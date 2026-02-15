@@ -653,6 +653,9 @@ public final class BuildASTPhase: CompilerPhase {
                 _ = consume()
                 return astArena.appendExpr(.nameRef(name, token.range))
 
+            case .keyword(.when):
+                return parseWhenExpression()
+
             case .keyword(let keyword):
                 _ = consume()
                 return astArena.appendExpr(.nameRef(interner.intern(keyword.rawValue), token.range))
@@ -663,9 +666,6 @@ public final class BuildASTPhase: CompilerPhase {
 
             case .stringQuote, .rawStringQuote:
                 return parseStringLiteral()
-
-            case .keyword(.when):
-                return parseWhenExpression()
 
             case .symbol(.lParen):
                 _ = consume()

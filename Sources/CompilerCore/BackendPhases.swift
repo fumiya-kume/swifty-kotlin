@@ -1270,7 +1270,8 @@ public final class LinkPhase: CompilerPhase {
 
         let wrapperSource = """
         #include <stdint.h>
-        extern int32_t \(entrySymbol)(void);
+        #include <stddef.h>
+        extern intptr_t \(entrySymbol)(void);
         int main(void) { return (int)\(entrySymbol)(); }
         """
         let wrapperURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "_entry.c")
