@@ -10,7 +10,7 @@ final class WhenLoweringPass: LoweringPass {
         module.arena.transformFunctions { function in
             var updated = function
             updated.body = function.body.map { instruction in
-                guard case .call(let symbol, let callee, let arguments, let result, let outThrown) = instruction,
+                guard case .call(let symbol, let callee, let arguments, let result, let canThrow) = instruction,
                       callee == markerCallee else {
                     return instruction
                 }
@@ -21,7 +21,7 @@ final class WhenLoweringPass: LoweringPass {
                         callee: loweredCallee,
                         arguments: [unitValue],
                         result: result,
-                        canThrow: outThrown
+                        canThrow: canThrow
                     )
                 }
                 return .call(
@@ -29,7 +29,7 @@ final class WhenLoweringPass: LoweringPass {
                     callee: loweredCallee,
                     arguments: arguments,
                     result: result,
-                    canThrow: outThrown
+                    canThrow: canThrow
                 )
             }
             return updated

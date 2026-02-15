@@ -14,7 +14,7 @@ final class PropertyLoweringPass: LoweringPass {
             loweredBody.reserveCapacity(function.body.count)
 
             for instruction in function.body {
-                guard case .call(let symbol, let callee, let arguments, let result, let outThrown) = instruction else {
+                guard case .call(let symbol, let callee, let arguments, let result, let canThrow) = instruction else {
                     loweredBody.append(instruction)
                     continue
                 }
@@ -39,7 +39,7 @@ final class PropertyLoweringPass: LoweringPass {
                         callee: loweredCallee,
                         arguments: loweredArguments,
                         result: result,
-                        canThrow: outThrown
+                        canThrow: canThrow
                     )
                 )
             }

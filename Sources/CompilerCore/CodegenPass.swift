@@ -220,11 +220,11 @@ public final class CodegenPhase: CompilerPhase {
                     return "returnValue"
                 case .returnIfEqual(let lhs, let rhs):
                     return "returnIfEqual lhs=\(lhs.rawValue) rhs=\(rhs.rawValue)"
-                case .call(let symbol, let callee, let arguments, let result, let outThrown):
+                case .call(let symbol, let callee, let arguments, let result, let canThrow):
                     let args = arguments.map { String($0.rawValue) }.joined(separator: ",")
                     let symbolValue = symbol.map { String($0.rawValue) } ?? "_"
                     let resultValue = result.map { String($0.rawValue) } ?? "_"
-                    return "call symbol=\(symbolValue) callee=\(callee.rawValue) args=[\(args)] result=\(resultValue) outThrown=\(outThrown)"
+                    return "call symbol=\(symbolValue) callee=\(callee.rawValue) args=[\(args)] result=\(resultValue) canThrow=\(canThrow)"
                 }
             }.joined(separator: "\n")
             let content = """

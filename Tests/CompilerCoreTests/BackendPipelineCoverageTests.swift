@@ -1014,22 +1014,22 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertTrue(hasSuspendGuard)
 
         let loweredSuspendThrowFlags: [String: [Bool]] = loweredSuspend?.body.reduce(into: [:]) { partial, instruction in
-            guard case .call(_, let callee, _, _, let outThrown) = instruction else {
+            guard case .call(_, let callee, _, _, let canThrow) = instruction else {
                 return
             }
             let name = interner.resolve(callee)
-            partial[name, default: []].append(outThrown)
+            partial[name, default: []].append(canThrow)
         } ?? [:]
         XCTAssertEqual(loweredSuspendThrowFlags["kk_suspend_suspendTarget"]?.allSatisfy({ $0 == true }), true)
         XCTAssertEqual(loweredSuspendThrowFlags["kk_coroutine_suspended"]?.allSatisfy({ $0 == false }), true)
         XCTAssertEqual(loweredSuspendThrowFlags["kk_coroutine_state_set_label"]?.allSatisfy({ $0 == false }), true)
 
         let callThrowFlags: [String: [Bool]] = loweredMain.body.reduce(into: [:]) { partial, instruction in
-            guard case .call(_, let callee, _, _, let outThrown) = instruction else {
+            guard case .call(_, let callee, _, _, let canThrow) = instruction else {
                 return
             }
             let name = interner.resolve(callee)
-            partial[name, default: []].append(outThrown)
+            partial[name, default: []].append(canThrow)
         }
         XCTAssertEqual(callThrowFlags["kk_coroutine_suspended"]?.allSatisfy({ $0 == false }), true)
         XCTAssertEqual(callThrowFlags["kk_suspend_suspendTarget"]?.allSatisfy({ $0 == true }), true)
@@ -1124,14 +1124,14 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertFalse(rawSuspendCalls)
 
         let rewrittenSuspendCalls = loweredCaller.body.compactMap { instruction -> (name: String, arity: Int, canThrow: Bool)? in
-            guard case .call(_, let callee, let arguments, _, let outThrown) = instruction else {
+            guard case .call(_, let callee, let arguments, _, let canThrow) = instruction else {
                 return nil
             }
             let name = interner.resolve(callee)
             guard name.hasPrefix("kk_suspend_susp") else {
                 return nil
             }
-            return (name: name, arity: arguments.count, canThrow: outThrown)
+            return (name: name, arity: arguments.count, canThrow: canThrow)
         }
         XCTAssertEqual(rewrittenSuspendCalls.count, 2)
         XCTAssertEqual(Set(rewrittenSuspendCalls.map(\.arity)), Set([1, 2]))

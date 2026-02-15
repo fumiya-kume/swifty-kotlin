@@ -142,7 +142,7 @@ final class InlineLoweringPass: LoweringPass {
                     )
                 )
 
-            case .call(let symbol, let callee, let args, let result, let outThrown):
+            case .call(let symbol, let callee, let args, let result, let canThrow):
                 let loweredResult = result.map { expr -> KIRExprID in
                     let cloned = cloneExpr(expr, in: module.arena)
                     localExprMap[expr] = cloned
@@ -154,7 +154,7 @@ final class InlineLoweringPass: LoweringPass {
                         callee: callee,
                         arguments: args.map { resolveAlias(of: $0, aliases: localExprMap) },
                         result: loweredResult,
-                        canThrow: outThrown
+                        canThrow: canThrow
                     )
                 )
 
@@ -181,13 +181,13 @@ final class InlineLoweringPass: LoweringPass {
                 result: result
             )
 
-        case .call(let symbol, let callee, let arguments, let result, let outThrown):
+        case .call(let symbol, let callee, let arguments, let result, let canThrow):
             return .call(
                 symbol: symbol,
                 callee: callee,
                 arguments: arguments.map { resolveAlias(of: $0, aliases: aliases) },
                 result: result,
-                canThrow: outThrown
+                canThrow: canThrow
             )
 
         case .returnValue(let value):

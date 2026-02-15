@@ -14,7 +14,7 @@ final class ForLoweringPass: LoweringPass {
             loweredBody.reserveCapacity(function.body.count)
 
             for instruction in function.body {
-                guard case .call(let symbol, let callee, let arguments, let result, let outThrown) = instruction,
+                guard case .call(let symbol, let callee, let arguments, let result, let canThrow) = instruction,
                       callee == markerCallee else {
                     loweredBody.append(instruction)
                     continue
@@ -28,7 +28,7 @@ final class ForLoweringPass: LoweringPass {
                             callee: iteratorCallee,
                             arguments: [iterable],
                             result: iteratorTemp,
-                            canThrow: outThrown
+                            canThrow: canThrow
                         )
                     )
                     var loweredArguments: [KIRExprID] = [iteratorTemp]
@@ -39,7 +39,7 @@ final class ForLoweringPass: LoweringPass {
                             callee: loweredCallee,
                             arguments: loweredArguments,
                             result: result,
-                            canThrow: outThrown
+                            canThrow: canThrow
                         )
                     )
                 } else {
@@ -49,7 +49,7 @@ final class ForLoweringPass: LoweringPass {
                             callee: loweredCallee,
                             arguments: [],
                             result: result,
-                            canThrow: outThrown
+                            canThrow: canThrow
                         )
                     )
                 }
