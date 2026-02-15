@@ -274,11 +274,18 @@ public final class KIRContext {
     public let diagnostics: DiagnosticEngine
     public let options: CompilerOptions
     public let interner: StringInterner
+    public let sema: SemaModule?
 
-    public init(diagnostics: DiagnosticEngine, options: CompilerOptions, interner: StringInterner) {
+    public init(
+        diagnostics: DiagnosticEngine,
+        options: CompilerOptions,
+        interner: StringInterner,
+        sema: SemaModule? = nil
+    ) {
         self.diagnostics = diagnostics
         self.options = options
         self.interner = interner
+        self.sema = sema
     }
 }
 

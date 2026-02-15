@@ -37,6 +37,7 @@ public struct SymbolFlags: OptionSet {
     public static let synthetic = SymbolFlags(rawValue: 1 << 3)
     public static let `static` = SymbolFlags(rawValue: 1 << 4)
     public static let sealedType = SymbolFlags(rawValue: 1 << 5)
+    public static let dataType = SymbolFlags(rawValue: 1 << 6)
 }
 
 public struct SemanticSymbol {
