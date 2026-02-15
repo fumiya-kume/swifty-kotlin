@@ -120,19 +120,57 @@ extension BuildASTPhase {
             if case .node(let childID) = child,
                arena.node(childID).kind == .typeArgs {
                 let tokens = collectTokens(from: childID, in: arena)
-                return tokens
-                    .compactMap { token in
-                        if !isTypeLikeNameToken(token.kind) {
-                            return nil
+                var result: [TypeParamDecl] = []
+                var angleDepth = 0
+                var pendingVariance: TypeVariance = .invariant
+
+                for token in tokens {
+                    switch token.kind {
+                    case .symbol(.lessThan):
+                        angleDepth += 1
+                        continue
+                    case .symbol(.greaterThan):
+                        angleDepth = max(0, angleDepth - 1)
+                        pendingVariance = .invariant
+                        continue
+                    case .symbol(.comma):
+                        if angleDepth == 1 {
+                            pendingVariance = .invariant
                         }
-                        guard let name = internedIdentifier(from: token, interner: interner) else {
-                            return nil
-                        }
-                        if case .keyword(let keyword) = token.kind, isLeadingDeclarationKeyword(keyword) {
-                            return nil
-                        }
-                        return TypeParamDecl(name: name)
+                        continue
+                    default:
+                        break
                     }
+
+                    guard angleDepth == 1 else {
+                        continue
+                    }
+
+                    switch token.kind {
+                    case .softKeyword(.out):
+                        pendingVariance = .out
+                        continue
+                    case .keyword(.in):
+                        pendingVariance = .in
+                        continue
+                    case .keyword(.reified):
+                        continue
+                    default:
+                        break
+                    }
+
+                    guard isTypeLikeNameToken(token.kind),
+                          let name = internedIdentifier(from: token, interner: interner) else {
+                        continue
+                    }
+                    if case .keyword(let keyword) = token.kind, isLeadingDeclarationKeyword(keyword) {
+                        continue
+                    }
+
+                    result.append(TypeParamDecl(name: name, variance: pendingVariance))
+                    pendingVariance = .invariant
+                }
+                return result
             }
         }
         return []

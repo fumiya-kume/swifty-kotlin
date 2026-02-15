@@ -142,19 +142,19 @@ public final class KotlinParser {
     ) -> NodeID {
         var children: [SyntaxChild] = leadingChildren
         var range = RangeAccumulator(value: leadingRange)
+        let supportsTypeParameters = kind == .classDecl || kind == .interfaceDecl
 
         _ = consumeToken(into: &children, range: &range)
-        if canStartTypeArgumentsInternal(after: lastConsumedToken) {
-            children.append(.node(parseTypeArguments()))
-            if let last = children.last {
-                range.append(childRange(last))
-            }
-        }
-
         if isIdentifierLike(stream.peek().kind) {
             _ = consumeToken(into: &children, range: &range)
         } else {
             diagnoseMissing("KSWIFTK-PARSE-0002", "Expected declaration name.")
+        }
+        if supportsTypeParameters && canStartTypeArgumentsInternal(after: lastConsumedToken) {
+            children.append(.node(parseTypeArguments()))
+            if let last = children.last {
+                range.append(childRange(last))
+            }
         }
         parsePostDeclarationTail(
             into: &children,

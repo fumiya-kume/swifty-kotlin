@@ -344,6 +344,46 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
         XCTAssertTrue(types.isSubtype(leafType, baseType))
         XCTAssertFalse(types.isSubtype(baseType, leafType))
 
+        let covariantSymbol = SymbolID(rawValue: 210)
+        types.setNominalTypeParameterVariances([.out], for: covariantSymbol)
+        let covariantInvariantInt = types.make(.classType(ClassType(
+            classSymbol: covariantSymbol,
+            args: [.invariant(intNN)],
+            nullability: .nonNull
+        )))
+        let covariantInvariantAny = types.make(.classType(ClassType(
+            classSymbol: covariantSymbol,
+            args: [.invariant(types.anyType)],
+            nullability: .nonNull
+        )))
+        XCTAssertTrue(types.isSubtype(covariantInvariantInt, covariantInvariantAny))
+        let covariantInProjection = types.make(.classType(ClassType(
+            classSymbol: covariantSymbol,
+            args: [.in(intNN)],
+            nullability: .nonNull
+        )))
+        XCTAssertFalse(types.isSubtype(covariantInProjection, covariantInvariantAny))
+
+        let contravariantSymbol = SymbolID(rawValue: 211)
+        types.setNominalTypeParameterVariances([.in], for: contravariantSymbol)
+        let contravariantInvariantInt = types.make(.classType(ClassType(
+            classSymbol: contravariantSymbol,
+            args: [.invariant(intNN)],
+            nullability: .nonNull
+        )))
+        let contravariantInvariantAny = types.make(.classType(ClassType(
+            classSymbol: contravariantSymbol,
+            args: [.invariant(types.anyType)],
+            nullability: .nonNull
+        )))
+        XCTAssertTrue(types.isSubtype(contravariantInvariantAny, contravariantInvariantInt))
+        let contravariantOutProjection = types.make(.classType(ClassType(
+            classSymbol: contravariantSymbol,
+            args: [.out(intNN)],
+            nullability: .nonNull
+        )))
+        XCTAssertFalse(types.isSubtype(contravariantOutProjection, contravariantInvariantInt))
+
         let classStarLHS = types.make(.classType(ClassType(
             classSymbol: classSym,
             args: [.star],

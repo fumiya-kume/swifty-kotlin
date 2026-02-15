@@ -257,6 +257,15 @@ public struct ImportDecl {
 
 public struct TypeParamDecl {
     public let name: InternedString
+    public let variance: TypeVariance
+
+    public init(
+        name: InternedString,
+        variance: TypeVariance = .invariant
+    ) {
+        self.name = name
+        self.variance = variance
+    }
 }
 
 public struct ValueParamDecl {

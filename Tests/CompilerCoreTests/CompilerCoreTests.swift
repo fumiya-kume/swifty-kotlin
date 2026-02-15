@@ -549,6 +549,31 @@ final class CompilerCoreTests: XCTestCase {
         }
     }
 
+    func testBuildASTParsesClassTypeParameterVariance() throws {
+        let source = """
+        class Box<out T, in U, V>
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let firstFile = try XCTUnwrap(ast.files.first)
+        let firstDeclID = try XCTUnwrap(firstFile.topLevelDecls.first)
+        let decl = try XCTUnwrap(ast.arena.decl(firstDeclID))
+        guard case .classDecl(let classDecl) = decl else {
+            XCTFail("Expected class declaration")
+            return
+        }
+
+        XCTAssertEqual(classDecl.typeParams.count, 3)
+        XCTAssertEqual(classDecl.typeParams.map(\.variance), [.out, .in, .invariant])
+        XCTAssertEqual(classDecl.typeParams.map { ctx.interner.resolve($0.name) }, ["T", "U", "V"])
+    }
+
     func testSemaResolvesUnqualifiedExtensionCallWithImplicitReceiver() throws {
         let source = """
         fun String.ext() = 1
@@ -586,6 +611,26 @@ final class CompilerCoreTests: XCTestCase {
             diag.code == "KSWIFTK-SEMA-0002"
         })
         XCTAssertFalse(hasNoViableDiagnostic)
+    }
+
+    func testGenericConstraintFailureReportsTypeDiagnostic() throws {
+        let source = """
+        fun <T> id(x: T): T = x
+        fun bad(): Boolean = id(1)
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let typeDiagnostics = ctx.diagnostics.diagnostics.filter { diag in
+            diag.code == "KSWIFTK-TYPE-0001"
+        }
+        XCTAssertFalse(typeDiagnostics.isEmpty, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
+        XCTAssertTrue(typeDiagnostics.contains(where: { $0.message.contains("Int <: Boolean") }))
     }
 
     func testSemaResolvesTopLevelFunctionAcrossFilesInSamePackage() throws {

@@ -111,6 +111,12 @@ extension DataFlowSemaPassPhase {
 
         switch decl {
         case .classDecl(let classDecl):
+            if !classDecl.typeParams.isEmpty {
+                types.setNominalTypeParameterVariances(
+                    classDecl.typeParams.map(\.variance),
+                    for: symbol
+                )
+            }
             let classType = types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
             collectNestedTypeAliases(
                 classDecl.nestedTypeAliases,
