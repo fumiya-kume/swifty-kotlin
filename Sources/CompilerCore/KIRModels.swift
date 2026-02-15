@@ -55,9 +55,13 @@ public enum KIRInstruction: Equatable {
     case nop
     case beginBlock
     case endBlock
+    case label(Int32)
+    case jump(Int32)
+    case jumpIfEqual(lhs: KIRExprID, rhs: KIRExprID, target: Int32)
     case constValue(result: KIRExprID, value: KIRExprKind)
     case binary(op: KIRBinaryOp, lhs: KIRExprID, rhs: KIRExprID, result: KIRExprID)
     case call(symbol: SymbolID?, callee: InternedString, arguments: [KIRExprID], result: KIRExprID?, outThrown: Bool)
+    case returnIfEqual(lhs: KIRExprID, rhs: KIRExprID)
     case returnUnit
     case returnValue(KIRExprID)
 }
@@ -247,6 +251,12 @@ public final class KIRModule {
             return "beginBlock"
         case .endBlock:
             return "endBlock"
+        case .label(let id):
+            return "label L\(id)"
+        case .jump(let target):
+            return "jump L\(target)"
+        case .jumpIfEqual(let lhs, let rhs, let target):
+            return "jumpIfEqual r\(lhs.rawValue), r\(rhs.rawValue) -> L\(target)"
         case .constValue(let result, let value):
             return "const r\(result.rawValue)=\(value)"
         case .binary(let op, let lhs, let rhs, let result):
@@ -262,6 +272,8 @@ public final class KIRModule {
             }
             let ret = result.map { "r\($0.rawValue)" } ?? "_"
             return "call \(calleeName) symbol=\(symbolLabel) args=[\(args)] ret=\(ret) thrown=\(outThrown)"
+        case .returnIfEqual(let lhs, let rhs):
+            return "returnIfEqual r\(lhs.rawValue), r\(rhs.rawValue)"
         case .returnUnit:
             return "returnUnit"
         case .returnValue(let value):

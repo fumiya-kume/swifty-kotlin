@@ -38,6 +38,7 @@ final class KIRModelsCoverageTests: XCTestCase {
             body: [
                 .nop,
                 .beginBlock,
+                .label(100),
                 .constValue(result: expr0, value: .intLiteral(10)),
                 .constValue(result: expr1, value: .boolLiteral(true)),
                 .constValue(result: expr2, value: .stringLiteral(interner.intern("txt"))),
@@ -45,7 +46,11 @@ final class KIRModelsCoverageTests: XCTestCase {
                 .constValue(result: expr4, value: .temporary(4)),
                 .constValue(result: expr5, value: .unit),
                 .binary(op: .add, lhs: expr0, rhs: expr0, result: expr4),
+                .jumpIfEqual(lhs: expr0, rhs: expr1, target: 101),
+                .jump(101),
+                .label(101),
                 .call(symbol: symB, callee: interner.intern("beta"), arguments: [expr0], result: expr4, outThrown: false),
+                .returnIfEqual(lhs: expr0, rhs: expr1),
                 .returnValue(expr4),
                 .endBlock
             ],
@@ -93,7 +98,11 @@ final class KIRModelsCoverageTests: XCTestCase {
         XCTAssertTrue(dump.contains("type beta"))
         XCTAssertTrue(dump.contains("const r"))
         XCTAssertTrue(dump.contains("binary add"))
+        XCTAssertTrue(dump.contains("label L100"))
+        XCTAssertTrue(dump.contains("jumpIfEqual"))
+        XCTAssertTrue(dump.contains("jump L101"))
         XCTAssertTrue(dump.contains("call beta"))
+        XCTAssertTrue(dump.contains("returnIfEqual"))
         XCTAssertTrue(dump.contains("return r"))
         XCTAssertTrue(dump.contains("lowerings: NormalizeBlocks, OperatorLowering"))
     }
