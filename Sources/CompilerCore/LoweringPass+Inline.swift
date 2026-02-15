@@ -9,6 +9,7 @@ final class InlineLoweringPass: LoweringPass {
     static let name = "InlineLowering"
 
     func run(module: KIRModule, ctx: KIRContext) throws {
+        let unitType = ctx.sema?.types.unitType
         let inlineFunctionsBySymbol = Dictionary(uniqueKeysWithValues: module.arena.declarations.compactMap { decl -> (SymbolID, KIRFunction)? in
             guard case .function(let function) = decl, function.isInline else {
                 return nil
@@ -62,7 +63,7 @@ final class InlineLoweringPass: LoweringPass {
                     if let returnedExpr = expansion.returnedExpr {
                         aliases[result] = resolveAlias(of: returnedExpr, aliases: aliases)
                     } else {
-                        let unitExpr = module.arena.appendExpr(.unit)
+                        let unitExpr = module.arena.appendExpr(.unit, type: unitType)
                         aliases[result] = unitExpr
                     }
                 }
@@ -250,7 +251,9 @@ final class InlineLoweringPass: LoweringPass {
 
     private func cloneExpr(_ source: KIRExprID, in arena: KIRArena) -> KIRExprID {
         let fallback = KIRExprKind.temporary(Int32(arena.expressions.count))
-        return arena.appendExpr(arena.expr(source) ?? fallback)
+        return arena.appendExpr(
+            arena.expr(source) ?? fallback,
+            type: arena.exprType(source)
+        )
     }
 }
-

@@ -104,7 +104,10 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         existingFunctionSymbols: Set<SymbolID>
     ) {
         let signature = FunctionSignature(parameterTypes: [], returnType: returnType, isSuspend: false)
-        let resultExpr = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
+        let resultExpr = module.arena.appendExpr(
+            .temporary(Int32(module.arena.expressions.count)),
+            type: returnType
+        )
         let body: [KIRInstruction] = [
             .constValue(result: resultExpr, value: .intLiteral(value)),
             .returnValue(resultExpr)
@@ -149,7 +152,10 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             flags: [.synthetic]
         )
         let parameter = KIRParameter(symbol: parameterSymbol, type: receiverType)
-        let resultExpr = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
+        let resultExpr = module.arena.appendExpr(
+            .temporary(Int32(module.arena.expressions.count)),
+            type: receiverType
+        )
         let body: [KIRInstruction] = [
             .constValue(result: resultExpr, value: .symbolRef(parameterSymbol)),
             .returnValue(resultExpr)
@@ -232,4 +238,3 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         ))
     }
 }
-

@@ -7,6 +7,7 @@ final class PropertyLoweringPass: LoweringPass {
         let getterName = ctx.interner.intern("get")
         let setterName = ctx.interner.intern("set")
         let loweredCallee = ctx.interner.intern("kk_property_access")
+        let boolType = ctx.sema?.types.make(.primitive(.boolean, .nonNull))
 
         module.arena.transformFunctions { function in
             var updated = function
@@ -24,7 +25,10 @@ final class PropertyLoweringPass: LoweringPass {
                 }
 
                 let isSetter = callee == setterName
-                let accessorKind = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
+                let accessorKind = module.arena.appendExpr(
+                    .temporary(Int32(module.arena.expressions.count)),
+                    type: boolType
+                )
                 loweredBody.append(
                     .constValue(
                         result: accessorKind,
@@ -50,4 +54,3 @@ final class PropertyLoweringPass: LoweringPass {
         module.recordLowering(Self.name)
     }
 }
-
