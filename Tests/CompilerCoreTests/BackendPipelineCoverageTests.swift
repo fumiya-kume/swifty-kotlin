@@ -211,7 +211,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
                 .call(symbol: nil, callee: interner.intern("get"), arguments: [v0], result: v1, outThrown: false),
                 .call(symbol: nil, callee: interner.intern("set"), arguments: [v0], result: v1, outThrown: false),
                 .call(symbol: nil, callee: interner.intern("<lambda>"), arguments: [v0], result: v1, outThrown: false),
-                .call(symbol: nil, callee: interner.intern("inlineTarget"), arguments: [v0], result: v1, outThrown: false),
+                .call(symbol: nil, callee: interner.intern("inlineTarget"), arguments: [], result: v1, outThrown: false),
                 .call(symbol: nil, callee: interner.intern("suspendTarget"), arguments: [v0], result: v1, outThrown: false),
                 .returnUnit
             ],
@@ -278,18 +278,34 @@ final class BackendPipelineCoverageTests: XCTestCase {
             guard case .call(_, let callee, _, _, _) = instruction else { return nil }
             return interner.resolve(callee)
         }
+        XCTAssertTrue(callees.contains("iterator"))
         XCTAssertTrue(callees.contains("kk_for_lowered"))
         XCTAssertTrue(callees.contains("kk_when_select"))
         XCTAssertTrue(callees.contains("kk_property_access"))
         XCTAssertTrue(callees.contains("kk_lambda_invoke"))
-        XCTAssertTrue(callees.contains("inlined_inlineTarget"))
+        XCTAssertFalse(callees.contains("inlineTarget"))
+        XCTAssertFalse(callees.contains("inlined_inlineTarget"))
+        XCTAssertTrue(callees.contains("kk_coroutine_suspended"))
         XCTAssertTrue(callees.contains("kk_suspend_suspendTarget"))
 
-        let allCallsThrowing = loweredMain.body.allSatisfy { instruction in
-            guard case .call(_, _, _, _, let outThrown) = instruction else { return true }
-            return outThrown
+        let loweredSuspend = module.arena.declarations.compactMap { decl -> KIRFunction? in
+            guard case .function(let function) = decl else {
+                return nil
+            }
+            return interner.resolve(function.name) == "kk_suspend_suspendTarget" ? function : nil
+        }.first
+        XCTAssertEqual(loweredSuspend?.params.count, 1)
+        XCTAssertEqual(loweredSuspend?.isSuspend, false)
+
+        let callThrowFlags: [String: [Bool]] = loweredMain.body.reduce(into: [:]) { partial, instruction in
+            guard case .call(_, let callee, _, _, let outThrown) = instruction else {
+                return
+            }
+            let name = interner.resolve(callee)
+            partial[name, default: []].append(outThrown)
         }
-        XCTAssertTrue(allCallsThrowing)
+        XCTAssertEqual(callThrowFlags["kk_coroutine_suspended"]?.allSatisfy({ $0 == false }), true)
+        XCTAssertEqual(callThrowFlags["kk_suspend_suspendTarget"]?.allSatisfy({ $0 == true }), true)
 
         guard case .function(let loweredEmpty)? = module.arena.decl(emptyID) else {
             XCTFail("expected lowered empty function")
@@ -297,6 +313,193 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
         XCTAssertEqual(loweredEmpty.body.last, .returnUnit)
         XCTAssertFalse(loweredEmpty.body.isEmpty)
+    }
+
+    func testInlineLoweringExpandsInlineBodyAndRewritesResultUse() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let types = TypeSystem()
+
+        let callerSym = SymbolID(rawValue: 300)
+        let inlineSym = SymbolID(rawValue: 301)
+        let inlineParamSym = SymbolID(rawValue: 302)
+
+        let inlineArg = arena.appendExpr(.temporary(0))
+        let inlineOne = arena.appendExpr(.temporary(1))
+        let inlineSum = arena.appendExpr(.temporary(2))
+        let callerArg = arena.appendExpr(.temporary(3))
+        let callerResult = arena.appendExpr(.temporary(4))
+
+        let inlineFn = KIRFunction(
+            symbol: inlineSym,
+            name: interner.intern("plusOne"),
+            params: [KIRParameter(symbol: inlineParamSym, type: types.make(.primitive(.int, .nonNull)))],
+            returnType: types.make(.primitive(.int, .nonNull)),
+            body: [
+                .constValue(result: inlineArg, value: .symbolRef(inlineParamSym)),
+                .constValue(result: inlineOne, value: .intLiteral(1)),
+                .call(symbol: nil, callee: interner.intern("kk_op_add"), arguments: [inlineArg, inlineOne], result: inlineSum, outThrown: false),
+                .returnValue(inlineSum)
+            ],
+            isSuspend: false,
+            isInline: true
+        )
+        let callerFn = KIRFunction(
+            symbol: callerSym,
+            name: interner.intern("main"),
+            params: [],
+            returnType: types.make(.primitive(.int, .nonNull)),
+            body: [
+                .constValue(result: callerArg, value: .intLiteral(41)),
+                .call(symbol: inlineSym, callee: interner.intern("plusOne"), arguments: [callerArg], result: callerResult, outThrown: false),
+                .returnValue(callerResult)
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+
+        let callerID = arena.appendDecl(.function(callerFn))
+        _ = arena.appendDecl(.function(inlineFn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [callerID])], arena: arena)
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(
+                moduleName: "InlineLowering",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            sourceManager: SourceManager(),
+            diagnostics: DiagnosticEngine(),
+            interner: interner
+        )
+        ctx.kir = module
+        try LoweringPhase().run(ctx)
+
+        guard case .function(let loweredCaller)? = module.arena.decl(callerID) else {
+            XCTFail("expected lowered caller function")
+            return
+        }
+
+        let calleeNames = loweredCaller.body.compactMap { instruction -> String? in
+            guard case .call(_, let callee, _, _, _) = instruction else { return nil }
+            return interner.resolve(callee)
+        }
+        XCTAssertFalse(calleeNames.contains("plusOne"))
+        XCTAssertTrue(calleeNames.contains("kk_op_add"))
+
+        let returnValues = loweredCaller.body.compactMap { instruction -> KIRExprID? in
+            guard case .returnValue(let expr) = instruction else { return nil }
+            return expr
+        }
+        XCTAssertEqual(returnValues.count, 1)
+        XCTAssertNotEqual(returnValues.first, callerResult)
+    }
+
+    func testDataEnumSealedSynthesisAddsSyntheticHelpers() throws {
+        let interner = StringInterner()
+        let diagnostics = DiagnosticEngine()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+        let bindings = BindingTable()
+        let sema = SemaModule(symbols: symbols, types: types, bindings: bindings, diagnostics: diagnostics)
+
+        let packageName = interner.intern("demo")
+        let packagePath = [packageName]
+
+        let colorName = interner.intern("Color")
+        let colorSymbol = symbols.define(
+            kind: .enumClass,
+            name: colorName,
+            fqName: packagePath + [colorName],
+            declSite: nil,
+            visibility: .public
+        )
+        _ = symbols.define(
+            kind: .field,
+            name: interner.intern("RED"),
+            fqName: packagePath + [colorName, interner.intern("RED")],
+            declSite: nil,
+            visibility: .public
+        )
+        _ = symbols.define(
+            kind: .field,
+            name: interner.intern("BLUE"),
+            fqName: packagePath + [colorName, interner.intern("BLUE")],
+            declSite: nil,
+            visibility: .public
+        )
+
+        let baseName = interner.intern("Base")
+        let baseSymbol = symbols.define(
+            kind: .class,
+            name: baseName,
+            fqName: packagePath + [baseName],
+            declSite: nil,
+            visibility: .public,
+            flags: [.sealedType]
+        )
+        let childName = interner.intern("Child")
+        let childSymbol = symbols.define(
+            kind: .class,
+            name: childName,
+            fqName: packagePath + [childName],
+            declSite: nil,
+            visibility: .public
+        )
+        symbols.setDirectSupertypes([baseSymbol], for: childSymbol)
+
+        let pointName = interner.intern("Point")
+        let pointSymbol = symbols.define(
+            kind: .class,
+            name: pointName,
+            fqName: packagePath + [pointName],
+            declSite: nil,
+            visibility: .public,
+            flags: [.dataType]
+        )
+
+        let arena = KIRArena()
+        let colorDecl = arena.appendDecl(.nominalType(KIRNominalType(symbol: colorSymbol)))
+        let baseDecl = arena.appendDecl(.nominalType(KIRNominalType(symbol: baseSymbol)))
+        let pointDecl = arena.appendDecl(.nominalType(KIRNominalType(symbol: pointSymbol)))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [colorDecl, baseDecl, pointDecl])], arena: arena)
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(
+                moduleName: "Synthesis",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            sourceManager: SourceManager(),
+            diagnostics: diagnostics,
+            interner: interner
+        )
+        ctx.sema = sema
+        ctx.kir = module
+
+        try LoweringPhase().run(ctx)
+
+        let functionNames = module.arena.declarations.compactMap { decl -> String? in
+            guard case .function(let function) = decl else {
+                return nil
+            }
+            return interner.resolve(function.name)
+        }
+        XCTAssertTrue(functionNames.contains("Color$enumValuesCount"))
+        XCTAssertTrue(functionNames.contains("Base$sealedSubtypeCount"))
+        XCTAssertTrue(functionNames.contains("Point$copy"))
+
+        let copyFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
+            guard case .function(let function) = decl else {
+                return nil
+            }
+            return interner.resolve(function.name) == "Point$copy" ? function : nil
+        }.first
+        XCTAssertEqual(copyFunction?.params.count, 1)
     }
 
     func testLinkPhaseGuardAndFailureBranches() throws {
