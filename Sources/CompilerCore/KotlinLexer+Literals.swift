@@ -3,7 +3,6 @@ extension KotlinLexer {
         var cursor = offset
         var hasDot = false
         var hasExponent = false
-        var hasFraction = false
         var parsedPrefix = false
 
         if bytes[cursor] == 0x30 && cursor + 1 < bytes.count {
@@ -103,9 +102,7 @@ extension KotlinLexer {
                 if ch == 0x2E && !hasDot {
                     hasDot = true
                     cursor += 1
-                    if cursor < bytes.count && isDigit(bytes[cursor]) {
-                        hasFraction = true
-                    } else {
+                    if cursor >= bytes.count || !isDigit(bytes[cursor]) {
                         diagnostics.error(
                             "KSWIFTK-LEX-0003",
                             "Invalid number format in numeric literal.",
