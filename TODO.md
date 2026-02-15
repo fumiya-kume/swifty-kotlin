@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-02-15
+最終更新: 2026-02-16
 
 ## P0 (Core Correctness)
 
@@ -85,18 +85,18 @@
   - [x] CFG ベースの suspension point 分割と label dispatch 生成
 - [x] P2-7: kotlinc 差分テストハーネスの整備
   - [x] `Scripts/diff_kotlinc.sh` を追加（kotlinc 実行結果との stdout/exit 比較）
-- [ ] P2-8: LLVM C API backend の runtime/ABI 追従（spec.md J15）
+- [x] P2-8: LLVM C API backend の runtime/ABI 追従（spec.md J15）
   - [x] `kk_string_concat` / 例外チャネル / coroutine helper 呼び出しの native lowering を実装
   - [x] `backend=llvm-c-api` で executable までの E2E テストを追加
-  - [ ] fallback 依存を段階的に縮小（strict 以外でも native 優先を固定）
+  - [x] fallback を撤去し、non-strict でも LLVM C API native backend のみを使用
 
 ## P3 (Spec Compliance Backlog)
 
-- [ ] P3-1: 決定性・エラー規約の固定（spec.md J0）
-  - [ ] 出力決定性テスト（同一入力/同一オプションで byte 同一）を追加
-  - [ ] compiler/runtime の panic 経路を診断コード方針に沿って整理
+- [x] P3-1: 決定性・エラー規約の固定（spec.md J0）
+  - [x] 出力決定性テスト（同一入力/同一オプションで byte 同一）を追加（`.kir` / `.ll` / `.o`）
+  - [x] compiler/runtime の panic 経路を診断コード方針に沿って整理
 - [ ] P3-2: 型システムの仕様追従（spec.md J8/J9）
-  - [ ] class/interface 継承関係を `TypeSystem.isSubtype` に反映
+  - [x] class/interface 継承関係を `TypeSystem.isSubtype` に反映
   - [ ] declaration-site variance と use-site variance 合成規則を強化
   - [ ] generic constraints の失敗診断精度を改善
 - [ ] P3-3: KIR の型付き IR 化強化（spec.md J11/J12）
@@ -116,4 +116,7 @@
 
 ## In Progress
 
-- [ ] P2-8: LLVM C API backend の runtime/ABI 追従
+- [ ] P3-2: 型システムの仕様追従
+  - [x] P3-2a: class/interface 継承関係を `TypeSystem.isSubtype` に反映
+  - [ ] P3-2b: variance 合成規則（declaration-site + use-site）を強化
+  - [ ] P3-2c: generic constraints 失敗診断を改善
