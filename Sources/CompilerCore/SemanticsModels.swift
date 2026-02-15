@@ -36,6 +36,7 @@ public struct SymbolFlags: OptionSet {
     public static let mutable = SymbolFlags(rawValue: 1 << 2)
     public static let synthetic = SymbolFlags(rawValue: 1 << 3)
     public static let `static` = SymbolFlags(rawValue: 1 << 4)
+    public static let sealedType = SymbolFlags(rawValue: 1 << 5)
 }
 
 public struct SemanticSymbol {
@@ -47,8 +48,6 @@ public struct SemanticSymbol {
     public let visibility: Visibility
     public let flags: SymbolFlags
 }
-
-public typealias SemaSymbol = SemanticSymbol
 
 public struct FunctionSignature {
     public let receiverType: TypeID?
@@ -108,7 +107,11 @@ open class BaseScope: Scope {
         guard let symbol = symbols.symbol(sym) else {
             return
         }
-        locals[symbol.name, default: []].append(sym)
+        var bucket = locals[symbol.name, default: []]
+        if !bucket.contains(sym) {
+            bucket.append(sym)
+        }
+        locals[symbol.name] = bucket
     }
 }
 
@@ -123,6 +126,7 @@ public final class SymbolTable {
     private var symbolsStorage: [SemanticSymbol] = []
     private var byFQName: [[InternedString]: [SymbolID]] = [:]
     private var functionSignatures: [SymbolID: FunctionSignature] = [:]
+    private var directSupertypes: [SymbolID: [SymbolID]] = [:]
 
     public init() {}
 
@@ -223,6 +227,24 @@ public final class SymbolTable {
     public func functionSignature(for symbol: SymbolID) -> FunctionSignature? {
         functionSignatures[symbol]
     }
+
+    public func setDirectSupertypes(_ supertypes: [SymbolID], for symbol: SymbolID) {
+        directSupertypes[symbol] = supertypes
+    }
+
+    public func directSupertypes(for symbol: SymbolID) -> [SymbolID] {
+        directSupertypes[symbol] ?? []
+    }
+
+    public func directSubtypes(of symbol: SymbolID) -> [SymbolID] {
+        var result: [SymbolID] = []
+        for (candidate, supertypes) in directSupertypes {
+            if supertypes.contains(symbol) {
+                result.append(candidate)
+            }
+        }
+        return result.sorted(by: { $0.rawValue < $1.rawValue })
+    }
 }
 
 public struct CallBinding {
@@ -281,21 +303,3 @@ public final class SemaModule {
     }
 }
 
-public final class SemaContext {
-    public let symbols: SymbolTable
-    public let types: TypeSystem
-    public let bindings: BindingTable
-    public let diagnostics: DiagnosticEngine
-
-    public init(
-        symbols: SymbolTable,
-        types: TypeSystem,
-        bindings: BindingTable,
-        diagnostics: DiagnosticEngine
-    ) {
-        self.symbols = symbols
-        self.types = types
-        self.bindings = bindings
-        self.diagnostics = diagnostics
-    }
-}

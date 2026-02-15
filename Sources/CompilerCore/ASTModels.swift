@@ -55,6 +55,7 @@ public struct Modifiers: OptionSet {
     public static let expect = Modifiers(rawValue: Int32(1) << 19)
     public static let actual = Modifiers(rawValue: Int32(1) << 20)
     public static let value = Modifiers(rawValue: Int32(1) << 21)
+    public static let enumModifier = Modifiers(rawValue: Int32(1) << 22)
 }
 
 public enum Decl {
@@ -79,12 +80,45 @@ public struct ClassDecl {
     public let modifiers: Modifiers
     public let typeParams: [TypeParamDecl]
     public let primaryConstructorParams: [ValueParamDecl]
+    public let superTypes: [TypeRefID]
+    public let enumEntries: [EnumEntryDecl]
+
+    public init(
+        range: SourceRange,
+        name: InternedString,
+        modifiers: Modifiers,
+        typeParams: [TypeParamDecl] = [],
+        primaryConstructorParams: [ValueParamDecl] = [],
+        superTypes: [TypeRefID] = [],
+        enumEntries: [EnumEntryDecl] = []
+    ) {
+        self.range = range
+        self.name = name
+        self.modifiers = modifiers
+        self.typeParams = typeParams
+        self.primaryConstructorParams = primaryConstructorParams
+        self.superTypes = superTypes
+        self.enumEntries = enumEntries
+    }
 }
 
 public struct ObjectDecl {
     public let range: SourceRange
     public let name: InternedString
     public let modifiers: Modifiers
+    public let superTypes: [TypeRefID]
+
+    public init(
+        range: SourceRange,
+        name: InternedString,
+        modifiers: Modifiers,
+        superTypes: [TypeRefID] = []
+    ) {
+        self.range = range
+        self.name = name
+        self.modifiers = modifiers
+        self.superTypes = superTypes
+    }
 }
 
 public struct FunDecl {
