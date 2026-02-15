@@ -90,6 +90,7 @@ public enum Keyword: String {
     case `noinline`
     case `tailrec`
     case `vararg`
+    case value
 }
 
 public enum SoftKeyword: String {

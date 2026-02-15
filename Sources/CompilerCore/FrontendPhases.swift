@@ -455,6 +455,14 @@ public final class BuildASTPhase: CompilerPhase {
                     modifiers.insert(.noinline)
                 case .keyword(.vararg):
                     modifiers.insert(.vararg)
+                case .keyword(.external):
+                    modifiers.insert(.external)
+                case .keyword(.expect):
+                    modifiers.insert(.expect)
+                case .keyword(.actual):
+                    modifiers.insert(.actual)
+                case .keyword(.value):
+                    modifiers.insert(.value)
                 default:
                     continue
                 }
@@ -515,7 +523,7 @@ public final class BuildASTPhase: CompilerPhase {
             return true
         case .public, .private, .internal, .protected, .open, .abstract, .sealed, .data, .annotation,
              .inner, .expect, .actual, .const, .lateinit, .override, .final,
-             .crossinline, .noinline, .tailrec, .inline, .suspend, .operator, .infix:
+             .crossinline, .noinline, .tailrec, .inline, .suspend, .operator, .infix, .external, .value:
             return true
         default:
             return false

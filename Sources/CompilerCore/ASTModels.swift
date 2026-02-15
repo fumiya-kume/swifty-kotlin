@@ -51,6 +51,10 @@ public struct Modifiers: OptionSet {
     public static let crossinline = Modifiers(rawValue: Int32(1) << 15)
     public static let noinline = Modifiers(rawValue: Int32(1) << 16)
     public static let vararg = Modifiers(rawValue: Int32(1) << 17)
+    public static let external = Modifiers(rawValue: Int32(1) << 18)
+    public static let expect = Modifiers(rawValue: Int32(1) << 19)
+    public static let actual = Modifiers(rawValue: Int32(1) << 20)
+    public static let value = Modifiers(rawValue: Int32(1) << 21)
 }
 
 public enum Decl {
@@ -120,7 +124,7 @@ public struct FunDecl {
     }
 }
 
-public enum FunctionBody {
+public enum FunctionBody: Equatable {
     case block(SourceRange)
     case expr(SourceRange)
     case unit

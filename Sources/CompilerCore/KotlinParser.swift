@@ -555,7 +555,7 @@ public final class KotlinParser {
         switch keyword {
         case .public, .private, .internal, .protected, .open, .abstract, .sealed, .data, .annotation,
              .inner, .expect, .actual, .const, .lateinit, .override, .final, .crossinline, .noinline, .tailrec,
-             .inline, .suspend, .operator, .infix:
+             .inline, .suspend, .operator, .infix, .external, .value:
             return true
         case .class, .object, .interface, .fun, .val, .var, .typealias, .enum, .package, .import:
             return true
@@ -570,7 +570,7 @@ public final class KotlinParser {
         switch keyword {
         case .public, .private, .internal, .protected, .open, .abstract, .sealed, .data, .annotation,
              .inner, .expect, .actual, .const, .lateinit, .override, .final, .crossinline, .noinline, .tailrec,
-             .inline, .suspend, .operator, .infix:
+             .inline, .suspend, .operator, .infix, .external, .value:
             return true
         default:
             return false
