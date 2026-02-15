@@ -1,9 +1,11 @@
 public struct CallArg {
     public let label: InternedString?
+    public let isSpread: Bool
     public let type: TypeID
 
-    public init(label: InternedString? = nil, type: TypeID) {
+    public init(label: InternedString? = nil, isSpread: Bool = false, type: TypeID) {
         self.label = label
+        self.isSpread = isSpread
         self.type = type
     }
 }
@@ -50,183 +52,228 @@ public final class OverloadResolver {
         ctx: SemaModule
     ) -> ResolvedCall {
         let solver = ConstraintSolver()
-        var viable: [ViableCandidate] = []
-        for candidate in candidates {
-            guard let symbol = ctx.symbols.symbol(candidate) else {
-                continue
-            }
-            guard symbol.kind == .function || symbol.kind == .constructor else {
-                continue
-            }
-            guard let signature = ctx.symbols.functionSignature(for: candidate) else {
-                continue
-            }
-            let typeVarBySymbol = ctx.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
-            var constraints: [VariableConstraint] = []
-            if let receiverType = signature.receiverType {
-                guard let implicitReceiverType else {
-                    continue
-                }
-                let rhsOperand = operand(
-                    for: receiverType,
-                    typeVarBySymbol: typeVarBySymbol,
-                    typeSystem: ctx.types
-                )
-                constraints.append(
-                    VariableConstraint(
-                        kind: .subtype,
-                        left: .type(implicitReceiverType),
-                        right: rhsOperand,
-                        blameRange: call.range
-                    )
-                )
-            }
-            guard let parameterMapping = buildParameterMapping(
-                signature: signature,
-                callArgs: call.args,
-                symbols: ctx.symbols
-            ) else {
-                continue
-            }
+        let viable = candidates.compactMap { candidate in
+            evaluateCandidate(
+                candidate,
+                call: call,
+                expectedType: expectedType,
+                implicitReceiverType: implicitReceiverType,
+                solver: solver,
+                ctx: ctx
+            )
+        }
+        return selectResult(from: viable, call: call, typeSystem: ctx.types)
+    }
 
-            for argIndex in call.args.indices {
-                guard let paramIndex = parameterMapping[argIndex],
-                      paramIndex >= 0,
-                      paramIndex < signature.parameterTypes.count else {
-                    constraints.removeAll(keepingCapacity: false)
-                    break
-                }
-                let arg = call.args[argIndex]
-                let paramType = signature.parameterTypes[paramIndex]
-                let rhsOperand = operand(
-                    for: paramType,
-                    typeVarBySymbol: typeVarBySymbol,
-                    typeSystem: ctx.types
-                )
-                constraints.append(
-                    VariableConstraint(
-                        kind: .subtype,
-                        left: .type(arg.type),
-                        right: rhsOperand,
-                        blameRange: call.range
-                    )
-                )
-            }
-            if constraints.isEmpty && !call.args.isEmpty {
-                continue
-            }
+    private func evaluateCandidate(
+        _ candidate: SymbolID,
+        call: CallExpr,
+        expectedType: TypeID?,
+        implicitReceiverType: TypeID?,
+        solver: ConstraintSolver,
+        ctx: SemaModule
+    ) -> ViableCandidate? {
+        guard let symbol = ctx.symbols.symbol(candidate),
+              symbol.kind == .function || symbol.kind == .constructor,
+              let signature = ctx.symbols.functionSignature(for: candidate) else {
+            return nil
+        }
 
-            if let expectedType {
-                let lhsOperand = operand(
-                    for: signature.returnType,
-                    typeVarBySymbol: typeVarBySymbol,
-                    typeSystem: ctx.types
-                )
-                constraints.append(
-                    VariableConstraint(
-                        kind: .subtype,
-                        left: lhsOperand,
-                        right: .type(expectedType),
-                        blameRange: call.range
-                    )
-                )
-            }
+        let typeVarBySymbol = ctx.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
 
-            let varsToSolve = usedTypeVariables(from: constraints)
-            let substitution: [TypeVarID: TypeID]
-            if varsToSolve.isEmpty {
-                let allSatisfied = constraints.allSatisfy { constraint in
-                    return isConstraintSatisfiedWithoutVariables(constraint, typeSystem: ctx.types)
-                }
-                if !allSatisfied {
-                    continue
-                }
-                substitution = [:]
-            } else {
-                let solution = solver.solve(
-                    vars: varsToSolve,
-                    constraints: constraints,
-                    typeSystem: ctx.types
-                )
-                if !solution.isSuccess {
-                    continue
-                }
-                substitution = solution.substitution
-            }
+        guard var constraints = buildReceiverConstraints(
+            signature: signature,
+            implicitReceiverType: implicitReceiverType,
+            typeVarBySymbol: typeVarBySymbol,
+            range: call.range,
+            typeSystem: ctx.types
+        ) else {
+            return nil
+        }
 
-            let instantiatedParameterTypes: [TypeID] = call.args.indices.compactMap { argIndex in
-                guard let paramIndex = parameterMapping[argIndex],
-                      paramIndex >= 0,
-                      paramIndex < signature.parameterTypes.count else {
-                    return nil
-                }
-                let type = signature.parameterTypes[paramIndex]
-                return ctx.types.substituteTypeParameters(
-                    in: type,
-                    substitution: substitution,
-                    typeVarBySymbol: typeVarBySymbol
-                )
-            }
-            if instantiatedParameterTypes.count != call.args.count {
-                continue
-            }
-            viable.append(
-                ViableCandidate(
-                    symbol: candidate,
-                    signature: signature,
-                    instantiatedParameterTypes: instantiatedParameterTypes,
-                    substitutedTypeArguments: substitution,
-                    parameterMapping: parameterMapping
+        guard let parameterMapping = buildParameterMapping(
+            signature: signature,
+            callArgs: call.args,
+            symbols: ctx.symbols
+        ) else {
+            return nil
+        }
+
+        guard appendArgumentConstraints(
+            to: &constraints,
+            call: call,
+            parameterMapping: parameterMapping,
+            signature: signature,
+            typeVarBySymbol: typeVarBySymbol,
+            typeSystem: ctx.types
+        ) else {
+            return nil
+        }
+
+        if let expectedType {
+            let lhsOperand = operand(
+                for: signature.returnType,
+                typeVarBySymbol: typeVarBySymbol,
+                typeSystem: ctx.types
+            )
+            constraints.append(
+                VariableConstraint(
+                    kind: .subtype,
+                    left: lhsOperand,
+                    right: .type(expectedType),
+                    blameRange: call.range
                 )
             )
         }
 
+        guard let substitution = solveConstraints(
+            constraints,
+            solver: solver,
+            typeSystem: ctx.types
+        ) else {
+            return nil
+        }
+
+        let instantiatedParameterTypes: [TypeID] = call.args.indices.compactMap { argIndex in
+            guard let paramIndex = parameterMapping[argIndex],
+                  paramIndex >= 0,
+                  paramIndex < signature.parameterTypes.count else {
+                return nil
+            }
+            return ctx.types.substituteTypeParameters(
+                in: signature.parameterTypes[paramIndex],
+                substitution: substitution,
+                typeVarBySymbol: typeVarBySymbol
+            )
+        }
+        guard instantiatedParameterTypes.count == call.args.count else {
+            return nil
+        }
+
+        return ViableCandidate(
+            symbol: candidate,
+            signature: signature,
+            instantiatedParameterTypes: instantiatedParameterTypes,
+            substitutedTypeArguments: substitution,
+            parameterMapping: parameterMapping
+        )
+    }
+
+    private func buildReceiverConstraints(
+        signature: FunctionSignature,
+        implicitReceiverType: TypeID?,
+        typeVarBySymbol: [SymbolID: TypeVarID],
+        range: SourceRange,
+        typeSystem: TypeSystem
+    ) -> [VariableConstraint]? {
+        guard let receiverType = signature.receiverType else {
+            return []
+        }
+        guard let implicitReceiverType else {
+            return nil
+        }
+        let rhsOperand = operand(
+            for: receiverType,
+            typeVarBySymbol: typeVarBySymbol,
+            typeSystem: typeSystem
+        )
+        return [VariableConstraint(
+            kind: .subtype,
+            left: .type(implicitReceiverType),
+            right: rhsOperand,
+            blameRange: range
+        )]
+    }
+
+    private func appendArgumentConstraints(
+        to constraints: inout [VariableConstraint],
+        call: CallExpr,
+        parameterMapping: [Int: Int],
+        signature: FunctionSignature,
+        typeVarBySymbol: [SymbolID: TypeVarID],
+        typeSystem: TypeSystem
+    ) -> Bool {
+        for argIndex in call.args.indices {
+            guard let paramIndex = parameterMapping[argIndex],
+                  paramIndex >= 0,
+                  paramIndex < signature.parameterTypes.count else {
+                constraints.removeAll(keepingCapacity: false)
+                break
+            }
+            let rhsOperand = operand(
+                for: signature.parameterTypes[paramIndex],
+                typeVarBySymbol: typeVarBySymbol,
+                typeSystem: typeSystem
+            )
+            constraints.append(
+                VariableConstraint(
+                    kind: .subtype,
+                    left: .type(call.args[argIndex].type),
+                    right: rhsOperand,
+                    blameRange: call.range
+                )
+            )
+        }
+        return !(constraints.isEmpty && !call.args.isEmpty)
+    }
+
+    private func solveConstraints(
+        _ constraints: [VariableConstraint],
+        solver: ConstraintSolver,
+        typeSystem: TypeSystem
+    ) -> [TypeVarID: TypeID]? {
+        let varsToSolve = usedTypeVariables(from: constraints)
+        if varsToSolve.isEmpty {
+            let allSatisfied = constraints.allSatisfy {
+                isConstraintSatisfiedWithoutVariables($0, typeSystem: typeSystem)
+            }
+            return allSatisfied ? [:] : nil
+        }
+        let solution = solver.solve(
+            vars: varsToSolve,
+            constraints: constraints,
+            typeSystem: typeSystem
+        )
+        return solution.isSuccess ? solution.substitution : nil
+    }
+
+    private func selectResult(
+        from viable: [ViableCandidate],
+        call: CallExpr,
+        typeSystem: TypeSystem
+    ) -> ResolvedCall {
         if viable.isEmpty {
-            let diagnostic = Diagnostic(
-                severity: .error,
+            return errorResult(
                 code: "KSWIFTK-SEMA-0002",
                 message: "No viable overload found for call.",
-                primaryRange: call.range,
-                secondaryRanges: []
-            )
-            return ResolvedCall(
-                chosenCallee: nil,
-                substitutedTypeArguments: [:],
-                parameterMapping: [:],
-                diagnostic: diagnostic
+                range: call.range
             )
         }
+        if viable.count == 1 {
+            return viable[0].toResolvedCall()
+        }
+        if let chosen = pickMostSpecific(viable, typeSystem: typeSystem) {
+            return chosen.toResolvedCall()
+        }
+        return errorResult(
+            code: "KSWIFTK-SEMA-0003",
+            message: "Ambiguous overload resolution.",
+            range: call.range
+        )
+    }
 
-        if viable.count > 1 {
-            if let chosen = pickMostSpecific(viable, typeSystem: ctx.types) {
-                return ResolvedCall(
-                    chosenCallee: chosen.symbol,
-                    substitutedTypeArguments: chosen.substitutedTypeArguments,
-                    parameterMapping: chosen.parameterMapping,
-                    diagnostic: nil
-                )
-            }
-            let diagnostic = Diagnostic(
+    private func errorResult(code: String, message: String, range: SourceRange) -> ResolvedCall {
+        ResolvedCall(
+            chosenCallee: nil,
+            substitutedTypeArguments: [:],
+            parameterMapping: [:],
+            diagnostic: Diagnostic(
                 severity: .error,
-                code: "KSWIFTK-SEMA-0003",
-                message: "Ambiguous overload resolution.",
-                primaryRange: call.range,
+                code: code,
+                message: message,
+                primaryRange: range,
                 secondaryRanges: []
             )
-            return ResolvedCall(
-                chosenCallee: nil,
-                substitutedTypeArguments: [:],
-                parameterMapping: [:],
-                diagnostic: diagnostic
-            )
-        }
-
-        let chosen = viable[0]
-        return ResolvedCall(
-            chosenCallee: chosen.symbol,
-            substitutedTypeArguments: chosen.substitutedTypeArguments,
-            parameterMapping: chosen.parameterMapping,
-            diagnostic: nil
         )
     }
 
@@ -236,6 +283,15 @@ public final class OverloadResolver {
         let instantiatedParameterTypes: [TypeID]
         let substitutedTypeArguments: [TypeVarID: TypeID]
         let parameterMapping: [Int: Int]
+
+        func toResolvedCall() -> ResolvedCall {
+            ResolvedCall(
+                chosenCallee: symbol,
+                substitutedTypeArguments: substitutedTypeArguments,
+                parameterMapping: parameterMapping,
+                diagnostic: nil
+            )
+        }
     }
 
     private func buildParameterMapping(
@@ -255,22 +311,73 @@ public final class OverloadResolver {
             symbols: symbols,
             count: paramCount
         )
+        var mapping: [Int: Int] = [:]
+        var boundNonVarargParams: Set<Int> = []
+        var sawNamedArgument = false
+        var positionalCursor = 0
 
-        let hasNamedArgs = callArgs.contains(where: { $0.label != nil })
-        if hasNamedArgs {
-            return buildNamedMapping(
-                callArgs: callArgs,
-                paramNames: paramNames,
-                hasDefaultValues: hasDefaultValues,
-                isVararg: isVararg
-            )
+        for (argIndex, arg) in callArgs.enumerated() {
+            if let label = arg.label {
+                sawNamedArgument = true
+                guard let paramIndex = paramNames.firstIndex(where: { $0 == label }) else {
+                    return nil
+                }
+                if arg.isSpread && !isVararg[paramIndex] {
+                    return nil
+                }
+                if isVararg[paramIndex] {
+                    mapping[argIndex] = paramIndex
+                    continue
+                }
+                if boundNonVarargParams.contains(paramIndex) {
+                    return nil
+                }
+                boundNonVarargParams.insert(paramIndex)
+                mapping[argIndex] = paramIndex
+                if paramIndex == positionalCursor {
+                    positionalCursor += 1
+                }
+                continue
+            }
+
+            if sawNamedArgument {
+                return nil
+            }
+
+            while positionalCursor < paramCount &&
+                    !isVararg[positionalCursor] &&
+                    boundNonVarargParams.contains(positionalCursor) {
+                positionalCursor += 1
+            }
+            if positionalCursor >= paramCount {
+                return nil
+            }
+
+            let paramIndex = positionalCursor
+            if arg.isSpread && !isVararg[paramIndex] {
+                return nil
+            }
+            if isVararg[paramIndex] {
+                mapping[argIndex] = paramIndex
+                continue
+            }
+            boundNonVarargParams.insert(paramIndex)
+            mapping[argIndex] = paramIndex
+            positionalCursor += 1
         }
-        return buildPositionalMapping(
-            callArgs: callArgs,
-            paramCount: paramCount,
-            hasDefaultValues: hasDefaultValues,
-            isVararg: isVararg
-        )
+
+        for paramIndex in paramNames.indices {
+            if isVararg[paramIndex] {
+                continue
+            }
+            if boundNonVarargParams.contains(paramIndex) {
+                continue
+            }
+            if !hasDefaultValues[paramIndex] {
+                return nil
+            }
+        }
+        return mapping
     }
 
     private func normalizeFlags(_ flags: [Bool], count: Int) -> [Bool] {
@@ -299,98 +406,6 @@ public final class OverloadResolver {
             }
         }
         return names
-    }
-
-    private func buildPositionalMapping(
-        callArgs: [CallArg],
-        paramCount: Int,
-        hasDefaultValues: [Bool],
-        isVararg: [Bool]
-    ) -> [Int: Int]? {
-        let varargIndices = isVararg.enumerated().filter { $0.element }.map(\.offset)
-        if varargIndices.count > 1 {
-            return nil
-        }
-
-        var mapping: [Int: Int] = [:]
-        if let varargIndex = varargIndices.first {
-            // Keep the initial implementation deterministic: only trailing vararg.
-            if varargIndex != paramCount - 1 {
-                return nil
-            }
-            let fixedCount = varargIndex
-            if callArgs.count < fixedCount {
-                return nil
-            }
-            for index in 0..<fixedCount {
-                mapping[index] = index
-            }
-            if callArgs.count > fixedCount {
-                for argIndex in fixedCount..<callArgs.count {
-                    mapping[argIndex] = varargIndex
-                }
-            }
-            return mapping
-        }
-
-        if callArgs.count > paramCount {
-            return nil
-        }
-        for index in callArgs.indices {
-            mapping[index] = index
-        }
-        if callArgs.count < paramCount {
-            for paramIndex in callArgs.count..<paramCount {
-                if !hasDefaultValues[paramIndex] {
-                    return nil
-                }
-            }
-        }
-        return mapping
-    }
-
-    private func buildNamedMapping(
-        callArgs: [CallArg],
-        paramNames: [InternedString?],
-        hasDefaultValues: [Bool],
-        isVararg: [Bool]
-    ) -> [Int: Int]? {
-        if callArgs.contains(where: { $0.label == nil }) {
-            return nil
-        }
-
-        var mapping: [Int: Int] = [:]
-        var boundNonVarargParams: Set<Int> = []
-        for (argIndex, arg) in callArgs.enumerated() {
-            guard let label = arg.label else {
-                return nil
-            }
-            guard let paramIndex = paramNames.firstIndex(where: { $0 == label }) else {
-                return nil
-            }
-            if isVararg[paramIndex] {
-                mapping[argIndex] = paramIndex
-                continue
-            }
-            if boundNonVarargParams.contains(paramIndex) {
-                return nil
-            }
-            boundNonVarargParams.insert(paramIndex)
-            mapping[argIndex] = paramIndex
-        }
-
-        for paramIndex in paramNames.indices {
-            if isVararg[paramIndex] {
-                continue
-            }
-            if boundNonVarargParams.contains(paramIndex) {
-                continue
-            }
-            if !hasDefaultValues[paramIndex] {
-                return nil
-            }
-        }
-        return mapping
     }
 
     private func usedTypeVariables(from constraints: [VariableConstraint]) -> [TypeVarID] {
