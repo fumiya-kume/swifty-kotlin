@@ -157,6 +157,15 @@ extension BuildASTPhase {
                 _ = consume()
                 return astArena.appendExpr(.nameRef(name, token.range))
 
+            case .keyword(.return):
+                return parseReturnExpression()
+
+            case .keyword(.if):
+                return parseIfExpression()
+
+            case .keyword(.try):
+                return parseTryExpression()
+
             case .keyword(.when):
                 return parseWhenExpression()
 
@@ -176,6 +185,9 @@ extension BuildASTPhase {
                 let expr = parseExpression(minPrecedence: 0)
                 _ = consumeIf(.symbol(.rParen))
                 return expr
+
+            case .symbol(.lBrace):
+                return parseBlockExpression()
 
             default:
                 return nil
@@ -261,6 +273,138 @@ extension BuildASTPhase {
 
             let range = SourceRange(start: whenToken.range.start, end: end)
             return astArena.appendExpr(.whenExpr(subject: subject, branches: branches, elseExpr: elseExpr, range: range))
+        }
+
+        private func parseReturnExpression() -> ExprID? {
+            guard let returnToken = consume() else {
+                return nil
+            }
+            let value = parseExpression(minPrecedence: 0)
+            let end = value.flatMap { astArena.exprRange($0)?.end } ?? returnToken.range.end
+            let range = SourceRange(start: returnToken.range.start, end: end)
+            return astArena.appendExpr(.returnExpr(value: value, range: range))
+        }
+
+        private func parseIfExpression() -> ExprID? {
+            guard let ifToken = consume() else {
+                return nil
+            }
+            guard consumeIf(.symbol(.lParen)) != nil else {
+                return nil
+            }
+            guard let condition = parseExpression(minPrecedence: 0) else {
+                return nil
+            }
+            _ = consumeIf(.symbol(.rParen))
+
+            guard let thenExpr = parseExpression(minPrecedence: 0) else {
+                return nil
+            }
+
+            var elseExpr: ExprID?
+            if matches(.keyword(.else)) {
+                _ = consume()
+                elseExpr = parseExpression(minPrecedence: 0)
+            }
+
+            let end = elseExpr
+                .flatMap { astArena.exprRange($0)?.end }
+                ?? astArena.exprRange(thenExpr)?.end
+                ?? ifToken.range.end
+            let range = SourceRange(start: ifToken.range.start, end: end)
+            return astArena.appendExpr(.ifExpr(condition: condition, thenExpr: thenExpr, elseExpr: elseExpr, range: range))
+        }
+
+        private func parseTryExpression() -> ExprID? {
+            guard let tryToken = consume() else {
+                return nil
+            }
+            guard let bodyExpr = parseExpression(minPrecedence: 0) else {
+                return nil
+            }
+
+            var catchBodies: [ExprID] = []
+            while matches(.keyword(.catch)) {
+                _ = consume()
+                skipBalancedParenthesisIfNeeded()
+                if let catchExpr = parseExpression(minPrecedence: 0) {
+                    catchBodies.append(catchExpr)
+                } else {
+                    break
+                }
+            }
+
+            var finallyExpr: ExprID?
+            if matches(.keyword(.finally)) {
+                _ = consume()
+                finallyExpr = parseExpression(minPrecedence: 0)
+            }
+
+            let tailEnd = finallyExpr
+                .flatMap { astArena.exprRange($0)?.end }
+                ?? catchBodies.last.flatMap { astArena.exprRange($0)?.end }
+                ?? astArena.exprRange(bodyExpr)?.end
+                ?? tryToken.range.end
+            let range = SourceRange(start: tryToken.range.start, end: tailEnd)
+            return astArena.appendExpr(.tryExpr(body: bodyExpr, catchBodies: catchBodies, finallyExpr: finallyExpr, range: range))
+        }
+
+        private func parseBlockExpression() -> ExprID? {
+            guard let openBrace = consume() else {
+                return nil
+            }
+            var depth = 1
+            var blockTokens: [Token] = []
+            var end = openBrace.range.end
+
+            while let token = current() {
+                _ = consume()
+                switch token.kind {
+                case .symbol(.lBrace):
+                    depth += 1
+                    blockTokens.append(token)
+                case .symbol(.rBrace):
+                    depth -= 1
+                    if depth == 0 {
+                        end = token.range.end
+                        break
+                    }
+                    blockTokens.append(token)
+                default:
+                    blockTokens.append(token)
+                }
+                if depth == 0 {
+                    break
+                }
+            }
+
+            let trimmed = blockTokens.filter { token in
+                token.kind != .symbol(.semicolon)
+            }
+            if let nestedExpr = ExpressionParser(tokens: trimmed, interner: interner, astArena: astArena).parse() {
+                return nestedExpr
+            }
+            let range = SourceRange(start: openBrace.range.start, end: end)
+            return astArena.appendExpr(.nameRef(interner.intern("Unit"), range))
+        }
+
+        private func skipBalancedParenthesisIfNeeded() {
+            guard matches(.symbol(.lParen)) else {
+                return
+            }
+            _ = consume()
+            var depth = 1
+            while let token = current(), depth > 0 {
+                _ = consume()
+                switch token.kind {
+                case .symbol(.lParen):
+                    depth += 1
+                case .symbol(.rParen):
+                    depth -= 1
+                default:
+                    continue
+                }
+            }
         }
 
         private func mergeRanges(_ lhs: SourceRange?, _ rhs: SourceRange?, fallback: SourceRange) -> SourceRange {
