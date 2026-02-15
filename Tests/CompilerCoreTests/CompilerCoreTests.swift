@@ -722,6 +722,47 @@ final class CompilerCoreTests: XCTestCase {
         XCTAssertEqual(exitCode, 1)
     }
 
+    func testDriverFallbackDiagnosticClassifiesPipelineErrors() {
+        let load = CompilerDriver.fallbackDiagnostic(for: CompilerPipelineError.loadError)
+        XCTAssertEqual(load?.code, "KSWIFTK-PIPELINE-0001")
+
+        let invalid = CompilerDriver.fallbackDiagnostic(for: CompilerPipelineError.invalidInput("missing AST"))
+        XCTAssertEqual(invalid?.code, "KSWIFTK-PIPELINE-0002")
+        XCTAssertTrue(invalid?.message.contains("missing AST") == true)
+
+        let output = CompilerDriver.fallbackDiagnostic(for: CompilerPipelineError.outputUnavailable)
+        XCTAssertEqual(output?.code, "KSWIFTK-PIPELINE-0003")
+
+        struct UnknownError: Error {}
+        XCTAssertNil(CompilerDriver.fallbackDiagnostic(for: UnknownError()))
+    }
+
+    func testDriverReportsPipelineOutputUnavailableWithoutICE() throws {
+        let source = "fun main() = 0"
+        let tempSource = try writeTempSource(source)
+        let missingDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathComponent("missing")
+        let outputBase = missingDir.appendingPathComponent("result").path
+
+        let options = CompilerOptions(
+            moduleName: "PipelineFailure",
+            inputs: [tempSource.path],
+            outputPath: outputBase,
+            emit: .kirDump,
+            target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+        )
+        let driver = CompilerDriver(
+            version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
+            kotlinVersion: .v2_3_10
+        )
+
+        let result = driver.runForTesting(options: options)
+        XCTAssertEqual(result.exitCode, 1)
+        XCTAssertTrue(result.diagnostics.contains { $0.code == "KSWIFTK-PIPELINE-0003" })
+        XCTAssertFalse(result.diagnostics.contains { $0.code == "KSWIFTK-ICE-0001" })
+    }
+
     private func makeContext(source: String) throws -> CompilationContext {
         let tempURL = try writeTempSource(source)
 
