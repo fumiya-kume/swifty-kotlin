@@ -125,8 +125,8 @@ public struct FunDecl {
 }
 
 public enum FunctionBody: Equatable {
-    case block(SourceRange)
-    case expr(SourceRange)
+    case block([ExprID], SourceRange)
+    case expr(ExprID, SourceRange)
     case unit
 }
 
@@ -162,9 +162,39 @@ public struct ValueParamDecl {
     public let type: TypeRefID?
 }
 
+public enum BinaryOp: Equatable {
+    case add
+    case subtract
+    case multiply
+    case divide
+    case equal
+}
+
+public struct WhenBranch: Equatable {
+    public let condition: ExprID?
+    public let body: ExprID
+    public let range: SourceRange
+
+    public init(condition: ExprID?, body: ExprID, range: SourceRange) {
+        self.condition = condition
+        self.body = body
+        self.range = range
+    }
+}
+
+public enum Expr: Equatable {
+    case intLiteral(Int64, SourceRange)
+    case boolLiteral(Bool, SourceRange)
+    case stringLiteral(InternedString, SourceRange)
+    case nameRef(InternedString, SourceRange)
+    case call(callee: ExprID, args: [ExprID], range: SourceRange)
+    case binary(op: BinaryOp, lhs: ExprID, rhs: ExprID, range: SourceRange)
+    case whenExpr(subject: ExprID, branches: [WhenBranch], elseExpr: ExprID?, range: SourceRange)
+}
+
 public final class ASTArena {
     public private(set) var decls: [Decl] = []
-    public private(set) var expressions: [ExprID: SourceRange] = [:]
+    public private(set) var exprs: [Expr] = []
 
     public init() {}
 
@@ -184,6 +214,36 @@ public final class ASTArena {
 
     public func declarations() -> [Decl] {
         return decls
+    }
+
+    public func appendExpr(_ expr: Expr) -> ExprID {
+        let id = ExprID(rawValue: Int32(exprs.count))
+        exprs.append(expr)
+        return id
+    }
+
+    public func expr(_ id: ExprID) -> Expr? {
+        let index = Int(id.rawValue)
+        if index < 0 || index >= exprs.count {
+            return nil
+        }
+        return exprs[index]
+    }
+
+    public func exprRange(_ id: ExprID) -> SourceRange? {
+        guard let expr = expr(id) else {
+            return nil
+        }
+        switch expr {
+        case .intLiteral(_, let range),
+             .boolLiteral(_, let range),
+             .stringLiteral(_, let range),
+             .nameRef(_, let range),
+             .call(_, _, let range),
+             .binary(_, _, _, let range),
+             .whenExpr(_, _, _, let range):
+            return range
+        }
     }
 }
 
