@@ -3,6 +3,16 @@ import Foundation
 public final class CodegenPhase: CompilerPhase {
     public static let name = "Codegen"
 
+    private enum BackendKind {
+        case syntheticC
+        case llvmCAPI
+    }
+
+    private struct BackendSelection {
+        let kind: BackendKind
+        let strictMode: Bool
+    }
+
     public init() {}
 
     public func run(_ ctx: CompilationContext) throws {
@@ -15,12 +25,7 @@ public final class CodegenPhase: CompilerPhase {
             libraries: ctx.options.linkLibraries,
             extraObjects: []
         )
-        let backend = LLVMBackend(
-            target: ctx.options.target,
-            optLevel: ctx.options.optLevel,
-            debugInfo: ctx.options.debugInfo,
-            diagnostics: ctx.diagnostics
-        )
+        let backend = makeBackend(ctx: ctx)
 
         do {
             switch ctx.options.emit {
@@ -57,7 +62,7 @@ public final class CodegenPhase: CompilerPhase {
 
     private func emitLibrary(
         module: KIRModule,
-        backend: LLVMBackend,
+        backend: any CodegenBackend,
         runtime: RuntimeLinkInfo,
         ctx: CompilationContext
     ) throws {
@@ -99,6 +104,77 @@ public final class CodegenPhase: CompilerPhase {
 
         let metadata = makeMetadata(ctx: ctx)
         try metadata.write(to: URL(fileURLWithPath: metadataPath), atomically: true, encoding: .utf8)
+    }
+
+    private func makeBackend(ctx: CompilationContext) -> any CodegenBackend {
+        let selection = selectedBackend(irFlags: ctx.options.irFlags, diagnostics: ctx.diagnostics)
+        switch selection.kind {
+        case .syntheticC:
+            return LLVMBackend(
+                target: ctx.options.target,
+                optLevel: ctx.options.optLevel,
+                debugInfo: ctx.options.debugInfo,
+                diagnostics: ctx.diagnostics
+            )
+        case .llvmCAPI:
+            return LLVMCAPIBackend(
+                target: ctx.options.target,
+                optLevel: ctx.options.optLevel,
+                debugInfo: ctx.options.debugInfo,
+                diagnostics: ctx.diagnostics,
+                strictMode: selection.strictMode
+            )
+        }
+    }
+
+    private func selectedBackend(irFlags: [String], diagnostics: DiagnosticEngine) -> BackendSelection {
+        var requestedBackend: String?
+        var strictMode = false
+
+        for flag in irFlags {
+            if flag == "backend-strict" {
+                strictMode = true
+                continue
+            }
+            if flag.hasPrefix("backend-strict=") {
+                let value = String(flag.dropFirst("backend-strict=".count))
+                strictMode = parseStrictModeFlag(value) ?? strictMode
+                continue
+            }
+            guard flag.hasPrefix("backend=") else {
+                continue
+            }
+            requestedBackend = String(flag.dropFirst("backend=".count))
+        }
+
+        guard let requestedBackend else {
+            return BackendSelection(kind: .syntheticC, strictMode: false)
+        }
+
+        switch requestedBackend {
+        case "synthetic-c", "synthetic":
+            return BackendSelection(kind: .syntheticC, strictMode: false)
+        case "llvm-c-api", "llvm-capi":
+            return BackendSelection(kind: .llvmCAPI, strictMode: strictMode)
+        default:
+            diagnostics.warning(
+                "KSWIFTK-BACKEND-1002",
+                "Unknown backend '\(requestedBackend)'; falling back to synthetic C backend.",
+                range: nil
+            )
+            return BackendSelection(kind: .syntheticC, strictMode: false)
+        }
+    }
+
+    private func parseStrictModeFlag(_ value: String) -> Bool? {
+        switch value.lowercased() {
+        case "1", "true", "yes", "on":
+            return true
+        case "0", "false", "no", "off":
+            return false
+        default:
+            return nil
+        }
     }
 
     private func emitInlineKIRArtifacts(
@@ -205,10 +281,12 @@ public final class CodegenPhase: CompilerPhase {
             if nominalKinds.contains(symbol.kind), let layout = sema.symbols.nominalLayout(for: symbol.id) {
                 fields.append("layoutWords=\(layout.instanceSizeWords)")
                 fields.append("fields=\(layout.instanceFieldCount)")
-                fields.append("vtable=\(layout.vtableSlots.count)")
-                fields.append("itable=\(layout.itableSlots.count)")
-                if let superClass = layout.superClass {
-                    fields.append("super=\(superClass.rawValue)")
+                fields.append("vtable=\(layout.vtableSize)")
+                fields.append("itable=\(layout.itableSize)")
+                if let superClass = layout.superClass,
+                   let superSymbol = sema.symbols.symbol(superClass) {
+                    let superFQName = superSymbol.fqName.map { ctx.interner.resolve($0) }.joined(separator: ".")
+                    fields.append("superFq=\(superFQName)")
                 }
             }
             lines.append(fields.joined(separator: " "))
@@ -216,4 +294,3 @@ public final class CodegenPhase: CompilerPhase {
         return lines.joined(separator: "\n") + "\n"
     }
 }
-
