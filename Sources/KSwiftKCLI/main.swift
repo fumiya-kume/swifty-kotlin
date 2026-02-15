@@ -11,6 +11,10 @@ Usage: kswiftc [options] <input files>
   -I <path>              Search path
   -L <path>              Library path
   -l <name>              Link library
+  --target <triple>      Target triple (arch-vendor-os[-version])
+  -Xfrontend <flag>      Frontend feature flag
+  -Xir <flag>            IR/lowering feature flag
+  -Xruntime <flag>       Runtime feature flag
   -g                     Emit debug info
 """
     print(usage)
@@ -48,6 +52,18 @@ func parseOptimizationLevel(_ value: String) -> OptimizationLevel? {
     }
 }
 
+func parseTargetTriple(_ value: String) -> TargetTriple? {
+    let parts = value.split(separator: "-", omittingEmptySubsequences: false).map(String.init)
+    guard parts.count >= 3 else {
+        return nil
+    }
+    let arch = parts[0]
+    let vendor = parts[1]
+    let os = parts[2]
+    let version = parts.count > 3 ? parts[3] : nil
+    return TargetTriple(arch: arch, vendor: vendor, os: os, osVersion: version)
+}
+
 let args = Array(ProcessInfo.processInfo.arguments.dropFirst())
 if args.isEmpty {
     printUsage()
@@ -63,6 +79,10 @@ var libraryPaths: [String] = []
 var linkLibraries: [String] = []
 var optLevel: OptimizationLevel = .O0
 var debugInfo = false
+var frontendFlags: [String] = []
+var irFlags: [String] = []
+var runtimeFlags: [String] = []
+var target = TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
 
 var index = 0
 while index < args.count {
@@ -101,6 +121,39 @@ while index < args.count {
         }
     case "-g":
         debugInfo = true
+    case "--target":
+        index += 1
+        if index >= args.count {
+            printUsage()
+            exit(1)
+        }
+        guard let parsed = parseTargetTriple(args[index]) else {
+            print("Invalid target triple: \(args[index])")
+            printUsage()
+            exit(1)
+        }
+        target = parsed
+    case "-Xfrontend":
+        index += 1
+        if index >= args.count {
+            printUsage()
+            exit(1)
+        }
+        frontendFlags.append(args[index])
+    case "-Xir":
+        index += 1
+        if index >= args.count {
+            printUsage()
+            exit(1)
+        }
+        irFlags.append(args[index])
+    case "-Xruntime":
+        index += 1
+        if index >= args.count {
+            printUsage()
+            exit(1)
+        }
+        runtimeFlags.append(args[index])
     case _ where arg.hasPrefix("-O"):
         if let level = parseOptimizationLevel(String(arg.dropFirst())) {
             optLevel = level
@@ -150,7 +203,6 @@ if inputPaths.isEmpty {
     exit(1)
 }
 
-let defaultTarget = TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
 let defaultVersion = CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil)
 let driver = CompilerDriver(
     version: defaultVersion,
@@ -165,9 +217,12 @@ let options = CompilerOptions(
     searchPaths: searchPaths,
     libraryPaths: libraryPaths,
     linkLibraries: linkLibraries,
-    target: defaultTarget,
+    target: target,
     optLevel: optLevel,
-    debugInfo: debugInfo
+    debugInfo: debugInfo,
+    frontendFlags: frontendFlags,
+    irFlags: irFlags,
+    runtimeFlags: runtimeFlags
 )
 
 let exitCode = driver.run(options: options)
