@@ -537,7 +537,7 @@ final class CompilerCoreTests: XCTestCase {
             return
         }
 
-        XCTAssertNotEqual(funDecl.name.rawValue, invalidID)
+        XCTAssertNotEqual(funDecl.name, .invalid)
         let receiverTypeID = try XCTUnwrap(funDecl.receiverType)
         let receiverType = try XCTUnwrap(ast.arena.typeRef(receiverTypeID))
         if case .named(let path, let nullable) = receiverType {

@@ -1,7 +1,9 @@
 public struct ASTNodeID: Hashable {
     public let rawValue: Int32
 
-    public init(rawValue: Int32 = invalidID) {
+    public static let invalid = ASTNodeID(rawValue: -1)
+
+    public init(rawValue: Int32 = -1) {
         self.rawValue = rawValue
     }
 }
@@ -9,7 +11,9 @@ public struct ASTNodeID: Hashable {
 public struct ExprID: Hashable {
     public let rawValue: Int32
 
-    public init(rawValue: Int32 = invalidID) {
+    public static let invalid = ExprID(rawValue: -1)
+
+    public init(rawValue: Int32 = -1) {
         self.rawValue = rawValue
     }
 }
@@ -17,7 +21,9 @@ public struct ExprID: Hashable {
 public struct TypeRefID: Hashable {
     public let rawValue: Int32
 
-    public init(rawValue: Int32 = invalidID) {
+    public static let invalid = TypeRefID(rawValue: -1)
+
+    public init(rawValue: Int32 = -1) {
         self.rawValue = rawValue
     }
 }
@@ -33,10 +39,10 @@ public struct Modifiers: OptionSet {
     public let rawValue: Int32
 
     public init(rawValue: Int32) { self.rawValue = rawValue }
-    public static let publicModifier = Modifiers(rawValue: Int32(1) << 0)
-    public static let internalModifier = Modifiers(rawValue: Int32(1) << 1)
-    public static let privateModifier = Modifiers(rawValue: Int32(1) << 2)
-    public static let protectedModifier = Modifiers(rawValue: Int32(1) << 3)
+    public static let `public` = Modifiers(rawValue: Int32(1) << 0)
+    public static let `internal` = Modifiers(rawValue: Int32(1) << 1)
+    public static let `private` = Modifiers(rawValue: Int32(1) << 2)
+    public static let `protected` = Modifiers(rawValue: Int32(1) << 3)
     public static let final = Modifiers(rawValue: Int32(1) << 4)
     public static let open = Modifiers(rawValue: Int32(1) << 5)
     public static let abstract = Modifiers(rawValue: Int32(1) << 6)
@@ -133,6 +139,8 @@ public struct ObjectDecl {
     }
 }
 
+/// AST-layer type names mirror Kotlin syntax keywords (e.g. `fun`),
+/// while semantic/KIR layers use full English names (e.g. `Function`).
 public struct FunDecl {
     public let range: SourceRange
     public let name: InternedString

@@ -3,9 +3,9 @@ import XCTest
 
 final class ASTModelsTests: XCTestCase {
     func testIDInitializersSupportDefaultAndExplicitValues() {
-        XCTAssertEqual(ASTNodeID().rawValue, invalidID)
-        XCTAssertEqual(ExprID().rawValue, invalidID)
-        XCTAssertEqual(TypeRefID().rawValue, invalidID)
+        XCTAssertEqual(ASTNodeID(), .invalid)
+        XCTAssertEqual(ExprID(), .invalid)
+        XCTAssertEqual(TypeRefID(), .invalid)
 
         XCTAssertEqual(ASTNodeID(rawValue: 10).rawValue, 10)
         XCTAssertEqual(ExprID(rawValue: 11).rawValue, 11)
@@ -18,7 +18,7 @@ final class ASTModelsTests: XCTestCase {
         let decl = FunDecl(
             range: makeRange(start: 1, end: 5),
             name: name,
-            modifiers: [.publicModifier]
+            modifiers: [.public]
         )
 
         XCTAssertEqual(decl.name, name)
@@ -32,13 +32,13 @@ final class ASTModelsTests: XCTestCase {
     }
 
     func testModifiersOptionSetComposition() {
-        let modifiers: Modifiers = [.publicModifier, .inline, .operator, .tailrec]
+        let modifiers: Modifiers = [.public, .inline, .operator, .tailrec]
 
-        XCTAssertTrue(modifiers.contains(.publicModifier))
+        XCTAssertTrue(modifiers.contains(.public))
         XCTAssertTrue(modifiers.contains(.inline))
         XCTAssertTrue(modifiers.contains(.operator))
         XCTAssertTrue(modifiers.contains(.tailrec))
-        XCTAssertFalse(modifiers.contains(.privateModifier))
+        XCTAssertFalse(modifiers.contains(.private))
     }
 
     func testASTArenaAppendLookupAndDeclarationSnapshot() {
@@ -47,7 +47,7 @@ final class ASTModelsTests: XCTestCase {
         let classDecl = ClassDecl(
             range: makeRange(start: 0, end: 2),
             name: name,
-            modifiers: [.publicModifier],
+            modifiers: [.public],
             typeParams: [],
             primaryConstructorParams: []
         )
@@ -57,7 +57,7 @@ final class ASTModelsTests: XCTestCase {
         let propertyDecl = PropertyDecl(
             range: makeRange(start: 3, end: 5),
             name: interner.intern("p"),
-            modifiers: [.privateModifier],
+            modifiers: [.private],
             type: TypeRefID(rawValue: 1)
         )
         let propertyID = arena.appendDecl(.propertyDecl(propertyDecl))
@@ -82,11 +82,11 @@ final class ASTModelsTests: XCTestCase {
         let typeRef = TypeRefID(rawValue: 4)
         let name = interner.intern("Name")
 
-        let objectDecl = ObjectDecl(range: range, name: name, modifiers: [.publicModifier])
+        let objectDecl = ObjectDecl(range: range, name: name, modifiers: [.public])
         XCTAssertEqual(objectDecl.name, name)
 
-        let typeAliasDecl = TypeAliasDecl(range: range, name: interner.intern("Alias"), modifiers: [.internalModifier])
-        XCTAssertEqual(typeAliasDecl.modifiers, [.internalModifier])
+        let typeAliasDecl = TypeAliasDecl(range: range, name: interner.intern("Alias"), modifiers: [.internal])
+        XCTAssertEqual(typeAliasDecl.modifiers, [.internal])
 
         let enumEntryDecl = EnumEntryDecl(range: range, name: interner.intern("Entry"))
         XCTAssertEqual(enumEntryDecl.range, range)

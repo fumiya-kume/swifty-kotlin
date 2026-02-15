@@ -1,9 +1,9 @@
-public let invalidID: Int32 = -1
-
 public struct TokenID: Hashable {
     public let rawValue: Int32
 
-    public init(rawValue: Int32 = invalidID) {
+    public static let invalid = TokenID(rawValue: -1)
+
+    public init(rawValue: Int32 = -1) {
         self.rawValue = rawValue
     }
 }
@@ -11,7 +11,9 @@ public struct TokenID: Hashable {
 public struct NodeID: Hashable {
     public let rawValue: Int32
 
-    public init(rawValue: Int32 = invalidID) {
+    public static let invalid = NodeID(rawValue: -1)
+
+    public init(rawValue: Int32 = -1) {
         self.rawValue = rawValue
     }
 }
@@ -19,7 +21,9 @@ public struct NodeID: Hashable {
 public struct DeclID: Hashable {
     public let rawValue: Int32
 
-    public init(rawValue: Int32 = invalidID) {
+    public static let invalid = DeclID(rawValue: -1)
+
+    public init(rawValue: Int32 = -1) {
         self.rawValue = rawValue
     }
 }
@@ -27,7 +31,9 @@ public struct DeclID: Hashable {
 public struct FileID: Hashable {
     public let rawValue: Int32
 
-    public init(rawValue: Int32 = invalidID) {
+    public static let invalid = FileID(rawValue: -1)
+
+    public init(rawValue: Int32 = -1) {
         self.rawValue = rawValue
     }
 

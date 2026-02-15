@@ -1,7 +1,9 @@
 public struct TypeVarID: Hashable {
     public let rawValue: Int32
 
-    public init(rawValue: Int32 = invalidID) {
+    public static let invalid = TypeVarID(rawValue: -1)
+
+    public init(rawValue: Int32 = -1) {
         self.rawValue = rawValue
     }
 }
@@ -154,30 +156,70 @@ public final class ConstraintSolver {
 
             let candidate: TypeID
             if lowers.isEmpty {
-                candidate = typeSystem.glb(uppers)
+                candidate = typeSystem.greatestLowerBound(uppers)
             } else if uppers.isEmpty {
-                candidate = typeSystem.lub(lowers)
+                candidate = typeSystem.leastUpperBound(lowers)
             } else {
-                let lowerCandidate = typeSystem.lub(lowers)
-                let upperCandidate = typeSystem.glb(uppers)
+                let lowerCandidate = typeSystem.leastUpperBound(lowers)
+                let upperCandidate = typeSystem.greatestLowerBound(uppers)
                 guard typeSystem.isSubtype(lowerCandidate, upperCandidate) else {
                     let blameRange = firstRelevantBlameRange(for: variable, relations: constraints)
-                    return failureSolution(vars: vars, typeSystem: typeSystem, blameRange: blameRange)
+                    let message = """
+                    Conflicting bounds for type variable #\(variable.rawValue): \
+                    inferred \(typeSystem.renderType(lowerCandidate)) is not a subtype of \(typeSystem.renderType(upperCandidate)). \
+                    lower=[\(renderBounds(lowers, typeSystem: typeSystem))], upper=[\(renderBounds(uppers, typeSystem: typeSystem))]
+                    """
+                    return failureSolution(
+                        vars: vars,
+                        typeSystem: typeSystem,
+                        blameRange: blameRange,
+                        message: message
+                    )
                 }
                 candidate = lowerCandidate
             }
 
             if candidate == typeSystem.errorType {
                 let blameRange = firstRelevantBlameRange(for: variable, relations: constraints)
-                return failureSolution(vars: vars, typeSystem: typeSystem, blameRange: blameRange)
+                let message = """
+                Failed to infer type variable #\(variable.rawValue) from bounds: \
+                lower=[\(renderBounds(lowers, typeSystem: typeSystem))], upper=[\(renderBounds(uppers, typeSystem: typeSystem))]
+                """
+                return failureSolution(
+                    vars: vars,
+                    typeSystem: typeSystem,
+                    blameRange: blameRange,
+                    message: message
+                )
             }
             substitution[variable] = candidate
         }
 
         for constraint in constraints {
-            let ok = isConstraintSatisfied(constraint, substitution: substitution, typeSystem: typeSystem)
+            guard let left = resolve(constraint.left, substitution: substitution),
+                  let right = resolve(constraint.right, substitution: substitution) else {
+                return failureSolution(
+                    vars: vars,
+                    typeSystem: typeSystem,
+                    blameRange: constraint.blameRange,
+                    message: "Type inference left unresolved variables while checking constraints."
+                )
+            }
+            let ok = isConstraintSatisfied(
+                kind: constraint.kind,
+                left: left,
+                right: right,
+                typeSystem: typeSystem
+            )
             if !ok {
-                return failureSolution(vars: vars, typeSystem: typeSystem, blameRange: constraint.blameRange)
+                let relation = relationOperator(for: constraint.kind)
+                let message = "Type constraint is not satisfied: \(typeSystem.renderType(left)) \(relation) \(typeSystem.renderType(right))."
+                return failureSolution(
+                    vars: vars,
+                    typeSystem: typeSystem,
+                    blameRange: constraint.blameRange,
+                    message: message
+                )
             }
         }
 

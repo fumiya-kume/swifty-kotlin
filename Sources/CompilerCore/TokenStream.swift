@@ -6,8 +6,8 @@ public final class TokenStream {
         Token(
             kind: .eof,
             range: SourceRange(
-                start: SourceLocation(file: FileID(rawValue: invalidID), offset: 0),
-                end: SourceLocation(file: FileID(rawValue: invalidID), offset: 0)
+                start: SourceLocation(file: FileID.invalid, offset: 0),
+                end: SourceLocation(file: FileID.invalid, offset: 0)
             )
         )
     }
@@ -16,11 +16,11 @@ public final class TokenStream {
         self.tokens = tokens
     }
 
-    public func peek(_ k: Int = 0) -> Token {
-        if tokens.isEmpty || k < 0 {
+    public func peek(_ offset: Int = 0) -> Token {
+        if tokens.isEmpty || offset < 0 {
             return syntheticEOFToken
         }
-        let target = index + k
+        let target = index + offset
         if target < tokens.count {
             return tokens[target]
         }

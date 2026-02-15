@@ -57,10 +57,10 @@ public final class SyntaxArena {
         return TokenID(rawValue: id)
     }
 
-    public func makeNode(kind: SyntaxKind, range: SourceRange, _ kids: [SyntaxChild]) -> NodeID {
-        let start = Int32(children.count)
-        children.append(contentsOf: kids)
-        let childCount = Int16(kids.count)
+    public func makeNode(kind: SyntaxKind, range: SourceRange, _ children: [SyntaxChild]) -> NodeID {
+        let start = Int32(self.children.count)
+        self.children.append(contentsOf: children)
+        let childCount = Int16(children.count)
         let nodeID = Int32(nodes.count)
         let node = SyntaxNode(
             kind: kind,
@@ -76,8 +76,8 @@ public final class SyntaxArena {
         let index = Int(id.rawValue)
         if index < 0 || index >= nodes.count {
             let invalidRange = SourceRange(
-                start: SourceLocation(file: FileID(rawValue: invalidID), offset: 0),
-                end: SourceLocation(file: FileID(rawValue: invalidID), offset: 0)
+                start: SourceLocation(file: FileID.invalid, offset: 0),
+                end: SourceLocation(file: FileID.invalid, offset: 0)
             )
             return SyntaxNode(kind: .statement, range: invalidRange, firstChildIndex: 0, childCount: 0)
         }

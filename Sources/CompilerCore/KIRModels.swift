@@ -3,7 +3,9 @@ import Foundation
 public struct KIRDeclID: Hashable {
     public let rawValue: Int32
 
-    public init(rawValue: Int32 = invalidID) {
+    public static let invalid = KIRDeclID(rawValue: -1)
+
+    public init(rawValue: Int32 = -1) {
         self.rawValue = rawValue
     }
 }
@@ -11,7 +13,9 @@ public struct KIRDeclID: Hashable {
 public struct KIRExprID: Hashable {
     public let rawValue: Int32
 
-    public init(rawValue: Int32 = invalidID) {
+    public static let invalid = KIRExprID(rawValue: -1)
+
+    public init(rawValue: Int32 = -1) {
         self.rawValue = rawValue
     }
 }
@@ -19,7 +23,9 @@ public struct KIRExprID: Hashable {
 public struct KIRTypeID: Hashable {
     public let rawValue: Int32
 
-    public init(rawValue: Int32 = invalidID) {
+    public static let invalid = KIRTypeID(rawValue: -1)
+
+    public init(rawValue: Int32 = -1) {
         self.rawValue = rawValue
     }
 }

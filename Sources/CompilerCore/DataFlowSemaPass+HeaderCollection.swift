@@ -288,13 +288,13 @@ extension DataFlowSemaPassPhase {
     }
 
     private func visibility(from modifiers: Modifiers) -> Visibility {
-        if modifiers.contains(.privateModifier) {
+        if modifiers.contains(.private) {
             return .private
         }
-        if modifiers.contains(.internalModifier) {
+        if modifiers.contains(.internal) {
             return .internal
         }
-        if modifiers.contains(.protectedModifier) {
+        if modifiers.contains(.protected) {
             return .protected
         }
         return .public

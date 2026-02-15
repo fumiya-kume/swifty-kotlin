@@ -31,12 +31,12 @@ final class SyntaxArenaTests: XCTestCase {
 
         let negative = arena.node(NodeID(rawValue: -1))
         XCTAssertEqual(negative.kind, .statement)
-        XCTAssertEqual(negative.range.start.file.rawValue, invalidID)
+        XCTAssertEqual(negative.range.start.file, .invalid)
         XCTAssertEqual(negative.childCount, 0)
 
         let tooLarge = arena.node(NodeID(rawValue: 999))
         XCTAssertEqual(tooLarge.kind, .statement)
-        XCTAssertEqual(tooLarge.range.end.file.rawValue, invalidID)
+        XCTAssertEqual(tooLarge.range.end.file, .invalid)
     }
 
     func testChildrenReturnsEmptyForNodesWithoutAddressableChildren() {

@@ -1,5 +1,11 @@
 public struct InternedString: Hashable {
     public let rawValue: Int32
+
+    public static let invalid = InternedString(rawValue: -1)
+
+    public init(rawValue: Int32 = -1) {
+        self.rawValue = rawValue
+    }
 }
 
 public final class StringInterner {
@@ -9,14 +15,14 @@ public final class StringInterner {
 
     public init() {}
 
-    public func intern(_ s: String) -> InternedString {
-        if let existing = map[s] {
+    public func intern(_ string: String) -> InternedString {
+        if let existing = map[string] {
             return InternedString(rawValue: existing)
         }
         let id = nextID
         nextID += 1
-        map[s] = id
-        values.append(s)
+        map[string] = id
+        values.append(string)
         return InternedString(rawValue: id)
     }
 

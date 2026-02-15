@@ -767,8 +767,8 @@ public final class KotlinParser {
 
     private var invalidRange: SourceRange {
         SourceRange(
-            start: SourceLocation(file: FileID(rawValue: invalidID), offset: 0),
-            end: SourceLocation(file: FileID(rawValue: invalidID), offset: 0)
+            start: SourceLocation(file: FileID.invalid, offset: 0),
+            end: SourceLocation(file: FileID.invalid, offset: 0)
         )
     }
 }

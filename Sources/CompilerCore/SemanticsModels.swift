@@ -1,7 +1,9 @@
 public struct SymbolID: Hashable {
     public let rawValue: Int32
 
-    public init(rawValue: Int32 = invalidID) {
+    public static let invalid = SymbolID(rawValue: -1)
+
+    public init(rawValue: Int32 = -1) {
         self.rawValue = rawValue
     }
 }

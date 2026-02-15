@@ -20,8 +20,8 @@ public final class DiagnosticEngine {
 
     public init() {}
 
-    public func emit(_ d: Diagnostic) {
-        diagnostics.append(d)
+    public func emit(_ diagnostic: Diagnostic) {
+        diagnostics.append(diagnostic)
     }
 
     public func error(_ code: String, _ message: String, range: SourceRange?) {

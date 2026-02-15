@@ -285,7 +285,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         let backend = LLVMCAPIBackend(
             target: defaultTargetTriple(),
             optLevel: .O0,
-            debugInfo: false,
+            emitsDebugInfo: false,
             diagnostics: diagnostics,
             strictMode: false
         )
@@ -495,7 +495,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         let backend = LLVMCAPIBackend(
             target: defaultTargetTriple(),
             optLevel: .O0,
-            debugInfo: false,
+            emitsDebugInfo: false,
             diagnostics: DiagnosticEngine(),
             strictMode: true
         )
@@ -789,7 +789,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         let backend = LLVMBackend(
             target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: "14.0"),
             optLevel: .O2,
-            debugInfo: true,
+            emitsDebugInfo: true,
             diagnostics: DiagnosticEngine()
         )
 
@@ -825,7 +825,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         let failingBackend = LLVMBackend(
             target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil),
             optLevel: .O0,
-            debugInfo: false,
+            emitsDebugInfo: false,
             diagnostics: failingDiagnostics
         )
         let missingDir = tempDir.appendingPathComponent(UUID().uuidString).path + "/sub/out.o"
@@ -861,7 +861,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         let backend = LLVMBackend(
             target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: "14.0"),
             optLevel: .O0,
-            debugInfo: false,
+            emitsDebugInfo: false,
             diagnostics: DiagnosticEngine()
         )
 

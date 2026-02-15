@@ -134,7 +134,7 @@ public final class BuildASTPhase: CompilerPhase {
         }
 
         let tokenFileIDs = Set(ctx.tokens.map { $0.range.start.file.rawValue })
-        let fileIDs = tokenFileIDs.filter { $0 != invalidID }.sorted()
+        let fileIDs = tokenFileIDs.filter { $0 != FileID.invalid.rawValue }.sorted()
         let files: [ASTFile] = fileIDs.map { rawID in
             ASTFile(
                 fileID: FileID(rawValue: rawID),

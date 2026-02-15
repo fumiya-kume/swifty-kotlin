@@ -1,7 +1,9 @@
 public struct TypeID: Hashable {
     public let rawValue: Int32
 
-    public init(rawValue: Int32 = invalidID) {
+    public static let invalid = TypeID(rawValue: -1)
+
+    public init(rawValue: Int32 = -1) {
         self.rawValue = rawValue
     }
 }
@@ -270,7 +272,7 @@ public final class TypeSystem {
         }
     }
 
-    public func lub(_ types: [TypeID]) -> TypeID {
+    public func leastUpperBound(_ types: [TypeID]) -> TypeID {
         let filtered = types.filter { kind(of: $0) != .error }
         guard let first = filtered.first else {
             return errorType
@@ -284,7 +286,7 @@ public final class TypeSystem {
         return anyType
     }
 
-    public func glb(_ types: [TypeID]) -> TypeID {
+    public func greatestLowerBound(_ types: [TypeID]) -> TypeID {
         guard let first = types.first else {
             return errorType
         }

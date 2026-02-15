@@ -8,13 +8,13 @@ extension BuildASTPhase {
                let token = resolveToken(tokenID, in: arena) {
                 switch token.kind {
                 case .keyword(.public):
-                    modifiers.insert(.publicModifier)
+                    modifiers.insert(.public)
                 case .keyword(.private):
-                    modifiers.insert(.privateModifier)
+                    modifiers.insert(.private)
                 case .keyword(.internal):
-                    modifiers.insert(.internalModifier)
+                    modifiers.insert(.internal)
                 case .keyword(.protected):
-                    modifiers.insert(.protectedModifier)
+                    modifiers.insert(.protected)
                 case .keyword(.final):
                     modifiers.insert(.final)
                 case .keyword(.open):

@@ -11,13 +11,13 @@ public final class LLVMCAPIBackend: CodegenBackend {
     public init(
         target: TargetTriple,
         optLevel: OptimizationLevel,
-        debugInfo: Bool,
+        emitsDebugInfo: Bool,
         diagnostics: DiagnosticEngine,
         strictMode: Bool = false
     ) {
         self.target = target
         self.optLevel = optLevel
-        _ = debugInfo
+        _ = emitsDebugInfo
         self.diagnostics = diagnostics
         self.strictMode = strictMode
 

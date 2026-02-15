@@ -113,14 +113,14 @@ public final class CodegenPhase: CompilerPhase {
             return LLVMBackend(
                 target: ctx.options.target,
                 optLevel: ctx.options.optLevel,
-                debugInfo: ctx.options.debugInfo,
+                emitsDebugInfo: ctx.options.emitsDebugInfo,
                 diagnostics: ctx.diagnostics
             )
         case .llvmCAPI:
             return LLVMCAPIBackend(
                 target: ctx.options.target,
                 optLevel: ctx.options.optLevel,
-                debugInfo: ctx.options.debugInfo,
+                emitsDebugInfo: ctx.options.emitsDebugInfo,
                 diagnostics: ctx.diagnostics,
                 strictMode: selection.strictMode
             )

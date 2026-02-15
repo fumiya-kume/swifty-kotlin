@@ -57,7 +57,7 @@ public struct CompilerOptions: Equatable {
     public var linkLibraries: [String]
     public var target: TargetTriple
     public var optLevel: OptimizationLevel
-    public var debugInfo: Bool
+    public var emitsDebugInfo: Bool
     public var frontendFlags: [String]
     public var irFlags: [String]
     public var runtimeFlags: [String]
@@ -72,7 +72,7 @@ public struct CompilerOptions: Equatable {
         linkLibraries: [String] = [],
         target: TargetTriple,
         optLevel: OptimizationLevel = .O0,
-        debugInfo: Bool = false,
+        emitsDebugInfo: Bool = false,
         frontendFlags: [String] = [],
         irFlags: [String] = [],
         runtimeFlags: [String] = []
@@ -86,7 +86,7 @@ public struct CompilerOptions: Equatable {
         self.linkLibraries = linkLibraries
         self.target = target
         self.optLevel = optLevel
-        self.debugInfo = debugInfo
+        self.emitsDebugInfo = emitsDebugInfo
         self.frontendFlags = frontendFlags
         self.irFlags = irFlags
         self.runtimeFlags = runtimeFlags

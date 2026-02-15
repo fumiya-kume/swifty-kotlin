@@ -219,7 +219,7 @@ let options = CompilerOptions(
     linkLibraries: linkLibraries,
     target: target,
     optLevel: optLevel,
-    debugInfo: debugInfo,
+    emitsDebugInfo: debugInfo,
     frontendFlags: frontendFlags,
     irFlags: irFlags,
     runtimeFlags: runtimeFlags
