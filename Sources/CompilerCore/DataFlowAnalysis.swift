@@ -21,10 +21,12 @@ public struct DataFlowState: Equatable {
 public struct WhenBranchSummary {
     public let coveredSymbols: Set<InternedString>
     public let hasElse: Bool
+    public let hasNullCase: Bool
 
-    public init(coveredSymbols: Set<InternedString>, hasElse: Bool) {
+    public init(coveredSymbols: Set<InternedString>, hasElse: Bool, hasNullCase: Bool = false) {
         self.coveredSymbols = coveredSymbols
         self.hasElse = hasElse
+        self.hasNullCase = hasNullCase
     }
 }
 
@@ -61,9 +63,12 @@ public final class DataFlowAnalyzer {
         }
         let kind = sema.types.kind(of: subjectType)
         switch kind {
-        case .primitive(.boolean, _):
+        case .primitive(.boolean, .nonNull):
             // `true` and `false` branches are both required when `else` is absent.
             return branches.coveredSymbols.count >= 2
+        case .primitive(.boolean, .nullable):
+            // Nullable Boolean needs true/false plus explicit null case.
+            return branches.coveredSymbols.count >= 2 && branches.hasNullCase
         case .classType:
             // For now rely on else branch for class-like types.
             return false
