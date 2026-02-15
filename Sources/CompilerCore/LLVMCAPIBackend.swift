@@ -9,7 +9,6 @@ public final class LLVMCAPIBackend: CodegenBackend {
     private let bindings: LLVMCAPIBindings?
     private let hasUsableBindings: Bool
     private var didWarnUnavailableFallback = false
-    private var didWarnNativeFailureFallback = false
 
     public init(
         target: TargetTriple,
@@ -132,15 +131,12 @@ public final class LLVMCAPIBackend: CodegenBackend {
                 )
                 throw LLVMCAPIBackendError.nativeEmissionFailed(reason)
             }
-            if !didWarnNativeFailureFallback {
-                diagnostics.warning(
-                    "KSWIFTK-BACKEND-1005",
-                    "LLVM C API backend failed to emit \(context); falling back to synthetic C backend: \(reason)",
-                    range: nil
-                )
-                didWarnNativeFailureFallback = true
-            }
-            try fallbackEmit()
+            diagnostics.error(
+                "KSWIFTK-BACKEND-1006",
+                "LLVM C API backend failed to emit \(context): \(reason)",
+                range: nil
+            )
+            throw LLVMCAPIBackendError.nativeEmissionFailed(reason)
         }
     }
 
