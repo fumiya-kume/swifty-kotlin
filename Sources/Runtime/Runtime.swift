@@ -214,8 +214,14 @@ public func kk_throwable_new(_ message: UnsafeMutableRawPointer?) -> UnsafeMutab
 
 @_cdecl("kk_panic")
 public func kk_panic(_ cstr: UnsafePointer<CChar>) -> Never {
+    fatalError(runtimePanicMessage(fromCString: cstr))
+}
+
+let runtimePanicDiagnosticCode = "KSWIFTK-RUNTIME-0001"
+
+func runtimePanicMessage(fromCString cstr: UnsafePointer<CChar>) -> String {
     let message = String(cString: cstr)
-    fatalError("KSwiftK panic: \(message)")
+    return "KSwiftK panic [\(runtimePanicDiagnosticCode)]: \(message)"
 }
 
 @_cdecl("kk_string_from_utf8")
