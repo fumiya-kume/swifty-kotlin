@@ -52,8 +52,10 @@ public final class OverloadResolver {
         ctx: SemaModule
     ) -> ResolvedCall {
         let solver = ConstraintSolver()
-        let viable = candidates.compactMap { candidate in
-            evaluateCandidate(
+        var viable: [ViableCandidate] = []
+        var candidateFailures: [Diagnostic] = []
+        for candidate in candidates {
+            let evaluation = evaluateCandidate(
                 candidate,
                 call: call,
                 expectedType: expectedType,
@@ -61,8 +63,21 @@ public final class OverloadResolver {
                 solver: solver,
                 ctx: ctx
             )
+            switch evaluation {
+            case .viable(let value):
+                viable.append(value)
+            case .constraintFailure(let diagnostic):
+                candidateFailures.append(diagnostic)
+            case .rejected:
+                continue
+            }
         }
-        return selectResult(from: viable, call: call, typeSystem: ctx.types)
+        return selectResult(
+            from: viable,
+            call: call,
+            typeSystem: ctx.types,
+            candidateFailures: candidateFailures
+        )
     }
 
     private func evaluateCandidate(
@@ -72,11 +87,11 @@ public final class OverloadResolver {
         implicitReceiverType: TypeID?,
         solver: ConstraintSolver,
         ctx: SemaModule
-    ) -> ViableCandidate? {
+    ) -> CandidateEvaluation {
         guard let symbol = ctx.symbols.symbol(candidate),
               symbol.kind == .function || symbol.kind == .constructor,
               let signature = ctx.symbols.functionSignature(for: candidate) else {
-            return nil
+            return .rejected
         }
 
         let typeVarBySymbol = ctx.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
@@ -88,7 +103,7 @@ public final class OverloadResolver {
             range: call.range,
             typeSystem: ctx.types
         ) else {
-            return nil
+            return .rejected
         }
 
         guard let parameterMapping = buildParameterMapping(
@@ -96,7 +111,7 @@ public final class OverloadResolver {
             callArgs: call.args,
             symbols: ctx.symbols
         ) else {
-            return nil
+            return .rejected
         }
 
         guard appendArgumentConstraints(
@@ -107,7 +122,7 @@ public final class OverloadResolver {
             typeVarBySymbol: typeVarBySymbol,
             typeSystem: ctx.types
         ) else {
-            return nil
+            return .rejected
         }
 
         if let expectedType {
@@ -126,12 +141,19 @@ public final class OverloadResolver {
             )
         }
 
-        guard let substitution = solveConstraints(
+        let solveResult = solveConstraints(
             constraints,
             solver: solver,
             typeSystem: ctx.types
-        ) else {
-            return nil
+        )
+        let substitution: [TypeVarID: TypeID]
+        switch solveResult {
+        case .success(let value):
+            substitution = value
+        case .constraintFailure(let diagnostic):
+            return .constraintFailure(diagnostic)
+        case .rejected:
+            return .rejected
         }
 
         let instantiatedParameterTypes: [TypeID] = call.args.indices.compactMap { argIndex in
@@ -147,16 +169,16 @@ public final class OverloadResolver {
             )
         }
         guard instantiatedParameterTypes.count == call.args.count else {
-            return nil
+            return .rejected
         }
 
-        return ViableCandidate(
+        return .viable(ViableCandidate(
             symbol: candidate,
             signature: signature,
             instantiatedParameterTypes: instantiatedParameterTypes,
             substitutedTypeArguments: substitution,
             parameterMapping: parameterMapping
-        )
+        ))
     }
 
     private func buildReceiverConstraints(
@@ -221,28 +243,43 @@ public final class OverloadResolver {
         _ constraints: [VariableConstraint],
         solver: ConstraintSolver,
         typeSystem: TypeSystem
-    ) -> [TypeVarID: TypeID]? {
+    ) -> ConstraintSolveResult {
         let varsToSolve = usedTypeVariables(from: constraints)
         if varsToSolve.isEmpty {
             let allSatisfied = constraints.allSatisfy {
                 isConstraintSatisfiedWithoutVariables($0, typeSystem: typeSystem)
             }
-            return allSatisfied ? [:] : nil
+            return allSatisfied ? .success([:]) : .rejected
         }
         let solution = solver.solve(
             vars: varsToSolve,
             constraints: constraints,
             typeSystem: typeSystem
         )
-        return solution.isSuccess ? solution.substitution : nil
+        if solution.isSuccess {
+            return .success(solution.substitution)
+        }
+        if let failure = solution.failure {
+            return .constraintFailure(failure)
+        }
+        return .rejected
     }
 
     private func selectResult(
         from viable: [ViableCandidate],
         call: CallExpr,
-        typeSystem: TypeSystem
+        typeSystem: TypeSystem,
+        candidateFailures: [Diagnostic]
     ) -> ResolvedCall {
         if viable.isEmpty {
+            if let diagnostic = candidateFailures.first {
+                return ResolvedCall(
+                    chosenCallee: nil,
+                    substitutedTypeArguments: [:],
+                    parameterMapping: [:],
+                    diagnostic: diagnostic
+                )
+            }
             return errorResult(
                 code: "KSWIFTK-SEMA-0002",
                 message: "No viable overload found for call.",
@@ -292,6 +329,18 @@ public final class OverloadResolver {
                 diagnostic: nil
             )
         }
+    }
+
+    private enum CandidateEvaluation {
+        case viable(ViableCandidate)
+        case constraintFailure(Diagnostic)
+        case rejected
+    }
+
+    private enum ConstraintSolveResult {
+        case success([TypeVarID: TypeID])
+        case constraintFailure(Diagnostic)
+        case rejected
     }
 
     private func buildParameterMapping(

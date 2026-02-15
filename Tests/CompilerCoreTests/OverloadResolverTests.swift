@@ -281,6 +281,56 @@ final class OverloadResolverTests: XCTestCase {
         XCTAssertEqual(resolved.substitutedTypeArguments[TypeVarID(rawValue: 0)], intType)
     }
 
+    func testResolveCallReturnsConstraintDiagnosticForGenericMismatch() {
+        let setup = makeSemaModule()
+        let resolver = OverloadResolver()
+        let types = setup.types
+        let symbols = setup.symbols
+        let interner = setup.interner
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let typeParamSymbol = defineSymbol(
+            kind: .typeParameter,
+            name: "T",
+            suffix: "constraint_typeParam",
+            symbols: symbols,
+            interner: interner
+        )
+        let typeParamType = types.make(.typeParam(TypeParamType(symbol: typeParamSymbol, nullability: .nonNull)))
+
+        let generic = defineSymbol(
+            kind: .function,
+            name: "id",
+            suffix: "constraint_generic",
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [typeParamType],
+                returnType: typeParamType,
+                typeParameterSymbols: [typeParamSymbol]
+            ),
+            for: generic
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 64, end: 69),
+            calleeName: interner.intern("id"),
+            args: [CallArg(type: intType)]
+        )
+        let resolved = resolver.resolveCall(
+            candidates: [generic],
+            call: call,
+            expectedType: boolType,
+            ctx: setup.ctx
+        )
+
+        XCTAssertNil(resolved.chosenCallee)
+        XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-TYPE-0001")
+    }
+
     func testResolveCallSkipsExtensionCandidateWithoutReceiver() {
         let setup = makeSemaModule()
         let resolver = OverloadResolver()

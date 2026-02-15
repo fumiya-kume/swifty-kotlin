@@ -244,15 +244,12 @@ public final class ConstraintSolver {
     }
 
     private func isConstraintSatisfied(
-        _ constraint: VariableConstraint,
-        substitution: [TypeVarID: TypeID],
+        kind: ConstraintKind,
+        left: TypeID,
+        right: TypeID,
         typeSystem: TypeSystem
     ) -> Bool {
-        guard let left = resolve(constraint.left, substitution: substitution),
-              let right = resolve(constraint.right, substitution: substitution) else {
-            return false
-        }
-        switch constraint.kind {
+        switch kind {
         case .subtype:
             return typeSystem.isSubtype(left, right)
         case .equal:
@@ -304,7 +301,8 @@ public final class ConstraintSolver {
     private func failureSolution(
         vars: [TypeVarID],
         typeSystem: TypeSystem,
-        blameRange: SourceRange?
+        blameRange: SourceRange?,
+        message: String = "Type constraint could not be satisfied."
     ) -> Solution {
         var substitution: [TypeVarID: TypeID] = [:]
         for variable in vars {
@@ -313,10 +311,31 @@ public final class ConstraintSolver {
         let diagnostic = Diagnostic(
             severity: .error,
             code: "KSWIFTK-TYPE-0001",
-            message: "Type constraint could not be satisfied.",
+            message: message,
             primaryRange: blameRange,
             secondaryRanges: []
         )
         return Solution(substitution: substitution, isSuccess: false, failure: diagnostic)
+    }
+
+    private func relationOperator(for kind: ConstraintKind) -> String {
+        switch kind {
+        case .subtype:
+            return "<:"
+        case .equal:
+            return "=="
+        case .supertype:
+            return ":>"
+        }
+    }
+
+    private func renderBounds(_ bounds: [TypeID], typeSystem: TypeSystem) -> String {
+        if bounds.isEmpty {
+            return "-"
+        }
+        return bounds
+            .map(typeSystem.renderType)
+            .sorted()
+            .joined(separator: ", ")
     }
 }

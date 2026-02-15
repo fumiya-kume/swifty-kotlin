@@ -630,7 +630,10 @@ final class CompilerCoreTests: XCTestCase {
             diag.code == "KSWIFTK-TYPE-0001"
         }
         XCTAssertFalse(typeDiagnostics.isEmpty, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
-        XCTAssertTrue(typeDiagnostics.contains(where: { $0.message.contains("Int <: Boolean") }))
+        let hasNoViableDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0002"
+        })
+        XCTAssertFalse(hasNoViableDiagnostic, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
     }
 
     func testSemaResolvesTopLevelFunctionAcrossFilesInSamePackage() throws {

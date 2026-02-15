@@ -98,6 +98,7 @@ final class ConstraintSolverTests: XCTestCase {
         XCTAssertFalse(solution.isSuccess)
         XCTAssertEqual(solution.failure?.code, "KSWIFTK-TYPE-0001")
         XCTAssertEqual(solution.failure?.primaryRange, blame)
+        XCTAssertTrue(solution.failure?.message.contains("Conflicting bounds for type variable #12") ?? false)
         XCTAssertEqual(solution.substitution[t0], types.errorType)
     }
 }
