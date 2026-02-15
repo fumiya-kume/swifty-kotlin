@@ -34,13 +34,32 @@ public struct KIRParameter {
     }
 }
 
-public enum KIRInstruction {
+public enum KIRBinaryOp: Equatable {
+    case add
+    case subtract
+    case multiply
+    case divide
+    case equal
+}
+
+public enum KIRExprKind: Equatable {
+    case intLiteral(Int64)
+    case boolLiteral(Bool)
+    case stringLiteral(InternedString)
+    case symbolRef(SymbolID)
+    case temporary(Int32)
+    case unit
+}
+
+public enum KIRInstruction: Equatable {
     case nop
     case beginBlock
     case endBlock
+    case constValue(result: KIRExprID, value: KIRExprKind)
+    case binary(op: KIRBinaryOp, lhs: KIRExprID, rhs: KIRExprID, result: KIRExprID)
+    case call(symbol: SymbolID?, callee: InternedString, arguments: [KIRExprID], result: KIRExprID?, outThrown: Bool)
     case returnUnit
     case returnValue(KIRExprID)
-    case call(symbol: SymbolID, arguments: [KIRExprID], outThrown: Bool)
 }
 
 public struct KIRFunction {
@@ -48,7 +67,7 @@ public struct KIRFunction {
     public let name: InternedString
     public let params: [KIRParameter]
     public let returnType: TypeID
-    public let body: [KIRInstruction]
+    public var body: [KIRInstruction]
     public let isSuspend: Bool
     public let isInline: Bool
 
@@ -107,6 +126,7 @@ public struct KIRFile {
 
 public final class KIRArena {
     public private(set) var declarations: [KIRDecl] = []
+    public private(set) var expressions: [KIRExprKind] = []
 
     public init() {}
 
@@ -116,12 +136,35 @@ public final class KIRArena {
         return id
     }
 
+    public func appendExpr(_ expr: KIRExprKind) -> KIRExprID {
+        let id = KIRExprID(rawValue: Int32(expressions.count))
+        expressions.append(expr)
+        return id
+    }
+
     public func decl(_ id: KIRDeclID) -> KIRDecl? {
         let index = Int(id.rawValue)
         guard index >= 0 && index < declarations.count else {
             return nil
         }
         return declarations[index]
+    }
+
+    public func expr(_ id: KIRExprID) -> KIRExprKind? {
+        let index = Int(id.rawValue)
+        guard index >= 0 && index < expressions.count else {
+            return nil
+        }
+        return expressions[index]
+    }
+
+    public func transformFunctions(_ transform: (KIRFunction) -> KIRFunction) {
+        for index in declarations.indices {
+            guard case .function(let function) = declarations[index] else {
+                continue
+            }
+            declarations[index] = .function(transform(function))
+        }
     }
 }
 
@@ -171,6 +214,9 @@ public final class KIRModule {
             case .function(let function):
                 let name = interner.resolve(function.name)
                 lines.append("decl[\(index)] function \(name) params=\(function.params.count) suspend=\(function.isSuspend) inline=\(function.isInline)")
+                for instruction in function.body {
+                    lines.append("  \(instructionDescription(instruction, interner: interner, arena: arena, symbols: symbols))")
+                }
             case .global:
                 lines.append("decl[\(index)] global")
             case .nominalType(let nominal):
@@ -187,15 +233,52 @@ public final class KIRModule {
         }
         return lines.joined(separator: "\n")
     }
+
+    private func instructionDescription(
+        _ instruction: KIRInstruction,
+        interner: StringInterner,
+        arena: KIRArena,
+        symbols: SymbolTable?
+    ) -> String {
+        switch instruction {
+        case .nop:
+            return "nop"
+        case .beginBlock:
+            return "beginBlock"
+        case .endBlock:
+            return "endBlock"
+        case .constValue(let result, let value):
+            return "const r\(result.rawValue)=\(value)"
+        case .binary(let op, let lhs, let rhs, let result):
+            return "binary \(op) r\(lhs.rawValue), r\(rhs.rawValue) -> r\(result.rawValue)"
+        case .call(let symbol, let callee, let arguments, let result, let outThrown):
+            let calleeName = interner.resolve(callee)
+            let args = arguments.map { "r\($0.rawValue)" }.joined(separator: ", ")
+            let symbolLabel: String
+            if let symbol, let sym = symbols?.symbol(symbol) {
+                symbolLabel = interner.resolve(sym.name)
+            } else {
+                symbolLabel = "_"
+            }
+            let ret = result.map { "r\($0.rawValue)" } ?? "_"
+            return "call \(calleeName) symbol=\(symbolLabel) args=[\(args)] ret=\(ret) thrown=\(outThrown)"
+        case .returnUnit:
+            return "returnUnit"
+        case .returnValue(let value):
+            return "return r\(value.rawValue)"
+        }
+    }
 }
 
 public final class KIRContext {
     public let diagnostics: DiagnosticEngine
     public let options: CompilerOptions
+    public let interner: StringInterner
 
-    public init(diagnostics: DiagnosticEngine, options: CompilerOptions) {
+    public init(diagnostics: DiagnosticEngine, options: CompilerOptions, interner: StringInterner) {
         self.diagnostics = diagnostics
         self.options = options
+        self.interner = interner
     }
 }
 
