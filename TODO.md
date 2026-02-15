@@ -73,10 +73,10 @@
   - [x] LLVM C API で最小 IR 生成（const / return / call / branch）
   - [x] LLVM C API で Object 出力パス（target machine 初期化 + emit）
   - [x] 既存 synthetic C backend と emit 出力互換テストを追加
-- [ ] P2-5: Runtime GC 実装（mark-sweep + root map）
+- [x] P2-5: Runtime GC 実装（mark-sweep + root map）
   - [x] stop-the-world mark-sweep collector を実装
   - [x] root set（globals / stack frame map / coroutine）走査を実装
-  - [ ] `kk_register_frame_map` 系 API と compiler 側 map 出力を実装（runtime API は実装済み、compiler map 出力が未了）
+  - [x] `kk_register_frame_map` 系 API と compiler 側 map 出力を実装（現状は 0-root map 生成）
 - [x] P2-6: coroutine CPS/state machine lowering 実装
   - [x] lowered suspend 関数へ state enter/exit helper 挿入（state machine 骨格）
   - [x] suspension point ごとの label 設定 + `COROUTINE_SUSPENDED` 早期 return ガード挿入
@@ -116,5 +116,4 @@
 
 ## In Progress
 
-- [ ] P2-5: Runtime GC 実装（mark-sweep + root map）
 - [ ] P2-8: LLVM C API backend の runtime/ABI 追従
