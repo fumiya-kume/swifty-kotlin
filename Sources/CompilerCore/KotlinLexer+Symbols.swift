@@ -56,6 +56,10 @@ extension KotlinLexer {
             offset += 3
             return .dotDotLt
         }
+        if starts(with: "??") {
+            offset += 2
+            return .questionQuestion
+        }
         if starts(with: "?.") {
             offset += 2
             return .questionDot
