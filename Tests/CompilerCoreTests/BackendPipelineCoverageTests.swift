@@ -145,6 +145,94 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
     }
 
+    func testSemaSynthesizesNominalLayoutsAndLibraryMetadataContainsLayoutFields() throws {
+        let source = """
+        package layoutdemo
+        class Base
+        class Derived: Base
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let semaCtx = makeCompilationContext(inputs: [path], moduleName: "LayoutSema", emit: .kirDump)
+            try runToKIR(semaCtx)
+
+            let sema = try XCTUnwrap(semaCtx.sema)
+            let base = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
+                semaCtx.interner.resolve(symbol.name) == "Base" && symbol.kind == .class
+            }))
+            let derived = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
+                semaCtx.interner.resolve(symbol.name) == "Derived" && symbol.kind == .class
+            }))
+
+            let baseLayout = sema.symbols.nominalLayout(for: base.id)
+            let derivedLayout = sema.symbols.nominalLayout(for: derived.id)
+            XCTAssertNotNil(baseLayout)
+            XCTAssertNotNil(derivedLayout)
+            XCTAssertEqual(baseLayout?.objectHeaderWords, 3)
+            XCTAssertGreaterThanOrEqual(baseLayout?.instanceSizeWords ?? 0, 3)
+            XCTAssertEqual(derivedLayout?.superClass, base.id)
+
+            let libBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let libCtx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "LayoutLib",
+                emit: .library,
+                outputPath: libBase
+            )
+            try runToKIR(libCtx)
+            try LoweringPhase().run(libCtx)
+            try CodegenPhase().run(libCtx)
+
+            let metadataPath = libBase + ".kklib/metadata.bin"
+            let metadata = try String(contentsOfFile: metadataPath, encoding: .utf8)
+            XCTAssertTrue(metadata.contains("layoutWords="))
+            XCTAssertTrue(metadata.contains("vtable="))
+            XCTAssertTrue(metadata.contains("itable="))
+        }
+    }
+
+    func testSemaAllocatesVtableSlotsFromImportedNominalMetadata() throws {
+        let fm = FileManager.default
+        let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let libDir = baseDir.appendingPathExtension("kklib")
+        try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
+
+        let manifest = """
+        {
+          "formatVersion": 1,
+          "moduleName": "ExtMeta",
+          "metadata": "metadata.bin"
+        }
+        """
+        let metadata = """
+        symbols=2
+        class _ fq=ext.C
+        function _ fq=ext.C.m arity=0 suspend=0
+        """
+        try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
+
+        let source = "fun main() = 0"
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "VTableImport",
+                emit: .kirDump,
+                searchPaths: [libDir.path]
+            )
+            try runToKIR(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let classSymbol = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
+                ctx.interner.resolve(symbol.name) == "C" && symbol.kind == .class
+            }))
+            let layout = sema.symbols.nominalLayout(for: classSymbol.id)
+            XCTAssertNotNil(layout)
+            XCTAssertEqual(layout?.vtableSlots.count, 1)
+            XCTAssertEqual(layout?.itableSlots.count, 0)
+        }
+    }
+
     func testLinkPhaseReportsMissingMainAndCanLinkExecutable() throws {
         try withTemporaryFile(contents: "fun notMain() = 0") { path in
             let out = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path

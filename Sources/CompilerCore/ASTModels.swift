@@ -397,3 +397,9 @@ public final class ASTModule {
         self.init(files: [], arena: ASTArena(), declarationCount: declarationCount, tokenCount: tokenCount)
     }
 }
+
+extension ASTModule {
+    var sortedFiles: [ASTFile] {
+        files.sorted(by: { $0.fileID.rawValue < $1.fileID.rawValue })
+    }
+}

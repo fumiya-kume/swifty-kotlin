@@ -81,6 +81,31 @@ public struct FunctionSignature {
     }
 }
 
+public struct NominalLayout: Equatable {
+    public let objectHeaderWords: Int
+    public let instanceFieldCount: Int
+    public let instanceSizeWords: Int
+    public let vtableSlots: [SymbolID: Int]
+    public let itableSlots: [SymbolID: Int]
+    public let superClass: SymbolID?
+
+    public init(
+        objectHeaderWords: Int,
+        instanceFieldCount: Int,
+        instanceSizeWords: Int,
+        vtableSlots: [SymbolID: Int],
+        itableSlots: [SymbolID: Int],
+        superClass: SymbolID?
+    ) {
+        self.objectHeaderWords = objectHeaderWords
+        self.instanceFieldCount = instanceFieldCount
+        self.instanceSizeWords = instanceSizeWords
+        self.vtableSlots = vtableSlots
+        self.itableSlots = itableSlots
+        self.superClass = superClass
+    }
+}
+
 public protocol Scope: AnyObject {
     var parent: Scope? { get }
     func lookup(_ name: InternedString) -> [SymbolID]
@@ -129,6 +154,7 @@ public final class SymbolTable {
     private var functionSignatures: [SymbolID: FunctionSignature] = [:]
     private var propertyTypes: [SymbolID: TypeID] = [:]
     private var directSupertypes: [SymbolID: [SymbolID]] = [:]
+    private var nominalLayouts: [SymbolID: NominalLayout] = [:]
 
     public init() {}
 
@@ -254,6 +280,14 @@ public final class SymbolTable {
             }
         }
         return result.sorted(by: { $0.rawValue < $1.rawValue })
+    }
+
+    public func setNominalLayout(_ layout: NominalLayout, for symbol: SymbolID) {
+        nominalLayouts[symbol] = layout
+    }
+
+    public func nominalLayout(for symbol: SymbolID) -> NominalLayout? {
+        nominalLayouts[symbol]
     }
 }
 
