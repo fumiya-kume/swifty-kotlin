@@ -103,6 +103,61 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
     }
 
+    func testCodegenProducesDeterministicKirLlAndObjectOutputs() throws {
+        let source = """
+        fun helper(x: Int, y: Int) = x + y
+        fun main() = helper(40, 2)
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let fm = FileManager.default
+            let workDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+            try fm.createDirectory(at: workDir, withIntermediateDirectories: true)
+            defer { try? fm.removeItem(at: workDir) }
+
+            func compileAndRead(emit: EmitMode, outputPath: String) throws -> Data {
+                let ctx = makeCompilationContext(
+                    inputs: [path],
+                    moduleName: "Determinism",
+                    emit: emit,
+                    outputPath: outputPath
+                )
+                try runToKIR(ctx)
+                try LoweringPhase().run(ctx)
+                try CodegenPhase().run(ctx)
+
+                let artifactPath: String
+                switch emit {
+                case .kirDump:
+                    artifactPath = outputPath + ".kir"
+                case .llvmIR:
+                    artifactPath = outputPath + ".ll"
+                case .object:
+                    artifactPath = outputPath + ".o"
+                default:
+                    XCTFail("unsupported emit for determinism test: \(emit)")
+                    artifactPath = outputPath
+                }
+                return try Data(contentsOf: URL(fileURLWithPath: artifactPath))
+            }
+
+            let kirBase = workDir.appendingPathComponent("deterministic").path
+            let kirFirst = try compileAndRead(emit: .kirDump, outputPath: kirBase)
+            let kirSecond = try compileAndRead(emit: .kirDump, outputPath: kirBase)
+            XCTAssertEqual(kirFirst, kirSecond)
+
+            let llvmBase = workDir.appendingPathComponent("deterministic").path
+            let llvmFirst = try compileAndRead(emit: .llvmIR, outputPath: llvmBase)
+            let llvmSecond = try compileAndRead(emit: .llvmIR, outputPath: llvmBase)
+            XCTAssertEqual(llvmFirst, llvmSecond)
+
+            let objectBase = workDir.appendingPathComponent("deterministic").path
+            let objectFirst = try compileAndRead(emit: .object, outputPath: objectBase)
+            let objectSecond = try compileAndRead(emit: .object, outputPath: objectBase)
+            XCTAssertEqual(objectFirst, objectSecond)
+        }
+    }
+
     func testCodegenBackendSelectionSupportsLlvmCApiFlag() throws {
         let source = "fun main() = 0"
         try withTemporaryFile(contents: source) { path in
