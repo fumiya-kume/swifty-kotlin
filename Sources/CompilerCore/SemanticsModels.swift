@@ -126,6 +126,7 @@ public final class SymbolTable {
     private var symbolsStorage: [SemanticSymbol] = []
     private var byFQName: [[InternedString]: [SymbolID]] = [:]
     private var functionSignatures: [SymbolID: FunctionSignature] = [:]
+    private var propertyTypes: [SymbolID: TypeID] = [:]
     private var directSupertypes: [SymbolID: [SymbolID]] = [:]
 
     public init() {}
@@ -228,6 +229,14 @@ public final class SymbolTable {
         functionSignatures[symbol]
     }
 
+    public func setPropertyType(_ type: TypeID, for symbol: SymbolID) {
+        propertyTypes[symbol] = type
+    }
+
+    public func propertyType(for symbol: SymbolID) -> TypeID? {
+        propertyTypes[symbol]
+    }
+
     public func setDirectSupertypes(_ supertypes: [SymbolID], for symbol: SymbolID) {
         directSupertypes[symbol] = supertypes
     }
@@ -302,4 +311,3 @@ public final class SemaModule {
         self.diagnostics = diagnostics
     }
 }
-

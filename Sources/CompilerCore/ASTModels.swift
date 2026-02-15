@@ -82,6 +82,7 @@ public struct ClassDecl {
     public let primaryConstructorParams: [ValueParamDecl]
     public let superTypes: [TypeRefID]
     public let enumEntries: [EnumEntryDecl]
+    public let initBlocks: [FunctionBody]
 
     public init(
         range: SourceRange,
@@ -90,7 +91,8 @@ public struct ClassDecl {
         typeParams: [TypeParamDecl] = [],
         primaryConstructorParams: [ValueParamDecl] = [],
         superTypes: [TypeRefID] = [],
-        enumEntries: [EnumEntryDecl] = []
+        enumEntries: [EnumEntryDecl] = [],
+        initBlocks: [FunctionBody] = []
     ) {
         self.range = range
         self.name = name
@@ -99,6 +101,7 @@ public struct ClassDecl {
         self.primaryConstructorParams = primaryConstructorParams
         self.superTypes = superTypes
         self.enumEntries = enumEntries
+        self.initBlocks = initBlocks
     }
 }
 
@@ -107,17 +110,20 @@ public struct ObjectDecl {
     public let name: InternedString
     public let modifiers: Modifiers
     public let superTypes: [TypeRefID]
+    public let initBlocks: [FunctionBody]
 
     public init(
         range: SourceRange,
         name: InternedString,
         modifiers: Modifiers,
-        superTypes: [TypeRefID] = []
+        superTypes: [TypeRefID] = [],
+        initBlocks: [FunctionBody] = []
     ) {
         self.range = range
         self.name = name
         self.modifiers = modifiers
         self.superTypes = superTypes
+        self.initBlocks = initBlocks
     }
 }
 
@@ -164,11 +170,59 @@ public enum FunctionBody: Equatable {
     case unit
 }
 
+public enum PropertyAccessorKind: Equatable {
+    case getter
+    case setter
+}
+
+public struct PropertyAccessorDecl: Equatable {
+    public let range: SourceRange
+    public let kind: PropertyAccessorKind
+    public let parameterName: InternedString?
+    public let body: FunctionBody
+
+    public init(
+        range: SourceRange,
+        kind: PropertyAccessorKind,
+        parameterName: InternedString? = nil,
+        body: FunctionBody = .unit
+    ) {
+        self.range = range
+        self.kind = kind
+        self.parameterName = parameterName
+        self.body = body
+    }
+}
+
 public struct PropertyDecl {
     public let range: SourceRange
     public let name: InternedString
     public let modifiers: Modifiers
     public let type: TypeRefID?
+    public let isVar: Bool
+    public let initializer: ExprID?
+    public let getter: PropertyAccessorDecl?
+    public let setter: PropertyAccessorDecl?
+
+    public init(
+        range: SourceRange,
+        name: InternedString,
+        modifiers: Modifiers,
+        type: TypeRefID?,
+        isVar: Bool = false,
+        initializer: ExprID? = nil,
+        getter: PropertyAccessorDecl? = nil,
+        setter: PropertyAccessorDecl? = nil
+    ) {
+        self.range = range
+        self.name = name
+        self.modifiers = modifiers
+        self.type = type
+        self.isVar = isVar
+        self.initializer = initializer
+        self.getter = getter
+        self.setter = setter
+    }
 }
 
 public struct TypeAliasDecl {
@@ -234,12 +288,24 @@ public struct WhenBranch: Equatable {
     }
 }
 
+public struct CallArgument: Equatable {
+    public let label: InternedString?
+    public let isSpread: Bool
+    public let expr: ExprID
+
+    public init(label: InternedString? = nil, isSpread: Bool = false, expr: ExprID) {
+        self.label = label
+        self.isSpread = isSpread
+        self.expr = expr
+    }
+}
+
 public enum Expr: Equatable {
     case intLiteral(Int64, SourceRange)
     case boolLiteral(Bool, SourceRange)
     case stringLiteral(InternedString, SourceRange)
     case nameRef(InternedString, SourceRange)
-    case call(callee: ExprID, args: [ExprID], range: SourceRange)
+    case call(callee: ExprID, args: [CallArgument], range: SourceRange)
     case binary(op: BinaryOp, lhs: ExprID, rhs: ExprID, range: SourceRange)
     case whenExpr(subject: ExprID, branches: [WhenBranch], elseExpr: ExprID?, range: SourceRange)
 }
