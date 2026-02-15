@@ -364,15 +364,82 @@ private struct NativeEmitter {
         var currentBlock = entryBlock
         var values: [Int32: LLVMCAPIBindings.LLVMValueRef] = [:]
         var externalFunctions: [String: LLVMFunction] = [:]
+        var generatedStringLiteralCount: Int32 = 0
 
-        func valueForConstant(_ expression: KIRExprKind) -> LLVMCAPIBindings.LLVMValueRef {
+        func declareExternalFunction(
+            named calleeName: String,
+            argumentCount: Int,
+            appendThrownChannel: Bool
+        ) -> LLVMFunction? {
+            if let existing = externalFunctions[calleeName] {
+                return existing
+            }
+            var callParameterTypes = Array(repeating: int64Type, count: argumentCount)
+            if appendThrownChannel {
+                callParameterTypes.append(outThrownPointerType)
+            }
+            guard let externalType = bindings.functionType(
+                returnType: int64Type,
+                parameters: callParameterTypes,
+                isVarArg: false
+            ) else {
+                return nil
+            }
+            let externalValue = bindings.getNamedFunction(module: llvmModule, name: calleeName)
+                ?? bindings.addFunction(module: llvmModule, name: calleeName, functionType: externalType)
+            guard let externalValue else {
+                return nil
+            }
+            let declared = LLVMFunction(value: externalValue, type: externalType)
+            externalFunctions[calleeName] = declared
+            return declared
+        }
+
+        func valueForConstant(_ expression: KIRExprKind, expressionRawID: Int32?) -> LLVMCAPIBindings.LLVMValueRef {
             switch expression {
             case .intLiteral(let number):
                 return bindings.constInt(int64Type, value: UInt64(bitPattern: number), signExtend: true) ?? zeroValue
             case .boolLiteral(let value):
                 return bindings.constInt(int64Type, value: value ? 1 : 0) ?? zeroValue
-            case .stringLiteral:
-                return zeroValue
+            case .stringLiteral(let interned):
+                let text = interner.resolve(interned)
+                let literalID: Int32
+                if let expressionRawID {
+                    literalID = expressionRawID
+                } else {
+                    literalID = generatedStringLiteralCount
+                    generatedStringLiteralCount += 1
+                }
+                guard let globalStringPointer = bindings.buildGlobalStringPtr(
+                    builder,
+                    value: text,
+                    name: "str_lit_\(literalID)"
+                ) else {
+                    return zeroValue
+                }
+                guard let pointerAsInt = bindings.buildPtrToInt(
+                    builder,
+                    value: globalStringPointer,
+                    type: int64Type,
+                    name: "str_ptr_\(literalID)"
+                ) else {
+                    return zeroValue
+                }
+                let lengthValue = bindings.constInt(int64Type, value: UInt64(text.utf8.count)) ?? zeroValue
+                guard let stringFromUTF8 = declareExternalFunction(
+                    named: "kk_string_from_utf8",
+                    argumentCount: 2,
+                    appendThrownChannel: false
+                ) else {
+                    return zeroValue
+                }
+                return bindings.buildCall(
+                    builder,
+                    functionType: stringFromUTF8.type,
+                    callee: stringFromUTF8.value,
+                    arguments: [pointerAsInt, lengthValue],
+                    name: "str_from_utf8_\(literalID)"
+                ) ?? zeroValue
             case .symbolRef(let symbol):
                 return parameterValues[symbol] ?? zeroValue
             case .temporary(let raw):
@@ -391,7 +458,7 @@ private struct NativeEmitter {
                 return value
             }
             if let expression = module.arena.expr(id) {
-                let constant = valueForConstant(expression)
+                let constant = valueForConstant(expression, expressionRawID: id.rawValue)
                 values[id.rawValue] = constant
                 return constant
             }
@@ -497,7 +564,7 @@ private struct NativeEmitter {
                 bindings.positionBuilder(builder, at: continueBlock)
 
             case .constValue(let result, let value):
-                values[result.rawValue] = valueForConstant(value)
+                values[result.rawValue] = valueForConstant(value, expressionRawID: result.rawValue)
 
             case .binary(let op, let lhs, let rhs, let result):
                 let lhsValue = resolveValue(lhs)
@@ -564,32 +631,11 @@ private struct NativeEmitter {
                 } else if calleeName.isEmpty {
                     calleeFunction = nil
                 } else {
-                    if let existing = externalFunctions[calleeName] {
-                        calleeFunction = existing
-                    } else {
-                        var callParameterTypes = Array(repeating: int64Type, count: argumentValues.count)
-                        if shouldAppendThrownChannel {
-                            callParameterTypes.append(outThrownPointerType)
-                        }
-                        guard let externalType = bindings.functionType(
-                            returnType: int64Type,
-                            parameters: callParameterTypes,
-                            isVarArg: false
-                        ) else {
-                            calleeFunction = nil
-                            storeResult(result, nil)
-                            continue
-                        }
-                        let externalValue = bindings.getNamedFunction(module: llvmModule, name: calleeName)
-                            ?? bindings.addFunction(module: llvmModule, name: calleeName, functionType: externalType)
-                        if let externalValue {
-                            let declared = LLVMFunction(value: externalValue, type: externalType)
-                            externalFunctions[calleeName] = declared
-                            calleeFunction = declared
-                        } else {
-                            calleeFunction = nil
-                        }
-                    }
+                    calleeFunction = declareExternalFunction(
+                        named: calleeName,
+                        argumentCount: argumentValues.count,
+                        appendThrownChannel: shouldAppendThrownChannel
+                    )
                 }
 
                 guard let calleeFunction else {
