@@ -347,6 +347,10 @@ private struct NativeEmitter {
             }
             parameterValues[parameter.symbol] = value
         }
+        let outThrownParameter = bindings.getParam(
+            function: llvmFunction.value,
+            index: UInt32(function.params.count)
+        )
 
         guard let zeroValue = bindings.constInt(int64Type, value: 0) else {
             throw LLVMCAPIBackendError.nativeEmissionFailed("LLVMConstInt returned null")
@@ -354,6 +358,7 @@ private struct NativeEmitter {
         guard let undefThrownPointer = bindings.getUndef(type: outThrownPointerType) else {
             throw LLVMCAPIBackendError.nativeEmissionFailed("LLVMGetUndef for outThrown pointer returned null")
         }
+        let nullThrownPointer = bindings.constPointerNull(outThrownPointerType) ?? undefThrownPointer
 
         bindings.positionBuilder(builder, at: entryBlock)
         var currentBlock = entryBlock
@@ -550,7 +555,8 @@ private struct NativeEmitter {
                 }
 
                 let calleeFunction: LLVMFunction?
-                let shouldAppendThrownChannel = usesThrownChannel || symbol.flatMap { internalFunctions[$0] } != nil
+                let isInternalCall = symbol.flatMap { internalFunctions[$0] } != nil
+                let shouldAppendThrownChannel = usesThrownChannel || isInternalCall
 
                 if let symbol,
                    let internalFunction = internalFunctions[symbol] {
@@ -593,7 +599,11 @@ private struct NativeEmitter {
 
                 var callArguments = argumentValues
                 if shouldAppendThrownChannel {
-                    callArguments.append(undefThrownPointer)
+                    if usesThrownChannel, let outThrownParameter {
+                        callArguments.append(outThrownParameter)
+                    } else {
+                        callArguments.append(nullThrownPointer)
+                    }
                 }
 
                 let callValue = bindings.buildCall(

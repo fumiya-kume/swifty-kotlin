@@ -59,6 +59,7 @@ final class LLVMCAPIBindings {
         UnsafePointer<CChar>?
     ) -> LLVMValueRef?
     private typealias LLVMConstIntFn = @convention(c) (LLVMTypeRef?, UInt64, LLVMBool) -> LLVMValueRef?
+    private typealias LLVMConstPointerNullFn = @convention(c) (LLVMTypeRef?) -> LLVMValueRef?
     private typealias LLVMGetDefaultTargetTripleFn = @convention(c) () -> UnsafeMutablePointer<CChar>?
     private typealias LLVMGetTargetFromTripleFn = @convention(c) (
         UnsafePointer<CChar>?,
@@ -128,6 +129,7 @@ final class LLVMCAPIBindings {
     private let buildCall2Fn: LLVMBuildCall2Fn?
     private let buildCallFn: LLVMBuildCallFn?
     private let constIntFn: LLVMConstIntFn
+    private let constPointerNullFn: LLVMConstPointerNullFn?
     private let getDefaultTargetTripleFn: LLVMGetDefaultTargetTripleFn
     private let getTargetFromTripleFn: LLVMGetTargetFromTripleFn
     private let createTargetMachineFn: LLVMCreateTargetMachineFn
@@ -180,6 +182,7 @@ final class LLVMCAPIBindings {
         buildCall2Fn: LLVMBuildCall2Fn?,
         buildCallFn: LLVMBuildCallFn?,
         constIntFn: @escaping LLVMConstIntFn,
+        constPointerNullFn: LLVMConstPointerNullFn?,
         getDefaultTargetTripleFn: @escaping LLVMGetDefaultTargetTripleFn,
         getTargetFromTripleFn: @escaping LLVMGetTargetFromTripleFn,
         createTargetMachineFn: @escaping LLVMCreateTargetMachineFn,
@@ -231,6 +234,7 @@ final class LLVMCAPIBindings {
         self.buildCall2Fn = buildCall2Fn
         self.buildCallFn = buildCallFn
         self.constIntFn = constIntFn
+        self.constPointerNullFn = constPointerNullFn
         self.getDefaultTargetTripleFn = getDefaultTargetTripleFn
         self.getTargetFromTripleFn = getTargetFromTripleFn
         self.createTargetMachineFn = createTargetMachineFn
@@ -355,6 +359,7 @@ final class LLVMCAPIBindings {
                 buildCall2Fn: buildCall2,
                 buildCallFn: buildCall,
                 constIntFn: constInt,
+                constPointerNullFn: loadSymbol(handle: handle, name: "LLVMConstPointerNull", as: LLVMConstPointerNullFn.self),
                 getDefaultTargetTripleFn: getDefaultTargetTriple,
                 getTargetFromTripleFn: getTargetFromTriple,
                 createTargetMachineFn: createTargetMachine,
@@ -538,6 +543,10 @@ final class LLVMCAPIBindings {
 
     func constInt(_ type: LLVMTypeRef?, value: UInt64, signExtend: Bool = false) -> LLVMValueRef? {
         constIntFn(type, value, signExtend ? 1 : 0)
+    }
+
+    func constPointerNull(_ type: LLVMTypeRef?) -> LLVMValueRef? {
+        constPointerNullFn?(type)
     }
 
     func defaultTargetTriple() -> String? {
