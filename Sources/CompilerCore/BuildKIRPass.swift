@@ -12,7 +12,17 @@ public final class BuildKIRPhase: CompilerPhase {
 
         let arena = KIRArena()
         var files: [KIRFile] = []
-        let propertyConstantInitializers = collectPropertyConstantInitializers(ast: ast, sema: sema)
+        var sourceByFileID: [Int32: String] = [:]
+        for file in ast.files {
+            let contents = ctx.sourceManager.contents(of: file.fileID)
+            sourceByFileID[file.fileID.rawValue] = String(data: contents, encoding: .utf8) ?? ""
+        }
+        let propertyConstantInitializers = collectPropertyConstantInitializers(
+            ast: ast,
+            sema: sema,
+            interner: ctx.interner,
+            sourceByFileID: sourceByFileID
+        )
 
         for file in ast.sortedFiles {
             var declIDs: [KIRDeclID] = []
@@ -146,8 +156,11 @@ public final class BuildKIRPhase: CompilerPhase {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
+        let boundType = sema.bindings.exprTypes[exprID]
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+        let boolType = sema.types.make(.primitive(.boolean, .nonNull))
         guard let expr = ast.arena.expr(exprID) else {
-            let temp = arena.appendExpr(.temporary(Int32(arena.expressions.count)))
+            let temp = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.errorType)
             instructions.append(.constValue(result: temp, value: .unit))
             return temp
         }
@@ -155,37 +168,37 @@ public final class BuildKIRPhase: CompilerPhase {
 
         switch expr {
         case .intLiteral(let value, _):
-            let id = arena.appendExpr(.intLiteral(value))
+            let id = arena.appendExpr(.intLiteral(value), type: boundType ?? intType)
             instructions.append(.constValue(result: id, value: .intLiteral(value)))
             return id
 
         case .boolLiteral(let value, _):
-            let id = arena.appendExpr(.boolLiteral(value))
+            let id = arena.appendExpr(.boolLiteral(value), type: boundType ?? boolType)
             instructions.append(.constValue(result: id, value: .boolLiteral(value)))
             return id
 
         case .stringLiteral(let value, _):
-            let id = arena.appendExpr(.stringLiteral(value))
+            let id = arena.appendExpr(.stringLiteral(value), type: boundType ?? stringType)
             instructions.append(.constValue(result: id, value: .stringLiteral(value)))
             return id
 
         case .nameRef(let name, _):
             if interner.resolve(name) == "null" {
-                let id = arena.appendExpr(.unit)
+                let id = arena.appendExpr(.unit, type: boundType ?? sema.types.nullableAnyType)
                 instructions.append(.constValue(result: id, value: .unit))
                 return id
             }
             if let symbol = sema.bindings.identifierSymbols[exprID] {
                 if let constant = propertyConstantInitializers[symbol] {
-                    let id = arena.appendExpr(constant)
+                    let id = arena.appendExpr(constant, type: boundType)
                     instructions.append(.constValue(result: id, value: constant))
                     return id
                 }
-                let id = arena.appendExpr(.symbolRef(symbol))
+                let id = arena.appendExpr(.symbolRef(symbol), type: boundType)
                 instructions.append(.constValue(result: id, value: .symbolRef(symbol)))
                 return id
             }
-            let id = arena.appendExpr(.temporary(Int32(arena.expressions.count)))
+            let id = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
             instructions.append(.call(symbol: nil, callee: name, arguments: [], result: id, canThrow: false))
             return id
 
@@ -201,7 +214,7 @@ public final class BuildKIRPhase: CompilerPhase {
                     instructions: &instructions
                 )
             }
-            let unit = arena.appendExpr(.unit)
+            let unit = arena.appendExpr(.unit, type: boundType ?? sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
@@ -236,19 +249,16 @@ public final class BuildKIRPhase: CompilerPhase {
                     instructions: &instructions
                 )
             } else {
-                elseID = arena.appendExpr(.unit)
+                elseID = arena.appendExpr(.unit, type: sema.types.unitType)
                 instructions.append(.constValue(result: elseID, value: .unit))
             }
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)))
-            instructions.append(
-                .call(
-                    symbol: nil,
-                    callee: interner.intern("kk_when_select"),
-                    arguments: [conditionID, thenID, elseID],
-                    result: result,
-                    canThrow: false
-                )
-            )
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
+            instructions.append(.select(
+                condition: conditionID,
+                thenValue: thenID,
+                elseValue: elseID,
+                result: result
+            ))
             return result
 
         case .tryExpr(let bodyExpr, _, _, _):
@@ -281,7 +291,7 @@ public final class BuildKIRPhase: CompilerPhase {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)))
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
             if case .add = op, sema.bindings.exprTypes[exprID] == stringType {
                 instructions.append(
                     .call(
@@ -328,7 +338,7 @@ public final class BuildKIRPhase: CompilerPhase {
                     instructions: &instructions
                 )
             }
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)))
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
             let chosen = sema.bindings.callBindings[exprID]?.chosenCallee
             instructions.append(.call(symbol: chosen, callee: calleeName, arguments: argIDs, result: result, canThrow: false))
             return result
@@ -355,7 +365,7 @@ public final class BuildKIRPhase: CompilerPhase {
                     instructions: &instructions
                 )
             } else {
-                fallbackID = arena.appendExpr(.unit)
+                fallbackID = arena.appendExpr(.unit, type: sema.types.unitType)
                 instructions.append(.constValue(result: fallbackID, value: .unit))
             }
 
@@ -385,7 +395,7 @@ public final class BuildKIRPhase: CompilerPhase {
                     instructions: &instructions
                 )
 
-                let matchesID = arena.appendExpr(.temporary(Int32(arena.expressions.count)))
+                let matchesID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
                 instructions.append(.binary(
                     op: .equal,
                     lhs: subjectID,
@@ -393,13 +403,12 @@ public final class BuildKIRPhase: CompilerPhase {
                     result: matchesID
                 ))
 
-                let nextSelectedID = arena.appendExpr(.temporary(Int32(arena.expressions.count)))
-                instructions.append(.call(
-                    symbol: nil,
-                    callee: interner.intern("kk_when_select"),
-                    arguments: [matchesID, bodyID, selectedID],
-                    result: nextSelectedID,
-                    canThrow: false
+                let nextSelectedID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
+                instructions.append(.select(
+                    condition: matchesID,
+                    thenValue: bodyID,
+                    elseValue: selectedID,
+                    result: nextSelectedID
                 ))
                 selectedID = nextSelectedID
             }
@@ -409,15 +418,26 @@ public final class BuildKIRPhase: CompilerPhase {
 
     private func collectPropertyConstantInitializers(
         ast: ASTModule,
-        sema: SemaModule
+        sema: SemaModule,
+        interner: StringInterner,
+        sourceByFileID: [Int32: String]
     ) -> [SymbolID: KIRExprKind] {
         var mapping: [SymbolID: KIRExprKind] = [:]
         for file in ast.sortedFiles {
             for declID in file.topLevelDecls {
                 guard let decl = ast.arena.decl(declID),
                       case .propertyDecl(let property) = decl,
-                      let symbol = sema.bindings.declSymbols[declID],
-                      let constant = literalConstantExpr(property: property, ast: ast) else {
+                      let symbol = sema.bindings.declSymbols[declID] else {
+                    continue
+                }
+                let constant =
+                    literalConstantExpr(property: property, ast: ast) ??
+                    inlineGetterConstantExpr(
+                        propertyName: interner.resolve(property.name),
+                        source: sourceByFileID[file.fileID.rawValue] ?? "",
+                        interner: interner
+                    )
+                guard let constant else {
                     continue
                 }
                 mapping[symbol] = constant
@@ -435,6 +455,44 @@ public final class BuildKIRPhase: CompilerPhase {
             }
         }
         return mapping
+    }
+
+    private func inlineGetterConstantExpr(
+        propertyName: String,
+        source: String,
+        interner: StringInterner
+    ) -> KIRExprKind? {
+        guard !propertyName.isEmpty else {
+            return nil
+        }
+        let escapedPropertyName = NSRegularExpression.escapedPattern(for: propertyName)
+        let pattern = #"(?m)^\s*(?:val|var)\s+\#(escapedPropertyName)\b[^\n]*\n\s*get\s*\(\s*\)\s*=\s*([^\n;]+)"#
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(
+                in: source,
+                range: NSRange(source.startIndex..<source.endIndex, in: source)
+              ),
+              match.numberOfRanges >= 2,
+              let bodyRange = Range(match.range(at: 1), in: source) else {
+            return nil
+        }
+        let rawBody = source[bodyRange].trimmingCharacters(in: .whitespacesAndNewlines)
+        if rawBody == "true" {
+            return .boolLiteral(true)
+        }
+        if rawBody == "false" {
+            return .boolLiteral(false)
+        }
+        let normalized = rawBody.replacingOccurrences(of: "_", with: "")
+        if let intValue = Int64(normalized) {
+            return .intLiteral(intValue)
+        }
+        if rawBody.hasPrefix("\""), rawBody.hasSuffix("\""), rawBody.count >= 2 {
+            let start = rawBody.index(after: rawBody.startIndex)
+            let end = rawBody.index(before: rawBody.endIndex)
+            return .stringLiteral(interner.intern(String(rawBody[start..<end])))
+        }
+        return nil
     }
 
     private func literalConstantExpr(property: PropertyDecl, ast: ASTModule) -> KIRExprKind? {

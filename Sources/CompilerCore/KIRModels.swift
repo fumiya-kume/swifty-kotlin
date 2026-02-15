@@ -66,6 +66,7 @@ public enum KIRInstruction: Equatable {
     case jumpIfEqual(lhs: KIRExprID, rhs: KIRExprID, target: Int32)
     case constValue(result: KIRExprID, value: KIRExprKind)
     case binary(op: KIRBinaryOp, lhs: KIRExprID, rhs: KIRExprID, result: KIRExprID)
+    case select(condition: KIRExprID, thenValue: KIRExprID, elseValue: KIRExprID, result: KIRExprID)
     case call(symbol: SymbolID?, callee: InternedString, arguments: [KIRExprID], result: KIRExprID?, canThrow: Bool)
     case returnIfEqual(lhs: KIRExprID, rhs: KIRExprID)
     case returnUnit
@@ -137,6 +138,7 @@ public struct KIRFile {
 public final class KIRArena {
     public private(set) var declarations: [KIRDecl] = []
     public private(set) var expressions: [KIRExprKind] = []
+    public private(set) var exprTypes: [KIRExprID: TypeID] = [:]
 
     public init() {}
 
@@ -146,9 +148,12 @@ public final class KIRArena {
         return id
     }
 
-    public func appendExpr(_ expr: KIRExprKind) -> KIRExprID {
+    public func appendExpr(_ expr: KIRExprKind, type: TypeID? = nil) -> KIRExprID {
         let id = KIRExprID(rawValue: Int32(expressions.count))
         expressions.append(expr)
+        if let type {
+            exprTypes[id] = type
+        }
         return id
     }
 
@@ -166,6 +171,17 @@ public final class KIRArena {
             return nil
         }
         return expressions[index]
+    }
+
+    public func setExprType(_ type: TypeID, for id: KIRExprID) {
+        guard expr(id) != nil else {
+            return
+        }
+        exprTypes[id] = type
+    }
+
+    public func exprType(_ id: KIRExprID) -> TypeID? {
+        exprTypes[id]
     }
 
     public func transformFunctions(_ transform: (KIRFunction) -> KIRFunction) {
@@ -267,6 +283,8 @@ public final class KIRModule {
             return "const r\(result.rawValue)=\(value)"
         case .binary(let op, let lhs, let rhs, let result):
             return "binary \(op) r\(lhs.rawValue), r\(rhs.rawValue) -> r\(result.rawValue)"
+        case .select(let condition, let thenValue, let elseValue, let result):
+            return "select r\(condition.rawValue) ? r\(thenValue.rawValue) : r\(elseValue.rawValue) -> r\(result.rawValue)"
         case .call(let symbol, let callee, let arguments, let result, let canThrow):
             let calleeName = interner.resolve(callee)
             let args = arguments.map { "r\($0.rawValue)" }.joined(separator: ", ")

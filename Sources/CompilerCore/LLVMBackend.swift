@@ -324,6 +324,13 @@ public final class LLVMBackend {
                     lines.append("  \(varName(result)) = \(valueExpr(value, interner: interner));")
                 }
 
+            case .select(let condition, let thenValue, let elseValue, let result):
+                ensureDeclared(condition, declared: &declared, lines: &lines)
+                ensureDeclared(thenValue, declared: &declared, lines: &lines)
+                ensureDeclared(elseValue, declared: &declared, lines: &lines)
+                ensureDeclared(result, declared: &declared, lines: &lines)
+                lines.append("  \(varName(result)) = (\(varName(condition)) ? \(varName(thenValue)) : \(varName(elseValue)));")
+
             case .binary(let op, let lhs, let rhs, let result):
                 ensureDeclared(result, declared: &declared, lines: &lines)
                 ensureDeclared(lhs, declared: &declared, lines: &lines)

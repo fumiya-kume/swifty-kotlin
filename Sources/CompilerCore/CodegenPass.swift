@@ -220,6 +220,8 @@ public final class CodegenPhase: CompilerPhase {
                     return "returnValue"
                 case .returnIfEqual(let lhs, let rhs):
                     return "returnIfEqual lhs=\(lhs.rawValue) rhs=\(rhs.rawValue)"
+                case .select(let condition, let thenValue, let elseValue, let result):
+                    return "select condition=\(condition.rawValue) then=\(thenValue.rawValue) else=\(elseValue.rawValue) result=\(result.rawValue)"
                 case .call(let symbol, let callee, let arguments, let result, let canThrow):
                     let args = arguments.map { String($0.rawValue) }.joined(separator: ",")
                     let symbolValue = symbol.map { String($0.rawValue) } ?? "_"

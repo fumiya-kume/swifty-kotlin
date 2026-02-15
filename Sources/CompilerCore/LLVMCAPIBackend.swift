@@ -534,6 +534,9 @@ private struct NativeEmitter {
             case .constValue(let result, let value):
                 values[result.rawValue] = valueForConstant(value, expressionRawID: result.rawValue)
 
+            case .select(_, let thenValue, _, let result):
+                storeResult(result, resolveValue(thenValue))
+
             case .binary(let op, let lhs, let rhs, let result):
                 let lhsValue = resolveValue(lhs)
                 let rhsValue = resolveValue(rhs)
