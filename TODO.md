@@ -95,10 +95,10 @@
 - [x] P3-1: 決定性・エラー規約の固定（spec.md J0）
   - [x] 出力決定性テスト（同一入力/同一オプションで byte 同一）を追加（`.kir` / `.ll` / `.o`）
   - [x] compiler/runtime の panic 経路を診断コード方針に沿って整理
-- [ ] P3-2: 型システムの仕様追従（spec.md J8/J9）
+- [x] P3-2: 型システムの仕様追従（spec.md J8/J9）
   - [x] class/interface 継承関係を `TypeSystem.isSubtype` に反映
   - [x] declaration-site variance と use-site variance 合成規則を強化
-  - [ ] generic constraints の失敗診断精度を改善
+  - [x] generic constraints の失敗診断精度を改善
 - [ ] P3-3: KIR の型付き IR 化強化（spec.md J11/J12）
   - [ ] `if/for/try` など制御構造の KIR 表現を marker 依存から段階的に脱却
   - [ ] KIR value/type 情報の保持を強化し lowering の前提を明確化
@@ -116,7 +116,6 @@
 
 ## In Progress
 
-- [ ] P3-2: 型システムの仕様追従
-  - [x] P3-2a: class/interface 継承関係を `TypeSystem.isSubtype` に反映
-  - [x] P3-2b: variance 合成規則（declaration-site + use-site）を強化
-  - [ ] P3-2c: generic constraints 失敗診断を改善
+- [ ] P3-3: KIR の型付き IR 化強化
+  - [ ] P3-3a: `if/for/try` marker 依存を段階的に除去
+  - [ ] P3-3b: KIR value/type 情報を強化し lowering 前提を明確化
