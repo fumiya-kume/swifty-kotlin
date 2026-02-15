@@ -287,6 +287,111 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
     }
 
+    func testBuildKIRLowersStringAdditionToRuntimeConcatCall() throws {
+        let source = """
+        fun main() = "a" + "b"
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case .function(let function) = decl else {
+                    return nil
+                }
+                return ctx.interner.resolve(function.name) == "main" ? function : nil
+            }.first
+            let body = try XCTUnwrap(mainFunction?.body)
+            let callees = body.compactMap { instruction -> String? in
+                guard case .call(_, let callee, _, _, _) = instruction else {
+                    return nil
+                }
+                return ctx.interner.resolve(callee)
+            }
+
+            XCTAssertTrue(callees.contains("kk_string_concat"))
+            XCTAssertFalse(body.contains { instruction in
+                guard case .binary(let op, _, _, _) = instruction else {
+                    return false
+                }
+                return op == .add
+            })
+        }
+    }
+
+    func testLlvmCapiBackendEmitsRuntimeStringAndCoroutineHelpersInLLVMIR() throws {
+        guard let bindings = LLVMCAPIBindings.load(),
+              bindings.smokeTestContextLifecycle() else {
+            throw XCTSkip("LLVM C API bindings are unavailable in this environment.")
+        }
+
+        let interner = StringInterner()
+        let types = TypeSystem()
+        let arena = KIRArena()
+
+        let left = interner.intern("left")
+        let right = interner.intern("right")
+
+        let leftExpr = arena.appendExpr(.stringLiteral(left))
+        let rightExpr = arena.appendExpr(.stringLiteral(right))
+        let concatResult = arena.appendExpr(.temporary(0))
+        let suspendedResult = arena.appendExpr(.temporary(1))
+        let labelValue = arena.appendExpr(.intLiteral(7))
+        let labelResult = arena.appendExpr(.temporary(2))
+        let throwingResult = arena.appendExpr(.temporary(3))
+
+        let main = KIRFunction(
+            symbol: SymbolID(rawValue: 1200),
+            name: interner.intern("main"),
+            params: [],
+            returnType: types.unitType,
+            body: [
+                .constValue(result: leftExpr, value: .stringLiteral(left)),
+                .constValue(result: rightExpr, value: .stringLiteral(right)),
+                .call(symbol: nil, callee: interner.intern("kk_string_concat"), arguments: [leftExpr, rightExpr], result: concatResult, outThrown: false),
+                .call(symbol: nil, callee: interner.intern("kk_coroutine_suspended"), arguments: [], result: suspendedResult, outThrown: false),
+                .constValue(result: labelValue, value: .intLiteral(7)),
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("kk_coroutine_state_set_label"),
+                    arguments: [suspendedResult, labelValue],
+                    result: labelResult,
+                    outThrown: false
+                ),
+                .call(symbol: nil, callee: interner.intern("external_throwing"), arguments: [], result: throwingResult, outThrown: true),
+                .returnUnit
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+
+        let mainID = arena.appendDecl(.function(main))
+        let module = KIRModule(
+            files: [KIRFile(fileID: FileID(rawValue: 0), decls: [mainID])],
+            arena: arena
+        )
+
+        let backend = LLVMCAPIBackend(
+            target: defaultTargetTriple(),
+            optLevel: .O0,
+            debugInfo: false,
+            diagnostics: DiagnosticEngine(),
+            strictMode: true
+        )
+        let runtime = RuntimeLinkInfo(libraryPaths: [], libraries: [], extraObjects: [])
+        let irPath = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".ll").path
+
+        try backend.emitLLVMIR(module: module, runtime: runtime, outputIRPath: irPath, interner: interner)
+        let ir = try String(contentsOfFile: irPath, encoding: .utf8)
+
+        XCTAssertTrue(ir.contains("@kk_string_from_utf8"))
+        XCTAssertTrue(ir.contains("@kk_string_concat"))
+        XCTAssertTrue(ir.contains("@kk_coroutine_suspended"))
+        XCTAssertTrue(ir.contains("@kk_coroutine_state_set_label"))
+        XCTAssertTrue(ir.contains("@external_throwing"))
+    }
+
     func testLlvmCapiBindingsCandidatePathsHonorEnvironmentOverride() {
         let overridePath = "/tmp/custom-libLLVM.dylib"
         let paths = LLVMCAPIBindings.candidateLibraryPaths(environment: ["KSWIFTK_LLVM_DYLIB": overridePath])
