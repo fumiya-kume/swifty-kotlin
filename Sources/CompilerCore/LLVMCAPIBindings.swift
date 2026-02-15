@@ -42,6 +42,7 @@ final class LLVMCAPIBindings {
     private typealias LLVMBuildMulFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     private typealias LLVMBuildSDivFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     private typealias LLVMBuildICmpFn = @convention(c) (LLVMBuilderRef?, UInt32, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    private typealias LLVMBuildZExtFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMTypeRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     private typealias LLVMBuildCall2Fn = @convention(c) (
         LLVMBuilderRef?,
         LLVMTypeRef?,
@@ -123,6 +124,7 @@ final class LLVMCAPIBindings {
     private let buildMulFn: LLVMBuildMulFn
     private let buildSDivFn: LLVMBuildSDivFn
     private let buildICmpFn: LLVMBuildICmpFn
+    private let buildZExtFn: LLVMBuildZExtFn?
     private let buildCall2Fn: LLVMBuildCall2Fn?
     private let buildCallFn: LLVMBuildCallFn?
     private let constIntFn: LLVMConstIntFn
@@ -174,6 +176,7 @@ final class LLVMCAPIBindings {
         buildMulFn: @escaping LLVMBuildMulFn,
         buildSDivFn: @escaping LLVMBuildSDivFn,
         buildICmpFn: @escaping LLVMBuildICmpFn,
+        buildZExtFn: LLVMBuildZExtFn?,
         buildCall2Fn: LLVMBuildCall2Fn?,
         buildCallFn: LLVMBuildCallFn?,
         constIntFn: @escaping LLVMConstIntFn,
@@ -224,6 +227,7 @@ final class LLVMCAPIBindings {
         self.buildMulFn = buildMulFn
         self.buildSDivFn = buildSDivFn
         self.buildICmpFn = buildICmpFn
+        self.buildZExtFn = buildZExtFn
         self.buildCall2Fn = buildCall2Fn
         self.buildCallFn = buildCallFn
         self.constIntFn = constIntFn
@@ -347,6 +351,7 @@ final class LLVMCAPIBindings {
                 buildMulFn: buildMul,
                 buildSDivFn: buildSDiv,
                 buildICmpFn: buildICmp,
+                buildZExtFn: loadSymbol(handle: handle, name: "LLVMBuildZExt", as: LLVMBuildZExtFn.self),
                 buildCall2Fn: buildCall2,
                 buildCallFn: buildCall,
                 constIntFn: constInt,
@@ -487,6 +492,13 @@ final class LLVMCAPIBindings {
 
     func buildICmpEqual(_ builder: LLVMBuilderRef?, lhs: LLVMValueRef?, rhs: LLVMValueRef?, name: String) -> LLVMValueRef? {
         name.withCString { buildICmpFn(builder, 32, lhs, rhs, $0) }
+    }
+
+    func buildZExt(_ builder: LLVMBuilderRef?, value: LLVMValueRef?, type: LLVMTypeRef?, name: String) -> LLVMValueRef? {
+        guard let buildZExtFn else {
+            return nil
+        }
+        return name.withCString { buildZExtFn(builder, value, type, $0) }
     }
 
     func buildAdd(_ builder: LLVMBuilderRef?, lhs: LLVMValueRef?, rhs: LLVMValueRef?, name: String) -> LLVMValueRef? {
