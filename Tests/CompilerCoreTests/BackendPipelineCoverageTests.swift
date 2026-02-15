@@ -103,6 +103,48 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
     }
 
+    func testSemaLoadsSymbolsFromKklibSearchPath() throws {
+        let librarySource = """
+        package extdemo
+        fun plus(v: Int) = v + 1
+        """
+        try withTemporaryFile(contents: librarySource) { libraryPath in
+            let libraryBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let libraryCtx = makeCompilationContext(
+                inputs: [libraryPath],
+                moduleName: "ExtDemo",
+                emit: .library,
+                outputPath: libraryBase
+            )
+            try runToKIR(libraryCtx)
+            try LoweringPhase().run(libraryCtx)
+            try CodegenPhase().run(libraryCtx)
+
+            let appSource = """
+            import extdemo.plus
+            fun main() = plus(41)
+            """
+            try withTemporaryFile(contents: appSource) { appPath in
+                let appCtx = makeCompilationContext(
+                    inputs: [appPath],
+                    moduleName: "App",
+                    emit: .kirDump,
+                    searchPaths: [libraryBase + ".kklib"]
+                )
+                try runToKIR(appCtx)
+
+                let sema = try XCTUnwrap(appCtx.sema)
+                let importedPlus = sema.symbols.allSymbols().first { symbol in
+                    appCtx.interner.resolve(symbol.name) == "plus" &&
+                    symbol.kind == .function &&
+                    symbol.flags.contains(.synthetic)
+                }
+                XCTAssertNotNil(importedPlus)
+                XCTAssertFalse(appCtx.diagnostics.diagnostics.contains { $0.code == "KSWIFTK-SEMA-0002" })
+            }
+        }
+    }
+
     func testLinkPhaseReportsMissingMainAndCanLinkExecutable() throws {
         try withTemporaryFile(contents: "fun notMain() = 0") { path in
             let out = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
@@ -296,6 +338,12 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }.first
         XCTAssertEqual(loweredSuspend?.params.count, 1)
         XCTAssertEqual(loweredSuspend?.isSuspend, false)
+        let loweredSuspendCallees = loweredSuspend?.body.compactMap { instruction -> String? in
+            guard case .call(_, let callee, _, _, _) = instruction else { return nil }
+            return interner.resolve(callee)
+        } ?? []
+        XCTAssertTrue(loweredSuspendCallees.contains("kk_coroutine_state_enter"))
+        XCTAssertTrue(loweredSuspendCallees.contains("kk_coroutine_state_exit"))
 
         let callThrowFlags: [String: [Bool]] = loweredMain.body.reduce(into: [:]) { partial, instruction in
             guard case .call(_, let callee, _, _, let outThrown) = instruction else {

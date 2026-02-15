@@ -61,7 +61,8 @@ func makeCompilationContext(
     inputs: [String],
     moduleName: String = "TestModule",
     emit: EmitMode = .kirDump,
-    outputPath: String? = nil
+    outputPath: String? = nil,
+    searchPaths: [String] = []
 ) -> CompilationContext {
     let destination = outputPath ?? FileManager.default.temporaryDirectory
         .appendingPathComponent(UUID().uuidString)
@@ -71,6 +72,7 @@ func makeCompilationContext(
         inputs: inputs,
         outputPath: destination,
         emit: emit,
+        searchPaths: searchPaths,
         target: defaultTargetTriple()
     )
     return CompilationContext(
