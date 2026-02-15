@@ -5,7 +5,7 @@ public final class NameMangler {
 
     public func mangle(
         moduleName: String,
-        symbol: Symbol,
+        symbol: SemanticSymbol,
         signature: String
     ) -> String {
         let fqPart = symbol.fqName.map { encode(component: $0.rawValue) }.joined(separator: "_")

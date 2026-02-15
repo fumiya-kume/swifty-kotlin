@@ -16,22 +16,6 @@ public struct NodeID: Hashable {
     }
 }
 
-public struct SymbolID: Hashable {
-    public let rawValue: Int32
-
-    public init(rawValue: Int32 = invalidID) {
-        self.rawValue = rawValue
-    }
-}
-
-public struct TypeID: Hashable {
-    public let rawValue: Int32
-
-    public init(rawValue: Int32 = invalidID) {
-        self.rawValue = rawValue
-    }
-}
-
 public struct DeclID: Hashable {
     public let rawValue: Int32
 

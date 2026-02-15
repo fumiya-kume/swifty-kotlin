@@ -6,7 +6,7 @@ public struct SymbolID: Hashable {
     }
 }
 
-public enum SymbolKind {
+public enum SymbolKind: Equatable {
     case package
     case `class`
     case `interface`
@@ -38,7 +38,7 @@ public struct SymbolFlags: OptionSet {
     public static let `static` = SymbolFlags(rawValue: 1 << 4)
 }
 
-public struct Symbol {
+public struct SemanticSymbol {
     public let id: SymbolID
     public let kind: SymbolKind
     public let name: InternedString
@@ -47,6 +47,8 @@ public struct Symbol {
     public let visibility: Visibility
     public let flags: SymbolFlags
 }
+
+public typealias SemaSymbol = SemanticSymbol
 
 public struct FunctionSignature {
     public let parameterTypes: [TypeID]
@@ -106,7 +108,7 @@ public final class FunctionScope: BaseScope {}
 public final class BlockScope: BaseScope {}
 
 public final class SymbolTable {
-    private var symbolsStorage: [Symbol] = []
+    private var symbolsStorage: [SemanticSymbol] = []
     private var byFQName: [[InternedString]: SymbolID] = [:]
     private var functionSignatures: [SymbolID: FunctionSignature] = [:]
 
@@ -116,11 +118,11 @@ public final class SymbolTable {
         symbolsStorage.count
     }
 
-    public func allSymbols() -> [Symbol] {
+    public func allSymbols() -> [SemanticSymbol] {
         symbolsStorage
     }
 
-    public func symbol(_ id: SymbolID) -> Symbol? {
+    public func symbol(_ id: SymbolID) -> SemanticSymbol? {
         let index = Int(id.rawValue)
         guard index >= 0 && index < symbolsStorage.count else {
             return nil
@@ -144,7 +146,7 @@ public final class SymbolTable {
             return existing
         }
         let id = SymbolID(rawValue: Int32(symbolsStorage.count))
-        let symbol = Symbol(
+        let symbol = SemanticSymbol(
             id: id,
             kind: kind,
             name: name,
