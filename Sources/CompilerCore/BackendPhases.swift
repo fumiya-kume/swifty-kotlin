@@ -47,6 +47,11 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
                 )
             }
         }
+        bindInheritanceEdges(
+            ast: ast,
+            symbols: symbols,
+            bindings: bindings
+        )
 
         // Pass B: lightweight body checks.
         for file in ast.files.sorted(by: { $0.fileID.rawValue < $1.fileID.rawValue }) {
@@ -101,7 +106,7 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
         switch decl {
         case .classDecl(let classDecl):
             declaration = (
-                kind: .class,
+                kind: classSymbolKind(for: classDecl),
                 name: classDecl.name,
                 range: classDecl.range,
                 visibility: visibility(from: classDecl.modifiers),
@@ -171,8 +176,30 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
         bindings.bindDecl(declID, symbol: symbol)
 
         switch decl {
-        case .classDecl:
+        case .classDecl(let classDecl):
             _ = types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
+            if declaration.kind == .enumClass {
+                for entry in classDecl.enumEntries {
+                    let entryFQName = fqName + [entry.name]
+                    let existingEntrySymbols = symbols.lookupAll(fqName: entryFQName).compactMap { symbols.symbol($0) }
+                    if hasDeclarationConflict(newKind: .field, existing: existingEntrySymbols) {
+                        diagnostics.error(
+                            "KSWIFTK-SEMA-0001",
+                            "Duplicate declaration in the same package scope.",
+                            range: entry.range
+                        )
+                    }
+                    let entrySymbol = symbols.define(
+                        kind: .field,
+                        name: entry.name,
+                        fqName: entryFQName,
+                        declSite: entry.range,
+                        visibility: .public,
+                        flags: []
+                    )
+                    scope.insert(entrySymbol)
+                }
+            }
 
         case .objectDecl:
             _ = types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
@@ -261,19 +288,90 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
                 for: symbol
             )
 
-        case .propertyDecl(let propertyDecl):
-            let type = resolveTypeRef(
-                propertyDecl.type,
-                ast: ast,
-                symbols: symbols,
-                types: types,
-                interner: interner
-            ) ?? types.make(.any(.nullable))
-            _ = type
-
-        case .typeAliasDecl, .enumEntry:
+        case .propertyDecl, .typeAliasDecl, .enumEntry:
             break
         }
+    }
+
+    private func bindInheritanceEdges(
+        ast: ASTModule,
+        symbols: SymbolTable,
+        bindings: BindingTable
+    ) {
+        for file in ast.files.sorted(by: { $0.fileID.rawValue < $1.fileID.rawValue }) {
+            for declID in file.topLevelDecls {
+                guard let symbol = bindings.declSymbols[declID],
+                      let decl = ast.arena.decl(declID) else {
+                    continue
+                }
+                let superTypeRefs: [TypeRefID]
+                switch decl {
+                case .classDecl(let classDecl):
+                    superTypeRefs = classDecl.superTypes
+                case .objectDecl(let objectDecl):
+                    superTypeRefs = objectDecl.superTypes
+                default:
+                    continue
+                }
+
+                var superSymbols: [SymbolID] = []
+                for superTypeRef in superTypeRefs {
+                    if let superSymbol = resolveNominalSymbolFromTypeRef(
+                        superTypeRef,
+                        currentPackage: file.packageFQName,
+                        ast: ast,
+                        symbols: symbols
+                    ) {
+                        superSymbols.append(superSymbol)
+                    }
+                }
+                let uniqueSuperSymbols = Array(Set(superSymbols)).sorted(by: { $0.rawValue < $1.rawValue })
+                symbols.setDirectSupertypes(uniqueSuperSymbols, for: symbol)
+            }
+        }
+    }
+
+    private func resolveNominalSymbolFromTypeRef(
+        _ typeRefID: TypeRefID,
+        currentPackage: [InternedString],
+        ast: ASTModule,
+        symbols: SymbolTable
+    ) -> SymbolID? {
+        guard let typeRef = ast.arena.typeRef(typeRefID) else {
+            return nil
+        }
+        let path: [InternedString]
+        switch typeRef {
+        case .named(let refPath, _):
+            path = refPath
+        }
+        guard !path.isEmpty else {
+            return nil
+        }
+
+        var candidatePaths: [[InternedString]] = [path]
+        if path.count == 1 && !currentPackage.isEmpty {
+            candidatePaths.append(currentPackage + path)
+        }
+
+        for candidatePath in candidatePaths {
+            if let symbol = symbols.lookupAll(fqName: candidatePath)
+                .compactMap({ symbols.symbol($0) })
+                .first(where: { isNominalTypeSymbol($0.kind) })?.id {
+                return symbol
+            }
+        }
+        return nil
+    }
+
+    private func classSymbolKind(for classDecl: ClassDecl) -> SymbolKind {
+        if classDecl.modifiers.contains(.annotationClass) {
+            return .annotationClass
+        }
+        if classDecl.modifiers.contains(.enumModifier) {
+            return .enumClass
+        }
+        return .class
     }
 
     private func resolveTypeRef(
@@ -424,6 +522,9 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
         if modifiers.contains(.inline) {
             value.insert(.inlineFunction)
         }
+        if modifiers.contains(.sealed) {
+            value.insert(.sealedType)
+        }
         return value
     }
 }
@@ -445,7 +546,7 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
         let solver = ConstraintSolver()
         let resolver = OverloadResolver()
         let dataFlow = DataFlowAnalyzer()
-        let semaCtx = SemaContext(
+        let semaCtx = SemaModule(
             symbols: sema.symbols,
             types: sema.types,
             bindings: sema.bindings,
@@ -464,7 +565,16 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
             }
         }
 
+        let fileScopes = buildFileScopes(
+            ast: ast,
+            sema: sema,
+            interner: ctx.interner
+        )
+
         for file in ast.files {
+            guard let fileScope = fileScopes[file.fileID.rawValue] else {
+                continue
+            }
             for declID in file.topLevelDecls {
                 guard let decl = ast.arena.decl(declID),
                       let declSymbol = sema.bindings.declSymbols[declID] else {
@@ -501,6 +611,8 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                         resolver: resolver,
                         dataFlow: dataFlow,
                         interner: ctx.interner,
+                        scope: fileScope,
+                        implicitReceiverType: signature.receiverType,
                         expectedType: signature.returnType
                     )
 
@@ -517,6 +629,8 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                             resolver: resolver,
                             dataFlow: dataFlow,
                             interner: ctx.interner,
+                            scope: fileScope,
+                            implicitReceiverType: signature.receiverType,
                             expectedType: expectedTypeForExpr
                         )
                     }
@@ -562,11 +676,13 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
         _ id: ExprID,
         ast: ASTModule,
         sema: SemaModule,
-        semaCtx: SemaContext,
+        semaCtx: SemaModule,
         locals: inout [InternedString: (type: TypeID, symbol: SymbolID)],
         resolver: OverloadResolver,
         dataFlow: DataFlowAnalyzer,
         interner: StringInterner,
+        scope: Scope,
+        implicitReceiverType: TypeID? = nil,
         expectedType: TypeID? = nil
     ) -> TypeID {
         guard let expr = ast.arena.expr(id) else {
@@ -600,7 +716,7 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                 sema.bindings.bindExprType(id, type: local.type)
                 return local.type
             }
-            let candidates = sema.symbols.allSymbols().filter { $0.name == name }
+            let candidates = scope.lookup(name).compactMap { sema.symbols.symbol($0) }
             if let first = candidates.first {
                 sema.bindings.bindIdentifier(id, symbol: first.id)
             }
@@ -618,6 +734,8 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                 resolver: resolver,
                 dataFlow: dataFlow,
                 interner: interner,
+                scope: scope,
+                implicitReceiverType: implicitReceiverType,
                 expectedType: nil
             )
             let rhs = inferExpr(
@@ -629,6 +747,8 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                 resolver: resolver,
                 dataFlow: dataFlow,
                 interner: interner,
+                scope: scope,
+                implicitReceiverType: implicitReceiverType,
                 expectedType: nil
             )
             let type: TypeID
@@ -658,6 +778,8 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                     resolver: resolver,
                     dataFlow: dataFlow,
                     interner: interner,
+                    scope: scope,
+                    implicitReceiverType: implicitReceiverType,
                     expectedType: nil
                 )
             }
@@ -670,15 +792,17 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                 calleeName = nil
             }
 
-            let candidates = sema.symbols.allSymbols().filter { symbol in
-                guard symbol.kind == .function || symbol.kind == .constructor else {
-                    return false
+            let candidates: [SymbolID]
+            if let calleeName {
+                candidates = scope.lookup(calleeName).filter { candidate in
+                    guard let symbol = sema.symbols.symbol(candidate) else {
+                        return false
+                    }
+                    return symbol.kind == .function || symbol.kind == .constructor
                 }
-                guard let calleeName else {
-                    return false
-                }
-                return symbol.name == calleeName
-            }.map(\.id)
+            } else {
+                candidates = []
+            }
 
             if candidates.isEmpty {
                 sema.bindings.bindExprType(id, type: sema.types.errorType)
@@ -690,6 +814,7 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                 candidates: candidates,
                 call: CallExpr(range: range, calleeName: calleeName ?? InternedString(rawValue: invalidID), args: args),
                 expectedType: expectedType,
+                implicitReceiverType: implicitReceiverType,
                 ctx: semaCtx
             )
             if let diagnostic = resolved.diagnostic {
@@ -713,12 +838,11 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
             )
             let returnType: TypeID
             if let signature = sema.symbols.functionSignature(for: chosen) {
-                let typeVarBySymbol = makeTypeVarBySymbol(signature.typeParameterSymbols)
-                returnType = substituteTypeParameters(
+                let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
+                returnType = sema.types.substituteTypeParameters(
                     in: signature.returnType,
                     substitution: resolved.substitutedTypeArguments,
-                    typeVarBySymbol: typeVarBySymbol,
-                    typeSystem: sema.types
+                    typeVarBySymbol: typeVarBySymbol
                 )
             } else {
                 returnType = sema.types.anyType
@@ -736,12 +860,39 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                 resolver: resolver,
                 dataFlow: dataFlow,
                 interner: interner,
+                scope: scope,
+                implicitReceiverType: implicitReceiverType,
                 expectedType: nil
             )
+            let subjectLocalBinding: (name: InternedString, type: TypeID, symbol: SymbolID, isStable: Bool)? = {
+                guard let subjectExpr = ast.arena.expr(subjectID),
+                      case .nameRef(let subjectName, _) = subjectExpr,
+                      let local = locals[subjectName] else {
+                    return nil
+                }
+                return (
+                    subjectName,
+                    local.type,
+                    local.symbol,
+                    isStableLocalSymbol(local.symbol, sema: sema)
+                )
+            }()
+            let hasExplicitNullBranch = branches.contains { branch in
+                guard let condition = branch.condition,
+                      let conditionExpr = ast.arena.expr(condition),
+                      case .nameRef(let name, _) = conditionExpr else {
+                    return false
+                }
+                return interner.resolve(name) == "null"
+            }
             var branchTypes: [TypeID] = []
             var covered: Set<InternedString> = []
             var hasNullCase = false
+            var hasTrueCase = false
+            var hasFalseCase = false
             for branch in branches {
+                var isNullBranch = false
+                var branchSmartCastType: TypeID?
                 if let cond = branch.condition {
                     let condType = inferExpr(
                         cond,
@@ -752,25 +903,57 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                         resolver: resolver,
                         dataFlow: dataFlow,
                         interner: interner,
+                        scope: scope,
+                        implicitReceiverType: implicitReceiverType,
                         expectedType: nil
                     )
-                    if condType == boolType, let condExpr = ast.arena.expr(cond) {
+                    if let condExpr = ast.arena.expr(cond) {
                         switch condExpr {
                         case .boolLiteral(true, _):
-                            covered.insert(InternedString(rawValue: 1))
+                            if condType == boolType {
+                                hasTrueCase = true
+                            }
+                            covered.insert(interner.intern("true"))
+
                         case .boolLiteral(false, _):
-                            covered.insert(InternedString(rawValue: 2))
+                            if condType == boolType {
+                                hasFalseCase = true
+                            }
+                            covered.insert(interner.intern("false"))
+
                         case .nameRef(let name, _):
                             if interner.resolve(name) == "null" {
                                 hasNullCase = true
+                                isNullBranch = true
+                            } else {
+                                covered.insert(name)
                             }
+
                         default:
                             break
                         }
-                    } else if let condExpr = ast.arena.expr(cond),
-                              case .nameRef(let name, _) = condExpr,
-                              interner.resolve(name) == "null" {
-                        hasNullCase = true
+                    }
+                    branchSmartCastType = smartCastTypeForWhenSubjectCase(
+                        conditionID: cond,
+                        subjectType: subjectType,
+                        ast: ast,
+                        sema: sema,
+                        interner: interner
+                    )
+                }
+                var branchLocals = locals
+                if let subjectLocalBinding,
+                   subjectLocalBinding.isStable {
+                    if let branchSmartCastType {
+                        branchLocals[subjectLocalBinding.name] = (
+                            branchSmartCastType,
+                            subjectLocalBinding.symbol
+                        )
+                    } else if hasExplicitNullBranch && !isNullBranch {
+                        branchLocals[subjectLocalBinding.name] = (
+                            makeNonNullable(subjectLocalBinding.type, types: sema.types),
+                            subjectLocalBinding.symbol
+                        )
                     }
                 }
                 branchTypes.append(
@@ -779,26 +962,39 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                         ast: ast,
                         sema: sema,
                         semaCtx: semaCtx,
-                        locals: &locals,
+                        locals: &branchLocals,
                         resolver: resolver,
                         dataFlow: dataFlow,
                         interner: interner,
+                        scope: scope,
+                        implicitReceiverType: implicitReceiverType,
                         expectedType: expectedType
                     )
                 )
             }
 
             if let elseExpr {
+                var elseLocals = locals
+                if let subjectLocalBinding,
+                   subjectLocalBinding.isStable,
+                   hasExplicitNullBranch {
+                    elseLocals[subjectLocalBinding.name] = (
+                        makeNonNullable(subjectLocalBinding.type, types: sema.types),
+                        subjectLocalBinding.symbol
+                    )
+                }
                 branchTypes.append(
                     inferExpr(
                         elseExpr,
                         ast: ast,
                         sema: sema,
                         semaCtx: semaCtx,
-                        locals: &locals,
+                        locals: &elseLocals,
                         resolver: resolver,
                         dataFlow: dataFlow,
                         interner: interner,
+                        scope: scope,
+                        implicitReceiverType: implicitReceiverType,
                         expectedType: expectedType
                     )
                 )
@@ -807,7 +1003,9 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
             let summary = WhenBranchSummary(
                 coveredSymbols: covered,
                 hasElse: elseExpr != nil,
-                hasNullCase: hasNullCase
+                hasNullCase: hasNullCase,
+                hasTrueCase: hasTrueCase,
+                hasFalseCase: hasFalseCase
             )
             if !dataFlow.isWhenExhaustive(subjectType: subjectType, branches: summary, sema: sema) {
                 semaCtx.diagnostics.error(
@@ -823,122 +1021,269 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
         }
     }
 
-    private func makeTypeVarBySymbol(_ symbols: [SymbolID]) -> [SymbolID: TypeVarID] {
-        var mapping: [SymbolID: TypeVarID] = [:]
-        var index: Int32 = 0
-        for symbol in symbols {
-            mapping[symbol] = TypeVarID(rawValue: index)
-            index += 1
-        }
-        return mapping
-    }
+    private func makeNonNullable(_ type: TypeID, types: TypeSystem) -> TypeID {
+        switch types.kind(of: type) {
+        case .any(.nullable):
+            return types.anyType
 
-    private func substituteTypeParameters(
-        in type: TypeID,
-        substitution: [TypeVarID: TypeID],
-        typeVarBySymbol: [SymbolID: TypeVarID],
-        typeSystem: TypeSystem
-    ) -> TypeID {
-        let kind = typeSystem.kind(of: type)
-        switch kind {
-        case .typeParam(let typeParam):
-            if let variable = typeVarBySymbol[typeParam.symbol],
-               let concrete = substitution[variable] {
-                return concrete
-            }
-            return type
+        case .primitive(let primitive, .nullable):
+            return types.make(.primitive(primitive, .nonNull))
 
         case .classType(let classType):
-            let newArgs: [TypeArg] = classType.args.map { arg in
-                switch arg {
-                case .invariant(let inner):
-                    return .invariant(substituteTypeParameters(
-                        in: inner,
-                        substitution: substitution,
-                        typeVarBySymbol: typeVarBySymbol,
-                        typeSystem: typeSystem
-                    ))
-                case .out(let inner):
-                    return .out(substituteTypeParameters(
-                        in: inner,
-                        substitution: substitution,
-                        typeVarBySymbol: typeVarBySymbol,
-                        typeSystem: typeSystem
-                    ))
-                case .in(let inner):
-                    return .in(substituteTypeParameters(
-                        in: inner,
-                        substitution: substitution,
-                        typeVarBySymbol: typeVarBySymbol,
-                        typeSystem: typeSystem
-                    ))
-                case .star:
-                    return .star
-                }
-            }
-            if newArgs == classType.args {
+            guard classType.nullability == .nullable else {
                 return type
             }
-            return typeSystem.make(.classType(ClassType(
+            return types.make(.classType(ClassType(
                 classSymbol: classType.classSymbol,
-                args: newArgs,
-                nullability: classType.nullability
+                args: classType.args,
+                nullability: .nonNull
+            )))
+
+        case .typeParam(let typeParam):
+            guard typeParam.nullability == .nullable else {
+                return type
+            }
+            return types.make(.typeParam(TypeParamType(
+                symbol: typeParam.symbol,
+                nullability: .nonNull
             )))
 
         case .functionType(let functionType):
-            let newReceiver = functionType.receiver.map { receiver in
-                substituteTypeParameters(
-                    in: receiver,
-                    substitution: substitution,
-                    typeVarBySymbol: typeVarBySymbol,
-                    typeSystem: typeSystem
-                )
-            }
-            let newParams = functionType.params.map { param in
-                substituteTypeParameters(
-                    in: param,
-                    substitution: substitution,
-                    typeVarBySymbol: typeVarBySymbol,
-                    typeSystem: typeSystem
-                )
-            }
-            let newReturn = substituteTypeParameters(
-                in: functionType.returnType,
-                substitution: substitution,
-                typeVarBySymbol: typeVarBySymbol,
-                typeSystem: typeSystem
-            )
-            if newReceiver == functionType.receiver &&
-                newParams == functionType.params &&
-                newReturn == functionType.returnType {
+            guard functionType.nullability == .nullable else {
                 return type
             }
-            return typeSystem.make(.functionType(FunctionType(
-                receiver: newReceiver,
-                params: newParams,
-                returnType: newReturn,
+            return types.make(.functionType(FunctionType(
+                receiver: functionType.receiver,
+                params: functionType.params,
+                returnType: functionType.returnType,
                 isSuspend: functionType.isSuspend,
-                nullability: functionType.nullability
+                nullability: .nonNull
             )))
-
-        case .intersection(let parts):
-            let newParts = parts.map { part in
-                substituteTypeParameters(
-                    in: part,
-                    substitution: substitution,
-                    typeVarBySymbol: typeVarBySymbol,
-                    typeSystem: typeSystem
-                )
-            }
-            if newParts == parts {
-                return type
-            }
-            return typeSystem.make(.intersection(newParts))
 
         default:
             return type
         }
     }
+
+    private func isStableLocalSymbol(_ symbolID: SymbolID, sema: SemaModule) -> Bool {
+        guard let symbol = sema.symbols.symbol(symbolID) else {
+            return false
+        }
+        switch symbol.kind {
+        case .valueParameter, .local:
+            return !symbol.flags.contains(.mutable)
+        default:
+            return false
+        }
+    }
+
+    private func smartCastTypeForWhenSubjectCase(
+        conditionID: ExprID,
+        subjectType: TypeID,
+        ast: ASTModule,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID? {
+        guard let conditionExpr = ast.arena.expr(conditionID) else {
+            return nil
+        }
+        switch conditionExpr {
+        case .boolLiteral:
+            switch sema.types.kind(of: subjectType) {
+            case .primitive(.boolean, _):
+                return sema.types.make(.primitive(.boolean, .nonNull))
+            default:
+                return nil
+            }
+
+        case .nameRef(let name, _):
+            if interner.resolve(name) == "null" {
+                return nil
+            }
+            guard let conditionSymbolID = sema.bindings.identifierSymbols[conditionID],
+                  let conditionSymbol = sema.symbols.symbol(conditionSymbolID) else {
+                return nil
+            }
+            switch conditionSymbol.kind {
+            case .field:
+                guard let enumOwner = enumOwnerSymbol(for: conditionSymbol, symbols: sema.symbols),
+                      nominalSymbol(of: subjectType, types: sema.types) == enumOwner else {
+                    return nil
+                }
+                return sema.types.make(.classType(ClassType(
+                    classSymbol: enumOwner,
+                    args: [],
+                    nullability: .nonNull
+                )))
+
+            case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
+                guard let subjectNominal = nominalSymbol(of: subjectType, types: sema.types),
+                      isNominalSubtype(conditionSymbolID, of: subjectNominal, symbols: sema.symbols) else {
+                    return nil
+                }
+                return sema.types.make(.classType(ClassType(
+                    classSymbol: conditionSymbolID,
+                    args: [],
+                    nullability: .nonNull
+                )))
+
+            default:
+                return nil
+            }
+
+        default:
+            return nil
+        }
+    }
+
+    private func nominalSymbol(of type: TypeID, types: TypeSystem) -> SymbolID? {
+        if case .classType(let classType) = types.kind(of: type) {
+            return classType.classSymbol
+        }
+        return nil
+    }
+
+    private func enumOwnerSymbol(for entrySymbol: SemanticSymbol, symbols: SymbolTable) -> SymbolID? {
+        guard entrySymbol.kind == .field,
+              entrySymbol.fqName.count >= 2 else {
+            return nil
+        }
+        let ownerFQName = Array(entrySymbol.fqName.dropLast())
+        return symbols.lookupAll(fqName: ownerFQName).first(where: { symbolID in
+            symbols.symbol(symbolID)?.kind == .enumClass
+        })
+    }
+
+    private func isNominalSubtype(
+        _ candidate: SymbolID,
+        of base: SymbolID,
+        symbols: SymbolTable
+    ) -> Bool {
+        if candidate == base {
+            return true
+        }
+        var queue = symbols.directSupertypes(for: candidate)
+        var visited: Set<SymbolID> = [candidate]
+        while !queue.isEmpty {
+            let next = queue.removeFirst()
+            if next == base {
+                return true
+            }
+            if visited.insert(next).inserted {
+                queue.append(contentsOf: symbols.directSupertypes(for: next))
+            }
+        }
+        return false
+    }
+
+    private func buildFileScopes(
+        ast: ASTModule,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> [Int32: FileScope] {
+        let topLevelSymbolsByPackage = collectTopLevelSymbolsByPackage(ast: ast, sema: sema)
+        let defaultImportPackages = makeDefaultImportPackages(interner: interner)
+        var fileScopes: [Int32: FileScope] = [:]
+
+        for file in ast.files.sorted(by: { $0.fileID.rawValue < $1.fileID.rawValue }) {
+            let defaultImportScope = ImportScope(parent: nil, symbols: sema.symbols)
+            for packagePath in defaultImportPackages {
+                for importedSymbol in topLevelSymbolsByPackage[packagePath] ?? [] {
+                    defaultImportScope.insert(importedSymbol)
+                }
+            }
+
+            let wildcardImportScope = ImportScope(parent: defaultImportScope, symbols: sema.symbols)
+            let explicitImportScope = ImportScope(parent: wildcardImportScope, symbols: sema.symbols)
+            populateImportScopes(
+                for: file,
+                sema: sema,
+                explicitImportScope: explicitImportScope,
+                wildcardImportScope: wildcardImportScope,
+                topLevelSymbolsByPackage: topLevelSymbolsByPackage
+            )
+
+            let packageScope = PackageScope(parent: explicitImportScope, symbols: sema.symbols)
+            for packageSymbol in topLevelSymbolsByPackage[file.packageFQName] ?? [] {
+                packageScope.insert(packageSymbol)
+            }
+
+            let fileScope = FileScope(parent: packageScope, symbols: sema.symbols)
+            fileScopes[file.fileID.rawValue] = fileScope
+        }
+
+        return fileScopes
+    }
+
+    private func collectTopLevelSymbolsByPackage(
+        ast: ASTModule,
+        sema: SemaModule
+    ) -> [[InternedString]: [SymbolID]] {
+        var mapping: [[InternedString]: [SymbolID]] = [:]
+        for file in ast.files.sorted(by: { $0.fileID.rawValue < $1.fileID.rawValue }) {
+            for declID in file.topLevelDecls {
+                guard let symbol = sema.bindings.declSymbols[declID] else {
+                    continue
+                }
+                mapping[file.packageFQName, default: []].append(symbol)
+            }
+        }
+        return mapping
+    }
+
+    private func populateImportScopes(
+        for file: ASTFile,
+        sema: SemaModule,
+        explicitImportScope: ImportScope,
+        wildcardImportScope: ImportScope,
+        topLevelSymbolsByPackage: [[InternedString]: [SymbolID]]
+    ) {
+        for importDecl in file.imports {
+            let resolved = sema.symbols.lookupAll(fqName: importDecl.path)
+            if resolved.isEmpty {
+                continue
+            }
+
+            let importedSymbols = resolved.filter { symbolID in
+                guard let symbol = sema.symbols.symbol(symbolID) else {
+                    return false
+                }
+                return symbol.kind != .package
+            }
+            if !importedSymbols.isEmpty {
+                for importedSymbol in importedSymbols {
+                    explicitImportScope.insert(importedSymbol)
+                }
+                continue
+            }
+
+            let hasPackageImport = resolved.contains { symbolID in
+                sema.symbols.symbol(symbolID)?.kind == .package
+            }
+            if hasPackageImport {
+                for importedSymbol in topLevelSymbolsByPackage[importDecl.path] ?? [] {
+                    wildcardImportScope.insert(importedSymbol)
+                }
+            }
+        }
+    }
+
+    private func makeDefaultImportPackages(interner: StringInterner) -> [[InternedString]] {
+        let packages: [[String]] = [
+            ["kotlin"],
+            ["kotlin", "annotation"],
+            ["kotlin", "collections"],
+            ["kotlin", "comparisons"],
+            ["kotlin", "io"],
+            ["kotlin", "ranges"],
+            ["kotlin", "sequences"],
+            ["kotlin", "text"]
+        ]
+        return packages.map { segments in
+            segments.map { interner.intern($0) }
+        }
+    }
+
 }
 
 public final class SemaPassesPhase: CompilerPhase {

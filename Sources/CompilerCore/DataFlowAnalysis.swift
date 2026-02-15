@@ -22,11 +22,21 @@ public struct WhenBranchSummary {
     public let coveredSymbols: Set<InternedString>
     public let hasElse: Bool
     public let hasNullCase: Bool
+    public let hasTrueCase: Bool
+    public let hasFalseCase: Bool
 
-    public init(coveredSymbols: Set<InternedString>, hasElse: Bool, hasNullCase: Bool = false) {
+    public init(
+        coveredSymbols: Set<InternedString>,
+        hasElse: Bool,
+        hasNullCase: Bool = false,
+        hasTrueCase: Bool? = nil,
+        hasFalseCase: Bool? = nil
+    ) {
         self.coveredSymbols = coveredSymbols
         self.hasElse = hasElse
         self.hasNullCase = hasNullCase
+        self.hasTrueCase = hasTrueCase ?? coveredSymbols.contains(InternedString(rawValue: 1))
+        self.hasFalseCase = hasFalseCase ?? coveredSymbols.contains(InternedString(rawValue: 2))
     }
 }
 
@@ -64,18 +74,73 @@ public final class DataFlowAnalyzer {
         let kind = sema.types.kind(of: subjectType)
         switch kind {
         case .primitive(.boolean, .nonNull):
-            // `true` and `false` branches are both required when `else` is absent.
-            return branches.coveredSymbols.count >= 2
+            return branches.hasTrueCase && branches.hasFalseCase
         case .primitive(.boolean, .nullable):
-            // Nullable Boolean needs true/false plus explicit null case.
-            return branches.coveredSymbols.count >= 2 && branches.hasNullCase
-        case .classType:
-            // For now rely on else branch for class-like types.
-            return false
+            return branches.hasTrueCase && branches.hasFalseCase && branches.hasNullCase
+        case .classType(let classType):
+            return isClassWhenExhaustive(
+                classType: classType,
+                branches: branches,
+                sema: sema
+            )
         case .any(.nullable):
             return false
         default:
             return false
         }
+    }
+
+    private func isClassWhenExhaustive(
+        classType: ClassType,
+        branches: WhenBranchSummary,
+        sema: SemaModule
+    ) -> Bool {
+        guard let classSymbol = sema.symbols.symbol(classType.classSymbol) else {
+            return false
+        }
+
+        switch classSymbol.kind {
+        case .enumClass:
+            let enumEntryNames = enumEntryNames(for: classSymbol, sema: sema)
+            guard !enumEntryNames.isEmpty else {
+                return false
+            }
+            let hasAllEnumEntries = enumEntryNames.isSubset(of: branches.coveredSymbols)
+            if classType.nullability == .nullable {
+                return hasAllEnumEntries && branches.hasNullCase
+            }
+            return hasAllEnumEntries
+
+        default:
+            if classSymbol.flags.contains(.sealedType) {
+                let subtypeNames = Set(sema.symbols.directSubtypes(of: classSymbol.id).compactMap { subtype in
+                    sema.symbols.symbol(subtype)?.name
+                })
+                guard !subtypeNames.isEmpty else {
+                    return false
+                }
+                let hasAllSealedSubtypes = subtypeNames.isSubset(of: branches.coveredSymbols)
+                if classType.nullability == .nullable {
+                    return hasAllSealedSubtypes && branches.hasNullCase
+                }
+                return hasAllSealedSubtypes
+            }
+            return false
+        }
+    }
+
+    private func enumEntryNames(for enumSymbol: SemanticSymbol, sema: SemaModule) -> Set<InternedString> {
+        let enumFQName = enumSymbol.fqName
+        let expectedCount = enumFQName.count + 1
+        let entries = sema.symbols.allSymbols().filter { symbol in
+            guard symbol.kind == .field else {
+                return false
+            }
+            guard symbol.fqName.count == expectedCount else {
+                return false
+            }
+            return Array(symbol.fqName.dropLast()) == enumFQName
+        }
+        return Set(entries.map(\.name))
     }
 }
