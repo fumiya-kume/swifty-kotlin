@@ -333,6 +333,52 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
             sema.bindings.bindExprType(id, type: resolvedType)
             return resolvedType
 
+        case .returnExpr(let value, _):
+            let resolved: TypeID
+            if let value {
+                resolved = inferExpr(value, ctx: ctx, locals: &locals, expectedType: expectedType)
+            } else {
+                resolved = sema.types.unitType
+            }
+            sema.bindings.bindExprType(id, type: resolved)
+            return resolved
+
+        case .ifExpr(let condition, let thenExpr, let elseExpr, _):
+            let conditionType = inferExpr(condition, ctx: ctx, locals: &locals)
+            if conditionType != boolType {
+                emitSubtypeConstraint(
+                    left: conditionType,
+                    right: boolType,
+                    range: ast.arena.exprRange(condition),
+                    solver: ConstraintSolver(),
+                    sema: sema,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+            }
+            let thenType = inferExpr(thenExpr, ctx: ctx, locals: &locals, expectedType: expectedType)
+            let resolvedType: TypeID
+            if let elseExpr {
+                let elseType = inferExpr(elseExpr, ctx: ctx, locals: &locals, expectedType: expectedType)
+                resolvedType = sema.types.lub([thenType, elseType])
+            } else {
+                resolvedType = sema.types.unitType
+            }
+            sema.bindings.bindExprType(id, type: resolvedType)
+            return resolvedType
+
+        case .tryExpr(let body, let catchBodies, let finallyExpr, _):
+            var branchTypes: [TypeID] = []
+            branchTypes.append(inferExpr(body, ctx: ctx, locals: &locals, expectedType: expectedType))
+            for catchBody in catchBodies {
+                branchTypes.append(inferExpr(catchBody, ctx: ctx, locals: &locals, expectedType: expectedType))
+            }
+            if let finallyExpr {
+                _ = inferExpr(finallyExpr, ctx: ctx, locals: &locals, expectedType: nil)
+            }
+            let resolvedType = sema.types.lub(branchTypes)
+            sema.bindings.bindExprType(id, type: resolvedType)
+            return resolvedType
+
         case .binary(let op, let lhsID, let rhsID, _):
             let lhs = inferExpr(lhsID, ctx: ctx, locals: &locals)
             let rhs = inferExpr(rhsID, ctx: ctx, locals: &locals)
@@ -794,4 +840,3 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
     }
 
 }
-
