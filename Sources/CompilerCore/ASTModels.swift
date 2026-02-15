@@ -81,6 +81,7 @@ public struct ClassDecl {
     public let typeParams: [TypeParamDecl]
     public let primaryConstructorParams: [ValueParamDecl]
     public let superTypes: [TypeRefID]
+    public let nestedTypeAliases: [TypeAliasDecl]
     public let enumEntries: [EnumEntryDecl]
     public let initBlocks: [FunctionBody]
 
@@ -91,6 +92,7 @@ public struct ClassDecl {
         typeParams: [TypeParamDecl] = [],
         primaryConstructorParams: [ValueParamDecl] = [],
         superTypes: [TypeRefID] = [],
+        nestedTypeAliases: [TypeAliasDecl] = [],
         enumEntries: [EnumEntryDecl] = [],
         initBlocks: [FunctionBody] = []
     ) {
@@ -100,6 +102,7 @@ public struct ClassDecl {
         self.typeParams = typeParams
         self.primaryConstructorParams = primaryConstructorParams
         self.superTypes = superTypes
+        self.nestedTypeAliases = nestedTypeAliases
         self.enumEntries = enumEntries
         self.initBlocks = initBlocks
     }
@@ -110,6 +113,7 @@ public struct ObjectDecl {
     public let name: InternedString
     public let modifiers: Modifiers
     public let superTypes: [TypeRefID]
+    public let nestedTypeAliases: [TypeAliasDecl]
     public let initBlocks: [FunctionBody]
 
     public init(
@@ -117,12 +121,14 @@ public struct ObjectDecl {
         name: InternedString,
         modifiers: Modifiers,
         superTypes: [TypeRefID] = [],
+        nestedTypeAliases: [TypeAliasDecl] = [],
         initBlocks: [FunctionBody] = []
     ) {
         self.range = range
         self.name = name
         self.modifiers = modifiers
         self.superTypes = superTypes
+        self.nestedTypeAliases = nestedTypeAliases
         self.initBlocks = initBlocks
     }
 }
@@ -308,6 +314,9 @@ public enum Expr: Equatable {
     case call(callee: ExprID, args: [CallArgument], range: SourceRange)
     case binary(op: BinaryOp, lhs: ExprID, rhs: ExprID, range: SourceRange)
     case whenExpr(subject: ExprID, branches: [WhenBranch], elseExpr: ExprID?, range: SourceRange)
+    case returnExpr(value: ExprID?, range: SourceRange)
+    case ifExpr(condition: ExprID, thenExpr: ExprID, elseExpr: ExprID?, range: SourceRange)
+    case tryExpr(body: ExprID, catchBodies: [ExprID], finallyExpr: ExprID?, range: SourceRange)
 }
 
 public final class ASTArena {
@@ -360,7 +369,10 @@ public final class ASTArena {
              .nameRef(_, let range),
              .call(_, _, let range),
              .binary(_, _, _, let range),
-             .whenExpr(_, _, _, let range):
+             .whenExpr(_, _, _, let range),
+             .returnExpr(_, let range),
+             .ifExpr(_, _, _, let range),
+             .tryExpr(_, _, _, let range):
             return range
         }
     }

@@ -22,6 +22,7 @@ extension BuildASTPhase {
             typeParams: declarationTypeParameters(from: nodeID, in: arena, interner: interner),
             primaryConstructorParams: declarationValueParameters(from: nodeID, in: arena, interner: interner, astArena: astArena),
             superTypes: declarationSuperTypes(from: nodeID, in: arena, interner: interner, astArena: astArena),
+            nestedTypeAliases: declarationNestedTypeAliases(from: nodeID, in: arena, interner: interner),
             enumEntries: declarationEnumEntries(from: nodeID, in: arena, interner: interner),
             initBlocks: declarationInitBlocks(from: nodeID, in: arena, interner: interner, astArena: astArena)
         )
@@ -35,6 +36,7 @@ extension BuildASTPhase {
             name: declarationName(from: nodeID, in: arena, interner: interner),
             modifiers: modifiers,
             superTypes: declarationSuperTypes(from: nodeID, in: arena, interner: interner, astArena: astArena),
+            nestedTypeAliases: declarationNestedTypeAliases(from: nodeID, in: arena, interner: interner),
             initBlocks: declarationInitBlocks(from: nodeID, in: arena, interner: interner, astArena: astArena)
         )
     }
@@ -210,6 +212,32 @@ extension BuildASTPhase {
             }
         }
         return entries
+    }
+
+    func declarationNestedTypeAliases(
+        from nodeID: NodeID,
+        in arena: SyntaxArena,
+        interner: StringInterner
+    ) -> [TypeAliasDecl] {
+        guard let bodyBlockID = arena.children(of: nodeID).compactMap({ child -> NodeID? in
+            guard case .node(let childID) = child,
+                  arena.node(childID).kind == .block else {
+                return nil
+            }
+            return childID
+        }).first else {
+            return []
+        }
+
+        var aliases: [TypeAliasDecl] = []
+        for child in arena.children(of: bodyBlockID) {
+            guard case .node(let childID) = child,
+                  arena.node(childID).kind == .typeAliasDecl else {
+                continue
+            }
+            aliases.append(makeTypeAliasDecl(from: childID, in: arena, interner: interner))
+        }
+        return aliases
     }
 
     func declarationSuperTypes(
