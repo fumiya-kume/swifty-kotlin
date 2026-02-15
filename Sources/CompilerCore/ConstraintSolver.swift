@@ -26,6 +26,30 @@ public struct Constraint {
     }
 }
 
+public enum ConstraintOperand: Equatable {
+    case type(TypeID)
+    case variable(TypeVarID)
+}
+
+public struct VariableConstraint {
+    public let kind: ConstraintKind
+    public let left: ConstraintOperand
+    public let right: ConstraintOperand
+    public let blameRange: SourceRange?
+
+    public init(
+        kind: ConstraintKind,
+        left: ConstraintOperand,
+        right: ConstraintOperand,
+        blameRange: SourceRange? = nil
+    ) {
+        self.kind = kind
+        self.left = left
+        self.right = right
+        self.blameRange = blameRange
+    }
+}
+
 public struct Solution {
     public let substitution: [TypeVarID: TypeID]
     public let isSuccess: Bool
@@ -46,35 +70,211 @@ public final class ConstraintSolver {
         constraints: [Constraint],
         typeSystem: TypeSystem
     ) -> Solution {
+        let converted = constraints.map { constraint in
+            VariableConstraint(
+                kind: constraint.kind,
+                left: .type(constraint.left),
+                right: .type(constraint.right),
+                blameRange: constraint.blameRange
+            )
+        }
+        return solve(vars: vars, constraints: converted, typeSystem: typeSystem)
+    }
+
+    public func solve(
+        vars: [TypeVarID],
+        constraints: [VariableConstraint],
+        typeSystem: TypeSystem
+    ) -> Solution {
+        var lowerBounds: [TypeVarID: [TypeID]] = [:]
+        var upperBounds: [TypeVarID: [TypeID]] = [:]
+        var varRelations: [(left: TypeVarID, right: TypeVarID, blame: SourceRange?)] = []
+
+        for variable in vars {
+            lowerBounds[variable] = []
+            upperBounds[variable] = []
+        }
+
+        for constraint in constraints {
+            let relations = normalize(constraint)
+            for relation in relations {
+                switch (relation.left, relation.right) {
+                case let (.type(leftType), .type(rightType)):
+                    if !typeSystem.isSubtype(leftType, rightType) {
+                        return failureSolution(vars: vars, typeSystem: typeSystem, blameRange: relation.blame)
+                    }
+
+                case let (.variable(variable), .type(boundType)):
+                    appendUnique(boundType, to: &upperBounds[variable, default: []])
+
+                case let (.type(boundType), .variable(variable)):
+                    appendUnique(boundType, to: &lowerBounds[variable, default: []])
+
+                case let (.variable(leftVar), .variable(rightVar)):
+                    varRelations.append((leftVar, rightVar, relation.blame))
+                }
+            }
+        }
+
+        if !varRelations.isEmpty {
+            for _ in 0..<max(1, vars.count) {
+                var changed = false
+                for relation in varRelations {
+                    let leftVar = relation.left
+                    let rightVar = relation.right
+
+                    let rightUpper = upperBounds[rightVar, default: []]
+                    for bound in rightUpper {
+                        if appendUnique(bound, to: &upperBounds[leftVar, default: []]) {
+                            changed = true
+                        }
+                    }
+
+                    let leftLower = lowerBounds[leftVar, default: []]
+                    for bound in leftLower {
+                        if appendUnique(bound, to: &lowerBounds[rightVar, default: []]) {
+                            changed = true
+                        }
+                    }
+                }
+                if !changed {
+                    break
+                }
+            }
+        }
+
+        var substitution: [TypeVarID: TypeID] = [:]
+        for variable in vars {
+            let lowers = lowerBounds[variable, default: []]
+            let uppers = upperBounds[variable, default: []]
+            if lowers.isEmpty && uppers.isEmpty {
+                substitution[variable] = typeSystem.errorType
+                continue
+            }
+
+            let candidate: TypeID
+            if lowers.isEmpty {
+                candidate = typeSystem.glb(uppers)
+            } else if uppers.isEmpty {
+                candidate = typeSystem.lub(lowers)
+            } else {
+                let lowerCandidate = typeSystem.lub(lowers)
+                let upperCandidate = typeSystem.glb(uppers)
+                guard typeSystem.isSubtype(lowerCandidate, upperCandidate) else {
+                    let blameRange = firstRelevantBlameRange(for: variable, relations: constraints)
+                    return failureSolution(vars: vars, typeSystem: typeSystem, blameRange: blameRange)
+                }
+                candidate = lowerCandidate
+            }
+
+            if candidate == typeSystem.errorType {
+                let blameRange = firstRelevantBlameRange(for: variable, relations: constraints)
+                return failureSolution(vars: vars, typeSystem: typeSystem, blameRange: blameRange)
+            }
+            substitution[variable] = candidate
+        }
+
+        for constraint in constraints {
+            let ok = isConstraintSatisfied(constraint, substitution: substitution, typeSystem: typeSystem)
+            if !ok {
+                return failureSolution(vars: vars, typeSystem: typeSystem, blameRange: constraint.blameRange)
+            }
+        }
+
+        for variable in vars where substitution[variable] == nil {
+            substitution[variable] = typeSystem.errorType
+        }
+        return Solution(substitution: substitution, isSuccess: true, failure: nil)
+    }
+
+    private func normalize(_ constraint: VariableConstraint) -> [(left: ConstraintOperand, right: ConstraintOperand, blame: SourceRange?)] {
+        switch constraint.kind {
+        case .subtype:
+            return [(constraint.left, constraint.right, constraint.blameRange)]
+        case .equal:
+            return [
+                (constraint.left, constraint.right, constraint.blameRange),
+                (constraint.right, constraint.left, constraint.blameRange)
+            ]
+        case .supertype:
+            return [(constraint.right, constraint.left, constraint.blameRange)]
+        }
+    }
+
+    private func isConstraintSatisfied(
+        _ constraint: VariableConstraint,
+        substitution: [TypeVarID: TypeID],
+        typeSystem: TypeSystem
+    ) -> Bool {
+        guard let left = resolve(constraint.left, substitution: substitution),
+              let right = resolve(constraint.right, substitution: substitution) else {
+            return false
+        }
+        switch constraint.kind {
+        case .subtype:
+            return typeSystem.isSubtype(left, right)
+        case .equal:
+            return typeSystem.isSubtype(left, right) && typeSystem.isSubtype(right, left)
+        case .supertype:
+            return typeSystem.isSubtype(right, left)
+        }
+    }
+
+    private func resolve(_ operand: ConstraintOperand, substitution: [TypeVarID: TypeID]) -> TypeID? {
+        switch operand {
+        case .type(let type):
+            return type
+        case .variable(let variable):
+            return substitution[variable]
+        }
+    }
+
+    @discardableResult
+    private func appendUnique(_ value: TypeID, to array: inout [TypeID]) -> Bool {
+        if array.contains(value) {
+            return false
+        }
+        array.append(value)
+        return true
+    }
+
+    private func firstRelevantBlameRange(
+        for variable: TypeVarID,
+        relations: [VariableConstraint]
+    ) -> SourceRange? {
+        for relation in relations {
+            switch (relation.left, relation.right) {
+            case (.variable(let lhs), _):
+                if lhs == variable {
+                    return relation.blameRange
+                }
+            case (_, .variable(let rhs)):
+                if rhs == variable {
+                    return relation.blameRange
+                }
+            default:
+                continue
+            }
+        }
+        return nil
+    }
+
+    private func failureSolution(
+        vars: [TypeVarID],
+        typeSystem: TypeSystem,
+        blameRange: SourceRange?
+    ) -> Solution {
         var substitution: [TypeVarID: TypeID] = [:]
         for variable in vars {
             substitution[variable] = typeSystem.errorType
         }
-
-        for constraint in constraints {
-            let ok: Bool
-            switch constraint.kind {
-            case .subtype:
-                ok = typeSystem.isSubtype(constraint.left, constraint.right)
-            case .equal:
-                ok = typeSystem.isSubtype(constraint.left, constraint.right)
-                    && typeSystem.isSubtype(constraint.right, constraint.left)
-            case .supertype:
-                ok = typeSystem.isSubtype(constraint.right, constraint.left)
-            }
-
-            if !ok {
-                let diagnostic = Diagnostic(
-                    severity: .error,
-                    code: "KSWIFTK-TYPE-0001",
-                    message: "Type constraint could not be satisfied.",
-                    primaryRange: constraint.blameRange,
-                    secondaryRanges: []
-                )
-                return Solution(substitution: substitution, isSuccess: false, failure: diagnostic)
-            }
-        }
-
-        return Solution(substitution: substitution, isSuccess: true, failure: nil)
+        let diagnostic = Diagnostic(
+            severity: .error,
+            code: "KSWIFTK-TYPE-0001",
+            message: "Type constraint could not be satisfied.",
+            primaryRange: blameRange,
+            secondaryRanges: []
+        )
+        return Solution(substitution: substitution, isSuccess: false, failure: diagnostic)
     }
 }
