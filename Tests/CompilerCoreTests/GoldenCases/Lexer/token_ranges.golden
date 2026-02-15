@@ -1,0 +1,22 @@
+keyword(package) f0:0..7
+identifier(golden) f0:8..14
+symbol(.) f0:14..15
+identifier(lexer) f0:15..20
+keyword(fun) f0:22..25
+identifier(main) f0:26..30
+symbol(() f0:30..31
+symbol()) f0:31..32
+symbol({) f0:33..34
+keyword(val) f0:39..42
+identifier(x) f0:43..44
+symbol(=) f0:45..46
+intLiteral(42) f0:47..49
+keyword(val) f0:54..57
+identifier(s) f0:58..59
+symbol(=) f0:60..61
+stringQuote f0:62..63
+stringSegment(hi ) f0:63..66
+templateSimpleNameStart f0:66..67
+identifier(x) f0:67..68
+stringQuote f0:68..69
+symbol(}) f0:70..71

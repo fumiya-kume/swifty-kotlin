@@ -5,6 +5,8 @@ final class KIRModelsCoverageTests: XCTestCase {
     func testArenaAppendLookupTransformAndModuleDerivedCounts() {
         let interner = StringInterner()
         let symbols = SymbolTable()
+        let types = TypeSystem()
+        let intType = types.make(.primitive(.int, .nonNull))
         let symA = symbols.define(
             kind: .function,
             name: interner.intern("alpha"),
@@ -23,7 +25,7 @@ final class KIRModelsCoverageTests: XCTestCase {
         )
 
         let arena = KIRArena()
-        let expr0 = arena.appendExpr(.intLiteral(10))
+        let expr0 = arena.appendExpr(.intLiteral(10), type: intType)
         let expr1 = arena.appendExpr(.boolLiteral(true))
         let expr2 = arena.appendExpr(.stringLiteral(interner.intern("hi")))
         let expr3 = arena.appendExpr(.symbolRef(symA))
@@ -33,8 +35,8 @@ final class KIRModelsCoverageTests: XCTestCase {
         let fnA = KIRFunction(
             symbol: symA,
             name: interner.intern("alpha"),
-            params: [KIRParameter(symbol: symA, type: TypeSystem().anyType)],
-            returnType: TypeSystem().anyType,
+            params: [KIRParameter(symbol: symA, type: types.anyType)],
+            returnType: types.anyType,
             body: [
                 .nop,
                 .beginBlock,
@@ -61,14 +63,14 @@ final class KIRModelsCoverageTests: XCTestCase {
             symbol: symB,
             name: interner.intern("beta"),
             params: [],
-            returnType: TypeSystem().unitType,
+            returnType: types.unitType,
             body: [.returnUnit],
             isSuspend: true,
             isInline: false
         )
 
         let declFnA = arena.appendDecl(.function(fnA))
-        _ = arena.appendDecl(.global(KIRGlobal(symbol: symA, type: TypeSystem().anyType)))
+        _ = arena.appendDecl(.global(KIRGlobal(symbol: symA, type: types.anyType)))
         _ = arena.appendDecl(.nominalType(KIRNominalType(symbol: symB)))
         _ = arena.appendDecl(.function(fnB))
 
@@ -76,6 +78,9 @@ final class KIRModelsCoverageTests: XCTestCase {
         XCTAssertNil(arena.decl(KIRDeclID(rawValue: -1)))
         XCTAssertNil(arena.decl(KIRDeclID(rawValue: 999)))
         XCTAssertEqual(arena.expr(expr0), .intLiteral(10))
+        XCTAssertEqual(arena.exprType(expr0), intType)
+        arena.setExprType(types.unitType, for: expr5)
+        XCTAssertEqual(arena.exprType(expr5), types.unitType)
         XCTAssertNil(arena.expr(KIRExprID(rawValue: -1)))
         XCTAssertNil(arena.expr(KIRExprID(rawValue: 999)))
 

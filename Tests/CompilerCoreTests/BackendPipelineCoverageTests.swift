@@ -459,7 +459,12 @@ final class BackendPipelineCoverageTests: XCTestCase {
         let suspendedResult = arena.appendExpr(.temporary(1))
         let labelValue = arena.appendExpr(.intLiteral(7))
         let labelResult = arena.appendExpr(.temporary(2))
-        let throwingResult = arena.appendExpr(.temporary(3))
+        let spillSlotValue = arena.appendExpr(.intLiteral(0))
+        let spillStored = arena.appendExpr(.temporary(3))
+        let spillLoaded = arena.appendExpr(.temporary(4))
+        let completionStored = arena.appendExpr(.temporary(5))
+        let completionLoaded = arena.appendExpr(.temporary(6))
+        let throwingResult = arena.appendExpr(.temporary(7))
 
         let main = KIRFunction(
             symbol: SymbolID(rawValue: 1200),
@@ -477,6 +482,35 @@ final class BackendPipelineCoverageTests: XCTestCase {
                     callee: interner.intern("kk_coroutine_state_set_label"),
                     arguments: [suspendedResult, labelValue],
                     result: labelResult,
+                    canThrow: false
+                ),
+                .constValue(result: spillSlotValue, value: .intLiteral(0)),
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("kk_coroutine_state_set_spill"),
+                    arguments: [suspendedResult, spillSlotValue, concatResult],
+                    result: spillStored,
+                    canThrow: false
+                ),
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("kk_coroutine_state_get_spill"),
+                    arguments: [suspendedResult, spillSlotValue],
+                    result: spillLoaded,
+                    canThrow: false
+                ),
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("kk_coroutine_state_set_completion"),
+                    arguments: [suspendedResult, spillLoaded],
+                    result: completionStored,
+                    canThrow: false
+                ),
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("kk_coroutine_state_get_completion"),
+                    arguments: [suspendedResult],
+                    result: completionLoaded,
                     canThrow: false
                 ),
                 .call(symbol: nil, callee: interner.intern("external_throwing"), arguments: [], result: throwingResult, canThrow: true),
@@ -509,6 +543,10 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertTrue(ir.contains("@kk_string_concat"))
         XCTAssertTrue(ir.contains("@kk_coroutine_suspended"))
         XCTAssertTrue(ir.contains("@kk_coroutine_state_set_label"))
+        XCTAssertTrue(ir.contains("@kk_coroutine_state_set_spill"))
+        XCTAssertTrue(ir.contains("@kk_coroutine_state_get_spill"))
+        XCTAssertTrue(ir.contains("@kk_coroutine_state_set_completion"))
+        XCTAssertTrue(ir.contains("@kk_coroutine_state_get_completion"))
         XCTAssertTrue(ir.contains("@external_throwing"))
     }
 
@@ -871,7 +909,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: objectPath))
     }
 
-    func testLoweringRewritesMarkerCallsAndNormalizesEmptyFunctionBody() throws {
+    func testLoweringRewritesCallsAndNormalizesEmptyFunctionBody() throws {
         let interner = StringInterner()
         let arena = KIRArena()
 
@@ -883,6 +921,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         let v0 = arena.appendExpr(.temporary(0))
         let v1 = arena.appendExpr(.temporary(1))
         let v2 = arena.appendExpr(.temporary(2))
+        let v3 = arena.appendExpr(.temporary(3))
 
         let mainFn = KIRFunction(
             symbol: mainSym,
@@ -890,8 +929,9 @@ final class BackendPipelineCoverageTests: XCTestCase {
             params: [],
             returnType: TypeSystem().unitType,
             body: [
-                .call(symbol: nil, callee: interner.intern("__for_expr__"), arguments: [v0], result: v1, canThrow: false),
-                .call(symbol: nil, callee: interner.intern("__when_expr__"), arguments: [v0], result: v1, canThrow: false),
+                .call(symbol: nil, callee: interner.intern("iterator"), arguments: [v0], result: v3, canThrow: false),
+                .call(symbol: nil, callee: interner.intern("kk_for_lowered"), arguments: [v3], result: v1, canThrow: false),
+                .select(condition: v0, thenValue: v1, elseValue: v2, result: v1),
                 .call(symbol: nil, callee: interner.intern("get"), arguments: [v0], result: v1, canThrow: false),
                 .call(symbol: nil, callee: interner.intern("set"), arguments: [v0], result: v1, canThrow: false),
                 .call(symbol: nil, callee: interner.intern("<lambda>"), arguments: [v0], result: v1, canThrow: false),
@@ -972,7 +1012,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertTrue(callees.contains("kk_lambda_invoke"))
         XCTAssertFalse(callees.contains("inlineTarget"))
         XCTAssertFalse(callees.contains("inlined_inlineTarget"))
-        XCTAssertTrue(callees.contains("kk_coroutine_suspended"))
+        XCTAssertTrue(callees.contains("kk_coroutine_continuation_new"))
         XCTAssertTrue(callees.contains("kk_suspend_suspendTarget"))
 
         let loweredSuspend = module.arena.declarations.compactMap { decl -> KIRFunction? in
@@ -989,6 +1029,8 @@ final class BackendPipelineCoverageTests: XCTestCase {
         } ?? []
         XCTAssertTrue(loweredSuspendCallees.contains("kk_coroutine_state_enter"))
         XCTAssertTrue(loweredSuspendCallees.contains("kk_coroutine_state_set_label"))
+        XCTAssertTrue(loweredSuspendCallees.contains("kk_coroutine_state_set_completion"))
+        XCTAssertTrue(loweredSuspendCallees.contains("kk_coroutine_state_get_completion"))
         XCTAssertTrue(loweredSuspendCallees.contains("kk_coroutine_state_exit"))
         let dispatchJumpCount = loweredSuspend?.body.filter { instruction in
             if case .jumpIfEqual = instruction {
@@ -1023,6 +1065,8 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertEqual(loweredSuspendThrowFlags["kk_suspend_suspendTarget"]?.allSatisfy({ $0 == true }), true)
         XCTAssertEqual(loweredSuspendThrowFlags["kk_coroutine_suspended"]?.allSatisfy({ $0 == false }), true)
         XCTAssertEqual(loweredSuspendThrowFlags["kk_coroutine_state_set_label"]?.allSatisfy({ $0 == false }), true)
+        XCTAssertEqual(loweredSuspendThrowFlags["kk_coroutine_state_set_completion"]?.allSatisfy({ $0 == false }), true)
+        XCTAssertEqual(loweredSuspendThrowFlags["kk_coroutine_state_get_completion"]?.allSatisfy({ $0 == false }), true)
 
         let callThrowFlags: [String: [Bool]] = loweredMain.body.reduce(into: [:]) { partial, instruction in
             guard case .call(_, let callee, _, _, let canThrow) = instruction else {
@@ -1031,7 +1075,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             let name = interner.resolve(callee)
             partial[name, default: []].append(canThrow)
         }
-        XCTAssertEqual(callThrowFlags["kk_coroutine_suspended"]?.allSatisfy({ $0 == false }), true)
+        XCTAssertEqual(callThrowFlags["kk_coroutine_continuation_new"]?.allSatisfy({ $0 == false }), true)
         XCTAssertEqual(callThrowFlags["kk_suspend_suspendTarget"]?.allSatisfy({ $0 == true }), true)
 
         guard case .function(let loweredEmpty)? = module.arena.decl(emptyID) else {
@@ -1209,6 +1253,208 @@ final class BackendPipelineCoverageTests: XCTestCase {
             return false
         } ?? false
         XCTAssertTrue(hasOriginalBranch)
+    }
+
+    func testCoroutineLoweringSpillsAndReloadsLiveValuesAcrossSuspension() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let types = TypeSystem()
+
+        let suspendSym = SymbolID(rawValue: 1900)
+        let liveValue = arena.appendExpr(.temporary(0))
+        let callResult = arena.appendExpr(.temporary(1))
+        let summedResult = arena.appendExpr(.temporary(2))
+
+        let suspendFn = KIRFunction(
+            symbol: suspendSym,
+            name: interner.intern("suspendTarget"),
+            params: [],
+            returnType: types.make(.primitive(.int, .nonNull)),
+            body: [
+                .constValue(result: liveValue, value: .intLiteral(41)),
+                .call(symbol: suspendSym, callee: interner.intern("suspendTarget"), arguments: [], result: callResult, canThrow: false),
+                .binary(op: .add, lhs: liveValue, rhs: callResult, result: summedResult),
+                .returnValue(summedResult)
+            ],
+            isSuspend: true,
+            isInline: false
+        )
+
+        let suspendID = arena.appendDecl(.function(suspendFn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [suspendID])], arena: arena)
+        let options = CompilerOptions(
+            moduleName: "CoroutineSpill",
+            inputs: [],
+            outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+            emit: .kirDump,
+            target: defaultTargetTriple()
+        )
+        let ctx = CompilationContext(
+            options: options,
+            sourceManager: SourceManager(),
+            diagnostics: DiagnosticEngine(),
+            interner: interner
+        )
+        ctx.kir = module
+
+        try LoweringPhase().run(ctx)
+
+        let loweredSuspend = module.arena.declarations.compactMap { decl -> KIRFunction? in
+            guard case .function(let function) = decl else {
+                return nil
+            }
+            return interner.resolve(function.name) == "kk_suspend_suspendTarget" ? function : nil
+        }.first
+        XCTAssertNotNil(loweredSuspend)
+
+        let loweredCalls = loweredSuspend?.body.compactMap { instruction -> String? in
+            guard case .call(_, let callee, _, _, _) = instruction else {
+                return nil
+            }
+            return interner.resolve(callee)
+        } ?? []
+        XCTAssertTrue(loweredCalls.contains("kk_coroutine_state_set_spill"))
+        XCTAssertTrue(loweredCalls.contains("kk_coroutine_state_get_spill"))
+        XCTAssertTrue(loweredCalls.contains("kk_coroutine_state_set_completion"))
+        XCTAssertTrue(loweredCalls.contains("kk_coroutine_state_get_completion"))
+
+        let setSpillCount = loweredCalls.filter { $0 == "kk_coroutine_state_set_spill" }.count
+        let getSpillCount = loweredCalls.filter { $0 == "kk_coroutine_state_get_spill" }.count
+        XCTAssertEqual(setSpillCount, 1)
+        XCTAssertEqual(getSpillCount, 1)
+
+        let throwFlags: [String: [Bool]] = loweredSuspend?.body.reduce(into: [:]) { partial, instruction in
+            guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+                return
+            }
+            partial[interner.resolve(callee), default: []].append(canThrow)
+        } ?? [:]
+        XCTAssertEqual(throwFlags["kk_suspend_suspendTarget"]?.allSatisfy({ $0 == true }), true)
+        XCTAssertEqual(throwFlags["kk_coroutine_state_set_spill"]?.allSatisfy({ $0 == false }), true)
+        XCTAssertEqual(throwFlags["kk_coroutine_state_get_spill"]?.allSatisfy({ $0 == false }), true)
+        XCTAssertEqual(throwFlags["kk_coroutine_state_set_completion"]?.allSatisfy({ $0 == false }), true)
+        XCTAssertEqual(throwFlags["kk_coroutine_state_get_completion"]?.allSatisfy({ $0 == false }), true)
+    }
+
+    func testSuspendExceptionPropagationKeepsThrowingChannelAcrossSuspendChain() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let types = TypeSystem()
+
+        let mainSymbol = SymbolID(rawValue: 2100)
+        let topSymbol = SymbolID(rawValue: 2101)
+        let leafSymbol = SymbolID(rawValue: 2102)
+
+        let mainResult = arena.appendExpr(.temporary(0))
+        let topResult = arena.appendExpr(.temporary(1))
+        let leafResult = arena.appendExpr(.temporary(2))
+
+        let mainFunction = KIRFunction(
+            symbol: mainSymbol,
+            name: interner.intern("main"),
+            params: [],
+            returnType: types.unitType,
+            body: [
+                .call(symbol: topSymbol, callee: interner.intern("top"), arguments: [], result: mainResult, canThrow: false),
+                .returnValue(mainResult)
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let topFunction = KIRFunction(
+            symbol: topSymbol,
+            name: interner.intern("top"),
+            params: [],
+            returnType: types.unitType,
+            body: [
+                .call(symbol: leafSymbol, callee: interner.intern("leaf"), arguments: [], result: topResult, canThrow: false),
+                .returnValue(topResult)
+            ],
+            isSuspend: true,
+            isInline: false
+        )
+        let leafFunction = KIRFunction(
+            symbol: leafSymbol,
+            name: interner.intern("leaf"),
+            params: [],
+            returnType: types.unitType,
+            body: [
+                .call(symbol: nil, callee: interner.intern("external_throwing"), arguments: [], result: leafResult, canThrow: false),
+                .returnValue(leafResult)
+            ],
+            isSuspend: true,
+            isInline: false
+        )
+
+        let mainID = arena.appendDecl(.function(mainFunction))
+        _ = arena.appendDecl(.function(topFunction))
+        _ = arena.appendDecl(.function(leafFunction))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [mainID])], arena: arena)
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(
+                moduleName: "CoroutineThrowFlags",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            sourceManager: SourceManager(),
+            diagnostics: DiagnosticEngine(),
+            interner: interner
+        )
+        ctx.kir = module
+
+        try LoweringPhase().run(ctx)
+
+        let loweredMain = module.arena.declarations.compactMap { decl -> KIRFunction? in
+            guard case .function(let function) = decl else {
+                return nil
+            }
+            return interner.resolve(function.name) == "main" ? function : nil
+        }.first
+        let loweredTop = module.arena.declarations.compactMap { decl -> KIRFunction? in
+            guard case .function(let function) = decl else {
+                return nil
+            }
+            return interner.resolve(function.name) == "kk_suspend_top" ? function : nil
+        }.first
+        let loweredLeaf = module.arena.declarations.compactMap { decl -> KIRFunction? in
+            guard case .function(let function) = decl else {
+                return nil
+            }
+            return interner.resolve(function.name) == "kk_suspend_leaf" ? function : nil
+        }.first
+
+        XCTAssertNotNil(loweredMain)
+        XCTAssertNotNil(loweredTop)
+        XCTAssertNotNil(loweredLeaf)
+
+        let mainThrowFlags: [String: [Bool]] = loweredMain?.body.reduce(into: [:]) { partial, instruction in
+            guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+                return
+            }
+            partial[interner.resolve(callee), default: []].append(canThrow)
+        } ?? [:]
+        XCTAssertEqual(mainThrowFlags["kk_suspend_top"]?.allSatisfy({ $0 == true }), true)
+
+        let topThrowFlags: [String: [Bool]] = loweredTop?.body.reduce(into: [:]) { partial, instruction in
+            guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+                return
+            }
+            partial[interner.resolve(callee), default: []].append(canThrow)
+        } ?? [:]
+        XCTAssertEqual(topThrowFlags["kk_suspend_leaf"]?.allSatisfy({ $0 == true }), true)
+        XCTAssertEqual(topThrowFlags["kk_coroutine_state_set_label"]?.allSatisfy({ $0 == false }), true)
+        XCTAssertEqual(topThrowFlags["kk_coroutine_state_set_completion"]?.allSatisfy({ $0 == false }), true)
+
+        let leafThrowFlags: [String: [Bool]] = loweredLeaf?.body.reduce(into: [:]) { partial, instruction in
+            guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+                return
+            }
+            partial[interner.resolve(callee), default: []].append(canThrow)
+        } ?? [:]
+        XCTAssertEqual(leafThrowFlags["external_throwing"]?.allSatisfy({ $0 == true }), true)
     }
 
     func testInlineLoweringExpandsInlineBodyAndRewritesResultUse() throws {
@@ -1663,6 +1909,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         let kir = try XCTUnwrap(ctx.kir)
         XCTAssertGreaterThanOrEqual(kir.functionCount, 2)
         XCTAssertFalse(kir.executedLowerings.isEmpty)
+        XCTAssertFalse(kir.arena.exprTypes.isEmpty)
         XCTAssertFalse((ctx.sema?.bindings.exprTypes ?? [:]).isEmpty)
     }
 

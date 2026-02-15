@@ -17,6 +17,10 @@ Options:
   --java <path>      Path to java command (default: java)
   --keep-temp        Keep per-test temporary directories
   -h, --help         Show this help
+
+Examples:
+  bash Scripts/diff_kotlinc.sh Scripts/diff_cases
+  bash Scripts/diff_kotlinc.sh path/to/program.kt
 USAGE
 }
 

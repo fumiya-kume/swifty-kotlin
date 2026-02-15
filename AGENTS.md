@@ -19,6 +19,7 @@ Run from repository root.
 swift build
 swift build -c release
 swift test
+swift test --filter SmokeTests
 ```
 
 Run the compiler locally after build:

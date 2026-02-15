@@ -38,7 +38,8 @@ let package = Package(
         .testTarget(
             name: "CompilerCoreTests",
             dependencies: ["CompilerCore"],
-            path: "Tests/CompilerCoreTests"
+            path: "Tests/CompilerCoreTests",
+            exclude: ["GoldenCases"]
         ),
         .testTarget(
             name: "RuntimeTests",

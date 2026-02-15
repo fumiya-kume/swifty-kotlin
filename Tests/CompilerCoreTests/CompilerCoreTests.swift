@@ -811,6 +811,78 @@ final class CompilerCoreTests: XCTestCase {
         XCTAssertFalse(result.diagnostics.contains { $0.code == "KSWIFTK-ICE-0001" })
     }
 
+    func testFunctionExpressionBodyWhenRemainsExpressionBody() throws {
+        let source = """
+        fun classify(v: Int) = when (v) {
+            0 -> 10
+            else -> 20
+        }
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let file = try XCTUnwrap(ast.files.first)
+        let declID = try XCTUnwrap(file.topLevelDecls.first)
+        guard let decl = ast.arena.decl(declID), case .funDecl(let function) = decl else {
+            XCTFail("Expected top-level function declaration.")
+            return
+        }
+
+        switch function.body {
+        case .expr(let exprID, _):
+            guard let expr = ast.arena.expr(exprID),
+                  case .whenExpr(_, let branches, let elseExpr, _) = expr else {
+                XCTFail("Expected expression body to be parsed as when expression.")
+                return
+            }
+            XCTAssertEqual(branches.count, 1)
+            XCTAssertNotNil(elseExpr)
+        case .block, .unit:
+            XCTFail("Expression-body function must not be parsed as block body.")
+        }
+    }
+
+    func testBlockBodySplitsStatementsOnNewline() throws {
+        let source = """
+        fun main() {
+            println(1)
+            println(2)
+        }
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let file = try XCTUnwrap(ast.files.first)
+        let declID = try XCTUnwrap(file.topLevelDecls.first)
+        guard let decl = ast.arena.decl(declID), case .funDecl(let function) = decl else {
+            XCTFail("Expected top-level function declaration.")
+            return
+        }
+
+        switch function.body {
+        case .block(let exprIDs, _):
+            XCTAssertEqual(exprIDs.count, 2)
+            for exprID in exprIDs {
+                guard let expr = ast.arena.expr(exprID), case .call = expr else {
+                    XCTFail("Expected block statement to parse as call expression.")
+                    return
+                }
+            }
+        case .expr, .unit:
+            XCTFail("Block-body function should produce block expressions.")
+        }
+    }
+
     private func makeContext(source: String) throws -> CompilationContext {
         let tempURL = try writeTempSource(source)
 

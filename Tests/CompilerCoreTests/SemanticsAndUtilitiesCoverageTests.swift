@@ -63,6 +63,90 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
         ))
     }
 
+    func testNameManglerBuildsErasedSignatureWithNullableAndSuspendFunctionTypes() {
+        let interner = StringInterner()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+        let mangler = NameMangler()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let nullableIntType = types.make(.primitive(.int, .nullable))
+        let suspendLambdaType = types.make(.functionType(
+            FunctionType(
+                params: [intType],
+                returnType: nullableIntType,
+                isSuspend: true
+            )
+        ))
+        let functionSymbolID = symbols.define(
+            kind: .function,
+            name: interner.intern("consume"),
+            fqName: [interner.intern("pkg"), interner.intern("consume")],
+            declSite: nil,
+            visibility: .public,
+            flags: []
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [nullableIntType, suspendLambdaType],
+                returnType: intType,
+                isSuspend: false
+            ),
+            for: functionSymbolID
+        )
+        guard let functionSymbol = symbols.symbol(functionSymbolID) else {
+            XCTFail("missing function symbol")
+            return
+        }
+
+        let encoded = mangler.mangledSignature(for: functionSymbol, symbols: symbols, types: types)
+        XCTAssertTrue(encoded.contains("Q<I>"))
+        XCTAssertTrue(encoded.contains("SF1<"))
+        XCTAssertTrue(encoded.hasPrefix("F2<"))
+    }
+
+    func testNameManglerSupportsDeclKindOverridesForAccessorKinds() {
+        let interner = StringInterner()
+        let mangler = NameMangler()
+
+        let functionSymbol = SemanticSymbol(
+            id: SymbolID(rawValue: 10),
+            kind: .function,
+            name: interner.intern("value"),
+            fqName: [interner.intern("pkg"), interner.intern("value")],
+            declSite: nil,
+            visibility: .public,
+            flags: []
+        )
+        let constructorSymbol = SemanticSymbol(
+            id: SymbolID(rawValue: 11),
+            kind: .constructor,
+            name: interner.intern("Ctor"),
+            fqName: [interner.intern("pkg"), interner.intern("Ctor")],
+            declSite: nil,
+            visibility: .public,
+            flags: []
+        )
+
+        let getter = mangler.mangle(
+            moduleName: "ModuleX",
+            symbol: functionSymbol,
+            signature: "_",
+            declKind: .getter
+        )
+        let setter = mangler.mangle(
+            moduleName: "ModuleX",
+            symbol: functionSymbol,
+            signature: "_",
+            declKind: .setter
+        )
+        let constructor = mangler.mangle(moduleName: "ModuleX", symbol: constructorSymbol, signature: "_")
+
+        XCTAssertTrue(getter.contains("__G__"))
+        XCTAssertTrue(setter.contains("__S__"))
+        XCTAssertTrue(constructor.contains("__K__"))
+    }
+
     func testDataFlowMergeAndWhenExhaustivenessAcrossKinds() {
         let analyzer = DataFlowAnalyzer()
         let interner = StringInterner()
