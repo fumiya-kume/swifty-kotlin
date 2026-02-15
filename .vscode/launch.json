@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:kotlin-compiler}",
+            "name": "Debug kswiftc",
+            "target": "kswiftc",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug kswiftc"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:kotlin-compiler}",
+            "name": "Release kswiftc",
+            "target": "kswiftc",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release kswiftc"
+        }
+    ]
+}
