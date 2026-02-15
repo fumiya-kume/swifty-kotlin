@@ -1,0 +1,342 @@
+import Foundation
+
+extension BuildASTPhase {
+    struct BracketDepth {
+        var angle: Int = 0
+        var paren: Int = 0
+        var bracket: Int = 0
+        var brace: Int = 0
+
+        var isAtTopLevel: Bool {
+            angle == 0 && paren == 0 && bracket == 0 && brace == 0
+        }
+
+        var isAngleParenTopLevel: Bool {
+            angle == 0 && paren == 0
+        }
+
+        mutating func track(_ kind: TokenKind) {
+            switch kind {
+            case .symbol(.lessThan):    angle += 1
+            case .symbol(.greaterThan): angle = max(0, angle - 1)
+            case .symbol(.lParen):      paren += 1
+            case .symbol(.rParen):      paren = max(0, paren - 1)
+            case .symbol(.lBracket):    bracket += 1
+            case .symbol(.rBracket):    bracket = max(0, bracket - 1)
+            case .symbol(.lBrace):      brace += 1
+            case .symbol(.rBrace):      brace = max(0, brace - 1)
+            default: break
+            }
+        }
+    }
+
+    final class ExpressionParser {
+        private let tokens: [Token]
+        private let interner: StringInterner
+        private let astArena: ASTArena
+        private var index: Int = 0
+
+        init(tokens: [Token], interner: StringInterner, astArena: ASTArena) {
+            self.tokens = tokens
+            self.interner = interner
+            self.astArena = astArena
+        }
+
+        func parse() -> ExprID? {
+            parseExpression(minPrecedence: 0)
+        }
+
+        private func parseExpression(minPrecedence: Int) -> ExprID? {
+            guard var lhs = parsePostfixOrPrimary() else {
+                return nil
+            }
+
+            while let op = binaryOperator(at: current()), precedence(of: op) >= minPrecedence {
+                guard let opToken = consume() else { break }
+                let nextMin = precedence(of: op) + 1
+                guard let rhs = parseExpression(minPrecedence: nextMin) else { break }
+                let range = mergeRanges(astArena.exprRange(lhs), astArena.exprRange(rhs), fallback: opToken.range)
+                lhs = astArena.appendExpr(.binary(op: op, lhs: lhs, rhs: rhs, range: range))
+            }
+            return lhs
+        }
+
+        private func parsePostfixOrPrimary() -> ExprID? {
+            guard var expr = parsePrimary() else {
+                return nil
+            }
+            while matches(.symbol(.lParen)) {
+                guard let open = consume() else { break }
+                var args: [CallArgument] = []
+                if !matches(.symbol(.rParen)) {
+                    while true {
+                        if let argument = parseCallArgument() {
+                            args.append(argument)
+                        }
+                        if matches(.symbol(.comma)) {
+                            _ = consume()
+                            continue
+                        }
+                        break
+                    }
+                }
+                let close = consumeIf(.symbol(.rParen))
+                let fallbackEnd = close?.range.end ?? open.range.end
+                let endRange = SourceRange(start: fallbackEnd, end: fallbackEnd)
+                let range = mergeRanges(astArena.exprRange(expr), close?.range ?? endRange, fallback: open.range)
+                expr = astArena.appendExpr(.call(callee: expr, args: args, range: range))
+            }
+            return expr
+        }
+
+        private func parseCallArgument() -> CallArgument? {
+            var isSpread = false
+            if matches(.symbol(.star)) {
+                _ = consume()
+                isSpread = true
+            }
+
+            var label: InternedString?
+            if let first = current(),
+               let second = peek(1),
+               isArgumentLabelToken(first.kind),
+               second.kind == .symbol(.assign) {
+                label = tokenText(first)
+                _ = consume()
+                _ = consume()
+            }
+
+            guard let expr = parseExpression(minPrecedence: 0) else {
+                return nil
+            }
+            return CallArgument(label: label, isSpread: isSpread, expr: expr)
+        }
+
+        private func isArgumentLabelToken(_ kind: TokenKind) -> Bool {
+            switch kind {
+            case .identifier, .backtickedIdentifier, .keyword, .softKeyword:
+                return true
+            default:
+                return false
+            }
+        }
+
+        private func tokenText(_ token: Token) -> InternedString? {
+            switch token.kind {
+            case .identifier(let name), .backtickedIdentifier(let name):
+                return name
+            case .keyword(let keyword):
+                return interner.intern(keyword.rawValue)
+            case .softKeyword(let keyword):
+                return interner.intern(keyword.rawValue)
+            default:
+                return nil
+            }
+        }
+
+        private func parsePrimary() -> ExprID? {
+            guard let token = current() else {
+                return nil
+            }
+
+            switch token.kind {
+            case .intLiteral(let text), .longLiteral(let text):
+                _ = consume()
+                let value = Int64(text.filter { $0.isNumber }) ?? 0
+                return astArena.appendExpr(.intLiteral(value, token.range))
+
+            case .keyword(.true):
+                _ = consume()
+                return astArena.appendExpr(.boolLiteral(true, token.range))
+
+            case .keyword(.false):
+                _ = consume()
+                return astArena.appendExpr(.boolLiteral(false, token.range))
+
+            case .identifier(let name), .backtickedIdentifier(let name):
+                _ = consume()
+                return astArena.appendExpr(.nameRef(name, token.range))
+
+            case .keyword(.when):
+                return parseWhenExpression()
+
+            case .keyword(let keyword):
+                _ = consume()
+                return astArena.appendExpr(.nameRef(interner.intern(keyword.rawValue), token.range))
+
+            case .softKeyword(let keyword):
+                _ = consume()
+                return astArena.appendExpr(.nameRef(interner.intern(keyword.rawValue), token.range))
+
+            case .stringQuote, .rawStringQuote:
+                return parseStringLiteral()
+
+            case .symbol(.lParen):
+                _ = consume()
+                let expr = parseExpression(minPrecedence: 0)
+                _ = consumeIf(.symbol(.rParen))
+                return expr
+
+            default:
+                return nil
+            }
+        }
+
+        private func parseStringLiteral() -> ExprID? {
+            guard let open = consume() else { return nil }
+            var pieces: [String] = []
+            var end = open.range.end
+            let closingKind = open.kind
+
+            while let token = current() {
+                if token.kind == closingKind {
+                    _ = consume()
+                    end = token.range.end
+                    break
+                }
+                if case .stringSegment(let segment) = token.kind {
+                    pieces.append(interner.resolve(segment))
+                }
+                end = token.range.end
+                _ = consume()
+            }
+
+            let literal = pieces.joined()
+            let id = interner.intern(literal)
+            let range = SourceRange(start: open.range.start, end: end)
+            return astArena.appendExpr(.stringLiteral(id, range))
+        }
+
+        private func parseWhenExpression() -> ExprID? {
+            guard let whenToken = consume() else {
+                return nil
+            }
+            guard consumeIf(.symbol(.lParen)) != nil else {
+                return nil
+            }
+            guard let subject = parseExpression(minPrecedence: 0) else {
+                return nil
+            }
+            _ = consumeIf(.symbol(.rParen))
+            guard consumeIf(.symbol(.lBrace)) != nil else {
+                return nil
+            }
+
+            var branches: [WhenBranch] = []
+            var elseExpr: ExprID?
+            var end = whenToken.range.end
+
+            while let token = current() {
+                if token.kind == .symbol(.rBrace) {
+                    end = token.range.end
+                    _ = consume()
+                    break
+                }
+
+                let branchStart = token.range.start
+                var condition: ExprID?
+                if token.kind == .keyword(.else) {
+                    _ = consume()
+                } else {
+                    condition = parseExpression(minPrecedence: 0)
+                }
+
+                _ = consumeIf(.symbol(.arrow))
+                let body = parseExpression(minPrecedence: 0)
+                while matches(.symbol(.semicolon)) || matches(.symbol(.comma)) {
+                    _ = consume()
+                }
+
+                if let body {
+                    let branchRange = SourceRange(start: branchStart, end: astArena.exprRange(body)?.end ?? branchStart)
+                    let branch = WhenBranch(condition: condition, body: body, range: branchRange)
+                    if condition == nil {
+                        elseExpr = body
+                    } else {
+                        branches.append(branch)
+                    }
+                    end = branchRange.end
+                }
+            }
+
+            let range = SourceRange(start: whenToken.range.start, end: end)
+            return astArena.appendExpr(.whenExpr(subject: subject, branches: branches, elseExpr: elseExpr, range: range))
+        }
+
+        private func mergeRanges(_ lhs: SourceRange?, _ rhs: SourceRange?, fallback: SourceRange) -> SourceRange {
+            switch (lhs, rhs) {
+            case let (lhs?, rhs?):
+                return SourceRange(start: lhs.start, end: rhs.end)
+            case let (lhs?, nil):
+                return lhs
+            case let (nil, rhs?):
+                return rhs
+            default:
+                return fallback
+            }
+        }
+
+        private func binaryOperator(at token: Token?) -> BinaryOp? {
+            guard let token else { return nil }
+            switch token.kind {
+            case .symbol(.plus):
+                return .add
+            case .symbol(.minus):
+                return .subtract
+            case .symbol(.star):
+                return .multiply
+            case .symbol(.slash):
+                return .divide
+            case .symbol(.equalEqual):
+                return .equal
+            default:
+                return nil
+            }
+        }
+
+        private func precedence(of op: BinaryOp) -> Int {
+            switch op {
+            case .multiply, .divide:
+                return 20
+            case .add, .subtract:
+                return 10
+            case .equal:
+                return 5
+            }
+        }
+
+        private func current() -> Token? {
+            if index >= 0 && index < tokens.count {
+                return tokens[index]
+            }
+            return nil
+        }
+
+        private func peek(_ offset: Int) -> Token? {
+            let target = index + offset
+            if target >= 0 && target < tokens.count {
+                return tokens[target]
+            }
+            return nil
+        }
+
+        private func consume() -> Token? {
+            guard let token = current() else {
+                return nil
+            }
+            index += 1
+            return token
+        }
+
+        private func matches(_ kind: TokenKind) -> Bool {
+            current()?.kind == kind
+        }
+
+        private func consumeIf(_ kind: TokenKind) -> Token? {
+            guard matches(kind) else {
+                return nil
+            }
+            return consume()
+        }
+    }
+}
