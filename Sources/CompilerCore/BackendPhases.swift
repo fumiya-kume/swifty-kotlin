@@ -1,5 +1,11 @@
 import Foundation
 
+private extension ASTModule {
+    var sortedFiles: [ASTFile] {
+        files.sorted(by: { $0.fileID.rawValue < $1.fileID.rawValue })
+    }
+}
+
 public final class DataFlowSemaPassPhase: CompilerPhase {
     public static let name = "DataFlowSemaPass"
 
@@ -23,7 +29,7 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
         let rootScope = PackageScope(parent: nil, symbols: symbols)
         var fileScopes: [Int32: FileScope] = [:]
 
-        for file in ast.files.sorted(by: { $0.fileID.rawValue < $1.fileID.rawValue }) {
+        for file in ast.sortedFiles {
             let packageSymbol = definePackageSymbol(for: file, symbols: symbols, interner: ctx.interner)
             let packageScope = PackageScope(parent: rootScope, symbols: symbols)
             packageScope.insert(packageSymbol)
@@ -31,7 +37,7 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
         }
 
         // Pass A: collect declaration headers and signatures.
-        for file in ast.files.sorted(by: { $0.fileID.rawValue < $1.fileID.rawValue }) {
+        for file in ast.sortedFiles {
             guard let fileScope = fileScopes[file.fileID.rawValue] else { continue }
             for declID in file.topLevelDecls {
                 collectHeader(
@@ -54,7 +60,7 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
         )
 
         // Pass B: lightweight body checks.
-        for file in ast.files.sorted(by: { $0.fileID.rawValue < $1.fileID.rawValue }) {
+        for file in ast.sortedFiles {
             for declID in file.topLevelDecls {
                 analyzeBody(
                     declID: declID,
@@ -313,7 +319,7 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
         symbols: SymbolTable,
         bindings: BindingTable
     ) {
-        for file in ast.files.sorted(by: { $0.fileID.rawValue < $1.fileID.rawValue }) {
+        for file in ast.sortedFiles {
             for declID in file.topLevelDecls {
                 guard let symbol = bindings.declSymbols[declID],
                       let decl = ast.arena.decl(declID) else {
@@ -821,17 +827,15 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
 
     private func inferExpr(
         _ id: ExprID,
-        ast: ASTModule,
-        sema: SemaModule,
-        semaCtx: SemaModule,
+        ctx: TypeInferenceContext,
         locals: inout [InternedString: (type: TypeID, symbol: SymbolID)],
-        resolver: OverloadResolver,
-        dataFlow: DataFlowAnalyzer,
-        interner: StringInterner,
-        scope: Scope,
-        implicitReceiverType: TypeID? = nil,
         expectedType: TypeID? = nil
     ) -> TypeID {
+        let ast = ctx.ast
+        let sema = ctx.sema
+        let interner = ctx.interner
+        let scope = ctx.scope
+
         guard let expr = ast.arena.expr(id) else {
             return sema.types.errorType
         }
@@ -880,40 +884,12 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
             return resolvedType
 
         case .binary(let op, let lhsID, let rhsID, _):
-            let lhs = inferExpr(
-                lhsID,
-                ast: ast,
-                sema: sema,
-                semaCtx: semaCtx,
-                locals: &locals,
-                resolver: resolver,
-                dataFlow: dataFlow,
-                interner: interner,
-                scope: scope,
-                implicitReceiverType: implicitReceiverType,
-                expectedType: nil
-            )
-            let rhs = inferExpr(
-                rhsID,
-                ast: ast,
-                sema: sema,
-                semaCtx: semaCtx,
-                locals: &locals,
-                resolver: resolver,
-                dataFlow: dataFlow,
-                interner: interner,
-                scope: scope,
-                implicitReceiverType: implicitReceiverType,
-                expectedType: nil
-            )
+            let lhs = inferExpr(lhsID, ctx: ctx, locals: &locals)
+            let rhs = inferExpr(rhsID, ctx: ctx, locals: &locals)
             let type: TypeID
             switch op {
             case .add:
-                if lhs == stringType || rhs == stringType {
-                    type = stringType
-                } else {
-                    type = intType
-                }
+                type = (lhs == stringType || rhs == stringType) ? stringType : intType
             case .subtract, .multiply, .divide:
                 type = intType
             case .equal:
@@ -924,19 +900,7 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
 
         case .call(let calleeID, let args, let range):
             let argTypes = args.map { argument in
-                inferExpr(
-                    argument.expr,
-                    ast: ast,
-                    sema: sema,
-                    semaCtx: semaCtx,
-                    locals: &locals,
-                    resolver: resolver,
-                    dataFlow: dataFlow,
-                    interner: interner,
-                    scope: scope,
-                    implicitReceiverType: implicitReceiverType,
-                    expectedType: nil
-                )
+                inferExpr(argument.expr, ctx: ctx, locals: &locals)
             }
 
             let calleeExpr = ast.arena.expr(calleeID)
@@ -950,9 +914,7 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
             let candidates: [SymbolID]
             if let calleeName {
                 candidates = scope.lookup(calleeName).filter { candidate in
-                    guard let symbol = sema.symbols.symbol(candidate) else {
-                        return false
-                    }
+                    guard let symbol = sema.symbols.symbol(candidate) else { return false }
                     return symbol.kind == .function || symbol.kind == .constructor
                 }
             } else {
@@ -965,13 +927,9 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
             }
 
             let resolvedArgs: [CallArg] = zip(args, argTypes).map { argument, type in
-                CallArg(
-                    label: argument.label,
-                    isSpread: argument.isSpread,
-                    type: type
-                )
+                CallArg(label: argument.label, isSpread: argument.isSpread, type: type)
             }
-            let resolved = resolver.resolveCall(
+            let resolved = ctx.resolver.resolveCall(
                 candidates: candidates,
                 call: CallExpr(
                     range: range,
@@ -979,11 +937,11 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                     args: resolvedArgs
                 ),
                 expectedType: expectedType,
-                implicitReceiverType: implicitReceiverType,
-                ctx: semaCtx
+                implicitReceiverType: ctx.implicitReceiverType,
+                ctx: ctx.semaCtx
             )
             if let diagnostic = resolved.diagnostic {
-                semaCtx.diagnostics.emit(diagnostic)
+                ctx.semaCtx.diagnostics.emit(diagnostic)
                 sema.bindings.bindExprType(id, type: sema.types.errorType)
                 return sema.types.errorType
             }
@@ -1016,19 +974,7 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
             return returnType
 
         case .whenExpr(let subjectID, let branches, let elseExpr, let range):
-            let subjectType = inferExpr(
-                subjectID,
-                ast: ast,
-                sema: sema,
-                semaCtx: semaCtx,
-                locals: &locals,
-                resolver: resolver,
-                dataFlow: dataFlow,
-                interner: interner,
-                scope: scope,
-                implicitReceiverType: implicitReceiverType,
-                expectedType: nil
-            )
+            let subjectType = inferExpr(subjectID, ctx: ctx, locals: &locals)
             let subjectLocalBinding: (name: InternedString, type: TypeID, symbol: SymbolID, isStable: Bool)? = {
                 guard let subjectExpr = ast.arena.expr(subjectID),
                       case .nameRef(let subjectName, _) = subjectExpr,
@@ -1036,9 +982,7 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                     return nil
                 }
                 return (
-                    subjectName,
-                    local.type,
-                    local.symbol,
+                    subjectName, local.type, local.symbol,
                     isStableLocalSymbol(local.symbol, sema: sema)
                 )
             }()
@@ -1059,33 +1003,15 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                 var isNullBranch = false
                 var branchSmartCastType: TypeID?
                 if let cond = branch.condition {
-                    let condType = inferExpr(
-                        cond,
-                        ast: ast,
-                        sema: sema,
-                        semaCtx: semaCtx,
-                        locals: &locals,
-                        resolver: resolver,
-                        dataFlow: dataFlow,
-                        interner: interner,
-                        scope: scope,
-                        implicitReceiverType: implicitReceiverType,
-                        expectedType: nil
-                    )
+                    let condType = inferExpr(cond, ctx: ctx, locals: &locals)
                     if let condExpr = ast.arena.expr(cond) {
                         switch condExpr {
                         case .boolLiteral(true, _):
-                            if condType == boolType {
-                                hasTrueCase = true
-                            }
+                            if condType == boolType { hasTrueCase = true }
                             covered.insert(interner.intern("true"))
-
                         case .boolLiteral(false, _):
-                            if condType == boolType {
-                                hasFalseCase = true
-                            }
+                            if condType == boolType { hasFalseCase = true }
                             covered.insert(interner.intern("false"))
-
                         case .nameRef(let name, _):
                             if interner.resolve(name) == "null" {
                                 hasNullCase = true
@@ -1093,26 +1019,20 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                             } else {
                                 covered.insert(name)
                             }
-
                         default:
                             break
                         }
                     }
                     branchSmartCastType = smartCastTypeForWhenSubjectCase(
-                        conditionID: cond,
-                        subjectType: subjectType,
-                        ast: ast,
-                        sema: sema,
-                        interner: interner
+                        conditionID: cond, subjectType: subjectType,
+                        ast: ast, sema: sema, interner: interner
                     )
                 }
                 var branchLocals = locals
-                if let subjectLocalBinding,
-                   subjectLocalBinding.isStable {
+                if let subjectLocalBinding, subjectLocalBinding.isStable {
                     if let branchSmartCastType {
                         branchLocals[subjectLocalBinding.name] = (
-                            branchSmartCastType,
-                            subjectLocalBinding.symbol
+                            branchSmartCastType, subjectLocalBinding.symbol
                         )
                     } else if hasExplicitNullBranch && !isNullBranch {
                         branchLocals[subjectLocalBinding.name] = (
@@ -1122,19 +1042,7 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                     }
                 }
                 branchTypes.append(
-                    inferExpr(
-                        branch.body,
-                        ast: ast,
-                        sema: sema,
-                        semaCtx: semaCtx,
-                        locals: &branchLocals,
-                        resolver: resolver,
-                        dataFlow: dataFlow,
-                        interner: interner,
-                        scope: scope,
-                        implicitReceiverType: implicitReceiverType,
-                        expectedType: expectedType
-                    )
+                    inferExpr(branch.body, ctx: ctx, locals: &branchLocals, expectedType: expectedType)
                 )
             }
 
@@ -1149,31 +1057,17 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                     )
                 }
                 branchTypes.append(
-                    inferExpr(
-                        elseExpr,
-                        ast: ast,
-                        sema: sema,
-                        semaCtx: semaCtx,
-                        locals: &elseLocals,
-                        resolver: resolver,
-                        dataFlow: dataFlow,
-                        interner: interner,
-                        scope: scope,
-                        implicitReceiverType: implicitReceiverType,
-                        expectedType: expectedType
-                    )
+                    inferExpr(elseExpr, ctx: ctx, locals: &elseLocals, expectedType: expectedType)
                 )
             }
 
             let summary = WhenBranchSummary(
-                coveredSymbols: covered,
-                hasElse: elseExpr != nil,
-                hasNullCase: hasNullCase,
-                hasTrueCase: hasTrueCase,
+                coveredSymbols: covered, hasElse: elseExpr != nil,
+                hasNullCase: hasNullCase, hasTrueCase: hasTrueCase,
                 hasFalseCase: hasFalseCase
             )
-            if !dataFlow.isWhenExhaustive(subjectType: subjectType, branches: summary, sema: sema) {
-                semaCtx.diagnostics.error(
+            if !ctx.dataFlow.isWhenExhaustive(subjectType: subjectType, branches: summary, sema: sema) {
+                ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0004",
                     "Non-exhaustive when expression.",
                     range: range
@@ -1350,7 +1244,7 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
         let defaultImportPackages = makeDefaultImportPackages(interner: interner)
         var fileScopes: [Int32: FileScope] = [:]
 
-        for file in ast.files.sorted(by: { $0.fileID.rawValue < $1.fileID.rawValue }) {
+        for file in ast.sortedFiles {
             let defaultImportScope = ImportScope(parent: nil, symbols: sema.symbols)
             for packagePath in defaultImportPackages {
                 for importedSymbol in topLevelSymbolsByPackage[packagePath] ?? [] {
@@ -1385,7 +1279,7 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
         sema: SemaModule
     ) -> [[InternedString]: [SymbolID]] {
         var mapping: [[InternedString]: [SymbolID]] = [:]
-        for file in ast.files.sorted(by: { $0.fileID.rawValue < $1.fileID.rawValue }) {
+        for file in ast.sortedFiles {
             for declID in file.topLevelDecls {
                 guard let symbol = sema.bindings.declSymbols[declID] else {
                     continue
@@ -1484,7 +1378,7 @@ public final class BuildKIRPhase: CompilerPhase {
         let arena = KIRArena()
         var files: [KIRFile] = []
 
-        for file in ast.files.sorted(by: { $0.fileID.rawValue < $1.fileID.rawValue }) {
+        for file in ast.sortedFiles {
             var declIDs: [KIRDeclID] = []
             for declID in file.topLevelDecls {
                 guard let decl = ast.arena.decl(declID),
@@ -1880,15 +1774,10 @@ public final class CodegenPhase: CompilerPhase {
                 try backend.emitLLVMIR(module: kir, runtime: runtime, outputIRPath: path, interner: ctx.interner)
                 ctx.generatedLLVMIRPath = path
 
-            case .object:
+            case .object, .executable:
                 let path = outputPath(base: ctx.options.outputPath, defaultExtension: "o")
                 try backend.emitObject(module: kir, runtime: runtime, outputObjectPath: path, interner: ctx.interner)
                 ctx.generatedObjectPath = path
-
-            case .executable:
-                let objectPath = outputPath(base: ctx.options.outputPath, defaultExtension: "o")
-                try backend.emitObject(module: kir, runtime: runtime, outputObjectPath: objectPath, interner: ctx.interner)
-                ctx.generatedObjectPath = objectPath
 
             case .library:
                 try emitLibrary(module: kir, backend: backend, runtime: runtime, ctx: ctx)
@@ -2090,36 +1979,18 @@ public final class LinkPhase: CompilerPhase {
             }
             _ = try CommandRunner.run(executable: "/usr/bin/clang", arguments: args)
         } catch let error as CommandRunnerError {
+            let message: String
             switch error {
             case .launchFailed(let reason):
-                ctx.diagnostics.error(
-                    "KSWIFTK-LINK-0001",
-                    "Failed to launch linker: \(reason)",
-                    range: nil
-                )
+                message = "Failed to launch linker: \(reason)"
             case .nonZeroExit(let result):
                 let stderr = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
-                if stderr.isEmpty {
-                    ctx.diagnostics.error(
-                        "KSWIFTK-LINK-0001",
-                        "Linker failed with exit code \(result.exitCode).",
-                        range: nil
-                    )
-                } else {
-                    ctx.diagnostics.error(
-                        "KSWIFTK-LINK-0001",
-                        "Linker failed: \(stderr)",
-                        range: nil
-                    )
-                }
+                message = stderr.isEmpty ? "Linker failed with exit code \(result.exitCode)." : "Linker failed: \(stderr)"
             }
+            ctx.diagnostics.error("KSWIFTK-LINK-0001", message, range: nil)
             throw CompilerPipelineError.outputUnavailable
         } catch {
-            ctx.diagnostics.error(
-                "KSWIFTK-LINK-0001",
-                "Link step failed: \(error)",
-                range: nil
-            )
+            ctx.diagnostics.error("KSWIFTK-LINK-0001", "Link step failed: \(error)", range: nil)
             throw CompilerPipelineError.outputUnavailable
         }
     }
