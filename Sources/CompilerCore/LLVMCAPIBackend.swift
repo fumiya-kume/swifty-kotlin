@@ -3,12 +3,10 @@ import Foundation
 public final class LLVMCAPIBackend: CodegenBackend {
     private let target: TargetTriple
     private let optLevel: OptimizationLevel
-    private let fallbackBackend: LLVMBackend
     private let diagnostics: DiagnosticEngine
     private let strictMode: Bool
     private let bindings: LLVMCAPIBindings?
     private let hasUsableBindings: Bool
-    private var didWarnUnavailableFallback = false
 
     public init(
         target: TargetTriple,
@@ -19,12 +17,7 @@ public final class LLVMCAPIBackend: CodegenBackend {
     ) {
         self.target = target
         self.optLevel = optLevel
-        self.fallbackBackend = LLVMBackend(
-            target: target,
-            optLevel: optLevel,
-            debugInfo: debugInfo,
-            diagnostics: diagnostics
-        )
+        _ = debugInfo
         self.diagnostics = diagnostics
         self.strictMode = strictMode
 
@@ -40,7 +33,7 @@ public final class LLVMCAPIBackend: CodegenBackend {
         interner: StringInterner
     ) throws {
         _ = runtime
-        try emitWithFallback(
+        try emitNative(
             context: "object",
             nativeEmit: { bindings in
                 let emitter = NativeEmitter(
@@ -51,14 +44,6 @@ public final class LLVMCAPIBackend: CodegenBackend {
                     interner: interner
                 )
                 try emitter.emitObject(outputPath: outputObjectPath)
-            },
-            fallbackEmit: {
-                try fallbackBackend.emitObject(
-                    module: module,
-                    runtime: runtime,
-                    outputObjectPath: outputObjectPath,
-                    interner: interner
-                )
             }
         )
     }
@@ -70,7 +55,7 @@ public final class LLVMCAPIBackend: CodegenBackend {
         interner: StringInterner
     ) throws {
         _ = runtime
-        try emitWithFallback(
+        try emitNative(
             context: "LLVM IR",
             nativeEmit: { bindings in
                 let emitter = NativeEmitter(
@@ -81,22 +66,13 @@ public final class LLVMCAPIBackend: CodegenBackend {
                     interner: interner
                 )
                 try emitter.emitLLVMIR(outputPath: outputIRPath)
-            },
-            fallbackEmit: {
-                try fallbackBackend.emitLLVMIR(
-                    module: module,
-                    runtime: runtime,
-                    outputIRPath: outputIRPath,
-                    interner: interner
-                )
             }
         )
     }
 
-    private func emitWithFallback(
+    private func emitNative(
         context: String,
-        nativeEmit: (LLVMCAPIBindings) throws -> Void,
-        fallbackEmit: () throws -> Void
+        nativeEmit: (LLVMCAPIBindings) throws -> Void
     ) throws {
         guard let bindings, hasUsableBindings else {
             if strictMode {
@@ -105,18 +81,14 @@ public final class LLVMCAPIBackend: CodegenBackend {
                     "LLVM C API backend is requested in strict mode, but LLVM C API bindings are unavailable.",
                     range: nil
                 )
-                throw LLVMCAPIBackendError.unavailableInStrictMode
+                throw LLVMCAPIBackendError.bindingsUnavailable
             }
-            if !didWarnUnavailableFallback {
-                diagnostics.warning(
-                    "KSWIFTK-BACKEND-1001",
-                    "LLVM C API backend is unavailable; falling back to synthetic C backend.",
-                    range: nil
-                )
-                didWarnUnavailableFallback = true
-            }
-            try fallbackEmit()
-            return
+            diagnostics.error(
+                "KSWIFTK-BACKEND-1007",
+                "LLVM C API backend is requested, but LLVM C API bindings are unavailable and fallback backend is disabled.",
+                range: nil
+            )
+            throw LLVMCAPIBackendError.bindingsUnavailable
         }
 
         do {
@@ -143,7 +115,7 @@ public final class LLVMCAPIBackend: CodegenBackend {
     private func describe(error: Error) -> String {
         if let backendError = error as? LLVMCAPIBackendError {
             switch backendError {
-            case .unavailableInStrictMode:
+            case .bindingsUnavailable:
                 return "backend unavailable"
             case .nativeEmissionFailed(let reason):
                 return reason
@@ -154,7 +126,7 @@ public final class LLVMCAPIBackend: CodegenBackend {
 }
 
 enum LLVMCAPIBackendError: Error {
-    case unavailableInStrictMode
+    case bindingsUnavailable
     case nativeEmissionFailed(String)
 }
 

@@ -124,11 +124,16 @@ final class BackendPipelineCoverageTests: XCTestCase {
 
             try runToKIR(ctx)
             try LoweringPhase().run(ctx)
-            try CodegenPhase().run(ctx)
+            if llvmCapiBindingsAvailable() {
+                try CodegenPhase().run(ctx)
 
-            let objectPath = try XCTUnwrap(ctx.generatedObjectPath)
-            XCTAssertTrue(FileManager.default.fileExists(atPath: objectPath))
-            XCTAssertFalse(ctx.diagnostics.diagnostics.contains { $0.severity == .error })
+                let objectPath = try XCTUnwrap(ctx.generatedObjectPath)
+                XCTAssertTrue(FileManager.default.fileExists(atPath: objectPath))
+                XCTAssertFalse(ctx.diagnostics.diagnostics.contains { $0.severity == .error })
+            } else {
+                XCTAssertThrowsError(try CodegenPhase().run(ctx))
+                XCTAssertTrue(ctx.diagnostics.diagnostics.contains { $0.code == "KSWIFTK-BACKEND-1007" })
+            }
         }
     }
 
@@ -250,6 +255,10 @@ final class BackendPipelineCoverageTests: XCTestCase {
     }
 
     func testCodegenBackendSelectionLlvmCApiAndSyntheticBackendObjectCompatibilitySmoke() throws {
+        guard llvmCapiBindingsAvailable() else {
+            throw XCTSkip("LLVM C API bindings are unavailable in this environment.")
+        }
+
         let source = """
         fun helper(v: Int) = v + 1
         fun main() = helper(41)
@@ -308,6 +317,10 @@ final class BackendPipelineCoverageTests: XCTestCase {
     }
 
     func testLlvmCapiBackendCanLinkAndRunExecutable() throws {
+        guard llvmCapiBindingsAvailable() else {
+            throw XCTSkip("LLVM C API bindings are unavailable in this environment.")
+        }
+
         let source = "fun main() = 0"
         try withTemporaryFile(contents: source) { path in
             let outputPath = FileManager.default.temporaryDirectory
@@ -1667,5 +1680,12 @@ final class BackendPipelineCoverageTests: XCTestCase {
         _ = arena.appendDecl(.function(callee))
 
         return KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [mainID])], arena: arena)
+    }
+
+    private func llvmCapiBindingsAvailable() -> Bool {
+        guard let bindings = LLVMCAPIBindings.load() else {
+            return false
+        }
+        return bindings.smokeTestContextLifecycle()
     }
 }
