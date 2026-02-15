@@ -274,6 +274,109 @@ final class CompilerCoreTests: XCTestCase {
         XCTAssertTrue(hasTypeError)
     }
 
+    func testPropertyInitializerInfersTypeForSubsequentCalls() throws {
+        let source = """
+        val num = 1
+        fun takesInt(x: Int) = x
+        fun use() = takesInt(num)
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasNoViableDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0002"
+        })
+        XCTAssertFalse(hasNoViableDiagnostic, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
+    }
+
+    func testPropertyInitializerTypeMismatchReportsTypeDiagnostic() throws {
+        let source = """
+        val bad: Int = "x"
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasTypeError = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-TYPE-0001"
+        })
+        XCTAssertTrue(hasTypeError, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
+    }
+
+    func testPropertyGetterTypeMismatchReportsTypeDiagnostic() throws {
+        let source = """
+        val bad: Int {
+            get() = "x"
+        }
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasTypeError = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-TYPE-0001"
+        })
+        XCTAssertTrue(hasTypeError, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
+    }
+
+    func testSetterOnValReportsDiagnostic() throws {
+        let source = """
+        val bad: Int {
+            set(value) {
+                value
+            }
+        }
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasSetterDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0005"
+        })
+        XCTAssertTrue(hasSetterDiagnostic, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
+    }
+
+    func testClassInitBlockIsTypeChecked() throws {
+        let source = """
+        fun takesInt(x: Int) = x
+        class C {
+            init {
+                takesInt("x")
+            }
+        }
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasNoViableDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0002"
+        })
+        XCTAssertTrue(hasNoViableDiagnostic, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
+    }
+
     func testOverloadRejectsBooleanArgumentForIntParameter() throws {
         let source = """
         fun foo(a: Int) = a
@@ -291,6 +394,82 @@ final class CompilerCoreTests: XCTestCase {
             diag.code == "KSWIFTK-SEMA-0002"
         })
         XCTAssertTrue(hasNoViableDiagnostic)
+    }
+
+    func testCallSupportsMixedNamedAndPositionalArguments() throws {
+        let source = """
+        fun pick(x: Int, flag: Boolean) = x
+        fun use() = pick(1, flag = true)
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasNoViableDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0002"
+        })
+        XCTAssertFalse(hasNoViableDiagnostic, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
+    }
+
+    func testCallRejectsPositionalArgumentAfterNamedArgument() throws {
+        let source = """
+        fun pick(x: Int, y: Int) = x
+        fun use() = pick(y = 1, 2)
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasNoViableDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0002"
+        })
+        XCTAssertTrue(hasNoViableDiagnostic, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
+    }
+
+    func testCallSupportsNonTrailingVarargWithNamedTail() throws {
+        let source = """
+        fun sum(vararg items: Int, tail: Int) = tail
+        fun use() = sum(1, 2, tail = 3)
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasNoViableDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0002"
+        })
+        XCTAssertFalse(hasNoViableDiagnostic, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
+    }
+
+    func testCallRejectsSpreadForNonVarargParameter() throws {
+        let source = """
+        fun take(x: Int) = x
+        fun use() = take(*1)
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasNoViableDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0002"
+        })
+        XCTAssertTrue(hasNoViableDiagnostic, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
     }
 
     func testSemaAllowsOverloadedTopLevelFunctionsWithoutDuplicateDiagnostic() throws {

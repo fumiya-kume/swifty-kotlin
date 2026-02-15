@@ -481,6 +481,123 @@ final class OverloadResolverTests: XCTestCase {
         XCTAssertEqual(resolved.parameterMapping, [0: 1, 1: 0])
     }
 
+    func testResolveCallSupportsMixedPositionalAndNamedArguments() {
+        let setup = makeSemaModule()
+        let resolver = OverloadResolver()
+        let types = setup.types
+        let symbols = setup.symbols
+        let interner = setup.interner
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let fn = defineSymbol(
+            kind: .function,
+            name: "mix",
+            suffix: "mix",
+            symbols: symbols,
+            interner: interner
+        )
+        let paramX = defineSymbol(
+            kind: .valueParameter,
+            name: "x",
+            suffix: "mix_x",
+            symbols: symbols,
+            interner: interner
+        )
+        let paramFlag = defineSymbol(
+            kind: .valueParameter,
+            name: "flag",
+            suffix: "mix_flag",
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType, boolType],
+                returnType: boolType,
+                valueParameterSymbols: [paramX, paramFlag]
+            ),
+            for: fn
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 95, end: 114),
+            calleeName: interner.intern("mix"),
+            args: [
+                CallArg(type: intType),
+                CallArg(label: interner.intern("flag"), type: boolType)
+            ]
+        )
+        let resolved = resolver.resolveCall(
+            candidates: [fn],
+            call: call,
+            expectedType: nil,
+            ctx: setup.ctx
+        )
+
+        XCTAssertEqual(resolved.chosenCallee, fn)
+        XCTAssertNil(resolved.diagnostic)
+        XCTAssertEqual(resolved.parameterMapping, [0: 0, 1: 1])
+    }
+
+    func testResolveCallRejectsPositionalArgumentAfterNamedArgument() {
+        let setup = makeSemaModule()
+        let resolver = OverloadResolver()
+        let types = setup.types
+        let symbols = setup.symbols
+        let interner = setup.interner
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let fn = defineSymbol(
+            kind: .function,
+            name: "mixBad",
+            suffix: "mixBad",
+            symbols: symbols,
+            interner: interner
+        )
+        let paramX = defineSymbol(
+            kind: .valueParameter,
+            name: "x",
+            suffix: "mixBad_x",
+            symbols: symbols,
+            interner: interner
+        )
+        let paramFlag = defineSymbol(
+            kind: .valueParameter,
+            name: "flag",
+            suffix: "mixBad_flag",
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType, boolType],
+                returnType: boolType,
+                valueParameterSymbols: [paramX, paramFlag]
+            ),
+            for: fn
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 115, end: 137),
+            calleeName: interner.intern("mixBad"),
+            args: [
+                CallArg(label: interner.intern("flag"), type: boolType),
+                CallArg(type: intType)
+            ]
+        )
+        let resolved = resolver.resolveCall(
+            candidates: [fn],
+            call: call,
+            expectedType: nil,
+            ctx: setup.ctx
+        )
+
+        XCTAssertNil(resolved.chosenCallee)
+        XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-SEMA-0002")
+    }
+
     func testResolveCallSupportsTrailingVarargMapping() {
         let setup = makeSemaModule()
         let resolver = OverloadResolver()
@@ -535,6 +652,114 @@ final class OverloadResolverTests: XCTestCase {
         XCTAssertEqual(resolved.chosenCallee, fn)
         XCTAssertNil(resolved.diagnostic)
         XCTAssertEqual(resolved.parameterMapping, [0: 0, 1: 1, 2: 1])
+    }
+
+    func testResolveCallSupportsNonTrailingVarargWithNamedTail() {
+        let setup = makeSemaModule()
+        let resolver = OverloadResolver()
+        let types = setup.types
+        let symbols = setup.symbols
+        let interner = setup.interner
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let fn = defineSymbol(
+            kind: .function,
+            name: "nonTrailingVararg",
+            suffix: "nonTrailingVararg",
+            symbols: symbols,
+            interner: interner
+        )
+        let paramNums = defineSymbol(
+            kind: .valueParameter,
+            name: "nums",
+            suffix: "nonTrailingVararg_nums",
+            symbols: symbols,
+            interner: interner
+        )
+        let paramTail = defineSymbol(
+            kind: .valueParameter,
+            name: "tail",
+            suffix: "nonTrailingVararg_tail",
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType, boolType],
+                returnType: boolType,
+                valueParameterSymbols: [paramNums, paramTail],
+                valueParameterIsVararg: [true, false]
+            ),
+            for: fn
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 138, end: 170),
+            calleeName: interner.intern("nonTrailingVararg"),
+            args: [
+                CallArg(type: intType),
+                CallArg(type: intType),
+                CallArg(label: interner.intern("tail"), type: boolType)
+            ]
+        )
+        let resolved = resolver.resolveCall(
+            candidates: [fn],
+            call: call,
+            expectedType: nil,
+            ctx: setup.ctx
+        )
+
+        XCTAssertEqual(resolved.chosenCallee, fn)
+        XCTAssertNil(resolved.diagnostic)
+        XCTAssertEqual(resolved.parameterMapping, [0: 0, 1: 0, 2: 1])
+    }
+
+    func testResolveCallRejectsSpreadArgumentForNonVarargParameter() {
+        let setup = makeSemaModule()
+        let resolver = OverloadResolver()
+        let types = setup.types
+        let symbols = setup.symbols
+        let interner = setup.interner
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let fn = defineSymbol(
+            kind: .function,
+            name: "spreadBad",
+            suffix: "spreadBad",
+            symbols: symbols,
+            interner: interner
+        )
+        let paramX = defineSymbol(
+            kind: .valueParameter,
+            name: "x",
+            suffix: "spreadBad_x",
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType],
+                returnType: intType,
+                valueParameterSymbols: [paramX]
+            ),
+            for: fn
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 171, end: 188),
+            calleeName: interner.intern("spreadBad"),
+            args: [CallArg(isSpread: true, type: intType)]
+        )
+        let resolved = resolver.resolveCall(
+            candidates: [fn],
+            call: call,
+            expectedType: nil,
+            ctx: setup.ctx
+        )
+
+        XCTAssertNil(resolved.chosenCallee)
+        XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-SEMA-0002")
     }
 
     private func defineSymbol(

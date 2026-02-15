@@ -471,8 +471,8 @@ final class BackendPipelineCoverageTests: XCTestCase {
         let eDiv = astArena.appendExpr(.binary(op: .divide, lhs: eInt2, rhs: eInt1, range: range))
         let eEq = astArena.appendExpr(.binary(op: .equal, lhs: eInt1, rhs: eInt2, range: range))
 
-        let eCallKnown = astArena.appendExpr(.call(callee: eNameKnown, args: [eInt1], range: range))
-        let eCallUnknown = astArena.appendExpr(.call(callee: eNameUnknown, args: [eInt1], range: range))
+        let eCallKnown = astArena.appendExpr(.call(callee: eNameKnown, args: [CallArgument(expr: eInt1)], range: range))
+        let eCallUnknown = astArena.appendExpr(.call(callee: eNameUnknown, args: [CallArgument(expr: eInt1)], range: range))
         let eCallNonName = astArena.appendExpr(.call(callee: eInt1, args: [], range: range))
 
         let whenBranchTrue = WhenBranch(condition: eBoolTrue, body: eInt1, range: range)
