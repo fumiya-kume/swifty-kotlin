@@ -35,6 +35,9 @@ public final class CompilerDriver {
         do {
             for phase in phases {
                 try phase.run(ctx)
+                if ctx.diagnostics.hasError {
+                    break
+                }
             }
         } catch {
             if !ctx.diagnostics.hasError {
