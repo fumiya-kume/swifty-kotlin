@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(swift build:*)"
+      "Bash(swift build:*)",
+      "Bash(swift test:*)",
+      "Bash(git stash push:*)"
     ]
   }
 }
