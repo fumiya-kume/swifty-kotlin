@@ -110,7 +110,7 @@ public final class BuildASTPhase: CompilerPhase {
                 declarationsByFile[fileRawID, default: []].append(id)
 
             case .objectDecl:
-                let id = arena.appendDecl(.objectDecl(makeObjectDecl(from: nodeID, in: cst, interner: ctx.interner)))
+                let id = arena.appendDecl(.objectDecl(makeObjectDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena)))
                 declarations.append(id)
                 declarationsByFile[fileRawID, default: []].append(id)
 
@@ -165,17 +165,20 @@ public final class BuildASTPhase: CompilerPhase {
             name: declarationName(from: nodeID, in: arena, interner: interner),
             modifiers: declarationModifiers(from: nodeID, in: arena),
             typeParams: declarationTypeParameters(from: nodeID, in: arena, interner: interner),
-            primaryConstructorParams: declarationValueParameters(from: nodeID, in: arena, interner: interner, astArena: astArena)
+            primaryConstructorParams: declarationValueParameters(from: nodeID, in: arena, interner: interner, astArena: astArena),
+            superTypes: declarationSuperTypes(from: nodeID, in: arena, interner: interner, astArena: astArena),
+            enumEntries: declarationEnumEntries(from: nodeID, in: arena, interner: interner)
         )
     }
 
-    private func makeObjectDecl(from nodeID: NodeID, in arena: SyntaxArena, interner: StringInterner) -> ObjectDecl {
+    private func makeObjectDecl(from nodeID: NodeID, in arena: SyntaxArena, interner: StringInterner, astArena: ASTArena) -> ObjectDecl {
         let node = arena.node(nodeID)
         let modifiers = declarationModifiers(from: nodeID, in: arena)
         return ObjectDecl(
             range: node.range,
             name: declarationName(from: nodeID, in: arena, interner: interner),
-            modifiers: modifiers
+            modifiers: modifiers,
+            superTypes: declarationSuperTypes(from: nodeID, in: arena, interner: interner, astArena: astArena)
         )
     }
 
@@ -328,6 +331,156 @@ public final class BuildASTPhase: CompilerPhase {
             appendValueParameter(from: paramTokens, into: &arguments, interner: interner, astArena: astArena)
         }
         return arguments
+    }
+
+    private func declarationEnumEntries(
+        from nodeID: NodeID,
+        in arena: SyntaxArena,
+        interner: StringInterner
+    ) -> [EnumEntryDecl] {
+        var entries: [EnumEntryDecl] = []
+        var stack: [NodeID] = [nodeID]
+        while let current = stack.popLast() {
+            for child in arena.children(of: current) {
+                guard case .node(let childID) = child else {
+                    continue
+                }
+                let childNode = arena.node(childID)
+                if childNode.kind == .enumEntry {
+                    entries.append(makeEnumEntryDecl(from: childID, in: arena, interner: interner))
+                } else {
+                    stack.append(childID)
+                }
+            }
+        }
+        return entries
+    }
+
+    private func declarationSuperTypes(
+        from nodeID: NodeID,
+        in arena: SyntaxArena,
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> [TypeRefID] {
+        let tokens = collectTokens(from: nodeID, in: arena)
+        guard !tokens.isEmpty else {
+            return []
+        }
+        let declName = declarationName(from: nodeID, in: arena, interner: interner)
+        guard let nameIndex = tokens.firstIndex(where: { token in
+            guard let name = internedIdentifier(from: token, interner: interner) else {
+                return false
+            }
+            if case .keyword(let keyword) = token.kind, isLeadingDeclarationKeyword(keyword) {
+                return false
+            }
+            return name == declName
+        }) else {
+            return []
+        }
+
+        var index = nameIndex + 1
+        if index < tokens.count, tokens[index].kind == .symbol(.lessThan) {
+            var depth = 0
+            while index < tokens.count {
+                let token = tokens[index]
+                if token.kind == .symbol(.lessThan) {
+                    depth += 1
+                } else if token.kind == .symbol(.greaterThan) {
+                    depth -= 1
+                    if depth == 0 {
+                        index += 1
+                        break
+                    }
+                }
+                index += 1
+            }
+        }
+        if index < tokens.count, tokens[index].kind == .symbol(.lParen) {
+            var depth = 0
+            while index < tokens.count {
+                let token = tokens[index]
+                if token.kind == .symbol(.lParen) {
+                    depth += 1
+                } else if token.kind == .symbol(.rParen) {
+                    depth -= 1
+                    if depth == 0 {
+                        index += 1
+                        break
+                    }
+                }
+                index += 1
+            }
+        }
+        guard index < tokens.count, tokens[index].kind == .symbol(.colon) else {
+            return []
+        }
+        index += 1
+
+        var refs: [TypeRefID] = []
+        var current: [Token] = []
+        var angleDepth = 0
+        var parenDepth = 0
+        while index < tokens.count {
+            let token = tokens[index]
+            let atTopLevel = angleDepth == 0 && parenDepth == 0
+            if atTopLevel {
+                if token.kind == .symbol(.lBrace) || token.kind == .symbol(.semicolon) {
+                    break
+                }
+                if case .softKeyword(.where) = token.kind {
+                    break
+                }
+                if token.kind == .symbol(.comma) {
+                    if let ref = parseTypeRef(
+                        from: stripSuperTypeInvocation(from: current),
+                        interner: interner,
+                        astArena: astArena
+                    ) {
+                        refs.append(ref)
+                    }
+                    current.removeAll(keepingCapacity: true)
+                    index += 1
+                    continue
+                }
+            }
+
+            if token.kind == .symbol(.lessThan) {
+                angleDepth += 1
+            } else if token.kind == .symbol(.greaterThan) {
+                angleDepth = max(0, angleDepth - 1)
+            } else if token.kind == .symbol(.lParen) {
+                parenDepth += 1
+            } else if token.kind == .symbol(.rParen) {
+                parenDepth = max(0, parenDepth - 1)
+            }
+            current.append(token)
+            index += 1
+        }
+        if let ref = parseTypeRef(
+            from: stripSuperTypeInvocation(from: current),
+            interner: interner,
+            astArena: astArena
+        ) {
+            refs.append(ref)
+        }
+        return refs
+    }
+
+    private func stripSuperTypeInvocation(from tokens: [Token]) -> [Token] {
+        var result: [Token] = []
+        var angleDepth = 0
+        for token in tokens {
+            if token.kind == .symbol(.lessThan) {
+                angleDepth += 1
+            } else if token.kind == .symbol(.greaterThan) {
+                angleDepth = max(0, angleDepth - 1)
+            } else if angleDepth == 0 && token.kind == .symbol(.lParen) {
+                break
+            }
+            result.append(token)
+        }
+        return result
     }
 
     private func appendValueParameter(
@@ -869,6 +1022,8 @@ public final class BuildASTPhase: CompilerPhase {
                     modifiers.insert(.actual)
                 case .keyword(.value):
                     modifiers.insert(.value)
+                case .keyword(.enum):
+                    modifiers.insert(.enumModifier)
                 default:
                     continue
                 }

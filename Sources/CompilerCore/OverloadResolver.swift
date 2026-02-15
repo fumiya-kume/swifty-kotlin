@@ -46,7 +46,8 @@ public final class OverloadResolver {
         candidates: [SymbolID],
         call: CallExpr,
         expectedType: TypeID?,
-        ctx: SemaContext
+        implicitReceiverType: TypeID? = nil,
+        ctx: SemaModule
     ) -> ResolvedCall {
         let solver = ConstraintSolver()
         var viable: [ViableCandidate] = []
@@ -60,10 +61,25 @@ public final class OverloadResolver {
             guard let signature = ctx.symbols.functionSignature(for: candidate) else {
                 continue
             }
-            // Unqualified calls currently have no receiver expression in CallExpr.
-            // Skip extension-call candidates until receiver-based call modeling is added.
-            if signature.receiverType != nil {
-                continue
+            let typeVarBySymbol = ctx.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
+            var constraints: [VariableConstraint] = []
+            if let receiverType = signature.receiverType {
+                guard let implicitReceiverType else {
+                    continue
+                }
+                let rhsOperand = operand(
+                    for: receiverType,
+                    typeVarBySymbol: typeVarBySymbol,
+                    typeSystem: ctx.types
+                )
+                constraints.append(
+                    VariableConstraint(
+                        kind: .subtype,
+                        left: .type(implicitReceiverType),
+                        right: rhsOperand,
+                        blameRange: call.range
+                    )
+                )
             }
             guard let parameterMapping = buildParameterMapping(
                 signature: signature,
@@ -72,9 +88,6 @@ public final class OverloadResolver {
             ) else {
                 continue
             }
-
-            let typeVarBySymbol = makeTypeVarBySymbol(signature.typeParameterSymbols)
-            var constraints: [VariableConstraint] = []
 
             for argIndex in call.args.indices {
                 guard let paramIndex = parameterMapping[argIndex],
@@ -148,11 +161,10 @@ public final class OverloadResolver {
                     return nil
                 }
                 let type = signature.parameterTypes[paramIndex]
-                return substituteTypeParameters(
+                return ctx.types.substituteTypeParameters(
                     in: type,
                     substitution: substitution,
-                    typeVarBySymbol: typeVarBySymbol,
-                    typeSystem: ctx.types
+                    typeVarBySymbol: typeVarBySymbol
                 )
             }
             if instantiatedParameterTypes.count != call.args.count {
@@ -381,16 +393,6 @@ public final class OverloadResolver {
         return mapping
     }
 
-    private func makeTypeVarBySymbol(_ symbols: [SymbolID]) -> [SymbolID: TypeVarID] {
-        var mapping: [SymbolID: TypeVarID] = [:]
-        var index: Int32 = 0
-        for symbol in symbols {
-            mapping[symbol] = TypeVarID(rawValue: index)
-            index += 1
-        }
-        return mapping
-    }
-
     private func usedTypeVariables(from constraints: [VariableConstraint]) -> [TypeVarID] {
         var seen: Set<TypeVarID> = []
         for constraint in constraints {
@@ -432,113 +434,6 @@ public final class OverloadResolver {
             return typeSystem.isSubtype(lhs, rhs) && typeSystem.isSubtype(rhs, lhs)
         case .supertype:
             return typeSystem.isSubtype(rhs, lhs)
-        }
-    }
-
-    private func substituteTypeParameters(
-        in type: TypeID,
-        substitution: [TypeVarID: TypeID],
-        typeVarBySymbol: [SymbolID: TypeVarID],
-        typeSystem: TypeSystem
-    ) -> TypeID {
-        let kind = typeSystem.kind(of: type)
-        switch kind {
-        case .typeParam(let typeParam):
-            if let variable = typeVarBySymbol[typeParam.symbol],
-               let concrete = substitution[variable] {
-                return concrete
-            }
-            return type
-
-        case .classType(let classType):
-            let newArgs: [TypeArg] = classType.args.map { arg in
-                switch arg {
-                case .invariant(let type):
-                    return .invariant(substituteTypeParameters(
-                        in: type,
-                        substitution: substitution,
-                        typeVarBySymbol: typeVarBySymbol,
-                        typeSystem: typeSystem
-                    ))
-                case .out(let type):
-                    return .out(substituteTypeParameters(
-                        in: type,
-                        substitution: substitution,
-                        typeVarBySymbol: typeVarBySymbol,
-                        typeSystem: typeSystem
-                    ))
-                case .in(let type):
-                    return .in(substituteTypeParameters(
-                        in: type,
-                        substitution: substitution,
-                        typeVarBySymbol: typeVarBySymbol,
-                        typeSystem: typeSystem
-                    ))
-                case .star:
-                    return .star
-                }
-            }
-            if newArgs == classType.args {
-                return type
-            }
-            return typeSystem.make(.classType(ClassType(
-                classSymbol: classType.classSymbol,
-                args: newArgs,
-                nullability: classType.nullability
-            )))
-
-        case .functionType(let functionType):
-            let newReceiver = functionType.receiver.map { receiver in
-                substituteTypeParameters(
-                    in: receiver,
-                    substitution: substitution,
-                    typeVarBySymbol: typeVarBySymbol,
-                    typeSystem: typeSystem
-                )
-            }
-            let newParams = functionType.params.map { param in
-                substituteTypeParameters(
-                    in: param,
-                    substitution: substitution,
-                    typeVarBySymbol: typeVarBySymbol,
-                    typeSystem: typeSystem
-                )
-            }
-            let newReturn = substituteTypeParameters(
-                in: functionType.returnType,
-                substitution: substitution,
-                typeVarBySymbol: typeVarBySymbol,
-                typeSystem: typeSystem
-            )
-            if newReceiver == functionType.receiver &&
-                newParams == functionType.params &&
-                newReturn == functionType.returnType {
-                return type
-            }
-            return typeSystem.make(.functionType(FunctionType(
-                receiver: newReceiver,
-                params: newParams,
-                returnType: newReturn,
-                isSuspend: functionType.isSuspend,
-                nullability: functionType.nullability
-            )))
-
-        case .intersection(let parts):
-            let newParts = parts.map { part in
-                substituteTypeParameters(
-                    in: part,
-                    substitution: substitution,
-                    typeVarBySymbol: typeVarBySymbol,
-                    typeSystem: typeSystem
-                )
-            }
-            if newParts == parts {
-                return type
-            }
-            return typeSystem.make(.intersection(newParts))
-
-        default:
-            return type
         }
     }
 
