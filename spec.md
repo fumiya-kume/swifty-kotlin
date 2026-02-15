@@ -1114,3 +1114,31 @@ KIR で `isSuspend = true` の関数。
 
    * bug としてチケット化
    * どの Phase のどの規約に違反したかを特定
+
+---
+
+# Doc J19: Coverage Gate（SwiftPM）
+
+## J19.1 目的
+
+* `CompilerCore` の優先8ファイルに対して、行カバレッジ 95% 以上を継続的に保証する。
+
+## J19.2 実行コマンド
+
+```bash
+bash Scripts/check_coverage.sh
+```
+
+## J19.3 判定ルール
+
+* 対象:
+  * `Sources/CompilerCore/TokenStream.swift`
+  * `Sources/CompilerCore/SourceManager.swift`
+  * `Sources/CompilerCore/ConstraintSolver.swift`
+  * `Sources/CompilerCore/OverloadResolver.swift`
+  * `Sources/CompilerCore/SyntaxArena.swift`
+  * `Sources/CompilerCore/CompilerTypes.swift`
+  * `Sources/CompilerCore/TokenModel.swift`
+  * `Sources/CompilerCore/ASTModels.swift`
+* しきい値: 95%（`COVERAGE_THRESHOLD` で上書き可）
+* いずれか1ファイルでも未達なら `exit 1`
