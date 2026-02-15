@@ -1,0 +1,5 @@
+module CLLVM [system] {
+  header "include/llvm_shim.h"
+  link "LLVM"
+  export *
+}

@@ -21,8 +21,12 @@ let package = Package(
         )
     ],
     targets: [
+        .systemLibrary(
+            name: "CLLVM"
+        ),
         .target(
-            name: "CompilerCore"
+            name: "CompilerCore",
+            dependencies: ["CLLVM"]
         ),
         .executableTarget(
             name: "KSwiftKCLI",
