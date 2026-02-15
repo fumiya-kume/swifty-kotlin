@@ -39,6 +39,11 @@ let package = Package(
             name: "CompilerCoreTests",
             dependencies: ["CompilerCore"],
             path: "Tests/CompilerCoreTests"
+        ),
+        .testTarget(
+            name: "RuntimeTests",
+            dependencies: ["Runtime"],
+            path: "Tests/RuntimeTests"
         )
     ]
 )
