@@ -2306,6 +2306,21 @@ private final class InlineLoweringPass: LoweringImpl {
             case .nop:
                 lowered.append(.nop)
 
+            case .label(let id):
+                lowered.append(.label(id))
+
+            case .jump(let target):
+                lowered.append(.jump(target))
+
+            case .jumpIfEqual(let lhs, let rhs, let target):
+                lowered.append(
+                    .jumpIfEqual(
+                        lhs: resolveAlias(of: lhs, aliases: localExprMap),
+                        rhs: resolveAlias(of: rhs, aliases: localExprMap),
+                        target: target
+                    )
+                )
+
             case .returnUnit:
                 returnedExpr = nil
 
@@ -2348,6 +2363,14 @@ private final class InlineLoweringPass: LoweringImpl {
                         outThrown: outThrown
                     )
                 )
+
+            case .returnIfEqual(let lhs, let rhs):
+                lowered.append(
+                    .returnIfEqual(
+                        lhs: resolveAlias(of: lhs, aliases: localExprMap),
+                        rhs: resolveAlias(of: rhs, aliases: localExprMap)
+                    )
+                )
             }
         }
 
@@ -2375,6 +2398,19 @@ private final class InlineLoweringPass: LoweringImpl {
 
         case .returnValue(let value):
             return .returnValue(resolveAlias(of: value, aliases: aliases))
+
+        case .returnIfEqual(let lhs, let rhs):
+            return .returnIfEqual(
+                lhs: resolveAlias(of: lhs, aliases: aliases),
+                rhs: resolveAlias(of: rhs, aliases: aliases)
+            )
+
+        case .jumpIfEqual(let lhs, let rhs, let target):
+            return .jumpIfEqual(
+                lhs: resolveAlias(of: lhs, aliases: aliases),
+                rhs: resolveAlias(of: rhs, aliases: aliases),
+                target: target
+            )
 
         default:
             return instruction
@@ -2454,6 +2490,8 @@ private final class CoroutineLoweringPass: LoweringImpl {
             module.recordLowering(Self.name)
             return
         }
+        let suspendFunctionSymbols = Set(suspendFunctions.map(\.symbol))
+        let suspendFunctionNames = Set(suspendFunctions.map(\.name))
 
         var existingFunctionNames: Set<InternedString> = Set(module.arena.declarations.compactMap { decl in
             guard case .function(let function) = decl else {
@@ -2492,7 +2530,9 @@ private final class CoroutineLoweringPass: LoweringImpl {
                 continuationParameterSymbol: continuationParameterSymbol,
                 loweredSymbol: loweredSymbol,
                 module: module,
-                interner: ctx.interner
+                interner: ctx.interner,
+                suspendFunctionSymbols: suspendFunctionSymbols,
+                suspendFunctionNames: suspendFunctionNames
             )
             let loweredFunction = KIRFunction(
                 symbol: loweredSymbol,
@@ -2698,13 +2738,23 @@ private final class CoroutineLoweringPass: LoweringImpl {
         continuationParameterSymbol: SymbolID,
         loweredSymbol: SymbolID,
         module: KIRModule,
-        interner: StringInterner
+        interner: StringInterner,
+        suspendFunctionSymbols: Set<SymbolID>,
+        suspendFunctionNames: Set<InternedString>
     ) -> [KIRInstruction] {
         let enterCallee = interner.intern("kk_coroutine_state_enter")
+        let setLabelCallee = interner.intern("kk_coroutine_state_set_label")
         let exitCallee = interner.intern("kk_coroutine_state_exit")
+        let suspendedProvider = interner.intern("kk_coroutine_suspended")
+
+        let stateBlocks = buildSuspendStateBlocks(
+            originalBody: originalBody,
+            suspendFunctionSymbols: suspendFunctionSymbols,
+            suspendFunctionNames: suspendFunctionNames
+        )
 
         var lowered: [KIRInstruction] = []
-        lowered.reserveCapacity(originalBody.count + 4)
+        lowered.reserveCapacity(originalBody.count * 3 + 16)
 
         let continuationExpr = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
         lowered.append(.constValue(result: continuationExpr, value: .symbolRef(continuationParameterSymbol)))
@@ -2723,41 +2773,330 @@ private final class CoroutineLoweringPass: LoweringImpl {
             )
         )
 
-        for instruction in originalBody {
-            switch instruction {
-            case .returnValue(let value):
-                let exitValueExpr = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
-                lowered.append(
-                    .call(
-                        symbol: nil,
-                        callee: exitCallee,
-                        arguments: [continuationExpr, value],
-                        result: exitValueExpr,
-                        outThrown: false
-                    )
+        for block in stateBlocks {
+            let expectedResumeExpr = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
+            lowered.append(.constValue(result: expectedResumeExpr, value: .intLiteral(block.resumeLabel)))
+            lowered.append(
+                .jumpIfEqual(
+                    lhs: resumeLabelExpr,
+                    rhs: expectedResumeExpr,
+                    target: stateDispatchLabel(for: block.resumeLabel)
                 )
-                lowered.append(.returnValue(exitValueExpr))
+            )
+        }
+        lowered.append(.jump(stateDispatchLabel(for: stateBlocks.first?.resumeLabel ?? 0)))
 
-            case .returnUnit:
-                let unitExpr = module.arena.appendExpr(.unit)
-                let exitValueExpr = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
-                lowered.append(
-                    .call(
-                        symbol: nil,
-                        callee: exitCallee,
-                        arguments: [continuationExpr, unitExpr],
-                        result: exitValueExpr,
-                        outThrown: false
+        for (index, block) in stateBlocks.enumerated() {
+            lowered.append(.label(stateDispatchLabel(for: block.resumeLabel)))
+            let nextResumeLabel = stateBlocks.indices.contains(index + 1)
+                ? stateBlocks[index + 1].resumeLabel
+                : nil
+
+            for instruction in block.instructions {
+                if case .call(let symbol, let callee, let arguments, let result, let outThrown) = instruction,
+                   isSuspendCall(
+                    symbol: symbol,
+                    callee: callee,
+                    suspendFunctionSymbols: suspendFunctionSymbols,
+                    suspendFunctionNames: suspendFunctionNames
+                   ),
+                   let nextResumeLabel {
+                    let resumeLabelExpr = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
+                    lowered.append(.constValue(result: resumeLabelExpr, value: .intLiteral(nextResumeLabel)))
+
+                    lowered.append(
+                        .call(
+                            symbol: nil,
+                            callee: setLabelCallee,
+                            arguments: [continuationExpr, resumeLabelExpr],
+                            result: nil,
+                            outThrown: false
+                        )
                     )
-                )
-                lowered.append(.returnValue(exitValueExpr))
 
-            default:
-                lowered.append(instruction)
+                    let suspensionResult = result ?? module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
+                    lowered.append(
+                        .call(
+                            symbol: symbol,
+                            callee: callee,
+                            arguments: arguments,
+                            result: suspensionResult,
+                            outThrown: outThrown
+                        )
+                    )
+
+                    let suspendedExpr = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
+                    lowered.append(
+                        .call(
+                            symbol: nil,
+                            callee: suspendedProvider,
+                            arguments: [],
+                            result: suspendedExpr,
+                            outThrown: false
+                        )
+                    )
+                    lowered.append(.returnIfEqual(lhs: suspensionResult, rhs: suspendedExpr))
+                    continue
+                }
+
+                switch instruction {
+                case .returnValue(let value):
+                    let exitValueExpr = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
+                    lowered.append(
+                        .call(
+                            symbol: nil,
+                            callee: exitCallee,
+                            arguments: [continuationExpr, value],
+                            result: exitValueExpr,
+                            outThrown: false
+                        )
+                    )
+                    lowered.append(.returnValue(exitValueExpr))
+
+                case .returnUnit:
+                    let unitExpr = module.arena.appendExpr(.unit)
+                    let exitValueExpr = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
+                    lowered.append(
+                        .call(
+                            symbol: nil,
+                            callee: exitCallee,
+                            arguments: [continuationExpr, unitExpr],
+                            result: exitValueExpr,
+                            outThrown: false
+                        )
+                    )
+                    lowered.append(.returnValue(exitValueExpr))
+
+                default:
+                    lowered.append(instruction)
+                }
             }
         }
 
         return lowered
+    }
+
+    private func stateDispatchLabel(for resumeLabel: Int64) -> Int32 {
+        Int32(1000 + resumeLabel)
+    }
+
+    private struct SuspendStateBlock {
+        let resumeLabel: Int64
+        let instructions: [KIRInstruction]
+    }
+
+    private struct CFGBlock {
+        let id: Int
+        let instructions: [KIRInstruction]
+        let successors: [Int]
+    }
+
+    private func buildSuspendStateBlocks(
+        originalBody: [KIRInstruction],
+        suspendFunctionSymbols: Set<SymbolID>,
+        suspendFunctionNames: Set<InternedString>
+    ) -> [SuspendStateBlock] {
+        let cfgBlocks = buildControlFlowBlocks(originalBody)
+        guard !cfgBlocks.isEmpty else {
+            return [SuspendStateBlock(resumeLabel: 0, instructions: [])]
+        }
+
+        let reachableOrder = reachableBlockOrder(cfgBlocks: cfgBlocks)
+
+        var blocks: [SuspendStateBlock] = []
+        var currentResumeLabel: Int64 = 0
+        var nextResumeLabel: Int64 = 1
+
+        for blockID in reachableOrder {
+            let cfgBlock = cfgBlocks[blockID]
+            var chunk: [KIRInstruction] = []
+            chunk.reserveCapacity(cfgBlock.instructions.count)
+
+            for instruction in cfgBlock.instructions {
+                chunk.append(instruction)
+
+                guard case .call(let symbol, let callee, _, _, _) = instruction else {
+                    continue
+                }
+                guard isSuspendCall(
+                    symbol: symbol,
+                    callee: callee,
+                    suspendFunctionSymbols: suspendFunctionSymbols,
+                    suspendFunctionNames: suspendFunctionNames
+                ) else {
+                    continue
+                }
+
+                blocks.append(
+                    SuspendStateBlock(
+                        resumeLabel: currentResumeLabel,
+                        instructions: chunk
+                    )
+                )
+                chunk = []
+                currentResumeLabel = nextResumeLabel
+                nextResumeLabel += 1
+            }
+
+            if !chunk.isEmpty {
+                blocks.append(
+                    SuspendStateBlock(
+                        resumeLabel: currentResumeLabel,
+                        instructions: chunk
+                    )
+                )
+                currentResumeLabel = nextResumeLabel
+                nextResumeLabel += 1
+            }
+        }
+
+        if blocks.isEmpty {
+            return [SuspendStateBlock(resumeLabel: 0, instructions: [])]
+        }
+        return blocks
+    }
+
+    private func buildControlFlowBlocks(_ instructions: [KIRInstruction]) -> [CFGBlock] {
+        guard !instructions.isEmpty else {
+            return []
+        }
+
+        var labelToInstructionIndex: [Int32: Int] = [:]
+        for (index, instruction) in instructions.enumerated() {
+            if case .label(let labelID) = instruction {
+                labelToInstructionIndex[labelID] = index
+            }
+        }
+
+        var leaders: Set<Int> = [0]
+        for (index, instruction) in instructions.enumerated() {
+            switch instruction {
+            case .label:
+                leaders.insert(index)
+            case .jump(let target):
+                if let targetIndex = labelToInstructionIndex[target] {
+                    leaders.insert(targetIndex)
+                }
+                if index + 1 < instructions.count {
+                    leaders.insert(index + 1)
+                }
+            case .jumpIfEqual(_, _, let target):
+                if let targetIndex = labelToInstructionIndex[target] {
+                    leaders.insert(targetIndex)
+                }
+                if index + 1 < instructions.count {
+                    leaders.insert(index + 1)
+                }
+            case .returnUnit, .returnValue, .returnIfEqual:
+                if index + 1 < instructions.count {
+                    leaders.insert(index + 1)
+                }
+            default:
+                continue
+            }
+        }
+
+        let sortedLeaders = leaders.sorted()
+        var ranges: [(start: Int, end: Int)] = []
+        ranges.reserveCapacity(sortedLeaders.count)
+        for (index, start) in sortedLeaders.enumerated() {
+            let end = index + 1 < sortedLeaders.count ? sortedLeaders[index + 1] : instructions.count
+            if start < end {
+                ranges.append((start: start, end: end))
+            }
+        }
+        guard !ranges.isEmpty else {
+            return []
+        }
+
+        var instructionToBlock: [Int: Int] = [:]
+        for (blockID, range) in ranges.enumerated() {
+            for instructionIndex in range.start..<range.end {
+                instructionToBlock[instructionIndex] = blockID
+            }
+        }
+
+        var blocks: [CFGBlock] = []
+        blocks.reserveCapacity(ranges.count)
+
+        for (blockID, range) in ranges.enumerated() {
+            let blockInstructions = Array(instructions[range.start..<range.end])
+            let terminator = blockInstructions.last
+
+            var successors: [Int] = []
+            switch terminator {
+            case .some(.jump(let target)):
+                if let targetInstruction = labelToInstructionIndex[target],
+                   let targetBlock = instructionToBlock[targetInstruction] {
+                    successors.append(targetBlock)
+                }
+
+            case .some(.jumpIfEqual(_, _, let target)):
+                if let targetInstruction = labelToInstructionIndex[target],
+                   let targetBlock = instructionToBlock[targetInstruction] {
+                    successors.append(targetBlock)
+                }
+                if blockID + 1 < ranges.count {
+                    successors.append(blockID + 1)
+                }
+
+            case .some(.returnUnit), .some(.returnValue), .some(.returnIfEqual):
+                break
+
+            default:
+                if blockID + 1 < ranges.count {
+                    successors.append(blockID + 1)
+                }
+            }
+
+            var dedupedSuccessors: [Int] = []
+            dedupedSuccessors.reserveCapacity(successors.count)
+            for successor in successors where !dedupedSuccessors.contains(successor) {
+                dedupedSuccessors.append(successor)
+            }
+            blocks.append(
+                CFGBlock(
+                    id: blockID,
+                    instructions: blockInstructions,
+                    successors: dedupedSuccessors
+                )
+            )
+        }
+
+        return blocks
+    }
+
+    private func reachableBlockOrder(cfgBlocks: [CFGBlock]) -> [Int] {
+        guard !cfgBlocks.isEmpty else {
+            return []
+        }
+        var order: [Int] = []
+        var stack: [Int] = [0]
+        var visited: Set<Int> = []
+
+        while let blockID = stack.popLast() {
+            guard visited.insert(blockID).inserted else {
+                continue
+            }
+            order.append(blockID)
+            let successors = cfgBlocks[blockID].successors
+            for successor in successors.reversed() {
+                stack.append(successor)
+            }
+        }
+        return order
+    }
+
+    private func isSuspendCall(
+        symbol: SymbolID?,
+        callee: InternedString,
+        suspendFunctionSymbols: Set<SymbolID>,
+        suspendFunctionNames: Set<InternedString>
+    ) -> Bool {
+        if let symbol, suspendFunctionSymbols.contains(symbol) {
+            return true
+        }
+        return suspendFunctionNames.contains(callee)
     }
 }
 
@@ -2778,6 +3117,7 @@ private final class ABILoweringPass: LoweringImpl {
             ctx.interner.intern("kk_lambda_invoke"),
             ctx.interner.intern("kk_coroutine_suspended"),
             ctx.interner.intern("kk_coroutine_state_enter"),
+            ctx.interner.intern("kk_coroutine_state_set_label"),
             ctx.interner.intern("kk_coroutine_state_exit")
         ]
         module.arena.transformFunctions { function in
@@ -2962,6 +3302,12 @@ public final class CodegenPhase: CompilerPhase {
                     return "beginBlock"
                 case .endBlock:
                     return "endBlock"
+                case .label(let id):
+                    return "label id=\(id)"
+                case .jump(let target):
+                    return "jump target=\(target)"
+                case .jumpIfEqual(let lhs, let rhs, let target):
+                    return "jumpIfEqual lhs=\(lhs.rawValue) rhs=\(rhs.rawValue) target=\(target)"
                 case .constValue(let result, let value):
                     return "const result=\(result.rawValue) value=\(value)"
                 case .binary(let op, let lhs, let rhs, let result):
@@ -2970,6 +3316,8 @@ public final class CodegenPhase: CompilerPhase {
                     return "returnUnit"
                 case .returnValue:
                     return "returnValue"
+                case .returnIfEqual(let lhs, let rhs):
+                    return "returnIfEqual lhs=\(lhs.rawValue) rhs=\(rhs.rawValue)"
                 case .call(let symbol, let callee, let arguments, let result, let outThrown):
                     let args = arguments.map { String($0.rawValue) }.joined(separator: ",")
                     let symbolValue = symbol.map { String($0.rawValue) } ?? "_"
