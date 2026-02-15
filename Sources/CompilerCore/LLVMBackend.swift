@@ -15,18 +15,18 @@ public struct RuntimeLinkInfo {
 public final class LLVMBackend {
     private let target: TargetTriple
     private let optLevel: OptimizationLevel
-    private let debugInfo: Bool
+    private let emitsDebugInfo: Bool
     private let diagnostics: DiagnosticEngine
 
     public init(
         target: TargetTriple,
         optLevel: OptimizationLevel,
-        debugInfo: Bool,
+        emitsDebugInfo: Bool,
         diagnostics: DiagnosticEngine
     ) {
         self.target = target
         self.optLevel = optLevel
-        self.debugInfo = debugInfo
+        self.emitsDebugInfo = emitsDebugInfo
         self.diagnostics = diagnostics
     }
 
@@ -190,9 +190,22 @@ public final class LLVMBackend {
             "  }",
             "  return (void*)out;",
             "}",
-            "static void kk_println_any(void* obj) {",
-            "  if (!obj) { puts(\"null\"); return; }",
-            "  KKString* s = (KKString*)obj;",
+            "static void kk_println_any(intptr_t obj) {",
+            "  if (obj == 0) { puts(\"null\"); return; }",
+            "  if (obj > -(intptr_t)0x100000000LL && obj < (intptr_t)0x100000000LL) {",
+            "    printf(\"%ld\\n\", (long)obj);",
+            "    return;",
+            "  }",
+            "  KKString* s = (KKString*)(void*)obj;",
+            "  if (!s) { puts(\"null\"); return; }",
+            "  if (s->len < 0 || s->len > (1 << 20)) {",
+            "    printf(\"%ld\\n\", (long)obj);",
+            "    return;",
+            "  }",
+            "  if (s->len > 0 && !s->bytes) {",
+            "    printf(\"%ld\\n\", (long)obj);",
+            "    return;",
+            "  }",
             "  if (s->bytes && s->len > 0) fwrite(s->bytes, 1, (size_t)s->len, stdout);",
             "  fputc('\\n', stdout);",
             "}",
@@ -274,6 +287,10 @@ public final class LLVMBackend {
         var declared: Set<Int32> = []
         var callIndex = 0
         let functionID = max(0, Int(function.symbol.rawValue))
+        var parameterNameBySymbol: [SymbolID: String] = [:]
+        for (index, parameter) in function.params.enumerated() {
+            parameterNameBySymbol[parameter.symbol] = "p\(index)"
+        }
 
         lines.append("  kk_register_frame_map(\(functionID)u, &\(frameMapDescriptorSymbol(for: function)));")
         lines.append("  kk_push_frame(\(functionID)u, NULL);")
@@ -300,7 +317,12 @@ public final class LLVMBackend {
 
             case .constValue(let result, let value):
                 ensureDeclared(result, declared: &declared, lines: &lines)
-                lines.append("  \(varName(result)) = \(valueExpr(value, interner: interner));")
+                if case .symbolRef(let symbol) = value,
+                   let parameterName = parameterNameBySymbol[symbol] {
+                    lines.append("  \(varName(result)) = \(parameterName);")
+                } else {
+                    lines.append("  \(varName(result)) = \(valueExpr(value, interner: interner));")
+                }
 
             case .binary(let op, let lhs, let rhs, let result):
                 ensureDeclared(result, declared: &declared, lines: &lines)
@@ -334,7 +356,7 @@ public final class LLVMBackend {
 
                 if calleeName == "println" || calleeName == "kk_println_any" {
                     let value = argVars.first ?? "0"
-                    lines.append("  kk_println_any((void*)\(value));")
+                    lines.append("  kk_println_any(\(value));")
                     if let result {
                         lines.append("  \(varName(result)) = 0;")
                     }
@@ -353,8 +375,23 @@ public final class LLVMBackend {
                     continue
                 }
 
+                if calleeName == "kk_string_concat" {
+                    let lhs = argVars.count > 0 ? argVars[0] : "0"
+                    let rhs = argVars.count > 1 ? argVars[1] : "0"
+                    let expr = "(intptr_t)kk_string_concat((void*)\(lhs), (void*)\(rhs))"
+                    if let result {
+                        lines.append("  \(varName(result)) = \(expr);")
+                    } else {
+                        lines.append("  (void)\(expr);")
+                    }
+                    continue
+                }
+
                 if calleeName == "kk_when_select" {
-                    let value = argVars.dropFirst().first ?? argVars.first ?? "0"
+                    let condition = argVars.count > 0 ? argVars[0] : "0"
+                    let thenValue = argVars.count > 1 ? argVars[1] : "0"
+                    let elseValue = argVars.count > 2 ? argVars[2] : "0"
+                    let value = "(\(condition) ? \(thenValue) : \(elseValue))"
                     if let result {
                         lines.append("  \(varName(result)) = \(value);")
                     } else {
@@ -522,6 +559,8 @@ public final class LLVMBackend {
         let ignored: Set<String> = [
             "println",
             "kk_println_any",
+            "kk_string_concat",
+            "kk_string_from_utf8",
             "kk_when_select",
             "kk_coroutine_suspended",
             "kk_coroutine_state_enter",
