@@ -255,6 +255,38 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
     }
 
+    func testLlvmCapiBackendCanLinkAndRunExecutable() throws {
+        let source = "fun main() = 0"
+        try withTemporaryFile(contents: source) { path in
+            let outputPath = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .path
+            let options = CompilerOptions(
+                moduleName: "LLVMCAPIExe",
+                inputs: [path],
+                outputPath: outputPath,
+                emit: .executable,
+                target: defaultTargetTriple(),
+                irFlags: ["backend=llvm-c-api"]
+            )
+            let ctx = CompilationContext(
+                options: options,
+                sourceManager: SourceManager(),
+                diagnostics: DiagnosticEngine(),
+                interner: StringInterner()
+            )
+
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+            try LinkPhase().run(ctx)
+
+            XCTAssertTrue(FileManager.default.fileExists(atPath: outputPath))
+            let result = try CommandRunner.run(executable: outputPath, arguments: [])
+            XCTAssertEqual(result.exitCode, 0)
+        }
+    }
+
     func testLlvmCapiBindingsCandidatePathsHonorEnvironmentOverride() {
         let overridePath = "/tmp/custom-libLLVM.dylib"
         let paths = LLVMCAPIBindings.candidateLibraryPaths(environment: ["KSWIFTK_LLVM_DYLIB": overridePath])
