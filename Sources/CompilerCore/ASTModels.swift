@@ -160,6 +160,20 @@ public struct TypeParamDecl {
 public struct ValueParamDecl {
     public let name: InternedString
     public let type: TypeRefID?
+    public let hasDefaultValue: Bool
+    public let isVararg: Bool
+
+    public init(
+        name: InternedString,
+        type: TypeRefID?,
+        hasDefaultValue: Bool = false,
+        isVararg: Bool = false
+    ) {
+        self.name = name
+        self.type = type
+        self.hasDefaultValue = hasDefaultValue
+        self.isVararg = isVararg
+    }
 }
 
 public enum TypeRef: Equatable {

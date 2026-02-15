@@ -51,21 +51,33 @@ public struct SemanticSymbol {
 public typealias SemaSymbol = SemanticSymbol
 
 public struct FunctionSignature {
+    public let receiverType: TypeID?
     public let parameterTypes: [TypeID]
     public let returnType: TypeID
     public let isSuspend: Bool
     public let valueParameterSymbols: [SymbolID]
+    public let valueParameterHasDefaultValues: [Bool]
+    public let valueParameterIsVararg: [Bool]
+    public let typeParameterSymbols: [SymbolID]
 
     public init(
+        receiverType: TypeID? = nil,
         parameterTypes: [TypeID],
         returnType: TypeID,
         isSuspend: Bool = false,
-        valueParameterSymbols: [SymbolID] = []
+        valueParameterSymbols: [SymbolID] = [],
+        valueParameterHasDefaultValues: [Bool] = [],
+        valueParameterIsVararg: [Bool] = [],
+        typeParameterSymbols: [SymbolID] = []
     ) {
+        self.receiverType = receiverType
         self.parameterTypes = parameterTypes
         self.returnType = returnType
         self.isSuspend = isSuspend
         self.valueParameterSymbols = valueParameterSymbols
+        self.valueParameterHasDefaultValues = valueParameterHasDefaultValues
+        self.valueParameterIsVararg = valueParameterIsVararg
+        self.typeParameterSymbols = typeParameterSymbols
     }
 }
 
@@ -109,7 +121,7 @@ public final class BlockScope: BaseScope {}
 
 public final class SymbolTable {
     private var symbolsStorage: [SemanticSymbol] = []
-    private var byFQName: [[InternedString]: SymbolID] = [:]
+    private var byFQName: [[InternedString]: [SymbolID]] = [:]
     private var functionSignatures: [SymbolID: FunctionSignature] = [:]
 
     public init() {}
@@ -131,7 +143,11 @@ public final class SymbolTable {
     }
 
     public func lookup(fqName: [InternedString]) -> SymbolID? {
-        byFQName[fqName]
+        byFQName[fqName]?.first
+    }
+
+    public func lookupAll(fqName: [InternedString]) -> [SymbolID] {
+        byFQName[fqName] ?? []
     }
 
     public func define(
@@ -142,9 +158,38 @@ public final class SymbolTable {
         visibility: Visibility,
         flags: SymbolFlags = []
     ) -> SymbolID {
-        if let existing = byFQName[fqName] {
-            return existing
+        if let existing = byFQName[fqName], !existing.isEmpty {
+            let existingKinds = existing.compactMap { symbol($0)?.kind }
+            if canCoexistAsOverload(kind: kind, existingKinds: existingKinds) {
+                return appendNewSymbol(
+                    kind: kind,
+                    name: name,
+                    fqName: fqName,
+                    declSite: declSite,
+                    visibility: visibility,
+                    flags: flags
+                )
+            }
+            return existing[0]
         }
+        return appendNewSymbol(
+            kind: kind,
+            name: name,
+            fqName: fqName,
+            declSite: declSite,
+            visibility: visibility,
+            flags: flags
+        )
+    }
+
+    private func appendNewSymbol(
+        kind: SymbolKind,
+        name: InternedString,
+        fqName: [InternedString],
+        declSite: SourceRange?,
+        visibility: Visibility,
+        flags: SymbolFlags
+    ) -> SymbolID {
         let id = SymbolID(rawValue: Int32(symbolsStorage.count))
         let symbol = SemanticSymbol(
             id: id,
@@ -156,8 +201,19 @@ public final class SymbolTable {
             flags: flags
         )
         symbolsStorage.append(symbol)
-        byFQName[fqName] = id
+        byFQName[fqName, default: []].append(id)
         return id
+    }
+
+    private func canCoexistAsOverload(kind: SymbolKind, existingKinds: [SymbolKind]) -> Bool {
+        guard isOverloadable(kind) else {
+            return false
+        }
+        return existingKinds.allSatisfy { isOverloadable($0) }
+    }
+
+    private func isOverloadable(_ kind: SymbolKind) -> Bool {
+        kind == .function || kind == .constructor
     }
 
     public func setFunctionSignature(_ signature: FunctionSignature, for symbol: SymbolID) {
