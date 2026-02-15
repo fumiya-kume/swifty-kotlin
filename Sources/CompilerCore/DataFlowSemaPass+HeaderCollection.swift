@@ -112,6 +112,12 @@ extension DataFlowSemaPassPhase {
         switch decl {
         case .classDecl(let classDecl):
             let classType = types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
+            collectNestedTypeAliases(
+                classDecl.nestedTypeAliases,
+                ownerFQName: fqName,
+                symbols: symbols,
+                diagnostics: diagnostics
+            )
             if declaration.kind == .enumClass {
                 for entry in classDecl.enumEntries {
                     let entryFQName = fqName + [entry.name]
@@ -136,8 +142,14 @@ extension DataFlowSemaPassPhase {
                 }
             }
 
-        case .objectDecl:
+        case .objectDecl(let objectDecl):
             _ = types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
+            collectNestedTypeAliases(
+                objectDecl.nestedTypeAliases,
+                ownerFQName: fqName,
+                symbols: symbols,
+                diagnostics: diagnostics
+            )
 
         case .funDecl(let funDecl):
             var paramTypes: [TypeID] = []
@@ -235,6 +247,33 @@ extension DataFlowSemaPassPhase {
 
         case .typeAliasDecl, .enumEntry:
             break
+        }
+    }
+
+    private func collectNestedTypeAliases(
+        _ aliases: [TypeAliasDecl],
+        ownerFQName: [InternedString],
+        symbols: SymbolTable,
+        diagnostics: DiagnosticEngine
+    ) {
+        for alias in aliases {
+            let aliasFQName = ownerFQName + [alias.name]
+            let existingSymbols = symbols.lookupAll(fqName: aliasFQName).compactMap { symbols.symbol($0) }
+            if hasDeclarationConflict(newKind: .typeAlias, existing: existingSymbols) {
+                diagnostics.error(
+                    "KSWIFTK-SEMA-0001",
+                    "Duplicate declaration in the same package scope.",
+                    range: alias.range
+                )
+            }
+            _ = symbols.define(
+                kind: .typeAlias,
+                name: alias.name,
+                fqName: aliasFQName,
+                declSite: alias.range,
+                visibility: visibility(from: alias.modifiers),
+                flags: flags(from: alias.modifiers)
+            )
         }
     }
 
