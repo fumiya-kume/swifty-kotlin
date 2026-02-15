@@ -105,27 +105,27 @@ public final class BuildASTPhase: CompilerPhase {
                 importsByFile[fileRawID, default: []].append(ImportDecl(range: node.range, path: path))
 
             case .classDecl, .interfaceDecl:
-                let decl = ASTDecl.classDecl(makeClassDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
+                let decl = Decl.classDecl(makeClassDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
                 appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
 
             case .objectDecl:
-                let decl = ASTDecl.objectDecl(makeObjectDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
+                let decl = Decl.objectDecl(makeObjectDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
                 appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
 
             case .funDecl:
-                let decl = ASTDecl.funDecl(makeFunDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
+                let decl = Decl.funDecl(makeFunDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
                 appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
 
             case .propertyDecl:
-                let decl = ASTDecl.propertyDecl(makePropertyDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
+                let decl = Decl.propertyDecl(makePropertyDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
                 appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
 
             case .typeAliasDecl:
-                let decl = ASTDecl.typeAliasDecl(makeTypeAliasDecl(from: nodeID, in: cst, interner: ctx.interner))
+                let decl = Decl.typeAliasDecl(makeTypeAliasDecl(from: nodeID, in: cst, interner: ctx.interner))
                 appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
 
             case .enumEntry:
-                let decl = ASTDecl.enumEntry(makeEnumEntryDecl(from: nodeID, in: cst, interner: ctx.interner))
+                let decl = Decl.enumEntry(makeEnumEntryDecl(from: nodeID, in: cst, interner: ctx.interner))
                 appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
 
             default:
@@ -148,7 +148,7 @@ public final class BuildASTPhase: CompilerPhase {
     }
 
     private func appendDecl(
-        _ decl: ASTDecl,
+        _ decl: Decl,
         to arena: ASTArena,
         declarations: inout [DeclID],
         fileDecls: inout [Int32: [DeclID]],
@@ -988,19 +988,11 @@ public final class BuildASTPhase: CompilerPhase {
         guard let openIndex = tokens.firstIndex(where: { $0.kind == .symbol(.lParen) }) else {
             return nil
         }
-        var depth = 0
-        for index in openIndex..<tokens.count {
-            let token = tokens[index]
-            if token.kind == .symbol(.lParen) {
-                depth += 1
-            } else if token.kind == .symbol(.rParen) {
-                depth -= 1
-                if depth == 0 {
-                    return index
-                }
-            }
+        let afterClose = skipBalancedBracket(in: tokens, from: openIndex, open: .symbol(.lParen), close: .symbol(.rParen))
+        guard afterClose > openIndex else {
+            return nil
         }
-        return nil
+        return afterClose - 1
     }
 
     private func parseTypeRef(
@@ -1014,24 +1006,19 @@ public final class BuildASTPhase: CompilerPhase {
 
         var path: [InternedString] = []
         var nullable = false
-        var angleDepth = 0
+        var depth = BracketDepth()
 
         for token in tokens {
+            depth.track(token.kind)
+            if depth.angle > 0 {
+                continue
+            }
             switch token.kind {
-            case .symbol(.lessThan):
-                angleDepth += 1
-            case .symbol(.greaterThan):
-                angleDepth = max(0, angleDepth - 1)
             case .symbol(.question):
-                if angleDepth == 0 {
-                    nullable = true
-                }
-            case .symbol(.dot):
+                nullable = true
+            case .symbol(.dot), .symbol(.greaterThan):
                 continue
             default:
-                if angleDepth > 0 {
-                    continue
-                }
                 if let name = internedIdentifier(from: token, interner: interner),
                    isTypeLikeNameToken(token.kind) {
                     path.append(name)
