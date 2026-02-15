@@ -36,33 +36,13 @@ public final class LLVMBackend {
         outputObjectPath: String,
         interner: StringInterner
     ) throws {
-        let source = renderCModule(module: module, interner: interner)
-        let tempDir = FileManager.default.temporaryDirectory
-        let sourceURL = tempDir.appendingPathComponent(UUID().uuidString + ".c")
-        defer {
-            try? FileManager.default.removeItem(at: sourceURL)
-        }
-
-        do {
-            try source.write(to: sourceURL, atomically: true, encoding: .utf8)
-            var args = ["-x", "c", "-std=c11", "-c", sourceURL.path, "-o", outputObjectPath]
-            args.append(contentsOf: clangTargetArgs())
-            _ = try CommandRunner.run(executable: "/usr/bin/clang", arguments: args)
-        } catch let error as CommandRunnerError {
-            reportBackendError(
-                code: "KSWIFTK-BACKEND-0001",
-                message: "clang failed while emitting object output: \(outputObjectPath)",
-                error: error
-            )
-            throw error
-        } catch {
-            diagnostics.error(
-                "KSWIFTK-BACKEND-0001",
-                "Failed to emit object output: \(outputObjectPath)",
-                range: nil
-            )
-            throw error
-        }
+        try compileWithClang(
+            module: module, interner: interner,
+            extraArgs: ["-c"],
+            outputPath: outputObjectPath,
+            errorCode: "KSWIFTK-BACKEND-0001",
+            errorContext: "object output"
+        )
     }
 
     public func emitLLVMIR(
@@ -70,6 +50,23 @@ public final class LLVMBackend {
         runtime: RuntimeLinkInfo,
         outputIRPath: String,
         interner: StringInterner
+    ) throws {
+        try compileWithClang(
+            module: module, interner: interner,
+            extraArgs: ["-S", "-emit-llvm"],
+            outputPath: outputIRPath,
+            errorCode: "KSWIFTK-BACKEND-0002",
+            errorContext: "LLVM IR output"
+        )
+    }
+
+    private func compileWithClang(
+        module: KIRModule,
+        interner: StringInterner,
+        extraArgs: [String],
+        outputPath: String,
+        errorCode: String,
+        errorContext: String
     ) throws {
         let source = renderCModule(module: module, interner: interner)
         let tempDir = FileManager.default.temporaryDirectory
@@ -80,25 +77,29 @@ public final class LLVMBackend {
 
         do {
             try source.write(to: sourceURL, atomically: true, encoding: .utf8)
-            var args = ["-x", "c", "-std=c11", "-S", "-emit-llvm", sourceURL.path, "-o", outputIRPath]
+            var args = ["-x", "c", "-std=c11"] + extraArgs + [sourceURL.path, "-o", outputPath]
             args.append(contentsOf: clangTargetArgs())
             _ = try CommandRunner.run(executable: "/usr/bin/clang", arguments: args)
         } catch let error as CommandRunnerError {
             reportBackendError(
-                code: "KSWIFTK-BACKEND-0002",
-                message: "clang failed while emitting LLVM IR output: \(outputIRPath)",
+                code: errorCode,
+                message: "clang failed while emitting \(errorContext): \(outputPath)",
                 error: error
             )
             throw error
         } catch {
             diagnostics.error(
-                "KSWIFTK-BACKEND-0002",
-                "Failed to emit LLVM IR output: \(outputIRPath)",
+                errorCode,
+                "Failed to emit \(errorContext): \(outputPath)",
                 range: nil
             )
             throw error
         }
     }
+
+    private static let builtinOps: [String: String] = [
+        "kk_op_add": "+", "kk_op_sub": "-", "kk_op_mul": "*", "kk_op_div": "/", "kk_op_eq": "=="
+    ]
 
     public static func cFunctionSymbol(for function: KIRFunction, interner: StringInterner) -> String {
         let rawName = interner.resolve(function.name)
@@ -271,22 +272,10 @@ public final class LLVMBackend {
                     continue
                 }
 
-                if calleeName == "kk_op_add" || calleeName == "kk_op_sub" || calleeName == "kk_op_mul" || calleeName == "kk_op_div" || calleeName == "kk_op_eq" {
+                if let cOp = LLVMBackend.builtinOps[calleeName] {
                     let lhs = argVars.count > 0 ? argVars[0] : "0"
                     let rhs = argVars.count > 1 ? argVars[1] : "0"
-                    let expr: String
-                    switch calleeName {
-                    case "kk_op_add":
-                        expr = "(\(lhs) + \(rhs))"
-                    case "kk_op_sub":
-                        expr = "(\(lhs) - \(rhs))"
-                    case "kk_op_mul":
-                        expr = "(\(lhs) * \(rhs))"
-                    case "kk_op_div":
-                        expr = "(\(lhs) / \(rhs))"
-                    default:
-                        expr = "(\(lhs) == \(rhs))"
-                    }
+                    let expr = "(\(lhs) \(cOp) \(rhs))"
                     if let result {
                         lines.append("  \(varName(result)) = \(expr);")
                     } else {
