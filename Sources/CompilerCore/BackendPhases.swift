@@ -129,12 +129,16 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
                 flags: flags(from: funDecl.modifiers)
             )
         case .propertyDecl(let propertyDecl):
+            var propertyFlags = flags(from: propertyDecl.modifiers)
+            if propertyDecl.isVar {
+                propertyFlags.insert(.mutable)
+            }
             declaration = (
                 kind: .property,
                 name: propertyDecl.name,
                 range: propertyDecl.range,
                 visibility: visibility(from: propertyDecl.modifiers),
-                flags: flags(from: propertyDecl.modifiers)
+                flags: propertyFlags
             )
         case .typeAliasDecl(let typeAliasDecl):
             declaration = (
@@ -177,7 +181,7 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
 
         switch decl {
         case .classDecl(let classDecl):
-            _ = types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
+            let classType = types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
             if declaration.kind == .enumClass {
                 for entry in classDecl.enumEntries {
                     let entryFQName = fqName + [entry.name]
@@ -197,6 +201,7 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
                         visibility: .public,
                         flags: []
                     )
+                    symbols.setPropertyType(classType, for: entrySymbol)
                     scope.insert(entrySymbol)
                 }
             }
@@ -288,7 +293,17 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
                 for: symbol
             )
 
-        case .propertyDecl, .typeAliasDecl, .enumEntry:
+        case .propertyDecl(let propertyDecl):
+            let resolvedType = resolveTypeRef(
+                propertyDecl.type,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                interner: interner
+            ) ?? types.nullableAnyType
+            symbols.setPropertyType(resolvedType, for: symbol)
+
+        case .typeAliasDecl, .enumEntry:
             break
         }
     }
@@ -529,6 +544,25 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
     }
 }
 
+private struct TypeInferenceContext {
+    let ast: ASTModule
+    let sema: SemaModule
+    let semaCtx: SemaModule
+    let resolver: OverloadResolver
+    let dataFlow: DataFlowAnalyzer
+    let interner: StringInterner
+    let scope: Scope
+    let implicitReceiverType: TypeID?
+
+    func with(scope: Scope) -> TypeInferenceContext {
+        TypeInferenceContext(ast: ast, sema: sema, semaCtx: semaCtx, resolver: resolver, dataFlow: dataFlow, interner: interner, scope: scope, implicitReceiverType: implicitReceiverType)
+    }
+
+    func with(implicitReceiverType: TypeID?) -> TypeInferenceContext {
+        TypeInferenceContext(ast: ast, sema: sema, semaCtx: semaCtx, resolver: resolver, dataFlow: dataFlow, interner: interner, scope: scope, implicitReceiverType: implicitReceiverType)
+    }
+}
+
 public final class TypeCheckSemaPassPhase: CompilerPhase {
     public static let name = "TypeCheckSemaPass"
 
@@ -575,100 +609,213 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
             guard let fileScope = fileScopes[file.fileID.rawValue] else {
                 continue
             }
+            let inferCtx = TypeInferenceContext(
+                ast: ast, sema: sema, semaCtx: semaCtx,
+                resolver: resolver, dataFlow: dataFlow,
+                interner: ctx.interner, scope: fileScope,
+                implicitReceiverType: nil
+            )
             for declID in file.topLevelDecls {
                 guard let decl = ast.arena.decl(declID),
                       let declSymbol = sema.bindings.declSymbols[declID] else {
                     continue
                 }
-                guard case .funDecl(let function) = decl else {
-                    continue
-                }
-                guard let signature = sema.symbols.functionSignature(for: declSymbol) else {
-                    continue
-                }
-
-                var locals: [InternedString: (type: TypeID, symbol: SymbolID)] = [:]
-                for (index, paramSymbol) in signature.valueParameterSymbols.enumerated() {
-                    guard let param = sema.symbols.symbol(paramSymbol) else {
+                switch decl {
+                case .funDecl(let function):
+                    guard let signature = sema.symbols.functionSignature(for: declSymbol) else {
                         continue
                     }
-                    let type = index < signature.parameterTypes.count ? signature.parameterTypes[index] : sema.types.anyType
-                    locals[param.name] = (type, paramSymbol)
-                }
 
-                let bodyType: TypeID
-                switch function.body {
-                case .unit:
-                    bodyType = sema.types.unitType
+                    var locals: [InternedString: (type: TypeID, symbol: SymbolID)] = [:]
+                    for (index, paramSymbol) in signature.valueParameterSymbols.enumerated() {
+                        guard let param = sema.symbols.symbol(paramSymbol) else {
+                            continue
+                        }
+                        let type = index < signature.parameterTypes.count ? signature.parameterTypes[index] : sema.types.anyType
+                        locals[param.name] = (type, paramSymbol)
+                    }
 
-                case .expr(let exprID, _):
-                    bodyType = inferExpr(
-                        exprID,
-                        ast: ast,
-                        sema: sema,
-                        semaCtx: semaCtx,
-                        locals: &locals,
-                        resolver: resolver,
-                        dataFlow: dataFlow,
-                        interner: ctx.interner,
-                        scope: fileScope,
-                        implicitReceiverType: signature.receiverType,
+                    let funCtx = inferCtx.with(implicitReceiverType: signature.receiverType)
+                    let bodyType = inferFunctionBodyType(
+                        function.body, ctx: funCtx, locals: &locals,
                         expectedType: signature.returnType
                     )
+                    emitSubtypeConstraint(
+                        left: bodyType, right: signature.returnType,
+                        range: function.range, solver: solver,
+                        sema: sema, diagnostics: ctx.diagnostics
+                    )
 
-                case .block(let exprIDs, _):
-                    var last = sema.types.unitType
-                    for (index, exprID) in exprIDs.enumerated() {
-                        let expectedTypeForExpr = index == exprIDs.count - 1 ? signature.returnType : nil
-                        last = inferExpr(
-                            exprID,
-                            ast: ast,
-                            sema: sema,
-                            semaCtx: semaCtx,
-                            locals: &locals,
-                            resolver: resolver,
-                            dataFlow: dataFlow,
-                            interner: ctx.interner,
-                            scope: fileScope,
-                            implicitReceiverType: signature.receiverType,
-                            expectedType: expectedTypeForExpr
+                    if function.returnType == nil && bodyType != sema.types.errorType {
+                        sema.symbols.setFunctionSignature(
+                            FunctionSignature(
+                                receiverType: signature.receiverType,
+                                parameterTypes: signature.parameterTypes,
+                                returnType: bodyType,
+                                isSuspend: signature.isSuspend,
+                                valueParameterSymbols: signature.valueParameterSymbols,
+                                valueParameterHasDefaultValues: signature.valueParameterHasDefaultValues,
+                                valueParameterIsVararg: signature.valueParameterIsVararg,
+                                typeParameterSymbols: signature.typeParameterSymbols
+                            ),
+                            for: declSymbol
                         )
                     }
-                    bodyType = last
-                }
 
-                let solution = solver.solve(
-                    vars: [],
-                    constraints: [
-                        Constraint(
-                            kind: .subtype,
-                            left: bodyType,
-                            right: signature.returnType,
-                            blameRange: function.range
-                        )
-                    ],
-                    typeSystem: sema.types
-                )
-                if !solution.isSuccess, let failure = solution.failure {
-                    ctx.diagnostics.emit(failure)
-                }
-
-                if function.returnType == nil && bodyType != sema.types.errorType {
-                    sema.symbols.setFunctionSignature(
-                        FunctionSignature(
-                            receiverType: signature.receiverType,
-                            parameterTypes: signature.parameterTypes,
-                            returnType: bodyType,
-                            isSuspend: signature.isSuspend,
-                            valueParameterSymbols: signature.valueParameterSymbols,
-                            valueParameterHasDefaultValues: signature.valueParameterHasDefaultValues,
-                            valueParameterIsVararg: signature.valueParameterIsVararg,
-                            typeParameterSymbols: signature.typeParameterSymbols
-                        ),
-                        for: declSymbol
+                case .propertyDecl(let property):
+                    typeCheckPropertyDecl(
+                        property, symbol: declSymbol,
+                        ctx: inferCtx, solver: solver,
+                        diagnostics: ctx.diagnostics
                     )
+                    let expr = ExprID(rawValue: declID.rawValue)
+                    sema.bindings.bindIdentifier(expr, symbol: declSymbol)
+                    let propertyType = sema.symbols.propertyType(for: declSymbol) ?? sema.types.nullableAnyType
+                    sema.bindings.bindExprType(expr, type: propertyType)
+
+                case .classDecl(let classDecl):
+                    typeCheckInitBlocks(classDecl.initBlocks, ctx: inferCtx)
+
+                case .objectDecl(let objectDecl):
+                    typeCheckInitBlocks(objectDecl.initBlocks, ctx: inferCtx)
+
+                case .typeAliasDecl, .enumEntry:
+                    continue
                 }
             }
+        }
+    }
+
+    private func inferFunctionBodyType(
+        _ body: FunctionBody,
+        ctx: TypeInferenceContext,
+        locals: inout [InternedString: (type: TypeID, symbol: SymbolID)],
+        expectedType: TypeID?
+    ) -> TypeID {
+        switch body {
+        case .unit:
+            return ctx.sema.types.unitType
+
+        case .expr(let exprID, _):
+            return inferExpr(exprID, ctx: ctx, locals: &locals, expectedType: expectedType)
+
+        case .block(let exprIDs, _):
+            var last = ctx.sema.types.unitType
+            for (index, exprID) in exprIDs.enumerated() {
+                let expectedTypeForExpr = index == exprIDs.count - 1 ? expectedType : nil
+                last = inferExpr(exprID, ctx: ctx, locals: &locals, expectedType: expectedTypeForExpr)
+            }
+            return last
+        }
+    }
+
+    private func emitSubtypeConstraint(
+        left: TypeID,
+        right: TypeID,
+        range: SourceRange?,
+        solver: ConstraintSolver,
+        sema: SemaModule,
+        diagnostics: DiagnosticEngine
+    ) {
+        let solution = solver.solve(
+            vars: [],
+            constraints: [
+                Constraint(
+                    kind: .subtype,
+                    left: left,
+                    right: right,
+                    blameRange: range
+                )
+            ],
+            typeSystem: sema.types
+        )
+        if !solution.isSuccess, let failure = solution.failure {
+            diagnostics.emit(failure)
+        }
+    }
+
+    private func typeCheckPropertyDecl(
+        _ property: PropertyDecl,
+        symbol: SymbolID,
+        ctx: TypeInferenceContext,
+        solver: ConstraintSolver,
+        diagnostics: DiagnosticEngine
+    ) {
+        let sema = ctx.sema
+        let interner = ctx.interner
+        var inferredPropertyType: TypeID? = property.type != nil ? sema.symbols.propertyType(for: symbol) : nil
+
+        if let initializer = property.initializer {
+            var locals: [InternedString: (type: TypeID, symbol: SymbolID)] = [:]
+            let initializerType = inferExpr(
+                initializer, ctx: ctx, locals: &locals,
+                expectedType: inferredPropertyType
+            )
+            if let declaredType = inferredPropertyType {
+                emitSubtypeConstraint(
+                    left: initializerType, right: declaredType,
+                    range: property.range, solver: solver,
+                    sema: sema, diagnostics: diagnostics
+                )
+            } else {
+                inferredPropertyType = initializerType
+            }
+        }
+
+        if let getter = property.getter {
+            var getterLocals: [InternedString: (type: TypeID, symbol: SymbolID)] = [:]
+            if let fieldType = inferredPropertyType {
+                getterLocals[interner.intern("field")] = (fieldType, symbol)
+            }
+            let getterType = inferFunctionBodyType(
+                getter.body, ctx: ctx, locals: &getterLocals,
+                expectedType: inferredPropertyType
+            )
+            if let declaredType = inferredPropertyType {
+                emitSubtypeConstraint(
+                    left: getterType, right: declaredType,
+                    range: getter.range, solver: solver,
+                    sema: sema, diagnostics: diagnostics
+                )
+            } else {
+                inferredPropertyType = getterType
+            }
+        }
+
+        let finalPropertyType = inferredPropertyType ?? sema.types.nullableAnyType
+        sema.symbols.setPropertyType(finalPropertyType, for: symbol)
+
+        if let setter = property.setter {
+            if !property.isVar {
+                diagnostics.error(
+                    "KSWIFTK-SEMA-0005",
+                    "Setter is not allowed for read-only property.",
+                    range: setter.range
+                )
+            }
+            var setterLocals: [InternedString: (type: TypeID, symbol: SymbolID)] = [:]
+            setterLocals[interner.intern("field")] = (finalPropertyType, symbol)
+            let parameterName = setter.parameterName ?? interner.intern("value")
+            setterLocals[parameterName] = (finalPropertyType, symbol)
+            let setterType = inferFunctionBodyType(
+                setter.body, ctx: ctx, locals: &setterLocals,
+                expectedType: sema.types.unitType
+            )
+            emitSubtypeConstraint(
+                left: setterType, right: sema.types.unitType,
+                range: setter.range, solver: solver,
+                sema: sema, diagnostics: diagnostics
+            )
+        }
+    }
+
+    private func typeCheckInitBlocks(
+        _ blocks: [FunctionBody],
+        ctx: TypeInferenceContext
+    ) {
+        for block in blocks {
+            var locals: [InternedString: (type: TypeID, symbol: SymbolID)] = [:]
+            _ = inferFunctionBodyType(block, ctx: ctx, locals: &locals, expectedType: nil)
         }
     }
 
@@ -720,7 +867,15 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
             if let first = candidates.first {
                 sema.bindings.bindIdentifier(id, symbol: first.id)
             }
-            let resolvedType = candidates.first.flatMap { sema.symbols.functionSignature(for: $0.id)?.returnType } ?? sema.types.anyType
+            let resolvedType = candidates.first.flatMap { symbol in
+                if let signature = sema.symbols.functionSignature(for: symbol.id) {
+                    return signature.returnType
+                }
+                if symbol.kind == .property || symbol.kind == .field {
+                    return sema.symbols.propertyType(for: symbol.id)
+                }
+                return nil
+            } ?? sema.types.anyType
             sema.bindings.bindExprType(id, type: resolvedType)
             return resolvedType
 
@@ -767,10 +922,10 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
             sema.bindings.bindExprType(id, type: type)
             return type
 
-        case .call(let calleeID, let argIDs, let range):
-            let argTypes = argIDs.map { argID in
+        case .call(let calleeID, let args, let range):
+            let argTypes = args.map { argument in
                 inferExpr(
-                    argID,
+                    argument.expr,
                     ast: ast,
                     sema: sema,
                     semaCtx: semaCtx,
@@ -809,10 +964,20 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                 return sema.types.errorType
             }
 
-            let args = argTypes.map { CallArg(type: $0) }
+            let resolvedArgs: [CallArg] = zip(args, argTypes).map { argument, type in
+                CallArg(
+                    label: argument.label,
+                    isSpread: argument.isSpread,
+                    type: type
+                )
+            }
             let resolved = resolver.resolveCall(
                 candidates: candidates,
-                call: CallExpr(range: range, calleeName: calleeName ?? InternedString(rawValue: invalidID), args: args),
+                call: CallExpr(
+                    range: range,
+                    calleeName: calleeName ?? InternedString(rawValue: invalidID),
+                    args: resolvedArgs
+                ),
                 expectedType: expectedType,
                 implicitReceiverType: implicitReceiverType,
                 ctx: semaCtx
@@ -1471,8 +1636,8 @@ public final class BuildKIRPhase: CompilerPhase {
             } else {
                 calleeName = sema.symbols.allSymbols().first?.name ?? InternedString(rawValue: invalidID)
             }
-            let argIDs = args.map { arg in
-                lowerExpr(arg, ast: ast, sema: sema, arena: arena, interner: interner, instructions: &instructions)
+            let argIDs = args.map { argument in
+                lowerExpr(argument.expr, ast: ast, sema: sema, arena: arena, interner: interner, instructions: &instructions)
             }
             let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)))
             let chosen = sema.bindings.callBindings[exprID]?.chosenCallee
@@ -1557,83 +1722,33 @@ private final class OperatorLoweringPass: LoweringImpl {
     }
 }
 
-private final class ForLoweringPass: LoweringImpl {
-    static let name = "ForLowering"
-    func run(module: KIRModule, ctx: KIRContext) throws {
-        let marker = "__for_expr__"
-        let lowered = "kk_for_lowered"
-        module.arena.transformFunctions { function in
-            var updated = function
-            updated.body = function.body.map { instruction in
-                guard case .call(let symbol, let callee, let arguments, let result, let outThrown) = instruction else {
-                    return instruction
-                }
-                if ctx.interner.resolve(callee) == marker {
-                    return .call(
-                        symbol: symbol,
-                        callee: ctx.interner.intern(lowered),
-                        arguments: arguments,
-                        result: result,
-                        outThrown: outThrown
-                    )
-                }
-                return instruction
-            }
-            return updated
-        }
-        module.recordLowering(Self.name)
-    }
-}
+private final class CalleeRenamingPass: LoweringImpl {
+    let passName: String
+    let matchNames: Set<String>
+    let replacement: String
 
-private final class WhenLoweringPass: LoweringImpl {
-    static let name = "WhenLowering"
-    func run(module: KIRModule, ctx: KIRContext) throws {
-        module.arena.transformFunctions { function in
-            var updated = function
-            updated.body = function.body.map { instruction in
-                guard case .call(let symbol, let callee, let arguments, let result, let outThrown) = instruction else {
-                    return instruction
-                }
-                if ctx.interner.resolve(callee) == "__when_expr__" {
-                    return .call(
-                        symbol: symbol,
-                        callee: ctx.interner.intern("kk_when_select"),
-                        arguments: arguments,
-                        result: result,
-                        outThrown: outThrown
-                    )
-                }
-                return instruction
-            }
-            return updated
-        }
-        module.recordLowering(Self.name)
-    }
-}
+    static let name = "CalleeRenaming"
 
-private final class PropertyLoweringPass: LoweringImpl {
-    static let name = "PropertyLowering"
+    init(name: String, matchNames: Set<String>, replacement: String) {
+        self.passName = name
+        self.matchNames = matchNames
+        self.replacement = replacement
+    }
+
     func run(module: KIRModule, ctx: KIRContext) throws {
+        let replacementInterned = ctx.interner.intern(replacement)
         module.arena.transformFunctions { function in
             var updated = function
             updated.body = function.body.map { instruction in
-                guard case .call(let symbol, let callee, let arguments, let result, let outThrown) = instruction else {
+                guard case .call(let symbol, let callee, let arguments, let result, let outThrown) = instruction,
+                      self.matchNames.contains(ctx.interner.resolve(callee)) else {
                     return instruction
                 }
-                if ctx.interner.resolve(callee) == "get" || ctx.interner.resolve(callee) == "set" {
-                    return .call(
-                        symbol: symbol,
-                        callee: ctx.interner.intern("kk_property_access"),
-                        arguments: arguments,
-                        result: result,
-                        outThrown: outThrown
-                    )
-                }
-                return instruction
+                return .call(symbol: symbol, callee: replacementInterned, arguments: arguments, result: result, outThrown: outThrown)
             }
             return updated
         }
-        module.recordLowering(Self.name)
+        module.recordLowering(passName)
     }
 }
 
@@ -1651,83 +1766,37 @@ private final class DataEnumSealedSynthesisPass: LoweringImpl {
     }
 }
 
-private final class LambdaClosureConversionPass: LoweringImpl {
-    static let name = "LambdaClosureConversion"
-    func run(module: KIRModule, ctx: KIRContext) throws {
-        module.arena.transformFunctions { function in
-            var updated = function
-            updated.body = function.body.map { instruction in
-                guard case .call(let symbol, let callee, let arguments, let result, let outThrown) = instruction else {
-                    return instruction
-                }
-                if ctx.interner.resolve(callee) == "<lambda>" {
-                    return .call(
-                        symbol: symbol,
-                        callee: ctx.interner.intern("kk_lambda_invoke"),
-                        arguments: arguments,
-                        result: result,
-                        outThrown: outThrown
-                    )
-                }
-                return instruction
-            }
-            return updated
-        }
-        module.recordLowering(Self.name)
-    }
-}
+private final class PrefixRenamingPass: LoweringImpl {
+    let passName: String
+    let prefix: String
+    let predicate: (KIRFunction) -> Bool
 
-private final class InlineLoweringPass: LoweringImpl {
-    static let name = "InlineLowering"
+    static let name = "PrefixRenaming"
+
+    init(name: String, prefix: String, predicate: @escaping (KIRFunction) -> Bool) {
+        self.passName = name
+        self.prefix = prefix
+        self.predicate = predicate
+    }
+
     func run(module: KIRModule, ctx: KIRContext) throws {
-        let inlineNames: Set<InternedString> = Set(module.arena.declarations.compactMap { decl in
-            guard case .function(let function) = decl, function.isInline else {
-                return nil
-            }
+        let matchingNames: Set<InternedString> = Set(module.arena.declarations.compactMap { decl in
+            guard case .function(let function) = decl, predicate(function) else { return nil }
             return function.name
         })
         module.arena.transformFunctions { function in
             var updated = function
             updated.body = function.body.map { instruction in
-                guard case .call(let symbol, let callee, let arguments, let result, let outThrown) = instruction else {
+                guard case .call(let symbol, let callee, let arguments, let result, let outThrown) = instruction,
+                      matchingNames.contains(callee) else {
                     return instruction
                 }
-                if inlineNames.contains(callee) {
-                    let renamed = ctx.interner.intern("inlined_" + ctx.interner.resolve(callee))
-                    return .call(symbol: symbol, callee: renamed, arguments: arguments, result: result, outThrown: outThrown)
-                }
-                return instruction
+                let renamed = ctx.interner.intern(self.prefix + ctx.interner.resolve(callee))
+                return .call(symbol: symbol, callee: renamed, arguments: arguments, result: result, outThrown: outThrown)
             }
             return updated
         }
-        module.recordLowering(Self.name)
-    }
-}
-
-private final class CoroutineLoweringPass: LoweringImpl {
-    static let name = "CoroutineLowering"
-    func run(module: KIRModule, ctx: KIRContext) throws {
-        let suspendNames: Set<InternedString> = Set(module.arena.declarations.compactMap { decl in
-            guard case .function(let function) = decl, function.isSuspend else {
-                return nil
-            }
-            return function.name
-        })
-        module.arena.transformFunctions { function in
-            var updated = function
-            updated.body = function.body.map { instruction in
-                guard case .call(let symbol, let callee, let arguments, let result, let outThrown) = instruction else {
-                    return instruction
-                }
-                if suspendNames.contains(callee) {
-                    let renamed = ctx.interner.intern("kk_suspend_" + ctx.interner.resolve(callee))
-                    return .call(symbol: symbol, callee: renamed, arguments: arguments, result: result, outThrown: outThrown)
-                }
-                return instruction
-            }
-            return updated
-        }
-        module.recordLowering(Self.name)
+        module.recordLowering(passName)
     }
 }
 
@@ -1754,13 +1823,13 @@ public final class LoweringPhase: CompilerPhase {
     private let passes: [any LoweringImpl] = [
         NormalizeBlocksPass(),
         OperatorLoweringPass(),
-        ForLoweringPass(),
-        WhenLoweringPass(),
-        PropertyLoweringPass(),
+        CalleeRenamingPass(name: "ForLowering", matchNames: ["__for_expr__"], replacement: "kk_for_lowered"),
+        CalleeRenamingPass(name: "WhenLowering", matchNames: ["__when_expr__"], replacement: "kk_when_select"),
+        CalleeRenamingPass(name: "PropertyLowering", matchNames: ["get", "set"], replacement: "kk_property_access"),
         DataEnumSealedSynthesisPass(),
-        LambdaClosureConversionPass(),
-        InlineLoweringPass(),
-        CoroutineLoweringPass(),
+        CalleeRenamingPass(name: "LambdaClosureConversion", matchNames: ["<lambda>"], replacement: "kk_lambda_invoke"),
+        PrefixRenamingPass(name: "InlineLowering", prefix: "inlined_", predicate: { $0.isInline }),
+        PrefixRenamingPass(name: "CoroutineLowering", prefix: "kk_suspend_", predicate: { $0.isSuspend }),
         ABILoweringPass()
     ]
 
