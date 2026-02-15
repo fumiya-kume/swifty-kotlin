@@ -5,7 +5,10 @@
       "Bash(swift test:*)",
       "Bash(git stash push:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "WebFetch(domain:risako.saenuruki.com)",
+      "Bash(curl:*)",
+      "Bash(python3:*)"
     ]
   }
 }
