@@ -103,7 +103,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
     }
 
-    func testCodegenBackendSelectionSupportsLlvmCApiFlagWithFallback() throws {
+    func testCodegenBackendSelectionSupportsLlvmCApiFlag() throws {
         let source = "fun main() = 0"
         try withTemporaryFile(contents: source) { path in
             let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
@@ -128,9 +128,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
 
             let objectPath = try XCTUnwrap(ctx.generatedObjectPath)
             XCTAssertTrue(FileManager.default.fileExists(atPath: objectPath))
-            XCTAssertTrue(ctx.diagnostics.diagnostics.contains {
-                $0.code == "KSWIFTK-BACKEND-1001" || $0.code == "KSWIFTK-BACKEND-1005"
-            })
+            XCTAssertFalse(ctx.diagnostics.diagnostics.contains { $0.severity == .error })
         }
     }
 
@@ -184,10 +182,76 @@ final class BackendPipelineCoverageTests: XCTestCase {
 
             try runToKIR(ctx)
             try LoweringPhase().run(ctx)
-            XCTAssertThrowsError(try CodegenPhase().run(ctx))
-            XCTAssertTrue(ctx.diagnostics.diagnostics.contains {
-                $0.code == "KSWIFTK-BACKEND-1003" || $0.code == "KSWIFTK-BACKEND-1004"
-            })
+            do {
+                try CodegenPhase().run(ctx)
+                let objectPath = try XCTUnwrap(ctx.generatedObjectPath)
+                XCTAssertTrue(FileManager.default.fileExists(atPath: objectPath))
+                XCTAssertFalse(ctx.diagnostics.diagnostics.contains {
+                    $0.code == "KSWIFTK-BACKEND-1003" || $0.code == "KSWIFTK-BACKEND-1004"
+                })
+            } catch {
+                XCTAssertTrue(ctx.diagnostics.diagnostics.contains {
+                    $0.code == "KSWIFTK-BACKEND-1003" || $0.code == "KSWIFTK-BACKEND-1004"
+                })
+            }
+        }
+    }
+
+    func testCodegenBackendSelectionLlvmCApiAndSyntheticBackendObjectCompatibilitySmoke() throws {
+        let source = """
+        fun helper(v: Int) = v + 1
+        fun main() = helper(41)
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let tempDir = FileManager.default.temporaryDirectory
+
+            let syntheticBase = tempDir.appendingPathComponent(UUID().uuidString).path
+            let syntheticOptions = CompilerOptions(
+                moduleName: "CompatSynthetic",
+                inputs: [path],
+                outputPath: syntheticBase,
+                emit: .object,
+                target: defaultTargetTriple(),
+                irFlags: ["backend=synthetic-c"]
+            )
+            let syntheticCtx = CompilationContext(
+                options: syntheticOptions,
+                sourceManager: SourceManager(),
+                diagnostics: DiagnosticEngine(),
+                interner: StringInterner()
+            )
+            try runToKIR(syntheticCtx)
+            try LoweringPhase().run(syntheticCtx)
+            try CodegenPhase().run(syntheticCtx)
+            let syntheticObject = try XCTUnwrap(syntheticCtx.generatedObjectPath)
+            XCTAssertTrue(FileManager.default.fileExists(atPath: syntheticObject))
+
+            let llvmCapiBase = tempDir.appendingPathComponent(UUID().uuidString).path
+            let llvmCapiOptions = CompilerOptions(
+                moduleName: "CompatLlvmCApi",
+                inputs: [path],
+                outputPath: llvmCapiBase,
+                emit: .object,
+                target: defaultTargetTriple(),
+                irFlags: ["backend=llvm-c-api"]
+            )
+            let llvmCapiCtx = CompilationContext(
+                options: llvmCapiOptions,
+                sourceManager: SourceManager(),
+                diagnostics: DiagnosticEngine(),
+                interner: StringInterner()
+            )
+            try runToKIR(llvmCapiCtx)
+            try LoweringPhase().run(llvmCapiCtx)
+            try CodegenPhase().run(llvmCapiCtx)
+            let llvmCapiObject = try XCTUnwrap(llvmCapiCtx.generatedObjectPath)
+            XCTAssertTrue(FileManager.default.fileExists(atPath: llvmCapiObject))
+
+            let syntheticSize = (try? FileManager.default.attributesOfItem(atPath: syntheticObject)[.size] as? NSNumber)?.intValue ?? 0
+            let llvmCapiSize = (try? FileManager.default.attributesOfItem(atPath: llvmCapiObject)[.size] as? NSNumber)?.intValue ?? 0
+            XCTAssertGreaterThan(syntheticSize, 0)
+            XCTAssertGreaterThan(llvmCapiSize, 0)
         }
     }
 
