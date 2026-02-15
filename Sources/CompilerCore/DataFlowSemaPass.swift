@@ -390,7 +390,7 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
 
     private func synthesizeNominalLayouts(symbols: SymbolTable) {
         let nominalIDs = symbols.allSymbols()
-            .filter { isNominalTypeSymbol($0.kind) }
+            .filter { isNominalLayoutTargetSymbol($0.kind) }
             .map(\.id)
             .sorted(by: { $0.rawValue < $1.rawValue })
         guard !nominalIDs.isEmpty else {
@@ -409,7 +409,7 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
                     guard let superSymbol = symbols.symbol(superID) else {
                         return false
                     }
-                    return isNominalTypeSymbol(superSymbol.kind)
+                    return isNominalLayoutTargetSymbol(superSymbol.kind)
                 }
                 .sorted(by: { $0.rawValue < $1.rawValue })
             for superNominal in superNominals {
@@ -429,41 +429,67 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
 
             let directSuperNominals = symbols.directSupertypes(for: nominalID)
                 .compactMap { symbols.symbol($0) }
-                .filter { isNominalTypeSymbol($0.kind) }
+                .filter { isNominalLayoutTargetSymbol($0.kind) }
                 .sorted(by: { $0.id.rawValue < $1.id.rawValue })
 
             let superClass = directSuperNominals.first(where: { $0.kind != .interface })?.id
-            let inheritedVtable = superClass.flatMap { symbols.nominalLayout(for: $0)?.vtableSlots } ?? [:]
-            var vtableSlots = inheritedVtable
+            let layoutHint = symbols.nominalLayoutHint(for: nominalID)
 
-            var nextVtableSlot = (vtableSlots.values.max() ?? -1) + 1
+            let inheritedVtable = superClass.flatMap { symbols.nominalLayout(for: $0)?.vtableSlots } ?? [:]
+            let inheritedVtableSize = superClass.flatMap { symbols.nominalLayout(for: $0)?.vtableSize } ?? 0
+            var vtableSlots = inheritedVtable
+            var vtableSlotByKey: [MethodDispatchKey: Int] = [:]
+            for methodID in inheritedVtable.keys.sorted(by: { $0.rawValue < $1.rawValue }) {
+                guard let methodSymbol = symbols.symbol(methodID),
+                      let slot = inheritedVtable[methodID] else {
+                    continue
+                }
+                vtableSlotByKey[methodDispatchKey(for: methodSymbol, symbols: symbols)] = slot
+            }
+
+            var nextVtableSlot = max(inheritedVtableSize, (vtableSlots.values.max() ?? -1) + 1)
             let ownMethods = symbols.allSymbols()
                 .filter { symbol in
                     symbol.kind == .function &&
                     isDirectMemberSymbol(symbol, of: nominalSymbol)
                 }
                 .sorted(by: { $0.id.rawValue < $1.id.rawValue })
-            for method in ownMethods where vtableSlots[method.id] == nil {
+            for method in ownMethods {
+                let key = methodDispatchKey(for: method, symbols: symbols)
+                if let inheritedSlot = vtableSlotByKey[key] {
+                    vtableSlots[method.id] = inheritedSlot
+                    continue
+                }
                 vtableSlots[method.id] = nextVtableSlot
+                vtableSlotByKey[key] = nextVtableSlot
                 nextVtableSlot += 1
             }
+            let declaredVtableSize = layoutHint?.declaredVtableSize ?? 0
+            let vtableSize = max(nextVtableSlot, declaredVtableSize)
 
             let inheritedItable = superClass.flatMap { symbols.nominalLayout(for: $0)?.itableSlots } ?? [:]
+            let inheritedItableSize = superClass.flatMap { symbols.nominalLayout(for: $0)?.itableSize } ?? 0
             var itableSlots = inheritedItable
-            var nextItableSlot = (itableSlots.values.max() ?? -1) + 1
+            var nextItableSlot = max(inheritedItableSize, (itableSlots.values.max() ?? -1) + 1)
             let interfaces = collectInterfaceSupertypes(of: nominalID, symbols: symbols)
             for interfaceID in interfaces where itableSlots[interfaceID] == nil {
                 itableSlots[interfaceID] = nextItableSlot
                 nextItableSlot += 1
             }
+            let declaredItableSize = layoutHint?.declaredItableSize ?? 0
+            let itableSize = max(nextItableSlot, declaredItableSize)
 
-            let instanceFieldCount = symbols.allSymbols().filter { symbol in
+            let ownFieldCount = symbols.allSymbols().filter { symbol in
                 (symbol.kind == .field || symbol.kind == .property) &&
                 isDirectMemberSymbol(symbol, of: nominalSymbol)
             }.count
+            let inheritedFieldCount = superClass.flatMap { symbols.nominalLayout(for: $0)?.instanceFieldCount } ?? 0
+            let declaredFieldCount = layoutHint?.declaredFieldCount ?? 0
+            let instanceFieldCount = max(inheritedFieldCount + ownFieldCount, declaredFieldCount)
 
             let objectHeaderWords = 3
-            let instanceSizeWords = objectHeaderWords + instanceFieldCount
+            let declaredSizeWords = layoutHint?.declaredInstanceSizeWords ?? 0
+            let instanceSizeWords = max(objectHeaderWords + instanceFieldCount, declaredSizeWords)
             symbols.setNominalLayout(
                 NominalLayout(
                     objectHeaderWords: objectHeaderWords,
@@ -471,6 +497,8 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
                     instanceSizeWords: instanceSizeWords,
                     vtableSlots: vtableSlots,
                     itableSlots: itableSlots,
+                    vtableSize: vtableSize,
+                    itableSize: itableSize,
                     superClass: superClass
                 ),
                 for: nominalID
@@ -509,6 +537,21 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
         }
 
         return interfaces.sorted(by: { $0.rawValue < $1.rawValue })
+    }
+
+    private struct MethodDispatchKey: Hashable {
+        let name: InternedString
+        let arity: Int
+        let isSuspend: Bool
+    }
+
+    private func methodDispatchKey(for method: SemanticSymbol, symbols: SymbolTable) -> MethodDispatchKey {
+        let signature = symbols.functionSignature(for: method.id)
+        return MethodDispatchKey(
+            name: method.name,
+            arity: signature?.parameterTypes.count ?? 0,
+            isSuspend: signature?.isSuspend ?? false
+        )
     }
 
     private func classSymbolKind(for classDecl: ClassDecl) -> SymbolKind {
@@ -591,6 +634,15 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
     private func isNominalTypeSymbol(_ kind: SymbolKind) -> Bool {
         switch kind {
         case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
+            return true
+        default:
+            return false
+        }
+    }
+
+    private func isNominalLayoutTargetSymbol(_ kind: SymbolKind) -> Bool {
+        switch kind {
+        case .class, .interface, .object, .enumClass, .annotationClass:
             return true
         default:
             return false
@@ -683,6 +735,11 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
         let fqName: [InternedString]
         let arity: Int
         let isSuspend: Bool
+        let declaredFieldCount: Int?
+        let declaredInstanceSizeWords: Int?
+        let declaredVtableSize: Int?
+        let declaredItableSize: Int?
+        let superFQName: [InternedString]?
     }
 
     private func loadImportedLibrarySymbols(
@@ -693,6 +750,7 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
         interner: StringInterner
     ) {
         let libraryDirs = discoverLibraryDirectories(searchPaths: options.searchPaths)
+        var pendingSupertypeEdges: [(subtype: SymbolID, superFQName: [InternedString])] = []
         for libraryDir in libraryDirs {
             let metadataPath = resolveMetadataPath(libraryDir: libraryDir)
             guard let records = parseLibraryMetadata(
@@ -719,6 +777,27 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
                     visibility: .public,
                     flags: flags
                 )
+                if isNominalLayoutTargetSymbol(record.kind) {
+                    let hasLayoutHint =
+                        record.declaredFieldCount != nil ||
+                        record.declaredInstanceSizeWords != nil ||
+                        record.declaredVtableSize != nil ||
+                        record.declaredItableSize != nil
+                    if hasLayoutHint {
+                        symbols.setNominalLayoutHint(
+                            NominalLayoutHint(
+                                declaredFieldCount: record.declaredFieldCount,
+                                declaredInstanceSizeWords: record.declaredInstanceSizeWords,
+                                declaredVtableSize: record.declaredVtableSize,
+                                declaredItableSize: record.declaredItableSize
+                            ),
+                            for: symbol
+                        )
+                    }
+                    if let superFQName = record.superFQName, !superFQName.isEmpty {
+                        pendingSupertypeEdges.append((subtype: symbol, superFQName: superFQName))
+                    }
+                }
                 if record.kind == .function {
                     let parameterTypes = Array(repeating: types.anyType, count: max(0, record.arity))
                     symbols.setFunctionSignature(
@@ -732,6 +811,20 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
                 } else if record.kind == .property || record.kind == .field {
                     symbols.setPropertyType(types.anyType, for: symbol)
                 }
+            }
+        }
+
+        for edge in pendingSupertypeEdges {
+            guard let superSymbol = symbols.lookupAll(fqName: edge.superFQName)
+                .compactMap({ symbols.symbol($0) })
+                .first(where: { isNominalLayoutTargetSymbol($0.kind) })?.id else {
+                continue
+            }
+            var supertypes = symbols.directSupertypes(for: edge.subtype)
+            if !supertypes.contains(superSymbol) {
+                supertypes.append(superSymbol)
+                supertypes.sort(by: { $0.rawValue < $1.rawValue })
+                symbols.setDirectSupertypes(supertypes, for: edge.subtype)
             }
         }
     }
@@ -801,6 +894,11 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
             var fqName: [InternedString] = []
             var arity = 0
             var isSuspend = false
+            var declaredFieldCount: Int? = nil
+            var declaredInstanceSizeWords: Int? = nil
+            var declaredVtableSize: Int? = nil
+            var declaredItableSize: Int? = nil
+            var superFQName: [InternedString]? = nil
 
             for part in parts.dropFirst() {
                 guard let separatorIndex = part.firstIndex(of: "=") else {
@@ -817,6 +915,19 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
                     arity = Int(value) ?? 0
                 case "suspend":
                     isSuspend = value == "1" || value == "true"
+                case "fields":
+                    declaredFieldCount = Int(value)
+                case "layoutWords":
+                    declaredInstanceSizeWords = Int(value)
+                case "vtable":
+                    declaredVtableSize = Int(value)
+                case "itable":
+                    declaredItableSize = Int(value)
+                case "superFq":
+                    let parsed = value
+                        .split(separator: ".")
+                        .map { interner.intern(String($0)) }
+                    superFQName = parsed.isEmpty ? nil : parsed
                 default:
                     continue
                 }
@@ -829,7 +940,12 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
                 kind: kind,
                 fqName: fqName,
                 arity: arity,
-                isSuspend: isSuspend
+                isSuspend: isSuspend,
+                declaredFieldCount: declaredFieldCount,
+                declaredInstanceSizeWords: declaredInstanceSizeWords,
+                declaredVtableSize: declaredVtableSize,
+                declaredItableSize: declaredItableSize,
+                superFQName: superFQName
             ))
         }
 

@@ -87,6 +87,8 @@ public struct NominalLayout: Equatable {
     public let instanceSizeWords: Int
     public let vtableSlots: [SymbolID: Int]
     public let itableSlots: [SymbolID: Int]
+    public let vtableSize: Int
+    public let itableSize: Int
     public let superClass: SymbolID?
 
     public init(
@@ -95,6 +97,8 @@ public struct NominalLayout: Equatable {
         instanceSizeWords: Int,
         vtableSlots: [SymbolID: Int],
         itableSlots: [SymbolID: Int],
+        vtableSize: Int? = nil,
+        itableSize: Int? = nil,
         superClass: SymbolID?
     ) {
         self.objectHeaderWords = objectHeaderWords
@@ -102,7 +106,30 @@ public struct NominalLayout: Equatable {
         self.instanceSizeWords = instanceSizeWords
         self.vtableSlots = vtableSlots
         self.itableSlots = itableSlots
+        let inferredVtableSize = (vtableSlots.values.max() ?? -1) + 1
+        let inferredItableSize = (itableSlots.values.max() ?? -1) + 1
+        self.vtableSize = max(0, max(vtableSize ?? 0, inferredVtableSize))
+        self.itableSize = max(0, max(itableSize ?? 0, inferredItableSize))
         self.superClass = superClass
+    }
+}
+
+public struct NominalLayoutHint: Equatable {
+    public let declaredFieldCount: Int?
+    public let declaredInstanceSizeWords: Int?
+    public let declaredVtableSize: Int?
+    public let declaredItableSize: Int?
+
+    public init(
+        declaredFieldCount: Int?,
+        declaredInstanceSizeWords: Int?,
+        declaredVtableSize: Int?,
+        declaredItableSize: Int?
+    ) {
+        self.declaredFieldCount = declaredFieldCount
+        self.declaredInstanceSizeWords = declaredInstanceSizeWords
+        self.declaredVtableSize = declaredVtableSize
+        self.declaredItableSize = declaredItableSize
     }
 }
 
@@ -155,6 +182,7 @@ public final class SymbolTable {
     private var propertyTypes: [SymbolID: TypeID] = [:]
     private var directSupertypes: [SymbolID: [SymbolID]] = [:]
     private var nominalLayouts: [SymbolID: NominalLayout] = [:]
+    private var nominalLayoutHints: [SymbolID: NominalLayoutHint] = [:]
 
     public init() {}
 
@@ -288,6 +316,14 @@ public final class SymbolTable {
 
     public func nominalLayout(for symbol: SymbolID) -> NominalLayout? {
         nominalLayouts[symbol]
+    }
+
+    public func setNominalLayoutHint(_ hint: NominalLayoutHint, for symbol: SymbolID) {
+        nominalLayoutHints[symbol] = hint
+    }
+
+    public func nominalLayoutHint(for symbol: SymbolID) -> NominalLayoutHint? {
+        nominalLayoutHints[symbol]
     }
 }
 
