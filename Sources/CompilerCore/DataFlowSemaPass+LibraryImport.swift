@@ -84,6 +84,7 @@ extension DataFlowSemaPassPhase {
                 supertypes.append(superSymbol)
                 supertypes.sort(by: { $0.rawValue < $1.rawValue })
                 symbols.setDirectSupertypes(supertypes, for: edge.subtype)
+                types.setNominalDirectSupertypes(supertypes, for: edge.subtype)
             }
         }
     }

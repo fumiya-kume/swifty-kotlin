@@ -4,7 +4,8 @@ extension DataFlowSemaPassPhase {
     func bindInheritanceEdges(
         ast: ASTModule,
         symbols: SymbolTable,
-        bindings: BindingTable
+        bindings: BindingTable,
+        types: TypeSystem
     ) {
         for file in ast.sortedFiles {
             for declID in file.topLevelDecls {
@@ -35,6 +36,7 @@ extension DataFlowSemaPassPhase {
                 }
                 let uniqueSuperSymbols = Array(Set(superSymbols)).sorted(by: { $0.rawValue < $1.rawValue })
                 symbols.setDirectSupertypes(uniqueSuperSymbols, for: symbol)
+                types.setNominalDirectSupertypes(uniqueSuperSymbols, for: symbol)
             }
         }
     }

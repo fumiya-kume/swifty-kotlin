@@ -325,6 +325,25 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
         )))
         XCTAssertFalse(types.isSubtype(classInvariantInt, classOtherSymbol))
 
+        let baseNominal = SymbolID(rawValue: 200)
+        let midNominal = SymbolID(rawValue: 201)
+        let leafNominal = SymbolID(rawValue: 202)
+        types.setNominalDirectSupertypes([baseNominal], for: midNominal)
+        types.setNominalDirectSupertypes([midNominal], for: leafNominal)
+
+        let baseType = types.make(.classType(ClassType(
+            classSymbol: baseNominal,
+            args: [],
+            nullability: .nonNull
+        )))
+        let leafType = types.make(.classType(ClassType(
+            classSymbol: leafNominal,
+            args: [],
+            nullability: .nonNull
+        )))
+        XCTAssertTrue(types.isSubtype(leafType, baseType))
+        XCTAssertFalse(types.isSubtype(baseType, leafType))
+
         let classStarLHS = types.make(.classType(ClassType(
             classSymbol: classSym,
             args: [.star],

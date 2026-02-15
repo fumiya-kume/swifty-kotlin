@@ -88,6 +88,7 @@ public enum TypeKind: Hashable {
 public final class TypeSystem {
     private var kindToID: [TypeKind: TypeID] = [:]
     private var idToKind: [TypeKind] = []
+    private var nominalDirectSupertypes: [SymbolID: [SymbolID]] = [:]
 
     public let errorType: TypeID
     public let unitType: TypeID
@@ -134,6 +135,15 @@ public final class TypeSystem {
             return .error
         }
         return idToKind[index]
+    }
+
+    public func setNominalDirectSupertypes(_ supertypes: [SymbolID], for symbol: SymbolID) {
+        let unique = Array(Set(supertypes)).sorted(by: { $0.rawValue < $1.rawValue })
+        nominalDirectSupertypes[symbol] = unique
+    }
+
+    public func directNominalSupertypes(for symbol: SymbolID) -> [SymbolID] {
+        nominalDirectSupertypes[symbol] ?? []
     }
 
     public func isSubtype(_ a: TypeID, _ b: TypeID) -> Bool {
@@ -183,7 +193,18 @@ public final class TypeSystem {
             return lp == rp && nullabilitySubtype(ln, rn)
 
         case let (.classType(lt), .classType(rt)):
-            if lt.classSymbol != rt.classSymbol || lt.args.count != rt.args.count {
+            if lt.classSymbol != rt.classSymbol {
+                guard isNominalSubtypeSymbol(lt.classSymbol, of: rt.classSymbol) else {
+                    return false
+                }
+                return rt.args.isEmpty || rt.args.allSatisfy { arg in
+                    if case .star = arg {
+                        return true
+                    }
+                    return false
+                }
+            }
+            if lt.args.count != rt.args.count {
                 return false
             }
             guard nullabilitySubtype(lt.nullability, rt.nullability) else {
@@ -281,6 +302,24 @@ public final class TypeSystem {
             return true
         }
         return lhs == .nonNull && rhs == .nullable
+    }
+
+    private func isNominalSubtypeSymbol(_ candidate: SymbolID, of base: SymbolID) -> Bool {
+        if candidate == base {
+            return true
+        }
+        var queue = directNominalSupertypes(for: candidate)
+        var visited: Set<SymbolID> = [candidate]
+        while let current = queue.first {
+            queue.removeFirst()
+            if current == base {
+                return true
+            }
+            if visited.insert(current).inserted {
+                queue.append(contentsOf: directNominalSupertypes(for: current))
+            }
+        }
+        return false
     }
 
     public func makeTypeVarBySymbol(_ symbols: [SymbolID]) -> [SymbolID: TypeVarID] {

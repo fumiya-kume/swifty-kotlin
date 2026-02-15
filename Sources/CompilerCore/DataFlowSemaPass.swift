@@ -58,7 +58,8 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
         bindInheritanceEdges(
             ast: ast,
             symbols: symbols,
-            bindings: bindings
+            bindings: bindings,
+            types: types
         )
         synthesizeNominalLayouts(symbols: symbols)
 
