@@ -68,7 +68,7 @@ public final class LLVMBackend {
         errorCode: String,
         errorContext: String
     ) throws {
-        let source = renderCModule(module: module, interner: interner)
+        let source = emitCModule(module: module, interner: interner)
         let sourceURL = deterministicTempSourceURL(outputPath: outputPath)
         defer {
             try? FileManager.default.removeItem(at: sourceURL)
@@ -130,7 +130,7 @@ public final class LLVMBackend {
         return "\(target.arch)-\(target.vendor)-\(target.os)"
     }
 
-    private func renderCModule(module: KIRModule, interner: StringInterner) -> String {
+    private func emitCModule(module: KIRModule, interner: StringInterner) -> String {
         let functionSymbols: [SymbolID: String] = module.arena.declarations.reduce(into: [:]) { acc, decl in
             guard case .function(let function) = decl else {
                 return

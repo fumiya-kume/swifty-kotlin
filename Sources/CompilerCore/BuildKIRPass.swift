@@ -118,7 +118,7 @@ public final class BuildKIRPhase: CompilerPhase {
                     let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol)))
                     declIDs.append(kirID)
 
-                case .enumEntry:
+                case .enumEntryDecl:
                     let kirID = arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: sema.types.anyType)))
                     declIDs.append(kirID)
                 }

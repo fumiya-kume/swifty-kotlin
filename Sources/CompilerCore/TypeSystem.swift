@@ -206,39 +206,39 @@ public final class TypeSystem {
         case (.any(.nonNull), .any(.nullable)):
             return true
 
-        case let (.primitive(lp, ln), .primitive(rp, rn)):
-            return lp == rp && nullabilitySubtype(ln, rn)
+        case let (.primitive(leftPrimitive, leftNullability), .primitive(rightPrimitive, rightNullability)):
+            return leftPrimitive == rightPrimitive && nullabilitySubtype(leftNullability, rightNullability)
 
-        case let (.classType(lt), .classType(rt)):
-            guard nullabilitySubtype(lt.nullability, rt.nullability) else {
+        case let (.classType(leftClass), .classType(rightClass)):
+            guard nullabilitySubtype(leftClass.nullability, rightClass.nullability) else {
                 return false
             }
-            if lt.classSymbol != rt.classSymbol {
-                guard isNominalSubtypeSymbol(lt.classSymbol, of: rt.classSymbol) else {
+            if leftClass.classSymbol != rightClass.classSymbol {
+                guard isNominalSubtypeSymbol(leftClass.classSymbol, of: rightClass.classSymbol) else {
                     return false
                 }
-                return rt.args.isEmpty || rt.args.allSatisfy { arg in
+                return rightClass.args.isEmpty || rightClass.args.allSatisfy { arg in
                     if case .star = arg {
                         return true
                     }
                     return false
                 }
             }
-            if lt.args.count != rt.args.count {
+            if leftClass.args.count != rightClass.args.count {
                 return false
             }
             let declarationVariances = normalizedNominalVariances(
-                for: lt.classSymbol,
-                arity: lt.args.count
+                for: leftClass.classSymbol,
+                arity: leftClass.args.count
             )
-            for index in 0..<lt.args.count {
+            for index in 0..<leftClass.args.count {
                 let lhsProjection = composedProjection(
                     declarationVariance: declarationVariances[index],
-                    useSite: lt.args[index]
+                    useSite: leftClass.args[index]
                 )
                 let rhsProjection = composedProjection(
                     declarationVariance: declarationVariances[index],
-                    useSite: rt.args[index]
+                    useSite: rightClass.args[index]
                 )
                 if !isProjectionSubtype(lhsProjection, rhsProjection) {
                     return false
@@ -246,29 +246,29 @@ public final class TypeSystem {
             }
             return true
 
-        case let (.functionType(lf), .functionType(rf)):
-            guard lf.params.count == rf.params.count else {
+        case let (.functionType(leftFunction), .functionType(rightFunction)):
+            guard leftFunction.params.count == rightFunction.params.count else {
                 return false
             }
-            guard lf.isSuspend == rf.isSuspend else {
+            guard leftFunction.isSuspend == rightFunction.isSuspend else {
                 return false
             }
-            guard nullabilitySubtype(lf.nullability, rf.nullability) else {
+            guard nullabilitySubtype(leftFunction.nullability, rightFunction.nullability) else {
                 return false
             }
-            if let lReceiver = lf.receiver, let rReceiver = rf.receiver {
+            if let lReceiver = leftFunction.receiver, let rReceiver = rightFunction.receiver {
                 if !isSubtype(rReceiver, lReceiver) {
                     return false
                 }
-            } else if lf.receiver != nil || rf.receiver != nil {
+            } else if leftFunction.receiver != nil || rightFunction.receiver != nil {
                 return false
             }
-            for (lp, rp) in zip(lf.params, rf.params) {
-                if !isSubtype(rp, lp) {
+            for (leftParam, rightParam) in zip(leftFunction.params, rightFunction.params) {
+                if !isSubtype(rightParam, leftParam) {
                     return false
                 }
             }
-            return isSubtype(lf.returnType, rf.returnType)
+            return isSubtype(leftFunction.returnType, rightFunction.returnType)
 
         case let (.intersection(parts), _):
             return parts.allSatisfy { isSubtype($0, supertype) }
@@ -276,8 +276,8 @@ public final class TypeSystem {
         case let (_, .intersection(parts)):
             return parts.contains { isSubtype(subtype, $0) }
 
-        case (.any(let ln), .any(let rn)):
-            return nullabilitySubtype(ln, rn)
+        case (.any(let leftNullability), .any(let rightNullability)):
+            return nullabilitySubtype(leftNullability, rightNullability)
 
         default:
             return false

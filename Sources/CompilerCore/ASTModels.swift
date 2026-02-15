@@ -70,7 +70,7 @@ public enum Decl {
     case propertyDecl(PropertyDecl)
     case typeAliasDecl(TypeAliasDecl)
     case objectDecl(ObjectDecl)
-    case enumEntry(EnumEntryDecl)
+    case enumEntryDecl(EnumEntryDecl)
 }
 
 public struct ASTFile {

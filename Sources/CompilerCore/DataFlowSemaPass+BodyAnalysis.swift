@@ -47,7 +47,7 @@ extension DataFlowSemaPassPhase {
                 bindings.bindExprType(expr, type: boundType)
             }
 
-        case .classDecl, .objectDecl, .typeAliasDecl, .enumEntry:
+        case .classDecl, .objectDecl, .typeAliasDecl, .enumEntryDecl:
             break
         }
     }

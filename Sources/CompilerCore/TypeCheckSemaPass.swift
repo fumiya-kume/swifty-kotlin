@@ -136,7 +136,7 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                 case .objectDecl(let objectDecl):
                     typeCheckInitBlocks(objectDecl.initBlocks, ctx: inferCtx)
 
-                case .typeAliasDecl, .enumEntry:
+                case .typeAliasDecl, .enumEntryDecl:
                     continue
                 }
             }

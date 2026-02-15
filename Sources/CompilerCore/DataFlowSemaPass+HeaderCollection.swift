@@ -78,7 +78,7 @@ extension DataFlowSemaPassPhase {
                 visibility: visibility(from: typeAliasDecl.modifiers),
                 flags: flags(from: typeAliasDecl.modifiers)
             )
-        case .enumEntry(let entry):
+        case .enumEntryDecl(let entry):
             declaration = (
                 kind: .field,
                 name: entry.name,
@@ -251,7 +251,7 @@ extension DataFlowSemaPassPhase {
             ) ?? types.nullableAnyType
             symbols.setPropertyType(resolvedType, for: symbol)
 
-        case .typeAliasDecl, .enumEntry:
+        case .typeAliasDecl, .enumEntryDecl:
             break
         }
     }

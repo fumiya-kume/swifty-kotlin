@@ -125,7 +125,7 @@ public final class BuildASTPhase: CompilerPhase {
                 appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
 
             case .enumEntry:
-                let decl = Decl.enumEntry(makeEnumEntryDecl(from: nodeID, in: cst, interner: ctx.interner))
+                let decl = Decl.enumEntryDecl(makeEnumEntryDecl(from: nodeID, in: cst, interner: ctx.interner))
                 appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
 
             default:
