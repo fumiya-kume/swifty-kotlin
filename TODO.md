@@ -99,23 +99,61 @@
   - [x] class/interface 継承関係を `TypeSystem.isSubtype` に反映
   - [x] declaration-site variance と use-site variance 合成規則を強化
   - [x] generic constraints の失敗診断精度を改善
-- [ ] P3-3: KIR の型付き IR 化強化（spec.md J11/J12）
-  - [ ] `if/for/try` など制御構造の KIR 表現を marker 依存から段階的に脱却
-  - [ ] KIR value/type 情報の保持を強化し lowering の前提を明確化
-- [ ] P3-4: Name mangling/ABI 厳密化（spec.md J13）
-  - [ ] signature の型符号化ルール（nullable / function / suspend）を反映
-  - [ ] decl kind（getter/setter/constructor）の区別を mangling に反映
-- [ ] P3-5: Coroutine フル CPS 仕様追従（spec.md J17）
-  - [ ] continuation object（spill slots + label）生成を実装
-  - [ ] suspension 跨ぎ live 解析に基づく spill/reload を実装
-  - [ ] suspend 例外伝播を含む golden/E2E テストを追加
-- [ ] P3-6: テストハーネス拡張（spec.md J18/J19）
-  - [ ] Lexer/Parser/Sema の golden test セットを追加
-  - [ ] `Scripts/check_coverage.sh` を CI gate に組み込み
-  - [ ] `diff_kotlinc.sh` の回帰ケースを継続追加
+- [x] P3-3: KIR の型付き IR 化強化（spec.md J11/J12）
+  - [x] `if/for/try` など制御構造の KIR 表現を marker 依存から段階的に脱却
+  - [x] KIR value/type 情報の保持を強化し lowering の前提を明確化
+- [x] P3-4: Name mangling/ABI 厳密化（spec.md J13）
+  - [x] signature の型符号化ルール（nullable / function / suspend）を反映
+  - [x] decl kind（getter/setter/constructor）の区別を mangling に反映
+- [x] P3-5: Coroutine フル CPS 仕様追従（spec.md J17）
+  - [x] continuation object（spill slots + label）生成を実装
+    - [x] continuation allocation helper（`kk_coroutine_continuation_new`）導入
+    - [x] label state の enter/set/exit を continuation object ベースへ移行
+    - [x] spill slots / completion を continuation object に保持
+  - [x] suspension 跨ぎ live 解析に基づく spill/reload を実装
+  - [x] suspend 例外伝播を含む golden/E2E テストを追加
+- [x] P3-6: テストハーネス拡張（spec.md J18/J19）
+  - [x] Lexer/Parser/Sema の golden test セットを追加
+  - [x] `Scripts/check_coverage.sh` を CI gate に組み込み
+  - [x] `diff_kotlinc.sh` の回帰ケースを継続追加
+
+## P4 (Spec Diff Expansion)
+
+- [x] P4: Kotlin spec 差分テストの拡充（継続）
+  - [x] `Scripts/diff_kotlinc.sh` の対象ケースを言語機能ごとに増やす
+    - [x] `hello.kt` / `control_when.kt` / `boolean_when.kt` / `if_expr.kt` / `overload.kt` / `string_concat.kt` / `type_error.kt`
+  - [x] golden 更新ワークフロー（差分可視化 + approve 手順）をドキュメント化
+    - [x] `Scripts/README.md` を追加
+  - [x] diff ケースを CI で定期実行する job を追加
+
+## P5 (Spec Gap Backlog)
+
+- [ ] P5-1: call lowering で default 引数補完を実装（spec.md J9/J11/J12）
+  - [ ] `CallBinding.parameterMapping` を使って omitted parameter を KIR call 引数に補完
+  - [ ] named/reordered call の最終引数列を callee parameter 順へ正規化
+  - [ ] `named_default.kt` 回帰ケース（`sum(a = 3, c = 4)`）を pass させる
+
+- [ ] P5-2: block 内 local declaration/assignment を AST/Sema/KIR で実装（spec.md J5/J6/J7/J11）
+  - [ ] `val/var` 文ノードを AST に導入し、block body に保持
+  - [ ] local symbol 生成・スコープ解決・再代入検査（`val` 不変）を実装
+  - [ ] KIR に local store/load（または SSA 変換）を導入
+
+- [ ] P5-3: receiver 参照（`this`/extension receiver）の束縛と lowering を完成（spec.md J7/J9/J12）
+  - [ ] extension/member body で `this` を value symbol として束縛
+  - [ ] unresolved identifier が external symbol call に落ちる経路を遮断
+  - [ ] `extension.kt` 回帰ケース（`x.inc2()`）を pass させる
+
+- [ ] P5-4: runtime value 表現の整合（null と primitive 0 の分離）を修正（spec.md J16）
+  - [ ] synthetic runtime `kk_println_any` の判定を tagged/value-aware に変更
+  - [ ] `println(0)` / `println(null)` の差分テストを追加
+
+- [ ] P5-5: diff/golden ケースを P5 領域で拡張（spec.md J18）
+  - [ ] default args / local var / receiver / zero-null 表示の回帰ケースを `Scripts/diff_cases` へ追加
+  - [ ] 失敗時 artifact を CI summary に出す補助スクリプトを追加
 
 ## In Progress
 
-- [ ] P3-3: KIR の型付き IR 化強化
-  - [ ] P3-3a: `if/for/try` marker 依存を段階的に除去
-  - [ ] P3-3b: KIR value/type 情報を強化し lowering 前提を明確化
+- [ ] P5-1: call lowering で default 引数補完を実装（spec.md J9/J11/J12）
+  - [ ] `CallBinding.parameterMapping` を使って omitted parameter を KIR call 引数に補完
+  - [ ] named/reordered call の最終引数列を callee parameter 順へ正規化
+  - [ ] `named_default.kt` 回帰ケース（`sum(a = 3, c = 4)`）を pass させる
