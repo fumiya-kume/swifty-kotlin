@@ -482,6 +482,61 @@ final class LexerParserCoverageTests: XCTestCase {
         }
     }
 
+    func testParserUsesScriptRootForTopLevelStatementsOnly() {
+        let parsed = parse(
+            """
+            1 + 2
+            """
+        )
+        XCTAssertEqual(parsed.arena.node(parsed.root).kind, .script)
+    }
+
+    func testSemaCollectsNestedTypeAliasSymbolsInClassAndObject() throws {
+        let source = """
+        class Box {
+            typealias Elem = Int
+        }
+        object Holder {
+            typealias Value = String
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let all = sema.symbols.allSymbols()
+            let elem = all.first(where: { symbol in
+                symbol.kind == .typeAlias &&
+                ctx.interner.resolve(symbol.name) == "Elem" &&
+                symbol.fqName.count >= 2 &&
+                ctx.interner.resolve(symbol.fqName[symbol.fqName.count - 2]) == "Box"
+            })
+            let value = all.first(where: { symbol in
+                symbol.kind == .typeAlias &&
+                ctx.interner.resolve(symbol.name) == "Value" &&
+                symbol.fqName.count >= 2 &&
+                ctx.interner.resolve(symbol.fqName[symbol.fqName.count - 2]) == "Holder"
+            })
+
+            XCTAssertNotNil(elem)
+            XCTAssertNotNil(value)
+        }
+    }
+
+    func testExpressionBodyParsesReturnIfTryWithoutTypeDiagnostics() throws {
+        let source = """
+        fun demo(flag: Boolean): Int = if (flag) return 1 else try 2 catch (e: Throwable) 3
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(ctx.diagnostics.diagnostics.contains { $0.severity == .error })
+        }
+    }
+
     private func lex(_ source: String) -> (tokens: [Token], interner: StringInterner, diagnostics: DiagnosticEngine) {
         let diagnostics = DiagnosticEngine()
         let interner = StringInterner()
