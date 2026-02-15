@@ -151,7 +151,8 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
 
         guard let declaration else { return }
         let fqName = package + [declaration.name]
-        if symbols.lookup(fqName: fqName) != nil {
+        let existingSymbols = symbols.lookupAll(fqName: fqName).compactMap { symbols.symbol($0) }
+        if hasDeclarationConflict(newKind: declaration.kind, existing: existingSymbols) {
             diagnostics.error(
                 "KSWIFTK-SEMA-0001",
                 "Duplicate declaration in the same package scope.",
@@ -179,8 +180,34 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
         case .funDecl(let funDecl):
             var paramTypes: [TypeID] = []
             var paramSymbols: [SymbolID] = []
+            var paramHasDefaultValues: [Bool] = []
+            var paramIsVararg: [Bool] = []
+            var typeParameterSymbols: [SymbolID] = []
+            var localTypeParameters: [InternedString: SymbolID] = [:]
+            let localNamespaceFQName = fqName + [interner.intern("$\(symbol.rawValue)")]
+            for typeParam in funDecl.typeParams {
+                let typeParamFQName = localNamespaceFQName + [typeParam.name]
+                let typeParamSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: typeParam.name,
+                    fqName: typeParamFQName,
+                    declSite: funDecl.range,
+                    visibility: .private,
+                    flags: []
+                )
+                typeParameterSymbols.append(typeParamSymbol)
+                localTypeParameters[typeParam.name] = typeParamSymbol
+            }
+            let receiverType = resolveTypeRef(
+                funDecl.receiverType,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                localTypeParameters: localTypeParameters
+            )
             for valueParam in funDecl.valueParams {
-                let paramFQName = fqName + [valueParam.name]
+                let paramFQName = localNamespaceFQName + [valueParam.name]
                 let paramSymbol = symbols.define(
                     kind: .valueParameter,
                     name: valueParam.name,
@@ -194,10 +221,13 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
                     ast: ast,
                     symbols: symbols,
                     types: types,
-                    interner: interner
+                    interner: interner,
+                    localTypeParameters: localTypeParameters
                 ) ?? anyType
                 paramTypes.append(resolvedType)
                 paramSymbols.append(paramSymbol)
+                paramHasDefaultValues.append(valueParam.hasDefaultValue)
+                paramIsVararg.append(valueParam.isVararg)
             }
             let returnType: TypeID
             if let explicit = resolveTypeRef(
@@ -205,7 +235,8 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
                 ast: ast,
                 symbols: symbols,
                 types: types,
-                interner: interner
+                interner: interner,
+                localTypeParameters: localTypeParameters
             ) {
                 returnType = explicit
             } else {
@@ -218,10 +249,14 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
             }
             symbols.setFunctionSignature(
                 FunctionSignature(
+                    receiverType: receiverType,
                     parameterTypes: paramTypes,
                     returnType: returnType,
                     isSuspend: funDecl.isSuspend,
-                    valueParameterSymbols: paramSymbols
+                    valueParameterSymbols: paramSymbols,
+                    valueParameterHasDefaultValues: paramHasDefaultValues,
+                    valueParameterIsVararg: paramIsVararg,
+                    typeParameterSymbols: typeParameterSymbols
                 ),
                 for: symbol
             )
@@ -246,7 +281,8 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
         ast: ASTModule,
         symbols: SymbolTable,
         types: TypeSystem,
-        interner: StringInterner
+        interner: StringInterner,
+        localTypeParameters: [InternedString: SymbolID] = [:]
     ) -> TypeID? {
         guard let typeRefID, let typeRef = ast.arena.typeRef(typeRefID) else {
             return nil
@@ -262,6 +298,10 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
 
         guard let shortName = path.last else {
             return nil
+        }
+
+        if path.count == 1, let typeParamSymbol = localTypeParameters[shortName] {
+            return types.make(.typeParam(TypeParamType(symbol: typeParamSymbol, nullability: nullability)))
         }
 
         switch interner.resolve(shortName) {
@@ -281,10 +321,35 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
             break
         }
 
-        if let symbol = symbols.lookup(fqName: path) {
+        if let symbol = symbols.lookupAll(fqName: path)
+            .compactMap({ symbols.symbol($0) })
+            .first(where: { isNominalTypeSymbol($0.kind) })?.id {
             return types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: nullability)))
         }
         return nullability == .nullable ? types.nullableAnyType : types.anyType
+    }
+
+    private func hasDeclarationConflict(newKind: SymbolKind, existing: [SemanticSymbol]) -> Bool {
+        guard !existing.isEmpty else {
+            return false
+        }
+        if isOverloadableSymbol(newKind) {
+            return existing.contains(where: { !isOverloadableSymbol($0.kind) })
+        }
+        return true
+    }
+
+    private func isOverloadableSymbol(_ kind: SymbolKind) -> Bool {
+        kind == .function || kind == .constructor
+    }
+
+    private func isNominalTypeSymbol(_ kind: SymbolKind) -> Bool {
+        switch kind {
+        case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
+            return true
+        default:
+            return false
+        }
     }
 
     private func analyzeBody(
@@ -434,12 +499,15 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                         semaCtx: semaCtx,
                         locals: &locals,
                         resolver: resolver,
-                        dataFlow: dataFlow
+                        dataFlow: dataFlow,
+                        interner: ctx.interner,
+                        expectedType: signature.returnType
                     )
 
                 case .block(let exprIDs, _):
                     var last = sema.types.unitType
-                    for exprID in exprIDs {
+                    for (index, exprID) in exprIDs.enumerated() {
+                        let expectedTypeForExpr = index == exprIDs.count - 1 ? signature.returnType : nil
                         last = inferExpr(
                             exprID,
                             ast: ast,
@@ -447,7 +515,9 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                             semaCtx: semaCtx,
                             locals: &locals,
                             resolver: resolver,
-                            dataFlow: dataFlow
+                            dataFlow: dataFlow,
+                            interner: ctx.interner,
+                            expectedType: expectedTypeForExpr
                         )
                     }
                     bodyType = last
@@ -468,6 +538,22 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                 if !solution.isSuccess, let failure = solution.failure {
                     ctx.diagnostics.emit(failure)
                 }
+
+                if function.returnType == nil && bodyType != sema.types.errorType {
+                    sema.symbols.setFunctionSignature(
+                        FunctionSignature(
+                            receiverType: signature.receiverType,
+                            parameterTypes: signature.parameterTypes,
+                            returnType: bodyType,
+                            isSuspend: signature.isSuspend,
+                            valueParameterSymbols: signature.valueParameterSymbols,
+                            valueParameterHasDefaultValues: signature.valueParameterHasDefaultValues,
+                            valueParameterIsVararg: signature.valueParameterIsVararg,
+                            typeParameterSymbols: signature.typeParameterSymbols
+                        ),
+                        for: declSymbol
+                    )
+                }
             }
         }
     }
@@ -479,7 +565,9 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
         semaCtx: SemaContext,
         locals: inout [InternedString: (type: TypeID, symbol: SymbolID)],
         resolver: OverloadResolver,
-        dataFlow: DataFlowAnalyzer
+        dataFlow: DataFlowAnalyzer,
+        interner: StringInterner,
+        expectedType: TypeID? = nil
     ) -> TypeID {
         guard let expr = ast.arena.expr(id) else {
             return sema.types.errorType
@@ -503,6 +591,10 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
             return stringType
 
         case .nameRef(let name, _):
+            if interner.resolve(name) == "null" {
+                sema.bindings.bindExprType(id, type: sema.types.nullableAnyType)
+                return sema.types.nullableAnyType
+            }
             if let local = locals[name] {
                 sema.bindings.bindIdentifier(id, symbol: local.symbol)
                 sema.bindings.bindExprType(id, type: local.type)
@@ -517,8 +609,28 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
             return resolvedType
 
         case .binary(let op, let lhsID, let rhsID, _):
-            let lhs = inferExpr(lhsID, ast: ast, sema: sema, semaCtx: semaCtx, locals: &locals, resolver: resolver, dataFlow: dataFlow)
-            let rhs = inferExpr(rhsID, ast: ast, sema: sema, semaCtx: semaCtx, locals: &locals, resolver: resolver, dataFlow: dataFlow)
+            let lhs = inferExpr(
+                lhsID,
+                ast: ast,
+                sema: sema,
+                semaCtx: semaCtx,
+                locals: &locals,
+                resolver: resolver,
+                dataFlow: dataFlow,
+                interner: interner,
+                expectedType: nil
+            )
+            let rhs = inferExpr(
+                rhsID,
+                ast: ast,
+                sema: sema,
+                semaCtx: semaCtx,
+                locals: &locals,
+                resolver: resolver,
+                dataFlow: dataFlow,
+                interner: interner,
+                expectedType: nil
+            )
             let type: TypeID
             switch op {
             case .add:
@@ -537,7 +649,17 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
 
         case .call(let calleeID, let argIDs, let range):
             let argTypes = argIDs.map { argID in
-                inferExpr(argID, ast: ast, sema: sema, semaCtx: semaCtx, locals: &locals, resolver: resolver, dataFlow: dataFlow)
+                inferExpr(
+                    argID,
+                    ast: ast,
+                    sema: sema,
+                    semaCtx: semaCtx,
+                    locals: &locals,
+                    resolver: resolver,
+                    dataFlow: dataFlow,
+                    interner: interner,
+                    expectedType: nil
+                )
             }
 
             let calleeExpr = ast.arena.expr(calleeID)
@@ -567,7 +689,7 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
             let resolved = resolver.resolveCall(
                 candidates: candidates,
                 call: CallExpr(range: range, calleeName: calleeName ?? InternedString(rawValue: invalidID), args: args),
-                expectedType: nil,
+                expectedType: expectedType,
                 ctx: semaCtx
             )
             if let diagnostic = resolved.diagnostic {
@@ -583,44 +705,110 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                 id,
                 binding: CallBinding(
                     chosenCallee: chosen,
-                    substitutedTypeArguments: [],
+                    substitutedTypeArguments: resolved.substitutedTypeArguments
+                        .sorted(by: { $0.key.rawValue < $1.key.rawValue })
+                        .map(\.value),
                     parameterMapping: resolved.parameterMapping
                 )
             )
-            let returnType = sema.symbols.functionSignature(for: chosen)?.returnType ?? sema.types.anyType
+            let returnType: TypeID
+            if let signature = sema.symbols.functionSignature(for: chosen) {
+                let typeVarBySymbol = makeTypeVarBySymbol(signature.typeParameterSymbols)
+                returnType = substituteTypeParameters(
+                    in: signature.returnType,
+                    substitution: resolved.substitutedTypeArguments,
+                    typeVarBySymbol: typeVarBySymbol,
+                    typeSystem: sema.types
+                )
+            } else {
+                returnType = sema.types.anyType
+            }
             sema.bindings.bindExprType(id, type: returnType)
             return returnType
 
         case .whenExpr(let subjectID, let branches, let elseExpr, let range):
-            let subjectType = inferExpr(subjectID, ast: ast, sema: sema, semaCtx: semaCtx, locals: &locals, resolver: resolver, dataFlow: dataFlow)
+            let subjectType = inferExpr(
+                subjectID,
+                ast: ast,
+                sema: sema,
+                semaCtx: semaCtx,
+                locals: &locals,
+                resolver: resolver,
+                dataFlow: dataFlow,
+                interner: interner,
+                expectedType: nil
+            )
             var branchTypes: [TypeID] = []
             var covered: Set<InternedString> = []
+            var hasNullCase = false
             for branch in branches {
                 if let cond = branch.condition {
-                    let condType = inferExpr(cond, ast: ast, sema: sema, semaCtx: semaCtx, locals: &locals, resolver: resolver, dataFlow: dataFlow)
+                    let condType = inferExpr(
+                        cond,
+                        ast: ast,
+                        sema: sema,
+                        semaCtx: semaCtx,
+                        locals: &locals,
+                        resolver: resolver,
+                        dataFlow: dataFlow,
+                        interner: interner,
+                        expectedType: nil
+                    )
                     if condType == boolType, let condExpr = ast.arena.expr(cond) {
                         switch condExpr {
                         case .boolLiteral(true, _):
                             covered.insert(InternedString(rawValue: 1))
                         case .boolLiteral(false, _):
                             covered.insert(InternedString(rawValue: 2))
+                        case .nameRef(let name, _):
+                            if interner.resolve(name) == "null" {
+                                hasNullCase = true
+                            }
                         default:
                             break
                         }
+                    } else if let condExpr = ast.arena.expr(cond),
+                              case .nameRef(let name, _) = condExpr,
+                              interner.resolve(name) == "null" {
+                        hasNullCase = true
                     }
                 }
                 branchTypes.append(
-                    inferExpr(branch.body, ast: ast, sema: sema, semaCtx: semaCtx, locals: &locals, resolver: resolver, dataFlow: dataFlow)
+                    inferExpr(
+                        branch.body,
+                        ast: ast,
+                        sema: sema,
+                        semaCtx: semaCtx,
+                        locals: &locals,
+                        resolver: resolver,
+                        dataFlow: dataFlow,
+                        interner: interner,
+                        expectedType: expectedType
+                    )
                 )
             }
 
             if let elseExpr {
                 branchTypes.append(
-                    inferExpr(elseExpr, ast: ast, sema: sema, semaCtx: semaCtx, locals: &locals, resolver: resolver, dataFlow: dataFlow)
+                    inferExpr(
+                        elseExpr,
+                        ast: ast,
+                        sema: sema,
+                        semaCtx: semaCtx,
+                        locals: &locals,
+                        resolver: resolver,
+                        dataFlow: dataFlow,
+                        interner: interner,
+                        expectedType: expectedType
+                    )
                 )
             }
 
-            let summary = WhenBranchSummary(coveredSymbols: covered, hasElse: elseExpr != nil)
+            let summary = WhenBranchSummary(
+                coveredSymbols: covered,
+                hasElse: elseExpr != nil,
+                hasNullCase: hasNullCase
+            )
             if !dataFlow.isWhenExhaustive(subjectType: subjectType, branches: summary, sema: sema) {
                 semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0004",
@@ -631,6 +819,123 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
 
             let type = sema.types.lub(branchTypes)
             sema.bindings.bindExprType(id, type: type)
+            return type
+        }
+    }
+
+    private func makeTypeVarBySymbol(_ symbols: [SymbolID]) -> [SymbolID: TypeVarID] {
+        var mapping: [SymbolID: TypeVarID] = [:]
+        var index: Int32 = 0
+        for symbol in symbols {
+            mapping[symbol] = TypeVarID(rawValue: index)
+            index += 1
+        }
+        return mapping
+    }
+
+    private func substituteTypeParameters(
+        in type: TypeID,
+        substitution: [TypeVarID: TypeID],
+        typeVarBySymbol: [SymbolID: TypeVarID],
+        typeSystem: TypeSystem
+    ) -> TypeID {
+        let kind = typeSystem.kind(of: type)
+        switch kind {
+        case .typeParam(let typeParam):
+            if let variable = typeVarBySymbol[typeParam.symbol],
+               let concrete = substitution[variable] {
+                return concrete
+            }
+            return type
+
+        case .classType(let classType):
+            let newArgs: [TypeArg] = classType.args.map { arg in
+                switch arg {
+                case .invariant(let inner):
+                    return .invariant(substituteTypeParameters(
+                        in: inner,
+                        substitution: substitution,
+                        typeVarBySymbol: typeVarBySymbol,
+                        typeSystem: typeSystem
+                    ))
+                case .out(let inner):
+                    return .out(substituteTypeParameters(
+                        in: inner,
+                        substitution: substitution,
+                        typeVarBySymbol: typeVarBySymbol,
+                        typeSystem: typeSystem
+                    ))
+                case .in(let inner):
+                    return .in(substituteTypeParameters(
+                        in: inner,
+                        substitution: substitution,
+                        typeVarBySymbol: typeVarBySymbol,
+                        typeSystem: typeSystem
+                    ))
+                case .star:
+                    return .star
+                }
+            }
+            if newArgs == classType.args {
+                return type
+            }
+            return typeSystem.make(.classType(ClassType(
+                classSymbol: classType.classSymbol,
+                args: newArgs,
+                nullability: classType.nullability
+            )))
+
+        case .functionType(let functionType):
+            let newReceiver = functionType.receiver.map { receiver in
+                substituteTypeParameters(
+                    in: receiver,
+                    substitution: substitution,
+                    typeVarBySymbol: typeVarBySymbol,
+                    typeSystem: typeSystem
+                )
+            }
+            let newParams = functionType.params.map { param in
+                substituteTypeParameters(
+                    in: param,
+                    substitution: substitution,
+                    typeVarBySymbol: typeVarBySymbol,
+                    typeSystem: typeSystem
+                )
+            }
+            let newReturn = substituteTypeParameters(
+                in: functionType.returnType,
+                substitution: substitution,
+                typeVarBySymbol: typeVarBySymbol,
+                typeSystem: typeSystem
+            )
+            if newReceiver == functionType.receiver &&
+                newParams == functionType.params &&
+                newReturn == functionType.returnType {
+                return type
+            }
+            return typeSystem.make(.functionType(FunctionType(
+                receiver: newReceiver,
+                params: newParams,
+                returnType: newReturn,
+                isSuspend: functionType.isSuspend,
+                nullability: functionType.nullability
+            )))
+
+        case .intersection(let parts):
+            let newParts = parts.map { part in
+                substituteTypeParameters(
+                    in: part,
+                    substitution: substitution,
+                    typeVarBySymbol: typeVarBySymbol,
+                    typeSystem: typeSystem
+                )
+            }
+            if newParts == parts {
+                return type
+            }
+            return typeSystem.make(.intersection(newParts))
+
+        default:
             return type
         }
     }
