@@ -132,6 +132,7 @@
   - [ ] `CallBinding.parameterMapping` を使って omitted parameter を KIR call 引数に補完
   - [ ] named/reordered call の最終引数列を callee parameter 順へ正規化
   - [ ] `named_default.kt` 回帰ケース（`sum(a = 3, c = 4)`）を pass させる
+  - [ ] 再現: `bash Scripts/diff_kotlinc.sh /tmp/named_default.kt`
 
 - [ ] P5-2: block 内 local declaration/assignment を AST/Sema/KIR で実装（spec.md J5/J6/J7/J11）
   - [ ] `val/var` 文ノードを AST に導入し、block body に保持
@@ -142,10 +143,12 @@
   - [ ] extension/member body で `this` を value symbol として束縛
   - [ ] unresolved identifier が external symbol call に落ちる経路を遮断
   - [ ] `extension.kt` 回帰ケース（`x.inc2()`）を pass させる
+  - [ ] 再現: `bash Scripts/diff_kotlinc.sh /tmp/extension.kt`
 
 - [ ] P5-4: runtime value 表現の整合（null と primitive 0 の分離）を修正（spec.md J16）
   - [ ] synthetic runtime `kk_println_any` の判定を tagged/value-aware に変更
   - [ ] `println(0)` / `println(null)` の差分テストを追加
+  - [ ] 再現: `bash Scripts/diff_kotlinc.sh /tmp/zero_print.kt`
 
 - [ ] P5-5: diff/golden ケースを P5 領域で拡張（spec.md J18）
   - [ ] default args / local var / receiver / zero-null 表示の回帰ケースを `Scripts/diff_cases` へ追加
@@ -157,3 +160,4 @@
   - [ ] `CallBinding.parameterMapping` を使って omitted parameter を KIR call 引数に補完
   - [ ] named/reordered call の最終引数列を callee parameter 順へ正規化
   - [ ] `named_default.kt` 回帰ケース（`sum(a = 3, c = 4)`）を pass させる
+  - [ ] 再現: `bash Scripts/diff_kotlinc.sh /tmp/named_default.kt`
