@@ -34,7 +34,7 @@ final class DeepPhaseCoverageTests: XCTestCase {
         }
 
         func node(_ kind: SyntaxKind, _ children: [SyntaxChild]) -> NodeID {
-            cst.makeNode(kind: kind, range: makeRange(file: file, start: 0, end: max(offset, 1)), children)
+            cst.appendNode(kind: kind, range: makeRange(file: file, start: 0, end: max(offset, 1)), children)
         }
 
         let packageNode = node(.packageHeader, [

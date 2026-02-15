@@ -53,7 +53,7 @@ public final class KotlinParser {
 
         return (
             arena: arena,
-            root: arena.makeNode(
+            root: arena.appendNode(
                 kind: rootKind,
                 range: range.value ?? invalidRange, children)
         )
@@ -132,7 +132,7 @@ public final class KotlinParser {
         consumeIf(expected: keyword, into: &children, range: &range, code: "KSWIFTK-PARSE-0001")
         parseQualifiedPath(into: &children, range: &range, allowImportWildcard: allowWildcard)
         appendOptionalTerminator(into: &children, range: &range)
-        return arena.makeNode(kind: kind, range: range.value ?? invalidRange, children)
+        return arena.appendNode(kind: kind, range: range.value ?? invalidRange, children)
     }
 
     private func parseNamedDeclaration(
@@ -162,7 +162,7 @@ public final class KotlinParser {
             includeBlock: kind == .classDecl || kind == .interfaceDecl || kind == .objectDecl
         )
 
-        return arena.makeNode(
+        return arena.appendNode(
             kind: kind,
             range: range.value ?? invalidRange, children)
     }
@@ -197,7 +197,7 @@ public final class KotlinParser {
             parseTail(inBlock: false, into: &children, range: &range)
         }
 
-        return arena.makeNode(
+        return arena.appendNode(
             kind: .funDecl,
             range: range.value ?? invalidRange, children)
     }
@@ -222,7 +222,7 @@ public final class KotlinParser {
             parseTail(inBlock: false, into: &children, range: &range)
         }
 
-        return arena.makeNode(
+        return arena.appendNode(
             kind: .propertyDecl,
             range: range.value ?? invalidRange, children)
     }
@@ -242,7 +242,7 @@ public final class KotlinParser {
         }
         parseTail(inBlock: false, into: &children, range: &range)
 
-        return arena.makeNode(
+        return arena.appendNode(
             kind: .typeAliasDecl,
             range: range.value ?? invalidRange, children)
     }
@@ -270,7 +270,7 @@ public final class KotlinParser {
             parseTail(inBlock: false, into: &children, range: &range)
         }
 
-        return arena.makeNode(
+        return arena.appendNode(
             kind: .classDecl,
             range: range.value ?? invalidRange, children)
     }
@@ -279,7 +279,7 @@ public final class KotlinParser {
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
         guard consumeIfSymbol(.lBrace, into: &children, range: &range) else {
-            return arena.makeNode(kind: .block, range: range.value ?? invalidRange, children)
+            return arena.appendNode(kind: .block, range: range.value ?? invalidRange, children)
         }
 
         while !stream.atEOF() {
@@ -304,7 +304,7 @@ public final class KotlinParser {
             children.append(.node(parseStatement(inBlock: true)))
         }
 
-        return arena.makeNode(kind: .block, range: range.value ?? invalidRange, children)
+        return arena.appendNode(kind: .block, range: range.value ?? invalidRange, children)
     }
 
     private func parseEnumEntryDeclaration() -> NodeID {
@@ -319,7 +319,7 @@ public final class KotlinParser {
         }
         parseTail(inBlock: true, into: &children, range: &range)
 
-        return arena.makeNode(
+        return arena.appendNode(
             kind: .enumEntry,
             range: range.value ?? invalidRange, children)
     }
@@ -340,7 +340,7 @@ public final class KotlinParser {
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
         guard consumeIfSymbol(.lBrace, into: &children, range: &range) else {
-            return arena.makeNode(kind: .block, range: range.value ?? invalidRange, children)
+            return arena.appendNode(kind: .block, range: range.value ?? invalidRange, children)
         }
 
         while !stream.atEOF() {
@@ -358,7 +358,7 @@ public final class KotlinParser {
             }
         }
 
-        return arena.makeNode(kind: .block, range: range.value ?? invalidRange, children)
+        return arena.appendNode(kind: .block, range: range.value ?? invalidRange, children)
     }
 
     private func parseStatement(inBlock: Bool) -> NodeID {
@@ -389,7 +389,7 @@ public final class KotlinParser {
             _ = consumeToken(into: &children, range: &range)
         }
 
-        return arena.makeNode(
+        return arena.appendNode(
             kind: .statement,
             range: range.value ?? invalidRange, children)
     }
@@ -445,7 +445,7 @@ public final class KotlinParser {
         var range = RangeAccumulator()
 
         guard consumeIfSymbol(opening, into: &children, range: &range) else {
-            return arena.makeNode(kind: .statement, range: invalidRange, [])
+            return arena.appendNode(kind: .statement, range: invalidRange, [])
         }
 
         var depth = 1
@@ -453,7 +453,7 @@ public final class KotlinParser {
             let token = stream.peek()
             if case .symbol(let symbol) = token.kind, symbol == closing && depth == 1 {
                 _ = consumeToken(into: &children, range: &range)
-                return arena.makeNode(kind: .statement, range: range.value ?? invalidRange, children)
+                return arena.appendNode(kind: .statement, range: range.value ?? invalidRange, children)
             }
             if depth == 1 && hasLeadingNewline(token) && isLikelyTopLevelDeclarationStart(token) {
                 break
@@ -472,7 +472,7 @@ public final class KotlinParser {
             "Unterminated '\(opening.rawValue)' group.",
             range: stream.peek().rangeIfAvailable
         )
-        return arena.makeNode(kind: .statement, range: range.value ?? invalidRange, children)
+        return arena.appendNode(kind: .statement, range: range.value ?? invalidRange, children)
     }
 
     private func parseQualifiedPath(into children: inout [SyntaxChild], range: inout RangeAccumulator, allowImportWildcard: Bool) {
@@ -623,7 +623,7 @@ public final class KotlinParser {
         var depth = 1
 
         guard consumeIfSymbol(.lessThan, into: &children, range: &range) else {
-            return arena.makeNode(
+            return arena.appendNode(
                 kind: .typeArgs,
                 range: range.value ?? invalidRange,
                 []
@@ -647,7 +647,7 @@ public final class KotlinParser {
             case .symbol(.greaterThan):
                 depth -= 1
                 if depth == 0 {
-                    return arena.makeNode(kind: .typeArgs, range: range.value ?? invalidRange, children)
+                    return arena.appendNode(kind: .typeArgs, range: range.value ?? invalidRange, children)
                 }
             default:
                 break
@@ -659,7 +659,7 @@ public final class KotlinParser {
             "Unterminated '<' type argument list.",
             range: stream.peek().rangeIfAvailable
         )
-        return arena.makeNode(
+        return arena.appendNode(
             kind: .typeArgs,
             range: range.value ?? invalidRange,
             children

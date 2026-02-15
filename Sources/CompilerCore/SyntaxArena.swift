@@ -57,7 +57,7 @@ public final class SyntaxArena {
         return TokenID(rawValue: id)
     }
 
-    public func makeNode(kind: SyntaxKind, range: SourceRange, _ children: [SyntaxChild]) -> NodeID {
+    public func appendNode(kind: SyntaxKind, range: SourceRange, _ children: [SyntaxChild]) -> NodeID {
         let start = Int32(self.children.count)
         self.children.append(contentsOf: children)
         let childCount = Int16(children.count)

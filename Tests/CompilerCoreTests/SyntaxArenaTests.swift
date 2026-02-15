@@ -15,7 +15,7 @@ final class SyntaxArenaTests: XCTestCase {
         XCTAssertEqual(tokenIDB, TokenID(rawValue: 1))
 
         let range = makeRange(start: 0, end: 3)
-        let nodeID = arena.makeNode(kind: .callExpr, range: range, [.token(tokenIDA), .token(tokenIDB)])
+        let nodeID = arena.appendNode(kind: .callExpr, range: range, [.token(tokenIDA), .token(tokenIDB)])
         let node = arena.node(nodeID)
 
         XCTAssertEqual(node.kind, .callExpr)
@@ -41,7 +41,7 @@ final class SyntaxArenaTests: XCTestCase {
 
     func testChildrenReturnsEmptyForNodesWithoutAddressableChildren() {
         let arena = SyntaxArena()
-        let emptyNode = arena.makeNode(kind: .block, range: makeRange(), [])
+        let emptyNode = arena.appendNode(kind: .block, range: makeRange(), [])
 
         XCTAssertEqual(Array(arena.children(of: emptyNode)), [])
         XCTAssertEqual(Array(arena.children(of: NodeID(rawValue: 1234))), [])
