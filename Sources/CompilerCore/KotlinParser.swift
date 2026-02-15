@@ -15,6 +15,8 @@ public final class KotlinParser {
     public func parseFile() -> (arena: SyntaxArena, root: NodeID) {
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
+        var sawTopLevelStatement = false
+        var sawTopLevelDeclOrHeader = false
 
         while !stream.atEOF() {
             let token = stream.peek()
@@ -26,22 +28,33 @@ public final class KotlinParser {
             switch token.kind {
             case .keyword(.package):
                 node = parsePackageHeader()
+                sawTopLevelDeclOrHeader = true
             case .keyword(.import):
                 node = parseImportHeader()
+                sawTopLevelDeclOrHeader = true
             case .keyword(let keyword) where isDeclarationKeyword(keyword):
                 node = parseDeclaration()
+                sawTopLevelDeclOrHeader = true
             default:
                 node = parseStatement(inBlock: false)
+                sawTopLevelStatement = true
             }
 
             children.append(.node(node))
             range.append(arena.node(node).range)
         }
 
+        let rootKind: SyntaxKind
+        if sawTopLevelStatement && !sawTopLevelDeclOrHeader {
+            rootKind = .script
+        } else {
+            rootKind = .kotlinFile
+        }
+
         return (
             arena: arena,
             root: arena.makeNode(
-                kind: .kotlinFile,
+                kind: rootKind,
                 range: range.value ?? invalidRange, children)
         )
     }
