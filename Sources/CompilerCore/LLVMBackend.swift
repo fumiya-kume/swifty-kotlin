@@ -122,6 +122,7 @@ public final class LLVMBackend {
             }
             acc[function.symbol] = Self.cFunctionSymbol(for: function, interner: interner)
         }
+        let externalCallees = collectExternalCallees(module: module, interner: interner, functionSymbols: functionSymbols)
 
         var lines: [String] = [
             "#include <stdint.h>",
@@ -178,12 +179,23 @@ public final class LLVMBackend {
             "  (void)functionId;",
             "  return 0;",
             "}",
+            "static intptr_t kk_coroutine_state_set_label(intptr_t continuation, intptr_t label) {",
+            "  (void)continuation;",
+            "  return label;",
+            "}",
             "static intptr_t kk_coroutine_state_exit(intptr_t continuation, intptr_t value) {",
             "  (void)continuation;",
             "  return value;",
             "}",
             ""
         ]
+
+        for callee in externalCallees {
+            lines.append("extern intptr_t \(callee)();")
+        }
+        if !externalCallees.isEmpty {
+            lines.append("")
+        }
 
         for decl in module.arena.declarations {
             guard case .function(let function) = decl else {
@@ -236,6 +248,17 @@ public final class LLVMBackend {
 
             case .beginBlock, .endBlock:
                 continue
+
+            case .label(let id):
+                lines.append("\(labelName(id)):")
+
+            case .jump(let target):
+                lines.append("  goto \(labelName(target));")
+
+            case .jumpIfEqual(let lhs, let rhs, let target):
+                ensureDeclared(lhs, declared: &declared, lines: &lines)
+                ensureDeclared(rhs, declared: &declared, lines: &lines)
+                lines.append("  if (\(varName(lhs)) == \(varName(rhs))) goto \(labelName(target));")
 
             case .constValue(let result, let value):
                 ensureDeclared(result, declared: &declared, lines: &lines)
@@ -313,16 +336,14 @@ public final class LLVMBackend {
                 }
                 var callArguments = argVars
                 var thrownSlotName: String? = nil
-                if isInternalFunction {
-                    if usesThrownChannel {
-                        let slot = "thrown_\(callIndex)"
-                        callIndex += 1
-                        lines.append("  intptr_t \(slot) = 0;")
-                        thrownSlotName = slot
-                        callArguments.append("&\(slot)")
-                    } else {
-                        callArguments.append("NULL")
-                    }
+                if usesThrownChannel {
+                    let slot = "thrown_\(callIndex)"
+                    callIndex += 1
+                    lines.append("  intptr_t \(slot) = 0;")
+                    thrownSlotName = slot
+                    callArguments.append("&\(slot)")
+                } else if isInternalFunction {
+                    callArguments.append("NULL")
                 }
 
                 let callExpr = "\(target)(\(callArguments.joined(separator: ", ")))"
@@ -337,6 +358,13 @@ public final class LLVMBackend {
                     lines.append("    return 0;")
                     lines.append("  }")
                 }
+
+            case .returnIfEqual(let lhs, let rhs):
+                ensureDeclared(lhs, declared: &declared, lines: &lines)
+                ensureDeclared(rhs, declared: &declared, lines: &lines)
+                lines.append("  if (\(varName(lhs)) == \(varName(rhs))) {")
+                lines.append("    return \(varName(lhs));")
+                lines.append("  }")
 
             case .returnUnit:
                 lines.append("  return 0;")
@@ -362,6 +390,10 @@ public final class LLVMBackend {
 
     private func varName(_ id: KIRExprID) -> String {
         "r\(id.rawValue)"
+    }
+
+    private func labelName(_ id: Int32) -> String {
+        "L\(max(0, id))"
     }
 
     private func valueExpr(_ value: KIRExprKind, interner: StringInterner) -> String {
@@ -432,6 +464,51 @@ public final class LLVMBackend {
             return "_"
         }
         return result
+    }
+
+    private func collectExternalCallees(
+        module: KIRModule,
+        interner: StringInterner,
+        functionSymbols: [SymbolID: String]
+    ) -> [String] {
+        var callees: Set<String> = []
+        let ignored: Set<String> = [
+            "println",
+            "kk_println_any",
+            "kk_when_select",
+            "kk_coroutine_suspended",
+            "kk_coroutine_state_enter",
+            "kk_coroutine_state_set_label",
+            "kk_coroutine_state_exit"
+        ]
+
+        for decl in module.arena.declarations {
+            guard case .function(let function) = decl else {
+                continue
+            }
+            for instruction in function.body {
+                guard case .call(let symbol, let callee, _, _, _) = instruction else {
+                    continue
+                }
+                if let symbol, functionSymbols[symbol] != nil {
+                    continue
+                }
+
+                let calleeName = interner.resolve(callee)
+                guard !calleeName.isEmpty else {
+                    continue
+                }
+                if LLVMBackend.builtinOps[calleeName] != nil {
+                    continue
+                }
+                if ignored.contains(calleeName) {
+                    continue
+                }
+                callees.insert(calleeName)
+            }
+        }
+
+        return callees.sorted()
     }
 
     private func clangTargetArgs() -> [String] {
