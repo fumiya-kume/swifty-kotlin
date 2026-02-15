@@ -38,6 +38,10 @@
   - [x] OverloadResolver の spread 制約対応（non-vararg への spread 拒否）
   - [x] OverloadResolver の non-trailing vararg 対応
   - [x] Frontend/AST で named/spread call args を保持して Resolver に渡す
+- [ ] P1-6: Kotlin 2.3 stable 機能差分の穴埋め（spec.md J0/J5/J6）
+  - [ ] nested typealias（class/object 内）を Parser/AST/Sema で扱う
+  - [ ] `return`/`if`/`try` を expression-body で正しく扱う式パーサを実装
+  - [ ] `script` ルート（`SyntaxKind.script`）の parse パスを実装
 
 ## P2 (Backend / Runtime)
 
@@ -60,16 +64,19 @@
   - [x] class layout を継承込みで合成（super fields を instance size へ反映）
   - [x] metadata `superFq` / `fields` / `vtable` / `itable` を import 側で反映
 - [x] P2-3: `.kklib` 消費側（-I から manifest/metadata 読込）
-- [ ] P2-4: LLVM C API backend への移行
+- [x] P2-4: LLVM C API backend への移行
   - [x] Codegen backend を抽象化し `-Xir backend=...` で選択可能に変更
   - [x] `backend=llvm-c-api` 選択時の `LLVMCAPIBackend` スキャフォールド（警告つきフォールバック）を追加
   - [x] `backend-strict=true` で未実装時に即 error へ切替（CI 用ガード）
   - [x] LLVM C API dynamic bindings loader（`dlopen` / `dlsym`）を追加
-  - [ ] LLVM C API bindings（modulemap / SwiftPM link 設定）を追加
-  - [ ] LLVM C API で最小 IR 生成（const / return / call / branch）
-  - [ ] LLVM C API で Object 出力パス（target machine 初期化 + emit）
-  - [ ] 既存 synthetic C backend と emit 出力互換テストを追加
+  - [x] LLVM C API bindings（modulemap / SwiftPM link 設定）を追加
+  - [x] LLVM C API で最小 IR 生成（const / return / call / branch）
+  - [x] LLVM C API で Object 出力パス（target machine 初期化 + emit）
+  - [x] 既存 synthetic C backend と emit 出力互換テストを追加
 - [ ] P2-5: Runtime GC 実装（mark-sweep + root map）
+  - [ ] stop-the-world mark-sweep collector を実装
+  - [ ] root set（globals / stack frame map / coroutine）走査を実装
+  - [ ] `kk_register_frame_map` 系 API と compiler 側 map 出力を実装
 - [x] P2-6: coroutine CPS/state machine lowering 実装
   - [x] lowered suspend 関数へ state enter/exit helper 挿入（state machine 骨格）
   - [x] suspension point ごとの label 設定 + `COROUTINE_SUSPENDED` 早期 return ガード挿入
@@ -78,7 +85,37 @@
   - [x] CFG ベースの suspension point 分割と label dispatch 生成
 - [x] P2-7: kotlinc 差分テストハーネスの整備
   - [x] `Scripts/diff_kotlinc.sh` を追加（kotlinc 実行結果との stdout/exit 比較）
+- [ ] P2-8: LLVM C API backend の runtime/ABI 追従（spec.md J15）
+  - [ ] `kk_string_concat` / 例外チャネル / coroutine helper 呼び出しの native lowering を実装
+  - [ ] `backend=llvm-c-api` で executable までの E2E テストを追加
+  - [ ] fallback 依存を段階的に縮小（strict 以外でも native 優先を固定）
+
+## P3 (Spec Compliance Backlog)
+
+- [ ] P3-1: 決定性・エラー規約の固定（spec.md J0）
+  - [ ] 出力決定性テスト（同一入力/同一オプションで byte 同一）を追加
+  - [ ] compiler/runtime の panic 経路を診断コード方針に沿って整理
+- [ ] P3-2: 型システムの仕様追従（spec.md J8/J9）
+  - [ ] class/interface 継承関係を `TypeSystem.isSubtype` に反映
+  - [ ] declaration-site variance と use-site variance 合成規則を強化
+  - [ ] generic constraints の失敗診断精度を改善
+- [ ] P3-3: KIR の型付き IR 化強化（spec.md J11/J12）
+  - [ ] `if/for/try` など制御構造の KIR 表現を marker 依存から段階的に脱却
+  - [ ] KIR value/type 情報の保持を強化し lowering の前提を明確化
+- [ ] P3-4: Name mangling/ABI 厳密化（spec.md J13）
+  - [ ] signature の型符号化ルール（nullable / function / suspend）を反映
+  - [ ] decl kind（getter/setter/constructor）の区別を mangling に反映
+- [ ] P3-5: Coroutine フル CPS 仕様追従（spec.md J17）
+  - [ ] continuation object（spill slots + label）生成を実装
+  - [ ] suspension 跨ぎ live 解析に基づく spill/reload を実装
+  - [ ] suspend 例外伝播を含む golden/E2E テストを追加
+- [ ] P3-6: テストハーネス拡張（spec.md J18/J19）
+  - [ ] Lexer/Parser/Sema の golden test セットを追加
+  - [ ] `Scripts/check_coverage.sh` を CI gate に組み込み
+  - [ ] `diff_kotlinc.sh` の回帰ケースを継続追加
 
 ## In Progress
 
-- [ ] P2-4 を実装中
+- [ ] P1-6: Kotlin 2.3 stable 機能差分の穴埋め
+- [ ] P2-5: Runtime GC 実装（mark-sweep + root map）
+- [ ] P2-8: LLVM C API backend の runtime/ABI 追従
