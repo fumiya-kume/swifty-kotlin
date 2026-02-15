@@ -13,7 +13,7 @@ Usage: kswiftc [options] <input files>
   -l <name>              Link library
   --target <triple>      Target triple (arch-vendor-os[-version])
   -Xfrontend <flag>      Frontend feature flag
-  -Xir <flag>            IR/lowering feature flag
+  -Xir <flag>            IR/lowering feature flag (e.g. backend=llvm-c-api, backend-strict=true)
   -Xruntime <flag>       Runtime feature flag
   -g                     Emit debug info
 """
