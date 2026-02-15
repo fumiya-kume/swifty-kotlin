@@ -2785,8 +2785,8 @@ public final class LinkPhase: CompilerPhase {
         let wrapperSource = """
         #include <stdint.h>
         #include <stddef.h>
-        extern intptr_t \(entrySymbol)(void);
-        int main(void) { return (int)\(entrySymbol)(); }
+        extern intptr_t \(entrySymbol)(intptr_t* outThrown);
+        int main(void) { return (int)\(entrySymbol)(NULL); }
         """
         let wrapperURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "_entry.c")
         defer { try? FileManager.default.removeItem(at: wrapperURL) }

@@ -173,6 +173,15 @@ public final class LLVMBackend {
             "  static int32_t token = 0;",
             "  return (void*)&token;",
             "}",
+            "static intptr_t kk_coroutine_state_enter(intptr_t continuation, intptr_t functionId) {",
+            "  (void)continuation;",
+            "  (void)functionId;",
+            "  return 0;",
+            "}",
+            "static intptr_t kk_coroutine_state_exit(intptr_t continuation, intptr_t value) {",
+            "  (void)continuation;",
+            "  return value;",
+            "}",
             ""
         ]
 
@@ -201,15 +210,11 @@ public final class LLVMBackend {
 
     private func functionPrototype(function: KIRFunction, interner: StringInterner) -> String {
         let symbol = Self.cFunctionSymbol(for: function, interner: interner)
-        let params: String
-        if function.params.isEmpty {
-            params = "void"
-        } else {
-            params = function.params.enumerated().map { index, _ in
-                "intptr_t p\(index)"
-            }.joined(separator: ", ")
+        var parameters = function.params.enumerated().map { index, _ in
+            "intptr_t p\(index)"
         }
-        return "intptr_t \(symbol)(\(params))"
+        parameters.append("intptr_t* outThrown")
+        return "intptr_t \(symbol)(\(parameters.joined(separator: ", ")))"
     }
 
     private func emitFunctionBody(
@@ -220,6 +225,9 @@ public final class LLVMBackend {
     ) -> [String] {
         var lines: [String] = []
         var declared: Set<Int32> = []
+        var callIndex = 0
+
+        lines.append("  if (outThrown) { *outThrown = 0; }")
 
         for instruction in function.body {
             switch instruction {
@@ -252,7 +260,7 @@ public final class LLVMBackend {
                 }
                 lines.append("  \(varName(result)) = (\(varName(lhs)) \(opText) \(varName(rhs)));")
 
-            case .call(let symbol, let callee, let arguments, let result, _):
+            case .call(let symbol, let callee, let arguments, let result, let usesThrownChannel):
                 let calleeName = interner.resolve(callee)
                 let argVars = arguments.map { arg -> String in
                     ensureDeclared(arg, declared: &declared, lines: &lines)
@@ -295,16 +303,39 @@ public final class LLVMBackend {
                 }
 
                 let target: String
+                let isInternalFunction: Bool
                 if let symbol, let resolved = functionSymbols[symbol] {
                     target = resolved
+                    isInternalFunction = true
                 } else {
                     target = calleeName.isEmpty ? "0" : calleeName
+                    isInternalFunction = false
                 }
-                let callExpr = "\(target)(\(argVars.joined(separator: ", ")))"
+                var callArguments = argVars
+                var thrownSlotName: String? = nil
+                if isInternalFunction {
+                    if usesThrownChannel {
+                        let slot = "thrown_\(callIndex)"
+                        callIndex += 1
+                        lines.append("  intptr_t \(slot) = 0;")
+                        thrownSlotName = slot
+                        callArguments.append("&\(slot)")
+                    } else {
+                        callArguments.append("NULL")
+                    }
+                }
+
+                let callExpr = "\(target)(\(callArguments.joined(separator: ", ")))"
                 if let result {
                     lines.append("  \(varName(result)) = \(callExpr);")
                 } else {
                     lines.append("  (void)\(callExpr);")
+                }
+                if let thrownSlotName {
+                    lines.append("  if (\(thrownSlotName) != 0) {")
+                    lines.append("    if (outThrown) { *outThrown = \(thrownSlotName); }")
+                    lines.append("    return 0;")
+                    lines.append("  }")
                 }
 
             case .returnUnit:
