@@ -197,6 +197,58 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
     }
 
+    func testLlvmCapiBackendNativeFailureReportsErrorWithoutFallback() throws {
+        guard let bindings = LLVMCAPIBindings.load(),
+              bindings.smokeTestContextLifecycle() else {
+            throw XCTSkip("LLVM C API bindings are unavailable in this environment.")
+        }
+
+        let diagnostics = DiagnosticEngine()
+        let interner = StringInterner()
+        let types = TypeSystem()
+        let arena = KIRArena()
+        let function = KIRFunction(
+            symbol: SymbolID(rawValue: 2500),
+            name: interner.intern("main"),
+            params: [],
+            returnType: types.unitType,
+            body: [.returnUnit],
+            isSuspend: false,
+            isInline: false
+        )
+        let functionID = arena.appendDecl(.function(function))
+        let module = KIRModule(
+            files: [KIRFile(fileID: FileID(rawValue: 0), decls: [functionID])],
+            arena: arena
+        )
+
+        let backend = LLVMCAPIBackend(
+            target: defaultTargetTriple(),
+            optLevel: .O0,
+            debugInfo: false,
+            diagnostics: diagnostics,
+            strictMode: false
+        )
+
+        let runtime = RuntimeLinkInfo(libraryPaths: [], libraries: [], extraObjects: [])
+        let missingObjectPath = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathComponent("missing")
+            .appendingPathComponent("out.o")
+            .path
+
+        XCTAssertThrowsError(
+            try backend.emitObject(
+                module: module,
+                runtime: runtime,
+                outputObjectPath: missingObjectPath,
+                interner: interner
+            )
+        )
+        XCTAssertTrue(diagnostics.diagnostics.contains { $0.code == "KSWIFTK-BACKEND-1006" })
+        XCTAssertFalse(diagnostics.diagnostics.contains { $0.code == "KSWIFTK-BACKEND-1005" })
+    }
+
     func testCodegenBackendSelectionLlvmCApiAndSyntheticBackendObjectCompatibilitySmoke() throws {
         let source = """
         fun helper(v: Int) = v + 1
@@ -682,6 +734,10 @@ final class BackendPipelineCoverageTests: XCTestCase {
         try backend.emitObject(module: module, runtime: runtime, outputObjectPath: objPath, interner: interner)
         XCTAssertTrue(FileManager.default.fileExists(atPath: irPath))
         XCTAssertTrue(FileManager.default.fileExists(atPath: objPath))
+        let ir = try String(contentsOfFile: irPath, encoding: .utf8)
+        XCTAssertTrue(ir.contains("kk_register_frame_map"))
+        XCTAssertTrue(ir.contains("kk_push_frame"))
+        XCTAssertTrue(ir.contains("kk_pop_frame"))
 
         let fnName = LLVMBackend.cFunctionSymbol(
             for: KIRFunction(
