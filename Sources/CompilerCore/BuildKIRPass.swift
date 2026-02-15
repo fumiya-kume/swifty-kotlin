@@ -138,6 +138,46 @@ public final class BuildKIRPhase: CompilerPhase {
             instructions.append(.call(symbol: nil, callee: name, arguments: [], result: id, outThrown: false))
             return id
 
+        case .returnExpr(let value, _):
+            if let value {
+                return lowerExpr(
+                    value,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    instructions: &instructions
+                )
+            }
+            let unit = arena.appendExpr(.unit)
+            instructions.append(.constValue(result: unit, value: .unit))
+            return unit
+
+        case .ifExpr(let condition, let thenExpr, let elseExpr, _):
+            let conditionID = lowerExpr(condition, ast: ast, sema: sema, arena: arena, interner: interner, instructions: &instructions)
+            let thenID = lowerExpr(thenExpr, ast: ast, sema: sema, arena: arena, interner: interner, instructions: &instructions)
+            let elseID: KIRExprID
+            if let elseExpr {
+                elseID = lowerExpr(elseExpr, ast: ast, sema: sema, arena: arena, interner: interner, instructions: &instructions)
+            } else {
+                elseID = arena.appendExpr(.unit)
+                instructions.append(.constValue(result: elseID, value: .unit))
+            }
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)))
+            instructions.append(
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("kk_when_select"),
+                    arguments: [conditionID, thenID, elseID],
+                    result: result,
+                    outThrown: false
+                )
+            )
+            return result
+
+        case .tryExpr(let bodyExpr, _, _, _):
+            return lowerExpr(bodyExpr, ast: ast, sema: sema, arena: arena, interner: interner, instructions: &instructions)
+
         case .binary(let op, let lhs, let rhs, _):
             let lhsID = lowerExpr(lhs, ast: ast, sema: sema, arena: arena, interner: interner, instructions: &instructions)
             let rhsID = lowerExpr(rhs, ast: ast, sema: sema, arena: arena, interner: interner, instructions: &instructions)
