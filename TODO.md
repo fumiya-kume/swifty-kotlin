@@ -38,10 +38,10 @@
   - [x] OverloadResolver の spread 制約対応（non-vararg への spread 拒否）
   - [x] OverloadResolver の non-trailing vararg 対応
   - [x] Frontend/AST で named/spread call args を保持して Resolver に渡す
-- [ ] P1-6: Kotlin 2.3 stable 機能差分の穴埋め（spec.md J0/J5/J6）
-  - [ ] nested typealias（class/object 内）を Parser/AST/Sema で扱う
-  - [ ] `return`/`if`/`try` を expression-body で正しく扱う式パーサを実装
-  - [ ] `script` ルート（`SyntaxKind.script`）の parse パスを実装
+- [x] P1-6: Kotlin 2.3 stable 機能差分の穴埋め（spec.md J0/J5/J6）
+  - [x] nested typealias（class/object 内）を Parser/AST/Sema で扱う
+  - [x] `return`/`if`/`try` を expression-body で正しく扱う式パーサを実装
+  - [x] `script` ルート（`SyntaxKind.script`）の parse パスを実装
 
 ## P2 (Backend / Runtime)
 
@@ -74,9 +74,9 @@
   - [x] LLVM C API で Object 出力パス（target machine 初期化 + emit）
   - [x] 既存 synthetic C backend と emit 出力互換テストを追加
 - [ ] P2-5: Runtime GC 実装（mark-sweep + root map）
-  - [ ] stop-the-world mark-sweep collector を実装
-  - [ ] root set（globals / stack frame map / coroutine）走査を実装
-  - [ ] `kk_register_frame_map` 系 API と compiler 側 map 出力を実装
+  - [x] stop-the-world mark-sweep collector を実装
+  - [x] root set（globals / stack frame map / coroutine）走査を実装
+  - [ ] `kk_register_frame_map` 系 API と compiler 側 map 出力を実装（runtime API は実装済み、compiler map 出力が未了）
 - [x] P2-6: coroutine CPS/state machine lowering 実装
   - [x] lowered suspend 関数へ state enter/exit helper 挿入（state machine 骨格）
   - [x] suspension point ごとの label 設定 + `COROUTINE_SUSPENDED` 早期 return ガード挿入
@@ -86,8 +86,8 @@
 - [x] P2-7: kotlinc 差分テストハーネスの整備
   - [x] `Scripts/diff_kotlinc.sh` を追加（kotlinc 実行結果との stdout/exit 比較）
 - [ ] P2-8: LLVM C API backend の runtime/ABI 追従（spec.md J15）
-  - [ ] `kk_string_concat` / 例外チャネル / coroutine helper 呼び出しの native lowering を実装
-  - [ ] `backend=llvm-c-api` で executable までの E2E テストを追加
+  - [x] `kk_string_concat` / 例外チャネル / coroutine helper 呼び出しの native lowering を実装
+  - [x] `backend=llvm-c-api` で executable までの E2E テストを追加
   - [ ] fallback 依存を段階的に縮小（strict 以外でも native 優先を固定）
 
 ## P3 (Spec Compliance Backlog)
@@ -116,6 +116,5 @@
 
 ## In Progress
 
-- [ ] P1-6: Kotlin 2.3 stable 機能差分の穴埋め
 - [ ] P2-5: Runtime GC 実装（mark-sweep + root map）
 - [ ] P2-8: LLVM C API backend の runtime/ABI 追従
