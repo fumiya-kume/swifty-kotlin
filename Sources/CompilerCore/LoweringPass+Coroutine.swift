@@ -9,6 +9,9 @@ final class CoroutineLoweringPass: LoweringPass {
     }
 
     func run(module: KIRModule, ctx: KIRContext) throws {
+        let anyType = ctx.sema?.types.nullableAnyType ?? ctx.sema?.types.anyType
+        let intType = ctx.sema?.types.make(.primitive(.int, .nonNull))
+        let unitType = ctx.sema?.types.unitType
         let suspendFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
             guard case .function(let function) = decl, function.isSuspend else {
                 return nil
@@ -62,7 +65,10 @@ final class CoroutineLoweringPass: LoweringPass {
                 module: module,
                 interner: ctx.interner,
                 suspendFunctionSymbols: suspendFunctionSymbols,
-                suspendFunctionNames: suspendFunctionNames
+                suspendFunctionNames: suspendFunctionNames,
+                continuationType: continuationType,
+                intType: intType,
+                unitType: unitType
             )
             let loweredFunction = KIRFunction(
                 symbol: loweredSymbol,
@@ -103,7 +109,7 @@ final class CoroutineLoweringPass: LoweringPass {
             }
             partial[entry.key] = value
         }
-        let continuationProvider = ctx.interner.intern("kk_coroutine_suspended")
+        let continuationFactory = ctx.interner.intern("kk_coroutine_continuation_new")
 
         module.arena.transformFunctions { function in
             var updated = function
@@ -133,12 +139,26 @@ final class CoroutineLoweringPass: LoweringPass {
                     continue
                 }
 
-                let continuationTemp = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
+                let continuationFunctionID = module.arena.appendExpr(
+                    .temporary(Int32(module.arena.expressions.count)),
+                    type: intType
+                )
+                loweredBody.append(
+                    .constValue(
+                        result: continuationFunctionID,
+                        value: .intLiteral(Int64(loweredTarget.symbol.rawValue))
+                    )
+                )
+
+                let continuationTemp = module.arena.appendExpr(
+                    .temporary(Int32(module.arena.expressions.count)),
+                    type: anyType
+                )
                 loweredBody.append(
                     .call(
                         symbol: nil,
-                        callee: continuationProvider,
-                        arguments: [],
+                        callee: continuationFactory,
+                        arguments: [continuationFunctionID],
                         result: continuationTemp,
                         canThrow: false
                     )
@@ -282,11 +302,18 @@ final class CoroutineLoweringPass: LoweringPass {
         module: KIRModule,
         interner: StringInterner,
         suspendFunctionSymbols: Set<SymbolID>,
-        suspendFunctionNames: Set<InternedString>
+        suspendFunctionNames: Set<InternedString>,
+        continuationType: TypeID,
+        intType: TypeID?,
+        unitType: TypeID?
     ) -> [KIRInstruction] {
         let enterCallee = interner.intern("kk_coroutine_state_enter")
         let setLabelCallee = interner.intern("kk_coroutine_state_set_label")
         let exitCallee = interner.intern("kk_coroutine_state_exit")
+        let setSpillCallee = interner.intern("kk_coroutine_state_set_spill")
+        let getSpillCallee = interner.intern("kk_coroutine_state_get_spill")
+        let setCompletionCallee = interner.intern("kk_coroutine_state_set_completion")
+        let getCompletionCallee = interner.intern("kk_coroutine_state_get_completion")
         let suspendedProvider = interner.intern("kk_coroutine_suspended")
 
         let stateBlocks = buildSuspendStateBlocks(
@@ -294,17 +321,59 @@ final class CoroutineLoweringPass: LoweringPass {
             suspendFunctionSymbols: suspendFunctionSymbols,
             suspendFunctionNames: suspendFunctionNames
         )
+        let liveOutByInstruction = computeLiveOutByInstruction(originalBody)
+
+        var transitionsByResumeLabel: [Int64: SuspendTransition] = [:]
+        var transitionSourceIndexes: Set<Int> = []
+        for (index, block) in stateBlocks.enumerated() {
+            guard stateBlocks.indices.contains(index + 1) else {
+                continue
+            }
+            let nextResumeLabel = stateBlocks[index + 1].resumeLabel
+            guard let tailInstruction = block.instructions.last else {
+                continue
+            }
+            guard case .call(let symbol, let callee, _, let result, _) = tailInstruction.instruction,
+                  isSuspendCall(
+                    symbol: symbol,
+                    callee: callee,
+                    suspendFunctionSymbols: suspendFunctionSymbols,
+                    suspendFunctionNames: suspendFunctionNames
+                  ) else {
+                continue
+            }
+            let transition = SuspendTransition(
+                sourceInstructionIndex: tailInstruction.sourceIndex,
+                callResultExpr: result
+            )
+            transitionsByResumeLabel[nextResumeLabel] = transition
+            transitionSourceIndexes.insert(tailInstruction.sourceIndex)
+        }
+        let spillPlan = buildSpillPlan(
+            transitionSourceIndexes: transitionSourceIndexes,
+            liveOutByInstruction: liveOutByInstruction,
+            transitionsByResumeLabel: transitionsByResumeLabel
+        )
 
         var lowered: [KIRInstruction] = []
-        lowered.reserveCapacity(originalBody.count * 3 + 16)
+        lowered.reserveCapacity(originalBody.count * 6 + 24)
 
-        let continuationExpr = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
+        let continuationExpr = module.arena.appendExpr(
+            .temporary(Int32(module.arena.expressions.count)),
+            type: continuationType
+        )
         lowered.append(.constValue(result: continuationExpr, value: .symbolRef(continuationParameterSymbol)))
 
-        let functionIDExpr = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
+        let functionIDExpr = module.arena.appendExpr(
+            .temporary(Int32(module.arena.expressions.count)),
+            type: intType
+        )
         lowered.append(.constValue(result: functionIDExpr, value: .intLiteral(Int64(loweredSymbol.rawValue))))
 
-        let resumeLabelExpr = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
+        let resumeLabelExpr = module.arena.appendExpr(
+            .temporary(Int32(module.arena.expressions.count)),
+            type: intType
+        )
         lowered.append(
             .call(
                 symbol: nil,
@@ -316,7 +385,10 @@ final class CoroutineLoweringPass: LoweringPass {
         )
 
         for block in stateBlocks {
-            let expectedResumeExpr = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
+            let expectedResumeExpr = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)),
+                type: intType
+            )
             lowered.append(.constValue(result: expectedResumeExpr, value: .intLiteral(block.resumeLabel)))
             lowered.append(
                 .jumpIfEqual(
@@ -330,20 +402,80 @@ final class CoroutineLoweringPass: LoweringPass {
 
         for (index, block) in stateBlocks.enumerated() {
             lowered.append(.label(stateDispatchLabel(for: block.resumeLabel)))
+            if let transition = transitionsByResumeLabel[block.resumeLabel] {
+                let reloadExprs = spillPlan.exprsByTransitionSource[transition.sourceInstructionIndex] ?? []
+                for exprID in reloadExprs {
+                    guard let slot = spillPlan.slotByExpr[exprID] else {
+                        continue
+                    }
+                    let slotExpr = appendIntLiteralExpr(
+                        slot,
+                        intType: intType,
+                        module: module,
+                        lowered: &lowered
+                    )
+                    lowered.append(
+                        .call(
+                            symbol: nil,
+                            callee: getSpillCallee,
+                            arguments: [continuationExpr, slotExpr],
+                            result: exprID,
+                            canThrow: false
+                        )
+                    )
+                }
+                if let callResultExpr = transition.callResultExpr {
+                    lowered.append(
+                        .call(
+                            symbol: nil,
+                            callee: getCompletionCallee,
+                            arguments: [continuationExpr],
+                            result: callResultExpr,
+                            canThrow: false
+                        )
+                    )
+                }
+            }
             let nextResumeLabel = stateBlocks.indices.contains(index + 1)
                 ? stateBlocks[index + 1].resumeLabel
                 : nil
 
-            for instruction in block.instructions {
+            for stateInstruction in block.instructions {
+                let instruction = stateInstruction.instruction
                 if case .call(let symbol, let callee, let arguments, let result, let canThrow) = instruction,
                    isSuspendCall(
                     symbol: symbol,
                     callee: callee,
                     suspendFunctionSymbols: suspendFunctionSymbols,
-                    suspendFunctionNames: suspendFunctionNames
+                   suspendFunctionNames: suspendFunctionNames
                    ),
                    let nextResumeLabel {
-                    let resumeLabelExpr = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
+                    let spilledExprs = spillPlan.exprsByTransitionSource[stateInstruction.sourceIndex] ?? []
+                    for exprID in spilledExprs {
+                        guard let slot = spillPlan.slotByExpr[exprID] else {
+                            continue
+                        }
+                        let slotExpr = appendIntLiteralExpr(
+                            slot,
+                            intType: intType,
+                            module: module,
+                            lowered: &lowered
+                        )
+                        lowered.append(
+                            .call(
+                                symbol: nil,
+                                callee: setSpillCallee,
+                                arguments: [continuationExpr, slotExpr, exprID],
+                                result: nil,
+                                canThrow: false
+                            )
+                        )
+                    }
+
+                    let resumeLabelExpr = module.arena.appendExpr(
+                        .temporary(Int32(module.arena.expressions.count)),
+                        type: intType
+                    )
                     lowered.append(.constValue(result: resumeLabelExpr, value: .intLiteral(nextResumeLabel)))
 
                     lowered.append(
@@ -356,7 +488,10 @@ final class CoroutineLoweringPass: LoweringPass {
                         )
                     )
 
-                    let suspensionResult = result ?? module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
+                    let suspensionResult = result ?? module.arena.appendExpr(
+                        .temporary(Int32(module.arena.expressions.count)),
+                        type: continuationType
+                    )
                     lowered.append(
                         .call(
                             symbol: symbol,
@@ -367,7 +502,10 @@ final class CoroutineLoweringPass: LoweringPass {
                         )
                     )
 
-                    let suspendedExpr = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
+                    let suspendedExpr = module.arena.appendExpr(
+                        .temporary(Int32(module.arena.expressions.count)),
+                        type: continuationType
+                    )
                     lowered.append(
                         .call(
                             symbol: nil,
@@ -378,12 +516,24 @@ final class CoroutineLoweringPass: LoweringPass {
                         )
                     )
                     lowered.append(.returnIfEqual(lhs: suspensionResult, rhs: suspendedExpr))
+                    lowered.append(
+                        .call(
+                            symbol: nil,
+                            callee: setCompletionCallee,
+                            arguments: [continuationExpr, suspensionResult],
+                            result: nil,
+                            canThrow: false
+                        )
+                    )
                     continue
                 }
 
                 switch instruction {
                 case .returnValue(let value):
-                    let exitValueExpr = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
+                    let exitValueExpr = module.arena.appendExpr(
+                        .temporary(Int32(module.arena.expressions.count)),
+                        type: continuationType
+                    )
                     lowered.append(
                         .call(
                             symbol: nil,
@@ -396,8 +546,11 @@ final class CoroutineLoweringPass: LoweringPass {
                     lowered.append(.returnValue(exitValueExpr))
 
                 case .returnUnit:
-                    let unitExpr = module.arena.appendExpr(.unit)
-                    let exitValueExpr = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
+                    let unitExpr = module.arena.appendExpr(.unit, type: unitType)
+                    let exitValueExpr = module.arena.appendExpr(
+                        .temporary(Int32(module.arena.expressions.count)),
+                        type: continuationType
+                    )
                     lowered.append(
                         .call(
                             symbol: nil,
@@ -422,14 +575,29 @@ final class CoroutineLoweringPass: LoweringPass {
         Int32(1000 + resumeLabel)
     }
 
+    private struct IndexedInstruction {
+        let sourceIndex: Int
+        let instruction: KIRInstruction
+    }
+
     private struct SuspendStateBlock {
         let resumeLabel: Int64
-        let instructions: [KIRInstruction]
+        let instructions: [IndexedInstruction]
+    }
+
+    private struct SuspendTransition {
+        let sourceInstructionIndex: Int
+        let callResultExpr: KIRExprID?
+    }
+
+    private struct SpillPlan {
+        let slotByExpr: [KIRExprID: Int64]
+        let exprsByTransitionSource: [Int: [KIRExprID]]
     }
 
     private struct CFGBlock {
         let id: Int
-        let instructions: [KIRInstruction]
+        let instructions: [IndexedInstruction]
         let successors: [Int]
     }
 
@@ -451,13 +619,13 @@ final class CoroutineLoweringPass: LoweringPass {
 
         for blockID in reachableOrder {
             let cfgBlock = cfgBlocks[blockID]
-            var chunk: [KIRInstruction] = []
+            var chunk: [IndexedInstruction] = []
             chunk.reserveCapacity(cfgBlock.instructions.count)
 
-            for instruction in cfgBlock.instructions {
-                chunk.append(instruction)
+            for indexed in cfgBlock.instructions {
+                chunk.append(indexed)
 
-                guard case .call(let symbol, let callee, _, _, _) = instruction else {
+                guard case .call(let symbol, let callee, _, _, _) = indexed.instruction else {
                     continue
                 }
                 guard isSuspendCall(
@@ -562,8 +730,10 @@ final class CoroutineLoweringPass: LoweringPass {
         blocks.reserveCapacity(ranges.count)
 
         for (blockID, range) in ranges.enumerated() {
-            let blockInstructions = Array(instructions[range.start..<range.end])
-            let terminator = blockInstructions.last
+            let blockInstructions = (range.start..<range.end).map { index in
+                IndexedInstruction(sourceIndex: index, instruction: instructions[index])
+            }
+            let terminator = blockInstructions.last?.instruction
 
             var successors: [Int] = []
             switch terminator {
@@ -608,6 +778,192 @@ final class CoroutineLoweringPass: LoweringPass {
         return blocks
     }
 
+    private func buildSpillPlan(
+        transitionSourceIndexes: Set<Int>,
+        liveOutByInstruction: [Int: Set<KIRExprID>],
+        transitionsByResumeLabel: [Int64: SuspendTransition]
+    ) -> SpillPlan {
+        var transitionSourceToExprs: [Int: Set<KIRExprID>] = [:]
+        var allSpilledExprs: Set<KIRExprID> = []
+        let resultExprs = Set(transitionsByResumeLabel.values.compactMap(\.callResultExpr))
+
+        for sourceIndex in transitionSourceIndexes {
+            var spillExprs = liveOutByInstruction[sourceIndex] ?? []
+            spillExprs.subtract(resultExprs)
+            transitionSourceToExprs[sourceIndex] = spillExprs
+            allSpilledExprs.formUnion(spillExprs)
+        }
+
+        let sortedSpilledExprs = allSpilledExprs.sorted { lhs, rhs in
+            lhs.rawValue < rhs.rawValue
+        }
+        var slotByExpr: [KIRExprID: Int64] = [:]
+        slotByExpr.reserveCapacity(sortedSpilledExprs.count)
+        for (slot, expr) in sortedSpilledExprs.enumerated() {
+            slotByExpr[expr] = Int64(slot)
+        }
+
+        var exprsByTransitionSource: [Int: [KIRExprID]] = [:]
+        exprsByTransitionSource.reserveCapacity(transitionSourceToExprs.count)
+        for (sourceIndex, exprs) in transitionSourceToExprs {
+            exprsByTransitionSource[sourceIndex] = exprs.sorted { lhs, rhs in
+                lhs.rawValue < rhs.rawValue
+            }
+        }
+
+        return SpillPlan(
+            slotByExpr: slotByExpr,
+            exprsByTransitionSource: exprsByTransitionSource
+        )
+    }
+
+    private func computeLiveOutByInstruction(_ instructions: [KIRInstruction]) -> [Int: Set<KIRExprID>] {
+        guard !instructions.isEmpty else {
+            return [:]
+        }
+
+        var labelToInstructionIndex: [Int32: Int] = [:]
+        for (index, instruction) in instructions.enumerated() {
+            if case .label(let labelID) = instruction {
+                labelToInstructionIndex[labelID] = index
+            }
+        }
+
+        var successorsByInstruction: [Int: [Int]] = [:]
+        var useByInstruction: [Int: Set<KIRExprID>] = [:]
+        var defByInstruction: [Int: Set<KIRExprID>] = [:]
+
+        for (index, instruction) in instructions.enumerated() {
+            let successors = instructionSuccessors(
+                at: index,
+                instruction: instruction,
+                totalInstructions: instructions.count,
+                labelToInstructionIndex: labelToInstructionIndex
+            )
+            successorsByInstruction[index] = successors
+            useByInstruction[index] = usedExprIDs(in: instruction)
+            defByInstruction[index] = definedExprIDs(in: instruction)
+        }
+
+        var liveIn: [Int: Set<KIRExprID>] = [:]
+        var liveOut: [Int: Set<KIRExprID>] = [:]
+        for index in instructions.indices {
+            liveIn[index] = []
+            liveOut[index] = []
+        }
+
+        var changed = true
+        while changed {
+            changed = false
+            for index in instructions.indices.reversed() {
+                let oldLiveIn = liveIn[index] ?? []
+                let oldLiveOut = liveOut[index] ?? []
+                let successors = successorsByInstruction[index] ?? []
+
+                var newLiveOut: Set<KIRExprID> = []
+                for successor in successors {
+                    newLiveOut.formUnion(liveIn[successor] ?? [])
+                }
+
+                let uses = useByInstruction[index] ?? []
+                let defs = defByInstruction[index] ?? []
+                let newLiveIn = uses.union(newLiveOut.subtracting(defs))
+
+                if newLiveIn != oldLiveIn || newLiveOut != oldLiveOut {
+                    liveIn[index] = newLiveIn
+                    liveOut[index] = newLiveOut
+                    changed = true
+                }
+            }
+        }
+
+        return liveOut
+    }
+
+    private func instructionSuccessors(
+        at index: Int,
+        instruction: KIRInstruction,
+        totalInstructions: Int,
+        labelToInstructionIndex: [Int32: Int]
+    ) -> [Int] {
+        let fallthroughSuccessors = index + 1 < totalInstructions ? [index + 1] : []
+        switch instruction {
+        case .jump(let target):
+            guard let targetIndex = labelToInstructionIndex[target] else {
+                return []
+            }
+            return [targetIndex]
+
+        case .jumpIfEqual(_, _, let target):
+            var successors = fallthroughSuccessors
+            if let targetIndex = labelToInstructionIndex[target],
+               !successors.contains(targetIndex) {
+                successors.append(targetIndex)
+            }
+            return successors
+
+        case .returnUnit, .returnValue:
+            return []
+
+        case .returnIfEqual:
+            return fallthroughSuccessors
+
+        default:
+            return fallthroughSuccessors
+        }
+    }
+
+    private func usedExprIDs(in instruction: KIRInstruction) -> Set<KIRExprID> {
+        switch instruction {
+        case .jumpIfEqual(let lhs, let rhs, _):
+            return Set([lhs, rhs])
+        case .binary(_, let lhs, let rhs, _):
+            return Set([lhs, rhs])
+        case .select(let condition, let thenValue, let elseValue, _):
+            return Set([condition, thenValue, elseValue])
+        case .call(_, _, let arguments, _, _):
+            return Set(arguments)
+        case .returnIfEqual(let lhs, let rhs):
+            return Set([lhs, rhs])
+        case .returnValue(let value):
+            return Set([value])
+        default:
+            return []
+        }
+    }
+
+    private func definedExprIDs(in instruction: KIRInstruction) -> Set<KIRExprID> {
+        switch instruction {
+        case .constValue(let result, _):
+            return Set([result])
+        case .binary(_, _, _, let result):
+            return Set([result])
+        case .select(_, _, _, let result):
+            return Set([result])
+        case .call(_, _, _, let result, _):
+            if let result {
+                return Set([result])
+            }
+            return []
+        default:
+            return []
+        }
+    }
+
+    private func appendIntLiteralExpr(
+        _ value: Int64,
+        intType: TypeID?,
+        module: KIRModule,
+        lowered: inout [KIRInstruction]
+    ) -> KIRExprID {
+        let expr = module.arena.appendExpr(
+            .temporary(Int32(module.arena.expressions.count)),
+            type: intType
+        )
+        lowered.append(.constValue(result: expr, value: .intLiteral(value)))
+        return expr
+    }
+
     private func reachableBlockOrder(cfgBlocks: [CFGBlock]) -> [Int] {
         guard !cfgBlocks.isEmpty else {
             return []
@@ -641,4 +997,3 @@ final class CoroutineLoweringPass: LoweringPass {
         return suspendFunctionNames.contains(callee)
     }
 }
-

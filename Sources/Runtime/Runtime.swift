@@ -53,6 +53,20 @@ private final class RuntimeThrowableBox {
     }
 }
 
+private final class RuntimeContinuationState {
+    var functionID: Int64
+    var label: Int64
+    var completion: Int64
+    var spillSlots: [Int64: Int64]
+
+    init(functionID: Int64, label: Int64 = 0, completion: Int64 = 0, spillSlots: [Int64: Int64] = [:]) {
+        self.functionID = functionID
+        self.label = label
+        self.completion = completion
+        self.spillSlots = spillSlots
+    }
+}
+
 private struct HeapObjectRecord {
     let pointer: UnsafeMutableRawPointer
     let byteCount: Int
@@ -280,6 +294,91 @@ public func kk_coroutine_suspended() -> UnsafeMutableRawPointer {
     RuntimeStorage.objectPointers.insert(UInt(bitPattern: ptr))
     RuntimeStorage.lock.unlock()
     return ptr
+}
+
+@_cdecl("kk_coroutine_continuation_new")
+public func kk_coroutine_continuation_new(_ functionID: Int) -> Int {
+    let state = RuntimeContinuationState(functionID: Int64(functionID))
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(state).toOpaque())
+    RuntimeStorage.lock.lock()
+    RuntimeStorage.objectPointers.insert(UInt(bitPattern: ptr))
+    RuntimeStorage.lock.unlock()
+    return Int(bitPattern: ptr)
+}
+
+@_cdecl("kk_coroutine_state_enter")
+public func kk_coroutine_state_enter(_ continuation: Int, _ functionID: Int) -> Int {
+    guard let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) else {
+        return 0
+    }
+    let state = Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
+    let functionIDValue = Int64(functionID)
+    if state.functionID != functionIDValue {
+        state.functionID = functionIDValue
+        state.label = 0
+        state.completion = 0
+        state.spillSlots.removeAll(keepingCapacity: false)
+    }
+    return Int(state.label)
+}
+
+@_cdecl("kk_coroutine_state_set_label")
+public func kk_coroutine_state_set_label(_ continuation: Int, _ label: Int) -> Int {
+    guard let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) else {
+        return label
+    }
+    let state = Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
+    state.label = Int64(label)
+    return label
+}
+
+@_cdecl("kk_coroutine_state_exit")
+public func kk_coroutine_state_exit(_ continuation: Int, _ value: Int) -> Int {
+    if let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) {
+        RuntimeStorage.lock.lock()
+        RuntimeStorage.objectPointers.remove(UInt(bitPattern: continuationPtr))
+        RuntimeStorage.lock.unlock()
+        Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).release()
+    }
+    return value
+}
+
+@_cdecl("kk_coroutine_state_set_spill")
+public func kk_coroutine_state_set_spill(_ continuation: Int, _ slot: Int, _ value: Int) -> Int {
+    guard let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) else {
+        return value
+    }
+    let state = Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
+    state.spillSlots[Int64(slot)] = Int64(value)
+    return value
+}
+
+@_cdecl("kk_coroutine_state_get_spill")
+public func kk_coroutine_state_get_spill(_ continuation: Int, _ slot: Int) -> Int {
+    guard let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) else {
+        return 0
+    }
+    let state = Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
+    return Int(state.spillSlots[Int64(slot)] ?? 0)
+}
+
+@_cdecl("kk_coroutine_state_set_completion")
+public func kk_coroutine_state_set_completion(_ continuation: Int, _ value: Int) -> Int {
+    guard let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) else {
+        return value
+    }
+    let state = Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
+    state.completion = Int64(value)
+    return value
+}
+
+@_cdecl("kk_coroutine_state_get_completion")
+public func kk_coroutine_state_get_completion(_ continuation: Int) -> Int {
+    guard let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) else {
+        return 0
+    }
+    let state = Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
+    return Int(state.completion)
 }
 
 private func performMarkAndSweepLocked() {
