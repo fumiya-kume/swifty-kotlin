@@ -375,7 +375,7 @@ public final class KotlinParser {
             }
         }
 
-        if stream.index == startCount {
+        if stream.index == startCount, !shouldStopStatementBefore(stream.peek(), inBlock: inBlock) {
             _ = consumeToken(into: &children, range: &range)
         }
 
@@ -425,7 +425,7 @@ public final class KotlinParser {
                 break
             }
         }
-        if !progress {
+        if !progress, !shouldStopStatementBefore(stream.peek(), inBlock: inBlock) {
             _ = consumeToken(into: &children, range: &range)
         }
     }
@@ -444,6 +444,9 @@ public final class KotlinParser {
             if case .symbol(let symbol) = token.kind, symbol == closing && depth == 1 {
                 _ = consumeToken(into: &children, range: &range)
                 return arena.makeNode(kind: .statement, range: range.value ?? invalidRange, children)
+            }
+            if depth == 1 && hasLeadingNewline(token) && isLikelyTopLevelDeclarationStart(token) {
+                break
             }
 
             _ = consumeToken(into: &children, range: &range)
@@ -621,6 +624,11 @@ public final class KotlinParser {
         }
 
         while !stream.atEOF() && depth > 0 {
+            let next = stream.peek()
+            if depth == 1 && hasLeadingNewline(next) && isLikelyTopLevelDeclarationStart(next) {
+                break
+            }
+
             let token = consumeToken(into: &children, range: &range)
             if token.kind == .eof {
                 break
@@ -655,7 +663,7 @@ public final class KotlinParser {
         guard token != nil else { return false }
         guard case .symbol(.lessThan) = stream.peek().kind else { return false }
 
-        var depth = 0
+        var depth = 1
         var projectionExpected = true
         var sawProjection = false
 
@@ -663,14 +671,10 @@ public final class KotlinParser {
             let token = stream.peek(lookahead)
             switch token.kind {
             case .eof:
-                return false
+                return depth == 1 && sawProjection && !projectionExpected
             case .symbol(.lessThan):
                 depth += 1
             case .symbol(.greaterThan):
-                if depth == 0 {
-                    if projectionExpected { return false }
-                    return followsTypeArgs(stream.peek(lookahead + 1))
-                }
                 depth -= 1
                 if depth == 0 {
                     if projectionExpected { return false }
@@ -682,27 +686,27 @@ public final class KotlinParser {
                     projectionExpected = true
                 }
             case .identifier, .backtickedIdentifier:
-                if depth >= 1 {
+                if depth == 1 {
                     sawProjection = true
                     projectionExpected = false
                 } else { return false }
             case .symbol(.star):
-                if depth >= 1 {
+                if depth == 1 {
                     sawProjection = true
                     projectionExpected = false
                 } else { return false }
             case .keyword(.in), .softKeyword(.out):
-                if depth >= 1 && projectionExpected {
+                if depth == 1 && projectionExpected {
                     break
                 }
-                if depth >= 1 {
+                if depth == 1 {
                     projectionExpected = true
-                } else {
+                } else if depth < 1 {
                     return false
                 }
             case .symbol(.dot), .symbol(.question), .symbol(.questionDot),
                  .symbol(.doubleColon), .symbol(.colon):
-                if depth >= 1 && projectionExpected {
+                if depth == 1 && projectionExpected {
                     return false
                 }
             default:
@@ -722,6 +726,8 @@ public final class KotlinParser {
              .symbol(.lBrace), .symbol(.rParen), .symbol(.rBrace), .symbol(.question),
              .symbol(.assign):
             return true
+        case .identifier, .backtickedIdentifier, .keyword, .softKeyword:
+            return true
         case .eof:
             return true
         default:
@@ -740,6 +746,16 @@ public final class KotlinParser {
             return false
         }
         return canStartTypeArgumentsInternal(after: lastConsumedToken)
+    }
+
+    private func isLikelyTopLevelDeclarationStart(_ token: Token) -> Bool {
+        if isDeclarationStart(token.kind) {
+            return true
+        }
+        if case .keyword(let keyword) = token.kind {
+            return isDeclarationModifierKeyword(keyword) || keyword == .companion
+        }
+        return false
     }
 
     private var invalidRange: SourceRange {
