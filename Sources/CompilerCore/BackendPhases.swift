@@ -2284,6 +2284,13 @@ private final class CoroutineLoweringPass: LoweringImpl {
                 sema: ctx.sema,
                 interner: ctx.interner
             )
+            let loweredBody = lowerSuspendBodyToStateMachineSkeleton(
+                originalBody: suspendFunction.body,
+                continuationParameterSymbol: continuationParameterSymbol,
+                loweredSymbol: loweredSymbol,
+                module: module,
+                interner: ctx.interner
+            )
             let loweredFunction = KIRFunction(
                 symbol: loweredSymbol,
                 name: loweredName,
@@ -2291,7 +2298,7 @@ private final class CoroutineLoweringPass: LoweringImpl {
                     KIRParameter(symbol: continuationParameterSymbol, type: continuationType)
                 ],
                 returnType: continuationType,
-                body: suspendFunction.body,
+                body: loweredBody,
                 isSuspend: false,
                 isInline: false
             )
@@ -2482,6 +2489,73 @@ private final class CoroutineLoweringPass: LoweringImpl {
             for: loweredSymbol
         )
     }
+
+    private func lowerSuspendBodyToStateMachineSkeleton(
+        originalBody: [KIRInstruction],
+        continuationParameterSymbol: SymbolID,
+        loweredSymbol: SymbolID,
+        module: KIRModule,
+        interner: StringInterner
+    ) -> [KIRInstruction] {
+        let enterCallee = interner.intern("kk_coroutine_state_enter")
+        let exitCallee = interner.intern("kk_coroutine_state_exit")
+
+        var lowered: [KIRInstruction] = []
+        lowered.reserveCapacity(originalBody.count + 4)
+
+        let continuationExpr = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
+        lowered.append(.constValue(result: continuationExpr, value: .symbolRef(continuationParameterSymbol)))
+
+        let functionIDExpr = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
+        lowered.append(.constValue(result: functionIDExpr, value: .intLiteral(Int64(loweredSymbol.rawValue))))
+
+        let resumeLabelExpr = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
+        lowered.append(
+            .call(
+                symbol: nil,
+                callee: enterCallee,
+                arguments: [continuationExpr, functionIDExpr],
+                result: resumeLabelExpr,
+                outThrown: false
+            )
+        )
+
+        for instruction in originalBody {
+            switch instruction {
+            case .returnValue(let value):
+                let exitValueExpr = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
+                lowered.append(
+                    .call(
+                        symbol: nil,
+                        callee: exitCallee,
+                        arguments: [continuationExpr, value],
+                        result: exitValueExpr,
+                        outThrown: false
+                    )
+                )
+                lowered.append(.returnValue(exitValueExpr))
+
+            case .returnUnit:
+                let unitExpr = module.arena.appendExpr(.unit)
+                let exitValueExpr = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)))
+                lowered.append(
+                    .call(
+                        symbol: nil,
+                        callee: exitCallee,
+                        arguments: [continuationExpr, unitExpr],
+                        result: exitValueExpr,
+                        outThrown: false
+                    )
+                )
+                lowered.append(.returnValue(exitValueExpr))
+
+            default:
+                lowered.append(instruction)
+            }
+        }
+
+        return lowered
+    }
 }
 
 private final class ABILoweringPass: LoweringImpl {
@@ -2499,7 +2573,9 @@ private final class ABILoweringPass: LoweringImpl {
             ctx.interner.intern("iterator"),
             ctx.interner.intern("kk_property_access"),
             ctx.interner.intern("kk_lambda_invoke"),
-            ctx.interner.intern("kk_coroutine_suspended")
+            ctx.interner.intern("kk_coroutine_suspended"),
+            ctx.interner.intern("kk_coroutine_state_enter"),
+            ctx.interner.intern("kk_coroutine_state_exit")
         ]
         module.arena.transformFunctions { function in
             var updated = function
