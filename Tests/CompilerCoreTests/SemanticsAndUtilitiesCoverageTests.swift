@@ -65,9 +65,11 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
 
     func testDataFlowMergeAndWhenExhaustivenessAcrossKinds() {
         let analyzer = DataFlowAnalyzer()
+        let interner = StringInterner()
+        let symbols = SymbolTable()
         let types = TypeSystem()
         let sema = SemaModule(
-            symbols: SymbolTable(),
+            symbols: symbols,
             types: types,
             bindings: BindingTable(),
             diagnostics: DiagnosticEngine()
@@ -123,6 +125,107 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
         XCTAssertFalse(analyzer.isWhenExhaustive(
             subjectType: classType,
             branches: WhenBranchSummary(coveredSymbols: [], hasElse: false),
+            sema: sema
+        ))
+
+        let enumSymbol = symbols.define(
+            kind: .enumClass,
+            name: interner.intern("Color"),
+            fqName: [interner.intern("Color")],
+            declSite: nil,
+            visibility: .public
+        )
+        let red = interner.intern("Red")
+        let green = interner.intern("Green")
+        _ = symbols.define(
+            kind: .field,
+            name: red,
+            fqName: [interner.intern("Color"), red],
+            declSite: nil,
+            visibility: .public
+        )
+        _ = symbols.define(
+            kind: .field,
+            name: green,
+            fqName: [interner.intern("Color"), green],
+            declSite: nil,
+            visibility: .public
+        )
+        let enumType = types.make(.classType(ClassType(
+            classSymbol: enumSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        XCTAssertTrue(analyzer.isWhenExhaustive(
+            subjectType: enumType,
+            branches: WhenBranchSummary(coveredSymbols: [red, green], hasElse: false),
+            sema: sema
+        ))
+        XCTAssertFalse(analyzer.isWhenExhaustive(
+            subjectType: enumType,
+            branches: WhenBranchSummary(coveredSymbols: [red], hasElse: false),
+            sema: sema
+        ))
+
+        let nullableEnumType = types.make(.classType(ClassType(
+            classSymbol: enumSymbol,
+            args: [],
+            nullability: .nullable
+        )))
+        XCTAssertFalse(analyzer.isWhenExhaustive(
+            subjectType: nullableEnumType,
+            branches: WhenBranchSummary(coveredSymbols: [red, green], hasElse: false, hasNullCase: false),
+            sema: sema
+        ))
+        XCTAssertTrue(analyzer.isWhenExhaustive(
+            subjectType: nullableEnumType,
+            branches: WhenBranchSummary(coveredSymbols: [red, green], hasElse: false, hasNullCase: true),
+            sema: sema
+        ))
+
+        let sealedBase = symbols.define(
+            kind: .class,
+            name: interner.intern("Expr"),
+            fqName: [interner.intern("Expr")],
+            declSite: nil,
+            visibility: .public,
+            flags: [.sealedType]
+        )
+        let sealedA = symbols.define(
+            kind: .object,
+            name: interner.intern("A"),
+            fqName: [interner.intern("A")],
+            declSite: nil,
+            visibility: .public
+        )
+        let sealedB = symbols.define(
+            kind: .object,
+            name: interner.intern("B"),
+            fqName: [interner.intern("B")],
+            declSite: nil,
+            visibility: .public
+        )
+        symbols.setDirectSupertypes([sealedBase], for: sealedA)
+        symbols.setDirectSupertypes([sealedBase], for: sealedB)
+        let sealedType = types.make(.classType(ClassType(
+            classSymbol: sealedBase,
+            args: [],
+            nullability: .nonNull
+        )))
+        XCTAssertTrue(analyzer.isWhenExhaustive(
+            subjectType: sealedType,
+            branches: WhenBranchSummary(
+                coveredSymbols: [interner.intern("A"), interner.intern("B")],
+                hasElse: false
+            ),
+            sema: sema
+        ))
+        XCTAssertFalse(analyzer.isWhenExhaustive(
+            subjectType: sealedType,
+            branches: WhenBranchSummary(
+                coveredSymbols: [interner.intern("A")],
+                hasElse: false
+            ),
             sema: sema
         ))
 

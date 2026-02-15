@@ -39,12 +39,12 @@ func withTemporaryFile(
     try body(fileURL.path)
 }
 
-func makeSemaContext() -> (ctx: SemaContext, symbols: SymbolTable, types: TypeSystem, interner: StringInterner) {
+func makeSemaModule() -> (ctx: SemaModule, symbols: SymbolTable, types: TypeSystem, interner: StringInterner) {
     let symbols = SymbolTable()
     let types = TypeSystem()
     let bindings = BindingTable()
     let diagnostics = DiagnosticEngine()
-    let ctx = SemaContext(
+    let ctx = SemaModule(
         symbols: symbols,
         types: types,
         bindings: bindings,

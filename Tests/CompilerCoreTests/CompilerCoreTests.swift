@@ -80,7 +80,7 @@ final class CompilerCoreTests: XCTestCase {
         let hasDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
             diag.code == "KSWIFTK-SEMA-0004"
         })
-        XCTAssertTrue(hasDiagnostic)
+        XCTAssertTrue(hasDiagnostic, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
     }
 
     func testWhenExhaustivenessAcceptsNullableBooleanWithNullBranch() throws {
@@ -105,6 +105,155 @@ final class CompilerCoreTests: XCTestCase {
             diag.code == "KSWIFTK-SEMA-0004"
         })
         XCTAssertFalse(hasDiagnostic)
+    }
+
+    func testWhenExhaustivenessAcceptsEnumWithAllEntries() throws {
+        let source = """
+        enum class Color { Red, Green }
+        fun pick(color: Color) = when (color) {
+            Red -> 1
+            Green -> 2
+        }
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0004"
+        })
+        XCTAssertFalse(hasDiagnostic)
+    }
+
+    func testWhenExhaustivenessAcceptsSealedWithAllDirectSubtypes() throws {
+        let source = """
+        sealed class Expr
+        object A : Expr()
+        object B : Expr()
+        fun eval(e: Expr): Int {
+            when (e) {
+                A -> 1
+                B -> 2
+            }
+        }
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0004"
+        })
+        XCTAssertFalse(hasDiagnostic)
+    }
+
+    func testWhenExhaustivenessDiagnosticForSealedMissingSubtype() throws {
+        let source = """
+        sealed class Expr
+        object A : Expr()
+        object B : Expr()
+        fun eval(e: Expr): Int {
+            when (e) {
+                A -> 1
+            }
+        }
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0004"
+        })
+        XCTAssertTrue(hasDiagnostic)
+    }
+
+    func testWhenNullBranchSmartCastsLocalToNonNullInOtherBranches() throws {
+        let source = """
+        fun takesInt(x: Int) = x
+        fun smart(x: Int?): Int {
+            when (x) {
+                null -> 0
+                else -> takesInt(x)
+            }
+        }
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasNoViableDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0002"
+        })
+        XCTAssertFalse(hasNoViableDiagnostic)
+    }
+
+    func testWhenBranchSmartCastsSealedSubjectToMatchedSubtype() throws {
+        let source = """
+        sealed class Expr
+        object A : Expr()
+        object B : Expr()
+        fun takesA(x: A) = 1
+        fun eval(e: Expr): Int {
+            when (e) {
+                A -> takesA(e)
+                B -> 0
+            }
+        }
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasNoViableDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0002"
+        })
+        XCTAssertFalse(hasNoViableDiagnostic, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
+    }
+
+    func testWhenBooleanBranchSmartCastsNullableBooleanToNonNull() throws {
+        let source = """
+        fun takesBool(x: Boolean) = x
+        fun eval(b: Boolean?) {
+            when (b) {
+                true -> takesBool(b)
+                false -> takesBool(b)
+                null -> false
+            }
+        }
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasNoViableDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0002"
+        })
+        XCTAssertFalse(hasNoViableDiagnostic, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
     }
 
     func testTypeCheckReportsReturnTypeMismatchForExpressionBody() throws {
@@ -221,6 +370,25 @@ final class CompilerCoreTests: XCTestCase {
         }
     }
 
+    func testSemaResolvesUnqualifiedExtensionCallWithImplicitReceiver() throws {
+        let source = """
+        fun String.ext() = 1
+        fun String.wrap() = ext()
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasNoViableDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0002"
+        })
+        XCTAssertFalse(hasNoViableDiagnostic)
+    }
+
     func testGenericIdentityFunctionIsInferredAtCallSite() throws {
         let source = """
         fun <T> id(x: T): T = x
@@ -239,6 +407,95 @@ final class CompilerCoreTests: XCTestCase {
             diag.code == "KSWIFTK-SEMA-0002"
         })
         XCTAssertFalse(hasNoViableDiagnostic)
+    }
+
+    func testSemaResolvesTopLevelFunctionAcrossFilesInSamePackage() throws {
+        let sources = [
+            """
+            package demo
+            fun helper(x: Int) = x
+            """,
+            """
+            package demo
+            fun use() = helper(1)
+            """
+        ]
+        let ctx = try makeContext(sources: sources)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasNoViableDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0002"
+        })
+        XCTAssertFalse(hasNoViableDiagnostic)
+    }
+
+    func testSemaResolvesExplicitImportAcrossPackages() throws {
+        let sources = [
+            """
+            package lib
+            fun helper(x: Int) = x
+            """,
+            """
+            package app
+            import lib.helper
+            fun use() = helper(1)
+            """
+        ]
+        let ctx = try makeContext(sources: sources)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasNoViableDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0002"
+        })
+        XCTAssertFalse(hasNoViableDiagnostic)
+    }
+
+    func testExplicitImportWinsOverDefaultImportForSameName() throws {
+        let sources = [
+            """
+            package kotlin.io
+            fun pick(x: Int) = "default"
+            """,
+            """
+            package custom.io
+            fun pick(x: Int) = 2
+            """,
+            """
+            package app
+            import custom.io.pick
+            fun use() = pick(1)
+            """
+        ]
+        let ctx = try makeContext(sources: sources)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let useSymbol = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
+            symbol.kind == .function && ctx.interner.resolve(symbol.name) == "use"
+        })?.id)
+        let useSignature = try XCTUnwrap(sema.symbols.functionSignature(for: useSymbol))
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+        XCTAssertEqual(useSignature.returnType, intType)
+
+        let hasAmbiguousDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0003"
+        })
+        XCTAssertFalse(hasAmbiguousDiagnostic)
     }
 
     func testEmitObjectProducesMachOFile() throws {
@@ -293,6 +550,33 @@ final class CompilerCoreTests: XCTestCase {
             moduleName: "TestModule",
             inputs: [tempURL.path],
             outputPath: tempURL.deletingPathExtension().appendingPathExtension("out").path,
+            emit: .kirDump,
+            target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+        )
+        return CompilationContext(
+            options: options,
+            sourceManager: SourceManager(),
+            diagnostics: DiagnosticEngine(),
+            interner: StringInterner()
+        )
+    }
+
+    private func makeContext(sources: [String]) throws -> CompilationContext {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        addTeardownBlock {
+            try? FileManager.default.removeItem(at: tempDir)
+        }
+
+        let inputPaths = try sources.enumerated().map { index, source in
+            let fileURL = tempDir.appendingPathComponent("input\(index).kt")
+            try source.write(to: fileURL, atomically: true, encoding: .utf8)
+            return fileURL.path
+        }
+        let options = CompilerOptions(
+            moduleName: "TestModule",
+            inputs: inputPaths,
+            outputPath: tempDir.appendingPathComponent("out.kir").path,
             emit: .kirDump,
             target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
         )

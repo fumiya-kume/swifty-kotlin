@@ -3,7 +3,7 @@ import XCTest
 
 final class OverloadResolverTests: XCTestCase {
     func testResolveCallReturnsNoViableDiagnosticAfterAllCandidateFilters() {
-        let setup = makeSemaContext()
+        let setup = makeSemaModule()
         let resolver = OverloadResolver()
         let types = setup.types
         let symbols = setup.symbols
@@ -90,7 +90,7 @@ final class OverloadResolverTests: XCTestCase {
     }
 
     func testResolveCallReturnsAmbiguousDiagnosticForMultipleViableCandidates() {
-        let setup = makeSemaContext()
+        let setup = makeSemaModule()
         let resolver = OverloadResolver()
         let types = setup.types
         let symbols = setup.symbols
@@ -139,7 +139,7 @@ final class OverloadResolverTests: XCTestCase {
     }
 
     func testResolveCallReturnsChosenCandidateAndIdentityMapping() {
-        let setup = makeSemaContext()
+        let setup = makeSemaModule()
         let resolver = OverloadResolver()
         let types = setup.types
         let symbols = setup.symbols
@@ -180,7 +180,7 @@ final class OverloadResolverTests: XCTestCase {
     }
 
     func testResolveCallPrefersMostSpecificCandidate() {
-        let setup = makeSemaContext()
+        let setup = makeSemaModule()
         let resolver = OverloadResolver()
         let types = setup.types
         let symbols = setup.symbols
@@ -231,7 +231,7 @@ final class OverloadResolverTests: XCTestCase {
     }
 
     func testResolveCallInfersGenericTypeArgumentFromParameter() {
-        let setup = makeSemaContext()
+        let setup = makeSemaModule()
         let resolver = OverloadResolver()
         let types = setup.types
         let symbols = setup.symbols
@@ -282,7 +282,7 @@ final class OverloadResolverTests: XCTestCase {
     }
 
     func testResolveCallSkipsExtensionCandidateWithoutReceiver() {
-        let setup = makeSemaContext()
+        let setup = makeSemaModule()
         let resolver = OverloadResolver()
         let types = setup.types
         let symbols = setup.symbols
@@ -323,8 +323,51 @@ final class OverloadResolverTests: XCTestCase {
         XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-SEMA-0002")
     }
 
+    func testResolveCallAcceptsExtensionCandidateWithImplicitReceiver() {
+        let setup = makeSemaModule()
+        let resolver = OverloadResolver()
+        let types = setup.types
+        let symbols = setup.symbols
+        let interner = setup.interner
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let stringType = types.make(.primitive(.string, .nonNull))
+
+        let ext = defineSymbol(
+            kind: .function,
+            name: "ext",
+            suffix: "extension_with_receiver",
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: stringType,
+                parameterTypes: [],
+                returnType: intType
+            ),
+            for: ext
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 68, end: 72),
+            calleeName: interner.intern("ext"),
+            args: []
+        )
+        let resolved = resolver.resolveCall(
+            candidates: [ext],
+            call: call,
+            expectedType: nil,
+            implicitReceiverType: stringType,
+            ctx: setup.ctx
+        )
+
+        XCTAssertEqual(resolved.chosenCallee, ext)
+        XCTAssertNil(resolved.diagnostic)
+    }
+
     func testResolveCallAllowsOmittedDefaultArguments() {
-        let setup = makeSemaContext()
+        let setup = makeSemaModule()
         let resolver = OverloadResolver()
         let types = setup.types
         let symbols = setup.symbols
@@ -380,7 +423,7 @@ final class OverloadResolverTests: XCTestCase {
     }
 
     func testResolveCallSupportsNamedArgumentsAndParameterMapping() {
-        let setup = makeSemaContext()
+        let setup = makeSemaModule()
         let resolver = OverloadResolver()
         let types = setup.types
         let symbols = setup.symbols
@@ -439,7 +482,7 @@ final class OverloadResolverTests: XCTestCase {
     }
 
     func testResolveCallSupportsTrailingVarargMapping() {
-        let setup = makeSemaContext()
+        let setup = makeSemaModule()
         let resolver = OverloadResolver()
         let types = setup.types
         let symbols = setup.symbols
