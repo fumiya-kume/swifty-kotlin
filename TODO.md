@@ -97,7 +97,7 @@
   - [x] compiler/runtime の panic 経路を診断コード方針に沿って整理
 - [ ] P3-2: 型システムの仕様追従（spec.md J8/J9）
   - [x] class/interface 継承関係を `TypeSystem.isSubtype` に反映
-  - [ ] declaration-site variance と use-site variance 合成規則を強化
+  - [x] declaration-site variance と use-site variance 合成規則を強化
   - [ ] generic constraints の失敗診断精度を改善
 - [ ] P3-3: KIR の型付き IR 化強化（spec.md J11/J12）
   - [ ] `if/for/try` など制御構造の KIR 表現を marker 依存から段階的に脱却
@@ -118,5 +118,5 @@
 
 - [ ] P3-2: 型システムの仕様追従
   - [x] P3-2a: class/interface 継承関係を `TypeSystem.isSubtype` に反映
-  - [ ] P3-2b: variance 合成規則（declaration-site + use-site）を強化
+  - [x] P3-2b: variance 合成規則（declaration-site + use-site）を強化
   - [ ] P3-2c: generic constraints 失敗診断を改善
