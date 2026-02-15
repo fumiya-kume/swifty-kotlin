@@ -111,6 +111,7 @@ public final class BuildKIRPhase: CompilerPhase {
             instructions.append(.constValue(result: temp, value: .unit))
             return temp
         }
+        let stringType = sema.types.make(.primitive(.string, .nonNull))
 
         switch expr {
         case .intLiteral(let value, _):
@@ -182,6 +183,18 @@ public final class BuildKIRPhase: CompilerPhase {
             let lhsID = lowerExpr(lhs, ast: ast, sema: sema, arena: arena, interner: interner, instructions: &instructions)
             let rhsID = lowerExpr(rhs, ast: ast, sema: sema, arena: arena, interner: interner, instructions: &instructions)
             let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)))
+            if case .add = op, sema.bindings.exprTypes[exprID] == stringType {
+                instructions.append(
+                    .call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_concat"),
+                        arguments: [lhsID, rhsID],
+                        result: result,
+                        outThrown: false
+                    )
+                )
+                return result
+            }
             let kirOp: KIRBinaryOp
             switch op {
             case .add:
