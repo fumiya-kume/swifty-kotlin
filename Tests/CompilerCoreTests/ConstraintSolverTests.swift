@@ -6,8 +6,9 @@ final class ConstraintSolverTests: XCTestCase {
         let solver = ConstraintSolver()
         let types = TypeSystem()
         let vars = [TypeVarID(rawValue: 1), TypeVarID(rawValue: 2)]
+        let constraints: [Constraint] = []
 
-        let solution = solver.solve(vars: vars, constraints: [], typeSystem: types)
+        let solution = solver.solve(vars: vars, constraints: constraints, typeSystem: types)
 
         XCTAssertTrue(solution.isSuccess)
         XCTAssertNil(solution.failure)
@@ -57,5 +58,46 @@ final class ConstraintSolverTests: XCTestCase {
         XCTAssertEqual(solution.failure?.severity, .error)
         XCTAssertEqual(solution.failure?.code, "KSWIFTK-TYPE-0001")
         XCTAssertEqual(solution.failure?.primaryRange, blameRange)
+    }
+
+    func testSolveVariableConstraintsBindsTypeVariablesFromEqualityAndBounds() {
+        let solver = ConstraintSolver()
+        let types = TypeSystem()
+        let intType = types.make(.primitive(.int, .nonNull))
+        let anyType = types.anyType
+        let t0 = TypeVarID(rawValue: 10)
+        let t1 = TypeVarID(rawValue: 11)
+
+        let constraints: [VariableConstraint] = [
+            VariableConstraint(kind: .equal, left: .variable(t0), right: .type(intType)),
+            VariableConstraint(kind: .supertype, left: .variable(t1), right: .type(intType)),
+            VariableConstraint(kind: .subtype, left: .variable(t1), right: .type(anyType))
+        ]
+        let solution = solver.solve(vars: [t0, t1], constraints: constraints, typeSystem: types)
+
+        XCTAssertTrue(solution.isSuccess)
+        XCTAssertNil(solution.failure)
+        XCTAssertEqual(solution.substitution[t0], intType)
+        XCTAssertEqual(solution.substitution[t1], intType)
+    }
+
+    func testSolveVariableConstraintsFailsOnConflictingBounds() {
+        let solver = ConstraintSolver()
+        let types = TypeSystem()
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let t0 = TypeVarID(rawValue: 12)
+        let blame = makeRange(start: 9, end: 12)
+
+        let constraints: [VariableConstraint] = [
+            VariableConstraint(kind: .supertype, left: .variable(t0), right: .type(intType), blameRange: blame),
+            VariableConstraint(kind: .subtype, left: .variable(t0), right: .type(boolType), blameRange: blame)
+        ]
+        let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
+
+        XCTAssertFalse(solution.isSuccess)
+        XCTAssertEqual(solution.failure?.code, "KSWIFTK-TYPE-0001")
+        XCTAssertEqual(solution.failure?.primaryRange, blame)
+        XCTAssertEqual(solution.substitution[t0], types.errorType)
     }
 }

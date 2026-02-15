@@ -138,6 +138,26 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
             branches: WhenBranchSummary(coveredSymbols: [], hasElse: false),
             sema: sema
         ))
+
+        let nullableBool = types.make(.primitive(.boolean, .nullable))
+        XCTAssertFalse(analyzer.isWhenExhaustive(
+            subjectType: nullableBool,
+            branches: WhenBranchSummary(
+                coveredSymbols: [InternedString(rawValue: 1), InternedString(rawValue: 2)],
+                hasElse: false,
+                hasNullCase: false
+            ),
+            sema: sema
+        ))
+        XCTAssertTrue(analyzer.isWhenExhaustive(
+            subjectType: nullableBool,
+            branches: WhenBranchSummary(
+                coveredSymbols: [InternedString(rawValue: 1), InternedString(rawValue: 2)],
+                hasElse: false,
+                hasNullCase: true
+            ),
+            sema: sema
+        ))
     }
 
     func testTypeSystemSubtypeLUBAndGLBCoversVarianceAndIntersections() {
@@ -395,6 +415,31 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
         XCTAssertEqual(bindings.identifierSymbols[expr], fn)
         XCTAssertEqual(bindings.callBindings[expr]?.chosenCallee, fn)
         XCTAssertEqual(bindings.declSymbols[decl], fn)
+    }
+
+    func testSymbolTableSupportsOverloadedFunctionsWithSameFQName() {
+        let interner = StringInterner()
+        let symbols = SymbolTable()
+        let fqName = [interner.intern("pkg"), interner.intern("run")]
+
+        let first = symbols.define(
+            kind: .function,
+            name: interner.intern("run"),
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public
+        )
+        let second = symbols.define(
+            kind: .function,
+            name: interner.intern("run"),
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public
+        )
+
+        XCTAssertNotEqual(first, second)
+        XCTAssertEqual(symbols.lookupAll(fqName: fqName), [first, second])
+        XCTAssertEqual(symbols.lookup(fqName: fqName), first)
     }
 }
 

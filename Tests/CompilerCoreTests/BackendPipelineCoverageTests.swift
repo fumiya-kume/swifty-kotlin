@@ -357,6 +357,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             crossinline mapper: T,
             noinline fallback: T = mapper
         ): String? = "ok"
+        fun String.decorate(): String = this
 
         fun typed(a: Int, b: String?, c: Any): Int = 1
         fun duplicate(x: Int, x: Int): Int = x
@@ -382,6 +383,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
 
             var sawTypedParameter = false
             var sawFunctionReturnType = false
+            var sawFunctionReceiverType = false
             var sawExplicitPropertyType = false
             var sawDelegatedPropertyWithoutType = false
 
@@ -390,6 +392,9 @@ final class BackendPipelineCoverageTests: XCTestCase {
                 case .funDecl(let fn):
                     if fn.returnType != nil {
                         sawFunctionReturnType = true
+                    }
+                    if fn.receiverType != nil {
+                        sawFunctionReceiverType = true
                     }
                     if fn.valueParams.contains(where: { $0.type != nil }) {
                         sawTypedParameter = true
@@ -410,12 +415,21 @@ final class BackendPipelineCoverageTests: XCTestCase {
 
             XCTAssertTrue(sawTypedParameter)
             XCTAssertTrue(sawFunctionReturnType)
+            XCTAssertTrue(sawFunctionReceiverType)
             XCTAssertTrue(sawExplicitPropertyType)
             XCTAssertTrue(sawDelegatedPropertyWithoutType)
 
             let sema = try XCTUnwrap(ctx.sema)
             XCTAssertFalse(sema.symbols.allSymbols().isEmpty)
             XCTAssertFalse(sema.bindings.exprTypes.isEmpty)
+            let decorateSymbol = sema.symbols.allSymbols().first(where: { symbol in
+                ctx.interner.resolve(symbol.name) == "decorate"
+            })
+            XCTAssertNotNil(decorateSymbol)
+            if let decorateSymbol {
+                let signature = sema.symbols.functionSignature(for: decorateSymbol.id)
+                XCTAssertNotNil(signature?.receiverType)
+            }
 
             let codes = Set(ctx.diagnostics.diagnostics.map(\.code))
             XCTAssertTrue(codes.contains("KSWIFTK-TYPE-0002"))

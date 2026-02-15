@@ -199,7 +199,7 @@ final class LexerParserCoverageTests: XCTestCase {
             interner: interner,
             diagnostics: diagnostics
         )
-        XCTAssertFalse(parserA.canStartTypeArguments(after: anchor))
+        XCTAssertTrue(parserA.canStartTypeArguments(after: anchor))
 
         let parserB = KotlinParser(
             tokens: [
@@ -217,7 +217,7 @@ final class LexerParserCoverageTests: XCTestCase {
             interner: interner,
             diagnostics: diagnostics
         )
-        XCTAssertFalse(parserB.canStartTypeArguments(after: anchor))
+        XCTAssertTrue(parserB.canStartTypeArguments(after: anchor))
 
         let parserB2 = KotlinParser(
             tokens: [
@@ -236,7 +236,7 @@ final class LexerParserCoverageTests: XCTestCase {
             interner: interner,
             diagnostics: diagnostics
         )
-        XCTAssertTrue(parserB2.canStartTypeArguments(after: anchor))
+        XCTAssertFalse(parserB2.canStartTypeArguments(after: anchor))
 
         let parserC = KotlinParser(
             tokens: [
@@ -266,9 +266,9 @@ final class LexerParserCoverageTests: XCTestCase {
             tokens: [
                 makeToken(kind: .keyword(.fun)),
                 makeToken(kind: .symbol(.lessThan)),
-                makeToken(kind: .symbol(.lessThan)),
                 makeToken(kind: .identifier(interner.intern("T"))),
                 makeToken(kind: .symbol(.greaterThan)),
+                makeToken(kind: .identifier(interner.intern("id"))),
                 makeToken(kind: .symbol(.lParen)),
                 makeToken(kind: .identifier(interner.intern("x"))),
                 makeToken(kind: .symbol(.colon)),
@@ -397,9 +397,8 @@ final class LexerParserCoverageTests: XCTestCase {
         let typeArgTokens: [Token] = [
             makeToken(kind: .keyword(.fun)),
             makeToken(kind: .symbol(.lessThan)),
-            makeToken(kind: .symbol(.lessThan)),
             makeToken(kind: .identifier(interner.intern("T"))),
-            makeToken(kind: .symbol(.greaterThan)),
+            makeToken(kind: .identifier(interner.intern("broken"))),
             makeToken(kind: .symbol(.lParen)),
             makeToken(kind: .identifier(interner.intern("x"))),
             makeToken(kind: .symbol(.colon)),
@@ -456,6 +455,30 @@ final class LexerParserCoverageTests: XCTestCase {
             XCTAssertEqual(ast.files.count, 1)
             XCTAssertGreaterThanOrEqual(ast.declarationCount, 6)
             XCTAssertFalse(ctx.diagnostics.hasError)
+        }
+    }
+
+    func testParserKeepsFollowingDeclarationAfterBrokenFunctionHeader() throws {
+        let source = """
+        fun ()
+        fun good(): Int = 1
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runFrontend(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let declarations = ast.arena.declarations()
+            XCTAssertGreaterThanOrEqual(declarations.count, 2)
+
+            let names: [String] = declarations.compactMap { decl in
+                guard case .funDecl(let funDecl) = decl else {
+                    return nil
+                }
+                return ctx.interner.resolve(funDecl.name)
+            }
+            XCTAssertTrue(names.contains("good"))
         }
     }
 

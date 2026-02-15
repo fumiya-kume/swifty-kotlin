@@ -60,6 +60,53 @@ final class CompilerCoreTests: XCTestCase {
         XCTAssertTrue(hasDiagnostic)
     }
 
+    func testWhenExhaustivenessDiagnosticForNullableBooleanWithoutNullBranch() throws {
+        let source = """
+        fun test(x: Boolean?) {
+            when (x) {
+                true -> 1
+                false -> 0
+            }
+        }
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0004"
+        })
+        XCTAssertTrue(hasDiagnostic)
+    }
+
+    func testWhenExhaustivenessAcceptsNullableBooleanWithNullBranch() throws {
+        let source = """
+        fun test(x: Boolean?) {
+            when (x) {
+                true -> 1
+                false -> 0
+                null -> 2
+            }
+        }
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0004"
+        })
+        XCTAssertFalse(hasDiagnostic)
+    }
+
     func testTypeCheckReportsReturnTypeMismatchForExpressionBody() throws {
         let source = """
         fun bad(): Int = "x"
@@ -95,6 +142,103 @@ final class CompilerCoreTests: XCTestCase {
             diag.code == "KSWIFTK-SEMA-0002"
         })
         XCTAssertTrue(hasNoViableDiagnostic)
+    }
+
+    func testSemaAllowsOverloadedTopLevelFunctionsWithoutDuplicateDiagnostic() throws {
+        let source = """
+        fun pick(x: Int) = x
+        fun pick(x: String) = x
+        fun use() = pick(1)
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasDuplicateDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0001"
+        })
+        XCTAssertFalse(hasDuplicateDiagnostic)
+
+        let hasNoViableDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0002"
+        })
+        XCTAssertFalse(hasNoViableDiagnostic)
+    }
+
+    func testInferredExpressionBodyReturnTypeCanFlowIntoTypedCall() throws {
+        let source = """
+        fun foo() = 1
+        fun takesInt(a: Int) = a
+        fun bar() = takesInt(foo())
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasNoViableDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0002"
+        })
+        XCTAssertFalse(hasNoViableDiagnostic)
+    }
+
+    func testBuildASTParsesExtensionFunctionReceiverType() throws {
+        let source = """
+        fun String.echo(): String = this
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let firstFile = try XCTUnwrap(ast.files.first)
+        let firstDeclID = try XCTUnwrap(firstFile.topLevelDecls.first)
+        let decl = try XCTUnwrap(ast.arena.decl(firstDeclID))
+        guard case .funDecl(let funDecl) = decl else {
+            XCTFail("Expected function declaration")
+            return
+        }
+
+        XCTAssertNotEqual(funDecl.name.rawValue, invalidID)
+        let receiverTypeID = try XCTUnwrap(funDecl.receiverType)
+        let receiverType = try XCTUnwrap(ast.arena.typeRef(receiverTypeID))
+        if case .named(let path, let nullable) = receiverType {
+            XCTAssertFalse(nullable)
+            XCTAssertEqual(path.count, 1)
+            XCTAssertEqual(ctx.interner.resolve(path[0]), "String")
+        } else {
+            XCTFail("Expected named receiver type")
+        }
+    }
+
+    func testGenericIdentityFunctionIsInferredAtCallSite() throws {
+        let source = """
+        fun <T> id(x: T): T = x
+        fun takesInt(a: Int) = a
+        fun main() = takesInt(id(1))
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasNoViableDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0002"
+        })
+        XCTAssertFalse(hasNoViableDiagnostic)
     }
 
     func testEmitObjectProducesMachOFile() throws {

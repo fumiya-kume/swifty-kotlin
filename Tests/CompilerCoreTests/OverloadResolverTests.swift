@@ -179,6 +179,321 @@ final class OverloadResolverTests: XCTestCase {
         XCTAssertEqual(resolved.substitutedTypeArguments, [:])
     }
 
+    func testResolveCallPrefersMostSpecificCandidate() {
+        let setup = makeSemaContext()
+        let resolver = OverloadResolver()
+        let types = setup.types
+        let symbols = setup.symbols
+        let interner = setup.interner
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let anyType = types.anyType
+
+        let genericLike = defineSymbol(
+            kind: .function,
+            name: "foo",
+            suffix: "any",
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(parameterTypes: [anyType], returnType: anyType),
+            for: genericLike
+        )
+
+        let intSpecific = defineSymbol(
+            kind: .function,
+            name: "foo",
+            suffix: "int",
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(parameterTypes: [intType], returnType: intType),
+            for: intSpecific
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 50, end: 55),
+            calleeName: interner.intern("foo"),
+            args: [CallArg(type: intType)]
+        )
+
+        let resolved = resolver.resolveCall(
+            candidates: [genericLike, intSpecific],
+            call: call,
+            expectedType: nil,
+            ctx: setup.ctx
+        )
+
+        XCTAssertEqual(resolved.chosenCallee, intSpecific)
+        XCTAssertNil(resolved.diagnostic)
+    }
+
+    func testResolveCallInfersGenericTypeArgumentFromParameter() {
+        let setup = makeSemaContext()
+        let resolver = OverloadResolver()
+        let types = setup.types
+        let symbols = setup.symbols
+        let interner = setup.interner
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let typeParamSymbol = defineSymbol(
+            kind: .typeParameter,
+            name: "T",
+            suffix: "typeParam",
+            symbols: symbols,
+            interner: interner
+        )
+        let typeParamType = types.make(.typeParam(TypeParamType(symbol: typeParamSymbol, nullability: .nonNull)))
+
+        let generic = defineSymbol(
+            kind: .function,
+            name: "id",
+            suffix: "generic",
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [typeParamType],
+                returnType: typeParamType,
+                typeParameterSymbols: [typeParamSymbol]
+            ),
+            for: generic
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 60, end: 63),
+            calleeName: interner.intern("id"),
+            args: [CallArg(type: intType)]
+        )
+        let resolved = resolver.resolveCall(
+            candidates: [generic],
+            call: call,
+            expectedType: intType,
+            ctx: setup.ctx
+        )
+
+        XCTAssertEqual(resolved.chosenCallee, generic)
+        XCTAssertNil(resolved.diagnostic)
+        XCTAssertEqual(resolved.substitutedTypeArguments.count, 1)
+        XCTAssertEqual(resolved.substitutedTypeArguments[TypeVarID(rawValue: 0)], intType)
+    }
+
+    func testResolveCallSkipsExtensionCandidateWithoutReceiver() {
+        let setup = makeSemaContext()
+        let resolver = OverloadResolver()
+        let types = setup.types
+        let symbols = setup.symbols
+        let interner = setup.interner
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let stringType = types.make(.primitive(.string, .nonNull))
+
+        let ext = defineSymbol(
+            kind: .function,
+            name: "ext",
+            suffix: "extension",
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: stringType,
+                parameterTypes: [],
+                returnType: intType
+            ),
+            for: ext
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 64, end: 68),
+            calleeName: interner.intern("ext"),
+            args: []
+        )
+        let resolved = resolver.resolveCall(
+            candidates: [ext],
+            call: call,
+            expectedType: nil,
+            ctx: setup.ctx
+        )
+
+        XCTAssertNil(resolved.chosenCallee)
+        XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-SEMA-0002")
+    }
+
+    func testResolveCallAllowsOmittedDefaultArguments() {
+        let setup = makeSemaContext()
+        let resolver = OverloadResolver()
+        let types = setup.types
+        let symbols = setup.symbols
+        let interner = setup.interner
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let fn = defineSymbol(
+            kind: .function,
+            name: "withDefault",
+            suffix: "withDefault",
+            symbols: symbols,
+            interner: interner
+        )
+        let paramA = defineSymbol(
+            kind: .valueParameter,
+            name: "a",
+            suffix: "withDefault_a",
+            symbols: symbols,
+            interner: interner
+        )
+        let paramB = defineSymbol(
+            kind: .valueParameter,
+            name: "b",
+            suffix: "withDefault_b",
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType, intType],
+                returnType: intType,
+                valueParameterSymbols: [paramA, paramB],
+                valueParameterHasDefaultValues: [false, true]
+            ),
+            for: fn
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 70, end: 81),
+            calleeName: interner.intern("withDefault"),
+            args: [CallArg(type: intType)]
+        )
+        let resolved = resolver.resolveCall(
+            candidates: [fn],
+            call: call,
+            expectedType: nil,
+            ctx: setup.ctx
+        )
+
+        XCTAssertEqual(resolved.chosenCallee, fn)
+        XCTAssertNil(resolved.diagnostic)
+        XCTAssertEqual(resolved.parameterMapping, [0: 0])
+    }
+
+    func testResolveCallSupportsNamedArgumentsAndParameterMapping() {
+        let setup = makeSemaContext()
+        let resolver = OverloadResolver()
+        let types = setup.types
+        let symbols = setup.symbols
+        let interner = setup.interner
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let fn = defineSymbol(
+            kind: .function,
+            name: "named",
+            suffix: "named",
+            symbols: symbols,
+            interner: interner
+        )
+        let paramX = defineSymbol(
+            kind: .valueParameter,
+            name: "x",
+            suffix: "named_x",
+            symbols: symbols,
+            interner: interner
+        )
+        let paramFlag = defineSymbol(
+            kind: .valueParameter,
+            name: "flag",
+            suffix: "named_flag",
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType, boolType],
+                returnType: boolType,
+                valueParameterSymbols: [paramX, paramFlag]
+            ),
+            for: fn
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 82, end: 99),
+            calleeName: interner.intern("named"),
+            args: [
+                CallArg(label: interner.intern("flag"), type: boolType),
+                CallArg(label: interner.intern("x"), type: intType)
+            ]
+        )
+        let resolved = resolver.resolveCall(
+            candidates: [fn],
+            call: call,
+            expectedType: nil,
+            ctx: setup.ctx
+        )
+
+        XCTAssertEqual(resolved.chosenCallee, fn)
+        XCTAssertNil(resolved.diagnostic)
+        XCTAssertEqual(resolved.parameterMapping, [0: 1, 1: 0])
+    }
+
+    func testResolveCallSupportsTrailingVarargMapping() {
+        let setup = makeSemaContext()
+        let resolver = OverloadResolver()
+        let types = setup.types
+        let symbols = setup.symbols
+        let interner = setup.interner
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let fn = defineSymbol(
+            kind: .function,
+            name: "varargFn",
+            suffix: "varargFn",
+            symbols: symbols,
+            interner: interner
+        )
+        let paramHead = defineSymbol(
+            kind: .valueParameter,
+            name: "head",
+            suffix: "vararg_head",
+            symbols: symbols,
+            interner: interner
+        )
+        let paramTail = defineSymbol(
+            kind: .valueParameter,
+            name: "tail",
+            suffix: "vararg_tail",
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType, intType],
+                returnType: intType,
+                valueParameterSymbols: [paramHead, paramTail],
+                valueParameterIsVararg: [false, true]
+            ),
+            for: fn
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 100, end: 119),
+            calleeName: interner.intern("varargFn"),
+            args: [CallArg(type: intType), CallArg(type: intType), CallArg(type: intType)]
+        )
+        let resolved = resolver.resolveCall(
+            candidates: [fn],
+            call: call,
+            expectedType: nil,
+            ctx: setup.ctx
+        )
+
+        XCTAssertEqual(resolved.chosenCallee, fn)
+        XCTAssertNil(resolved.diagnostic)
+        XCTAssertEqual(resolved.parameterMapping, [0: 0, 1: 1, 2: 1])
+    }
+
     private func defineSymbol(
         kind: SymbolKind,
         name: String,
