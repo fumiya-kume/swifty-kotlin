@@ -69,6 +69,11 @@ final class ASTModelsTests: XCTestCase {
         XCTAssertNil(arena.decl(DeclID(rawValue: -1)))
         XCTAssertNil(arena.decl(DeclID(rawValue: 999)))
         XCTAssertEqual(arena.declarations().count, 2)
+
+        let typeRefID = arena.appendTypeRef(.named(path: [interner.intern("Int")], nullable: false))
+        XCTAssertEqual(typeRefID.rawValue, 0)
+        XCTAssertNotNil(arena.typeRef(typeRefID))
+        XCTAssertNil(arena.typeRef(TypeRefID(rawValue: 999)))
     }
 
     func testModelStructsAndModuleInitializers() {

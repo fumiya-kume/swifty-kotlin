@@ -42,7 +42,8 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
                     types: types,
                     bindings: bindings,
                     scope: fileScope,
-                    diagnostics: ctx.diagnostics
+                    diagnostics: ctx.diagnostics,
+                    interner: ctx.interner
                 )
             }
         }
@@ -56,7 +57,8 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
                     symbols: symbols,
                     types: types,
                     bindings: bindings,
-                    diagnostics: ctx.diagnostics
+                    diagnostics: ctx.diagnostics,
+                    interner: ctx.interner
                 )
             }
         }
@@ -87,7 +89,8 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
         types: TypeSystem,
         bindings: BindingTable,
         scope: Scope,
-        diagnostics: DiagnosticEngine
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner
     ) {
         guard let decl = ast.arena.decl(declID) else { return }
         let package = file.packageFQName
@@ -186,15 +189,32 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
                     visibility: .private,
                     flags: []
                 )
-                paramTypes.append(anyType)
+                let resolvedType = resolveTypeRef(
+                    valueParam.type,
+                    ast: ast,
+                    symbols: symbols,
+                    types: types,
+                    interner: interner
+                ) ?? anyType
+                paramTypes.append(resolvedType)
                 paramSymbols.append(paramSymbol)
             }
             let returnType: TypeID
-            switch funDecl.body {
-            case .unit:
-                returnType = unitType
-            case .block, .expr:
-                returnType = anyType
+            if let explicit = resolveTypeRef(
+                funDecl.returnType,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                interner: interner
+            ) {
+                returnType = explicit
+            } else {
+                switch funDecl.body {
+                case .unit:
+                    returnType = unitType
+                case .block, .expr:
+                    returnType = anyType
+                }
             }
             symbols.setFunctionSignature(
                 FunctionSignature(
@@ -206,12 +226,65 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
                 for: symbol
             )
 
-        case .propertyDecl:
-            _ = types.make(.any(.nullable))
+        case .propertyDecl(let propertyDecl):
+            let type = resolveTypeRef(
+                propertyDecl.type,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                interner: interner
+            ) ?? types.make(.any(.nullable))
+            _ = type
 
         case .typeAliasDecl, .enumEntry:
             break
         }
+    }
+
+    private func resolveTypeRef(
+        _ typeRefID: TypeRefID?,
+        ast: ASTModule,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID? {
+        guard let typeRefID, let typeRef = ast.arena.typeRef(typeRefID) else {
+            return nil
+        }
+
+        let nullability: Nullability
+        let path: [InternedString]
+        switch typeRef {
+        case .named(let refPath, let nullable):
+            path = refPath
+            nullability = nullable ? .nullable : .nonNull
+        }
+
+        guard let shortName = path.last else {
+            return nil
+        }
+
+        switch interner.resolve(shortName) {
+        case "Int":
+            return types.make(.primitive(.int, nullability))
+        case "Boolean":
+            return types.make(.primitive(.boolean, nullability))
+        case "String":
+            return types.make(.primitive(.string, nullability))
+        case "Any":
+            return nullability == .nullable ? types.nullableAnyType : types.anyType
+        case "Unit":
+            return nullability == .nullable ? types.nullableAnyType : types.unitType
+        case "Nothing":
+            return types.nothingType
+        default:
+            break
+        }
+
+        if let symbol = symbols.lookup(fqName: path) {
+            return types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: nullability)))
+        }
+        return nullability == .nullable ? types.nullableAnyType : types.anyType
     }
 
     private func analyzeBody(
@@ -220,7 +293,8 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
         symbols: SymbolTable,
         types: TypeSystem,
         bindings: BindingTable,
-        diagnostics: DiagnosticEngine
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner
     ) {
         guard let decl = ast.arena.decl(declID) else { return }
         switch decl {
@@ -245,11 +319,18 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
                 bindings.bindExprType(expr, type: signature.returnType)
             }
 
-        case .propertyDecl:
+        case .propertyDecl(let propertyDecl):
             if let symbol = bindings.declSymbols[declID] {
                 let expr = ExprID(rawValue: declID.rawValue)
                 bindings.bindIdentifier(expr, symbol: symbol)
-                bindings.bindExprType(expr, type: types.anyType)
+                let boundType = resolveTypeRef(
+                    propertyDecl.type,
+                    ast: ast,
+                    symbols: symbols,
+                    types: types,
+                    interner: interner
+                ) ?? types.anyType
+                bindings.bindExprType(expr, type: boundType)
             }
 
         case .classDecl, .objectDecl, .typeAliasDecl, .enumEntry:

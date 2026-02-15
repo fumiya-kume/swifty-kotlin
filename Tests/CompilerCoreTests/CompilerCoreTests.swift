@@ -60,6 +60,43 @@ final class CompilerCoreTests: XCTestCase {
         XCTAssertTrue(hasDiagnostic)
     }
 
+    func testTypeCheckReportsReturnTypeMismatchForExpressionBody() throws {
+        let source = """
+        fun bad(): Int = "x"
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasTypeError = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-TYPE-0001"
+        })
+        XCTAssertTrue(hasTypeError)
+    }
+
+    func testOverloadRejectsBooleanArgumentForIntParameter() throws {
+        let source = """
+        fun foo(a: Int) = a
+        fun bar() = foo(true)
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasNoViableDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0002"
+        })
+        XCTAssertTrue(hasNoViableDiagnostic)
+    }
+
     func testEmitObjectProducesMachOFile() throws {
         let source = "fun main() {}"
         let tempSource = try writeTempSource(source)

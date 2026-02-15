@@ -52,3 +52,44 @@ func makeSemaContext() -> (ctx: SemaContext, symbols: SymbolTable, types: TypeSy
     )
     return (ctx, symbols, types, StringInterner())
 }
+
+func defaultTargetTriple() -> TargetTriple {
+    TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+}
+
+func makeCompilationContext(
+    inputs: [String],
+    moduleName: String = "TestModule",
+    emit: EmitMode = .kirDump,
+    outputPath: String? = nil
+) -> CompilationContext {
+    let destination = outputPath ?? FileManager.default.temporaryDirectory
+        .appendingPathComponent(UUID().uuidString)
+        .path
+    let options = CompilerOptions(
+        moduleName: moduleName,
+        inputs: inputs,
+        outputPath: destination,
+        emit: emit,
+        target: defaultTargetTriple()
+    )
+    return CompilationContext(
+        options: options,
+        sourceManager: SourceManager(),
+        diagnostics: DiagnosticEngine(),
+        interner: StringInterner()
+    )
+}
+
+func runFrontend(_ ctx: CompilationContext) throws {
+    try LoadSourcesPhase().run(ctx)
+    try LexPhase().run(ctx)
+    try ParsePhase().run(ctx)
+    try BuildASTPhase().run(ctx)
+}
+
+func runToKIR(_ ctx: CompilationContext) throws {
+    try runFrontend(ctx)
+    try SemaPassesPhase().run(ctx)
+    try BuildKIRPhase().run(ctx)
+}

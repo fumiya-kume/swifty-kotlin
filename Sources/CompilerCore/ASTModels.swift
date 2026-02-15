@@ -162,6 +162,10 @@ public struct ValueParamDecl {
     public let type: TypeRefID?
 }
 
+public enum TypeRef: Equatable {
+    case named(path: [InternedString], nullable: Bool)
+}
+
 public enum BinaryOp: Equatable {
     case add
     case subtract
@@ -195,6 +199,7 @@ public enum Expr: Equatable {
 public final class ASTArena {
     public private(set) var decls: [Decl] = []
     public private(set) var exprs: [Expr] = []
+    public private(set) var typeRefs: [TypeRef] = []
 
     public init() {}
 
@@ -244,6 +249,20 @@ public final class ASTArena {
              .whenExpr(_, _, _, let range):
             return range
         }
+    }
+
+    public func appendTypeRef(_ typeRef: TypeRef) -> TypeRefID {
+        let id = TypeRefID(rawValue: Int32(typeRefs.count))
+        typeRefs.append(typeRef)
+        return id
+    }
+
+    public func typeRef(_ id: TypeRefID) -> TypeRef? {
+        let index = Int(id.rawValue)
+        if index < 0 || index >= typeRefs.count {
+            return nil
+        }
+        return typeRefs[index]
     }
 }
 

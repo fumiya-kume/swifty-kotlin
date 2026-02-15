@@ -1,0 +1,442 @@
+import Foundation
+import XCTest
+@testable import CompilerCore
+
+final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
+    func testNameManglerEncodesAllKindsAndProducesStableHashSuffix() {
+        let interner = StringInterner()
+        let mangler = NameMangler()
+        let kinds: [SymbolKind] = [
+            .function,
+            .class,
+            .property,
+            .constructor,
+            .object,
+            .typeAlias,
+            .interface,
+            .enumClass,
+            .annotationClass,
+            .package,
+            .field,
+            .typeParameter,
+            .valueParameter,
+            .local,
+            .label
+        ]
+
+        var mangledByKind: [String: String] = [:]
+        for (index, kind) in kinds.enumerated() {
+            let name = interner.intern("sym_\(index)")
+            let fq = [interner.intern("pkg"), interner.intern("name\(index)")]
+            let symbol = SemanticSymbol(
+                id: SymbolID(rawValue: Int32(index)),
+                kind: kind,
+                name: name,
+                fqName: fq,
+                declSite: nil,
+                visibility: .public,
+                flags: []
+            )
+            let mangled = mangler.mangle(moduleName: "ModuleX", symbol: symbol, signature: "sig\(index)")
+            mangledByKind[String(describing: kind)] = mangled
+            XCTAssertTrue(mangled.hasPrefix("_KK_ModuleX__"))
+            XCTAssertTrue(mangled.contains("__sig\(index)__"))
+
+            let suffix = String(mangled.suffix(8))
+            XCTAssertEqual(suffix.count, 8)
+            XCTAssertTrue(suffix.allSatisfy { $0.isHexDigit })
+        }
+
+        XCTAssertEqual(mangledByKind.count, kinds.count)
+        XCTAssertEqual(mangledByKind[String(describing: SymbolKind.function)], mangler.mangle(
+            moduleName: "ModuleX",
+            symbol: SemanticSymbol(
+                id: SymbolID(rawValue: 0),
+                kind: .function,
+                name: interner.intern("sym_0"),
+                fqName: [interner.intern("pkg"), interner.intern("name0")],
+                declSite: nil,
+                visibility: .public,
+                flags: []
+            ),
+            signature: "sig0"
+        ))
+    }
+
+    func testDataFlowMergeAndWhenExhaustivenessAcrossKinds() {
+        let analyzer = DataFlowAnalyzer()
+        let types = TypeSystem()
+        let sema = SemaModule(
+            symbols: SymbolTable(),
+            types: types,
+            bindings: BindingTable(),
+            diagnostics: DiagnosticEngine()
+        )
+
+        let sym = SymbolID(rawValue: 1)
+        let lhs = DataFlowState(variables: [
+            sym: VariableFlowState(
+                possibleTypes: [types.anyType],
+                nullability: .nonNull,
+                isStable: true
+            )
+        ])
+        let rhsType = types.make(.primitive(.int, .nullable))
+        let rhs = DataFlowState(variables: [
+            sym: VariableFlowState(
+                possibleTypes: [rhsType],
+                nullability: .nullable,
+                isStable: false
+            ),
+            SymbolID(rawValue: 2): VariableFlowState(
+                possibleTypes: [types.unitType],
+                nullability: .nonNull,
+                isStable: true
+            )
+        ])
+
+        let merged = analyzer.merge(lhs, rhs)
+        XCTAssertEqual(merged.variables.count, 2)
+        XCTAssertTrue(merged.variables[sym]?.possibleTypes.contains(types.anyType) == true)
+        XCTAssertTrue(merged.variables[sym]?.possibleTypes.contains(rhsType) == true)
+        XCTAssertEqual(merged.variables[sym]?.nullability, .nullable)
+        XCTAssertEqual(merged.variables[sym]?.isStable, false)
+
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        XCTAssertTrue(analyzer.isWhenExhaustive(
+            subjectType: boolType,
+            branches: WhenBranchSummary(coveredSymbols: [InternedString(rawValue: 1), InternedString(rawValue: 2)], hasElse: false),
+            sema: sema
+        ))
+        XCTAssertFalse(analyzer.isWhenExhaustive(
+            subjectType: boolType,
+            branches: WhenBranchSummary(coveredSymbols: [InternedString(rawValue: 1)], hasElse: false),
+            sema: sema
+        ))
+        XCTAssertTrue(analyzer.isWhenExhaustive(
+            subjectType: boolType,
+            branches: WhenBranchSummary(coveredSymbols: [], hasElse: true),
+            sema: sema
+        ))
+
+        let classType = types.make(.classType(ClassType(classSymbol: SymbolID(rawValue: 9))))
+        XCTAssertFalse(analyzer.isWhenExhaustive(
+            subjectType: classType,
+            branches: WhenBranchSummary(coveredSymbols: [], hasElse: false),
+            sema: sema
+        ))
+
+        XCTAssertFalse(analyzer.isWhenExhaustive(
+            subjectType: types.nullableAnyType,
+            branches: WhenBranchSummary(coveredSymbols: [], hasElse: false),
+            sema: sema
+        ))
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        XCTAssertFalse(analyzer.isWhenExhaustive(
+            subjectType: intType,
+            branches: WhenBranchSummary(coveredSymbols: [], hasElse: false),
+            sema: sema
+        ))
+    }
+
+    func testTypeSystemSubtypeLUBAndGLBCoversVarianceAndIntersections() {
+        let types = TypeSystem()
+
+        let intNN = types.make(.primitive(.int, .nonNull))
+        let intNullable = types.make(.primitive(.int, .nullable))
+        let boolNN = types.make(.primitive(.boolean, .nonNull))
+
+        XCTAssertTrue(types.isSubtype(intNN, intNN))
+        XCTAssertTrue(types.isSubtype(types.nothingType, intNN))
+        XCTAssertTrue(types.isSubtype(types.errorType, intNN))
+        XCTAssertTrue(types.isSubtype(intNN, types.errorType))
+        XCTAssertTrue(types.isSubtype(intNullable, types.nullableAnyType))
+        XCTAssertTrue(types.isSubtype(intNN, types.anyType))
+        XCTAssertFalse(types.isSubtype(intNullable, types.anyType))
+        XCTAssertTrue(types.isSubtype(intNN, intNullable))
+        XCTAssertFalse(types.isSubtype(intNullable, intNN))
+
+        let classSym = SymbolID(rawValue: 100)
+        let classAOutInt = types.make(.classType(ClassType(
+            classSymbol: classSym,
+            args: [.out(intNN)],
+            nullability: .nonNull
+        )))
+        let classAOutAny = types.make(.classType(ClassType(
+            classSymbol: classSym,
+            args: [.out(types.anyType)],
+            nullability: .nonNull
+        )))
+        XCTAssertTrue(types.isSubtype(classAOutInt, classAOutAny))
+
+        let classAInInt = types.make(.classType(ClassType(
+            classSymbol: classSym,
+            args: [.in(intNN)],
+            nullability: .nonNull
+        )))
+        let classAInAny = types.make(.classType(ClassType(
+            classSymbol: classSym,
+            args: [.in(types.anyType)],
+            nullability: .nonNull
+        )))
+        XCTAssertTrue(types.isSubtype(classAInAny, classAInInt))
+        XCTAssertFalse(types.isSubtype(classAInInt, classAInAny))
+
+        let classInvariantInt = types.make(.classType(ClassType(
+            classSymbol: classSym,
+            args: [.invariant(intNN)],
+            nullability: .nonNull
+        )))
+        let classInvariantBool = types.make(.classType(ClassType(
+            classSymbol: classSym,
+            args: [.invariant(boolNN)],
+            nullability: .nonNull
+        )))
+        XCTAssertFalse(types.isSubtype(classInvariantInt, classInvariantBool))
+
+        let classOtherSymbol = types.make(.classType(ClassType(
+            classSymbol: SymbolID(rawValue: 101),
+            args: [.star],
+            nullability: .nonNull
+        )))
+        XCTAssertFalse(types.isSubtype(classInvariantInt, classOtherSymbol))
+
+        let classStarLHS = types.make(.classType(ClassType(
+            classSymbol: classSym,
+            args: [.star],
+            nullability: .nonNull
+        )))
+        let classStarRHS = types.make(.classType(ClassType(
+            classSymbol: classSym,
+            args: [.star],
+            nullability: .nonNull
+        )))
+        XCTAssertTrue(types.isSubtype(classStarLHS, classStarRHS))
+
+        let fnA = types.make(.functionType(FunctionType(
+            receiver: intNN,
+            params: [types.anyType],
+            returnType: intNN,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let fnB = types.make(.functionType(FunctionType(
+            receiver: intNN,
+            params: [intNN],
+            returnType: types.anyType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        XCTAssertTrue(types.isSubtype(fnA, fnB))
+
+        let fnSuspend = types.make(.functionType(FunctionType(
+            receiver: nil,
+            params: [intNN],
+            returnType: intNN,
+            isSuspend: true,
+            nullability: .nonNull
+        )))
+        XCTAssertFalse(types.isSubtype(fnA, fnSuspend))
+
+        let typeParamNN = types.make(.typeParam(TypeParamType(symbol: SymbolID(rawValue: 5), nullability: .nonNull)))
+        let typeParamNullable = types.make(.typeParam(TypeParamType(symbol: SymbolID(rawValue: 5), nullability: .nullable)))
+        XCTAssertTrue(types.isSubtype(typeParamNN, types.anyType))
+        XCTAssertFalse(types.isSubtype(typeParamNullable, types.anyType))
+
+        let lhsIntersection = types.make(.intersection([intNN, boolNN]))
+        XCTAssertFalse(types.isSubtype(lhsIntersection, intNN))
+        XCTAssertTrue(types.isSubtype(intNN, types.make(.intersection([intNN, boolNN]))))
+
+        XCTAssertEqual(types.lub([]), types.errorType)
+        XCTAssertEqual(types.lub([intNN, intNN]), intNN)
+        XCTAssertEqual(types.lub([intNN, intNullable]), types.nullableAnyType)
+
+        XCTAssertEqual(types.glb([]), types.errorType)
+        XCTAssertEqual(types.glb([intNN, intNN]), intNN)
+        XCTAssertEqual(types.glb([intNN, types.nothingType]), types.nothingType)
+
+        let glbMixed = types.glb([intNN, boolNN])
+        XCTAssertEqual(types.kind(of: glbMixed), .intersection([intNN, boolNN]))
+
+        XCTAssertEqual(types.kind(of: TypeID(rawValue: 9999)), .error)
+    }
+
+    func testTypeSystemAnyNonNullSubtypeCoversClassFunctionIntersectionAndDefaultCases() {
+        let types = TypeSystem()
+
+        let intNN = types.make(.primitive(.int, .nonNull))
+        let intNullable = types.make(.primitive(.int, .nullable))
+
+        let classNN = types.make(.classType(ClassType(
+            classSymbol: SymbolID(rawValue: 400),
+            args: [],
+            nullability: .nonNull
+        )))
+        let classNullable = types.make(.classType(ClassType(
+            classSymbol: SymbolID(rawValue: 400),
+            args: [],
+            nullability: .nullable
+        )))
+
+        let fnNN = types.make(.functionType(FunctionType(
+            receiver: nil,
+            params: [intNN],
+            returnType: intNN,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let fnNullable = types.make(.functionType(FunctionType(
+            receiver: nil,
+            params: [intNN],
+            returnType: intNN,
+            isSuspend: false,
+            nullability: .nullable
+        )))
+
+        let intersectionAllNonNull = types.make(.intersection([intNN, classNN]))
+        let intersectionWithNullable = types.make(.intersection([intNN, intNullable]))
+
+        XCTAssertTrue(types.isSubtype(classNN, types.anyType))
+        XCTAssertFalse(types.isSubtype(classNullable, types.anyType))
+        XCTAssertTrue(types.isSubtype(fnNN, types.anyType))
+        XCTAssertFalse(types.isSubtype(fnNullable, types.anyType))
+        XCTAssertTrue(types.isSubtype(intersectionAllNonNull, types.anyType))
+        XCTAssertFalse(types.isSubtype(intersectionWithNullable, types.anyType))
+        XCTAssertFalse(types.isSubtype(types.nullableAnyType, types.anyType))
+
+        let fnWithReceiver = types.make(.functionType(FunctionType(
+            receiver: intNN,
+            params: [intNN],
+            returnType: intNN,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let fnWithoutReceiver = types.make(.functionType(FunctionType(
+            receiver: nil,
+            params: [intNN],
+            returnType: intNN,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        XCTAssertFalse(types.isSubtype(fnWithReceiver, fnWithoutReceiver))
+    }
+
+    func testDiagnosticsRenderSortOrderAndPrintingPaths() {
+        let manager = SourceManager()
+        let fileB = manager.addFile(path: "b.kt", contents: Data("line1\nline2\n".utf8))
+        let fileA = manager.addFile(path: "a.kt", contents: Data("x\ny\n".utf8))
+
+        let engine = DiagnosticEngine()
+        engine.warning("W002", "later file", range: makeRange(file: fileB, start: 0, end: 1))
+        engine.error("E001", "first file", range: makeRange(file: fileA, start: 0, end: 1))
+        engine.note("N010", "same place as error", range: makeRange(file: fileA, start: 0, end: 1))
+        engine.info("I999", "no range", range: nil)
+
+        XCTAssertTrue(engine.hasError)
+        let rendered = engine.render(manager)
+        let lines = rendered.split(separator: "\n").map(String.init)
+
+        XCTAssertEqual(lines.count, 4)
+        XCTAssertTrue(lines[0].contains("a.kt:1:1: error E001"))
+        XCTAssertTrue(lines[1].contains("a.kt:1:1: note N010"))
+        XCTAssertTrue(lines[2].contains("b.kt:1:1: warning W002"))
+        XCTAssertTrue(lines[3].contains("info I999: no range"))
+
+        engine.printDiagnostics(to: false, from: manager)
+
+        let empty = DiagnosticEngine()
+        empty.printDiagnostics(to: false, from: manager)
+    }
+
+    func testSemanticsBindingTableAndSymbolTableScopes() {
+        let interner = StringInterner()
+        let symbols = SymbolTable()
+
+        let pkg = symbols.define(
+            kind: .package,
+            name: interner.intern("pkg"),
+            fqName: [interner.intern("pkg")],
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        let fn = symbols.define(
+            kind: .function,
+            name: interner.intern("run"),
+            fqName: [interner.intern("pkg"), interner.intern("run")],
+            declSite: nil,
+            visibility: .public,
+            flags: [.inlineFunction, .suspendFunction]
+        )
+
+        XCTAssertEqual(symbols.count, 2)
+        XCTAssertNotNil(symbols.symbol(pkg))
+        XCTAssertNotNil(symbols.lookup(fqName: [interner.intern("pkg")]))
+
+        let signature = FunctionSignature(parameterTypes: [TypeSystem().anyType], returnType: TypeSystem().unitType)
+        symbols.setFunctionSignature(signature, for: fn)
+        XCTAssertEqual(symbols.functionSignature(for: fn)?.parameterTypes.count, 1)
+
+        let root = PackageScope(parent: nil, symbols: symbols)
+        let fileScope = FileScope(parent: root, symbols: symbols)
+        fileScope.insert(fn)
+        XCTAssertEqual(fileScope.lookup(interner.intern("run")), [fn])
+        XCTAssertTrue(root.lookup(interner.intern("run")).isEmpty)
+
+        let bindings = BindingTable()
+        let expr = ExprID(rawValue: 1)
+        let decl = DeclID(rawValue: 2)
+        bindings.bindExprType(expr, type: TypeSystem().anyType)
+        bindings.bindIdentifier(expr, symbol: fn)
+        bindings.bindCall(expr, binding: CallBinding(chosenCallee: fn, substitutedTypeArguments: [], parameterMapping: [0: 0]))
+        bindings.bindDecl(decl, symbol: fn)
+
+        XCTAssertEqual(bindings.identifierSymbols[expr], fn)
+        XCTAssertEqual(bindings.callBindings[expr]?.chosenCallee, fn)
+        XCTAssertEqual(bindings.declSymbols[decl], fn)
+    }
+}
+
+final class CommandRunnerCoverageTests: XCTestCase {
+    func testRunReturnsStdoutOnSuccess() throws {
+        let result = try CommandRunner.run(
+            executable: "/usr/bin/env",
+            arguments: ["sh", "-c", "printf 'ok'"]
+        )
+
+        XCTAssertEqual(result.exitCode, 0)
+        XCTAssertEqual(result.stdout, "ok")
+    }
+
+    func testRunThrowsNonZeroExitWithCapturedStderr() {
+        XCTAssertThrowsError(
+            try CommandRunner.run(
+                executable: "/usr/bin/env",
+                arguments: ["sh", "-c", "printf 'err' >&2; exit 7"]
+            )
+        ) { error in
+            guard case CommandRunnerError.nonZeroExit(let result) = error else {
+                XCTFail("Expected nonZeroExit, got \(error)")
+                return
+            }
+            XCTAssertEqual(result.exitCode, 7)
+            XCTAssertEqual(result.stderr, "err")
+        }
+    }
+
+    func testRunThrowsLaunchFailedForMissingExecutable() {
+        XCTAssertThrowsError(
+            try CommandRunner.run(
+                executable: "/definitely/missing/executable",
+                arguments: []
+            )
+        ) { error in
+            guard case CommandRunnerError.launchFailed(let message) = error else {
+                XCTFail("Expected launchFailed, got \(error)")
+                return
+            }
+            XCTAssertTrue(message.contains("Failed to launch"))
+        }
+    }
+}

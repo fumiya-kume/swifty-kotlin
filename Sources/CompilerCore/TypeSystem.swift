@@ -156,6 +156,24 @@ public final class TypeSystem {
         if case .any(.nullable) = rhs {
             return true
         }
+        if case .any(.nonNull) = rhs {
+            switch lhs {
+            case .any(.nonNull), .unit, .nothing:
+                return true
+            case .primitive(_, let nullability):
+                return nullability == .nonNull
+            case .classType(let classType):
+                return classType.nullability == .nonNull
+            case .functionType(let functionType):
+                return functionType.nullability == .nonNull
+            case .typeParam(let typeParam):
+                return typeParam.nullability == .nonNull
+            case .intersection(let parts):
+                return parts.allSatisfy { isSubtype($0, b) }
+            default:
+                return false
+            }
+        }
 
         switch (lhs, rhs) {
         case (.any(.nonNull), .any(.nullable)):
