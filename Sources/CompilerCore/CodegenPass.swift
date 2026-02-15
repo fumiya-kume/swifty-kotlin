@@ -193,8 +193,13 @@ public final class CodegenPhase: CompilerPhase {
             guard let symbol = sema.symbols.symbol(function.symbol) else {
                 continue
             }
-            let signature = "F$arity\(function.params.count)"
-            let mangled = mangler.mangle(moduleName: ctx.options.moduleName, symbol: symbol, signature: signature)
+            let mangled = mangler.mangle(
+                moduleName: ctx.options.moduleName,
+                symbol: symbol,
+                symbols: sema.symbols,
+                types: sema.types,
+                nameResolver: { ctx.interner.resolve($0) }
+            )
             let filePath = outputDir + "/\(mangled).kirbin"
             let bodyLines = function.body.map { instruction in
                 switch instruction {
@@ -269,7 +274,13 @@ public final class CodegenPhase: CompilerPhase {
         var lines: [String] = ["symbols=\(exported.count)"]
         let mangler = NameMangler()
         for symbol in exported {
-            let mangled = mangler.mangle(moduleName: ctx.options.moduleName, symbol: symbol, signature: "_")
+            let mangled = mangler.mangle(
+                moduleName: ctx.options.moduleName,
+                symbol: symbol,
+                symbols: sema.symbols,
+                types: sema.types,
+                nameResolver: { ctx.interner.resolve($0) }
+            )
             let fqName = symbol.fqName.map { ctx.interner.resolve($0) }.joined(separator: ".")
             var fields = [
                 "\(symbol.kind)",
