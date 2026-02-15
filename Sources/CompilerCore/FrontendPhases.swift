@@ -184,15 +184,17 @@ public final class BuildASTPhase: CompilerPhase {
         let modifiers = declarationModifiers(from: nodeID, in: arena)
         let isSuspend = modifiers.contains(.suspend)
         let isInline = modifiers.contains(.inline)
+        let functionName = declarationFunctionName(from: nodeID, in: arena, interner: interner)
         let valueParams = declarationValueParameters(from: nodeID, in: arena, interner: interner, astArena: astArena)
+        let receiverType = declarationReceiverType(from: nodeID, in: arena, interner: interner, astArena: astArena)
         let returnType = declarationReturnType(from: nodeID, in: arena, interner: interner, astArena: astArena)
         let body = declarationBody(from: nodeID, in: arena, interner: interner, astArena: astArena)
         return FunDecl(
             range: node.range,
-            name: declarationName(from: nodeID, in: arena, interner: interner),
+            name: functionName,
             modifiers: modifiers,
             typeParams: declarationTypeParameters(from: nodeID, in: arena, interner: interner),
-            receiverType: nil,
+            receiverType: receiverType,
             valueParams: valueParams,
             returnType: returnType,
             body: body,
@@ -335,6 +337,7 @@ public final class BuildASTPhase: CompilerPhase {
         astArena: ASTArena
     ) {
         let withoutDefault = stripDefaultValue(tokens)
+        let hasDefaultValue = withoutDefault.count != tokens.count
         guard !withoutDefault.isEmpty else {
             return
         }
@@ -376,7 +379,18 @@ public final class BuildASTPhase: CompilerPhase {
             typeRef = nil
         }
 
-        parameters.append(ValueParamDecl(name: name, type: typeRef))
+        let isVararg = withoutDefault.contains(where: { token in
+            if case .keyword(.vararg) = token.kind {
+                return true
+            }
+            return false
+        })
+        parameters.append(ValueParamDecl(
+            name: name,
+            type: typeRef,
+            hasDefaultValue: hasDefaultValue,
+            isVararg: isVararg
+        ))
     }
 
     private func isTypeLikeNameToken(_ kind: TokenKind) -> Bool {
@@ -429,6 +443,101 @@ public final class BuildASTPhase: CompilerPhase {
             }
         }
         return tokens
+    }
+
+    private func declarationFunctionName(
+        from nodeID: NodeID,
+        in arena: SyntaxArena,
+        interner: StringInterner
+    ) -> InternedString {
+        let tokens = collectTokens(from: nodeID, in: arena)
+        guard let paramsOpenIndex = tokens.firstIndex(where: { $0.kind == .symbol(.lParen) }) else {
+            return declarationName(from: nodeID, in: arena, interner: interner)
+        }
+        if paramsOpenIndex == 0 {
+            return declarationName(from: nodeID, in: arena, interner: interner)
+        }
+
+        for index in stride(from: paramsOpenIndex - 1, through: 0, by: -1) {
+            let token = tokens[index]
+            if !isTypeLikeNameToken(token.kind) {
+                continue
+            }
+            if let name = internedIdentifier(from: token, interner: interner) {
+                return name
+            }
+        }
+        return declarationName(from: nodeID, in: arena, interner: interner)
+    }
+
+    private func declarationReceiverType(
+        from nodeID: NodeID,
+        in arena: SyntaxArena,
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> TypeRefID? {
+        let tokens = collectTokens(from: nodeID, in: arena)
+        guard let paramsOpenIndex = tokens.firstIndex(where: { $0.kind == .symbol(.lParen) }),
+              paramsOpenIndex > 0 else {
+            return nil
+        }
+
+        var nameIndex: Int?
+        for index in stride(from: paramsOpenIndex - 1, through: 0, by: -1) {
+            if isTypeLikeNameToken(tokens[index].kind) {
+                nameIndex = index
+                break
+            }
+        }
+        guard let nameIndex else {
+            return nil
+        }
+
+        var dotIndex: Int?
+        var angleDepth = 0
+        for index in 0..<nameIndex {
+            let token = tokens[index]
+            if token.kind == .symbol(.lessThan) {
+                angleDepth += 1
+            } else if token.kind == .symbol(.greaterThan) {
+                angleDepth = max(0, angleDepth - 1)
+            }
+            if angleDepth == 0, token.kind == .symbol(.dot) {
+                dotIndex = index
+            }
+        }
+        guard let dotIndex else {
+            return nil
+        }
+
+        guard let funIndex = tokens.firstIndex(where: { $0.kind == .keyword(.fun) }) else {
+            return nil
+        }
+
+        var receiverStart = funIndex + 1
+        if receiverStart < tokens.count, tokens[receiverStart].kind == .symbol(.lessThan) {
+            var genericDepth = 0
+            while receiverStart < tokens.count {
+                let token = tokens[receiverStart]
+                if token.kind == .symbol(.lessThan) {
+                    genericDepth += 1
+                } else if token.kind == .symbol(.greaterThan) {
+                    genericDepth -= 1
+                    if genericDepth == 0 {
+                        receiverStart += 1
+                        break
+                    }
+                }
+                receiverStart += 1
+            }
+        }
+
+        if receiverStart >= dotIndex {
+            return nil
+        }
+
+        let receiverTokens = Array(tokens[receiverStart..<dotIndex])
+        return parseTypeRef(from: receiverTokens, interner: interner, astArena: astArena)
     }
 
     private func declarationReturnType(
