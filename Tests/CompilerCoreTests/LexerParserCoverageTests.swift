@@ -447,7 +447,7 @@ final class LexerParserCoverageTests: XCTestCase {
             let ctx = makeCompilationContext(inputs: [path])
             try runFrontend(ctx)
 
-            XCTAssertNotNil(ctx.cst)
+            XCTAssertNotNil(ctx.syntaxTree)
             XCTAssertNotNil(ctx.ast)
             XCTAssertFalse(ctx.tokens.isEmpty)
 

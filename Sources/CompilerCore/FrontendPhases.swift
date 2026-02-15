@@ -68,8 +68,8 @@ public final class ParsePhase: CompilerPhase {
             diagnostics: ctx.diagnostics
         )
         let parsed = parser.parseFile()
-        ctx.cst = parsed.arena
-        ctx.cstRoot = parsed.root
+        ctx.syntaxTree = parsed.arena
+        ctx.syntaxTreeRoot = parsed.root
     }
 }
 
@@ -79,7 +79,7 @@ public final class BuildASTPhase: CompilerPhase {
     public init() {}
 
     public func run(_ ctx: CompilationContext) throws {
-        guard let cst = ctx.cst else {
+        guard let cst = ctx.syntaxTree else {
             throw CompilerPipelineError.invalidInput("Parse phase did not run.")
         }
 
@@ -89,7 +89,7 @@ public final class BuildASTPhase: CompilerPhase {
         var importsByFile: [Int32: [ImportDecl]] = [:]
         var declarationsByFile: [Int32: [DeclID]] = [:]
 
-        for child in cst.children(of: ctx.cstRoot) {
+        for child in cst.children(of: ctx.syntaxTreeRoot) {
             guard case .node(let nodeID) = child else {
                 continue
             }

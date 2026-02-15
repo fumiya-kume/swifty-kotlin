@@ -239,8 +239,8 @@ final class DeepPhaseCoverageTests: XCTestCase {
         ])
 
         ctx.tokens = tokens
-        ctx.cst = cst
-        ctx.cstRoot = root
+        ctx.syntaxTree = cst
+        ctx.syntaxTreeRoot = root
 
         try BuildASTPhase().run(ctx)
         let ast = try XCTUnwrap(ctx.ast)
