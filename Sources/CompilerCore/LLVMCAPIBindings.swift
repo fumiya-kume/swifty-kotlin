@@ -43,6 +43,8 @@ final class LLVMCAPIBindings {
     private typealias LLVMBuildSDivFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     private typealias LLVMBuildICmpFn = @convention(c) (LLVMBuilderRef?, UInt32, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     private typealias LLVMBuildZExtFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMTypeRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    private typealias LLVMBuildGlobalStringPtrFn = @convention(c) (LLVMBuilderRef?, UnsafePointer<CChar>?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    private typealias LLVMBuildPtrToIntFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMTypeRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     private typealias LLVMBuildCall2Fn = @convention(c) (
         LLVMBuilderRef?,
         LLVMTypeRef?,
@@ -126,6 +128,8 @@ final class LLVMCAPIBindings {
     private let buildSDivFn: LLVMBuildSDivFn
     private let buildICmpFn: LLVMBuildICmpFn
     private let buildZExtFn: LLVMBuildZExtFn?
+    private let buildGlobalStringPtrFn: LLVMBuildGlobalStringPtrFn?
+    private let buildPtrToIntFn: LLVMBuildPtrToIntFn?
     private let buildCall2Fn: LLVMBuildCall2Fn?
     private let buildCallFn: LLVMBuildCallFn?
     private let constIntFn: LLVMConstIntFn
@@ -179,6 +183,8 @@ final class LLVMCAPIBindings {
         buildSDivFn: @escaping LLVMBuildSDivFn,
         buildICmpFn: @escaping LLVMBuildICmpFn,
         buildZExtFn: LLVMBuildZExtFn?,
+        buildGlobalStringPtrFn: LLVMBuildGlobalStringPtrFn?,
+        buildPtrToIntFn: LLVMBuildPtrToIntFn?,
         buildCall2Fn: LLVMBuildCall2Fn?,
         buildCallFn: LLVMBuildCallFn?,
         constIntFn: @escaping LLVMConstIntFn,
@@ -231,6 +237,8 @@ final class LLVMCAPIBindings {
         self.buildSDivFn = buildSDivFn
         self.buildICmpFn = buildICmpFn
         self.buildZExtFn = buildZExtFn
+        self.buildGlobalStringPtrFn = buildGlobalStringPtrFn
+        self.buildPtrToIntFn = buildPtrToIntFn
         self.buildCall2Fn = buildCall2Fn
         self.buildCallFn = buildCallFn
         self.constIntFn = constIntFn
@@ -356,6 +364,8 @@ final class LLVMCAPIBindings {
                 buildSDivFn: buildSDiv,
                 buildICmpFn: buildICmp,
                 buildZExtFn: loadSymbol(handle: handle, name: "LLVMBuildZExt", as: LLVMBuildZExtFn.self),
+                buildGlobalStringPtrFn: loadSymbol(handle: handle, name: "LLVMBuildGlobalStringPtr", as: LLVMBuildGlobalStringPtrFn.self),
+                buildPtrToIntFn: loadSymbol(handle: handle, name: "LLVMBuildPtrToInt", as: LLVMBuildPtrToIntFn.self),
                 buildCall2Fn: buildCall2,
                 buildCallFn: buildCall,
                 constIntFn: constInt,
@@ -504,6 +514,24 @@ final class LLVMCAPIBindings {
             return nil
         }
         return name.withCString { buildZExtFn(builder, value, type, $0) }
+    }
+
+    func buildGlobalStringPtr(_ builder: LLVMBuilderRef?, value: String, name: String) -> LLVMValueRef? {
+        guard let buildGlobalStringPtrFn else {
+            return nil
+        }
+        return value.withCString { valueCString in
+            name.withCString { nameCString in
+                buildGlobalStringPtrFn(builder, valueCString, nameCString)
+            }
+        }
+    }
+
+    func buildPtrToInt(_ builder: LLVMBuilderRef?, value: LLVMValueRef?, type: LLVMTypeRef?, name: String) -> LLVMValueRef? {
+        guard let buildPtrToIntFn else {
+            return nil
+        }
+        return name.withCString { buildPtrToIntFn(builder, value, type, $0) }
     }
 
     func buildAdd(_ builder: LLVMBuilderRef?, lhs: LLVMValueRef?, rhs: LLVMValueRef?, name: String) -> LLVMValueRef? {
