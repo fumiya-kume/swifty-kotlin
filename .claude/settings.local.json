@@ -8,7 +8,11 @@
       "Bash(git commit:*)",
       "WebFetch(domain:risako.saenuruki.com)",
       "Bash(curl:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(wc:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(printf:*)"
     ]
   }
 }
