@@ -104,40 +104,29 @@ public final class BuildASTPhase: CompilerPhase {
                 let path = extractQualifiedPath(from: nodeID, in: cst, interner: ctx.interner, isPackageHeader: false)
                 importsByFile[fileRawID, default: []].append(ImportDecl(range: node.range, path: path))
 
-            case .classDecl:
-                let id = arena.appendDecl(.classDecl(makeClassDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena)))
-                declarations.append(id)
-                declarationsByFile[fileRawID, default: []].append(id)
+            case .classDecl, .interfaceDecl:
+                let decl = ASTDecl.classDecl(makeClassDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
+                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
 
             case .objectDecl:
-                let id = arena.appendDecl(.objectDecl(makeObjectDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena)))
-                declarations.append(id)
-                declarationsByFile[fileRawID, default: []].append(id)
-
-            case .interfaceDecl:
-                let id = arena.appendDecl(.classDecl(makeClassDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena)))
-                declarations.append(id)
-                declarationsByFile[fileRawID, default: []].append(id)
+                let decl = ASTDecl.objectDecl(makeObjectDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
+                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
 
             case .funDecl:
-                let id = arena.appendDecl(.funDecl(makeFunDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena)))
-                declarations.append(id)
-                declarationsByFile[fileRawID, default: []].append(id)
+                let decl = ASTDecl.funDecl(makeFunDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
+                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
 
             case .propertyDecl:
-                let id = arena.appendDecl(.propertyDecl(makePropertyDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena)))
-                declarations.append(id)
-                declarationsByFile[fileRawID, default: []].append(id)
+                let decl = ASTDecl.propertyDecl(makePropertyDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
+                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
 
             case .typeAliasDecl:
-                let id = arena.appendDecl(.typeAliasDecl(makeTypeAliasDecl(from: nodeID, in: cst, interner: ctx.interner)))
-                declarations.append(id)
-                declarationsByFile[fileRawID, default: []].append(id)
+                let decl = ASTDecl.typeAliasDecl(makeTypeAliasDecl(from: nodeID, in: cst, interner: ctx.interner))
+                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
 
             case .enumEntry:
-                let id = arena.appendDecl(.enumEntry(makeEnumEntryDecl(from: nodeID, in: cst, interner: ctx.interner)))
-                declarations.append(id)
-                declarationsByFile[fileRawID, default: []].append(id)
+                let decl = ASTDecl.enumEntry(makeEnumEntryDecl(from: nodeID, in: cst, interner: ctx.interner))
+                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
 
             default:
                 continue
@@ -158,6 +147,18 @@ public final class BuildASTPhase: CompilerPhase {
         ctx.ast = ASTModule(files: files, arena: arena, declarationCount: declarations.count, tokenCount: ctx.tokens.count)
     }
 
+    private func appendDecl(
+        _ decl: ASTDecl,
+        to arena: ASTArena,
+        declarations: inout [DeclID],
+        fileDecls: inout [Int32: [DeclID]],
+        fileRawID: Int32
+    ) {
+        let id = arena.appendDecl(decl)
+        declarations.append(id)
+        fileDecls[fileRawID, default: []].append(id)
+    }
+
     private func makeClassDecl(from nodeID: NodeID, in arena: SyntaxArena, interner: StringInterner, astArena: ASTArena) -> ClassDecl {
         let node = arena.node(nodeID)
         return ClassDecl(
@@ -167,7 +168,8 @@ public final class BuildASTPhase: CompilerPhase {
             typeParams: declarationTypeParameters(from: nodeID, in: arena, interner: interner),
             primaryConstructorParams: declarationValueParameters(from: nodeID, in: arena, interner: interner, astArena: astArena),
             superTypes: declarationSuperTypes(from: nodeID, in: arena, interner: interner, astArena: astArena),
-            enumEntries: declarationEnumEntries(from: nodeID, in: arena, interner: interner)
+            enumEntries: declarationEnumEntries(from: nodeID, in: arena, interner: interner),
+            initBlocks: declarationInitBlocks(from: nodeID, in: arena, interner: interner, astArena: astArena)
         )
     }
 
@@ -178,7 +180,8 @@ public final class BuildASTPhase: CompilerPhase {
             range: node.range,
             name: declarationName(from: nodeID, in: arena, interner: interner),
             modifiers: modifiers,
-            superTypes: declarationSuperTypes(from: nodeID, in: arena, interner: interner, astArena: astArena)
+            superTypes: declarationSuperTypes(from: nodeID, in: arena, interner: interner, astArena: astArena),
+            initBlocks: declarationInitBlocks(from: nodeID, in: arena, interner: interner, astArena: astArena)
         )
     }
 
@@ -208,11 +211,16 @@ public final class BuildASTPhase: CompilerPhase {
 
     private func makePropertyDecl(from nodeID: NodeID, in arena: SyntaxArena, interner: StringInterner, astArena: ASTArena) -> PropertyDecl {
         let node = arena.node(nodeID)
+        let accessors = declarationPropertyAccessors(from: nodeID, in: arena, interner: interner, astArena: astArena)
         return PropertyDecl(
             range: node.range,
             name: declarationName(from: nodeID, in: arena, interner: interner),
             modifiers: declarationModifiers(from: nodeID, in: arena),
-            type: declarationPropertyType(from: nodeID, in: arena, interner: interner, astArena: astArena)
+            type: declarationPropertyType(from: nodeID, in: arena, interner: interner, astArena: astArena),
+            isVar: declarationIsVar(from: nodeID, in: arena),
+            initializer: declarationPropertyInitializer(from: nodeID, in: arena, interner: interner, astArena: astArena),
+            getter: accessors.getter,
+            setter: accessors.setter
         )
     }
 
@@ -235,15 +243,9 @@ public final class BuildASTPhase: CompilerPhase {
 
     private func declarationName(from nodeID: NodeID, in arena: SyntaxArena, interner: StringInterner) -> InternedString {
         for child in arena.children(of: nodeID) {
-            if case .token(let tokenID) = child {
-                let index = Int(tokenID.rawValue)
-                if index < 0 || index >= arena.tokens.count {
-                    continue
-                }
-                let token = arena.tokens[index]
-                guard let name = internedIdentifier(from: token, interner: interner) else {
-                    continue
-                }
+            if case .token(let tokenID) = child,
+               let token = resolveToken(tokenID, in: arena),
+               let name = internedIdentifier(from: token, interner: interner) {
                 if case .keyword(let keyword) = token.kind, isLeadingDeclarationKeyword(keyword) {
                     continue
                 }
@@ -380,38 +382,8 @@ public final class BuildASTPhase: CompilerPhase {
         }
 
         var index = nameIndex + 1
-        if index < tokens.count, tokens[index].kind == .symbol(.lessThan) {
-            var depth = 0
-            while index < tokens.count {
-                let token = tokens[index]
-                if token.kind == .symbol(.lessThan) {
-                    depth += 1
-                } else if token.kind == .symbol(.greaterThan) {
-                    depth -= 1
-                    if depth == 0 {
-                        index += 1
-                        break
-                    }
-                }
-                index += 1
-            }
-        }
-        if index < tokens.count, tokens[index].kind == .symbol(.lParen) {
-            var depth = 0
-            while index < tokens.count {
-                let token = tokens[index]
-                if token.kind == .symbol(.lParen) {
-                    depth += 1
-                } else if token.kind == .symbol(.rParen) {
-                    depth -= 1
-                    if depth == 0 {
-                        index += 1
-                        break
-                    }
-                }
-                index += 1
-            }
-        }
+        index = skipBalancedBracket(in: tokens, from: index, open: .symbol(.lessThan), close: .symbol(.greaterThan))
+        index = skipBalancedBracket(in: tokens, from: index, open: .symbol(.lParen), close: .symbol(.rParen))
         guard index < tokens.count, tokens[index].kind == .symbol(.colon) else {
             return []
         }
@@ -419,12 +391,10 @@ public final class BuildASTPhase: CompilerPhase {
 
         var refs: [TypeRefID] = []
         var current: [Token] = []
-        var angleDepth = 0
-        var parenDepth = 0
+        var depth = BracketDepth()
         while index < tokens.count {
             let token = tokens[index]
-            let atTopLevel = angleDepth == 0 && parenDepth == 0
-            if atTopLevel {
+            if depth.isAngleParenTopLevel {
                 if token.kind == .symbol(.lBrace) || token.kind == .symbol(.semicolon) {
                     break
                 }
@@ -445,15 +415,7 @@ public final class BuildASTPhase: CompilerPhase {
                 }
             }
 
-            if token.kind == .symbol(.lessThan) {
-                angleDepth += 1
-            } else if token.kind == .symbol(.greaterThan) {
-                angleDepth = max(0, angleDepth - 1)
-            } else if token.kind == .symbol(.lParen) {
-                parenDepth += 1
-            } else if token.kind == .symbol(.rParen) {
-                parenDepth = max(0, parenDepth - 1)
-            }
+            depth.track(token.kind)
             current.append(token)
             index += 1
         }
@@ -469,15 +431,12 @@ public final class BuildASTPhase: CompilerPhase {
 
     private func stripSuperTypeInvocation(from tokens: [Token]) -> [Token] {
         var result: [Token] = []
-        var angleDepth = 0
+        var depth = BracketDepth()
         for token in tokens {
-            if token.kind == .symbol(.lessThan) {
-                angleDepth += 1
-            } else if token.kind == .symbol(.greaterThan) {
-                angleDepth = max(0, angleDepth - 1)
-            } else if angleDepth == 0 && token.kind == .symbol(.lParen) {
+            if depth.angle == 0 && token.kind == .symbol(.lParen) {
                 break
             }
+            depth.track(token.kind)
             result.append(token)
         }
         return result
@@ -564,36 +523,12 @@ public final class BuildASTPhase: CompilerPhase {
     }
 
     private func stripDefaultValue(_ tokens: [Token]) -> [Token] {
-        var angleDepth = 0
-        var parenDepth = 0
-        var bracketDepth = 0
-        var braceDepth = 0
-
+        var depth = BracketDepth()
         for (index, token) in tokens.enumerated() {
-            switch token.kind {
-            case .symbol(.lessThan):
-                angleDepth += 1
-            case .symbol(.greaterThan):
-                angleDepth = max(0, angleDepth - 1)
-            case .symbol(.lParen):
-                parenDepth += 1
-            case .symbol(.rParen):
-                parenDepth = max(0, parenDepth - 1)
-            case .symbol(.lBracket):
-                bracketDepth += 1
-            case .symbol(.rBracket):
-                bracketDepth = max(0, bracketDepth - 1)
-            case .symbol(.lBrace):
-                braceDepth += 1
-            case .symbol(.rBrace):
-                braceDepth = max(0, braceDepth - 1)
-            case .symbol(.assign):
-                if angleDepth == 0 && parenDepth == 0 && bracketDepth == 0 && braceDepth == 0 {
-                    return Array(tokens[..<index])
-                }
-            default:
-                continue
+            if token.kind == .symbol(.assign) && depth.isAtTopLevel {
+                return Array(tokens[..<index])
             }
+            depth.track(token.kind)
         }
         return tokens
     }
@@ -647,15 +582,11 @@ public final class BuildASTPhase: CompilerPhase {
         }
 
         var dotIndex: Int?
-        var angleDepth = 0
+        var depth = BracketDepth()
         for index in 0..<nameIndex {
             let token = tokens[index]
-            if token.kind == .symbol(.lessThan) {
-                angleDepth += 1
-            } else if token.kind == .symbol(.greaterThan) {
-                angleDepth = max(0, angleDepth - 1)
-            }
-            if angleDepth == 0, token.kind == .symbol(.dot) {
+            depth.track(token.kind)
+            if depth.angle == 0, token.kind == .symbol(.dot) {
                 dotIndex = index
             }
         }
@@ -667,23 +598,10 @@ public final class BuildASTPhase: CompilerPhase {
             return nil
         }
 
-        var receiverStart = funIndex + 1
-        if receiverStart < tokens.count, tokens[receiverStart].kind == .symbol(.lessThan) {
-            var genericDepth = 0
-            while receiverStart < tokens.count {
-                let token = tokens[receiverStart]
-                if token.kind == .symbol(.lessThan) {
-                    genericDepth += 1
-                } else if token.kind == .symbol(.greaterThan) {
-                    genericDepth -= 1
-                    if genericDepth == 0 {
-                        receiverStart += 1
-                        break
-                    }
-                }
-                receiverStart += 1
-            }
-        }
+        let receiverStart = skipBalancedBracket(
+            in: tokens, from: funIndex + 1,
+            open: .symbol(.lessThan), close: .symbol(.greaterThan)
+        )
 
         if receiverStart >= dotIndex {
             return nil
@@ -722,10 +640,10 @@ public final class BuildASTPhase: CompilerPhase {
         }
 
         var typeTokens: [Token] = []
-        var angleDepth = 0
+        var depth = BracketDepth()
         while index < tokens.count {
             let token = tokens[index]
-            if angleDepth == 0 {
+            if depth.angle == 0 {
                 if token.kind == .symbol(.assign) || token.kind == .symbol(.lBrace) {
                     break
                 }
@@ -733,13 +651,7 @@ public final class BuildASTPhase: CompilerPhase {
                     break
                 }
             }
-
-            if token.kind == .symbol(.lessThan) {
-                angleDepth += 1
-            } else if token.kind == .symbol(.greaterThan) {
-                angleDepth = max(0, angleDepth - 1)
-            }
-
+            depth.track(token.kind)
             typeTokens.append(token)
             index += 1
         }
@@ -753,7 +665,7 @@ public final class BuildASTPhase: CompilerPhase {
         interner: StringInterner,
         astArena: ASTArena
     ) -> TypeRefID? {
-        let tokens = collectTokens(from: nodeID, in: arena)
+        let tokens = propertyHeadTokens(from: nodeID, in: arena)
         var sawName = false
         var colonIndex: Int?
         for (index, token) in tokens.enumerated() {
@@ -786,11 +698,11 @@ public final class BuildASTPhase: CompilerPhase {
         }
 
         var typeTokens: [Token] = []
-        var angleDepth = 0
+        var depth = BracketDepth()
         var index = colonIndex + 1
         while index < tokens.count {
             let token = tokens[index]
-            if angleDepth == 0 {
+            if depth.angle == 0 {
                 if token.kind == .symbol(.assign) || token.kind == .symbol(.lBrace) || token.kind == .symbol(.semicolon) {
                     break
                 }
@@ -798,18 +710,278 @@ public final class BuildASTPhase: CompilerPhase {
                     break
                 }
             }
-
-            if token.kind == .symbol(.lessThan) {
-                angleDepth += 1
-            } else if token.kind == .symbol(.greaterThan) {
-                angleDepth = max(0, angleDepth - 1)
-            }
-
+            depth.track(token.kind)
             typeTokens.append(token)
             index += 1
         }
 
         return parseTypeRef(from: typeTokens, interner: interner, astArena: astArena)
+    }
+
+    private func declarationIsVar(from nodeID: NodeID, in arena: SyntaxArena) -> Bool {
+        for child in arena.children(of: nodeID) {
+            if case .token(let tokenID) = child,
+               let token = resolveToken(tokenID, in: arena),
+               token.kind == .keyword(.var) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private func declarationPropertyInitializer(
+        from nodeID: NodeID,
+        in arena: SyntaxArena,
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> ExprID? {
+        let tokens = propertyHeadTokens(from: nodeID, in: arena)
+        guard !tokens.isEmpty else {
+            return nil
+        }
+
+        var assignIndex: Int?
+        var depth = BracketDepth()
+        for (index, token) in tokens.enumerated() {
+            if case .softKeyword(.by) = token.kind, depth.isAtTopLevel {
+                return nil
+            }
+            if token.kind == .symbol(.assign) && depth.isAtTopLevel {
+                assignIndex = index
+                break
+            }
+            depth.track(token.kind)
+        }
+
+        guard let assignIndex else {
+            return nil
+        }
+        let start = assignIndex + 1
+        guard start < tokens.count else {
+            return nil
+        }
+        let exprTokens = tokens[start...].filter { $0.kind != .symbol(.semicolon) }
+        guard !exprTokens.isEmpty else {
+            return nil
+        }
+        let parser = ExpressionParser(tokens: Array(exprTokens), interner: interner, astArena: astArena)
+        return parser.parse()
+    }
+
+    private func declarationPropertyAccessors(
+        from nodeID: NodeID,
+        in arena: SyntaxArena,
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> (getter: PropertyAccessorDecl?, setter: PropertyAccessorDecl?) {
+        var getter: PropertyAccessorDecl?
+        var setter: PropertyAccessorDecl?
+
+        guard let accessorBlockID = arena.children(of: nodeID).compactMap({ child -> NodeID? in
+            guard case .node(let childID) = child,
+                  arena.node(childID).kind == .block else {
+                return nil
+            }
+            return childID
+        }).first else {
+            return (nil, nil)
+        }
+
+        for child in arena.children(of: accessorBlockID) {
+            guard case .node(let statementID) = child,
+                  arena.node(statementID).kind == .statement else {
+                continue
+            }
+
+            let headerTokens = collectDirectTokens(from: statementID, in: arena).filter { token in
+                token.kind != .symbol(.semicolon)
+            }
+            guard let firstToken = headerTokens.first else {
+                continue
+            }
+
+            let kind: PropertyAccessorKind
+            switch firstToken.kind {
+            case .softKeyword(.get):
+                kind = .getter
+            case .softKeyword(.set):
+                kind = .setter
+            default:
+                continue
+            }
+
+            let parameterName: InternedString?
+            if kind == .setter {
+                parameterName = setterParameterName(from: headerTokens, interner: interner)
+            } else {
+                parameterName = nil
+            }
+
+            let body = accessorBody(
+                statementID: statementID,
+                headerTokens: headerTokens,
+                in: arena,
+                interner: interner,
+                astArena: astArena
+            )
+            let accessor = PropertyAccessorDecl(
+                range: arena.node(statementID).range,
+                kind: kind,
+                parameterName: parameterName,
+                body: body
+            )
+            switch kind {
+            case .getter:
+                if getter == nil {
+                    getter = accessor
+                }
+            case .setter:
+                if setter == nil {
+                    setter = accessor
+                }
+            }
+        }
+
+        return (getter, setter)
+    }
+
+    private func declarationInitBlocks(
+        from nodeID: NodeID,
+        in arena: SyntaxArena,
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> [FunctionBody] {
+        var result: [FunctionBody] = []
+        for child in arena.children(of: nodeID) {
+            guard case .node(let bodyBlockID) = child,
+                  arena.node(bodyBlockID).kind == .block else {
+                continue
+            }
+            for bodyChild in arena.children(of: bodyBlockID) {
+                guard case .node(let statementID) = bodyChild,
+                      arena.node(statementID).kind == .statement else {
+                    continue
+                }
+                let headerTokens = collectDirectTokens(from: statementID, in: arena).filter { token in
+                    token.kind != .symbol(.semicolon)
+                }
+                guard let firstToken = headerTokens.first,
+                      firstToken.kind == .softKeyword(.`init`) else {
+                    continue
+                }
+
+                if let nestedBlockID = arena.children(of: statementID).compactMap({ inner -> NodeID? in
+                    guard case .node(let nodeID) = inner,
+                          arena.node(nodeID).kind == .block else {
+                        return nil
+                    }
+                    return nodeID
+                }).first {
+                    let exprs = blockExpressions(
+                        from: nestedBlockID,
+                        in: arena,
+                        interner: interner,
+                        astArena: astArena
+                    )
+                    result.append(.block(exprs, arena.node(nestedBlockID).range))
+                    continue
+                }
+
+                if headerTokens.count > 1 {
+                    let parser = ExpressionParser(
+                        tokens: Array(headerTokens.dropFirst()),
+                        interner: interner,
+                        astArena: astArena
+                    )
+                    if let exprID = parser.parse(),
+                       let range = astArena.exprRange(exprID) {
+                        result.append(.expr(exprID, range))
+                        continue
+                    }
+                }
+                result.append(.unit)
+            }
+        }
+        return result
+    }
+
+    private func setterParameterName(
+        from headerTokens: [Token],
+        interner: StringInterner
+    ) -> InternedString? {
+        guard let openParenIndex = headerTokens.firstIndex(where: { $0.kind == .symbol(.lParen) }) else {
+            return nil
+        }
+        for token in headerTokens[(openParenIndex + 1)...] {
+            if token.kind == .symbol(.rParen) {
+                break
+            }
+            if let name = internedIdentifier(from: token, interner: interner),
+               isTypeLikeNameToken(token.kind) {
+                return name
+            }
+        }
+        return nil
+    }
+
+    private func accessorBody(
+        statementID: NodeID,
+        headerTokens: [Token],
+        in arena: SyntaxArena,
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> FunctionBody {
+        if let nestedBlockID = arena.children(of: statementID).compactMap({ child -> NodeID? in
+            guard case .node(let nodeID) = child,
+                  arena.node(nodeID).kind == .block else {
+                return nil
+            }
+            return nodeID
+        }).first {
+            let exprs = blockExpressions(
+                from: nestedBlockID,
+                in: arena,
+                interner: interner,
+                astArena: astArena
+            )
+            return .block(exprs, arena.node(nestedBlockID).range)
+        }
+
+        guard let assignIndex = headerTokens.firstIndex(where: { $0.kind == .symbol(.assign) }) else {
+            return .unit
+        }
+        let exprTokens = headerTokens[(assignIndex + 1)...].filter { token in
+            token.kind != .symbol(.semicolon)
+        }
+        guard !exprTokens.isEmpty else {
+            return .unit
+        }
+        let parser = ExpressionParser(tokens: Array(exprTokens), interner: interner, astArena: astArena)
+        guard let exprID = parser.parse(),
+              let range = astArena.exprRange(exprID) else {
+            return .unit
+        }
+        return .expr(exprID, range)
+    }
+
+    private func propertyHeadTokens(
+        from nodeID: NodeID,
+        in arena: SyntaxArena
+    ) -> [Token] {
+        var tokens: [Token] = []
+        for child in arena.children(of: nodeID) {
+            switch child {
+            case .token(let tokenID):
+                if let token = resolveToken(tokenID, in: arena) {
+                    tokens.append(token)
+                }
+            case .node(let childID):
+                if arena.node(childID).kind == .block {
+                    return tokens
+                }
+            }
+        }
+        return tokens
     }
 
     private func firstFunctionParameterCloseParen(in tokens: [Token]) -> Int? {
@@ -952,16 +1124,77 @@ public final class BuildASTPhase: CompilerPhase {
         return result
     }
 
+    private struct BracketDepth {
+        var angle: Int = 0
+        var paren: Int = 0
+        var bracket: Int = 0
+        var brace: Int = 0
+
+        var isAtTopLevel: Bool {
+            angle == 0 && paren == 0 && bracket == 0 && brace == 0
+        }
+
+        var isAngleParenTopLevel: Bool {
+            angle == 0 && paren == 0
+        }
+
+        mutating func track(_ kind: TokenKind) {
+            switch kind {
+            case .symbol(.lessThan):    angle += 1
+            case .symbol(.greaterThan): angle = max(0, angle - 1)
+            case .symbol(.lParen):      paren += 1
+            case .symbol(.rParen):      paren = max(0, paren - 1)
+            case .symbol(.lBracket):    bracket += 1
+            case .symbol(.rBracket):    bracket = max(0, bracket - 1)
+            case .symbol(.lBrace):      brace += 1
+            case .symbol(.rBrace):      brace = max(0, brace - 1)
+            default: break
+            }
+        }
+    }
+
+    private func skipBalancedBracket(
+        in tokens: [Token],
+        from startIndex: Int,
+        open: TokenKind,
+        close: TokenKind
+    ) -> Int {
+        guard startIndex < tokens.count, tokens[startIndex].kind == open else {
+            return startIndex
+        }
+        var depth = 0
+        var index = startIndex
+        while index < tokens.count {
+            let kind = tokens[index].kind
+            if kind == open {
+                depth += 1
+            } else if kind == close {
+                depth -= 1
+                if depth == 0 {
+                    return index + 1
+                }
+            }
+            index += 1
+        }
+        return index
+    }
+
+    private func resolveToken(_ tokenID: TokenID, in arena: SyntaxArena) -> Token? {
+        let index = Int(tokenID.rawValue)
+        guard index >= 0 && index < arena.tokens.count else {
+            return nil
+        }
+        return arena.tokens[index]
+    }
+
     private func collectTokens(from nodeID: NodeID, in arena: SyntaxArena) -> [Token] {
         var tokens: [Token] = []
         for child in arena.children(of: nodeID) {
             switch child {
             case .token(let tokenID):
-                let index = Int(tokenID.rawValue)
-                if index < 0 || index >= arena.tokens.count {
-                    continue
+                if let token = resolveToken(tokenID, in: arena) {
+                    tokens.append(token)
                 }
-                tokens.append(arena.tokens[index])
             case .node(let childID):
                 tokens.append(contentsOf: collectTokens(from: childID, in: arena))
             }
@@ -969,15 +1202,24 @@ public final class BuildASTPhase: CompilerPhase {
         return tokens
     }
 
+    private func collectDirectTokens(from nodeID: NodeID, in arena: SyntaxArena) -> [Token] {
+        var tokens: [Token] = []
+        for child in arena.children(of: nodeID) {
+            guard case .token(let tokenID) = child,
+                  let token = resolveToken(tokenID, in: arena) else {
+                continue
+            }
+            tokens.append(token)
+        }
+        return tokens
+    }
+
     private func declarationModifiers(from nodeID: NodeID, in arena: SyntaxArena) -> Modifiers {
         var modifiers: Modifiers = []
         for child in arena.children(of: nodeID) {
-            if case .token(let tokenID) = child {
-                let index = Int(tokenID.rawValue)
-                if index < 0 || index >= arena.tokens.count {
-                    continue
-                }
-                switch arena.tokens[index].kind {
+            if case .token(let tokenID) = child,
+               let token = resolveToken(tokenID, in: arena) {
+                switch token.kind {
                 case .keyword(.public):
                     modifiers.insert(.publicModifier)
                 case .keyword(.private):
@@ -1040,24 +1282,21 @@ public final class BuildASTPhase: CompilerPhase {
     ) -> [InternedString] {
         var names: [InternedString] = []
         for child in arena.children(of: nodeID) {
-            if case .token(let tokenID) = child {
-                let index = Int(tokenID.rawValue)
-                if index < 0 || index >= arena.tokens.count {
-                    continue
-                }
-                let token = arena.tokens[index]
-                if case .symbol(.star) = token.kind {
-                    continue
-                }
-                if isPackageHeader, case .keyword(.package) = token.kind {
-                    continue
-                }
-                if !isPackageHeader, case .keyword(.import) = token.kind {
-                    continue
-                }
-                if let name = internedIdentifier(from: token, interner: interner) {
-                    names.append(name)
-                }
+            guard case .token(let tokenID) = child,
+                  let token = resolveToken(tokenID, in: arena) else {
+                continue
+            }
+            if case .symbol(.star) = token.kind {
+                continue
+            }
+            if isPackageHeader, case .keyword(.package) = token.kind {
+                continue
+            }
+            if !isPackageHeader, case .keyword(.import) = token.kind {
+                continue
+            }
+            if let name = internedIdentifier(from: token, interner: interner) {
+                names.append(name)
             }
         }
         return names
@@ -1128,11 +1367,11 @@ public final class BuildASTPhase: CompilerPhase {
             }
             while matches(.symbol(.lParen)) {
                 guard let open = consume() else { break }
-                var args: [ExprID] = []
+                var args: [CallArgument] = []
                 if !matches(.symbol(.rParen)) {
                     while true {
-                        if let arg = parseExpression(minPrecedence: 0) {
-                            args.append(arg)
+                        if let argument = parseCallArgument() {
+                            args.append(argument)
                         }
                         if matches(.symbol(.comma)) {
                             _ = consume()
@@ -1148,6 +1387,51 @@ public final class BuildASTPhase: CompilerPhase {
                 expr = astArena.appendExpr(.call(callee: expr, args: args, range: range))
             }
             return expr
+        }
+
+        private func parseCallArgument() -> CallArgument? {
+            var isSpread = false
+            if matches(.symbol(.star)) {
+                _ = consume()
+                isSpread = true
+            }
+
+            var label: InternedString?
+            if let first = current(),
+               let second = peek(1),
+               isArgumentLabelToken(first.kind),
+               second.kind == .symbol(.assign) {
+                label = tokenText(first)
+                _ = consume()
+                _ = consume()
+            }
+
+            guard let expr = parseExpression(minPrecedence: 0) else {
+                return nil
+            }
+            return CallArgument(label: label, isSpread: isSpread, expr: expr)
+        }
+
+        private func isArgumentLabelToken(_ kind: TokenKind) -> Bool {
+            switch kind {
+            case .identifier, .backtickedIdentifier, .keyword, .softKeyword:
+                return true
+            default:
+                return false
+            }
+        }
+
+        private func tokenText(_ token: Token) -> InternedString? {
+            switch token.kind {
+            case .identifier(let name), .backtickedIdentifier(let name):
+                return name
+            case .keyword(let keyword):
+                return interner.intern(keyword.rawValue)
+            case .softKeyword(let keyword):
+                return interner.intern(keyword.rawValue)
+            default:
+                return nil
+            }
         }
 
         private func parsePrimary() -> ExprID? {
@@ -1324,6 +1608,14 @@ public final class BuildASTPhase: CompilerPhase {
         private func current() -> Token? {
             if index >= 0 && index < tokens.count {
                 return tokens[index]
+            }
+            return nil
+        }
+
+        private func peek(_ offset: Int) -> Token? {
+            let target = index + offset
+            if target >= 0 && target < tokens.count {
+                return tokens[target]
             }
             return nil
         }
