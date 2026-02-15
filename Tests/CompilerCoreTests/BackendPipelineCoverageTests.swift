@@ -103,6 +103,101 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
     }
 
+    func testCodegenBackendSelectionSupportsLlvmCApiFlagWithFallback() throws {
+        let source = "fun main() = 0"
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let options = CompilerOptions(
+                moduleName: "LLVMCAPIFlag",
+                inputs: [path],
+                outputPath: outputBase,
+                emit: .object,
+                target: defaultTargetTriple(),
+                irFlags: ["backend=llvm-c-api"]
+            )
+            let ctx = CompilationContext(
+                options: options,
+                sourceManager: SourceManager(),
+                diagnostics: DiagnosticEngine(),
+                interner: StringInterner()
+            )
+
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+
+            let objectPath = try XCTUnwrap(ctx.generatedObjectPath)
+            XCTAssertTrue(FileManager.default.fileExists(atPath: objectPath))
+            XCTAssertTrue(ctx.diagnostics.diagnostics.contains {
+                $0.code == "KSWIFTK-BACKEND-1001" || $0.code == "KSWIFTK-BACKEND-1005"
+            })
+        }
+    }
+
+    func testCodegenBackendSelectionWarnsOnUnknownBackendAndFallsBack() throws {
+        let source = "fun main() = 0"
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let options = CompilerOptions(
+                moduleName: "UnknownBackendFlag",
+                inputs: [path],
+                outputPath: outputBase,
+                emit: .object,
+                target: defaultTargetTriple(),
+                irFlags: ["backend=unknown-backend"]
+            )
+            let ctx = CompilationContext(
+                options: options,
+                sourceManager: SourceManager(),
+                diagnostics: DiagnosticEngine(),
+                interner: StringInterner()
+            )
+
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+
+            let objectPath = try XCTUnwrap(ctx.generatedObjectPath)
+            XCTAssertTrue(FileManager.default.fileExists(atPath: objectPath))
+            XCTAssertTrue(ctx.diagnostics.diagnostics.contains { $0.code == "KSWIFTK-BACKEND-1002" })
+        }
+    }
+
+    func testCodegenBackendSelectionLlvmCApiStrictModeFails() throws {
+        let source = "fun main() = 0"
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let options = CompilerOptions(
+                moduleName: "LLVMCAPIStrict",
+                inputs: [path],
+                outputPath: outputBase,
+                emit: .object,
+                target: defaultTargetTriple(),
+                irFlags: ["backend=llvm-c-api", "backend-strict=true"]
+            )
+            let ctx = CompilationContext(
+                options: options,
+                sourceManager: SourceManager(),
+                diagnostics: DiagnosticEngine(),
+                interner: StringInterner()
+            )
+
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            XCTAssertThrowsError(try CodegenPhase().run(ctx))
+            XCTAssertTrue(ctx.diagnostics.diagnostics.contains {
+                $0.code == "KSWIFTK-BACKEND-1003" || $0.code == "KSWIFTK-BACKEND-1004"
+            })
+        }
+    }
+
+    func testLlvmCapiBindingsCandidatePathsHonorEnvironmentOverride() {
+        let overridePath = "/tmp/custom-libLLVM.dylib"
+        let paths = LLVMCAPIBindings.candidateLibraryPaths(environment: ["KSWIFTK_LLVM_DYLIB": overridePath])
+        XCTAssertEqual(paths.first, overridePath)
+        XCTAssertTrue(paths.contains("libLLVM.dylib"))
+    }
+
     func testSemaLoadsSymbolsFromKklibSearchPath() throws {
         let librarySource = """
         package extdemo
@@ -188,6 +283,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             XCTAssertTrue(metadata.contains("layoutWords="))
             XCTAssertTrue(metadata.contains("vtable="))
             XCTAssertTrue(metadata.contains("itable="))
+            XCTAssertTrue(metadata.contains("superFq=layoutdemo.Base"))
         }
     }
 
@@ -229,7 +325,103 @@ final class BackendPipelineCoverageTests: XCTestCase {
             let layout = sema.symbols.nominalLayout(for: classSymbol.id)
             XCTAssertNotNil(layout)
             XCTAssertEqual(layout?.vtableSlots.count, 1)
+            XCTAssertEqual(layout?.vtableSize, 1)
             XCTAssertEqual(layout?.itableSlots.count, 0)
+            XCTAssertEqual(layout?.itableSize, 0)
+        }
+    }
+
+    func testSemaReusesVtableSlotForImportedOverrideMethods() throws {
+        let fm = FileManager.default
+        let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let libDir = baseDir.appendingPathExtension("kklib")
+        try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
+
+        let manifest = """
+        {
+          "formatVersion": 1,
+          "moduleName": "ExtMetaOverride",
+          "metadata": "metadata.bin"
+        }
+        """
+        let metadata = """
+        symbols=4
+        class _ fq=ext.Base fields=0 layoutWords=3 vtable=1 itable=0
+        function _ fq=ext.Base.m arity=0 suspend=0
+        class _ fq=ext.Derived superFq=ext.Base fields=0 layoutWords=3 vtable=1 itable=0
+        function _ fq=ext.Derived.m arity=0 suspend=0
+        """
+        try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
+
+        try withTemporaryFile(contents: "fun main() = 0") { path in
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "VTableOverrideImport",
+                emit: .kirDump,
+                searchPaths: [libDir.path]
+            )
+            try runToKIR(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let baseClass = try XCTUnwrap(sema.symbols.lookupAll(fqName: [ctx.interner.intern("ext"), ctx.interner.intern("Base")]).first)
+            let derivedClass = try XCTUnwrap(sema.symbols.lookupAll(fqName: [ctx.interner.intern("ext"), ctx.interner.intern("Derived")]).first)
+            let baseMethod = try XCTUnwrap(sema.symbols.lookupAll(fqName: [ctx.interner.intern("ext"), ctx.interner.intern("Base"), ctx.interner.intern("m")]).first)
+            let derivedMethod = try XCTUnwrap(sema.symbols.lookupAll(fqName: [ctx.interner.intern("ext"), ctx.interner.intern("Derived"), ctx.interner.intern("m")]).first)
+
+            let baseLayout = try XCTUnwrap(sema.symbols.nominalLayout(for: baseClass))
+            let derivedLayout = try XCTUnwrap(sema.symbols.nominalLayout(for: derivedClass))
+            XCTAssertEqual(derivedLayout.superClass, baseClass)
+            XCTAssertEqual(baseLayout.vtableSize, 1)
+            XCTAssertEqual(derivedLayout.vtableSize, 1)
+            XCTAssertEqual(derivedLayout.vtableSlots[baseMethod], derivedLayout.vtableSlots[derivedMethod])
+        }
+    }
+
+    func testSemaInheritsImportedFieldLayoutFromMetadataHints() throws {
+        let fm = FileManager.default
+        let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let libDir = baseDir.appendingPathExtension("kklib")
+        try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
+
+        let manifest = """
+        {
+          "formatVersion": 1,
+          "moduleName": "ExtLayoutHint",
+          "metadata": "metadata.bin"
+        }
+        """
+        let metadata = """
+        symbols=1
+        class _ fq=ext.Base fields=1 layoutWords=4 vtable=0 itable=0
+        """
+        try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
+
+        let source = """
+        class Derived: ext.Base
+        fun main() = 0
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "LayoutHintImport",
+                emit: .kirDump,
+                searchPaths: [libDir.path]
+            )
+            try runToKIR(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let baseClass = try XCTUnwrap(sema.symbols.lookupAll(fqName: [ctx.interner.intern("ext"), ctx.interner.intern("Base")]).first)
+            let derivedClass = try XCTUnwrap(sema.symbols.lookupAll(fqName: [ctx.interner.intern("Derived")]).first)
+            let baseLayout = try XCTUnwrap(sema.symbols.nominalLayout(for: baseClass))
+            let derivedLayout = try XCTUnwrap(sema.symbols.nominalLayout(for: derivedClass))
+
+            XCTAssertEqual(baseLayout.instanceFieldCount, 1)
+            XCTAssertEqual(baseLayout.instanceSizeWords, 4)
+            XCTAssertEqual(derivedLayout.superClass, baseClass)
+            XCTAssertEqual(derivedLayout.instanceFieldCount, 1)
+            XCTAssertEqual(derivedLayout.instanceSizeWords, 4)
         }
     }
 
@@ -523,6 +715,102 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
         XCTAssertEqual(loweredEmpty.body.last, .returnUnit)
         XCTAssertFalse(loweredEmpty.body.isEmpty)
+    }
+
+    func testCoroutineLoweringRewritesOverloadedSuspendCallsByNameAndArity() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let types = TypeSystem()
+
+        let callerSymbol = SymbolID(rawValue: 950)
+        let suspendNoArgSymbol = SymbolID(rawValue: 951)
+        let suspendOneArgSymbol = SymbolID(rawValue: 952)
+        let suspendOneArgParam = SymbolID(rawValue: 953)
+
+        let argValue = arena.appendExpr(.temporary(0))
+        let noArgResult = arena.appendExpr(.temporary(1))
+        let oneArgResult = arena.appendExpr(.temporary(2))
+
+        let caller = KIRFunction(
+            symbol: callerSymbol,
+            name: interner.intern("main"),
+            params: [],
+            returnType: types.unitType,
+            body: [
+                .constValue(result: argValue, value: .intLiteral(42)),
+                .call(symbol: nil, callee: interner.intern("susp"), arguments: [], result: noArgResult, outThrown: false),
+                .call(symbol: nil, callee: interner.intern("susp"), arguments: [argValue], result: oneArgResult, outThrown: false),
+                .returnUnit
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let suspendNoArg = KIRFunction(
+            symbol: suspendNoArgSymbol,
+            name: interner.intern("susp"),
+            params: [],
+            returnType: types.unitType,
+            body: [.returnUnit],
+            isSuspend: true,
+            isInline: false
+        )
+        let suspendOneArg = KIRFunction(
+            symbol: suspendOneArgSymbol,
+            name: interner.intern("susp"),
+            params: [KIRParameter(symbol: suspendOneArgParam, type: types.make(.primitive(.int, .nonNull)))],
+            returnType: types.unitType,
+            body: [.returnUnit],
+            isSuspend: true,
+            isInline: false
+        )
+
+        let callerID = arena.appendDecl(.function(caller))
+        _ = arena.appendDecl(.function(suspendNoArg))
+        _ = arena.appendDecl(.function(suspendOneArg))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [callerID])], arena: arena)
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(
+                moduleName: "CoroutineOverloadRewrite",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            sourceManager: SourceManager(),
+            diagnostics: DiagnosticEngine(),
+            interner: interner
+        )
+        ctx.kir = module
+
+        try LoweringPhase().run(ctx)
+
+        guard case .function(let loweredCaller)? = module.arena.decl(callerID) else {
+            XCTFail("expected lowered caller function")
+            return
+        }
+
+        let rawSuspendCalls = loweredCaller.body.contains { instruction in
+            guard case .call(_, let callee, _, _, _) = instruction else {
+                return false
+            }
+            return interner.resolve(callee) == "susp"
+        }
+        XCTAssertFalse(rawSuspendCalls)
+
+        let rewrittenSuspendCalls = loweredCaller.body.compactMap { instruction -> (name: String, arity: Int, outThrown: Bool)? in
+            guard case .call(_, let callee, let arguments, _, let outThrown) = instruction else {
+                return nil
+            }
+            let name = interner.resolve(callee)
+            guard name.hasPrefix("kk_suspend_susp") else {
+                return nil
+            }
+            return (name: name, arity: arguments.count, outThrown: outThrown)
+        }
+        XCTAssertEqual(rewrittenSuspendCalls.count, 2)
+        XCTAssertEqual(Set(rewrittenSuspendCalls.map(\.arity)), Set([1, 2]))
+        XCTAssertTrue(rewrittenSuspendCalls.allSatisfy(\.outThrown))
     }
 
     func testCoroutineLoweringPreservesControlFlowAroundSuspendCalls() throws {
