@@ -4,7 +4,7 @@ public final class LLVMCAPIBackend: CodegenBackend {
     private let target: TargetTriple
     private let optLevel: OptimizationLevel
     private let diagnostics: DiagnosticEngine
-    private let strictMode: Bool
+    private let isStrictMode: Bool
     private let bindings: LLVMCAPIBindings?
     private let hasUsableBindings: Bool
 
@@ -13,13 +13,13 @@ public final class LLVMCAPIBackend: CodegenBackend {
         optLevel: OptimizationLevel,
         emitsDebugInfo: Bool,
         diagnostics: DiagnosticEngine,
-        strictMode: Bool = false
+        isStrictMode: Bool = false
     ) {
         self.target = target
         self.optLevel = optLevel
         _ = emitsDebugInfo
         self.diagnostics = diagnostics
-        self.strictMode = strictMode
+        self.isStrictMode = isStrictMode
 
         let loadedBindings = LLVMCAPIBindings.load()
         self.bindings = loadedBindings
@@ -75,7 +75,7 @@ public final class LLVMCAPIBackend: CodegenBackend {
         nativeEmit: (LLVMCAPIBindings) throws -> Void
     ) throws {
         guard let bindings, hasUsableBindings else {
-            if strictMode {
+            if isStrictMode {
                 diagnostics.error(
                     "KSWIFTK-BACKEND-1003",
                     "LLVM C API backend is requested in strict mode, but LLVM C API bindings are unavailable.",
@@ -95,7 +95,7 @@ public final class LLVMCAPIBackend: CodegenBackend {
             try nativeEmit(bindings)
         } catch {
             let reason = describe(error: error)
-            if strictMode {
+            if isStrictMode {
                 diagnostics.error(
                     "KSWIFTK-BACKEND-1004",
                     "LLVM C API backend failed to emit \(context) in strict mode: \(reason)",

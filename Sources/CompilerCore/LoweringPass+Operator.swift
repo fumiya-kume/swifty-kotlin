@@ -1,6 +1,6 @@
 import Foundation
 
-final class OperatorLoweringPass: LoweringImpl {
+final class OperatorLoweringPass: LoweringPass {
     static let name = "OperatorLowering"
     func run(module: KIRModule, ctx: KIRContext) throws {
         module.arena.transformFunctions { function in
@@ -22,7 +22,7 @@ final class OperatorLoweringPass: LoweringImpl {
                 case .equal:
                     callee = ctx.interner.intern("kk_op_eq")
                 }
-                return .call(symbol: nil, callee: callee, arguments: [lhs, rhs], result: result, outThrown: false)
+                return .call(symbol: nil, callee: callee, arguments: [lhs, rhs], result: result, canThrow: false)
             }
             return updated
         }

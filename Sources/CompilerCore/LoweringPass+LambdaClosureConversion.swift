@@ -1,6 +1,6 @@
 import Foundation
 
-final class LambdaClosureConversionPass: LoweringImpl {
+final class LambdaClosureConversionPass: LoweringPass {
     static let name = "LambdaClosureConversion"
 
     func run(module: KIRModule, ctx: KIRContext) throws {
@@ -19,7 +19,7 @@ final class LambdaClosureConversionPass: LoweringImpl {
                     callee: loweredCallee,
                     arguments: arguments,
                     result: result,
-                    outThrown: outThrown
+                    canThrow: outThrown
                 )
             }
             return updated

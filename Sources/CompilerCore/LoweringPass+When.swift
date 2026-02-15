@@ -1,6 +1,6 @@
 import Foundation
 
-final class WhenLoweringPass: LoweringImpl {
+final class WhenLoweringPass: LoweringPass {
     static let name = "WhenLowering"
 
     func run(module: KIRModule, ctx: KIRContext) throws {
@@ -21,7 +21,7 @@ final class WhenLoweringPass: LoweringImpl {
                         callee: loweredCallee,
                         arguments: [unitValue],
                         result: result,
-                        outThrown: outThrown
+                        canThrow: outThrown
                     )
                 }
                 return .call(
@@ -29,7 +29,7 @@ final class WhenLoweringPass: LoweringImpl {
                     callee: loweredCallee,
                     arguments: arguments,
                     result: result,
-                    outThrown: outThrown
+                    canThrow: outThrown
                 )
             }
             return updated

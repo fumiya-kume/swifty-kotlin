@@ -1,6 +1,6 @@
 import Foundation
 
-final class ABILoweringPass: LoweringImpl {
+final class ABILoweringPass: LoweringPass {
     static let name = "ABILowering"
 
     func run(module: KIRModule, ctx: KIRContext) throws {
@@ -10,11 +10,13 @@ final class ABILoweringPass: LoweringImpl {
             ctx.interner.intern("kk_op_mul"),
             ctx.interner.intern("kk_op_div"),
             ctx.interner.intern("kk_op_eq"),
+            ctx.interner.intern("kk_string_concat"),
             ctx.interner.intern("kk_when_select"),
             ctx.interner.intern("kk_for_lowered"),
             ctx.interner.intern("iterator"),
             ctx.interner.intern("kk_property_access"),
             ctx.interner.intern("kk_lambda_invoke"),
+            ctx.interner.intern("kk_println_any"),
             ctx.interner.intern("kk_coroutine_suspended"),
             ctx.interner.intern("kk_coroutine_state_enter"),
             ctx.interner.intern("kk_coroutine_state_set_label"),
@@ -31,7 +33,7 @@ final class ABILoweringPass: LoweringImpl {
                     callee: callee,
                     arguments: arguments,
                     result: result,
-                    outThrown: !nonThrowingCallees.contains(callee)
+                    canThrow: !nonThrowingCallees.contains(callee)
                 )
             }
             return updated
@@ -39,4 +41,3 @@ final class ABILoweringPass: LoweringImpl {
         module.recordLowering(Self.name)
     }
 }
-

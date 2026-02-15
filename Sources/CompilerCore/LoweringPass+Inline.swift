@@ -5,7 +5,7 @@ struct InlineExpansion {
     let returnedExpr: KIRExprID?
 }
 
-final class InlineLoweringPass: LoweringImpl {
+final class InlineLoweringPass: LoweringPass {
     static let name = "InlineLowering"
 
     func run(module: KIRModule, ctx: KIRContext) throws {
@@ -154,7 +154,7 @@ final class InlineLoweringPass: LoweringImpl {
                         callee: callee,
                         arguments: args.map { resolveAlias(of: $0, aliases: localExprMap) },
                         result: loweredResult,
-                        outThrown: outThrown
+                        canThrow: outThrown
                     )
                 )
 
@@ -187,7 +187,7 @@ final class InlineLoweringPass: LoweringImpl {
                 callee: callee,
                 arguments: arguments.map { resolveAlias(of: $0, aliases: aliases) },
                 result: result,
-                outThrown: outThrown
+                canThrow: outThrown
             )
 
         case .returnValue(let value):

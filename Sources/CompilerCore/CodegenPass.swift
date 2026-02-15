@@ -10,7 +10,7 @@ public final class CodegenPhase: CompilerPhase {
 
     private struct BackendSelection {
         let kind: BackendKind
-        let strictMode: Bool
+        let isStrictMode: Bool
     }
 
     public init() {}
@@ -122,23 +122,23 @@ public final class CodegenPhase: CompilerPhase {
                 optLevel: ctx.options.optLevel,
                 emitsDebugInfo: ctx.options.emitsDebugInfo,
                 diagnostics: ctx.diagnostics,
-                strictMode: selection.strictMode
+                isStrictMode: selection.isStrictMode
             )
         }
     }
 
     private func selectedBackend(irFlags: [String], diagnostics: DiagnosticEngine) -> BackendSelection {
         var requestedBackend: String?
-        var strictMode = false
+        var isStrictMode = false
 
         for flag in irFlags {
             if flag == "backend-strict" {
-                strictMode = true
+                isStrictMode = true
                 continue
             }
             if flag.hasPrefix("backend-strict=") {
                 let value = String(flag.dropFirst("backend-strict=".count))
-                strictMode = parseStrictModeFlag(value) ?? strictMode
+                isStrictMode = parseStrictModeFlag(value) ?? isStrictMode
                 continue
             }
             guard flag.hasPrefix("backend=") else {
@@ -148,21 +148,21 @@ public final class CodegenPhase: CompilerPhase {
         }
 
         guard let requestedBackend else {
-            return BackendSelection(kind: .syntheticC, strictMode: false)
+            return BackendSelection(kind: .syntheticC, isStrictMode: false)
         }
 
         switch requestedBackend {
         case "synthetic-c", "synthetic":
-            return BackendSelection(kind: .syntheticC, strictMode: false)
+            return BackendSelection(kind: .syntheticC, isStrictMode: false)
         case "llvm-c-api", "llvm-capi":
-            return BackendSelection(kind: .llvmCAPI, strictMode: strictMode)
+            return BackendSelection(kind: .llvmCAPI, isStrictMode: isStrictMode)
         default:
             diagnostics.warning(
                 "KSWIFTK-BACKEND-1002",
                 "Unknown backend '\(requestedBackend)'; falling back to synthetic C backend.",
                 range: nil
             )
-            return BackendSelection(kind: .syntheticC, strictMode: false)
+            return BackendSelection(kind: .syntheticC, isStrictMode: false)
         }
     }
 

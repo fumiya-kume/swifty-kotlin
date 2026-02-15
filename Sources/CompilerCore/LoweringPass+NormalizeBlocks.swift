@@ -1,6 +1,6 @@
 import Foundation
 
-final class NormalizeBlocksPass: LoweringImpl {
+final class NormalizeBlocksPass: LoweringPass {
     static let name = "NormalizeBlocks"
     func run(module: KIRModule, ctx: KIRContext) throws {
         module.arena.transformFunctions { function in

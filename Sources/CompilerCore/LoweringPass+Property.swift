@@ -1,6 +1,6 @@
 import Foundation
 
-final class PropertyLoweringPass: LoweringImpl {
+final class PropertyLoweringPass: LoweringPass {
     static let name = "PropertyLowering"
 
     func run(module: KIRModule, ctx: KIRContext) throws {
@@ -39,7 +39,7 @@ final class PropertyLoweringPass: LoweringImpl {
                         callee: loweredCallee,
                         arguments: loweredArguments,
                         result: result,
-                        outThrown: outThrown
+                        canThrow: outThrown
                     )
                 )
             }

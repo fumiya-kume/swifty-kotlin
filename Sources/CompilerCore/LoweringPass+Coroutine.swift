@@ -1,6 +1,6 @@
 import Foundation
 
-final class CoroutineLoweringPass: LoweringImpl {
+final class CoroutineLoweringPass: LoweringPass {
     static let name = "CoroutineLowering"
 
     private struct SuspendCallLookupKey: Hashable {
@@ -140,7 +140,7 @@ final class CoroutineLoweringPass: LoweringImpl {
                         callee: continuationProvider,
                         arguments: [],
                         result: continuationTemp,
-                        outThrown: false
+                        canThrow: false
                     )
                 )
                 var loweredArguments = arguments
@@ -151,7 +151,7 @@ final class CoroutineLoweringPass: LoweringImpl {
                         callee: loweredTarget.name,
                         arguments: loweredArguments,
                         result: result,
-                        outThrown: outThrown
+                        canThrow: outThrown
                     )
                 )
             }
@@ -311,7 +311,7 @@ final class CoroutineLoweringPass: LoweringImpl {
                 callee: enterCallee,
                 arguments: [continuationExpr, functionIDExpr],
                 result: resumeLabelExpr,
-                outThrown: false
+                canThrow: false
             )
         )
 
@@ -352,7 +352,7 @@ final class CoroutineLoweringPass: LoweringImpl {
                             callee: setLabelCallee,
                             arguments: [continuationExpr, resumeLabelExpr],
                             result: nil,
-                            outThrown: false
+                            canThrow: false
                         )
                     )
 
@@ -363,7 +363,7 @@ final class CoroutineLoweringPass: LoweringImpl {
                             callee: callee,
                             arguments: arguments,
                             result: suspensionResult,
-                            outThrown: outThrown
+                            canThrow: outThrown
                         )
                     )
 
@@ -374,7 +374,7 @@ final class CoroutineLoweringPass: LoweringImpl {
                             callee: suspendedProvider,
                             arguments: [],
                             result: suspendedExpr,
-                            outThrown: false
+                            canThrow: false
                         )
                     )
                     lowered.append(.returnIfEqual(lhs: suspensionResult, rhs: suspendedExpr))
@@ -390,7 +390,7 @@ final class CoroutineLoweringPass: LoweringImpl {
                             callee: exitCallee,
                             arguments: [continuationExpr, value],
                             result: exitValueExpr,
-                            outThrown: false
+                            canThrow: false
                         )
                     )
                     lowered.append(.returnValue(exitValueExpr))
@@ -404,7 +404,7 @@ final class CoroutineLoweringPass: LoweringImpl {
                             callee: exitCallee,
                             arguments: [continuationExpr, unitExpr],
                             result: exitValueExpr,
-                            outThrown: false
+                            canThrow: false
                         )
                     )
                     lowered.append(.returnValue(exitValueExpr))

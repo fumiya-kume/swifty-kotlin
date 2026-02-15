@@ -1,11 +1,11 @@
 import Foundation
 
-protocol LoweringImpl: KIRPass {}
+protocol LoweringPass: KIRPass {}
 
 public final class LoweringPhase: CompilerPhase {
     public static let name = "Lowerings"
 
-    private let passes: [any LoweringImpl] = [
+    private let passes: [any LoweringPass] = [
         NormalizeBlocksPass(),
         OperatorLoweringPass(),
         ForLoweringPass(),

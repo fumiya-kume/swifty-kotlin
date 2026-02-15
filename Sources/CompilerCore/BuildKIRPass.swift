@@ -186,7 +186,7 @@ public final class BuildKIRPhase: CompilerPhase {
                 return id
             }
             let id = arena.appendExpr(.temporary(Int32(arena.expressions.count)))
-            instructions.append(.call(symbol: nil, callee: name, arguments: [], result: id, outThrown: false))
+            instructions.append(.call(symbol: nil, callee: name, arguments: [], result: id, canThrow: false))
             return id
 
         case .returnExpr(let value, _):
@@ -246,7 +246,7 @@ public final class BuildKIRPhase: CompilerPhase {
                     callee: interner.intern("kk_when_select"),
                     arguments: [conditionID, thenID, elseID],
                     result: result,
-                    outThrown: false
+                    canThrow: false
                 )
             )
             return result
@@ -289,7 +289,7 @@ public final class BuildKIRPhase: CompilerPhase {
                         callee: interner.intern("kk_string_concat"),
                         arguments: [lhsID, rhsID],
                         result: result,
-                        outThrown: false
+                        canThrow: false
                     )
                 )
                 return result
@@ -330,7 +330,7 @@ public final class BuildKIRPhase: CompilerPhase {
             }
             let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)))
             let chosen = sema.bindings.callBindings[exprID]?.chosenCallee
-            instructions.append(.call(symbol: chosen, callee: calleeName, arguments: argIDs, result: result, outThrown: false))
+            instructions.append(.call(symbol: chosen, callee: calleeName, arguments: argIDs, result: result, canThrow: false))
             return result
 
         case .whenExpr(let subject, let branches, let elseExpr, _):
@@ -399,7 +399,7 @@ public final class BuildKIRPhase: CompilerPhase {
                     callee: interner.intern("kk_when_select"),
                     arguments: [matchesID, bodyID, selectedID],
                     result: nextSelectedID,
-                    outThrown: false
+                    canThrow: false
                 ))
                 selectedID = nextSelectedID
             }

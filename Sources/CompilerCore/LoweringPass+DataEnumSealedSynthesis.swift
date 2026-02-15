@@ -1,6 +1,6 @@
 import Foundation
 
-final class DataEnumSealedSynthesisPass: LoweringImpl {
+final class DataEnumSealedSynthesisPass: LoweringPass {
     static let name = "DataEnumSealedSynthesis"
 
     func run(module: KIRModule, ctx: KIRContext) throws {

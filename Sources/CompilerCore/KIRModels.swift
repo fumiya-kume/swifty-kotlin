@@ -66,7 +66,7 @@ public enum KIRInstruction: Equatable {
     case jumpIfEqual(lhs: KIRExprID, rhs: KIRExprID, target: Int32)
     case constValue(result: KIRExprID, value: KIRExprKind)
     case binary(op: KIRBinaryOp, lhs: KIRExprID, rhs: KIRExprID, result: KIRExprID)
-    case call(symbol: SymbolID?, callee: InternedString, arguments: [KIRExprID], result: KIRExprID?, outThrown: Bool)
+    case call(symbol: SymbolID?, callee: InternedString, arguments: [KIRExprID], result: KIRExprID?, canThrow: Bool)
     case returnIfEqual(lhs: KIRExprID, rhs: KIRExprID)
     case returnUnit
     case returnValue(KIRExprID)
@@ -267,7 +267,7 @@ public final class KIRModule {
             return "const r\(result.rawValue)=\(value)"
         case .binary(let op, let lhs, let rhs, let result):
             return "binary \(op) r\(lhs.rawValue), r\(rhs.rawValue) -> r\(result.rawValue)"
-        case .call(let symbol, let callee, let arguments, let result, let outThrown):
+        case .call(let symbol, let callee, let arguments, let result, let canThrow):
             let calleeName = interner.resolve(callee)
             let args = arguments.map { "r\($0.rawValue)" }.joined(separator: ", ")
             let symbolLabel: String
@@ -277,7 +277,7 @@ public final class KIRModule {
                 symbolLabel = "_"
             }
             let ret = result.map { "r\($0.rawValue)" } ?? "_"
-            return "call \(calleeName) symbol=\(symbolLabel) args=[\(args)] ret=\(ret) thrown=\(outThrown)"
+            return "call \(calleeName) symbol=\(symbolLabel) args=[\(args)] ret=\(ret) thrown=\(canThrow)"
         case .returnIfEqual(let lhs, let rhs):
             return "returnIfEqual r\(lhs.rawValue), r\(rhs.rawValue)"
         case .returnUnit:

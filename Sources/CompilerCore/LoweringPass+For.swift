@@ -1,6 +1,6 @@
 import Foundation
 
-final class ForLoweringPass: LoweringImpl {
+final class ForLoweringPass: LoweringPass {
     static let name = "ForLowering"
 
     func run(module: KIRModule, ctx: KIRContext) throws {
@@ -28,7 +28,7 @@ final class ForLoweringPass: LoweringImpl {
                             callee: iteratorCallee,
                             arguments: [iterable],
                             result: iteratorTemp,
-                            outThrown: outThrown
+                            canThrow: outThrown
                         )
                     )
                     var loweredArguments: [KIRExprID] = [iteratorTemp]
@@ -39,7 +39,7 @@ final class ForLoweringPass: LoweringImpl {
                             callee: loweredCallee,
                             arguments: loweredArguments,
                             result: result,
-                            outThrown: outThrown
+                            canThrow: outThrown
                         )
                     )
                 } else {
@@ -49,7 +49,7 @@ final class ForLoweringPass: LoweringImpl {
                             callee: loweredCallee,
                             arguments: [],
                             result: result,
-                            outThrown: outThrown
+                            canThrow: outThrown
                         )
                     )
                 }
