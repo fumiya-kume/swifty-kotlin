@@ -100,29 +100,26 @@ public final class KotlinParser {
     }
 
     private func parsePackageHeader(leadingChildren: [SyntaxChild] = [], leadingRange: SourceRange? = nil) -> NodeID {
-        var range = RangeAccumulator(value: leadingRange)
-        var children: [SyntaxChild] = leadingChildren
-
-        consumeIf(expected: .keyword(.package), into: &children, range: &range, code: "KSWIFTK-PARSE-0001")
-        parseQualifiedPath(into: &children, range: &range, allowImportWildcard: false)
-        appendOptionalTerminator(into: &children, range: &range)
-
-        return arena.makeNode(
-            kind: .packageHeader,
-            range: range.value ?? invalidRange, children)
+        parseHeaderDeclaration(keyword: .keyword(.package), kind: .packageHeader, allowWildcard: false, leadingChildren: leadingChildren, leadingRange: leadingRange)
     }
 
     private func parseImportHeader(leadingChildren: [SyntaxChild] = [], leadingRange: SourceRange? = nil) -> NodeID {
+        parseHeaderDeclaration(keyword: .keyword(.import), kind: .importHeader, allowWildcard: true, leadingChildren: leadingChildren, leadingRange: leadingRange)
+    }
+
+    private func parseHeaderDeclaration(
+        keyword: TokenKind,
+        kind: SyntaxKind,
+        allowWildcard: Bool,
+        leadingChildren: [SyntaxChild],
+        leadingRange: SourceRange?
+    ) -> NodeID {
         var range = RangeAccumulator(value: leadingRange)
         var children: [SyntaxChild] = leadingChildren
-
-        consumeIf(expected: .keyword(.import), into: &children, range: &range, code: "KSWIFTK-PARSE-0001")
-        parseQualifiedPath(into: &children, range: &range, allowImportWildcard: true)
+        consumeIf(expected: keyword, into: &children, range: &range, code: "KSWIFTK-PARSE-0001")
+        parseQualifiedPath(into: &children, range: &range, allowImportWildcard: allowWildcard)
         appendOptionalTerminator(into: &children, range: &range)
-
-        return arena.makeNode(
-            kind: .importHeader,
-            range: range.value ?? invalidRange, children)
+        return arena.makeNode(kind: kind, range: range.value ?? invalidRange, children)
     }
 
     private func parseNamedDeclaration(
@@ -554,26 +551,23 @@ public final class KotlinParser {
         }
     }
 
-    private func isDeclarationKeyword(_ keyword: Keyword) -> Bool {
+    private func isDeclarationModifierKeyword(_ keyword: Keyword) -> Bool {
         switch keyword {
         case .public, .private, .internal, .protected, .open, .abstract, .sealed, .data, .annotation,
              .inner, .expect, .actual, .const, .lateinit, .override, .final, .crossinline, .noinline, .tailrec,
              .inline, .suspend, .operator, .infix, .external, .value:
-            return true
-        case .class, .object, .interface, .fun, .val, .var, .typealias, .enum, .package, .import:
-            return true
-        case .companion:
             return true
         default:
             return false
         }
     }
 
-    private func isDeclarationModifierKeyword(_ keyword: Keyword) -> Bool {
+    private func isDeclarationKeyword(_ keyword: Keyword) -> Bool {
+        if isDeclarationModifierKeyword(keyword) {
+            return true
+        }
         switch keyword {
-        case .public, .private, .internal, .protected, .open, .abstract, .sealed, .data, .annotation,
-             .inner, .expect, .actual, .const, .lateinit, .override, .final, .crossinline, .noinline, .tailrec,
-             .inline, .suspend, .operator, .infix, .external, .value:
+        case .class, .object, .interface, .fun, .val, .var, .typealias, .enum, .package, .import, .companion:
             return true
         default:
             return false
