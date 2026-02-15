@@ -2721,7 +2721,7 @@ public final class CodegenPhase: CompilerPhase {
             return "symbols=0\n"
         }
         let exported = sema.symbols.allSymbols()
-            .filter { $0.visibility == Visibility.public }
+            .filter { $0.visibility == Visibility.public && $0.kind != .package }
             .sorted { lhs, rhs in
                 if lhs.fqName.count != rhs.fqName.count {
                     return lhs.fqName.count < rhs.fqName.count
@@ -2738,7 +2738,17 @@ public final class CodegenPhase: CompilerPhase {
         let mangler = NameMangler()
         for symbol in exported {
             let mangled = mangler.mangle(moduleName: ctx.options.moduleName, symbol: symbol, signature: "_")
-            lines.append("\(symbol.kind) \(mangled)")
+            let fqName = symbol.fqName.map { ctx.interner.resolve($0) }.joined(separator: ".")
+            var fields = [
+                "\(symbol.kind)",
+                mangled,
+                "fq=\(fqName)"
+            ]
+            if symbol.kind == .function, let signature = sema.symbols.functionSignature(for: symbol.id) {
+                fields.append("arity=\(signature.parameterTypes.count)")
+                fields.append("suspend=\(signature.isSuspend ? 1 : 0)")
+            }
+            lines.append(fields.joined(separator: " "))
         }
         return lines.joined(separator: "\n") + "\n"
     }
