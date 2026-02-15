@@ -254,10 +254,17 @@ extension BuildASTPhase {
         interner: StringInterner,
         astArena: ASTArena
     ) -> FunctionBody {
-        for child in arena.children(of: nodeID) {
-            if case .node(let childID) = child, arena.node(childID).kind == .block {
-                let exprs = blockExpressions(from: childID, in: arena, interner: interner, astArena: astArena)
-                return .block(exprs, arena.node(childID).range)
+        let directTokens = collectDirectTokens(from: nodeID, in: arena)
+        let hasExpressionBody = directTokens.contains(where: { token in
+            token.kind == .symbol(.assign)
+        })
+
+        if !hasExpressionBody {
+            for child in arena.children(of: nodeID) {
+                if case .node(let childID) = child, arena.node(childID).kind == .block {
+                    let exprs = blockExpressions(from: childID, in: arena, interner: interner, astArena: astArena)
+                    return .block(exprs, arena.node(childID).range)
+                }
             }
         }
 

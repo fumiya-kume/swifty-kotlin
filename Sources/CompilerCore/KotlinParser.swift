@@ -365,9 +365,19 @@ public final class KotlinParser {
         let startCount = stream.index
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
+        var parenDepth = 0
+        var bracketDepth = 0
 
         while !stream.atEOF() {
             let token = stream.peek()
+            if inBlock,
+               !children.isEmpty,
+               parenDepth == 0,
+               bracketDepth == 0,
+               hasLeadingNewline(token),
+               shouldSplitStatementOnNewline(token.kind) {
+                break
+            }
             if shouldStopStatementBefore(token, inBlock: inBlock) {
                 break
             }
@@ -377,6 +387,18 @@ public final class KotlinParser {
             }
 
             _ = consumeToken(into: &children, range: &range)
+            switch token.kind {
+            case .symbol(.lParen):
+                parenDepth += 1
+            case .symbol(.rParen):
+                parenDepth = max(0, parenDepth - 1)
+            case .symbol(.lBracket):
+                bracketDepth += 1
+            case .symbol(.rBracket):
+                bracketDepth = max(0, bracketDepth - 1)
+            default:
+                break
+            }
             if case .symbol(.semicolon) = token.kind {
                 break
             }
@@ -392,6 +414,18 @@ public final class KotlinParser {
         return arena.appendNode(
             kind: .statement,
             range: range.value ?? invalidRange, children)
+    }
+
+    private func shouldSplitStatementOnNewline(_ kind: TokenKind) -> Bool {
+        switch kind {
+        case .symbol(.dot), .symbol(.comma), .symbol(.questionDot), .symbol(.questionQuestion),
+             .symbol(.plus), .symbol(.minus), .symbol(.star), .symbol(.slash),
+             .symbol(.equalEqual), .symbol(.assign), .symbol(.arrow),
+             .symbol(.rParen), .symbol(.rBracket), .symbol(.rBrace):
+            return false
+        default:
+            return true
+        }
     }
 
     private enum StatementTailStatus {
