@@ -1002,7 +1002,11 @@ private struct NativeEmitter {
                     name: "thrown_val_\(instructionIndex)"
                    ) {
                     if let thrownResult {
-                        storeResult(thrownResult, thrownValue)
+                        if let alloca = copyTargetAllocas[thrownResult.rawValue] {
+                            _ = bindings.buildStore(builder, value: thrownValue, pointer: alloca)
+                        } else {
+                            storeResult(thrownResult, thrownValue)
+                        }
                     } else if let hasThrown = buildBoolCondition(
                         from: thrownValue,
                         name: "has_thrown_\(instructionIndex)"
