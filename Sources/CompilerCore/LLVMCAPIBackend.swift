@@ -698,6 +698,56 @@ private struct NativeEmitter {
                 } else {
                     lowered = nil
                 }
+            case "kk_op_ne":
+                if let compared = bindings.buildICmpNotEqual(builder, lhs: lhs, rhs: rhs, name: "ne_\(instructionIndex)") {
+                    lowered = bindings.buildZExt(builder, value: compared, type: int64Type, name: "ne64_\(instructionIndex)")
+                } else {
+                    lowered = nil
+                }
+            case "kk_op_lt":
+                if let compared = bindings.buildICmpSignedLessThan(builder, lhs: lhs, rhs: rhs, name: "lt_\(instructionIndex)") {
+                    lowered = bindings.buildZExt(builder, value: compared, type: int64Type, name: "lt64_\(instructionIndex)")
+                } else {
+                    lowered = nil
+                }
+            case "kk_op_le":
+                if let compared = bindings.buildICmpSignedLessOrEqual(builder, lhs: lhs, rhs: rhs, name: "le_\(instructionIndex)") {
+                    lowered = bindings.buildZExt(builder, value: compared, type: int64Type, name: "le64_\(instructionIndex)")
+                } else {
+                    lowered = nil
+                }
+            case "kk_op_gt":
+                if let compared = bindings.buildICmpSignedGreaterThan(builder, lhs: lhs, rhs: rhs, name: "gt_\(instructionIndex)") {
+                    lowered = bindings.buildZExt(builder, value: compared, type: int64Type, name: "gt64_\(instructionIndex)")
+                } else {
+                    lowered = nil
+                }
+            case "kk_op_ge":
+                if let compared = bindings.buildICmpSignedGreaterOrEqual(builder, lhs: lhs, rhs: rhs, name: "ge_\(instructionIndex)") {
+                    lowered = bindings.buildZExt(builder, value: compared, type: int64Type, name: "ge64_\(instructionIndex)")
+                } else {
+                    lowered = nil
+                }
+            case "kk_op_and":
+                if let lhsBool = buildBoolCondition(from: lhs, name: "and_lhs_\(instructionIndex)"),
+                   let rhsBool = buildBoolCondition(from: rhs, name: "and_rhs_\(instructionIndex)"),
+                   let lhsInt = bindings.buildZExt(builder, value: lhsBool, type: int64Type, name: "and_lhs64_\(instructionIndex)"),
+                   let rhsInt = bindings.buildZExt(builder, value: rhsBool, type: int64Type, name: "and_rhs64_\(instructionIndex)") {
+                    lowered = bindings.buildMul(builder, lhs: lhsInt, rhs: rhsInt, name: "and64_\(instructionIndex)")
+                } else {
+                    lowered = nil
+                }
+            case "kk_op_or":
+                if let lhsBool = buildBoolCondition(from: lhs, name: "or_lhs_\(instructionIndex)"),
+                   let rhsBool = buildBoolCondition(from: rhs, name: "or_rhs_\(instructionIndex)"),
+                   let lhsInt = bindings.buildZExt(builder, value: lhsBool, type: int64Type, name: "or_lhs64_\(instructionIndex)"),
+                   let rhsInt = bindings.buildZExt(builder, value: rhsBool, type: int64Type, name: "or_rhs64_\(instructionIndex)"),
+                   let sum = bindings.buildAdd(builder, lhs: lhsInt, rhs: rhsInt, name: "or_sum_\(instructionIndex)"),
+                   let nonZero = bindings.buildICmpNotEqual(builder, lhs: sum, rhs: zeroValue, name: "or_nonzero_\(instructionIndex)") {
+                    lowered = bindings.buildZExt(builder, value: nonZero, type: int64Type, name: "or64_\(instructionIndex)")
+                } else {
+                    lowered = nil
+                }
             default:
                 return false
             }

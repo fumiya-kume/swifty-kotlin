@@ -554,6 +554,22 @@ final class LLVMCAPIBindings {
         name.withCString { buildICmpFn(builder, 33, lhs, rhs, $0) }
     }
 
+    func buildICmpSignedLessThan(_ builder: LLVMBuilderRef?, lhs: LLVMValueRef?, rhs: LLVMValueRef?, name: String) -> LLVMValueRef? {
+        name.withCString { buildICmpFn(builder, 40, lhs, rhs, $0) }
+    }
+
+    func buildICmpSignedLessOrEqual(_ builder: LLVMBuilderRef?, lhs: LLVMValueRef?, rhs: LLVMValueRef?, name: String) -> LLVMValueRef? {
+        name.withCString { buildICmpFn(builder, 41, lhs, rhs, $0) }
+    }
+
+    func buildICmpSignedGreaterThan(_ builder: LLVMBuilderRef?, lhs: LLVMValueRef?, rhs: LLVMValueRef?, name: String) -> LLVMValueRef? {
+        name.withCString { buildICmpFn(builder, 38, lhs, rhs, $0) }
+    }
+
+    func buildICmpSignedGreaterOrEqual(_ builder: LLVMBuilderRef?, lhs: LLVMValueRef?, rhs: LLVMValueRef?, name: String) -> LLVMValueRef? {
+        name.withCString { buildICmpFn(builder, 39, lhs, rhs, $0) }
+    }
+
     func buildZExt(_ builder: LLVMBuilderRef?, value: LLVMValueRef?, type: LLVMTypeRef?, name: String) -> LLVMValueRef? {
         guard let buildZExtFn else {
             return nil
