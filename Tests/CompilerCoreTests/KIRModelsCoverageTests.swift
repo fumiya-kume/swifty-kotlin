@@ -51,7 +51,7 @@ final class KIRModelsCoverageTests: XCTestCase {
                 .jumpIfEqual(lhs: expr0, rhs: expr1, target: 101),
                 .jump(101),
                 .label(101),
-                .call(symbol: symB, callee: interner.intern("beta"), arguments: [expr0], result: expr4, canThrow: false),
+                .call(symbol: symB, callee: interner.intern("beta"), arguments: [expr0], result: expr4, canThrow: false, thrownResult: nil),
                 .returnIfEqual(lhs: expr0, rhs: expr1),
                 .returnValue(expr4),
                 .endBlock

@@ -306,8 +306,8 @@ final class GoldenHarnessTests: XCTestCase {
         case .ifExpr(let condition, let thenExpr, let elseExpr, _):
             let renderedElse = elseExpr.map { "e\($0.rawValue)" } ?? "_"
             return "if cond=e\(condition.rawValue) then=e\(thenExpr.rawValue) else=\(renderedElse)"
-        case .tryExpr(let body, let catchBodies, let finallyExpr, _):
-            let catches = catchBodies.map { "e\($0.rawValue)" }.joined(separator: ",")
+        case .tryExpr(let body, let catchClauses, let finallyExpr, _):
+            let catches = catchClauses.map { "e\($0.body.rawValue)" }.joined(separator: ",")
             let renderedFinally = finallyExpr.map { "e\($0.rawValue)" } ?? "_"
             return "try body=e\(body.rawValue) catches=[\(catches)] finally=\(renderedFinally)"
         }
