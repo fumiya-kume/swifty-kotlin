@@ -114,9 +114,11 @@ public struct KIRGlobal {
 
 public struct KIRNominalType {
     public let symbol: SymbolID
+    public let memberDecls: [KIRDeclID]
 
-    public init(symbol: SymbolID) {
+    public init(symbol: SymbolID, memberDecls: [KIRDeclID] = []) {
         self.symbol = symbol
+        self.memberDecls = memberDecls
     }
 }
 

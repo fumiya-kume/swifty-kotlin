@@ -185,7 +185,21 @@ open class BaseScope: Scope {
 public final class FileScope: BaseScope {}
 public final class PackageScope: BaseScope {}
 public final class ImportScope: BaseScope {}
-public final class ClassMemberScope: BaseScope {}
+
+public final class ClassMemberScope: BaseScope {
+    private let ownerSymbol: SymbolID
+    private let thisType: TypeID?
+
+    public init(parent: Scope?, symbols: SymbolTable, ownerSymbol: SymbolID, thisType: TypeID?) {
+        self.ownerSymbol = ownerSymbol
+        self.thisType = thisType
+        super.init(parent: parent, symbols: symbols)
+    }
+
+    public var receiverType: TypeID? { thisType }
+    public var owner: SymbolID { ownerSymbol }
+}
+
 public final class FunctionScope: BaseScope {}
 public final class BlockScope: BaseScope {}
 
@@ -198,6 +212,7 @@ public final class SymbolTable {
     private var nominalLayouts: [SymbolID: NominalLayout] = [:]
     private var nominalLayoutHints: [SymbolID: NominalLayoutHint] = [:]
     private var externalLinkNames: [SymbolID: String] = [:]
+    private var parentSymbols: [SymbolID: SymbolID] = [:]
 
     public init() {}
 
@@ -347,6 +362,14 @@ public final class SymbolTable {
 
     public func externalLinkName(for symbol: SymbolID) -> String? {
         externalLinkNames[symbol]
+    }
+
+    public func setParentSymbol(_ parent: SymbolID, for child: SymbolID) {
+        parentSymbols[child] = parent
+    }
+
+    public func parentSymbol(for child: SymbolID) -> SymbolID? {
+        parentSymbols[child]
     }
 }
 

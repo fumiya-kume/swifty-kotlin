@@ -90,6 +90,10 @@ public struct ClassDecl {
     public let nestedTypeAliases: [TypeAliasDecl]
     public let enumEntries: [EnumEntryDecl]
     public let initBlocks: [FunctionBody]
+    public let memberFunctions: [DeclID]
+    public let memberProperties: [DeclID]
+    public let nestedClasses: [DeclID]
+    public let nestedObjects: [DeclID]
 
     public init(
         range: SourceRange,
@@ -100,7 +104,11 @@ public struct ClassDecl {
         superTypes: [TypeRefID] = [],
         nestedTypeAliases: [TypeAliasDecl] = [],
         enumEntries: [EnumEntryDecl] = [],
-        initBlocks: [FunctionBody] = []
+        initBlocks: [FunctionBody] = [],
+        memberFunctions: [DeclID] = [],
+        memberProperties: [DeclID] = [],
+        nestedClasses: [DeclID] = [],
+        nestedObjects: [DeclID] = []
     ) {
         self.range = range
         self.name = name
@@ -111,6 +119,10 @@ public struct ClassDecl {
         self.nestedTypeAliases = nestedTypeAliases
         self.enumEntries = enumEntries
         self.initBlocks = initBlocks
+        self.memberFunctions = memberFunctions
+        self.memberProperties = memberProperties
+        self.nestedClasses = nestedClasses
+        self.nestedObjects = nestedObjects
     }
 }
 
@@ -121,6 +133,10 @@ public struct ObjectDecl {
     public let superTypes: [TypeRefID]
     public let nestedTypeAliases: [TypeAliasDecl]
     public let initBlocks: [FunctionBody]
+    public let memberFunctions: [DeclID]
+    public let memberProperties: [DeclID]
+    public let nestedClasses: [DeclID]
+    public let nestedObjects: [DeclID]
 
     public init(
         range: SourceRange,
@@ -128,7 +144,11 @@ public struct ObjectDecl {
         modifiers: Modifiers,
         superTypes: [TypeRefID] = [],
         nestedTypeAliases: [TypeAliasDecl] = [],
-        initBlocks: [FunctionBody] = []
+        initBlocks: [FunctionBody] = [],
+        memberFunctions: [DeclID] = [],
+        memberProperties: [DeclID] = [],
+        nestedClasses: [DeclID] = [],
+        nestedObjects: [DeclID] = []
     ) {
         self.range = range
         self.name = name
@@ -136,6 +156,10 @@ public struct ObjectDecl {
         self.superTypes = superTypes
         self.nestedTypeAliases = nestedTypeAliases
         self.initBlocks = initBlocks
+        self.memberFunctions = memberFunctions
+        self.memberProperties = memberProperties
+        self.nestedClasses = nestedClasses
+        self.nestedObjects = nestedObjects
     }
 }
 
@@ -217,6 +241,7 @@ public struct PropertyDecl {
     public let initializer: ExprID?
     public let getter: PropertyAccessorDecl?
     public let setter: PropertyAccessorDecl?
+    public let delegateExpression: ExprID?
 
     public init(
         range: SourceRange,
@@ -226,7 +251,8 @@ public struct PropertyDecl {
         isVar: Bool = false,
         initializer: ExprID? = nil,
         getter: PropertyAccessorDecl? = nil,
-        setter: PropertyAccessorDecl? = nil
+        setter: PropertyAccessorDecl? = nil,
+        delegateExpression: ExprID? = nil
     ) {
         self.range = range
         self.name = name
@@ -236,6 +262,7 @@ public struct PropertyDecl {
         self.initializer = initializer
         self.getter = getter
         self.setter = setter
+        self.delegateExpression = delegateExpression
     }
 }
 

@@ -147,14 +147,46 @@ extension DataFlowSemaPassPhase {
                     scope.insert(entrySymbol)
                 }
             }
+            collectMemberHeaders(
+                memberFunctions: classDecl.memberFunctions,
+                memberProperties: classDecl.memberProperties,
+                nestedClasses: classDecl.nestedClasses,
+                nestedObjects: classDecl.nestedObjects,
+                ownerFQName: fqName,
+                ownerSymbol: symbol,
+                ownerType: classType,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                bindings: bindings,
+                scope: scope,
+                diagnostics: diagnostics,
+                interner: interner
+            )
 
         case .objectDecl(let objectDecl):
-            _ = types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
+            let objectType = types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
             collectNestedTypeAliases(
                 objectDecl.nestedTypeAliases,
                 ownerFQName: fqName,
                 symbols: symbols,
                 diagnostics: diagnostics
+            )
+            collectMemberHeaders(
+                memberFunctions: objectDecl.memberFunctions,
+                memberProperties: objectDecl.memberProperties,
+                nestedClasses: objectDecl.nestedClasses,
+                nestedObjects: objectDecl.nestedObjects,
+                ownerFQName: fqName,
+                ownerSymbol: symbol,
+                ownerType: objectType,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                bindings: bindings,
+                scope: scope,
+                diagnostics: diagnostics,
+                interner: interner
             )
 
         case .funDecl(let funDecl):
@@ -266,6 +298,249 @@ extension DataFlowSemaPassPhase {
 
         case .typeAliasDecl, .enumEntryDecl:
             break
+        }
+    }
+
+    private func collectMemberHeaders(
+        memberFunctions: [DeclID],
+        memberProperties: [DeclID],
+        nestedClasses: [DeclID],
+        nestedObjects: [DeclID],
+        ownerFQName: [InternedString],
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        ast: ASTModule,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        bindings: BindingTable,
+        scope: Scope,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner
+    ) {
+        let anyType = types.anyType
+        let unitType = types.unitType
+
+        for declID in memberFunctions {
+            guard let decl = ast.arena.decl(declID),
+                  case .funDecl(let funDecl) = decl else {
+                continue
+            }
+            let memberFQName = ownerFQName + [funDecl.name]
+            let memberFlags = flags(from: funDecl.modifiers)
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: funDecl.name,
+                fqName: memberFQName,
+                declSite: funDecl.range,
+                visibility: visibility(from: funDecl.modifiers),
+                flags: memberFlags
+            )
+            scope.insert(memberSymbol)
+            bindings.bindDecl(declID, symbol: memberSymbol)
+            symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
+
+            let localNamespaceFQName = memberFQName + [interner.intern("$\(memberSymbol.rawValue)")]
+            var paramTypes: [TypeID] = []
+            var paramSymbols: [SymbolID] = []
+            var paramHasDefaultValues: [Bool] = []
+            var paramIsVararg: [Bool] = []
+            var typeParameterSymbols: [SymbolID] = []
+            var localTypeParameters: [InternedString: SymbolID] = [:]
+            var reifiedIndices: Set<Int> = []
+
+            for (index, typeParam) in funDecl.typeParams.enumerated() {
+                let typeParamFQName = localNamespaceFQName + [typeParam.name]
+                let typeParamFlags: SymbolFlags = typeParam.isReified ? [.reifiedTypeParameter] : []
+                let typeParamSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: typeParam.name,
+                    fqName: typeParamFQName,
+                    declSite: funDecl.range,
+                    visibility: .private,
+                    flags: typeParamFlags
+                )
+                typeParameterSymbols.append(typeParamSymbol)
+                localTypeParameters[typeParam.name] = typeParamSymbol
+                if typeParam.isReified {
+                    reifiedIndices.insert(index)
+                }
+            }
+
+            for valueParam in funDecl.valueParams {
+                let paramFQName = localNamespaceFQName + [valueParam.name]
+                let paramSymbol = symbols.define(
+                    kind: .valueParameter,
+                    name: valueParam.name,
+                    fqName: paramFQName,
+                    declSite: funDecl.range,
+                    visibility: .private,
+                    flags: []
+                )
+                let resolvedType = resolveTypeRef(
+                    valueParam.type,
+                    ast: ast,
+                    symbols: symbols,
+                    types: types,
+                    interner: interner,
+                    localTypeParameters: localTypeParameters
+                ) ?? anyType
+                paramTypes.append(resolvedType)
+                paramSymbols.append(paramSymbol)
+                paramHasDefaultValues.append(valueParam.hasDefaultValue)
+                paramIsVararg.append(valueParam.isVararg)
+            }
+
+            let returnType: TypeID
+            if let explicit = resolveTypeRef(
+                funDecl.returnType,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                localTypeParameters: localTypeParameters
+            ) {
+                returnType = explicit
+            } else {
+                switch funDecl.body {
+                case .unit:
+                    returnType = unitType
+                case .block, .expr:
+                    returnType = anyType
+                }
+            }
+
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: ownerType,
+                    parameterTypes: paramTypes,
+                    returnType: returnType,
+                    isSuspend: funDecl.isSuspend,
+                    valueParameterSymbols: paramSymbols,
+                    valueParameterHasDefaultValues: paramHasDefaultValues,
+                    valueParameterIsVararg: paramIsVararg,
+                    typeParameterSymbols: typeParameterSymbols,
+                    reifiedTypeParameterIndices: reifiedIndices
+                ),
+                for: memberSymbol
+            )
+        }
+
+        for declID in memberProperties {
+            guard let decl = ast.arena.decl(declID),
+                  case .propertyDecl(let propertyDecl) = decl else {
+                continue
+            }
+            let memberFQName = ownerFQName + [propertyDecl.name]
+            var propertyFlags = flags(from: propertyDecl.modifiers)
+            if propertyDecl.isVar {
+                propertyFlags.insert(.mutable)
+            }
+            let memberSymbol = symbols.define(
+                kind: .property,
+                name: propertyDecl.name,
+                fqName: memberFQName,
+                declSite: propertyDecl.range,
+                visibility: visibility(from: propertyDecl.modifiers),
+                flags: propertyFlags
+            )
+            scope.insert(memberSymbol)
+            bindings.bindDecl(declID, symbol: memberSymbol)
+            symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
+
+            let resolvedType = resolveTypeRef(
+                propertyDecl.type,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                interner: interner
+            ) ?? types.nullableAnyType
+            symbols.setPropertyType(resolvedType, for: memberSymbol)
+        }
+
+        for declID in nestedClasses {
+            guard let decl = ast.arena.decl(declID),
+                  case .classDecl(let nestedClass) = decl else {
+                continue
+            }
+            let nestedFQName = ownerFQName + [nestedClass.name]
+            let nestedSymbol = symbols.define(
+                kind: classSymbolKind(for: nestedClass),
+                name: nestedClass.name,
+                fqName: nestedFQName,
+                declSite: nestedClass.range,
+                visibility: visibility(from: nestedClass.modifiers),
+                flags: flags(from: nestedClass.modifiers)
+            )
+            scope.insert(nestedSymbol)
+            bindings.bindDecl(declID, symbol: nestedSymbol)
+            symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)
+
+            let nestedType = types.make(.classType(ClassType(classSymbol: nestedSymbol, args: [], nullability: .nonNull)))
+            collectNestedTypeAliases(
+                nestedClass.nestedTypeAliases,
+                ownerFQName: nestedFQName,
+                symbols: symbols,
+                diagnostics: diagnostics
+            )
+            collectMemberHeaders(
+                memberFunctions: nestedClass.memberFunctions,
+                memberProperties: nestedClass.memberProperties,
+                nestedClasses: nestedClass.nestedClasses,
+                nestedObjects: nestedClass.nestedObjects,
+                ownerFQName: nestedFQName,
+                ownerSymbol: nestedSymbol,
+                ownerType: nestedType,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                bindings: bindings,
+                scope: scope,
+                diagnostics: diagnostics,
+                interner: interner
+            )
+        }
+
+        for declID in nestedObjects {
+            guard let decl = ast.arena.decl(declID),
+                  case .objectDecl(let nestedObject) = decl else {
+                continue
+            }
+            let nestedFQName = ownerFQName + [nestedObject.name]
+            let nestedSymbol = symbols.define(
+                kind: .object,
+                name: nestedObject.name,
+                fqName: nestedFQName,
+                declSite: nestedObject.range,
+                visibility: visibility(from: nestedObject.modifiers),
+                flags: flags(from: nestedObject.modifiers)
+            )
+            scope.insert(nestedSymbol)
+            bindings.bindDecl(declID, symbol: nestedSymbol)
+            symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)
+
+            let nestedType = types.make(.classType(ClassType(classSymbol: nestedSymbol, args: [], nullability: .nonNull)))
+            collectNestedTypeAliases(
+                nestedObject.nestedTypeAliases,
+                ownerFQName: nestedFQName,
+                symbols: symbols,
+                diagnostics: diagnostics
+            )
+            collectMemberHeaders(
+                memberFunctions: nestedObject.memberFunctions,
+                memberProperties: nestedObject.memberProperties,
+                nestedClasses: nestedObject.nestedClasses,
+                nestedObjects: nestedObject.nestedObjects,
+                ownerFQName: nestedFQName,
+                ownerSymbol: nestedSymbol,
+                ownerType: nestedType,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                bindings: bindings,
+                scope: scope,
+                diagnostics: diagnostics,
+                interner: interner
+            )
         }
     }
 
