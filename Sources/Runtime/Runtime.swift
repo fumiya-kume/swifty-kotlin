@@ -406,11 +406,20 @@ public func kk_array_set(_ arrayRaw: Int, _ index: Int, _ value: Int, _ outThrow
 
 @_cdecl("kk_println_any")
 public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
-    guard let raw = normalizeNullableRuntimePointer(obj) else {
+    let intValue: Int
+    if let ptr = obj {
+        intValue = Int(bitPattern: ptr)
+    } else {
+        intValue = 0
+    }
+    if intValue == runtimeNullSentinelInt {
         Swift.print("null")
         return
     }
-    let intValue = Int(bitPattern: raw)
+    guard let raw = obj else {
+        Swift.print(intValue)
+        return
+    }
     RuntimeStorage.lock.lock()
     let isObjectPointer = RuntimeStorage.objectPointers.contains(UInt(bitPattern: raw))
     RuntimeStorage.lock.unlock()
