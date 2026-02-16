@@ -581,6 +581,33 @@ public final class BuildKIRPhase: CompilerPhase {
                 instructions: &instructions
             )
 
+        case .unary(let op, let operand, _):
+            let operandID = lowerExpr(
+                operand,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            switch op {
+            case .plus:
+                return operandID
+            case .minus:
+                let zero = arena.appendExpr(.intLiteral(0), type: intType)
+                instructions.append(.constValue(result: zero, value: .intLiteral(0)))
+                let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? intType)
+                instructions.append(.binary(op: .subtract, lhs: zero, rhs: operandID, result: result))
+                return result
+            case .not:
+                let falseValue = arena.appendExpr(.boolLiteral(false), type: boolType)
+                instructions.append(.constValue(result: falseValue, value: .boolLiteral(false)))
+                let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? boolType)
+                instructions.append(.binary(op: .equal, lhs: operandID, rhs: falseValue, result: result))
+                return result
+            }
+
         case .binary(let op, let lhs, let rhs, _):
             let lhsID = lowerExpr(
                 lhs,
@@ -658,6 +685,19 @@ public final class BuildKIRPhase: CompilerPhase {
                 kirOp = .divide
             case .equal:
                 kirOp = .equal
+            case .notEqual, .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual, .logicalAnd, .logicalOr:
+                if let runtimeCallee = builtinBinaryRuntimeCallee(for: op, interner: interner) {
+                    instructions.append(
+                        .call(
+                            symbol: nil,
+                            callee: runtimeCallee,
+                            arguments: [lhsID, rhsID],
+                            result: result,
+                            canThrow: false
+                        )
+                    )
+                }
+                return result
             }
             instructions.append(.binary(op: kirOp, lhs: lhsID, rhs: rhsID, result: result))
             return result
@@ -1038,6 +1078,35 @@ public final class BuildKIRPhase: CompilerPhase {
             return interner.intern("div")
         case .equal:
             return interner.intern("equals")
+        case .notEqual:
+            return interner.intern("equals")
+        case .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
+            return interner.intern("compareTo")
+        case .logicalAnd:
+            return interner.intern("and")
+        case .logicalOr:
+            return interner.intern("or")
+        }
+    }
+
+    private func builtinBinaryRuntimeCallee(for op: BinaryOp, interner: StringInterner) -> InternedString? {
+        switch op {
+        case .notEqual:
+            return interner.intern("kk_op_ne")
+        case .lessThan:
+            return interner.intern("kk_op_lt")
+        case .lessOrEqual:
+            return interner.intern("kk_op_le")
+        case .greaterThan:
+            return interner.intern("kk_op_gt")
+        case .greaterOrEqual:
+            return interner.intern("kk_op_ge")
+        case .logicalAnd:
+            return interner.intern("kk_op_and")
+        case .logicalOr:
+            return interner.intern("kk_op_or")
+        case .add, .subtract, .multiply, .divide, .equal:
+            return nil
         }
     }
 

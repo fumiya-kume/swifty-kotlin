@@ -47,7 +47,7 @@ extension BuildASTPhase {
         }
 
         private func parseExpression(minPrecedence: Int) -> ExprID? {
-            guard var lhs = parsePostfixOrPrimary() else {
+            guard var lhs = parsePrefixOrPostfix() else {
                 return nil
             }
 
@@ -59,6 +59,18 @@ extension BuildASTPhase {
                 lhs = astArena.appendExpr(.binary(op: op, lhs: lhs, rhs: rhs, range: range))
             }
             return lhs
+        }
+
+        private func parsePrefixOrPostfix() -> ExprID? {
+            if let unaryOp = unaryOperator(at: current()) {
+                guard let opToken = consume(),
+                      let operand = parsePrefixOrPostfix() else {
+                    return nil
+                }
+                let range = mergeRanges(opToken.range, astArena.exprRange(operand), fallback: opToken.range)
+                return astArena.appendExpr(.unary(op: unaryOp, operand: operand, range: range))
+            }
+            return parsePostfixOrPrimary()
         }
 
         private func parsePostfixOrPrimary() -> ExprID? {
@@ -570,6 +582,34 @@ extension BuildASTPhase {
                 return .divide
             case .symbol(.equalEqual):
                 return .equal
+            case .symbol(.bangEqual):
+                return .notEqual
+            case .symbol(.lessThan):
+                return .lessThan
+            case .symbol(.lessOrEqual):
+                return .lessOrEqual
+            case .symbol(.greaterThan):
+                return .greaterThan
+            case .symbol(.greaterOrEqual):
+                return .greaterOrEqual
+            case .symbol(.ampAmp):
+                return .logicalAnd
+            case .symbol(.barBar):
+                return .logicalOr
+            default:
+                return nil
+            }
+        }
+
+        private func unaryOperator(at token: Token?) -> UnaryOp? {
+            guard let token else { return nil }
+            switch token.kind {
+            case .symbol(.plus):
+                return .plus
+            case .symbol(.minus):
+                return .minus
+            case .symbol(.bang):
+                return .not
             default:
                 return nil
             }
@@ -580,8 +620,14 @@ extension BuildASTPhase {
             case .multiply, .divide:
                 return 20
             case .add, .subtract:
-                return 10
-            case .equal:
+                return 18
+            case .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
+                return 15
+            case .equal, .notEqual:
+                return 12
+            case .logicalAnd:
+                return 8
+            case .logicalOr:
                 return 5
             }
         }

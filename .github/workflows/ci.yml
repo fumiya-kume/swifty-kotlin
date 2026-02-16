@@ -12,65 +12,52 @@ permissions:
   contents: read
 
 jobs:
-  test-and-coverage:
-    name: Test and Coverage Gate
-    runs-on: macos-latest
-
+  smoke-tests:
+    name: Smoke Tests
+    runs-on: [self-hosted, macOS, ARM64]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Show toolchain versions
         run: |
-          xcodebuild -version
           swift --version
-
       - name: Run smoke tests
         run: bash Scripts/swift_test.sh --filter SmokeTests
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "21"
-
-      - name: Ensure kotlinc is installed
+  diff-regression:
+    name: kotlinc Diff Regression
+    runs-on: [self-hosted, macOS, ARM64]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify prerequisites
         run: |
-          if ! command -v kotlinc >/dev/null 2>&1; then
-            brew update
-            brew install kotlin
-          fi
+          java -version
           kotlinc -version
-
       - name: Build compiler
         run: swift build
-
       - name: Run kotlinc diff regression cases
         id: diff_kotlinc
         continue-on-error: true
         env:
           DIFF_REPORT: ${{ runner.temp }}/diff_kotlinc_report.tsv
         run: bash Scripts/diff_kotlinc.sh --report "$DIFF_REPORT" Scripts/diff_cases
-
       - name: Summarize kotlinc diff artifacts
         if: always()
         env:
           DIFF_REPORT: ${{ runner.temp }}/diff_kotlinc_report.tsv
         run: bash Scripts/diff_kotlinc_ci_summary.sh --report "$DIFF_REPORT"
-
       - name: Fail when kotlinc diff regression mismatches exist
         if: steps.diff_kotlinc.outcome == 'failure'
         run: |
           echo "kotlinc diff regression cases failed." >&2
           exit 1
 
-      - name: Ensure jq is installed
-        run: |
-          if ! command -v jq >/dev/null 2>&1; then
-            brew update
-            brew install jq
-          fi
-
+  test-and-coverage:
+    name: Test and Coverage Gate
+    runs-on: [self-hosted, macOS, ARM64]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify prerequisites
+        run: jq --version
       - name: Run tests with coverage threshold
         env:
           COVERAGE_THRESHOLD: "95"

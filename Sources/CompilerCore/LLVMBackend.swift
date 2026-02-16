@@ -132,7 +132,18 @@ public final class LLVMBackend {
     }
 
     private static let builtinOps: [String: String] = [
-        "kk_op_add": "+", "kk_op_sub": "-", "kk_op_mul": "*", "kk_op_div": "/", "kk_op_eq": "=="
+        "kk_op_add": "+",
+        "kk_op_sub": "-",
+        "kk_op_mul": "*",
+        "kk_op_div": "/",
+        "kk_op_eq": "==",
+        "kk_op_ne": "!=",
+        "kk_op_lt": "<",
+        "kk_op_le": "<=",
+        "kk_op_gt": ">",
+        "kk_op_ge": ">=",
+        "kk_op_and": "&&",
+        "kk_op_or": "||"
     ]
 
     private struct FrameMapPlan {
