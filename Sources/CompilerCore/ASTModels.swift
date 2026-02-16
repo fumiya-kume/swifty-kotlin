@@ -353,6 +353,20 @@ public struct CallArgument: Equatable {
     }
 }
 
+public struct CatchClause: Equatable {
+    public let paramName: InternedString?
+    public let paramTypeName: InternedString?
+    public let body: ExprID
+    public let range: SourceRange
+
+    public init(paramName: InternedString? = nil, paramTypeName: InternedString? = nil, body: ExprID, range: SourceRange) {
+        self.paramName = paramName
+        self.paramTypeName = paramTypeName
+        self.body = body
+        self.range = range
+    }
+}
+
 public enum Expr: Equatable {
     case intLiteral(Int64, SourceRange)
     case boolLiteral(Bool, SourceRange)
@@ -373,7 +387,7 @@ public enum Expr: Equatable {
     case whenExpr(subject: ExprID, branches: [WhenBranch], elseExpr: ExprID?, range: SourceRange)
     case returnExpr(value: ExprID?, range: SourceRange)
     case ifExpr(condition: ExprID, thenExpr: ExprID, elseExpr: ExprID?, range: SourceRange)
-    case tryExpr(body: ExprID, catchBodies: [ExprID], finallyExpr: ExprID?, range: SourceRange)
+    case tryExpr(body: ExprID, catchClauses: [CatchClause], finallyExpr: ExprID?, range: SourceRange)
     case unaryExpr(op: UnaryOp, operand: ExprID, range: SourceRange)
     case isCheck(expr: ExprID, type: TypeRefID, negated: Bool, range: SourceRange)
     case asCast(expr: ExprID, type: TypeRefID, isSafe: Bool, range: SourceRange)

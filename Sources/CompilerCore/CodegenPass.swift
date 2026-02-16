@@ -248,12 +248,19 @@ public final class CodegenPhase: CompilerPhase {
             return "unary op=\(op) operand=\(operand.rawValue) result=\(result.rawValue)"
         case .nullAssert(let operand, let result):
             return "nullAssert operand=\(operand.rawValue) result=\(result.rawValue)"
-        case .call(let symbol, let callee, let arguments, let result, let canThrow):
+        case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult):
             let args = arguments.map { String($0.rawValue) }.joined(separator: ",")
             let symbolValue = symbol.map { String($0.rawValue) } ?? "_"
             let resultValue = result.map { String($0.rawValue) } ?? "_"
+            let thrownResultValue = thrownResult.map { String($0.rawValue) } ?? "_"
             let calleeName = base64Encode(interner.resolve(callee))
-            return "call symbol=\(symbolValue) calleeB64=\(calleeName) args=[\(args)] result=\(resultValue) canThrow=\(canThrow ? 1 : 0)"
+            return "call symbol=\(symbolValue) calleeB64=\(calleeName) args=[\(args)] result=\(resultValue) canThrow=\(canThrow ? 1 : 0) thrownResult=\(thrownResultValue)"
+        case .jumpIfNotNull(let value, let target):
+            return "jumpIfNotNull value=\(value.rawValue) target=\(target)"
+        case .copy(let from, let to):
+            return "copy from=\(from.rawValue) to=\(to.rawValue)"
+        case .rethrow(let value):
+            return "rethrow value=\(value.rawValue)"
         }
     }
 

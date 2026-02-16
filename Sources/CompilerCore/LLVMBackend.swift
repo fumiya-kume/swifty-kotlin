@@ -699,7 +699,7 @@ public final class LLVMBackend {
                 lines.append("  \(varName(result)) = \(varName(operand));")
                 syncRoot(result)
 
-            case .call(let symbol, let callee, let arguments, let result, let usesThrownChannel):
+            case .call(let symbol, let callee, let arguments, let result, let usesThrownChannel, let thrownResult):
                 let calleeName = interner.resolve(callee)
                 let argVars = arguments.map { arg -> String in
                     ensureDeclared(arg, declared: &declared, lines: &lines)
@@ -708,6 +708,9 @@ public final class LLVMBackend {
 
                 if let result {
                     ensureDeclared(result, declared: &declared, lines: &lines)
+                }
+                if let thrownResult {
+                    ensureDeclared(thrownResult, declared: &declared, lines: &lines)
                 }
 
                 if calleeName == "println" || calleeName == "kk_println_any" {
@@ -795,12 +798,31 @@ public final class LLVMBackend {
                     lines.append("  kk_unregister_coroutine_root((void*)(uintptr_t)\(continuation));")
                 }
                 if let thrownSlotName {
-                    lines.append("  if (\(thrownSlotName) != 0) {")
-                    lines.append("    if (outThrown) { *outThrown = \(thrownSlotName); }")
-                    lines.append("    kk_pop_frame();")
-                    lines.append("    return 0;")
-                    lines.append("  }")
+                    if let thrownResult {
+                        lines.append("  \(varName(thrownResult)) = \(thrownSlotName);")
+                    } else {
+                        lines.append("  if (\(thrownSlotName) != 0) {")
+                        lines.append("    if (outThrown) { *outThrown = \(thrownSlotName); }")
+                        lines.append("    kk_pop_frame();")
+                        lines.append("    return 0;")
+                        lines.append("  }")
+                    }
                 }
+
+            case .jumpIfNotNull(let value, let target):
+                ensureDeclared(value, declared: &declared, lines: &lines)
+                lines.append("  if (\(varName(value)) != 0) goto \(labelName(target));")
+
+            case .copy(let from, let to):
+                ensureDeclared(from, declared: &declared, lines: &lines)
+                ensureDeclared(to, declared: &declared, lines: &lines)
+                lines.append("  \(varName(to)) = \(varName(from));")
+
+            case .rethrow(let value):
+                ensureDeclared(value, declared: &declared, lines: &lines)
+                lines.append("  if (outThrown) { *outThrown = \(varName(value)); }")
+                lines.append("  kk_pop_frame();")
+                lines.append("  return 0;")
 
             case .returnIfEqual(let lhs, let rhs):
                 ensureDeclared(lhs, declared: &declared, lines: &lines)
@@ -882,13 +904,23 @@ public final class LLVMBackend {
                 ids.insert(lhs)
                 ids.insert(rhs)
                 ids.insert(result)
-            case .call(_, _, let arguments, let result, _):
+            case .call(_, _, let arguments, let result, _, let thrownResult):
                 for arg in arguments {
                     ids.insert(arg)
                 }
                 if let result {
                     ids.insert(result)
                 }
+                if let thrownResult {
+                    ids.insert(thrownResult)
+                }
+            case .jumpIfNotNull(let value, _):
+                ids.insert(value)
+            case .copy(let from, let to):
+                ids.insert(from)
+                ids.insert(to)
+            case .rethrow(let value):
+                ids.insert(value)
             case .returnIfEqual(let lhs, let rhs):
                 ids.insert(lhs)
                 ids.insert(rhs)
@@ -1045,7 +1077,7 @@ public final class LLVMBackend {
                 continue
             }
             for instruction in function.body {
-                guard case .call(let symbol, let callee, _, _, _) = instruction else {
+                guard case .call(let symbol, let callee, _, _, _, _) = instruction else {
                     continue
                 }
                 if let symbol, functionSymbols[symbol] != nil {
