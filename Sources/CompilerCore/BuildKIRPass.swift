@@ -6,6 +6,8 @@ public final class BuildKIRPhase: CompilerPhase {
     private var localValuesBySymbol: [SymbolID: KIRExprID] = [:]
     private var currentImplicitReceiverExprID: KIRExprID?
     private var currentImplicitReceiverSymbol: SymbolID?
+    private var loopControlStack: [(continueLabel: Int32, breakLabel: Int32)] = []
+    private var nextLoopLabel: Int32 = 10_000
 
     public init() {}
 
@@ -49,6 +51,8 @@ public final class BuildKIRPhase: CompilerPhase {
                     localValuesBySymbol.removeAll(keepingCapacity: true)
                     currentImplicitReceiverExprID = nil
                     currentImplicitReceiverSymbol = nil
+                    loopControlStack.removeAll(keepingCapacity: true)
+                    nextLoopLabel = 10_000
                     let signature = sema.symbols.functionSignature(for: symbol)
                     var params: [KIRParameter] = []
                     if let signature {
@@ -239,6 +243,171 @@ public final class BuildKIRPhase: CompilerPhase {
             let id = arena.appendExpr(.unit, type: boundType ?? sema.types.errorType)
             instructions.append(.constValue(result: id, value: .unit))
             return id
+
+        case .forExpr(_, let iterableExpr, let bodyExpr, _):
+            let iterableID = lowerExpr(
+                iterableExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            let iteratorID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("iterator"),
+                arguments: [iterableID],
+                result: iteratorID,
+                canThrow: false
+            ))
+
+            let continueLabel = makeLoopLabel()
+            let breakLabel = makeLoopLabel()
+            instructions.append(.label(continueLabel))
+
+            let hasNextID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("hasNext"),
+                arguments: [iteratorID],
+                result: hasNextID,
+                canThrow: false
+            ))
+            let falseID = arena.appendExpr(.boolLiteral(false), type: boolType)
+            instructions.append(.constValue(result: falseID, value: .boolLiteral(false)))
+            instructions.append(.jumpIfEqual(lhs: hasNextID, rhs: falseID, target: breakLabel))
+
+            let loopVariableSymbol = sema.bindings.identifierSymbols[exprID]
+            let previousLoopValue = loopVariableSymbol.flatMap { localValuesBySymbol[$0] }
+            let nextValueID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("next"),
+                arguments: [iteratorID],
+                result: nextValueID,
+                canThrow: false
+            ))
+            if let loopVariableSymbol {
+                localValuesBySymbol[loopVariableSymbol] = nextValueID
+            }
+
+            loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel))
+            _ = lowerExpr(
+                bodyExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            _ = loopControlStack.popLast()
+            instructions.append(.jump(continueLabel))
+            instructions.append(.label(breakLabel))
+
+            if let loopVariableSymbol {
+                if let previousLoopValue {
+                    localValuesBySymbol[loopVariableSymbol] = previousLoopValue
+                } else {
+                    localValuesBySymbol.removeValue(forKey: loopVariableSymbol)
+                }
+            }
+
+            let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+            instructions.append(.constValue(result: unit, value: .unit))
+            return unit
+
+        case .whileExpr(let conditionExpr, let bodyExpr, _):
+            let continueLabel = makeLoopLabel()
+            let breakLabel = makeLoopLabel()
+            instructions.append(.label(continueLabel))
+
+            let conditionID = lowerExpr(
+                conditionExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            let falseID = arena.appendExpr(.boolLiteral(false), type: boolType)
+            instructions.append(.constValue(result: falseID, value: .boolLiteral(false)))
+            instructions.append(.jumpIfEqual(lhs: conditionID, rhs: falseID, target: breakLabel))
+
+            loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel))
+            _ = lowerExpr(
+                bodyExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            _ = loopControlStack.popLast()
+            instructions.append(.jump(continueLabel))
+            instructions.append(.label(breakLabel))
+
+            let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+            instructions.append(.constValue(result: unit, value: .unit))
+            return unit
+
+        case .doWhileExpr(let bodyExpr, let conditionExpr, _):
+            let bodyLabel = makeLoopLabel()
+            let continueLabel = makeLoopLabel()
+            let breakLabel = makeLoopLabel()
+            instructions.append(.label(bodyLabel))
+
+            loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel))
+            _ = lowerExpr(
+                bodyExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            _ = loopControlStack.popLast()
+
+            instructions.append(.label(continueLabel))
+            let conditionID = lowerExpr(
+                conditionExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            let falseID = arena.appendExpr(.boolLiteral(false), type: boolType)
+            instructions.append(.constValue(result: falseID, value: .boolLiteral(false)))
+            instructions.append(.jumpIfEqual(lhs: conditionID, rhs: falseID, target: breakLabel))
+            instructions.append(.jump(bodyLabel))
+            instructions.append(.label(breakLabel))
+
+            let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+            instructions.append(.constValue(result: unit, value: .unit))
+            return unit
+
+        case .breakExpr:
+            if let breakLabel = loopControlStack.last?.breakLabel {
+                instructions.append(.jump(breakLabel))
+            }
+            let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+            instructions.append(.constValue(result: unit, value: .unit))
+            return unit
+
+        case .continueExpr:
+            if let continueLabel = loopControlStack.last?.continueLabel {
+                instructions.append(.jump(continueLabel))
+            }
+            let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+            instructions.append(.constValue(result: unit, value: .unit))
+            return unit
 
         case .localDecl(_, _, let initializer, _):
             let initializerID = lowerExpr(
@@ -894,5 +1063,11 @@ public final class BuildKIRPhase: CompilerPhase {
         default:
             return nil
         }
+    }
+
+    private func makeLoopLabel() -> Int32 {
+        let label = nextLoopLabel
+        nextLoopLabel += 1
+        return label
     }
 }
