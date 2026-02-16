@@ -183,9 +183,9 @@
   - [x] 回復後も parse 継続し、診断と CST dump が安定する golden を追加する
 
 - [ ] P5-11: loop 構文を AST→KIR→Lowering まで通しで実装する（spec.md J5/J6/J11/J12）
-  - [ ] `for`/`while`/`do-while` を Parser/AST で専用ノード化し、`SyntaxKind.loopStmt` を実生成する
-  - [ ] BuildKIR で loop の制御フロー（label/jump）を生成する
-  - [ ] `break`/`continue`（必要なら label 付き）を loop 制御フローへ接続する
+  - [x] `for`/`while`/`do-while` を Parser/AST で専用ノード化し、`SyntaxKind.loopStmt` を実生成する
+  - [x] BuildKIR で loop の制御フロー（label/jump）を生成する
+  - [x] `break`/`continue`（必要なら label 付き）を loop 制御フローへ接続する
   - [ ] `ForLoweringPass` の no-op 実装を置き換え、`iterator/hasNext/next` 展開を実装する
   - [ ] loop 回帰ケースを `diff_kotlinc.sh` に追加する
 
@@ -427,8 +427,8 @@
 ## In Progress
 
 - [ ] P5-11: loop 構文を AST→KIR→Lowering まで通しで実装する（spec.md J5/J6/J11/J12）
-  - [ ] `for`/`while`/`do-while` を Parser/AST で専用ノード化し、`SyntaxKind.loopStmt` を実生成する
-  - [ ] BuildKIR で loop の制御フロー（label/jump）を生成する
-  - [ ] `break`/`continue`（必要なら label 付き）を loop 制御フローへ接続する
+  - [x] `for`/`while`/`do-while` を Parser/AST で専用ノード化し、`SyntaxKind.loopStmt` を実生成する
+  - [x] BuildKIR で loop の制御フロー（label/jump）を生成する
+  - [x] `break`/`continue`（必要なら label 付き）を loop 制御フローへ接続する
   - [ ] `ForLoweringPass` の no-op 実装を置き換え、`iterator/hasNext/next` 展開を実装する
   - [ ] loop 回帰ケースを `diff_kotlinc.sh` に追加する
