@@ -3,6 +3,7 @@ import Foundation
 public final class LLVMCAPIBackend: CodegenBackend {
     private let target: TargetTriple
     private let optLevel: OptimizationLevel
+    private let debugInfo: Bool
     private let diagnostics: DiagnosticEngine
     private let isStrictMode: Bool
     private let bindings: LLVMCAPIBindings?
@@ -11,19 +12,36 @@ public final class LLVMCAPIBackend: CodegenBackend {
     public init(
         target: TargetTriple,
         optLevel: OptimizationLevel,
-        emitsDebugInfo: Bool,
+        debugInfo: Bool,
         diagnostics: DiagnosticEngine,
         isStrictMode: Bool = false
     ) {
         self.target = target
         self.optLevel = optLevel
-        _ = emitsDebugInfo
+        self.debugInfo = debugInfo
         self.diagnostics = diagnostics
         self.isStrictMode = isStrictMode
 
         let loadedBindings = LLVMCAPIBindings.load()
         self.bindings = loadedBindings
         self.hasUsableBindings = loadedBindings?.smokeTestContextLifecycle() == true
+    }
+
+    @available(*, deprecated, message: "Use init(target:optLevel:debugInfo:diagnostics:isStrictMode:) instead.")
+    public convenience init(
+        target: TargetTriple,
+        optLevel: OptimizationLevel,
+        emitsDebugInfo: Bool,
+        diagnostics: DiagnosticEngine,
+        isStrictMode: Bool = false
+    ) {
+        self.init(
+            target: target,
+            optLevel: optLevel,
+            debugInfo: emitsDebugInfo,
+            diagnostics: diagnostics,
+            isStrictMode: isStrictMode
+        )
     }
 
     public func emitObject(
@@ -74,6 +92,7 @@ public final class LLVMCAPIBackend: CodegenBackend {
         context: String,
         nativeEmit: (LLVMCAPIBindings) throws -> Void
     ) throws {
+        _ = debugInfo
         guard let bindings, hasUsableBindings else {
             if isStrictMode {
                 diagnostics.error(
@@ -233,6 +252,18 @@ private struct NativeEmitter {
             throw LLVMCAPIBackendError.nativeEmissionFailed("LLVMPointerType returned null")
         }
 
+        do {
+            try defineFrameRuntimeStubs(
+                module: llvmModule,
+                context: context,
+                int64Type: int64Type
+            )
+        } catch {
+            bindings.disposeModule(llvmModule)
+            bindings.disposeContext(context)
+            throw error
+        }
+
         var internalFunctions: [SymbolID: LLVMFunction] = [:]
 
         for declaration in module.arena.declarations {
@@ -275,6 +306,69 @@ private struct NativeEmitter {
         }
 
         return (context: context, module: llvmModule)
+    }
+
+    private func defineFrameRuntimeStubs(
+        module: LLVMCAPIBindings.LLVMModuleRef,
+        context: LLVMCAPIBindings.LLVMContextRef,
+        int64Type: LLVMCAPIBindings.LLVMTypeRef
+    ) throws {
+        _ = try defineNoOpRuntimeFunction(
+            named: "kk_register_frame_map",
+            argumentCount: 2,
+            module: module,
+            context: context,
+            int64Type: int64Type
+        )
+        _ = try defineNoOpRuntimeFunction(
+            named: "kk_push_frame",
+            argumentCount: 2,
+            module: module,
+            context: context,
+            int64Type: int64Type
+        )
+        _ = try defineNoOpRuntimeFunction(
+            named: "kk_pop_frame",
+            argumentCount: 0,
+            module: module,
+            context: context,
+            int64Type: int64Type
+        )
+    }
+
+    private func defineNoOpRuntimeFunction(
+        named name: String,
+        argumentCount: Int,
+        module: LLVMCAPIBindings.LLVMModuleRef,
+        context: LLVMCAPIBindings.LLVMContextRef,
+        int64Type: LLVMCAPIBindings.LLVMTypeRef
+    ) throws -> LLVMFunction {
+        let parameterTypes = Array(repeating: int64Type, count: max(0, argumentCount))
+        guard let functionType = bindings.functionType(
+            returnType: int64Type,
+            parameters: parameterTypes,
+            isVarArg: false
+        ) else {
+            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to create runtime stub type for '\(name)'")
+        }
+        guard let functionValue = bindings.getNamedFunction(module: module, name: name)
+            ?? bindings.addFunction(module: module, name: name, functionType: functionType) else {
+            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to define runtime stub '\(name)'")
+        }
+        bindings.setInternalLinkage(functionValue)
+
+        guard let builder = bindings.createBuilder(context: context) else {
+            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to create builder for runtime stub '\(name)'")
+        }
+        defer { bindings.disposeBuilder(builder) }
+
+        guard let entry = bindings.appendBasicBlock(context: context, function: functionValue, name: "entry") else {
+            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to create runtime stub block for '\(name)'")
+        }
+        bindings.positionBuilder(builder, at: entry)
+        let zero = bindings.constInt(int64Type, value: 0) ?? bindings.getUndef(type: int64Type)
+        _ = bindings.buildRet(builder, value: zero)
+        return LLVMFunction(value: functionValue, type: functionType)
     }
 
     private func emitFunctionBody(
@@ -469,6 +563,116 @@ private struct NativeEmitter {
             return block
         }
 
+        func buildBoolCondition(
+            from value: LLVMCAPIBindings.LLVMValueRef,
+            name: String
+        ) -> LLVMCAPIBindings.LLVMValueRef? {
+            bindings.buildICmpNotEqual(builder, lhs: value, rhs: zeroValue, name: name)
+        }
+
+        func storeOutThrownIfNonNull(
+            _ value: LLVMCAPIBindings.LLVMValueRef,
+            suffix: String
+        ) {
+            guard let outThrownParameter,
+                  let pointerIsNonNull = bindings.buildICmpNotEqual(
+                    builder,
+                    lhs: outThrownParameter,
+                    rhs: nullThrownPointer,
+                    name: "out_nonnull_\(suffix)"
+                  ),
+                  let storeBlock = bindings.appendBasicBlock(
+                    context: context,
+                    function: llvmFunction.value,
+                    name: "out_store_\(suffix)"
+                  ),
+                  let continueBlock = bindings.appendBasicBlock(
+                    context: context,
+                    function: llvmFunction.value,
+                    name: "out_cont_\(suffix)"
+                  ) else {
+                return
+            }
+
+            _ = bindings.buildCondBr(
+                builder,
+                condition: pointerIsNonNull,
+                thenBlock: storeBlock,
+                elseBlock: continueBlock
+            )
+
+            bindings.positionBuilder(builder, at: storeBlock)
+            _ = bindings.buildStore(builder, value: value, pointer: outThrownParameter)
+            _ = bindings.buildBr(builder, destination: continueBlock)
+
+            currentBlock = continueBlock
+            bindings.positionBuilder(builder, at: continueBlock)
+        }
+
+        let frameRegisterFunction = declareExternalFunction(
+            named: "kk_register_frame_map",
+            argumentCount: 2,
+            appendThrownChannel: false
+        )
+        let framePushFunction = declareExternalFunction(
+            named: "kk_push_frame",
+            argumentCount: 2,
+            appendThrownChannel: false
+        )
+        let framePopFunction = declareExternalFunction(
+            named: "kk_pop_frame",
+            argumentCount: 0,
+            appendThrownChannel: false
+        )
+        let coroutineRegisterRootFunction = declareExternalFunction(
+            named: "kk_register_coroutine_root",
+            argumentCount: 1,
+            appendThrownChannel: false
+        )
+        let coroutineUnregisterRootFunction = declareExternalFunction(
+            named: "kk_unregister_coroutine_root",
+            argumentCount: 1,
+            appendThrownChannel: false
+        )
+        let functionIDValue = bindings.constInt(
+            int64Type,
+            value: UInt64(bitPattern: Int64(max(0, function.symbol.rawValue))),
+            signExtend: false
+        ) ?? zeroValue
+
+        func emitFramePop(_ suffix: String) {
+            guard let framePopFunction else {
+                return
+            }
+            _ = bindings.buildCall(
+                builder,
+                functionType: framePopFunction.type,
+                callee: framePopFunction.value,
+                arguments: [],
+                name: "frame_pop_\(suffix)"
+            )
+        }
+
+        if let frameRegisterFunction {
+            _ = bindings.buildCall(
+                builder,
+                functionType: frameRegisterFunction.type,
+                callee: frameRegisterFunction.value,
+                arguments: [functionIDValue, zeroValue],
+                name: "frame_register"
+            )
+        }
+        if let framePushFunction {
+            _ = bindings.buildCall(
+                builder,
+                functionType: framePushFunction.type,
+                callee: framePushFunction.value,
+                arguments: [functionIDValue, zeroValue],
+                name: "frame_push"
+            )
+        }
+        storeOutThrownIfNonNull(zeroValue, suffix: "entry")
+
         func emitBuiltinCall(
             calleeName: String,
             argumentValues: [LLVMCAPIBindings.LLVMValueRef],
@@ -552,8 +756,23 @@ private struct NativeEmitter {
             case .constValue(let result, let value):
                 values[result.rawValue] = valueForConstant(value, expressionRawID: result.rawValue)
 
-            case .select(_, let thenValue, _, let result):
-                storeResult(result, resolveValue(thenValue))
+            case .select(let condition, let thenValue, let elseValue, let result):
+                let conditionValue = resolveValue(condition)
+                guard let loweredCondition = buildBoolCondition(
+                    from: conditionValue,
+                    name: "select_cond_\(instructionIndex)"
+                ) else {
+                    storeResult(result, resolveValue(thenValue))
+                    continue
+                }
+                let selected = bindings.buildSelect(
+                    builder,
+                    condition: loweredCondition,
+                    thenValue: resolveValue(thenValue),
+                    elseValue: resolveValue(elseValue),
+                    name: "select_\(instructionIndex)"
+                )
+                storeResult(result, selected ?? resolveValue(thenValue))
 
             case .binary(let op, let lhs, let rhs, let result):
                 let lhsValue = resolveValue(lhs)
@@ -591,13 +810,43 @@ private struct NativeEmitter {
                 let argumentValues = arguments.map(resolveValue)
 
                 if calleeName == "println" || calleeName == "kk_println_any" {
+                    let printValue = argumentValues.first ?? zeroValue
+                    if let printFunction = declareExternalFunction(
+                        named: "kk_println_any",
+                        argumentCount: 1,
+                        appendThrownChannel: false
+                    ) {
+                        _ = bindings.buildCall(
+                            builder,
+                            functionType: printFunction.type,
+                            callee: printFunction.value,
+                            arguments: [printValue],
+                            name: "println_\(instructionIndex)"
+                        )
+                    }
                     storeResult(result, zeroValue)
                     continue
                 }
 
                 if calleeName == "kk_when_select" {
-                    let selectedValue = argumentValues.dropFirst().first ?? argumentValues.first ?? zeroValue
-                    storeResult(result, selectedValue)
+                    let conditionValue = argumentValues.count > 0 ? argumentValues[0] : zeroValue
+                    let thenValue = argumentValues.count > 1 ? argumentValues[1] : zeroValue
+                    let elseValue = argumentValues.count > 2 ? argumentValues[2] : zeroValue
+                    if let loweredCondition = buildBoolCondition(
+                        from: conditionValue,
+                        name: "when_cond_\(instructionIndex)"
+                    ) {
+                        let selected = bindings.buildSelect(
+                            builder,
+                            condition: loweredCondition,
+                            thenValue: thenValue,
+                            elseValue: elseValue,
+                            name: "when_select_\(instructionIndex)"
+                        )
+                        storeResult(result, selected ?? thenValue)
+                    } else {
+                        storeResult(result, thenValue)
+                    }
                     continue
                 }
 
@@ -633,9 +882,21 @@ private struct NativeEmitter {
                 }
 
                 var callArguments = argumentValues
+                var thrownSlotPointer: LLVMCAPIBindings.LLVMValueRef? = nil
                 if shouldAppendThrownChannel {
-                    if usesThrownChannel, let outThrownParameter {
-                        callArguments.append(outThrownParameter)
+                    if usesThrownChannel {
+                        let thrownSlot = bindings.buildAlloca(
+                            builder,
+                            type: int64Type,
+                            name: "thrown_slot_\(instructionIndex)"
+                        )
+                        if let thrownSlot {
+                            _ = bindings.buildStore(builder, value: zeroValue, pointer: thrownSlot)
+                            callArguments.append(thrownSlot)
+                            thrownSlotPointer = thrownSlot
+                        } else {
+                            callArguments.append(nullThrownPointer)
+                        }
                     } else {
                         callArguments.append(nullThrownPointer)
                     }
@@ -649,6 +910,63 @@ private struct NativeEmitter {
                     name: "call_\(instructionIndex)"
                 )
                 storeResult(result, callValue)
+                if calleeName == "kk_coroutine_continuation_new",
+                   let coroutineRegisterRootFunction {
+                    _ = bindings.buildCall(
+                        builder,
+                        functionType: coroutineRegisterRootFunction.type,
+                        callee: coroutineRegisterRootFunction.value,
+                        arguments: [callValue ?? zeroValue],
+                        name: "coroutine_root_register_\(instructionIndex)"
+                    )
+                }
+                if calleeName == "kk_coroutine_state_exit",
+                   let coroutineUnregisterRootFunction {
+                    _ = bindings.buildCall(
+                        builder,
+                        functionType: coroutineUnregisterRootFunction.type,
+                        callee: coroutineUnregisterRootFunction.value,
+                        arguments: [argumentValues.first ?? zeroValue],
+                        name: "coroutine_root_unregister_\(instructionIndex)"
+                    )
+                }
+                if usesThrownChannel,
+                   let thrownSlotPointer,
+                   let thrownValue = bindings.buildLoad(
+                    builder,
+                    type: int64Type,
+                    pointer: thrownSlotPointer,
+                    name: "thrown_val_\(instructionIndex)"
+                   ),
+                   let hasThrown = buildBoolCondition(
+                    from: thrownValue,
+                    name: "has_thrown_\(instructionIndex)"
+                   ),
+                   let thrownBlock = bindings.appendBasicBlock(
+                    context: context,
+                    function: llvmFunction.value,
+                    name: "thrown_\(instructionIndex)"
+                   ),
+                   let continueBlock = bindings.appendBasicBlock(
+                    context: context,
+                    function: llvmFunction.value,
+                    name: "call_cont_\(instructionIndex)"
+                   ) {
+                    _ = bindings.buildCondBr(
+                        builder,
+                        condition: hasThrown,
+                        thenBlock: thrownBlock,
+                        elseBlock: continueBlock
+                    )
+
+                    bindings.positionBuilder(builder, at: thrownBlock)
+                    storeOutThrownIfNonNull(thrownValue, suffix: "throw_\(instructionIndex)")
+                    emitFramePop("throw_\(instructionIndex)")
+                    _ = bindings.buildRet(builder, value: zeroValue)
+
+                    currentBlock = continueBlock
+                    bindings.positionBuilder(builder, at: continueBlock)
+                }
 
             case .returnIfEqual(let lhs, let rhs):
                 guard !bindings.hasTerminator(currentBlock),
@@ -671,6 +989,7 @@ private struct NativeEmitter {
                 _ = bindings.buildCondBr(builder, condition: condition, thenBlock: trueBlock, elseBlock: falseBlock)
 
                 bindings.positionBuilder(builder, at: trueBlock)
+                emitFramePop("ret_if_\(instructionIndex)")
                 _ = bindings.buildRet(builder, value: lhsValue)
 
                 currentBlock = falseBlock
@@ -680,17 +999,20 @@ private struct NativeEmitter {
                 guard !bindings.hasTerminator(currentBlock) else {
                     continue
                 }
+                emitFramePop("ret_unit_\(instructionIndex)")
                 _ = bindings.buildRet(builder, value: zeroValue)
 
             case .returnValue(let value):
                 guard !bindings.hasTerminator(currentBlock) else {
                     continue
                 }
+                emitFramePop("ret_val_\(instructionIndex)")
                 _ = bindings.buildRet(builder, value: resolveValue(value))
             }
         }
 
         if !bindings.hasTerminator(currentBlock) {
+            emitFramePop("ret_fallthrough")
             _ = bindings.buildRet(builder, value: zeroValue)
         }
     }
