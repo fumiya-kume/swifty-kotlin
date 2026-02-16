@@ -45,9 +45,11 @@ final class CoroutineLoweringPass: LoweringPass {
 
         var nextSyntheticSymbol = nextAvailableSyntheticSymbol(module: module, sema: ctx.sema)
         var loweredBySymbol: [SymbolID: (name: InternedString, symbol: SymbolID)] = [:]
+        var continuationTypeByLoweredSymbol: [SymbolID: TypeID] = [:]
         var suspendFunctionArityBySymbol: [SymbolID: Int] = [:]
         var loweredByNameBuckets: [InternedString: [(name: InternedString, symbol: SymbolID)]] = [:]
         var loweredByNameArityBuckets: [SuspendCallLookupKey: [(name: InternedString, symbol: SymbolID)]] = [:]
+        var existingSymbolFQNames: Set<[InternedString]> = Set(ctx.sema?.symbols.allSymbols().map(\.fqName) ?? [])
 
         for suspendFunction in suspendFunctions {
             suspendFunctionArityBySymbol[suspendFunction.symbol] = suspendFunction.params.count
@@ -63,7 +65,22 @@ final class CoroutineLoweringPass: LoweringPass {
                 nextSyntheticSymbol: &nextSyntheticSymbol,
                 sema: ctx.sema
             )
-            let continuationType = ctx.sema?.types.nullableAnyType ?? suspendFunction.returnType
+            let suspendLoweringPlan = analyzeSuspendLoweringPlan(
+                originalBody: suspendFunction.body,
+                suspendFunctionSymbols: suspendFunctionSymbols,
+                suspendFunctionNames: suspendFunctionNames,
+                runtimeSuspendCallNames: runtimeSuspendCallNames
+            )
+            let continuationNominal = synthesizeContinuationNominalIfPossible(
+                original: suspendFunction,
+                loweredName: loweredName,
+                plan: suspendLoweringPlan,
+                sema: ctx.sema,
+                interner: ctx.interner,
+                existingSymbolFQNames: &existingSymbolFQNames
+            )
+            let continuationType = continuationNominal?.continuationType
+                ?? (ctx.sema?.types.nullableAnyType ?? suspendFunction.returnType)
             let continuationParameterSymbol = defineSyntheticContinuationParameterSymbol(
                 owner: loweredSymbol,
                 loweredName: loweredName,
@@ -81,10 +98,15 @@ final class CoroutineLoweringPass: LoweringPass {
                 suspendFunctionNames: suspendFunctionNames,
                 runtimeSuspendCallNames: runtimeSuspendCallNames,
                 runtimeDelayCallee: runtimeDelayCallee,
+                suspendPlan: suspendLoweringPlan,
+                spillSlotByExpr: continuationNominal?.spillSlotByExpr ?? [:],
                 continuationType: continuationType,
                 intType: intType,
                 unitType: unitType
             )
+            if let continuationNominal {
+                _ = module.arena.appendDecl(.nominalType(KIRNominalType(symbol: continuationNominal.typeSymbol)))
+            }
             let loweredFunction = KIRFunction(
                 symbol: loweredSymbol,
                 name: loweredName,
@@ -100,6 +122,7 @@ final class CoroutineLoweringPass: LoweringPass {
 
             let lowered = (name: loweredName, symbol: loweredSymbol)
             loweredBySymbol[suspendFunction.symbol] = lowered
+            continuationTypeByLoweredSymbol[loweredSymbol] = continuationType
             suspendFunctionArityBySymbol[loweredSymbol] = suspendFunction.params.count
             loweredByNameBuckets[suspendFunction.name, default: []].append(lowered)
             let byNameArityKey = SuspendCallLookupKey(name: suspendFunction.name, arity: suspendFunction.params.count)
@@ -236,7 +259,7 @@ final class CoroutineLoweringPass: LoweringPass {
 
                 let continuationTemp = module.arena.appendExpr(
                     .temporary(Int32(module.arena.expressions.count)),
-                    type: anyType
+                    type: continuationTypeByLoweredSymbol[loweredTarget.symbol] ?? anyType
                 )
                 loweredBody.append(
                     .call(
@@ -302,6 +325,175 @@ final class CoroutineLoweringPass: LoweringPass {
         while true {
             let candidate = interner.intern("\(base)$\(suffix)")
             if existingFunctionNames.insert(candidate).inserted {
+                return candidate
+            }
+            suffix += 1
+        }
+    }
+
+    private struct ContinuationNominal {
+        let typeSymbol: SymbolID
+        let continuationType: TypeID
+        let spillSlotByExpr: [KIRExprID: Int64]
+    }
+
+    private func synthesizeContinuationNominalIfPossible(
+        original: KIRFunction,
+        loweredName: InternedString,
+        plan: SuspendLoweringPlan,
+        sema: SemaModule?,
+        interner: StringInterner,
+        existingSymbolFQNames: inout Set<[InternedString]>
+    ) -> ContinuationNominal? {
+        guard let sema, let originalSymbol = sema.symbols.symbol(original.symbol) else {
+            return nil
+        }
+
+        let typeBaseName = interner.intern(interner.resolve(loweredName) + "$Cont")
+        let ownerFQNamePrefix = Array(originalSymbol.fqName.dropLast())
+        let typeName = uniqueNestedSymbolName(
+            preferred: typeBaseName,
+            ownerFQNamePrefix: ownerFQNamePrefix,
+            existingSymbolFQNames: &existingSymbolFQNames,
+            interner: interner
+        )
+        let typeFQName = ownerFQNamePrefix + [typeName]
+
+        let typeSymbol = sema.symbols.define(
+            kind: .class,
+            name: typeName,
+            fqName: typeFQName,
+            declSite: originalSymbol.declSite,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let continuationType = sema.types.make(
+            .classType(
+                ClassType(
+                    classSymbol: typeSymbol,
+                    args: [],
+                    nullability: .nullable
+                )
+            )
+        )
+
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+        let anyNullableType = sema.types.nullableAnyType
+
+        let labelFieldName = interner.intern("$label")
+        let labelFieldSymbol = sema.symbols.define(
+            kind: .field,
+            name: labelFieldName,
+            fqName: typeFQName + [labelFieldName],
+            declSite: originalSymbol.declSite,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        sema.symbols.setPropertyType(intType, for: labelFieldSymbol)
+
+        let completionFieldName = interner.intern("$completion")
+        let completionFieldSymbol = sema.symbols.define(
+            kind: .field,
+            name: completionFieldName,
+            fqName: typeFQName + [completionFieldName],
+            declSite: originalSymbol.declSite,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        sema.symbols.setPropertyType(anyNullableType, for: completionFieldSymbol)
+
+        let spilledExprs = plan.spillPlan.slotByExpr.keys.sorted(by: { lhs, rhs in
+            let lhsSlot = plan.spillPlan.slotByExpr[lhs] ?? 0
+            let rhsSlot = plan.spillPlan.slotByExpr[rhs] ?? 0
+            if lhsSlot != rhsSlot {
+                return lhsSlot < rhsSlot
+            }
+            return lhs.rawValue < rhs.rawValue
+        })
+
+        var spillFieldByExpr: [KIRExprID: SymbolID] = [:]
+        for (index, exprID) in spilledExprs.enumerated() {
+            let spillFieldName = interner.intern("$spill\(index)")
+            let spillFieldSymbol = sema.symbols.define(
+                kind: .field,
+                name: spillFieldName,
+                fqName: typeFQName + [spillFieldName],
+                declSite: originalSymbol.declSite,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            sema.symbols.setPropertyType(anyNullableType, for: spillFieldSymbol)
+            spillFieldByExpr[exprID] = spillFieldSymbol
+        }
+
+        let objectHeaderWords = 2
+        var fieldOffsets: [SymbolID: Int] = [:]
+        var nextFieldOffset = objectHeaderWords
+        fieldOffsets[labelFieldSymbol] = nextFieldOffset
+        nextFieldOffset += 1
+        fieldOffsets[completionFieldSymbol] = nextFieldOffset
+        nextFieldOffset += 1
+        for exprID in spilledExprs {
+            guard let spillField = spillFieldByExpr[exprID] else {
+                continue
+            }
+            fieldOffsets[spillField] = nextFieldOffset
+            nextFieldOffset += 1
+        }
+
+        sema.symbols.setNominalLayout(
+            NominalLayout(
+                objectHeaderWords: objectHeaderWords,
+                instanceFieldCount: fieldOffsets.count,
+                instanceSizeWords: objectHeaderWords + fieldOffsets.count,
+                fieldOffsets: fieldOffsets,
+                vtableSlots: [:],
+                itableSlots: [:],
+                vtableSize: 0,
+                itableSize: 0,
+                superClass: nil
+            ),
+            for: typeSymbol
+        )
+
+        var spillSlotByExpr: [KIRExprID: Int64] = [:]
+        if let firstSpillExpr = spilledExprs.first,
+           let firstSpillField = spillFieldByExpr[firstSpillExpr],
+           let baseOffset = fieldOffsets[firstSpillField] {
+            for exprID in spilledExprs {
+                guard let fieldSymbol = spillFieldByExpr[exprID],
+                      let offset = fieldOffsets[fieldSymbol] else {
+                    continue
+                }
+                spillSlotByExpr[exprID] = Int64(offset - baseOffset)
+            }
+        }
+
+        return ContinuationNominal(
+            typeSymbol: typeSymbol,
+            continuationType: continuationType,
+            spillSlotByExpr: spillSlotByExpr
+        )
+    }
+
+    private func uniqueNestedSymbolName(
+        preferred: InternedString,
+        ownerFQNamePrefix: [InternedString],
+        existingSymbolFQNames: inout Set<[InternedString]>,
+        interner: StringInterner
+    ) -> InternedString {
+        var candidate = preferred
+        var candidateFQName = ownerFQNamePrefix + [candidate]
+        if existingSymbolFQNames.insert(candidateFQName).inserted {
+            return candidate
+        }
+
+        let base = interner.resolve(preferred)
+        var suffix = 1
+        while true {
+            candidate = interner.intern("\(base)$\(suffix)")
+            candidateFQName = ownerFQNamePrefix + [candidate]
+            if existingSymbolFQNames.insert(candidateFQName).inserted {
                 return candidate
             }
             suffix += 1
@@ -390,6 +582,8 @@ final class CoroutineLoweringPass: LoweringPass {
         suspendFunctionNames: Set<InternedString>,
         runtimeSuspendCallNames: Set<InternedString>,
         runtimeDelayCallee: InternedString,
+        suspendPlan: SuspendLoweringPlan,
+        spillSlotByExpr: [KIRExprID: Int64],
         continuationType: TypeID,
         intType: TypeID?,
         unitType: TypeID?
@@ -403,50 +597,19 @@ final class CoroutineLoweringPass: LoweringPass {
         let getCompletionCallee = interner.intern("kk_coroutine_state_get_completion")
         let suspendedProvider = interner.intern("kk_coroutine_suspended")
         let sourceDelayCallee = interner.intern("delay")
-
-        let stateBlocks = buildSuspendStateBlocks(
-            originalBody: originalBody,
-            suspendFunctionSymbols: suspendFunctionSymbols,
-            suspendFunctionNames: suspendFunctionNames,
-            runtimeSuspendCallNames: runtimeSuspendCallNames
-        )
-        let liveOutByInstruction = computeLiveOutByInstruction(originalBody)
-
-        var transitionsByResumeLabel: [Int64: SuspendTransition] = [:]
-        var transitionSourceIndexes: Set<Int> = []
-        for (index, block) in stateBlocks.enumerated() {
-            guard stateBlocks.indices.contains(index + 1) else {
-                continue
-            }
-            let nextResumeLabel = stateBlocks[index + 1].resumeLabel
-            guard let tailInstruction = block.instructions.last else {
-                continue
-            }
-            guard case .call(let symbol, let callee, _, let result, _) = tailInstruction.instruction,
-                  isSuspendCall(
-                    symbol: symbol,
-                    callee: callee,
-                    suspendFunctionSymbols: suspendFunctionSymbols,
-                    suspendFunctionNames: suspendFunctionNames,
-                    runtimeSuspendCallNames: runtimeSuspendCallNames
-                  ) else {
-                continue
-            }
-            let transition = SuspendTransition(
-                sourceInstructionIndex: tailInstruction.sourceIndex,
-                callResultExpr: result
-            )
-            transitionsByResumeLabel[nextResumeLabel] = transition
-            transitionSourceIndexes.insert(tailInstruction.sourceIndex)
-        }
-        let spillPlan = buildSpillPlan(
-            transitionSourceIndexes: transitionSourceIndexes,
-            liveOutByInstruction: liveOutByInstruction,
-            transitionsByResumeLabel: transitionsByResumeLabel
-        )
+        let stateBlocks = suspendPlan.stateBlocks
+        let transitionsByResumeLabel = suspendPlan.transitionsByResumeLabel
+        let spillPlan = suspendPlan.spillPlan
 
         var lowered: [KIRInstruction] = []
         lowered.reserveCapacity(originalBody.count * 6 + 24)
+
+        func slotForSpillExpr(_ exprID: KIRExprID) -> Int64? {
+            if let overridden = spillSlotByExpr[exprID] {
+                return overridden
+            }
+            return spillPlan.slotByExpr[exprID]
+        }
 
         let continuationExpr = module.arena.appendExpr(
             .temporary(Int32(module.arena.expressions.count)),
@@ -495,7 +658,7 @@ final class CoroutineLoweringPass: LoweringPass {
             if let transition = transitionsByResumeLabel[block.resumeLabel] {
                 let reloadExprs = spillPlan.exprsByTransitionSource[transition.sourceInstructionIndex] ?? []
                 for exprID in reloadExprs {
-                    guard let slot = spillPlan.slotByExpr[exprID] else {
+                    guard let slot = slotForSpillExpr(exprID) else {
                         continue
                     }
                     let slotExpr = appendIntLiteralExpr(
@@ -541,9 +704,9 @@ final class CoroutineLoweringPass: LoweringPass {
                    runtimeSuspendCallNames: runtimeSuspendCallNames
                    ),
                    let nextResumeLabel {
-                    let spilledExprs = spillPlan.exprsByTransitionSource[stateInstruction.sourceIndex] ?? []
+                   let spilledExprs = spillPlan.exprsByTransitionSource[stateInstruction.sourceIndex] ?? []
                     for exprID in spilledExprs {
-                        guard let slot = spillPlan.slotByExpr[exprID] else {
+                        guard let slot = slotForSpillExpr(exprID) else {
                             continue
                         }
                         let slotExpr = appendIntLiteralExpr(
@@ -691,10 +854,69 @@ final class CoroutineLoweringPass: LoweringPass {
         let exprsByTransitionSource: [Int: [KIRExprID]]
     }
 
+    private struct SuspendLoweringPlan {
+        let stateBlocks: [SuspendStateBlock]
+        let transitionsByResumeLabel: [Int64: SuspendTransition]
+        let spillPlan: SpillPlan
+    }
+
     private struct CFGBlock {
         let id: Int
         let instructions: [IndexedInstruction]
         let successors: [Int]
+    }
+
+    private func analyzeSuspendLoweringPlan(
+        originalBody: [KIRInstruction],
+        suspendFunctionSymbols: Set<SymbolID>,
+        suspendFunctionNames: Set<InternedString>,
+        runtimeSuspendCallNames: Set<InternedString>
+    ) -> SuspendLoweringPlan {
+        let stateBlocks = buildSuspendStateBlocks(
+            originalBody: originalBody,
+            suspendFunctionSymbols: suspendFunctionSymbols,
+            suspendFunctionNames: suspendFunctionNames,
+            runtimeSuspendCallNames: runtimeSuspendCallNames
+        )
+        let liveOutByInstruction = computeLiveOutByInstruction(originalBody)
+
+        var transitionsByResumeLabel: [Int64: SuspendTransition] = [:]
+        var transitionSourceIndexes: Set<Int> = []
+        for (index, block) in stateBlocks.enumerated() {
+            guard stateBlocks.indices.contains(index + 1) else {
+                continue
+            }
+            let nextResumeLabel = stateBlocks[index + 1].resumeLabel
+            guard let tailInstruction = block.instructions.last else {
+                continue
+            }
+            guard case .call(let symbol, let callee, _, let result, _) = tailInstruction.instruction,
+                  isSuspendCall(
+                    symbol: symbol,
+                    callee: callee,
+                    suspendFunctionSymbols: suspendFunctionSymbols,
+                    suspendFunctionNames: suspendFunctionNames,
+                    runtimeSuspendCallNames: runtimeSuspendCallNames
+                  ) else {
+                continue
+            }
+            let transition = SuspendTransition(
+                sourceInstructionIndex: tailInstruction.sourceIndex,
+                callResultExpr: result
+            )
+            transitionsByResumeLabel[nextResumeLabel] = transition
+            transitionSourceIndexes.insert(tailInstruction.sourceIndex)
+        }
+        let spillPlan = buildSpillPlan(
+            transitionSourceIndexes: transitionSourceIndexes,
+            liveOutByInstruction: liveOutByInstruction,
+            transitionsByResumeLabel: transitionsByResumeLabel
+        )
+        return SuspendLoweringPlan(
+            stateBlocks: stateBlocks,
+            transitionsByResumeLabel: transitionsByResumeLabel,
+            spillPlan: spillPlan
+        )
     }
 
     private func buildSuspendStateBlocks(
