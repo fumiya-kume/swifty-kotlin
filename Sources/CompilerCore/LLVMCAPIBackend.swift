@@ -787,6 +787,8 @@ private struct NativeEmitter {
                     lowered = bindings.buildMul(builder, lhs: lhsValue, rhs: rhsValue, name: "bin_mul_\(instructionIndex)")
                 case .divide:
                     lowered = bindings.buildSDiv(builder, lhs: lhsValue, rhs: rhsValue, name: "bin_div_\(instructionIndex)")
+                case .modulo:
+                    lowered = nil
                 case .equal:
                     if let compared = bindings.buildICmpEqual(
                         builder,
@@ -798,8 +800,18 @@ private struct NativeEmitter {
                     } else {
                         lowered = nil
                     }
+                case .notEqual, .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
+                    lowered = nil
+                case .logicalAnd, .logicalOr:
+                    lowered = nil
                 }
                 storeResult(result, lowered)
+
+            case .unary(_, let operand, let result):
+                storeResult(result, resolveValue(operand))
+
+            case .nullAssert(let operand, let result):
+                storeResult(result, resolveValue(operand))
 
             case .call(let symbol, let callee, let arguments, let result, let usesThrownChannel):
                 guard !bindings.hasTerminator(currentBlock) else {

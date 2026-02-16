@@ -204,6 +204,27 @@ final class InlineLoweringPass: LoweringPass {
                         rhs: resolveAlias(of: rhs, aliases: localExprMap)
                     )
                 )
+
+            case .unary(let op, let operand, let result):
+                let loweredResult = cloneExpr(result, in: module.arena)
+                localExprMap[result] = loweredResult
+                lowered.append(
+                    .unary(
+                        op: op,
+                        operand: resolveAlias(of: operand, aliases: localExprMap),
+                        result: loweredResult
+                    )
+                )
+
+            case .nullAssert(let operand, let result):
+                let loweredResult = cloneExpr(result, in: module.arena)
+                localExprMap[result] = loweredResult
+                lowered.append(
+                    .nullAssert(
+                        operand: resolveAlias(of: operand, aliases: localExprMap),
+                        result: loweredResult
+                    )
+                )
             }
         }
 
