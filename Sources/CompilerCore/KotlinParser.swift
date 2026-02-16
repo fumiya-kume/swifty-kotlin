@@ -18,6 +18,9 @@ public final class KotlinParser {
         var sawTopLevelStatement = false
         var sawTopLevelDeclOrHeader = false
 
+        var pendingImports: [SyntaxChild] = []
+        var importRange = RangeAccumulator()
+
         while !stream.atEOF() {
             let token = stream.peek()
             if token.kind == .eof {
@@ -32,6 +35,10 @@ public final class KotlinParser {
             case .keyword(.import):
                 node = parseImportHeader()
                 sawTopLevelDeclOrHeader = true
+                pendingImports.append(.node(node))
+                importRange.append(arena.node(node).range)
+                range.append(arena.node(node).range)
+                continue
             case .keyword(let keyword) where isDeclarationKeyword(keyword):
                 node = parseDeclaration()
                 sawTopLevelDeclOrHeader = true
@@ -50,8 +57,28 @@ public final class KotlinParser {
                 sawTopLevelStatement = true
             }
 
+            if !pendingImports.isEmpty {
+                let importListNode = arena.appendNode(
+                    kind: .importList,
+                    range: importRange.value ?? invalidRange,
+                    pendingImports
+                )
+                children.append(.node(importListNode))
+                pendingImports.removeAll(keepingCapacity: true)
+                importRange = RangeAccumulator()
+            }
+
             children.append(.node(node))
             range.append(arena.node(node).range)
+        }
+
+        if !pendingImports.isEmpty {
+            let importListNode = arena.appendNode(
+                kind: .importList,
+                range: importRange.value ?? invalidRange,
+                pendingImports
+            )
+            children.append(.node(importListNode))
         }
 
         let rootKind: SyntaxKind
@@ -380,6 +407,8 @@ public final class KotlinParser {
             return parseLoopStatement(inBlock: inBlock)
         }
 
+        let leadingKind = classifyStatementLeadingToken(stream.peek())
+
         let startCount = stream.index
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
@@ -429,9 +458,54 @@ public final class KotlinParser {
             _ = consumeToken(into: &children, range: &range)
         }
 
+        let nodeKind = resolveStatementKind(leadingKind, children: children)
+
         return arena.appendNode(
-            kind: .statement,
+            kind: nodeKind,
             range: range.value ?? invalidRange, children)
+    }
+
+    private func classifyStatementLeadingToken(_ token: Token) -> SyntaxKind {
+        switch token.kind {
+        case .keyword(.if):
+            return .ifExpr
+        case .keyword(.when):
+            return .whenExpr
+        case .keyword(.try):
+            return .tryExpr
+        case .identifier, .backtickedIdentifier:
+            return .callExpr
+        case .softKeyword:
+            return .callExpr
+        default:
+            return .statement
+        }
+    }
+
+    private func resolveStatementKind(_ candidate: SyntaxKind, children: [SyntaxChild]) -> SyntaxKind {
+        switch candidate {
+        case .ifExpr, .whenExpr, .tryExpr:
+            return candidate
+        case .callExpr:
+            for child in children {
+                if case .node(let childID) = child,
+                   arena.node(childID).kind == .block {
+                    return .callExpr
+                }
+                if case .token(let tokenID) = child {
+                    let index = Int(tokenID.rawValue)
+                    if index >= 0 && index < arena.tokens.count {
+                        let token = arena.tokens[index]
+                        if token.kind == .symbol(.lParen) {
+                            return .callExpr
+                        }
+                    }
+                }
+            }
+            return .statement
+        default:
+            return .statement
+        }
     }
 
     private func parseLoopStatement(inBlock: Bool) -> NodeID {

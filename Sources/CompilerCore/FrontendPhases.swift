@@ -104,6 +104,15 @@ public final class BuildASTPhase: CompilerPhase {
                 let path = extractQualifiedPath(from: nodeID, in: cst, interner: ctx.interner, isPackageHeader: false)
                 importsByFile[fileRawID, default: []].append(ImportDecl(range: node.range, path: path))
 
+            case .importList:
+                for importChild in cst.children(of: nodeID) {
+                    guard case .node(let importNodeID) = importChild else { continue }
+                    let importNode = cst.node(importNodeID)
+                    guard importNode.kind == .importHeader else { continue }
+                    let path = extractQualifiedPath(from: importNodeID, in: cst, interner: ctx.interner, isPackageHeader: false)
+                    importsByFile[fileRawID, default: []].append(ImportDecl(range: importNode.range, path: path))
+                }
+
             case .classDecl, .interfaceDecl:
                 let decl = Decl.classDecl(makeClassDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
                 appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)

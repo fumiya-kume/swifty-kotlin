@@ -72,7 +72,7 @@ extension BuildASTPhase {
 
         for child in arena.children(of: accessorBlockID) {
             guard case .node(let statementID) = child,
-                  arena.node(statementID).kind == .statement else {
+                  isStatementLikeKind(arena.node(statementID).kind) else {
                 continue
             }
 
@@ -142,7 +142,7 @@ extension BuildASTPhase {
             }
             for bodyChild in arena.children(of: bodyBlockID) {
                 guard case .node(let statementID) = bodyChild,
-                      arena.node(statementID).kind == .statement else {
+                      isStatementLikeKind(arena.node(statementID).kind) else {
                     continue
                 }
                 let headerTokens = collectDirectTokens(from: statementID, in: arena).filter { token in
@@ -309,7 +309,7 @@ extension BuildASTPhase {
                 continue
             }
             let node = arena.node(nodeID)
-            guard node.kind == .statement || node.kind == .propertyDecl || node.kind == .loopStmt else {
+            guard isStatementLikeKind(node.kind) else {
                 continue
             }
             let statementTokens = collectTokens(from: nodeID, in: arena).filter { token in
@@ -404,6 +404,12 @@ extension BuildASTPhase {
         interner: StringInterner,
         astArena: ASTArena
     ) -> ExprID? {
+        if let compoundExpr = parseCompoundAssignmentExpr(
+            from: statementTokens, interner: interner, astArena: astArena
+        ) {
+            return compoundExpr
+        }
+
         var assignIndex: Int?
         var depth = BracketDepth()
         for (index, token) in statementTokens.enumerated() {
@@ -460,6 +466,60 @@ extension BuildASTPhase {
         default:
             return nil
         }
+    }
+
+    func parseCompoundAssignmentExpr(
+        from statementTokens: [Token],
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> ExprID? {
+        let compoundOps: [(TokenKind, CompoundAssignOp)] = [
+            (.symbol(.plusAssign), .plusAssign),
+            (.symbol(.minusAssign), .minusAssign),
+            (.symbol(.starAssign), .timesAssign),
+            (.symbol(.slashAssign), .divAssign),
+            (.symbol(.percentAssign), .modAssign),
+        ]
+
+        var foundIndex: Int?
+        var foundOp: CompoundAssignOp?
+        var depth = BracketDepth()
+        for (index, token) in statementTokens.enumerated() {
+            for (kind, op) in compoundOps {
+                if token.kind == kind && depth.isAtTopLevel {
+                    foundIndex = index
+                    foundOp = op
+                    break
+                }
+            }
+            if foundIndex != nil { break }
+            depth.track(token.kind)
+        }
+
+        guard let assignIndex = foundIndex, let op = foundOp, assignIndex > 0 else {
+            return nil
+        }
+
+        let lhsTokens = statementTokens[..<assignIndex].filter { $0.kind != .symbol(.semicolon) }
+        guard !lhsTokens.isEmpty else { return nil }
+
+        let valueTokens = statementTokens[(assignIndex + 1)...].filter { $0.kind != .symbol(.semicolon) }
+        guard !valueTokens.isEmpty else { return nil }
+
+        let lhsParser = ExpressionParser(tokens: Array(lhsTokens), interner: interner, astArena: astArena)
+        guard let lhsExpr = lhsParser.parse(),
+              let lhs = astArena.expr(lhsExpr),
+              case .nameRef(let name, _) = lhs,
+              let lhsRange = astArena.exprRange(lhsExpr) else {
+            return nil
+        }
+
+        let parser = ExpressionParser(tokens: Array(valueTokens), interner: interner, astArena: astArena)
+        guard let valueExpr = parser.parse() else { return nil }
+
+        let end = astArena.exprRange(valueExpr)?.end ?? statementTokens.last?.range.end ?? lhsRange.end
+        let range = SourceRange(start: lhsRange.start, end: end)
+        return astArena.appendExpr(.compoundAssign(op: op, name: name, value: valueExpr, range: range))
     }
 
     func skipBalancedBracket(
@@ -521,6 +581,16 @@ extension BuildASTPhase {
             tokens.append(token)
         }
         return tokens
+    }
+
+    func isStatementLikeKind(_ kind: SyntaxKind) -> Bool {
+        switch kind {
+        case .statement, .propertyDecl, .loopStmt,
+             .ifExpr, .whenExpr, .tryExpr, .callExpr:
+            return true
+        default:
+            return false
+        }
     }
 
 }

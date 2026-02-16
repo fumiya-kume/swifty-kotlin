@@ -535,6 +535,78 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
     }
 
+    func testABILoweringInsertsBoxingCallsForPrimitiveToAnyBoundary() throws {
+        let source = """
+        fun acceptAny(x: Any?) = x
+        fun main() {
+            acceptAny(42)
+            acceptAny(true)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case .function(let function) = decl else {
+                    return nil
+                }
+                return ctx.interner.resolve(function.name) == "main" ? function : nil
+            }.first
+            let body = try XCTUnwrap(mainFunction?.body)
+
+            let callNames = body.compactMap { instruction -> String? in
+                guard case .call(_, let callee, _, _, _) = instruction else {
+                    return nil
+                }
+                return ctx.interner.resolve(callee)
+            }
+            XCTAssertTrue(callNames.contains("kk_box_int"))
+            XCTAssertTrue(callNames.contains("kk_box_bool"))
+        }
+    }
+
+    func testABILoweringBoxingCallsAreNonThrowing() throws {
+        let source = """
+        fun acceptAny(x: Any?) = x
+        fun main() {
+            acceptAny(7)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case .function(let function) = decl else {
+                    return nil
+                }
+                return ctx.interner.resolve(function.name) == "main" ? function : nil
+            }.first
+            let body = try XCTUnwrap(mainFunction?.body)
+
+            let boxingThrowFlags = body.compactMap { instruction -> Bool? in
+                guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+                    return nil
+                }
+                let name = ctx.interner.resolve(callee)
+                guard name == "kk_box_int" || name == "kk_box_bool" ||
+                      name == "kk_unbox_int" || name == "kk_unbox_bool" else {
+                    return nil
+                }
+                return canThrow
+            }
+            XCTAssertFalse(boxingThrowFlags.isEmpty)
+            XCTAssertTrue(boxingThrowFlags.allSatisfy { $0 == false })
+        }
+    }
+
     func testArrayAccessAndAssignmentLowerToRuntimeCallsWithExpectedThrowFlags() throws {
         let source = """
         fun main(): Any? {
@@ -2650,9 +2722,9 @@ final class BackendPipelineCoverageTests: XCTestCase {
         let eGe = astArena.appendExpr(.binary(op: .greaterOrEqual, lhs: eInt2, rhs: eInt1, range: range))
         let eAnd = astArena.appendExpr(.binary(op: .logicalAnd, lhs: eBoolTrue, rhs: eBoolFalse, range: range))
         let eOr = astArena.appendExpr(.binary(op: .logicalOr, lhs: eBoolFalse, rhs: eBoolTrue, range: range))
-        let eUnaryPlus = astArena.appendExpr(.unary(op: .plus, operand: eInt1, range: range))
-        let eUnaryMinus = astArena.appendExpr(.unary(op: .minus, operand: eInt2, range: range))
-        let eUnaryNot = astArena.appendExpr(.unary(op: .not, operand: eBoolFalse, range: range))
+        let eUnaryPlus = astArena.appendExpr(.unaryExpr(op: .unaryPlus, operand: eInt1, range: range))
+        let eUnaryMinus = astArena.appendExpr(.unaryExpr(op: .unaryMinus, operand: eInt2, range: range))
+        let eUnaryNot = astArena.appendExpr(.unaryExpr(op: .not, operand: eBoolFalse, range: range))
 
         let eCallKnown = astArena.appendExpr(.call(callee: eNameKnown, args: [CallArgument(expr: eInt1)], range: range))
         let eCallUnknown = astArena.appendExpr(.call(callee: eNameUnknown, args: [CallArgument(expr: eInt1)], range: range))
