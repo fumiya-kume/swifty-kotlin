@@ -503,82 +503,120 @@ extension DataFlowSemaPassPhase {
         }
 
         for declID in nestedClasses {
-            guard let decl = ast.arena.decl(declID),
-                  case .classDecl(let nestedClass) = decl else {
+            guard let decl = ast.arena.decl(declID) else {
                 continue
             }
-            let nestedFQName = ownerFQName + [nestedClass.name]
-            let nestedClassKind = classSymbolKind(for: nestedClass)
-            let existingClassSymbols = symbols.lookupAll(fqName: nestedFQName).compactMap { symbols.symbol($0) }
-            if hasDeclarationConflict(newKind: nestedClassKind, existing: existingClassSymbols) {
-                diagnostics.error(
-                    "KSWIFTK-SEMA-0001",
-                    "Duplicate declaration in the same package scope.",
-                    range: nestedClass.range
-                )
-            }
-            let nestedSymbol = symbols.define(
-                kind: nestedClassKind,
-                name: nestedClass.name,
-                fqName: nestedFQName,
-                declSite: nestedClass.range,
-                visibility: visibility(from: nestedClass.modifiers),
-                flags: flags(from: nestedClass.modifiers)
-            )
-            bindings.bindDecl(declID, symbol: nestedSymbol)
-            symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)
-
-            let nestedType = types.make(.classType(ClassType(classSymbol: nestedSymbol, args: [], nullability: .nonNull)))
-            if !nestedClass.typeParams.isEmpty {
-                types.setNominalTypeParameterVariances(
-                    nestedClass.typeParams.map(\.variance),
-                    for: nestedSymbol
-                )
-            }
-            if classSymbolKind(for: nestedClass) == .enumClass {
-                for entry in nestedClass.enumEntries {
-                    let entryFQName = nestedFQName + [entry.name]
-                    let existingEntrySymbols = symbols.lookupAll(fqName: entryFQName).compactMap { symbols.symbol($0) }
-                    if hasDeclarationConflict(newKind: .field, existing: existingEntrySymbols) {
-                        diagnostics.error(
-                            "KSWIFTK-SEMA-0001",
-                            "Duplicate declaration in the same package scope.",
-                            range: entry.range
-                        )
-                    }
-                    let entrySymbol = symbols.define(
-                        kind: .field,
-                        name: entry.name,
-                        fqName: entryFQName,
-                        declSite: entry.range,
-                        visibility: .public,
-                        flags: []
+            switch decl {
+            case .classDecl(let nestedClass):
+                let nestedFQName = ownerFQName + [nestedClass.name]
+                let nestedClassKind = classSymbolKind(for: nestedClass)
+                let existingClassSymbols = symbols.lookupAll(fqName: nestedFQName).compactMap { symbols.symbol($0) }
+                if hasDeclarationConflict(newKind: nestedClassKind, existing: existingClassSymbols) {
+                    diagnostics.error(
+                        "KSWIFTK-SEMA-0001",
+                        "Duplicate declaration in the same package scope.",
+                        range: nestedClass.range
                     )
-                    symbols.setPropertyType(nestedType, for: entrySymbol)
                 }
+                let nestedSymbol = symbols.define(
+                    kind: nestedClassKind,
+                    name: nestedClass.name,
+                    fqName: nestedFQName,
+                    declSite: nestedClass.range,
+                    visibility: visibility(from: nestedClass.modifiers),
+                    flags: flags(from: nestedClass.modifiers)
+                )
+                bindings.bindDecl(declID, symbol: nestedSymbol)
+                symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)
+
+                let nestedType = types.make(.classType(ClassType(classSymbol: nestedSymbol, args: [], nullability: .nonNull)))
+                if !nestedClass.typeParams.isEmpty {
+                    types.setNominalTypeParameterVariances(
+                        nestedClass.typeParams.map(\.variance),
+                        for: nestedSymbol
+                    )
+                }
+                if classSymbolKind(for: nestedClass) == .enumClass {
+                    for entry in nestedClass.enumEntries {
+                        let entryFQName = nestedFQName + [entry.name]
+                        let existingEntrySymbols = symbols.lookupAll(fqName: entryFQName).compactMap { symbols.symbol($0) }
+                        if hasDeclarationConflict(newKind: .field, existing: existingEntrySymbols) {
+                            diagnostics.error(
+                                "KSWIFTK-SEMA-0001",
+                                "Duplicate declaration in the same package scope.",
+                                range: entry.range
+                            )
+                        }
+                        let entrySymbol = symbols.define(
+                            kind: .field,
+                            name: entry.name,
+                            fqName: entryFQName,
+                            declSite: entry.range,
+                            visibility: .public,
+                            flags: []
+                        )
+                        symbols.setPropertyType(nestedType, for: entrySymbol)
+                    }
+                }
+                collectNestedTypeAliases(
+                    nestedClass.nestedTypeAliases,
+                    ownerFQName: nestedFQName,
+                    symbols: symbols,
+                    diagnostics: diagnostics
+                )
+                collectMemberHeaders(
+                    memberFunctions: nestedClass.memberFunctions,
+                    memberProperties: nestedClass.memberProperties,
+                    nestedClasses: nestedClass.nestedClasses,
+                    nestedObjects: nestedClass.nestedObjects,
+                    ownerFQName: nestedFQName,
+                    ownerSymbol: nestedSymbol,
+                    ownerType: nestedType,
+                    ast: ast,
+                    symbols: symbols,
+                    types: types,
+                    bindings: bindings,
+                    scope: scope,
+                    diagnostics: diagnostics,
+                    interner: interner
+                )
+            case .interfaceDecl(let nestedInterface):
+                let nestedFQName = ownerFQName + [nestedInterface.name]
+                let existingInterfaceSymbols = symbols.lookupAll(fqName: nestedFQName).compactMap { symbols.symbol($0) }
+                if hasDeclarationConflict(newKind: .interface, existing: existingInterfaceSymbols) {
+                    diagnostics.error(
+                        "KSWIFTK-SEMA-0001",
+                        "Duplicate declaration in the same package scope.",
+                        range: nestedInterface.range
+                    )
+                }
+                let nestedSymbol = symbols.define(
+                    kind: .interface,
+                    name: nestedInterface.name,
+                    fqName: nestedFQName,
+                    declSite: nestedInterface.range,
+                    visibility: visibility(from: nestedInterface.modifiers),
+                    flags: flags(from: nestedInterface.modifiers)
+                )
+                bindings.bindDecl(declID, symbol: nestedSymbol)
+                symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)
+
+                _ = types.make(.classType(ClassType(classSymbol: nestedSymbol, args: [], nullability: .nonNull)))
+                if !nestedInterface.typeParams.isEmpty {
+                    types.setNominalTypeParameterVariances(
+                        nestedInterface.typeParams.map(\.variance),
+                        for: nestedSymbol
+                    )
+                }
+                collectNestedTypeAliases(
+                    nestedInterface.nestedTypeAliases,
+                    ownerFQName: nestedFQName,
+                    symbols: symbols,
+                    diagnostics: diagnostics
+                )
+            default:
+                continue
             }
-            collectNestedTypeAliases(
-                nestedClass.nestedTypeAliases,
-                ownerFQName: nestedFQName,
-                symbols: symbols,
-                diagnostics: diagnostics
-            )
-            collectMemberHeaders(
-                memberFunctions: nestedClass.memberFunctions,
-                memberProperties: nestedClass.memberProperties,
-                nestedClasses: nestedClass.nestedClasses,
-                nestedObjects: nestedClass.nestedObjects,
-                ownerFQName: nestedFQName,
-                ownerSymbol: nestedSymbol,
-                ownerType: nestedType,
-                ast: ast,
-                symbols: symbols,
-                types: types,
-                bindings: bindings,
-                scope: scope,
-                diagnostics: diagnostics,
-                interner: interner
-            )
         }
 
         for declID in nestedObjects {

@@ -1370,25 +1370,33 @@ public final class BuildKIRPhase: CompilerPhase {
 
         for declID in nestedClasses {
             guard let decl = ast.arena.decl(declID),
-                  case .classDecl(let nested) = decl,
                   let symbol = sema.bindings.declSymbols[declID] else {
                 continue
             }
-            let (nestedDirect, nestedAll) = lowerMemberDecls(
-                memberFunctions: nested.memberFunctions,
-                memberProperties: nested.memberProperties,
-                nestedClasses: nested.nestedClasses,
-                nestedObjects: nested.nestedObjects,
-                ast: ast,
-                sema: sema,
-                arena: arena,
-                interner: interner,
-                propertyConstantInitializers: propertyConstantInitializers
-            )
-            let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: nestedDirect)))
-            directMembers.append(kirID)
-            allDecls.append(kirID)
-            allDecls.append(contentsOf: nestedAll)
+            switch decl {
+            case .classDecl(let nested):
+                let (nestedDirect, nestedAll) = lowerMemberDecls(
+                    memberFunctions: nested.memberFunctions,
+                    memberProperties: nested.memberProperties,
+                    nestedClasses: nested.nestedClasses,
+                    nestedObjects: nested.nestedObjects,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers
+                )
+                let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: nestedDirect)))
+                directMembers.append(kirID)
+                allDecls.append(kirID)
+                allDecls.append(contentsOf: nestedAll)
+            case .interfaceDecl:
+                let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol)))
+                directMembers.append(kirID)
+                allDecls.append(kirID)
+            default:
+                continue
+            }
         }
 
         for declID in nestedObjects {

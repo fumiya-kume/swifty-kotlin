@@ -425,9 +425,13 @@ extension BuildASTPhase {
                 let propDecl = makePropertyDecl(from: childID, in: arena, interner: interner, astArena: astArena)
                 let declID = astArena.appendDecl(.propertyDecl(propDecl))
                 properties.append(declID)
-            case .classDecl, .interfaceDecl:
+            case .classDecl:
                 let classDecl = makeClassDecl(from: childID, in: arena, interner: interner, astArena: astArena)
                 let declID = astArena.appendDecl(.classDecl(classDecl))
+                nestedClasses.append(declID)
+            case .interfaceDecl:
+                let interfaceDecl = makeInterfaceDecl(from: childID, in: arena, interner: interner, astArena: astArena)
+                let declID = astArena.appendDecl(.interfaceDecl(interfaceDecl))
                 nestedClasses.append(declID)
             case .objectDecl:
                 let objectDecl = makeObjectDecl(from: childID, in: arena, interner: interner, astArena: astArena)
