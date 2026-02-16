@@ -16,6 +16,7 @@ Cases:
 - `extension_receiver.kt`: extension receiver 呼び出しと `this` 束縛
 - `local_var.kt`: block 内 local `val` 宣言と参照
 - `local_assign.kt`: block 内 local `var` 再代入
+- `array_index.kt`: `IntArray` の index read/write と算術
 - `overload.kt`: overload resolution by parameter type
 - `string_concat.kt`: string `+` lowering via runtime concat helper
 - `val_reassign_error.kt`: local `val` 再代入の compile-error parity

@@ -440,6 +440,87 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
     }
 
+    func testArrayAccessAndAssignmentLowerToRuntimeCallsWithExpectedThrowFlags() throws {
+        let source = """
+        fun main(): Any? {
+            val arr = IntArray(2)
+            arr[0] = 7
+            return arr[0]
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case .function(let function) = decl else {
+                    return nil
+                }
+                return ctx.interner.resolve(function.name) == "main" ? function : nil
+            }.first
+            let body = try XCTUnwrap(mainFunction?.body)
+
+            let callNames = body.compactMap { instruction -> String? in
+                guard case .call(_, let callee, _, _, _) = instruction else {
+                    return nil
+                }
+                return ctx.interner.resolve(callee)
+            }
+            XCTAssertTrue(callNames.contains("kk_array_new"))
+            XCTAssertTrue(callNames.contains("kk_array_set"))
+            XCTAssertTrue(callNames.contains("kk_array_get"))
+
+            let throwFlags: [String: [Bool]] = body.reduce(into: [:]) { partial, instruction in
+                guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+                    return
+                }
+                partial[ctx.interner.resolve(callee), default: []].append(canThrow)
+            }
+            XCTAssertEqual(throwFlags["kk_array_new"]?.allSatisfy({ $0 == false }), true)
+            XCTAssertEqual(throwFlags["kk_array_set"]?.allSatisfy({ $0 == true }), true)
+            XCTAssertEqual(throwFlags["kk_array_get"]?.allSatisfy({ $0 == true }), true)
+        }
+    }
+
+    func testArrayOutOfBoundsThrownChannelReturnsEarlyBeforeSubsequentReturn() throws {
+        let source = """
+        fun readOutOfBounds(arr: Any?): Any? = arr[5]
+        fun main(): Any? {
+            val arr = IntArray(1)
+            readOutOfBounds(arr)
+            return 99
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputPath = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .path
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "ArrayThrownChannel",
+                emit: .executable,
+                outputPath: outputPath
+            )
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+            try LinkPhase().run(ctx)
+
+            XCTAssertTrue(FileManager.default.fileExists(atPath: outputPath))
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: outputPath)
+            process.arguments = []
+            try process.run()
+            process.waitUntilExit()
+
+            XCTAssertEqual(process.terminationStatus, 0)
+        }
+    }
+
     func testLlvmCapiBackendEmitsRuntimeStringAndCoroutineHelpersInLLVMIR() throws {
         guard let bindings = LLVMCAPIBindings.load(),
               bindings.smokeTestContextLifecycle() else {
