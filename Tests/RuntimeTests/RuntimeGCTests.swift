@@ -39,6 +39,12 @@ private func withTestTypeInfo(
     }
 }
 
+private func withDummyTypeInfo<T>(_ body: (UnsafeRawPointer) -> T) -> T {
+    withTestTypeInfo(fieldOffsets: []) { typeInfoPtr in
+        body(UnsafeRawPointer(typeInfoPtr))
+    }
+}
+
 final class RuntimeGCTests: XCTestCase {
     override func setUp() {
         super.setUp()
@@ -51,28 +57,32 @@ final class RuntimeGCTests: XCTestCase {
     }
 
     func testGCCollectsUnreachableAllocation() {
-        _ = kk_alloc(16, nil)
-        XCTAssertEqual(kk_runtime_heap_object_count(), 1)
-        kk_gc_collect()
-        XCTAssertEqual(kk_runtime_heap_object_count(), 0)
+        withDummyTypeInfo { ti in
+            _ = kk_alloc(16, ti)
+            XCTAssertEqual(kk_runtime_heap_object_count(), 1)
+            kk_gc_collect()
+            XCTAssertEqual(kk_runtime_heap_object_count(), 0)
+        }
     }
 
     func testGlobalRootPreventsCollectionUntilCleared() {
-        let slot = UnsafeMutablePointer<UnsafeMutableRawPointer?>.allocate(capacity: 1)
-        slot.initialize(to: kk_alloc(16, nil))
-        defer {
-            slot.deinitialize(count: 1)
-            slot.deallocate()
+        withDummyTypeInfo { ti in
+            let slot = UnsafeMutablePointer<UnsafeMutableRawPointer?>.allocate(capacity: 1)
+            slot.initialize(to: kk_alloc(16, ti))
+            defer {
+                slot.deinitialize(count: 1)
+                slot.deallocate()
+            }
+
+            kk_register_global_root(slot)
+            kk_gc_collect()
+            XCTAssertEqual(kk_runtime_heap_object_count(), 1)
+
+            slot.pointee = nil
+            kk_gc_collect()
+            XCTAssertEqual(kk_runtime_heap_object_count(), 0)
+            kk_unregister_global_root(slot)
         }
-
-        kk_register_global_root(slot)
-        kk_gc_collect()
-        XCTAssertEqual(kk_runtime_heap_object_count(), 1)
-
-        slot.pointee = nil
-        kk_gc_collect()
-        XCTAssertEqual(kk_runtime_heap_object_count(), 0)
-        kk_unregister_global_root(slot)
     }
 
     func testFrameMapRootsProtectActiveFramePointers() {
@@ -84,34 +94,38 @@ final class RuntimeGCTests: XCTestCase {
             }
         }
 
-        let frameRootSlot = UnsafeMutablePointer<UnsafeMutableRawPointer?>.allocate(capacity: 1)
-        frameRootSlot.initialize(to: kk_alloc(8, nil))
-        defer {
-            frameRootSlot.deinitialize(count: 1)
-            frameRootSlot.deallocate()
+        withDummyTypeInfo { ti in
+            let frameRootSlot = UnsafeMutablePointer<UnsafeMutableRawPointer?>.allocate(capacity: 1)
+            frameRootSlot.initialize(to: kk_alloc(8, ti))
+            defer {
+                frameRootSlot.deinitialize(count: 1)
+                frameRootSlot.deallocate()
+            }
+
+            kk_push_frame(77, UnsafeMutableRawPointer(frameRootSlot))
+            kk_gc_collect()
+            XCTAssertEqual(kk_runtime_heap_object_count(), 1)
+
+            frameRootSlot.pointee = nil
+            kk_gc_collect()
+            XCTAssertEqual(kk_runtime_heap_object_count(), 0)
+            kk_pop_frame()
+
+            kk_register_frame_map(77, nil)
         }
-
-        kk_push_frame(77, UnsafeMutableRawPointer(frameRootSlot))
-        kk_gc_collect()
-        XCTAssertEqual(kk_runtime_heap_object_count(), 1)
-
-        frameRootSlot.pointee = nil
-        kk_gc_collect()
-        XCTAssertEqual(kk_runtime_heap_object_count(), 0)
-        kk_pop_frame()
-
-        kk_register_frame_map(77, nil)
     }
 
     func testCoroutineRootRegistrationPreventsCollection() {
-        let object = kk_alloc(12, nil)
-        kk_register_coroutine_root(object)
-        kk_gc_collect()
-        XCTAssertEqual(kk_runtime_heap_object_count(), 1)
+        withDummyTypeInfo { ti in
+            let object = kk_alloc(12, ti)
+            kk_register_coroutine_root(object)
+            kk_gc_collect()
+            XCTAssertEqual(kk_runtime_heap_object_count(), 1)
 
-        kk_unregister_coroutine_root(object)
-        kk_gc_collect()
-        XCTAssertEqual(kk_runtime_heap_object_count(), 0)
+            kk_unregister_coroutine_root(object)
+            kk_gc_collect()
+            XCTAssertEqual(kk_runtime_heap_object_count(), 0)
+        }
     }
 
     func testAllocInitializesObjectHeader() {
@@ -133,7 +147,7 @@ final class RuntimeGCTests: XCTestCase {
 
         withTestTypeInfo(fieldOffsets: [fieldOffset]) { typeInfoPtr in
             let parent = kk_alloc(parentSize, UnsafeRawPointer(typeInfoPtr))
-            let child = kk_alloc(16, nil)
+            let child = kk_alloc(16, UnsafeRawPointer(typeInfoPtr))
             let slot = parent.advanced(by: Int(fieldOffset)).assumingMemoryBound(to: UnsafeMutableRawPointer?.self)
             slot.pointee = child
 
