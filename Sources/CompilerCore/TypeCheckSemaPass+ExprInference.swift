@@ -275,11 +275,24 @@ extension TypeCheckSemaPassPhase {
             sema.bindings.bindExprType(id, type: resolvedType)
             return resolvedType
 
-        case .tryExpr(let body, let catchBodies, let finallyExpr, _):
+        case .tryExpr(let body, let catchClauses, let finallyExpr, _):
             var branchTypes: [TypeID] = []
             branchTypes.append(inferExpr(body, ctx: ctx, locals: &locals, expectedType: expectedType))
-            for catchBody in catchBodies {
-                branchTypes.append(inferExpr(catchBody, ctx: ctx, locals: &locals, expectedType: expectedType))
+            for clause in catchClauses {
+                var catchLocals = locals
+                if let paramName = clause.paramName {
+                    let catchParamSymbol = sema.symbols.define(
+                        kind: .local,
+                        name: paramName,
+                        fqName: [paramName],
+                        declSite: clause.range,
+                        visibility: .internal
+                    )
+                    sema.symbols.setPropertyType(sema.types.anyType, for: catchParamSymbol)
+                    catchLocals[paramName] = (sema.types.anyType, catchParamSymbol, false)
+                    sema.bindings.bindIdentifier(clause.body, symbol: catchParamSymbol)
+                }
+                branchTypes.append(inferExpr(clause.body, ctx: ctx, locals: &catchLocals, expectedType: expectedType))
             }
             if let finallyExpr {
                 _ = inferExpr(finallyExpr, ctx: ctx, locals: &locals, expectedType: nil)

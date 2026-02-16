@@ -260,7 +260,8 @@ public final class BuildKIRPhase: CompilerPhase {
                 callee: interner.intern("iterator"),
                 arguments: [iterableID],
                 result: iteratorID,
-                canThrow: false
+                canThrow: false,
+                thrownResult: nil
             ))
 
             let continueLabel = makeLoopLabel()
@@ -273,7 +274,8 @@ public final class BuildKIRPhase: CompilerPhase {
                 callee: interner.intern("hasNext"),
                 arguments: [iteratorID],
                 result: hasNextID,
-                canThrow: false
+                canThrow: false,
+                thrownResult: nil
             ))
             let falseID = arena.appendExpr(.boolLiteral(false), type: boolType)
             instructions.append(.constValue(result: falseID, value: .boolLiteral(false)))
@@ -287,7 +289,8 @@ public final class BuildKIRPhase: CompilerPhase {
                 callee: interner.intern("next"),
                 arguments: [iteratorID],
                 result: nextValueID,
-                canThrow: false
+                canThrow: false,
+                thrownResult: nil
             ))
             if let loopVariableSymbol {
                 localValuesBySymbol[loopVariableSymbol] = nextValueID
@@ -468,7 +471,8 @@ public final class BuildKIRPhase: CompilerPhase {
                 callee: interner.intern("kk_array_get"),
                 arguments: [arrayID, indexID],
                 result: result,
-                canThrow: false
+                canThrow: false,
+                thrownResult: nil
             ))
             return result
 
@@ -505,7 +509,8 @@ public final class BuildKIRPhase: CompilerPhase {
                 callee: interner.intern("kk_array_set"),
                 arguments: [arrayID, indexID, valueID],
                 result: nil,
-                canThrow: false
+                canThrow: false,
+                thrownResult: nil
             ))
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))
@@ -570,16 +575,97 @@ public final class BuildKIRPhase: CompilerPhase {
             ))
             return result
 
-        case .tryExpr(let bodyExpr, _, _, _):
-            return lowerExpr(
+        case .tryExpr(let bodyExpr, let catchClauses, let finallyExpr, _):
+            let exceptionSlot = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+            let zeroInit = arena.appendExpr(.intLiteral(0), type: sema.types.anyType)
+            instructions.append(.constValue(result: zeroInit, value: .intLiteral(0)))
+            instructions.append(.copy(from: zeroInit, to: exceptionSlot))
+
+            let catchDispatchLabel = makeLoopLabel()
+            let finallyLabel = makeLoopLabel()
+            let rethrowLabel = makeLoopLabel()
+            let endLabel = makeLoopLabel()
+
+            var bodyInstructions: [KIRInstruction] = []
+            let bodyResultID = lowerExpr(
                 bodyExpr,
                 ast: ast,
                 sema: sema,
                 arena: arena,
                 interner: interner,
                 propertyConstantInitializers: propertyConstantInitializers,
-                instructions: &instructions
+                instructions: &bodyInstructions
             )
+
+            for instruction in bodyInstructions {
+                if case .call(let symbol, let callee, let arguments, let result, _, _) = instruction {
+                    instructions.append(.call(
+                        symbol: symbol,
+                        callee: callee,
+                        arguments: arguments,
+                        result: result,
+                        canThrow: true,
+                        thrownResult: exceptionSlot
+                    ))
+                    instructions.append(.jumpIfNotNull(value: exceptionSlot, target: catchDispatchLabel))
+                } else {
+                    instructions.append(instruction)
+                }
+            }
+
+            instructions.append(.jump(finallyLabel))
+
+            instructions.append(.label(catchDispatchLabel))
+            if !catchClauses.isEmpty {
+                for clause in catchClauses {
+                    if let paramName = clause.paramName {
+                        let paramID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+                        instructions.append(.copy(from: exceptionSlot, to: paramID))
+                        if let catchParamSymbol = sema.bindings.identifierSymbols[clause.body] {
+                            localValuesBySymbol[catchParamSymbol] = paramID
+                        }
+                    }
+
+                    _ = lowerExpr(
+                        clause.body,
+                        ast: ast,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        propertyConstantInitializers: propertyConstantInitializers,
+                        instructions: &instructions
+                    )
+
+                    let clearVal = arena.appendExpr(.intLiteral(0), type: sema.types.anyType)
+                    instructions.append(.constValue(result: clearVal, value: .intLiteral(0)))
+                    instructions.append(.copy(from: clearVal, to: exceptionSlot))
+
+                    instructions.append(.jump(finallyLabel))
+                }
+            } else {
+                instructions.append(.jump(finallyLabel))
+            }
+
+            instructions.append(.label(finallyLabel))
+            if let finallyExpr {
+                _ = lowerExpr(
+                    finallyExpr,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+            }
+            instructions.append(.jumpIfNotNull(value: exceptionSlot, target: rethrowLabel))
+            instructions.append(.jump(endLabel))
+
+            instructions.append(.label(rethrowLabel))
+            instructions.append(.rethrow(value: exceptionSlot))
+
+            instructions.append(.label(endLabel))
+            return bodyResultID
 
         case .binary(let op, let lhs, let rhs, _):
             let lhsID = lowerExpr(
@@ -630,7 +716,8 @@ public final class BuildKIRPhase: CompilerPhase {
                     callee: loweredCalleeName,
                     arguments: finalArguments,
                     result: result,
-                    canThrow: false
+                    canThrow: false,
+                    thrownResult: nil
                 ))
                 return result
             }
@@ -641,7 +728,8 @@ public final class BuildKIRPhase: CompilerPhase {
                         callee: interner.intern("kk_string_concat"),
                         arguments: [lhsID, rhsID],
                         result: result,
-                        canThrow: false
+                        canThrow: false,
+                        thrownResult: nil
                     )
                 )
                 return result
@@ -728,7 +816,8 @@ public final class BuildKIRPhase: CompilerPhase {
                 callee: loweredCalleeName,
                 arguments: finalArgIDs,
                 result: result,
-                canThrow: false
+                canThrow: false,
+                thrownResult: nil
             ))
             return result
 
@@ -801,7 +890,8 @@ public final class BuildKIRPhase: CompilerPhase {
                 callee: loweredMemberCalleeName,
                 arguments: finalArguments,
                 result: result,
-                canThrow: false
+                canThrow: false,
+                thrownResult: nil
             ))
             return result
 

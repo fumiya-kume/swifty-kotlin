@@ -22,7 +22,7 @@ final class OperatorLoweringPass: LoweringPass {
                 case .equal:
                     callee = ctx.interner.intern("kk_op_eq")
                 }
-                return .call(symbol: nil, callee: callee, arguments: [lhs, rhs], result: result, canThrow: false)
+                return .call(symbol: nil, callee: callee, arguments: [lhs, rhs], result: result, canThrow: false, thrownResult: nil)
             }
             return updated
         }

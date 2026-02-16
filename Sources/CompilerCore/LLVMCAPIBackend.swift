@@ -801,7 +801,7 @@ private struct NativeEmitter {
                 }
                 storeResult(result, lowered)
 
-            case .call(let symbol, let callee, let arguments, let result, let usesThrownChannel):
+            case .call(let symbol, let callee, let arguments, let result, let usesThrownChannel, let thrownResult):
                 guard !bindings.hasTerminator(currentBlock) else {
                     continue
                 }
@@ -937,36 +937,71 @@ private struct NativeEmitter {
                     type: int64Type,
                     pointer: thrownSlotPointer,
                     name: "thrown_val_\(instructionIndex)"
-                   ),
-                   let hasThrown = buildBoolCondition(
-                    from: thrownValue,
-                    name: "has_thrown_\(instructionIndex)"
-                   ),
-                   let thrownBlock = bindings.appendBasicBlock(
-                    context: context,
-                    function: llvmFunction.value,
-                    name: "thrown_\(instructionIndex)"
-                   ),
-                   let continueBlock = bindings.appendBasicBlock(
-                    context: context,
-                    function: llvmFunction.value,
-                    name: "call_cont_\(instructionIndex)"
                    ) {
-                    _ = bindings.buildCondBr(
-                        builder,
-                        condition: hasThrown,
-                        thenBlock: thrownBlock,
-                        elseBlock: continueBlock
-                    )
+                    if let thrownResult {
+                        storeResult(thrownResult, thrownValue)
+                    } else if let hasThrown = buildBoolCondition(
+                        from: thrownValue,
+                        name: "has_thrown_\(instructionIndex)"
+                    ),
+                    let thrownBlock = bindings.appendBasicBlock(
+                        context: context,
+                        function: llvmFunction.value,
+                        name: "thrown_\(instructionIndex)"
+                    ),
+                    let continueBlock = bindings.appendBasicBlock(
+                        context: context,
+                        function: llvmFunction.value,
+                        name: "call_cont_\(instructionIndex)"
+                    ) {
+                        _ = bindings.buildCondBr(
+                            builder,
+                            condition: hasThrown,
+                            thenBlock: thrownBlock,
+                            elseBlock: continueBlock
+                        )
 
-                    bindings.positionBuilder(builder, at: thrownBlock)
-                    storeOutThrownIfNonNull(thrownValue, suffix: "throw_\(instructionIndex)")
-                    emitFramePop("throw_\(instructionIndex)")
-                    _ = bindings.buildRet(builder, value: zeroValue)
+                        bindings.positionBuilder(builder, at: thrownBlock)
+                        storeOutThrownIfNonNull(thrownValue, suffix: "throw_\(instructionIndex)")
+                        emitFramePop("throw_\(instructionIndex)")
+                        _ = bindings.buildRet(builder, value: zeroValue)
 
-                    currentBlock = continueBlock
-                    bindings.positionBuilder(builder, at: continueBlock)
+                        currentBlock = continueBlock
+                        bindings.positionBuilder(builder, at: continueBlock)
+                    }
                 }
+
+            case .jumpIfNotNull(let value, let target):
+                guard !bindings.hasTerminator(currentBlock) else {
+                    continue
+                }
+                let resolved = resolveValue(value)
+                if let condition = buildBoolCondition(from: resolved, name: "jnn_cond_\(instructionIndex)"),
+                   let targetBlock = blockForLabel(target),
+                   let fallthroughBlock = bindings.appendBasicBlock(
+                    context: context,
+                    function: llvmFunction.value,
+                    name: "jnn_cont_\(instructionIndex)"
+                   ) {
+                    _ = bindings.buildCondBr(builder, condition: condition, thenBlock: targetBlock, elseBlock: fallthroughBlock)
+                    currentBlock = fallthroughBlock
+                    bindings.positionBuilder(builder, at: fallthroughBlock)
+                }
+
+            case .copy(let from, let to):
+                guard !bindings.hasTerminator(currentBlock) else {
+                    continue
+                }
+                storeResult(to, resolveValue(from))
+
+            case .rethrow(let value):
+                guard !bindings.hasTerminator(currentBlock) else {
+                    continue
+                }
+                let resolved = resolveValue(value)
+                storeOutThrownIfNonNull(resolved, suffix: "rethrow_\(instructionIndex)")
+                emitFramePop("rethrow_\(instructionIndex)")
+                _ = bindings.buildRet(builder, value: zeroValue)
 
             case .returnIfEqual(let lhs, let rhs):
                 guard !bindings.hasTerminator(currentBlock),

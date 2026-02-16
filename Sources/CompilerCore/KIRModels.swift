@@ -68,7 +68,10 @@ public enum KIRInstruction: Equatable {
     case constValue(result: KIRExprID, value: KIRExprKind)
     case binary(op: KIRBinaryOp, lhs: KIRExprID, rhs: KIRExprID, result: KIRExprID)
     case select(condition: KIRExprID, thenValue: KIRExprID, elseValue: KIRExprID, result: KIRExprID)
-    case call(symbol: SymbolID?, callee: InternedString, arguments: [KIRExprID], result: KIRExprID?, canThrow: Bool)
+    case call(symbol: SymbolID?, callee: InternedString, arguments: [KIRExprID], result: KIRExprID?, canThrow: Bool, thrownResult: KIRExprID?)
+    case jumpIfNotNull(value: KIRExprID, target: Int32)
+    case copy(from: KIRExprID, to: KIRExprID)
+    case rethrow(value: KIRExprID)
     case returnIfEqual(lhs: KIRExprID, rhs: KIRExprID)
     case returnUnit
     case returnValue(KIRExprID)
@@ -286,7 +289,7 @@ public final class KIRModule {
             return "binary \(op) r\(lhs.rawValue), r\(rhs.rawValue) -> r\(result.rawValue)"
         case .select(let condition, let thenValue, let elseValue, let result):
             return "select r\(condition.rawValue) ? r\(thenValue.rawValue) : r\(elseValue.rawValue) -> r\(result.rawValue)"
-        case .call(let symbol, let callee, let arguments, let result, let canThrow):
+        case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult):
             let calleeName = interner.resolve(callee)
             let args = arguments.map { "r\($0.rawValue)" }.joined(separator: ", ")
             let symbolLabel: String
@@ -296,7 +299,14 @@ public final class KIRModule {
                 symbolLabel = "_"
             }
             let ret = result.map { "r\($0.rawValue)" } ?? "_"
-            return "call \(calleeName) symbol=\(symbolLabel) args=[\(args)] ret=\(ret) thrown=\(canThrow)"
+            let thrownRet = thrownResult.map { "r\($0.rawValue)" } ?? "_"
+            return "call \(calleeName) symbol=\(symbolLabel) args=[\(args)] ret=\(ret) thrown=\(canThrow) thrownResult=\(thrownRet)"
+        case .jumpIfNotNull(let value, let target):
+            return "jumpIfNotNull r\(value.rawValue) -> L\(target)"
+        case .copy(let from, let to):
+            return "copy r\(from.rawValue) -> r\(to.rawValue)"
+        case .rethrow(let value):
+            return "rethrow r\(value.rawValue)"
         case .returnIfEqual(let lhs, let rhs):
             return "returnIfEqual r\(lhs.rawValue), r\(rhs.rawValue)"
         case .returnUnit:

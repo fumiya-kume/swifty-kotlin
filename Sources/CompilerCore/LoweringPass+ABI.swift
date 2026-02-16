@@ -38,7 +38,7 @@ final class ABILoweringPass: LoweringPass {
         module.arena.transformFunctions { function in
             var updated = function
             updated.body = function.body.map { instruction in
-                guard case .call(let symbol, let callee, let arguments, let result, _) = instruction else {
+                guard case .call(let symbol, let callee, let arguments, let result, _, let thrownResult) = instruction else {
                     return instruction
                 }
                 return .call(
@@ -46,7 +46,8 @@ final class ABILoweringPass: LoweringPass {
                     callee: callee,
                     arguments: arguments,
                     result: result,
-                    canThrow: !nonThrowingCallees.contains(callee)
+                    canThrow: !nonThrowingCallees.contains(callee),
+                    thrownResult: thrownResult
                 )
             }
             return updated

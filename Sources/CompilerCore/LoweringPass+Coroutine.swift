@@ -155,7 +155,7 @@ final class CoroutineLoweringPass: LoweringPass {
             var loweredBody: [KIRInstruction] = []
             loweredBody.reserveCapacity(function.body.count)
             for instruction in function.body {
-                guard case .call(let symbol, let callee, let arguments, let result, let canThrow) = instruction else {
+                guard case .call(let symbol, let callee, let arguments, let result, let canThrow, _) = instruction else {
                     loweredBody.append(instruction)
                     continue
                 }
@@ -222,7 +222,8 @@ final class CoroutineLoweringPass: LoweringPass {
                             callee: runtimeLauncherCallee,
                             arguments: [entryPointExpr, entryFunctionID],
                             result: result,
-                            canThrow: canThrow
+                            canThrow: canThrow,
+                            thrownResult: nil
                         )
                     )
                     continue
@@ -267,7 +268,8 @@ final class CoroutineLoweringPass: LoweringPass {
                         callee: continuationFactory,
                         arguments: [continuationFunctionID],
                         result: continuationTemp,
-                        canThrow: false
+                        canThrow: false,
+                        thrownResult: nil
                     )
                 )
                 var loweredArguments = arguments
@@ -278,7 +280,8 @@ final class CoroutineLoweringPass: LoweringPass {
                         callee: loweredTarget.name,
                         arguments: loweredArguments,
                         result: result,
-                        canThrow: canThrow
+                        canThrow: canThrow,
+                        thrownResult: nil
                     )
                 )
             }
@@ -633,7 +636,8 @@ final class CoroutineLoweringPass: LoweringPass {
                 callee: enterCallee,
                 arguments: [continuationExpr, functionIDExpr],
                 result: resumeLabelExpr,
-                canThrow: false
+                canThrow: false,
+                thrownResult: nil
             )
         )
 
@@ -673,7 +677,8 @@ final class CoroutineLoweringPass: LoweringPass {
                             callee: getSpillCallee,
                             arguments: [continuationExpr, slotExpr],
                             result: exprID,
-                            canThrow: false
+                            canThrow: false,
+                            thrownResult: nil
                         )
                     )
                 }
@@ -684,7 +689,8 @@ final class CoroutineLoweringPass: LoweringPass {
                             callee: getCompletionCallee,
                             arguments: [continuationExpr],
                             result: callResultExpr,
-                            canThrow: false
+                            canThrow: false,
+                            thrownResult: nil
                         )
                     )
                 }
@@ -695,7 +701,7 @@ final class CoroutineLoweringPass: LoweringPass {
 
             for stateInstruction in block.instructions {
                 let instruction = stateInstruction.instruction
-                if case .call(let symbol, let callee, let arguments, let result, let canThrow) = instruction,
+                if case .call(let symbol, let callee, let arguments, let result, let canThrow, _) = instruction,
                    isSuspendCall(
                     symbol: symbol,
                     callee: callee,
@@ -721,7 +727,8 @@ final class CoroutineLoweringPass: LoweringPass {
                                 callee: setSpillCallee,
                                 arguments: [continuationExpr, slotExpr, exprID],
                                 result: nil,
-                                canThrow: false
+                                canThrow: false,
+                                thrownResult: nil
                             )
                         )
                     }
@@ -738,7 +745,8 @@ final class CoroutineLoweringPass: LoweringPass {
                             callee: setLabelCallee,
                             arguments: [continuationExpr, resumeLabelExpr],
                             result: nil,
-                            canThrow: false
+                            canThrow: false,
+                            thrownResult: nil
                         )
                     )
 
@@ -757,7 +765,8 @@ final class CoroutineLoweringPass: LoweringPass {
                             callee: loweredSuspendCallee,
                             arguments: loweredSuspendArguments,
                             result: suspensionResult,
-                            canThrow: canThrow
+                            canThrow: canThrow,
+                            thrownResult: nil
                         )
                     )
 
@@ -771,7 +780,8 @@ final class CoroutineLoweringPass: LoweringPass {
                             callee: suspendedProvider,
                             arguments: [],
                             result: suspendedExpr,
-                            canThrow: false
+                            canThrow: false,
+                            thrownResult: nil
                         )
                     )
                     lowered.append(.returnIfEqual(lhs: suspensionResult, rhs: suspendedExpr))
@@ -781,7 +791,8 @@ final class CoroutineLoweringPass: LoweringPass {
                             callee: setCompletionCallee,
                             arguments: [continuationExpr, suspensionResult],
                             result: nil,
-                            canThrow: false
+                            canThrow: false,
+                            thrownResult: nil
                         )
                     )
                     continue
@@ -799,7 +810,8 @@ final class CoroutineLoweringPass: LoweringPass {
                             callee: exitCallee,
                             arguments: [continuationExpr, value],
                             result: exitValueExpr,
-                            canThrow: false
+                            canThrow: false,
+                            thrownResult: nil
                         )
                     )
                     lowered.append(.returnValue(exitValueExpr))
@@ -816,7 +828,8 @@ final class CoroutineLoweringPass: LoweringPass {
                             callee: exitCallee,
                             arguments: [continuationExpr, unitExpr],
                             result: exitValueExpr,
-                            canThrow: false
+                            canThrow: false,
+                            thrownResult: nil
                         )
                     )
                     lowered.append(.returnValue(exitValueExpr))
@@ -890,7 +903,7 @@ final class CoroutineLoweringPass: LoweringPass {
             guard let tailInstruction = block.instructions.last else {
                 continue
             }
-            guard case .call(let symbol, let callee, _, let result, _) = tailInstruction.instruction,
+            guard case .call(let symbol, let callee, _, let result, _, _) = tailInstruction.instruction,
                   isSuspendCall(
                     symbol: symbol,
                     callee: callee,
@@ -944,7 +957,7 @@ final class CoroutineLoweringPass: LoweringPass {
             for indexed in cfgBlock.instructions {
                 chunk.append(indexed)
 
-                guard case .call(let symbol, let callee, _, _, _) = indexed.instruction else {
+                guard case .call(let symbol, let callee, _, _, _, _) = indexed.instruction else {
                     continue
                 }
                 guard isSuspendCall(
@@ -1241,7 +1254,7 @@ final class CoroutineLoweringPass: LoweringPass {
             return Set([lhs, rhs])
         case .select(let condition, let thenValue, let elseValue, _):
             return Set([condition, thenValue, elseValue])
-        case .call(_, _, let arguments, _, _):
+        case .call(_, _, let arguments, _, _, _):
             return Set(arguments)
         case .returnIfEqual(let lhs, let rhs):
             return Set([lhs, rhs])
@@ -1260,7 +1273,7 @@ final class CoroutineLoweringPass: LoweringPass {
             return Set([result])
         case .select(_, _, _, let result):
             return Set([result])
-        case .call(_, _, _, let result, _):
+        case .call(_, _, _, let result, _, _):
             if let result {
                 return Set([result])
             }

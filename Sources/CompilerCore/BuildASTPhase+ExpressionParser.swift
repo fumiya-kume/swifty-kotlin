@@ -460,12 +460,14 @@ extension BuildASTPhase {
                 return nil
             }
 
-            var catchBodies: [ExprID] = []
+            var catchClauses: [CatchClause] = []
             while matches(.keyword(.catch)) {
-                _ = consume()
-                skipBalancedParenthesisIfNeeded()
+                let catchToken = consume()!
+                let (paramName, paramTypeName) = parseCatchParameter()
                 if let catchExpr = parseExpression(minPrecedence: 0) {
-                    catchBodies.append(catchExpr)
+                    let clauseEnd = astArena.exprRange(catchExpr)?.end ?? catchToken.range.end
+                    let clauseRange = SourceRange(start: catchToken.range.start, end: clauseEnd)
+                    catchClauses.append(CatchClause(paramName: paramName, paramTypeName: paramTypeName, body: catchExpr, range: clauseRange))
                 } else {
                     break
                 }
@@ -479,11 +481,44 @@ extension BuildASTPhase {
 
             let tailEnd = finallyExpr
                 .flatMap { astArena.exprRange($0)?.end }
-                ?? catchBodies.last.flatMap { astArena.exprRange($0)?.end }
+                ?? catchClauses.last.map { astArena.exprRange($0.body)?.end ?? tryToken.range.end }
                 ?? astArena.exprRange(bodyExpr)?.end
                 ?? tryToken.range.end
             let range = SourceRange(start: tryToken.range.start, end: tailEnd)
-            return astArena.appendExpr(.tryExpr(body: bodyExpr, catchBodies: catchBodies, finallyExpr: finallyExpr, range: range))
+            return astArena.appendExpr(.tryExpr(body: bodyExpr, catchClauses: catchClauses, finallyExpr: finallyExpr, range: range))
+        }
+
+        private func parseCatchParameter() -> (paramName: InternedString?, paramTypeName: InternedString?) {
+            guard matches(.symbol(.lParen)) else {
+                return (nil, nil)
+            }
+            _ = consume()
+            var paramName: InternedString?
+            var paramTypeName: InternedString?
+            if case .identifier(let name) = current()?.kind {
+                paramName = name
+                _ = consume()
+                if matches(.symbol(.colon)) {
+                    _ = consume()
+                    if case .identifier(let typeName) = current()?.kind {
+                        paramTypeName = typeName
+                        _ = consume()
+                    }
+                }
+            }
+            var depth = 1
+            while let token = current(), depth > 0 {
+                _ = consume()
+                switch token.kind {
+                case .symbol(.lParen):
+                    depth += 1
+                case .symbol(.rParen):
+                    depth -= 1
+                default:
+                    continue
+                }
+            }
+            return (paramName, paramTypeName)
         }
 
         private func parseBlockExpression() -> ExprID? {
