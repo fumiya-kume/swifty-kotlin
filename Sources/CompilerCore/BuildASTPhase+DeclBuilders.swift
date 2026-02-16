@@ -368,8 +368,9 @@ extension BuildASTPhase {
         interner: StringInterner,
         astArena: ASTArena
     ) {
-        let withoutDefault = stripDefaultValue(tokens)
-        let hasDefaultValue = withoutDefault.count != tokens.count
+        let split = splitDefaultValue(tokens)
+        let withoutDefault = split.withoutDefault
+        let hasDefaultValue = split.defaultTokens != nil
         guard !withoutDefault.isEmpty else {
             return
         }
@@ -417,11 +418,21 @@ extension BuildASTPhase {
             }
             return false
         })
+        let defaultValueExpr: ExprID?
+        if let defaultTokens = split.defaultTokens?
+            .filter({ $0.kind != .symbol(.semicolon) }),
+           !defaultTokens.isEmpty {
+            let parser = ExpressionParser(tokens: defaultTokens, interner: interner, astArena: astArena)
+            defaultValueExpr = parser.parse()
+        } else {
+            defaultValueExpr = nil
+        }
         parameters.append(ValueParamDecl(
             name: name,
             type: typeRef,
             hasDefaultValue: hasDefaultValue,
-            isVararg: isVararg
+            isVararg: isVararg,
+            defaultValue: defaultValueExpr
         ))
     }
 

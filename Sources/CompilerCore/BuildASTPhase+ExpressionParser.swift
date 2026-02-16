@@ -65,28 +65,74 @@ extension BuildASTPhase {
             guard var expr = parsePrimary() else {
                 return nil
             }
-            while matches(.symbol(.lParen)) {
-                guard let open = consume() else { break }
-                var args: [CallArgument] = []
-                if !matches(.symbol(.rParen)) {
-                    while true {
-                        if let argument = parseCallArgument() {
-                            args.append(argument)
-                        }
-                        if matches(.symbol(.comma)) {
-                            _ = consume()
-                            continue
-                        }
+            while true {
+                if matches(.symbol(.lParen)) {
+                    guard let open = consume() else { break }
+                    let args = parseCallArguments()
+                    let close = consumeIf(.symbol(.rParen))
+                    let fallbackEnd = close?.range.end ?? open.range.end
+                    let endRange = SourceRange(start: fallbackEnd, end: fallbackEnd)
+                    let range = mergeRanges(astArena.exprRange(expr), close?.range ?? endRange, fallback: open.range)
+                    expr = astArena.appendExpr(.call(callee: expr, args: args, range: range))
+                    continue
+                }
+
+                if matches(.symbol(.lBracket)) {
+                    guard let open = consume() else { break }
+                    let indexExpr = parseExpression(minPrecedence: 0)
+                    let close = consumeIf(.symbol(.rBracket))
+                    guard let indexExpr else {
                         break
                     }
+                    let fallbackEnd = close?.range.end ?? open.range.end
+                    let fallbackRange = SourceRange(start: fallbackEnd, end: fallbackEnd)
+                    let range = mergeRanges(astArena.exprRange(expr), close?.range ?? fallbackRange, fallback: open.range)
+                    expr = astArena.appendExpr(.arrayAccess(array: expr, index: indexExpr, range: range))
+                    continue
                 }
-                let close = consumeIf(.symbol(.rParen))
-                let fallbackEnd = close?.range.end ?? open.range.end
-                let endRange = SourceRange(start: fallbackEnd, end: fallbackEnd)
-                let range = mergeRanges(astArena.exprRange(expr), close?.range ?? endRange, fallback: open.range)
-                expr = astArena.appendExpr(.call(callee: expr, args: args, range: range))
+
+                guard matches(.symbol(.dot)) else {
+                    break
+                }
+                guard let dot = consume(),
+                      let memberToken = consume(),
+                      let memberName = tokenText(memberToken) else {
+                    break
+                }
+                var args: [CallArgument] = []
+                var memberEndRange = memberToken.range
+                if matches(.symbol(.lParen)),
+                   let open = consume() {
+                    args = parseCallArguments()
+                    let close = consumeIf(.symbol(.rParen))
+                    memberEndRange = close?.range ?? open.range
+                }
+                let range = mergeRanges(astArena.exprRange(expr), memberEndRange, fallback: dot.range)
+                expr = astArena.appendExpr(.memberCall(
+                    receiver: expr,
+                    callee: memberName,
+                    args: args,
+                    range: range
+                ))
             }
             return expr
+        }
+
+        private func parseCallArguments() -> [CallArgument] {
+            var args: [CallArgument] = []
+            if !matches(.symbol(.rParen)) {
+                while true {
+                    if let argument = parseCallArgument() {
+                        args.append(argument)
+                    }
+                    if matches(.symbol(.comma)) {
+                        _ = consume()
+                        continue
+                    }
+                    break
+                }
+            }
+            return args
         }
 
         private func parseCallArgument() -> CallArgument? {

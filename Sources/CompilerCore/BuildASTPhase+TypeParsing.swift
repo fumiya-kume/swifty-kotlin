@@ -19,14 +19,20 @@ extension BuildASTPhase {
     }
 
     func stripDefaultValue(_ tokens: [Token]) -> [Token] {
+        splitDefaultValue(tokens).withoutDefault
+    }
+
+    func splitDefaultValue(_ tokens: [Token]) -> (withoutDefault: [Token], defaultTokens: [Token]?) {
         var depth = BracketDepth()
         for (index, token) in tokens.enumerated() {
             if token.kind == .symbol(.assign) && depth.isAtTopLevel {
-                return Array(tokens[..<index])
+                let defaultStart = tokens.index(after: index)
+                let trailing = defaultStart < tokens.endIndex ? Array(tokens[defaultStart...]) : []
+                return (Array(tokens[..<index]), trailing)
             }
             depth.track(token.kind)
         }
-        return tokens
+        return (tokens, nil)
     }
 
     func declarationFunctionName(

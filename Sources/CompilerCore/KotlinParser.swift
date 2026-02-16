@@ -516,6 +516,10 @@ public final class KotlinParser {
             if shouldStopStatementBefore(token, inBlock: false) {
                 break
             }
+            // Package/import paths must not consume declaration starts on the next line.
+            if consumed && hasLeadingNewline(token) {
+                break
+            }
             if case .symbol(.dot) = token.kind {
                 _ = consumeToken(into: &children, range: &range)
                 consumed = true
@@ -530,9 +534,6 @@ public final class KotlinParser {
                 _ = consumeToken(into: &children, range: &range)
                 consumed = true
                 continue
-            }
-            if hasLeadingNewline(token) && consumed {
-                break
             }
             break
         }

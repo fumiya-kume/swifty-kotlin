@@ -269,12 +269,16 @@ extension BuildASTPhase {
         }
 
         let tokens = collectTokens(from: nodeID, in: arena)
-        guard let assignIndex = tokens.firstIndex(where: { token in
-            if case .symbol(.assign) = token.kind {
-                return true
+        var assignIndex: Int?
+        var depth = BracketDepth()
+        for (index, token) in tokens.enumerated() {
+            if token.kind == .symbol(.assign) && depth.isAtTopLevel {
+                assignIndex = index
+                break
             }
-            return false
-        }) else {
+            depth.track(token.kind)
+        }
+        guard let assignIndex else {
             return .unit
         }
 
@@ -305,7 +309,7 @@ extension BuildASTPhase {
                 continue
             }
             let node = arena.node(nodeID)
-            guard node.kind == .statement else {
+            guard node.kind == .statement || node.kind == .propertyDecl else {
                 continue
             }
             let statementTokens = collectTokens(from: nodeID, in: arena).filter { token in
@@ -314,12 +318,148 @@ extension BuildASTPhase {
             guard !statementTokens.isEmpty else {
                 continue
             }
+            if let localDeclExpr = parseLocalDeclarationExpr(
+                from: statementTokens,
+                interner: interner,
+                astArena: astArena
+            ) {
+                result.append(localDeclExpr)
+                continue
+            }
+            if let localAssignExpr = parseLocalAssignmentExpr(
+                from: statementTokens,
+                interner: interner,
+                astArena: astArena
+            ) {
+                result.append(localAssignExpr)
+                continue
+            }
             let parser = ExpressionParser(tokens: statementTokens, interner: interner, astArena: astArena)
             if let exprID = parser.parse() {
                 result.append(exprID)
             }
         }
         return result
+    }
+
+    func parseLocalDeclarationExpr(
+        from statementTokens: [Token],
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> ExprID? {
+        guard let head = statementTokens.first else {
+            return nil
+        }
+        let isMutable: Bool
+        switch head.kind {
+        case .keyword(.val):
+            isMutable = false
+        case .keyword(.var):
+            isMutable = true
+        default:
+            return nil
+        }
+
+        guard let nameToken = statementTokens.dropFirst().first(where: { token in
+            isTypeLikeNameToken(token.kind)
+        }),
+              let name = internedIdentifier(from: nameToken, interner: interner) else {
+            return nil
+        }
+
+        var assignIndex: Int?
+        var depth = BracketDepth()
+        for (index, token) in statementTokens.enumerated() {
+            if token.kind == .symbol(.assign) && depth.isAtTopLevel {
+                assignIndex = index
+                break
+            }
+            depth.track(token.kind)
+        }
+        guard let assignIndex else {
+            return nil
+        }
+        let initializerTokens = statementTokens[(assignIndex + 1)...].filter { token in
+            token.kind != .symbol(.semicolon)
+        }
+        guard !initializerTokens.isEmpty else {
+            return nil
+        }
+        let parser = ExpressionParser(tokens: Array(initializerTokens), interner: interner, astArena: astArena)
+        guard let initializerExpr = parser.parse() else {
+            return nil
+        }
+        let end = astArena.exprRange(initializerExpr)?.end ?? statementTokens.last?.range.end ?? head.range.end
+        let range = SourceRange(start: head.range.start, end: end)
+        return astArena.appendExpr(.localDecl(
+            name: name,
+            isMutable: isMutable,
+            initializer: initializerExpr,
+            range: range
+        ))
+    }
+
+    func parseLocalAssignmentExpr(
+        from statementTokens: [Token],
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> ExprID? {
+        var assignIndex: Int?
+        var depth = BracketDepth()
+        for (index, token) in statementTokens.enumerated() {
+            if token.kind == .symbol(.assign) && depth.isAtTopLevel {
+                assignIndex = index
+                break
+            }
+            depth.track(token.kind)
+        }
+        guard let assignIndex, assignIndex > 0 else {
+            return nil
+        }
+
+        let lhsTokens = statementTokens[..<assignIndex].filter { token in
+            token.kind != .symbol(.semicolon)
+        }
+        guard !lhsTokens.isEmpty else {
+            return nil
+        }
+
+        let valueTokens = statementTokens[(assignIndex + 1)...].filter { token in
+            token.kind != .symbol(.semicolon)
+        }
+        guard !valueTokens.isEmpty else {
+            return nil
+        }
+
+        let lhsParser = ExpressionParser(tokens: Array(lhsTokens), interner: interner, astArena: astArena)
+        guard let lhsExpr = lhsParser.parse() else {
+            return nil
+        }
+        let parser = ExpressionParser(tokens: Array(valueTokens), interner: interner, astArena: astArena)
+        guard let valueExpr = parser.parse() else {
+            return nil
+        }
+        guard let lhs = astArena.expr(lhsExpr),
+              let lhsRange = astArena.exprRange(lhsExpr) else {
+            return nil
+        }
+        let end = astArena.exprRange(valueExpr)?.end ?? statementTokens.last?.range.end ?? lhsRange.end
+        let range = SourceRange(start: lhsRange.start, end: end)
+
+        switch lhs {
+        case .nameRef(let name, _):
+            let nameText = interner.resolve(name)
+            if nameText == "val" || nameText == "var" {
+                return nil
+            }
+            return astArena.appendExpr(.localAssign(name: name, value: valueExpr, range: range))
+
+        case .arrayAccess(let array, let index, _):
+            return astArena.appendExpr(.arrayAssign(array: array, index: index, value: valueExpr, range: range))
+
+        default:
+            return nil
+        }
     }
 
     func skipBalancedBracket(

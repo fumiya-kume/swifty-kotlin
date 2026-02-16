@@ -273,17 +273,20 @@ public struct ValueParamDecl {
     public let type: TypeRefID?
     public let hasDefaultValue: Bool
     public let isVararg: Bool
+    public let defaultValue: ExprID?
 
     public init(
         name: InternedString,
         type: TypeRefID?,
         hasDefaultValue: Bool = false,
-        isVararg: Bool = false
+        isVararg: Bool = false,
+        defaultValue: ExprID? = nil
     ) {
         self.name = name
         self.type = type
         self.hasDefaultValue = hasDefaultValue
         self.isVararg = isVararg
+        self.defaultValue = defaultValue
     }
 }
 
@@ -328,7 +331,12 @@ public enum Expr: Equatable {
     case boolLiteral(Bool, SourceRange)
     case stringLiteral(InternedString, SourceRange)
     case nameRef(InternedString, SourceRange)
+    case localDecl(name: InternedString, isMutable: Bool, initializer: ExprID, range: SourceRange)
+    case localAssign(name: InternedString, value: ExprID, range: SourceRange)
+    case arrayAssign(array: ExprID, index: ExprID, value: ExprID, range: SourceRange)
     case call(callee: ExprID, args: [CallArgument], range: SourceRange)
+    case memberCall(receiver: ExprID, callee: InternedString, args: [CallArgument], range: SourceRange)
+    case arrayAccess(array: ExprID, index: ExprID, range: SourceRange)
     case binary(op: BinaryOp, lhs: ExprID, rhs: ExprID, range: SourceRange)
     case whenExpr(subject: ExprID, branches: [WhenBranch], elseExpr: ExprID?, range: SourceRange)
     case returnExpr(value: ExprID?, range: SourceRange)
@@ -384,7 +392,12 @@ public final class ASTArena {
              .boolLiteral(_, let range),
              .stringLiteral(_, let range),
              .nameRef(_, let range),
+             .localDecl(_, _, _, let range),
+             .localAssign(_, _, let range),
+             .arrayAssign(_, _, _, let range),
              .call(_, _, let range),
+             .memberCall(_, _, _, let range),
+             .arrayAccess(_, _, let range),
              .binary(_, _, _, let range),
              .whenExpr(_, _, _, let range),
              .returnExpr(_, let range),
