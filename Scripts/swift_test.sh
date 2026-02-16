@@ -7,15 +7,15 @@ workers_override="${SWIFT_TEST_WORKERS:-}"
 detect_workers() {
     local detected
 
-    # Use physical cores by default to avoid overcommitting long-running tests.
-    if detected="$(sysctl -n hw.physicalcpu 2>/dev/null)" \
+    # Use logical cores by default to maximize XCTest worker concurrency.
+    if detected="$(sysctl -n hw.logicalcpu 2>/dev/null)" \
         && [[ "$detected" =~ ^[0-9]+$ ]] \
         && (( detected > 0 )); then
         printf "%s" "$detected"
         return
     fi
 
-    if detected="$(sysctl -n hw.logicalcpu 2>/dev/null)" \
+    if detected="$(sysctl -n hw.physicalcpu 2>/dev/null)" \
         && [[ "$detected" =~ ^[0-9]+$ ]] \
         && (( detected > 0 )); then
         printf "%s" "$detected"
