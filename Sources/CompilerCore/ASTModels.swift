@@ -66,6 +66,7 @@ public struct Modifiers: OptionSet {
 
 public enum Decl {
     case classDecl(ClassDecl)
+    case interfaceDecl(InterfaceDecl)
     case funDecl(FunDecl)
     case propertyDecl(PropertyDecl)
     case typeAliasDecl(TypeAliasDecl)
@@ -111,6 +112,31 @@ public struct ClassDecl {
         self.nestedTypeAliases = nestedTypeAliases
         self.enumEntries = enumEntries
         self.initBlocks = initBlocks
+    }
+}
+
+public struct InterfaceDecl {
+    public let range: SourceRange
+    public let name: InternedString
+    public let modifiers: Modifiers
+    public let typeParams: [TypeParamDecl]
+    public let superTypes: [TypeRefID]
+    public let nestedTypeAliases: [TypeAliasDecl]
+
+    public init(
+        range: SourceRange,
+        name: InternedString,
+        modifiers: Modifiers,
+        typeParams: [TypeParamDecl] = [],
+        superTypes: [TypeRefID] = [],
+        nestedTypeAliases: [TypeAliasDecl] = []
+    ) {
+        self.range = range
+        self.name = name
+        self.modifiers = modifiers
+        self.typeParams = typeParams
+        self.superTypes = superTypes
+        self.nestedTypeAliases = nestedTypeAliases
     }
 }
 

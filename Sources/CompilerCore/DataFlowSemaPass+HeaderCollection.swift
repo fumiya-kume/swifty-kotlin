@@ -42,6 +42,14 @@ extension DataFlowSemaPassPhase {
                 visibility: visibility(from: classDecl.modifiers),
                 flags: flags(from: classDecl.modifiers)
             )
+        case .interfaceDecl(let interfaceDecl):
+            declaration = (
+                kind: .interface,
+                name: interfaceDecl.name,
+                range: interfaceDecl.range,
+                visibility: visibility(from: interfaceDecl.modifiers),
+                flags: flags(from: interfaceDecl.modifiers)
+            )
         case .objectDecl(let objectDecl):
             declaration = (
                 kind: .object,
@@ -147,6 +155,21 @@ extension DataFlowSemaPassPhase {
                     scope.insert(entrySymbol)
                 }
             }
+
+        case .interfaceDecl(let interfaceDecl):
+            if !interfaceDecl.typeParams.isEmpty {
+                types.setNominalTypeParameterVariances(
+                    interfaceDecl.typeParams.map(\.variance),
+                    for: symbol
+                )
+            }
+            _ = types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
+            collectNestedTypeAliases(
+                interfaceDecl.nestedTypeAliases,
+                ownerFQName: fqName,
+                symbols: symbols,
+                diagnostics: diagnostics
+            )
 
         case .objectDecl(let objectDecl):
             _ = types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))

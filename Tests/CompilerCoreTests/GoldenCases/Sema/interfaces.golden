@@ -1,0 +1,4 @@
+symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s1 kind=interface fq=golden.sema.Greeter vis=public flags=_
+file f0 package=golden.sema
+  decl d0 interface Greeter sym=s1

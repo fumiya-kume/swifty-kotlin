@@ -170,6 +170,9 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                 case .classDecl(let classDecl):
                     typeCheckInitBlocks(classDecl.initBlocks, ctx: inferCtx)
 
+                case .interfaceDecl:
+                    break
+
                 case .objectDecl(let objectDecl):
                     typeCheckInitBlocks(objectDecl.initBlocks, ctx: inferCtx)
 

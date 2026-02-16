@@ -43,7 +43,7 @@ public final class BuildKIRPhase: CompilerPhase {
                 }
 
                 switch decl {
-                case .classDecl, .objectDecl:
+                case .classDecl, .interfaceDecl, .objectDecl:
                     let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol)))
                     declIDs.append(kirID)
 
