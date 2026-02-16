@@ -601,6 +601,39 @@ public final class BuildKIRPhase: CompilerPhase {
                 instructions: &instructions
             )
             let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
+            if let callBinding = sema.bindings.callBindings[exprID],
+               let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee),
+               signature.receiverType != nil {
+                var finalArguments = normalizedCallArguments(
+                    providedArguments: [rhsID],
+                    callBinding: callBinding,
+                    chosenCallee: callBinding.chosenCallee,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+                finalArguments.insert(lhsID, at: 0)
+                let loweredCalleeName: InternedString
+                if let externalLinkName = sema.symbols.externalLinkName(for: callBinding.chosenCallee),
+                   !externalLinkName.isEmpty {
+                    loweredCalleeName = interner.intern(externalLinkName)
+                } else if let symbol = sema.symbols.symbol(callBinding.chosenCallee) {
+                    loweredCalleeName = symbol.name
+                } else {
+                    loweredCalleeName = binaryOperatorFunctionName(for: op, interner: interner)
+                }
+                instructions.append(.call(
+                    symbol: callBinding.chosenCallee,
+                    callee: loweredCalleeName,
+                    arguments: finalArguments,
+                    result: result,
+                    canThrow: false
+                ))
+                return result
+            }
             if case .add = op, sema.bindings.exprTypes[exprID] == stringType {
                 instructions.append(
                     .call(
@@ -677,7 +710,11 @@ public final class BuildKIRPhase: CompilerPhase {
                 }
             }
             let loweredCalleeName: InternedString
-            if chosen == nil {
+            if let chosen,
+               let externalLinkName = sema.symbols.externalLinkName(for: chosen),
+               !externalLinkName.isEmpty {
+                loweredCalleeName = interner.intern(externalLinkName)
+            } else if chosen == nil {
                 loweredCalleeName = loweredRuntimeBuiltinCallee(
                     for: calleeName,
                     argumentCount: finalArgIDs.count,
@@ -751,9 +788,17 @@ public final class BuildKIRPhase: CompilerPhase {
                     finalArguments.append(tokenExpr)
                 }
             }
+            let loweredMemberCalleeName: InternedString
+            if let chosen,
+               let externalLinkName = sema.symbols.externalLinkName(for: chosen),
+               !externalLinkName.isEmpty {
+                loweredMemberCalleeName = interner.intern(externalLinkName)
+            } else {
+                loweredMemberCalleeName = calleeName
+            }
             instructions.append(.call(
                 symbol: chosen,
-                callee: calleeName,
+                callee: loweredMemberCalleeName,
                 arguments: finalArguments,
                 result: result,
                 canThrow: false
@@ -978,6 +1023,21 @@ public final class BuildKIRPhase: CompilerPhase {
             return interner.intern("kk_array_new")
         default:
             return nil
+        }
+    }
+
+    private func binaryOperatorFunctionName(for op: BinaryOp, interner: StringInterner) -> InternedString {
+        switch op {
+        case .add:
+            return interner.intern("plus")
+        case .subtract:
+            return interner.intern("minus")
+        case .multiply:
+            return interner.intern("times")
+        case .divide:
+            return interner.intern("div")
+        case .equal:
+            return interner.intern("equals")
         }
     }
 

@@ -39,6 +39,10 @@ extension DataFlowSemaPassPhase {
             guard let nominalSymbol = symbols.symbol(nominalID) else {
                 continue
             }
+            if nominalSymbol.flags.contains(.synthetic),
+               symbols.nominalLayout(for: nominalID) != nil {
+                continue
+            }
 
             let directSuperNominals = symbols.directSupertypes(for: nominalID)
                 .compactMap { symbols.symbol($0) }
@@ -92,16 +96,24 @@ extension DataFlowSemaPassPhase {
             let declaredItableSize = layoutHint?.declaredItableSize ?? 0
             let itableSize = max(nextItableSlot, declaredItableSize)
 
-            let ownFieldCount = symbols.allSymbols().filter { symbol in
+            let ownFields = symbols.allSymbols().filter { symbol in
                 (symbol.kind == .field || symbol.kind == .property) &&
                 isDirectMemberSymbol(symbol, of: nominalSymbol)
-            }.count
+            }.sorted(by: { $0.id.rawValue < $1.id.rawValue })
+            let ownFieldCount = ownFields.count
             let inheritedFieldCount = superClass.flatMap { symbols.nominalLayout(for: $0)?.instanceFieldCount } ?? 0
+            // Keep nominal layout in sync with Runtime.KKObjHeader (typeInfo + flags/size).
+            let objectHeaderWords = 2
+            let inheritedFieldOffsets = superClass.flatMap { symbols.nominalLayout(for: $0)?.fieldOffsets } ?? [:]
+            var fieldOffsets = inheritedFieldOffsets
+            var nextFieldOffset = (inheritedFieldOffsets.values.max() ?? (objectHeaderWords - 1)) + 1
+            for field in ownFields where fieldOffsets[field.id] == nil {
+                fieldOffsets[field.id] = nextFieldOffset
+                nextFieldOffset += 1
+            }
             let declaredFieldCount = layoutHint?.declaredFieldCount ?? 0
             let instanceFieldCount = max(inheritedFieldCount + ownFieldCount, declaredFieldCount)
 
-            // Keep nominal layout in sync with Runtime.KKObjHeader (typeInfo + flags/size).
-            let objectHeaderWords = 2
             let declaredSizeWords = layoutHint?.declaredInstanceSizeWords ?? 0
             let inheritedInstanceSizeWords = superClass.flatMap { symbols.nominalLayout(for: $0)?.instanceSizeWords } ?? 0
             let instanceSizeWords = max(
@@ -113,6 +125,7 @@ extension DataFlowSemaPassPhase {
                     objectHeaderWords: objectHeaderWords,
                     instanceFieldCount: instanceFieldCount,
                     instanceSizeWords: instanceSizeWords,
+                    fieldOffsets: fieldOffsets,
                     vtableSlots: vtableSlots,
                     itableSlots: itableSlots,
                     vtableSize: vtableSize,

@@ -91,6 +91,7 @@ public struct NominalLayout: Equatable {
     public let objectHeaderWords: Int
     public let instanceFieldCount: Int
     public let instanceSizeWords: Int
+    public let fieldOffsets: [SymbolID: Int]
     public let vtableSlots: [SymbolID: Int]
     public let itableSlots: [SymbolID: Int]
     public let vtableSize: Int
@@ -101,6 +102,7 @@ public struct NominalLayout: Equatable {
         objectHeaderWords: Int,
         instanceFieldCount: Int,
         instanceSizeWords: Int,
+        fieldOffsets: [SymbolID: Int] = [:],
         vtableSlots: [SymbolID: Int],
         itableSlots: [SymbolID: Int],
         vtableSize: Int? = nil,
@@ -108,8 +110,14 @@ public struct NominalLayout: Equatable {
         superClass: SymbolID?
     ) {
         self.objectHeaderWords = objectHeaderWords
-        self.instanceFieldCount = instanceFieldCount
-        self.instanceSizeWords = instanceSizeWords
+        let inferredFieldCount = max(0, fieldOffsets.count)
+        self.instanceFieldCount = max(instanceFieldCount, inferredFieldCount)
+        let inferredInstanceSizeWords = max(0, (fieldOffsets.values.max() ?? (objectHeaderWords - 1)) + 1)
+        self.instanceSizeWords = max(
+            max(instanceSizeWords, inferredInstanceSizeWords),
+            objectHeaderWords + self.instanceFieldCount
+        )
+        self.fieldOffsets = fieldOffsets
         self.vtableSlots = vtableSlots
         self.itableSlots = itableSlots
         let inferredVtableSize = (vtableSlots.values.max() ?? -1) + 1
@@ -189,6 +197,7 @@ public final class SymbolTable {
     private var directSupertypes: [SymbolID: [SymbolID]] = [:]
     private var nominalLayouts: [SymbolID: NominalLayout] = [:]
     private var nominalLayoutHints: [SymbolID: NominalLayoutHint] = [:]
+    private var externalLinkNames: [SymbolID: String] = [:]
 
     public init() {}
 
@@ -330,6 +339,14 @@ public final class SymbolTable {
 
     public func nominalLayoutHint(for symbol: SymbolID) -> NominalLayoutHint? {
         nominalLayoutHints[symbol]
+    }
+
+    public func setExternalLinkName(_ linkName: String, for symbol: SymbolID) {
+        externalLinkNames[symbol] = linkName
+    }
+
+    public func externalLinkName(for symbol: SymbolID) -> String? {
+        externalLinkNames[symbol]
     }
 }
 
