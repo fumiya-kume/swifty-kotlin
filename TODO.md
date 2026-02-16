@@ -247,8 +247,10 @@
   - [ ] `finally` の常時実行順序（normal/exception 両経路）を保証する
 
 - [ ] P5-22: 式パーサ/型推論を Kotlin 基本演算子セットへ拡張する（spec.md J5/J6/J9）
-  - [ ] unary 演算（`!`/unary `+`/unary `-`）と優先順位を実装する
+  - [x] unary 演算（`!`/unary `+`/unary `-`）と優先順位を実装する
   - [ ] 比較/論理/型演算子（`!=`/`<`/`<=`/`>`/`>=`/`&&`/`||`/`is`/`as`）と優先順位を実装する
+    - [x] 比較/論理（`!=`/`<`/`<=`/`>`/`>=`/`&&`/`||`）を Parser/Sema/KIR/backend に接続
+    - [ ] 型演算子（`is`/`as`）を Parser/Sema/KIR/backend に接続
   - [ ] Elvis（`?:`）/ null 断定（`!!`）/ safe call（`?.`）を AST と型推論に反映する
   - [ ] assignment（`=` と複合代入）を式/文として扱い、`val` 再代入診断と接続する
 
