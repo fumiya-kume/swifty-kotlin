@@ -110,16 +110,16 @@ final class ABILoweringPass: LoweringPass {
                 ))
 
                 if let types, let result {
-                    let resultType = module.arena.exprType(result)
-                    if let resultType {
-                        let resultKind = types.kind(of: resultType)
-                        if isAnyOrNullableAny(resultKind) {
-                            let returnType = returnTypeForCall(
-                                callSymbol: callSymbol,
-                                symbols: symbols
-                            )
-                            if let returnType {
-                                let returnKind = types.kind(of: returnType)
+                    let returnType = returnTypeForCall(
+                        callSymbol: callSymbol,
+                        symbols: symbols
+                    )
+                    if let returnType {
+                        let returnKind = types.kind(of: returnType)
+                        if isAnyOrNullableAny(returnKind) {
+                            let resultType = module.arena.exprType(result)
+                            if let resultType {
+                                let resultKind = types.kind(of: resultType)
                                 if let unboxCallee = unboxingCallee(
                                     sourceKind: returnKind,
                                     targetKind: resultKind,
@@ -128,7 +128,7 @@ final class ABILoweringPass: LoweringPass {
                                 ) {
                                     let unboxedResult = module.arena.appendExpr(
                                         .temporary(Int32(module.arena.expressions.count)),
-                                        type: returnType
+                                        type: resultType
                                     )
                                     newBody.append(.call(
                                         symbol: nil,
