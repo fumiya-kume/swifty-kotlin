@@ -232,10 +232,15 @@ final class ABIMismatchTests: XCTestCase {
 
     func testGeneratedHeaderContainsAllFunctions() {
         let header = RuntimeABISpec.generateCHeader()
+        let headerLines = Set(
+            header
+                .split(separator: "\n")
+                .map { String($0).trimmingCharacters(in: .whitespaces) }
+        )
         for spec in RuntimeABISpec.allFunctions {
             XCTAssertTrue(
-                header.contains(spec.name),
-                "Generated header missing function '\(spec.name)'"
+                headerLines.contains(spec.cDeclaration),
+                "Generated header missing declaration for '\(spec.name)': expected line '\(spec.cDeclaration)'"
             )
         }
     }
