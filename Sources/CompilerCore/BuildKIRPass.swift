@@ -43,9 +43,41 @@ public final class BuildKIRPhase: CompilerPhase {
                 }
 
                 switch decl {
-                case .classDecl, .interfaceDecl, .objectDecl:
+                case .classDecl(let classDecl):
+                    let (directMembers, allDecls) = lowerMemberDecls(
+                        memberFunctions: classDecl.memberFunctions,
+                        memberProperties: classDecl.memberProperties,
+                        nestedClasses: classDecl.nestedClasses,
+                        nestedObjects: classDecl.nestedObjects,
+                        ast: ast,
+                        sema: sema,
+                        arena: arena,
+                        interner: ctx.interner,
+                        propertyConstantInitializers: propertyConstantInitializers
+                    )
+                    let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: directMembers)))
+                    declIDs.append(kirID)
+                    declIDs.append(contentsOf: allDecls)
+
+                case .interfaceDecl:
                     let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol)))
                     declIDs.append(kirID)
+
+                case .objectDecl(let objectDecl):
+                    let (directMembers, allDecls) = lowerMemberDecls(
+                        memberFunctions: objectDecl.memberFunctions,
+                        memberProperties: objectDecl.memberProperties,
+                        nestedClasses: objectDecl.nestedClasses,
+                        nestedObjects: objectDecl.nestedObjects,
+                        ast: ast,
+                        sema: sema,
+                        arena: arena,
+                        interner: ctx.interner,
+                        propertyConstantInitializers: propertyConstantInitializers
+                    )
+                    let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: directMembers)))
+                    declIDs.append(kirID)
+                    declIDs.append(contentsOf: allDecls)
 
                 case .funDecl(let function):
                     localValuesBySymbol.removeAll(keepingCapacity: true)
@@ -1196,6 +1228,203 @@ public final class BuildKIRPhase: CompilerPhase {
         }
     }
 
+    private func lowerMemberDecls(
+        memberFunctions: [DeclID],
+        memberProperties: [DeclID],
+        nestedClasses: [DeclID],
+        nestedObjects: [DeclID],
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind]
+    ) -> (directMembers: [KIRDeclID], allDecls: [KIRDeclID]) {
+        var directMembers: [KIRDeclID] = []
+        var allDecls: [KIRDeclID] = []
+
+        for declID in memberFunctions {
+            guard let decl = ast.arena.decl(declID),
+                  case .funDecl(let function) = decl,
+                  let symbol = sema.bindings.declSymbols[declID] else {
+                continue
+            }
+            localValuesBySymbol.removeAll(keepingCapacity: true)
+            currentImplicitReceiverExprID = nil
+            currentImplicitReceiverSymbol = nil
+            loopControlStack.removeAll(keepingCapacity: true)
+            nextLoopLabel = 10_000
+
+            let signature = sema.symbols.functionSignature(for: symbol)
+            var params: [KIRParameter] = []
+            if let signature {
+                if let receiverType = signature.receiverType {
+                    let receiverSymbol = syntheticReceiverParameterSymbol(functionSymbol: symbol)
+                    params.append(KIRParameter(symbol: receiverSymbol, type: receiverType))
+                    currentImplicitReceiverSymbol = receiverSymbol
+                    currentImplicitReceiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: receiverType)
+                }
+                params.append(contentsOf: zip(signature.valueParameterSymbols, signature.parameterTypes).map { pair in
+                    KIRParameter(symbol: pair.0, type: pair.1)
+                })
+            }
+            if function.isInline, let signature,
+               !signature.reifiedTypeParameterIndices.isEmpty {
+                let intType = sema.types.make(.primitive(.int, .nonNull))
+                for index in signature.reifiedTypeParameterIndices.sorted() {
+                    guard index < signature.typeParameterSymbols.count else { continue }
+                    let typeParamSymbol = signature.typeParameterSymbols[index]
+                    let tokenSymbol = SymbolID(rawValue: -20_000 - typeParamSymbol.rawValue)
+                    params.append(KIRParameter(symbol: tokenSymbol, type: intType))
+                }
+            }
+            let returnType = signature?.returnType ?? sema.types.unitType
+            var body: [KIRInstruction] = [.beginBlock]
+            if let receiverExpr = currentImplicitReceiverExprID,
+               let receiverSymbol = currentImplicitReceiverSymbol {
+                body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSymbol)))
+            }
+            switch function.body {
+            case .block(let exprIDs, _):
+                var lastValue: KIRExprID?
+                var terminatedByReturn = false
+                for exprID in exprIDs {
+                    if let expr = ast.arena.expr(exprID),
+                       case .returnExpr(let value, _) = expr {
+                        if let value {
+                            let lowered = lowerExpr(
+                                value,
+                                ast: ast,
+                                sema: sema,
+                                arena: arena,
+                                interner: interner,
+                                propertyConstantInitializers: propertyConstantInitializers,
+                                instructions: &body
+                            )
+                            body.append(.returnValue(lowered))
+                        } else {
+                            body.append(.returnUnit)
+                        }
+                        terminatedByReturn = true
+                        break
+                    }
+                    lastValue = lowerExpr(
+                        exprID,
+                        ast: ast,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        propertyConstantInitializers: propertyConstantInitializers,
+                        instructions: &body
+                    )
+                }
+                if !terminatedByReturn {
+                    if let lastValue {
+                        body.append(.returnValue(lastValue))
+                    } else {
+                        body.append(.returnUnit)
+                    }
+                }
+            case .expr(let exprID, _):
+                let value = lowerExpr(
+                    exprID,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &body
+                )
+                body.append(.returnValue(value))
+            case .unit:
+                body.append(.returnUnit)
+            }
+            body.append(.endBlock)
+            let kirID = arena.appendDecl(
+                .function(
+                    KIRFunction(
+                        symbol: symbol,
+                        name: function.name,
+                        params: params,
+                        returnType: returnType,
+                        body: body,
+                        isSuspend: function.isSuspend,
+                        isInline: function.isInline
+                    )
+                )
+            )
+            directMembers.append(kirID)
+            allDecls.append(kirID)
+            currentImplicitReceiverExprID = nil
+            currentImplicitReceiverSymbol = nil
+        }
+
+        for declID in memberProperties {
+            guard let symbol = sema.bindings.declSymbols[declID] else {
+                continue
+            }
+            let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
+            let kirID = arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: propType)))
+            directMembers.append(kirID)
+            allDecls.append(kirID)
+        }
+
+        for declID in nestedClasses {
+            guard let decl = ast.arena.decl(declID),
+                  let symbol = sema.bindings.declSymbols[declID] else {
+                continue
+            }
+            switch decl {
+            case .classDecl(let nested):
+                let (nestedDirect, nestedAll) = lowerMemberDecls(
+                    memberFunctions: nested.memberFunctions,
+                    memberProperties: nested.memberProperties,
+                    nestedClasses: nested.nestedClasses,
+                    nestedObjects: nested.nestedObjects,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers
+                )
+                let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: nestedDirect)))
+                directMembers.append(kirID)
+                allDecls.append(kirID)
+                allDecls.append(contentsOf: nestedAll)
+            case .interfaceDecl:
+                let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol)))
+                directMembers.append(kirID)
+                allDecls.append(kirID)
+            default:
+                continue
+            }
+        }
+
+        for declID in nestedObjects {
+            guard let decl = ast.arena.decl(declID),
+                  case .objectDecl(let nested) = decl,
+                  let symbol = sema.bindings.declSymbols[declID] else {
+                continue
+            }
+            let (nestedDirect, nestedAll) = lowerMemberDecls(
+                memberFunctions: nested.memberFunctions,
+                memberProperties: nested.memberProperties,
+                nestedClasses: nested.nestedClasses,
+                nestedObjects: nested.nestedObjects,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers
+            )
+            let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: nestedDirect)))
+            directMembers.append(kirID)
+            allDecls.append(kirID)
+            allDecls.append(contentsOf: nestedAll)
+        }
+
+        return (directMembers, allDecls)
+    }
+
     private func collectPropertyConstantInitializers(
         ast: ASTModule,
         sema: SemaModule,
@@ -1204,37 +1433,63 @@ public final class BuildKIRPhase: CompilerPhase {
     ) -> [SymbolID: KIRExprKind] {
         var mapping: [SymbolID: KIRExprKind] = [:]
         for file in ast.sortedFiles {
+            let source = sourceByFileID[file.fileID.rawValue] ?? ""
             for declID in file.topLevelDecls {
-                guard let decl = ast.arena.decl(declID),
-                      case .propertyDecl(let property) = decl,
-                      let symbol = sema.bindings.declSymbols[declID] else {
-                    continue
-                }
-                let constant =
-                    literalConstantExpr(property: property, ast: ast) ??
-                    inlineGetterConstantExpr(
-                        propertyName: interner.resolve(property.name),
-                        source: sourceByFileID[file.fileID.rawValue] ?? "",
-                        interner: interner
-                    )
-                guard let constant else {
-                    continue
-                }
-                mapping[symbol] = constant
-                if let propertySymbol = sema.symbols.symbol(symbol) {
-                    let related = sema.symbols.lookupAll(fqName: propertySymbol.fqName)
-                    for relatedID in related {
-                        guard let relatedSymbol = sema.symbols.symbol(relatedID) else {
-                            continue
-                        }
-                        if relatedSymbol.kind == .property || relatedSymbol.kind == .field {
-                            mapping[relatedID] = constant
-                        }
-                    }
-                }
+                collectPropertyConstant(declID, ast: ast, sema: sema, interner: interner, source: source, mapping: &mapping)
             }
         }
         return mapping
+    }
+
+    private func collectPropertyConstant(
+        _ declID: DeclID,
+        ast: ASTModule,
+        sema: SemaModule,
+        interner: StringInterner,
+        source: String,
+        mapping: inout [SymbolID: KIRExprKind]
+    ) {
+        guard let decl = ast.arena.decl(declID) else { return }
+        switch decl {
+        case .propertyDecl(let property):
+            guard let symbol = sema.bindings.declSymbols[declID] else { return }
+            let constant =
+                literalConstantExpr(property: property, ast: ast) ??
+                inlineGetterConstantExpr(
+                    propertyName: interner.resolve(property.name),
+                    source: source,
+                    interner: interner
+                )
+            guard let constant else { return }
+            mapping[symbol] = constant
+            if let propertySymbol = sema.symbols.symbol(symbol) {
+                let related = sema.symbols.lookupAll(fqName: propertySymbol.fqName)
+                for relatedID in related {
+                    guard let relatedSymbol = sema.symbols.symbol(relatedID) else {
+                        continue
+                    }
+                    if relatedSymbol.kind == .property || relatedSymbol.kind == .field {
+                        mapping[relatedID] = constant
+                    }
+                }
+            }
+        case .classDecl(let classDecl):
+            for memberDeclID in classDecl.memberProperties {
+                collectPropertyConstant(memberDeclID, ast: ast, sema: sema, interner: interner, source: source, mapping: &mapping)
+            }
+            for nestedDeclID in classDecl.nestedClasses + classDecl.nestedObjects {
+                collectPropertyConstant(nestedDeclID, ast: ast, sema: sema, interner: interner, source: source, mapping: &mapping)
+            }
+        case .objectDecl(let objectDecl):
+            for memberDeclID in objectDecl.memberProperties {
+                collectPropertyConstant(memberDeclID, ast: ast, sema: sema, interner: interner, source: source, mapping: &mapping)
+            }
+            for nestedDeclID in objectDecl.nestedClasses + objectDecl.nestedObjects {
+                collectPropertyConstant(nestedDeclID, ast: ast, sema: sema, interner: interner, source: source, mapping: &mapping)
+            }
+        default:
+            break
+        }
     }
 
     private func collectFunctionDefaultArgumentExpressions(
@@ -1244,18 +1499,43 @@ public final class BuildKIRPhase: CompilerPhase {
         var mapping: [SymbolID: [ExprID?]] = [:]
         for file in ast.sortedFiles {
             for declID in file.topLevelDecls {
-                guard let decl = ast.arena.decl(declID),
-                      case .funDecl(let function) = decl,
-                      let symbol = sema.bindings.declSymbols[declID] else {
-                    continue
-                }
-                let defaults = function.valueParams.map(\.defaultValue)
-                if defaults.contains(where: { $0 != nil }) {
-                    mapping[symbol] = defaults
-                }
+                collectFunctionDefaults(declID, ast: ast, sema: sema, mapping: &mapping)
             }
         }
         return mapping
+    }
+
+    private func collectFunctionDefaults(
+        _ declID: DeclID,
+        ast: ASTModule,
+        sema: SemaModule,
+        mapping: inout [SymbolID: [ExprID?]]
+    ) {
+        guard let decl = ast.arena.decl(declID) else { return }
+        switch decl {
+        case .funDecl(let function):
+            guard let symbol = sema.bindings.declSymbols[declID] else { return }
+            let defaults = function.valueParams.map(\.defaultValue)
+            if defaults.contains(where: { $0 != nil }) {
+                mapping[symbol] = defaults
+            }
+        case .classDecl(let classDecl):
+            for memberDeclID in classDecl.memberFunctions {
+                collectFunctionDefaults(memberDeclID, ast: ast, sema: sema, mapping: &mapping)
+            }
+            for nestedDeclID in classDecl.nestedClasses + classDecl.nestedObjects {
+                collectFunctionDefaults(nestedDeclID, ast: ast, sema: sema, mapping: &mapping)
+            }
+        case .objectDecl(let objectDecl):
+            for memberDeclID in objectDecl.memberFunctions {
+                collectFunctionDefaults(memberDeclID, ast: ast, sema: sema, mapping: &mapping)
+            }
+            for nestedDeclID in objectDecl.nestedClasses + objectDecl.nestedObjects {
+                collectFunctionDefaults(nestedDeclID, ast: ast, sema: sema, mapping: &mapping)
+            }
+        default:
+            break
+        }
     }
 
     private func normalizedCallArguments(
