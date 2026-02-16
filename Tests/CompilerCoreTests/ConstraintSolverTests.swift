@@ -172,6 +172,290 @@ final class ConstraintSolverTests: XCTestCase {
         XCTAssertEqual(solution.substitution[t0], types.errorType)
     }
 
+    func testSolveSupertypeConstraintAddsLowerBound() {
+        let solver = ConstraintSolver()
+        let types = TypeSystem()
+        let intType = types.make(.primitive(.int, .nonNull))
+        let t0 = TypeVarID(rawValue: 31)
+
+        let constraints: [VariableConstraint] = [
+            VariableConstraint(kind: .supertype, left: .variable(t0), right: .type(intType))
+        ]
+        let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
+
+        XCTAssertTrue(solution.isSuccess)
+        XCTAssertEqual(solution.substitution[t0], intType)
+    }
+
+    func testSolveFailsWhenCandidateIsErrorType() {
+        let solver = ConstraintSolver()
+        let types = TypeSystem()
+        let t0 = TypeVarID(rawValue: 41)
+        let blame = makeRange(start: 40, end: 45)
+
+        let constraints: [VariableConstraint] = [
+            VariableConstraint(kind: .subtype, left: .type(types.errorType), right: .variable(t0), blameRange: blame)
+        ]
+        let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
+
+        XCTAssertFalse(solution.isSuccess)
+        XCTAssertTrue(solution.failure?.message.contains("Failed to infer") ?? false)
+    }
+
+    func testSolveResolvesVariableWithOnlyUpperBound() {
+        let solver = ConstraintSolver()
+        let types = TypeSystem()
+        let intType = types.make(.primitive(.int, .nonNull))
+        let t0 = TypeVarID(rawValue: 51)
+
+        let constraints: [VariableConstraint] = [
+            VariableConstraint(kind: .subtype, left: .variable(t0), right: .type(intType))
+        ]
+        let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
+
+        XCTAssertTrue(solution.isSuccess)
+        XCTAssertEqual(solution.substitution[t0], intType)
+    }
+
+    func testSolveResolvesVariableWithCompatibleLowerAndUpperBounds() {
+        let solver = ConstraintSolver()
+        let types = TypeSystem()
+        let intType = types.make(.primitive(.int, .nonNull))
+        let anyType = types.anyType
+        let t0 = TypeVarID(rawValue: 61)
+
+        let constraints: [VariableConstraint] = [
+            VariableConstraint(kind: .subtype, left: .type(intType), right: .variable(t0)),
+            VariableConstraint(kind: .subtype, left: .variable(t0), right: .type(anyType))
+        ]
+        let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
+
+        XCTAssertTrue(solution.isSuccess)
+        XCTAssertEqual(solution.substitution[t0], intType)
+    }
+
+    func testConstraintOperandEquatable() {
+        let a: ConstraintOperand = .type(TypeID(rawValue: 1))
+        let b: ConstraintOperand = .type(TypeID(rawValue: 1))
+        let c: ConstraintOperand = .variable(TypeVarID(rawValue: 2))
+        XCTAssertEqual(a, b)
+        XCTAssertNotEqual(a, c)
+    }
+
+    func testSolveDuplicateBoundsAreDeduped() {
+        let solver = ConstraintSolver()
+        let types = TypeSystem()
+        let intType = types.make(.primitive(.int, .nonNull))
+        let t0 = TypeVarID(rawValue: 70)
+
+        let constraints: [VariableConstraint] = [
+            VariableConstraint(kind: .subtype, left: .type(intType), right: .variable(t0)),
+            VariableConstraint(kind: .subtype, left: .type(intType), right: .variable(t0))
+        ]
+        let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
+
+        XCTAssertTrue(solution.isSuccess)
+        XCTAssertEqual(solution.substitution[t0], intType)
+    }
+
+    func testSolveBlameRangeFromRightSideVariable() {
+        let solver = ConstraintSolver()
+        let types = TypeSystem()
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let t0 = TypeVarID(rawValue: 80)
+        let blame = makeRange(start: 50, end: 55)
+
+        let constraints: [VariableConstraint] = [
+            VariableConstraint(kind: .subtype, left: .type(intType), right: .type(boolType), blameRange: blame),
+            VariableConstraint(kind: .subtype, left: .type(intType), right: .variable(t0), blameRange: blame)
+        ]
+        let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
+
+        XCTAssertFalse(solution.isSuccess)
+        XCTAssertEqual(solution.failure?.primaryRange, blame)
+    }
+
+    func testSolutionInitStoresAllFields() {
+        let sub: [TypeVarID: TypeID] = [TypeVarID(rawValue: 0): TypeID(rawValue: 5)]
+        let diag = Diagnostic(
+            severity: .error,
+            code: "TEST",
+            message: "test",
+            primaryRange: nil,
+            secondaryRanges: []
+        )
+        let solution = Solution(substitution: sub, isSuccess: false, failure: diag)
+        XCTAssertEqual(solution.substitution[TypeVarID(rawValue: 0)], TypeID(rawValue: 5))
+        XCTAssertFalse(solution.isSuccess)
+        XCTAssertEqual(solution.failure?.code, "TEST")
+    }
+
+    func testSolveVarToVarConvergesWithoutChange() {
+        let solver = ConstraintSolver()
+        let types = TypeSystem()
+        let intType = types.make(.primitive(.int, .nonNull))
+        let t0 = TypeVarID(rawValue: 92)
+        let t1 = TypeVarID(rawValue: 93)
+
+        let constraints: [VariableConstraint] = [
+            VariableConstraint(kind: .subtype, left: .variable(t0), right: .variable(t1)),
+            VariableConstraint(kind: .subtype, left: .type(intType), right: .variable(t0)),
+            VariableConstraint(kind: .subtype, left: .type(intType), right: .variable(t1))
+        ]
+        let solution = solver.solve(vars: [t0, t1], constraints: constraints, typeSystem: types)
+
+        XCTAssertTrue(solution.isSuccess)
+        XCTAssertEqual(solution.substitution[t0], intType)
+        XCTAssertEqual(solution.substitution[t1], intType)
+    }
+
+    func testConstraintInitWithBlameRange() {
+        let blame = makeRange(start: 10, end: 20)
+        let constraint = Constraint(
+            kind: .equal,
+            left: TypeID(rawValue: 1),
+            right: TypeID(rawValue: 2),
+            blameRange: blame
+        )
+        XCTAssertEqual(constraint.kind, .equal)
+        XCTAssertEqual(constraint.blameRange, blame)
+    }
+
+    func testConstraintInitWithoutBlameRange() {
+        let constraint = Constraint(
+            kind: .subtype,
+            left: TypeID(rawValue: 1),
+            right: TypeID(rawValue: 2)
+        )
+        XCTAssertNil(constraint.blameRange)
+    }
+
+    func testVariableConstraintInitWithBlameRange() {
+        let blame = makeRange(start: 0, end: 5)
+        let vc = VariableConstraint(
+            kind: .supertype,
+            left: .variable(TypeVarID(rawValue: 1)),
+            right: .type(TypeID(rawValue: 2)),
+            blameRange: blame
+        )
+        XCTAssertEqual(vc.kind, .supertype)
+        XCTAssertEqual(vc.blameRange, blame)
+    }
+
+    func testVariableConstraintInitWithoutBlameRange() {
+        let vc = VariableConstraint(
+            kind: .equal,
+            left: .type(TypeID(rawValue: 1)),
+            right: .variable(TypeVarID(rawValue: 2))
+        )
+        XCTAssertNil(vc.blameRange)
+    }
+
+    func testSolveBothBoundsUsesLowerCandidate(){
+        let solver = ConstraintSolver()
+        let types = TypeSystem()
+        let intType = types.make(.primitive(.int, .nonNull))
+        let anyType = types.anyType
+        let t0 = TypeVarID(rawValue: 60)
+
+        let constraints: [VariableConstraint] = [
+            VariableConstraint(kind: .supertype, left: .variable(t0), right: .type(intType)),
+            VariableConstraint(kind: .subtype, left: .variable(t0), right: .type(anyType))
+        ]
+        let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
+
+        XCTAssertTrue(solution.isSuccess)
+        XCTAssertEqual(solution.substitution[t0], intType)
+    }
+
+    func testSolveErrorCandidateReportsFailure() {
+        let solver = ConstraintSolver()
+        let types = TypeSystem()
+        let t0 = TypeVarID(rawValue: 70)
+        let blame = makeRange(start: 5, end: 8)
+
+        let constraints: [VariableConstraint] = [
+            VariableConstraint(kind: .supertype, left: .variable(t0), right: .type(types.errorType), blameRange: blame)
+        ]
+        let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
+
+        XCTAssertFalse(solution.isSuccess)
+        XCTAssertTrue(solution.failure?.message.contains("Failed to infer type variable") ?? false)
+    }
+
+    func testSolveMultipleVarRelationsConverge() {
+        let solver = ConstraintSolver()
+        let types = TypeSystem()
+        let intType = types.make(.primitive(.int, .nonNull))
+        let anyType = types.anyType
+        let t0 = TypeVarID(rawValue: 80)
+        let t1 = TypeVarID(rawValue: 81)
+        let t2 = TypeVarID(rawValue: 82)
+
+        let constraints: [VariableConstraint] = [
+            VariableConstraint(kind: .supertype, left: .variable(t0), right: .type(intType)),
+            VariableConstraint(kind: .subtype, left: .variable(t0), right: .variable(t1)),
+            VariableConstraint(kind: .subtype, left: .variable(t1), right: .variable(t2)),
+            VariableConstraint(kind: .subtype, left: .variable(t2), right: .type(anyType))
+        ]
+        let solution = solver.solve(vars: [t0, t1, t2], constraints: constraints, typeSystem: types)
+
+        XCTAssertTrue(solution.isSuccess)
+    }
+
+    func testTypeVarIDInvalidAndEquality() {
+        XCTAssertEqual(TypeVarID.invalid.rawValue, -1)
+        XCTAssertEqual(TypeVarID(), TypeVarID.invalid)
+        XCTAssertNotEqual(TypeVarID(rawValue: 0), TypeVarID(rawValue: 1))
+    }
+
+    func testConstraintOperandEquality() {
+        let types = TypeSystem()
+        let intType = types.make(.primitive(.int, .nonNull))
+        let op1 = ConstraintOperand.type(intType)
+        let op2 = ConstraintOperand.type(intType)
+        let op3 = ConstraintOperand.variable(TypeVarID(rawValue: 1))
+        let op4 = ConstraintOperand.variable(TypeVarID(rawValue: 1))
+
+        XCTAssertEqual(op1, op2)
+        XCTAssertEqual(op3, op4)
+        XCTAssertNotEqual(op1, op3)
+    }
+
+    func testSolveSupertypeConstraintViolationReportsFailure() {
+        let solver = ConstraintSolver()
+        let types = TypeSystem()
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let t0 = TypeVarID(rawValue: 90)
+
+        let constraints: [VariableConstraint] = [
+            VariableConstraint(kind: .supertype, left: .type(intType), right: .type(boolType))
+        ]
+        let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
+
+        XCTAssertFalse(solution.isSuccess)
+    }
+
+    func testFirstRelevantBlameRangeFindsRightSideVariable() {
+        let solver = ConstraintSolver()
+        let types = TypeSystem()
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let t0 = TypeVarID(rawValue: 100)
+        let blame = makeRange(start: 20, end: 25)
+
+        let constraints: [VariableConstraint] = [
+            VariableConstraint(kind: .subtype, left: .type(intType), right: .variable(t0), blameRange: blame),
+            VariableConstraint(kind: .subtype, left: .variable(t0), right: .type(boolType))
+        ]
+        let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
+
+        XCTAssertFalse(solution.isSuccess)
+        XCTAssertEqual(solution.failure?.primaryRange, blame)
+    }
+
     func testSolveUnresolvedVariableInConstraintProducesFailure() {
         let solver = ConstraintSolver()
         let types = TypeSystem()
@@ -196,7 +480,7 @@ final class ConstraintSolverTests: XCTestCase {
         let intType = types.make(.primitive(.int, .nonNull))
         let boolType = types.make(.primitive(.boolean, .nonNull))
         let anyType = types.anyType
-        let t0 = TypeVarID(rawValue: 90)
+        let t0 = TypeVarID(rawValue: 95)
         let blame = makeRange(start: 5, end: 8)
 
         let constraints: [VariableConstraint] = [
@@ -212,7 +496,7 @@ final class ConstraintSolverTests: XCTestCase {
     func testSolveCandidateErrorTypeFromUpperBoundsOnly() {
         let solver = ConstraintSolver()
         let types = TypeSystem()
-        let t0 = TypeVarID(rawValue: 100)
+        let t0 = TypeVarID(rawValue: 101)
         let blame = makeRange(start: 0, end: 1)
 
         let constraints: [VariableConstraint] = [
@@ -228,4 +512,5 @@ final class ConstraintSolverTests: XCTestCase {
         XCTAssertEqual(TypeVarID.invalid.rawValue, -1)
         XCTAssertEqual(TypeVarID().rawValue, -1)
     }
+
 }

@@ -16,7 +16,8 @@ final class WhenLoweringPass: LoweringPass {
                         callee: loweredCallee,
                         arguments: [condition, thenValue, elseValue],
                         result: result,
-                        canThrow: false
+                        canThrow: false,
+                        thrownResult: nil
                     )
 
                 default:

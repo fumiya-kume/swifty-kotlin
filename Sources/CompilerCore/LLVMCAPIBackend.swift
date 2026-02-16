@@ -428,6 +428,16 @@ private struct NativeEmitter {
         var externalFunctions: [String: LLVMFunction] = [:]
         var generatedStringLiteralCount: Int32 = 0
 
+        var copyTargetAllocas: [Int32: LLVMCAPIBindings.LLVMValueRef] = [:]
+        for instruction in function.body {
+            if case .copy(_, let to) = instruction, copyTargetAllocas[to.rawValue] == nil {
+                if let alloca = bindings.buildAlloca(builder, type: int64Type, name: "copy_slot_\(to.rawValue)") {
+                    _ = bindings.buildStore(builder, value: zeroValue, pointer: alloca)
+                    copyTargetAllocas[to.rawValue] = alloca
+                }
+            }
+        }
+
         func declareExternalFunction(
             named calleeName: String,
             argumentCount: Int,
@@ -534,6 +544,9 @@ private struct NativeEmitter {
         }
 
         func resolveValue(_ id: KIRExprID) -> LLVMCAPIBindings.LLVMValueRef {
+            if let alloca = copyTargetAllocas[id.rawValue] {
+                return bindings.buildLoad(builder, type: int64Type, pointer: alloca, name: "load_\(id.rawValue)") ?? zeroValue
+            }
             if let value = values[id.rawValue] {
                 return value
             }
@@ -837,6 +850,8 @@ private struct NativeEmitter {
                     lowered = bindings.buildMul(builder, lhs: lhsValue, rhs: rhsValue, name: "bin_mul_\(instructionIndex)")
                 case .divide:
                     lowered = bindings.buildSDiv(builder, lhs: lhsValue, rhs: rhsValue, name: "bin_div_\(instructionIndex)")
+                case .modulo:
+                    lowered = nil
                 case .equal:
                     if let compared = bindings.buildICmpEqual(
                         builder,
@@ -848,10 +863,20 @@ private struct NativeEmitter {
                     } else {
                         lowered = nil
                     }
+                case .notEqual, .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
+                    lowered = nil
+                case .logicalAnd, .logicalOr:
+                    lowered = nil
                 }
                 storeResult(result, lowered)
 
-            case .call(let symbol, let callee, let arguments, let result, let usesThrownChannel):
+            case .unary(_, let operand, let result):
+                storeResult(result, resolveValue(operand))
+
+            case .nullAssert(let operand, let result):
+                storeResult(result, resolveValue(operand))
+
+            case .call(let symbol, let callee, let arguments, let result, let usesThrownChannel, let thrownResult):
                 guard !bindings.hasTerminator(currentBlock) else {
                     continue
                 }
@@ -987,36 +1012,80 @@ private struct NativeEmitter {
                     type: int64Type,
                     pointer: thrownSlotPointer,
                     name: "thrown_val_\(instructionIndex)"
-                   ),
-                   let hasThrown = buildBoolCondition(
-                    from: thrownValue,
-                    name: "has_thrown_\(instructionIndex)"
-                   ),
-                   let thrownBlock = bindings.appendBasicBlock(
-                    context: context,
-                    function: llvmFunction.value,
-                    name: "thrown_\(instructionIndex)"
-                   ),
-                   let continueBlock = bindings.appendBasicBlock(
-                    context: context,
-                    function: llvmFunction.value,
-                    name: "call_cont_\(instructionIndex)"
                    ) {
-                    _ = bindings.buildCondBr(
-                        builder,
-                        condition: hasThrown,
-                        thenBlock: thrownBlock,
-                        elseBlock: continueBlock
-                    )
+                    if let thrownResult {
+                        if let alloca = copyTargetAllocas[thrownResult.rawValue] {
+                            _ = bindings.buildStore(builder, value: thrownValue, pointer: alloca)
+                        } else {
+                            storeResult(thrownResult, thrownValue)
+                        }
+                    } else if let hasThrown = buildBoolCondition(
+                        from: thrownValue,
+                        name: "has_thrown_\(instructionIndex)"
+                    ),
+                    let thrownBlock = bindings.appendBasicBlock(
+                        context: context,
+                        function: llvmFunction.value,
+                        name: "thrown_\(instructionIndex)"
+                    ),
+                    let continueBlock = bindings.appendBasicBlock(
+                        context: context,
+                        function: llvmFunction.value,
+                        name: "call_cont_\(instructionIndex)"
+                    ) {
+                        _ = bindings.buildCondBr(
+                            builder,
+                            condition: hasThrown,
+                            thenBlock: thrownBlock,
+                            elseBlock: continueBlock
+                        )
 
-                    bindings.positionBuilder(builder, at: thrownBlock)
-                    storeOutThrownIfNonNull(thrownValue, suffix: "throw_\(instructionIndex)")
-                    emitFramePop("throw_\(instructionIndex)")
-                    _ = bindings.buildRet(builder, value: zeroValue)
+                        bindings.positionBuilder(builder, at: thrownBlock)
+                        storeOutThrownIfNonNull(thrownValue, suffix: "throw_\(instructionIndex)")
+                        emitFramePop("throw_\(instructionIndex)")
+                        _ = bindings.buildRet(builder, value: zeroValue)
 
-                    currentBlock = continueBlock
-                    bindings.positionBuilder(builder, at: continueBlock)
+                        currentBlock = continueBlock
+                        bindings.positionBuilder(builder, at: continueBlock)
+                    }
                 }
+
+            case .jumpIfNotNull(let value, let target):
+                guard !bindings.hasTerminator(currentBlock) else {
+                    continue
+                }
+                let resolved = resolveValue(value)
+                if let condition = buildBoolCondition(from: resolved, name: "jnn_cond_\(instructionIndex)"),
+                   let targetBlock = blockForLabel(target),
+                   let fallthroughBlock = bindings.appendBasicBlock(
+                    context: context,
+                    function: llvmFunction.value,
+                    name: "jnn_cont_\(instructionIndex)"
+                   ) {
+                    _ = bindings.buildCondBr(builder, condition: condition, thenBlock: targetBlock, elseBlock: fallthroughBlock)
+                    currentBlock = fallthroughBlock
+                    bindings.positionBuilder(builder, at: fallthroughBlock)
+                }
+
+            case .copy(let from, let to):
+                guard !bindings.hasTerminator(currentBlock) else {
+                    continue
+                }
+                let copySource = resolveValue(from)
+                if let alloca = copyTargetAllocas[to.rawValue] {
+                    _ = bindings.buildStore(builder, value: copySource, pointer: alloca)
+                } else {
+                    storeResult(to, copySource)
+                }
+
+            case .rethrow(let value):
+                guard !bindings.hasTerminator(currentBlock) else {
+                    continue
+                }
+                let resolved = resolveValue(value)
+                storeOutThrownIfNonNull(resolved, suffix: "rethrow_\(instructionIndex)")
+                emitFramePop("rethrow_\(instructionIndex)")
+                _ = bindings.buildRet(builder, value: zeroValue)
 
             case .returnIfEqual(let lhs, let rhs):
                 guard !bindings.hasTerminator(currentBlock),

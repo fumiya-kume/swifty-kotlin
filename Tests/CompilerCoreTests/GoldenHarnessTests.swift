@@ -230,6 +230,8 @@ final class GoldenHarnessTests: XCTestCase {
         switch decl {
         case .classDecl(let classDecl):
             return "class \(interner.resolve(classDecl.name))"
+        case .interfaceDecl(let interfaceDecl):
+            return "interface \(interner.resolve(interfaceDecl.name))"
         case .funDecl(let funDecl):
             return "fun \(interner.resolve(funDecl.name)) suspend=\(funDecl.isSuspend ? 1 : 0) inline=\(funDecl.isInline ? 1 : 0)"
         case .propertyDecl(let propertyDecl):
@@ -291,8 +293,6 @@ final class GoldenHarnessTests: XCTestCase {
             return "memberCall recv=e\(receiver.rawValue) callee=\(interner.resolve(callee)) args=[\(renderedArgs)]"
         case .arrayAccess(let array, let index, _):
             return "arrayAccess array=e\(array.rawValue) index=e\(index.rawValue)"
-        case .unary(let op, let operand, _):
-            return "unary(\(op)) operand=e\(operand.rawValue)"
         case .binary(let op, let lhs, let rhs, _):
             return "binary(\(op)) lhs=e\(lhs.rawValue) rhs=e\(rhs.rawValue)"
         case .whenExpr(let subject, let branches, let elseExpr, _):
@@ -308,10 +308,26 @@ final class GoldenHarnessTests: XCTestCase {
         case .ifExpr(let condition, let thenExpr, let elseExpr, _):
             let renderedElse = elseExpr.map { "e\($0.rawValue)" } ?? "_"
             return "if cond=e\(condition.rawValue) then=e\(thenExpr.rawValue) else=\(renderedElse)"
-        case .tryExpr(let body, let catchBodies, let finallyExpr, _):
-            let catches = catchBodies.map { "e\($0.rawValue)" }.joined(separator: ",")
+        case .tryExpr(let body, let catchClauses, let finallyExpr, _):
+            let catches = catchClauses.map { "e\($0.body.rawValue)" }.joined(separator: ",")
             let renderedFinally = finallyExpr.map { "e\($0.rawValue)" } ?? "_"
             return "try body=e\(body.rawValue) catches=[\(catches)] finally=\(renderedFinally)"
+        case .unaryExpr(let op, let operand, _):
+            return "unary(\(op)) operand=e\(operand.rawValue)"
+        case .isCheck(let expr, let type, let negated, _):
+            return "isCheck\(negated ? "!" : "") expr=e\(expr.rawValue) type=t\(type.rawValue)"
+        case .asCast(let expr, let type, let isSafe, _):
+            return "asCast\(isSafe ? "?" : "") expr=e\(expr.rawValue) type=t\(type.rawValue)"
+        case .nullAssert(let expr, _):
+            return "nullAssert expr=e\(expr.rawValue)"
+        case .safeMemberCall(let receiver, let callee, let args, _):
+            let renderedArgs = args.map { arg in
+                let label = arg.label.map { interner.resolve($0) } ?? "_"
+                return "\(label):e\(arg.expr.rawValue)"
+            }.joined(separator: ",")
+            return "safeMemberCall recv=e\(receiver.rawValue) callee=\(interner.resolve(callee)) args=[\(renderedArgs)]"
+        case .compoundAssign(let op, let name, let value, _):
+            return "compoundAssign(\(op)) name=\(interner.resolve(name)) value=e\(value.rawValue)"
         }
     }
 
