@@ -616,6 +616,9 @@ public final class BuildKIRPhase: CompilerPhase {
                         thrownResult: exceptionSlot
                     ))
                     instructions.append(.jumpIfNotNull(value: exceptionSlot, target: catchDispatchLabel))
+                } else if case .rethrow(let value) = instruction {
+                    instructions.append(.copy(from: value, to: exceptionSlot))
+                    instructions.append(.jump(catchDispatchLabel))
                 } else {
                     instructions.append(instruction)
                 }
