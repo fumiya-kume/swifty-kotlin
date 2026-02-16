@@ -1138,37 +1138,63 @@ public final class BuildKIRPhase: CompilerPhase {
     ) -> [SymbolID: KIRExprKind] {
         var mapping: [SymbolID: KIRExprKind] = [:]
         for file in ast.sortedFiles {
+            let source = sourceByFileID[file.fileID.rawValue] ?? ""
             for declID in file.topLevelDecls {
-                guard let decl = ast.arena.decl(declID),
-                      case .propertyDecl(let property) = decl,
-                      let symbol = sema.bindings.declSymbols[declID] else {
-                    continue
-                }
-                let constant =
-                    literalConstantExpr(property: property, ast: ast) ??
-                    inlineGetterConstantExpr(
-                        propertyName: interner.resolve(property.name),
-                        source: sourceByFileID[file.fileID.rawValue] ?? "",
-                        interner: interner
-                    )
-                guard let constant else {
-                    continue
-                }
-                mapping[symbol] = constant
-                if let propertySymbol = sema.symbols.symbol(symbol) {
-                    let related = sema.symbols.lookupAll(fqName: propertySymbol.fqName)
-                    for relatedID in related {
-                        guard let relatedSymbol = sema.symbols.symbol(relatedID) else {
-                            continue
-                        }
-                        if relatedSymbol.kind == .property || relatedSymbol.kind == .field {
-                            mapping[relatedID] = constant
-                        }
-                    }
-                }
+                collectPropertyConstant(declID, ast: ast, sema: sema, interner: interner, source: source, mapping: &mapping)
             }
         }
         return mapping
+    }
+
+    private func collectPropertyConstant(
+        _ declID: DeclID,
+        ast: ASTModule,
+        sema: SemaModule,
+        interner: StringInterner,
+        source: String,
+        mapping: inout [SymbolID: KIRExprKind]
+    ) {
+        guard let decl = ast.arena.decl(declID) else { return }
+        switch decl {
+        case .propertyDecl(let property):
+            guard let symbol = sema.bindings.declSymbols[declID] else { return }
+            let constant =
+                literalConstantExpr(property: property, ast: ast) ??
+                inlineGetterConstantExpr(
+                    propertyName: interner.resolve(property.name),
+                    source: source,
+                    interner: interner
+                )
+            guard let constant else { return }
+            mapping[symbol] = constant
+            if let propertySymbol = sema.symbols.symbol(symbol) {
+                let related = sema.symbols.lookupAll(fqName: propertySymbol.fqName)
+                for relatedID in related {
+                    guard let relatedSymbol = sema.symbols.symbol(relatedID) else {
+                        continue
+                    }
+                    if relatedSymbol.kind == .property || relatedSymbol.kind == .field {
+                        mapping[relatedID] = constant
+                    }
+                }
+            }
+        case .classDecl(let classDecl):
+            for memberDeclID in classDecl.memberProperties {
+                collectPropertyConstant(memberDeclID, ast: ast, sema: sema, interner: interner, source: source, mapping: &mapping)
+            }
+            for nestedDeclID in classDecl.nestedClasses + classDecl.nestedObjects {
+                collectPropertyConstant(nestedDeclID, ast: ast, sema: sema, interner: interner, source: source, mapping: &mapping)
+            }
+        case .objectDecl(let objectDecl):
+            for memberDeclID in objectDecl.memberProperties {
+                collectPropertyConstant(memberDeclID, ast: ast, sema: sema, interner: interner, source: source, mapping: &mapping)
+            }
+            for nestedDeclID in objectDecl.nestedClasses + objectDecl.nestedObjects {
+                collectPropertyConstant(nestedDeclID, ast: ast, sema: sema, interner: interner, source: source, mapping: &mapping)
+            }
+        default:
+            break
+        }
     }
 
     private func collectFunctionDefaultArgumentExpressions(
@@ -1178,18 +1204,43 @@ public final class BuildKIRPhase: CompilerPhase {
         var mapping: [SymbolID: [ExprID?]] = [:]
         for file in ast.sortedFiles {
             for declID in file.topLevelDecls {
-                guard let decl = ast.arena.decl(declID),
-                      case .funDecl(let function) = decl,
-                      let symbol = sema.bindings.declSymbols[declID] else {
-                    continue
-                }
-                let defaults = function.valueParams.map(\.defaultValue)
-                if defaults.contains(where: { $0 != nil }) {
-                    mapping[symbol] = defaults
-                }
+                collectFunctionDefaults(declID, ast: ast, sema: sema, mapping: &mapping)
             }
         }
         return mapping
+    }
+
+    private func collectFunctionDefaults(
+        _ declID: DeclID,
+        ast: ASTModule,
+        sema: SemaModule,
+        mapping: inout [SymbolID: [ExprID?]]
+    ) {
+        guard let decl = ast.arena.decl(declID) else { return }
+        switch decl {
+        case .funDecl(let function):
+            guard let symbol = sema.bindings.declSymbols[declID] else { return }
+            let defaults = function.valueParams.map(\.defaultValue)
+            if defaults.contains(where: { $0 != nil }) {
+                mapping[symbol] = defaults
+            }
+        case .classDecl(let classDecl):
+            for memberDeclID in classDecl.memberFunctions {
+                collectFunctionDefaults(memberDeclID, ast: ast, sema: sema, mapping: &mapping)
+            }
+            for nestedDeclID in classDecl.nestedClasses + classDecl.nestedObjects {
+                collectFunctionDefaults(nestedDeclID, ast: ast, sema: sema, mapping: &mapping)
+            }
+        case .objectDecl(let objectDecl):
+            for memberDeclID in objectDecl.memberFunctions {
+                collectFunctionDefaults(memberDeclID, ast: ast, sema: sema, mapping: &mapping)
+            }
+            for nestedDeclID in objectDecl.nestedClasses + objectDecl.nestedObjects {
+                collectFunctionDefaults(nestedDeclID, ast: ast, sema: sema, mapping: &mapping)
+            }
+        default:
+            break
+        }
     }
 
     private func normalizedCallArguments(
