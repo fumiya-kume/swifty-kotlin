@@ -366,6 +366,14 @@ extension DataFlowSemaPassPhase {
                 }
             }
 
+            if !reifiedIndices.isEmpty && !funDecl.isInline {
+                diagnostics.error(
+                    "KSWIFTK-SEMA-0020",
+                    "Only type parameters of inline functions can be reified",
+                    range: funDecl.range
+                )
+            }
+
             for valueParam in funDecl.valueParams {
                 let paramFQName = localNamespaceFQName + [valueParam.name]
                 let paramSymbol = symbols.define(
@@ -476,6 +484,35 @@ extension DataFlowSemaPassPhase {
             symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)
 
             let nestedType = types.make(.classType(ClassType(classSymbol: nestedSymbol, args: [], nullability: .nonNull)))
+            if !nestedClass.typeParams.isEmpty {
+                types.setNominalTypeParameterVariances(
+                    nestedClass.typeParams.map(\.variance),
+                    for: nestedSymbol
+                )
+            }
+            if classSymbolKind(for: nestedClass) == .enumClass {
+                for entry in nestedClass.enumEntries {
+                    let entryFQName = nestedFQName + [entry.name]
+                    let existingEntrySymbols = symbols.lookupAll(fqName: entryFQName).compactMap { symbols.symbol($0) }
+                    if hasDeclarationConflict(newKind: .field, existing: existingEntrySymbols) {
+                        diagnostics.error(
+                            "KSWIFTK-SEMA-0001",
+                            "Duplicate declaration in the same package scope.",
+                            range: entry.range
+                        )
+                    }
+                    let entrySymbol = symbols.define(
+                        kind: .field,
+                        name: entry.name,
+                        fqName: entryFQName,
+                        declSite: entry.range,
+                        visibility: .public,
+                        flags: []
+                    )
+                    symbols.setPropertyType(nestedType, for: entrySymbol)
+                    scope.insert(entrySymbol)
+                }
+            }
             collectNestedTypeAliases(
                 nestedClass.nestedTypeAliases,
                 ownerFQName: nestedFQName,
