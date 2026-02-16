@@ -188,6 +188,124 @@ extension BuildASTPhase {
         return result
     }
 
+    func declarationSecondaryConstructors(
+        from nodeID: NodeID,
+        in arena: SyntaxArena,
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> [ConstructorDecl] {
+        var result: [ConstructorDecl] = []
+        for child in arena.children(of: nodeID) {
+            guard case .node(let bodyBlockID) = child,
+                  arena.node(bodyBlockID).kind == .block else {
+                continue
+            }
+            for bodyChild in arena.children(of: bodyBlockID) {
+                guard case .node(let ctorNodeID) = bodyChild,
+                      arena.node(ctorNodeID).kind == .constructorDecl else {
+                    continue
+                }
+                let ctorNode = arena.node(ctorNodeID)
+                let params = declarationValueParameters(from: ctorNodeID, in: arena, interner: interner, astArena: astArena)
+                let delegationCall = extractDelegationCall(from: ctorNodeID, in: arena, interner: interner, astArena: astArena)
+                let body = declarationBody(from: ctorNodeID, in: arena, interner: interner, astArena: astArena)
+                result.append(ConstructorDecl(
+                    range: ctorNode.range,
+                    modifiers: declarationModifiers(from: ctorNodeID, in: arena),
+                    valueParams: params,
+                    delegationCall: delegationCall,
+                    body: body
+                ))
+            }
+        }
+        return result
+    }
+
+    func extractDelegationCall(
+        from nodeID: NodeID,
+        in arena: SyntaxArena,
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> ConstructorDelegationCall? {
+        let tokens = collectTokens(from: nodeID, in: arena)
+        var index = 0
+        var parenDepth = 0
+        var foundFirstParens = false
+        while index < tokens.count {
+            let token = tokens[index]
+            if token.kind == .symbol(.lParen) {
+                parenDepth += 1
+                if !foundFirstParens {
+                    foundFirstParens = true
+                }
+            }
+            if token.kind == .symbol(.rParen) {
+                parenDepth -= 1
+                if parenDepth == 0 && foundFirstParens {
+                    index += 1
+                    break
+                }
+            }
+            index += 1
+        }
+
+        guard index < tokens.count else { return nil }
+
+        if tokens[index].kind == .symbol(.colon) {
+            index += 1
+        }
+
+        guard index < tokens.count else { return nil }
+
+        let kind: ConstructorDelegationKind
+        if tokens[index].kind == .keyword(.this) {
+            kind = .this
+            index += 1
+        } else if tokens[index].kind == .keyword(.super) {
+            kind = .super_
+            index += 1
+        } else {
+            return nil
+        }
+
+        let range = tokens[index - 1].range
+
+        var args: [CallArgument] = []
+        if index < tokens.count, tokens[index].kind == .symbol(.lParen) {
+            index += 1
+            var argTokens: [Token] = []
+            var depth = 0
+            while index < tokens.count {
+                let t = tokens[index]
+                if t.kind == .symbol(.lParen) { depth += 1 }
+                if t.kind == .symbol(.rParen) {
+                    if depth == 0 { index += 1; break }
+                    depth -= 1
+                }
+                if t.kind == .symbol(.comma) && depth == 0 {
+                    if !argTokens.isEmpty {
+                        let parser = ExpressionParser(tokens: argTokens, interner: interner, astArena: astArena)
+                        if let exprID = parser.parse() {
+                            args.append(CallArgument(expr: exprID))
+                        }
+                        argTokens.removeAll(keepingCapacity: true)
+                    }
+                } else {
+                    argTokens.append(t)
+                }
+                index += 1
+            }
+            if !argTokens.isEmpty {
+                let parser = ExpressionParser(tokens: argTokens, interner: interner, astArena: astArena)
+                if let exprID = parser.parse() {
+                    args.append(CallArgument(expr: exprID))
+                }
+            }
+        }
+
+        return ConstructorDelegationCall(kind: kind, args: args, range: range)
+    }
+
     func setterParameterName(
         from headerTokens: [Token],
         interner: StringInterner

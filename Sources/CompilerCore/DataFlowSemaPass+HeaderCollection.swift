@@ -124,6 +124,120 @@ extension DataFlowSemaPassPhase {
                 symbols: symbols,
                 diagnostics: diagnostics
             )
+
+            let ctorName = interner.intern("<init>")
+            let primaryCtorFQName = fqName + [ctorName]
+            let primaryCtorSymbol = symbols.define(
+                kind: .constructor,
+                name: declaration.name,
+                fqName: primaryCtorFQName,
+                declSite: classDecl.range,
+                visibility: declaration.visibility,
+                flags: []
+            )
+            scope.insert(primaryCtorSymbol)
+            do {
+                var paramTypes: [TypeID] = []
+                var paramSymbols: [SymbolID] = []
+                var paramHasDefaultValues: [Bool] = []
+                var paramIsVararg: [Bool] = []
+                let localNamespaceFQName = primaryCtorFQName + [interner.intern("$\(primaryCtorSymbol.rawValue)")]
+                for valueParam in classDecl.primaryConstructorParams {
+                    let paramFQName = localNamespaceFQName + [valueParam.name]
+                    let paramSymbol = symbols.define(
+                        kind: .valueParameter,
+                        name: valueParam.name,
+                        fqName: paramFQName,
+                        declSite: classDecl.range,
+                        visibility: .private,
+                        flags: []
+                    )
+                    let resolvedType = resolveTypeRef(
+                        valueParam.type,
+                        ast: ast,
+                        symbols: symbols,
+                        types: types,
+                        interner: interner
+                    ) ?? anyType
+                    paramTypes.append(resolvedType)
+                    paramSymbols.append(paramSymbol)
+                    paramHasDefaultValues.append(valueParam.hasDefaultValue)
+                    paramIsVararg.append(valueParam.isVararg)
+                }
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        parameterTypes: paramTypes,
+                        returnType: classType,
+                        valueParameterSymbols: paramSymbols,
+                        valueParameterHasDefaultValues: paramHasDefaultValues,
+                        valueParameterIsVararg: paramIsVararg
+                    ),
+                    for: primaryCtorSymbol
+                )
+            }
+
+            for (ctorIndex, secondaryCtor) in classDecl.secondaryConstructors.enumerated() {
+                let secCtorSymbol = symbols.define(
+                    kind: .constructor,
+                    name: declaration.name,
+                    fqName: primaryCtorFQName,
+                    declSite: secondaryCtor.range,
+                    visibility: visibility(from: secondaryCtor.modifiers),
+                    flags: []
+                )
+                scope.insert(secCtorSymbol)
+                var paramTypes: [TypeID] = []
+                var paramSymbols: [SymbolID] = []
+                var paramHasDefaultValues: [Bool] = []
+                var paramIsVararg: [Bool] = []
+                let localNamespaceFQName = primaryCtorFQName + [interner.intern("$sec\(ctorIndex)_\(secCtorSymbol.rawValue)")]
+                for valueParam in secondaryCtor.valueParams {
+                    let paramFQName = localNamespaceFQName + [valueParam.name]
+                    let paramSymbol = symbols.define(
+                        kind: .valueParameter,
+                        name: valueParam.name,
+                        fqName: paramFQName,
+                        declSite: secondaryCtor.range,
+                        visibility: .private,
+                        flags: []
+                    )
+                    let resolvedType = resolveTypeRef(
+                        valueParam.type,
+                        ast: ast,
+                        symbols: symbols,
+                        types: types,
+                        interner: interner
+                    ) ?? anyType
+                    paramTypes.append(resolvedType)
+                    paramSymbols.append(paramSymbol)
+                    paramHasDefaultValues.append(valueParam.hasDefaultValue)
+                    paramIsVararg.append(valueParam.isVararg)
+                }
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        parameterTypes: paramTypes,
+                        returnType: classType,
+                        valueParameterSymbols: paramSymbols,
+                        valueParameterHasDefaultValues: paramHasDefaultValues,
+                        valueParameterIsVararg: paramIsVararg
+                    ),
+                    for: secCtorSymbol
+                )
+
+                if let delegation = secondaryCtor.delegationCall {
+                    if delegation.kind == .super_ {
+                        let superTypes = symbols.directSupertypes(for: symbol)
+                        if superTypes.isEmpty {
+                            diagnostics.error(
+                                "KSWIFTK-SEMA-0021",
+                                "Cannot delegate to super: class has no superclass.",
+                                range: delegation.range
+                            )
+                        }
+                    }
+                }
+            }
+
             if declaration.kind == .enumClass {
                 for entry in classDecl.enumEntries {
                     let entryFQName = fqName + [entry.name]

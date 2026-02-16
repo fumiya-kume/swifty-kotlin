@@ -108,4 +108,14 @@ extension TypeCheckSemaPassPhase {
             _ = inferFunctionBodyType(block, ctx: ctx, locals: &locals, expectedType: nil)
         }
     }
+
+    func typeCheckSecondaryConstructors(
+        _ constructors: [ConstructorDecl],
+        ctx: TypeInferenceContext
+    ) {
+        for ctor in constructors {
+            var locals: [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool)] = [:]
+            _ = inferFunctionBodyType(ctor.body, ctx: ctx, locals: &locals, expectedType: nil)
+        }
+    }
 }

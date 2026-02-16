@@ -169,6 +169,7 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
 
                 case .classDecl(let classDecl):
                     typeCheckInitBlocks(classDecl.initBlocks, ctx: inferCtx)
+                    typeCheckSecondaryConstructors(classDecl.secondaryConstructors, ctx: inferCtx)
 
                 case .objectDecl(let objectDecl):
                     typeCheckInitBlocks(objectDecl.initBlocks, ctx: inferCtx)

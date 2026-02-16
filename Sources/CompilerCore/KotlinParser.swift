@@ -361,6 +361,45 @@ public final class KotlinParser {
             range: range.value ?? invalidRange, children)
     }
 
+    private func parseConstructorDeclaration() -> NodeID {
+        var children: [SyntaxChild] = []
+        var range = RangeAccumulator()
+
+        _ = consumeToken(into: &children, range: &range)
+
+        if case .symbol(.lParen) = stream.peek().kind {
+            children.append(.node(parseBalancedGroup(opening: .lParen, closing: .rParen)))
+            if let last = children.last {
+                range.append(childRange(last))
+            }
+        }
+
+        var parenDepth = 0
+        while !stream.atEOF() {
+            let token = stream.peek()
+            if token.kind == .eof { break }
+            if case .symbol(.rBrace) = token.kind, parenDepth == 0 { break }
+            if case .symbol(.lBrace) = token.kind, parenDepth == 0 { break }
+            if hasLeadingNewline(token), parenDepth == 0, !children.isEmpty { break }
+            if case .symbol(.semicolon) = token.kind {
+                _ = consumeToken(into: &children, range: &range)
+                break
+            }
+            _ = consumeToken(into: &children, range: &range)
+            if case .symbol(.lParen) = token.kind { parenDepth += 1 }
+            if case .symbol(.rParen) = token.kind { parenDepth = max(0, parenDepth - 1) }
+        }
+
+        if case .symbol(.lBrace) = stream.peek().kind {
+            children.append(.node(parseBlock()))
+            if let last = children.last {
+                range.append(childRange(last))
+            }
+        }
+
+        return arena.appendNode(kind: .constructorDecl, range: range.value ?? invalidRange, children)
+    }
+
     private func parsePostDeclarationTail(into children: inout [SyntaxChild], range: inout RangeAccumulator, includeBlock: Bool) {
         if case .symbol(.lBrace) = stream.peek().kind {
             if includeBlock {
@@ -385,6 +424,14 @@ public final class KotlinParser {
             if case .symbol(.rBrace) = token.kind {
                 _ = consumeToken(into: &children, range: &range)
                 break
+            }
+            if case .keyword(.constructor) = token.kind {
+                children.append(.node(parseConstructorDeclaration()))
+                continue
+            }
+            if case .softKeyword(.constructor) = token.kind {
+                children.append(.node(parseConstructorDeclaration()))
+                continue
             }
             if isDeclarationStart(token.kind) && hasLeadingNewline(token) {
                 children.append(.node(parseDeclaration()))
