@@ -24,6 +24,7 @@ node kotlinFile f0:0..0
     tok missing(identifier()) f0:44..44
     tok symbol(=) f0:44..45
     tok identifier(Int) f0:46..49
-  node importHeader f0:50..0
-    tok keyword(import) f0:50..56
-    tok missing(identifier()) f-1:0..0
+  node importList f0:50..0
+    node importHeader f0:50..0
+      tok keyword(import) f0:50..56
+      tok missing(identifier()) f-1:0..0
