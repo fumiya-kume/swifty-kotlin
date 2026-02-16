@@ -12,7 +12,7 @@ final class OperatorLoweringPass: LoweringPass {
             updated.body = function.body.map { instruction in
                 switch instruction {
                 case .binary(let op, let lhs, let rhs, let result):
-                    let prefix = self.operatorPrefix(for: lhs, arena: module.arena, types: types)
+                    let prefix = self.operatorPrefix(for: lhs, rhs: rhs, arena: module.arena, types: types)
                     let callee: InternedString
                     switch op {
                     case .add:
@@ -84,18 +84,24 @@ final class OperatorLoweringPass: LoweringPass {
         module.recordLowering(Self.name)
     }
 
-    private func operatorPrefix(for exprID: KIRExprID, arena: KIRArena, types: TypeSystem?) -> String {
-        guard let types,
-              let typeID = arena.exprType(exprID) else {
-            return ""
+    private func operatorPrefix(for lhs: KIRExprID, rhs: KIRExprID, arena: KIRArena, types: TypeSystem?) -> String {
+        guard let types else { return "" }
+        let lhsRank = primitiveRank(for: lhs, arena: arena, types: types)
+        let rhsRank = primitiveRank(for: rhs, arena: arena, types: types)
+        let rank = max(lhsRank, rhsRank)
+        switch rank {
+        case 2: return "d"
+        case 1: return "f"
+        default: return ""
         }
+    }
+
+    private func primitiveRank(for exprID: KIRExprID, arena: KIRArena, types: TypeSystem) -> Int {
+        guard let typeID = arena.exprType(exprID) else { return 0 }
         switch types.kind(of: typeID) {
-        case .primitive(.float, _):
-            return "f"
-        case .primitive(.double, _):
-            return "d"
-        default:
-            return ""
+        case .primitive(.double, _): return 2
+        case .primitive(.float, _): return 1
+        default: return 0
         }
     }
 }

@@ -362,7 +362,6 @@ public final class LLVMBackend {
             "}",
             "static intptr_t kk_unbox_long(intptr_t obj) {",
             "  if (obj == KK_NULL_SENTINEL) return 0;",
-            "  if (obj > -(intptr_t)0x100000000LL && obj < (intptr_t)0x100000000LL) return obj;",
             "  KKBoxedValue* box = (KKBoxedValue*)(void*)obj;",
             "  if (box && box->tag == KK_BOX_TAG_LONG) return box->value;",
             "  return obj;",
