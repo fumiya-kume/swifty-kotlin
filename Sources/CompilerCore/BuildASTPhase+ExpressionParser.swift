@@ -135,7 +135,7 @@ extension BuildASTPhase {
             guard index > 0, index - 1 < tokens.count else { return true }
             let prev = tokens[index - 1]
             switch prev.kind {
-            case .intLiteral, .longLiteral, .floatLiteral, .doubleLiteral,
+            case .intLiteral, .longLiteral, .floatLiteral, .doubleLiteral, .charLiteral,
                  .identifier, .backtickedIdentifier,
                  .symbol(.rParen), .symbol(.rBracket),
                  .symbol(.bangBang),
@@ -302,10 +302,37 @@ extension BuildASTPhase {
             }
 
             switch token.kind {
-            case .intLiteral(let text), .longLiteral(let text):
+            case .intLiteral(let text):
                 _ = consume()
-                let value = Int64(text.filter { $0.isNumber }) ?? 0
+                let value = Int64(text.filter { $0.isNumber || $0 == "-" }) ?? 0
                 return astArena.appendExpr(.intLiteral(value, token.range))
+
+            case .longLiteral(let text):
+                _ = consume()
+                let stripped = text.filter { $0.isNumber || $0 == "-" }
+                let value = Int64(stripped) ?? 0
+                return astArena.appendExpr(.longLiteral(value, token.range))
+
+            case .floatLiteral(let text):
+                _ = consume()
+                let stripped = String(text.dropLast()).replacingOccurrences(of: "_", with: "")
+                let value = Double(stripped) ?? 0.0
+                return astArena.appendExpr(.floatLiteral(value, token.range))
+
+            case .doubleLiteral(let text):
+                _ = consume()
+                let stripped: String
+                if text.last == "d" || text.last == "D" {
+                    stripped = String(text.dropLast()).replacingOccurrences(of: "_", with: "")
+                } else {
+                    stripped = text.replacingOccurrences(of: "_", with: "")
+                }
+                let value = Double(stripped) ?? 0.0
+                return astArena.appendExpr(.doubleLiteral(value, token.range))
+
+            case .charLiteral(let scalar):
+                _ = consume()
+                return astArena.appendExpr(.charLiteral(scalar, token.range))
 
             case .keyword(.true):
                 _ = consume()

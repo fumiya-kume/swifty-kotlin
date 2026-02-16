@@ -395,6 +395,10 @@ public struct CatchClause: Equatable {
 
 public enum Expr: Equatable {
     case intLiteral(Int64, SourceRange)
+    case longLiteral(Int64, SourceRange)
+    case floatLiteral(Double, SourceRange)
+    case doubleLiteral(Double, SourceRange)
+    case charLiteral(UInt32, SourceRange)
     case boolLiteral(Bool, SourceRange)
     case stringLiteral(InternedString, SourceRange)
     case nameRef(InternedString, SourceRange)
@@ -467,6 +471,10 @@ public final class ASTArena {
         }
         switch expr {
         case .intLiteral(_, let range),
+             .longLiteral(_, let range),
+             .floatLiteral(_, let range),
+             .doubleLiteral(_, let range),
+             .charLiteral(_, let range),
              .boolLiteral(_, let range),
              .stringLiteral(_, let range),
              .nameRef(_, let range),

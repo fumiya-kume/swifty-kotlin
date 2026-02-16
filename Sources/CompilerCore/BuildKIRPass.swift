@@ -207,6 +207,30 @@ public final class BuildKIRPhase: CompilerPhase {
             instructions.append(.constValue(result: id, value: .intLiteral(value)))
             return id
 
+        case .longLiteral(let value, _):
+            let longType = sema.types.make(.primitive(.long, .nonNull))
+            let id = arena.appendExpr(.longLiteral(value), type: boundType ?? longType)
+            instructions.append(.constValue(result: id, value: .longLiteral(value)))
+            return id
+
+        case .floatLiteral(let value, _):
+            let floatType = sema.types.make(.primitive(.float, .nonNull))
+            let id = arena.appendExpr(.floatLiteral(value), type: boundType ?? floatType)
+            instructions.append(.constValue(result: id, value: .floatLiteral(value)))
+            return id
+
+        case .doubleLiteral(let value, _):
+            let doubleType = sema.types.make(.primitive(.double, .nonNull))
+            let id = arena.appendExpr(.doubleLiteral(value), type: boundType ?? doubleType)
+            instructions.append(.constValue(result: id, value: .doubleLiteral(value)))
+            return id
+
+        case .charLiteral(let value, _):
+            let charType = sema.types.make(.primitive(.char, .nonNull))
+            let id = arena.appendExpr(.charLiteral(value), type: boundType ?? charType)
+            instructions.append(.constValue(result: id, value: .charLiteral(value)))
+            return id
+
         case .boolLiteral(let value, _):
             let id = arena.appendExpr(.boolLiteral(value), type: boundType ?? boolType)
             instructions.append(.constValue(result: id, value: .boolLiteral(value)))
@@ -1469,6 +1493,14 @@ public final class BuildKIRPhase: CompilerPhase {
         switch expr {
         case .intLiteral(let value, _):
             return .intLiteral(value)
+        case .longLiteral(let value, _):
+            return .longLiteral(value)
+        case .floatLiteral(let value, _):
+            return .floatLiteral(value)
+        case .doubleLiteral(let value, _):
+            return .doubleLiteral(value)
+        case .charLiteral(let value, _):
+            return .charLiteral(value)
         case .boolLiteral(let value, _):
             return .boolLiteral(value)
         case .stringLiteral(let value, _):

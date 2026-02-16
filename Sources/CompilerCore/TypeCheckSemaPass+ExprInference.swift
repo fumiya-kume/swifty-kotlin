@@ -18,12 +18,32 @@ extension TypeCheckSemaPassPhase {
 
         let boolType = sema.types.make(.primitive(.boolean, .nonNull))
         let intType = sema.types.make(.primitive(.int, .nonNull))
+        let longType = sema.types.make(.primitive(.long, .nonNull))
+        let floatType = sema.types.make(.primitive(.float, .nonNull))
+        let doubleType = sema.types.make(.primitive(.double, .nonNull))
+        let charType = sema.types.make(.primitive(.char, .nonNull))
         let stringType = sema.types.make(.primitive(.string, .nonNull))
 
         switch expr {
         case .intLiteral:
             sema.bindings.bindExprType(id, type: intType)
             return intType
+
+        case .longLiteral:
+            sema.bindings.bindExprType(id, type: longType)
+            return longType
+
+        case .floatLiteral:
+            sema.bindings.bindExprType(id, type: floatType)
+            return floatType
+
+        case .doubleLiteral:
+            sema.bindings.bindExprType(id, type: doubleType)
+            return doubleType
+
+        case .charLiteral:
+            sema.bindings.bindExprType(id, type: charType)
+            return charType
 
         case .boolLiteral:
             sema.bindings.bindExprType(id, type: boolType)
@@ -363,9 +383,27 @@ extension TypeCheckSemaPassPhase {
             let type: TypeID
             switch op {
             case .add:
-                type = (lhs == stringType || rhs == stringType) ? stringType : intType
+                if lhs == stringType || rhs == stringType {
+                    type = stringType
+                } else if lhs == doubleType || rhs == doubleType {
+                    type = doubleType
+                } else if lhs == floatType || rhs == floatType {
+                    type = floatType
+                } else if lhs == longType || rhs == longType {
+                    type = longType
+                } else {
+                    type = intType
+                }
             case .subtract, .multiply, .divide, .modulo:
-                type = intType
+                if lhs == doubleType || rhs == doubleType {
+                    type = doubleType
+                } else if lhs == floatType || rhs == floatType {
+                    type = floatType
+                } else if lhs == longType || rhs == longType {
+                    type = longType
+                } else {
+                    type = intType
+                }
             case .equal, .notEqual, .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
                 type = boolType
             case .logicalAnd, .logicalOr:

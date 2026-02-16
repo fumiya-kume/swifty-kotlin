@@ -36,14 +36,33 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_array_new"),
             ctx.interner.intern("kk_box_int"),
             ctx.interner.intern("kk_box_bool"),
+            ctx.interner.intern("kk_box_long"),
+            ctx.interner.intern("kk_box_float"),
+            ctx.interner.intern("kk_box_double"),
+            ctx.interner.intern("kk_box_char"),
             ctx.interner.intern("kk_unbox_int"),
-            ctx.interner.intern("kk_unbox_bool")
+            ctx.interner.intern("kk_unbox_bool"),
+            ctx.interner.intern("kk_unbox_long"),
+            ctx.interner.intern("kk_unbox_float"),
+            ctx.interner.intern("kk_unbox_double"),
+            ctx.interner.intern("kk_unbox_char"),
+            ctx.interner.intern("kk_println_float"),
+            ctx.interner.intern("kk_println_double"),
+            ctx.interner.intern("kk_println_char")
         ]
 
         let boxIntCallee = ctx.interner.intern("kk_box_int")
         let boxBoolCallee = ctx.interner.intern("kk_box_bool")
+        let boxLongCallee = ctx.interner.intern("kk_box_long")
+        let boxFloatCallee = ctx.interner.intern("kk_box_float")
+        let boxDoubleCallee = ctx.interner.intern("kk_box_double")
+        let boxCharCallee = ctx.interner.intern("kk_box_char")
         let unboxIntCallee = ctx.interner.intern("kk_unbox_int")
         let unboxBoolCallee = ctx.interner.intern("kk_unbox_bool")
+        let unboxLongCallee = ctx.interner.intern("kk_unbox_long")
+        let unboxFloatCallee = ctx.interner.intern("kk_unbox_float")
+        let unboxDoubleCallee = ctx.interner.intern("kk_unbox_double")
+        let unboxCharCallee = ctx.interner.intern("kk_unbox_char")
 
         let types = ctx.sema?.types
         let symbols = ctx.sema?.symbols
@@ -101,7 +120,11 @@ final class ABILoweringPass: LoweringPass {
                                 paramType: paramType,
                                 types: types,
                                 boxIntCallee: boxIntCallee,
-                                boxBoolCallee: boxBoolCallee
+                                boxBoolCallee: boxBoolCallee,
+                                boxLongCallee: boxLongCallee,
+                                boxFloatCallee: boxFloatCallee,
+                                boxDoubleCallee: boxDoubleCallee,
+                                boxCharCallee: boxCharCallee
                             ) {
                                 let boxedResult = module.arena.appendExpr(
                                     .temporary(Int32(module.arena.expressions.count)),
@@ -144,7 +167,11 @@ final class ABILoweringPass: LoweringPass {
                                     sourceKind: returnKind,
                                     targetKind: resultKind,
                                     unboxIntCallee: unboxIntCallee,
-                                    unboxBoolCallee: unboxBoolCallee
+                                    unboxBoolCallee: unboxBoolCallee,
+                                    unboxLongCallee: unboxLongCallee,
+                                    unboxFloatCallee: unboxFloatCallee,
+                                    unboxDoubleCallee: unboxDoubleCallee,
+                                    unboxCharCallee: unboxCharCallee
                                 )
                                 resolvedReturnType = returnType
                             }
@@ -205,7 +232,11 @@ final class ABILoweringPass: LoweringPass {
         paramType: TypeID,
         types: TypeSystem,
         boxIntCallee: InternedString,
-        boxBoolCallee: InternedString
+        boxBoolCallee: InternedString,
+        boxLongCallee: InternedString,
+        boxFloatCallee: InternedString,
+        boxDoubleCallee: InternedString,
+        boxCharCallee: InternedString
     ) -> InternedString? {
         let argKind = types.kind(of: argType)
         let paramKind = types.kind(of: paramType)
@@ -215,10 +246,18 @@ final class ABILoweringPass: LoweringPass {
                case .primitive(let argPrimitive, .nonNull) = argKind,
                paramPrimitive == argPrimitive {
                 switch argPrimitive {
-                case .int, .long:
+                case .int:
                     return boxIntCallee
+                case .long:
+                    return boxLongCallee
                 case .boolean:
                     return boxBoolCallee
+                case .float:
+                    return boxFloatCallee
+                case .double:
+                    return boxDoubleCallee
+                case .char:
+                    return boxCharCallee
                 default:
                     return nil
                 }
@@ -227,10 +266,18 @@ final class ABILoweringPass: LoweringPass {
         }
 
         switch argKind {
-        case .primitive(.int, _), .primitive(.long, _):
+        case .primitive(.int, _):
             return boxIntCallee
+        case .primitive(.long, _):
+            return boxLongCallee
         case .primitive(.boolean, _):
             return boxBoolCallee
+        case .primitive(.float, _):
+            return boxFloatCallee
+        case .primitive(.double, _):
+            return boxDoubleCallee
+        case .primitive(.char, _):
+            return boxCharCallee
         default:
             return nil
         }
@@ -240,17 +287,29 @@ final class ABILoweringPass: LoweringPass {
         sourceKind: TypeKind,
         targetKind: TypeKind,
         unboxIntCallee: InternedString,
-        unboxBoolCallee: InternedString
+        unboxBoolCallee: InternedString,
+        unboxLongCallee: InternedString,
+        unboxFloatCallee: InternedString,
+        unboxDoubleCallee: InternedString,
+        unboxCharCallee: InternedString
     ) -> InternedString? {
         guard isAnyOrNullableAny(sourceKind) else {
             return nil
         }
 
         switch targetKind {
-        case .primitive(.int, _), .primitive(.long, _):
+        case .primitive(.int, _):
             return unboxIntCallee
+        case .primitive(.long, _):
+            return unboxLongCallee
         case .primitive(.boolean, _):
             return unboxBoolCallee
+        case .primitive(.float, _):
+            return unboxFloatCallee
+        case .primitive(.double, _):
+            return unboxDoubleCallee
+        case .primitive(.char, _):
+            return unboxCharCallee
         default:
             return nil
         }
@@ -265,6 +324,14 @@ final class ABILoweringPass: LoweringPass {
             switch kind {
             case .intLiteral:
                 return types.make(.primitive(.int, .nonNull))
+            case .longLiteral:
+                return types.make(.primitive(.long, .nonNull))
+            case .floatLiteral:
+                return types.make(.primitive(.float, .nonNull))
+            case .doubleLiteral:
+                return types.make(.primitive(.double, .nonNull))
+            case .charLiteral:
+                return types.make(.primitive(.char, .nonNull))
             case .boolLiteral:
                 return types.make(.primitive(.boolean, .nonNull))
             case .stringLiteral:

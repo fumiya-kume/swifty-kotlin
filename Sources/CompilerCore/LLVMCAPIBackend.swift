@@ -471,6 +471,20 @@ private struct NativeEmitter {
             switch expression {
             case .intLiteral(let number):
                 return bindings.constInt(int64Type, value: UInt64(bitPattern: number), signExtend: true) ?? zeroValue
+            case .longLiteral(let number):
+                return bindings.constInt(int64Type, value: UInt64(bitPattern: number), signExtend: true) ?? zeroValue
+            case .floatLiteral(let value):
+                var f = Float(value)
+                var bits: UInt32 = 0
+                memcpy(&bits, &f, MemoryLayout<UInt32>.size)
+                return bindings.constInt(int64Type, value: UInt64(bits)) ?? zeroValue
+            case .doubleLiteral(let value):
+                var d = value
+                var bits: UInt64 = 0
+                memcpy(&bits, &d, MemoryLayout<UInt64>.size)
+                return bindings.constInt(int64Type, value: bits) ?? zeroValue
+            case .charLiteral(let scalar):
+                return bindings.constInt(int64Type, value: UInt64(scalar)) ?? zeroValue
             case .boolLiteral(let value):
                 return bindings.constInt(int64Type, value: value ? 1 : 0) ?? zeroValue
             case .stringLiteral(let interned):
