@@ -14,32 +14,23 @@ permissions:
 jobs:
   smoke-tests:
     name: Smoke Tests
-    runs-on: macos-latest
+    runs-on: [self-hosted, macOS, ARM64]
     steps:
       - uses: actions/checkout@v4
       - name: Show toolchain versions
         run: |
-          xcodebuild -version
           swift --version
       - name: Run smoke tests
         run: bash Scripts/swift_test.sh --filter SmokeTests
 
   diff-regression:
     name: kotlinc Diff Regression
-    runs-on: macos-latest
+    runs-on: [self-hosted, macOS, ARM64]
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "21"
-      - name: Ensure kotlinc is installed
+      - name: Verify prerequisites
         run: |
-          if ! command -v kotlinc >/dev/null 2>&1; then
-            brew update
-            brew install kotlin
-          fi
+          java -version
           kotlinc -version
       - name: Build compiler
         run: swift build
@@ -62,15 +53,11 @@ jobs:
 
   test-and-coverage:
     name: Test and Coverage Gate
-    runs-on: macos-latest
+    runs-on: [self-hosted, macOS, ARM64]
     steps:
       - uses: actions/checkout@v4
-      - name: Ensure jq is installed
-        run: |
-          if ! command -v jq >/dev/null 2>&1; then
-            brew update
-            brew install jq
-          fi
+      - name: Verify prerequisites
+        run: jq --version
       - name: Run tests with coverage threshold
         env:
           COVERAGE_THRESHOLD: "95"
