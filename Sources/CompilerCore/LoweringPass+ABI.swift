@@ -71,6 +71,7 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_op_dle"),
             ctx.interner.intern("kk_op_dgt"),
             ctx.interner.intern("kk_op_dge"),
+            ctx.interner.intern("kk_println_long"),
             ctx.interner.intern("kk_int_to_float_bits"),
             ctx.interner.intern("kk_int_to_double_bits"),
             ctx.interner.intern("kk_float_to_double_bits")

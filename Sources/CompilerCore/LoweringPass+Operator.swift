@@ -95,6 +95,9 @@ final class OperatorLoweringPass: LoweringPass {
                         let argType = module.arena.exprType(arguments[0])
                         if let argType {
                             switch types.kind(of: argType) {
+                            case .primitive(.long, _):
+                                newBody.append(.call(symbol: symbol, callee: ctx.interner.intern("kk_println_long"), arguments: arguments, result: result, canThrow: canThrow, thrownResult: thrownResult))
+                                continue
                             case .primitive(.float, _):
                                 newBody.append(.call(symbol: symbol, callee: ctx.interner.intern("kk_println_float"), arguments: arguments, result: result, canThrow: canThrow, thrownResult: thrownResult))
                                 continue
