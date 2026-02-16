@@ -63,9 +63,12 @@ final class ABILoweringPass: LoweringPass {
             var newBody: [KIRInstruction] = []
             newBody.reserveCapacity(function.body.count)
 
-            for instruction in function.body {
+            var idx = 0
+            while idx < function.body.count {
+                let instruction = function.body[idx]
                 guard case .call(let callSymbol, let callee, let arguments, let result, _, let thrownResult) = instruction else {
                     newBody.append(instruction)
+                    idx += 1
                     continue
                 }
 
@@ -149,7 +152,7 @@ final class ABILoweringPass: LoweringPass {
                     }
                 }
 
-                if let resolvedUnboxCallee, let resolvedReturnType, let result, thrownResult == nil {
+                if let resolvedUnboxCallee, let resolvedReturnType, let result {
                     let tempResult = module.arena.appendExpr(
                         .temporary(Int32(module.arena.expressions.count)),
                         type: resolvedReturnType
@@ -160,8 +163,16 @@ final class ABILoweringPass: LoweringPass {
                         arguments: boxedArguments,
                         result: tempResult,
                         canThrow: canThrow,
-                        thrownResult: nil
+                        thrownResult: thrownResult
                     ))
+                    if thrownResult != nil {
+                        let nextIdx = idx + 1
+                        if nextIdx < function.body.count,
+                           case .jumpIfNotNull = function.body[nextIdx] {
+                            newBody.append(function.body[nextIdx])
+                            idx += 1
+                        }
+                    }
                     newBody.append(.call(
                         symbol: nil,
                         callee: resolvedUnboxCallee,
@@ -180,6 +191,7 @@ final class ABILoweringPass: LoweringPass {
                         thrownResult: thrownResult
                     ))
                 }
+                idx += 1
             }
 
             updated.body = newBody
