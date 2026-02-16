@@ -10,13 +10,48 @@ struct TypeInferenceContext {
     let interner: StringInterner
     let scope: Scope
     let implicitReceiverType: TypeID?
+    let loopDepth: Int
 
     func with(scope: Scope) -> TypeInferenceContext {
-        TypeInferenceContext(ast: ast, sema: sema, semaCtx: semaCtx, resolver: resolver, dataFlow: dataFlow, interner: interner, scope: scope, implicitReceiverType: implicitReceiverType)
+        TypeInferenceContext(
+            ast: ast,
+            sema: sema,
+            semaCtx: semaCtx,
+            resolver: resolver,
+            dataFlow: dataFlow,
+            interner: interner,
+            scope: scope,
+            implicitReceiverType: implicitReceiverType,
+            loopDepth: loopDepth
+        )
     }
 
     func with(implicitReceiverType: TypeID?) -> TypeInferenceContext {
-        TypeInferenceContext(ast: ast, sema: sema, semaCtx: semaCtx, resolver: resolver, dataFlow: dataFlow, interner: interner, scope: scope, implicitReceiverType: implicitReceiverType)
+        TypeInferenceContext(
+            ast: ast,
+            sema: sema,
+            semaCtx: semaCtx,
+            resolver: resolver,
+            dataFlow: dataFlow,
+            interner: interner,
+            scope: scope,
+            implicitReceiverType: implicitReceiverType,
+            loopDepth: loopDepth
+        )
+    }
+
+    func with(loopDepth: Int) -> TypeInferenceContext {
+        TypeInferenceContext(
+            ast: ast,
+            sema: sema,
+            semaCtx: semaCtx,
+            resolver: resolver,
+            dataFlow: dataFlow,
+            interner: interner,
+            scope: scope,
+            implicitReceiverType: implicitReceiverType,
+            loopDepth: loopDepth
+        )
     }
 }
 
@@ -70,7 +105,8 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                 ast: ast, sema: sema, semaCtx: semaCtx,
                 resolver: resolver, dataFlow: dataFlow,
                 interner: ctx.interner, scope: fileScope,
-                implicitReceiverType: nil
+                implicitReceiverType: nil,
+                loopDepth: 0
             )
             for declID in file.topLevelDecls {
                 guard let decl = ast.arena.decl(declID),

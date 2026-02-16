@@ -64,6 +64,94 @@ extension TypeCheckSemaPassPhase {
             sema.bindings.bindExprType(id, type: resolvedType)
             return resolvedType
 
+        case .forExpr(let loopVariable, let iterableExpr, let bodyExpr, let range):
+            let iterableType = inferExpr(iterableExpr, ctx: ctx, locals: &locals, expectedType: nil)
+            var bodyLocals = locals
+            if let loopVariable {
+                let elementType = arrayElementType(for: iterableType, sema: sema, interner: interner) ?? sema.types.anyType
+                let loopVariableSymbol = sema.symbols.define(
+                    kind: .local,
+                    name: loopVariable,
+                    fqName: [
+                        ctx.interner.intern("__for_\(id.rawValue)"),
+                        loopVariable
+                    ],
+                    declSite: range,
+                    visibility: .private,
+                    flags: []
+                )
+                bodyLocals[loopVariable] = (elementType, loopVariableSymbol, false)
+                sema.bindings.bindIdentifier(id, symbol: loopVariableSymbol)
+            }
+            _ = inferExpr(
+                bodyExpr,
+                ctx: ctx.with(loopDepth: ctx.loopDepth + 1),
+                locals: &bodyLocals,
+                expectedType: nil
+            )
+            sema.bindings.bindExprType(id, type: sema.types.unitType)
+            return sema.types.unitType
+
+        case .whileExpr(let conditionExpr, let bodyExpr, let range):
+            let conditionType = inferExpr(conditionExpr, ctx: ctx, locals: &locals, expectedType: boolType)
+            emitSubtypeConstraint(
+                left: conditionType,
+                right: boolType,
+                range: ast.arena.exprRange(conditionExpr) ?? range,
+                solver: ConstraintSolver(),
+                sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+            _ = inferExpr(
+                bodyExpr,
+                ctx: ctx.with(loopDepth: ctx.loopDepth + 1),
+                locals: &locals,
+                expectedType: nil
+            )
+            sema.bindings.bindExprType(id, type: sema.types.unitType)
+            return sema.types.unitType
+
+        case .doWhileExpr(let bodyExpr, let conditionExpr, let range):
+            _ = inferExpr(
+                bodyExpr,
+                ctx: ctx.with(loopDepth: ctx.loopDepth + 1),
+                locals: &locals,
+                expectedType: nil
+            )
+            let conditionType = inferExpr(conditionExpr, ctx: ctx, locals: &locals, expectedType: boolType)
+            emitSubtypeConstraint(
+                left: conditionType,
+                right: boolType,
+                range: ast.arena.exprRange(conditionExpr) ?? range,
+                solver: ConstraintSolver(),
+                sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+            sema.bindings.bindExprType(id, type: sema.types.unitType)
+            return sema.types.unitType
+
+        case .breakExpr(let range):
+            if ctx.loopDepth == 0 {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0018",
+                    "'break' is only allowed inside loop bodies.",
+                    range: range
+                )
+            }
+            sema.bindings.bindExprType(id, type: sema.types.unitType)
+            return sema.types.unitType
+
+        case .continueExpr(let range):
+            if ctx.loopDepth == 0 {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0019",
+                    "'continue' is only allowed inside loop bodies.",
+                    range: range
+                )
+            }
+            sema.bindings.bindExprType(id, type: sema.types.unitType)
+            return sema.types.unitType
+
         case .localDecl(let name, let isMutable, let initializer, let range):
             let initializerType = inferExpr(initializer, ctx: ctx, locals: &locals, expectedType: nil)
             let localSymbol = sema.symbols.define(
