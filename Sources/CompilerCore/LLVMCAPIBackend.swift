@@ -409,11 +409,29 @@ private struct NativeEmitter {
                     name: "str_from_utf8_\(literalID)"
                 ) ?? zeroValue
             case .symbolRef(let symbol):
-                return parameterValues[symbol] ?? zeroValue
+                if let parameter = parameterValues[symbol] {
+                    return parameter
+                }
+                if let internalFunction = internalFunctions[symbol],
+                   let functionPointer = bindings.buildPtrToInt(
+                    builder,
+                    value: internalFunction.value,
+                    type: int64Type,
+                    name: "fn_ptr_\(symbol.rawValue)"
+                   ) {
+                    return functionPointer
+                }
+                return zeroValue
             case .temporary(let raw):
                 return bindings.constInt(
                     int64Type,
                     value: UInt64(bitPattern: Int64(raw)),
+                    signExtend: true
+                ) ?? zeroValue
+            case .null:
+                return bindings.constInt(
+                    int64Type,
+                    value: UInt64(bitPattern: Int64.min),
                     signExtend: true
                 ) ?? zeroValue
             case .unit:

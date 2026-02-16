@@ -202,47 +202,78 @@ public final class CodegenPhase: CompilerPhase {
             )
             let filePath = outputDir + "/\(mangled).kirbin"
             let bodyLines = function.body.map { instruction in
-                switch instruction {
-                case .nop:
-                    return "nop"
-                case .beginBlock:
-                    return "beginBlock"
-                case .endBlock:
-                    return "endBlock"
-                case .label(let id):
-                    return "label id=\(id)"
-                case .jump(let target):
-                    return "jump target=\(target)"
-                case .jumpIfEqual(let lhs, let rhs, let target):
-                    return "jumpIfEqual lhs=\(lhs.rawValue) rhs=\(rhs.rawValue) target=\(target)"
-                case .constValue(let result, let value):
-                    return "const result=\(result.rawValue) value=\(value)"
-                case .binary(let op, let lhs, let rhs, let result):
-                    return "binary op=\(op) lhs=\(lhs.rawValue) rhs=\(rhs.rawValue) result=\(result.rawValue)"
-                case .returnUnit:
-                    return "returnUnit"
-                case .returnValue:
-                    return "returnValue"
-                case .returnIfEqual(let lhs, let rhs):
-                    return "returnIfEqual lhs=\(lhs.rawValue) rhs=\(rhs.rawValue)"
-                case .select(let condition, let thenValue, let elseValue, let result):
-                    return "select condition=\(condition.rawValue) then=\(thenValue.rawValue) else=\(elseValue.rawValue) result=\(result.rawValue)"
-                case .call(let symbol, let callee, let arguments, let result, let canThrow):
-                    let args = arguments.map { String($0.rawValue) }.joined(separator: ",")
-                    let symbolValue = symbol.map { String($0.rawValue) } ?? "_"
-                    let resultValue = result.map { String($0.rawValue) } ?? "_"
-                    return "call symbol=\(symbolValue) callee=\(callee.rawValue) args=[\(args)] result=\(resultValue) canThrow=\(canThrow)"
-                }
+                serializeInlineInstruction(instruction, interner: ctx.interner)
             }.joined(separator: "\n")
+            let paramSymbols = function.params.map { String($0.symbol.rawValue) }.joined(separator: ",")
             let content = """
-            name=\(ctx.interner.resolve(function.name))
+            version=2
+            nameB64=\(base64Encode(ctx.interner.resolve(function.name)))
             params=\(function.params.count)
+            paramSymbols=\(paramSymbols)
             suspend=\(function.isSuspend)
             body:
             \(bodyLines)
             """
             try content.write(to: URL(fileURLWithPath: filePath), atomically: true, encoding: .utf8)
         }
+    }
+
+    private func serializeInlineInstruction(_ instruction: KIRInstruction, interner: StringInterner) -> String {
+        switch instruction {
+        case .nop:
+            return "nop"
+        case .beginBlock:
+            return "beginBlock"
+        case .endBlock:
+            return "endBlock"
+        case .label(let id):
+            return "label id=\(id)"
+        case .jump(let target):
+            return "jump target=\(target)"
+        case .jumpIfEqual(let lhs, let rhs, let target):
+            return "jumpIfEqual lhs=\(lhs.rawValue) rhs=\(rhs.rawValue) target=\(target)"
+        case .constValue(let result, let value):
+            return "const result=\(result.rawValue) value=\(serializeInlineExprKind(value, interner: interner))"
+        case .binary(let op, let lhs, let rhs, let result):
+            return "binary op=\(op) lhs=\(lhs.rawValue) rhs=\(rhs.rawValue) result=\(result.rawValue)"
+        case .returnUnit:
+            return "returnUnit"
+        case .returnValue(let value):
+            return "returnValue value=\(value.rawValue)"
+        case .returnIfEqual(let lhs, let rhs):
+            return "returnIfEqual lhs=\(lhs.rawValue) rhs=\(rhs.rawValue)"
+        case .select(let condition, let thenValue, let elseValue, let result):
+            return "select condition=\(condition.rawValue) then=\(thenValue.rawValue) else=\(elseValue.rawValue) result=\(result.rawValue)"
+        case .call(let symbol, let callee, let arguments, let result, let canThrow):
+            let args = arguments.map { String($0.rawValue) }.joined(separator: ",")
+            let symbolValue = symbol.map { String($0.rawValue) } ?? "_"
+            let resultValue = result.map { String($0.rawValue) } ?? "_"
+            let calleeName = base64Encode(interner.resolve(callee))
+            return "call symbol=\(symbolValue) calleeB64=\(calleeName) args=[\(args)] result=\(resultValue) canThrow=\(canThrow ? 1 : 0)"
+        }
+    }
+
+    private func serializeInlineExprKind(_ value: KIRExprKind, interner: StringInterner) -> String {
+        switch value {
+        case .intLiteral(let intValue):
+            return "int:\(intValue)"
+        case .boolLiteral(let boolValue):
+            return "bool:\(boolValue ? 1 : 0)"
+        case .stringLiteral(let text):
+            return "stringB64:\(base64Encode(interner.resolve(text)))"
+        case .symbolRef(let symbol):
+            return "symbol:\(symbol.rawValue)"
+        case .temporary(let raw):
+            return "temp:\(raw)"
+        case .null:
+            return "null"
+        case .unit:
+            return "unit"
+        }
+    }
+
+    private func base64Encode(_ value: String) -> String {
+        Data(value.utf8).base64EncodedString()
     }
 
     private func libraryOutputPath(base: String) -> String {
@@ -290,6 +321,7 @@ public final class CodegenPhase: CompilerPhase {
             if symbol.kind == .function, let signature = sema.symbols.functionSignature(for: symbol.id) {
                 fields.append("arity=\(signature.parameterTypes.count)")
                 fields.append("suspend=\(signature.isSuspend ? 1 : 0)")
+                fields.append("inline=\(symbol.flags.contains(.inlineFunction) ? 1 : 0)")
             }
             if nominalKinds.contains(symbol.kind), let layout = sema.symbols.nominalLayout(for: symbol.id) {
                 fields.append("layoutWords=\(layout.instanceSizeWords)")

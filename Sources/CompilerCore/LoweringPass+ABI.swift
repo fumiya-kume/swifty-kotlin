@@ -25,7 +25,12 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_coroutine_state_set_spill"),
             ctx.interner.intern("kk_coroutine_state_get_spill"),
             ctx.interner.intern("kk_coroutine_state_set_completion"),
-            ctx.interner.intern("kk_coroutine_state_get_completion")
+            ctx.interner.intern("kk_coroutine_state_get_completion"),
+            ctx.interner.intern("kk_kxmini_run_blocking"),
+            ctx.interner.intern("kk_kxmini_launch"),
+            ctx.interner.intern("kk_kxmini_async"),
+            ctx.interner.intern("kk_kxmini_async_await"),
+            ctx.interner.intern("kk_kxmini_delay")
         ]
         module.arena.transformFunctions { function in
             var updated = function

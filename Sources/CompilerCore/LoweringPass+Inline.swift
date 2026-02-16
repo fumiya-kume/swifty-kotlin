@@ -10,12 +10,17 @@ final class InlineLoweringPass: LoweringPass {
 
     func run(module: KIRModule, ctx: KIRContext) throws {
         let unitType = ctx.sema?.types.unitType
-        let inlineFunctionsBySymbol = Dictionary(uniqueKeysWithValues: module.arena.declarations.compactMap { decl -> (SymbolID, KIRFunction)? in
+        var inlineFunctionsBySymbol = Dictionary(uniqueKeysWithValues: module.arena.declarations.compactMap { decl -> (SymbolID, KIRFunction)? in
             guard case .function(let function) = decl, function.isInline else {
                 return nil
             }
             return (function.symbol, function)
         })
+        if let imported = ctx.sema?.importedInlineFunctions {
+            for (symbol, function) in imported where inlineFunctionsBySymbol[symbol] == nil {
+                inlineFunctionsBySymbol[symbol] = function
+            }
+        }
         let inlineFunctionsByName = Dictionary(grouping: inlineFunctionsBySymbol.values, by: \.name)
 
         module.arena.transformFunctions { function in
