@@ -128,7 +128,7 @@ extension DataFlowSemaPassPhase {
             return types.make(.typeParam(TypeParamType(symbol: tp.symbol, nullability: .nullable)))
         case .functionType(let ft):
             return types.make(.functionType(FunctionType(receiver: ft.receiver, params: ft.params, returnType: ft.returnType, isSuspend: ft.isSuspend, nullability: .nullable)))
-        case .any:
+        case .any, .unit, .nothing:
             return types.nullableAnyType
         default:
             return typeID
