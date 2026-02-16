@@ -231,6 +231,27 @@ final class InlineLoweringPass: LoweringPass {
                 lowered.append(
                     .rethrow(value: resolveAlias(of: value, aliases: localExprMap))
                 )
+
+            case .unary(let op, let operand, let result):
+                let loweredResult = cloneExpr(result, in: module.arena)
+                localExprMap[result] = loweredResult
+                lowered.append(
+                    .unary(
+                        op: op,
+                        operand: resolveAlias(of: operand, aliases: localExprMap),
+                        result: loweredResult
+                    )
+                )
+
+            case .nullAssert(let operand, let result):
+                let loweredResult = cloneExpr(result, in: module.arena)
+                localExprMap[result] = loweredResult
+                lowered.append(
+                    .nullAssert(
+                        operand: resolveAlias(of: operand, aliases: localExprMap),
+                        result: loweredResult
+                    )
+                )
             }
         }
 
@@ -288,6 +309,19 @@ final class InlineLoweringPass: LoweringPass {
         case .rethrow(let value):
             return .rethrow(value: resolveAlias(of: value, aliases: aliases))
 
+        case .unary(let op, let operand, let result):
+            return .unary(
+                op: op,
+                operand: resolveAlias(of: operand, aliases: aliases),
+                result: result
+            )
+
+        case .nullAssert(let operand, let result):
+            return .nullAssert(
+                operand: resolveAlias(of: operand, aliases: aliases),
+                result: result
+            )
+
         default:
             return instruction
         }
@@ -300,6 +334,10 @@ final class InlineLoweringPass: LoweringPass {
         case .binary(_, _, _, let result):
             return result
         case .call(_, _, _, let result, _, _):
+            return result
+        case .unary(_, _, let result):
+            return result
+        case .nullAssert(_, let result):
             return result
         default:
             return nil

@@ -656,10 +656,47 @@ public final class LLVMBackend {
                     opText = "*"
                 case .divide:
                     opText = "/"
+                case .modulo:
+                    opText = "%"
                 case .equal:
                     opText = "=="
+                case .notEqual:
+                    opText = "!="
+                case .lessThan:
+                    opText = "<"
+                case .lessOrEqual:
+                    opText = "<="
+                case .greaterThan:
+                    opText = ">"
+                case .greaterOrEqual:
+                    opText = ">="
+                case .logicalAnd:
+                    opText = "&&"
+                case .logicalOr:
+                    opText = "||"
                 }
                 lines.append("  \(varName(result)) = (\(varName(lhs)) \(opText) \(varName(rhs)));")
+                syncRoot(result)
+
+            case .unary(let op, let operand, let result):
+                ensureDeclared(result, declared: &declared, lines: &lines)
+                ensureDeclared(operand, declared: &declared, lines: &lines)
+                let unaryOpText: String
+                switch op {
+                case .not:
+                    unaryOpText = "!"
+                case .unaryPlus:
+                    unaryOpText = "+"
+                case .unaryMinus:
+                    unaryOpText = "-"
+                }
+                lines.append("  \(varName(result)) = (\(unaryOpText)\(varName(operand)));")
+                syncRoot(result)
+
+            case .nullAssert(let operand, let result):
+                ensureDeclared(result, declared: &declared, lines: &lines)
+                ensureDeclared(operand, declared: &declared, lines: &lines)
+                lines.append("  \(varName(result)) = \(varName(operand));")
                 syncRoot(result)
 
             case .call(let symbol, let callee, let arguments, let result, let usesThrownChannel, let thrownResult):

@@ -45,7 +45,21 @@ public enum KIRBinaryOp: Equatable {
     case subtract
     case multiply
     case divide
+    case modulo
     case equal
+    case notEqual
+    case lessThan
+    case lessOrEqual
+    case greaterThan
+    case greaterOrEqual
+    case logicalAnd
+    case logicalOr
+}
+
+public enum KIRUnaryOp: Equatable {
+    case not
+    case unaryPlus
+    case unaryMinus
 }
 
 public enum KIRExprKind: Equatable {
@@ -67,6 +81,8 @@ public enum KIRInstruction: Equatable {
     case jumpIfEqual(lhs: KIRExprID, rhs: KIRExprID, target: Int32)
     case constValue(result: KIRExprID, value: KIRExprKind)
     case binary(op: KIRBinaryOp, lhs: KIRExprID, rhs: KIRExprID, result: KIRExprID)
+    case unary(op: KIRUnaryOp, operand: KIRExprID, result: KIRExprID)
+    case nullAssert(operand: KIRExprID, result: KIRExprID)
     case select(condition: KIRExprID, thenValue: KIRExprID, elseValue: KIRExprID, result: KIRExprID)
     case call(symbol: SymbolID?, callee: InternedString, arguments: [KIRExprID], result: KIRExprID?, canThrow: Bool, thrownResult: KIRExprID?)
     case jumpIfNotNull(value: KIRExprID, target: Int32)
@@ -287,6 +303,10 @@ public final class KIRModule {
             return "const r\(result.rawValue)=\(value)"
         case .binary(let op, let lhs, let rhs, let result):
             return "binary \(op) r\(lhs.rawValue), r\(rhs.rawValue) -> r\(result.rawValue)"
+        case .unary(let op, let operand, let result):
+            return "unary \(op) r\(operand.rawValue) -> r\(result.rawValue)"
+        case .nullAssert(let operand, let result):
+            return "nullAssert r\(operand.rawValue) -> r\(result.rawValue)"
         case .select(let condition, let thenValue, let elseValue, let result):
             return "select r\(condition.rawValue) ? r\(thenValue.rawValue) : r\(elseValue.rawValue) -> r\(result.rawValue)"
         case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult):

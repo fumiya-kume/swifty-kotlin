@@ -302,6 +302,7 @@ public enum BinaryOp: Equatable {
     case subtract
     case multiply
     case divide
+    case modulo
     case equal
     case notEqual
     case lessThan
@@ -310,12 +311,22 @@ public enum BinaryOp: Equatable {
     case greaterOrEqual
     case logicalAnd
     case logicalOr
+    case elvis
+    case rangeTo
 }
 
 public enum UnaryOp: Equatable {
-    case plus
-    case minus
     case not
+    case unaryPlus
+    case unaryMinus
+}
+
+public enum CompoundAssignOp: Equatable {
+    case plusAssign
+    case minusAssign
+    case timesAssign
+    case divAssign
+    case modAssign
 }
 
 public struct WhenBranch: Equatable {
@@ -372,12 +383,17 @@ public enum Expr: Equatable {
     case call(callee: ExprID, args: [CallArgument], range: SourceRange)
     case memberCall(receiver: ExprID, callee: InternedString, args: [CallArgument], range: SourceRange)
     case arrayAccess(array: ExprID, index: ExprID, range: SourceRange)
-    case unary(op: UnaryOp, operand: ExprID, range: SourceRange)
     case binary(op: BinaryOp, lhs: ExprID, rhs: ExprID, range: SourceRange)
     case whenExpr(subject: ExprID, branches: [WhenBranch], elseExpr: ExprID?, range: SourceRange)
     case returnExpr(value: ExprID?, range: SourceRange)
     case ifExpr(condition: ExprID, thenExpr: ExprID, elseExpr: ExprID?, range: SourceRange)
     case tryExpr(body: ExprID, catchClauses: [CatchClause], finallyExpr: ExprID?, range: SourceRange)
+    case unaryExpr(op: UnaryOp, operand: ExprID, range: SourceRange)
+    case isCheck(expr: ExprID, type: TypeRefID, negated: Bool, range: SourceRange)
+    case asCast(expr: ExprID, type: TypeRefID, isSafe: Bool, range: SourceRange)
+    case nullAssert(expr: ExprID, range: SourceRange)
+    case safeMemberCall(receiver: ExprID, callee: InternedString, args: [CallArgument], range: SourceRange)
+    case compoundAssign(op: CompoundAssignOp, name: InternedString, value: ExprID, range: SourceRange)
 }
 
 public final class ASTArena {
@@ -439,12 +455,17 @@ public final class ASTArena {
              .call(_, _, let range),
              .memberCall(_, _, _, let range),
              .arrayAccess(_, _, let range),
-             .unary(_, _, let range),
              .binary(_, _, _, let range),
              .whenExpr(_, _, _, let range),
              .returnExpr(_, let range),
              .ifExpr(_, _, _, let range),
-             .tryExpr(_, _, _, let range):
+             .tryExpr(_, _, _, let range),
+             .unaryExpr(_, _, let range),
+             .isCheck(_, _, _, let range),
+             .asCast(_, _, _, let range),
+             .nullAssert(_, let range),
+             .safeMemberCall(_, _, _, let range),
+             .compoundAssign(_, _, _, let range):
             return range
         }
     }
