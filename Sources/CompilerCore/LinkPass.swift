@@ -31,8 +31,21 @@ public final class LinkPhase: CompilerPhase {
         let wrapperSource = """
         #include <stdint.h>
         #include <stddef.h>
+        #include <stdio.h>
         extern intptr_t \(entrySymbol)(intptr_t* outThrown);
-        int main(void) { return (int)\(entrySymbol)(NULL); }
+        int main(void) {
+          intptr_t thrown = 0;
+          intptr_t result = \(entrySymbol)(&thrown);
+          if (thrown != 0) {
+            fprintf(
+              stderr,
+              "KSwiftK panic [KSWIFTK-LINK-0003]: Unhandled top-level exception (%p)\\n",
+              (void*)(uintptr_t)thrown
+            );
+            return 1;
+          }
+          return (int)result;
+        }
         """
         let wrapperURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "_entry.c")
         defer { try? FileManager.default.removeItem(at: wrapperURL) }

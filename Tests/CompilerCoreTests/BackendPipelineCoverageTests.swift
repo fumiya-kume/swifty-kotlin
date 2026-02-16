@@ -533,13 +533,16 @@ final class BackendPipelineCoverageTests: XCTestCase {
             try LinkPhase().run(ctx)
 
             XCTAssertTrue(FileManager.default.fileExists(atPath: outputPath))
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: outputPath)
-            process.arguments = []
-            try process.run()
-            process.waitUntilExit()
-
-            XCTAssertEqual(process.terminationStatus, 0)
+            let result: CommandResult
+            do {
+                result = try CommandRunner.run(executable: outputPath, arguments: [])
+                XCTFail("Expected top-level thrown channel to fail process exit.")
+                return
+            } catch CommandRunnerError.nonZeroExit(let failed) {
+                result = failed
+            }
+            XCTAssertEqual(result.exitCode, 1)
+            XCTAssertTrue(result.stderr.contains("KSWIFTK-LINK-0003"))
         }
     }
 
@@ -1236,6 +1239,38 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
     }
 
+    func testLinkPhaseWrapperReportsTopLevelThrownException() throws {
+        let source = """
+        fun main(): Any? {
+            val arr = IntArray(1)
+            return arr[2]
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let out = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "TopLevelThrow", emit: .executable, outputPath: out)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+            try LinkPhase().run(ctx)
+
+            XCTAssertTrue(FileManager.default.fileExists(atPath: out))
+
+            let result: CommandResult
+            do {
+                result = try CommandRunner.run(executable: out, arguments: [])
+                XCTFail("Expected executable to fail on unhandled top-level exception.")
+                return
+            } catch CommandRunnerError.nonZeroExit(let failed) {
+                result = failed
+            }
+
+            XCTAssertEqual(result.exitCode, 1)
+            XCTAssertTrue(result.stderr.contains("KSWIFTK-LINK-0003"))
+            XCTAssertTrue(result.stderr.contains("KSwiftK panic"))
+        }
+    }
+
     func testLinkPhaseAutoLinksKklibManifestObjectsAndDeduplicates() throws {
         let fm = FileManager.default
         let workspaceDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
@@ -1331,6 +1366,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: irPath))
         XCTAssertTrue(FileManager.default.fileExists(atPath: objPath))
         let ir = try String(contentsOfFile: irPath, encoding: .utf8)
+        XCTAssertTrue(ir.contains("!llvm.dbg.cu"))
         XCTAssertTrue(ir.contains("kk_register_frame_map"))
         XCTAssertTrue(ir.contains("kk_push_frame"))
         XCTAssertTrue(ir.contains("kk_pop_frame"))
