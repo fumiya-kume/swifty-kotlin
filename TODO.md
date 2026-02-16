@@ -177,12 +177,12 @@
   - [x] runtime に配列境界チェック API（in-range 判定と throw 経路）を追加する
   - [x] out-of-bounds 例外が `outThrown` チャネルで伝播する E2E ケースを追加する
 
-- [ ] P5-10: parser の missing-token 挿入と同期点スキップを仕様どおり実装する（spec.md J5.4）
-  - [ ] 期待トークン欠如時に virtual/missing token を CST に保持できる仕組みを追加する
-  - [ ] トップレベル/ブロック内の同期点（`;`/改行/`}`/`catch`/`finally`/`else`/EOF）までの回復を明示実装する
-  - [ ] 回復後も parse 継続し、診断と CST dump が安定する golden を追加する
+- [x] P5-10: parser の missing-token 挿入と同期点スキップを仕様どおり実装する（spec.md J5.4）
+  - [x] 期待トークン欠如時に virtual/missing token を CST に保持できる仕組みを追加する
+  - [x] トップレベル/ブロック内の同期点（`;`/改行/`}`/`catch`/`finally`/`else`/EOF）までの回復を明示実装する
+  - [x] 回復後も parse 継続し、診断と CST dump が安定する golden を追加する
 
-- [ ]  : loop 構文を AST→KIR→Lowering まで通しで実装する（spec.md J5/J6/J11/J12）
+- [ ] P5-11: loop 構文を AST→KIR→Lowering まで通しで実装する（spec.md J5/J6/J11/J12）
   - [ ] `for`/`while`/`do-while` を Parser/AST で専用ノード化し、`SyntaxKind.loopStmt` を実生成する
   - [ ] BuildKIR で loop の制御フロー（label/jump）を生成する
   - [ ] `break`/`continue`（必要なら label 付き）を loop 制御フローへ接続する
@@ -426,7 +426,9 @@
 
 ## In Progress
 
-- [ ] P5-10: parser の missing-token 挿入と同期点スキップを仕様どおり実装する（spec.md J5.4）
-  - [ ] 期待トークン欠如時に virtual/missing token を CST に保持できる仕組みを追加する
-  - [ ] トップレベル/ブロック内の同期点（`;`/改行/`}`/`catch`/`finally`/`else`/EOF）までの回復を明示実装する
-  - [ ] 回復後も parse 継続し、診断と CST dump が安定する golden を追加する
+- [ ] P5-11: loop 構文を AST→KIR→Lowering まで通しで実装する（spec.md J5/J6/J11/J12）
+  - [ ] `for`/`while`/`do-while` を Parser/AST で専用ノード化し、`SyntaxKind.loopStmt` を実生成する
+  - [ ] BuildKIR で loop の制御フロー（label/jump）を生成する
+  - [ ] `break`/`continue`（必要なら label 付き）を loop 制御フローへ接続する
+  - [ ] `ForLoweringPass` の no-op 実装を置き換え、`iterator/hasNext/next` 展開を実装する
+  - [ ] loop 回帰ケースを `diff_kotlinc.sh` に追加する
