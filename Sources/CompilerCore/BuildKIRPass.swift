@@ -1007,7 +1007,8 @@ public final class BuildKIRPhase: CompilerPhase {
                 callee: interner.intern("kk_op_is"),
                 arguments: [operandID],
                 result: result,
-                canThrow: false
+                canThrow: false,
+                thrownResult: nil
             ))
             return result
 
@@ -1027,7 +1028,8 @@ public final class BuildKIRPhase: CompilerPhase {
                 callee: interner.intern("kk_op_cast"),
                 arguments: [operandID],
                 result: result,
-                canThrow: false
+                canThrow: false,
+                thrownResult: nil
             ))
             return result
 
@@ -1099,7 +1101,8 @@ public final class BuildKIRPhase: CompilerPhase {
                 callee: loweredMemberCalleeName,
                 arguments: finalArguments,
                 result: result,
-                canThrow: false
+                canThrow: false,
+                thrownResult: nil
             ))
             return result
 
