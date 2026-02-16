@@ -116,21 +116,15 @@ extension BuildASTPhase {
                 let range = mergeRanges(token.range, astArena.exprRange(operand), fallback: token.range)
                 return astArena.appendExpr(.unaryExpr(op: .not, operand: operand, range: range))
             case .symbol(.minus):
-                if isUnaryPrefix() {
-                    _ = consume()
-                    guard let operand = parsePrefixUnary() else { return nil }
-                    let range = mergeRanges(token.range, astArena.exprRange(operand), fallback: token.range)
-                    return astArena.appendExpr(.unaryExpr(op: .unaryMinus, operand: operand, range: range))
-                }
-                return parsePostfixOrPrimary()
+                _ = consume()
+                guard let operand = parsePrefixUnary() else { return nil }
+                let range = mergeRanges(token.range, astArena.exprRange(operand), fallback: token.range)
+                return astArena.appendExpr(.unaryExpr(op: .unaryMinus, operand: operand, range: range))
             case .symbol(.plus):
-                if isUnaryPrefix() {
-                    _ = consume()
-                    guard let operand = parsePrefixUnary() else { return nil }
-                    let range = mergeRanges(token.range, astArena.exprRange(operand), fallback: token.range)
-                    return astArena.appendExpr(.unaryExpr(op: .unaryPlus, operand: operand, range: range))
-                }
-                return parsePostfixOrPrimary()
+                _ = consume()
+                guard let operand = parsePrefixUnary() else { return nil }
+                let range = mergeRanges(token.range, astArena.exprRange(operand), fallback: token.range)
+                return astArena.appendExpr(.unaryExpr(op: .unaryPlus, operand: operand, range: range))
             default:
                 return parsePostfixOrPrimary()
             }
