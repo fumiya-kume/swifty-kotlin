@@ -493,7 +493,7 @@ extension BuildASTPhase {
 
             let tailEnd = finallyExpr
                 .flatMap { astArena.exprRange($0)?.end }
-                ?? catchClauses.last.map { astArena.exprRange($0.body)?.end ?? tryToken.range.end }
+                ?? catchClauses.last.flatMap { astArena.exprRange($0.body)?.end }
                 ?? astArena.exprRange(bodyExpr)?.end
                 ?? tryToken.range.end
             let range = SourceRange(start: tryToken.range.start, end: tailEnd)

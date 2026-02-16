@@ -428,6 +428,16 @@ private struct NativeEmitter {
         var externalFunctions: [String: LLVMFunction] = [:]
         var generatedStringLiteralCount: Int32 = 0
 
+        var copyTargetAllocas: [Int32: LLVMCAPIBindings.LLVMValueRef] = [:]
+        for instruction in function.body {
+            if case .copy(_, let to) = instruction, copyTargetAllocas[to.rawValue] == nil {
+                if let alloca = bindings.buildAlloca(builder, type: int64Type, name: "copy_slot_\(to.rawValue)") {
+                    _ = bindings.buildStore(builder, value: zeroValue, pointer: alloca)
+                    copyTargetAllocas[to.rawValue] = alloca
+                }
+            }
+        }
+
         func declareExternalFunction(
             named calleeName: String,
             argumentCount: Int,
@@ -534,6 +544,9 @@ private struct NativeEmitter {
         }
 
         func resolveValue(_ id: KIRExprID) -> LLVMCAPIBindings.LLVMValueRef {
+            if let alloca = copyTargetAllocas[id.rawValue] {
+                return bindings.buildLoad(builder, type: int64Type, pointer: alloca, name: "load_\(id.rawValue)") ?? zeroValue
+            }
             if let value = values[id.rawValue] {
                 return value
             }
@@ -1042,7 +1055,12 @@ private struct NativeEmitter {
                 guard !bindings.hasTerminator(currentBlock) else {
                     continue
                 }
-                storeResult(to, resolveValue(from))
+                let copySource = resolveValue(from)
+                if let alloca = copyTargetAllocas[to.rawValue] {
+                    _ = bindings.buildStore(builder, value: copySource, pointer: alloca)
+                } else {
+                    storeResult(to, copySource)
+                }
 
             case .rethrow(let value):
                 guard !bindings.hasTerminator(currentBlock) else {
