@@ -39,6 +39,25 @@ final class CompilerTypesTests: XCTestCase {
         XCTAssertEqual(options.runtimeFlags, [])
     }
 
+    func testDeprecatedEmitsDebugInfoPropertyAndInit() {
+        let target = TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+
+        var options = CompilerOptions(
+            moduleName: "M",
+            inputs: ["a.kt"],
+            outputPath: "out",
+            emit: .executable,
+            target: target,
+            emitsDebugInfo: true
+        )
+        XCTAssertTrue(options.debugInfo)
+        XCTAssertTrue(options.emitsDebugInfo)
+
+        options.emitsDebugInfo = false
+        XCTAssertFalse(options.debugInfo)
+        XCTAssertFalse(options.emitsDebugInfo)
+    }
+
     func testCompilerOptionsCustomArgumentsAndEnums() {
         let target = TargetTriple(arch: "x86_64", vendor: "pc", os: "linux", osVersion: "6")
         let options = CompilerOptions(
