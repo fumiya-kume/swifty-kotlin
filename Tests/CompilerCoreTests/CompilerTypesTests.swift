@@ -78,4 +78,112 @@ final class CompilerTypesTests: XCTestCase {
         XCTAssertEqual(EmitMode.kirDump.rawValue, "kirDump")
         XCTAssertEqual(EmitMode.library.rawValue, "library")
     }
+
+    func testCompilerVersionWithNilGitHash() {
+        let version = CompilerVersion(major: 0, minor: 0, patch: 1, gitHash: nil)
+        XCTAssertEqual(version.major, 0)
+        XCTAssertEqual(version.minor, 0)
+        XCTAssertEqual(version.patch, 1)
+        XCTAssertNil(version.gitHash)
+    }
+
+    func testTargetTripleWithNilOSVersion() {
+        let triple = TargetTriple(arch: "x86_64", vendor: "pc", os: "linux", osVersion: nil)
+        XCTAssertEqual(triple.arch, "x86_64")
+        XCTAssertEqual(triple.vendor, "pc")
+        XCTAssertEqual(triple.os, "linux")
+        XCTAssertNil(triple.osVersion)
+    }
+
+    func testDeprecatedEmitsDebugInfoGetterAndSetter() {
+        var options = CompilerOptions(
+            moduleName: "M",
+            inputs: ["a.kt"],
+            outputPath: "out",
+            emit: .object,
+            target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil),
+            debugInfo: false
+        )
+        XCTAssertFalse(options.emitsDebugInfo)
+        options.emitsDebugInfo = true
+        XCTAssertTrue(options.emitsDebugInfo)
+        XCTAssertTrue(options.debugInfo)
+    }
+
+    func testDeprecatedInitWithEmitsDebugInfo() {
+        let options = CompilerOptions(
+            moduleName: "DeprecatedModule",
+            inputs: ["x.kt"],
+            outputPath: "out.o",
+            emit: .executable,
+            searchPaths: ["/sp"],
+            libraryPaths: ["/lp"],
+            linkLibraries: ["z"],
+            target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: "14.0"),
+            optLevel: .O2,
+            emitsDebugInfo: true,
+            frontendFlags: ["-f1"],
+            irFlags: ["-i1"],
+            runtimeFlags: ["-r1"]
+        )
+        XCTAssertEqual(options.moduleName, "DeprecatedModule")
+        XCTAssertEqual(options.inputs, ["x.kt"])
+        XCTAssertEqual(options.outputPath, "out.o")
+        XCTAssertEqual(options.emit, .executable)
+        XCTAssertEqual(options.searchPaths, ["/sp"])
+        XCTAssertEqual(options.libraryPaths, ["/lp"])
+        XCTAssertEqual(options.linkLibraries, ["z"])
+        XCTAssertEqual(options.optLevel, .O2)
+        XCTAssertTrue(options.debugInfo)
+        XCTAssertTrue(options.emitsDebugInfo)
+        XCTAssertEqual(options.frontendFlags, ["-f1"])
+        XCTAssertEqual(options.irFlags, ["-i1"])
+        XCTAssertEqual(options.runtimeFlags, ["-r1"])
+    }
+
+    func testDeprecatedInitWithEmitsDebugInfoDefaultArguments() {
+        let options = CompilerOptions(
+            moduleName: "M2",
+            inputs: ["b.kt"],
+            outputPath: "out2",
+            emit: .llvmIR,
+            target: TargetTriple(arch: "x86_64", vendor: "pc", os: "linux", osVersion: nil),
+            emitsDebugInfo: false
+        )
+        XCTAssertEqual(options.moduleName, "M2")
+        XCTAssertEqual(options.emit, .llvmIR)
+        XCTAssertFalse(options.debugInfo)
+        XCTAssertEqual(options.searchPaths, [])
+        XCTAssertEqual(options.libraryPaths, [])
+        XCTAssertEqual(options.linkLibraries, [])
+        XCTAssertEqual(options.optLevel, .O0)
+        XCTAssertEqual(options.frontendFlags, [])
+        XCTAssertEqual(options.irFlags, [])
+        XCTAssertEqual(options.runtimeFlags, [])
+    }
+
+    func testEmitModeKirDump() {
+        XCTAssertEqual(EmitMode.kirDump.rawValue, "kirDump")
+    }
+
+    func testOptimizationLevelEquality() {
+        XCTAssertEqual(OptimizationLevel.O1, OptimizationLevel.O1)
+        XCTAssertNotEqual(OptimizationLevel.O0, OptimizationLevel.O3)
+    }
+
+    func testTargetTripleEquality() {
+        let a = TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: "14.0")
+        let b = TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: "14.0")
+        let c = TargetTriple(arch: "x86_64", vendor: "pc", os: "linux", osVersion: nil)
+        XCTAssertEqual(a, b)
+        XCTAssertNotEqual(a, c)
+    }
+
+    func testCompilerVersionEquality() {
+        let a = CompilerVersion(major: 1, minor: 0, patch: 0, gitHash: "abc")
+        let b = CompilerVersion(major: 1, minor: 0, patch: 0, gitHash: "abc")
+        let c = CompilerVersion(major: 2, minor: 0, patch: 0, gitHash: nil)
+        XCTAssertEqual(a, b)
+        XCTAssertNotEqual(a, c)
+    }
 }
