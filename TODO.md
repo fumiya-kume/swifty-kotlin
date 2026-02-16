@@ -187,7 +187,7 @@
   - [x] BuildKIR で loop の制御フロー（label/jump）を生成する
   - [x] `break`/`continue`（必要なら label 付き）を loop 制御フローへ接続する
   - [ ] `ForLoweringPass` の no-op 実装を置き換え、`iterator/hasNext/next` 展開を実装する
-  - [ ] loop 回帰ケースを `diff_kotlinc.sh` に追加する
+  - [x] loop 回帰ケースを `diff_kotlinc.sh` に追加する
 
 - [ ] P5-12: inline `reified` の hidden type token 伝播を実装する（spec.md J12.2）
   - [ ] `reified` type parameter を Sema signature に保持し call binding で解決する
@@ -431,4 +431,4 @@
   - [x] BuildKIR で loop の制御フロー（label/jump）を生成する
   - [x] `break`/`continue`（必要なら label 付き）を loop 制御フローへ接続する
   - [ ] `ForLoweringPass` の no-op 実装を置き換え、`iterator/hasNext/next` 展開を実装する
-  - [ ] loop 回帰ケースを `diff_kotlinc.sh` に追加する
+  - [x] loop 回帰ケースを `diff_kotlinc.sh` に追加する
