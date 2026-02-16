@@ -319,7 +319,10 @@ extension TypeCheckSemaPassPhase {
         case .binary(let op, let lhsID, let rhsID, let range):
             let lhs = inferExpr(lhsID, ctx: ctx, locals: &locals)
             let rhs = inferExpr(rhsID, ctx: ctx, locals: &locals)
-            if shouldResolveBinaryOperatorOverload(for: op) {
+            let isPrimitiveBuiltin = (lhs == intType && (op == .add || op == .subtract || op == .multiply || op == .divide || op == .equal))
+                || (lhs == stringType && (op == .add || op == .equal))
+                || (lhs == boolType && op == .equal)
+            if shouldResolveBinaryOperatorOverload(for: op) && !isPrimitiveBuiltin {
                 let operatorName = binaryOperatorFunctionName(for: op, interner: interner)
                 let operatorCandidates = scope.lookup(operatorName).filter { candidate in
                     guard let symbol = sema.symbols.symbol(candidate),
