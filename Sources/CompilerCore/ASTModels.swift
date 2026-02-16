@@ -334,6 +334,11 @@ public enum Expr: Equatable {
     case boolLiteral(Bool, SourceRange)
     case stringLiteral(InternedString, SourceRange)
     case nameRef(InternedString, SourceRange)
+    case forExpr(loopVariable: InternedString?, iterable: ExprID, body: ExprID, range: SourceRange)
+    case whileExpr(condition: ExprID, body: ExprID, range: SourceRange)
+    case doWhileExpr(body: ExprID, condition: ExprID, range: SourceRange)
+    case breakExpr(range: SourceRange)
+    case continueExpr(range: SourceRange)
     case localDecl(name: InternedString, isMutable: Bool, initializer: ExprID, range: SourceRange)
     case localAssign(name: InternedString, value: ExprID, range: SourceRange)
     case arrayAssign(array: ExprID, index: ExprID, value: ExprID, range: SourceRange)
@@ -395,6 +400,11 @@ public final class ASTArena {
              .boolLiteral(_, let range),
              .stringLiteral(_, let range),
              .nameRef(_, let range),
+             .forExpr(_, _, _, let range),
+             .whileExpr(_, _, let range),
+             .doWhileExpr(_, _, let range),
+             .breakExpr(let range),
+             .continueExpr(let range),
              .localDecl(_, _, _, let range),
              .localAssign(_, _, let range),
              .arrayAssign(_, _, _, let range),

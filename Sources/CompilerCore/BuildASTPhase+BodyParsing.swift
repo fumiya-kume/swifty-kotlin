@@ -309,7 +309,7 @@ extension BuildASTPhase {
                 continue
             }
             let node = arena.node(nodeID)
-            guard node.kind == .statement || node.kind == .propertyDecl else {
+            guard node.kind == .statement || node.kind == .propertyDecl || node.kind == .loopStmt else {
                 continue
             }
             let statementTokens = collectTokens(from: nodeID, in: arena).filter { token in

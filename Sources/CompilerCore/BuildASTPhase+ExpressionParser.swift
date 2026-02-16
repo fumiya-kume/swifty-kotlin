@@ -203,6 +203,23 @@ extension BuildASTPhase {
                 _ = consume()
                 return astArena.appendExpr(.nameRef(name, token.range))
 
+            case .keyword(.for):
+                return parseForExpression()
+
+            case .keyword(.while):
+                return parseWhileExpression()
+
+            case .keyword(.do):
+                return parseDoWhileExpression()
+
+            case .keyword(.break):
+                _ = consume()
+                return astArena.appendExpr(.breakExpr(range: token.range))
+
+            case .keyword(.continue):
+                _ = consume()
+                return astArena.appendExpr(.continueExpr(range: token.range))
+
             case .keyword(.return):
                 return parseReturnExpression()
 
@@ -329,6 +346,80 @@ extension BuildASTPhase {
             let end = value.flatMap { astArena.exprRange($0)?.end } ?? returnToken.range.end
             let range = SourceRange(start: returnToken.range.start, end: end)
             return astArena.appendExpr(.returnExpr(value: value, range: range))
+        }
+
+        private func parseForExpression() -> ExprID? {
+            guard let forToken = consume() else {
+                return nil
+            }
+            guard consumeIf(.symbol(.lParen)) != nil else {
+                return nil
+            }
+
+            var loopVariable: InternedString?
+            if let token = current(),
+               token.kind != .keyword(.in),
+               let name = tokenText(token) {
+                loopVariable = name
+                _ = consume()
+            }
+
+            while let token = current(),
+                  token.kind != .keyword(.in),
+                  token.kind != .symbol(.rParen) {
+                _ = consume()
+            }
+            _ = consumeIf(.keyword(.in))
+
+            guard let iterable = parseExpression(minPrecedence: 0) else {
+                return nil
+            }
+            _ = consumeIf(.symbol(.rParen))
+
+            guard let body = parseExpression(minPrecedence: 0) else {
+                return nil
+            }
+            let end = astArena.exprRange(body)?.end ?? forToken.range.end
+            let range = SourceRange(start: forToken.range.start, end: end)
+            return astArena.appendExpr(.forExpr(loopVariable: loopVariable, iterable: iterable, body: body, range: range))
+        }
+
+        private func parseWhileExpression() -> ExprID? {
+            guard let whileToken = consume() else {
+                return nil
+            }
+            guard consumeIf(.symbol(.lParen)) != nil else {
+                return nil
+            }
+            guard let condition = parseExpression(minPrecedence: 0) else {
+                return nil
+            }
+            _ = consumeIf(.symbol(.rParen))
+            guard let body = parseExpression(minPrecedence: 0) else {
+                return nil
+            }
+            let end = astArena.exprRange(body)?.end ?? whileToken.range.end
+            let range = SourceRange(start: whileToken.range.start, end: end)
+            return astArena.appendExpr(.whileExpr(condition: condition, body: body, range: range))
+        }
+
+        private func parseDoWhileExpression() -> ExprID? {
+            guard let doToken = consume() else {
+                return nil
+            }
+            guard let body = parseExpression(minPrecedence: 0) else {
+                return nil
+            }
+            guard matches(.keyword(.while)),
+                  consume() != nil,
+                  consumeIf(.symbol(.lParen)) != nil,
+                  let condition = parseExpression(minPrecedence: 0) else {
+                return nil
+            }
+            _ = consumeIf(.symbol(.rParen))
+            let end = astArena.exprRange(condition)?.end ?? astArena.exprRange(body)?.end ?? doToken.range.end
+            let range = SourceRange(start: doToken.range.start, end: end)
+            return astArena.appendExpr(.doWhileExpr(body: body, condition: condition, range: range))
         }
 
         private func parseIfExpression() -> ExprID? {
