@@ -303,6 +303,19 @@ public enum BinaryOp: Equatable {
     case multiply
     case divide
     case equal
+    case notEqual
+    case lessThan
+    case lessOrEqual
+    case greaterThan
+    case greaterOrEqual
+    case logicalAnd
+    case logicalOr
+}
+
+public enum UnaryOp: Equatable {
+    case plus
+    case minus
+    case not
 }
 
 public struct WhenBranch: Equatable {
@@ -345,6 +358,7 @@ public enum Expr: Equatable {
     case call(callee: ExprID, args: [CallArgument], range: SourceRange)
     case memberCall(receiver: ExprID, callee: InternedString, args: [CallArgument], range: SourceRange)
     case arrayAccess(array: ExprID, index: ExprID, range: SourceRange)
+    case unary(op: UnaryOp, operand: ExprID, range: SourceRange)
     case binary(op: BinaryOp, lhs: ExprID, rhs: ExprID, range: SourceRange)
     case whenExpr(subject: ExprID, branches: [WhenBranch], elseExpr: ExprID?, range: SourceRange)
     case returnExpr(value: ExprID?, range: SourceRange)
@@ -411,6 +425,7 @@ public final class ASTArena {
              .call(_, _, let range),
              .memberCall(_, _, _, let range),
              .arrayAccess(_, _, let range),
+             .unary(_, _, let range),
              .binary(_, _, _, let range),
              .whenExpr(_, _, _, let range),
              .returnExpr(_, let range),
