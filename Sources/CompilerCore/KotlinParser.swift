@@ -42,6 +42,9 @@ public final class KotlinParser {
                     var skipChildren: [SyntaxChild] = []
                     var skipRange = RangeAccumulator()
                     skipToSynchronizationPoint(inBlock: false, into: &skipChildren, range: &skipRange)
+                    if stream.index == before, !stream.atEOF() {
+                        _ = consumeToken(into: &skipChildren, range: &skipRange)
+                    }
                     node = arena.appendNode(kind: .statement, range: skipRange.value ?? invalidRange, skipChildren)
                 }
                 sawTopLevelStatement = true
@@ -361,7 +364,11 @@ public final class KotlinParser {
             } else if parseStatementTail(inBlock: true) == .canContinue {
                 children.append(.node(parseStatement(inBlock: true)))
             } else {
+                let before = stream.index
                 skipToSynchronizationPoint(inBlock: true, into: &children, range: &range)
+                if stream.index == before, !stream.atEOF() {
+                    _ = consumeToken(into: &children, range: &range)
+                }
             }
         }
 
@@ -369,6 +376,10 @@ public final class KotlinParser {
     }
 
     private func parseStatement(inBlock: Bool) -> NodeID {
+        if isLoopStart(stream.peek().kind) {
+            return parseLoopStatement(inBlock: inBlock)
+        }
+
         let startCount = stream.index
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
@@ -421,6 +432,56 @@ public final class KotlinParser {
         return arena.appendNode(
             kind: .statement,
             range: range.value ?? invalidRange, children)
+    }
+
+    private func parseLoopStatement(inBlock: Bool) -> NodeID {
+        _ = inBlock
+        var children: [SyntaxChild] = []
+        var range = RangeAccumulator()
+
+        let loopToken = consumeToken(into: &children, range: &range)
+
+        switch loopToken.kind {
+        case .keyword(.for), .keyword(.while):
+            if case .symbol(.lParen) = stream.peek().kind {
+                let header = parseBalancedGroup(opening: .lParen, closing: .rParen)
+                children.append(.node(header))
+                range.append(arena.node(header).range)
+            }
+            appendLoopBody(into: &children, range: &range)
+
+        case .keyword(.do):
+            appendLoopBody(into: &children, range: &range)
+            if case .keyword(.while) = stream.peek().kind {
+                _ = consumeToken(into: &children, range: &range)
+                if case .symbol(.lParen) = stream.peek().kind {
+                    let condition = parseBalancedGroup(opening: .lParen, closing: .rParen)
+                    children.append(.node(condition))
+                    range.append(arena.node(condition).range)
+                }
+            }
+
+        default:
+            break
+        }
+
+        return arena.appendNode(kind: .loopStmt, range: range.value ?? invalidRange, children)
+    }
+
+    private func appendLoopBody(into children: inout [SyntaxChild], range: inout RangeAccumulator) {
+        if case .symbol(.lBrace) = stream.peek().kind {
+            let block = parseBlock()
+            children.append(.node(block))
+            range.append(arena.node(block).range)
+            return
+        }
+        let before = stream.index
+        let body = parseStatement(inBlock: true)
+        children.append(.node(body))
+        range.append(arena.node(body).range)
+        if stream.index == before, !stream.atEOF() {
+            _ = consumeToken(into: &children, range: &range)
+        }
     }
 
     private func shouldSplitStatementOnNewline(_ kind: TokenKind) -> Bool {
@@ -595,8 +656,6 @@ public final class KotlinParser {
         switch token.kind {
         case .symbol(.rBrace):
             return true
-        case .keyword(.else), .keyword(.catch), .keyword(.finally):
-            return inBlock
         case .keyword(.class), .keyword(.object), .keyword(.interface), .keyword(.fun),
              .keyword(.val), .keyword(.var), .keyword(.typealias), .keyword(.enum),
              .keyword(.package), .keyword(.import):
@@ -639,6 +698,15 @@ public final class KotlinParser {
     private func isIdentifierLike(_ kind: TokenKind) -> Bool {
         switch kind {
         case .identifier, .backtickedIdentifier, .keyword, .softKeyword:
+            return true
+        default:
+            return false
+        }
+    }
+
+    private func isLoopStart(_ kind: TokenKind) -> Bool {
+        switch kind {
+        case .keyword(.for), .keyword(.while), .keyword(.do):
             return true
         default:
             return false

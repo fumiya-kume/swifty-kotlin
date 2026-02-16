@@ -16,7 +16,7 @@ node kotlinFile f0:0..38
     tok identifier(Int) f0:35..38
     node block f0:39..193
       tok symbol({) f0:39..40
-      node statement f0:45..61
+      node statement f0:45..146
         tok keyword(return) f0:45..51
         tok keyword(if) f0:52..54
         tok symbol(() f0:55..56
@@ -35,21 +35,19 @@ node kotlinFile f0:0..38
                 tok intLiteral(1) f0:95..96
                 tok symbol(->) f0:97..99
                 tok intLiteral(10) f0:100..102
-              tok keyword(else) f0:115..119
-              node statement f0:120..125
+              node statement f0:115..125
+                tok keyword(else) f0:115..119
                 tok symbol(->) f0:120..122
                 tok intLiteral(20) f0:123..125
               tok symbol(}) f0:134..135
           tok symbol(}) f0:140..141
-      tok keyword(else) f0:142..146
-      node statement f-1:0..0
+        tok keyword(else) f0:142..146
         node block f0:147..191
           tok symbol({) f0:147..148
-          node statement f0:157..162
+          node statement f0:157..185
             tok keyword(try) f0:157..160
             tok identifier(x) f0:161..162
-          tok keyword(catch) f0:163..168
-          node statement f0:169..185
+            tok keyword(catch) f0:163..168
             tok symbol(() f0:169..170
             tok identifier(e) f0:170..171
             tok symbol(:) f0:171..172
