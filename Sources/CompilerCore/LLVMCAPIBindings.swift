@@ -21,6 +21,7 @@ final class LLVMCAPIBindings {
     private typealias LLVMDisposeMessageFn = @convention(c) (UnsafeMutablePointer<CChar>?) -> Void
     private typealias LLVMSetTargetFn = @convention(c) (LLVMModuleRef?, UnsafePointer<CChar>?) -> Void
     private typealias LLVMSetDataLayoutFn = @convention(c) (LLVMModuleRef?, UnsafePointer<CChar>?) -> Void
+    private typealias LLVMSetLinkageFn = @convention(c) (LLVMValueRef?, UInt32) -> Void
     private typealias LLVMInt64TypeInContextFn = @convention(c) (LLVMContextRef?) -> LLVMTypeRef?
     private typealias LLVMPointerTypeFn = @convention(c) (LLVMTypeRef?, UInt32) -> LLVMTypeRef?
     private typealias LLVMFunctionTypeFn = @convention(c) (LLVMTypeRef?, UnsafeMutablePointer<LLVMTypeRef?>?, UInt32, LLVMBool) -> LLVMTypeRef?
@@ -43,6 +44,11 @@ final class LLVMCAPIBindings {
     private typealias LLVMBuildSDivFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     private typealias LLVMBuildICmpFn = @convention(c) (LLVMBuilderRef?, UInt32, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     private typealias LLVMBuildZExtFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMTypeRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    private typealias LLVMBuildAllocaFn = @convention(c) (LLVMBuilderRef?, LLVMTypeRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    private typealias LLVMBuildStoreFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?) -> LLVMValueRef?
+    private typealias LLVMBuildLoad2Fn = @convention(c) (LLVMBuilderRef?, LLVMTypeRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    private typealias LLVMBuildLoadFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    private typealias LLVMBuildSelectFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     private typealias LLVMBuildGlobalStringPtrFn = @convention(c) (LLVMBuilderRef?, UnsafePointer<CChar>?, UnsafePointer<CChar>?) -> LLVMValueRef?
     private typealias LLVMBuildPtrToIntFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMTypeRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     private typealias LLVMBuildCall2Fn = @convention(c) (
@@ -106,6 +112,7 @@ final class LLVMCAPIBindings {
     private let disposeMessageFn: LLVMDisposeMessageFn
     private let setTargetFn: LLVMSetTargetFn
     private let setDataLayoutFn: LLVMSetDataLayoutFn
+    private let setLinkageFn: LLVMSetLinkageFn
     private let int64TypeFn: LLVMInt64TypeInContextFn
     private let pointerTypeFn: LLVMPointerTypeFn
     private let functionTypeFn: LLVMFunctionTypeFn
@@ -128,6 +135,11 @@ final class LLVMCAPIBindings {
     private let buildSDivFn: LLVMBuildSDivFn
     private let buildICmpFn: LLVMBuildICmpFn
     private let buildZExtFn: LLVMBuildZExtFn?
+    private let buildAllocaFn: LLVMBuildAllocaFn?
+    private let buildStoreFn: LLVMBuildStoreFn?
+    private let buildLoad2Fn: LLVMBuildLoad2Fn?
+    private let buildLoadFn: LLVMBuildLoadFn?
+    private let buildSelectFn: LLVMBuildSelectFn?
     private let buildGlobalStringPtrFn: LLVMBuildGlobalStringPtrFn?
     private let buildPtrToIntFn: LLVMBuildPtrToIntFn?
     private let buildCall2Fn: LLVMBuildCall2Fn?
@@ -161,6 +173,7 @@ final class LLVMCAPIBindings {
         disposeMessageFn: @escaping LLVMDisposeMessageFn,
         setTargetFn: @escaping LLVMSetTargetFn,
         setDataLayoutFn: @escaping LLVMSetDataLayoutFn,
+        setLinkageFn: @escaping LLVMSetLinkageFn,
         int64TypeFn: @escaping LLVMInt64TypeInContextFn,
         pointerTypeFn: @escaping LLVMPointerTypeFn,
         functionTypeFn: @escaping LLVMFunctionTypeFn,
@@ -183,6 +196,11 @@ final class LLVMCAPIBindings {
         buildSDivFn: @escaping LLVMBuildSDivFn,
         buildICmpFn: @escaping LLVMBuildICmpFn,
         buildZExtFn: LLVMBuildZExtFn?,
+        buildAllocaFn: LLVMBuildAllocaFn?,
+        buildStoreFn: LLVMBuildStoreFn?,
+        buildLoad2Fn: LLVMBuildLoad2Fn?,
+        buildLoadFn: LLVMBuildLoadFn?,
+        buildSelectFn: LLVMBuildSelectFn?,
         buildGlobalStringPtrFn: LLVMBuildGlobalStringPtrFn?,
         buildPtrToIntFn: LLVMBuildPtrToIntFn?,
         buildCall2Fn: LLVMBuildCall2Fn?,
@@ -215,6 +233,7 @@ final class LLVMCAPIBindings {
         self.disposeMessageFn = disposeMessageFn
         self.setTargetFn = setTargetFn
         self.setDataLayoutFn = setDataLayoutFn
+        self.setLinkageFn = setLinkageFn
         self.int64TypeFn = int64TypeFn
         self.pointerTypeFn = pointerTypeFn
         self.functionTypeFn = functionTypeFn
@@ -237,6 +256,11 @@ final class LLVMCAPIBindings {
         self.buildSDivFn = buildSDivFn
         self.buildICmpFn = buildICmpFn
         self.buildZExtFn = buildZExtFn
+        self.buildAllocaFn = buildAllocaFn
+        self.buildStoreFn = buildStoreFn
+        self.buildLoad2Fn = buildLoad2Fn
+        self.buildLoadFn = buildLoadFn
+        self.buildSelectFn = buildSelectFn
         self.buildGlobalStringPtrFn = buildGlobalStringPtrFn
         self.buildPtrToIntFn = buildPtrToIntFn
         self.buildCall2Fn = buildCall2Fn
@@ -295,6 +319,7 @@ final class LLVMCAPIBindings {
                   let disposeMessage = loadSymbol(handle: handle, name: "LLVMDisposeMessage", as: LLVMDisposeMessageFn.self),
                   let setTarget = loadSymbol(handle: handle, name: "LLVMSetTarget", as: LLVMSetTargetFn.self),
                   let setDataLayout = loadSymbol(handle: handle, name: "LLVMSetDataLayout", as: LLVMSetDataLayoutFn.self),
+                  let setLinkage = loadSymbol(handle: handle, name: "LLVMSetLinkage", as: LLVMSetLinkageFn.self),
                   let int64Type = loadSymbol(handle: handle, name: "LLVMInt64TypeInContext", as: LLVMInt64TypeInContextFn.self),
                   let pointerType = loadSymbol(handle: handle, name: "LLVMPointerType", as: LLVMPointerTypeFn.self),
                   let functionType = loadSymbol(handle: handle, name: "LLVMFunctionType", as: LLVMFunctionTypeFn.self),
@@ -342,6 +367,7 @@ final class LLVMCAPIBindings {
                 disposeMessageFn: disposeMessage,
                 setTargetFn: setTarget,
                 setDataLayoutFn: setDataLayout,
+                setLinkageFn: setLinkage,
                 int64TypeFn: int64Type,
                 pointerTypeFn: pointerType,
                 functionTypeFn: functionType,
@@ -364,6 +390,11 @@ final class LLVMCAPIBindings {
                 buildSDivFn: buildSDiv,
                 buildICmpFn: buildICmp,
                 buildZExtFn: loadSymbol(handle: handle, name: "LLVMBuildZExt", as: LLVMBuildZExtFn.self),
+                buildAllocaFn: loadSymbol(handle: handle, name: "LLVMBuildAlloca", as: LLVMBuildAllocaFn.self),
+                buildStoreFn: loadSymbol(handle: handle, name: "LLVMBuildStore", as: LLVMBuildStoreFn.self),
+                buildLoad2Fn: loadSymbol(handle: handle, name: "LLVMBuildLoad2", as: LLVMBuildLoad2Fn.self),
+                buildLoadFn: loadSymbol(handle: handle, name: "LLVMBuildLoad", as: LLVMBuildLoadFn.self),
+                buildSelectFn: loadSymbol(handle: handle, name: "LLVMBuildSelect", as: LLVMBuildSelectFn.self),
                 buildGlobalStringPtrFn: loadSymbol(handle: handle, name: "LLVMBuildGlobalStringPtr", as: LLVMBuildGlobalStringPtrFn.self),
                 buildPtrToIntFn: loadSymbol(handle: handle, name: "LLVMBuildPtrToInt", as: LLVMBuildPtrToIntFn.self),
                 buildCall2Fn: buildCall2,
@@ -429,6 +460,16 @@ final class LLVMCAPIBindings {
 
     func setDataLayout(_ module: LLVMModuleRef?, dataLayout: String) {
         dataLayout.withCString { setDataLayoutFn(module, $0) }
+    }
+
+    func setExternalWeakLinkage(_ value: LLVMValueRef?) {
+        // LLVMLinkage enum value for LLVMExternalWeakLinkage.
+        setLinkageFn(value, 12)
+    }
+
+    func setInternalLinkage(_ value: LLVMValueRef?) {
+        // LLVMLinkage enum value for LLVMInternalLinkage.
+        setLinkageFn(value, 8)
     }
 
     func int64Type(context: LLVMContextRef?) -> LLVMTypeRef? {
@@ -509,11 +550,58 @@ final class LLVMCAPIBindings {
         name.withCString { buildICmpFn(builder, 32, lhs, rhs, $0) }
     }
 
+    func buildICmpNotEqual(_ builder: LLVMBuilderRef?, lhs: LLVMValueRef?, rhs: LLVMValueRef?, name: String) -> LLVMValueRef? {
+        name.withCString { buildICmpFn(builder, 33, lhs, rhs, $0) }
+    }
+
     func buildZExt(_ builder: LLVMBuilderRef?, value: LLVMValueRef?, type: LLVMTypeRef?, name: String) -> LLVMValueRef? {
         guard let buildZExtFn else {
             return nil
         }
         return name.withCString { buildZExtFn(builder, value, type, $0) }
+    }
+
+    func buildAlloca(_ builder: LLVMBuilderRef?, type: LLVMTypeRef?, name: String) -> LLVMValueRef? {
+        guard let buildAllocaFn else {
+            return nil
+        }
+        return name.withCString { buildAllocaFn(builder, type, $0) }
+    }
+
+    @discardableResult
+    func buildStore(_ builder: LLVMBuilderRef?, value: LLVMValueRef?, pointer: LLVMValueRef?) -> LLVMValueRef? {
+        guard let buildStoreFn else {
+            return nil
+        }
+        return buildStoreFn(builder, value, pointer)
+    }
+
+    func buildLoad(
+        _ builder: LLVMBuilderRef?,
+        type: LLVMTypeRef?,
+        pointer: LLVMValueRef?,
+        name: String
+    ) -> LLVMValueRef? {
+        if let buildLoad2Fn {
+            return name.withCString { buildLoad2Fn(builder, type, pointer, $0) }
+        }
+        guard let buildLoadFn else {
+            return nil
+        }
+        return name.withCString { buildLoadFn(builder, pointer, $0) }
+    }
+
+    func buildSelect(
+        _ builder: LLVMBuilderRef?,
+        condition: LLVMValueRef?,
+        thenValue: LLVMValueRef?,
+        elseValue: LLVMValueRef?,
+        name: String
+    ) -> LLVMValueRef? {
+        guard let buildSelectFn else {
+            return nil
+        }
+        return name.withCString { buildSelectFn(builder, condition, thenValue, elseValue, $0) }
     }
 
     func buildGlobalStringPtr(_ builder: LLVMBuilderRef?, value: String, name: String) -> LLVMValueRef? {
