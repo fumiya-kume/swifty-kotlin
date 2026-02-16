@@ -2922,6 +2922,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         let pickCalleeExpr = astArena.appendExpr(.nameRef(pickName, range))
         let pickCallExpr = astArena.appendExpr(.call(
             callee: pickCalleeExpr,
+            typeArgs: [],
             args: [CallArgument(expr: intArgExpr)],
             range: range
         ))
