@@ -559,7 +559,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             let body = try XCTUnwrap(mainFunction?.body)
 
             let callNames = body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _) = instruction else {
+                guard case .call(_, let callee, _, _, _, _) = instruction else {
                     return nil
                 }
                 return ctx.interner.resolve(callee)
@@ -592,7 +592,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             let body = try XCTUnwrap(mainFunction?.body)
 
             let boxingThrowFlags = body.compactMap { instruction -> Bool? in
-                guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+                guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
                     return nil
                 }
                 let name = ctx.interner.resolve(callee)
