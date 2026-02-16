@@ -12,7 +12,8 @@
       "Bash(wc:*)",
       "Bash(ls:*)",
       "Bash(find:*)",
-      "Bash(printf:*)"
+      "Bash(printf:*)",
+      "Bash(grep:*)"
     ]
   }
 }

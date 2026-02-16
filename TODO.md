@@ -172,19 +172,20 @@
   - [x] `delay` 実装を `DispatchSourceTimer` ベースへ揃え、resume タイミングの振る舞いを仕様化する
   - [x] `delay` を含む最小 coroutine E2E（起動・suspend・resume）の diff/golden ケースを追加する
 
-- [ ] P5-9: 配列アクセスの bounds check を IR/runtime 境界で実装する（spec.md J15.3）
-  - [ ] AST/KIR に array load/store（index 付き）表現を導入し、codegen で runtime 呼び出しへ lowering する
-  - [ ] runtime に配列境界チェック API（in-range 判定と throw 経路）を追加する
-  - [ ] out-of-bounds 例外が `outThrown` チャネルで伝播する E2E ケースを追加する
+- [x] P5-9: 配列アクセスの bounds check を IR/runtime 境界で実装する（spec.md J15.3）
+  - [x] AST/KIR に array load/store（index 付き）表現を導入し、codegen で runtime 呼び出しへ lowering する
+  - [x] runtime に配列境界チェック API（in-range 判定と throw 経路）を追加する
+  - [x] out-of-bounds 例外が `outThrown` チャネルで伝播する E2E ケースを追加する
 
 - [ ] P5-10: parser の missing-token 挿入と同期点スキップを仕様どおり実装する（spec.md J5.4）
   - [ ] 期待トークン欠如時に virtual/missing token を CST に保持できる仕組みを追加する
   - [ ] トップレベル/ブロック内の同期点（`;`/改行/`}`/`catch`/`finally`/`else`/EOF）までの回復を明示実装する
   - [ ] 回復後も parse 継続し、診断と CST dump が安定する golden を追加する
 
-- [ ] P5-11: loop 構文を AST→KIR→Lowering まで通しで実装する（spec.md J5/J6/J11/J12）
-  - [ ] `for`/`while` を Parser/AST で専用ノード化し、`SyntaxKind.loopStmt` を実生成する
+- [ ]  : loop 構文を AST→KIR→Lowering まで通しで実装する（spec.md J5/J6/J11/J12）
+  - [ ] `for`/`while`/`do-while` を Parser/AST で専用ノード化し、`SyntaxKind.loopStmt` を実生成する
   - [ ] BuildKIR で loop の制御フロー（label/jump）を生成する
+  - [ ] `break`/`continue`（必要なら label 付き）を loop 制御フローへ接続する
   - [ ] `ForLoweringPass` の no-op 実装を置き換え、`iterator/hasNext/next` 展開を実装する
   - [ ] loop 回帰ケースを `diff_kotlinc.sh` に追加する
 
@@ -239,6 +240,8 @@
 
 - [ ] P5-21: `try/catch/finally` の例外チャネル制御フローを KIR/Lowering で実装する（spec.md J11.3/J13.3）
   - [ ] BuildKIR の `tryExpr` lowering で catch/finally を捨てる現実装を置換し、分岐ブロックを生成する
+  - [ ] catch parameter（`catch (e: E)` の `e`）をスコープへ束縛し、catch body で参照可能にする
+  - [ ] 複数 catch 節を宣言順で評価し、例外型（`E`）に一致した節だけへ遷移する型マッチを実装する
   - [ ] `outThrown` を監視して catch へ遷移し、catch 未処理時は呼び出し元へ再送する経路を実装する
   - [ ] `finally` の常時実行順序（normal/exception 両経路）を保証する
 
@@ -280,7 +283,9 @@
 
 - [ ] P5-29: class/object body の member 宣言（fun/property）を AST/Sema/KIR に接続する（spec.md J6/J7/J12）
   - [ ] `ClassDecl`/`ObjectDecl` に member 宣言リストを保持し、body 内 `fun`/`val`/`var` を AST へ昇格する
+  - [ ] nested `class`/`object` 宣言を class/object body から保持し、owner FQName 配下へシンボル化する
   - [ ] `ClassMemberScope` を使った member symbol 収集と参照解決（`this` レシーバ込み）を実装する
+  - [ ] backing field 実体化と delegated property（`by`）の lowering を実装する
   - [ ] member 関数/プロパティを KIR へ落とし込み、metadata/layout と整合させる
 
 - [ ] P5-30: constructor 宣言と呼び出し解決を実装する（spec.md J5/J7/J13）
@@ -334,9 +339,94 @@
   - [ ] spread 引数（`*args`）と通常引数の混在を lowering で保持し、callee 側 ABI と整合させる
   - [ ] vararg + default 引数 + named 引数の組み合わせ回帰ケースを追加する
 
+- [ ] P5-40: 未解決参照・型参照の診断を strict 化する（spec.md J7/J8/J9）
+  - [ ] `nameRef`/`call`/`memberCall` の unresolved 経路で `errorType` を返すだけでなく診断（`KSWIFTK-SEMA-*`）を出す
+  - [ ] `resolveTypeRef` の未知型 fallback（`Any` へ丸める現実装）を廃止し、型名解決失敗を診断する
+  - [ ] unresolved 診断の回帰ケース（識別子・関数呼び出し・型注釈）を追加する
+
+- [ ] P5-41: local 変数宣言の完全化（未初期化宣言・型注釈）を実装する（spec.md J6/J7/J9）
+  - [ ] AST `localDecl` が initializer 省略を表現できるよう拡張する（`var x: Int` 対応）
+  - [ ] local 宣言の型注釈（`val x: T = ...` / `var x: T`）を保持し、推論/代入検査に接続する
+  - [ ] 未初期化 local の使用前参照を診断する data-flow チェックを追加する
+
+- [ ] P5-42: block-scope 宣言（local function など）を AST/Sema/KIR に接続する（spec.md J6/J7/J9）
+  - [ ] block 内 `fun` 宣言を `blockExpressions` で捨てない AST 表現へ変更する
+  - [ ] `FunctionScope`/`BlockScope` に local function symbol を登録し、後続式から参照解決できるようにする
+  - [ ] local function 呼び出しの KIR 生成と回帰ケースを追加する
+
+- [ ] P5-43: import 解決を library symbol まで拡張し wildcard/default import を有効化する（spec.md J7）
+  - [ ] library import 時に package symbol と package->top-level symbol インデックスを構築する
+  - [ ] `buildFileScopes` が source 由来だけでなく imported symbol を default/wildcard import 対象へ取り込むよう修正する
+  - [ ] `import foo.bar.*` と default import が `.kklib` シンボルで機能する回帰ケースを追加する
+
+- [ ] P5-44: coroutine launcher lowering の zero-argument 制約を解消する（spec.md J17.3）
+  - [ ] `runBlocking`/`launch`/`async` が 0 引数 suspend 関数参照専用となっている制約を解除する
+  - [ ] suspend lambda/closure と引数付き suspend 関数呼び出しへの橋渡しを実装する
+  - [ ] launcher + 引数あり suspend 関数の E2E 回帰ケースを追加する
+
+- [ ] P5-45: `-g` の debug info 出力を backend/link へ実装する（spec.md J1/J15）
+  - [ ] `CompilerOptions.emitsDebugInfo` を `LLVMBackend`/`LLVMCAPIBackend` の emit path へ反映する
+  - [ ] synthetic C backend の clang 呼び出しに debug flag を接続し、出力に debug section が含まれることを確認する
+  - [ ] LLVM C API backend で DI metadata の最小生成（または仕様化した制限つき対応）を追加する
+
+- [ ] P5-46: 数値リテラルの lexical grammar を Kotlin 仕様に合わせる（spec.md J4）
+  - [ ] `0o` など Kotlin 非対応プレフィックスを受理しないよう lexer を修正する
+  - [ ] underscore/suffix の許容位置を仕様どおりに検証し、違反時診断を固定する
+  - [ ] 数値リテラル grammar 回帰ケース（valid/invalid）を golden に追加する
+
+- [ ] P5-47: block expression の文脈で複文評価（複数 statement + 末尾式）を実装する（spec.md J6/J9/J11）
+  - [ ] `ExpressionParser.parseBlockExpression` の単一式再パースを廃止し、block 内 statement 列と末尾式を AST で保持する
+  - [ ] block expression 内の local declaration/scope を type inference に接続する
+  - [ ] `if`/`when`/`try` branch に `{ a; b; c }` を置いた場合の型と実行順序を回帰テスト化する
+
+- [ ] P5-48: `return` の制御フローを nested expression から正しく伝播させる（spec.md J6/J11/J12）
+  - [ ] BuildKIR で `returnExpr` を値式として潰さず、関数終端ジャンプとして lowering する
+  - [ ] `if`/`when`/`try` の分岐内部にある `return` を親関数の return へ接続する
+  - [ ] nested return 回帰ケース（`if` 内 return / `when` branch return）を追加する
+
+- [ ] P5-49: subject-less `when`（`when { ... }`）を Parser/Sema/KIR へ実装する（spec.md J5/J6/J9）
+  - [ ] `parseWhenExpression` が subject 必須になっている現実装を拡張し、subject 省略形を AST で表現する
+  - [ ] 分岐条件を `Boolean` 文脈で型検査し、exhaustiveness 規則へ接続する
+  - [ ] subject-less when の回帰ケース（guard 連鎖）を追加する
+
+- [ ] P5-50: `super` / qualified `this` 解決を実装する（spec.md J7/J9/J13.2）
+  - [ ] AST に `super` / `this@Label`（必要最小）を区別する参照ノードを追加する
+  - [ ] member 解決で supertype member lookup を実装し、override 先呼び出しに接続する
+  - [ ] super call の lowering/codegen（direct/special dispatch）を追加する
+
+- [ ] P5-51: `if/when` の branch 評価を eager `select` から制御フロー化へ移行する（spec.md J11/J12）
+  - [ ] `BuildKIRPass` の `ifExpr`/`whenExpr` lowering で全分岐を先に評価してしまう現実装を廃止する
+  - [ ] branch ごとに block/jump（または等価表現）を生成し、選択された分岐だけを評価する
+  - [ ] 分岐内の副作用・`return`・`throw` が非選択分岐から漏れない回帰ケースを追加する
+
+- [ ] P5-52: マルチファイル時の parse 境界を file 単位に固定する（spec.md J1/J5/J6）
+  - [ ] `LexPhase` でファイルごとの EOF 境界情報を保持し、`ParsePhase` を file 単位で実行する
+  - [ ] ファイル跨ぎで statement が連結される経路（token 連結時の境界欠落）を解消する
+  - [ ] file ごとの `kotlinFile`/`script` 判定と `ASTFile` 構築が安定する回帰ケースを追加する
+
+- [ ] P5-53: visibility（public/internal/protected/private）を解決規則へ反映する（spec.md J6.3/J7）
+  - [ ] `lookup`/import 解決で不可視シンボルを候補から除外するアクセス制御層を追加する
+  - [ ] top-level `private` の file スコープ制約と member `protected` 制約を検証する
+  - [ ] 不可視参照時の診断（`KSWIFTK-SEMA-*`）と回帰ケースを追加する
+
+- [ ] P5-54: `.kklib` manifest の固定スキーマ検証と互換性チェックを実装する（spec.md J14.2）
+  - [ ] `formatVersion`/`moduleName`/`kotlinLanguageVersion`/`target` を読み取り、欠落・不整合を診断する
+  - [ ] 現在ターゲットと非互換な library を import した場合に `KSWIFTK-LIB-*` で失敗させる
+  - [ ] `objects`/`metadata`/`inlineKIRDir` のパス妥当性チェックを追加する
+
+- [ ] P5-55: Data-flow 解析を true/false 分岐状態モデルへ拡張する（spec.md J10.1）
+  - [ ] `DataFlowState` を式条件（`if`/`when`/logical op）で分岐生成し、CFG 合流点で merge する
+  - [ ] smart cast/nullability 判定を ad-hoc 判定から `DataFlowState` 駆動へ移行する
+  - [ ] 分岐後の型縮小・nullability 更新が維持される回帰ケースを追加する
+
+- [ ] P5-56: default 引数の評価を callee 文脈セマンティクスへ合わせる（spec.md J9/J11/J12）
+  - [ ] omitted 引数の default 式を caller 側で直接 lowering する現実装を廃止する
+  - [ ] default 式が先行 parameter/receiver を参照できるよう callee 文脈で評価する
+  - [ ] default 引数の評価順序（左から右）と副作用順を固定する回帰ケースを追加する
+
 ## In Progress
 
-- [ ] P5-9: 配列アクセスの bounds check を IR/runtime 境界で実装する（spec.md J15.3）
-  - [ ] AST/KIR に array load/store（index 付き）表現を導入し、codegen で runtime 呼び出しへ lowering する
-  - [ ] runtime に配列境界チェック API（in-range 判定と throw 経路）を追加する
-  - [ ] out-of-bounds 例外が `outThrown` チャネルで伝播する E2E ケースを追加する
+- [ ] P5-10: parser の missing-token 挿入と同期点スキップを仕様どおり実装する（spec.md J5.4）
+  - [ ] 期待トークン欠如時に virtual/missing token を CST に保持できる仕組みを追加する
+  - [ ] トップレベル/ブロック内の同期点（`;`/改行/`}`/`catch`/`finally`/`else`/EOF）までの回復を明示実装する
+  - [ ] 回復後も parse 継続し、診断と CST dump が安定する golden を追加する
