@@ -48,6 +48,16 @@ final class ABILoweringPass: LoweringPass {
         let types = ctx.sema?.types
         let symbols = ctx.sema?.symbols
 
+        var signatureByName: [InternedString: FunctionSignature] = [:]
+        if let symbols {
+            for decl in module.arena.declarations {
+                guard case .function(let fn) = decl else { continue }
+                if let sig = symbols.functionSignature(for: fn.symbol) {
+                    signatureByName[fn.name] = sig
+                }
+            }
+        }
+
         module.arena.transformFunctions { function in
             var updated = function
             var newBody: [KIRInstruction] = []
@@ -62,8 +72,14 @@ final class ABILoweringPass: LoweringPass {
                 let canThrow = !nonThrowingCallees.contains(callee)
 
                 var boxedArguments = arguments
-                if let types, let symbols, let callSymbol {
-                    let signature = symbols.functionSignature(for: callSymbol)
+                if let types {
+                    var signature: FunctionSignature?
+                    if let symbols, let callSymbol {
+                        signature = symbols.functionSignature(for: callSymbol)
+                    }
+                    if signature == nil {
+                        signature = signatureByName[callee]
+                    }
                     if let signature {
                         let parameterTypes = signature.parameterTypes
                         let receiverOffset = signature.receiverType != nil ? 1 : 0
@@ -104,10 +120,16 @@ final class ABILoweringPass: LoweringPass {
                 var resolvedUnboxCallee: InternedString?
                 var resolvedReturnType: TypeID?
                 if let types, let result {
-                    let returnType = returnTypeForCall(
-                        callSymbol: callSymbol,
-                        symbols: symbols
-                    )
+                    var returnType: TypeID?
+                    if let callSymbol {
+                        returnType = returnTypeForCall(
+                            callSymbol: callSymbol,
+                            symbols: symbols
+                        )
+                    }
+                    if returnType == nil {
+                        returnType = signatureByName[callee]?.returnType
+                    }
                     if let returnType {
                         let returnKind = types.kind(of: returnType)
                         if isAnyOrNullableAny(returnKind) {

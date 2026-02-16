@@ -564,8 +564,8 @@ final class BackendPipelineCoverageTests: XCTestCase {
                 }
                 return ctx.interner.resolve(callee)
             }
-            XCTAssertTrue(callNames.contains("kk_box_int"), "callNames=\(callNames)")
-            XCTAssertTrue(callNames.contains("kk_box_bool"), "callNames=\(callNames)")
+            XCTAssertTrue(callNames.contains("kk_box_int"))
+            XCTAssertTrue(callNames.contains("kk_box_bool"))
         }
     }
 
@@ -602,11 +602,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
                 }
                 return canThrow
             }
-            let allCalls = body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _) = instruction else { return nil }
-                return ctx.interner.resolve(callee)
-            }
-            XCTAssertFalse(boxingThrowFlags.isEmpty, "allCalls=\(allCalls)")
+            XCTAssertFalse(boxingThrowFlags.isEmpty)
             XCTAssertTrue(boxingThrowFlags.allSatisfy { $0 == false })
         }
     }
