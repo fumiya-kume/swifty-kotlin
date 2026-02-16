@@ -121,7 +121,8 @@ public final class BuildKIRPhase: CompilerPhase {
                                     case .this:
                                         delegationTarget = ctorFQName
                                     case .super_:
-                                        if let superclass = sema.symbols.supertypes(of: symbol)?.first {
+                                        let supertypes = sema.symbols.directSupertypes(for: symbol)
+                                        if let superclass = supertypes.first {
                                             delegationTarget = (sema.symbols.symbol(superclass)?.fqName ?? []) + [ctx.interner.intern("<init>")]
                                         } else {
                                             delegationTarget = []
