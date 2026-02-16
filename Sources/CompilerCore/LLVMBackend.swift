@@ -15,19 +15,34 @@ public struct RuntimeLinkInfo {
 public final class LLVMBackend {
     private let target: TargetTriple
     private let optLevel: OptimizationLevel
-    private let emitsDebugInfo: Bool
+    private let debugInfo: Bool
     private let diagnostics: DiagnosticEngine
 
     public init(
         target: TargetTriple,
         optLevel: OptimizationLevel,
-        emitsDebugInfo: Bool,
+        debugInfo: Bool,
         diagnostics: DiagnosticEngine
     ) {
         self.target = target
         self.optLevel = optLevel
-        self.emitsDebugInfo = emitsDebugInfo
+        self.debugInfo = debugInfo
         self.diagnostics = diagnostics
+    }
+
+    @available(*, deprecated, message: "Use init(target:optLevel:debugInfo:diagnostics:) instead.")
+    public convenience init(
+        target: TargetTriple,
+        optLevel: OptimizationLevel,
+        emitsDebugInfo: Bool,
+        diagnostics: DiagnosticEngine
+    ) {
+        self.init(
+            target: target,
+            optLevel: optLevel,
+            debugInfo: emitsDebugInfo,
+            diagnostics: diagnostics
+        )
     }
 
     public func emitObject(
@@ -116,6 +131,22 @@ public final class LLVMBackend {
         "kk_op_add": "+", "kk_op_sub": "-", "kk_op_mul": "*", "kk_op_div": "/", "kk_op_eq": "=="
     ]
 
+    private struct FrameMapPlan {
+        let parameterSlotBySymbol: [SymbolID: Int]
+        let exprSlotByID: [Int32: Int]
+        let rootOffsets: [Int32]
+
+        static let empty = FrameMapPlan(
+            parameterSlotBySymbol: [:],
+            exprSlotByID: [:],
+            rootOffsets: []
+        )
+
+        var rootCount: Int {
+            rootOffsets.count
+        }
+    }
+
     public static func cFunctionSymbol(for function: KIRFunction, interner: StringInterner) -> String {
         let rawName = interner.resolve(function.name)
         let safeName = sanitizeForCSymbol(rawName)
@@ -131,11 +162,28 @@ public final class LLVMBackend {
     }
 
     private func emitCModule(module: KIRModule, interner: StringInterner) -> String {
-        let functionSymbols: [SymbolID: String] = module.arena.declarations.reduce(into: [:]) { acc, decl in
+        let functions: [KIRFunction] = module.arena.declarations.compactMap { decl in
             guard case .function(let function) = decl else {
-                return
+                return nil
             }
+            return function
+        }
+        let globals: [KIRGlobal] = module.arena.declarations.compactMap { decl in
+            guard case .global(let global) = decl else {
+                return nil
+            }
+            return global
+        }.sorted(by: { lhs, rhs in
+            lhs.symbol.rawValue < rhs.symbol.rawValue
+        })
+        let globalValueSymbols: [SymbolID: String] = globals.reduce(into: [:]) { partial, global in
+            partial[global.symbol] = globalSlotSymbol(for: global.symbol)
+        }
+        let functionSymbols: [SymbolID: String] = functions.reduce(into: [:]) { acc, function in
             acc[function.symbol] = Self.cFunctionSymbol(for: function, interner: interner)
+        }
+        let frameMapPlans: [SymbolID: FrameMapPlan] = functions.reduce(into: [:]) { plans, function in
+            plans[function.symbol] = buildFrameMapPlan(function: function)
         }
         let externalCallees = collectExternalCallees(module: module, interner: interner, functionSymbols: functionSymbols)
 
@@ -160,6 +208,18 @@ public final class LLVMBackend {
             "  (void)frameBase;",
             "}",
             "__attribute__((weak)) void kk_pop_frame(void) {}",
+            "__attribute__((weak)) void kk_register_global_root(void** slot) {",
+            "  (void)slot;",
+            "}",
+            "__attribute__((weak)) void kk_unregister_global_root(void** slot) {",
+            "  (void)slot;",
+            "}",
+            "__attribute__((weak)) void kk_register_coroutine_root(void* value) {",
+            "  (void)value;",
+            "}",
+            "__attribute__((weak)) void kk_unregister_coroutine_root(void* value) {",
+            "  (void)value;",
+            "}",
             "",
             "static void* kk_string_from_utf8(const uint8_t* ptr, int32_t len) {",
             "  if (len < 0) len = 0;",
@@ -367,6 +427,29 @@ public final class LLVMBackend {
             ""
         ]
 
+        for global in globals {
+            lines.append("static intptr_t \(globalSlotSymbol(for: global.symbol)) = 0;")
+        }
+        if !globals.isEmpty {
+            lines.append("static void kk_register_module_globals(void) __attribute__((constructor));")
+            lines.append("static void kk_unregister_module_globals(void) __attribute__((destructor));")
+            lines.append("static void kk_register_module_globals(void) {")
+            for global in globals {
+                let slotSymbol = globalSlotSymbol(for: global.symbol)
+                lines.append("  kk_register_global_root((void**)&\(slotSymbol));")
+            }
+            lines.append("}")
+            lines.append("static void kk_unregister_module_globals(void) {")
+            for global in globals {
+                let slotSymbol = globalSlotSymbol(for: global.symbol)
+                lines.append("  kk_unregister_global_root((void**)&\(slotSymbol));")
+            }
+            lines.append("}")
+        }
+        if !globals.isEmpty {
+            lines.append("")
+        }
+
         for callee in externalCallees {
             lines.append("extern intptr_t \(callee)();")
         }
@@ -374,31 +457,37 @@ public final class LLVMBackend {
             lines.append("")
         }
 
-        for decl in module.arena.declarations {
-            guard case .function(let function) = decl else {
-                continue
-            }
+        for function in functions {
+            let framePlan = frameMapPlans[function.symbol] ?? .empty
             let frameMapSymbol = frameMapDescriptorSymbol(for: function)
-            lines.append("static const KKFrameMapDescriptor \(frameMapSymbol) = { 0u, NULL };")
+            if framePlan.rootCount > 0 {
+                let offsetsSymbol = frameMapOffsetsSymbol(for: function)
+                let offsetsText = framePlan.rootOffsets.map(String.init).joined(separator: ", ")
+                lines.append("static const int32_t \(offsetsSymbol)[] = { \(offsetsText) };")
+                lines.append("static const KKFrameMapDescriptor \(frameMapSymbol) = { \(framePlan.rootCount)u, \(offsetsSymbol) };")
+            } else {
+                lines.append("static const KKFrameMapDescriptor \(frameMapSymbol) = { 0u, NULL };")
+            }
         }
         lines.append("")
 
-        for decl in module.arena.declarations {
-            guard case .function(let function) = decl else {
-                continue
-            }
+        for function in functions {
             lines.append(functionPrototype(function: function, interner: interner) + ";")
         }
         lines.append("")
-        lines.append("int32_t kk_module_function_count(void) { return \(module.functionCount); }")
+        lines.append("static int32_t kk_module_function_count(void) { return \(module.functionCount); }")
         lines.append("")
 
-        for decl in module.arena.declarations {
-            guard case .function(let function) = decl else {
-                continue
-            }
+        for function in functions {
             lines.append(functionPrototype(function: function, interner: interner) + " {")
-            lines.append(contentsOf: emitFunctionBody(function: function, interner: interner, arena: module.arena, functionSymbols: functionSymbols))
+            lines.append(contentsOf: emitFunctionBody(
+                function: function,
+                frameMapPlan: frameMapPlans[function.symbol] ?? .empty,
+                interner: interner,
+                arena: module.arena,
+                functionSymbols: functionSymbols,
+                globalValueSymbols: globalValueSymbols
+            ))
             lines.append("}")
             lines.append("")
         }
@@ -417,9 +506,11 @@ public final class LLVMBackend {
 
     private func emitFunctionBody(
         function: KIRFunction,
+        frameMapPlan: FrameMapPlan,
         interner: StringInterner,
         arena: KIRArena,
-        functionSymbols: [SymbolID: String]
+        functionSymbols: [SymbolID: String],
+        globalValueSymbols: [SymbolID: String]
     ) -> [String] {
         var lines: [String] = []
         var declared: Set<Int32> = []
@@ -430,9 +521,30 @@ public final class LLVMBackend {
             parameterNameBySymbol[parameter.symbol] = "p\(index)"
         }
 
+        if frameMapPlan.rootCount > 0 {
+            lines.append("  intptr_t kk_gc_roots[\(frameMapPlan.rootCount)];")
+            lines.append("  memset(kk_gc_roots, 0, sizeof(kk_gc_roots));")
+            for (index, parameter) in function.params.enumerated() {
+                guard let slot = frameMapPlan.parameterSlotBySymbol[parameter.symbol] else {
+                    continue
+                }
+                lines.append("  kk_gc_roots[\(slot)] = p\(index);")
+            }
+        }
         lines.append("  kk_register_frame_map(\(functionID)u, &\(frameMapDescriptorSymbol(for: function)));")
-        lines.append("  kk_push_frame(\(functionID)u, NULL);")
+        if frameMapPlan.rootCount > 0 {
+            lines.append("  kk_push_frame(\(functionID)u, kk_gc_roots);")
+        } else {
+            lines.append("  kk_push_frame(\(functionID)u, NULL);")
+        }
         lines.append("  if (outThrown) { *outThrown = 0; }")
+
+        func syncRoot(_ id: KIRExprID) {
+            guard let slot = frameMapPlan.exprSlotByID[id.rawValue] else {
+                return
+            }
+            lines.append("  kk_gc_roots[\(slot)] = \(varName(id));")
+        }
 
         for instruction in function.body {
             switch instruction {
@@ -459,8 +571,11 @@ public final class LLVMBackend {
                    let parameterName = parameterNameBySymbol[symbol] {
                     lines.append("  \(varName(result)) = \(parameterName);")
                 } else {
-                    lines.append("  \(varName(result)) = \(valueExpr(value, interner: interner, functionSymbols: functionSymbols));")
+                    lines.append(
+                        "  \(varName(result)) = \(valueExpr(value, interner: interner, functionSymbols: functionSymbols, globalValueSymbols: globalValueSymbols));"
+                    )
                 }
+                syncRoot(result)
 
             case .select(let condition, let thenValue, let elseValue, let result):
                 ensureDeclared(condition, declared: &declared, lines: &lines)
@@ -468,6 +583,7 @@ public final class LLVMBackend {
                 ensureDeclared(elseValue, declared: &declared, lines: &lines)
                 ensureDeclared(result, declared: &declared, lines: &lines)
                 lines.append("  \(varName(result)) = (\(varName(condition)) ? \(varName(thenValue)) : \(varName(elseValue)));")
+                syncRoot(result)
 
             case .binary(let op, let lhs, let rhs, let result):
                 ensureDeclared(result, declared: &declared, lines: &lines)
@@ -487,6 +603,7 @@ public final class LLVMBackend {
                     opText = "=="
                 }
                 lines.append("  \(varName(result)) = (\(varName(lhs)) \(opText) \(varName(rhs)));")
+                syncRoot(result)
 
             case .call(let symbol, let callee, let arguments, let result, let usesThrownChannel):
                 let calleeName = interner.resolve(callee)
@@ -504,6 +621,7 @@ public final class LLVMBackend {
                     lines.append("  kk_println_any(\(value));")
                     if let result {
                         lines.append("  \(varName(result)) = 0;")
+                        syncRoot(result)
                     }
                     continue
                 }
@@ -514,6 +632,7 @@ public final class LLVMBackend {
                     let expr = "(\(lhs) \(cOp) \(rhs))"
                     if let result {
                         lines.append("  \(varName(result)) = \(expr);")
+                        syncRoot(result)
                     } else {
                         lines.append("  (void)\(expr);")
                     }
@@ -526,6 +645,7 @@ public final class LLVMBackend {
                     let expr = "(intptr_t)kk_string_concat((void*)\(lhs), (void*)\(rhs))"
                     if let result {
                         lines.append("  \(varName(result)) = \(expr);")
+                        syncRoot(result)
                     } else {
                         lines.append("  (void)\(expr);")
                     }
@@ -539,6 +659,7 @@ public final class LLVMBackend {
                     let value = "(\(condition) ? \(thenValue) : \(elseValue))"
                     if let result {
                         lines.append("  \(varName(result)) = \(value);")
+                        syncRoot(result)
                     } else {
                         lines.append("  (void)\(value);")
                     }
@@ -569,8 +690,15 @@ public final class LLVMBackend {
                 let callExpr = "\(target)(\(callArguments.joined(separator: ", ")))"
                 if let result {
                     lines.append("  \(varName(result)) = \(callExpr);")
+                    syncRoot(result)
                 } else {
                     lines.append("  (void)\(callExpr);")
+                }
+                if calleeName == "kk_coroutine_continuation_new", let result {
+                    lines.append("  kk_register_coroutine_root((void*)(uintptr_t)\(varName(result)));")
+                }
+                if calleeName == "kk_coroutine_state_exit", let continuation = argVars.first {
+                    lines.append("  kk_unregister_coroutine_root((void*)(uintptr_t)\(continuation));")
                 }
                 if let thrownSlotName {
                     lines.append("  if (\(thrownSlotName) != 0) {")
@@ -610,6 +738,76 @@ public final class LLVMBackend {
         "kk_frame_map_\(max(0, Int(function.symbol.rawValue)))"
     }
 
+    private func frameMapOffsetsSymbol(for function: KIRFunction) -> String {
+        "kk_frame_map_offsets_\(max(0, Int(function.symbol.rawValue)))"
+    }
+
+    private func buildFrameMapPlan(function: KIRFunction) -> FrameMapPlan {
+        var parameterSlotBySymbol: [SymbolID: Int] = [:]
+        var nextSlot = 0
+        for parameter in function.params {
+            parameterSlotBySymbol[parameter.symbol] = nextSlot
+            nextSlot += 1
+        }
+
+        let exprIDs = collectFrameRootExprIDs(function: function)
+        var exprSlotByID: [Int32: Int] = [:]
+        for exprID in exprIDs {
+            exprSlotByID[exprID.rawValue] = nextSlot
+            nextSlot += 1
+        }
+
+        let pointerStride = max(1, MemoryLayout<Int>.size)
+        let rootOffsets = (0..<nextSlot).map { slot in
+            Int32(slot * pointerStride)
+        }
+
+        return FrameMapPlan(
+            parameterSlotBySymbol: parameterSlotBySymbol,
+            exprSlotByID: exprSlotByID,
+            rootOffsets: rootOffsets
+        )
+    }
+
+    private func collectFrameRootExprIDs(function: KIRFunction) -> [KIRExprID] {
+        var ids: Set<KIRExprID> = []
+
+        for instruction in function.body {
+            switch instruction {
+            case .jumpIfEqual(let lhs, let rhs, _):
+                ids.insert(lhs)
+                ids.insert(rhs)
+            case .constValue(let result, _):
+                ids.insert(result)
+            case .select(let condition, let thenValue, let elseValue, let result):
+                ids.insert(condition)
+                ids.insert(thenValue)
+                ids.insert(elseValue)
+                ids.insert(result)
+            case .binary(_, let lhs, let rhs, let result):
+                ids.insert(lhs)
+                ids.insert(rhs)
+                ids.insert(result)
+            case .call(_, _, let arguments, let result, _):
+                for arg in arguments {
+                    ids.insert(arg)
+                }
+                if let result {
+                    ids.insert(result)
+                }
+            case .returnIfEqual(let lhs, let rhs):
+                ids.insert(lhs)
+                ids.insert(rhs)
+            case .returnValue(let value):
+                ids.insert(value)
+            default:
+                continue
+            }
+        }
+
+        return ids.sorted(by: { $0.rawValue < $1.rawValue })
+    }
+
     private func ensureDeclared(_ id: KIRExprID, declared: inout Set<Int32>, lines: inout [String]) {
         guard declared.insert(id.rawValue).inserted else {
             return
@@ -625,7 +823,12 @@ public final class LLVMBackend {
         "L\(max(0, id))"
     }
 
-    private func valueExpr(_ value: KIRExprKind, interner: StringInterner, functionSymbols: [SymbolID: String]) -> String {
+    private func valueExpr(
+        _ value: KIRExprKind,
+        interner: StringInterner,
+        functionSymbols: [SymbolID: String],
+        globalValueSymbols: [SymbolID: String]
+    ) -> String {
         switch value {
         case .intLiteral(let number):
             return "\(number)"
@@ -640,6 +843,9 @@ public final class LLVMBackend {
             if let functionSymbol = functionSymbols[symbol] {
                 return "(intptr_t)\(functionSymbol)"
             }
+            if let globalSymbol = globalValueSymbols[symbol] {
+                return globalSymbol
+            }
             return "0"
         case .temporary(let index):
             return "\(index)"
@@ -648,6 +854,10 @@ public final class LLVMBackend {
         case .unit:
             return "0"
         }
+    }
+
+    private func globalSlotSymbol(for symbol: SymbolID) -> String {
+        "kk_global_root_slot_\(max(0, Int(symbol.rawValue)))"
     }
 
     private func cStringLiteral(_ value: String) -> String {
@@ -721,6 +931,10 @@ public final class LLVMBackend {
             "kk_coroutine_state_get_spill",
             "kk_coroutine_state_set_completion",
             "kk_coroutine_state_get_completion",
+            "kk_register_global_root",
+            "kk_unregister_global_root",
+            "kk_register_coroutine_root",
+            "kk_unregister_coroutine_root",
             "kk_kxmini_run_blocking",
             "kk_kxmini_launch",
             "kk_kxmini_async",
