@@ -1030,7 +1030,14 @@ final class CoroutineLoweringPass: LoweringPass {
                 if index + 1 < instructions.count {
                     leaders.insert(index + 1)
                 }
-            case .returnUnit, .returnValue, .returnIfEqual:
+            case .jumpIfNotNull(_, let target):
+                if let targetIndex = labelToInstructionIndex[target] {
+                    leaders.insert(targetIndex)
+                }
+                if index + 1 < instructions.count {
+                    leaders.insert(index + 1)
+                }
+            case .returnUnit, .returnValue, .returnIfEqual, .rethrow:
                 if index + 1 < instructions.count {
                     leaders.insert(index + 1)
                 }
@@ -1085,7 +1092,16 @@ final class CoroutineLoweringPass: LoweringPass {
                     successors.append(blockID + 1)
                 }
 
-            case .some(.returnUnit), .some(.returnValue), .some(.returnIfEqual):
+            case .some(.jumpIfNotNull(_, let target)):
+                if let targetInstruction = labelToInstructionIndex[target],
+                   let targetBlock = instructionToBlock[targetInstruction] {
+                    successors.append(targetBlock)
+                }
+                if blockID + 1 < ranges.count {
+                    successors.append(blockID + 1)
+                }
+
+            case .some(.returnUnit), .some(.returnValue), .some(.returnIfEqual), .some(.rethrow):
                 break
 
             default:
@@ -1235,7 +1251,15 @@ final class CoroutineLoweringPass: LoweringPass {
             }
             return successors
 
-        case .returnUnit, .returnValue:
+        case .jumpIfNotNull(_, let target):
+            var successors = fallthroughSuccessors
+            if let targetIndex = labelToInstructionIndex[target],
+               !successors.contains(targetIndex) {
+                successors.append(targetIndex)
+            }
+            return successors
+
+        case .returnUnit, .returnValue, .rethrow:
             return []
 
         case .returnIfEqual:

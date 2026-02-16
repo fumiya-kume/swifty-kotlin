@@ -581,10 +581,17 @@ public final class BuildKIRPhase: CompilerPhase {
             instructions.append(.constValue(result: zeroInit, value: .intLiteral(0)))
             instructions.append(.copy(from: zeroInit, to: exceptionSlot))
 
+            let tryResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+
             let catchDispatchLabel = makeLoopLabel()
             let finallyLabel = makeLoopLabel()
             let rethrowLabel = makeLoopLabel()
             let endLabel = makeLoopLabel()
+
+            var clauseLabels: [Int32] = []
+            for _ in catchClauses {
+                clauseLabels.append(makeLoopLabel())
+            }
 
             var bodyInstructions: [KIRInstruction] = []
             let bodyResultID = lowerExpr(
@@ -598,7 +605,8 @@ public final class BuildKIRPhase: CompilerPhase {
             )
 
             for instruction in bodyInstructions {
-                if case .call(let symbol, let callee, let arguments, let result, _, _) = instruction {
+                if case .call(let symbol, let callee, let arguments, let result, _, let existingThrownResult) = instruction,
+                   existingThrownResult == nil {
                     instructions.append(.call(
                         symbol: symbol,
                         callee: callee,
@@ -613,11 +621,16 @@ public final class BuildKIRPhase: CompilerPhase {
                 }
             }
 
+            instructions.append(.copy(from: bodyResultID, to: tryResult))
             instructions.append(.jump(finallyLabel))
 
             instructions.append(.label(catchDispatchLabel))
             if !catchClauses.isEmpty {
-                for clause in catchClauses {
+                instructions.append(.jump(clauseLabels[0]))
+
+                for (index, clause) in catchClauses.enumerated() {
+                    instructions.append(.label(clauseLabels[index]))
+
                     if clause.paramName != nil {
                         let paramID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
                         instructions.append(.copy(from: exceptionSlot, to: paramID))
@@ -626,7 +639,7 @@ public final class BuildKIRPhase: CompilerPhase {
                         }
                     }
 
-                    _ = lowerExpr(
+                    let catchBodyResult = lowerExpr(
                         clause.body,
                         ast: ast,
                         sema: sema,
@@ -635,6 +648,8 @@ public final class BuildKIRPhase: CompilerPhase {
                         propertyConstantInitializers: propertyConstantInitializers,
                         instructions: &instructions
                     )
+
+                    instructions.append(.copy(from: catchBodyResult, to: tryResult))
 
                     let clearVal = arena.appendExpr(.intLiteral(0), type: sema.types.anyType)
                     instructions.append(.constValue(result: clearVal, value: .intLiteral(0)))
@@ -665,7 +680,7 @@ public final class BuildKIRPhase: CompilerPhase {
             instructions.append(.rethrow(value: exceptionSlot))
 
             instructions.append(.label(endLabel))
-            return bodyResultID
+            return tryResult
 
         case .unary(let op, let operand, _):
             let operandID = lowerExpr(
