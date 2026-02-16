@@ -51,7 +51,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
     }
 
-    func testCodegenEmitsKirDumpLLVMIRAndLibraryArtifacts() throws {
+    func testCodegenEmitsKirDumpArtifact() throws {
         let source = """
         inline fun helper(x: Int) = x + 1
         fun main() = helper(41)
@@ -61,26 +61,37 @@ final class BackendPipelineCoverageTests: XCTestCase {
             let tempDir = FileManager.default.temporaryDirectory
 
             let kirBase = tempDir.appendingPathComponent(UUID().uuidString).path
-            let kirCtx = makeCompilationContext(inputs: [path], moduleName: "KirMod", emit: .kirDump, outputPath: kirBase)
-            try runToKIR(kirCtx)
-            try LoweringPhase().run(kirCtx)
-            try CodegenPhase().run(kirCtx)
+            _ = try runCodegenPipeline(inputPath: path, moduleName: "KirMod", emit: .kirDump, outputPath: kirBase)
             XCTAssertTrue(FileManager.default.fileExists(atPath: kirBase + ".kir"))
+        }
+    }
 
+    func testCodegenEmitsLlvmIRArtifact() throws {
+        let source = """
+        inline fun helper(x: Int) = x + 1
+        fun main() = helper(41)
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let tempDir = FileManager.default.temporaryDirectory
             let llvmBase = tempDir.appendingPathComponent(UUID().uuidString).path
-            let llvmCtx = makeCompilationContext(inputs: [path], moduleName: "LLMod", emit: .llvmIR, outputPath: llvmBase)
-            try runToKIR(llvmCtx)
-            try LoweringPhase().run(llvmCtx)
-            try CodegenPhase().run(llvmCtx)
+            let llvmCtx = try runCodegenPipeline(inputPath: path, moduleName: "LLMod", emit: .llvmIR, outputPath: llvmBase)
             let llvmPath = try XCTUnwrap(llvmCtx.generatedLLVMIRPath)
             XCTAssertTrue(llvmPath.hasSuffix(".ll"))
             XCTAssertTrue(FileManager.default.fileExists(atPath: llvmPath))
+        }
+    }
 
+    func testCodegenEmitsLibraryArtifacts() throws {
+        let source = """
+        inline fun helper(x: Int) = x + 1
+        fun main() = helper(41)
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let tempDir = FileManager.default.temporaryDirectory
             let libBase = tempDir.appendingPathComponent(UUID().uuidString).path
-            let libCtx = makeCompilationContext(inputs: [path], moduleName: "LibMod", emit: .library, outputPath: libBase)
-            try runToKIR(libCtx)
-            try LoweringPhase().run(libCtx)
-            try CodegenPhase().run(libCtx)
+            _ = try runCodegenPipeline(inputPath: path, moduleName: "LibMod", emit: .library, outputPath: libBase)
 
             let libDir = libBase + ".kklib"
             let manifestPath = libDir + "/manifest.json"
@@ -103,59 +114,28 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
     }
 
-    func testCodegenProducesDeterministicKirLlAndObjectOutputs() throws {
+    func testCodegenProducesDeterministicKirOutput() throws {
         let source = """
         fun helper(x: Int, y: Int) = x + y
         fun main() = helper(40, 2)
         """
+        try assertDeterministicCodegenOutput(source: source, emit: .kirDump)
+    }
 
-        try withTemporaryFile(contents: source) { path in
-            let fm = FileManager.default
-            let workDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-            try fm.createDirectory(at: workDir, withIntermediateDirectories: true)
-            defer { try? fm.removeItem(at: workDir) }
+    func testCodegenProducesDeterministicLlvmIROutput() throws {
+        let source = """
+        fun helper(x: Int, y: Int) = x + y
+        fun main() = helper(40, 2)
+        """
+        try assertDeterministicCodegenOutput(source: source, emit: .llvmIR)
+    }
 
-            func compileAndRead(emit: EmitMode, outputPath: String) throws -> Data {
-                let ctx = makeCompilationContext(
-                    inputs: [path],
-                    moduleName: "Determinism",
-                    emit: emit,
-                    outputPath: outputPath
-                )
-                try runToKIR(ctx)
-                try LoweringPhase().run(ctx)
-                try CodegenPhase().run(ctx)
-
-                let artifactPath: String
-                switch emit {
-                case .kirDump:
-                    artifactPath = outputPath + ".kir"
-                case .llvmIR:
-                    artifactPath = outputPath + ".ll"
-                case .object:
-                    artifactPath = outputPath + ".o"
-                default:
-                    XCTFail("unsupported emit for determinism test: \(emit)")
-                    artifactPath = outputPath
-                }
-                return try Data(contentsOf: URL(fileURLWithPath: artifactPath))
-            }
-
-            let kirBase = workDir.appendingPathComponent("deterministic").path
-            let kirFirst = try compileAndRead(emit: .kirDump, outputPath: kirBase)
-            let kirSecond = try compileAndRead(emit: .kirDump, outputPath: kirBase)
-            XCTAssertEqual(kirFirst, kirSecond)
-
-            let llvmBase = workDir.appendingPathComponent("deterministic").path
-            let llvmFirst = try compileAndRead(emit: .llvmIR, outputPath: llvmBase)
-            let llvmSecond = try compileAndRead(emit: .llvmIR, outputPath: llvmBase)
-            XCTAssertEqual(llvmFirst, llvmSecond)
-
-            let objectBase = workDir.appendingPathComponent("deterministic").path
-            let objectFirst = try compileAndRead(emit: .object, outputPath: objectBase)
-            let objectSecond = try compileAndRead(emit: .object, outputPath: objectBase)
-            XCTAssertEqual(objectFirst, objectSecond)
-        }
+    func testCodegenProducesDeterministicObjectOutput() throws {
+        let source = """
+        fun helper(x: Int, y: Int) = x + y
+        fun main() = helper(40, 2)
+        """
+        try assertDeterministicCodegenOutput(source: source, emit: .object)
     }
 
     func testCodegenBackendSelectionSupportsLlvmCApiFlag() throws {
@@ -1875,19 +1855,28 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertEqual(copyFunction?.params.count, 1)
     }
 
-    func testLinkPhaseGuardAndFailureBranches() throws {
+    func testLinkPhaseSkipsForObjectEmitMode() throws {
         let objectCtx = makeCompilationContext(inputs: [], moduleName: "SkipLink", emit: .object)
         XCTAssertNoThrow(try LinkPhase().run(objectCtx))
+    }
 
+    func testLinkPhaseFailsWhenObjectIsMissingForExecutable() throws {
         let missingObjectCtx = makeCompilationContext(inputs: [], moduleName: "MissingObj", emit: .executable)
         XCTAssertThrowsError(try LinkPhase().run(missingObjectCtx))
+    }
 
+    func testLinkPhaseFailsWhenKIRModuleIsMissing() throws {
         let tempObjectURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".o")
         try Data().write(to: tempObjectURL)
 
         let noKirCtx = makeCompilationContext(inputs: [], moduleName: "NoKir", emit: .executable)
         noKirCtx.generatedObjectPath = tempObjectURL.path
         XCTAssertThrowsError(try LinkPhase().run(noKirCtx))
+    }
+
+    func testLinkPhaseReportsDiagnosticForUnsupportedTargetArchitecture() throws {
+        let tempObjectURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".o")
+        try Data().write(to: tempObjectURL)
 
         let interner = StringInterner()
         let arena = KIRArena()
@@ -2050,6 +2039,11 @@ final class BackendPipelineCoverageTests: XCTestCase {
         let eCallKnown = astArena.appendExpr(.call(callee: eNameKnown, args: [CallArgument(expr: eInt1)], range: range))
         let eCallUnknown = astArena.appendExpr(.call(callee: eNameUnknown, args: [CallArgument(expr: eInt1)], range: range))
         let eCallNonName = astArena.appendExpr(.call(callee: eInt1, args: [], range: range))
+        let eBreak = astArena.appendExpr(.breakExpr(range: range))
+        let eContinue = astArena.appendExpr(.continueExpr(range: range))
+        let eWhile = astArena.appendExpr(.whileExpr(condition: eBoolTrue, body: eBreak, range: range))
+        let eDoWhile = astArena.appendExpr(.doWhileExpr(body: eContinue, condition: eBoolTrue, range: range))
+        let eFor = astArena.appendExpr(.forExpr(loopVariable: interner.intern("i"), iterable: eNameUnknown, body: eInt1, range: range))
 
         let whenBranchTrue = WhenBranch(condition: eBoolTrue, body: eInt1, range: range)
         let whenBranchFalse = WhenBranch(condition: eBoolFalse, body: eInt2, range: range)
@@ -2080,7 +2074,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             body: .block([
                 eInt1, eBoolTrue, eString, eNameLocal, eNameKnown, eNameUnknown,
                 eAdd, eSub, eMul, eDiv, eEq, eCallKnown, eCallUnknown, eCallNonName,
-                eWhenNoElse, eWhenElse
+                eWhenNoElse, eWhenElse, eWhile, eDoWhile, eFor
             ], range),
             isSuspend: true,
             isInline: true
@@ -2142,6 +2136,105 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertFalse(kir.executedLowerings.isEmpty)
         XCTAssertFalse(kir.arena.exprTypes.isEmpty)
         XCTAssertFalse((ctx.sema?.bindings.exprTypes ?? [:]).isEmpty)
+    }
+
+    func testBuildKIRLowersLoopExpressionsToControlFlowInstructions() throws {
+        let source = """
+        fun loop(flag: Boolean, items: IntArray): Int {
+            while (flag) { break }
+            do { continue } while (flag)
+            for (item in items) { break }
+            return 1
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "LoopIR", emit: .kirDump)
+            try runToKIR(ctx)
+
+            let kir = try XCTUnwrap(ctx.kir)
+            let interner = ctx.interner
+            let loopFunction = kir.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case .function(let function) = decl else {
+                    return nil
+                }
+                return interner.resolve(function.name) == "loop" ? function : nil
+            }.first
+            let body = try XCTUnwrap(loopFunction?.body)
+
+            let labelCount = body.filter { instruction in
+                if case .label = instruction { return true }
+                return false
+            }.count
+            XCTAssertGreaterThanOrEqual(labelCount, 4)
+
+            let jumpCount = body.filter { instruction in
+                if case .jump = instruction { return true }
+                if case .jumpIfEqual = instruction { return true }
+                return false
+            }.count
+            XCTAssertGreaterThanOrEqual(jumpCount, 4)
+
+            let callees = body.compactMap { instruction -> String? in
+                guard case .call(_, let callee, _, _, _) = instruction else {
+                    return nil
+                }
+                return interner.resolve(callee)
+            }
+            XCTAssertTrue(callees.contains("iterator"))
+            XCTAssertTrue(callees.contains("hasNext"))
+            XCTAssertTrue(callees.contains("next"))
+        }
+    }
+
+    private func runCodegenPipeline(inputPath: String, moduleName: String, emit: EmitMode, outputPath: String) throws -> CompilationContext {
+        let ctx = makeCompilationContext(
+            inputs: [inputPath],
+            moduleName: moduleName,
+            emit: emit,
+            outputPath: outputPath
+        )
+        try runToKIR(ctx)
+        try LoweringPhase().run(ctx)
+        try CodegenPhase().run(ctx)
+        return ctx
+    }
+
+    private func assertDeterministicCodegenOutput(source: String, emit: EmitMode) throws {
+        try withTemporaryFile(contents: source) { path in
+            let fm = FileManager.default
+            let workDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+            try fm.createDirectory(at: workDir, withIntermediateDirectories: true)
+            defer { try? fm.removeItem(at: workDir) }
+
+            let artifactBase = workDir.appendingPathComponent("deterministic").path
+            let first = try readCodegenArtifact(inputPath: path, emit: emit, outputPath: artifactBase)
+            let second = try readCodegenArtifact(inputPath: path, emit: emit, outputPath: artifactBase)
+            XCTAssertEqual(first, second)
+        }
+    }
+
+    private func readCodegenArtifact(inputPath: String, emit: EmitMode, outputPath: String) throws -> Data {
+        let ctx = try runCodegenPipeline(
+            inputPath: inputPath,
+            moduleName: "Determinism",
+            emit: emit,
+            outputPath: outputPath
+        )
+
+        let artifactPath: String
+        switch emit {
+        case .kirDump:
+            artifactPath = outputPath + ".kir"
+        case .llvmIR:
+            artifactPath = try XCTUnwrap(ctx.generatedLLVMIRPath)
+        case .object:
+            artifactPath = try XCTUnwrap(ctx.generatedObjectPath)
+        default:
+            XCTFail("unsupported emit for determinism test: \(emit)")
+            artifactPath = outputPath
+        }
+        return try Data(contentsOf: URL(fileURLWithPath: artifactPath))
     }
 
     private func makeComplexKIRModule(interner: StringInterner) -> KIRModule {
