@@ -1004,7 +1004,7 @@ extension TypeCheckSemaPassPhase {
         sema: SemaModule,
         interner: StringInterner
     ) -> [TypeArg] {
-        argRefs.compactMap { argRef in
+        argRefs.map { argRef in
             switch argRef {
             case .invariant(let innerRef):
                 return .invariant(resolveTypeRef(innerRef, ast: ast, sema: sema, interner: interner))

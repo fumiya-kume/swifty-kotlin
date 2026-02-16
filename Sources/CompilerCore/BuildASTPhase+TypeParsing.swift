@@ -321,18 +321,20 @@ extension BuildASTPhase {
         for token in tokens {
             depth.track(token.kind)
             if token.kind == .symbol(.comma) && depth.isAtTopLevel {
-                if let argRef = parseSingleTypeArgRef(from: current, interner: interner, astArena: astArena) {
-                    args.append(argRef)
+                guard let argRef = parseSingleTypeArgRef(from: current, interner: interner, astArena: astArena) else {
+                    return []
                 }
+                args.append(argRef)
                 current = []
                 continue
             }
             current.append(token)
         }
         if !current.isEmpty {
-            if let argRef = parseSingleTypeArgRef(from: current, interner: interner, astArena: astArena) {
-                args.append(argRef)
+            guard let argRef = parseSingleTypeArgRef(from: current, interner: interner, astArena: astArena) else {
+                return []
             }
+            args.append(argRef)
         }
         return args
     }
@@ -413,18 +415,20 @@ extension BuildASTPhase {
         for token in paramTokens {
             depth.track(token.kind)
             if token.kind == .symbol(.comma) && depth.isAtTopLevel {
-                if let ref = parseTypeRef(from: currentParam, interner: interner, astArena: astArena) {
-                    paramRefs.append(ref)
+                guard let ref = parseTypeRef(from: currentParam, interner: interner, astArena: astArena) else {
+                    return nil
                 }
+                paramRefs.append(ref)
                 currentParam = []
                 continue
             }
             currentParam.append(token)
         }
         if !currentParam.isEmpty {
-            if let ref = parseTypeRef(from: currentParam, interner: interner, astArena: astArena) {
-                paramRefs.append(ref)
+            guard let ref = parseTypeRef(from: currentParam, interner: interner, astArena: astArena) else {
+                return nil
             }
+            paramRefs.append(ref)
         }
 
         let returnTokens = Array(tokens[(closeIndex + 2)...])

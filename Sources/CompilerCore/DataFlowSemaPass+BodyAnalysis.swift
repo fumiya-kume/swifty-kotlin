@@ -110,15 +110,19 @@ extension DataFlowSemaPassPhase {
 
         case .functionType(let paramRefIDs, let returnRefID, let isSuspend, let nullable):
             let nullability: Nullability = nullable ? .nullable : .nonNull
-            let paramTypes = paramRefIDs.compactMap { paramRef in
-                resolveTypeRef(
+            var paramTypes: [TypeID] = []
+            for paramRef in paramRefIDs {
+                guard let paramType = resolveTypeRef(
                     paramRef,
                     ast: ast,
                     symbols: symbols,
                     types: types,
                     interner: interner,
                     localTypeParameters: localTypeParameters
-                )
+                ) else {
+                    return nil
+                }
+                paramTypes.append(paramType)
             }
             let returnType = resolveTypeRef(
                 returnRefID,
@@ -145,41 +149,44 @@ extension DataFlowSemaPassPhase {
         interner: StringInterner,
         localTypeParameters: [InternedString: SymbolID] = [:]
     ) -> [TypeArg] {
-        argRefs.compactMap { argRef in
+        var result: [TypeArg] = []
+        result.reserveCapacity(argRefs.count)
+        for argRef in argRefs {
             switch argRef {
             case .invariant(let innerRef):
-                guard let resolved = resolveTypeRef(
+                let resolved = resolveTypeRef(
                     innerRef,
                     ast: ast,
                     symbols: symbols,
                     types: types,
                     interner: interner,
                     localTypeParameters: localTypeParameters
-                ) else { return nil }
-                return .invariant(resolved)
+                ) ?? types.anyType
+                result.append(.invariant(resolved))
             case .out(let innerRef):
-                guard let resolved = resolveTypeRef(
+                let resolved = resolveTypeRef(
                     innerRef,
                     ast: ast,
                     symbols: symbols,
                     types: types,
                     interner: interner,
                     localTypeParameters: localTypeParameters
-                ) else { return nil }
-                return .out(resolved)
+                ) ?? types.anyType
+                result.append(.out(resolved))
             case .in(let innerRef):
-                guard let resolved = resolveTypeRef(
+                let resolved = resolveTypeRef(
                     innerRef,
                     ast: ast,
                     symbols: symbols,
                     types: types,
                     interner: interner,
                     localTypeParameters: localTypeParameters
-                ) else { return nil }
-                return .in(resolved)
+                ) ?? types.anyType
+                result.append(.in(resolved))
             case .star:
-                return .star
+                result.append(.star)
             }
         }
+        return result
     }
 }

@@ -750,6 +750,10 @@ extension BuildASTPhase {
                     return nil
                 }
                 if token.kind == .symbol(.greaterThan) {
+                    if refs.isEmpty {
+                        index = savedIndex
+                        return nil
+                    }
                     _ = consume()
                     return refs
                 }
