@@ -36,11 +36,19 @@ public final class LinkPhase: CompilerPhase {
         """
         let wrapperURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "_entry.c")
         defer { try? FileManager.default.removeItem(at: wrapperURL) }
+        let autoLinkedObjects = discoverLibraryObjects(searchPaths: ctx.options.searchPaths)
 
         do {
             try wrapperSource.write(to: wrapperURL, atomically: true, encoding: .utf8)
 
-            var args: [String] = [objectPath, wrapperURL.path, "-o", ctx.options.outputPath]
+            var linkInputs: [String] = [objectPath, wrapperURL.path]
+            for extraObject in autoLinkedObjects where !linkInputs.contains(extraObject) {
+                linkInputs.append(extraObject)
+            }
+
+            var args: [String] = linkInputs
+            args.append("-o")
+            args.append(ctx.options.outputPath)
             args.append(contentsOf: clangTargetArgs(ctx.options.target))
             for path in ctx.options.libraryPaths {
                 args.append("-L\(path)")
@@ -84,5 +92,66 @@ public final class LinkPhase: CompilerPhase {
             triple += version
         }
         return ["-target", triple]
+    }
+
+    private func discoverLibraryObjects(searchPaths: [String]) -> [String] {
+        let fileManager = FileManager.default
+        var libraryDirs: Set<String> = []
+        for rawPath in searchPaths {
+            let path = URL(fileURLWithPath: rawPath).standardizedFileURL.path
+            var isDirectory: ObjCBool = false
+            guard fileManager.fileExists(atPath: path, isDirectory: &isDirectory), isDirectory.boolValue else {
+                continue
+            }
+            if path.hasSuffix(".kklib") {
+                libraryDirs.insert(path)
+                continue
+            }
+            guard let entries = try? fileManager.contentsOfDirectory(atPath: path) else {
+                continue
+            }
+            for entry in entries where entry.hasSuffix(".kklib") {
+                libraryDirs.insert(URL(fileURLWithPath: path).appendingPathComponent(entry).standardizedFileURL.path)
+            }
+        }
+
+        var collected: [String] = []
+        var seen: Set<String> = []
+        for libraryDir in libraryDirs.sorted() {
+            for objectPath in objectPaths(from: libraryDir) {
+                let absolutePath = URL(fileURLWithPath: objectPath).standardizedFileURL.path
+                guard fileManager.fileExists(atPath: absolutePath) else {
+                    continue
+                }
+                if seen.insert(absolutePath).inserted {
+                    collected.append(absolutePath)
+                }
+            }
+        }
+        return collected
+    }
+
+    private func objectPaths(from libraryDir: String) -> [String] {
+        let fileManager = FileManager.default
+        let manifestPath = URL(fileURLWithPath: libraryDir).appendingPathComponent("manifest.json").path
+        if let data = try? Data(contentsOf: URL(fileURLWithPath: manifestPath)),
+           let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let manifestObjects = object["objects"] as? [String] {
+            let mapped = manifestObjects
+                .filter { !$0.isEmpty }
+                .map { URL(fileURLWithPath: libraryDir).appendingPathComponent($0).path }
+            if !mapped.isEmpty {
+                return mapped
+            }
+        }
+
+        let objectsDir = URL(fileURLWithPath: libraryDir).appendingPathComponent("objects").path
+        guard let entries = try? fileManager.contentsOfDirectory(atPath: objectsDir) else {
+            return []
+        }
+        return entries
+            .filter { $0.hasSuffix(".o") }
+            .sorted()
+            .map { URL(fileURLWithPath: objectsDir).appendingPathComponent($0).path }
     }
 }
