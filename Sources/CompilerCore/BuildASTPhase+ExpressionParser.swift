@@ -786,6 +786,37 @@ extension BuildASTPhase {
                         index = savedIndex
                         return nil
                     }
+                    guard let freshToken = current() else {
+                        index = savedIndex
+                        return nil
+                    }
+                    if freshToken.kind == .symbol(.greaterThan) {
+                        _ = consume()
+                        return args
+                    }
+                    if freshToken.kind == .symbol(.star) {
+                        _ = consume()
+                        args.append(.star)
+                        continue
+                    }
+                    var variance: TypeVariance = .invariant
+                    if case .softKeyword(.out) = freshToken.kind {
+                        variance = .out
+                        _ = consume()
+                    } else if case .keyword(.in) = freshToken.kind {
+                        variance = .in
+                        _ = consume()
+                    }
+                    guard let innerRef = parseInlineTypeRef() else {
+                        index = savedIndex
+                        return nil
+                    }
+                    switch variance {
+                    case .invariant: args.append(.invariant(innerRef))
+                    case .out: args.append(.out(innerRef))
+                    case .in: args.append(.in(innerRef))
+                    }
+                    continue
                 }
                 if token.kind == .symbol(.star) {
                     _ = consume()

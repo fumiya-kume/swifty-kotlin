@@ -428,14 +428,8 @@ extension BuildASTPhase {
         }
 
         let returnTokens = Array(tokens[(closeIndex + 2)...])
-        var nullable = false
-        var returnTypeTokens = returnTokens
-        if let last = returnTypeTokens.last, last.kind == .symbol(.question) {
-            nullable = true
-            returnTypeTokens = Array(returnTypeTokens.dropLast())
-        }
 
-        guard let returnRef = parseTypeRef(from: returnTypeTokens, interner: interner, astArena: astArena) else {
+        guard let returnRef = parseTypeRef(from: returnTokens, interner: interner, astArena: astArena) else {
             return nil
         }
 
@@ -443,7 +437,7 @@ extension BuildASTPhase {
             params: paramRefs,
             returnType: returnRef,
             isSuspend: isSuspend,
-            nullable: nullable
+            nullable: false
         ))
     }
 
