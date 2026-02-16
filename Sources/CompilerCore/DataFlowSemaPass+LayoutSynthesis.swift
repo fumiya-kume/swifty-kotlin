@@ -100,9 +100,14 @@ extension DataFlowSemaPassPhase {
             let declaredFieldCount = layoutHint?.declaredFieldCount ?? 0
             let instanceFieldCount = max(inheritedFieldCount + ownFieldCount, declaredFieldCount)
 
-            let objectHeaderWords = 3
+            // Keep nominal layout in sync with Runtime.KKObjHeader (typeInfo + flags/size).
+            let objectHeaderWords = 2
             let declaredSizeWords = layoutHint?.declaredInstanceSizeWords ?? 0
-            let instanceSizeWords = max(objectHeaderWords + instanceFieldCount, declaredSizeWords)
+            let inheritedInstanceSizeWords = superClass.flatMap { symbols.nominalLayout(for: $0)?.instanceSizeWords } ?? 0
+            let instanceSizeWords = max(
+                max(objectHeaderWords + instanceFieldCount, inheritedInstanceSizeWords),
+                declaredSizeWords
+            )
             symbols.setNominalLayout(
                 NominalLayout(
                     objectHeaderWords: objectHeaderWords,

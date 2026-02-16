@@ -22,6 +22,7 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
 
         let rootScope = PackageScope(parent: nil, symbols: symbols)
         var fileScopes: [Int32: FileScope] = [:]
+        var importedInlineFunctions: [SymbolID: KIRFunction] = [:]
 
         for file in ast.sortedFiles {
             let packageSymbol = definePackageSymbol(for: file, symbols: symbols, interner: ctx.interner)
@@ -35,8 +36,10 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
             symbols: symbols,
             types: types,
             diagnostics: ctx.diagnostics,
-            interner: ctx.interner
+            interner: ctx.interner,
+            importedInlineFunctions: &importedInlineFunctions
         )
+        sema.importedInlineFunctions = importedInlineFunctions
 
         // Pass A: collect declaration headers and signatures.
         for file in ast.sortedFiles {
