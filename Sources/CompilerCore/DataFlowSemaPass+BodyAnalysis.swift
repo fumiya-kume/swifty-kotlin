@@ -152,12 +152,18 @@ extension DataFlowSemaPassPhase {
            targetSymbol.kind == .typeAlias {
             var newVisited = visited
             newVisited.insert(symbolID)
-            return resolveTypeAliasUnderlying(
+            if let resolved = resolveTypeAliasUnderlying(
                 classType.classSymbol,
                 symbols: symbols,
                 types: types,
                 visited: newVisited
-            )
+            ) {
+                if classType.nullability == .nullable {
+                    return applyNullability(resolved, types: types)
+                }
+                return resolved
+            }
+            return nil
         }
         return underlying
     }
