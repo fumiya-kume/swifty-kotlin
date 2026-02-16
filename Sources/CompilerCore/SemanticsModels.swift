@@ -40,6 +40,7 @@ public struct SymbolFlags: OptionSet {
     public static let `static` = SymbolFlags(rawValue: 1 << 4)
     public static let sealedType = SymbolFlags(rawValue: 1 << 5)
     public static let dataType = SymbolFlags(rawValue: 1 << 6)
+    public static let reifiedTypeParameter = SymbolFlags(rawValue: 1 << 7)
 }
 
 public struct SemanticSymbol {
@@ -61,6 +62,7 @@ public struct FunctionSignature {
     public let valueParameterHasDefaultValues: [Bool]
     public let valueParameterIsVararg: [Bool]
     public let typeParameterSymbols: [SymbolID]
+    public let reifiedTypeParameterIndices: Set<Int>
 
     public init(
         receiverType: TypeID? = nil,
@@ -70,7 +72,8 @@ public struct FunctionSignature {
         valueParameterSymbols: [SymbolID] = [],
         valueParameterHasDefaultValues: [Bool] = [],
         valueParameterIsVararg: [Bool] = [],
-        typeParameterSymbols: [SymbolID] = []
+        typeParameterSymbols: [SymbolID] = [],
+        reifiedTypeParameterIndices: Set<Int> = []
     ) {
         self.receiverType = receiverType
         self.parameterTypes = parameterTypes
@@ -80,6 +83,7 @@ public struct FunctionSignature {
         self.valueParameterHasDefaultValues = valueParameterHasDefaultValues
         self.valueParameterIsVararg = valueParameterIsVararg
         self.typeParameterSymbols = typeParameterSymbols
+        self.reifiedTypeParameterIndices = reifiedTypeParameterIndices
     }
 }
 

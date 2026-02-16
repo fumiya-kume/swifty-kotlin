@@ -258,13 +258,16 @@ public struct ImportDecl {
 public struct TypeParamDecl {
     public let name: InternedString
     public let variance: TypeVariance
+    public let isReified: Bool
 
     public init(
         name: InternedString,
-        variance: TypeVariance = .invariant
+        variance: TypeVariance = .invariant,
+        isReified: Bool = false
     ) {
         self.name = name
         self.variance = variance
+        self.isReified = isReified
     }
 }
 

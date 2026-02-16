@@ -164,19 +164,31 @@ extension DataFlowSemaPassPhase {
             var paramIsVararg: [Bool] = []
             var typeParameterSymbols: [SymbolID] = []
             var localTypeParameters: [InternedString: SymbolID] = [:]
+            var reifiedIndices: Set<Int> = []
             let localNamespaceFQName = fqName + [interner.intern("$\(symbol.rawValue)")]
-            for typeParam in funDecl.typeParams {
+            for (index, typeParam) in funDecl.typeParams.enumerated() {
                 let typeParamFQName = localNamespaceFQName + [typeParam.name]
+                let typeParamFlags: SymbolFlags = typeParam.isReified ? [.reifiedTypeParameter] : []
                 let typeParamSymbol = symbols.define(
                     kind: .typeParameter,
                     name: typeParam.name,
                     fqName: typeParamFQName,
                     declSite: funDecl.range,
                     visibility: .private,
-                    flags: []
+                    flags: typeParamFlags
                 )
                 typeParameterSymbols.append(typeParamSymbol)
                 localTypeParameters[typeParam.name] = typeParamSymbol
+                if typeParam.isReified {
+                    reifiedIndices.insert(index)
+                }
+            }
+            if !reifiedIndices.isEmpty && !funDecl.isInline {
+                diagnostics.error(
+                    "KSWIFTK-SEMA-0020",
+                    "Only type parameters of inline functions can be reified",
+                    range: funDecl.range
+                )
             }
             let receiverType = resolveTypeRef(
                 funDecl.receiverType,
@@ -236,7 +248,8 @@ extension DataFlowSemaPassPhase {
                     valueParameterSymbols: paramSymbols,
                     valueParameterHasDefaultValues: paramHasDefaultValues,
                     valueParameterIsVararg: paramIsVararg,
-                    typeParameterSymbols: typeParameterSymbols
+                    typeParameterSymbols: typeParameterSymbols,
+                    reifiedTypeParameterIndices: reifiedIndices
                 ),
                 for: symbol
             )

@@ -373,7 +373,8 @@ final class CoroutineLoweringPass: LoweringPass {
                 valueParameterSymbols: loweredValueSymbols,
                 valueParameterHasDefaultValues: loweredDefaults,
                 valueParameterIsVararg: loweredVararg,
-                typeParameterSymbols: originalSignature?.typeParameterSymbols ?? []
+                typeParameterSymbols: originalSignature?.typeParameterSymbols ?? [],
+                reifiedTypeParameterIndices: originalSignature?.reifiedTypeParameterIndices ?? []
             ),
             for: loweredSymbol
         )

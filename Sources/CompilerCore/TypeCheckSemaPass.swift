@@ -113,7 +113,8 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                                 valueParameterSymbols: signature.valueParameterSymbols,
                                 valueParameterHasDefaultValues: signature.valueParameterHasDefaultValues,
                                 valueParameterIsVararg: signature.valueParameterIsVararg,
-                                typeParameterSymbols: signature.typeParameterSymbols
+                                typeParameterSymbols: signature.typeParameterSymbols,
+                                reifiedTypeParameterIndices: signature.reifiedTypeParameterIndices
                             ),
                             for: declSymbol
                         )

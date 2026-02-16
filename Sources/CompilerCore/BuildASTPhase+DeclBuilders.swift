@@ -123,6 +123,7 @@ extension BuildASTPhase {
                 var result: [TypeParamDecl] = []
                 var angleDepth = 0
                 var pendingVariance: TypeVariance = .invariant
+                var pendingReified = false
 
                 for token in tokens {
                     switch token.kind {
@@ -132,10 +133,12 @@ extension BuildASTPhase {
                     case .symbol(.greaterThan):
                         angleDepth = max(0, angleDepth - 1)
                         pendingVariance = .invariant
+                        pendingReified = false
                         continue
                     case .symbol(.comma):
                         if angleDepth == 1 {
                             pendingVariance = .invariant
+                            pendingReified = false
                         }
                         continue
                     default:
@@ -154,6 +157,7 @@ extension BuildASTPhase {
                         pendingVariance = .in
                         continue
                     case .keyword(.reified):
+                        pendingReified = true
                         continue
                     default:
                         break
@@ -167,8 +171,9 @@ extension BuildASTPhase {
                         continue
                     }
 
-                    result.append(TypeParamDecl(name: name, variance: pendingVariance))
+                    result.append(TypeParamDecl(name: name, variance: pendingVariance, isReified: pendingReified))
                     pendingVariance = .invariant
+                    pendingReified = false
                 }
                 return result
             }
