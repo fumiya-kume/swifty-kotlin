@@ -164,6 +164,36 @@ final class CompilerTypesTests: XCTestCase {
         XCTAssertEqual(options.runtimeFlags, ["-Xr"])
     }
 
+    func testDeprecatedInitWithEmitsDebugInfoDefaultArguments() {
+        let options = CompilerOptions(
+            moduleName: "M2",
+            inputs: ["b.kt"],
+            outputPath: "out2",
+            emit: .llvmIR,
+            target: TargetTriple(arch: "x86_64", vendor: "pc", os: "linux", osVersion: nil),
+            emitsDebugInfo: false
+        )
+        XCTAssertEqual(options.moduleName, "M2")
+        XCTAssertEqual(options.emit, .llvmIR)
+        XCTAssertFalse(options.debugInfo)
+        XCTAssertEqual(options.searchPaths, [])
+        XCTAssertEqual(options.libraryPaths, [])
+        XCTAssertEqual(options.linkLibraries, [])
+        XCTAssertEqual(options.optLevel, .O0)
+        XCTAssertEqual(options.frontendFlags, [])
+        XCTAssertEqual(options.irFlags, [])
+        XCTAssertEqual(options.runtimeFlags, [])
+    }
+
+    func testEmitModeKirDump() {
+        XCTAssertEqual(EmitMode.kirDump.rawValue, "kirDump")
+    }
+
+    func testOptimizationLevelEquality() {
+        XCTAssertEqual(OptimizationLevel.O1, OptimizationLevel.O1)
+        XCTAssertNotEqual(OptimizationLevel.O0, OptimizationLevel.O3)
+    }
+
     func testCompilerVersionEquality() {
         let v1 = CompilerVersion(major: 1, minor: 2, patch: 3, gitHash: "abc")
         let v2 = CompilerVersion(major: 1, minor: 2, patch: 3, gitHash: "abc")
