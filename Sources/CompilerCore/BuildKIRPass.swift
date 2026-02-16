@@ -122,7 +122,11 @@ public final class BuildKIRPhase: CompilerPhase {
                                         delegationTarget = ctorFQName
                                     case .super_:
                                         let supertypes = sema.symbols.directSupertypes(for: symbol)
-                                        if let superclass = supertypes.first {
+                                        let classSupertypes = supertypes.filter {
+                                            let kind = sema.symbols.symbol($0)?.kind
+                                            return kind == .class || kind == .enumClass
+                                        }
+                                        if let superclass = classSupertypes.first {
                                             delegationTarget = (sema.symbols.symbol(superclass)?.fqName ?? []) + [ctx.interner.intern("<init>")]
                                         } else {
                                             delegationTarget = []
