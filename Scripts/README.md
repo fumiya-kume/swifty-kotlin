@@ -1,11 +1,16 @@
 # Scripts workflow
 
+`Scripts/swift_test.sh` wraps `swift test` with parallel execution enabled by default.
+
+- Tune workers: `SWIFT_TEST_WORKERS=4 bash Scripts/swift_test.sh`
+- Disable parallel mode: `SWIFT_TEST_PARALLEL=0 bash Scripts/swift_test.sh`
+
 ## Golden update workflow
 
 1. Run golden tests without updating fixtures:
 
 ```bash
-swift test --filter GoldenHarnessTests
+bash Scripts/swift_test.sh --filter GoldenHarnessTests
 ```
 
 2. Review differences:
@@ -17,7 +22,7 @@ git diff -- Tests/CompilerCoreTests/GoldenCases
 3. If the parser/sema/lowering change is intentional, update fixtures:
 
 ```bash
-UPDATE_GOLDEN=1 swift test --filter GoldenHarnessTests
+UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter GoldenHarnessTests
 ```
 
 4. Re-review fixture changes and ensure only intended files changed:
@@ -30,7 +35,7 @@ git diff -- Tests/CompilerCoreTests/GoldenCases
 5. Validate before commit:
 
 ```bash
-swift test
+bash Scripts/swift_test.sh
 bash Scripts/diff_kotlinc.sh Scripts/diff_cases
 ```
 

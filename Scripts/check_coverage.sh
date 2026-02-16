@@ -14,7 +14,7 @@ readonly targets=(
   "Sources/CompilerCore/ASTModels.swift"
 )
 
-swift test --enable-code-coverage
+bash Scripts/swift_test.sh --enable-code-coverage
 
 readonly profile=".build/debug/codecov/default.profdata"
 readonly tests_binary=".build/debug/KSwiftKPackageTests.xctest/Contents/MacOS/KSwiftKPackageTests"

@@ -18,8 +18,10 @@ Run from repository root.
 ```bash
 swift build
 swift build -c release
-swift test
-swift test --filter SmokeTests
+bash Scripts/swift_test.sh
+bash Scripts/swift_test.sh --filter SmokeTests
+SWIFT_TEST_WORKERS=4 bash Scripts/swift_test.sh
+SWIFT_TEST_PARALLEL=0 bash Scripts/swift_test.sh
 ```
 
 Run the compiler locally after build:
@@ -43,7 +45,8 @@ Scripts/diff_kotlinc.sh [--kswiftc path] [--kotlinc path] path/to/tests
 
 ## Testing Guidelines
 - Framework: XCTest.
-- Primary path: `swift test`.
+- Primary path: `bash Scripts/swift_test.sh`.
+- `Scripts/swift_test.sh` runs tests in parallel by default; tune with `SWIFT_TEST_WORKERS`, or disable with `SWIFT_TEST_PARALLEL=0`.
 - Test file names should end with `Tests.swift`, and test methods should describe expected behavior directly.
 - For critical behavior changes, prefer adding/adjusting focused coverage tests in `Tests/CompilerCoreTests` and include them in PR notes.
 - CI enforces targeted line coverage thresholds (95% by default) in `Scripts/check_coverage.sh`.

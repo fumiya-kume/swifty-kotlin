@@ -11,17 +11,17 @@ KSwiftK is a Kotlin compiler written in Swift, targeting Kotlin 2.3.10 stable fe
 ```bash
 swift build                              # Debug build
 swift build -c release                   # Release build
-swift test                               # Run all tests
-swift test --filter SmokeTests           # Quick smoke tests
-swift test --filter GoldenHarnessTests   # Golden (snapshot) tests
-swift test --filter CompilerCoreTests.BackendPipelineCoverageTests  # Single test class
+bash Scripts/swift_test.sh                               # Run all tests (parallel by default)
+bash Scripts/swift_test.sh --filter SmokeTests           # Quick smoke tests
+bash Scripts/swift_test.sh --filter GoldenHarnessTests   # Golden (snapshot) tests
+bash Scripts/swift_test.sh --filter CompilerCoreTests.BackendPipelineCoverageTests  # Single test class
 .build/debug/kswiftc path/to/file.kt -o out  # Run the compiler
 ```
 
 ### Golden Test Update Workflow
 
 ```bash
-UPDATE_GOLDEN=1 swift test --filter GoldenHarnessTests  # Update golden fixtures
+UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter GoldenHarnessTests  # Update golden fixtures
 git diff -- Tests/CompilerCoreTests/GoldenCases          # Review changes
 ```
 

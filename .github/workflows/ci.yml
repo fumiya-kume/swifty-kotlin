@@ -26,7 +26,7 @@ jobs:
           swift --version
 
       - name: Run smoke tests
-        run: swift test --filter SmokeTests
+        run: bash Scripts/swift_test.sh --filter SmokeTests
 
       - name: Set up Java
         uses: actions/setup-java@v4
