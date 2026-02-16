@@ -56,7 +56,8 @@ final class InlineLoweringPass: LoweringPass {
                 let expansion = expandInlineCall(
                     inlineTarget: inlineTarget,
                     arguments: arguments,
-                    module: module
+                    module: module,
+                    ctx: ctx
                 )
                 guard let expansion else {
                     loweredBody.append(instruction)
@@ -86,13 +87,29 @@ final class InlineLoweringPass: LoweringPass {
     private func expandInlineCall(
         inlineTarget: KIRFunction,
         arguments: [KIRExprID],
-        module: KIRModule
+        module: KIRModule,
+        ctx: KIRContext
     ) -> InlineExpansion? {
         guard arguments.count == inlineTarget.params.count else {
             return nil
         }
 
         let parameterValues = Dictionary(uniqueKeysWithValues: zip(inlineTarget.params.map(\.symbol), arguments))
+
+        var typeParamTokenValues: [SymbolID: KIRExprID] = [:]
+        if let sema = ctx.sema,
+           let sig = sema.symbols.functionSignature(for: inlineTarget.symbol),
+           !sig.reifiedTypeParameterIndices.isEmpty {
+            for index in sig.reifiedTypeParameterIndices.sorted() {
+                guard index < sig.typeParameterSymbols.count else { continue }
+                let typeParamSymbol = sig.typeParameterSymbols[index]
+                let tokenSymbol = SymbolID(rawValue: -20_000 - typeParamSymbol.rawValue)
+                if let tokenArg = parameterValues[tokenSymbol] {
+                    typeParamTokenValues[typeParamSymbol] = tokenArg
+                }
+            }
+        }
+
         var localExprMap: [KIRExprID: KIRExprID] = [:]
         var lowered: [KIRInstruction] = []
         lowered.reserveCapacity(inlineTarget.body.count)
@@ -130,6 +147,10 @@ final class InlineLoweringPass: LoweringPass {
             case .constValue(let result, let value):
                 if case .symbolRef(let symbol) = value, let argument = parameterValues[symbol] {
                     localExprMap[result] = argument
+                    continue
+                }
+                if case .symbolRef(let symbol) = value, let tokenArg = typeParamTokenValues[symbol] {
+                    localExprMap[result] = tokenArg
                     continue
                 }
                 let loweredResult = cloneExpr(result, in: module.arena)

@@ -570,6 +570,15 @@ extension TypeCheckSemaPassPhase {
         case "delay":
             guard argumentCount == 1 else { return nil }
             return sema.types.nullableAnyType
+        case "kk_array_new", "IntArray":
+            guard argumentCount == 1 else { return nil }
+            return sema.types.anyType
+        case "kk_array_get":
+            guard argumentCount == 2 else { return nil }
+            return sema.types.anyType
+        case "kk_array_set":
+            guard argumentCount == 3 else { return nil }
+            return sema.types.unitType
         default:
             return nil
         }

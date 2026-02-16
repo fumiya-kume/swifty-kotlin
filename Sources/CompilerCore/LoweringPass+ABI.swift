@@ -30,7 +30,8 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_kxmini_launch"),
             ctx.interner.intern("kk_kxmini_async"),
             ctx.interner.intern("kk_kxmini_async_await"),
-            ctx.interner.intern("kk_kxmini_delay")
+            ctx.interner.intern("kk_kxmini_delay"),
+            ctx.interner.intern("kk_array_new")
         ]
         module.arena.transformFunctions { function in
             var updated = function

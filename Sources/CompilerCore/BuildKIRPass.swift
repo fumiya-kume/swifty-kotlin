@@ -62,6 +62,16 @@ public final class BuildKIRPhase: CompilerPhase {
                             KIRParameter(symbol: pair.0, type: pair.1)
                         })
                     }
+                    if function.isInline, let signature,
+                       !signature.reifiedTypeParameterIndices.isEmpty {
+                        let intType = sema.types.make(.primitive(.int, .nonNull))
+                        for index in signature.reifiedTypeParameterIndices.sorted() {
+                            guard index < signature.typeParameterSymbols.count else { continue }
+                            let typeParamSymbol = signature.typeParameterSymbols[index]
+                            let tokenSymbol = SymbolID(rawValue: -20_000 - typeParamSymbol.rawValue)
+                            params.append(KIRParameter(symbol: tokenSymbol, type: intType))
+                        }
+                    }
                     let returnType = signature?.returnType ?? sema.types.unitType
                     var body: [KIRInstruction] = [.beginBlock]
                     if let receiverExpr = currentImplicitReceiverExprID,
@@ -471,7 +481,7 @@ public final class BuildKIRPhase: CompilerPhase {
             let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
             let callBinding = sema.bindings.callBindings[exprID]
             let chosen = callBinding?.chosenCallee
-            let finalArgIDs = normalizedCallArguments(
+            var finalArgIDs = normalizedCallArguments(
                 providedArguments: loweredArgIDs,
                 callBinding: callBinding,
                 chosenCallee: chosen,
@@ -482,7 +492,38 @@ public final class BuildKIRPhase: CompilerPhase {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
-            instructions.append(.call(symbol: chosen, callee: calleeName, arguments: finalArgIDs, result: result, canThrow: false))
+            if let callBinding, let chosen,
+               let sig = sema.symbols.functionSignature(for: chosen),
+               !sig.reifiedTypeParameterIndices.isEmpty {
+                let intType = sema.types.make(.primitive(.int, .nonNull))
+                for index in sig.reifiedTypeParameterIndices.sorted() {
+                    let concreteType = index < callBinding.substitutedTypeArguments.count
+                        ? callBinding.substitutedTypeArguments[index]
+                        : sema.types.anyType
+                    let tokenExpr = arena.appendExpr(
+                        .intLiteral(Int64(concreteType.rawValue)),
+                        type: intType
+                    )
+                    finalArgIDs.append(tokenExpr)
+                }
+            }
+            let loweredCalleeName: InternedString
+            if chosen == nil {
+                loweredCalleeName = loweredRuntimeBuiltinCallee(
+                    for: calleeName,
+                    argumentCount: finalArgIDs.count,
+                    interner: interner
+                ) ?? calleeName
+            } else {
+                loweredCalleeName = calleeName
+            }
+            instructions.append(.call(
+                symbol: chosen,
+                callee: loweredCalleeName,
+                arguments: finalArgIDs,
+                result: result,
+                canThrow: false
+            ))
             return result
 
         case .memberCall(let receiverExpr, let calleeName, let args, _):
@@ -525,6 +566,21 @@ public final class BuildKIRPhase: CompilerPhase {
                let signature = sema.symbols.functionSignature(for: chosen),
                signature.receiverType != nil {
                 finalArguments.insert(loweredReceiverID, at: 0)
+            }
+            if let callBinding, let chosen,
+               let sig = sema.symbols.functionSignature(for: chosen),
+               !sig.reifiedTypeParameterIndices.isEmpty {
+                let intType = sema.types.make(.primitive(.int, .nonNull))
+                for index in sig.reifiedTypeParameterIndices.sorted() {
+                    let concreteType = index < callBinding.substitutedTypeArguments.count
+                        ? callBinding.substitutedTypeArguments[index]
+                        : sema.types.anyType
+                    let tokenExpr = arena.appendExpr(
+                        .intLiteral(Int64(concreteType.rawValue)),
+                        type: intType
+                    )
+                    finalArguments.append(tokenExpr)
+                }
             }
             instructions.append(.call(
                 symbol: chosen,
@@ -738,6 +794,22 @@ public final class BuildKIRPhase: CompilerPhase {
 
     private func syntheticReceiverParameterSymbol(functionSymbol: SymbolID) -> SymbolID {
         SymbolID(rawValue: -10_000 - functionSymbol.rawValue)
+    }
+
+    private func loweredRuntimeBuiltinCallee(
+        for callee: InternedString,
+        argumentCount: Int,
+        interner: StringInterner
+    ) -> InternedString? {
+        switch interner.resolve(callee) {
+        case "IntArray":
+            guard argumentCount == 1 else {
+                return nil
+            }
+            return interner.intern("kk_array_new")
+        default:
+            return nil
+        }
     }
 
     private func inlineGetterConstantExpr(

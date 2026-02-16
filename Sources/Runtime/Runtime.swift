@@ -61,6 +61,14 @@ private final class RuntimeThrowableBox {
     }
 }
 
+private final class RuntimeArrayBox {
+    var elements: [Int]
+
+    init(length: Int) {
+        self.elements = Array(repeating: 0, count: max(0, length))
+    }
+}
+
 private final class RuntimeContinuationState {
     var functionID: Int64
     var label: Int64
@@ -316,12 +324,8 @@ public func kk_runtime_force_reset() {
 @_cdecl("kk_throwable_new")
 public func kk_throwable_new(_ message: UnsafeMutableRawPointer?) -> UnsafeMutableRawPointer {
     let text = extractString(from: message) ?? "Throwable"
-    let throwable = RuntimeThrowableBox(message: text)
-    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(throwable).toOpaque())
-    RuntimeStorage.lock.lock()
-    RuntimeStorage.objectPointers.insert(UInt(bitPattern: ptr))
-    RuntimeStorage.lock.unlock()
-    return ptr
+    let throwableInt = runtimeAllocateThrowable(message: text)
+    return UnsafeMutableRawPointer(bitPattern: throwableInt) ?? UnsafeMutableRawPointer(bitPattern: 0x1)!
 }
 
 @_cdecl("kk_panic")
@@ -359,6 +363,45 @@ public func kk_string_concat(_ a: UnsafeMutableRawPointer?, _ b: UnsafeMutableRa
     RuntimeStorage.objectPointers.insert(UInt(bitPattern: opaque))
     RuntimeStorage.lock.unlock()
     return opaque
+}
+
+@_cdecl("kk_array_new")
+public func kk_array_new(_ length: Int) -> Int {
+    let box = RuntimeArrayBox(length: length)
+    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    RuntimeStorage.lock.lock()
+    RuntimeStorage.objectPointers.insert(UInt(bitPattern: opaque))
+    RuntimeStorage.lock.unlock()
+    return Int(bitPattern: opaque)
+}
+
+@_cdecl("kk_array_get")
+public func kk_array_get(_ arrayRaw: Int, _ index: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Array reference is null.")
+        return 0
+    }
+    guard array.elements.indices.contains(index) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Array index \(index) out of bounds for length \(array.elements.count).")
+        return 0
+    }
+    return array.elements[index]
+}
+
+@_cdecl("kk_array_set")
+public func kk_array_set(_ arrayRaw: Int, _ index: Int, _ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Array reference is null.")
+        return 0
+    }
+    guard array.elements.indices.contains(index) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Array index \(index) out of bounds for length \(array.elements.count).")
+        return 0
+    }
+    array.elements[index] = value
+    return value
 }
 
 @_cdecl("kk_println_any")
@@ -537,6 +580,28 @@ private func suspendEntryPoint(from rawValue: Int) -> KKSuspendEntryPoint? {
         return nil
     }
     return unsafeBitCast(rawValue, to: KKSuspendEntryPoint.self)
+}
+
+private func runtimeArrayBox(from rawValue: Int) -> RuntimeArrayBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
+        return nil
+    }
+    RuntimeStorage.lock.lock()
+    let isObjectPointer = RuntimeStorage.objectPointers.contains(UInt(bitPattern: ptr))
+    RuntimeStorage.lock.unlock()
+    guard isObjectPointer else {
+        return nil
+    }
+    return tryCast(ptr, to: RuntimeArrayBox.self)
+}
+
+private func runtimeAllocateThrowable(message: String) -> Int {
+    let throwable = RuntimeThrowableBox(message: message)
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(throwable).toOpaque())
+    RuntimeStorage.lock.lock()
+    RuntimeStorage.objectPointers.insert(UInt(bitPattern: ptr))
+    RuntimeStorage.lock.unlock()
+    return Int(bitPattern: ptr)
 }
 
 private func runSuspendEntryLoop(entryPointRaw: Int, functionID: Int) -> Int {
