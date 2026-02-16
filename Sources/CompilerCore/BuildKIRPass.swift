@@ -44,7 +44,7 @@ public final class BuildKIRPhase: CompilerPhase {
 
                 switch decl {
                 case .classDecl(let classDecl):
-                    let memberKIRDecls = lowerMemberDecls(
+                    let (directMembers, allDecls) = lowerMemberDecls(
                         memberFunctions: classDecl.memberFunctions,
                         memberProperties: classDecl.memberProperties,
                         nestedClasses: classDecl.nestedClasses,
@@ -55,12 +55,12 @@ public final class BuildKIRPhase: CompilerPhase {
                         interner: ctx.interner,
                         propertyConstantInitializers: propertyConstantInitializers
                     )
-                    let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: memberKIRDecls)))
+                    let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: directMembers)))
                     declIDs.append(kirID)
-                    declIDs.append(contentsOf: memberKIRDecls)
+                    declIDs.append(contentsOf: allDecls)
 
                 case .objectDecl(let objectDecl):
-                    let memberKIRDecls = lowerMemberDecls(
+                    let (directMembers, allDecls) = lowerMemberDecls(
                         memberFunctions: objectDecl.memberFunctions,
                         memberProperties: objectDecl.memberProperties,
                         nestedClasses: objectDecl.nestedClasses,
@@ -71,9 +71,9 @@ public final class BuildKIRPhase: CompilerPhase {
                         interner: ctx.interner,
                         propertyConstantInitializers: propertyConstantInitializers
                     )
-                    let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: memberKIRDecls)))
+                    let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: directMembers)))
                     declIDs.append(kirID)
-                    declIDs.append(contentsOf: memberKIRDecls)
+                    declIDs.append(contentsOf: allDecls)
 
                 case .funDecl(let function):
                     localValuesBySymbol.removeAll(keepingCapacity: true)
@@ -956,8 +956,9 @@ public final class BuildKIRPhase: CompilerPhase {
         arena: KIRArena,
         interner: StringInterner,
         propertyConstantInitializers: [SymbolID: KIRExprKind]
-    ) -> [KIRDeclID] {
-        var memberKIRDecls: [KIRDeclID] = []
+    ) -> (directMembers: [KIRDeclID], allDecls: [KIRDeclID]) {
+        var directMembers: [KIRDeclID] = []
+        var allDecls: [KIRDeclID] = []
 
         for declID in memberFunctions {
             guard let decl = ast.arena.decl(declID),
@@ -1069,7 +1070,8 @@ public final class BuildKIRPhase: CompilerPhase {
                     )
                 )
             )
-            memberKIRDecls.append(kirID)
+            directMembers.append(kirID)
+            allDecls.append(kirID)
             currentImplicitReceiverExprID = nil
             currentImplicitReceiverSymbol = nil
         }
@@ -1080,7 +1082,8 @@ public final class BuildKIRPhase: CompilerPhase {
             }
             let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
             let kirID = arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: propType)))
-            memberKIRDecls.append(kirID)
+            directMembers.append(kirID)
+            allDecls.append(kirID)
         }
 
         for declID in nestedClasses {
@@ -1089,7 +1092,7 @@ public final class BuildKIRPhase: CompilerPhase {
                   let symbol = sema.bindings.declSymbols[declID] else {
                 continue
             }
-            let nestedMembers = lowerMemberDecls(
+            let (nestedDirect, nestedAll) = lowerMemberDecls(
                 memberFunctions: nested.memberFunctions,
                 memberProperties: nested.memberProperties,
                 nestedClasses: nested.nestedClasses,
@@ -1100,9 +1103,10 @@ public final class BuildKIRPhase: CompilerPhase {
                 interner: interner,
                 propertyConstantInitializers: propertyConstantInitializers
             )
-            let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: nestedMembers)))
-            memberKIRDecls.append(kirID)
-            memberKIRDecls.append(contentsOf: nestedMembers)
+            let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: nestedDirect)))
+            directMembers.append(kirID)
+            allDecls.append(kirID)
+            allDecls.append(contentsOf: nestedAll)
         }
 
         for declID in nestedObjects {
@@ -1111,7 +1115,7 @@ public final class BuildKIRPhase: CompilerPhase {
                   let symbol = sema.bindings.declSymbols[declID] else {
                 continue
             }
-            let nestedMembers = lowerMemberDecls(
+            let (nestedDirect, nestedAll) = lowerMemberDecls(
                 memberFunctions: nested.memberFunctions,
                 memberProperties: nested.memberProperties,
                 nestedClasses: nested.nestedClasses,
@@ -1122,12 +1126,13 @@ public final class BuildKIRPhase: CompilerPhase {
                 interner: interner,
                 propertyConstantInitializers: propertyConstantInitializers
             )
-            let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: nestedMembers)))
-            memberKIRDecls.append(kirID)
-            memberKIRDecls.append(contentsOf: nestedMembers)
+            let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: nestedDirect)))
+            directMembers.append(kirID)
+            allDecls.append(kirID)
+            allDecls.append(contentsOf: nestedAll)
         }
 
-        return memberKIRDecls
+        return (directMembers, allDecls)
     }
 
     private func collectPropertyConstantInitializers(
