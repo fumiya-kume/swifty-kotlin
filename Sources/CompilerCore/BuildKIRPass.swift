@@ -2,6 +2,10 @@ import Foundation
 
 public final class BuildKIRPhase: CompilerPhase {
     public static let name = "BuildKIR"
+    private var functionDefaultArgumentsBySymbol: [SymbolID: [ExprID?]] = [:]
+    private var localValuesBySymbol: [SymbolID: KIRExprID] = [:]
+    private var currentImplicitReceiverExprID: KIRExprID?
+    private var currentImplicitReceiverSymbol: SymbolID?
 
     public init() {}
 
@@ -23,6 +27,10 @@ public final class BuildKIRPhase: CompilerPhase {
             interner: ctx.interner,
             sourceByFileID: sourceByFileID
         )
+        functionDefaultArgumentsBySymbol = collectFunctionDefaultArgumentExpressions(
+            ast: ast,
+            sema: sema
+        )
 
         for file in ast.sortedFiles {
             var declIDs: [KIRDeclID] = []
@@ -38,17 +46,28 @@ public final class BuildKIRPhase: CompilerPhase {
                     declIDs.append(kirID)
 
                 case .funDecl(let function):
+                    localValuesBySymbol.removeAll(keepingCapacity: true)
+                    currentImplicitReceiverExprID = nil
+                    currentImplicitReceiverSymbol = nil
                     let signature = sema.symbols.functionSignature(for: symbol)
-                    let params: [KIRParameter]
+                    var params: [KIRParameter] = []
                     if let signature {
-                        params = zip(signature.valueParameterSymbols, signature.parameterTypes).map { pair in
-                            KIRParameter(symbol: pair.0, type: pair.1)
+                        if let receiverType = signature.receiverType {
+                            let receiverSymbol = syntheticReceiverParameterSymbol(functionSymbol: symbol)
+                            params.append(KIRParameter(symbol: receiverSymbol, type: receiverType))
+                            currentImplicitReceiverSymbol = receiverSymbol
+                            currentImplicitReceiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: receiverType)
                         }
-                    } else {
-                        params = []
+                        params.append(contentsOf: zip(signature.valueParameterSymbols, signature.parameterTypes).map { pair in
+                            KIRParameter(symbol: pair.0, type: pair.1)
+                        })
                     }
                     let returnType = signature?.returnType ?? sema.types.unitType
                     var body: [KIRInstruction] = [.beginBlock]
+                    if let receiverExpr = currentImplicitReceiverExprID,
+                       let receiverSymbol = currentImplicitReceiverSymbol {
+                        body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSymbol)))
+                    }
                     switch function.body {
                     case .block(let exprIDs, _):
                         var lastValue: KIRExprID?
@@ -119,6 +138,8 @@ public final class BuildKIRPhase: CompilerPhase {
                         )
                     )
                     declIDs.append(kirID)
+                    currentImplicitReceiverExprID = nil
+                    currentImplicitReceiverSymbol = nil
 
                 case .propertyDecl:
                     let kirID = arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: sema.types.anyType)))
@@ -184,11 +205,18 @@ public final class BuildKIRPhase: CompilerPhase {
 
         case .nameRef(let name, _):
             if interner.resolve(name) == "null" {
-                let id = arena.appendExpr(.unit, type: boundType ?? sema.types.nullableAnyType)
-                instructions.append(.constValue(result: id, value: .unit))
+                let id = arena.appendExpr(.null, type: boundType ?? sema.types.nullableAnyType)
+                instructions.append(.constValue(result: id, value: .null))
                 return id
             }
+            if interner.resolve(name) == "this",
+               let currentImplicitReceiverExprID {
+                return currentImplicitReceiverExprID
+            }
             if let symbol = sema.bindings.identifierSymbols[exprID] {
+                if let localValue = localValuesBySymbol[symbol] {
+                    return localValue
+                }
                 if let constant = propertyConstantInitializers[symbol] {
                     let id = arena.appendExpr(constant, type: boundType)
                     instructions.append(.constValue(result: id, value: constant))
@@ -198,9 +226,111 @@ public final class BuildKIRPhase: CompilerPhase {
                 instructions.append(.constValue(result: id, value: .symbolRef(symbol)))
                 return id
             }
-            let id = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
-            instructions.append(.call(symbol: nil, callee: name, arguments: [], result: id, canThrow: false))
+            let id = arena.appendExpr(.unit, type: boundType ?? sema.types.errorType)
+            instructions.append(.constValue(result: id, value: .unit))
             return id
+
+        case .localDecl(_, _, let initializer, _):
+            let initializerID = lowerExpr(
+                initializer,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            if let symbol = sema.bindings.identifierSymbols[exprID] {
+                localValuesBySymbol[symbol] = initializerID
+            }
+            let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+            instructions.append(.constValue(result: unit, value: .unit))
+            return unit
+
+        case .localAssign(_, let valueExpr, _):
+            let valueID = lowerExpr(
+                valueExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            if let symbol = sema.bindings.identifierSymbols[exprID] {
+                localValuesBySymbol[symbol] = valueID
+            }
+            let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+            instructions.append(.constValue(result: unit, value: .unit))
+            return unit
+
+        case .arrayAccess(let arrayExpr, let indexExpr, _):
+            let arrayID = lowerExpr(
+                arrayExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            let indexID = lowerExpr(
+                indexExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_array_get"),
+                arguments: [arrayID, indexID],
+                result: result,
+                canThrow: false
+            ))
+            return result
+
+        case .arrayAssign(let arrayExpr, let indexExpr, let valueExpr, _):
+            let arrayID = lowerExpr(
+                arrayExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            let indexID = lowerExpr(
+                indexExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            let valueID = lowerExpr(
+                valueExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_array_set"),
+                arguments: [arrayID, indexID, valueID],
+                result: nil,
+                canThrow: false
+            ))
+            let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+            instructions.append(.constValue(result: unit, value: .unit))
+            return unit
 
         case .returnExpr(let value, _):
             if let value {
@@ -327,7 +457,7 @@ public final class BuildKIRPhase: CompilerPhase {
             } else {
                 calleeName = sema.symbols.allSymbols().first?.name ?? InternedString()
             }
-            let argIDs = args.map { argument in
+            let loweredArgIDs = args.map { argument in
                 lowerExpr(
                     argument.expr,
                     ast: ast,
@@ -339,8 +469,70 @@ public final class BuildKIRPhase: CompilerPhase {
                 )
             }
             let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
-            let chosen = sema.bindings.callBindings[exprID]?.chosenCallee
-            instructions.append(.call(symbol: chosen, callee: calleeName, arguments: argIDs, result: result, canThrow: false))
+            let callBinding = sema.bindings.callBindings[exprID]
+            let chosen = callBinding?.chosenCallee
+            let finalArgIDs = normalizedCallArguments(
+                providedArguments: loweredArgIDs,
+                callBinding: callBinding,
+                chosenCallee: chosen,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            instructions.append(.call(symbol: chosen, callee: calleeName, arguments: finalArgIDs, result: result, canThrow: false))
+            return result
+
+        case .memberCall(let receiverExpr, let calleeName, let args, _):
+            let loweredReceiverID = lowerExpr(
+                receiverExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            let loweredArgIDs = args.map { argument in
+                lowerExpr(
+                    argument.expr,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+            }
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+            let callBinding = sema.bindings.callBindings[exprID]
+            let chosen = callBinding?.chosenCallee
+            let normalizedArgs = normalizedCallArguments(
+                providedArguments: loweredArgIDs,
+                callBinding: callBinding,
+                chosenCallee: chosen,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            var finalArguments = normalizedArgs
+            if let chosen,
+               let signature = sema.symbols.functionSignature(for: chosen),
+               signature.receiverType != nil {
+                finalArguments.insert(loweredReceiverID, at: 0)
+            }
+            instructions.append(.call(
+                symbol: chosen,
+                callee: calleeName,
+                arguments: finalArguments,
+                result: result,
+                canThrow: false
+            ))
             return result
 
         case .whenExpr(let subject, let branches, let elseExpr, _):
@@ -455,6 +647,97 @@ public final class BuildKIRPhase: CompilerPhase {
             }
         }
         return mapping
+    }
+
+    private func collectFunctionDefaultArgumentExpressions(
+        ast: ASTModule,
+        sema: SemaModule
+    ) -> [SymbolID: [ExprID?]] {
+        var mapping: [SymbolID: [ExprID?]] = [:]
+        for file in ast.sortedFiles {
+            for declID in file.topLevelDecls {
+                guard let decl = ast.arena.decl(declID),
+                      case .funDecl(let function) = decl,
+                      let symbol = sema.bindings.declSymbols[declID] else {
+                    continue
+                }
+                let defaults = function.valueParams.map(\.defaultValue)
+                if defaults.contains(where: { $0 != nil }) {
+                    mapping[symbol] = defaults
+                }
+            }
+        }
+        return mapping
+    }
+
+    private func normalizedCallArguments(
+        providedArguments: [KIRExprID],
+        callBinding: CallBinding?,
+        chosenCallee: SymbolID?,
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) -> [KIRExprID] {
+        guard let callBinding,
+              let chosenCallee,
+              let signature = sema.symbols.functionSignature(for: chosenCallee) else {
+            return providedArguments
+        }
+
+        let parameterCount = signature.parameterTypes.count
+        guard parameterCount > 0 else {
+            return providedArguments
+        }
+
+        var argIndicesByParameter: [Int: [Int]] = [:]
+        for (argIndex, paramIndex) in callBinding.parameterMapping {
+            guard argIndex >= 0, argIndex < providedArguments.count else {
+                continue
+            }
+            argIndicesByParameter[paramIndex, default: []].append(argIndex)
+        }
+        for key in Array(argIndicesByParameter.keys) {
+            argIndicesByParameter[key]?.sort()
+        }
+
+        let hasOutOfRangeMapping = argIndicesByParameter.keys.contains(where: { $0 < 0 || $0 >= parameterCount })
+        let hasMergedParameterMapping = argIndicesByParameter.values.contains(where: { $0.count > 1 })
+        if hasOutOfRangeMapping || hasMergedParameterMapping {
+            return providedArguments
+        }
+
+        let defaultExpressions = functionDefaultArgumentsBySymbol[chosenCallee] ?? []
+        var normalized: [KIRExprID] = []
+        normalized.reserveCapacity(parameterCount)
+
+        for paramIndex in 0..<parameterCount {
+            if let argIndex = argIndicesByParameter[paramIndex]?.first {
+                normalized.append(providedArguments[argIndex])
+                continue
+            }
+            guard paramIndex < defaultExpressions.count,
+                  let defaultExprID = defaultExpressions[paramIndex] else {
+                return providedArguments
+            }
+            let loweredDefault = lowerExpr(
+                defaultExprID,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            normalized.append(loweredDefault)
+        }
+        return normalized
+    }
+
+    private func syntheticReceiverParameterSymbol(functionSymbol: SymbolID) -> SymbolID {
+        SymbolID(rawValue: -10_000 - functionSymbol.rawValue)
     }
 
     private func inlineGetterConstantExpr(

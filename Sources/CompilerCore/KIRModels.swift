@@ -54,6 +54,7 @@ public enum KIRExprKind: Equatable {
     case stringLiteral(InternedString)
     case symbolRef(SymbolID)
     case temporary(Int32)
+    case null
     case unit
 }
 
