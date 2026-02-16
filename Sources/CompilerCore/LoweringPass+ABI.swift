@@ -149,7 +149,7 @@ final class ABILoweringPass: LoweringPass {
                     }
                 }
 
-                if let resolvedUnboxCallee, let resolvedReturnType, let result {
+                if let resolvedUnboxCallee, let resolvedReturnType, let result, thrownResult == nil {
                     let tempResult = module.arena.appendExpr(
                         .temporary(Int32(module.arena.expressions.count)),
                         type: resolvedReturnType
@@ -160,7 +160,7 @@ final class ABILoweringPass: LoweringPass {
                         arguments: boxedArguments,
                         result: tempResult,
                         canThrow: canThrow,
-                        thrownResult: thrownResult
+                        thrownResult: nil
                     ))
                     newBody.append(.call(
                         symbol: nil,
