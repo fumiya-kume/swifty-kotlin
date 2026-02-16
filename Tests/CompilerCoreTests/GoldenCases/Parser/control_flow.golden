@@ -24,7 +24,7 @@ node kotlinFile f0:0..38
         tok symbol()) f0:60..61
         node block f0:62..141
           tok symbol({) f0:62..63
-          node statement f0:72..80
+          node whenExpr f0:72..80
             tok keyword(when) f0:72..76
             tok symbol(() f0:77..78
             tok identifier(x) f0:78..79
@@ -44,7 +44,7 @@ node kotlinFile f0:0..38
         tok keyword(else) f0:142..146
         node block f0:147..191
           tok symbol({) f0:147..148
-          node statement f0:157..185
+          node tryExpr f0:157..185
             tok keyword(try) f0:157..160
             tok identifier(x) f0:161..162
             tok keyword(catch) f0:163..168

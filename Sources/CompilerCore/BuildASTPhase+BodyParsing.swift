@@ -141,17 +141,17 @@ extension BuildASTPhase {
                 continue
             }
             for bodyChild in arena.children(of: bodyBlockID) {
-                    guard case .node(let statementID) = bodyChild,
-                          isStatementLikeKind(arena.node(statementID).kind) else {
-                        continue
-                    }
-                    let headerTokens = collectDirectTokens(from: statementID, in: arena).filter { token in
-                        token.kind != .symbol(.semicolon)
-                    }
-                    guard let firstToken = headerTokens.first,
-                          firstToken.kind == .softKeyword(.`init`) else {
-                        continue
-                    }
+                guard case .node(let statementID) = bodyChild,
+                      isStatementLikeKind(arena.node(statementID).kind) else {
+                    continue
+                }
+                let headerTokens = collectDirectTokens(from: statementID, in: arena).filter { token in
+                    token.kind != .symbol(.semicolon)
+                }
+                guard let firstToken = headerTokens.first,
+                      firstToken.kind == .softKeyword(.`init`) else {
+                    continue
+                }
 
                 if let nestedBlockID = arena.children(of: statementID).compactMap({ inner -> NodeID? in
                     guard case .node(let nodeID) = inner,
