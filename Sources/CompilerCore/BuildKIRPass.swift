@@ -984,6 +984,16 @@ public final class BuildKIRPhase: CompilerPhase {
                     KIRParameter(symbol: pair.0, type: pair.1)
                 })
             }
+            if function.isInline, let signature,
+               !signature.reifiedTypeParameterIndices.isEmpty {
+                let intType = sema.types.make(.primitive(.int, .nonNull))
+                for index in signature.reifiedTypeParameterIndices.sorted() {
+                    guard index < signature.typeParameterSymbols.count else { continue }
+                    let typeParamSymbol = signature.typeParameterSymbols[index]
+                    let tokenSymbol = SymbolID(rawValue: -20_000 - typeParamSymbol.rawValue)
+                    params.append(KIRParameter(symbol: tokenSymbol, type: intType))
+                }
+            }
             let returnType = signature?.returnType ?? sema.types.unitType
             var body: [KIRInstruction] = [.beginBlock]
             if let receiverExpr = currentImplicitReceiverExprID,
