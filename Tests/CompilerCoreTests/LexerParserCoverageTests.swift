@@ -537,6 +537,31 @@ final class LexerParserCoverageTests: XCTestCase {
         }
     }
 
+    func testUnaryExpressionsParseAndTypeCheckWithoutErrors() throws {
+        let source = """
+        fun demo(x: Int): Int = if (!false) -x + +x else 0
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(ctx.diagnostics.diagnostics.contains { $0.severity == .error })
+        }
+    }
+
+    func testComparisonAndLogicalExpressionsParseAndTypeCheckWithoutErrors() throws {
+        let source = """
+        fun demoA(x: Int): Int = if (x != 0 && x < 10 || x >= 100) 1 else 2
+        fun demoB(x: Int): Int = if (x <= 20 && x > 3) 2 else 3
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(ctx.diagnostics.diagnostics.contains { $0.severity == .error })
+        }
+    }
+
     private func lex(_ source: String) -> (tokens: [Token], interner: StringInterner, diagnostics: DiagnosticEngine) {
         let diagnostics = DiagnosticEngine()
         let interner = StringInterner()
