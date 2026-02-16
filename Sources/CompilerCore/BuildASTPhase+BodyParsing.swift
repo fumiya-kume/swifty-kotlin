@@ -208,7 +208,16 @@ extension BuildASTPhase {
                 let ctorNode = arena.node(ctorNodeID)
                 let params = declarationValueParameters(from: ctorNodeID, in: arena, interner: interner, astArena: astArena)
                 let delegationCall = extractDelegationCall(from: ctorNodeID, in: arena, interner: interner, astArena: astArena)
-                let body = declarationBody(from: ctorNodeID, in: arena, interner: interner, astArena: astArena)
+                let body: FunctionBody
+                if let blockID = arena.children(of: ctorNodeID).compactMap({ child -> NodeID? in
+                    guard case .node(let id) = child, arena.node(id).kind == .block else { return nil }
+                    return id
+                }).first {
+                    let exprs = blockExpressions(from: blockID, in: arena, interner: interner, astArena: astArena)
+                    body = .block(exprs, arena.node(blockID).range)
+                } else {
+                    body = .unit
+                }
                 result.append(ConstructorDecl(
                     range: ctorNode.range,
                     modifiers: declarationModifiers(from: ctorNodeID, in: arena),
