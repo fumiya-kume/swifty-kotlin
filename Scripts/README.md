@@ -47,3 +47,15 @@ Run all tracked regression cases:
 ```bash
 bash Scripts/diff_kotlinc.sh Scripts/diff_cases
 ```
+
+Emit a machine-readable report (TSV) for CI tooling:
+
+```bash
+bash Scripts/diff_kotlinc.sh --report /tmp/diff_report.tsv Scripts/diff_cases
+```
+
+Render a markdown summary from that report:
+
+```bash
+bash Scripts/diff_kotlinc_ci_summary.sh --report /tmp/diff_report.tsv --summary /tmp/step_summary.md
+```

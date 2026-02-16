@@ -6,6 +6,8 @@ KSWIFTC="${KSWIFTC:-$ROOT_DIR/.build/debug/kswiftc}"
 KOTLINC="${KOTLINC:-kotlinc}"
 JAVA_BIN="${JAVA_BIN:-java}"
 KEEP_TEMP=0
+REPORT_PATH=""
+LAST_ARTIFACT_DIR=""
 
 usage() {
   cat <<USAGE
@@ -16,6 +18,7 @@ Options:
   --kotlinc <path>   Path to kotlinc command (default: kotlinc)
   --java <path>      Path to java command (default: java)
   --keep-temp        Keep per-test temporary directories
+  --report <path>    Write TSV report (case, status, artifact_dir)
   -h, --help         Show this help
 
 Examples:
@@ -47,6 +50,10 @@ while [[ $# -gt 0 ]]; do
     --keep-temp)
       KEEP_TEMP=1
       ;;
+    --report)
+      shift
+      REPORT_PATH="$1"
+      ;;
     -h|--help)
       usage
       exit 0
@@ -70,6 +77,10 @@ done
 if [[ -z "$TARGET" ]]; then
   usage
   exit 1
+fi
+
+if [[ -n "$REPORT_PATH" ]]; then
+  : >"$REPORT_PATH"
 fi
 
 if [[ ! -x "$KSWIFTC" ]]; then
@@ -108,6 +119,7 @@ run_case() {
   local kt_file="$1"
   local tmp_dir
   tmp_dir="$(mktemp -d -t kswiftk-diff-XXXXXX)"
+  LAST_ARTIFACT_DIR="$tmp_dir"
 
   local ref_jar="$tmp_dir/ref.jar"
   local ref_compile_stdout="$tmp_dir/ref_compile.stdout"
@@ -183,6 +195,7 @@ run_case() {
 
   if [[ $KEEP_TEMP -eq 0 && $ok -eq 1 ]]; then
     rm -rf "$tmp_dir"
+    LAST_ARTIFACT_DIR=""
   else
     echo "  artifacts: $tmp_dir"
   fi
@@ -195,8 +208,13 @@ FAILED=0
 while IFS= read -r test_case; do
   [[ -z "$test_case" ]] && continue
   TOTAL=$((TOTAL + 1))
+  status="PASS"
   if ! run_case "$test_case"; then
     FAILED=$((FAILED + 1))
+    status="FAIL"
+  fi
+  if [[ -n "$REPORT_PATH" ]]; then
+    printf '%s\t%s\t%s\n' "$test_case" "$status" "$LAST_ARTIFACT_DIR" >>"$REPORT_PATH"
   fi
 done < <(collect_cases "$TARGET")
 
