@@ -1282,7 +1282,8 @@ extension DataFlowSemaPassPhase {
                 callee: interner.intern(calleeName),
                 arguments: args,
                 result: result,
-                canThrow: canThrow
+                canThrow: canThrow,
+                thrownResult: nil
             )
         default:
             return nil

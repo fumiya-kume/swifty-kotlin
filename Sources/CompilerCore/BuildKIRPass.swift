@@ -618,7 +618,7 @@ public final class BuildKIRPhase: CompilerPhase {
             instructions.append(.label(catchDispatchLabel))
             if !catchClauses.isEmpty {
                 for clause in catchClauses {
-                    if let paramName = clause.paramName {
+                    if clause.paramName != nil {
                         let paramID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
                         instructions.append(.copy(from: exceptionSlot, to: paramID))
                         if let catchParamSymbol = sema.bindings.identifierSymbols[clause.body] {
