@@ -210,6 +210,27 @@ final class InlineLoweringPass: LoweringPass {
                         rhs: resolveAlias(of: rhs, aliases: localExprMap)
                     )
                 )
+
+            case .jumpIfNotNull(let value, let target):
+                lowered.append(
+                    .jumpIfNotNull(
+                        value: resolveAlias(of: value, aliases: localExprMap),
+                        target: target
+                    )
+                )
+
+            case .copy(let from, let to):
+                lowered.append(
+                    .copy(
+                        from: resolveAlias(of: from, aliases: localExprMap),
+                        to: resolveAlias(of: to, aliases: localExprMap)
+                    )
+                )
+
+            case .rethrow(let value):
+                lowered.append(
+                    .rethrow(value: resolveAlias(of: value, aliases: localExprMap))
+                )
             }
         }
 
