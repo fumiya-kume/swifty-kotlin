@@ -12,28 +12,28 @@ permissions:
   contents: read
 
 jobs:
-  test-and-coverage:
-    name: Test and Coverage Gate
+  smoke-tests:
+    name: Smoke Tests
     runs-on: macos-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Show toolchain versions
         run: |
           xcodebuild -version
           swift --version
-
       - name: Run smoke tests
         run: bash Scripts/swift_test.sh --filter SmokeTests
 
+  diff-regression:
+    name: kotlinc Diff Regression
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "21"
-
       - name: Ensure kotlinc is installed
         run: |
           if ! command -v kotlinc >/dev/null 2>&1; then
@@ -41,36 +41,36 @@ jobs:
             brew install kotlin
           fi
           kotlinc -version
-
       - name: Build compiler
         run: swift build
-
       - name: Run kotlinc diff regression cases
         id: diff_kotlinc
         continue-on-error: true
         env:
           DIFF_REPORT: ${{ runner.temp }}/diff_kotlinc_report.tsv
         run: bash Scripts/diff_kotlinc.sh --report "$DIFF_REPORT" Scripts/diff_cases
-
       - name: Summarize kotlinc diff artifacts
         if: always()
         env:
           DIFF_REPORT: ${{ runner.temp }}/diff_kotlinc_report.tsv
         run: bash Scripts/diff_kotlinc_ci_summary.sh --report "$DIFF_REPORT"
-
       - name: Fail when kotlinc diff regression mismatches exist
         if: steps.diff_kotlinc.outcome == 'failure'
         run: |
           echo "kotlinc diff regression cases failed." >&2
           exit 1
 
+  test-and-coverage:
+    name: Test and Coverage Gate
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
       - name: Ensure jq is installed
         run: |
           if ! command -v jq >/dev/null 2>&1; then
             brew update
             brew install jq
           fi
-
       - name: Run tests with coverage threshold
         env:
           COVERAGE_THRESHOLD: "95"

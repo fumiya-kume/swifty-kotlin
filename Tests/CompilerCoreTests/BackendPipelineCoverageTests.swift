@@ -420,21 +420,19 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
     }
 
-    func testBuildKIRUsesResolvedOperatorOverloadCallForBinaryExpression() throws {
+    func testBuildKIRLowersUnaryOperatorsToExpectedOperations() throws {
         let source = """
-        operator fun Int.plus(other: Int): Int = this - other
-        fun main(): Int = 7 + 3
+        fun main(): Int {
+            val x = 2
+            val a = -x
+            val b = +x
+            if (!false) return a + b
+            return 0
+        }
         """
         try withTemporaryFile(contents: source) { path in
             let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
             try runToKIR(ctx)
-
-            let sema = try XCTUnwrap(ctx.sema)
-            let plusSymbol = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
-                ctx.interner.resolve(symbol.name) == "plus" &&
-                symbol.kind == .function &&
-                !symbol.flags.contains(.synthetic)
-            }))
 
             let module = try XCTUnwrap(ctx.kir)
             let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
@@ -445,19 +443,94 @@ final class BackendPipelineCoverageTests: XCTestCase {
             }.first
             let body = try XCTUnwrap(mainFunction?.body)
 
-            XCTAssertTrue(body.contains { instruction in
-                guard case .call(let symbol, let callee, let arguments, _, _) = instruction else {
-                    return false
+            let binaryOps = body.compactMap { instruction -> KIRBinaryOp? in
+                guard case .binary(let op, _, _, _) = instruction else {
+                    return nil
                 }
-                return symbol == plusSymbol.id &&
-                    ctx.interner.resolve(callee) == "plus" &&
-                    arguments.count == 2
+                return op
+            }
+            XCTAssertTrue(binaryOps.contains(.subtract))
+            XCTAssertTrue(binaryOps.contains(.equal))
+        }
+    }
+
+    func testBuildKIRLowersComparisonAndLogicalOperatorsToRuntimeCalls() throws {
+        let source = """
+        fun main(): Int {
+            val x = 3
+            val a = x != 2
+            val b = x < 5
+            val c = x <= 3
+            val d = x > 1
+            val e = x >= 3
+            val f = true && false
+            val g = false || true
+            if (a && b && c && d && e && !f && g) return 1
+            return 0
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case .function(let function) = decl else {
+                    return nil
+                }
+                return ctx.interner.resolve(function.name) == "main" ? function : nil
+            }.first
+            let body = try XCTUnwrap(mainFunction?.body)
+            let callees = Set(body.compactMap { instruction -> String? in
+                guard case .call(_, let callee, _, _, _) = instruction else {
+                    return nil
+                }
+                return ctx.interner.resolve(callee)
             })
-            XCTAssertFalse(body.contains { instruction in
+
+            XCTAssertTrue(callees.contains("kk_op_ne"))
+            XCTAssertTrue(callees.contains("kk_op_lt"))
+            XCTAssertTrue(callees.contains("kk_op_le"))
+            XCTAssertTrue(callees.contains("kk_op_gt"))
+            XCTAssertTrue(callees.contains("kk_op_ge"))
+            XCTAssertTrue(callees.contains("kk_op_and"))
+            XCTAssertTrue(callees.contains("kk_op_or"))
+        }
+    }
+
+    func testBuildKIRUsesResolvedOperatorOverloadCallForBinaryExpression() throws {
+        // Kotlin member functions take precedence over extensions with the same
+        // signature.  Int.plus is a built-in member, so `operator fun Int.plus`
+        // defined as an extension must NOT shadow the built-in `+`.
+        let source = """
+        operator fun Int.plus(other: Int): Int = this - other
+        fun main(): Int = 7 + 3
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case .function(let function) = decl else {
+                    return nil
+                }
+                return ctx.interner.resolve(function.name) == "main" ? function : nil
+            }.first
+            let body = try XCTUnwrap(mainFunction?.body)
+
+            // The built-in binary .add instruction should be used, not a call.
+            XCTAssertTrue(body.contains { instruction in
                 guard case .binary(let op, _, _, _) = instruction else {
                     return false
                 }
                 return op == .add
+            })
+            XCTAssertFalse(body.contains { instruction in
+                guard case .call(_, let callee, _, _, _) = instruction else {
+                    return false
+                }
+                return ctx.interner.resolve(callee) == "plus"
             })
         }
     }
@@ -2581,6 +2654,16 @@ final class BackendPipelineCoverageTests: XCTestCase {
         let eMul = astArena.appendExpr(.binary(op: .multiply, lhs: eInt1, rhs: eInt2, range: range))
         let eDiv = astArena.appendExpr(.binary(op: .divide, lhs: eInt2, rhs: eInt1, range: range))
         let eEq = astArena.appendExpr(.binary(op: .equal, lhs: eInt1, rhs: eInt2, range: range))
+        let eNe = astArena.appendExpr(.binary(op: .notEqual, lhs: eInt1, rhs: eInt2, range: range))
+        let eLt = astArena.appendExpr(.binary(op: .lessThan, lhs: eInt1, rhs: eInt2, range: range))
+        let eLe = astArena.appendExpr(.binary(op: .lessOrEqual, lhs: eInt1, rhs: eInt2, range: range))
+        let eGt = astArena.appendExpr(.binary(op: .greaterThan, lhs: eInt2, rhs: eInt1, range: range))
+        let eGe = astArena.appendExpr(.binary(op: .greaterOrEqual, lhs: eInt2, rhs: eInt1, range: range))
+        let eAnd = astArena.appendExpr(.binary(op: .logicalAnd, lhs: eBoolTrue, rhs: eBoolFalse, range: range))
+        let eOr = astArena.appendExpr(.binary(op: .logicalOr, lhs: eBoolFalse, rhs: eBoolTrue, range: range))
+        let eUnaryPlus = astArena.appendExpr(.unary(op: .plus, operand: eInt1, range: range))
+        let eUnaryMinus = astArena.appendExpr(.unary(op: .minus, operand: eInt2, range: range))
+        let eUnaryNot = astArena.appendExpr(.unary(op: .not, operand: eBoolFalse, range: range))
 
         let eCallKnown = astArena.appendExpr(.call(callee: eNameKnown, args: [CallArgument(expr: eInt1)], range: range))
         let eCallUnknown = astArena.appendExpr(.call(callee: eNameUnknown, args: [CallArgument(expr: eInt1)], range: range))
@@ -2619,7 +2702,8 @@ final class BackendPipelineCoverageTests: XCTestCase {
             returnType: intTypeRef,
             body: .block([
                 eInt1, eBoolTrue, eString, eNameLocal, eNameKnown, eNameUnknown,
-                eAdd, eSub, eMul, eDiv, eEq, eCallKnown, eCallUnknown, eCallNonName,
+                eAdd, eSub, eMul, eDiv, eEq, eNe, eLt, eLe, eGt, eGe, eAnd, eOr, eUnaryPlus, eUnaryMinus, eUnaryNot,
+                eCallKnown, eCallUnknown, eCallNonName,
                 eWhenNoElse, eWhenElse, eWhile, eDoWhile, eFor
             ], range),
             isSuspend: true,
@@ -2682,6 +2766,16 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertFalse(kir.executedLowerings.isEmpty)
         XCTAssertFalse(kir.arena.exprTypes.isEmpty)
         XCTAssertFalse((ctx.sema?.bindings.exprTypes ?? [:]).isEmpty)
+        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[eUnaryPlus])
+        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[eUnaryMinus])
+        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[eUnaryNot])
+        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[eNe])
+        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[eLt])
+        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[eLe])
+        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[eGt])
+        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[eGe])
+        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[eAnd])
+        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[eOr])
     }
 
     func testBuildKIRLowersLoopExpressionsToControlFlowInstructions() throws {

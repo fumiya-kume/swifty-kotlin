@@ -291,6 +291,8 @@ final class GoldenHarnessTests: XCTestCase {
             return "memberCall recv=e\(receiver.rawValue) callee=\(interner.resolve(callee)) args=[\(renderedArgs)]"
         case .arrayAccess(let array, let index, _):
             return "arrayAccess array=e\(array.rawValue) index=e\(index.rawValue)"
+        case .unary(let op, let operand, _):
+            return "unary(\(op)) operand=e\(operand.rawValue)"
         case .binary(let op, let lhs, let rhs, _):
             return "binary(\(op)) lhs=e\(lhs.rawValue) rhs=e\(rhs.rawValue)"
         case .whenExpr(let subject, let branches, let elseExpr, _):
