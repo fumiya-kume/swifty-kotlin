@@ -265,7 +265,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         let backend = LLVMCAPIBackend(
             target: defaultTargetTriple(),
             optLevel: .O0,
-            emitsDebugInfo: false,
+            debugInfo: false,
             diagnostics: diagnostics,
             isStrictMode: false
         )
@@ -420,6 +420,48 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
     }
 
+    func testBuildKIRUsesResolvedOperatorOverloadCallForBinaryExpression() throws {
+        let source = """
+        operator fun Int.plus(other: Int): Int = this - other
+        fun main(): Int = 7 + 3
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let plusSymbol = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
+                ctx.interner.resolve(symbol.name) == "plus" &&
+                symbol.kind == .function &&
+                !symbol.flags.contains(.synthetic)
+            }))
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case .function(let function) = decl else {
+                    return nil
+                }
+                return ctx.interner.resolve(function.name) == "main" ? function : nil
+            }.first
+            let body = try XCTUnwrap(mainFunction?.body)
+
+            XCTAssertTrue(body.contains { instruction in
+                guard case .call(let symbol, let callee, let arguments, _, _) = instruction else {
+                    return false
+                }
+                return symbol == plusSymbol.id &&
+                    ctx.interner.resolve(callee) == "plus" &&
+                    arguments.count == 2
+            })
+            XCTAssertFalse(body.contains { instruction in
+                guard case .binary(let op, _, _, _) = instruction else {
+                    return false
+                }
+                return op == .add
+            })
+        }
+    }
+
     func testArrayAccessAndAssignmentLowerToRuntimeCallsWithExpectedThrowFlags() throws {
         let source = """
         fun main(): Any? {
@@ -526,6 +568,11 @@ final class BackendPipelineCoverageTests: XCTestCase {
         let completionStored = arena.appendExpr(.temporary(5))
         let completionLoaded = arena.appendExpr(.temporary(6))
         let throwingResult = arena.appendExpr(.temporary(7))
+        let whenCondition = arena.appendExpr(.boolLiteral(true))
+        let whenResult = arena.appendExpr(.temporary(8))
+        let selectResult = arena.appendExpr(.temporary(9))
+        let continuationResult = arena.appendExpr(.temporary(10))
+        let stateExitResult = arena.appendExpr(.temporary(11))
 
         let main = KIRFunction(
             symbol: SymbolID(rawValue: 1200),
@@ -574,6 +621,29 @@ final class BackendPipelineCoverageTests: XCTestCase {
                     result: completionLoaded,
                     canThrow: false
                 ),
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("kk_when_select"),
+                    arguments: [whenCondition, concatResult, completionLoaded],
+                    result: whenResult,
+                    canThrow: false
+                ),
+                .select(condition: whenCondition, thenValue: whenResult, elseValue: concatResult, result: selectResult),
+                .call(symbol: nil, callee: interner.intern("println"), arguments: [selectResult], result: nil, canThrow: false),
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("kk_coroutine_continuation_new"),
+                    arguments: [labelValue],
+                    result: continuationResult,
+                    canThrow: false
+                ),
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("kk_coroutine_state_exit"),
+                    arguments: [continuationResult, completionLoaded],
+                    result: stateExitResult,
+                    canThrow: false
+                ),
                 .call(symbol: nil, callee: interner.intern("external_throwing"), arguments: [], result: throwingResult, canThrow: true),
                 .returnUnit
             ],
@@ -590,7 +660,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         let backend = LLVMCAPIBackend(
             target: defaultTargetTriple(),
             optLevel: .O0,
-            emitsDebugInfo: false,
+            debugInfo: false,
             diagnostics: DiagnosticEngine(),
             isStrictMode: true
         )
@@ -608,6 +678,16 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertTrue(ir.contains("@kk_coroutine_state_get_spill"))
         XCTAssertTrue(ir.contains("@kk_coroutine_state_set_completion"))
         XCTAssertTrue(ir.contains("@kk_coroutine_state_get_completion"))
+        XCTAssertTrue(ir.contains("@kk_println_any"))
+        XCTAssertTrue(ir.contains("@kk_register_frame_map"))
+        XCTAssertTrue(ir.contains("@kk_push_frame"))
+        XCTAssertTrue(ir.contains("@kk_pop_frame"))
+        XCTAssertTrue(ir.contains("@kk_register_coroutine_root"))
+        XCTAssertTrue(ir.contains("@kk_unregister_coroutine_root"))
+        XCTAssertTrue(ir.contains("coroutine_root_register"))
+        XCTAssertTrue(ir.contains("coroutine_root_unregister"))
+        XCTAssertTrue(ir.contains("select i1"))
+        XCTAssertTrue(ir.contains("thrown_slot_"))
         XCTAssertTrue(ir.contains("@external_throwing"))
     }
 
@@ -717,6 +797,54 @@ final class BackendPipelineCoverageTests: XCTestCase {
                 }
                 XCTAssertFalse(calls.contains("plus1"))
                 XCTAssertTrue(calls.contains("kk_op_add"))
+            }
+        }
+    }
+
+    func testLinkPhaseAutoLinksKotlinLibraryObjectForCrossModuleCall() throws {
+        let librarySource = """
+        package extdemo
+        fun plus(v: Int) = v + 1
+        """
+        try withTemporaryFile(contents: librarySource) { libraryPath in
+            let libraryBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let libraryCtx = makeCompilationContext(
+                inputs: [libraryPath],
+                moduleName: "ExtDemo",
+                emit: .library,
+                outputPath: libraryBase
+            )
+            try runToKIR(libraryCtx)
+            try LoweringPhase().run(libraryCtx)
+            try CodegenPhase().run(libraryCtx)
+
+            let appSource = """
+            import extdemo.plus
+            fun main() = plus(41)
+            """
+            try withTemporaryFile(contents: appSource) { appPath in
+                let outputPath = FileManager.default.temporaryDirectory
+                    .appendingPathComponent(UUID().uuidString)
+                    .path
+                let appCtx = makeCompilationContext(
+                    inputs: [appPath],
+                    moduleName: "CrossModuleApp",
+                    emit: .executable,
+                    outputPath: outputPath,
+                    searchPaths: [libraryBase + ".kklib"]
+                )
+                try runToKIR(appCtx)
+                try LoweringPhase().run(appCtx)
+                try CodegenPhase().run(appCtx)
+                try LinkPhase().run(appCtx)
+
+                XCTAssertTrue(FileManager.default.fileExists(atPath: outputPath))
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: outputPath)
+                process.arguments = []
+                try process.run()
+                process.waitUntilExit()
+                XCTAssertEqual(process.terminationStatus, 42)
             }
         }
     }
@@ -906,6 +1034,171 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
     }
 
+    func testLibraryMetadataExportsTypeSignatures() throws {
+        let source = """
+        package metaexport
+        fun id(v: Int): Int = v
+        val answer: Int = 42
+        """
+        try withTemporaryFile(contents: source) { path in
+            let libBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "MetaExport",
+                emit: .library,
+                outputPath: libBase
+            )
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+
+            let metadataPath = libBase + ".kklib/metadata.bin"
+            let metadata = try String(contentsOfFile: metadataPath, encoding: .utf8)
+            XCTAssertTrue(metadata.contains("function "))
+            XCTAssertTrue(metadata.contains("property "))
+            XCTAssertTrue(metadata.contains("sig=F1<I,I>"))
+            XCTAssertTrue(metadata.contains("sig=I"))
+        }
+    }
+
+    func testLibraryImportRestoresFunctionAndPropertyTypeSignatures() throws {
+        let fm = FileManager.default
+        let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let libDir = baseDir.appendingPathExtension("kklib")
+        try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
+
+        let manifest = """
+        {
+          "formatVersion": 1,
+          "moduleName": "ExtTyped",
+          "metadata": "metadata.bin"
+        }
+        """
+        let metadata = """
+        symbols=2
+        function _ fq=ext.id arity=1 suspend=0 sig=F1<I,I>
+        property _ fq=ext.answer sig=I
+        """
+        try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
+
+        try withTemporaryFile(contents: "fun main() = 0") { path in
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "TypedImport",
+                emit: .kirDump,
+                searchPaths: [libDir.path]
+            )
+            try runToKIR(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let ext = ctx.interner.intern("ext")
+            let idName = ctx.interner.intern("id")
+            let answerName = ctx.interner.intern("answer")
+
+            let functionSymbol = try XCTUnwrap(sema.symbols.lookupAll(fqName: [ext, idName]).first)
+            let propertySymbol = try XCTUnwrap(sema.symbols.lookupAll(fqName: [ext, answerName]).first)
+            let functionSignature = try XCTUnwrap(sema.symbols.functionSignature(for: functionSymbol))
+            let propertyType = try XCTUnwrap(sema.symbols.propertyType(for: propertySymbol))
+
+            XCTAssertEqual(functionSignature.parameterTypes.count, 1)
+            XCTAssertEqual(functionSignature.isSuspend, false)
+            XCTAssertEqual(sema.types.kind(of: functionSignature.parameterTypes[0]), .primitive(.int, .nonNull))
+            XCTAssertEqual(sema.types.kind(of: functionSignature.returnType), .primitive(.int, .nonNull))
+            XCTAssertEqual(sema.types.kind(of: propertyType), .primitive(.int, .nonNull))
+        }
+    }
+
+    func testLibraryImportRestoresExplicitNominalLayoutSlotsAndOffsets() throws {
+        let fm = FileManager.default
+        let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let libDir = baseDir.appendingPathExtension("kklib")
+        try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
+
+        let manifest = """
+        {
+          "formatVersion": 1,
+          "moduleName": "ExtLayout",
+          "metadata": "metadata.bin"
+        }
+        """
+        let metadata = """
+        symbols=4
+        interface _ fq=ext.Face
+        class _ fq=ext.Box fields=1 layoutWords=3 vtable=1 itable=1 fieldOffsets=ext.Box.value@2 vtableSlots=ext.Box.get#0#0@0 itableSlots=ext.Face@0
+        function _ fq=ext.Box.get arity=0 suspend=0 sig=F0<I>
+        property _ fq=ext.Box.value sig=I
+        """
+        try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
+
+        try withTemporaryFile(contents: "fun main() = 0") { path in
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "LayoutImport",
+                emit: .kirDump,
+                searchPaths: [libDir.path]
+            )
+            try runToKIR(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let ext = ctx.interner.intern("ext")
+            let box = ctx.interner.intern("Box")
+            let face = ctx.interner.intern("Face")
+            let get = ctx.interner.intern("get")
+            let value = ctx.interner.intern("value")
+
+            let boxSymbol = try XCTUnwrap(sema.symbols.lookupAll(fqName: [ext, box]).first)
+            let faceSymbol = try XCTUnwrap(sema.symbols.lookupAll(fqName: [ext, face]).first)
+            let getSymbol = try XCTUnwrap(sema.symbols.lookupAll(fqName: [ext, box, get]).first)
+            let valueSymbol = try XCTUnwrap(sema.symbols.lookupAll(fqName: [ext, box, value]).first)
+            let layout = try XCTUnwrap(sema.symbols.nominalLayout(for: boxSymbol))
+
+            XCTAssertEqual(layout.fieldOffsets[valueSymbol], 2)
+            XCTAssertEqual(layout.vtableSlots[getSymbol], 0)
+            XCTAssertEqual(layout.itableSlots[faceSymbol], 0)
+            XCTAssertEqual(layout.vtableSize, 1)
+            XCTAssertEqual(layout.itableSize, 1)
+        }
+    }
+
+    func testLibraryImportReportsMetadataInconsistencyDiagnostics() throws {
+        let fm = FileManager.default
+        let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let libDir = baseDir.appendingPathExtension("kklib")
+        try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
+
+        let manifest = """
+        {
+          "formatVersion": 1,
+          "moduleName": "ExtBroken",
+          "metadata": "metadata.bin"
+        }
+        """
+        let metadata = """
+        symbols=2
+        class _ fq=ext.Box vtable=1 vtableSlots=ext.Box.get#0#0@1,ext.Box.missing#0#0@0
+        function _ fq=ext.Box.get arity=0 suspend=0 sig=broken
+        """
+        try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
+
+        try withTemporaryFile(contents: "fun main() = 0") { path in
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "BrokenImport",
+                emit: .kirDump,
+                searchPaths: [libDir.path]
+            )
+            try runToKIR(ctx)
+
+            let codes = Set(ctx.diagnostics.diagnostics.map(\.code))
+            XCTAssertTrue(codes.contains("KSWIFTK-LIB-0003"))
+            XCTAssertTrue(codes.contains("KSWIFTK-LIB-0004"))
+            XCTAssertTrue(codes.contains("KSWIFTK-LIB-0005"))
+        }
+    }
+
     func testLinkPhaseReportsMissingMainAndCanLinkExecutable() throws {
         try withTemporaryFile(contents: "fun notMain() = 0") { path in
             let out = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
@@ -943,13 +1236,88 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
     }
 
+    func testLinkPhaseAutoLinksKklibManifestObjectsAndDeduplicates() throws {
+        let fm = FileManager.default
+        let workspaceDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try fm.createDirectory(at: workspaceDir, withIntermediateDirectories: true)
+        defer { try? fm.removeItem(at: workspaceDir) }
+
+        let libraryDir = workspaceDir.appendingPathComponent("NativePlus.kklib")
+        let objectsDir = libraryDir.appendingPathComponent("objects")
+        try fm.createDirectory(at: objectsDir, withIntermediateDirectories: true)
+
+        let cSource = """
+        #include <stdint.h>
+        intptr_t plus(intptr_t value, intptr_t* outThrown) {
+            (void)outThrown;
+            return value + 1;
+        }
+        """
+        let cSourceURL = workspaceDir.appendingPathComponent("native_plus.c")
+        try cSource.write(to: cSourceURL, atomically: true, encoding: .utf8)
+
+        let objectURL = objectsDir.appendingPathComponent("native_plus.o")
+        _ = try CommandRunner.run(
+            executable: "/usr/bin/clang",
+            arguments: ["-c", cSourceURL.path, "-o", objectURL.path]
+        )
+
+        let manifest = """
+        {
+          "formatVersion": 1,
+          "moduleName": "NativePlus",
+          "kotlinLanguageVersion": "2.3.10",
+          "compilerVersion": "0.1.0",
+          "target": "arm64-apple-macosx",
+          "objects": ["objects/native_plus.o", "objects/native_plus.o"],
+          "metadata": "metadata.bin"
+        }
+        """
+        try manifest.write(
+            to: libraryDir.appendingPathComponent("manifest.json"),
+            atomically: true,
+            encoding: .utf8
+        )
+        try "symbols=0\n".write(
+            to: libraryDir.appendingPathComponent("metadata.bin"),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        let appSource = """
+        fun main() = plus(41)
+        """
+        try withTemporaryFile(contents: appSource) { appPath in
+            let outputPath = workspaceDir.appendingPathComponent("AppExecutable").path
+            let appCtx = makeCompilationContext(
+                inputs: [appPath],
+                moduleName: "App",
+                emit: .executable,
+                outputPath: outputPath,
+                searchPaths: [libraryDir.path, workspaceDir.path]
+            )
+            try runToKIR(appCtx)
+            try LoweringPhase().run(appCtx)
+            try CodegenPhase().run(appCtx)
+            try LinkPhase().run(appCtx)
+
+            XCTAssertTrue(fm.fileExists(atPath: outputPath))
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: outputPath)
+            process.arguments = []
+            try process.run()
+            process.waitUntilExit()
+            XCTAssertEqual(process.terminationStatus, 42)
+        }
+    }
+
     func testLLVMBackendEmitsOutputsAndReportsCommandFailure() throws {
         let interner = StringInterner()
         let module = makeComplexKIRModule(interner: interner)
         let backend = LLVMBackend(
             target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: "14.0"),
             optLevel: .O2,
-            emitsDebugInfo: true,
+            debugInfo: true,
             diagnostics: DiagnosticEngine()
         )
 
@@ -966,6 +1334,11 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertTrue(ir.contains("kk_register_frame_map"))
         XCTAssertTrue(ir.contains("kk_push_frame"))
         XCTAssertTrue(ir.contains("kk_pop_frame"))
+        XCTAssertTrue(ir.contains("kk_frame_map_offsets_"))
+        XCTAssertTrue(ir.contains("kk_register_module_globals"))
+        XCTAssertTrue(ir.contains("kk_unregister_module_globals"))
+        XCTAssertTrue(ir.contains("kk_register_global_root"))
+        XCTAssertTrue(ir.contains("kk_unregister_global_root"))
 
         let fnName = LLVMBackend.cFunctionSymbol(
             for: KIRFunction(
@@ -985,7 +1358,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         let failingBackend = LLVMBackend(
             target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil),
             optLevel: .O0,
-            emitsDebugInfo: false,
+            debugInfo: false,
             diagnostics: failingDiagnostics
         )
         let missingDir = tempDir.appendingPathComponent(UUID().uuidString).path + "/sub/out.o"
@@ -993,6 +1366,63 @@ final class BackendPipelineCoverageTests: XCTestCase {
             try failingBackend.emitObject(module: module, runtime: runtime, outputObjectPath: missingDir, interner: interner)
         )
         XCTAssertTrue(failingDiagnostics.diagnostics.contains { $0.code == "KSWIFTK-BACKEND-0001" })
+    }
+
+    func testLLVMBackendEmitsCoroutineRootLifecycleHooks() throws {
+        let interner = StringInterner()
+        let types = TypeSystem()
+        let arena = KIRArena()
+
+        let mainSymbol = SymbolID(rawValue: 990)
+        let functionIDValue = arena.appendExpr(.intLiteral(7))
+        let returnSeed = arena.appendExpr(.intLiteral(0))
+        let continuation = arena.appendExpr(.temporary(1))
+        let exited = arena.appendExpr(.temporary(2))
+
+        let main = KIRFunction(
+            symbol: mainSymbol,
+            name: interner.intern("main"),
+            params: [],
+            returnType: types.anyType,
+            body: [
+                .constValue(result: functionIDValue, value: .intLiteral(7)),
+                .constValue(result: returnSeed, value: .intLiteral(0)),
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("kk_coroutine_continuation_new"),
+                    arguments: [functionIDValue],
+                    result: continuation,
+                    canThrow: false
+                ),
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("kk_coroutine_state_exit"),
+                    arguments: [continuation, returnSeed],
+                    result: exited,
+                    canThrow: false
+                ),
+                .returnValue(exited)
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+
+        let mainID = arena.appendDecl(.function(main))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [mainID])], arena: arena)
+
+        let backend = LLVMBackend(
+            target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: "14.0"),
+            optLevel: .O0,
+            debugInfo: false,
+            diagnostics: DiagnosticEngine()
+        )
+        let runtime = RuntimeLinkInfo(libraryPaths: [], libraries: [], extraObjects: [])
+        let irPath = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".ll").path
+
+        try backend.emitLLVMIR(module: module, runtime: runtime, outputIRPath: irPath, interner: interner)
+        let ir = try String(contentsOfFile: irPath, encoding: .utf8)
+        XCTAssertTrue(ir.contains("call void @kk_register_coroutine_root"))
+        XCTAssertTrue(ir.contains("call void @kk_unregister_coroutine_root"))
     }
 
     func testLLVMBackendSupportsExternalThrowChannelCalls() throws {
@@ -1021,7 +1451,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         let backend = LLVMBackend(
             target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: "14.0"),
             optLevel: .O0,
-            emitsDebugInfo: false,
+            debugInfo: false,
             diagnostics: DiagnosticEngine()
         )
 
@@ -1044,7 +1474,9 @@ final class BackendPipelineCoverageTests: XCTestCase {
             return fixture.interner.resolve(callee)
         }
         XCTAssertTrue(callees.contains("iterator"))
-        XCTAssertTrue(callees.contains("kk_for_lowered"))
+        XCTAssertTrue(callees.contains("hasNext"))
+        XCTAssertTrue(callees.contains("next"))
+        XCTAssertFalse(callees.contains("kk_for_lowered"))
         XCTAssertTrue(callees.contains("kk_when_select"))
         XCTAssertTrue(callees.contains("kk_property_access"))
         XCTAssertTrue(callees.contains("kk_lambda_invoke"))
@@ -1475,6 +1907,143 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertEqual(throwFlags["kk_coroutine_state_get_spill"]?.allSatisfy({ $0 == false }), true)
         XCTAssertEqual(throwFlags["kk_coroutine_state_set_completion"]?.allSatisfy({ $0 == false }), true)
         XCTAssertEqual(throwFlags["kk_coroutine_state_get_completion"]?.allSatisfy({ $0 == false }), true)
+    }
+
+    func testCoroutineLoweringSynthesizesContinuationNominalTypeLayoutAndSignature() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let types = TypeSystem()
+        let symbols = SymbolTable()
+        let bindings = BindingTable()
+        let diagnostics = DiagnosticEngine()
+
+        let packageName = interner.intern("pkg")
+        let suspendName = interner.intern("suspendTarget")
+        let parameterName = interner.intern("value")
+        let range = makeRange()
+        let intType = types.make(.primitive(.int, .nonNull))
+
+        let suspendSymbol = symbols.define(
+            kind: .function,
+            name: suspendName,
+            fqName: [packageName, suspendName],
+            declSite: range,
+            visibility: .public,
+            flags: [.suspendFunction]
+        )
+        let parameterSymbol = symbols.define(
+            kind: .valueParameter,
+            name: parameterName,
+            fqName: [packageName, suspendName, parameterName],
+            declSite: range,
+            visibility: .private
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType],
+                returnType: intType,
+                isSuspend: true,
+                valueParameterSymbols: [parameterSymbol]
+            ),
+            for: suspendSymbol
+        )
+
+        let liveValue = arena.appendExpr(.temporary(0), type: intType)
+        let callResult = arena.appendExpr(.temporary(1), type: intType)
+        let sumResult = arena.appendExpr(.temporary(2), type: intType)
+
+        let suspendFunction = KIRFunction(
+            symbol: suspendSymbol,
+            name: suspendName,
+            params: [KIRParameter(symbol: parameterSymbol, type: intType)],
+            returnType: intType,
+            body: [
+                .constValue(result: liveValue, value: .symbolRef(parameterSymbol)),
+                .call(
+                    symbol: suspendSymbol,
+                    callee: suspendName,
+                    arguments: [liveValue],
+                    result: callResult,
+                    canThrow: false
+                ),
+                .binary(op: .add, lhs: liveValue, rhs: callResult, result: sumResult),
+                .returnValue(sumResult)
+            ],
+            isSuspend: true,
+            isInline: false
+        )
+
+        let suspendID = arena.appendDecl(.function(suspendFunction))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [suspendID])], arena: arena)
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(
+                moduleName: "CoroutineContinuationType",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            sourceManager: SourceManager(),
+            diagnostics: diagnostics,
+            interner: interner
+        )
+        ctx.kir = module
+        ctx.sema = SemaModule(
+            symbols: symbols,
+            types: types,
+            bindings: bindings,
+            diagnostics: diagnostics
+        )
+
+        try LoweringPhase().run(ctx)
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let continuationTypeSymbol = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
+            symbol.kind == .class &&
+                symbol.flags.contains(.synthetic) &&
+                interner.resolve(symbol.name).contains("kk_suspend_suspendTarget$Cont")
+        }))
+
+        let continuationFields = sema.symbols.allSymbols().filter { symbol in
+            symbol.kind == .field &&
+                symbol.fqName.count == continuationTypeSymbol.fqName.count + 1 &&
+                zip(continuationTypeSymbol.fqName, symbol.fqName).allSatisfy { $0 == $1 }
+        }
+        let fieldNames = Set(continuationFields.map { interner.resolve($0.name) })
+        XCTAssertTrue(fieldNames.contains("$label"))
+        XCTAssertTrue(fieldNames.contains("$completion"))
+        XCTAssertTrue(fieldNames.contains("$spill0"))
+
+        let layout = try XCTUnwrap(sema.symbols.nominalLayout(for: continuationTypeSymbol.id))
+        XCTAssertGreaterThanOrEqual(layout.instanceFieldCount, 3)
+        let labelField = try XCTUnwrap(continuationFields.first(where: { interner.resolve($0.name) == "$label" }))
+        let completionField = try XCTUnwrap(continuationFields.first(where: { interner.resolve($0.name) == "$completion" }))
+        let spillField = try XCTUnwrap(continuationFields.first(where: { interner.resolve($0.name) == "$spill0" }))
+        let labelOffset = try XCTUnwrap(layout.fieldOffsets[labelField.id])
+        let completionOffset = try XCTUnwrap(layout.fieldOffsets[completionField.id])
+        let spillOffset = try XCTUnwrap(layout.fieldOffsets[spillField.id])
+        XCTAssertLessThan(labelOffset, completionOffset)
+        XCTAssertLessThan(completionOffset, spillOffset)
+
+        let loweredSuspendSymbol = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
+            symbol.kind == .function && interner.resolve(symbol.name).hasPrefix("kk_suspend_suspendTarget")
+        }))
+        let loweredSignature = try XCTUnwrap(sema.symbols.functionSignature(for: loweredSuspendSymbol.id))
+        let continuationParameterType = try XCTUnwrap(loweredSignature.parameterTypes.last)
+        guard case .classType(let classType) = types.kind(of: continuationParameterType) else {
+            XCTFail("Expected lowered continuation parameter type to be class type.")
+            return
+        }
+        XCTAssertEqual(classType.classSymbol, continuationTypeSymbol.id)
+
+        let nominalSymbols = module.arena.declarations.compactMap { decl -> SymbolID? in
+            guard case .nominalType(let nominal) = decl else {
+                return nil
+            }
+            return nominal.symbol
+        }
+        XCTAssertTrue(nominalSymbols.contains(continuationTypeSymbol.id))
     }
 
     func testSuspendExceptionPropagationKeepsThrowingChannelAcrossSuspendChain() throws {
@@ -2115,6 +2684,341 @@ final class BackendPipelineCoverageTests: XCTestCase {
             XCTAssertTrue(callees.contains("hasNext"))
             XCTAssertTrue(callees.contains("next"))
         }
+    }
+
+    func testBuildKIRAddsHiddenTypeTokenForInlineReifiedCalls() throws {
+        let interner = StringInterner()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+        let bindings = BindingTable()
+        let diagnostics = DiagnosticEngine()
+        let astArena = ASTArena()
+        let range = makeRange()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let tName = interner.intern("T")
+        let valueName = interner.intern("value")
+        let pickName = interner.intern("pick")
+        let mainName = interner.intern("main")
+        let packageName = interner.intern("pkg")
+
+        let valueRefExpr = astArena.appendExpr(.nameRef(valueName, range))
+        let pickDeclID = astArena.appendDecl(.funDecl(FunDecl(
+            range: range,
+            name: pickName,
+            modifiers: [.inline],
+            typeParams: [TypeParamDecl(name: tName, variance: .invariant, isReified: true)],
+            receiverType: nil,
+            valueParams: [ValueParamDecl(name: valueName, type: nil)],
+            returnType: nil,
+            body: .expr(valueRefExpr, range),
+            isSuspend: false,
+            isInline: true
+        )))
+
+        let intArgExpr = astArena.appendExpr(.intLiteral(7, range))
+        let pickCalleeExpr = astArena.appendExpr(.nameRef(pickName, range))
+        let pickCallExpr = astArena.appendExpr(.call(
+            callee: pickCalleeExpr,
+            args: [CallArgument(expr: intArgExpr)],
+            range: range
+        ))
+        let mainDeclID = astArena.appendDecl(.funDecl(FunDecl(
+            range: range,
+            name: mainName,
+            modifiers: [],
+            typeParams: [],
+            receiverType: nil,
+            valueParams: [],
+            returnType: nil,
+            body: .expr(pickCallExpr, range),
+            isSuspend: false,
+            isInline: false
+        )))
+
+        let astFile = ASTFile(
+            fileID: FileID(rawValue: 0),
+            packageFQName: [packageName],
+            imports: [],
+            topLevelDecls: [pickDeclID, mainDeclID]
+        )
+        let astModule = ASTModule(files: [astFile], arena: astArena, declarationCount: 2, tokenCount: 0)
+
+        let pickSymbol = symbols.define(
+            kind: .function,
+            name: pickName,
+            fqName: [packageName, pickName],
+            declSite: range,
+            visibility: .public,
+            flags: [.inlineFunction]
+        )
+        let mainSymbol = symbols.define(
+            kind: .function,
+            name: mainName,
+            fqName: [packageName, mainName],
+            declSite: range,
+            visibility: .public
+        )
+        let valueSymbol = symbols.define(
+            kind: .valueParameter,
+            name: valueName,
+            fqName: [packageName, interner.intern("$pick"), valueName],
+            declSite: range,
+            visibility: .private
+        )
+        let typeParameterSymbol = symbols.define(
+            kind: .typeParameter,
+            name: tName,
+            fqName: [packageName, interner.intern("$pick"), tName],
+            declSite: range,
+            visibility: .private,
+            flags: [.reifiedTypeParameter]
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType],
+                returnType: intType,
+                valueParameterSymbols: [valueSymbol],
+                typeParameterSymbols: [typeParameterSymbol],
+                reifiedTypeParameterIndices: Set([0])
+            ),
+            for: pickSymbol
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [],
+                returnType: intType
+            ),
+            for: mainSymbol
+        )
+
+        bindings.bindDecl(pickDeclID, symbol: pickSymbol)
+        bindings.bindDecl(mainDeclID, symbol: mainSymbol)
+        bindings.bindIdentifier(valueRefExpr, symbol: valueSymbol)
+        bindings.bindExprType(valueRefExpr, type: intType)
+        bindings.bindExprType(intArgExpr, type: intType)
+        bindings.bindExprType(pickCallExpr, type: intType)
+        bindings.bindCall(
+            pickCallExpr,
+            binding: CallBinding(
+                chosenCallee: pickSymbol,
+                substitutedTypeArguments: [intType],
+                parameterMapping: [0: 0]
+            )
+        )
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(
+                moduleName: "ReifiedTokenKIR",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            sourceManager: SourceManager(),
+            diagnostics: diagnostics,
+            interner: interner
+        )
+        ctx.ast = astModule
+        ctx.sema = SemaModule(
+            symbols: symbols,
+            types: types,
+            bindings: bindings,
+            diagnostics: diagnostics
+        )
+
+        try BuildKIRPhase().run(ctx)
+
+        let kir = try XCTUnwrap(ctx.kir)
+        let pickFunction = try XCTUnwrap(kir.arena.declarations.compactMap { decl -> KIRFunction? in
+            guard case .function(let function) = decl else {
+                return nil
+            }
+            return function.symbol == pickSymbol ? function : nil
+        }.first)
+        let mainFunction = try XCTUnwrap(kir.arena.declarations.compactMap { decl -> KIRFunction? in
+            guard case .function(let function) = decl else {
+                return nil
+            }
+            return function.symbol == mainSymbol ? function : nil
+        }.first)
+
+        let expectedTokenSymbol = SymbolID(rawValue: -20_000 - typeParameterSymbol.rawValue)
+        XCTAssertEqual(pickFunction.params.count, 2)
+        XCTAssertEqual(pickFunction.params.last?.symbol, expectedTokenSymbol)
+
+        guard let callInstruction = mainFunction.body.first(where: { instruction in
+            guard case .call(let symbol, _, _, _, _) = instruction else {
+                return false
+            }
+            return symbol == pickSymbol
+        }),
+        case .call(_, _, let arguments, _, _) = callInstruction else {
+            XCTFail("Expected main to call inline reified function.")
+            return
+        }
+        XCTAssertEqual(arguments.count, 2)
+        let tokenArgument = arguments[1]
+        guard case .intLiteral(let tokenLiteral)? = kir.arena.expr(tokenArgument) else {
+            XCTFail("Expected hidden type token argument to be lowered as int literal.")
+            return
+        }
+        XCTAssertEqual(tokenLiteral, Int64(intType.rawValue))
+    }
+
+    func testInlineLoweringMapsReifiedTypeTokenSymbolRefToHiddenArgument() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+        let bindings = BindingTable()
+        let diagnostics = DiagnosticEngine()
+
+        let packageName = interner.intern("demo")
+        let mainName = interner.intern("main")
+        let inlineName = interner.intern("inlineToken")
+        let typeParameterName = interner.intern("T")
+        let intType = types.make(.primitive(.int, .nonNull))
+
+        let mainSymbol = symbols.define(
+            kind: .function,
+            name: mainName,
+            fqName: [packageName, mainName],
+            declSite: nil,
+            visibility: .public
+        )
+        let inlineSymbol = symbols.define(
+            kind: .function,
+            name: inlineName,
+            fqName: [packageName, inlineName],
+            declSite: nil,
+            visibility: .public,
+            flags: [.inlineFunction]
+        )
+        let typeParameterSymbol = symbols.define(
+            kind: .typeParameter,
+            name: typeParameterName,
+            fqName: [packageName, interner.intern("$inlineToken"), typeParameterName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.reifiedTypeParameter]
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [],
+                returnType: intType,
+                typeParameterSymbols: [typeParameterSymbol],
+                reifiedTypeParameterIndices: Set([0])
+            ),
+            for: inlineSymbol
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [],
+                returnType: intType
+            ),
+            for: mainSymbol
+        )
+
+        let hiddenTokenSymbol = SymbolID(rawValue: -20_000 - typeParameterSymbol.rawValue)
+        let inlineTokenExpr = arena.appendExpr(.temporary(0), type: intType)
+        let callerTokenExpr = arena.appendExpr(.intLiteral(321), type: intType)
+        let callerResultExpr = arena.appendExpr(.temporary(1), type: intType)
+
+        let inlineFunction = KIRFunction(
+            symbol: inlineSymbol,
+            name: inlineName,
+            params: [KIRParameter(symbol: hiddenTokenSymbol, type: intType)],
+            returnType: intType,
+            body: [
+                .constValue(result: inlineTokenExpr, value: .symbolRef(typeParameterSymbol)),
+                .returnValue(inlineTokenExpr)
+            ],
+            isSuspend: false,
+            isInline: true
+        )
+        let mainFunction = KIRFunction(
+            symbol: mainSymbol,
+            name: mainName,
+            params: [],
+            returnType: intType,
+            body: [
+                .constValue(result: callerTokenExpr, value: .intLiteral(321)),
+                .call(
+                    symbol: inlineSymbol,
+                    callee: inlineName,
+                    arguments: [callerTokenExpr],
+                    result: callerResultExpr,
+                    canThrow: false
+                ),
+                .returnValue(callerResultExpr)
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+
+        let mainDeclID = arena.appendDecl(.function(mainFunction))
+        _ = arena.appendDecl(.function(inlineFunction))
+        let module = KIRModule(
+            files: [KIRFile(fileID: FileID(rawValue: 0), decls: [mainDeclID])],
+            arena: arena
+        )
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(
+                moduleName: "InlineReifiedToken",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            sourceManager: SourceManager(),
+            diagnostics: diagnostics,
+            interner: interner
+        )
+        ctx.kir = module
+        ctx.sema = SemaModule(
+            symbols: symbols,
+            types: types,
+            bindings: bindings,
+            diagnostics: diagnostics
+        )
+
+        try LoweringPhase().run(ctx)
+
+        guard case .function(let loweredMain)? = module.arena.decl(mainDeclID) else {
+            XCTFail("Expected lowered main function.")
+            return
+        }
+
+        let loweredCallees = loweredMain.body.compactMap { instruction -> InternedString? in
+            guard case .call(_, let callee, _, _, _) = instruction else {
+                return nil
+            }
+            return callee
+        }
+        XCTAssertFalse(loweredCallees.contains(inlineName))
+
+        let symbolRefConstants = loweredMain.body.compactMap { instruction -> SymbolID? in
+            guard case .constValue(_, let value) = instruction,
+                  case .symbolRef(let symbol) = value else {
+                return nil
+            }
+            return symbol
+        }
+        XCTAssertFalse(symbolRefConstants.contains(typeParameterSymbol))
+
+        let returnExpr = try XCTUnwrap(loweredMain.body.compactMap { instruction -> KIRExprID? in
+            guard case .returnValue(let value) = instruction else {
+                return nil
+            }
+            return value
+        }.first)
+        guard case .intLiteral(let returnedLiteral)? = module.arena.expr(returnExpr) else {
+            XCTFail("Expected inline result to resolve to hidden token argument value.")
+            return
+        }
+        XCTAssertEqual(returnedLiteral, 321)
     }
 
     private struct LoweringRewriteFixture {
