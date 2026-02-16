@@ -224,18 +224,6 @@ extension DataFlowSemaPassPhase {
                     for: secCtorSymbol
                 )
 
-                if let delegation = secondaryCtor.delegationCall {
-                    if delegation.kind == .super_ {
-                        let superTypes = symbols.directSupertypes(for: symbol)
-                        if superTypes.isEmpty {
-                            diagnostics.error(
-                                "KSWIFTK-SEMA-0021",
-                                "Cannot delegate to super: class has no superclass.",
-                                range: delegation.range
-                            )
-                        }
-                    }
-                }
             }
 
             if declaration.kind == .enumClass {
@@ -462,5 +450,35 @@ extension DataFlowSemaPassPhase {
 
     private func isOverloadableSymbol(_ kind: SymbolKind) -> Bool {
         kind == .function || kind == .constructor
+    }
+
+    func validateConstructorDelegation(
+        ast: ASTModule,
+        symbols: SymbolTable,
+        diagnostics: DiagnosticEngine
+    ) {
+        for file in ast.sortedFiles {
+            for declID in file.topLevelDecls {
+                guard let decl = ast.arena.decl(declID),
+                      case .classDecl(let classDecl) = decl,
+                      let classSymbol = symbols.allSymbols().first(where: { $0.declSite == classDecl.range && $0.kind == .class || $0.kind == .enumClass })?.id else {
+                    continue
+                }
+                for secondaryCtor in classDecl.secondaryConstructors {
+                    guard let delegation = secondaryCtor.delegationCall,
+                          delegation.kind == .super_ else {
+                        continue
+                    }
+                    let superTypes = symbols.directSupertypes(for: classSymbol)
+                    if superTypes.isEmpty {
+                        diagnostics.error(
+                            "KSWIFTK-SEMA-0021",
+                            "Cannot delegate to super: class has no superclass.",
+                            range: delegation.range
+                        )
+                    }
+                }
+            }
+        }
     }
 }
