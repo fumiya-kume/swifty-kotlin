@@ -351,6 +351,10 @@ public final class CodegenPhase: CompilerPhase {
                sema.symbols.propertyType(for: symbol.id) != nil {
                 fields.append("sig=\(mangler.mangledSignature(for: symbol, symbols: sema.symbols, types: sema.types, nameResolver: { ctx.interner.resolve($0) }))")
             }
+            if symbol.kind == .typeAlias,
+               sema.symbols.typeAliasUnderlyingType(for: symbol.id) != nil {
+                fields.append("sig=\(mangler.mangledSignature(for: symbol, symbols: sema.symbols, types: sema.types, nameResolver: { ctx.interner.resolve($0) }))")
+            }
             if nominalKinds.contains(symbol.kind), let layout = sema.symbols.nominalLayout(for: symbol.id) {
                 fields.append("layoutWords=\(layout.instanceSizeWords)")
                 fields.append("fields=\(layout.instanceFieldCount)")

@@ -22,7 +22,7 @@ extension BuildASTPhase {
             typeParams: declarationTypeParameters(from: nodeID, in: arena, interner: interner),
             primaryConstructorParams: declarationValueParameters(from: nodeID, in: arena, interner: interner, astArena: astArena),
             superTypes: declarationSuperTypes(from: nodeID, in: arena, interner: interner, astArena: astArena),
-            nestedTypeAliases: declarationNestedTypeAliases(from: nodeID, in: arena, interner: interner),
+            nestedTypeAliases: declarationNestedTypeAliases(from: nodeID, in: arena, interner: interner, astArena: astArena),
             enumEntries: declarationEnumEntries(from: nodeID, in: arena, interner: interner),
             initBlocks: declarationInitBlocks(from: nodeID, in: arena, interner: interner, astArena: astArena)
         )
@@ -36,7 +36,7 @@ extension BuildASTPhase {
             modifiers: declarationModifiers(from: nodeID, in: arena),
             typeParams: declarationTypeParameters(from: nodeID, in: arena, interner: interner),
             superTypes: declarationSuperTypes(from: nodeID, in: arena, interner: interner, astArena: astArena),
-            nestedTypeAliases: declarationNestedTypeAliases(from: nodeID, in: arena, interner: interner)
+            nestedTypeAliases: declarationNestedTypeAliases(from: nodeID, in: arena, interner: interner, astArena: astArena)
         )
     }
 
@@ -48,7 +48,7 @@ extension BuildASTPhase {
             name: declarationName(from: nodeID, in: arena, interner: interner),
             modifiers: modifiers,
             superTypes: declarationSuperTypes(from: nodeID, in: arena, interner: interner, astArena: astArena),
-            nestedTypeAliases: declarationNestedTypeAliases(from: nodeID, in: arena, interner: interner),
+            nestedTypeAliases: declarationNestedTypeAliases(from: nodeID, in: arena, interner: interner, astArena: astArena),
             initBlocks: declarationInitBlocks(from: nodeID, in: arena, interner: interner, astArena: astArena)
         )
     }
@@ -92,13 +92,29 @@ extension BuildASTPhase {
         )
     }
 
-    func makeTypeAliasDecl(from nodeID: NodeID, in arena: SyntaxArena, interner: StringInterner) -> TypeAliasDecl {
+    func makeTypeAliasDecl(from nodeID: NodeID, in arena: SyntaxArena, interner: StringInterner, astArena: ASTArena) -> TypeAliasDecl {
         let node = arena.node(nodeID)
         return TypeAliasDecl(
             range: node.range,
             name: declarationName(from: nodeID, in: arena, interner: interner),
-            modifiers: declarationModifiers(from: nodeID, in: arena)
+            modifiers: declarationModifiers(from: nodeID, in: arena),
+            typeParams: declarationTypeParameters(from: nodeID, in: arena, interner: interner),
+            underlyingType: declarationTypeAliasRHS(from: nodeID, in: arena, interner: interner, astArena: astArena)
         )
+    }
+
+    func declarationTypeAliasRHS(
+        from nodeID: NodeID,
+        in arena: SyntaxArena,
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> TypeRefID? {
+        let tokens = collectTokens(from: nodeID, in: arena)
+        guard let assignIndex = tokens.firstIndex(where: { $0.kind == .symbol(.assign) }) else {
+            return nil
+        }
+        let rhsTokens = Array(tokens[(assignIndex + 1)...]).filter { $0.kind != .symbol(.semicolon) }
+        return parseTypeRef(from: rhsTokens, interner: interner, astArena: astArena)
     }
 
     func makeEnumEntryDecl(from nodeID: NodeID, in arena: SyntaxArena, interner: StringInterner) -> EnumEntryDecl {
@@ -272,7 +288,8 @@ extension BuildASTPhase {
     func declarationNestedTypeAliases(
         from nodeID: NodeID,
         in arena: SyntaxArena,
-        interner: StringInterner
+        interner: StringInterner,
+        astArena: ASTArena
     ) -> [TypeAliasDecl] {
         guard let bodyBlockID = arena.children(of: nodeID).compactMap({ child -> NodeID? in
             guard case .node(let childID) = child,
@@ -290,7 +307,7 @@ extension BuildASTPhase {
                   arena.node(childID).kind == .typeAliasDecl else {
                 continue
             }
-            aliases.append(makeTypeAliasDecl(from: childID, in: arena, interner: interner))
+            aliases.append(makeTypeAliasDecl(from: childID, in: arena, interner: interner, astArena: astArena))
         }
         return aliases
     }
