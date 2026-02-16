@@ -24,7 +24,7 @@ public final class KotlinParser {
                 break
             }
 
-            let node: NodeID
+            var node: NodeID
             switch token.kind {
             case .keyword(.package):
                 node = parsePackageHeader()
@@ -36,7 +36,14 @@ public final class KotlinParser {
                 node = parseDeclaration()
                 sawTopLevelDeclOrHeader = true
             default:
+                let before = stream.index
                 node = parseStatement(inBlock: false)
+                if stream.index == before {
+                    var skipChildren: [SyntaxChild] = []
+                    var skipRange = RangeAccumulator()
+                    skipToSynchronizationPoint(inBlock: false, into: &skipChildren, range: &skipRange)
+                    node = arena.appendNode(kind: .statement, range: skipRange.value ?? invalidRange, skipChildren)
+                }
                 sawTopLevelStatement = true
             }
 
@@ -148,7 +155,7 @@ public final class KotlinParser {
         if isIdentifierLike(stream.peek().kind) {
             _ = consumeToken(into: &children, range: &range)
         } else {
-            diagnoseMissing("KSWIFTK-PARSE-0002", "Expected declaration name.")
+            insertMissingToken(expected: .identifier(.invalid), into: &children, range: &range, code: "KSWIFTK-PARSE-0002", message: "Expected declaration name.")
         }
         if supportsTypeParameters && canStartTypeArgumentsInternal(after: lastConsumedToken) {
             children.append(.node(parseTypeArguments()))
@@ -184,7 +191,7 @@ public final class KotlinParser {
         if isIdentifierLike(stream.peek().kind) {
             _ = consumeToken(into: &children, range: &range)
         } else {
-            diagnoseMissing("KSWIFTK-PARSE-0002", "Expected function name.")
+            insertMissingToken(expected: .identifier(.invalid), into: &children, range: &range, code: "KSWIFTK-PARSE-0002", message: "Expected function name.")
         }
 
         if case .symbol(.lParen) = stream.peek().kind {
@@ -213,7 +220,7 @@ public final class KotlinParser {
         if isIdentifierLike(stream.peek().kind) {
             _ = consumeToken(into: &children, range: &range)
         } else {
-            diagnoseMissing("KSWIFTK-PARSE-0002", "Expected property name.")
+            insertMissingToken(expected: .identifier(.invalid), into: &children, range: &range, code: "KSWIFTK-PARSE-0002", message: "Expected property name.")
         }
 
         if case .symbol(.lBrace) = stream.peek().kind {
@@ -238,7 +245,7 @@ public final class KotlinParser {
         if isIdentifierLike(stream.peek().kind) {
             _ = consumeToken(into: &children, range: &range)
         } else {
-            diagnoseMissing("KSWIFTK-PARSE-0002", "Expected typealias name.")
+            insertMissingToken(expected: .identifier(.invalid), into: &children, range: &range, code: "KSWIFTK-PARSE-0002", message: "Expected typealias name.")
         }
         parseTail(inBlock: false, into: &children, range: &range)
 
@@ -261,7 +268,7 @@ public final class KotlinParser {
         if isIdentifierLike(stream.peek().kind) {
             _ = consumeToken(into: &children, range: &range)
         } else {
-            diagnoseMissing("KSWIFTK-PARSE-0002", "Expected enum name.")
+            insertMissingToken(expected: .identifier(.invalid), into: &children, range: &range, code: "KSWIFTK-PARSE-0002", message: "Expected enum name.")
         }
 
         if case .symbol(.lBrace) = stream.peek().kind {
@@ -354,7 +361,7 @@ public final class KotlinParser {
             } else if parseStatementTail(inBlock: true) == .canContinue {
                 children.append(.node(parseStatement(inBlock: true)))
             } else {
-                _ = consumeToken(into: &children, range: &range)
+                skipToSynchronizationPoint(inBlock: true, into: &children, range: &range)
             }
         }
 
@@ -538,7 +545,7 @@ public final class KotlinParser {
             break
         }
         if !consumed {
-            diagnoseMissing("KSWIFTK-PARSE-0003", "Expected name in package/import path.")
+            insertMissingToken(expected: .identifier(.invalid), into: &children, range: &range, code: "KSWIFTK-PARSE-0003", message: "Expected name in package/import path.")
         }
     }
 
@@ -547,7 +554,7 @@ public final class KotlinParser {
             _ = consumeToken(into: &children, range: &range)
             return
         }
-        diagnostics.warning(code, "Expected \(expected).", range: stream.peek().rangeIfAvailable)
+        insertMissingToken(expected: expected, into: &children, range: &range, code: code, message: "Expected \(expected).")
     }
 
     private func consumeIfSymbol(_ symbol: Symbol, into children: inout [SyntaxChild], range: inout RangeAccumulator) -> Bool {
@@ -648,8 +655,76 @@ public final class KotlinParser {
         }
     }
 
-    private func diagnoseMissing(_ code: String, _ message: String) {
-        diagnostics.warning(code, message, range: stream.peek().rangeIfAvailable)
+    private func zeroWidthRange(at token: Token) -> SourceRange {
+        let loc = token.range.start
+        return SourceRange(start: loc, end: loc)
+    }
+
+    private func insertMissingToken(
+        expected: TokenKind,
+        into children: inout [SyntaxChild],
+        range: inout RangeAccumulator,
+        code: String,
+        message: String
+    ) {
+        let missingRange = zeroWidthRange(at: stream.peek())
+        diagnostics.warning(code, message, range: missingRange)
+        let missingToken = Token(kind: .missing(expected: expected), range: missingRange)
+        let tokenID = arena.appendToken(missingToken)
+        children.append(.token(tokenID))
+        range.append(missingRange)
+    }
+
+    private func isSynchronizationPoint(_ token: Token, inBlock: Bool) -> Bool {
+        switch token.kind {
+        case .eof:
+            return true
+        case .symbol(.rBrace):
+            return true
+        case .keyword(.class), .keyword(.fun), .keyword(.val), .keyword(.var),
+             .keyword(.object), .keyword(.interface), .keyword(.typealias),
+             .keyword(.import), .keyword(.package):
+            return true
+        default:
+            break
+        }
+        if inBlock {
+            switch token.kind {
+            case .symbol(.semicolon):
+                return true
+            case .keyword(.catch), .keyword(.finally), .keyword(.else):
+                return true
+            default:
+                if hasLeadingNewline(token) {
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
+    private func skipToSynchronizationPoint(
+        inBlock: Bool,
+        into children: inout [SyntaxChild],
+        range: inout RangeAccumulator
+    ) {
+        let skippedStart = stream.peek().range
+        var skippedCount = 0
+        while !stream.atEOF() {
+            let token = stream.peek()
+            if isSynchronizationPoint(token, inBlock: inBlock) {
+                break
+            }
+            _ = consumeToken(into: &children, range: &range)
+            skippedCount += 1
+        }
+        if skippedCount > 0 {
+            diagnostics.error(
+                "KSWIFTK-PARSE-0006",
+                "Skipped \(skippedCount) unexpected token(s).",
+                range: skippedStart
+            )
+        }
     }
 
     private func parseTypeArguments() -> NodeID {

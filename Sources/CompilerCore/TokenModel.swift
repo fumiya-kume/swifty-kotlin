@@ -191,6 +191,7 @@ public enum TokenKind: Equatable {
     case templateSimpleNameStart
     case symbol(Symbol)
     case eof
+    indirect case missing(expected: TokenKind)
 }
 
 public struct Token: Equatable {
