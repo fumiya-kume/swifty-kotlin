@@ -59,6 +59,172 @@ public final class BuildKIRPhase: CompilerPhase {
                     declIDs.append(kirID)
                     declIDs.append(contentsOf: allDecls)
 
+                    let ctorFQName = (sema.symbols.symbol(symbol)?.fqName ?? []) + [ctx.interner.intern("<init>")]
+                    let ctorSymbols = sema.symbols.lookupAll(
+                        fqName: ctorFQName
+                    )
+                    for ctorSymbol in ctorSymbols {
+                        guard let signature = sema.symbols.functionSignature(for: ctorSymbol) else {
+                            continue
+                        }
+                        localValuesBySymbol.removeAll(keepingCapacity: true)
+                        currentImplicitReceiverExprID = nil
+                        currentImplicitReceiverSymbol = nil
+                        loopControlStack.removeAll(keepingCapacity: true)
+                        nextLoopLabel = 10_000
+
+                        let receiverSymbol = syntheticReceiverParameterSymbol(functionSymbol: ctorSymbol)
+                        var params = [KIRParameter(symbol: receiverSymbol, type: signature.returnType)]
+                        currentImplicitReceiverSymbol = receiverSymbol
+                        currentImplicitReceiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: signature.returnType)
+
+                        params.append(contentsOf: zip(signature.valueParameterSymbols, signature.parameterTypes).map { pair in
+                            KIRParameter(symbol: pair.0, type: pair.1)
+                        })
+                        let returnType = signature.returnType
+                        var body: [KIRInstruction] = [.beginBlock]
+
+                        if let receiverExpr = currentImplicitReceiverExprID,
+                           let receiverSym = currentImplicitReceiverSymbol {
+                            body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
+                        }
+
+                        let isSecondary = sema.symbols.symbol(ctorSymbol)?.declSite != classDecl.range
+
+                        if !isSecondary {
+                            for initBlock in classDecl.initBlocks {
+                                switch initBlock {
+                                case .block(let exprIDs, _):
+                                    for exprID in exprIDs {
+                                        _ = lowerExpr(
+                                            exprID,
+                                            ast: ast,
+                                            sema: sema,
+                                            arena: arena,
+                                            interner: ctx.interner,
+                                            propertyConstantInitializers: propertyConstantInitializers,
+                                            instructions: &body
+                                        )
+                                    }
+                                case .expr(let exprID, _):
+                                    _ = lowerExpr(
+                                        exprID,
+                                        ast: ast,
+                                        sema: sema,
+                                        arena: arena,
+                                        interner: ctx.interner,
+                                        propertyConstantInitializers: propertyConstantInitializers,
+                                        instructions: &body
+                                    )
+                                case .unit:
+                                    break
+                                }
+                            }
+                        }
+
+                        if isSecondary {
+                            for secondaryCtor in classDecl.secondaryConstructors {
+                                guard secondaryCtor.range == sema.symbols.symbol(ctorSymbol)?.declSite else {
+                                    continue
+                                }
+                                if let delegation = secondaryCtor.delegationCall {
+                                    let delegationTarget: [InternedString]
+                                    switch delegation.kind {
+                                    case .this:
+                                        delegationTarget = ctorFQName
+                                    case .super_:
+                                        let supertypes = sema.symbols.directSupertypes(for: symbol)
+                                        let classSupertypes = supertypes.filter {
+                                            let kind = sema.symbols.symbol($0)?.kind
+                                            return kind == .class || kind == .enumClass
+                                        }
+                                        if let superclass = classSupertypes.first {
+                                            delegationTarget = (sema.symbols.symbol(superclass)?.fqName ?? []) + [ctx.interner.intern("<init>")]
+                                        } else {
+                                            delegationTarget = []
+                                        }
+                                    }
+                                    if !delegationTarget.isEmpty {
+                                        var argIDs: [KIRExprID] = []
+                                        if let receiver = currentImplicitReceiverExprID {
+                                            argIDs.append(receiver)
+                                        }
+                                        for arg in delegation.args {
+                                            let lowered = lowerExpr(
+                                                arg.expr,
+                                                ast: ast,
+                                                sema: sema,
+                                                arena: arena,
+                                                interner: ctx.interner,
+                                                propertyConstantInitializers: propertyConstantInitializers,
+                                                instructions: &body
+                                            )
+                                            argIDs.append(lowered)
+                                        }
+                                        let delegationResultID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.unitType)
+                                        body.append(.call(
+                                            symbol: sema.symbols.lookupAll(fqName: delegationTarget).first,
+                                            callee: ctx.interner.intern("<init>"),
+                                            arguments: argIDs,
+                                            result: delegationResultID,
+                                            canThrow: false,
+                                            thrownResult: nil
+                                        ))
+                                    }
+                                }
+                                switch secondaryCtor.body {
+                                case .block(let exprIDs, _):
+                                    for exprID in exprIDs {
+                                        _ = lowerExpr(
+                                            exprID,
+                                            ast: ast,
+                                            sema: sema,
+                                            arena: arena,
+                                            interner: ctx.interner,
+                                            propertyConstantInitializers: propertyConstantInitializers,
+                                            instructions: &body
+                                        )
+                                    }
+                                case .expr(let exprID, _):
+                                    _ = lowerExpr(
+                                        exprID,
+                                        ast: ast,
+                                        sema: sema,
+                                        arena: arena,
+                                        interner: ctx.interner,
+                                        propertyConstantInitializers: propertyConstantInitializers,
+                                        instructions: &body
+                                    )
+                                case .unit:
+                                    break
+                                }
+                                break
+                            }
+                        }
+
+                        if let receiver = currentImplicitReceiverExprID {
+                            body.append(.returnValue(receiver))
+                        } else {
+                            body.append(.returnUnit)
+                        }
+                        body.append(.endBlock)
+
+                        let ctorKirID = arena.appendDecl(
+                            .function(
+                                KIRFunction(
+                                    symbol: ctorSymbol,
+                                    name: classDecl.name,
+                                    params: params,
+                                    returnType: returnType,
+                                    body: body,
+                                    isSuspend: false,
+                                    isInline: false
+                                )
+                            )
+                        )
+                        declIDs.append(ctorKirID)
+                    }
+
                 case .interfaceDecl:
                     let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol)))
                     declIDs.append(kirID)

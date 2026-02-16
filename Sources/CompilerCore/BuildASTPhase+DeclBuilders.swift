@@ -26,6 +26,7 @@ extension BuildASTPhase {
             nestedTypeAliases: declarationNestedTypeAliases(from: nodeID, in: arena, interner: interner),
             enumEntries: declarationEnumEntries(from: nodeID, in: arena, interner: interner),
             initBlocks: declarationInitBlocks(from: nodeID, in: arena, interner: interner, astArena: astArena),
+            secondaryConstructors: declarationSecondaryConstructors(from: nodeID, in: arena, interner: interner, astArena: astArena),
             memberFunctions: members.functions,
             memberProperties: members.properties,
             nestedClasses: members.nestedClasses,

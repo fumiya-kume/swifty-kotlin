@@ -81,6 +81,45 @@ public struct ASTFile {
     public let topLevelDecls: [DeclID]
 }
 
+public enum ConstructorDelegationKind: Equatable {
+    case this
+    case super_
+}
+
+public struct ConstructorDelegationCall: Equatable {
+    public let kind: ConstructorDelegationKind
+    public let args: [CallArgument]
+    public let range: SourceRange
+
+    public init(kind: ConstructorDelegationKind, args: [CallArgument], range: SourceRange) {
+        self.kind = kind
+        self.args = args
+        self.range = range
+    }
+}
+
+public struct ConstructorDecl {
+    public let range: SourceRange
+    public let modifiers: Modifiers
+    public let valueParams: [ValueParamDecl]
+    public let delegationCall: ConstructorDelegationCall?
+    public let body: FunctionBody
+
+    public init(
+        range: SourceRange,
+        modifiers: Modifiers = [],
+        valueParams: [ValueParamDecl] = [],
+        delegationCall: ConstructorDelegationCall? = nil,
+        body: FunctionBody = .unit
+    ) {
+        self.range = range
+        self.modifiers = modifiers
+        self.valueParams = valueParams
+        self.delegationCall = delegationCall
+        self.body = body
+    }
+}
+
 public struct ClassDecl {
     public let range: SourceRange
     public let name: InternedString
@@ -91,6 +130,7 @@ public struct ClassDecl {
     public let nestedTypeAliases: [TypeAliasDecl]
     public let enumEntries: [EnumEntryDecl]
     public let initBlocks: [FunctionBody]
+    public let secondaryConstructors: [ConstructorDecl]
     public let memberFunctions: [DeclID]
     public let memberProperties: [DeclID]
     public let nestedClasses: [DeclID]
@@ -106,6 +146,7 @@ public struct ClassDecl {
         nestedTypeAliases: [TypeAliasDecl] = [],
         enumEntries: [EnumEntryDecl] = [],
         initBlocks: [FunctionBody] = [],
+        secondaryConstructors: [ConstructorDecl] = [],
         memberFunctions: [DeclID] = [],
         memberProperties: [DeclID] = [],
         nestedClasses: [DeclID] = [],
@@ -120,6 +161,7 @@ public struct ClassDecl {
         self.nestedTypeAliases = nestedTypeAliases
         self.enumEntries = enumEntries
         self.initBlocks = initBlocks
+        self.secondaryConstructors = secondaryConstructors
         self.memberFunctions = memberFunctions
         self.memberProperties = memberProperties
         self.nestedClasses = nestedClasses
