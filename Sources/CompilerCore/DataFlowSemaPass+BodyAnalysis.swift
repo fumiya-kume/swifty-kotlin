@@ -112,6 +112,7 @@ extension DataFlowSemaPassPhase {
                     }
                     return underlying
                 }
+                return nullability == .nullable ? types.nullableAnyType : types.anyType
             }
             return types.make(.classType(ClassType(classSymbol: resolved.id, args: [], nullability: nullability)))
         }
@@ -131,7 +132,7 @@ extension DataFlowSemaPassPhase {
         case .any, .unit, .nothing:
             return types.nullableAnyType
         default:
-            return typeID
+            return types.nullableAnyType
         }
     }
 
