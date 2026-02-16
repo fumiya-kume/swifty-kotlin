@@ -252,10 +252,10 @@
   - [ ] Elvis（`?:`）/ null 断定（`!!`）/ safe call（`?.`）を AST と型推論に反映する
   - [ ] assignment（`=` と複合代入）を式/文として扱い、`val` 再代入診断と接続する
 
-- [ ] P5-23: executable エントリラッパーで `outThrown` を監視し top-level 例外を処理する（spec.md J13.3）
-  - [ ] LinkPhase の C wrapper が `main(outThrown)` 呼び出し後に throw チャネルを確認するよう修正する
-  - [ ] throw 発生時の終了コード/診断出力ポリシーを定義し runtime `kk_panic` と整合させる
-  - [ ] top-level throw の E2E テストを追加する
+- [x] P5-23: executable エントリラッパーで `outThrown` を監視し top-level 例外を処理する（spec.md J13.3）
+  - [x] LinkPhase の C wrapper が `main(outThrown)` 呼び出し後に throw チャネルを確認するよう修正する
+  - [x] throw 発生時の終了コード/診断出力ポリシーを定義し runtime `kk_panic` と整合させる（panic 形式メッセージ + exit code 1）
+  - [x] top-level throw の E2E テストを追加する
 
 - [ ] P5-24: CST 粒度を spec 最低ラインへ引き上げる（spec.md J5.1）
   - [ ] `importList` ノードを parser で実生成し、top-level 構造を明確化する
