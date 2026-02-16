@@ -113,8 +113,18 @@ extension TypeCheckSemaPassPhase {
         _ constructors: [ConstructorDecl],
         ctx: TypeInferenceContext
     ) {
+        let sema = ctx.sema
         for ctor in constructors {
             var locals: [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool)] = [:]
+            let ctorSymbols = sema.symbols.allSymbols().filter { $0.kind == .constructor && $0.declSite == ctor.range }
+            if let ctorSymbol = ctorSymbols.first,
+               let signature = sema.symbols.functionSignature(for: ctorSymbol.id) {
+                for (index, paramSymbol) in signature.valueParameterSymbols.enumerated() {
+                    guard let param = sema.symbols.symbol(paramSymbol) else { continue }
+                    let type = index < signature.parameterTypes.count ? signature.parameterTypes[index] : sema.types.anyType
+                    locals[param.name] = (type, paramSymbol, false)
+                }
+            }
             _ = inferFunctionBodyType(ctor.body, ctx: ctx, locals: &locals, expectedType: nil)
         }
     }

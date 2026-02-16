@@ -156,12 +156,16 @@ final class ASTModelsTests: XCTestCase {
             modifiers: [.public],
             valueParams: [param],
             delegationCall: delegationThis,
-            body: .block(ExprID(rawValue: 1))
+            body: .block([ExprID(rawValue: 1)], range)
         )
         XCTAssertEqual(ctorFull.modifiers, [.public])
         XCTAssertEqual(ctorFull.valueParams.count, 1)
         XCTAssertNotNil(ctorFull.delegationCall)
-        XCTAssertEqual(ctorFull.body, .block(ExprID(rawValue: 1)))
+        if case .block(let exprs, _) = ctorFull.body {
+            XCTAssertEqual(exprs.count, 1)
+        } else {
+            XCTFail("Expected .block body")
+        }
 
         let classDeclWithCtor = ClassDecl(
             range: range,

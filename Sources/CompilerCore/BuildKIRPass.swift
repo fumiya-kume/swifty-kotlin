@@ -47,8 +47,9 @@ public final class BuildKIRPhase: CompilerPhase {
                     let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol)))
                     declIDs.append(kirID)
 
+                    let ctorFQName = (sema.symbols.symbol(symbol)?.fqName ?? []) + [ctx.interner.intern("<init>")]
                     let ctorSymbols = sema.symbols.lookupAll(
-                        fqName: (ast.files.first(where: { $0.topLevelDecls.contains(declID) })?.packageFQName ?? []) + [classDecl.name] + [ctx.interner.intern("<init>")]
+                        fqName: ctorFQName
                     )
                     for ctorSymbol in ctorSymbols {
                         guard let signature = sema.symbols.functionSignature(for: ctorSymbol) else {
