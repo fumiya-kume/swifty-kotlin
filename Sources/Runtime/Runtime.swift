@@ -32,10 +32,18 @@ public struct KTypeInfo {
     }
 }
 
+private struct KKObjHeader {
+    var typeInfo: UnsafePointer<KTypeInfo>?
+    var flags: UInt32
+    var size: UInt32
+}
+
 public protocol KKContinuation {
     var context: UnsafeMutableRawPointer? { get }
     func resumeWith(_ result: UnsafeMutableRawPointer?)
 }
+
+private typealias KKSuspendEntryPoint = @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int
 
 private final class RuntimeStringBox {
     let value: String
@@ -58,20 +66,103 @@ private final class RuntimeContinuationState {
     var label: Int64
     var completion: Int64
     var spillSlots: [Int64: Int64]
+    private let stateLock = NSLock()
+    private let resumeSemaphore = DispatchSemaphore(value: 0)
+    private var delayTimers: [ObjectIdentifier: DispatchSourceTimer]
 
-    init(functionID: Int64, label: Int64 = 0, completion: Int64 = 0, spillSlots: [Int64: Int64] = [:]) {
+    init(
+        functionID: Int64,
+        label: Int64 = 0,
+        completion: Int64 = 0,
+        spillSlots: [Int64: Int64] = [:],
+        delayTimers: [ObjectIdentifier: DispatchSourceTimer] = [:]
+    ) {
         self.functionID = functionID
         self.label = label
         self.completion = completion
         self.spillSlots = spillSlots
+        self.delayTimers = delayTimers
+    }
+
+    deinit {
+        let timers = releaseAllDelayTimers()
+        for timer in timers {
+            timer.setEventHandler(handler: nil)
+            timer.cancel()
+        }
+    }
+
+    func scheduleDelay(milliseconds: Int) {
+        let timer = DispatchSource.makeTimerSource(queue: DispatchQueue.global())
+        let timerID = ObjectIdentifier(timer)
+        stateLock.lock()
+        delayTimers[timerID] = timer
+        stateLock.unlock()
+
+        timer.schedule(deadline: .now() + .milliseconds(max(0, milliseconds)))
+        timer.setEventHandler { [weak self] in
+            self?.completeDelayTimer(timerID: timerID)
+        }
+        timer.resume()
+    }
+
+    func waitForResumeSignal() {
+        resumeSemaphore.wait()
+    }
+
+    private func completeDelayTimer(timerID: ObjectIdentifier) {
+        stateLock.lock()
+        delayTimers.removeValue(forKey: timerID)
+        stateLock.unlock()
+        resumeSemaphore.signal()
+    }
+
+    private func releaseAllDelayTimers() -> [DispatchSourceTimer] {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        let timers = Array(delayTimers.values)
+        delayTimers.removeAll(keepingCapacity: false)
+        return timers
+    }
+}
+
+private final class RuntimeAsyncTask {
+    private let lock = NSLock()
+    private let ready = DispatchSemaphore(value: 0)
+    private var isCompleted = false
+    private var result: Int = 0
+
+    func complete(with result: Int) {
+        lock.lock()
+        guard !isCompleted else {
+            lock.unlock()
+            return
+        }
+        self.result = result
+        isCompleted = true
+        lock.unlock()
+        ready.signal()
+    }
+
+    func awaitResult() -> Int {
+        lock.lock()
+        if isCompleted {
+            let value = result
+            lock.unlock()
+            return value
+        }
+        lock.unlock()
+        ready.wait()
+        lock.lock()
+        let value = result
+        lock.unlock()
+        return value
     }
 }
 
 private struct HeapObjectRecord {
     let pointer: UnsafeMutableRawPointer
     let byteCount: Int
-    let typeInfo: UnsafePointer<KTypeInfo>?
-    var marked: Bool
 }
 
 private struct ActiveFrameRecord {
@@ -95,18 +186,25 @@ private enum RuntimeStorage {
     static let coroutineSuspendedBox = RuntimeStringBox("COROUTINE_SUSPENDED")
 }
 
+private let kkObjMarkFlag: UInt32 = 1 << 0
+
 @_cdecl("kk_alloc")
 public func kk_alloc(_ size: UInt32, _ typeInfo: UnsafeRawPointer?) -> UnsafeMutableRawPointer {
-    let allocationSize = Int(max(size, 1))
-    let ptr = UnsafeMutableRawPointer.allocate(byteCount: allocationSize, alignment: MemoryLayout<UInt64>.alignment)
+    let headerSize = MemoryLayout<KKObjHeader>.stride
+    let alignment = max(MemoryLayout<KKObjHeader>.alignment, MemoryLayout<UInt64>.alignment)
+    let allocationSize = max(Int(size), headerSize)
+    let ptr = UnsafeMutableRawPointer.allocate(byteCount: allocationSize, alignment: alignment)
     ptr.initializeMemory(as: UInt8.self, repeating: 0, count: allocationSize)
     let typeInfoPtr = typeInfo?.assumingMemoryBound(to: KTypeInfo.self)
+    ptr.assumingMemoryBound(to: KKObjHeader.self).pointee = KKObjHeader(
+        typeInfo: typeInfoPtr,
+        flags: 0,
+        size: UInt32(allocationSize)
+    )
     RuntimeStorage.lock.lock()
     RuntimeStorage.heapObjects[UInt(bitPattern: ptr)] = HeapObjectRecord(
         pointer: ptr,
-        byteCount: allocationSize,
-        typeInfo: typeInfoPtr,
-        marked: false
+        byteCount: allocationSize
     )
     RuntimeStorage.lock.unlock()
     return ptr
@@ -253,8 +351,8 @@ public func kk_string_from_utf8(_ ptr: UnsafePointer<UInt8>, _ len: Int32) -> Un
 
 @_cdecl("kk_string_concat")
 public func kk_string_concat(_ a: UnsafeMutableRawPointer?, _ b: UnsafeMutableRawPointer?) -> UnsafeMutableRawPointer {
-    let lhs = extractString(from: a) ?? ""
-    let rhs = extractString(from: b) ?? ""
+    let lhs = extractString(from: normalizeNullableRuntimePointer(a)) ?? ""
+    let rhs = extractString(from: normalizeNullableRuntimePointer(b)) ?? ""
     let box = RuntimeStringBox(lhs + rhs)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
     RuntimeStorage.lock.lock()
@@ -264,27 +362,31 @@ public func kk_string_concat(_ a: UnsafeMutableRawPointer?, _ b: UnsafeMutableRa
 }
 
 @_cdecl("kk_println_any")
-public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
-    guard let obj else {
+public func kk_println_any(_ obj: Int) {
+    if obj == runtimeNullSentinelInt {
         Swift.print("null")
         return
     }
-    RuntimeStorage.lock.lock()
-    let isObjectPointer = RuntimeStorage.objectPointers.contains(UInt(bitPattern: obj))
-    RuntimeStorage.lock.unlock()
-    if !isObjectPointer {
-        Swift.print("<object \(obj)>")
+    guard let objPointer = UnsafeMutableRawPointer(bitPattern: obj) else {
+        Swift.print(obj)
         return
     }
-    if let stringBox = tryCast(obj, to: RuntimeStringBox.self) {
+    RuntimeStorage.lock.lock()
+    let isObjectPointer = RuntimeStorage.objectPointers.contains(UInt(bitPattern: objPointer))
+    RuntimeStorage.lock.unlock()
+    if !isObjectPointer {
+        Swift.print(obj)
+        return
+    }
+    if let stringBox = tryCast(objPointer, to: RuntimeStringBox.self) {
         Swift.print(stringBox.value)
         return
     }
-    if let throwable = tryCast(obj, to: RuntimeThrowableBox.self) {
+    if let throwable = tryCast(objPointer, to: RuntimeThrowableBox.self) {
         Swift.print("Throwable(\(throwable.message))")
         return
     }
-    Swift.print("<object \(obj)>")
+    Swift.print("<object \(objPointer)>")
 }
 
 @_cdecl("kk_coroutine_suspended")
@@ -381,6 +483,88 @@ public func kk_coroutine_state_get_completion(_ continuation: Int) -> Int {
     return Int(state.completion)
 }
 
+@_cdecl("kk_kxmini_run_blocking")
+public func kk_kxmini_run_blocking(_ entryPointRaw: Int, _ functionID: Int) -> Int {
+    runSuspendEntryLoop(entryPointRaw: entryPointRaw, functionID: functionID)
+}
+
+@_cdecl("kk_kxmini_launch")
+public func kk_kxmini_launch(_ entryPointRaw: Int, _ functionID: Int) -> Int {
+    KxMiniRuntime.launch {
+        _ = runSuspendEntryLoop(entryPointRaw: entryPointRaw, functionID: functionID)
+    }
+    return 0
+}
+
+@_cdecl("kk_kxmini_async")
+public func kk_kxmini_async(_ entryPointRaw: Int, _ functionID: Int) -> Int {
+    let task = RuntimeAsyncTask()
+    let taskPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(task).toOpaque())
+    KxMiniRuntime.launch {
+        let result = runSuspendEntryLoop(entryPointRaw: entryPointRaw, functionID: functionID)
+        task.complete(with: result)
+    }
+    return Int(bitPattern: taskPtr)
+}
+
+@_cdecl("kk_kxmini_async_await")
+public func kk_kxmini_async_await(_ handle: Int) -> Int {
+    guard let handlePtr = UnsafeMutableRawPointer(bitPattern: handle) else {
+        return 0
+    }
+    let task = Unmanaged<RuntimeAsyncTask>.fromOpaque(handlePtr).takeRetainedValue()
+    return task.awaitResult()
+}
+
+@_cdecl("kk_kxmini_delay")
+public func kk_kxmini_delay(_ milliseconds: Int, _ continuation: Int) -> Int {
+    guard let state = runtimeContinuationState(from: continuation) else {
+        return 0
+    }
+    state.scheduleDelay(milliseconds: milliseconds)
+    return Int(bitPattern: kk_coroutine_suspended())
+}
+
+private func runtimeContinuationState(from continuation: Int) -> RuntimeContinuationState? {
+    guard let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) else {
+        return nil
+    }
+    return Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
+}
+
+private func suspendEntryPoint(from rawValue: Int) -> KKSuspendEntryPoint? {
+    guard rawValue != 0 else {
+        return nil
+    }
+    return unsafeBitCast(rawValue, to: KKSuspendEntryPoint.self)
+}
+
+private func runSuspendEntryLoop(entryPointRaw: Int, functionID: Int) -> Int {
+    guard let entryPoint = suspendEntryPoint(from: entryPointRaw) else {
+        return 0
+    }
+
+    let continuation = kk_coroutine_continuation_new(functionID)
+    let suspendedToken = Int(bitPattern: kk_coroutine_suspended())
+    var outThrown: Int = 0
+
+    while true {
+        outThrown = 0
+        let result = entryPoint(continuation, &outThrown)
+        if outThrown != 0 {
+            _ = kk_coroutine_state_exit(continuation, 0)
+            return 0
+        }
+        if result != suspendedToken {
+            return result
+        }
+        guard let state = runtimeContinuationState(from: continuation) else {
+            return 0
+        }
+        state.waitForResumeSignal()
+    }
+}
+
 private func performMarkAndSweepLocked() {
     guard !RuntimeStorage.heapObjects.isEmpty else {
         return
@@ -392,19 +576,23 @@ private func performMarkAndSweepLocked() {
 
     while let current = worklist.popLast() {
         let key = UInt(bitPattern: current)
-        guard var object = RuntimeStorage.heapObjects[key], !object.marked else {
+        guard let object = RuntimeStorage.heapObjects[key] else {
             continue
         }
-        object.marked = true
-        RuntimeStorage.heapObjects[key] = object
+        let header = object.pointer.assumingMemoryBound(to: KKObjHeader.self)
+        if (header.pointee.flags & kkObjMarkFlag) != 0 {
+            continue
+        }
+        header.pointee.flags |= kkObjMarkFlag
         appendObjectChildrenLocked(of: object, into: &worklist)
     }
 
     var survivors: [UInt: HeapObjectRecord] = [:]
     survivors.reserveCapacity(RuntimeStorage.heapObjects.count)
-    for (key, var object) in RuntimeStorage.heapObjects {
-        if object.marked {
-            object.marked = false
+    for (key, object) in RuntimeStorage.heapObjects {
+        let header = object.pointer.assumingMemoryBound(to: KKObjHeader.self)
+        if (header.pointee.flags & kkObjMarkFlag) != 0 {
+            header.pointee.flags &= ~kkObjMarkFlag
             survivors[key] = object
         } else {
             object.pointer.deallocate()
@@ -444,7 +632,8 @@ private func collectRootPointersLocked(into worklist: inout [UnsafeMutableRawPoi
 }
 
 private func appendObjectChildrenLocked(of object: HeapObjectRecord, into worklist: inout [UnsafeMutableRawPointer]) {
-    guard let typeInfo = object.typeInfo else {
+    let header = object.pointer.assumingMemoryBound(to: KKObjHeader.self).pointee
+    guard let typeInfo = header.typeInfo else {
         return
     }
     let descriptor = typeInfo.pointee
@@ -484,7 +673,7 @@ private func tryCast<T: AnyObject>(_ ptr: UnsafeMutableRawPointer, to type: T.Ty
 }
 
 private func extractString(from ptr: UnsafeMutableRawPointer?) -> String? {
-    guard let ptr else {
+    guard let ptr = normalizeNullableRuntimePointer(ptr) else {
         return nil
     }
     RuntimeStorage.lock.lock()
@@ -497,6 +686,19 @@ private func extractString(from ptr: UnsafeMutableRawPointer?) -> String? {
         return nil
     }
     return box.value
+}
+
+private let runtimeNullSentinelInt64 = Int64.min
+private let runtimeNullSentinelInt = Int(truncatingIfNeeded: runtimeNullSentinelInt64)
+
+private func normalizeNullableRuntimePointer(_ ptr: UnsafeMutableRawPointer?) -> UnsafeMutableRawPointer? {
+    guard let ptr else {
+        return nil
+    }
+    if UInt(bitPattern: ptr) == UInt(bitPattern: runtimeNullSentinelInt) {
+        return nil
+    }
+    return ptr
 }
 
 public final class KKDispatchContinuation: KKContinuation {
@@ -532,9 +734,13 @@ public enum KxMiniRuntime {
     }
 
     public static func delay(milliseconds: Int, continuation: KKContinuation) {
-        let deadline = DispatchTime.now() + .milliseconds(max(0, milliseconds))
-        DispatchQueue.global().asyncAfter(deadline: deadline) {
+        let timer = DispatchSource.makeTimerSource(queue: DispatchQueue.global())
+        timer.schedule(deadline: .now() + .milliseconds(max(0, milliseconds)))
+        timer.setEventHandler {
             continuation.resumeWith(nil)
+            timer.setEventHandler(handler: nil)
+            timer.cancel()
         }
+        timer.resume()
     }
 }
