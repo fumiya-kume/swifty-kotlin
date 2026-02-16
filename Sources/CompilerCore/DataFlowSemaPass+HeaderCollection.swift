@@ -461,7 +461,7 @@ extension DataFlowSemaPassPhase {
             for declID in file.topLevelDecls {
                 guard let decl = ast.arena.decl(declID),
                       case .classDecl(let classDecl) = decl,
-                      let classSymbol = symbols.allSymbols().first(where: { $0.declSite == classDecl.range && ($0.kind == .class || $0.kind == .enumClass) })?.id else {
+                      let classSymbol = symbols.allSymbols().first(where: { $0.declSite == classDecl.range && ($0.kind == .class || $0.kind == .enumClass || $0.kind == .annotationClass) })?.id else {
                     continue
                 }
                 for secondaryCtor in classDecl.secondaryConstructors {

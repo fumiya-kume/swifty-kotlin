@@ -380,7 +380,7 @@ public final class KotlinParser {
             if token.kind == .eof { break }
             if case .symbol(.rBrace) = token.kind, parenDepth == 0 { break }
             if case .symbol(.lBrace) = token.kind, parenDepth == 0 { break }
-            if hasLeadingNewline(token), parenDepth == 0, !children.isEmpty, token.kind != .symbol(.colon) { break }
+            if hasLeadingNewline(token), parenDepth == 0, !children.isEmpty, token.kind != .symbol(.colon), token.kind != .keyword(.this), token.kind != .keyword(.super) { break }
             if case .symbol(.semicolon) = token.kind {
                 _ = consumeToken(into: &children, range: &range)
                 break
