@@ -23,7 +23,7 @@ final class OperatorLoweringPass: LoweringPass {
                     case .equal:
                         callee = ctx.interner.intern("kk_op_eq")
                     case .notEqual:
-                        callee = ctx.interner.intern("kk_op_neq")
+                        callee = ctx.interner.intern("kk_op_ne")
                     case .lessThan:
                         callee = ctx.interner.intern("kk_op_lt")
                     case .lessOrEqual:

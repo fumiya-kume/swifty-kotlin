@@ -646,6 +646,18 @@ public final class BuildKIRPhase: CompilerPhase {
                 )
                 return result
             }
+            if let runtimeCallee = builtinBinaryRuntimeCallee(for: op, interner: interner) {
+                instructions.append(
+                    .call(
+                        symbol: nil,
+                        callee: runtimeCallee,
+                        arguments: [lhsID, rhsID],
+                        result: result,
+                        canThrow: false
+                    )
+                )
+                return result
+            }
             let kirOp: KIRBinaryOp
             switch op {
             case .add:
@@ -849,18 +861,22 @@ public final class BuildKIRPhase: CompilerPhase {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
-            let kirOp: KIRUnaryOp
             switch op {
-            case .not:
-                kirOp = .not
             case .unaryPlus:
-                kirOp = .unaryPlus
+                return operandID
             case .unaryMinus:
-                kirOp = .unaryMinus
+                let zero = arena.appendExpr(.intLiteral(0), type: intType)
+                instructions.append(.constValue(result: zero, value: .intLiteral(0)))
+                let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? intType)
+                instructions.append(.binary(op: .subtract, lhs: zero, rhs: operandID, result: result))
+                return result
+            case .not:
+                let falseValue = arena.appendExpr(.boolLiteral(false), type: boolType)
+                instructions.append(.constValue(result: falseValue, value: .boolLiteral(false)))
+                let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? boolType)
+                instructions.append(.binary(op: .equal, lhs: operandID, rhs: falseValue, result: result))
+                return result
             }
-            instructions.append(.unary(op: kirOp, operand: operandID, result: result))
-            return result
 
         case .isCheck(let exprToCheck, _, _, _):
             let operandID = lowerExpr(
@@ -1207,6 +1223,27 @@ public final class BuildKIRPhase: CompilerPhase {
                 return nil
             }
             return interner.intern("kk_array_new")
+        default:
+            return nil
+        }
+    }
+
+    private func builtinBinaryRuntimeCallee(for op: BinaryOp, interner: StringInterner) -> InternedString? {
+        switch op {
+        case .notEqual:
+            return interner.intern("kk_op_ne")
+        case .lessThan:
+            return interner.intern("kk_op_lt")
+        case .lessOrEqual:
+            return interner.intern("kk_op_le")
+        case .greaterThan:
+            return interner.intern("kk_op_gt")
+        case .greaterOrEqual:
+            return interner.intern("kk_op_ge")
+        case .logicalAnd:
+            return interner.intern("kk_op_and")
+        case .logicalOr:
+            return interner.intern("kk_op_or")
         default:
             return nil
         }
