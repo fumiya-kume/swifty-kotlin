@@ -1,5 +1,37 @@
+import Dispatch
 import XCTest
 @testable import Runtime
+
+private typealias RuntimeTestSuspendEntry = @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int
+
+private let runtimeKxMiniDelayFunctionID = 9101
+private let runtimeKxMiniLaunchFunctionID = 9102
+private let runtimeKxMiniAsyncFunctionID = 9103
+private let runtimeKxMiniLaunchSignal = DispatchSemaphore(value: 0)
+
+@_cdecl("runtime_test_suspend_with_delay")
+func runtime_test_suspend_with_delay(_ continuation: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    let label = kk_coroutine_state_enter(continuation, runtimeKxMiniDelayFunctionID)
+    if label == 0 {
+        _ = kk_coroutine_state_set_label(continuation, 1)
+        return kk_kxmini_delay(1, continuation)
+    }
+    outThrown?.pointee = 0
+    return kk_coroutine_state_exit(continuation, 42)
+}
+
+@_cdecl("runtime_test_suspend_launch")
+func runtime_test_suspend_launch(_ continuation: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    runtimeKxMiniLaunchSignal.signal()
+    return kk_coroutine_state_exit(continuation, 7)
+}
+
+@_cdecl("runtime_test_suspend_async")
+func runtime_test_suspend_async(_ continuation: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    return kk_coroutine_state_exit(continuation, 73)
+}
 
 final class RuntimeCoroutineStateTests: XCTestCase {
     override func setUp() {
@@ -40,5 +72,33 @@ final class RuntimeCoroutineStateTests: XCTestCase {
         XCTAssertEqual(kk_coroutine_state_enter(continuation, 8), 0)
         XCTAssertEqual(kk_coroutine_state_get_spill(continuation, 0), 0)
         XCTAssertEqual(kk_coroutine_state_get_completion(continuation), 0)
+    }
+
+    func testKxMiniRunBlockingResumesDelayedSuspendEntry() {
+        let entryRaw = unsafeBitCast(
+            runtime_test_suspend_with_delay as RuntimeTestSuspendEntry,
+            to: Int.self
+        )
+        let result = kk_kxmini_run_blocking(entryRaw, runtimeKxMiniDelayFunctionID)
+        XCTAssertEqual(result, 42)
+    }
+
+    func testKxMiniLaunchRunsSuspendEntryAsynchronously() {
+        let entryRaw = unsafeBitCast(
+            runtime_test_suspend_launch as RuntimeTestSuspendEntry,
+            to: Int.self
+        )
+        XCTAssertEqual(kk_kxmini_launch(entryRaw, runtimeKxMiniLaunchFunctionID), 0)
+        XCTAssertEqual(runtimeKxMiniLaunchSignal.wait(timeout: .now() + .seconds(1)), .success)
+    }
+
+    func testKxMiniAsyncReturnsAwaitableHandle() {
+        let entryRaw = unsafeBitCast(
+            runtime_test_suspend_async as RuntimeTestSuspendEntry,
+            to: Int.self
+        )
+        let handle = kk_kxmini_async(entryRaw, runtimeKxMiniAsyncFunctionID)
+        XCTAssertNotEqual(handle, 0)
+        XCTAssertEqual(kk_kxmini_async_await(handle), 73)
     }
 }

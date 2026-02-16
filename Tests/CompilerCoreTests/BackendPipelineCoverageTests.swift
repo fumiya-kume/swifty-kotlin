@@ -599,6 +599,67 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
     }
 
+    func testInlineLoweringExpandsImportedInlineFunctionFromKklib() throws {
+        let librarySource = """
+        package extdemo
+        inline fun plus1(v: Int) = v + 1
+        """
+        try withTemporaryFile(contents: librarySource) { libraryPath in
+            let libraryBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let libraryCtx = makeCompilationContext(
+                inputs: [libraryPath],
+                moduleName: "ExtDemo",
+                emit: .library,
+                outputPath: libraryBase
+            )
+            try runToKIR(libraryCtx)
+            try LoweringPhase().run(libraryCtx)
+            try CodegenPhase().run(libraryCtx)
+
+            let appSource = """
+            import extdemo.plus1
+            fun main() = plus1(41)
+            """
+            try withTemporaryFile(contents: appSource) { appPath in
+                let appCtx = makeCompilationContext(
+                    inputs: [appPath],
+                    moduleName: "App",
+                    emit: .kirDump,
+                    searchPaths: [libraryBase + ".kklib"]
+                )
+                try runToKIR(appCtx)
+                try LoweringPhase().run(appCtx)
+
+                let sema = try XCTUnwrap(appCtx.sema)
+                let importedInline = sema.symbols.allSymbols().first { symbol in
+                    appCtx.interner.resolve(symbol.name) == "plus1" &&
+                    symbol.kind == .function &&
+                    symbol.flags.contains(.inlineFunction)
+                }
+                XCTAssertNotNil(importedInline)
+                XCTAssertFalse(sema.importedInlineFunctions.isEmpty)
+
+                let kir = try XCTUnwrap(appCtx.kir)
+                guard let mainFunction = kir.arena.declarations.compactMap({ decl -> KIRFunction? in
+                    guard case .function(let function) = decl else { return nil }
+                    return appCtx.interner.resolve(function.name) == "main" ? function : nil
+                }).first else {
+                    XCTFail("Expected lowered main function")
+                    return
+                }
+
+                let calls = mainFunction.body.compactMap { instruction -> String? in
+                    guard case .call(_, let callee, _, _, _) = instruction else {
+                        return nil
+                    }
+                    return appCtx.interner.resolve(callee)
+                }
+                XCTAssertFalse(calls.contains("plus1"))
+                XCTAssertTrue(calls.contains("kk_op_add"))
+            }
+        }
+    }
+
     func testSemaSynthesizesNominalLayoutsAndLibraryMetadataContainsLayoutFields() throws {
         let source = """
         package layoutdemo
@@ -622,8 +683,8 @@ final class BackendPipelineCoverageTests: XCTestCase {
             let derivedLayout = sema.symbols.nominalLayout(for: derived.id)
             XCTAssertNotNil(baseLayout)
             XCTAssertNotNil(derivedLayout)
-            XCTAssertEqual(baseLayout?.objectHeaderWords, 3)
-            XCTAssertGreaterThanOrEqual(baseLayout?.instanceSizeWords ?? 0, 3)
+            XCTAssertEqual(baseLayout?.objectHeaderWords, 2)
+            XCTAssertGreaterThanOrEqual(baseLayout?.instanceSizeWords ?? 0, 2)
             XCTAssertEqual(derivedLayout?.superClass, base.id)
 
             let libBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
@@ -1084,6 +1145,95 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
         XCTAssertEqual(loweredEmpty.body.last, .returnUnit)
         XCTAssertFalse(loweredEmpty.body.isEmpty)
+    }
+
+    func testCoroutineLoweringRewritesKxMiniLauncherAndDelayBuiltins() throws {
+        let source = """
+        suspend fun delayedValue(): Int {
+            delay(1)
+            return 42
+        }
+        fun main(): Any? = runBlocking(delayedValue)
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "KxMiniLowering", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case .function(let function) = decl else {
+                    return nil
+                }
+                return ctx.interner.resolve(function.name) == "main" ? function : nil
+            }.first
+            let loweredSuspend = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case .function(let function) = decl else {
+                    return nil
+                }
+                return ctx.interner.resolve(function.name) == "kk_suspend_delayedValue" ? function : nil
+            }.first
+
+            let mainCalls = mainFunction?.body.compactMap { instruction -> String? in
+                guard case .call(_, let callee, _, _, _) = instruction else {
+                    return nil
+                }
+                return ctx.interner.resolve(callee)
+            } ?? []
+            XCTAssertTrue(mainCalls.contains("kk_kxmini_run_blocking"))
+            XCTAssertFalse(mainCalls.contains("runBlocking"))
+
+            let delayCalls = loweredSuspend?.body.compactMap { instruction -> String? in
+                guard case .call(_, let callee, _, _, _) = instruction else {
+                    return nil
+                }
+                return ctx.interner.resolve(callee)
+            } ?? []
+            XCTAssertTrue(delayCalls.contains("kk_kxmini_delay"))
+
+            let throwFlags = loweredSuspend?.body.reduce(into: [String: [Bool]]()) { partial, instruction in
+                guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+                    return
+                }
+                partial[ctx.interner.resolve(callee), default: []].append(canThrow)
+            } ?? [:]
+            XCTAssertEqual(throwFlags["kk_kxmini_delay"]?.allSatisfy({ $0 == false }), true)
+        }
+    }
+
+    func testKxMiniRunBlockingDelayExecutableReturnsExpectedExitCode() throws {
+        let source = """
+        suspend fun delayedValue(): Int {
+            delay(1)
+            return 42
+        }
+        fun main(): Any? = runBlocking(delayedValue)
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputPath = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .path
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "KxMiniExecutable",
+                emit: .executable,
+                outputPath: outputPath
+            )
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+            try LinkPhase().run(ctx)
+
+            XCTAssertTrue(FileManager.default.fileExists(atPath: outputPath))
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: outputPath)
+            process.arguments = []
+            try process.run()
+            process.waitUntilExit()
+            XCTAssertEqual(process.terminationStatus, 42)
+        }
     }
 
     func testCoroutineLoweringRewritesOverloadedSuspendCallsByNameAndArity() throws {

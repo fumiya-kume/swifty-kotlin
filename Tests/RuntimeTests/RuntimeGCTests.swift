@@ -6,6 +6,39 @@ private struct FrameMapDescriptorC {
     let rootOffsets: UnsafePointer<Int32>?
 }
 
+private struct ObjHeaderProbe {
+    let typeInfo: UnsafePointer<KTypeInfo>?
+    let flags: UInt32
+    let size: UInt32
+}
+
+private func withTestTypeInfo(
+    fieldOffsets: [UInt32],
+    body: (UnsafePointer<KTypeInfo>) -> Void
+) {
+    let typeName = Array("Test.Type\0".utf8).map(CChar.init)
+    let offsetStorage = fieldOffsets.isEmpty ? [UInt32(0)] : fieldOffsets
+    var emptyVtableEntry = UnsafeRawPointer(bitPattern: 0x1)!
+
+    typeName.withUnsafeBufferPointer { nameBuffer in
+        offsetStorage.withUnsafeBufferPointer { offsetBuffer in
+            withUnsafePointer(to: &emptyVtableEntry) { vtablePointer in
+                var typeInfo = KTypeInfo(
+                    fqName: nameBuffer.baseAddress!,
+                    instanceSize: 0,
+                    fieldCount: UInt32(fieldOffsets.count),
+                    fieldOffsets: offsetBuffer.baseAddress!,
+                    vtableSize: 0,
+                    vtable: vtablePointer,
+                    itable: nil,
+                    gcDescriptor: nil
+                )
+                withUnsafePointer(to: &typeInfo, body)
+            }
+        }
+    }
+}
+
 final class RuntimeGCTests: XCTestCase {
     override func setUp() {
         super.setUp()
@@ -79,5 +112,46 @@ final class RuntimeGCTests: XCTestCase {
         kk_unregister_coroutine_root(object)
         kk_gc_collect()
         XCTAssertEqual(kk_runtime_heap_object_count(), 0)
+    }
+
+    func testAllocInitializesObjectHeader() {
+        withTestTypeInfo(fieldOffsets: []) { typeInfoPtr in
+            let object = kk_alloc(32, UnsafeRawPointer(typeInfoPtr))
+            let header = object.assumingMemoryBound(to: ObjHeaderProbe.self).pointee
+            XCTAssertEqual(header.size, 32)
+            XCTAssertEqual(
+                UInt(bitPattern: header.typeInfo),
+                UInt(bitPattern: typeInfoPtr)
+            )
+            XCTAssertEqual(header.flags, 0)
+        }
+    }
+
+    func testGCTracesChildReferenceThroughObjectHeaderTypeInfo() {
+        let fieldOffset = UInt32(MemoryLayout<ObjHeaderProbe>.stride)
+        let parentSize = UInt32(MemoryLayout<ObjHeaderProbe>.stride + MemoryLayout<UnsafeMutableRawPointer?>.stride)
+
+        withTestTypeInfo(fieldOffsets: [fieldOffset]) { typeInfoPtr in
+            let parent = kk_alloc(parentSize, UnsafeRawPointer(typeInfoPtr))
+            let child = kk_alloc(16, nil)
+            let slot = parent.advanced(by: Int(fieldOffset)).assumingMemoryBound(to: UnsafeMutableRawPointer?.self)
+            slot.pointee = child
+
+            let rootSlot = UnsafeMutablePointer<UnsafeMutableRawPointer?>.allocate(capacity: 1)
+            rootSlot.initialize(to: parent)
+            defer {
+                rootSlot.deinitialize(count: 1)
+                rootSlot.deallocate()
+            }
+
+            kk_register_global_root(rootSlot)
+            kk_gc_collect()
+            XCTAssertEqual(kk_runtime_heap_object_count(), 2)
+
+            rootSlot.pointee = nil
+            kk_gc_collect()
+            XCTAssertEqual(kk_runtime_heap_object_count(), 0)
+            kk_unregister_global_root(rootSlot)
+        }
     }
 }

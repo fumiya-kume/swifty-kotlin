@@ -258,12 +258,22 @@ final class GoldenHarnessTests: XCTestCase {
             return "string(\(interner.resolve(text)))"
         case .nameRef(let name, _):
             return "name(\(interner.resolve(name)))"
+        case .localDecl(let name, let isMutable, let initializer, _):
+            return "localDecl \(interner.resolve(name)) mutable=\(isMutable ? 1 : 0) init=e\(initializer.rawValue)"
+        case .localAssign(let name, let value, _):
+            return "localAssign \(interner.resolve(name)) value=e\(value.rawValue)"
         case .call(let callee, let args, _):
             let renderedArgs = args.map { arg in
                 let label = arg.label.map { interner.resolve($0) } ?? "_"
                 return "\(label):e\(arg.expr.rawValue)"
             }.joined(separator: ",")
             return "call callee=e\(callee.rawValue) args=[\(renderedArgs)]"
+        case .memberCall(let receiver, let callee, let args, _):
+            let renderedArgs = args.map { arg in
+                let label = arg.label.map { interner.resolve($0) } ?? "_"
+                return "\(label):e\(arg.expr.rawValue)"
+            }.joined(separator: ",")
+            return "memberCall recv=e\(receiver.rawValue) callee=\(interner.resolve(callee)) args=[\(renderedArgs)]"
         case .binary(let op, let lhs, let rhs, _):
             return "binary(\(op)) lhs=e\(lhs.rawValue) rhs=e\(rhs.rawValue)"
         case .whenExpr(let subject, let branches, let elseExpr, _):

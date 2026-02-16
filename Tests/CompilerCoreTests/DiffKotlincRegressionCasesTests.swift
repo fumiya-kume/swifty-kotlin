@@ -15,7 +15,7 @@ final class DiffKotlincRegressionCasesTests: XCTestCase {
         let files = try FileManager.default.contentsOfDirectory(at: casesDir, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "kt" }
             .sorted { $0.lastPathComponent < $1.lastPathComponent }
-        XCTAssertGreaterThanOrEqual(files.count, 7)
+        XCTAssertGreaterThanOrEqual(files.count, 13)
 
         for file in files {
             let contents = try String(contentsOf: file, encoding: .utf8)
