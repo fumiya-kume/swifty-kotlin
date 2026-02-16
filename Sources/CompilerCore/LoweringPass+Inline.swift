@@ -273,6 +273,21 @@ final class InlineLoweringPass: LoweringPass {
                 target: target
             )
 
+        case .jumpIfNotNull(let value, let target):
+            return .jumpIfNotNull(
+                value: resolveAlias(of: value, aliases: aliases),
+                target: target
+            )
+
+        case .copy(let from, let to):
+            return .copy(
+                from: resolveAlias(of: from, aliases: aliases),
+                to: resolveAlias(of: to, aliases: aliases)
+            )
+
+        case .rethrow(let value):
+            return .rethrow(value: resolveAlias(of: value, aliases: aliases))
+
         default:
             return instruction
         }
