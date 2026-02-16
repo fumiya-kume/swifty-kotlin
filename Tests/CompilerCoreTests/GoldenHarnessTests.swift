@@ -260,6 +260,17 @@ final class GoldenHarnessTests: XCTestCase {
             return "string(\(interner.resolve(text)))"
         case .nameRef(let name, _):
             return "name(\(interner.resolve(name)))"
+        case .forExpr(let loopVariable, let iterable, let body, _):
+            let variable = loopVariable.map { interner.resolve($0) } ?? "_"
+            return "for var=\(variable) iterable=e\(iterable.rawValue) body=e\(body.rawValue)"
+        case .whileExpr(let condition, let body, _):
+            return "while cond=e\(condition.rawValue) body=e\(body.rawValue)"
+        case .doWhileExpr(let body, let condition, _):
+            return "doWhile body=e\(body.rawValue) cond=e\(condition.rawValue)"
+        case .breakExpr:
+            return "break"
+        case .continueExpr:
+            return "continue"
         case .localDecl(let name, let isMutable, let initializer, _):
             return "localDecl \(interner.resolve(name)) mutable=\(isMutable ? 1 : 0) init=e\(initializer.rawValue)"
         case .localAssign(let name, let value, _):
