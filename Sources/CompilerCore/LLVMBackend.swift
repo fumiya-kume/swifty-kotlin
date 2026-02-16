@@ -293,20 +293,20 @@ public final class LLVMBackend {
             "  array->elements[index] = value;",
             "  return value;",
             "}",
-            "static void kk_println_any(intptr_t obj) {",
-            "  if (obj == KK_NULL_SENTINEL) { puts(\"null\"); return; }",
-            "  if (obj > -(intptr_t)0x100000000LL && obj < (intptr_t)0x100000000LL) {",
-            "    printf(\"%ld\\n\", (long)obj);",
+            "static void kk_println_any(void* obj) {",
+                        "  if ((intptr_t)obj == KK_NULL_SENTINEL) { puts(\"null\"); return; }",
+                        "  if ((intptr_t)obj > -(intptr_t)0x100000000LL && (intptr_t)obj < (intptr_t)0x100000000LL) {",
+                        "    printf(\"%ld\\n\", (long)(intptr_t)obj);",
             "    return;",
             "  }",
-            "  KKString* s = (KKString*)(void*)obj;",
-            "  if (!s) { puts(\"null\"); return; }",
-            "  if (s->len < 0 || s->len > (1 << 20)) {",
-            "    printf(\"%ld\\n\", (long)obj);",
+                        "  KKString* s = (KKString*)obj;",
+                        "  if (!s) { puts(\"null\"); return; }",
+                        "  if (s->len < 0 || s->len > (1 << 20)) {",
+                        "    printf(\"%ld\\n\", (long)(intptr_t)obj);",
             "    return;",
             "  }",
-            "  if (s->len > 0 && !s->bytes) {",
-            "    printf(\"%ld\\n\", (long)obj);",
+                        "  if (s->len > 0 && !s->bytes) {",
+                        "    printf(\"%ld\\n\", (long)(intptr_t)obj);",
             "    return;",
             "  }",
             "  if (s->bytes && s->len > 0) fwrite(s->bytes, 1, (size_t)s->len, stdout);",
@@ -622,7 +622,7 @@ public final class LLVMBackend {
 
                 if calleeName == "println" || calleeName == "kk_println_any" {
                     let value = argVars.first ?? "0"
-                    lines.append("  kk_println_any(\(value));")
+                    lines.append("  kk_println_any((void*)\(value));")
                     if let result {
                         lines.append("  \(varName(result)) = 0;")
                         syncRoot(result)

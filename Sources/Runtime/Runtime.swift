@@ -197,15 +197,15 @@ private enum RuntimeStorage {
 private let kkObjMarkFlag: UInt32 = 1 << 0
 
 @_cdecl("kk_alloc")
-public func kk_alloc(_ size: UInt32, _ typeInfo: UnsafeRawPointer?) -> UnsafeMutableRawPointer {
+public func kk_alloc(_ size: UInt32, _ typeInfo: UnsafeRawPointer) -> UnsafeMutableRawPointer {
     let headerSize = MemoryLayout<KKObjHeader>.stride
     let alignment = max(MemoryLayout<KKObjHeader>.alignment, MemoryLayout<UInt64>.alignment)
     let allocationSize = max(Int(size), headerSize)
     let ptr = UnsafeMutableRawPointer.allocate(byteCount: allocationSize, alignment: alignment)
     ptr.initializeMemory(as: UInt8.self, repeating: 0, count: allocationSize)
-    let typeInfoPtr = typeInfo?.assumingMemoryBound(to: KTypeInfo.self)
+    let typedInfo = typeInfo.assumingMemoryBound(to: KTypeInfo.self)
     ptr.assumingMemoryBound(to: KKObjHeader.self).pointee = KKObjHeader(
-        typeInfo: typeInfoPtr,
+        typeInfo: typedInfo,
         flags: 0,
         size: UInt32(allocationSize)
     )
@@ -405,31 +405,28 @@ public func kk_array_set(_ arrayRaw: Int, _ index: Int, _ value: Int, _ outThrow
 }
 
 @_cdecl("kk_println_any")
-public func kk_println_any(_ obj: Int) {
-    if obj == runtimeNullSentinelInt {
+public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
+    guard let raw = normalizeNullableRuntimePointer(obj) else {
         Swift.print("null")
         return
     }
-    guard let objPointer = UnsafeMutableRawPointer(bitPattern: obj) else {
-        Swift.print(obj)
-        return
-    }
+    let intValue = Int(bitPattern: raw)
     RuntimeStorage.lock.lock()
-    let isObjectPointer = RuntimeStorage.objectPointers.contains(UInt(bitPattern: objPointer))
+    let isObjectPointer = RuntimeStorage.objectPointers.contains(UInt(bitPattern: raw))
     RuntimeStorage.lock.unlock()
     if !isObjectPointer {
-        Swift.print(obj)
+        Swift.print(intValue)
         return
     }
-    if let stringBox = tryCast(objPointer, to: RuntimeStringBox.self) {
+    if let stringBox = tryCast(raw, to: RuntimeStringBox.self) {
         Swift.print(stringBox.value)
         return
     }
-    if let throwable = tryCast(objPointer, to: RuntimeThrowableBox.self) {
+    if let throwable = tryCast(raw, to: RuntimeThrowableBox.self) {
         Swift.print("Throwable(\(throwable.message))")
         return
     }
-    Swift.print("<object \(objPointer)>")
+    Swift.print("<object \(raw)>")
 }
 
 @_cdecl("kk_coroutine_suspended")
