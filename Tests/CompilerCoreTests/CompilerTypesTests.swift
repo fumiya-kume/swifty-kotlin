@@ -33,7 +33,7 @@ final class CompilerTypesTests: XCTestCase {
         XCTAssertEqual(options.libraryPaths, [])
         XCTAssertEqual(options.linkLibraries, [])
         XCTAssertEqual(options.optLevel, .O0)
-        XCTAssertFalse(options.emitsDebugInfo)
+        XCTAssertFalse(options.debugInfo)
         XCTAssertEqual(options.frontendFlags, [])
         XCTAssertEqual(options.irFlags, [])
         XCTAssertEqual(options.runtimeFlags, [])
@@ -51,7 +51,7 @@ final class CompilerTypesTests: XCTestCase {
             linkLibraries: ["m", "pthread"],
             target: target,
             optLevel: .O3,
-            emitsDebugInfo: true,
+            debugInfo: true,
             frontendFlags: ["-XfrontendA"],
             irFlags: ["-XirA"],
             runtimeFlags: ["-XruntimeA"]
@@ -59,7 +59,7 @@ final class CompilerTypesTests: XCTestCase {
 
         XCTAssertEqual(options.target, target)
         XCTAssertEqual(options.optLevel, .O3)
-        XCTAssertTrue(options.emitsDebugInfo)
+        XCTAssertTrue(options.debugInfo)
         XCTAssertEqual(options.searchPaths, ["/opt/include"])
         XCTAssertEqual(options.libraryPaths, ["/opt/lib"])
         XCTAssertEqual(options.linkLibraries, ["m", "pthread"])

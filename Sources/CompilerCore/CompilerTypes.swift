@@ -57,7 +57,7 @@ public struct CompilerOptions: Equatable {
     public var linkLibraries: [String]
     public var target: TargetTriple
     public var optLevel: OptimizationLevel
-    public var emitsDebugInfo: Bool
+    public var debugInfo: Bool
     public var frontendFlags: [String]
     public var irFlags: [String]
     public var runtimeFlags: [String]
@@ -72,7 +72,7 @@ public struct CompilerOptions: Equatable {
         linkLibraries: [String] = [],
         target: TargetTriple,
         optLevel: OptimizationLevel = .O0,
-        emitsDebugInfo: Bool = false,
+        debugInfo: Bool = false,
         frontendFlags: [String] = [],
         irFlags: [String] = [],
         runtimeFlags: [String] = []
@@ -86,9 +86,48 @@ public struct CompilerOptions: Equatable {
         self.linkLibraries = linkLibraries
         self.target = target
         self.optLevel = optLevel
-        self.emitsDebugInfo = emitsDebugInfo
+        self.debugInfo = debugInfo
         self.frontendFlags = frontendFlags
         self.irFlags = irFlags
         self.runtimeFlags = runtimeFlags
+    }
+
+    @available(*, deprecated, message: "Use debugInfo instead.")
+    public var emitsDebugInfo: Bool {
+        get { debugInfo }
+        set { debugInfo = newValue }
+    }
+
+    @available(*, deprecated, message: "Use init(..., debugInfo: ...) instead.")
+    public init(
+        moduleName: String,
+        inputs: [String],
+        outputPath: String,
+        emit: EmitMode,
+        searchPaths: [String] = [],
+        libraryPaths: [String] = [],
+        linkLibraries: [String] = [],
+        target: TargetTriple,
+        optLevel: OptimizationLevel = .O0,
+        emitsDebugInfo: Bool,
+        frontendFlags: [String] = [],
+        irFlags: [String] = [],
+        runtimeFlags: [String] = []
+    ) {
+        self.init(
+            moduleName: moduleName,
+            inputs: inputs,
+            outputPath: outputPath,
+            emit: emit,
+            searchPaths: searchPaths,
+            libraryPaths: libraryPaths,
+            linkLibraries: linkLibraries,
+            target: target,
+            optLevel: optLevel,
+            debugInfo: emitsDebugInfo,
+            frontendFlags: frontendFlags,
+            irFlags: irFlags,
+            runtimeFlags: runtimeFlags
+        )
     }
 }
