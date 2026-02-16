@@ -256,6 +256,14 @@ final class GoldenHarnessTests: XCTestCase {
         switch expr {
         case .intLiteral(let value, _):
             return "int(\(value))"
+        case .longLiteral(let value, _):
+            return "long(\(value))"
+        case .floatLiteral(let value, _):
+            return "float(\(value))"
+        case .doubleLiteral(let value, _):
+            return "double(\(value))"
+        case .charLiteral(let value, _):
+            return "char(\(value))"
         case .boolLiteral(let value, _):
             return "bool(\(value ? "true" : "false"))"
         case .stringLiteral(let text, _):
