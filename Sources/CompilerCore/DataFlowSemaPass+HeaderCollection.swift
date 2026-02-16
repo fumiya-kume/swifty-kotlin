@@ -326,6 +326,14 @@ extension DataFlowSemaPassPhase {
                 continue
             }
             let memberFQName = ownerFQName + [funDecl.name]
+            let existingFunSymbols = symbols.lookupAll(fqName: memberFQName).compactMap { symbols.symbol($0) }
+            if hasDeclarationConflict(newKind: .function, existing: existingFunSymbols) {
+                diagnostics.error(
+                    "KSWIFTK-SEMA-0001",
+                    "Duplicate declaration in the same package scope.",
+                    range: funDecl.range
+                )
+            }
             let memberFlags = flags(from: funDecl.modifiers)
             let memberSymbol = symbols.define(
                 kind: .function,
@@ -438,6 +446,14 @@ extension DataFlowSemaPassPhase {
                 continue
             }
             let memberFQName = ownerFQName + [propertyDecl.name]
+            let existingPropSymbols = symbols.lookupAll(fqName: memberFQName).compactMap { symbols.symbol($0) }
+            if hasDeclarationConflict(newKind: .property, existing: existingPropSymbols) {
+                diagnostics.error(
+                    "KSWIFTK-SEMA-0001",
+                    "Duplicate declaration in the same package scope.",
+                    range: propertyDecl.range
+                )
+            }
             var propertyFlags = flags(from: propertyDecl.modifiers)
             if propertyDecl.isVar {
                 propertyFlags.insert(.mutable)
@@ -469,8 +485,17 @@ extension DataFlowSemaPassPhase {
                 continue
             }
             let nestedFQName = ownerFQName + [nestedClass.name]
+            let nestedClassKind = classSymbolKind(for: nestedClass)
+            let existingClassSymbols = symbols.lookupAll(fqName: nestedFQName).compactMap { symbols.symbol($0) }
+            if hasDeclarationConflict(newKind: nestedClassKind, existing: existingClassSymbols) {
+                diagnostics.error(
+                    "KSWIFTK-SEMA-0001",
+                    "Duplicate declaration in the same package scope.",
+                    range: nestedClass.range
+                )
+            }
             let nestedSymbol = symbols.define(
-                kind: classSymbolKind(for: nestedClass),
+                kind: nestedClassKind,
                 name: nestedClass.name,
                 fqName: nestedFQName,
                 declSite: nestedClass.range,
@@ -539,6 +564,14 @@ extension DataFlowSemaPassPhase {
                 continue
             }
             let nestedFQName = ownerFQName + [nestedObject.name]
+            let existingObjSymbols = symbols.lookupAll(fqName: nestedFQName).compactMap { symbols.symbol($0) }
+            if hasDeclarationConflict(newKind: .object, existing: existingObjSymbols) {
+                diagnostics.error(
+                    "KSWIFTK-SEMA-0001",
+                    "Duplicate declaration in the same package scope.",
+                    range: nestedObject.range
+                )
+            }
             let nestedSymbol = symbols.define(
                 kind: .object,
                 name: nestedObject.name,
