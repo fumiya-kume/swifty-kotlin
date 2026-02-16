@@ -780,7 +780,8 @@ public final class BuildKIRPhase: CompilerPhase {
                             callee: runtimeCallee,
                             arguments: [lhsID, rhsID],
                             result: result,
-                            canThrow: false
+                            canThrow: false,
+                            thrownResult: nil
                         )
                     )
                 }
