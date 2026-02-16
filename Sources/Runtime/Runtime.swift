@@ -102,7 +102,7 @@ private final class RuntimeContinuationState {
 
     func scheduleDelay(milliseconds: Int) {
         let timer = DispatchSource.makeTimerSource(queue: DispatchQueue.global())
-        let timerID = ObjectIdentifier(timer)
+        let timerID = ObjectIdentifier(timer as AnyObject)
         stateLock.lock()
         delayTimers[timerID] = timer
         stateLock.unlock()
