@@ -43,22 +43,113 @@ extension BuildASTPhase {
         }
 
         func parse() -> ExprID? {
+            parseAssignmentOrExpression()
+        }
+
+        private func parseAssignmentOrExpression() -> ExprID? {
             parseExpression(minPrecedence: 0)
         }
 
         private func parseExpression(minPrecedence: Int) -> ExprID? {
-            guard var lhs = parsePostfixOrPrimary() else {
+            guard var lhs = parsePrefixUnary() else {
                 return nil
             }
 
-            while let op = binaryOperator(at: current()), precedence(of: op) >= minPrecedence {
+            while true {
+                if let token = current(), token.kind == .keyword(.is) {
+                    let prec = 85
+                    guard prec >= minPrecedence else { break }
+                    _ = consume()
+                    guard let typeRef = parseTypeReference(token.range) else { break }
+                    let range = mergeRanges(astArena.exprRange(lhs), nil, fallback: token.range)
+                    lhs = astArena.appendExpr(.isCheck(expr: lhs, type: typeRef, negated: false, range: range))
+                    continue
+                }
+
+                if let token = current(), token.kind == .symbol(.bang),
+                   let next = peek(1), next.kind == .keyword(.is) {
+                    let prec = 85
+                    guard prec >= minPrecedence else { break }
+                    _ = consume()
+                    _ = consume()
+                    guard let typeRef = parseTypeReference(token.range) else { break }
+                    let range = mergeRanges(astArena.exprRange(lhs), nil, fallback: token.range)
+                    lhs = astArena.appendExpr(.isCheck(expr: lhs, type: typeRef, negated: true, range: range))
+                    continue
+                }
+
+                if let token = current(), token.kind == .keyword(.as) {
+                    let prec = 130
+                    guard prec >= minPrecedence else { break }
+                    _ = consume()
+                    let isSafe = consumeIf(.symbol(.question)) != nil
+                    guard let typeRef = parseTypeReference(token.range) else { break }
+                    let range = mergeRanges(astArena.exprRange(lhs), nil, fallback: token.range)
+                    lhs = astArena.appendExpr(.asCast(expr: lhs, type: typeRef, isSafe: isSafe, range: range))
+                    continue
+                }
+
+                guard let op = binaryOperator(at: current()), precedence(of: op) >= minPrecedence else {
+                    break
+                }
                 guard let opToken = consume() else { break }
-                let nextMin = precedence(of: op) + 1
+                let assoc = associativity(of: op)
+                let nextMin = assoc == .right ? precedence(of: op) : precedence(of: op) + 1
                 guard let rhs = parseExpression(minPrecedence: nextMin) else { break }
                 let range = mergeRanges(astArena.exprRange(lhs), astArena.exprRange(rhs), fallback: opToken.range)
                 lhs = astArena.appendExpr(.binary(op: op, lhs: lhs, rhs: rhs, range: range))
             }
             return lhs
+        }
+
+        private func parsePrefixUnary() -> ExprID? {
+            guard let token = current() else {
+                return nil
+            }
+            switch token.kind {
+            case .symbol(.bang):
+                if let next = peek(1), next.kind == .keyword(.is) {
+                    return parsePostfixOrPrimary()
+                }
+                _ = consume()
+                guard let operand = parsePrefixUnary() else { return nil }
+                let range = mergeRanges(token.range, astArena.exprRange(operand), fallback: token.range)
+                return astArena.appendExpr(.unaryExpr(op: .not, operand: operand, range: range))
+            case .symbol(.minus):
+                if isUnaryPrefix() {
+                    _ = consume()
+                    guard let operand = parsePrefixUnary() else { return nil }
+                    let range = mergeRanges(token.range, astArena.exprRange(operand), fallback: token.range)
+                    return astArena.appendExpr(.unaryExpr(op: .unaryMinus, operand: operand, range: range))
+                }
+                return parsePostfixOrPrimary()
+            case .symbol(.plus):
+                if isUnaryPrefix() {
+                    _ = consume()
+                    guard let operand = parsePrefixUnary() else { return nil }
+                    let range = mergeRanges(token.range, astArena.exprRange(operand), fallback: token.range)
+                    return astArena.appendExpr(.unaryExpr(op: .unaryPlus, operand: operand, range: range))
+                }
+                return parsePostfixOrPrimary()
+            default:
+                return parsePostfixOrPrimary()
+            }
+        }
+
+        private func isUnaryPrefix() -> Bool {
+            if index == 0 { return true }
+            guard index > 0, index - 1 < tokens.count else { return true }
+            let prev = tokens[index - 1]
+            switch prev.kind {
+            case .intLiteral, .longLiteral, .floatLiteral, .doubleLiteral,
+                 .identifier, .backtickedIdentifier,
+                 .symbol(.rParen), .symbol(.rBracket),
+                 .symbol(.bangBang),
+                 .keyword(.true), .keyword(.false):
+                return false
+            default:
+                return true
+            }
         }
 
         private func parsePostfixOrPrimary() -> ExprID? {
@@ -88,6 +179,37 @@ extension BuildASTPhase {
                     let fallbackRange = SourceRange(start: fallbackEnd, end: fallbackEnd)
                     let range = mergeRanges(astArena.exprRange(expr), close?.range ?? fallbackRange, fallback: open.range)
                     expr = astArena.appendExpr(.arrayAccess(array: expr, index: indexExpr, range: range))
+                    continue
+                }
+
+                if matches(.symbol(.bangBang)) {
+                    guard let bangBang = consume() else { break }
+                    let range = mergeRanges(astArena.exprRange(expr), bangBang.range, fallback: bangBang.range)
+                    expr = astArena.appendExpr(.nullAssert(expr: expr, range: range))
+                    continue
+                }
+
+                if matches(.symbol(.questionDot)) {
+                    guard let qDot = consume(),
+                          let memberToken = consume(),
+                          let memberName = tokenText(memberToken) else {
+                        break
+                    }
+                    var args: [CallArgument] = []
+                    var memberEndRange = memberToken.range
+                    if matches(.symbol(.lParen)),
+                       let open = consume() {
+                        args = parseCallArguments()
+                        let close = consumeIf(.symbol(.rParen))
+                        memberEndRange = close?.range ?? open.range
+                    }
+                    let range = mergeRanges(astArena.exprRange(expr), memberEndRange, fallback: qDot.range)
+                    expr = astArena.appendExpr(.safeMemberCall(
+                        receiver: expr,
+                        callee: memberName,
+                        args: args,
+                        range: range
+                    ))
                     continue
                 }
 
@@ -557,6 +679,28 @@ extension BuildASTPhase {
             }
         }
 
+        private func parseTypeReference(_ fallbackRange: SourceRange) -> TypeRefID? {
+            guard let token = current() else { return nil }
+            switch token.kind {
+            case .identifier(let name), .backtickedIdentifier(let name):
+                _ = consume()
+                let isNullable = consumeIf(.symbol(.question)) != nil
+                return astArena.appendTypeRef(.named(path: [name], nullable: isNullable))
+            case .keyword(let kw):
+                _ = consume()
+                let name = interner.intern(kw.rawValue)
+                let isNullable = consumeIf(.symbol(.question)) != nil
+                return astArena.appendTypeRef(.named(path: [name], nullable: isNullable))
+            case .softKeyword(let kw):
+                _ = consume()
+                let name = interner.intern(kw.rawValue)
+                let isNullable = consumeIf(.symbol(.question)) != nil
+                return astArena.appendTypeRef(.named(path: [name], nullable: isNullable))
+            default:
+                return nil
+            }
+        }
+
         private func binaryOperator(at token: Token?) -> BinaryOp? {
             guard let token else { return nil }
             switch token.kind {
@@ -568,21 +712,65 @@ extension BuildASTPhase {
                 return .multiply
             case .symbol(.slash):
                 return .divide
+            case .symbol(.percent):
+                return .modulo
             case .symbol(.equalEqual):
                 return .equal
+            case .symbol(.bangEqual):
+                return .notEqual
+            case .symbol(.lessThan):
+                return .lessThan
+            case .symbol(.lessOrEqual):
+                return .lessOrEqual
+            case .symbol(.greaterThan):
+                return .greaterThan
+            case .symbol(.greaterOrEqual):
+                return .greaterOrEqual
+            case .symbol(.ampAmp):
+                return .logicalAnd
+            case .symbol(.barBar):
+                return .logicalOr
+            case .symbol(.questionColon):
+                return .elvis
+            case .symbol(.dotDot):
+                return .rangeTo
             default:
                 return nil
             }
         }
 
+        private enum Associativity {
+            case left
+            case right
+        }
+
         private func precedence(of op: BinaryOp) -> Int {
             switch op {
-            case .multiply, .divide:
-                return 20
+            case .multiply, .divide, .modulo:
+                return 120
             case .add, .subtract:
-                return 10
-            case .equal:
-                return 5
+                return 110
+            case .rangeTo:
+                return 100
+            case .elvis:
+                return 90
+            case .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
+                return 80
+            case .equal, .notEqual:
+                return 70
+            case .logicalAnd:
+                return 60
+            case .logicalOr:
+                return 50
+            }
+        }
+
+        private func associativity(of op: BinaryOp) -> Associativity {
+            switch op {
+            case .elvis:
+                return .right
+            default:
+                return .left
             }
         }
 
