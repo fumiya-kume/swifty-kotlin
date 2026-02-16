@@ -91,7 +91,11 @@ public final class LLVMBackend {
 
         do {
             try source.write(to: sourceURL, atomically: false, encoding: .utf8)
-            var args = ["-x", "c", "-std=c11"] + extraArgs + [sourceURL.path, "-o", outputPath]
+            var args = ["-x", "c", "-std=c11"] + extraArgs
+            if debugInfo {
+                args.append("-g")
+            }
+            args.append(contentsOf: [sourceURL.path, "-o", outputPath])
             args.append(contentsOf: clangTargetArgs())
             _ = try CommandRunner.run(executable: "/usr/bin/clang", arguments: args)
         } catch let error as CommandRunnerError {
