@@ -291,8 +291,10 @@ extension TypeCheckSemaPassPhase {
         case .binary(let op, let lhsID, let rhsID, let range):
             let lhs = inferExpr(lhsID, ctx: ctx, locals: &locals)
             let rhs = inferExpr(rhsID, ctx: ctx, locals: &locals)
+            let lhsIsPrimitive: Bool
+            if case .primitive = sema.types.kind(of: lhs) { lhsIsPrimitive = true } else { lhsIsPrimitive = false }
             let operatorName = binaryOperatorFunctionName(for: op, interner: interner)
-            let operatorCandidates = scope.lookup(operatorName).filter { candidate in
+            let operatorCandidates: [SymbolID] = lhsIsPrimitive ? [] : scope.lookup(operatorName).filter { candidate in
                 guard let symbol = sema.symbols.symbol(candidate),
                       symbol.kind == .function,
                       let signature = sema.symbols.functionSignature(for: candidate) else {
