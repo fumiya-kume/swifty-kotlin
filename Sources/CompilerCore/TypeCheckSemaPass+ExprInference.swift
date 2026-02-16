@@ -288,70 +288,155 @@ extension TypeCheckSemaPassPhase {
             sema.bindings.bindExprType(id, type: resolvedType)
             return resolvedType
 
+        case .unary(let op, let operandID, let range):
+            let operandType = inferExpr(operandID, ctx: ctx, locals: &locals)
+            let type: TypeID
+            switch op {
+            case .plus, .minus:
+                emitSubtypeConstraint(
+                    left: operandType,
+                    right: intType,
+                    range: ast.arena.exprRange(operandID) ?? range,
+                    solver: ConstraintSolver(),
+                    sema: sema,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+                type = intType
+            case .not:
+                emitSubtypeConstraint(
+                    left: operandType,
+                    right: boolType,
+                    range: ast.arena.exprRange(operandID) ?? range,
+                    solver: ConstraintSolver(),
+                    sema: sema,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+                type = boolType
+            }
+            sema.bindings.bindExprType(id, type: type)
+            return type
+
         case .binary(let op, let lhsID, let rhsID, let range):
             let lhs = inferExpr(lhsID, ctx: ctx, locals: &locals)
             let rhs = inferExpr(rhsID, ctx: ctx, locals: &locals)
-            let operatorName = binaryOperatorFunctionName(for: op, interner: interner)
-            let operatorCandidates = scope.lookup(operatorName).filter { candidate in
-                guard let symbol = sema.symbols.symbol(candidate),
-                      symbol.kind == .function,
-                      let signature = sema.symbols.functionSignature(for: candidate) else {
-                    return false
+            let isPrimitiveBuiltin = (lhs == intType && (op == .add || op == .subtract || op == .multiply || op == .divide || op == .equal))
+                || (lhs == stringType && (op == .add || op == .equal))
+                || (lhs == boolType && op == .equal)
+            if shouldResolveBinaryOperatorOverload(for: op) && !isPrimitiveBuiltin {
+                let operatorName = binaryOperatorFunctionName(for: op, interner: interner)
+                let operatorCandidates = scope.lookup(operatorName).filter { candidate in
+                    guard let symbol = sema.symbols.symbol(candidate),
+                          symbol.kind == .function,
+                          let signature = sema.symbols.functionSignature(for: candidate) else {
+                        return false
+                    }
+                    return signature.receiverType != nil
                 }
-                return signature.receiverType != nil
-            }
-            if !operatorCandidates.isEmpty {
-                let resolved = ctx.resolver.resolveCall(
-                    candidates: operatorCandidates,
-                    call: CallExpr(
-                        range: range,
-                        calleeName: operatorName,
-                        args: [CallArg(type: rhs)]
-                    ),
-                    expectedType: expectedType,
-                    implicitReceiverType: lhs,
-                    ctx: ctx.semaCtx
-                )
-                if let diagnostic = resolved.diagnostic {
-                    ctx.semaCtx.diagnostics.emit(diagnostic)
-                    sema.bindings.bindExprType(id, type: sema.types.errorType)
-                    return sema.types.errorType
-                }
-                guard let chosen = resolved.chosenCallee else {
-                    sema.bindings.bindExprType(id, type: sema.types.errorType)
-                    return sema.types.errorType
-                }
-                sema.bindings.bindCall(
-                    id,
-                    binding: CallBinding(
-                        chosenCallee: chosen,
-                        substitutedTypeArguments: resolved.substitutedTypeArguments
-                            .sorted(by: { $0.key.rawValue < $1.key.rawValue })
-                            .map(\.value),
-                        parameterMapping: resolved.parameterMapping
+                if !operatorCandidates.isEmpty {
+                    let resolved = ctx.resolver.resolveCall(
+                        candidates: operatorCandidates,
+                        call: CallExpr(
+                            range: range,
+                            calleeName: operatorName,
+                            args: [CallArg(type: rhs)]
+                        ),
+                        expectedType: expectedType,
+                        implicitReceiverType: lhs,
+                        ctx: ctx.semaCtx
                     )
-                )
-                let returnType: TypeID
-                if let signature = sema.symbols.functionSignature(for: chosen) {
-                    let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
-                    returnType = sema.types.substituteTypeParameters(
-                        in: signature.returnType,
-                        substitution: resolved.substitutedTypeArguments,
-                        typeVarBySymbol: typeVarBySymbol
+                    if let diagnostic = resolved.diagnostic {
+                        ctx.semaCtx.diagnostics.emit(diagnostic)
+                        sema.bindings.bindExprType(id, type: sema.types.errorType)
+                        return sema.types.errorType
+                    }
+                    guard let chosen = resolved.chosenCallee else {
+                        sema.bindings.bindExprType(id, type: sema.types.errorType)
+                        return sema.types.errorType
+                    }
+                    sema.bindings.bindCall(
+                        id,
+                        binding: CallBinding(
+                            chosenCallee: chosen,
+                            substitutedTypeArguments: resolved.substitutedTypeArguments
+                                .sorted(by: { $0.key.rawValue < $1.key.rawValue })
+                                .map(\.value),
+                            parameterMapping: resolved.parameterMapping
+                        )
                     )
-                } else {
-                    returnType = sema.types.anyType
+                    let returnType: TypeID
+                    if let signature = sema.symbols.functionSignature(for: chosen) {
+                        let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
+                        returnType = sema.types.substituteTypeParameters(
+                            in: signature.returnType,
+                            substitution: resolved.substitutedTypeArguments,
+                            typeVarBySymbol: typeVarBySymbol
+                        )
+                    } else {
+                        returnType = sema.types.anyType
+                    }
+                    sema.bindings.bindExprType(id, type: returnType)
+                    return returnType
                 }
-                sema.bindings.bindExprType(id, type: returnType)
-                return returnType
             }
             let type: TypeID
             switch op {
             case .add:
                 type = (lhs == stringType || rhs == stringType) ? stringType : intType
             case .subtract, .multiply, .divide:
+                emitSubtypeConstraint(
+                    left: lhs,
+                    right: intType,
+                    range: ast.arena.exprRange(lhsID) ?? range,
+                    solver: ConstraintSolver(),
+                    sema: sema,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+                emitSubtypeConstraint(
+                    left: rhs,
+                    right: intType,
+                    range: ast.arena.exprRange(rhsID) ?? range,
+                    solver: ConstraintSolver(),
+                    sema: sema,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
                 type = intType
-            case .equal:
+            case .equal, .notEqual:
+                type = boolType
+            case .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
+                emitSubtypeConstraint(
+                    left: lhs,
+                    right: intType,
+                    range: ast.arena.exprRange(lhsID) ?? range,
+                    solver: ConstraintSolver(),
+                    sema: sema,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+                emitSubtypeConstraint(
+                    left: rhs,
+                    right: intType,
+                    range: ast.arena.exprRange(rhsID) ?? range,
+                    solver: ConstraintSolver(),
+                    sema: sema,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+                type = boolType
+            case .logicalAnd, .logicalOr:
+                emitSubtypeConstraint(
+                    left: lhs,
+                    right: boolType,
+                    range: ast.arena.exprRange(lhsID) ?? range,
+                    solver: ConstraintSolver(),
+                    sema: sema,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+                emitSubtypeConstraint(
+                    left: rhs,
+                    right: boolType,
+                    range: ast.arena.exprRange(rhsID) ?? range,
+                    solver: ConstraintSolver(),
+                    sema: sema,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
                 type = boolType
             }
             sema.bindings.bindExprType(id, type: type)
@@ -738,6 +823,23 @@ extension TypeCheckSemaPassPhase {
             return interner.intern("div")
         case .equal:
             return interner.intern("equals")
+        case .notEqual:
+            return interner.intern("equals")
+        case .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
+            return interner.intern("compareTo")
+        case .logicalAnd:
+            return interner.intern("and")
+        case .logicalOr:
+            return interner.intern("or")
+        }
+    }
+
+    func shouldResolveBinaryOperatorOverload(for op: BinaryOp) -> Bool {
+        switch op {
+        case .add, .subtract, .multiply, .divide, .equal:
+            return true
+        case .notEqual, .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual, .logicalAnd, .logicalOr:
+            return false
         }
     }
 
