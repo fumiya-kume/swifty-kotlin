@@ -132,7 +132,18 @@ public final class LLVMBackend {
     }
 
     private static let builtinOps: [String: String] = [
-        "kk_op_add": "+", "kk_op_sub": "-", "kk_op_mul": "*", "kk_op_div": "/", "kk_op_eq": "=="
+        "kk_op_add": "+",
+        "kk_op_sub": "-",
+        "kk_op_mul": "*",
+        "kk_op_div": "/",
+        "kk_op_eq": "==",
+        "kk_op_ne": "!=",
+        "kk_op_lt": "<",
+        "kk_op_le": "<=",
+        "kk_op_gt": ">",
+        "kk_op_ge": ">=",
+        "kk_op_and": "&&",
+        "kk_op_or": "||"
     ]
 
     private struct FrameMapPlan {
@@ -293,10 +304,52 @@ public final class LLVMBackend {
             "  array->elements[index] = value;",
             "  return value;",
             "}",
+            "typedef struct { intptr_t tag; intptr_t value; } KKBoxedValue;",
+            "#define KK_BOX_TAG_INT  0x4B424F49",
+            "#define KK_BOX_TAG_BOOL 0x4B424F42",
+            "static intptr_t kk_box_int(intptr_t value) {",
+            "  if (value == KK_NULL_SENTINEL) return value;",
+            "  KKBoxedValue* box = (KKBoxedValue*)malloc(sizeof(KKBoxedValue));",
+            "  if (!box) return value;",
+            "  box->tag = KK_BOX_TAG_INT;",
+            "  box->value = value;",
+            "  return (intptr_t)box;",
+            "}",
+            "static intptr_t kk_box_bool(intptr_t value) {",
+            "  if (value == KK_NULL_SENTINEL) return value;",
+            "  KKBoxedValue* box = (KKBoxedValue*)malloc(sizeof(KKBoxedValue));",
+            "  if (!box) return value;",
+            "  box->tag = KK_BOX_TAG_BOOL;",
+            "  box->value = value != 0 ? 1 : 0;",
+            "  return (intptr_t)box;",
+            "}",
+            "static intptr_t kk_unbox_int(intptr_t obj) {",
+            "  if (obj == KK_NULL_SENTINEL) return 0;",
+            "  if (obj > -(intptr_t)0x100000000LL && obj < (intptr_t)0x100000000LL) return obj;",
+            "  KKBoxedValue* box = (KKBoxedValue*)(void*)obj;",
+            "  if (box && box->tag == KK_BOX_TAG_INT) return box->value;",
+            "  return obj;",
+            "}",
+            "static intptr_t kk_unbox_bool(intptr_t obj) {",
+            "  if (obj == KK_NULL_SENTINEL) return 0;",
+            "  if (obj > -(intptr_t)0x100000000LL && obj < (intptr_t)0x100000000LL) return obj != 0 ? 1 : 0;",
+            "  KKBoxedValue* box = (KKBoxedValue*)(void*)obj;",
+            "  if (box && box->tag == KK_BOX_TAG_BOOL) return box->value;",
+            "  return obj != 0 ? 1 : 0;",
+            "}",
             "static void kk_println_any(intptr_t obj) {",
             "  if (obj == KK_NULL_SENTINEL) { puts(\"null\"); return; }",
             "  if (obj > -(intptr_t)0x100000000LL && obj < (intptr_t)0x100000000LL) {",
             "    printf(\"%ld\\n\", (long)obj);",
+            "    return;",
+            "  }",
+            "  KKBoxedValue* maybeBox = (KKBoxedValue*)(void*)obj;",
+            "  if (maybeBox && maybeBox->tag == KK_BOX_TAG_BOOL) {",
+            "    puts(maybeBox->value ? \"true\" : \"false\");",
+            "    return;",
+            "  }",
+            "  if (maybeBox && maybeBox->tag == KK_BOX_TAG_INT) {",
+            "    printf(\"%ld\\n\", (long)maybeBox->value);",
             "    return;",
             "  }",
             "  KKString* s = (KKString*)(void*)obj;",
@@ -603,10 +656,47 @@ public final class LLVMBackend {
                     opText = "*"
                 case .divide:
                     opText = "/"
+                case .modulo:
+                    opText = "%"
                 case .equal:
                     opText = "=="
+                case .notEqual:
+                    opText = "!="
+                case .lessThan:
+                    opText = "<"
+                case .lessOrEqual:
+                    opText = "<="
+                case .greaterThan:
+                    opText = ">"
+                case .greaterOrEqual:
+                    opText = ">="
+                case .logicalAnd:
+                    opText = "&&"
+                case .logicalOr:
+                    opText = "||"
                 }
                 lines.append("  \(varName(result)) = (\(varName(lhs)) \(opText) \(varName(rhs)));")
+                syncRoot(result)
+
+            case .unary(let op, let operand, let result):
+                ensureDeclared(result, declared: &declared, lines: &lines)
+                ensureDeclared(operand, declared: &declared, lines: &lines)
+                let unaryOpText: String
+                switch op {
+                case .not:
+                    unaryOpText = "!"
+                case .unaryPlus:
+                    unaryOpText = "+"
+                case .unaryMinus:
+                    unaryOpText = "-"
+                }
+                lines.append("  \(varName(result)) = (\(unaryOpText)\(varName(operand)));")
+                syncRoot(result)
+
+            case .nullAssert(let operand, let result):
+                ensureDeclared(result, declared: &declared, lines: &lines)
+                ensureDeclared(operand, declared: &declared, lines: &lines)
+                lines.append("  \(varName(result)) = \(varName(operand));")
                 syncRoot(result)
 
             case .call(let symbol, let callee, let arguments, let result, let usesThrownChannel):

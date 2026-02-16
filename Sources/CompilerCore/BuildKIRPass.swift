@@ -646,6 +646,18 @@ public final class BuildKIRPhase: CompilerPhase {
                 )
                 return result
             }
+            if let runtimeCallee = builtinBinaryRuntimeCallee(for: op, interner: interner) {
+                instructions.append(
+                    .call(
+                        symbol: nil,
+                        callee: runtimeCallee,
+                        arguments: [lhsID, rhsID],
+                        result: result,
+                        canThrow: false
+                    )
+                )
+                return result
+            }
             let kirOp: KIRBinaryOp
             switch op {
             case .add:
@@ -656,8 +668,42 @@ public final class BuildKIRPhase: CompilerPhase {
                 kirOp = .multiply
             case .divide:
                 kirOp = .divide
+            case .modulo:
+                kirOp = .modulo
             case .equal:
                 kirOp = .equal
+            case .notEqual:
+                kirOp = .notEqual
+            case .lessThan:
+                kirOp = .lessThan
+            case .lessOrEqual:
+                kirOp = .lessOrEqual
+            case .greaterThan:
+                kirOp = .greaterThan
+            case .greaterOrEqual:
+                kirOp = .greaterOrEqual
+            case .logicalAnd:
+                kirOp = .logicalAnd
+            case .logicalOr:
+                kirOp = .logicalOr
+            case .elvis:
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_op_elvis"),
+                    arguments: [lhsID, rhsID],
+                    result: result,
+                    canThrow: false
+                ))
+                return result
+            case .rangeTo:
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_op_rangeTo"),
+                    arguments: [lhsID, rhsID],
+                    result: result,
+                    canThrow: false
+                ))
+                return result
             }
             instructions.append(.binary(op: kirOp, lhs: lhsID, rhs: rhsID, result: result))
             return result
@@ -804,6 +850,162 @@ public final class BuildKIRPhase: CompilerPhase {
                 canThrow: false
             ))
             return result
+
+        case .unaryExpr(let op, let operandExpr, _):
+            let operandID = lowerExpr(
+                operandExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            switch op {
+            case .unaryPlus:
+                return operandID
+            case .unaryMinus:
+                let zero = arena.appendExpr(.intLiteral(0), type: intType)
+                instructions.append(.constValue(result: zero, value: .intLiteral(0)))
+                let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? intType)
+                instructions.append(.binary(op: .subtract, lhs: zero, rhs: operandID, result: result))
+                return result
+            case .not:
+                let falseValue = arena.appendExpr(.boolLiteral(false), type: boolType)
+                instructions.append(.constValue(result: falseValue, value: .boolLiteral(false)))
+                let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? boolType)
+                instructions.append(.binary(op: .equal, lhs: operandID, rhs: falseValue, result: result))
+                return result
+            }
+
+        case .isCheck(let exprToCheck, _, _, _):
+            let operandID = lowerExpr(
+                exprToCheck,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? boolType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_op_is"),
+                arguments: [operandID],
+                result: result,
+                canThrow: false
+            ))
+            return result
+
+        case .asCast(let exprToCast, _, _, _):
+            let operandID = lowerExpr(
+                exprToCast,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_op_cast"),
+                arguments: [operandID],
+                result: result,
+                canThrow: false
+            ))
+            return result
+
+        case .nullAssert(let innerExpr, _):
+            let operandID = lowerExpr(
+                innerExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+            instructions.append(.nullAssert(operand: operandID, result: result))
+            return result
+
+        case .safeMemberCall(let receiverExpr, let calleeName, let args, _):
+            let loweredReceiverID = lowerExpr(
+                receiverExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            let loweredArgIDs = args.map { argument in
+                lowerExpr(
+                    argument.expr,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+            }
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+            let callBinding = sema.bindings.callBindings[exprID]
+            let chosen = callBinding?.chosenCallee
+            let normalizedArgs = normalizedCallArguments(
+                providedArguments: loweredArgIDs,
+                callBinding: callBinding,
+                chosenCallee: chosen,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            var finalArguments = normalizedArgs
+            if let chosen,
+               let signature = sema.symbols.functionSignature(for: chosen),
+               signature.receiverType != nil {
+                finalArguments.insert(loweredReceiverID, at: 0)
+            }
+            let loweredMemberCalleeName: InternedString
+            if let chosen,
+               let externalLinkName = sema.symbols.externalLinkName(for: chosen),
+               !externalLinkName.isEmpty {
+                loweredMemberCalleeName = interner.intern(externalLinkName)
+            } else {
+                loweredMemberCalleeName = calleeName
+            }
+            instructions.append(.call(
+                symbol: chosen,
+                callee: loweredMemberCalleeName,
+                arguments: finalArguments,
+                result: result,
+                canThrow: false
+            ))
+            return result
+
+        case .compoundAssign(_, _, let valueExpr, _):
+            let valueID = lowerExpr(
+                valueExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            if let symbol = sema.bindings.identifierSymbols[exprID] {
+                localValuesBySymbol[symbol] = valueID
+            }
+            let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+            instructions.append(.constValue(result: unit, value: .unit))
+            return unit
 
         case .whenExpr(let subject, let branches, let elseExpr, _):
             let subjectID = lowerExpr(
@@ -1026,6 +1228,27 @@ public final class BuildKIRPhase: CompilerPhase {
         }
     }
 
+    private func builtinBinaryRuntimeCallee(for op: BinaryOp, interner: StringInterner) -> InternedString? {
+        switch op {
+        case .notEqual:
+            return interner.intern("kk_op_ne")
+        case .lessThan:
+            return interner.intern("kk_op_lt")
+        case .lessOrEqual:
+            return interner.intern("kk_op_le")
+        case .greaterThan:
+            return interner.intern("kk_op_gt")
+        case .greaterOrEqual:
+            return interner.intern("kk_op_ge")
+        case .logicalAnd:
+            return interner.intern("kk_op_and")
+        case .logicalOr:
+            return interner.intern("kk_op_or")
+        default:
+            return nil
+        }
+    }
+
     private func binaryOperatorFunctionName(for op: BinaryOp, interner: StringInterner) -> InternedString {
         switch op {
         case .add:
@@ -1036,8 +1259,22 @@ public final class BuildKIRPhase: CompilerPhase {
             return interner.intern("times")
         case .divide:
             return interner.intern("div")
+        case .modulo:
+            return interner.intern("rem")
         case .equal:
             return interner.intern("equals")
+        case .notEqual:
+            return interner.intern("equals")
+        case .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
+            return interner.intern("compareTo")
+        case .logicalAnd:
+            return interner.intern("and")
+        case .logicalOr:
+            return interner.intern("or")
+        case .elvis:
+            return interner.intern("elvis")
+        case .rangeTo:
+            return interner.intern("rangeTo")
         }
     }
 

@@ -310,6 +310,22 @@ final class GoldenHarnessTests: XCTestCase {
             let catches = catchBodies.map { "e\($0.rawValue)" }.joined(separator: ",")
             let renderedFinally = finallyExpr.map { "e\($0.rawValue)" } ?? "_"
             return "try body=e\(body.rawValue) catches=[\(catches)] finally=\(renderedFinally)"
+        case .unaryExpr(let op, let operand, _):
+            return "unary(\(op)) operand=e\(operand.rawValue)"
+        case .isCheck(let expr, let type, let negated, _):
+            return "isCheck\(negated ? "!" : "") expr=e\(expr.rawValue) type=t\(type.rawValue)"
+        case .asCast(let expr, let type, let isSafe, _):
+            return "asCast\(isSafe ? "?" : "") expr=e\(expr.rawValue) type=t\(type.rawValue)"
+        case .nullAssert(let expr, _):
+            return "nullAssert expr=e\(expr.rawValue)"
+        case .safeMemberCall(let receiver, let callee, let args, _):
+            let renderedArgs = args.map { arg in
+                let label = arg.label.map { interner.resolve($0) } ?? "_"
+                return "\(label):e\(arg.expr.rawValue)"
+            }.joined(separator: ",")
+            return "safeMemberCall recv=e\(receiver.rawValue) callee=\(interner.resolve(callee)) args=[\(renderedArgs)]"
+        case .compoundAssign(let op, let name, let value, _):
+            return "compoundAssign(\(op)) name=\(interner.resolve(name)) value=e\(value.rawValue)"
         }
     }
 
