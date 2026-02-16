@@ -147,25 +147,27 @@ final class RuntimeGCTests: XCTestCase {
 
         withTestTypeInfo(fieldOffsets: [fieldOffset]) { typeInfoPtr in
             let parent = kk_alloc(parentSize, UnsafeRawPointer(typeInfoPtr))
-            let child = kk_alloc(16, UnsafeRawPointer(typeInfoPtr))
-            let slot = parent.advanced(by: Int(fieldOffset)).assumingMemoryBound(to: UnsafeMutableRawPointer?.self)
-            slot.pointee = child
+            withDummyTypeInfo { childTI in
+                let child = kk_alloc(16, childTI)
+                let slot = parent.advanced(by: Int(fieldOffset)).assumingMemoryBound(to: UnsafeMutableRawPointer?.self)
+                slot.pointee = child
 
-            let rootSlot = UnsafeMutablePointer<UnsafeMutableRawPointer?>.allocate(capacity: 1)
-            rootSlot.initialize(to: parent)
-            defer {
-                rootSlot.deinitialize(count: 1)
-                rootSlot.deallocate()
+                let rootSlot = UnsafeMutablePointer<UnsafeMutableRawPointer?>.allocate(capacity: 1)
+                rootSlot.initialize(to: parent)
+                defer {
+                    rootSlot.deinitialize(count: 1)
+                    rootSlot.deallocate()
+                }
+
+                kk_register_global_root(rootSlot)
+                kk_gc_collect()
+                XCTAssertEqual(kk_runtime_heap_object_count(), 2)
+
+                rootSlot.pointee = nil
+                kk_gc_collect()
+                XCTAssertEqual(kk_runtime_heap_object_count(), 0)
+                kk_unregister_global_root(rootSlot)
             }
-
-            kk_register_global_root(rootSlot)
-            kk_gc_collect()
-            XCTAssertEqual(kk_runtime_heap_object_count(), 2)
-
-            rootSlot.pointee = nil
-            kk_gc_collect()
-            XCTAssertEqual(kk_runtime_heap_object_count(), 0)
-            kk_unregister_global_root(rootSlot)
         }
     }
 }
