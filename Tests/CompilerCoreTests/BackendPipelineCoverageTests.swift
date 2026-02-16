@@ -499,6 +499,9 @@ final class BackendPipelineCoverageTests: XCTestCase {
     }
 
     func testBuildKIRUsesResolvedOperatorOverloadCallForBinaryExpression() throws {
+        // Kotlin member functions take precedence over extensions with the same
+        // signature.  Int.plus is a built-in member, so `operator fun Int.plus`
+        // defined as an extension must NOT shadow the built-in `+`.
         let source = """
         operator fun Int.plus(other: Int): Int = this - other
         fun main(): Int = 7 + 3
@@ -506,13 +509,6 @@ final class BackendPipelineCoverageTests: XCTestCase {
         try withTemporaryFile(contents: source) { path in
             let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
             try runToKIR(ctx)
-
-            let sema = try XCTUnwrap(ctx.sema)
-            let plusSymbol = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
-                ctx.interner.resolve(symbol.name) == "plus" &&
-                symbol.kind == .function &&
-                !symbol.flags.contains(.synthetic)
-            }))
 
             let module = try XCTUnwrap(ctx.kir)
             let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
@@ -523,19 +519,18 @@ final class BackendPipelineCoverageTests: XCTestCase {
             }.first
             let body = try XCTUnwrap(mainFunction?.body)
 
+            // The built-in binary .add instruction should be used, not a call.
             XCTAssertTrue(body.contains { instruction in
-                guard case .call(let symbol, let callee, let arguments, _, _) = instruction else {
-                    return false
-                }
-                return symbol == plusSymbol.id &&
-                    ctx.interner.resolve(callee) == "plus" &&
-                    arguments.count == 2
-            })
-            XCTAssertFalse(body.contains { instruction in
                 guard case .binary(let op, _, _, _) = instruction else {
                     return false
                 }
                 return op == .add
+            })
+            XCTAssertFalse(body.contains { instruction in
+                guard case .call(_, let callee, _, _, _) = instruction else {
+                    return false
+                }
+                return ctx.interner.resolve(callee) == "plus"
             })
         }
     }
