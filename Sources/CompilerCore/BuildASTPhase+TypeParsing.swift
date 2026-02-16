@@ -261,13 +261,33 @@ extension BuildASTPhase {
             return nil
         }
 
+        if let funcTypeRef = parseFunctionTypeRef(from: tokens, interner: interner, astArena: astArena) {
+            return funcTypeRef
+        }
+
         var path: [InternedString] = []
         var nullable = false
+        var typeArgs: [TypeArgRef] = []
         var depth = BracketDepth()
+        var angleStartIndex: Int?
 
-        for token in tokens {
+        for (index, token) in tokens.enumerated() {
+            if depth.angle == 0 && token.kind == .symbol(.lessThan) {
+                angleStartIndex = index
+            }
             depth.track(token.kind)
             if depth.angle > 0 {
+                continue
+            }
+            if angleStartIndex != nil && token.kind == .symbol(.greaterThan) {
+                if let startIdx = angleStartIndex {
+                    typeArgs = parseTypeArgRefs(
+                        from: Array(tokens[(startIdx + 1)..<index]),
+                        interner: interner,
+                        astArena: astArena
+                    )
+                }
+                angleStartIndex = nil
                 continue
             }
             switch token.kind {
@@ -286,7 +306,160 @@ extension BuildASTPhase {
         guard !path.isEmpty else {
             return nil
         }
-        return astArena.appendTypeRef(.named(path: path, nullable: nullable))
+        return astArena.appendTypeRef(.named(path: path, args: typeArgs, nullable: nullable))
+    }
+
+    func parseTypeArgRefs(
+        from tokens: [Token],
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> [TypeArgRef] {
+        var args: [TypeArgRef] = []
+        var current: [Token] = []
+        var depth = BracketDepth()
+
+        for token in tokens {
+            depth.track(token.kind)
+            if token.kind == .symbol(.comma) && depth.isAtTopLevel {
+                if let argRef = parseSingleTypeArgRef(from: current, interner: interner, astArena: astArena) {
+                    args.append(argRef)
+                }
+                current = []
+                continue
+            }
+            current.append(token)
+        }
+        if !current.isEmpty {
+            if let argRef = parseSingleTypeArgRef(from: current, interner: interner, astArena: astArena) {
+                args.append(argRef)
+            }
+        }
+        return args
+    }
+
+    func parseSingleTypeArgRef(
+        from tokens: [Token],
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> TypeArgRef? {
+        guard !tokens.isEmpty else { return nil }
+
+        if tokens.count == 1 && tokens[0].kind == .symbol(.star) {
+            return .star
+        }
+
+        var variance: TypeVariance = .invariant
+        var typeTokens = tokens
+
+        if let first = typeTokens.first {
+            if case .softKeyword(.out) = first.kind {
+                variance = .out
+                typeTokens = Array(typeTokens.dropFirst())
+            } else if case .keyword(.in) = first.kind {
+                variance = .in
+                typeTokens = Array(typeTokens.dropFirst())
+            }
+        }
+
+        guard let innerRef = parseTypeRef(from: typeTokens, interner: interner, astArena: astArena) else {
+            return nil
+        }
+
+        switch variance {
+        case .invariant:
+            return .invariant(innerRef)
+        case .out:
+            return .out(innerRef)
+        case .in:
+            return .in(innerRef)
+        }
+    }
+
+    func parseFunctionTypeRef(
+        from tokens: [Token],
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> TypeRefID? {
+        guard !tokens.isEmpty else { return nil }
+
+        var isSuspend = false
+        var startIndex = 0
+
+        if case .keyword(.suspend) = tokens[0].kind {
+            isSuspend = true
+            startIndex = 1
+        } else if case .softKeyword(let kw) = tokens[0].kind, kw.rawValue == "suspend" {
+            isSuspend = true
+            startIndex = 1
+        }
+
+        guard startIndex < tokens.count,
+              tokens[startIndex].kind == .symbol(.lParen) else {
+            return nil
+        }
+
+        let closeIndex = findMatchingCloseParen(in: tokens, from: startIndex)
+        guard let closeIndex else { return nil }
+
+        guard closeIndex + 1 < tokens.count,
+              tokens[closeIndex + 1].kind == .symbol(.arrow) else {
+            return nil
+        }
+
+        let paramTokens = Array(tokens[(startIndex + 1)..<closeIndex])
+        var paramRefs: [TypeRefID] = []
+        var currentParam: [Token] = []
+        var depth = BracketDepth()
+        for token in paramTokens {
+            depth.track(token.kind)
+            if token.kind == .symbol(.comma) && depth.isAtTopLevel {
+                if let ref = parseTypeRef(from: currentParam, interner: interner, astArena: astArena) {
+                    paramRefs.append(ref)
+                }
+                currentParam = []
+                continue
+            }
+            currentParam.append(token)
+        }
+        if !currentParam.isEmpty {
+            if let ref = parseTypeRef(from: currentParam, interner: interner, astArena: astArena) {
+                paramRefs.append(ref)
+            }
+        }
+
+        let returnTokens = Array(tokens[(closeIndex + 2)...])
+        var nullable = false
+        var returnTypeTokens = returnTokens
+        if let last = returnTypeTokens.last, last.kind == .symbol(.question) {
+            nullable = true
+            returnTypeTokens = Array(returnTypeTokens.dropLast())
+        }
+
+        guard let returnRef = parseTypeRef(from: returnTypeTokens, interner: interner, astArena: astArena) else {
+            return nil
+        }
+
+        return astArena.appendTypeRef(.functionType(
+            params: paramRefs,
+            returnType: returnRef,
+            isSuspend: isSuspend,
+            nullable: nullable
+        ))
+    }
+
+    func findMatchingCloseParen(in tokens: [Token], from openIndex: Int) -> Int? {
+        var depth = 0
+        for i in openIndex..<tokens.count {
+            if tokens[i].kind == .symbol(.lParen) {
+                depth += 1
+            } else if tokens[i].kind == .symbol(.rParen) {
+                depth -= 1
+                if depth == 0 {
+                    return i
+                }
+            }
+        }
+        return nil
     }
 
     func isParameterModifierToken(_ token: Token) -> Bool {

@@ -64,44 +64,122 @@ extension DataFlowSemaPassPhase {
             return nil
         }
 
-        let nullability: Nullability
-        let path: [InternedString]
         switch typeRef {
-        case .named(let refPath, let nullable):
-            path = refPath
-            nullability = nullable ? .nullable : .nonNull
-        }
+        case .named(let path, let argRefs, let nullable):
+            let nullability: Nullability = nullable ? .nullable : .nonNull
 
-        guard let shortName = path.last else {
-            return nil
-        }
+            guard let shortName = path.last else {
+                return nil
+            }
 
-        if path.count == 1, let typeParamSymbol = localTypeParameters[shortName] {
-            return types.make(.typeParam(TypeParamType(symbol: typeParamSymbol, nullability: nullability)))
-        }
+            if path.count == 1, let typeParamSymbol = localTypeParameters[shortName] {
+                return types.make(.typeParam(TypeParamType(symbol: typeParamSymbol, nullability: nullability)))
+            }
 
-        switch interner.resolve(shortName) {
-        case "Int":
-            return types.make(.primitive(.int, nullability))
-        case "Boolean":
-            return types.make(.primitive(.boolean, nullability))
-        case "String":
-            return types.make(.primitive(.string, nullability))
-        case "Any":
+            switch interner.resolve(shortName) {
+            case "Int":
+                return types.make(.primitive(.int, nullability))
+            case "Boolean":
+                return types.make(.primitive(.boolean, nullability))
+            case "String":
+                return types.make(.primitive(.string, nullability))
+            case "Any":
+                return nullability == .nullable ? types.nullableAnyType : types.anyType
+            case "Unit":
+                return nullability == .nullable ? types.nullableAnyType : types.unitType
+            case "Nothing":
+                return types.nothingType
+            default:
+                break
+            }
+
+            if let symbol = symbols.lookupAll(fqName: path)
+                .compactMap({ symbols.symbol($0) })
+                .first(where: { isNominalTypeSymbol($0.kind) })?.id {
+                let resolvedArgs = resolveTypeArgRefs(
+                    argRefs,
+                    ast: ast,
+                    symbols: symbols,
+                    types: types,
+                    interner: interner,
+                    localTypeParameters: localTypeParameters
+                )
+                return types.make(.classType(ClassType(classSymbol: symbol, args: resolvedArgs, nullability: nullability)))
+            }
             return nullability == .nullable ? types.nullableAnyType : types.anyType
-        case "Unit":
-            return nullability == .nullable ? types.nullableAnyType : types.unitType
-        case "Nothing":
-            return types.nothingType
-        default:
-            break
-        }
 
-        if let symbol = symbols.lookupAll(fqName: path)
-            .compactMap({ symbols.symbol($0) })
-            .first(where: { isNominalTypeSymbol($0.kind) })?.id {
-            return types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: nullability)))
+        case .functionType(let paramRefIDs, let returnRefID, let isSuspend, let nullable):
+            let nullability: Nullability = nullable ? .nullable : .nonNull
+            let paramTypes = paramRefIDs.compactMap { paramRef in
+                resolveTypeRef(
+                    paramRef,
+                    ast: ast,
+                    symbols: symbols,
+                    types: types,
+                    interner: interner,
+                    localTypeParameters: localTypeParameters
+                )
+            }
+            let returnType = resolveTypeRef(
+                returnRefID,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                localTypeParameters: localTypeParameters
+            ) ?? types.unitType
+            return types.make(.functionType(FunctionType(
+                params: paramTypes,
+                returnType: returnType,
+                isSuspend: isSuspend,
+                nullability: nullability
+            )))
         }
-        return nullability == .nullable ? types.nullableAnyType : types.anyType
+    }
+
+    func resolveTypeArgRefs(
+        _ argRefs: [TypeArgRef],
+        ast: ASTModule,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        localTypeParameters: [InternedString: SymbolID] = [:]
+    ) -> [TypeArg] {
+        argRefs.compactMap { argRef in
+            switch argRef {
+            case .invariant(let innerRef):
+                guard let resolved = resolveTypeRef(
+                    innerRef,
+                    ast: ast,
+                    symbols: symbols,
+                    types: types,
+                    interner: interner,
+                    localTypeParameters: localTypeParameters
+                ) else { return nil }
+                return .invariant(resolved)
+            case .out(let innerRef):
+                guard let resolved = resolveTypeRef(
+                    innerRef,
+                    ast: ast,
+                    symbols: symbols,
+                    types: types,
+                    interner: interner,
+                    localTypeParameters: localTypeParameters
+                ) else { return nil }
+                return .out(resolved)
+            case .in(let innerRef):
+                guard let resolved = resolveTypeRef(
+                    innerRef,
+                    ast: ast,
+                    symbols: symbols,
+                    types: types,
+                    interner: interner,
+                    localTypeParameters: localTypeParameters
+                ) else { return nil }
+                return .in(resolved)
+            case .star:
+                return .star
+            }
+        }
     }
 }

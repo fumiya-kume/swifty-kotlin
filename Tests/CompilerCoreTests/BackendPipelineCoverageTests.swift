@@ -2647,7 +2647,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
                 case .propertyDecl(let property):
                     if let typeID = property.type, let typeRef = ast.arena.typeRef(typeID) {
                         sawExplicitPropertyType = true
-                        if case .named(let path, _) = typeRef {
+                        if case .named(let path, _, _) = typeRef {
                             XCTAssertFalse(path.isEmpty)
                         }
                     } else if ctx.interner.resolve(property.name) == "delegated" {
@@ -2692,9 +2692,9 @@ final class BackendPipelineCoverageTests: XCTestCase {
         let range = makeRange(file: FileID(rawValue: 0), start: 0, end: 1)
         let astArena = ASTArena()
 
-        let intTypeRef = astArena.appendTypeRef(.named(path: [interner.intern("Int")], nullable: false))
-        let boolTypeRef = astArena.appendTypeRef(.named(path: [interner.intern("Boolean")], nullable: false))
-        let stringTypeRef = astArena.appendTypeRef(.named(path: [interner.intern("String")], nullable: false))
+        let intTypeRef = astArena.appendTypeRef(.named(path: [interner.intern("Int")], args: [], nullable: false))
+        let boolTypeRef = astArena.appendTypeRef(.named(path: [interner.intern("Boolean")], args: [], nullable: false))
+        let stringTypeRef = astArena.appendTypeRef(.named(path: [interner.intern("String")], args: [], nullable: false))
 
         let helperName = interner.intern("helper")
         let calcName = interner.intern("calc")
@@ -2726,9 +2726,9 @@ final class BackendPipelineCoverageTests: XCTestCase {
         let eUnaryMinus = astArena.appendExpr(.unaryExpr(op: .unaryMinus, operand: eInt2, range: range))
         let eUnaryNot = astArena.appendExpr(.unaryExpr(op: .not, operand: eBoolFalse, range: range))
 
-        let eCallKnown = astArena.appendExpr(.call(callee: eNameKnown, args: [CallArgument(expr: eInt1)], range: range))
-        let eCallUnknown = astArena.appendExpr(.call(callee: eNameUnknown, args: [CallArgument(expr: eInt1)], range: range))
-        let eCallNonName = astArena.appendExpr(.call(callee: eInt1, args: [], range: range))
+        let eCallKnown = astArena.appendExpr(.call(callee: eNameKnown, typeArgs: [], args: [CallArgument(expr: eInt1)], range: range))
+        let eCallUnknown = astArena.appendExpr(.call(callee: eNameUnknown, typeArgs: [], args: [CallArgument(expr: eInt1)], range: range))
+        let eCallNonName = astArena.appendExpr(.call(callee: eInt1, typeArgs: [], args: [], range: range))
         let eBreak = astArena.appendExpr(.breakExpr(range: range))
         let eContinue = astArena.appendExpr(.continueExpr(range: range))
         let eWhile = astArena.appendExpr(.whileExpr(condition: eBoolTrue, body: eBreak, range: range))
