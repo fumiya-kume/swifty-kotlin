@@ -48,7 +48,29 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_unbox_char"),
             ctx.interner.intern("kk_println_float"),
             ctx.interner.intern("kk_println_double"),
-            ctx.interner.intern("kk_println_char")
+            ctx.interner.intern("kk_println_char"),
+            ctx.interner.intern("kk_op_fadd"),
+            ctx.interner.intern("kk_op_fsub"),
+            ctx.interner.intern("kk_op_fmul"),
+            ctx.interner.intern("kk_op_fdiv"),
+            ctx.interner.intern("kk_op_fmod"),
+            ctx.interner.intern("kk_op_feq"),
+            ctx.interner.intern("kk_op_fne"),
+            ctx.interner.intern("kk_op_flt"),
+            ctx.interner.intern("kk_op_fle"),
+            ctx.interner.intern("kk_op_fgt"),
+            ctx.interner.intern("kk_op_fge"),
+            ctx.interner.intern("kk_op_dadd"),
+            ctx.interner.intern("kk_op_dsub"),
+            ctx.interner.intern("kk_op_dmul"),
+            ctx.interner.intern("kk_op_ddiv"),
+            ctx.interner.intern("kk_op_dmod"),
+            ctx.interner.intern("kk_op_deq"),
+            ctx.interner.intern("kk_op_dne"),
+            ctx.interner.intern("kk_op_dlt"),
+            ctx.interner.intern("kk_op_dle"),
+            ctx.interner.intern("kk_op_dgt"),
+            ctx.interner.intern("kk_op_dge")
         ]
 
         let boxIntCallee = ctx.interner.intern("kk_box_int")

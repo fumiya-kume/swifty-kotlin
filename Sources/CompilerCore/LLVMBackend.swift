@@ -422,7 +422,7 @@ public final class LLVMBackend {
             "}",
             "static void kk_println_float(intptr_t v) {",
             "  float f = kk_bits_to_float(v);",
-            "  if (f == (float)(int)f) { printf(\"%.1f\\n\", (double)f); }",
+            "  if (f >= -2e9f && f <= 2e9f && f == (float)(int)f) { printf(\"%.1f\\n\", (double)f); }",
             "  else { printf(\"%g\\n\", (double)f); }",
             "}",
             "static void kk_println_double(intptr_t v) {",
