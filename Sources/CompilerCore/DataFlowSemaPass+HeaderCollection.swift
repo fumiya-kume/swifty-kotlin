@@ -335,7 +335,6 @@ extension DataFlowSemaPassPhase {
                 visibility: visibility(from: funDecl.modifiers),
                 flags: memberFlags
             )
-            scope.insert(memberSymbol)
             bindings.bindDecl(declID, symbol: memberSymbol)
             symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
 
@@ -451,7 +450,6 @@ extension DataFlowSemaPassPhase {
                 visibility: visibility(from: propertyDecl.modifiers),
                 flags: propertyFlags
             )
-            scope.insert(memberSymbol)
             bindings.bindDecl(declID, symbol: memberSymbol)
             symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
 
@@ -479,7 +477,6 @@ extension DataFlowSemaPassPhase {
                 visibility: visibility(from: nestedClass.modifiers),
                 flags: flags(from: nestedClass.modifiers)
             )
-            scope.insert(nestedSymbol)
             bindings.bindDecl(declID, symbol: nestedSymbol)
             symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)
 
@@ -510,7 +507,6 @@ extension DataFlowSemaPassPhase {
                         flags: []
                     )
                     symbols.setPropertyType(nestedType, for: entrySymbol)
-                    scope.insert(entrySymbol)
                 }
             }
             collectNestedTypeAliases(
@@ -551,7 +547,6 @@ extension DataFlowSemaPassPhase {
                 visibility: visibility(from: nestedObject.modifiers),
                 flags: flags(from: nestedObject.modifiers)
             )
-            scope.insert(nestedSymbol)
             bindings.bindDecl(declID, symbol: nestedSymbol)
             symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)
 
