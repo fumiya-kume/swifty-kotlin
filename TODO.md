@@ -182,55 +182,56 @@
   - [x] トップレベル/ブロック内の同期点（`;`/改行/`}`/`catch`/`finally`/`else`/EOF）までの回復を明示実装する
   - [x] 回復後も parse 継続し、診断と CST dump が安定する golden を追加する
 
-- [ ] P5-11: loop 構文を AST→KIR→Lowering まで通しで実装する（spec.md J5/J6/J11/J12）
+- [x] P5-11: loop 構文を AST→KIR→Lowering まで通しで実装する（spec.md J5/J6/J11/J12）
   - [x] `for`/`while`/`do-while` を Parser/AST で専用ノード化し、`SyntaxKind.loopStmt` を実生成する
   - [x] BuildKIR で loop の制御フロー（label/jump）を生成する
   - [x] `break`/`continue`（必要なら label 付き）を loop 制御フローへ接続する
-  - [ ] `ForLoweringPass` の no-op 実装を置き換え、`iterator/hasNext/next` 展開を実装する
+  - [x] `ForLoweringPass` の no-op 実装を置き換え、`iterator/hasNext/next` 展開を実装する
   - [x] loop 回帰ケースを `diff_kotlinc.sh` に追加する
 
-- [ ] P5-12: inline `reified` の hidden type token 伝播を実装する（spec.md J12.2）
-  - [ ] `reified` type parameter を Sema signature に保持し call binding で解決する
-  - [ ] call lowering 時に runtime type token 引数を追加する
-  - [ ] inline 展開先で token 利用を可能にする KIR/Lowering 経路を追加する
+- [x] P5-12: inline `reified` の hidden type token 伝播を実装する（spec.md J12.2）
+  - [x] `reified` type parameter を Sema signature に保持し call binding で解決する
+  - [x] call lowering 時に runtime type token 引数を追加する
+  - [x] inline 展開先で token 利用を可能にする KIR/Lowering 経路を追加する
 
-- [ ] P5-13: `.kklib` の separate compilation link を完成させる（spec.md J14.1/J14.2）
-  - [ ] `manifest.json` の `objects` 配列を読み、consumer link 時に対象 object を自動追加する
-  - [ ] `-I` で見つかった `.kklib` の object 探索と重複排除を実装する
-  - [ ] 2 モジュールリンク（consumer が library object を自動リンク）E2E を追加する
+- [x] P5-13: `.kklib` の separate compilation link を完成させる（spec.md J14.1/J14.2）
+  - [x] `manifest.json` の `objects` 配列を読み、consumer link 時に対象 object を自動追加する
+  - [x] `-I` で見つかった `.kklib` の object 探索と重複排除を実装する
+  - [x] 2 モジュールリンク（consumer が library object を自動リンク）E2E を追加する
 
-- [ ] P5-14: `metadata.bin` の公開 API 情報を仕様最小要件まで拡張する（spec.md J14.3）
-  - [ ] function/property の型シグネチャを import 側で再構築可能な形で保存/復元する
-  - [ ] nominal の field offset / vtable slot / itable slot 情報を metadata に保存/復元する
-  - [ ] metadata 不整合時の診断コード（`KSWIFTK-LIB-*`）を追加する
+- [x] P5-14: `metadata.bin` の公開 API 情報を仕様最小要件まで拡張する（spec.md J14.3）
+  - [x] function/property の型シグネチャを import 側で再構築可能な形で保存/復元する
+  - [x] nominal の field offset / vtable slot / itable slot 情報を metadata に保存/復元する
+  - [x] metadata 不整合時の診断コード（`KSWIFTK-LIB-*`）を追加する
 
-- [ ] P5-15: LLVM C API backend の例外・runtime ABI 追従を synthetic backend 同等にする（spec.md J13.3/J15.3）
-  - [ ] `select` / `kk_when_select` の lowering を条件評価つき実装へ修正し、現行の擬似 no-op 実装を置換する
-  - [ ] `usesThrownChannel` call 後の `outThrown` 判定と例外経路分岐を実装する
-  - [ ] frame map 登録/解除（`kk_register_frame_map` / `kk_push_frame` / `kk_pop_frame`）を挿入する
-  - [ ] `kk_println_any`/runtime call の扱いを no-op ではなく実 call に揃える
+- [x] P5-15: LLVM C API backend の例外・runtime ABI 追従を synthetic backend 同等にする（spec.md J13.3/J15.3）
+  - [x] `select` / `kk_when_select` の lowering を条件評価つき実装へ修正し、現行の擬似 no-op 実装を置換する
+  - [x] `usesThrownChannel` call 後の `outThrown` 判定と例外経路分岐を実装する
+  - [x] frame map 登録/解除（`kk_register_frame_map` / `kk_push_frame` / `kk_pop_frame`）を挿入する
+  - [x] `kk_println_any`/runtime call の扱いを no-op ではなく実 call に揃える
 
-- [ ] P5-16: compiler 生成の GC root map を 0-root 固定から実 root 解析へ拡張する（spec.md J16.2）
-  - [ ] 関数ごとの root slot 解析（locals/temporaries/coroutine 参照）を実装する
-  - [ ] backend で `KKFrameMapDescriptor` の `rootCount/rootOffsets` を実データ生成する
-  - [ ] global/object root の `kk_register_global_root` / `kk_unregister_global_root` 呼び出しを codegen/link 境界で接続する
-  - [ ] continuation lifecycle の `kk_register_coroutine_root` / `kk_unregister_coroutine_root` 呼び出しを lowering/runtime 境界で接続する
-  - [ ] GC 回収回帰テスト（参照保持中は生存、解放後は回収）を追加する
+- [x] P5-16: compiler 生成の GC root map を 0-root 固定から実 root 解析へ拡張する（spec.md J16.2）
+  - [x] 関数ごとの root slot 解析（locals/temporaries/coroutine 参照）を実装する
+  - [x] backend で `KKFrameMapDescriptor` の `rootCount/rootOffsets` を実データ生成する
+  - [x] global/object root の `kk_register_global_root` / `kk_unregister_global_root` 呼び出しを codegen/link 境界で接続する
+  - [x] continuation lifecycle の `kk_register_coroutine_root` / `kk_unregister_coroutine_root` 呼び出しを lowering/runtime 境界で接続する
+  - [x] GC 回収回帰テスト（参照保持中は生存、解放後は回収）を追加する
 
-- [ ] P5-17: suspend lowering の `F$Cont` continuation 型生成を仕様どおり実装する（spec.md J17.2）
-  - [ ] 各 suspend 関数ごとに continuation nominal type（label/completion/spill fields）を KIR/Sema に生成する
-  - [ ] lowered 本体が `F$Cont` レイアウトを前提に spill/reload する経路へ移行する
-  - [ ] `F$Cont` 生成と state machine 復帰地点の整合を確認する回帰テストを追加する
+- [x] P5-17: suspend lowering の `F$Cont` continuation 型生成を仕様どおり実装する（spec.md J17.2）
+  - [x] 各 suspend 関数ごとに continuation nominal type（label/completion/spill fields）を KIR/Sema に生成する
+  - [x] lowered 本体が `F$Cont` レイアウトを前提に spill/reload する経路へ移行する
+  - [x] `F$Cont` 生成と state machine 復帰地点の整合を確認する回帰テストを追加する
 
-- [ ] P5-18: 公開 API 名を spec の固定シグネチャへ揃える（spec.md J1/J8）
-  - [ ] `CompilerOptions.debugInfo` 名称と CLI 連携を仕様名へ統一する（現行 `emitsDebugInfo` との差分解消）
-  - [ ] `TypeSystem.lub` / `TypeSystem.glb` の公開 API を追加し既存 `leastUpperBound` / `greatestLowerBound` と整合させる
-  - [ ] 既存テスト・呼び出し側を移行し、互換エイリアス方針を明文化する
+- [x] P5-18: 公開 API 名を spec の固定シグネチャへ揃える（spec.md J1/J8）
+  - [x] `CompilerOptions.debugInfo` 名称と CLI 連携を仕様名へ統一する（現行 `emitsDebugInfo` との差分解消）
+  - [x] `TypeSystem.lub` / `TypeSystem.glb` の公開 API を追加し既存 `leastUpperBound` / `greatestLowerBound` と整合させる
+  - [x] 既存テスト・呼び出し側を移行し、互換エイリアス（deprecated）方針を明文化する
 
 - [ ] P5-19: 演算子解決を sema 選択結果ベースへ移行する（spec.md J9/J12.2）
-  - [ ] `binary` 推論で固定型ルールのみを使う経路を縮小し、operator/member/extension 候補解決を導入する
-  - [ ] `OperatorLoweringPass` の `kk_op_*` 固定変換を置換し、chosen callee symbol に対する call へ lowering する
-  - [ ] 演算子オーバーロード（member/extension）の diff ケースを追加する
+  - [x] `binary` 推論で extension operator 候補解決を導入し、固定型ルールのみを使う経路を縮小する
+  - [x] BuildKIR の `binary` lowering で chosen callee symbol を直接 call する経路を追加し、`kk_op_*` 変換は fallback のみに限定する
+  - [x] 演算子オーバーロード（extension）diff ケースを追加する（`Scripts/diff_cases/operator_extension.kt`）
+  - [ ] member operator 候補解決と member call lowering の統合（class member pipeline 完了後）
 
 - [ ] P5-20: lambda / object literal / callable reference を front-to-back で実装する（spec.md J5/J6/J12）
   - [ ] Parser/AST に `lambdaLiteral` / `objectLiteral` / `callableRef` の実ノードを導入する
@@ -424,11 +425,53 @@
   - [ ] default 式が先行 parameter/receiver を参照できるよう callee 文脈で評価する
   - [ ] default 引数の評価順序（左から右）と副作用順を固定する回帰ケースを追加する
 
+- [ ] P5-57: コンパイル性能計測基盤を整備する
+  - [ ] `CompilerDriver` で各 phase の開始/終了時刻を記録し、`-Xfrontend time-phases`（仮）で集計を出力する
+  - [ ] `Scripts/bench_compile.sh`（仮）を追加し、`--emit kir/object/executable` × backend（synthetic-c / llvm-c-api）を同条件で計測する
+  - [ ] 単一ファイル/複数ファイル（`Scripts/diff_cases`）の基準値を保存し、回帰時に比較できるフォーマット（TSV/JSON）で出力する
+
+- [ ] P5-58: BuildAST のトークン再走査と再パースを削減する
+  - [ ] `collectTokens(from:in:)` の再帰収集結果を node 単位でキャッシュし、同一 node の重複走査を避ける
+  - [ ] `ExpressionParser` 呼び出し前の `Array(...)` 断片コピーを削減し、token slice ベースで処理できる API に置換する
+  - [ ] `parseBlockExpression` の再帰再パース（`ExpressionParser(tokens: trimmed, ...)`）を block statement 直列処理に置換する
+  - [ ] AST 同値性（decl/expr 数と source range）を回帰テストで固定する
+
+- [ ] P5-59: Sema/DataFlow の全シンボル走査をインデックス化する
+  - [ ] `SymbolTable.allSymbols()` 依存箇所向けに owner/package/kind 別インデックスを導入する
+  - [ ] `DataFlowSemaPass+LayoutSynthesis` の ownMethods/ownFields 抽出をインデックス参照へ置換し、N^2 走査を回避する
+  - [ ] `DataFlowAnalysis.enumEntryNames` を enum owner -> entry 名キャッシュへ置換する
+  - [ ] `ASTModule.sortedFiles` の都度ソートを廃止し、構築時に安定順を保持する
+
+- [ ] P5-60: Lowering/Codegen のスループットを改善する
+  - [ ] Lowering pass に precondition を導入し、対象命令が存在しない pass の `transformFunctions` 実行を skip する
+  - [ ] `KIRArena.transformFunctions` に unchanged fast-path を追加し、未変更関数の body 再割当を抑制する
+  - [ ] object/executable のデフォルト backend を `llvm-c-api` に切り替える可否を性能/互換テストで検証する
+  - [ ] synthetic C backend 継続時は runtime stub を共有 object 化し、clang 入力量と起動回数のオーバーヘッドを削減する
+
+- [ ] P5-61: フロントエンドを file 単位で並列実行可能にする
+  - [ ] `LexPhase`/`ParsePhase`/`BuildASTPhase` の中間表現を file 単位で保持し、全ファイル連結前提を段階的に解消する
+  - [ ] `-Xfrontend jobs=N`（仮）で file 並列実行を有効化し、出力順序は fileID 順で決定的に固定する
+  - [ ] multi-file compile ベンチ（10/50/100 file）を追加し、単スレッド比の speedup と診断順序の安定性を検証する
+
+- [ ] P5-62: library import / metadata 復元のキャッシュを導入する
+  - [ ] `DataFlowSemaPass+LibraryImport` の manifest/metadata 読み込み結果を path + mtime キーで再利用する
+  - [ ] `MetadataTypeSignatureParser` の parse 結果を signature 文字列キーで memoize し、重複復元を削減する
+  - [ ] import が多いケース（複数 `.kklib`）の compile ベンチを追加し、Sema 時間の改善率を計測する
+
+- [ ] P5-63: 型推論と呼び出し解決のホットパスをキャッシュする
+  - [ ] `OverloadResolver.resolveCall` の結果を callee/arg type/expected type/receiver type キーでキャッシュする
+  - [ ] `TypeCheckSemaPass` の `scope.lookup` / `symbols.symbol` の反復参照をローカルキャッシュ化する
+  - [ ] キャッシュ有効/無効を切り替える debug flag（`-Xfrontend sema-cache=...` 仮）を追加し、差分検証テストを用意する
+
+- [ ] P5-64: external toolchain 呼び出しのオーバーヘッドを削減する
+  - [ ] `LinkPhase` の entry wrapper 生成を UUID 一時ファイル依存から安定パス + 内容差分更新へ置換する
+  - [ ] synthetic C backend の巨大 runtime stub 文字列を固定オブジェクト化し、毎回の C 生成量を削減する
+  - [ ] codegen/link の subprocess 実行時間を個別に計測し、`time-phases` 出力へ統合する
+
 ## In Progress
 
-- [ ] P5-11: loop 構文を AST→KIR→Lowering まで通しで実装する（spec.md J5/J6/J11/J12）
-  - [x] `for`/`while`/`do-while` を Parser/AST で専用ノード化し、`SyntaxKind.loopStmt` を実生成する
-  - [x] BuildKIR で loop の制御フロー（label/jump）を生成する
-  - [x] `break`/`continue`（必要なら label 付き）を loop 制御フローへ接続する
-  - [ ] `ForLoweringPass` の no-op 実装を置き換え、`iterator/hasNext/next` 展開を実装する
-  - [x] loop 回帰ケースを `diff_kotlinc.sh` に追加する
+- [ ] P5-19: 演算子解決を sema 選択結果ベースへ移行する（spec.md J9/J12.2）
+  - [x] `binary` 推論で extension operator 候補解決を導入し、固定型ルールのみを使う経路を縮小する
+  - [x] BuildKIR の `binary` lowering で chosen callee symbol を直接 call する経路を追加し、`kk_op_*` 変換は fallback のみに限定する
+  - [x] 演算子オーバーロード（extension）diff ケースを追加する（`Scripts/diff_cases/operator_extension.kt`）
+  - [ ] member operator 候補解決と member call lowering の統合（class member pipeline 完了後）
