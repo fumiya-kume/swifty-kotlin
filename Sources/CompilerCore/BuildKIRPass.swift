@@ -43,7 +43,6 @@ public final class BuildKIRPhase: CompilerPhase {
                 }
 
                 switch decl {
-<<<<<<< HEAD
                 case .classDecl(let classDecl):
                     let (directMembers, allDecls) = lowerMemberDecls(
                         memberFunctions: classDecl.memberFunctions,

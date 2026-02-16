@@ -125,6 +125,11 @@ extension TypeCheckSemaPassPhase {
                     locals[param.name] = (type, paramSymbol, false)
                 }
             }
+            if let delegation = ctor.delegationCall {
+                for arg in delegation.args {
+                    _ = inferExpr(arg.expr, ctx: ctx, locals: &locals, expectedType: nil)
+                }
+            }
             _ = inferFunctionBodyType(ctor.body, ctx: ctx, locals: &locals, expectedType: nil)
         }
     }
