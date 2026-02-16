@@ -493,7 +493,11 @@ extension DataFlowSemaPassPhase {
                         continue
                     }
                     let superTypes = symbols.directSupertypes(for: classSymbol)
-                    if superTypes.isEmpty {
+                    let classSupertypes = superTypes.filter {
+                        let kind = symbols.symbol($0)?.kind
+                        return kind == .class || kind == .enumClass
+                    }
+                    if classSupertypes.isEmpty {
                         diagnostics.error(
                             "KSWIFTK-SEMA-0021",
                             "Cannot delegate to super: class has no superclass.",

@@ -130,6 +130,9 @@ public final class BuildKIRPhase: CompilerPhase {
                                     }
                                     if !delegationTarget.isEmpty {
                                         var argIDs: [KIRExprID] = []
+                                        if let receiver = currentImplicitReceiverExprID {
+                                            argIDs.append(receiver)
+                                        }
                                         for arg in delegation.args {
                                             let lowered = lowerExpr(
                                                 arg.expr,
