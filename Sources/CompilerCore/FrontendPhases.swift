@@ -113,8 +113,12 @@ public final class BuildASTPhase: CompilerPhase {
                     importsByFile[fileRawID, default: []].append(ImportDecl(range: importNode.range, path: path))
                 }
 
-            case .classDecl, .interfaceDecl:
+            case .classDecl:
                 let decl = Decl.classDecl(makeClassDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
+                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
+
+            case .interfaceDecl:
+                let decl = Decl.interfaceDecl(makeInterfaceDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
                 appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
 
             case .objectDecl:

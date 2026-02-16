@@ -230,6 +230,8 @@ final class GoldenHarnessTests: XCTestCase {
         switch decl {
         case .classDecl(let classDecl):
             return "class \(interner.resolve(classDecl.name))"
+        case .interfaceDecl(let interfaceDecl):
+            return "interface \(interner.resolve(interfaceDecl.name))"
         case .funDecl(let funDecl):
             return "fun \(interner.resolve(funDecl.name)) suspend=\(funDecl.isSuspend ? 1 : 0) inline=\(funDecl.isInline ? 1 : 0)"
         case .propertyDecl(let propertyDecl):
