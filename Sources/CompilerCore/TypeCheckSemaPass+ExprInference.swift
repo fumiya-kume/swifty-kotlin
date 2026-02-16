@@ -4,7 +4,7 @@ extension TypeCheckSemaPassPhase {
     func inferExpr(
         _ id: ExprID,
         ctx: TypeInferenceContext,
-        locals: inout [InternedString: (type: TypeID, symbol: SymbolID)],
+        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool)],
         expectedType: TypeID? = nil
     ) -> TypeID {
         let ast = ctx.ast
@@ -38,6 +38,11 @@ extension TypeCheckSemaPassPhase {
                 sema.bindings.bindExprType(id, type: sema.types.nullableAnyType)
                 return sema.types.nullableAnyType
             }
+            if interner.resolve(name) == "this",
+               let receiverType = ctx.implicitReceiverType {
+                sema.bindings.bindExprType(id, type: receiverType)
+                return receiverType
+            }
             if let local = locals[name] {
                 sema.bindings.bindIdentifier(id, symbol: local.symbol)
                 sema.bindings.bindExprType(id, type: local.type)
@@ -58,6 +63,96 @@ extension TypeCheckSemaPassPhase {
             } ?? sema.types.anyType
             sema.bindings.bindExprType(id, type: resolvedType)
             return resolvedType
+
+        case .localDecl(let name, let isMutable, let initializer, let range):
+            let initializerType = inferExpr(initializer, ctx: ctx, locals: &locals, expectedType: nil)
+            let localSymbol = sema.symbols.define(
+                kind: .local,
+                name: name,
+                fqName: [
+                    ctx.interner.intern("__local_\(id.rawValue)"),
+                    name
+                ],
+                declSite: range,
+                visibility: .private,
+                flags: isMutable ? [.mutable] : []
+            )
+            locals[name] = (initializerType, localSymbol, isMutable)
+            sema.bindings.bindIdentifier(id, symbol: localSymbol)
+            sema.bindings.bindExprType(id, type: sema.types.unitType)
+            return sema.types.unitType
+
+        case .localAssign(let name, let value, let range):
+            let valueType = inferExpr(value, ctx: ctx, locals: &locals, expectedType: nil)
+            guard let local = locals[name] else {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0013",
+                    "Unresolved local variable '\(interner.resolve(name))'.",
+                    range: range
+                )
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
+            sema.bindings.bindIdentifier(id, symbol: local.symbol)
+            if !local.isMutable {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0014",
+                    "Val cannot be reassigned.",
+                    range: range
+                )
+            } else {
+                emitSubtypeConstraint(
+                    left: valueType,
+                    right: local.type,
+                    range: range,
+                    solver: ConstraintSolver(),
+                    sema: sema,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+            }
+            sema.bindings.bindExprType(id, type: sema.types.unitType)
+            return sema.types.unitType
+
+        case .arrayAccess(let arrayExpr, let indexExpr, let range):
+            let arrayType = inferExpr(arrayExpr, ctx: ctx, locals: &locals, expectedType: nil)
+            let indexType = inferExpr(indexExpr, ctx: ctx, locals: &locals, expectedType: intType)
+            emitSubtypeConstraint(
+                left: indexType,
+                right: intType,
+                range: ast.arena.exprRange(indexExpr) ?? range,
+                solver: ConstraintSolver(),
+                sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+            let elementType = arrayElementType(for: arrayType, sema: sema, interner: interner) ?? sema.types.anyType
+            sema.bindings.bindExprType(id, type: elementType)
+            return elementType
+
+        case .arrayAssign(let arrayExpr, let indexExpr, let valueExpr, let range):
+            let arrayType = inferExpr(arrayExpr, ctx: ctx, locals: &locals, expectedType: nil)
+            let indexType = inferExpr(indexExpr, ctx: ctx, locals: &locals, expectedType: intType)
+            emitSubtypeConstraint(
+                left: indexType,
+                right: intType,
+                range: ast.arena.exprRange(indexExpr) ?? range,
+                solver: ConstraintSolver(),
+                sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+            let elementExpectedType = arrayElementType(for: arrayType, sema: sema, interner: interner)
+            let valueType = inferExpr(valueExpr, ctx: ctx, locals: &locals, expectedType: elementExpectedType)
+            if let elementExpectedType {
+                emitSubtypeConstraint(
+                    left: valueType,
+                    right: elementExpectedType,
+                    range: ast.arena.exprRange(valueExpr) ?? range,
+                    solver: ConstraintSolver(),
+                    sema: sema,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+            }
+            sema.bindings.bindExprType(id, type: sema.types.unitType)
+            return sema.types.unitType
 
         case .returnExpr(let value, _):
             let resolved: TypeID
@@ -144,6 +239,15 @@ extension TypeCheckSemaPassPhase {
             }
 
             if candidates.isEmpty {
+                if let builtinType = kxMiniCoroutineBuiltinReturnType(
+                    calleeName: calleeName,
+                    argumentCount: args.count,
+                    sema: sema,
+                    interner: interner
+                ) {
+                    sema.bindings.bindExprType(id, type: builtinType)
+                    return builtinType
+                }
                 sema.bindings.bindExprType(id, type: sema.types.errorType)
                 return sema.types.errorType
             }
@@ -195,9 +299,75 @@ extension TypeCheckSemaPassPhase {
             sema.bindings.bindExprType(id, type: returnType)
             return returnType
 
+        case .memberCall(let receiverID, let calleeName, let args, let range):
+            let receiverType = inferExpr(receiverID, ctx: ctx, locals: &locals)
+            let argTypes = args.map { argument in
+                inferExpr(argument.expr, ctx: ctx, locals: &locals)
+            }
+
+            let candidates = scope.lookup(calleeName).filter { candidate in
+                guard let symbol = sema.symbols.symbol(candidate),
+                      symbol.kind == .function,
+                      let signature = sema.symbols.functionSignature(for: candidate) else {
+                    return false
+                }
+                return signature.receiverType != nil
+            }
+            if candidates.isEmpty {
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
+
+            let resolvedArgs: [CallArg] = zip(args, argTypes).map { argument, type in
+                CallArg(label: argument.label, isSpread: argument.isSpread, type: type)
+            }
+            let resolved = ctx.resolver.resolveCall(
+                candidates: candidates,
+                call: CallExpr(
+                    range: range,
+                    calleeName: calleeName,
+                    args: resolvedArgs
+                ),
+                expectedType: expectedType,
+                implicitReceiverType: receiverType,
+                ctx: ctx.semaCtx
+            )
+            if let diagnostic = resolved.diagnostic {
+                ctx.semaCtx.diagnostics.emit(diagnostic)
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
+            guard let chosen = resolved.chosenCallee else {
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
+            sema.bindings.bindCall(
+                id,
+                binding: CallBinding(
+                    chosenCallee: chosen,
+                    substitutedTypeArguments: resolved.substitutedTypeArguments
+                        .sorted(by: { $0.key.rawValue < $1.key.rawValue })
+                        .map(\.value),
+                    parameterMapping: resolved.parameterMapping
+                )
+            )
+            let returnType: TypeID
+            if let signature = sema.symbols.functionSignature(for: chosen) {
+                let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
+                returnType = sema.types.substituteTypeParameters(
+                    in: signature.returnType,
+                    substitution: resolved.substitutedTypeArguments,
+                    typeVarBySymbol: typeVarBySymbol
+                )
+            } else {
+                returnType = sema.types.anyType
+            }
+            sema.bindings.bindExprType(id, type: returnType)
+            return returnType
+
         case .whenExpr(let subjectID, let branches, let elseExpr, let range):
             let subjectType = inferExpr(subjectID, ctx: ctx, locals: &locals)
-            let subjectLocalBinding: (name: InternedString, type: TypeID, symbol: SymbolID, isStable: Bool)? = {
+            let subjectLocalBinding: (name: InternedString, type: TypeID, symbol: SymbolID, isStable: Bool, isMutable: Bool)? = {
                 guard let subjectExpr = ast.arena.expr(subjectID),
                       case .nameRef(let subjectName, _) = subjectExpr,
                       let local = locals[subjectName] else {
@@ -205,7 +375,8 @@ extension TypeCheckSemaPassPhase {
                 }
                 return (
                     subjectName, local.type, local.symbol,
-                    isStableLocalSymbol(local.symbol, sema: sema)
+                    isStableLocalSymbol(local.symbol, sema: sema),
+                    local.isMutable
                 )
             }()
             let hasExplicitNullBranch = branches.contains { branch in
@@ -254,12 +425,13 @@ extension TypeCheckSemaPassPhase {
                 if let subjectLocalBinding, subjectLocalBinding.isStable {
                     if let branchSmartCastType {
                         branchLocals[subjectLocalBinding.name] = (
-                            branchSmartCastType, subjectLocalBinding.symbol
+                            branchSmartCastType, subjectLocalBinding.symbol, subjectLocalBinding.isMutable
                         )
                     } else if hasExplicitNullBranch && !isNullBranch {
                         branchLocals[subjectLocalBinding.name] = (
                             makeNonNullable(subjectLocalBinding.type, types: sema.types),
-                            subjectLocalBinding.symbol
+                            subjectLocalBinding.symbol,
+                            subjectLocalBinding.isMutable
                         )
                     }
                 }
@@ -275,7 +447,8 @@ extension TypeCheckSemaPassPhase {
                    hasExplicitNullBranch {
                     elseLocals[subjectLocalBinding.name] = (
                         makeNonNullable(subjectLocalBinding.type, types: sema.types),
-                        subjectLocalBinding.symbol
+                        subjectLocalBinding.symbol,
+                        subjectLocalBinding.isMutable
                     )
                 }
                 branchTypes.append(
@@ -355,6 +528,50 @@ extension TypeCheckSemaPassPhase {
             return !symbol.flags.contains(.mutable)
         default:
             return false
+        }
+    }
+
+    func arrayElementType(
+        for arrayType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID? {
+        guard case .classType(let classType) = sema.types.kind(of: arrayType),
+              let symbol = sema.symbols.symbol(classType.classSymbol) else {
+            return nil
+        }
+        switch interner.resolve(symbol.name) {
+        case "IntArray":
+            return sema.types.make(.primitive(.int, .nonNull))
+        default:
+            return nil
+        }
+    }
+
+    func kxMiniCoroutineBuiltinReturnType(
+        calleeName: InternedString?,
+        argumentCount: Int,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID? {
+        guard let calleeName else {
+            return nil
+        }
+        switch interner.resolve(calleeName) {
+        case "runBlocking":
+            guard argumentCount == 1 else { return nil }
+            return sema.types.nullableAnyType
+        case "launch":
+            guard argumentCount == 1 else { return nil }
+            return sema.types.unitType
+        case "async":
+            guard argumentCount == 1 else { return nil }
+            return sema.types.nullableAnyType
+        case "delay":
+            guard argumentCount == 1 else { return nil }
+            return sema.types.nullableAnyType
+        default:
+            return nil
         }
     }
 

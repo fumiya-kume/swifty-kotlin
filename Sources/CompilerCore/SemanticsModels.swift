@@ -371,16 +371,19 @@ public final class SemaModule {
     public let types: TypeSystem
     public let bindings: BindingTable
     public let diagnostics: DiagnosticEngine
+    public var importedInlineFunctions: [SymbolID: KIRFunction]
 
     public init(
         symbols: SymbolTable,
         types: TypeSystem,
         bindings: BindingTable,
-        diagnostics: DiagnosticEngine
+        diagnostics: DiagnosticEngine,
+        importedInlineFunctions: [SymbolID: KIRFunction] = [:]
     ) {
         self.symbols = symbols
         self.types = types
         self.bindings = bindings
         self.diagnostics = diagnostics
+        self.importedInlineFunctions = importedInlineFunctions
     }
 }

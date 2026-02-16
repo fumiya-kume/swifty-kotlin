@@ -4,7 +4,7 @@ extension TypeCheckSemaPassPhase {
     func inferFunctionBodyType(
         _ body: FunctionBody,
         ctx: TypeInferenceContext,
-        locals: inout [InternedString: (type: TypeID, symbol: SymbolID)],
+        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool)],
         expectedType: TypeID?
     ) -> TypeID {
         switch body {
@@ -36,7 +36,7 @@ extension TypeCheckSemaPassPhase {
         var inferredPropertyType: TypeID? = property.type != nil ? sema.symbols.propertyType(for: symbol) : nil
 
         if let initializer = property.initializer {
-            var locals: [InternedString: (type: TypeID, symbol: SymbolID)] = [:]
+            var locals: [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool)] = [:]
             let initializerType = inferExpr(
                 initializer, ctx: ctx, locals: &locals,
                 expectedType: inferredPropertyType
@@ -53,9 +53,9 @@ extension TypeCheckSemaPassPhase {
         }
 
         if let getter = property.getter {
-            var getterLocals: [InternedString: (type: TypeID, symbol: SymbolID)] = [:]
+            var getterLocals: [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool)] = [:]
             if let fieldType = inferredPropertyType {
-                getterLocals[interner.intern("field")] = (fieldType, symbol)
+                getterLocals[interner.intern("field")] = (fieldType, symbol, true)
             }
             let getterType = inferFunctionBodyType(
                 getter.body, ctx: ctx, locals: &getterLocals,
@@ -83,10 +83,10 @@ extension TypeCheckSemaPassPhase {
                     range: setter.range
                 )
             }
-            var setterLocals: [InternedString: (type: TypeID, symbol: SymbolID)] = [:]
-            setterLocals[interner.intern("field")] = (finalPropertyType, symbol)
+            var setterLocals: [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool)] = [:]
+            setterLocals[interner.intern("field")] = (finalPropertyType, symbol, true)
             let parameterName = setter.parameterName ?? interner.intern("value")
-            setterLocals[parameterName] = (finalPropertyType, symbol)
+            setterLocals[parameterName] = (finalPropertyType, symbol, true)
             let setterType = inferFunctionBodyType(
                 setter.body, ctx: ctx, locals: &setterLocals,
                 expectedType: sema.types.unitType
@@ -104,7 +104,7 @@ extension TypeCheckSemaPassPhase {
         ctx: TypeInferenceContext
     ) {
         for block in blocks {
-            var locals: [InternedString: (type: TypeID, symbol: SymbolID)] = [:]
+            var locals: [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool)] = [:]
             _ = inferFunctionBodyType(block, ctx: ctx, locals: &locals, expectedType: nil)
         }
     }

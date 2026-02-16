@@ -83,13 +83,13 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                         continue
                     }
 
-                    var locals: [InternedString: (type: TypeID, symbol: SymbolID)] = [:]
+                    var locals: [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool)] = [:]
                     for (index, paramSymbol) in signature.valueParameterSymbols.enumerated() {
                         guard let param = sema.symbols.symbol(paramSymbol) else {
                             continue
                         }
                         let type = index < signature.parameterTypes.count ? signature.parameterTypes[index] : sema.types.anyType
-                        locals[param.name] = (type, paramSymbol)
+                        locals[param.name] = (type, paramSymbol, false)
                     }
 
                     let funCtx = inferCtx.with(implicitReceiverType: signature.receiverType)
