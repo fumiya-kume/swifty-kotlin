@@ -1017,7 +1017,7 @@ public final class BuildKIRPhase: CompilerPhase {
             instructions.append(.binary(op: kirOp, lhs: lhsID, rhs: rhsID, result: result))
             return result
 
-        case .call(let calleeExpr, let args, _):
+        case .call(let calleeExpr, _, let args, _):
             let calleeName: InternedString
             if let callee = ast.arena.expr(calleeExpr), case .nameRef(let name, _) = callee {
                 calleeName = name
@@ -1088,7 +1088,7 @@ public final class BuildKIRPhase: CompilerPhase {
             ))
             return result
 
-        case .memberCall(let receiverExpr, let calleeName, let args, _):
+        case .memberCall(let receiverExpr, let calleeName, _, let args, _):
             let loweredReceiverID = lowerExpr(
                 receiverExpr,
                 ast: ast,
@@ -1245,7 +1245,7 @@ public final class BuildKIRPhase: CompilerPhase {
             instructions.append(.nullAssert(operand: operandID, result: result))
             return result
 
-        case .safeMemberCall(let receiverExpr, let calleeName, let args, _):
+        case .safeMemberCall(let receiverExpr, let calleeName, _, let args, _):
             let loweredReceiverID = lowerExpr(
                 receiverExpr,
                 ast: ast,

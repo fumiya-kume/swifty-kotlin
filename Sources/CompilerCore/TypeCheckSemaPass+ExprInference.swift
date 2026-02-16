@@ -391,7 +391,7 @@ extension TypeCheckSemaPassPhase {
             sema.bindings.bindExprType(id, type: type)
             return type
 
-        case .call(let calleeID, let args, let range):
+        case .call(let calleeID, _, let args, let range):
             let argTypes = args.map { argument in
                 inferExpr(argument.expr, ctx: ctx, locals: &locals)
             }
@@ -475,7 +475,7 @@ extension TypeCheckSemaPassPhase {
             sema.bindings.bindExprType(id, type: returnType)
             return returnType
 
-        case .memberCall(let receiverID, let calleeName, let args, let range):
+        case .memberCall(let receiverID, let calleeName, _, let args, let range):
             let receiverType = inferExpr(receiverID, ctx: ctx, locals: &locals)
             let argTypes = args.map { argument in
                 inferExpr(argument.expr, ctx: ctx, locals: &locals)
@@ -584,7 +584,7 @@ extension TypeCheckSemaPassPhase {
             sema.bindings.bindExprType(id, type: type)
             return type
 
-        case .safeMemberCall(let receiverID, let calleeName, let args, let range):
+        case .safeMemberCall(let receiverID, let calleeName, _, let args, let range):
             let receiverType = inferExpr(receiverID, ctx: ctx, locals: &locals)
             let argTypes = args.map { argument in
                 inferExpr(argument.expr, ctx: ctx, locals: &locals)
@@ -948,7 +948,7 @@ extension TypeCheckSemaPassPhase {
             return sema.types.anyType
         }
         switch typeRef {
-        case .named(let path, let nullable):
+        case .named(let path, let argRefs, let nullable):
             guard let firstName = path.first else {
                 return sema.types.anyType
             }
@@ -986,13 +986,47 @@ extension TypeCheckSemaPassPhase {
                     }
                 }
                 if let symbolID = candidates.first {
+                    let resolvedArgs = resolveTypeArgRefsForTypeCheck(
+                        argRefs, ast: ast, sema: sema, interner: interner
+                    )
                     return sema.types.make(.classType(ClassType(
                         classSymbol: symbolID,
-                        args: [],
+                        args: resolvedArgs,
                         nullability: nullability
                     )))
                 }
                 return nullable ? sema.types.nullableAnyType : sema.types.anyType
+            }
+
+        case .functionType(let paramRefIDs, let returnRefID, let isSuspend, let nullable):
+            let nullability: Nullability = nullable ? .nullable : .nonNull
+            let paramTypes = paramRefIDs.map { resolveTypeRef($0, ast: ast, sema: sema, interner: interner) }
+            let returnType = resolveTypeRef(returnRefID, ast: ast, sema: sema, interner: interner)
+            return sema.types.make(.functionType(FunctionType(
+                params: paramTypes,
+                returnType: returnType,
+                isSuspend: isSuspend,
+                nullability: nullability
+            )))
+        }
+    }
+
+    func resolveTypeArgRefsForTypeCheck(
+        _ argRefs: [TypeArgRef],
+        ast: ASTModule,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> [TypeArg] {
+        argRefs.map { argRef in
+            switch argRef {
+            case .invariant(let innerRef):
+                return .invariant(resolveTypeRef(innerRef, ast: ast, sema: sema, interner: interner))
+            case .out(let innerRef):
+                return .out(resolveTypeRef(innerRef, ast: ast, sema: sema, interner: interner))
+            case .in(let innerRef):
+                return .in(resolveTypeRef(innerRef, ast: ast, sema: sema, interner: interner))
+            case .star:
+                return .star
             }
         }
     }

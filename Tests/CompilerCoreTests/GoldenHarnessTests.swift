@@ -279,13 +279,13 @@ final class GoldenHarnessTests: XCTestCase {
             return "localAssign \(interner.resolve(name)) value=e\(value.rawValue)"
         case .arrayAssign(let array, let index, let value, _):
             return "arrayAssign array=e\(array.rawValue) index=e\(index.rawValue) value=e\(value.rawValue)"
-        case .call(let callee, let args, _):
+        case .call(let callee, _, let args, _):
             let renderedArgs = args.map { arg in
                 let label = arg.label.map { interner.resolve($0) } ?? "_"
                 return "\(label):e\(arg.expr.rawValue)"
             }.joined(separator: ",")
             return "call callee=e\(callee.rawValue) args=[\(renderedArgs)]"
-        case .memberCall(let receiver, let callee, let args, _):
+        case .memberCall(let receiver, let callee, _, let args, _):
             let renderedArgs = args.map { arg in
                 let label = arg.label.map { interner.resolve($0) } ?? "_"
                 return "\(label):e\(arg.expr.rawValue)"
@@ -320,7 +320,7 @@ final class GoldenHarnessTests: XCTestCase {
             return "asCast\(isSafe ? "?" : "") expr=e\(expr.rawValue) type=t\(type.rawValue)"
         case .nullAssert(let expr, _):
             return "nullAssert expr=e\(expr.rawValue)"
-        case .safeMemberCall(let receiver, let callee, let args, _):
+        case .safeMemberCall(let receiver, let callee, _, let args, _):
             let renderedArgs = args.map { arg in
                 let label = arg.label.map { interner.resolve($0) } ?? "_"
                 return "\(label):e\(arg.expr.rawValue)"

@@ -388,8 +388,16 @@ public struct ValueParamDecl {
     }
 }
 
+public enum TypeArgRef: Equatable {
+    case invariant(TypeRefID)
+    case out(TypeRefID)
+    case `in`(TypeRefID)
+    case star
+}
+
 public enum TypeRef: Equatable {
-    case named(path: [InternedString], nullable: Bool)
+    case named(path: [InternedString], args: [TypeArgRef], nullable: Bool)
+    case functionType(params: [TypeRefID], returnType: TypeRefID, isSuspend: Bool, nullable: Bool)
 }
 
 public enum BinaryOp: Equatable {
@@ -475,8 +483,8 @@ public enum Expr: Equatable {
     case localDecl(name: InternedString, isMutable: Bool, initializer: ExprID, range: SourceRange)
     case localAssign(name: InternedString, value: ExprID, range: SourceRange)
     case arrayAssign(array: ExprID, index: ExprID, value: ExprID, range: SourceRange)
-    case call(callee: ExprID, args: [CallArgument], range: SourceRange)
-    case memberCall(receiver: ExprID, callee: InternedString, args: [CallArgument], range: SourceRange)
+    case call(callee: ExprID, typeArgs: [TypeRefID], args: [CallArgument], range: SourceRange)
+    case memberCall(receiver: ExprID, callee: InternedString, typeArgs: [TypeRefID], args: [CallArgument], range: SourceRange)
     case arrayAccess(array: ExprID, index: ExprID, range: SourceRange)
     case binary(op: BinaryOp, lhs: ExprID, rhs: ExprID, range: SourceRange)
     case whenExpr(subject: ExprID, branches: [WhenBranch], elseExpr: ExprID?, range: SourceRange)
@@ -487,7 +495,7 @@ public enum Expr: Equatable {
     case isCheck(expr: ExprID, type: TypeRefID, negated: Bool, range: SourceRange)
     case asCast(expr: ExprID, type: TypeRefID, isSafe: Bool, range: SourceRange)
     case nullAssert(expr: ExprID, range: SourceRange)
-    case safeMemberCall(receiver: ExprID, callee: InternedString, args: [CallArgument], range: SourceRange)
+    case safeMemberCall(receiver: ExprID, callee: InternedString, typeArgs: [TypeRefID], args: [CallArgument], range: SourceRange)
     case compoundAssign(op: CompoundAssignOp, name: InternedString, value: ExprID, range: SourceRange)
 }
 
@@ -547,8 +555,8 @@ public final class ASTArena {
              .localDecl(_, _, _, let range),
              .localAssign(_, _, let range),
              .arrayAssign(_, _, _, let range),
-             .call(_, _, let range),
-             .memberCall(_, _, _, let range),
+             .call(_, _, _, let range),
+             .memberCall(_, _, _, _, let range),
              .arrayAccess(_, _, let range),
              .binary(_, _, _, let range),
              .whenExpr(_, _, _, let range),
@@ -559,7 +567,7 @@ public final class ASTArena {
              .isCheck(_, _, _, let range),
              .asCast(_, _, _, let range),
              .nullAssert(_, let range),
-             .safeMemberCall(_, _, _, let range),
+             .safeMemberCall(_, _, _, _, let range),
              .compoundAssign(_, _, _, let range):
             return range
         }
