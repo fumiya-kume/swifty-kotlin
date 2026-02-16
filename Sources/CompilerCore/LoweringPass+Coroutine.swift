@@ -1260,6 +1260,12 @@ final class CoroutineLoweringPass: LoweringPass {
             return Set([lhs, rhs])
         case .returnValue(let value):
             return Set([value])
+        case .jumpIfNotNull(let value, _):
+            return Set([value])
+        case .copy(let from, _):
+            return Set([from])
+        case .rethrow(let value):
+            return Set([value])
         default:
             return []
         }
@@ -1273,11 +1279,13 @@ final class CoroutineLoweringPass: LoweringPass {
             return Set([result])
         case .select(_, _, _, let result):
             return Set([result])
-        case .call(_, _, _, let result, _, _):
-            if let result {
-                return Set([result])
-            }
-            return []
+        case .call(_, _, _, let result, _, let thrownResult):
+            var ids = Set<KIRExprID>()
+            if let result { ids.insert(result) }
+            if let thrownResult { ids.insert(thrownResult) }
+            return ids
+        case .copy(_, let to):
+            return Set([to])
         default:
             return []
         }

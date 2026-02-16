@@ -404,13 +404,13 @@ final class BackendPipelineCoverageTests: XCTestCase {
             }.first
             let body = try XCTUnwrap(mainFunction?.body)
             let callees = body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _) = instruction else {
-                    return nil
-                }
-                return ctx.interner.resolve(callee)
-            }
+                            guard case .call(_, let callee, _, _, _, _) = instruction else {
+                                return nil
+                            }
+                            return ctx.interner.resolve(callee)
+                        }
 
-            XCTAssertTrue(callees.contains("kk_string_concat"))
+                        XCTAssertTrue(callees.contains("kk_string_concat"))
             XCTAssertFalse(body.contains { instruction in
                 guard case .binary(let op, _, _, _) = instruction else {
                     return false
@@ -482,13 +482,13 @@ final class BackendPipelineCoverageTests: XCTestCase {
             }.first
             let body = try XCTUnwrap(mainFunction?.body)
             let callees = Set(body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _) = instruction else {
-                    return nil
-                }
-                return ctx.interner.resolve(callee)
-            })
+                            guard case .call(_, let callee, _, _, _, _) = instruction else {
+                                return nil
+                            }
+                            return ctx.interner.resolve(callee)
+                        })
 
-            XCTAssertTrue(callees.contains("kk_op_ne"))
+                        XCTAssertTrue(callees.contains("kk_op_ne"))
             XCTAssertTrue(callees.contains("kk_op_lt"))
             XCTAssertTrue(callees.contains("kk_op_le"))
             XCTAssertTrue(callees.contains("kk_op_gt"))
@@ -527,7 +527,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
                 return op == .add
             })
             XCTAssertFalse(body.contains { instruction in
-                guard case .call(_, let callee, _, _, _) = instruction else {
+                guard case .call(_, let callee, _, _, _, _) = instruction else {
                     return false
                 }
                 return ctx.interner.resolve(callee) == "plus"
@@ -559,7 +559,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             let body = try XCTUnwrap(mainFunction?.body)
 
             let callNames = body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _) = instruction else {
+                guard case .call(_, let callee, _, _, _, _) = instruction else {
                     return nil
                 }
                 return ctx.interner.resolve(callee)
@@ -569,7 +569,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             XCTAssertTrue(callNames.contains("kk_array_get"))
 
             let throwFlags: [String: [Bool]] = body.reduce(into: [:]) { partial, instruction in
-                guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+                guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
                     return
                 }
                 partial[ctx.interner.resolve(callee), default: []].append(canThrow)
@@ -874,7 +874,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
                 }
 
                 let calls = mainFunction.body.compactMap { instruction -> String? in
-                    guard case .call(_, let callee, _, _, _) = instruction else {
+                    guard case .call(_, let callee, _, _, _, _) = instruction else {
                         return nil
                     }
                     return appCtx.interner.resolve(callee)
@@ -1589,7 +1589,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
 
         let callees = loweredMain.body.compactMap { instruction -> String? in
-            guard case .call(_, let callee, _, _, _) = instruction else { return nil }
+            guard case .call(_, let callee, _, _, _, _) = instruction else { return nil }
             return fixture.interner.resolve(callee)
         }
         XCTAssertTrue(callees.contains("iterator"))
@@ -1605,7 +1605,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertTrue(callees.contains("kk_suspend_suspendTarget"))
 
         let throwFlags: [String: [Bool]] = loweredMain.body.reduce(into: [:]) { partial, instruction in
-            guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+            guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
                 return
             }
             let name = fixture.interner.resolve(callee)
@@ -1628,7 +1628,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertEqual(loweredSuspend?.isSuspend, false)
 
         let loweredSuspendCallees = loweredSuspend?.body.compactMap { instruction -> String? in
-            guard case .call(_, let callee, _, _, _) = instruction else {
+            guard case .call(_, let callee, _, _, _, _) = instruction else {
                 return nil
             }
             return fixture.interner.resolve(callee)
@@ -1665,7 +1665,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertTrue(hasSuspendGuard)
 
         let throwFlags: [String: [Bool]] = loweredSuspend?.body.reduce(into: [:]) { partial, instruction in
-            guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+            guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
                 return
             }
             let name = fixture.interner.resolve(callee)
@@ -1718,7 +1718,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             }.first
 
             let mainCalls = mainFunction?.body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _) = instruction else {
+                guard case .call(_, let callee, _, _, _, _) = instruction else {
                     return nil
                 }
                 return ctx.interner.resolve(callee)
@@ -1727,7 +1727,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             XCTAssertFalse(mainCalls.contains("runBlocking"))
 
             let delayCalls = loweredSuspend?.body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _) = instruction else {
+                guard case .call(_, let callee, _, _, _, _) = instruction else {
                     return nil
                 }
                 return ctx.interner.resolve(callee)
@@ -1735,7 +1735,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             XCTAssertTrue(delayCalls.contains("kk_kxmini_delay"))
 
             let throwFlags = loweredSuspend?.body.reduce(into: [String: [Bool]]()) { partial, instruction in
-                guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+                guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
                     return
                 }
                 partial[ctx.interner.resolve(callee), default: []].append(canThrow)
@@ -1852,7 +1852,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
 
         let rawSuspendCalls = loweredCaller.body.contains { instruction in
-            guard case .call(_, let callee, _, _, _) = instruction else {
+            guard case .call(_, let callee, _, _, _, _) = instruction else {
                 return false
             }
             return interner.resolve(callee) == "susp"
@@ -1860,7 +1860,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertFalse(rawSuspendCalls)
 
         let rewrittenSuspendCalls = loweredCaller.body.compactMap { instruction -> (name: String, arity: Int, canThrow: Bool)? in
-            guard case .call(_, let callee, let arguments, _, let canThrow) = instruction else {
+            guard case .call(_, let callee, let arguments, _, let canThrow, _) = instruction else {
                 return nil
             }
             let name = interner.resolve(callee)
@@ -2000,7 +2000,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertNotNil(loweredSuspend)
 
         let loweredCalls = loweredSuspend?.body.compactMap { instruction -> String? in
-            guard case .call(_, let callee, _, _, _) = instruction else {
+            guard case .call(_, let callee, _, _, _, _) = instruction else {
                 return nil
             }
             return interner.resolve(callee)
@@ -2016,7 +2016,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertEqual(getSpillCount, 1)
 
         let throwFlags: [String: [Bool]] = loweredSuspend?.body.reduce(into: [:]) { partial, instruction in
-            guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+            guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
                 return
             }
             partial[interner.resolve(callee), default: []].append(canThrow)
@@ -2261,7 +2261,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertNotNil(loweredLeaf)
 
         let mainThrowFlags: [String: [Bool]] = loweredMain?.body.reduce(into: [:]) { partial, instruction in
-            guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+            guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
                 return
             }
             partial[interner.resolve(callee), default: []].append(canThrow)
@@ -2269,7 +2269,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertEqual(mainThrowFlags["kk_suspend_top"]?.allSatisfy({ $0 == true }), true)
 
         let topThrowFlags: [String: [Bool]] = loweredTop?.body.reduce(into: [:]) { partial, instruction in
-            guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+            guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
                 return
             }
             partial[interner.resolve(callee), default: []].append(canThrow)
@@ -2279,7 +2279,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertEqual(topThrowFlags["kk_coroutine_state_set_completion"]?.allSatisfy({ $0 == false }), true)
 
         let leafThrowFlags: [String: [Bool]] = loweredLeaf?.body.reduce(into: [:]) { partial, instruction in
-            guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+            guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
                 return
             }
             partial[interner.resolve(callee), default: []].append(canThrow)
@@ -2355,7 +2355,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
 
         let calleeNames = loweredCaller.body.compactMap { instruction -> String? in
-            guard case .call(_, let callee, _, _, _) = instruction else { return nil }
+            guard case .call(_, let callee, _, _, _, _) = instruction else { return nil }
             return interner.resolve(callee)
         }
         XCTAssertFalse(calleeNames.contains("plusOne"))
@@ -2816,7 +2816,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             XCTAssertGreaterThanOrEqual(jumpCount, 4)
 
             let callees = body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _) = instruction else {
+                guard case .call(_, let callee, _, _, _, _) = instruction else {
                     return nil
                 }
                 return interner.resolve(callee)
@@ -2989,12 +2989,12 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertEqual(pickFunction.params.last?.symbol, expectedTokenSymbol)
 
         guard let callInstruction = mainFunction.body.first(where: { instruction in
-            guard case .call(let symbol, _, _, _, _) = instruction else {
+            guard case .call(let symbol, _, _, _, _, _) = instruction else {
                 return false
             }
             return symbol == pickSymbol
         }),
-        case .call(_, _, let arguments, _, _) = callInstruction else {
+        case .call(_, _, let arguments, _, _, _) = callInstruction else {
             XCTFail("Expected main to call inline reified function.")
             return
         }
@@ -3134,7 +3134,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
 
         let loweredCallees = loweredMain.body.compactMap { instruction -> InternedString? in
-            guard case .call(_, let callee, _, _, _) = instruction else {
+            guard case .call(_, let callee, _, _, _, _) = instruction else {
                 return nil
             }
             return callee
