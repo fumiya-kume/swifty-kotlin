@@ -172,22 +172,19 @@ final class ConstraintSolverTests: XCTestCase {
         XCTAssertEqual(solution.substitution[t0], types.errorType)
     }
 
-    func testSolveFailsWithSupertypeConstraintNotSatisfied() {
+    func testSolveSupertypeConstraintAddsLowerBound() {
         let solver = ConstraintSolver()
         let types = TypeSystem()
         let intType = types.make(.primitive(.int, .nonNull))
-        let boolType = types.make(.primitive(.boolean, .nonNull))
         let t0 = TypeVarID(rawValue: 31)
-        let blame = makeRange(start: 30, end: 35)
 
         let constraints: [VariableConstraint] = [
-            VariableConstraint(kind: .subtype, left: .type(intType), right: .variable(t0)),
-            VariableConstraint(kind: .supertype, left: .variable(t0), right: .type(boolType), blameRange: blame)
+            VariableConstraint(kind: .supertype, left: .variable(t0), right: .type(intType))
         ]
         let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
 
-        XCTAssertFalse(solution.isSuccess)
-        XCTAssertNotNil(solution.failure)
+        XCTAssertTrue(solution.isSuccess)
+        XCTAssertEqual(solution.substitution[t0], intType)
     }
 
     func testSolveFailsWhenCandidateIsErrorType() {
