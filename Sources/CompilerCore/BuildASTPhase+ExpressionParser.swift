@@ -164,8 +164,8 @@ extension BuildASTPhase {
                             expr = astArena.appendExpr(.call(callee: expr, typeArgs: typeArgs, args: args, range: range))
                             continue
                         }
-                        index = savedIndex
                     }
+                    index = savedIndex
                 }
 
                 if matches(.symbol(.lParen)) {
