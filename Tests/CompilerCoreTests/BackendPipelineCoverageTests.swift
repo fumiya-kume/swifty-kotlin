@@ -1031,101 +1031,17 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: objectPath))
     }
 
-    func testLoweringRewritesCallsAndNormalizesEmptyFunctionBody() throws {
-        let interner = StringInterner()
-        let arena = KIRArena()
+    func testLoweringRewritesMainCallSites() throws {
+        let fixture = try makeLoweringRewriteFixture()
 
-        let mainSym = SymbolID(rawValue: 10)
-        let inlineSym = SymbolID(rawValue: 11)
-        let suspendSym = SymbolID(rawValue: 12)
-        let emptySym = SymbolID(rawValue: 13)
-
-        let v0 = arena.appendExpr(.temporary(0))
-        let v1 = arena.appendExpr(.temporary(1))
-        let v2 = arena.appendExpr(.temporary(2))
-        let v3 = arena.appendExpr(.temporary(3))
-
-        let mainFn = KIRFunction(
-            symbol: mainSym,
-            name: interner.intern("main"),
-            params: [],
-            returnType: TypeSystem().unitType,
-            body: [
-                .call(symbol: nil, callee: interner.intern("iterator"), arguments: [v0], result: v3, canThrow: false),
-                .call(symbol: nil, callee: interner.intern("kk_for_lowered"), arguments: [v3], result: v1, canThrow: false),
-                .select(condition: v0, thenValue: v1, elseValue: v2, result: v1),
-                .call(symbol: nil, callee: interner.intern("get"), arguments: [v0], result: v1, canThrow: false),
-                .call(symbol: nil, callee: interner.intern("set"), arguments: [v0], result: v1, canThrow: false),
-                .call(symbol: nil, callee: interner.intern("<lambda>"), arguments: [v0], result: v1, canThrow: false),
-                .call(symbol: nil, callee: interner.intern("inlineTarget"), arguments: [], result: v1, canThrow: false),
-                .call(symbol: nil, callee: interner.intern("suspendTarget"), arguments: [v0], result: v1, canThrow: false),
-                .returnUnit
-            ],
-            isSuspend: false,
-            isInline: false
-        )
-        let inlineFn = KIRFunction(
-            symbol: inlineSym,
-            name: interner.intern("inlineTarget"),
-            params: [],
-            returnType: TypeSystem().unitType,
-            body: [.returnUnit],
-            isSuspend: false,
-            isInline: true
-        )
-        let suspendFn = KIRFunction(
-            symbol: suspendSym,
-            name: interner.intern("suspendTarget"),
-            params: [],
-            returnType: TypeSystem().unitType,
-            body: [
-                .call(symbol: suspendSym, callee: interner.intern("suspendTarget"), arguments: [], result: v2, canThrow: false),
-                .returnValue(v2)
-            ],
-            isSuspend: true,
-            isInline: false
-        )
-        let emptyFn = KIRFunction(
-            symbol: emptySym,
-            name: interner.intern("empty"),
-            params: [],
-            returnType: TypeSystem().unitType,
-            body: [],
-            isSuspend: false,
-            isInline: false
-        )
-
-        let mainID = arena.appendDecl(.function(mainFn))
-        _ = arena.appendDecl(.function(inlineFn))
-        _ = arena.appendDecl(.function(suspendFn))
-        let emptyID = arena.appendDecl(.function(emptyFn))
-        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [mainID, emptyID])], arena: arena)
-
-        let options = CompilerOptions(
-            moduleName: "Lowering",
-            inputs: [],
-            outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
-            emit: .kirDump,
-            target: defaultTargetTriple()
-        )
-        let ctx = CompilationContext(
-            options: options,
-            sourceManager: SourceManager(),
-            diagnostics: DiagnosticEngine(),
-            interner: interner
-        )
-        ctx.kir = module
-
-        try LoweringPhase().run(ctx)
-
-        guard case .function(let loweredMain)? = module.arena.decl(mainID) else {
+        guard case .function(let loweredMain)? = fixture.module.arena.decl(fixture.mainID) else {
             XCTFail("expected lowered main function")
             return
         }
 
         let callees = loweredMain.body.compactMap { instruction -> String? in
             guard case .call(_, let callee, _, _, _) = instruction else { return nil }
-            return interner.resolve(callee)
+            return fixture.interner.resolve(callee)
         }
         XCTAssertTrue(callees.contains("iterator"))
         XCTAssertTrue(callees.contains("kk_for_lowered"))
@@ -1137,23 +1053,41 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertTrue(callees.contains("kk_coroutine_continuation_new"))
         XCTAssertTrue(callees.contains("kk_suspend_suspendTarget"))
 
-        let loweredSuspend = module.arena.declarations.compactMap { decl -> KIRFunction? in
+        let throwFlags: [String: [Bool]] = loweredMain.body.reduce(into: [:]) { partial, instruction in
+            guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+                return
+            }
+            let name = fixture.interner.resolve(callee)
+            partial[name, default: []].append(canThrow)
+        }
+        XCTAssertEqual(throwFlags["kk_coroutine_continuation_new"]?.allSatisfy({ $0 == false }), true)
+        XCTAssertEqual(throwFlags["kk_suspend_suspendTarget"]?.allSatisfy({ $0 == true }), true)
+    }
+
+    func testLoweringBuildsSuspendStateMachineAndThrowFlags() throws {
+        let fixture = try makeLoweringRewriteFixture()
+        let loweredSuspend = fixture.module.arena.declarations.compactMap { decl -> KIRFunction? in
             guard case .function(let function) = decl else {
                 return nil
             }
-            return interner.resolve(function.name) == "kk_suspend_suspendTarget" ? function : nil
+            return fixture.interner.resolve(function.name) == "kk_suspend_suspendTarget" ? function : nil
         }.first
+
         XCTAssertEqual(loweredSuspend?.params.count, 1)
         XCTAssertEqual(loweredSuspend?.isSuspend, false)
+
         let loweredSuspendCallees = loweredSuspend?.body.compactMap { instruction -> String? in
-            guard case .call(_, let callee, _, _, _) = instruction else { return nil }
-            return interner.resolve(callee)
+            guard case .call(_, let callee, _, _, _) = instruction else {
+                return nil
+            }
+            return fixture.interner.resolve(callee)
         } ?? []
         XCTAssertTrue(loweredSuspendCallees.contains("kk_coroutine_state_enter"))
         XCTAssertTrue(loweredSuspendCallees.contains("kk_coroutine_state_set_label"))
         XCTAssertTrue(loweredSuspendCallees.contains("kk_coroutine_state_set_completion"))
         XCTAssertTrue(loweredSuspendCallees.contains("kk_coroutine_state_get_completion"))
         XCTAssertTrue(loweredSuspendCallees.contains("kk_coroutine_state_exit"))
+
         let dispatchJumpCount = loweredSuspend?.body.filter { instruction in
             if case .jumpIfEqual = instruction {
                 return true
@@ -1161,6 +1095,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             return false
         }.count ?? 0
         XCTAssertGreaterThanOrEqual(dispatchJumpCount, 2)
+
         let dispatchLabels = loweredSuspend?.body.compactMap { instruction -> Int32? in
             if case .label(let id) = instruction {
                 return id
@@ -1169,6 +1104,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         } ?? []
         XCTAssertTrue(dispatchLabels.contains(1000))
         XCTAssertTrue(dispatchLabels.contains(1001))
+
         let hasSuspendGuard = loweredSuspend?.body.contains { instruction in
             if case .returnIfEqual = instruction {
                 return true
@@ -1177,30 +1113,24 @@ final class BackendPipelineCoverageTests: XCTestCase {
         } ?? false
         XCTAssertTrue(hasSuspendGuard)
 
-        let loweredSuspendThrowFlags: [String: [Bool]] = loweredSuspend?.body.reduce(into: [:]) { partial, instruction in
+        let throwFlags: [String: [Bool]] = loweredSuspend?.body.reduce(into: [:]) { partial, instruction in
             guard case .call(_, let callee, _, _, let canThrow) = instruction else {
                 return
             }
-            let name = interner.resolve(callee)
+            let name = fixture.interner.resolve(callee)
             partial[name, default: []].append(canThrow)
         } ?? [:]
-        XCTAssertEqual(loweredSuspendThrowFlags["kk_suspend_suspendTarget"]?.allSatisfy({ $0 == true }), true)
-        XCTAssertEqual(loweredSuspendThrowFlags["kk_coroutine_suspended"]?.allSatisfy({ $0 == false }), true)
-        XCTAssertEqual(loweredSuspendThrowFlags["kk_coroutine_state_set_label"]?.allSatisfy({ $0 == false }), true)
-        XCTAssertEqual(loweredSuspendThrowFlags["kk_coroutine_state_set_completion"]?.allSatisfy({ $0 == false }), true)
-        XCTAssertEqual(loweredSuspendThrowFlags["kk_coroutine_state_get_completion"]?.allSatisfy({ $0 == false }), true)
+        XCTAssertEqual(throwFlags["kk_suspend_suspendTarget"]?.allSatisfy({ $0 == true }), true)
+        XCTAssertEqual(throwFlags["kk_coroutine_suspended"]?.allSatisfy({ $0 == false }), true)
+        XCTAssertEqual(throwFlags["kk_coroutine_state_set_label"]?.allSatisfy({ $0 == false }), true)
+        XCTAssertEqual(throwFlags["kk_coroutine_state_set_completion"]?.allSatisfy({ $0 == false }), true)
+        XCTAssertEqual(throwFlags["kk_coroutine_state_get_completion"]?.allSatisfy({ $0 == false }), true)
+    }
 
-        let callThrowFlags: [String: [Bool]] = loweredMain.body.reduce(into: [:]) { partial, instruction in
-            guard case .call(_, let callee, _, _, let canThrow) = instruction else {
-                return
-            }
-            let name = interner.resolve(callee)
-            partial[name, default: []].append(canThrow)
-        }
-        XCTAssertEqual(callThrowFlags["kk_coroutine_continuation_new"]?.allSatisfy({ $0 == false }), true)
-        XCTAssertEqual(callThrowFlags["kk_suspend_suspendTarget"]?.allSatisfy({ $0 == true }), true)
+    func testLoweringNormalizesEmptyFunctionBody() throws {
+        let fixture = try makeLoweringRewriteFixture()
 
-        guard case .function(let loweredEmpty)? = module.arena.decl(emptyID) else {
+        guard case .function(let loweredEmpty)? = fixture.module.arena.decl(fixture.emptyID) else {
             XCTFail("expected lowered empty function")
             return
         }
@@ -2185,6 +2115,102 @@ final class BackendPipelineCoverageTests: XCTestCase {
             XCTAssertTrue(callees.contains("hasNext"))
             XCTAssertTrue(callees.contains("next"))
         }
+    }
+
+    private struct LoweringRewriteFixture {
+        let interner: StringInterner
+        let module: KIRModule
+        let mainID: KIRDeclID
+        let emptyID: KIRDeclID
+    }
+
+    private func makeLoweringRewriteFixture() throws -> LoweringRewriteFixture {
+        let interner = StringInterner()
+        let arena = KIRArena()
+
+        let mainSym = SymbolID(rawValue: 10)
+        let inlineSym = SymbolID(rawValue: 11)
+        let suspendSym = SymbolID(rawValue: 12)
+        let emptySym = SymbolID(rawValue: 13)
+
+        let v0 = arena.appendExpr(.temporary(0))
+        let v1 = arena.appendExpr(.temporary(1))
+        let v2 = arena.appendExpr(.temporary(2))
+        let v3 = arena.appendExpr(.temporary(3))
+
+        let mainFn = KIRFunction(
+            symbol: mainSym,
+            name: interner.intern("main"),
+            params: [],
+            returnType: TypeSystem().unitType,
+            body: [
+                .call(symbol: nil, callee: interner.intern("iterator"), arguments: [v0], result: v3, canThrow: false),
+                .call(symbol: nil, callee: interner.intern("kk_for_lowered"), arguments: [v3], result: v1, canThrow: false),
+                .select(condition: v0, thenValue: v1, elseValue: v2, result: v1),
+                .call(symbol: nil, callee: interner.intern("get"), arguments: [v0], result: v1, canThrow: false),
+                .call(symbol: nil, callee: interner.intern("set"), arguments: [v0], result: v1, canThrow: false),
+                .call(symbol: nil, callee: interner.intern("<lambda>"), arguments: [v0], result: v1, canThrow: false),
+                .call(symbol: nil, callee: interner.intern("inlineTarget"), arguments: [], result: v1, canThrow: false),
+                .call(symbol: nil, callee: interner.intern("suspendTarget"), arguments: [v0], result: v1, canThrow: false),
+                .returnUnit
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let inlineFn = KIRFunction(
+            symbol: inlineSym,
+            name: interner.intern("inlineTarget"),
+            params: [],
+            returnType: TypeSystem().unitType,
+            body: [.returnUnit],
+            isSuspend: false,
+            isInline: true
+        )
+        let suspendFn = KIRFunction(
+            symbol: suspendSym,
+            name: interner.intern("suspendTarget"),
+            params: [],
+            returnType: TypeSystem().unitType,
+            body: [
+                .call(symbol: suspendSym, callee: interner.intern("suspendTarget"), arguments: [], result: v2, canThrow: false),
+                .returnValue(v2)
+            ],
+            isSuspend: true,
+            isInline: false
+        )
+        let emptyFn = KIRFunction(
+            symbol: emptySym,
+            name: interner.intern("empty"),
+            params: [],
+            returnType: TypeSystem().unitType,
+            body: [],
+            isSuspend: false,
+            isInline: false
+        )
+
+        let mainID = arena.appendDecl(.function(mainFn))
+        _ = arena.appendDecl(.function(inlineFn))
+        _ = arena.appendDecl(.function(suspendFn))
+        let emptyID = arena.appendDecl(.function(emptyFn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [mainID, emptyID])], arena: arena)
+
+        let options = CompilerOptions(
+            moduleName: "Lowering",
+            inputs: [],
+            outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+            emit: .kirDump,
+            target: defaultTargetTriple()
+        )
+        let ctx = CompilationContext(
+            options: options,
+            sourceManager: SourceManager(),
+            diagnostics: DiagnosticEngine(),
+            interner: interner
+        )
+        ctx.kir = module
+        try LoweringPhase().run(ctx)
+
+        return LoweringRewriteFixture(interner: interner, module: module, mainID: mainID, emptyID: emptyID)
     }
 
     private func runCodegenPipeline(inputPath: String, moduleName: String, emit: EmitMode, outputPath: String) throws -> CompilationContext {
