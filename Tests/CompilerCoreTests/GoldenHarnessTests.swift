@@ -313,9 +313,9 @@ final class GoldenHarnessTests: XCTestCase {
         case .unaryExpr(let op, let operand, _):
             return "unary(\(op)) operand=e\(operand.rawValue)"
         case .isCheck(let expr, let type, let negated, _):
-            return "isCheck\(negated ? "!" : "") expr=e\(expr.rawValue) type=\(interner.resolve(type))"
+            return "isCheck\(negated ? "!" : "") expr=e\(expr.rawValue) type=t\(type.rawValue)"
         case .asCast(let expr, let type, let isSafe, _):
-            return "asCast\(isSafe ? "?" : "") expr=e\(expr.rawValue) type=\(interner.resolve(type))"
+            return "asCast\(isSafe ? "?" : "") expr=e\(expr.rawValue) type=t\(type.rawValue)"
         case .nullAssert(let expr, _):
             return "nullAssert expr=e\(expr.rawValue)"
         case .safeMemberCall(let receiver, let callee, let args, _):
