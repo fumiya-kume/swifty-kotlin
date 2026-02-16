@@ -217,6 +217,8 @@ final class GoldenHarnessTests: XCTestCase {
             return "symbol(\(symbol.rawValue))"
         case .eof:
             return "eof"
+        case .missing(let expected):
+            return "missing(\(renderTokenKind(expected, interner: interner)))"
         }
     }
 
@@ -262,6 +264,8 @@ final class GoldenHarnessTests: XCTestCase {
             return "localDecl \(interner.resolve(name)) mutable=\(isMutable ? 1 : 0) init=e\(initializer.rawValue)"
         case .localAssign(let name, let value, _):
             return "localAssign \(interner.resolve(name)) value=e\(value.rawValue)"
+        case .arrayAssign(let array, let index, let value, _):
+            return "arrayAssign array=e\(array.rawValue) index=e\(index.rawValue) value=e\(value.rawValue)"
         case .call(let callee, let args, _):
             let renderedArgs = args.map { arg in
                 let label = arg.label.map { interner.resolve($0) } ?? "_"
@@ -274,6 +278,8 @@ final class GoldenHarnessTests: XCTestCase {
                 return "\(label):e\(arg.expr.rawValue)"
             }.joined(separator: ",")
             return "memberCall recv=e\(receiver.rawValue) callee=\(interner.resolve(callee)) args=[\(renderedArgs)]"
+        case .arrayAccess(let array, let index, _):
+            return "arrayAccess array=e\(array.rawValue) index=e\(index.rawValue)"
         case .binary(let op, let lhs, let rhs, _):
             return "binary(\(op)) lhs=e\(lhs.rawValue) rhs=e\(rhs.rawValue)"
         case .whenExpr(let subject, let branches, let elseExpr, _):
