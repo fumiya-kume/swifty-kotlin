@@ -113,14 +113,14 @@ public final class CodegenPhase: CompilerPhase {
             return LLVMBackend(
                 target: ctx.options.target,
                 optLevel: ctx.options.optLevel,
-                emitsDebugInfo: ctx.options.emitsDebugInfo,
+                debugInfo: ctx.options.debugInfo,
                 diagnostics: ctx.diagnostics
             )
         case .llvmCAPI:
             return LLVMCAPIBackend(
                 target: ctx.options.target,
                 optLevel: ctx.options.optLevel,
-                emitsDebugInfo: ctx.options.emitsDebugInfo,
+                debugInfo: ctx.options.debugInfo,
                 diagnostics: ctx.diagnostics,
                 isStrictMode: selection.isStrictMode
             )
@@ -287,6 +287,15 @@ public final class CodegenPhase: CompilerPhase {
         guard let sema = ctx.sema else {
             return "symbols=0\n"
         }
+        let functionLinkNamesBySymbol: [SymbolID: String] = {
+            guard let kir = ctx.kir else { return [:] }
+            return kir.arena.declarations.reduce(into: [:]) { partial, decl in
+                guard case .function(let function) = decl else {
+                    return
+                }
+                partial[function.symbol] = LLVMBackend.cFunctionSymbol(for: function, interner: ctx.interner)
+            }
+        }()
         let nominalKinds: Set<SymbolKind> = [.class, .interface, .object, .enumClass, .annotationClass]
         let exported = sema.symbols.allSymbols()
             .filter { $0.visibility == Visibility.public && $0.kind != .package }
@@ -322,12 +331,32 @@ public final class CodegenPhase: CompilerPhase {
                 fields.append("arity=\(signature.parameterTypes.count)")
                 fields.append("suspend=\(signature.isSuspend ? 1 : 0)")
                 fields.append("inline=\(symbol.flags.contains(.inlineFunction) ? 1 : 0)")
+                fields.append("sig=\(mangler.mangledSignature(for: symbol, symbols: sema.symbols, types: sema.types, nameResolver: { ctx.interner.resolve($0) }))")
+                if let linkName = functionLinkNamesBySymbol[symbol.id] {
+                    fields.append("link=\(linkName)")
+                }
+            }
+            if (symbol.kind == .property || symbol.kind == .field),
+               sema.symbols.propertyType(for: symbol.id) != nil {
+                fields.append("sig=\(mangler.mangledSignature(for: symbol, symbols: sema.symbols, types: sema.types, nameResolver: { ctx.interner.resolve($0) }))")
             }
             if nominalKinds.contains(symbol.kind), let layout = sema.symbols.nominalLayout(for: symbol.id) {
                 fields.append("layoutWords=\(layout.instanceSizeWords)")
                 fields.append("fields=\(layout.instanceFieldCount)")
                 fields.append("vtable=\(layout.vtableSize)")
                 fields.append("itable=\(layout.itableSize)")
+                let serializedFieldOffsets = serializeFieldOffsets(layout.fieldOffsets, symbols: sema.symbols, interner: ctx.interner)
+                if !serializedFieldOffsets.isEmpty {
+                    fields.append("fieldOffsets=\(serializedFieldOffsets)")
+                }
+                let serializedVTableSlots = serializeVTableSlots(layout.vtableSlots, symbols: sema.symbols, interner: ctx.interner)
+                if !serializedVTableSlots.isEmpty {
+                    fields.append("vtableSlots=\(serializedVTableSlots)")
+                }
+                let serializedITableSlots = serializeITableSlots(layout.itableSlots, symbols: sema.symbols, interner: ctx.interner)
+                if !serializedITableSlots.isEmpty {
+                    fields.append("itableSlots=\(serializedITableSlots)")
+                }
                 if let superClass = layout.superClass,
                    let superSymbol = sema.symbols.symbol(superClass) {
                     let superFQName = superSymbol.fqName.map { ctx.interner.resolve($0) }.joined(separator: ".")
@@ -337,5 +366,75 @@ public final class CodegenPhase: CompilerPhase {
             lines.append(fields.joined(separator: " "))
         }
         return lines.joined(separator: "\n") + "\n"
+    }
+
+    private func serializeFieldOffsets(
+        _ offsets: [SymbolID: Int],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> String {
+        let pairs: [(String, Int)] = offsets.compactMap { symbolID, offset in
+            guard let symbol = symbols.symbol(symbolID) else {
+                return nil
+            }
+            let fqName = symbol.fqName.map { interner.resolve($0) }.joined(separator: ".")
+            guard !fqName.isEmpty else {
+                return nil
+            }
+            return (fqName, offset)
+        }
+        let sorted = pairs.sorted { lhs, rhs in
+            if lhs.1 != rhs.1 { return lhs.1 < rhs.1 }
+            return lhs.0 < rhs.0
+        }
+        return sorted.map { "\($0.0)@\($0.1)" }.joined(separator: ",")
+    }
+
+    private func serializeVTableSlots(
+        _ slots: [SymbolID: Int],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> String {
+        let pairs: [(String, Int)] = slots.compactMap { symbolID, slot in
+            guard let symbol = symbols.symbol(symbolID), symbol.kind == .function else {
+                return nil
+            }
+            let fqName = symbol.fqName.map { interner.resolve($0) }.joined(separator: ".")
+            guard !fqName.isEmpty else {
+                return nil
+            }
+            let signature = symbols.functionSignature(for: symbolID)
+            let arity = signature?.parameterTypes.count ?? 0
+            let isSuspend = signature?.isSuspend ?? false
+            let key = "\(fqName)#\(arity)#\(isSuspend ? 1 : 0)"
+            return (key, slot)
+        }
+        let sorted = pairs.sorted { lhs, rhs in
+            if lhs.1 != rhs.1 { return lhs.1 < rhs.1 }
+            return lhs.0 < rhs.0
+        }
+        return sorted.map { "\($0.0)@\($0.1)" }.joined(separator: ",")
+    }
+
+    private func serializeITableSlots(
+        _ slots: [SymbolID: Int],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> String {
+        let pairs: [(String, Int)] = slots.compactMap { symbolID, slot in
+            guard let symbol = symbols.symbol(symbolID) else {
+                return nil
+            }
+            let fqName = symbol.fqName.map { interner.resolve($0) }.joined(separator: ".")
+            guard !fqName.isEmpty else {
+                return nil
+            }
+            return (fqName, slot)
+        }
+        let sorted = pairs.sorted { lhs, rhs in
+            if lhs.1 != rhs.1 { return lhs.1 < rhs.1 }
+            return lhs.0 < rhs.0
+        }
+        return sorted.map { "\($0.0)@\($0.1)" }.joined(separator: ",")
     }
 }
