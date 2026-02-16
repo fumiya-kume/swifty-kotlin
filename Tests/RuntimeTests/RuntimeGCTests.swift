@@ -39,7 +39,7 @@ private func withTestTypeInfo(
     }
 }
 
-private func withDummyTypeInfo<T>(_ body: (UnsafeRawPointer) -> T) -> T {
+private func withDummyTypeInfo(_ body: (UnsafeRawPointer) -> Void) {
     withTestTypeInfo(fieldOffsets: []) { typeInfoPtr in
         body(UnsafeRawPointer(typeInfoPtr))
     }
