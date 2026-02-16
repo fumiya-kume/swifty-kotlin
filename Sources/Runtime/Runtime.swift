@@ -422,6 +422,7 @@ public func kk_array_set(_ arrayRaw: Int, _ index: Int, _ value: Int, _ outThrow
 
 @_cdecl("kk_box_int")
 public func kk_box_int(_ value: Int) -> Int {
+    if value == runtimeNullSentinelInt { return value }
     let box = RuntimeIntBox(value)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
     RuntimeStorage.lock.lock()
@@ -432,6 +433,7 @@ public func kk_box_int(_ value: Int) -> Int {
 
 @_cdecl("kk_box_bool")
 public func kk_box_bool(_ value: Int) -> Int {
+    if value == runtimeNullSentinelInt { return value }
     let box = RuntimeBoolBox(value != 0)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
     RuntimeStorage.lock.lock()
