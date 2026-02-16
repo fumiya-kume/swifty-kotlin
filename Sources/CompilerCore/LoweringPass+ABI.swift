@@ -63,9 +63,12 @@ final class ABILoweringPass: LoweringPass {
             var newBody: [KIRInstruction] = []
             newBody.reserveCapacity(function.body.count)
 
-            for instruction in function.body {
-                guard case .call(let callSymbol, let callee, let arguments, let result, _) = instruction else {
+            var idx = 0
+            while idx < function.body.count {
+                let instruction = function.body[idx]
+                guard case .call(let callSymbol, let callee, let arguments, let result, _, let thrownResult) = instruction else {
                     newBody.append(instruction)
+                    idx += 1
                     continue
                 }
 
@@ -109,7 +112,8 @@ final class ABILoweringPass: LoweringPass {
                                     callee: boxCallee,
                                     arguments: [arguments[argIndex]],
                                     result: boxedResult,
-                                    canThrow: false
+                                    canThrow: false,
+                                    thrownResult: nil
                                 ))
                                 boxedArguments[argIndex] = boxedResult
                             }
@@ -158,14 +162,24 @@ final class ABILoweringPass: LoweringPass {
                         callee: callee,
                         arguments: boxedArguments,
                         result: tempResult,
-                        canThrow: canThrow
+                        canThrow: canThrow,
+                        thrownResult: thrownResult
                     ))
+                    if thrownResult != nil {
+                        let nextIdx = idx + 1
+                        if nextIdx < function.body.count,
+                           case .jumpIfNotNull = function.body[nextIdx] {
+                            newBody.append(function.body[nextIdx])
+                            idx += 1
+                        }
+                    }
                     newBody.append(.call(
                         symbol: nil,
                         callee: resolvedUnboxCallee,
                         arguments: [tempResult],
                         result: result,
-                        canThrow: false
+                        canThrow: false,
+                        thrownResult: nil
                     ))
                 } else {
                     newBody.append(.call(
@@ -173,9 +187,11 @@ final class ABILoweringPass: LoweringPass {
                         callee: callee,
                         arguments: boxedArguments,
                         result: result,
-                        canThrow: canThrow
+                        canThrow: canThrow,
+                        thrownResult: thrownResult
                     ))
                 }
+                idx += 1
             }
 
             updated.body = newBody

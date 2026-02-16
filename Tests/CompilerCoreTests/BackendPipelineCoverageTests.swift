@@ -404,13 +404,13 @@ final class BackendPipelineCoverageTests: XCTestCase {
             }.first
             let body = try XCTUnwrap(mainFunction?.body)
             let callees = body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _) = instruction else {
-                    return nil
-                }
-                return ctx.interner.resolve(callee)
-            }
+                            guard case .call(_, let callee, _, _, _, _) = instruction else {
+                                return nil
+                            }
+                            return ctx.interner.resolve(callee)
+                        }
 
-            XCTAssertTrue(callees.contains("kk_string_concat"))
+                        XCTAssertTrue(callees.contains("kk_string_concat"))
             XCTAssertFalse(body.contains { instruction in
                 guard case .binary(let op, _, _, _) = instruction else {
                     return false
@@ -482,13 +482,13 @@ final class BackendPipelineCoverageTests: XCTestCase {
             }.first
             let body = try XCTUnwrap(mainFunction?.body)
             let callees = Set(body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _) = instruction else {
-                    return nil
-                }
-                return ctx.interner.resolve(callee)
-            })
+                            guard case .call(_, let callee, _, _, _, _) = instruction else {
+                                return nil
+                            }
+                            return ctx.interner.resolve(callee)
+                        })
 
-            XCTAssertTrue(callees.contains("kk_op_ne"))
+                        XCTAssertTrue(callees.contains("kk_op_ne"))
             XCTAssertTrue(callees.contains("kk_op_lt"))
             XCTAssertTrue(callees.contains("kk_op_le"))
             XCTAssertTrue(callees.contains("kk_op_gt"))
@@ -527,7 +527,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
                 return op == .add
             })
             XCTAssertFalse(body.contains { instruction in
-                guard case .call(_, let callee, _, _, _) = instruction else {
+                guard case .call(_, let callee, _, _, _, _) = instruction else {
                     return false
                 }
                 return ctx.interner.resolve(callee) == "plus"
@@ -559,7 +559,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             let body = try XCTUnwrap(mainFunction?.body)
 
             let callNames = body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _) = instruction else {
+                guard case .call(_, let callee, _, _, _, _) = instruction else {
                     return nil
                 }
                 return ctx.interner.resolve(callee)
@@ -592,7 +592,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             let body = try XCTUnwrap(mainFunction?.body)
 
             let boxingThrowFlags = body.compactMap { instruction -> Bool? in
-                guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+                guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
                     return nil
                 }
                 let name = ctx.interner.resolve(callee)
@@ -631,7 +631,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             let body = try XCTUnwrap(mainFunction?.body)
 
             let callNames = body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _) = instruction else {
+                guard case .call(_, let callee, _, _, _, _) = instruction else {
                     return nil
                 }
                 return ctx.interner.resolve(callee)
@@ -641,7 +641,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             XCTAssertTrue(callNames.contains("kk_array_get"))
 
             let throwFlags: [String: [Bool]] = body.reduce(into: [:]) { partial, instruction in
-                guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+                guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
                     return
                 }
                 partial[ctx.interner.resolve(callee), default: []].append(canThrow)
@@ -730,15 +730,16 @@ final class BackendPipelineCoverageTests: XCTestCase {
             body: [
                 .constValue(result: leftExpr, value: .stringLiteral(left)),
                 .constValue(result: rightExpr, value: .stringLiteral(right)),
-                .call(symbol: nil, callee: interner.intern("kk_string_concat"), arguments: [leftExpr, rightExpr], result: concatResult, canThrow: false),
-                .call(symbol: nil, callee: interner.intern("kk_coroutine_suspended"), arguments: [], result: suspendedResult, canThrow: false),
+                .call(symbol: nil, callee: interner.intern("kk_string_concat"), arguments: [leftExpr, rightExpr], result: concatResult, canThrow: false, thrownResult: nil),
+                .call(symbol: nil, callee: interner.intern("kk_coroutine_suspended"), arguments: [], result: suspendedResult, canThrow: false, thrownResult: nil),
                 .constValue(result: labelValue, value: .intLiteral(7)),
                 .call(
                     symbol: nil,
                     callee: interner.intern("kk_coroutine_state_set_label"),
                     arguments: [suspendedResult, labelValue],
                     result: labelResult,
-                    canThrow: false
+                    canThrow: false,
+                    thrownResult: nil
                 ),
                 .constValue(result: spillSlotValue, value: .intLiteral(0)),
                 .call(
@@ -746,53 +747,60 @@ final class BackendPipelineCoverageTests: XCTestCase {
                     callee: interner.intern("kk_coroutine_state_set_spill"),
                     arguments: [suspendedResult, spillSlotValue, concatResult],
                     result: spillStored,
-                    canThrow: false
+                    canThrow: false,
+                    thrownResult: nil
                 ),
                 .call(
                     symbol: nil,
                     callee: interner.intern("kk_coroutine_state_get_spill"),
                     arguments: [suspendedResult, spillSlotValue],
                     result: spillLoaded,
-                    canThrow: false
+                    canThrow: false,
+                    thrownResult: nil
                 ),
                 .call(
                     symbol: nil,
                     callee: interner.intern("kk_coroutine_state_set_completion"),
                     arguments: [suspendedResult, spillLoaded],
                     result: completionStored,
-                    canThrow: false
+                    canThrow: false,
+                    thrownResult: nil
                 ),
                 .call(
                     symbol: nil,
                     callee: interner.intern("kk_coroutine_state_get_completion"),
                     arguments: [suspendedResult],
                     result: completionLoaded,
-                    canThrow: false
+                    canThrow: false,
+                    thrownResult: nil
                 ),
                 .call(
                     symbol: nil,
                     callee: interner.intern("kk_when_select"),
                     arguments: [whenCondition, concatResult, completionLoaded],
                     result: whenResult,
-                    canThrow: false
+                    canThrow: false,
+                    thrownResult: nil
                 ),
                 .select(condition: whenCondition, thenValue: whenResult, elseValue: concatResult, result: selectResult),
-                .call(symbol: nil, callee: interner.intern("println"), arguments: [selectResult], result: nil, canThrow: false),
+                .call(symbol: nil, callee: interner.intern("println"), arguments: [selectResult], result: nil, canThrow: false, thrownResult: nil),
                 .call(
                     symbol: nil,
                     callee: interner.intern("kk_coroutine_continuation_new"),
                     arguments: [labelValue],
                     result: continuationResult,
-                    canThrow: false
+                    canThrow: false,
+                    thrownResult: nil
                 ),
                 .call(
                     symbol: nil,
                     callee: interner.intern("kk_coroutine_state_exit"),
                     arguments: [continuationResult, completionLoaded],
                     result: stateExitResult,
-                    canThrow: false
+                    canThrow: false,
+                    thrownResult: nil
                 ),
-                .call(symbol: nil, callee: interner.intern("external_throwing"), arguments: [], result: throwingResult, canThrow: true),
+                .call(symbol: nil, callee: interner.intern("external_throwing"), arguments: [], result: throwingResult, canThrow: true, thrownResult: nil),
                 .returnUnit
             ],
             isSuspend: false,
@@ -938,7 +946,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
                 }
 
                 let calls = mainFunction.body.compactMap { instruction -> String? in
-                    guard case .call(_, let callee, _, _, _) = instruction else {
+                    guard case .call(_, let callee, _, _, _, _) = instruction else {
                         return nil
                     }
                     return appCtx.interner.resolve(callee)
@@ -1573,14 +1581,16 @@ final class BackendPipelineCoverageTests: XCTestCase {
                     callee: interner.intern("kk_coroutine_continuation_new"),
                     arguments: [functionIDValue],
                     result: continuation,
-                    canThrow: false
+                    canThrow: false,
+                    thrownResult: nil
                 ),
                 .call(
                     symbol: nil,
                     callee: interner.intern("kk_coroutine_state_exit"),
                     arguments: [continuation, returnSeed],
                     result: exited,
-                    canThrow: false
+                    canThrow: false,
+                    thrownResult: nil
                 ),
                 .returnValue(exited)
             ],
@@ -1620,7 +1630,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             params: [],
             returnType: types.anyType,
             body: [
-                .call(symbol: nil, callee: interner.intern("external_throwing"), arguments: [], result: callResult, canThrow: true),
+                .call(symbol: nil, callee: interner.intern("external_throwing"), arguments: [], result: callResult, canThrow: true, thrownResult: nil),
                 .returnValue(callResult)
             ],
             isSuspend: false,
@@ -1651,7 +1661,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
 
         let callees = loweredMain.body.compactMap { instruction -> String? in
-            guard case .call(_, let callee, _, _, _) = instruction else { return nil }
+            guard case .call(_, let callee, _, _, _, _) = instruction else { return nil }
             return fixture.interner.resolve(callee)
         }
         XCTAssertTrue(callees.contains("iterator"))
@@ -1667,7 +1677,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertTrue(callees.contains("kk_suspend_suspendTarget"))
 
         let throwFlags: [String: [Bool]] = loweredMain.body.reduce(into: [:]) { partial, instruction in
-            guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+            guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
                 return
             }
             let name = fixture.interner.resolve(callee)
@@ -1690,7 +1700,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertEqual(loweredSuspend?.isSuspend, false)
 
         let loweredSuspendCallees = loweredSuspend?.body.compactMap { instruction -> String? in
-            guard case .call(_, let callee, _, _, _) = instruction else {
+            guard case .call(_, let callee, _, _, _, _) = instruction else {
                 return nil
             }
             return fixture.interner.resolve(callee)
@@ -1727,7 +1737,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertTrue(hasSuspendGuard)
 
         let throwFlags: [String: [Bool]] = loweredSuspend?.body.reduce(into: [:]) { partial, instruction in
-            guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+            guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
                 return
             }
             let name = fixture.interner.resolve(callee)
@@ -1780,7 +1790,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             }.first
 
             let mainCalls = mainFunction?.body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _) = instruction else {
+                guard case .call(_, let callee, _, _, _, _) = instruction else {
                     return nil
                 }
                 return ctx.interner.resolve(callee)
@@ -1789,7 +1799,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             XCTAssertFalse(mainCalls.contains("runBlocking"))
 
             let delayCalls = loweredSuspend?.body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _) = instruction else {
+                guard case .call(_, let callee, _, _, _, _) = instruction else {
                     return nil
                 }
                 return ctx.interner.resolve(callee)
@@ -1797,7 +1807,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             XCTAssertTrue(delayCalls.contains("kk_kxmini_delay"))
 
             let throwFlags = loweredSuspend?.body.reduce(into: [String: [Bool]]()) { partial, instruction in
-                guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+                guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
                     return
                 }
                 partial[ctx.interner.resolve(callee), default: []].append(canThrow)
@@ -1861,8 +1871,8 @@ final class BackendPipelineCoverageTests: XCTestCase {
             returnType: types.unitType,
             body: [
                 .constValue(result: argValue, value: .intLiteral(42)),
-                .call(symbol: nil, callee: interner.intern("susp"), arguments: [], result: noArgResult, canThrow: false),
-                .call(symbol: nil, callee: interner.intern("susp"), arguments: [argValue], result: oneArgResult, canThrow: false),
+                .call(symbol: nil, callee: interner.intern("susp"), arguments: [], result: noArgResult, canThrow: false, thrownResult: nil),
+                .call(symbol: nil, callee: interner.intern("susp"), arguments: [argValue], result: oneArgResult, canThrow: false, thrownResult: nil),
                 .returnUnit
             ],
             isSuspend: false,
@@ -1914,7 +1924,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
 
         let rawSuspendCalls = loweredCaller.body.contains { instruction in
-            guard case .call(_, let callee, _, _, _) = instruction else {
+            guard case .call(_, let callee, _, _, _, _) = instruction else {
                 return false
             }
             return interner.resolve(callee) == "susp"
@@ -1922,7 +1932,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertFalse(rawSuspendCalls)
 
         let rewrittenSuspendCalls = loweredCaller.body.compactMap { instruction -> (name: String, arity: Int, canThrow: Bool)? in
-            guard case .call(_, let callee, let arguments, _, let canThrow) = instruction else {
+            guard case .call(_, let callee, let arguments, _, let canThrow, _) = instruction else {
                 return nil
             }
             let name = interner.resolve(callee)
@@ -1953,7 +1963,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             returnType: types.unitType,
             body: [
                 .label(10),
-                .call(symbol: suspendSym, callee: interner.intern("suspendTarget"), arguments: [], result: callResult, canThrow: false),
+                .call(symbol: suspendSym, callee: interner.intern("suspendTarget"), arguments: [], result: callResult, canThrow: false, thrownResult: nil),
                 .jumpIfEqual(lhs: lhs, rhs: rhs, target: 20),
                 .returnValue(lhs),
                 .label(20),
@@ -2026,7 +2036,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             returnType: types.make(.primitive(.int, .nonNull)),
             body: [
                 .constValue(result: liveValue, value: .intLiteral(41)),
-                .call(symbol: suspendSym, callee: interner.intern("suspendTarget"), arguments: [], result: callResult, canThrow: false),
+                .call(symbol: suspendSym, callee: interner.intern("suspendTarget"), arguments: [], result: callResult, canThrow: false, thrownResult: nil),
                 .binary(op: .add, lhs: liveValue, rhs: callResult, result: summedResult),
                 .returnValue(summedResult)
             ],
@@ -2062,7 +2072,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertNotNil(loweredSuspend)
 
         let loweredCalls = loweredSuspend?.body.compactMap { instruction -> String? in
-            guard case .call(_, let callee, _, _, _) = instruction else {
+            guard case .call(_, let callee, _, _, _, _) = instruction else {
                 return nil
             }
             return interner.resolve(callee)
@@ -2078,7 +2088,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertEqual(getSpillCount, 1)
 
         let throwFlags: [String: [Bool]] = loweredSuspend?.body.reduce(into: [:]) { partial, instruction in
-            guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+            guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
                 return
             }
             partial[interner.resolve(callee), default: []].append(canThrow)
@@ -2145,7 +2155,8 @@ final class BackendPipelineCoverageTests: XCTestCase {
                     callee: suspendName,
                     arguments: [liveValue],
                     result: callResult,
-                    canThrow: false
+                    canThrow: false,
+                    thrownResult: nil
                 ),
                 .binary(op: .add, lhs: liveValue, rhs: callResult, result: sumResult),
                 .returnValue(sumResult)
@@ -2246,7 +2257,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             params: [],
             returnType: types.unitType,
             body: [
-                .call(symbol: topSymbol, callee: interner.intern("top"), arguments: [], result: mainResult, canThrow: false),
+                .call(symbol: topSymbol, callee: interner.intern("top"), arguments: [], result: mainResult, canThrow: false, thrownResult: nil),
                 .returnValue(mainResult)
             ],
             isSuspend: false,
@@ -2258,7 +2269,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             params: [],
             returnType: types.unitType,
             body: [
-                .call(symbol: leafSymbol, callee: interner.intern("leaf"), arguments: [], result: topResult, canThrow: false),
+                .call(symbol: leafSymbol, callee: interner.intern("leaf"), arguments: [], result: topResult, canThrow: false, thrownResult: nil),
                 .returnValue(topResult)
             ],
             isSuspend: true,
@@ -2270,7 +2281,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             params: [],
             returnType: types.unitType,
             body: [
-                .call(symbol: nil, callee: interner.intern("external_throwing"), arguments: [], result: leafResult, canThrow: false),
+                .call(symbol: nil, callee: interner.intern("external_throwing"), arguments: [], result: leafResult, canThrow: false, thrownResult: nil),
                 .returnValue(leafResult)
             ],
             isSuspend: true,
@@ -2322,7 +2333,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertNotNil(loweredLeaf)
 
         let mainThrowFlags: [String: [Bool]] = loweredMain?.body.reduce(into: [:]) { partial, instruction in
-            guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+            guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
                 return
             }
             partial[interner.resolve(callee), default: []].append(canThrow)
@@ -2330,7 +2341,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertEqual(mainThrowFlags["kk_suspend_top"]?.allSatisfy({ $0 == true }), true)
 
         let topThrowFlags: [String: [Bool]] = loweredTop?.body.reduce(into: [:]) { partial, instruction in
-            guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+            guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
                 return
             }
             partial[interner.resolve(callee), default: []].append(canThrow)
@@ -2340,7 +2351,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertEqual(topThrowFlags["kk_coroutine_state_set_completion"]?.allSatisfy({ $0 == false }), true)
 
         let leafThrowFlags: [String: [Bool]] = loweredLeaf?.body.reduce(into: [:]) { partial, instruction in
-            guard case .call(_, let callee, _, _, let canThrow) = instruction else {
+            guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
                 return
             }
             partial[interner.resolve(callee), default: []].append(canThrow)
@@ -2371,7 +2382,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             body: [
                 .constValue(result: inlineArg, value: .symbolRef(inlineParamSym)),
                 .constValue(result: inlineOne, value: .intLiteral(1)),
-                .call(symbol: nil, callee: interner.intern("kk_op_add"), arguments: [inlineArg, inlineOne], result: inlineSum, canThrow: false),
+                .call(symbol: nil, callee: interner.intern("kk_op_add"), arguments: [inlineArg, inlineOne], result: inlineSum, canThrow: false, thrownResult: nil),
                 .returnValue(inlineSum)
             ],
             isSuspend: false,
@@ -2384,7 +2395,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             returnType: types.make(.primitive(.int, .nonNull)),
             body: [
                 .constValue(result: callerArg, value: .intLiteral(41)),
-                .call(symbol: inlineSym, callee: interner.intern("plusOne"), arguments: [callerArg], result: callerResult, canThrow: false),
+                .call(symbol: inlineSym, callee: interner.intern("plusOne"), arguments: [callerArg], result: callerResult, canThrow: false, thrownResult: nil),
                 .returnValue(callerResult)
             ],
             isSuspend: false,
@@ -2416,7 +2427,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
 
         let calleeNames = loweredCaller.body.compactMap { instruction -> String? in
-            guard case .call(_, let callee, _, _, _) = instruction else { return nil }
+            guard case .call(_, let callee, _, _, _, _) = instruction else { return nil }
             return interner.resolve(callee)
         }
         XCTAssertFalse(calleeNames.contains("plusOne"))
@@ -2877,7 +2888,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             XCTAssertGreaterThanOrEqual(jumpCount, 4)
 
             let callees = body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _) = instruction else {
+                guard case .call(_, let callee, _, _, _, _) = instruction else {
                     return nil
                 }
                 return interner.resolve(callee)
@@ -3050,12 +3061,12 @@ final class BackendPipelineCoverageTests: XCTestCase {
         XCTAssertEqual(pickFunction.params.last?.symbol, expectedTokenSymbol)
 
         guard let callInstruction = mainFunction.body.first(where: { instruction in
-            guard case .call(let symbol, _, _, _, _) = instruction else {
+            guard case .call(let symbol, _, _, _, _, _) = instruction else {
                 return false
             }
             return symbol == pickSymbol
         }),
-        case .call(_, _, let arguments, _, _) = callInstruction else {
+        case .call(_, _, let arguments, _, _, _) = callInstruction else {
             XCTFail("Expected main to call inline reified function.")
             return
         }
@@ -3151,7 +3162,8 @@ final class BackendPipelineCoverageTests: XCTestCase {
                     callee: inlineName,
                     arguments: [callerTokenExpr],
                     result: callerResultExpr,
-                    canThrow: false
+                    canThrow: false,
+                    thrownResult: nil
                 ),
                 .returnValue(callerResultExpr)
             ],
@@ -3194,7 +3206,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
 
         let loweredCallees = loweredMain.body.compactMap { instruction -> InternedString? in
-            guard case .call(_, let callee, _, _, _) = instruction else {
+            guard case .call(_, let callee, _, _, _, _) = instruction else {
                 return nil
             }
             return callee
@@ -3250,14 +3262,14 @@ final class BackendPipelineCoverageTests: XCTestCase {
             params: [],
             returnType: TypeSystem().unitType,
             body: [
-                .call(symbol: nil, callee: interner.intern("iterator"), arguments: [v0], result: v3, canThrow: false),
-                .call(symbol: nil, callee: interner.intern("kk_for_lowered"), arguments: [v3], result: v1, canThrow: false),
+                .call(symbol: nil, callee: interner.intern("iterator"), arguments: [v0], result: v3, canThrow: false, thrownResult: nil),
+                .call(symbol: nil, callee: interner.intern("kk_for_lowered"), arguments: [v3], result: v1, canThrow: false, thrownResult: nil),
                 .select(condition: v0, thenValue: v1, elseValue: v2, result: v1),
-                .call(symbol: nil, callee: interner.intern("get"), arguments: [v0], result: v1, canThrow: false),
-                .call(symbol: nil, callee: interner.intern("set"), arguments: [v0], result: v1, canThrow: false),
-                .call(symbol: nil, callee: interner.intern("<lambda>"), arguments: [v0], result: v1, canThrow: false),
-                .call(symbol: nil, callee: interner.intern("inlineTarget"), arguments: [], result: v1, canThrow: false),
-                .call(symbol: nil, callee: interner.intern("suspendTarget"), arguments: [v0], result: v1, canThrow: false),
+                .call(symbol: nil, callee: interner.intern("get"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil),
+                .call(symbol: nil, callee: interner.intern("set"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil),
+                .call(symbol: nil, callee: interner.intern("<lambda>"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil),
+                .call(symbol: nil, callee: interner.intern("inlineTarget"), arguments: [], result: v1, canThrow: false, thrownResult: nil),
+                .call(symbol: nil, callee: interner.intern("suspendTarget"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil),
                 .returnUnit
             ],
             isSuspend: false,
@@ -3278,7 +3290,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
             params: [],
             returnType: TypeSystem().unitType,
             body: [
-                .call(symbol: suspendSym, callee: interner.intern("suspendTarget"), arguments: [], result: v2, canThrow: false),
+                .call(symbol: suspendSym, callee: interner.intern("suspendTarget"), arguments: [], result: v2, canThrow: false, thrownResult: nil),
                 .returnValue(v2)
             ],
             isSuspend: true,
@@ -3416,15 +3428,15 @@ final class BackendPipelineCoverageTests: XCTestCase {
                 .binary(op: .multiply, lhs: e0, rhs: e1, result: e7),
                 .binary(op: .divide, lhs: e0, rhs: e1, result: e8),
                 .binary(op: .equal, lhs: e0, rhs: e1, result: e5),
-                .call(symbol: nil, callee: interner.intern("println"), arguments: [e3], result: e5, canThrow: false),
-                .call(symbol: nil, callee: interner.intern("kk_println_any"), arguments: [e3], result: nil, canThrow: false),
-                .call(symbol: nil, callee: interner.intern("kk_op_add"), arguments: [e0, e1], result: e5, canThrow: false),
-                .call(symbol: nil, callee: interner.intern("kk_op_sub"), arguments: [e0, e1], result: e6, canThrow: false),
-                .call(symbol: nil, callee: interner.intern("kk_op_mul"), arguments: [e0, e1], result: e7, canThrow: false),
-                .call(symbol: nil, callee: interner.intern("kk_op_div"), arguments: [e0, e1], result: e8, canThrow: false),
-                .call(symbol: nil, callee: interner.intern("kk_op_eq"), arguments: [e0, e1], result: e5, canThrow: false),
-                .call(symbol: nil, callee: interner.intern("kk_when_select"), arguments: [e2, e0, e1], result: e5, canThrow: false),
-                .call(symbol: calleeSym, callee: interner.intern("ignored"), arguments: [], result: e5, canThrow: false),
+                .call(symbol: nil, callee: interner.intern("println"), arguments: [e3], result: e5, canThrow: false, thrownResult: nil),
+                .call(symbol: nil, callee: interner.intern("kk_println_any"), arguments: [e3], result: nil, canThrow: false, thrownResult: nil),
+                .call(symbol: nil, callee: interner.intern("kk_op_add"), arguments: [e0, e1], result: e5, canThrow: false, thrownResult: nil),
+                .call(symbol: nil, callee: interner.intern("kk_op_sub"), arguments: [e0, e1], result: e6, canThrow: false, thrownResult: nil),
+                .call(symbol: nil, callee: interner.intern("kk_op_mul"), arguments: [e0, e1], result: e7, canThrow: false, thrownResult: nil),
+                .call(symbol: nil, callee: interner.intern("kk_op_div"), arguments: [e0, e1], result: e8, canThrow: false, thrownResult: nil),
+                .call(symbol: nil, callee: interner.intern("kk_op_eq"), arguments: [e0, e1], result: e5, canThrow: false, thrownResult: nil),
+                .call(symbol: nil, callee: interner.intern("kk_when_select"), arguments: [e2, e0, e1], result: e5, canThrow: false, thrownResult: nil),
+                .call(symbol: calleeSym, callee: interner.intern("ignored"), arguments: [], result: e5, canThrow: false, thrownResult: nil),
                 .returnValue(e5),
                 .endBlock
             ],

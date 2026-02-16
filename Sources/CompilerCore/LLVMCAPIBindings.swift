@@ -1,5 +1,9 @@
 import Foundation
+#if canImport(Darwin)
 import Darwin
+#elseif canImport(Glibc)
+import Glibc
+#endif
 
 final class LLVMCAPIBindings {
     typealias LLVMContextRef = OpaquePointer
@@ -300,7 +304,10 @@ final class LLVMCAPIBindings {
             "/Library/Developer/CommandLineTools/usr/lib/libLLVM.dylib",
             "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/usr/lib/libLLVM.dylib",
             "/Users/kuu/Desktop/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/usr/lib/libLLVM.dylib",
-            "libLLVM.dylib"
+            "libLLVM.dylib",
+            "/usr/lib/x86_64-linux-gnu/libLLVM-15.so",
+            "/usr/lib/x86_64-linux-gnu/libLLVM.so",
+            "libLLVM.so"
         ])
         return deduplicated(candidates)
     }

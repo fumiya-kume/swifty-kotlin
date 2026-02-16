@@ -10,7 +10,7 @@ final class LambdaClosureConversionPass: LoweringPass {
         module.arena.transformFunctions { function in
             var updated = function
             updated.body = function.body.map { instruction in
-                guard case .call(let symbol, let callee, let arguments, let result, let canThrow) = instruction,
+                guard case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult) = instruction,
                       callee == markerCallee else {
                     return instruction
                 }
@@ -19,7 +19,8 @@ final class LambdaClosureConversionPass: LoweringPass {
                     callee: loweredCallee,
                     arguments: arguments,
                     result: result,
-                    canThrow: canThrow
+                    canThrow: canThrow,
+                    thrownResult: thrownResult
                 )
             }
             return updated

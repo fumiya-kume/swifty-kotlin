@@ -29,6 +29,18 @@ extension BuildASTPhase {
         )
     }
 
+    func makeInterfaceDecl(from nodeID: NodeID, in arena: SyntaxArena, interner: StringInterner, astArena: ASTArena) -> InterfaceDecl {
+        let node = arena.node(nodeID)
+        return InterfaceDecl(
+            range: node.range,
+            name: declarationName(from: nodeID, in: arena, interner: interner),
+            modifiers: declarationModifiers(from: nodeID, in: arena),
+            typeParams: declarationTypeParameters(from: nodeID, in: arena, interner: interner),
+            superTypes: declarationSuperTypes(from: nodeID, in: arena, interner: interner, astArena: astArena),
+            nestedTypeAliases: declarationNestedTypeAliases(from: nodeID, in: arena, interner: interner)
+        )
+    }
+
     func makeObjectDecl(from nodeID: NodeID, in arena: SyntaxArena, interner: StringInterner, astArena: ASTArena) -> ObjectDecl {
         let node = arena.node(nodeID)
         let modifiers = declarationModifiers(from: nodeID, in: arena)

@@ -35,7 +35,7 @@ final class InlineLoweringPass: LoweringPass {
                     aliases.removeValue(forKey: defined)
                 }
 
-                guard case .call(let symbol, let callee, let arguments, let result, _) = instruction else {
+                guard case .call(let symbol, let callee, let arguments, let result, _, _) = instruction else {
                     loweredBody.append(instruction)
                     continue
                 }
@@ -169,8 +169,13 @@ final class InlineLoweringPass: LoweringPass {
                     )
                 )
 
-            case .call(let symbol, let callee, let args, let result, let canThrow):
+            case .call(let symbol, let callee, let args, let result, let canThrow, let thrownResult):
                 let loweredResult = result.map { expr -> KIRExprID in
+                    let cloned = cloneExpr(expr, in: module.arena)
+                    localExprMap[expr] = cloned
+                    return cloned
+                }
+                let loweredThrownResult = thrownResult.map { expr -> KIRExprID in
                     let cloned = cloneExpr(expr, in: module.arena)
                     localExprMap[expr] = cloned
                     return cloned
@@ -181,7 +186,8 @@ final class InlineLoweringPass: LoweringPass {
                         callee: callee,
                         arguments: args.map { resolveAlias(of: $0, aliases: localExprMap) },
                         result: loweredResult,
-                        canThrow: canThrow
+                        canThrow: canThrow,
+                        thrownResult: loweredThrownResult
                     )
                 )
 
@@ -203,6 +209,27 @@ final class InlineLoweringPass: LoweringPass {
                         lhs: resolveAlias(of: lhs, aliases: localExprMap),
                         rhs: resolveAlias(of: rhs, aliases: localExprMap)
                     )
+                )
+
+            case .jumpIfNotNull(let value, let target):
+                lowered.append(
+                    .jumpIfNotNull(
+                        value: resolveAlias(of: value, aliases: localExprMap),
+                        target: target
+                    )
+                )
+
+            case .copy(let from, let to):
+                lowered.append(
+                    .copy(
+                        from: resolveAlias(of: from, aliases: localExprMap),
+                        to: resolveAlias(of: to, aliases: localExprMap)
+                    )
+                )
+
+            case .rethrow(let value):
+                lowered.append(
+                    .rethrow(value: resolveAlias(of: value, aliases: localExprMap))
                 )
 
             case .unary(let op, let operand, let result):
@@ -241,13 +268,14 @@ final class InlineLoweringPass: LoweringPass {
                 result: result
             )
 
-        case .call(let symbol, let callee, let arguments, let result, let canThrow):
+        case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult):
             return .call(
                 symbol: symbol,
                 callee: callee,
                 arguments: arguments.map { resolveAlias(of: $0, aliases: aliases) },
                 result: result,
-                canThrow: canThrow
+                canThrow: canThrow,
+                thrownResult: thrownResult
             )
 
         case .returnValue(let value):
@@ -265,6 +293,21 @@ final class InlineLoweringPass: LoweringPass {
                 rhs: resolveAlias(of: rhs, aliases: aliases),
                 target: target
             )
+
+        case .jumpIfNotNull(let value, let target):
+            return .jumpIfNotNull(
+                value: resolveAlias(of: value, aliases: aliases),
+                target: target
+            )
+
+        case .copy(let from, let to):
+            return .copy(
+                from: resolveAlias(of: from, aliases: aliases),
+                to: resolveAlias(of: to, aliases: aliases)
+            )
+
+        case .rethrow(let value):
+            return .rethrow(value: resolveAlias(of: value, aliases: aliases))
 
         case .unary(let op, let operand, let result):
             return .unary(
@@ -290,7 +333,7 @@ final class InlineLoweringPass: LoweringPass {
             return result
         case .binary(_, _, _, let result):
             return result
-        case .call(_, _, _, let result, _):
+        case .call(_, _, _, let result, _, _):
             return result
         case .unary(_, _, let result):
             return result

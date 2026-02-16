@@ -118,7 +118,7 @@ private final class RuntimeContinuationState {
 
     func scheduleDelay(milliseconds: Int) {
         let timer = DispatchSource.makeTimerSource(queue: DispatchQueue.global())
-        let timerID = ObjectIdentifier(timer)
+        let timerID = ObjectIdentifier(timer as AnyObject)
         stateLock.lock()
         delayTimers[timerID] = timer
         stateLock.unlock()
@@ -213,15 +213,15 @@ private enum RuntimeStorage {
 private let kkObjMarkFlag: UInt32 = 1 << 0
 
 @_cdecl("kk_alloc")
-public func kk_alloc(_ size: UInt32, _ typeInfo: UnsafeRawPointer?) -> UnsafeMutableRawPointer {
+public func kk_alloc(_ size: UInt32, _ typeInfo: UnsafeRawPointer) -> UnsafeMutableRawPointer {
     let headerSize = MemoryLayout<KKObjHeader>.stride
     let alignment = max(MemoryLayout<KKObjHeader>.alignment, MemoryLayout<UInt64>.alignment)
     let allocationSize = max(Int(size), headerSize)
     let ptr = UnsafeMutableRawPointer.allocate(byteCount: allocationSize, alignment: alignment)
     ptr.initializeMemory(as: UInt8.self, repeating: 0, count: allocationSize)
-    let typeInfoPtr = typeInfo?.assumingMemoryBound(to: KTypeInfo.self)
+    let typedInfo = typeInfo.assumingMemoryBound(to: KTypeInfo.self)
     ptr.assumingMemoryBound(to: KKObjHeader.self).pointee = KKObjHeader(
-        typeInfo: typeInfoPtr,
+        typeInfo: typedInfo,
         flags: 0,
         size: UInt32(allocationSize)
     )
@@ -483,39 +483,45 @@ public func kk_unbox_bool(_ obj: Int) -> Int {
 }
 
 @_cdecl("kk_println_any")
-public func kk_println_any(_ obj: Int) {
-    if obj == runtimeNullSentinelInt {
+public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
+    let intValue: Int
+    if let ptr = obj {
+        intValue = Int(bitPattern: ptr)
+    } else {
+        intValue = 0
+    }
+    if intValue == runtimeNullSentinelInt {
         Swift.print("null")
         return
     }
-    guard let objPointer = UnsafeMutableRawPointer(bitPattern: obj) else {
-        Swift.print(obj)
+    guard let raw = obj else {
+        Swift.print(intValue)
         return
     }
     RuntimeStorage.lock.lock()
-    let isObjectPointer = RuntimeStorage.objectPointers.contains(UInt(bitPattern: objPointer))
+    let isObjectPointer = RuntimeStorage.objectPointers.contains(UInt(bitPattern: raw))
     RuntimeStorage.lock.unlock()
     if !isObjectPointer {
-        Swift.print(obj)
+        Swift.print(intValue)
         return
     }
-    if let boolBox = tryCast(objPointer, to: RuntimeBoolBox.self) {
+    if let boolBox = tryCast(raw, to: RuntimeBoolBox.self) {
         Swift.print(boolBox.value ? "true" : "false")
         return
     }
-    if let intBox = tryCast(objPointer, to: RuntimeIntBox.self) {
+    if let intBox = tryCast(raw, to: RuntimeIntBox.self) {
         Swift.print(intBox.value)
         return
     }
-    if let stringBox = tryCast(objPointer, to: RuntimeStringBox.self) {
+    if let stringBox = tryCast(raw, to: RuntimeStringBox.self) {
         Swift.print(stringBox.value)
         return
     }
-    if let throwable = tryCast(objPointer, to: RuntimeThrowableBox.self) {
+    if let throwable = tryCast(raw, to: RuntimeThrowableBox.self) {
         Swift.print("Throwable(\(throwable.message))")
         return
     }
-    Swift.print("<object \(objPointer)>")
+    Swift.print("<object \(raw)>")
 }
 
 @_cdecl("kk_coroutine_suspended")

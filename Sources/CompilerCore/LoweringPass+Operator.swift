@@ -37,7 +37,7 @@ final class OperatorLoweringPass: LoweringPass {
                     case .logicalOr:
                         callee = ctx.interner.intern("kk_op_or")
                     }
-                    return .call(symbol: nil, callee: callee, arguments: [lhs, rhs], result: result, canThrow: false)
+                    return .call(symbol: nil, callee: callee, arguments: [lhs, rhs], result: result, canThrow: false, thrownResult: nil)
                 case .unary(let op, let operand, let result):
                     let callee: InternedString
                     switch op {
@@ -48,9 +48,9 @@ final class OperatorLoweringPass: LoweringPass {
                     case .unaryMinus:
                         callee = ctx.interner.intern("kk_op_uminus")
                     }
-                    return .call(symbol: nil, callee: callee, arguments: [operand], result: result, canThrow: false)
+                    return .call(symbol: nil, callee: callee, arguments: [operand], result: result, canThrow: false, thrownResult: nil)
                 case .nullAssert(let operand, let result):
-                    return .call(symbol: nil, callee: ctx.interner.intern("kk_op_notnull"), arguments: [operand], result: result, canThrow: true)
+                    return .call(symbol: nil, callee: ctx.interner.intern("kk_op_notnull"), arguments: [operand], result: result, canThrow: true, thrownResult: nil)
                 default:
                     return instruction
                 }

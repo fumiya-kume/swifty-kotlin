@@ -17,6 +17,8 @@ extension DataFlowSemaPassPhase {
                 switch decl {
                 case .classDecl(let classDecl):
                     superTypeRefs = classDecl.superTypes
+                case .interfaceDecl(let interfaceDecl):
+                    superTypeRefs = interfaceDecl.superTypes
                 case .objectDecl(let objectDecl):
                     superTypeRefs = objectDecl.superTypes
                 default:
