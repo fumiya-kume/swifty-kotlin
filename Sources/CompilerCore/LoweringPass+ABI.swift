@@ -73,7 +73,7 @@ final class ABILoweringPass: LoweringPass {
                                 continue
                             }
                             let paramType = parameterTypes[paramIndex]
-                            let argType = module.arena.exprType(arguments[argIndex])
+                            let argType = intrinsicArgType(arguments[argIndex], arena: module.arena, types: types)
                             guard let argType else {
                                 continue
                             }
@@ -101,14 +101,8 @@ final class ABILoweringPass: LoweringPass {
                     }
                 }
 
-                newBody.append(.call(
-                    symbol: callSymbol,
-                    callee: callee,
-                    arguments: boxedArguments,
-                    result: result,
-                    canThrow: canThrow
-                ))
-
+                var resolvedUnboxCallee: InternedString?
+                var resolvedReturnType: TypeID?
                 if let types, let result {
                     let returnType = returnTypeForCall(
                         callSymbol: callSymbol,
@@ -120,27 +114,45 @@ final class ABILoweringPass: LoweringPass {
                             let resultType = module.arena.exprType(result)
                             if let resultType {
                                 let resultKind = types.kind(of: resultType)
-                                if let unboxCallee = unboxingCallee(
+                                resolvedUnboxCallee = unboxingCallee(
                                     sourceKind: returnKind,
                                     targetKind: resultKind,
                                     unboxIntCallee: unboxIntCallee,
                                     unboxBoolCallee: unboxBoolCallee
-                                ) {
-                                    let unboxedResult = module.arena.appendExpr(
-                                        .temporary(Int32(module.arena.expressions.count)),
-                                        type: resultType
-                                    )
-                                    newBody.append(.call(
-                                        symbol: nil,
-                                        callee: unboxCallee,
-                                        arguments: [result],
-                                        result: unboxedResult,
-                                        canThrow: false
-                                    ))
-                                }
+                                )
+                                resolvedReturnType = returnType
                             }
                         }
                     }
+                }
+
+                if let resolvedUnboxCallee, let resolvedReturnType, let result {
+                    let tempResult = module.arena.appendExpr(
+                        .temporary(Int32(module.arena.expressions.count)),
+                        type: resolvedReturnType
+                    )
+                    newBody.append(.call(
+                        symbol: callSymbol,
+                        callee: callee,
+                        arguments: boxedArguments,
+                        result: tempResult,
+                        canThrow: canThrow
+                    ))
+                    newBody.append(.call(
+                        symbol: nil,
+                        callee: resolvedUnboxCallee,
+                        arguments: [tempResult],
+                        result: result,
+                        canThrow: false
+                    ))
+                } else {
+                    newBody.append(.call(
+                        symbol: callSymbol,
+                        callee: callee,
+                        arguments: boxedArguments,
+                        result: result,
+                        canThrow: canThrow
+                    ))
                 }
             }
 
@@ -204,6 +216,26 @@ final class ABILoweringPass: LoweringPass {
         default:
             return nil
         }
+    }
+
+    private func intrinsicArgType(
+        _ argExprID: KIRExprID,
+        arena: KIRArena,
+        types: TypeSystem
+    ) -> TypeID? {
+        if let kind = arena.expr(argExprID) {
+            switch kind {
+            case .intLiteral:
+                return types.make(.primitive(.int, .nonNull))
+            case .boolLiteral:
+                return types.make(.primitive(.boolean, .nonNull))
+            case .stringLiteral:
+                return types.make(.primitive(.string, .nonNull))
+            default:
+                break
+            }
+        }
+        return arena.exprType(argExprID)
     }
 
     private func isAnyOrNullableAny(_ kind: TypeKind) -> Bool {
