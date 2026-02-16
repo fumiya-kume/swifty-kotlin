@@ -156,12 +156,12 @@ public final class ConstraintSolver {
 
             let candidate: TypeID
             if lowers.isEmpty {
-                candidate = typeSystem.greatestLowerBound(uppers)
+                candidate = typeSystem.glb(uppers)
             } else if uppers.isEmpty {
-                candidate = typeSystem.leastUpperBound(lowers)
+                candidate = typeSystem.lub(lowers)
             } else {
-                let lowerCandidate = typeSystem.leastUpperBound(lowers)
-                let upperCandidate = typeSystem.greatestLowerBound(uppers)
+                let lowerCandidate = typeSystem.lub(lowers)
+                let upperCandidate = typeSystem.glb(uppers)
                 guard typeSystem.isSubtype(lowerCandidate, upperCandidate) else {
                     let blameRange = firstRelevantBlameRange(for: variable, relations: constraints)
                     let message = """

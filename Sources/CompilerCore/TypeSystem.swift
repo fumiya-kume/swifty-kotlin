@@ -284,7 +284,7 @@ public final class TypeSystem {
         }
     }
 
-    public func leastUpperBound(_ types: [TypeID]) -> TypeID {
+    public func lub(_ types: [TypeID]) -> TypeID {
         let filtered = types.filter { kind(of: $0) != .error }
         guard let first = filtered.first else {
             return errorType
@@ -298,7 +298,7 @@ public final class TypeSystem {
         return anyType
     }
 
-    public func greatestLowerBound(_ types: [TypeID]) -> TypeID {
+    public func glb(_ types: [TypeID]) -> TypeID {
         guard let first = types.first else {
             return errorType
         }
@@ -309,6 +309,16 @@ public final class TypeSystem {
             return nothingType
         }
         return make(.intersection(types))
+    }
+
+    @available(*, deprecated, message: "Use lub(_:) instead.")
+    public func leastUpperBound(_ types: [TypeID]) -> TypeID {
+        lub(types)
+    }
+
+    @available(*, deprecated, message: "Use glb(_:) instead.")
+    public func greatestLowerBound(_ types: [TypeID]) -> TypeID {
+        glb(types)
     }
 
     private func nullabilitySubtype(_ lhs: Nullability, _ rhs: Nullability) -> Bool {

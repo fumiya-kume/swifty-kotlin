@@ -268,7 +268,7 @@ extension TypeCheckSemaPassPhase {
             let resolvedType: TypeID
             if let elseExpr {
                 let elseType = inferExpr(elseExpr, ctx: ctx, locals: &locals, expectedType: expectedType)
-                resolvedType = sema.types.leastUpperBound([thenType, elseType])
+                resolvedType = sema.types.lub([thenType, elseType])
             } else {
                 resolvedType = sema.types.unitType
             }
@@ -284,13 +284,67 @@ extension TypeCheckSemaPassPhase {
             if let finallyExpr {
                 _ = inferExpr(finallyExpr, ctx: ctx, locals: &locals, expectedType: nil)
             }
-            let resolvedType = sema.types.leastUpperBound(branchTypes)
+            let resolvedType = sema.types.lub(branchTypes)
             sema.bindings.bindExprType(id, type: resolvedType)
             return resolvedType
 
-        case .binary(let op, let lhsID, let rhsID, _):
+        case .binary(let op, let lhsID, let rhsID, let range):
             let lhs = inferExpr(lhsID, ctx: ctx, locals: &locals)
             let rhs = inferExpr(rhsID, ctx: ctx, locals: &locals)
+            let operatorName = binaryOperatorFunctionName(for: op, interner: interner)
+            let operatorCandidates = scope.lookup(operatorName).filter { candidate in
+                guard let symbol = sema.symbols.symbol(candidate),
+                      symbol.kind == .function,
+                      let signature = sema.symbols.functionSignature(for: candidate) else {
+                    return false
+                }
+                return signature.receiverType != nil
+            }
+            if !operatorCandidates.isEmpty {
+                let resolved = ctx.resolver.resolveCall(
+                    candidates: operatorCandidates,
+                    call: CallExpr(
+                        range: range,
+                        calleeName: operatorName,
+                        args: [CallArg(type: rhs)]
+                    ),
+                    expectedType: expectedType,
+                    implicitReceiverType: lhs,
+                    ctx: ctx.semaCtx
+                )
+                if let diagnostic = resolved.diagnostic {
+                    ctx.semaCtx.diagnostics.emit(diagnostic)
+                    sema.bindings.bindExprType(id, type: sema.types.errorType)
+                    return sema.types.errorType
+                }
+                guard let chosen = resolved.chosenCallee else {
+                    sema.bindings.bindExprType(id, type: sema.types.errorType)
+                    return sema.types.errorType
+                }
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: chosen,
+                        substitutedTypeArguments: resolved.substitutedTypeArguments
+                            .sorted(by: { $0.key.rawValue < $1.key.rawValue })
+                            .map(\.value),
+                        parameterMapping: resolved.parameterMapping
+                    )
+                )
+                let returnType: TypeID
+                if let signature = sema.symbols.functionSignature(for: chosen) {
+                    let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
+                    returnType = sema.types.substituteTypeParameters(
+                        in: signature.returnType,
+                        substitution: resolved.substitutedTypeArguments,
+                        typeVarBySymbol: typeVarBySymbol
+                    )
+                } else {
+                    returnType = sema.types.anyType
+                }
+                sema.bindings.bindExprType(id, type: returnType)
+                return returnType
+            }
             let type: TypeID
             switch op {
             case .add:
@@ -557,7 +611,7 @@ extension TypeCheckSemaPassPhase {
                 )
             }
 
-            let type = sema.types.leastUpperBound(branchTypes)
+            let type = sema.types.lub(branchTypes)
             sema.bindings.bindExprType(id, type: type)
             return type
         }
@@ -669,6 +723,21 @@ extension TypeCheckSemaPassPhase {
             return sema.types.unitType
         default:
             return nil
+        }
+    }
+
+    func binaryOperatorFunctionName(for op: BinaryOp, interner: StringInterner) -> InternedString {
+        switch op {
+        case .add:
+            return interner.intern("plus")
+        case .subtract:
+            return interner.intern("minus")
+        case .multiply:
+            return interner.intern("times")
+        case .divide:
+            return interner.intern("div")
+        case .equal:
+            return interner.intern("equals")
         }
     }
 

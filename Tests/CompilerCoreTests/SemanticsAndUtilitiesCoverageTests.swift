@@ -514,15 +514,15 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
         XCTAssertFalse(types.isSubtype(lhsIntersection, intNN))
         XCTAssertTrue(types.isSubtype(intNN, types.make(.intersection([intNN, boolNN]))))
 
-        XCTAssertEqual(types.leastUpperBound([]), types.errorType)
-        XCTAssertEqual(types.leastUpperBound([intNN, intNN]), intNN)
-        XCTAssertEqual(types.leastUpperBound([intNN, intNullable]), types.nullableAnyType)
+        XCTAssertEqual(types.lub([]), types.errorType)
+        XCTAssertEqual(types.lub([intNN, intNN]), intNN)
+        XCTAssertEqual(types.lub([intNN, intNullable]), types.nullableAnyType)
 
-        XCTAssertEqual(types.greatestLowerBound([]), types.errorType)
-        XCTAssertEqual(types.greatestLowerBound([intNN, intNN]), intNN)
-        XCTAssertEqual(types.greatestLowerBound([intNN, types.nothingType]), types.nothingType)
+        XCTAssertEqual(types.glb([]), types.errorType)
+        XCTAssertEqual(types.glb([intNN, intNN]), intNN)
+        XCTAssertEqual(types.glb([intNN, types.nothingType]), types.nothingType)
 
-        let glbMixed = types.greatestLowerBound([intNN, boolNN])
+        let glbMixed = types.glb([intNN, boolNN])
         XCTAssertEqual(types.kind(of: glbMixed), .intersection([intNN, boolNN]))
 
         XCTAssertEqual(types.kind(of: TypeID(rawValue: 9999)), .error)
