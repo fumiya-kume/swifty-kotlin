@@ -66,10 +66,24 @@ public final class BuildKIRPhase: CompilerPhase {
                         let returnType = signature.returnType
                         var body: [KIRInstruction] = [.beginBlock]
 
-                        for initBlock in classDecl.initBlocks {
-                            switch initBlock {
-                            case .block(let exprIDs, _):
-                                for exprID in exprIDs {
+                        let isSecondary = sema.symbols.symbol(ctorSymbol)?.declSite != classDecl.range
+
+                        if !isSecondary {
+                            for initBlock in classDecl.initBlocks {
+                                switch initBlock {
+                                case .block(let exprIDs, _):
+                                    for exprID in exprIDs {
+                                        _ = lowerExpr(
+                                            exprID,
+                                            ast: ast,
+                                            sema: sema,
+                                            arena: arena,
+                                            interner: ctx.interner,
+                                            propertyConstantInitializers: propertyConstantInitializers,
+                                            instructions: &body
+                                        )
+                                    }
+                                case .expr(let exprID, _):
                                     _ = lowerExpr(
                                         exprID,
                                         ast: ast,
@@ -79,23 +93,12 @@ public final class BuildKIRPhase: CompilerPhase {
                                         propertyConstantInitializers: propertyConstantInitializers,
                                         instructions: &body
                                     )
+                                case .unit:
+                                    break
                                 }
-                            case .expr(let exprID, _):
-                                _ = lowerExpr(
-                                    exprID,
-                                    ast: ast,
-                                    sema: sema,
-                                    arena: arena,
-                                    interner: ctx.interner,
-                                    propertyConstantInitializers: propertyConstantInitializers,
-                                    instructions: &body
-                                )
-                            case .unit:
-                                break
                             }
                         }
 
-                        let isSecondary = sema.symbols.symbol(ctorSymbol)?.declSite != classDecl.range
                         if isSecondary {
                             for secondaryCtor in classDecl.secondaryConstructors {
                                 guard secondaryCtor.range == sema.symbols.symbol(ctorSymbol)?.declSite else {
