@@ -345,6 +345,9 @@ extension BuildASTPhase {
             case .keyword(.try):
                 return parseTryExpression()
 
+            case .keyword(.throw):
+                return parseThrowExpression()
+
             case .keyword(.when):
                 return parseWhenExpression()
 
@@ -462,6 +465,18 @@ extension BuildASTPhase {
             let end = value.flatMap { astArena.exprRange($0)?.end } ?? returnToken.range.end
             let range = SourceRange(start: returnToken.range.start, end: end)
             return astArena.appendExpr(.returnExpr(value: value, range: range))
+        }
+
+        private func parseThrowExpression() -> ExprID? {
+            guard let throwToken = consume() else {
+                return nil
+            }
+            guard let value = parseExpression(minPrecedence: 0) else {
+                return nil
+            }
+            let end = astArena.exprRange(value)?.end ?? throwToken.range.end
+            let range = SourceRange(start: throwToken.range.start, end: end)
+            return astArena.appendExpr(.throwExpr(value: value, range: range))
         }
 
         private func parseForExpression() -> ExprID? {

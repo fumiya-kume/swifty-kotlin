@@ -285,9 +285,10 @@ public final class TypeSystem {
     }
 
     public func lub(_ types: [TypeID]) -> TypeID {
-        let filtered = types.filter { kind(of: $0) != .error }
+        let filtered = types.filter { kind(of: $0) != .error && kind(of: $0) != .nothing }
         guard let first = filtered.first else {
-            return errorType
+            let hasNothing = types.contains { kind(of: $0) == .nothing }
+            return hasNothing ? nothingType : errorType
         }
         if filtered.dropFirst().allSatisfy({ $0 == first }) {
             return first
