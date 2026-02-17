@@ -531,6 +531,8 @@ public enum Expr: Equatable {
     case throwExpr(value: ExprID, range: SourceRange)
     case localFunDecl(name: InternedString, valueParams: [ValueParamDecl], returnType: TypeRefID?, body: FunctionBody, range: SourceRange)
     case blockExpr(statements: [ExprID], trailingExpr: ExprID?, range: SourceRange)
+    case superRef(SourceRange)
+    case thisRef(label: InternedString?, SourceRange)
 }
 
 public final class ASTArena {
@@ -610,7 +612,9 @@ public final class ASTArena {
              .stringTemplate(_, let range),
              .throwExpr(_, let range),
              .localFunDecl(_, _, _, _, let range),
-             .blockExpr(_, _, let range):
+             .blockExpr(_, _, let range),
+             .superRef(let range),
+             .thisRef(_, let range):
             return range
         }
     }
