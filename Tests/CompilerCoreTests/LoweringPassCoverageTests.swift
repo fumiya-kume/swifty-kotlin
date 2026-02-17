@@ -132,6 +132,7 @@ final class LoweringPassCoverageTests: XCTestCase {
             let outputPath = FileManager.default.temporaryDirectory
                 .appendingPathComponent(UUID().uuidString)
                 .path
+            defer { try? FileManager.default.removeItem(atPath: outputPath) }
             let ctx = makeCompilationContext(
                 inputs: [path],
                 moduleName: "KxMiniExecutable",

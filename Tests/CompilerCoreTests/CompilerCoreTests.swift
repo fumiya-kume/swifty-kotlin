@@ -494,17 +494,9 @@ final class CompilerCoreTests: XCTestCase {
             """
         ]
         let ctx = try makeContext(sources: sources)
+        try runSema(ctx)
 
-        try LoadSourcesPhase().run(ctx)
-        try LexPhase().run(ctx)
-        try ParsePhase().run(ctx)
-        try BuildASTPhase().run(ctx)
-        try SemaPassesPhase().run(ctx)
-
-        let hasWildcardAlias = ctx.diagnostics.diagnostics.contains(where: { diag in
-            diag.code == "KSWIFTK-SEMA-0022"
-        })
-        XCTAssertTrue(hasWildcardAlias, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
+        assertHasDiagnostic("KSWIFTK-SEMA-0022", in: ctx)
     }
 
     func testImportAliasDuplicateDiagnostic() throws {
@@ -522,17 +514,9 @@ final class CompilerCoreTests: XCTestCase {
             """
         ]
         let ctx = try makeContext(sources: sources)
+        try runSema(ctx)
 
-        try LoadSourcesPhase().run(ctx)
-        try LexPhase().run(ctx)
-        try ParsePhase().run(ctx)
-        try BuildASTPhase().run(ctx)
-        try SemaPassesPhase().run(ctx)
-
-        let hasDuplicateAlias = ctx.diagnostics.diagnostics.contains(where: { diag in
-            diag.code == "KSWIFTK-SEMA-0023"
-        })
-        XCTAssertTrue(hasDuplicateAlias, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
+        assertHasDiagnostic("KSWIFTK-SEMA-0023", in: ctx)
     }
 
     func testImportAliasUnresolvedPathDiagnostic() throws {
@@ -542,17 +526,9 @@ final class CompilerCoreTests: XCTestCase {
         fun use() = 1
         """
         let ctx = try makeContext(source: source)
+        try runSema(ctx)
 
-        try LoadSourcesPhase().run(ctx)
-        try LexPhase().run(ctx)
-        try ParsePhase().run(ctx)
-        try BuildASTPhase().run(ctx)
-        try SemaPassesPhase().run(ctx)
-
-        let hasUnresolved = ctx.diagnostics.diagnostics.contains(where: { diag in
-            diag.code == "KSWIFTK-SEMA-0024"
-        })
-        XCTAssertTrue(hasUnresolved, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
+        assertHasDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
     }
 
     func testImportAliasResolvesAcrossPackages() throws {
@@ -568,23 +544,19 @@ final class CompilerCoreTests: XCTestCase {
             """
         ]
         let ctx = try makeContext(sources: sources)
+        try runSema(ctx)
 
-        try LoadSourcesPhase().run(ctx)
-        try LexPhase().run(ctx)
-        try ParsePhase().run(ctx)
-        try BuildASTPhase().run(ctx)
-        try SemaPassesPhase().run(ctx)
-
-        let hasNoViableDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
-            diag.code == "KSWIFTK-SEMA-0002"
-        })
-        XCTAssertFalse(hasNoViableDiagnostic, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
+        assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
     }
 
     func testEmitObjectProducesMachOFile() throws {
         let source = "fun main() {}"
         let tempSource = try writeTempSource(source)
         let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".o")
+        addTeardownBlock {
+            try? FileManager.default.removeItem(at: outputURL)
+            try? FileManager.default.removeItem(at: tempSource)
+        }
 
         let options = CompilerOptions(
             moduleName: "ObjTest",
