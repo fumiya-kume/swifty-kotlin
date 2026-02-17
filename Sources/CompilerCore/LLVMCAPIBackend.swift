@@ -964,7 +964,12 @@ private struct NativeEmitter {
                 case .divide:
                     lowered = bindings.buildSDiv(builder, lhs: lhsValue, rhs: rhsValue, name: "bin_div_\(instructionIndex)")
                 case .modulo:
-                    lowered = nil
+                    if let quotient = bindings.buildSDiv(builder, lhs: lhsValue, rhs: rhsValue, name: "bin_mod_q_\(instructionIndex)"),
+                       let product = bindings.buildMul(builder, lhs: quotient, rhs: rhsValue, name: "bin_mod_p_\(instructionIndex)") {
+                        lowered = bindings.buildSub(builder, lhs: lhsValue, rhs: product, name: "bin_mod_\(instructionIndex)")
+                    } else {
+                        lowered = nil
+                    }
                 case .equal:
                     if let compared = bindings.buildICmpEqual(
                         builder,
