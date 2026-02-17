@@ -480,7 +480,7 @@ extension BuildASTPhase {
         var startIndex = 0
         while startIndex < statementTokens.count,
               case .keyword(let kw) = statementTokens[startIndex].kind,
-              isDeclarationModifier(kw) {
+              KotlinParser.isDeclarationModifierKeyword(kw) {
             startIndex += 1
         }
         guard startIndex < statementTokens.count else {
@@ -527,7 +527,8 @@ extension BuildASTPhase {
             return nil
         }
         let end = astArena.exprRange(initializerExpr)?.end ?? statementTokens.last?.range.end ?? head.range.end
-        let range = SourceRange(start: head.range.start, end: end)
+        let rangeStart = statementTokens[0].range.start
+        let range = SourceRange(start: rangeStart, end: end)
         return astArena.appendExpr(.localDecl(
             name: name,
             isMutable: isMutable,
@@ -730,15 +731,5 @@ extension BuildASTPhase {
         }
     }
 
-    func isDeclarationModifier(_ keyword: Keyword) -> Bool {
-        switch keyword {
-        case .public, .private, .internal, .protected, .open, .abstract, .sealed, .data, .annotation,
-             .inner, .expect, .actual, .const, .lateinit, .override, .final, .crossinline, .noinline, .tailrec,
-             .inline, .suspend, .operator, .infix, .external, .value:
-            return true
-        default:
-            return false
-        }
-    }
 
 }

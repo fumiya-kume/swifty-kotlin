@@ -156,22 +156,20 @@ public final class BuildASTPhase: CompilerPhase {
                 interner: ctx.interner,
                 astArena: arena
             )
-            if !scriptExprs.isEmpty {
-                let rootNode = cst.node(ctx.syntaxTreeRoot)
-                let fileRawID = rootNode.range.start.file.rawValue
-                scriptExprsByFile[fileRawID] = scriptExprs
+            let rootNode = cst.node(ctx.syntaxTreeRoot)
+            let fileRawID = rootNode.range.start.file.rawValue
+            scriptExprsByFile[fileRawID] = scriptExprs
 
-                let mainName = ctx.interner.intern("main")
-                let mainDecl = FunDecl(
-                    range: rootNode.range,
-                    name: mainName,
-                    modifiers: [],
-                    body: .block(scriptExprs, rootNode.range)
-                )
-                let declID = arena.appendDecl(.funDecl(mainDecl))
-                declarations.append(declID)
-                declarationsByFile[fileRawID, default: []].append(declID)
-            }
+            let mainName = ctx.interner.intern("main")
+            let mainDecl = FunDecl(
+                range: rootNode.range,
+                name: mainName,
+                modifiers: [],
+                body: .block(scriptExprs, rootNode.range)
+            )
+            let declID = arena.appendDecl(.funDecl(mainDecl))
+            declarations.append(declID)
+            declarationsByFile[fileRawID, default: []].append(declID)
         }
 
         let tokenFileIDs = Set(ctx.tokens.map { $0.range.start.file.rawValue })
