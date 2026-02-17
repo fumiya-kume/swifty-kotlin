@@ -209,7 +209,7 @@ extension TypeCheckSemaPassPhase {
         case .localDecl(let name, let isMutable, let typeAnnotation, let initializer, let range):
             var declaredType: TypeID?
             if let typeAnnotation {
-                declaredType = resolveTypeRef(typeAnnotation, ast: ast, sema: sema, interner: interner)
+                declaredType = resolveTypeRef(typeAnnotation, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
             }
 
             var initializerType: TypeID?
