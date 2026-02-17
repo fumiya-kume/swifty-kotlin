@@ -42,7 +42,8 @@ extension DataFlowSemaPassPhase {
                     ast: ast,
                     symbols: symbols,
                     types: types,
-                    interner: interner
+                    interner: interner,
+                    diagnostics: diagnostics
                 ) ?? types.anyType
                 bindings.bindExprType(expr, type: boundType)
             }
@@ -58,7 +59,8 @@ extension DataFlowSemaPassPhase {
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
-        localTypeParameters: [InternedString: SymbolID] = [:]
+        localTypeParameters: [InternedString: SymbolID] = [:],
+        diagnostics: DiagnosticEngine? = nil
     ) -> TypeID? {
         guard let typeRefID, let typeRef = ast.arena.typeRef(typeRefID) else {
             return nil
@@ -115,11 +117,17 @@ extension DataFlowSemaPassPhase {
                     symbols: symbols,
                     types: types,
                     interner: interner,
-                    localTypeParameters: localTypeParameters
+                    localTypeParameters: localTypeParameters,
+                    diagnostics: diagnostics
                 )
                 return types.make(.classType(ClassType(classSymbol: resolved.id, args: resolvedArgs, nullability: nullability)))
             }
-            return nullability == .nullable ? types.nullableAnyType : types.anyType
+            diagnostics?.error(
+                "KSWIFTK-SEMA-0025",
+                "Unresolved type '\(interner.resolve(shortName))'.",
+                range: nil
+            )
+            return types.errorType
 
         case .functionType(let paramRefIDs, let returnRefID, let isSuspend, let nullable):
             let nullability: Nullability = nullable ? .nullable : .nonNull
@@ -131,7 +139,8 @@ extension DataFlowSemaPassPhase {
                     symbols: symbols,
                     types: types,
                     interner: interner,
-                    localTypeParameters: localTypeParameters
+                    localTypeParameters: localTypeParameters,
+                    diagnostics: diagnostics
                 ) else {
                     return nil
                 }
@@ -143,7 +152,8 @@ extension DataFlowSemaPassPhase {
                 symbols: symbols,
                 types: types,
                 interner: interner,
-                localTypeParameters: localTypeParameters
+                localTypeParameters: localTypeParameters,
+                diagnostics: diagnostics
             ) ?? types.unitType
             return types.make(.functionType(FunctionType(
                 params: paramTypes,
@@ -160,7 +170,8 @@ extension DataFlowSemaPassPhase {
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
-        localTypeParameters: [InternedString: SymbolID] = [:]
+        localTypeParameters: [InternedString: SymbolID] = [:],
+        diagnostics: DiagnosticEngine? = nil
     ) -> [TypeArg] {
         var result: [TypeArg] = []
         result.reserveCapacity(argRefs.count)
@@ -173,8 +184,9 @@ extension DataFlowSemaPassPhase {
                     symbols: symbols,
                     types: types,
                     interner: interner,
-                    localTypeParameters: localTypeParameters
-                ) ?? types.anyType
+                    localTypeParameters: localTypeParameters,
+                    diagnostics: diagnostics
+                ) ?? types.errorType
                 result.append(.invariant(resolved))
             case .out(let innerRef):
                 let resolved = resolveTypeRef(
@@ -183,8 +195,9 @@ extension DataFlowSemaPassPhase {
                     symbols: symbols,
                     types: types,
                     interner: interner,
-                    localTypeParameters: localTypeParameters
-                ) ?? types.anyType
+                    localTypeParameters: localTypeParameters,
+                    diagnostics: diagnostics
+                ) ?? types.errorType
                 result.append(.out(resolved))
             case .in(let innerRef):
                 let resolved = resolveTypeRef(
@@ -193,8 +206,9 @@ extension DataFlowSemaPassPhase {
                     symbols: symbols,
                     types: types,
                     interner: interner,
-                    localTypeParameters: localTypeParameters
-                ) ?? types.anyType
+                    localTypeParameters: localTypeParameters,
+                    diagnostics: diagnostics
+                ) ?? types.errorType
                 result.append(.in(resolved))
             case .star:
                 result.append(.star)

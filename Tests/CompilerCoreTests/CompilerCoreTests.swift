@@ -883,6 +883,60 @@ final class CompilerCoreTests: XCTestCase {
         }
     }
 
+    func testUnresolvedIdentifierEmitsDiagnostic() throws {
+        let source = """
+        fun test() = unknownVariable
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0022"
+        })
+        XCTAssertTrue(hasDiagnostic, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
+    }
+
+    func testUnresolvedFunctionCallEmitsDiagnostic() throws {
+        let source = """
+        fun test() = unknownFunction(1)
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0023"
+        })
+        XCTAssertTrue(hasDiagnostic, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
+    }
+
+    func testUnresolvedTypeAnnotationEmitsDiagnostic() throws {
+        let source = """
+        fun test(x: UnknownType) = x
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0025"
+        })
+        XCTAssertTrue(hasDiagnostic, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
+    }
+
     private func makeContext(source: String) throws -> CompilationContext {
         let tempURL = try writeTempSource(source)
 
