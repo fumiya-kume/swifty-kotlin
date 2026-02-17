@@ -75,7 +75,7 @@ extension TypeCheckSemaPassPhase {
             if let local = locals[name] {
                 if !local.isInitialized {
                     ctx.semaCtx.diagnostics.error(
-                        "KSWIFTK-SEMA-0020",
+                        "KSWIFTK-SEMA-0031",
                         "Variable '\(interner.resolve(name))' must be initialized before use.",
                         range: nameRange
                     )
@@ -796,7 +796,7 @@ extension TypeCheckSemaPassPhase {
             sema.bindings.bindIdentifier(id, symbol: local.symbol)
             if !local.isInitialized {
                 ctx.semaCtx.diagnostics.error(
-                    "KSWIFTK-SEMA-0020",
+                    "KSWIFTK-SEMA-0031",
                     "Variable '\(interner.resolve(name))' must be initialized before use.",
                     range: range
                 )
