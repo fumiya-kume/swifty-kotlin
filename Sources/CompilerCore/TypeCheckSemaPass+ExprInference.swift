@@ -234,7 +234,7 @@ extension TypeCheckSemaPassPhase {
                 return sema.types.errorType
             }
             sema.bindings.bindIdentifier(id, symbol: local.symbol)
-            if !local.isMutable {
+            if !local.isMutable && local.isInitialized {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0014",
                     "Val cannot be reassigned.",
