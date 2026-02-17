@@ -648,18 +648,20 @@ public final class BuildKIRPhase: CompilerPhase {
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
-        case .localDecl(_, _, let initializer, _):
-            let initializerID = lowerExpr(
-                initializer,
-                ast: ast,
-                sema: sema,
-                arena: arena,
-                interner: interner,
-                propertyConstantInitializers: propertyConstantInitializers,
-                instructions: &instructions
-            )
-            if let symbol = sema.bindings.identifierSymbols[exprID] {
-                localValuesBySymbol[symbol] = initializerID
+        case .localDecl(_, _, _, let initializer, _):
+            if let initializer {
+                let initializerID = lowerExpr(
+                    initializer,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+                if let symbol = sema.bindings.identifierSymbols[exprID] {
+                    localValuesBySymbol[symbol] = initializerID
+                }
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))

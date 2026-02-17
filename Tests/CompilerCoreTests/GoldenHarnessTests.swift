@@ -281,8 +281,10 @@ final class GoldenHarnessTests: XCTestCase {
             return "break"
         case .continueExpr:
             return "continue"
-        case .localDecl(let name, let isMutable, let initializer, _):
-            return "localDecl \(interner.resolve(name)) mutable=\(isMutable ? 1 : 0) init=e\(initializer.rawValue)"
+        case .localDecl(let name, let isMutable, let typeAnnotation, let initializer, _):
+            let typeStr = typeAnnotation.map { "t\($0.rawValue)" } ?? "_"
+            let initStr = initializer.map { "e\($0.rawValue)" } ?? "_"
+            return "localDecl \(interner.resolve(name)) mutable=\(isMutable ? 1 : 0) type=\(typeStr) init=\(initStr)"
         case .localAssign(let name, let value, _):
             return "localAssign \(interner.resolve(name)) value=e\(value.rawValue)"
         case .arrayAssign(let array, let index, let value, _):

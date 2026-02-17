@@ -4,7 +4,7 @@ extension TypeCheckSemaPassPhase {
     func inferExpr(
         _ id: ExprID,
         ctx: TypeInferenceContext,
-        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool)],
+        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
         expectedType: TypeID? = nil
     ) -> TypeID {
         let ast = ctx.ast
@@ -53,7 +53,7 @@ extension TypeCheckSemaPassPhase {
             sema.bindings.bindExprType(id, type: stringType)
             return stringType
 
-        case .nameRef(let name, _):
+        case .nameRef(let name, let range):
             if interner.resolve(name) == "null" {
                 sema.bindings.bindExprType(id, type: sema.types.nullableAnyType)
                 return sema.types.nullableAnyType
@@ -64,6 +64,13 @@ extension TypeCheckSemaPassPhase {
                 return receiverType
             }
             if let local = locals[name] {
+                if !local.isInitialized {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0020",
+                        "Variable '\(interner.resolve(name))' must be initialized before use.",
+                        range: range
+                    )
+                }
                 sema.bindings.bindIdentifier(id, symbol: local.symbol)
                 sema.bindings.bindExprType(id, type: local.type)
                 return local.type
@@ -100,7 +107,7 @@ extension TypeCheckSemaPassPhase {
                     visibility: .private,
                     flags: []
                 )
-                bodyLocals[loopVariable] = (elementType, loopVariableSymbol, false)
+                bodyLocals[loopVariable] = (elementType, loopVariableSymbol, false, true)
                 sema.bindings.bindIdentifier(id, symbol: loopVariableSymbol)
             }
             _ = inferExpr(
@@ -172,8 +179,33 @@ extension TypeCheckSemaPassPhase {
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
 
-        case .localDecl(let name, let isMutable, let initializer, let range):
-            let initializerType = inferExpr(initializer, ctx: ctx, locals: &locals, expectedType: nil)
+        case .localDecl(let name, let isMutable, let typeAnnotation, let initializer, let range):
+            var declaredType: TypeID?
+            if let typeAnnotation {
+                declaredType = resolveTypeRef(typeAnnotation, ast: ast, sema: sema, interner: interner)
+            }
+
+            var initializerType: TypeID?
+            if let initializer {
+                initializerType = inferExpr(initializer, ctx: ctx, locals: &locals, expectedType: declaredType)
+            }
+
+            let localType: TypeID
+            if let declaredType {
+                localType = declaredType
+                if let initializerType {
+                    emitSubtypeConstraint(
+                        left: initializerType, right: declaredType,
+                        range: range, solver: ConstraintSolver(),
+                        sema: sema, diagnostics: ctx.semaCtx.diagnostics
+                    )
+                }
+            } else if let initializerType {
+                localType = initializerType
+            } else {
+                localType = sema.types.errorType
+            }
+
             let localSymbol = sema.symbols.define(
                 kind: .local,
                 name: name,
@@ -185,7 +217,7 @@ extension TypeCheckSemaPassPhase {
                 visibility: .private,
                 flags: isMutable ? [.mutable] : []
             )
-            locals[name] = (initializerType, localSymbol, isMutable)
+            locals[name] = (localType, localSymbol, isMutable, initializer != nil)
             sema.bindings.bindIdentifier(id, symbol: localSymbol)
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
@@ -217,6 +249,7 @@ extension TypeCheckSemaPassPhase {
                     sema: sema,
                     diagnostics: ctx.semaCtx.diagnostics
                 )
+                locals[name] = (local.type, local.symbol, local.isMutable, true)
             }
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
@@ -309,7 +342,7 @@ extension TypeCheckSemaPassPhase {
                         visibility: .internal
                     )
                     sema.symbols.setPropertyType(sema.types.anyType, for: catchParamSymbol)
-                    catchLocals[paramName] = (sema.types.anyType, catchParamSymbol, false)
+                    catchLocals[paramName] = (sema.types.anyType, catchParamSymbol, false, true)
                     sema.bindings.bindIdentifier(clause.body, symbol: catchParamSymbol)
                 }
                 branchTypes.append(inferExpr(clause.body, ctx: ctx, locals: &catchLocals, expectedType: expectedType))
@@ -718,7 +751,7 @@ extension TypeCheckSemaPassPhase {
             default:
                 resultType = local.type
             }
-            locals[name] = (resultType, local.symbol, local.isMutable)
+            locals[name] = (resultType, local.symbol, local.isMutable, true)
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
 
@@ -782,13 +815,13 @@ extension TypeCheckSemaPassPhase {
                 if let subjectLocalBinding, subjectLocalBinding.isStable {
                     if let branchSmartCastType {
                         branchLocals[subjectLocalBinding.name] = (
-                            branchSmartCastType, subjectLocalBinding.symbol, subjectLocalBinding.isMutable
+                            branchSmartCastType, subjectLocalBinding.symbol, subjectLocalBinding.isMutable, true
                         )
                     } else if hasExplicitNullBranch && !isNullBranch {
                         branchLocals[subjectLocalBinding.name] = (
                             makeNonNullable(subjectLocalBinding.type, types: sema.types),
                             subjectLocalBinding.symbol,
-                            subjectLocalBinding.isMutable
+                            subjectLocalBinding.isMutable, true
                         )
                     }
                 }
@@ -805,7 +838,7 @@ extension TypeCheckSemaPassPhase {
                     elseLocals[subjectLocalBinding.name] = (
                         makeNonNullable(subjectLocalBinding.type, types: sema.types),
                         subjectLocalBinding.symbol,
-                        subjectLocalBinding.isMutable
+                        subjectLocalBinding.isMutable, true
                     )
                 }
                 branchTypes.append(

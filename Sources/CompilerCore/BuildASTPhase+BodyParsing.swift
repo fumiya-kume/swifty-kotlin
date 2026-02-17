@@ -494,6 +494,43 @@ extension BuildASTPhase {
             return nil
         }
 
+        let nameIndex = statementTokens.firstIndex(where: { token in
+            if let n = internedIdentifier(from: token, interner: interner), n == name, isTypeLikeNameToken(token.kind) {
+                return true
+            }
+            return false
+        }) ?? 1
+
+        var typeAnnotation: TypeRefID?
+        var colonIndex: Int?
+        for i in (nameIndex + 1)..<statementTokens.count {
+            let token = statementTokens[i]
+            if token.kind == .symbol(.colon) {
+                colonIndex = i
+                break
+            }
+            if token.kind == .symbol(.assign) || token.kind == .symbol(.semicolon) {
+                break
+            }
+        }
+        if let colonIndex {
+            var typeTokens: [Token] = []
+            var depth = BracketDepth()
+            var idx = colonIndex + 1
+            while idx < statementTokens.count {
+                let token = statementTokens[idx]
+                if depth.isAtTopLevel {
+                    if token.kind == .symbol(.assign) || token.kind == .symbol(.semicolon) {
+                        break
+                    }
+                }
+                depth.track(token.kind)
+                typeTokens.append(token)
+                idx += 1
+            }
+            typeAnnotation = parseTypeRef(from: typeTokens, interner: interner, astArena: astArena)
+        }
+
         var assignIndex: Int?
         var depth = BracketDepth()
         for (index, token) in statementTokens.enumerated() {
@@ -503,24 +540,33 @@ extension BuildASTPhase {
             }
             depth.track(token.kind)
         }
-        guard let assignIndex else {
+
+        var initializerExpr: ExprID?
+        if let assignIndex {
+            let initializerTokens = statementTokens[(assignIndex + 1)...].filter { token in
+                token.kind != .symbol(.semicolon)
+            }
+            if !initializerTokens.isEmpty {
+                let parser = ExpressionParser(tokens: Array(initializerTokens), interner: interner, astArena: astArena)
+                initializerExpr = parser.parse()
+            }
+        }
+
+        if typeAnnotation == nil && initializerExpr == nil {
             return nil
         }
-        let initializerTokens = statementTokens[(assignIndex + 1)...].filter { token in
-            token.kind != .symbol(.semicolon)
+
+        let end: SourceLocation
+        if let initializerExpr {
+            end = astArena.exprRange(initializerExpr)?.end ?? statementTokens.last?.range.end ?? head.range.end
+        } else {
+            end = statementTokens.last?.range.end ?? head.range.end
         }
-        guard !initializerTokens.isEmpty else {
-            return nil
-        }
-        let parser = ExpressionParser(tokens: Array(initializerTokens), interner: interner, astArena: astArena)
-        guard let initializerExpr = parser.parse() else {
-            return nil
-        }
-        let end = astArena.exprRange(initializerExpr)?.end ?? statementTokens.last?.range.end ?? head.range.end
         let range = SourceRange(start: head.range.start, end: end)
         return astArena.appendExpr(.localDecl(
             name: name,
             isMutable: isMutable,
+            typeAnnotation: typeAnnotation,
             initializer: initializerExpr,
             range: range
         ))
