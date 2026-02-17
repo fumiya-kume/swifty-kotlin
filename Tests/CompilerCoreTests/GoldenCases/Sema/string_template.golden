@@ -1,5 +1,5 @@
 symbol s0 kind=package fq=golden.sema vis=public flags=_
-symbol s1 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s1 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s2 kind=local fq=__local_1.name vis=private flags=_
 symbol s3 kind=local fq=__local_3.x vis=private flags=_
 symbol s4 kind=local fq=__local_6.greeting vis=private flags=_
@@ -18,7 +18,7 @@ expr e8 stringTemplate[lit(value=),expr(e7)] type=String
 expr e9 localDecl result mutable=0 init=e8 type=Unit ref=s5
 expr e10 name(println) type=_
 expr e11 name(greeting) type=String ref=s4
-expr e12 call callee=e10 args=[_:e11] type=<error>
+expr e12 call callee=e10 args=[_:e11] type=Unit
 expr e13 name(println) type=_
 expr e14 name(result) type=String ref=s5
-expr e15 call callee=e13 args=[_:e14] type=<error>
+expr e15 call callee=e13 args=[_:e14] type=Unit
