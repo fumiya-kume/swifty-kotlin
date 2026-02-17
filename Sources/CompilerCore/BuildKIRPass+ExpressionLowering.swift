@@ -451,7 +451,7 @@ extension BuildKIRPhase {
 
         case .returnExpr(let value, _):
             if let value {
-                return lowerExpr(
+                let lowered = lowerExpr(
                     value,
                     ast: ast,
                     sema: sema,
@@ -460,8 +460,11 @@ extension BuildKIRPhase {
                     propertyConstantInitializers: propertyConstantInitializers,
                     instructions: &instructions
                 )
+                instructions.append(.returnValue(lowered))
+            } else {
+                instructions.append(.returnUnit)
             }
-            let unit = arena.appendExpr(.unit, type: boundType ?? sema.types.unitType)
+            let unit = arena.appendExpr(.unit, type: sema.types.nothingType)
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
@@ -475,6 +478,12 @@ extension BuildKIRPhase {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
+            let elseLabel = makeLoopLabel()
+            let endLabel = makeLoopLabel()
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.errorType)
+            let falseVal = arena.appendExpr(.boolLiteral(false), type: boolType)
+            instructions.append(.constValue(result: falseVal, value: .boolLiteral(false)))
+            instructions.append(.jumpIfEqual(lhs: conditionID, rhs: falseVal, target: elseLabel))
             let thenID = lowerExpr(
                 thenExpr,
                 ast: ast,
@@ -484,9 +493,11 @@ extension BuildKIRPhase {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
-            let elseID: KIRExprID
+            instructions.append(.copy(from: thenID, to: result))
+            instructions.append(.jump(endLabel))
+            instructions.append(.label(elseLabel))
             if let elseExpr {
-                elseID = lowerExpr(
+                let elseID = lowerExpr(
                     elseExpr,
                     ast: ast,
                     sema: sema,
@@ -495,17 +506,13 @@ extension BuildKIRPhase {
                     propertyConstantInitializers: propertyConstantInitializers,
                     instructions: &instructions
                 )
+                instructions.append(.copy(from: elseID, to: result))
             } else {
-                elseID = arena.appendExpr(.unit, type: sema.types.unitType)
-                instructions.append(.constValue(result: elseID, value: .unit))
+                let unitVal = arena.appendExpr(.unit, type: sema.types.unitType)
+                instructions.append(.constValue(result: unitVal, value: .unit))
+                instructions.append(.copy(from: unitVal, to: result))
             }
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
-            instructions.append(.select(
-                condition: conditionID,
-                thenValue: thenID,
-                elseValue: elseID,
-                result: result
-            ))
+            instructions.append(.label(endLabel))
             return result
 
         case .tryExpr(let bodyExpr, let catchClauses, let finallyExpr, _):
@@ -1085,24 +1092,37 @@ extension BuildKIRPhase {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
-            let fallbackID: KIRExprID
-            if let elseExpr {
-                fallbackID = lowerExpr(
-                    elseExpr,
-                    ast: ast,
-                    sema: sema,
-                    arena: arena,
-                    interner: interner,
-                    propertyConstantInitializers: propertyConstantInitializers,
-                    instructions: &instructions
-                )
-            } else {
-                fallbackID = arena.appendExpr(.unit, type: sema.types.unitType)
-                instructions.append(.constValue(result: fallbackID, value: .unit))
+            let endLabel = makeLoopLabel()
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.errorType)
+
+            var nextBranchLabels: [Int32] = []
+            for _ in branches {
+                nextBranchLabels.append(makeLoopLabel())
             }
 
-            var selectedID = fallbackID
-            for branch in branches.reversed() {
+            for (index, branch) in branches.enumerated() {
+                if let conditionExprID = branch.condition {
+                    let conditionValueID = lowerExpr(
+                        conditionExprID,
+                        ast: ast,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        propertyConstantInitializers: propertyConstantInitializers,
+                        instructions: &instructions
+                    )
+                    let matchesID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
+                    instructions.append(.binary(
+                        op: .equal,
+                        lhs: subjectID,
+                        rhs: conditionValueID,
+                        result: matchesID
+                    ))
+                    let falseVal = arena.appendExpr(.boolLiteral(false), type: boolType)
+                    instructions.append(.constValue(result: falseVal, value: .boolLiteral(false)))
+                    instructions.append(.jumpIfEqual(lhs: matchesID, rhs: falseVal, target: nextBranchLabels[index]))
+                }
+
                 let bodyID = lowerExpr(
                     branch.body,
                     ast: ast,
@@ -1112,13 +1132,14 @@ extension BuildKIRPhase {
                     propertyConstantInitializers: propertyConstantInitializers,
                     instructions: &instructions
                 )
-                guard let conditionExprID = branch.condition else {
-                    selectedID = bodyID
-                    continue
-                }
+                instructions.append(.copy(from: bodyID, to: result))
+                instructions.append(.jump(endLabel))
+                instructions.append(.label(nextBranchLabels[index]))
+            }
 
-                let conditionValueID = lowerExpr(
-                    conditionExprID,
+            if let elseExpr {
+                let fallbackID = lowerExpr(
+                    elseExpr,
                     ast: ast,
                     sema: sema,
                     arena: arena,
@@ -1126,25 +1147,14 @@ extension BuildKIRPhase {
                     propertyConstantInitializers: propertyConstantInitializers,
                     instructions: &instructions
                 )
-
-                let matchesID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
-                instructions.append(.binary(
-                    op: .equal,
-                    lhs: subjectID,
-                    rhs: conditionValueID,
-                    result: matchesID
-                ))
-
-                let nextSelectedID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
-                instructions.append(.select(
-                    condition: matchesID,
-                    thenValue: bodyID,
-                    elseValue: selectedID,
-                    result: nextSelectedID
-                ))
-                selectedID = nextSelectedID
+                instructions.append(.copy(from: fallbackID, to: result))
+            } else {
+                let unitVal = arena.appendExpr(.unit, type: sema.types.unitType)
+                instructions.append(.constValue(result: unitVal, value: .unit))
+                instructions.append(.copy(from: unitVal, to: result))
             }
-            return selectedID
+            instructions.append(.label(endLabel))
+            return result
 
         case .blockExpr(let statements, let trailingExpr, _):
             for stmt in statements {
