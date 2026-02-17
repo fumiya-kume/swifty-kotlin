@@ -5,8 +5,10 @@ public final class CompilationContext {
     public let interner: StringInterner
 
     public var tokens: [Token] = []
+    public var tokensByFile: [(FileID, [Token])] = []
     public var syntaxTree: SyntaxArena? = nil
     public var syntaxTreeRoot: NodeID = NodeID()
+    public var syntaxTrees: [(FileID, SyntaxArena, NodeID)] = []
     public var ast: ASTModule? = nil
     public var sema: SemaModule? = nil
     public var kir: KIRModule? = nil
