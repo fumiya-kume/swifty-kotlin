@@ -769,7 +769,7 @@ extension TypeCheckSemaPassPhase {
             default:
                 resultType = local.type
             }
-            locals[name] = (resultType, local.symbol, local.isMutable, true)
+            locals[name] = (resultType, local.symbol, local.isMutable, local.isInitialized)
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
 

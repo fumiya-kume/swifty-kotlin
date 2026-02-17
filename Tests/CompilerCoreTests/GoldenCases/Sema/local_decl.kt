@@ -13,3 +13,14 @@ fun mutableTyped() {
     z = 40
     println(z)
 }
+
+fun deferredValInit() {
+    val a: Int
+    a = 5
+    println(a)
+}
+
+fun useBeforeInit() {
+    var b: Int
+    println(b)
+}
