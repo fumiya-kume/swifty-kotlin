@@ -167,10 +167,17 @@ public final class DataFlowAnalyzer {
         ), isStable else {
             return nil
         }
-        let nonNullType = makeTypeNonNullable(currentType, types: sema.types)
+        let effectiveType: TypeID
+        if let baseState = base.variables[symbol], baseState.possibleTypes.count == 1,
+           let baseType = baseState.possibleTypes.first {
+            effectiveType = baseType
+        } else {
+            effectiveType = currentType
+        }
+        let nonNullType = makeTypeNonNullable(effectiveType, types: sema.types)
         var trueVars = base.variables
         trueVars[symbol] = VariableFlowState(
-            possibleTypes: [currentType],
+            possibleTypes: [effectiveType],
             nullability: .nullable,
             isStable: true
         )
@@ -228,9 +235,16 @@ public final class DataFlowAnalyzer {
             nullability: nullable ? .nullable : .nonNull,
             isStable: true
         )
+        let falseType: TypeID
+        if let baseState = base.variables[symbol], baseState.possibleTypes.count == 1,
+           let baseType = baseState.possibleTypes.first {
+            falseType = baseType
+        } else {
+            falseType = currentType
+        }
         var falseVars = base.variables
         falseVars[symbol] = VariableFlowState(
-            possibleTypes: [currentType],
+            possibleTypes: [falseType],
             nullability: base.variables[symbol]?.nullability ?? .nonNull,
             isStable: true
         )
