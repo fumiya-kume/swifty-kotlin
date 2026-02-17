@@ -445,6 +445,14 @@ extension BuildASTPhase {
             guard !statementTokens.isEmpty else {
                 continue
             }
+            if let localFunDeclExpr = parseLocalFunDeclExpr(
+                from: statementTokens,
+                interner: interner,
+                astArena: astArena
+            ) {
+                result.append(localFunDeclExpr)
+                continue
+            }
             if let localDeclExpr = parseLocalDeclarationExpr(
                 from: statementTokens,
                 interner: interner,
@@ -649,6 +657,149 @@ extension BuildASTPhase {
         return astArena.appendExpr(.compoundAssign(op: op, name: name, value: valueExpr, range: range))
     }
 
+    func parseLocalFunDeclExpr(
+        from statementTokens: [Token],
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> ExprID? {
+        guard let head = statementTokens.first,
+              case .keyword(.fun) = head.kind else {
+            return nil
+        }
+
+        guard let nameToken = statementTokens.dropFirst().first(where: { token in
+            isTypeLikeNameToken(token.kind)
+        }),
+              let name = internedIdentifier(from: nameToken, interner: interner) else {
+            return nil
+        }
+
+        guard let lParenIndex = statementTokens.firstIndex(where: { $0.kind == .symbol(.lParen) }) else {
+            return nil
+        }
+
+        var valueParams: [ValueParamDecl] = []
+        var depth = 0
+        var paramTokens: [Token] = []
+        var index = lParenIndex + 1
+        while index < statementTokens.count {
+            let token = statementTokens[index]
+            if token.kind == .symbol(.lParen) {
+                depth += 1
+                paramTokens.append(token)
+            } else if token.kind == .symbol(.rParen) {
+                if depth == 0 {
+                    break
+                }
+                depth -= 1
+                paramTokens.append(token)
+            } else if token.kind == .symbol(.comma) && depth == 0 {
+                appendValueParameter(from: paramTokens, into: &valueParams, interner: interner, astArena: astArena)
+                paramTokens.removeAll(keepingCapacity: true)
+            } else {
+                paramTokens.append(token)
+            }
+            index += 1
+        }
+        if !paramTokens.isEmpty {
+            appendValueParameter(from: paramTokens, into: &valueParams, interner: interner, astArena: astArena)
+        }
+
+        guard index < statementTokens.count, statementTokens[index].kind == .symbol(.rParen) else {
+            return nil
+        }
+        index += 1
+
+        var returnType: TypeRefID?
+        if index < statementTokens.count, statementTokens[index].kind == .symbol(.colon) {
+            index += 1
+            var typeTokens: [Token] = []
+            var typeDepth = BracketDepth()
+            while index < statementTokens.count {
+                let token = statementTokens[index]
+                if typeDepth.isAtTopLevel {
+                    if token.kind == .symbol(.lBrace) || token.kind == .symbol(.assign) {
+                        break
+                    }
+                }
+                typeDepth.track(token.kind)
+                typeTokens.append(token)
+                index += 1
+            }
+            returnType = parseTypeRef(from: typeTokens, interner: interner, astArena: astArena)
+        }
+
+        let body: FunctionBody
+        if index < statementTokens.count, statementTokens[index].kind == .symbol(.assign) {
+            index += 1
+            let exprTokens = Array(statementTokens[index...])
+            let parser = ExpressionParser(tokens: exprTokens, interner: interner, astArena: astArena)
+            if let exprID = parser.parse(), let exprRange = astArena.exprRange(exprID) {
+                body = .expr(exprID, exprRange)
+            } else {
+                body = .unit
+            }
+        } else if index < statementTokens.count, statementTokens[index].kind == .symbol(.lBrace) {
+            var braceDepth = 0
+            var bodyTokens: [Token] = []
+            let braceStart = index
+            while index < statementTokens.count {
+                let token = statementTokens[index]
+                if token.kind == .symbol(.lBrace) {
+                    braceDepth += 1
+                } else if token.kind == .symbol(.rBrace) {
+                    braceDepth -= 1
+                    if braceDepth == 0 {
+                        index += 1
+                        break
+                    }
+                }
+                if braceDepth >= 1 && !(braceDepth == 1 && token.kind == .symbol(.lBrace)) {
+                    bodyTokens.append(token)
+                }
+                index += 1
+            }
+            if !bodyTokens.isEmpty {
+                let parser = ExpressionParser(tokens: bodyTokens, interner: interner, astArena: astArena)
+                if let exprID = parser.parse(), let exprRange = astArena.exprRange(exprID) {
+                    body = .block([exprID], exprRange)
+                } else {
+                    let bodyRange = SourceRange(
+                        start: statementTokens[braceStart].range.start,
+                        end: statementTokens[min(index, statementTokens.count - 1)].range.end
+                    )
+                    body = .block([], bodyRange)
+                }
+            } else {
+                let bodyRange = SourceRange(
+                    start: statementTokens[braceStart].range.start,
+                    end: statementTokens[min(index, statementTokens.count - 1)].range.end
+                )
+                body = .block([], bodyRange)
+            }
+        } else {
+            body = .unit
+        }
+
+        let end: SourceLocation
+        switch body {
+        case .block(_, let range):
+            end = range.end
+        case .expr(_, let range):
+            end = range.end
+        case .unit:
+            end = statementTokens.last?.range.end ?? head.range.end
+        }
+        let range = SourceRange(start: head.range.start, end: end)
+        return astArena.appendExpr(.localFunDecl(
+            name: name,
+            valueParams: valueParams,
+            returnType: returnType,
+            body: body,
+            range: range
+        ))
+    }
+
     func skipBalancedBracket(
         in tokens: [Token],
         from startIndex: Int,
@@ -713,7 +864,8 @@ extension BuildASTPhase {
     func isStatementLikeKind(_ kind: SyntaxKind) -> Bool {
         switch kind {
         case .statement, .propertyDecl, .loopStmt,
-             .ifExpr, .whenExpr, .tryExpr, .callExpr:
+             .ifExpr, .whenExpr, .tryExpr, .callExpr,
+             .funDecl:
             return true
         default:
             return false
