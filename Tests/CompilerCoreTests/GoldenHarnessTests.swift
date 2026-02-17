@@ -347,7 +347,14 @@ final class GoldenHarnessTests: XCTestCase {
         let returnType = types.renderType(signature.returnType)
         let defaults = signature.valueParameterHasDefaultValues.map { $0 ? "1" : "0" }.joined(separator: ",")
         let vararg = signature.valueParameterIsVararg.map { $0 ? "1" : "0" }.joined(separator: ",")
-        return "recv=\(receiver) params=[\(parameters)] ret=\(returnType) suspend=\(signature.isSuspend ? 1 : 0) defaults=[\(defaults)] vararg=[\(vararg)]"
+        var result = "recv=\(receiver) params=[\(parameters)] ret=\(returnType) suspend=\(signature.isSuspend ? 1 : 0) defaults=[\(defaults)] vararg=[\(vararg)]"
+        if !signature.typeParameterUpperBounds.isEmpty && signature.typeParameterUpperBounds.contains(where: { $0 != nil }) {
+            let bounds = signature.typeParameterUpperBounds.map { bound in
+                bound.map { types.renderType($0) } ?? "_"
+            }.joined(separator: ",")
+            result += " bounds=[\(bounds)]"
+        }
+        return result
     }
 
     private func renderSymbolFlags(_ flags: SymbolFlags) -> String {

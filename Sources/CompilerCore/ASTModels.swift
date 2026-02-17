@@ -370,15 +370,18 @@ public struct TypeParamDecl {
     public let name: InternedString
     public let variance: TypeVariance
     public let isReified: Bool
+    public let upperBound: TypeRefID?
 
     public init(
         name: InternedString,
         variance: TypeVariance = .invariant,
-        isReified: Bool = false
+        isReified: Bool = false,
+        upperBound: TypeRefID? = nil
     ) {
         self.name = name
         self.variance = variance
         self.isReified = isReified
+        self.upperBound = upperBound
     }
 }
 
