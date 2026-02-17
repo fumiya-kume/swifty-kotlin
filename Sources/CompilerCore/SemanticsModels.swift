@@ -180,6 +180,14 @@ open class BaseScope: Scope {
         }
         locals[symbol.name] = bucket
     }
+
+    open func insertWithAlias(_ sym: SymbolID, asName: InternedString) {
+        var bucket = locals[asName, default: []]
+        if !bucket.contains(sym) {
+            bucket.append(sym)
+        }
+        locals[asName] = bucket
+    }
 }
 
 public final class FileScope: BaseScope {}

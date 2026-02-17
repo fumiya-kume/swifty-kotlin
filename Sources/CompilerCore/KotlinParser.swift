@@ -154,13 +154,14 @@ public final class KotlinParser {
     }
 
     private func parseImportHeader(leadingChildren: [SyntaxChild] = [], leadingRange: SourceRange? = nil) -> NodeID {
-        parseHeaderDeclaration(keyword: .keyword(.import), kind: .importHeader, allowWildcard: true, leadingChildren: leadingChildren, leadingRange: leadingRange)
+        parseHeaderDeclaration(keyword: .keyword(.import), kind: .importHeader, allowWildcard: true, allowAlias: true, leadingChildren: leadingChildren, leadingRange: leadingRange)
     }
 
     private func parseHeaderDeclaration(
         keyword: TokenKind,
         kind: SyntaxKind,
         allowWildcard: Bool,
+        allowAlias: Bool = false,
         leadingChildren: [SyntaxChild],
         leadingRange: SourceRange?
     ) -> NodeID {
@@ -168,6 +169,14 @@ public final class KotlinParser {
         var children: [SyntaxChild] = leadingChildren
         consumeIf(expected: keyword, into: &children, range: &range, code: "KSWIFTK-PARSE-0001")
         parseQualifiedPath(into: &children, range: &range, allowImportWildcard: allowWildcard)
+        if allowAlias, case .keyword(.as) = stream.peek().kind {
+            _ = consumeToken(into: &children, range: &range)
+            if isIdentifierLike(stream.peek().kind) {
+                _ = consumeToken(into: &children, range: &range)
+            } else {
+                insertMissingToken(expected: .identifier(.invalid), into: &children, range: &range, code: "KSWIFTK-PARSE-0005", message: "Expected alias name after 'as'.")
+            }
+        }
         appendOptionalTerminator(into: &children, range: &range)
         return arena.appendNode(kind: kind, range: range.value ?? invalidRange, children)
     }
