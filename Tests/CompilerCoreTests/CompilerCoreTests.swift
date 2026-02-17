@@ -799,6 +799,19 @@ final class CompilerCoreTests: XCTestCase {
         assertHasDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
     }
 
+    func testSubjectLessWhenWithNonBooleanConditionEmitsDiagnostic() throws {
+        let source = """
+        fun test() = when {
+            42 -> "invalid"
+            else -> "ok"
+        }
+        """
+        let ctx = try makeContext(source: source)
+        try runSema(ctx)
+
+        assertHasDiagnostic("KSWIFTK-SEMA-0032", in: ctx)
+    }
+
     func testUnresolvedIdentifierEmitsDiagnostic() throws {
         let source = """
         fun test() = unknownVariable
