@@ -274,6 +274,16 @@ final class CoroutineLoweringPass: LoweringPass {
                     let targetArity = suspendFunctionArityBySymbol[referencedSymbol] ?? 0
                     let extraArgs = Array(arguments.dropFirst())
 
+                    guard extraArgs.count == targetArity else {
+                        ctx.diagnostics.error(
+                            "KSWIFTK-CORO-0003",
+                            "Coroutine launcher '\(ctx.interner.resolve(callee))' passed \(extraArgs.count) argument(s) but referenced suspend function expects \(targetArity).",
+                            range: nil
+                        )
+                        loweredBody.append(instruction)
+                        continue
+                    }
+
                     if targetArity == 0 {
                         let entryPointExpr = module.arena.appendExpr(
                             .temporary(Int32(module.arena.expressions.count)),

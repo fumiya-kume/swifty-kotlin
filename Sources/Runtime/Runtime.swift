@@ -741,6 +741,9 @@ private func runtimeAllocateThrowable(message: String) -> Int {
 }
 
 private func runSuspendEntryLoop(entryPointRaw: Int, functionID: Int) -> Int {
+    guard suspendEntryPoint(from: entryPointRaw) != nil else {
+        return 0
+    }
     let continuation = kk_coroutine_continuation_new(functionID)
     return runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
 }
