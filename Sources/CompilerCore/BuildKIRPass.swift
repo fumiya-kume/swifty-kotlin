@@ -472,18 +472,14 @@ public final class BuildKIRPhase: CompilerPhase {
                         instructions: &instructions
                     )
                     let exprType = sema.bindings.exprTypes[exprID]
-                    if exprType != nil && exprType != stringType {
+                    if let exprType, exprType != stringType {
                         let tag: Int64
-                        if let exprType {
-                            switch sema.types.kind(of: exprType) {
-                            case .primitive(.boolean, _):
-                                tag = 2
-                            case .primitive(.string, _):
-                                tag = 3
-                            default:
-                                tag = 1
-                            }
-                        } else {
+                        switch sema.types.kind(of: exprType) {
+                        case .primitive(.boolean, _):
+                            tag = 2
+                        case .primitive(.string, _):
+                            tag = 3
+                        default:
                             tag = 1
                         }
                         let tagID = arena.appendExpr(.intLiteral(tag), type: intType)
