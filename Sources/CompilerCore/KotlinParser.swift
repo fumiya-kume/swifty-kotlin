@@ -168,7 +168,7 @@ public final class KotlinParser {
         var range = RangeAccumulator(value: leadingRange)
         var children: [SyntaxChild] = leadingChildren
         consumeIf(expected: keyword, into: &children, range: &range, code: "KSWIFTK-PARSE-0001")
-        parseQualifiedPath(into: &children, range: &range, allowImportWildcard: allowWildcard)
+        parseQualifiedPath(into: &children, range: &range, allowImportWildcard: allowWildcard, stopAtAs: allowAlias)
         if allowAlias, case .keyword(.as) = stream.peek().kind {
             _ = consumeToken(into: &children, range: &range)
             if isIdentifierLike(stream.peek().kind) {
@@ -707,7 +707,7 @@ public final class KotlinParser {
         return arena.appendNode(kind: .statement, range: range.value ?? invalidRange, children)
     }
 
-    private func parseQualifiedPath(into children: inout [SyntaxChild], range: inout RangeAccumulator, allowImportWildcard: Bool) {
+    private func parseQualifiedPath(into children: inout [SyntaxChild], range: inout RangeAccumulator, allowImportWildcard: Bool, stopAtAs: Bool = false) {
         var consumed = false
         while !stream.atEOF() {
             let token = stream.peek()
@@ -716,6 +716,9 @@ public final class KotlinParser {
             }
             // Package/import paths must not consume declaration starts on the next line.
             if consumed && hasLeadingNewline(token) {
+                break
+            }
+            if stopAtAs, case .keyword(.as) = token.kind {
                 break
             }
             if case .symbol(.dot) = token.kind {

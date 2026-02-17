@@ -104,11 +104,17 @@ extension BuildASTPhase {
                 continue
             }
             if foundAs {
+                if case .missing = token.kind {
+                    return interner.intern("")
+                }
                 return internedIdentifier(from: token, interner: interner)
             }
             if case .keyword(.as) = token.kind {
                 foundAs = true
             }
+        }
+        if foundAs {
+            return interner.intern("")
         }
         return nil
     }

@@ -26,7 +26,8 @@ extension TypeCheckSemaPassPhase {
                 explicitImportScope: explicitImportScope,
                 wildcardImportScope: wildcardImportScope,
                 topLevelSymbolsByPackage: topLevelSymbolsByPackage,
-                diagnostics: sema.diagnostics
+                diagnostics: sema.diagnostics,
+                interner: interner
             )
 
             let packageScope = PackageScope(parent: explicitImportScope, symbols: sema.symbols)
@@ -63,21 +64,24 @@ extension TypeCheckSemaPassPhase {
         explicitImportScope: ImportScope,
         wildcardImportScope: ImportScope,
         topLevelSymbolsByPackage: [[InternedString]: [SymbolID]],
-        diagnostics: DiagnosticEngine
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner
     ) {
         var usedAliasNames: [InternedString: SourceRange] = [:]
 
         for importDecl in file.imports {
             if let alias = importDecl.alias {
-                let pathEndsWithStar = !importDecl.path.isEmpty && {
-                    let resolved = sema.symbols.lookupAll(fqName: importDecl.path)
-                    let hasPackageImport = resolved.contains { symbolID in
-                        sema.symbols.symbol(symbolID)?.kind == .package
-                    }
-                    return hasPackageImport && resolved.allSatisfy { sema.symbols.symbol($0)?.kind == .package }
-                }()
+                if interner.resolve(alias).isEmpty {
+                    continue
+                }
 
-                if pathEndsWithStar {
+                let resolved = sema.symbols.lookupAll(fqName: importDecl.path)
+
+                let isPackageOnlyImport = !resolved.isEmpty && resolved.allSatisfy {
+                    sema.symbols.symbol($0)?.kind == .package
+                }
+
+                if isPackageOnlyImport {
                     diagnostics.error(
                         "KSWIFTK-SEMA-0022",
                         "Cannot use alias on wildcard import.",
@@ -95,7 +99,6 @@ extension TypeCheckSemaPassPhase {
                     continue
                 }
 
-                let resolved = sema.symbols.lookupAll(fqName: importDecl.path)
                 if resolved.isEmpty {
                     diagnostics.error(
                         "KSWIFTK-SEMA-0024",
