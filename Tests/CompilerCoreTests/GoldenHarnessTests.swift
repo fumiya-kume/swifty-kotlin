@@ -364,7 +364,7 @@ final class GoldenHarnessTests: XCTestCase {
         case .blockExpr(let statements, let trailingExpr, _):
             let stmts = statements.map { "e\($0.rawValue)" }.joined(separator: ",")
             let trailing = trailingExpr.map { "e\($0.rawValue)" } ?? "_"
-            return "block stmts=[\(stmts)] trailing=\(trailing)"
+            return "blockExpr stmts=[\(stmts)] trailing=\(trailing)"
         }
     }
 
