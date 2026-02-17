@@ -546,10 +546,14 @@ extension BuildASTPhase {
             let initializerTokens = statementTokens[(assignIndex + 1)...].filter { token in
                 token.kind != .symbol(.semicolon)
             }
-            if !initializerTokens.isEmpty {
-                let parser = ExpressionParser(tokens: Array(initializerTokens), interner: interner, astArena: astArena)
-                initializerExpr = parser.parse()
+            guard !initializerTokens.isEmpty else {
+                return nil
             }
+            let parser = ExpressionParser(tokens: Array(initializerTokens), interner: interner, astArena: astArena)
+            guard let parsedInitializer = parser.parse() else {
+                return nil
+            }
+            initializerExpr = parsedInitializer
         }
 
         if typeAnnotation == nil && initializerExpr == nil {

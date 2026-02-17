@@ -156,6 +156,12 @@ extension TypeCheckSemaPassPhase {
                 sema: sema,
                 diagnostics: ctx.semaCtx.diagnostics
             )
+            for (name, local) in locals {
+                if !local.isInitialized,
+                   let bodyLocal = bodyLocals[name], bodyLocal.isInitialized {
+                    locals[name] = (local.type, local.symbol, local.isMutable, true)
+                }
+            }
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
 
