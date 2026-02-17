@@ -1009,13 +1009,13 @@ extension TypeCheckSemaPassPhase {
         }
         switch interner.resolve(calleeName) {
         case "runBlocking":
-            guard argumentCount == 1 else { return nil }
+            guard argumentCount >= 1 else { return nil }
             return sema.types.nullableAnyType
         case "launch":
-            guard argumentCount == 1 else { return nil }
+            guard argumentCount >= 1 else { return nil }
             return sema.types.unitType
         case "async":
-            guard argumentCount == 1 else { return nil }
+            guard argumentCount >= 1 else { return nil }
             return sema.types.nullableAnyType
         case "delay":
             guard argumentCount == 1 else { return nil }
