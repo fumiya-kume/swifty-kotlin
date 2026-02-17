@@ -54,8 +54,10 @@ extension DataFlowSemaPassPhase {
         }
         let path: [InternedString]
         switch typeRef {
-        case .named(let refPath, _):
+        case .named(let refPath, _, _):
             path = refPath
+        case .functionType:
+            return nil
         }
         guard !path.isEmpty else {
             return nil

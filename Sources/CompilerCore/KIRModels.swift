@@ -64,6 +64,10 @@ public enum KIRUnaryOp: Equatable {
 
 public enum KIRExprKind: Equatable {
     case intLiteral(Int64)
+    case longLiteral(Int64)
+    case floatLiteral(Double)
+    case doubleLiteral(Double)
+    case charLiteral(UInt32)
     case boolLiteral(Bool)
     case stringLiteral(InternedString)
     case symbolRef(SymbolID)
@@ -133,9 +137,11 @@ public struct KIRGlobal {
 
 public struct KIRNominalType {
     public let symbol: SymbolID
+    public let memberDecls: [KIRDeclID]
 
-    public init(symbol: SymbolID) {
+    public init(symbol: SymbolID, memberDecls: [KIRDeclID] = []) {
         self.symbol = symbol
+        self.memberDecls = memberDecls
     }
 }
 

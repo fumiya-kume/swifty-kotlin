@@ -81,6 +81,45 @@ public struct ASTFile {
     public let topLevelDecls: [DeclID]
 }
 
+public enum ConstructorDelegationKind: Equatable {
+    case this
+    case super_
+}
+
+public struct ConstructorDelegationCall: Equatable {
+    public let kind: ConstructorDelegationKind
+    public let args: [CallArgument]
+    public let range: SourceRange
+
+    public init(kind: ConstructorDelegationKind, args: [CallArgument], range: SourceRange) {
+        self.kind = kind
+        self.args = args
+        self.range = range
+    }
+}
+
+public struct ConstructorDecl {
+    public let range: SourceRange
+    public let modifiers: Modifiers
+    public let valueParams: [ValueParamDecl]
+    public let delegationCall: ConstructorDelegationCall?
+    public let body: FunctionBody
+
+    public init(
+        range: SourceRange,
+        modifiers: Modifiers = [],
+        valueParams: [ValueParamDecl] = [],
+        delegationCall: ConstructorDelegationCall? = nil,
+        body: FunctionBody = .unit
+    ) {
+        self.range = range
+        self.modifiers = modifiers
+        self.valueParams = valueParams
+        self.delegationCall = delegationCall
+        self.body = body
+    }
+}
+
 public struct ClassDecl {
     public let range: SourceRange
     public let name: InternedString
@@ -91,6 +130,11 @@ public struct ClassDecl {
     public let nestedTypeAliases: [TypeAliasDecl]
     public let enumEntries: [EnumEntryDecl]
     public let initBlocks: [FunctionBody]
+    public let secondaryConstructors: [ConstructorDecl]
+    public let memberFunctions: [DeclID]
+    public let memberProperties: [DeclID]
+    public let nestedClasses: [DeclID]
+    public let nestedObjects: [DeclID]
 
     public init(
         range: SourceRange,
@@ -101,7 +145,12 @@ public struct ClassDecl {
         superTypes: [TypeRefID] = [],
         nestedTypeAliases: [TypeAliasDecl] = [],
         enumEntries: [EnumEntryDecl] = [],
-        initBlocks: [FunctionBody] = []
+        initBlocks: [FunctionBody] = [],
+        secondaryConstructors: [ConstructorDecl] = [],
+        memberFunctions: [DeclID] = [],
+        memberProperties: [DeclID] = [],
+        nestedClasses: [DeclID] = [],
+        nestedObjects: [DeclID] = []
     ) {
         self.range = range
         self.name = name
@@ -112,6 +161,11 @@ public struct ClassDecl {
         self.nestedTypeAliases = nestedTypeAliases
         self.enumEntries = enumEntries
         self.initBlocks = initBlocks
+        self.secondaryConstructors = secondaryConstructors
+        self.memberFunctions = memberFunctions
+        self.memberProperties = memberProperties
+        self.nestedClasses = nestedClasses
+        self.nestedObjects = nestedObjects
     }
 }
 
@@ -147,6 +201,10 @@ public struct ObjectDecl {
     public let superTypes: [TypeRefID]
     public let nestedTypeAliases: [TypeAliasDecl]
     public let initBlocks: [FunctionBody]
+    public let memberFunctions: [DeclID]
+    public let memberProperties: [DeclID]
+    public let nestedClasses: [DeclID]
+    public let nestedObjects: [DeclID]
 
     public init(
         range: SourceRange,
@@ -154,7 +212,11 @@ public struct ObjectDecl {
         modifiers: Modifiers,
         superTypes: [TypeRefID] = [],
         nestedTypeAliases: [TypeAliasDecl] = [],
-        initBlocks: [FunctionBody] = []
+        initBlocks: [FunctionBody] = [],
+        memberFunctions: [DeclID] = [],
+        memberProperties: [DeclID] = [],
+        nestedClasses: [DeclID] = [],
+        nestedObjects: [DeclID] = []
     ) {
         self.range = range
         self.name = name
@@ -162,6 +224,10 @@ public struct ObjectDecl {
         self.superTypes = superTypes
         self.nestedTypeAliases = nestedTypeAliases
         self.initBlocks = initBlocks
+        self.memberFunctions = memberFunctions
+        self.memberProperties = memberProperties
+        self.nestedClasses = nestedClasses
+        self.nestedObjects = nestedObjects
     }
 }
 
@@ -243,6 +309,7 @@ public struct PropertyDecl {
     public let initializer: ExprID?
     public let getter: PropertyAccessorDecl?
     public let setter: PropertyAccessorDecl?
+    public let delegateExpression: ExprID?
 
     public init(
         range: SourceRange,
@@ -252,7 +319,8 @@ public struct PropertyDecl {
         isVar: Bool = false,
         initializer: ExprID? = nil,
         getter: PropertyAccessorDecl? = nil,
-        setter: PropertyAccessorDecl? = nil
+        setter: PropertyAccessorDecl? = nil,
+        delegateExpression: ExprID? = nil
     ) {
         self.range = range
         self.name = name
@@ -262,6 +330,7 @@ public struct PropertyDecl {
         self.initializer = initializer
         self.getter = getter
         self.setter = setter
+        self.delegateExpression = delegateExpression
     }
 }
 
@@ -319,8 +388,16 @@ public struct ValueParamDecl {
     }
 }
 
+public enum TypeArgRef: Equatable {
+    case invariant(TypeRefID)
+    case out(TypeRefID)
+    case `in`(TypeRefID)
+    case star
+}
+
 public enum TypeRef: Equatable {
-    case named(path: [InternedString], nullable: Bool)
+    case named(path: [InternedString], args: [TypeArgRef], nullable: Bool)
+    case functionType(params: [TypeRefID], returnType: TypeRefID, isSuspend: Bool, nullable: Bool)
 }
 
 public enum BinaryOp: Equatable {
@@ -395,6 +472,10 @@ public struct CatchClause: Equatable {
 
 public enum Expr: Equatable {
     case intLiteral(Int64, SourceRange)
+    case longLiteral(Int64, SourceRange)
+    case floatLiteral(Double, SourceRange)
+    case doubleLiteral(Double, SourceRange)
+    case charLiteral(UInt32, SourceRange)
     case boolLiteral(Bool, SourceRange)
     case stringLiteral(InternedString, SourceRange)
     case nameRef(InternedString, SourceRange)
@@ -406,8 +487,8 @@ public enum Expr: Equatable {
     case localDecl(name: InternedString, isMutable: Bool, initializer: ExprID, range: SourceRange)
     case localAssign(name: InternedString, value: ExprID, range: SourceRange)
     case arrayAssign(array: ExprID, index: ExprID, value: ExprID, range: SourceRange)
-    case call(callee: ExprID, args: [CallArgument], range: SourceRange)
-    case memberCall(receiver: ExprID, callee: InternedString, args: [CallArgument], range: SourceRange)
+    case call(callee: ExprID, typeArgs: [TypeRefID], args: [CallArgument], range: SourceRange)
+    case memberCall(receiver: ExprID, callee: InternedString, typeArgs: [TypeRefID], args: [CallArgument], range: SourceRange)
     case arrayAccess(array: ExprID, index: ExprID, range: SourceRange)
     case binary(op: BinaryOp, lhs: ExprID, rhs: ExprID, range: SourceRange)
     case whenExpr(subject: ExprID, branches: [WhenBranch], elseExpr: ExprID?, range: SourceRange)
@@ -418,7 +499,7 @@ public enum Expr: Equatable {
     case isCheck(expr: ExprID, type: TypeRefID, negated: Bool, range: SourceRange)
     case asCast(expr: ExprID, type: TypeRefID, isSafe: Bool, range: SourceRange)
     case nullAssert(expr: ExprID, range: SourceRange)
-    case safeMemberCall(receiver: ExprID, callee: InternedString, args: [CallArgument], range: SourceRange)
+    case safeMemberCall(receiver: ExprID, callee: InternedString, typeArgs: [TypeRefID], args: [CallArgument], range: SourceRange)
     case compoundAssign(op: CompoundAssignOp, name: InternedString, value: ExprID, range: SourceRange)
     case throwExpr(value: ExprID, range: SourceRange)
 }
@@ -468,6 +549,10 @@ public final class ASTArena {
         }
         switch expr {
         case .intLiteral(_, let range),
+             .longLiteral(_, let range),
+             .floatLiteral(_, let range),
+             .doubleLiteral(_, let range),
+             .charLiteral(_, let range),
              .boolLiteral(_, let range),
              .stringLiteral(_, let range),
              .nameRef(_, let range),
@@ -479,8 +564,8 @@ public final class ASTArena {
              .localDecl(_, _, _, let range),
              .localAssign(_, _, let range),
              .arrayAssign(_, _, _, let range),
-             .call(_, _, let range),
-             .memberCall(_, _, _, let range),
+             .call(_, _, _, let range),
+             .memberCall(_, _, _, _, let range),
              .arrayAccess(_, _, let range),
              .binary(_, _, _, let range),
              .whenExpr(_, _, _, let range),
@@ -491,7 +576,7 @@ public final class ASTArena {
              .isCheck(_, _, _, let range),
              .asCast(_, _, _, let range),
              .nullAssert(_, let range),
-             .safeMemberCall(_, _, _, let range),
+             .safeMemberCall(_, _, _, _, let range),
              .compoundAssign(_, _, _, let range),
              .throwExpr(_, let range):
             return range

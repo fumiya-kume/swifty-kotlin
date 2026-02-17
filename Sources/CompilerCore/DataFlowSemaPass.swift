@@ -64,6 +64,11 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
             bindings: bindings,
             types: types
         )
+        validateConstructorDelegation(
+            ast: ast,
+            symbols: symbols,
+            diagnostics: ctx.diagnostics
+        )
         synthesizeNominalLayouts(symbols: symbols)
 
         // Pass B: lightweight body checks.

@@ -43,9 +43,207 @@ public final class BuildKIRPhase: CompilerPhase {
                 }
 
                 switch decl {
-                case .classDecl, .interfaceDecl, .objectDecl:
+                case .classDecl(let classDecl):
+                    let (directMembers, allDecls) = lowerMemberDecls(
+                        memberFunctions: classDecl.memberFunctions,
+                        memberProperties: classDecl.memberProperties,
+                        nestedClasses: classDecl.nestedClasses,
+                        nestedObjects: classDecl.nestedObjects,
+                        ast: ast,
+                        sema: sema,
+                        arena: arena,
+                        interner: ctx.interner,
+                        propertyConstantInitializers: propertyConstantInitializers
+                    )
+                    let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: directMembers)))
+                    declIDs.append(kirID)
+                    declIDs.append(contentsOf: allDecls)
+
+                    let ctorFQName = (sema.symbols.symbol(symbol)?.fqName ?? []) + [ctx.interner.intern("<init>")]
+                    let ctorSymbols = sema.symbols.lookupAll(
+                        fqName: ctorFQName
+                    )
+                    for ctorSymbol in ctorSymbols {
+                        guard let signature = sema.symbols.functionSignature(for: ctorSymbol) else {
+                            continue
+                        }
+                        localValuesBySymbol.removeAll(keepingCapacity: true)
+                        currentImplicitReceiverExprID = nil
+                        currentImplicitReceiverSymbol = nil
+                        loopControlStack.removeAll(keepingCapacity: true)
+                        nextLoopLabel = 10_000
+
+                        let receiverSymbol = syntheticReceiverParameterSymbol(functionSymbol: ctorSymbol)
+                        var params = [KIRParameter(symbol: receiverSymbol, type: signature.returnType)]
+                        currentImplicitReceiverSymbol = receiverSymbol
+                        currentImplicitReceiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: signature.returnType)
+
+                        params.append(contentsOf: zip(signature.valueParameterSymbols, signature.parameterTypes).map { pair in
+                            KIRParameter(symbol: pair.0, type: pair.1)
+                        })
+                        let returnType = signature.returnType
+                        var body: [KIRInstruction] = [.beginBlock]
+
+                        if let receiverExpr = currentImplicitReceiverExprID,
+                           let receiverSym = currentImplicitReceiverSymbol {
+                            body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
+                        }
+
+                        let isSecondary = sema.symbols.symbol(ctorSymbol)?.declSite != classDecl.range
+
+                        if !isSecondary {
+                            for initBlock in classDecl.initBlocks {
+                                switch initBlock {
+                                case .block(let exprIDs, _):
+                                    for exprID in exprIDs {
+                                        _ = lowerExpr(
+                                            exprID,
+                                            ast: ast,
+                                            sema: sema,
+                                            arena: arena,
+                                            interner: ctx.interner,
+                                            propertyConstantInitializers: propertyConstantInitializers,
+                                            instructions: &body
+                                        )
+                                    }
+                                case .expr(let exprID, _):
+                                    _ = lowerExpr(
+                                        exprID,
+                                        ast: ast,
+                                        sema: sema,
+                                        arena: arena,
+                                        interner: ctx.interner,
+                                        propertyConstantInitializers: propertyConstantInitializers,
+                                        instructions: &body
+                                    )
+                                case .unit:
+                                    break
+                                }
+                            }
+                        }
+
+                        if isSecondary {
+                            for secondaryCtor in classDecl.secondaryConstructors {
+                                guard secondaryCtor.range == sema.symbols.symbol(ctorSymbol)?.declSite else {
+                                    continue
+                                }
+                                if let delegation = secondaryCtor.delegationCall {
+                                    let delegationTarget: [InternedString]
+                                    switch delegation.kind {
+                                    case .this:
+                                        delegationTarget = ctorFQName
+                                    case .super_:
+                                        let supertypes = sema.symbols.directSupertypes(for: symbol)
+                                        let classSupertypes = supertypes.filter {
+                                            let kind = sema.symbols.symbol($0)?.kind
+                                            return kind == .class || kind == .enumClass
+                                        }
+                                        if let superclass = classSupertypes.first {
+                                            delegationTarget = (sema.symbols.symbol(superclass)?.fqName ?? []) + [ctx.interner.intern("<init>")]
+                                        } else {
+                                            delegationTarget = []
+                                        }
+                                    }
+                                    if !delegationTarget.isEmpty {
+                                        var argIDs: [KIRExprID] = []
+                                        if let receiver = currentImplicitReceiverExprID {
+                                            argIDs.append(receiver)
+                                        }
+                                        for arg in delegation.args {
+                                            let lowered = lowerExpr(
+                                                arg.expr,
+                                                ast: ast,
+                                                sema: sema,
+                                                arena: arena,
+                                                interner: ctx.interner,
+                                                propertyConstantInitializers: propertyConstantInitializers,
+                                                instructions: &body
+                                            )
+                                            argIDs.append(lowered)
+                                        }
+                                        let delegationResultID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.unitType)
+                                        body.append(.call(
+                                            symbol: sema.symbols.lookupAll(fqName: delegationTarget).first,
+                                            callee: ctx.interner.intern("<init>"),
+                                            arguments: argIDs,
+                                            result: delegationResultID,
+                                            canThrow: false,
+                                            thrownResult: nil
+                                        ))
+                                    }
+                                }
+                                switch secondaryCtor.body {
+                                case .block(let exprIDs, _):
+                                    for exprID in exprIDs {
+                                        _ = lowerExpr(
+                                            exprID,
+                                            ast: ast,
+                                            sema: sema,
+                                            arena: arena,
+                                            interner: ctx.interner,
+                                            propertyConstantInitializers: propertyConstantInitializers,
+                                            instructions: &body
+                                        )
+                                    }
+                                case .expr(let exprID, _):
+                                    _ = lowerExpr(
+                                        exprID,
+                                        ast: ast,
+                                        sema: sema,
+                                        arena: arena,
+                                        interner: ctx.interner,
+                                        propertyConstantInitializers: propertyConstantInitializers,
+                                        instructions: &body
+                                    )
+                                case .unit:
+                                    break
+                                }
+                                break
+                            }
+                        }
+
+                        if let receiver = currentImplicitReceiverExprID {
+                            body.append(.returnValue(receiver))
+                        } else {
+                            body.append(.returnUnit)
+                        }
+                        body.append(.endBlock)
+
+                        let ctorKirID = arena.appendDecl(
+                            .function(
+                                KIRFunction(
+                                    symbol: ctorSymbol,
+                                    name: classDecl.name,
+                                    params: params,
+                                    returnType: returnType,
+                                    body: body,
+                                    isSuspend: false,
+                                    isInline: false
+                                )
+                            )
+                        )
+                        declIDs.append(ctorKirID)
+                    }
+
+                case .interfaceDecl:
                     let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol)))
                     declIDs.append(kirID)
+
+                case .objectDecl(let objectDecl):
+                    let (directMembers, allDecls) = lowerMemberDecls(
+                        memberFunctions: objectDecl.memberFunctions,
+                        memberProperties: objectDecl.memberProperties,
+                        nestedClasses: objectDecl.nestedClasses,
+                        nestedObjects: objectDecl.nestedObjects,
+                        ast: ast,
+                        sema: sema,
+                        arena: arena,
+                        interner: ctx.interner,
+                        propertyConstantInitializers: propertyConstantInitializers
+                    )
+                    let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: directMembers)))
+                    declIDs.append(kirID)
+                    declIDs.append(contentsOf: allDecls)
 
                 case .funDecl(let function):
                     localValuesBySymbol.removeAll(keepingCapacity: true)
@@ -219,6 +417,30 @@ public final class BuildKIRPhase: CompilerPhase {
         case .intLiteral(let value, _):
             let id = arena.appendExpr(.intLiteral(value), type: boundType ?? intType)
             instructions.append(.constValue(result: id, value: .intLiteral(value)))
+            return id
+
+        case .longLiteral(let value, _):
+            let longType = sema.types.make(.primitive(.long, .nonNull))
+            let id = arena.appendExpr(.longLiteral(value), type: boundType ?? longType)
+            instructions.append(.constValue(result: id, value: .longLiteral(value)))
+            return id
+
+        case .floatLiteral(let value, _):
+            let floatType = sema.types.make(.primitive(.float, .nonNull))
+            let id = arena.appendExpr(.floatLiteral(value), type: boundType ?? floatType)
+            instructions.append(.constValue(result: id, value: .floatLiteral(value)))
+            return id
+
+        case .doubleLiteral(let value, _):
+            let doubleType = sema.types.make(.primitive(.double, .nonNull))
+            let id = arena.appendExpr(.doubleLiteral(value), type: boundType ?? doubleType)
+            instructions.append(.constValue(result: id, value: .doubleLiteral(value)))
+            return id
+
+        case .charLiteral(let value, _):
+            let charType = sema.types.make(.primitive(.char, .nonNull))
+            let id = arena.appendExpr(.charLiteral(value), type: boundType ?? charType)
+            instructions.append(.constValue(result: id, value: .charLiteral(value)))
             return id
 
         case .boolLiteral(let value, _):
@@ -833,7 +1055,7 @@ public final class BuildKIRPhase: CompilerPhase {
             instructions.append(.binary(op: kirOp, lhs: lhsID, rhs: rhsID, result: result))
             return result
 
-        case .call(let calleeExpr, let args, _):
+        case .call(let calleeExpr, _, let args, _):
             let calleeName: InternedString
             if let callee = ast.arena.expr(calleeExpr), case .nameRef(let name, _) = callee {
                 calleeName = name
@@ -904,7 +1126,7 @@ public final class BuildKIRPhase: CompilerPhase {
             ))
             return result
 
-        case .memberCall(let receiverExpr, let calleeName, let args, _):
+        case .memberCall(let receiverExpr, let calleeName, _, let args, _):
             let loweredReceiverID = lowerExpr(
                 receiverExpr,
                 ast: ast,
@@ -1061,7 +1283,7 @@ public final class BuildKIRPhase: CompilerPhase {
             instructions.append(.nullAssert(operand: operandID, result: result))
             return result
 
-        case .safeMemberCall(let receiverExpr, let calleeName, let args, _):
+        case .safeMemberCall(let receiverExpr, let calleeName, _, let args, _):
             let loweredReceiverID = lowerExpr(
                 receiverExpr,
                 ast: ast,
@@ -1225,6 +1447,203 @@ public final class BuildKIRPhase: CompilerPhase {
         }
     }
 
+    private func lowerMemberDecls(
+        memberFunctions: [DeclID],
+        memberProperties: [DeclID],
+        nestedClasses: [DeclID],
+        nestedObjects: [DeclID],
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind]
+    ) -> (directMembers: [KIRDeclID], allDecls: [KIRDeclID]) {
+        var directMembers: [KIRDeclID] = []
+        var allDecls: [KIRDeclID] = []
+
+        for declID in memberFunctions {
+            guard let decl = ast.arena.decl(declID),
+                  case .funDecl(let function) = decl,
+                  let symbol = sema.bindings.declSymbols[declID] else {
+                continue
+            }
+            localValuesBySymbol.removeAll(keepingCapacity: true)
+            currentImplicitReceiverExprID = nil
+            currentImplicitReceiverSymbol = nil
+            loopControlStack.removeAll(keepingCapacity: true)
+            nextLoopLabel = 10_000
+
+            let signature = sema.symbols.functionSignature(for: symbol)
+            var params: [KIRParameter] = []
+            if let signature {
+                if let receiverType = signature.receiverType {
+                    let receiverSymbol = syntheticReceiverParameterSymbol(functionSymbol: symbol)
+                    params.append(KIRParameter(symbol: receiverSymbol, type: receiverType))
+                    currentImplicitReceiverSymbol = receiverSymbol
+                    currentImplicitReceiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: receiverType)
+                }
+                params.append(contentsOf: zip(signature.valueParameterSymbols, signature.parameterTypes).map { pair in
+                    KIRParameter(symbol: pair.0, type: pair.1)
+                })
+            }
+            if function.isInline, let signature,
+               !signature.reifiedTypeParameterIndices.isEmpty {
+                let intType = sema.types.make(.primitive(.int, .nonNull))
+                for index in signature.reifiedTypeParameterIndices.sorted() {
+                    guard index < signature.typeParameterSymbols.count else { continue }
+                    let typeParamSymbol = signature.typeParameterSymbols[index]
+                    let tokenSymbol = SymbolID(rawValue: -20_000 - typeParamSymbol.rawValue)
+                    params.append(KIRParameter(symbol: tokenSymbol, type: intType))
+                }
+            }
+            let returnType = signature?.returnType ?? sema.types.unitType
+            var body: [KIRInstruction] = [.beginBlock]
+            if let receiverExpr = currentImplicitReceiverExprID,
+               let receiverSymbol = currentImplicitReceiverSymbol {
+                body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSymbol)))
+            }
+            switch function.body {
+            case .block(let exprIDs, _):
+                var lastValue: KIRExprID?
+                var terminatedByReturn = false
+                for exprID in exprIDs {
+                    if let expr = ast.arena.expr(exprID),
+                       case .returnExpr(let value, _) = expr {
+                        if let value {
+                            let lowered = lowerExpr(
+                                value,
+                                ast: ast,
+                                sema: sema,
+                                arena: arena,
+                                interner: interner,
+                                propertyConstantInitializers: propertyConstantInitializers,
+                                instructions: &body
+                            )
+                            body.append(.returnValue(lowered))
+                        } else {
+                            body.append(.returnUnit)
+                        }
+                        terminatedByReturn = true
+                        break
+                    }
+                    lastValue = lowerExpr(
+                        exprID,
+                        ast: ast,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        propertyConstantInitializers: propertyConstantInitializers,
+                        instructions: &body
+                    )
+                }
+                if !terminatedByReturn {
+                    if let lastValue {
+                        body.append(.returnValue(lastValue))
+                    } else {
+                        body.append(.returnUnit)
+                    }
+                }
+            case .expr(let exprID, _):
+                let value = lowerExpr(
+                    exprID,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &body
+                )
+                body.append(.returnValue(value))
+            case .unit:
+                body.append(.returnUnit)
+            }
+            body.append(.endBlock)
+            let kirID = arena.appendDecl(
+                .function(
+                    KIRFunction(
+                        symbol: symbol,
+                        name: function.name,
+                        params: params,
+                        returnType: returnType,
+                        body: body,
+                        isSuspend: function.isSuspend,
+                        isInline: function.isInline
+                    )
+                )
+            )
+            directMembers.append(kirID)
+            allDecls.append(kirID)
+            currentImplicitReceiverExprID = nil
+            currentImplicitReceiverSymbol = nil
+        }
+
+        for declID in memberProperties {
+            guard let symbol = sema.bindings.declSymbols[declID] else {
+                continue
+            }
+            let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
+            let kirID = arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: propType)))
+            directMembers.append(kirID)
+            allDecls.append(kirID)
+        }
+
+        for declID in nestedClasses {
+            guard let decl = ast.arena.decl(declID),
+                  let symbol = sema.bindings.declSymbols[declID] else {
+                continue
+            }
+            switch decl {
+            case .classDecl(let nested):
+                let (nestedDirect, nestedAll) = lowerMemberDecls(
+                    memberFunctions: nested.memberFunctions,
+                    memberProperties: nested.memberProperties,
+                    nestedClasses: nested.nestedClasses,
+                    nestedObjects: nested.nestedObjects,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers
+                )
+                let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: nestedDirect)))
+                directMembers.append(kirID)
+                allDecls.append(kirID)
+                allDecls.append(contentsOf: nestedAll)
+            case .interfaceDecl:
+                let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol)))
+                directMembers.append(kirID)
+                allDecls.append(kirID)
+            default:
+                continue
+            }
+        }
+
+        for declID in nestedObjects {
+            guard let decl = ast.arena.decl(declID),
+                  case .objectDecl(let nested) = decl,
+                  let symbol = sema.bindings.declSymbols[declID] else {
+                continue
+            }
+            let (nestedDirect, nestedAll) = lowerMemberDecls(
+                memberFunctions: nested.memberFunctions,
+                memberProperties: nested.memberProperties,
+                nestedClasses: nested.nestedClasses,
+                nestedObjects: nested.nestedObjects,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers
+            )
+            let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: nestedDirect)))
+            directMembers.append(kirID)
+            allDecls.append(kirID)
+            allDecls.append(contentsOf: nestedAll)
+        }
+
+        return (directMembers, allDecls)
+    }
+
     private func collectPropertyConstantInitializers(
         ast: ASTModule,
         sema: SemaModule,
@@ -1233,37 +1652,63 @@ public final class BuildKIRPhase: CompilerPhase {
     ) -> [SymbolID: KIRExprKind] {
         var mapping: [SymbolID: KIRExprKind] = [:]
         for file in ast.sortedFiles {
+            let source = sourceByFileID[file.fileID.rawValue] ?? ""
             for declID in file.topLevelDecls {
-                guard let decl = ast.arena.decl(declID),
-                      case .propertyDecl(let property) = decl,
-                      let symbol = sema.bindings.declSymbols[declID] else {
-                    continue
-                }
-                let constant =
-                    literalConstantExpr(property: property, ast: ast) ??
-                    inlineGetterConstantExpr(
-                        propertyName: interner.resolve(property.name),
-                        source: sourceByFileID[file.fileID.rawValue] ?? "",
-                        interner: interner
-                    )
-                guard let constant else {
-                    continue
-                }
-                mapping[symbol] = constant
-                if let propertySymbol = sema.symbols.symbol(symbol) {
-                    let related = sema.symbols.lookupAll(fqName: propertySymbol.fqName)
-                    for relatedID in related {
-                        guard let relatedSymbol = sema.symbols.symbol(relatedID) else {
-                            continue
-                        }
-                        if relatedSymbol.kind == .property || relatedSymbol.kind == .field {
-                            mapping[relatedID] = constant
-                        }
-                    }
-                }
+                collectPropertyConstant(declID, ast: ast, sema: sema, interner: interner, source: source, mapping: &mapping)
             }
         }
         return mapping
+    }
+
+    private func collectPropertyConstant(
+        _ declID: DeclID,
+        ast: ASTModule,
+        sema: SemaModule,
+        interner: StringInterner,
+        source: String,
+        mapping: inout [SymbolID: KIRExprKind]
+    ) {
+        guard let decl = ast.arena.decl(declID) else { return }
+        switch decl {
+        case .propertyDecl(let property):
+            guard let symbol = sema.bindings.declSymbols[declID] else { return }
+            let constant =
+                literalConstantExpr(property: property, ast: ast) ??
+                inlineGetterConstantExpr(
+                    propertyName: interner.resolve(property.name),
+                    source: source,
+                    interner: interner
+                )
+            guard let constant else { return }
+            mapping[symbol] = constant
+            if let propertySymbol = sema.symbols.symbol(symbol) {
+                let related = sema.symbols.lookupAll(fqName: propertySymbol.fqName)
+                for relatedID in related {
+                    guard let relatedSymbol = sema.symbols.symbol(relatedID) else {
+                        continue
+                    }
+                    if relatedSymbol.kind == .property || relatedSymbol.kind == .field {
+                        mapping[relatedID] = constant
+                    }
+                }
+            }
+        case .classDecl(let classDecl):
+            for memberDeclID in classDecl.memberProperties {
+                collectPropertyConstant(memberDeclID, ast: ast, sema: sema, interner: interner, source: source, mapping: &mapping)
+            }
+            for nestedDeclID in classDecl.nestedClasses + classDecl.nestedObjects {
+                collectPropertyConstant(nestedDeclID, ast: ast, sema: sema, interner: interner, source: source, mapping: &mapping)
+            }
+        case .objectDecl(let objectDecl):
+            for memberDeclID in objectDecl.memberProperties {
+                collectPropertyConstant(memberDeclID, ast: ast, sema: sema, interner: interner, source: source, mapping: &mapping)
+            }
+            for nestedDeclID in objectDecl.nestedClasses + objectDecl.nestedObjects {
+                collectPropertyConstant(nestedDeclID, ast: ast, sema: sema, interner: interner, source: source, mapping: &mapping)
+            }
+        default:
+            break
+        }
     }
 
     private func collectFunctionDefaultArgumentExpressions(
@@ -1273,18 +1718,43 @@ public final class BuildKIRPhase: CompilerPhase {
         var mapping: [SymbolID: [ExprID?]] = [:]
         for file in ast.sortedFiles {
             for declID in file.topLevelDecls {
-                guard let decl = ast.arena.decl(declID),
-                      case .funDecl(let function) = decl,
-                      let symbol = sema.bindings.declSymbols[declID] else {
-                    continue
-                }
-                let defaults = function.valueParams.map(\.defaultValue)
-                if defaults.contains(where: { $0 != nil }) {
-                    mapping[symbol] = defaults
-                }
+                collectFunctionDefaults(declID, ast: ast, sema: sema, mapping: &mapping)
             }
         }
         return mapping
+    }
+
+    private func collectFunctionDefaults(
+        _ declID: DeclID,
+        ast: ASTModule,
+        sema: SemaModule,
+        mapping: inout [SymbolID: [ExprID?]]
+    ) {
+        guard let decl = ast.arena.decl(declID) else { return }
+        switch decl {
+        case .funDecl(let function):
+            guard let symbol = sema.bindings.declSymbols[declID] else { return }
+            let defaults = function.valueParams.map(\.defaultValue)
+            if defaults.contains(where: { $0 != nil }) {
+                mapping[symbol] = defaults
+            }
+        case .classDecl(let classDecl):
+            for memberDeclID in classDecl.memberFunctions {
+                collectFunctionDefaults(memberDeclID, ast: ast, sema: sema, mapping: &mapping)
+            }
+            for nestedDeclID in classDecl.nestedClasses + classDecl.nestedObjects {
+                collectFunctionDefaults(nestedDeclID, ast: ast, sema: sema, mapping: &mapping)
+            }
+        case .objectDecl(let objectDecl):
+            for memberDeclID in objectDecl.memberFunctions {
+                collectFunctionDefaults(memberDeclID, ast: ast, sema: sema, mapping: &mapping)
+            }
+            for nestedDeclID in objectDecl.nestedClasses + objectDecl.nestedObjects {
+                collectFunctionDefaults(nestedDeclID, ast: ast, sema: sema, mapping: &mapping)
+            }
+        default:
+            break
+        }
     }
 
     private func normalizedCallArguments(
@@ -1498,6 +1968,14 @@ public final class BuildKIRPhase: CompilerPhase {
         switch expr {
         case .intLiteral(let value, _):
             return .intLiteral(value)
+        case .longLiteral(let value, _):
+            return .longLiteral(value)
+        case .floatLiteral(let value, _):
+            return .floatLiteral(value)
+        case .doubleLiteral(let value, _):
+            return .doubleLiteral(value)
+        case .charLiteral(let value, _):
+            return .charLiteral(value)
         case .boolLiteral(let value, _):
             return .boolLiteral(value)
         case .stringLiteral(let value, _):

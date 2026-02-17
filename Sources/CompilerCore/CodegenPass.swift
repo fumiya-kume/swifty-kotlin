@@ -268,6 +268,14 @@ public final class CodegenPhase: CompilerPhase {
         switch value {
         case .intLiteral(let intValue):
             return "int:\(intValue)"
+        case .longLiteral(let longValue):
+            return "long:\(longValue)"
+        case .floatLiteral(let floatValue):
+            return "float:\(floatValue)"
+        case .doubleLiteral(let doubleValue):
+            return "double:\(doubleValue)"
+        case .charLiteral(let charValue):
+            return "char:\(charValue)"
         case .boolLiteral(let boolValue):
             return "bool:\(boolValue ? 1 : 0)"
         case .stringLiteral(let text):
