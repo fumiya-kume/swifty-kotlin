@@ -57,6 +57,7 @@ public final class LLVMCAPIBackend: CodegenBackend {
                 let emitter = NativeEmitter(
                     target: target,
                     optLevel: optLevel,
+                    debugInfo: debugInfo,
                     bindings: bindings,
                     module: module,
                     interner: interner
@@ -79,6 +80,7 @@ public final class LLVMCAPIBackend: CodegenBackend {
                 let emitter = NativeEmitter(
                     target: target,
                     optLevel: optLevel,
+                    debugInfo: debugInfo,
                     bindings: bindings,
                     module: module,
                     interner: interner
@@ -92,7 +94,6 @@ public final class LLVMCAPIBackend: CodegenBackend {
         context: String,
         nativeEmit: (LLVMCAPIBindings) throws -> Void
     ) throws {
-        _ = debugInfo
         guard let bindings, hasUsableBindings else {
             if isStrictMode {
                 diagnostics.error(
@@ -157,6 +158,7 @@ private struct NativeEmitter {
 
     private let target: TargetTriple
     private let optLevel: OptimizationLevel
+    private let debugInfo: Bool
     private let bindings: LLVMCAPIBindings
     private let module: KIRModule
     private let interner: StringInterner
@@ -164,12 +166,14 @@ private struct NativeEmitter {
     init(
         target: TargetTriple,
         optLevel: OptimizationLevel,
+        debugInfo: Bool,
         bindings: LLVMCAPIBindings,
         module: KIRModule,
         interner: StringInterner
     ) {
         self.target = target
         self.optLevel = optLevel
+        self.debugInfo = debugInfo
         self.bindings = bindings
         self.module = module
         self.interner = interner
@@ -305,7 +309,95 @@ private struct NativeEmitter {
             }
         }
 
+        if debugInfo {
+            attachMinimalDebugInfo(
+                llvmModule: llvmModule,
+                context: context,
+                internalFunctions: internalFunctions
+            )
+        }
+
         return (context: context, module: llvmModule)
+    }
+
+    private func attachMinimalDebugInfo(
+        llvmModule: LLVMCAPIBindings.LLVMModuleRef,
+        context: LLVMCAPIBindings.LLVMContextRef,
+        internalFunctions: [SymbolID: LLVMFunction]
+    ) {
+        guard bindings.debugInfoAvailable else {
+            return
+        }
+
+        guard let diBuilder = bindings.createDIBuilder(module: llvmModule) else {
+            return
+        }
+        defer {
+            bindings.finalizeDIBuilder(diBuilder)
+            bindings.disposeDIBuilder(diBuilder)
+        }
+
+        guard let diFile = bindings.diBuilderCreateFile(
+            diBuilder,
+            filename: "kswiftk_module.kt",
+            directory: "."
+        ) else {
+            return
+        }
+
+        let isOptimized = optLevel != .O0
+        guard bindings.diBuilderCreateCompileUnit(
+            diBuilder,
+            lang: 11,
+            file: diFile,
+            producer: "kswiftk",
+            isOptimized: isOptimized
+        ) != nil else {
+            return
+        }
+
+        let subroutineType = bindings.diBuilderCreateSubroutineType(
+            diBuilder,
+            file: diFile,
+            parameterTypes: []
+        )
+
+        for declaration in module.arena.declarations {
+            guard case .function(let function) = declaration,
+                  let llvmFunction = internalFunctions[function.symbol] else {
+                continue
+            }
+            let functionName = LLVMBackend.cFunctionSymbol(for: function, interner: interner)
+
+            guard let subprogram = bindings.diBuilderCreateFunction(
+                diBuilder,
+                scope: diFile,
+                name: interner.resolve(function.name),
+                linkageName: functionName,
+                file: diFile,
+                lineNo: 0,
+                type: subroutineType,
+                isLocalToUnit: false,
+                isDefinition: true,
+                scopeLine: 0,
+                isOptimized: isOptimized
+            ) else {
+                continue
+            }
+            bindings.setSubprogram(llvmFunction.value, subprogram: subprogram)
+        }
+
+        if let int32Type = bindings.int32Type(context: context),
+           let debugVersionConst = bindings.constInt(int32Type, value: 3),
+           let debugVersionMD = bindings.valueAsMetadata(debugVersionConst) {
+            bindings.addModuleFlag(llvmModule, behavior: 1, key: "Debug Info Version", value: debugVersionMD)
+        }
+
+        if let int32Type = bindings.int32Type(context: context),
+           let dwarfVersionConst = bindings.constInt(int32Type, value: 5),
+           let dwarfVersionMD = bindings.valueAsMetadata(dwarfVersionConst) {
+            bindings.addModuleFlag(llvmModule, behavior: 1, key: "Dwarf Version", value: dwarfVersionMD)
+        }
     }
 
     private func defineFrameRuntimeStubs(

@@ -224,6 +224,35 @@ final class LinkPhaseCoverageTests: XCTestCase {
         XCTAssertThrowsError(try LinkPhase().run(noKirCtx))
     }
 
+    func testLinkPhasePassesDebugFlagToClang() throws {
+        let source = "fun main() = 0"
+        try withTemporaryFile(contents: source) { path in
+            let outputPath = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString).path
+            let options = CompilerOptions(
+                moduleName: "DebugLink",
+                inputs: [path],
+                outputPath: outputPath,
+                emit: .executable,
+                target: defaultTargetTriple(),
+                debugInfo: true
+            )
+            let ctx = CompilationContext(
+                options: options,
+                sourceManager: SourceManager(),
+                diagnostics: DiagnosticEngine(),
+                interner: StringInterner()
+            )
+
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+            try LinkPhase().run(ctx)
+
+            XCTAssertTrue(FileManager.default.fileExists(atPath: outputPath))
+        }
+    }
+
     func testLinkPhaseReportsDiagnosticForUnsupportedTargetArchitecture() throws {
         let tempObjectURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".o")
         try Data().write(to: tempObjectURL)

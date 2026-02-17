@@ -107,6 +107,53 @@ final class LLVMCAPIBindings {
     private typealias LLVMInitializeAArch64TargetMCFn = @convention(c) () -> Void
     private typealias LLVMInitializeAArch64AsmPrinterFn = @convention(c) () -> Void
 
+    typealias LLVMDIBuilderRef = OpaquePointer
+    typealias LLVMMetadataRef = OpaquePointer
+
+    private typealias LLVMCreateDIBuilderFn = @convention(c) (LLVMModuleRef?) -> LLVMDIBuilderRef?
+    private typealias LLVMDisposeDIBuilderFn = @convention(c) (LLVMDIBuilderRef?) -> Void
+    private typealias LLVMDIBuilderFinalizeFn = @convention(c) (LLVMDIBuilderRef?) -> Void
+    private typealias LLVMDIBuilderCreateFileFn = @convention(c) (
+        LLVMDIBuilderRef?,
+        UnsafePointer<CChar>?, Int,
+        UnsafePointer<CChar>?, Int
+    ) -> LLVMMetadataRef?
+    private typealias LLVMDIBuilderCreateCompileUnitFn = @convention(c) (
+        LLVMDIBuilderRef?,
+        UInt32, LLVMMetadataRef?,
+        UnsafePointer<CChar>?, Int,
+        Int32,
+        UnsafePointer<CChar>?, Int,
+        UInt32,
+        UnsafePointer<CChar>?, Int,
+        UInt32, UInt32, Int32, Int32,
+        UnsafePointer<CChar>?, Int,
+        UnsafePointer<CChar>?, Int
+    ) -> LLVMMetadataRef?
+    private typealias LLVMDIBuilderCreateSubroutineTypeFn = @convention(c) (
+        LLVMDIBuilderRef?,
+        LLVMMetadataRef?,
+        UnsafeMutablePointer<LLVMMetadataRef?>?, UInt32,
+        UInt32
+    ) -> LLVMMetadataRef?
+    private typealias LLVMDIBuilderCreateFunctionFn = @convention(c) (
+        LLVMDIBuilderRef?,
+        LLVMMetadataRef?,
+        UnsafePointer<CChar>?, Int,
+        UnsafePointer<CChar>?, Int,
+        LLVMMetadataRef?,
+        UInt32, LLVMMetadataRef?,
+        Int32, Int32, UInt32, UInt32, Int32
+    ) -> LLVMMetadataRef?
+    private typealias LLVMSetSubprogramFn = @convention(c) (LLVMValueRef?, LLVMMetadataRef?) -> Void
+    private typealias LLVMAddModuleFlagFn = @convention(c) (
+        LLVMModuleRef?, UInt32,
+        UnsafePointer<CChar>?, Int,
+        LLVMMetadataRef?
+    ) -> Void
+    private typealias LLVMValueAsMetadataFn = @convention(c) (LLVMValueRef?) -> LLVMMetadataRef?
+    private typealias LLVMInt32TypeInContextFn = @convention(c) (LLVMContextRef?) -> LLVMTypeRef?
+
     private let handle: UnsafeMutableRawPointer
     private let contextCreateFn: LLVMContextCreateFn
     private let contextDisposeFn: LLVMContextDisposeFn
@@ -166,6 +213,17 @@ final class LLVMCAPIBindings {
     private let initializeAArch64TargetFn: LLVMInitializeAArch64TargetFn?
     private let initializeAArch64TargetMCFn: LLVMInitializeAArch64TargetMCFn?
     private let initializeAArch64AsmPrinterFn: LLVMInitializeAArch64AsmPrinterFn?
+    private let createDIBuilderFn: LLVMCreateDIBuilderFn?
+    private let disposeDIBuilderFn: LLVMDisposeDIBuilderFn?
+    private let diBuilderFinalizeFn: LLVMDIBuilderFinalizeFn?
+    private let diBuilderCreateFileFn: LLVMDIBuilderCreateFileFn?
+    private let diBuilderCreateCompileUnitFn: LLVMDIBuilderCreateCompileUnitFn?
+    private let diBuilderCreateSubroutineTypeFn: LLVMDIBuilderCreateSubroutineTypeFn?
+    private let diBuilderCreateFunctionFn: LLVMDIBuilderCreateFunctionFn?
+    private let setSubprogramFn: LLVMSetSubprogramFn?
+    private let addModuleFlagFn: LLVMAddModuleFlagFn?
+    private let valueAsMetadataFn: LLVMValueAsMetadataFn?
+    private let int32TypeFn: LLVMInt32TypeInContextFn?
 
     private init(
         handle: UnsafeMutableRawPointer,
@@ -226,7 +284,18 @@ final class LLVMCAPIBindings {
         initializeAArch64TargetInfoFn: LLVMInitializeAArch64TargetInfoFn?,
         initializeAArch64TargetFn: LLVMInitializeAArch64TargetFn?,
         initializeAArch64TargetMCFn: LLVMInitializeAArch64TargetMCFn?,
-        initializeAArch64AsmPrinterFn: LLVMInitializeAArch64AsmPrinterFn?
+        initializeAArch64AsmPrinterFn: LLVMInitializeAArch64AsmPrinterFn?,
+        createDIBuilderFn: LLVMCreateDIBuilderFn?,
+        disposeDIBuilderFn: LLVMDisposeDIBuilderFn?,
+        diBuilderFinalizeFn: LLVMDIBuilderFinalizeFn?,
+        diBuilderCreateFileFn: LLVMDIBuilderCreateFileFn?,
+        diBuilderCreateCompileUnitFn: LLVMDIBuilderCreateCompileUnitFn?,
+        diBuilderCreateSubroutineTypeFn: LLVMDIBuilderCreateSubroutineTypeFn?,
+        diBuilderCreateFunctionFn: LLVMDIBuilderCreateFunctionFn?,
+        setSubprogramFn: LLVMSetSubprogramFn?,
+        addModuleFlagFn: LLVMAddModuleFlagFn?,
+        valueAsMetadataFn: LLVMValueAsMetadataFn?,
+        int32TypeFn: LLVMInt32TypeInContextFn?
     ) {
         self.handle = handle
         self.contextCreateFn = contextCreateFn
@@ -287,6 +356,17 @@ final class LLVMCAPIBindings {
         self.initializeAArch64TargetFn = initializeAArch64TargetFn
         self.initializeAArch64TargetMCFn = initializeAArch64TargetMCFn
         self.initializeAArch64AsmPrinterFn = initializeAArch64AsmPrinterFn
+        self.createDIBuilderFn = createDIBuilderFn
+        self.disposeDIBuilderFn = disposeDIBuilderFn
+        self.diBuilderFinalizeFn = diBuilderFinalizeFn
+        self.diBuilderCreateFileFn = diBuilderCreateFileFn
+        self.diBuilderCreateCompileUnitFn = diBuilderCreateCompileUnitFn
+        self.diBuilderCreateSubroutineTypeFn = diBuilderCreateSubroutineTypeFn
+        self.diBuilderCreateFunctionFn = diBuilderCreateFunctionFn
+        self.setSubprogramFn = setSubprogramFn
+        self.addModuleFlagFn = addModuleFlagFn
+        self.valueAsMetadataFn = valueAsMetadataFn
+        self.int32TypeFn = int32TypeFn
     }
 
     deinit {
@@ -423,7 +503,18 @@ final class LLVMCAPIBindings {
                 initializeAArch64TargetInfoFn: loadSymbol(handle: handle, name: "LLVMInitializeAArch64TargetInfo", as: LLVMInitializeAArch64TargetInfoFn.self),
                 initializeAArch64TargetFn: loadSymbol(handle: handle, name: "LLVMInitializeAArch64Target", as: LLVMInitializeAArch64TargetFn.self),
                 initializeAArch64TargetMCFn: loadSymbol(handle: handle, name: "LLVMInitializeAArch64TargetMC", as: LLVMInitializeAArch64TargetMCFn.self),
-                initializeAArch64AsmPrinterFn: loadSymbol(handle: handle, name: "LLVMInitializeAArch64AsmPrinter", as: LLVMInitializeAArch64AsmPrinterFn.self)
+                initializeAArch64AsmPrinterFn: loadSymbol(handle: handle, name: "LLVMInitializeAArch64AsmPrinter", as: LLVMInitializeAArch64AsmPrinterFn.self),
+                createDIBuilderFn: loadSymbol(handle: handle, name: "LLVMCreateDIBuilder", as: LLVMCreateDIBuilderFn.self),
+                disposeDIBuilderFn: loadSymbol(handle: handle, name: "LLVMDisposeDIBuilder", as: LLVMDisposeDIBuilderFn.self),
+                diBuilderFinalizeFn: loadSymbol(handle: handle, name: "LLVMDIBuilderFinalize", as: LLVMDIBuilderFinalizeFn.self),
+                diBuilderCreateFileFn: loadSymbol(handle: handle, name: "LLVMDIBuilderCreateFile", as: LLVMDIBuilderCreateFileFn.self),
+                diBuilderCreateCompileUnitFn: loadSymbol(handle: handle, name: "LLVMDIBuilderCreateCompileUnit", as: LLVMDIBuilderCreateCompileUnitFn.self),
+                diBuilderCreateSubroutineTypeFn: loadSymbol(handle: handle, name: "LLVMDIBuilderCreateSubroutineType", as: LLVMDIBuilderCreateSubroutineTypeFn.self),
+                diBuilderCreateFunctionFn: loadSymbol(handle: handle, name: "LLVMDIBuilderCreateFunction", as: LLVMDIBuilderCreateFunctionFn.self),
+                setSubprogramFn: loadSymbol(handle: handle, name: "LLVMSetSubprogram", as: LLVMSetSubprogramFn.self),
+                addModuleFlagFn: loadSymbol(handle: handle, name: "LLVMAddModuleFlag", as: LLVMAddModuleFlagFn.self),
+                valueAsMetadataFn: loadSymbol(handle: handle, name: "LLVMValueAsMetadata", as: LLVMValueAsMetadataFn.self),
+                int32TypeFn: loadSymbol(handle: handle, name: "LLVMInt32TypeInContext", as: LLVMInt32TypeInContextFn.self)
             )
         }
         return nil
@@ -766,6 +857,139 @@ final class LLVMCAPIBindings {
             return String(cString: errorMessage)
         }
         return "LLVMTargetMachineEmitToFile failed."
+    }
+
+    var debugInfoAvailable: Bool {
+        createDIBuilderFn != nil &&
+        disposeDIBuilderFn != nil &&
+        diBuilderFinalizeFn != nil &&
+        diBuilderCreateFileFn != nil &&
+        diBuilderCreateCompileUnitFn != nil &&
+        diBuilderCreateSubroutineTypeFn != nil &&
+        diBuilderCreateFunctionFn != nil &&
+        setSubprogramFn != nil &&
+        addModuleFlagFn != nil &&
+        valueAsMetadataFn != nil &&
+        int32TypeFn != nil
+    }
+
+    func createDIBuilder(module: LLVMModuleRef?) -> LLVMDIBuilderRef? {
+        createDIBuilderFn?(module)
+    }
+
+    func disposeDIBuilder(_ builder: LLVMDIBuilderRef?) {
+        disposeDIBuilderFn?(builder)
+    }
+
+    func finalizeDIBuilder(_ builder: LLVMDIBuilderRef?) {
+        diBuilderFinalizeFn?(builder)
+    }
+
+    func diBuilderCreateFile(
+        _ builder: LLVMDIBuilderRef?,
+        filename: String,
+        directory: String
+    ) -> LLVMMetadataRef? {
+        guard let diBuilderCreateFileFn else { return nil }
+        return filename.withCString { fName in
+            directory.withCString { dir in
+                diBuilderCreateFileFn(builder, fName, filename.utf8.count, dir, directory.utf8.count)
+            }
+        }
+    }
+
+    func diBuilderCreateCompileUnit(
+        _ builder: LLVMDIBuilderRef?,
+        lang: UInt32,
+        file: LLVMMetadataRef?,
+        producer: String,
+        isOptimized: Bool
+    ) -> LLVMMetadataRef? {
+        guard let diBuilderCreateCompileUnitFn else { return nil }
+        return producer.withCString { prod in
+            "".withCString { empty in
+                diBuilderCreateCompileUnitFn(
+                    builder,
+                    lang, file,
+                    prod, producer.utf8.count,
+                    isOptimized ? 1 : 0,
+                    empty, 0,
+                    0,
+                    empty, 0,
+                    1,
+                    0, 0, 0,
+                    empty, 0,
+                    empty, 0
+                )
+            }
+        }
+    }
+
+    func diBuilderCreateSubroutineType(
+        _ builder: LLVMDIBuilderRef?,
+        file: LLVMMetadataRef?,
+        parameterTypes: [LLVMMetadataRef?]
+    ) -> LLVMMetadataRef? {
+        guard let diBuilderCreateSubroutineTypeFn else { return nil }
+        var mutable = parameterTypes
+        return diBuilderCreateSubroutineTypeFn(
+            builder, file, &mutable, UInt32(mutable.count), 0
+        )
+    }
+
+    func diBuilderCreateFunction(
+        _ builder: LLVMDIBuilderRef?,
+        scope: LLVMMetadataRef?,
+        name: String,
+        linkageName: String,
+        file: LLVMMetadataRef?,
+        lineNo: UInt32,
+        type: LLVMMetadataRef?,
+        isLocalToUnit: Bool,
+        isDefinition: Bool,
+        scopeLine: UInt32,
+        isOptimized: Bool
+    ) -> LLVMMetadataRef? {
+        guard let diBuilderCreateFunctionFn else { return nil }
+        return name.withCString { n in
+            linkageName.withCString { ln in
+                diBuilderCreateFunctionFn(
+                    builder, scope,
+                    n, name.utf8.count,
+                    ln, linkageName.utf8.count,
+                    file,
+                    lineNo, type,
+                    isLocalToUnit ? 1 : 0,
+                    isDefinition ? 1 : 0,
+                    scopeLine, 0,
+                    isOptimized ? 1 : 0
+                )
+            }
+        }
+    }
+
+    func setSubprogram(_ function: LLVMValueRef?, subprogram: LLVMMetadataRef?) {
+        setSubprogramFn?(function, subprogram)
+    }
+
+    func addModuleFlag(
+        _ module: LLVMModuleRef?,
+        behavior: UInt32,
+        key: String,
+        value: LLVMMetadataRef?
+    ) {
+        guard let addModuleFlagFn else { return }
+        key.withCString { k in
+            addModuleFlagFn(module, behavior, k, key.utf8.count, value)
+        }
+    }
+
+    func valueAsMetadata(_ value: LLVMValueRef?) -> LLVMMetadataRef? {
+        valueAsMetadataFn?(value)
+    }
+
+    func int32Type(context: LLVMContextRef?) -> LLVMTypeRef? {
+        int32TypeFn?(context)
     }
 
     private func initializeTarget(for triple: String) {
