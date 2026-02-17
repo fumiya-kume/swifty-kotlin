@@ -656,7 +656,7 @@ final class LibraryMetadataCoverageTests: XCTestCase {
             let noSymbols = ctx.sema?.symbols.allSymbols().contains { symbol in
                 ctx.interner.resolve(symbol.name) == "foo" && symbol.flags.contains(.synthetic)
             }
-            XCTAssertNotEqual(noSymbols, true)
+            XCTAssertFalse(noSymbols ?? false)
         }
     }
 
@@ -803,7 +803,7 @@ final class LibraryMetadataCoverageTests: XCTestCase {
           "formatVersion": 1,
           "moduleName": "WrongTarget",
           "kotlinLanguageVersion": "2.3.10",
-          "target": "x86_64-apple-macosx",
+          "target": "fake-unknown-invalid",
           "metadata": "metadata.bin"
         }
         """
@@ -827,7 +827,7 @@ final class LibraryMetadataCoverageTests: XCTestCase {
             let hasImported = ctx.sema?.symbols.allSymbols().contains { symbol in
                 ctx.interner.resolve(symbol.name) == "fn" && symbol.flags.contains(.synthetic)
             }
-            XCTAssertNotEqual(hasImported, true)
+            XCTAssertFalse(hasImported ?? false)
         }
     }
 
@@ -836,13 +836,15 @@ final class LibraryMetadataCoverageTests: XCTestCase {
         let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let libDir = baseDir.appendingPathExtension("kklib")
         try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
+        let t = defaultTargetTriple()
+        let targetStr = "\(t.arch)-\(t.vendor)-\(t.os)"
 
         let manifest = """
         {
           "formatVersion": 1,
           "moduleName": "GoodTarget",
           "kotlinLanguageVersion": "2.3.10",
-          "target": "arm64-apple-macosx",
+          "target": "\(targetStr)",
           "metadata": "metadata.bin"
         }
         """
@@ -874,13 +876,15 @@ final class LibraryMetadataCoverageTests: XCTestCase {
         let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let libDir = baseDir.appendingPathExtension("kklib")
         try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
+        let t = defaultTargetTriple()
+        let targetStr = "\(t.arch)-\(t.vendor)-\(t.os)"
 
         let manifest = """
         {
           "formatVersion": 1,
           "moduleName": "NoMeta",
           "kotlinLanguageVersion": "2.3.10",
-          "target": "arm64-apple-macosx",
+          "target": "\(targetStr)",
           "metadata": "nonexistent.bin"
         }
         """
@@ -904,13 +908,15 @@ final class LibraryMetadataCoverageTests: XCTestCase {
         let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let libDir = baseDir.appendingPathExtension("kklib")
         try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
+        let t = defaultTargetTriple()
+        let targetStr = "\(t.arch)-\(t.vendor)-\(t.os)"
 
         let manifest = """
         {
           "formatVersion": 1,
           "moduleName": "MissingObj",
           "kotlinLanguageVersion": "2.3.10",
-          "target": "arm64-apple-macosx",
+          "target": "\(targetStr)",
           "objects": ["objects/missing.o"],
           "metadata": "metadata.bin"
         }
@@ -943,13 +949,15 @@ final class LibraryMetadataCoverageTests: XCTestCase {
         let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let libDir = baseDir.appendingPathExtension("kklib")
         try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
+        let t = defaultTargetTriple()
+        let targetStr = "\(t.arch)-\(t.vendor)-\(t.os)"
 
         let manifest = """
         {
           "formatVersion": 1,
           "moduleName": "MissingInline",
           "kotlinLanguageVersion": "2.3.10",
-          "target": "arm64-apple-macosx",
+          "target": "\(targetStr)",
           "metadata": "metadata.bin",
           "inlineKIRDir": "nonexistent-dir"
         }
