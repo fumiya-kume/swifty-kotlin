@@ -133,6 +133,8 @@ run_case() {
   local cand_run_stdout="$tmp_dir/cand_run.stdout"
   local cand_run_stderr="$tmp_dir/cand_run.stderr"
 
+  : >"$ref_compile_stdout"
+  : >"$ref_compile_stderr"
   : >"$ref_run_stdout"
   : >"$ref_run_stderr"
   : >"$cand_run_stdout"
