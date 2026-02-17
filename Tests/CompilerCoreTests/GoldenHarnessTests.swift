@@ -368,6 +368,13 @@ final class GoldenHarnessTests: XCTestCase {
             let stmts = statements.map { "e\($0.rawValue)" }.joined(separator: ",")
             let trailing = trailingExpr.map { "e\($0.rawValue)" } ?? "_"
             return "blockExpr stmts=[\(stmts)] trailing=\(trailing)"
+        case .superRef:
+            return "super"
+        case .thisRef(let label, _):
+            if let label {
+                return "this@\(interner.resolve(label))"
+            }
+            return "this"
         }
     }
 

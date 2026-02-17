@@ -36,7 +36,8 @@ public final class LexPhase: CompilerPhase {
     public init() {}
 
     public func run(_ ctx: CompilationContext) throws {
-        var tokens: [Token] = []
+        var allTokens: [Token] = []
+        var tokensByFile: [(FileID, [Token])] = []
         for fileID in ctx.sourceManager.fileIDs().sorted(by: { $0.rawValue < $1.rawValue }) {
             let contents = ctx.sourceManager.contents(of: fileID)
             let lexer = KotlinLexer(
@@ -46,13 +47,15 @@ public final class LexPhase: CompilerPhase {
                 diagnostics: ctx.diagnostics
             )
             let fileTokens = lexer.lexAll()
+            tokensByFile.append((fileID, fileTokens))
             if let last = fileTokens.last, case .eof = last.kind {
-                tokens.append(contentsOf: fileTokens.dropLast())
+                allTokens.append(contentsOf: fileTokens.dropLast())
             } else {
-                tokens.append(contentsOf: fileTokens)
+                allTokens.append(contentsOf: fileTokens)
             }
         }
-        ctx.tokens = tokens
+        ctx.tokens = allTokens
+        ctx.tokensByFile = tokensByFile
     }
 }
 
@@ -62,14 +65,21 @@ public final class ParsePhase: CompilerPhase {
     public init() {}
 
     public func run(_ ctx: CompilationContext) throws {
-        let parser = KotlinParser(
-            tokens: ctx.tokens,
-            interner: ctx.interner,
-            diagnostics: ctx.diagnostics
-        )
-        let parsed = parser.parseFile()
-        ctx.syntaxTree = parsed.arena
-        ctx.syntaxTreeRoot = parsed.root
+        var syntaxTrees: [(FileID, SyntaxArena, NodeID)] = []
+        for (fileID, fileTokens) in ctx.tokensByFile {
+            let parser = KotlinParser(
+                tokens: fileTokens,
+                interner: ctx.interner,
+                diagnostics: ctx.diagnostics
+            )
+            let parsed = parser.parseFile()
+            syntaxTrees.append((fileID, parsed.arena, parsed.root))
+        }
+        ctx.syntaxTrees = syntaxTrees
+        if let first = syntaxTrees.first {
+            ctx.syntaxTree = first.1
+            ctx.syntaxTreeRoot = first.2
+        }
     }
 }
 
@@ -79,8 +89,18 @@ public final class BuildASTPhase: CompilerPhase {
     public init() {}
 
     public func run(_ ctx: CompilationContext) throws {
-        guard let cst = ctx.syntaxTree else {
-            throw CompilerPipelineError.invalidInput("Parse phase did not run.")
+        if ctx.syntaxTrees.isEmpty {
+            if let cst = ctx.syntaxTree {
+                let fileID: FileID
+                if let firstToken = ctx.tokens.first, firstToken.range.start.file != FileID.invalid {
+                    fileID = firstToken.range.start.file
+                } else {
+                    fileID = FileID(rawValue: 0)
+                }
+                ctx.syntaxTrees = [(fileID, cst, ctx.syntaxTreeRoot)]
+            } else {
+                throw CompilerPipelineError.invalidInput("Parse phase did not run.")
+            }
         }
 
         let arena = ASTArena()
@@ -88,95 +108,96 @@ public final class BuildASTPhase: CompilerPhase {
         var packageByFile: [Int32: [InternedString]] = [:]
         var importsByFile: [Int32: [ImportDecl]] = [:]
         var declarationsByFile: [Int32: [DeclID]] = [:]
-
-        let isScript = cst.node(ctx.syntaxTreeRoot).kind == .script
-
-        for child in cst.children(of: ctx.syntaxTreeRoot) {
-            guard case .node(let nodeID) = child else {
-                continue
-            }
-            let node = cst.node(nodeID)
-            let fileRawID = node.range.start.file.rawValue
-
-            switch node.kind {
-            case .packageHeader:
-                packageByFile[fileRawID] = extractQualifiedPath(from: nodeID, in: cst, interner: ctx.interner, isPackageHeader: true)
-
-            case .importHeader:
-                let path = extractQualifiedPath(from: nodeID, in: cst, interner: ctx.interner, isPackageHeader: false)
-                let alias = extractImportAlias(from: nodeID, in: cst, interner: ctx.interner)
-                importsByFile[fileRawID, default: []].append(ImportDecl(range: node.range, path: path, alias: alias))
-
-            case .importList:
-                for importChild in cst.children(of: nodeID) {
-                    guard case .node(let importNodeID) = importChild else { continue }
-                    let importNode = cst.node(importNodeID)
-                    guard importNode.kind == .importHeader else { continue }
-                    let path = extractQualifiedPath(from: importNodeID, in: cst, interner: ctx.interner, isPackageHeader: false)
-                    let alias = extractImportAlias(from: importNodeID, in: cst, interner: ctx.interner)
-                    importsByFile[fileRawID, default: []].append(ImportDecl(range: importNode.range, path: path, alias: alias))
-                }
-
-            case .classDecl:
-                let decl = Decl.classDecl(makeClassDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
-                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
-
-            case .interfaceDecl:
-                let decl = Decl.interfaceDecl(makeInterfaceDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
-                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
-
-            case .objectDecl:
-                let decl = Decl.objectDecl(makeObjectDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
-                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
-
-            case .funDecl:
-                let decl = Decl.funDecl(makeFunDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
-                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
-
-            case .propertyDecl where !isScript:
-                let decl = Decl.propertyDecl(makePropertyDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
-                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
-
-            case .typeAliasDecl:
-                let decl = Decl.typeAliasDecl(makeTypeAliasDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
-                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
-
-            case .enumEntry:
-                let decl = Decl.enumEntryDecl(makeEnumEntryDecl(from: nodeID, in: cst, interner: ctx.interner))
-                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
-
-            default:
-                continue
-            }
-        }
-
         var scriptExprsByFile: [Int32: [ExprID]] = [:]
-        if isScript {
-            let scriptExprs = blockExpressions(
-                from: ctx.syntaxTreeRoot,
-                in: cst,
-                interner: ctx.interner,
-                astArena: arena
-            )
-            let rootNode = cst.node(ctx.syntaxTreeRoot)
-            let fileRawID = rootNode.range.start.file.rawValue
-            scriptExprsByFile[fileRawID] = scriptExprs
 
-            let mainName = ctx.interner.intern("main")
-            let mainDecl = FunDecl(
-                range: rootNode.range,
-                name: mainName,
-                modifiers: [],
-                body: .block(scriptExprs, rootNode.range)
-            )
-            let declID = arena.appendDecl(.funDecl(mainDecl))
-            declarations.append(declID)
-            declarationsByFile[fileRawID, default: []].append(declID)
+        for (fileID, cst, root) in ctx.syntaxTrees {
+            let isScript = cst.node(root).kind == .script
+            let fileRawID = fileID.rawValue
+
+            for child in cst.children(of: root) {
+                guard case .node(let nodeID) = child else {
+                    continue
+                }
+                let node = cst.node(nodeID)
+
+                switch node.kind {
+                case .packageHeader:
+                    packageByFile[fileRawID] = extractQualifiedPath(from: nodeID, in: cst, interner: ctx.interner, isPackageHeader: true)
+
+                case .importHeader:
+                    let path = extractQualifiedPath(from: nodeID, in: cst, interner: ctx.interner, isPackageHeader: false)
+                    let alias = extractImportAlias(from: nodeID, in: cst, interner: ctx.interner)
+                    importsByFile[fileRawID, default: []].append(ImportDecl(range: node.range, path: path, alias: alias))
+
+                case .importList:
+                    for importChild in cst.children(of: nodeID) {
+                        guard case .node(let importNodeID) = importChild else { continue }
+                        let importNode = cst.node(importNodeID)
+                        guard importNode.kind == .importHeader else { continue }
+                        let path = extractQualifiedPath(from: importNodeID, in: cst, interner: ctx.interner, isPackageHeader: false)
+                        let alias = extractImportAlias(from: importNodeID, in: cst, interner: ctx.interner)
+                        importsByFile[fileRawID, default: []].append(ImportDecl(range: importNode.range, path: path, alias: alias))
+                    }
+
+                case .classDecl:
+                    let decl = Decl.classDecl(makeClassDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
+                    appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
+
+                case .interfaceDecl:
+                    let decl = Decl.interfaceDecl(makeInterfaceDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
+                    appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
+
+                case .objectDecl:
+                    let decl = Decl.objectDecl(makeObjectDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
+                    appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
+
+                case .funDecl:
+                    let decl = Decl.funDecl(makeFunDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
+                    appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
+
+                case .propertyDecl where !isScript:
+                    let decl = Decl.propertyDecl(makePropertyDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
+                    appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
+
+                case .typeAliasDecl:
+                    let decl = Decl.typeAliasDecl(makeTypeAliasDecl(from: nodeID, in: cst, interner: ctx.interner, astArena: arena))
+                    appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
+
+                case .enumEntry:
+                    let decl = Decl.enumEntryDecl(makeEnumEntryDecl(from: nodeID, in: cst, interner: ctx.interner))
+                    appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
+
+                default:
+                    continue
+                }
+            }
+
+            if isScript {
+                let scriptExprs = blockExpressions(
+                    from: root,
+                    in: cst,
+                    interner: ctx.interner,
+                    astArena: arena
+                )
+                let rootNode = cst.node(root)
+                scriptExprsByFile[fileRawID] = scriptExprs
+
+                let mainName = ctx.interner.intern("main")
+                let mainDecl = FunDecl(
+                    range: rootNode.range,
+                    name: mainName,
+                    modifiers: [],
+                    body: .block(scriptExprs, rootNode.range)
+                )
+                let declID = arena.appendDecl(.funDecl(mainDecl))
+                declarations.append(declID)
+                declarationsByFile[fileRawID, default: []].append(declID)
+            }
         }
 
-        let tokenFileIDs = Set(ctx.tokens.map { $0.range.start.file.rawValue })
-        let fileIDs = tokenFileIDs.filter { $0 != FileID.invalid.rawValue }.sorted()
-        let files: [ASTFile] = fileIDs.map { rawID in
+        let fileIDs = ctx.syntaxTrees.map { $0.0.rawValue }.filter { $0 != FileID.invalid.rawValue }
+        let uniqueFileIDs = Array(Set(fileIDs)).sorted()
+        let files: [ASTFile] = uniqueFileIDs.map { rawID in
             ASTFile(
                 fileID: FileID(rawValue: rawID),
                 packageFQName: packageByFile[rawID] ?? [],
