@@ -839,8 +839,12 @@ extension BuildASTPhase {
                     return false
                 }
                 if hasNewline && !current.isEmpty {
-                    groups.append(current)
-                    current = []
+                    let lastIsContinuation = current.last.map { isBinaryOperatorToken($0.kind) } ?? false
+                    let nextIsContinuation = isBinaryOperatorToken(token.kind)
+                    if !lastIsContinuation && !nextIsContinuation {
+                        groups.append(current)
+                        current = []
+                    }
                 }
             }
             depth.track(token.kind)
@@ -850,6 +854,25 @@ extension BuildASTPhase {
             groups.append(current)
         }
         return groups
+    }
+
+    func isBinaryOperatorToken(_ kind: TokenKind) -> Bool {
+        switch kind {
+        case .symbol(.plus), .symbol(.minus), .symbol(.star), .symbol(.slash), .symbol(.percent),
+             .symbol(.ampAmp), .symbol(.barBar),
+             .symbol(.equalEqual), .symbol(.bangEqual),
+             .symbol(.lessThan), .symbol(.lessOrEqual), .symbol(.greaterThan), .symbol(.greaterOrEqual),
+             .symbol(.assign), .symbol(.plusAssign), .symbol(.minusAssign),
+             .symbol(.starAssign), .symbol(.slashAssign), .symbol(.percentAssign),
+             .symbol(.dotDot), .symbol(.dotDotLt),
+             .symbol(.questionQuestion), .symbol(.questionColon),
+             .symbol(.dot), .symbol(.questionDot),
+             .symbol(.arrow), .symbol(.fatArrow),
+             .keyword(.as), .keyword(.is), .keyword(.in):
+            return true
+        default:
+            return false
+        }
     }
 
     func skipBalancedBracket(
