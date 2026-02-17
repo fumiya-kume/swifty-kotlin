@@ -90,19 +90,19 @@ extension TypeCheckSemaPassPhase {
                     continue
                 }
 
-                if usedAliasNames[alias] != nil {
+                if resolved.isEmpty {
                     diagnostics.error(
-                        "KSWIFTK-SEMA-0023",
-                        "Import alias conflicts with a previous import alias in the same file.",
+                        "KSWIFTK-SEMA-0024",
+                        "Unresolved import path.",
                         range: importDecl.range
                     )
                     continue
                 }
 
-                if resolved.isEmpty {
+                if usedAliasNames[alias] != nil {
                     diagnostics.error(
-                        "KSWIFTK-SEMA-0024",
-                        "Unresolved import path.",
+                        "KSWIFTK-SEMA-0023",
+                        "Import alias conflicts with a previous import alias in the same file.",
                         range: importDecl.range
                     )
                     continue
