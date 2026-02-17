@@ -169,4 +169,22 @@ final class RuntimeCoroutineStateTests: XCTestCase {
         XCTAssertNotEqual(handle, 0)
         XCTAssertEqual(kk_kxmini_async_await(handle), 73)
     }
+
+    func testRunBlockingWithContInvalidEntryDoesNotCrash() {
+        let continuation = kk_coroutine_continuation_new(5005)
+        _ = kk_coroutine_launcher_arg_set(continuation, 0, 123)
+        _ = kk_kxmini_run_blocking_with_cont(0, continuation)
+    }
+
+    func testLaunchWithContInvalidEntryDoesNotCrash() {
+        let continuation = kk_coroutine_continuation_new(5006)
+        _ = kk_coroutine_launcher_arg_set(continuation, 0, 0)
+        _ = kk_kxmini_launch_with_cont(0, continuation)
+    }
+
+    func testAsyncWithContInvalidEntryDoesNotCrash() {
+        let continuation = kk_coroutine_continuation_new(5007)
+        _ = kk_coroutine_launcher_arg_set(continuation, 0, 1)
+        _ = kk_kxmini_async_with_cont(0, continuation)
+    }
 }

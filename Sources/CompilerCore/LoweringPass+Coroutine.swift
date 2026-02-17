@@ -171,7 +171,7 @@ final class CoroutineLoweringPass: LoweringPass {
                 )
                 let argResult = module.arena.appendExpr(
                     .temporary(Int32(module.arena.expressions.count)),
-                    type: intType
+                    type: suspendFunction.params[paramIndex].type
                 )
                 thunkBody.append(
                     .call(
@@ -319,8 +319,7 @@ final class CoroutineLoweringPass: LoweringPass {
                         )
                     } else {
                         guard let thunk = launcherThunkByOriginalSymbol[referencedSymbol] else {
-                            loweredBody.append(instruction)
-                            continue
+                            preconditionFailure("Internal error: launcher thunk not found for suspend function '\(ctx.interner.resolve(loweredTarget.name))'")
                         }
 
                         let loweredFunctionIDExpr = module.arena.appendExpr(
@@ -371,6 +370,7 @@ final class CoroutineLoweringPass: LoweringPass {
                         )
 
                         guard let runtimeWithContCallee = kxMiniLauncherWithContCallees[callee] else {
+                            assertionFailure("Internal compiler error: missing runtime _with_cont callee mapping for launcher callee")
                             loweredBody.append(instruction)
                             continue
                         }

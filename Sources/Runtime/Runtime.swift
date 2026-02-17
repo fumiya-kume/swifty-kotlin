@@ -789,6 +789,7 @@ private func runSuspendEntryLoop(entryPointRaw: Int, functionID: Int) -> Int {
 
 private func runSuspendEntryLoopWithContinuation(entryPointRaw: Int, continuation: Int) -> Int {
     guard let entryPoint = suspendEntryPoint(from: entryPointRaw) else {
+        _ = kk_coroutine_state_exit(continuation, 0)
         return 0
     }
 
