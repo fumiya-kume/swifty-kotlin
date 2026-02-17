@@ -474,21 +474,18 @@ public final class DataFlowAnalyzer {
     }
 
     public func merge(_ lhs: DataFlowState, _ rhs: DataFlowState) -> DataFlowState {
-        var merged = lhs.variables
-        for (symbol, rhsState) in rhs.variables {
-            if let lhsState = merged[symbol] {
-                let types = lhsState.possibleTypes.union(rhsState.possibleTypes)
-                let nullability: Nullability = (lhsState.nullability == .nullable || rhsState.nullability == .nullable)
-                    ? .nullable
-                    : .nonNull
-                merged[symbol] = VariableFlowState(
-                    possibleTypes: types,
-                    nullability: nullability,
-                    isStable: lhsState.isStable && rhsState.isStable
-                )
-            } else {
-                merged[symbol] = rhsState
-            }
+        var merged: [SymbolID: VariableFlowState] = [:]
+        for (symbol, lhsState) in lhs.variables {
+            guard let rhsState = rhs.variables[symbol] else { continue }
+            let types = lhsState.possibleTypes.union(rhsState.possibleTypes)
+            let nullability: Nullability = (lhsState.nullability == .nullable || rhsState.nullability == .nullable)
+                ? .nullable
+                : .nonNull
+            merged[symbol] = VariableFlowState(
+                possibleTypes: types,
+                nullability: nullability,
+                isStable: lhsState.isStable && rhsState.isStable
+            )
         }
         return DataFlowState(variables: merged)
     }

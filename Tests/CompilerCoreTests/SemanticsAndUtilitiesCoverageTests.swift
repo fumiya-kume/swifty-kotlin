@@ -179,7 +179,7 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
         ])
 
         let merged = analyzer.merge(lhs, rhs)
-        XCTAssertEqual(merged.variables.count, 2)
+        XCTAssertEqual(merged.variables.count, 1)
         XCTAssertTrue(merged.variables[sym]?.possibleTypes.contains(types.anyType) == true)
         XCTAssertTrue(merged.variables[sym]?.possibleTypes.contains(rhsType) == true)
         XCTAssertEqual(merged.variables[sym]?.nullability, .nullable)
@@ -802,9 +802,20 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
         ])
         let mergedUnstable = analyzer.merge(lhs, unstable)
         XCTAssertEqual(mergedUnstable.variables[sym]?.isStable, false)
+
+        let symA = SymbolID(rawValue: 600)
+        let symB = SymbolID(rawValue: 601)
+        let onlyLeft = DataFlowState(variables: [
+            symA: VariableFlowState(possibleTypes: [intType], nullability: .nonNull, isStable: true)
+        ])
+        let onlyRight = DataFlowState(variables: [
+            symB: VariableFlowState(possibleTypes: [intType], nullability: .nonNull, isStable: true)
+        ])
+        let disjoint = analyzer.merge(onlyLeft, onlyRight)
+        XCTAssertTrue(disjoint.variables.isEmpty)
     }
 
-    func testSymbolTableSupportsOverloadedFunctionsWithSameFQName() {
+    func testSymbolTableSupportsOverloadedFunctionsWithSameFQName(){
         let interner = StringInterner()
         let symbols = SymbolTable()
         let fqName = [interner.intern("pkg"), interner.intern("run")]
