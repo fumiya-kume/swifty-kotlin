@@ -64,59 +64,144 @@ extension DataFlowSemaPassPhase {
             return nil
         }
 
-        let nullability: Nullability
-        let path: [InternedString]
         switch typeRef {
-        case .named(let refPath, let nullable):
-            path = refPath
-            nullability = nullable ? .nullable : .nonNull
-        }
+        case .named(let path, let argRefs, let nullable):
+            let nullability: Nullability = nullable ? .nullable : .nonNull
 
-        guard let shortName = path.last else {
-            return nil
-        }
+            guard let shortName = path.last else {
+                return nil
+            }
 
-        if path.count == 1, let typeParamSymbol = localTypeParameters[shortName] {
-            return types.make(.typeParam(TypeParamType(symbol: typeParamSymbol, nullability: nullability)))
-        }
+            if path.count == 1, let typeParamSymbol = localTypeParameters[shortName] {
+                return types.make(.typeParam(TypeParamType(symbol: typeParamSymbol, nullability: nullability)))
+            }
 
-        switch interner.resolve(shortName) {
-        case "Int":
-            return types.make(.primitive(.int, nullability))
-        case "Boolean":
-            return types.make(.primitive(.boolean, nullability))
-        case "String":
-            return types.make(.primitive(.string, nullability))
-        case "Any":
-            return nullability == .nullable ? types.nullableAnyType : types.anyType
-        case "Unit":
-            return nullability == .nullable ? types.nullableAnyType : types.unitType
-        case "Nothing":
-            return types.nothingType
-        default:
-            break
-        }
+            switch interner.resolve(shortName) {
+            case "Int":
+                return types.make(.primitive(.int, nullability))
+            case "Boolean":
+                return types.make(.primitive(.boolean, nullability))
+            case "String":
+                return types.make(.primitive(.string, nullability))
+            case "Any":
+                return nullability == .nullable ? types.nullableAnyType : types.anyType
+            case "Unit":
+                return nullability == .nullable ? types.nullableAnyType : types.unitType
+            case "Nothing":
+                return types.nothingType
+            default:
+                break
+            }
 
-        if let resolved = symbols.lookupAll(fqName: path)
-            .compactMap({ symbols.symbol($0) })
-            .first(where: { isNominalTypeSymbol($0.kind) }) {
-            if resolved.kind == .typeAlias {
-                if let underlying = resolveTypeAliasUnderlying(
-                    resolved.id,
+            if let resolved = symbols.lookupAll(fqName: path)
+                .compactMap({ symbols.symbol($0) })
+                .first(where: { isNominalTypeSymbol($0.kind) }) {
+                if resolved.kind == .typeAlias {
+                    if let underlying = resolveTypeAliasUnderlying(
+                        resolved.id,
+                        symbols: symbols,
+                        types: types,
+                        visited: []
+                    ) {
+                        if nullability == .nullable {
+                            return applyNullability(underlying, types: types)
+                        }
+                        return underlying
+                    }
+                    return nullability == .nullable ? types.nullableAnyType : types.anyType
+                }
+                let resolvedArgs = resolveTypeArgRefs(
+                    argRefs,
+                    ast: ast,
                     symbols: symbols,
                     types: types,
-                    visited: []
-                ) {
-                    if nullability == .nullable {
-                        return applyNullability(underlying, types: types)
-                    }
-                    return underlying
-                }
-                return nullability == .nullable ? types.nullableAnyType : types.anyType
+                    interner: interner,
+                    localTypeParameters: localTypeParameters
+                )
+                return types.make(.classType(ClassType(classSymbol: resolved.id, args: resolvedArgs, nullability: nullability)))
             }
-            return types.make(.classType(ClassType(classSymbol: resolved.id, args: [], nullability: nullability)))
+            return nullability == .nullable ? types.nullableAnyType : types.anyType
+
+        case .functionType(let paramRefIDs, let returnRefID, let isSuspend, let nullable):
+            let nullability: Nullability = nullable ? .nullable : .nonNull
+            var paramTypes: [TypeID] = []
+            for paramRef in paramRefIDs {
+                guard let paramType = resolveTypeRef(
+                    paramRef,
+                    ast: ast,
+                    symbols: symbols,
+                    types: types,
+                    interner: interner,
+                    localTypeParameters: localTypeParameters
+                ) else {
+                    return nil
+                }
+                paramTypes.append(paramType)
+            }
+            let returnType = resolveTypeRef(
+                returnRefID,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                localTypeParameters: localTypeParameters
+            ) ?? types.unitType
+            return types.make(.functionType(FunctionType(
+                params: paramTypes,
+                returnType: returnType,
+                isSuspend: isSuspend,
+                nullability: nullability
+            )))
         }
-        return nullability == .nullable ? types.nullableAnyType : types.anyType
+    }
+
+    func resolveTypeArgRefs(
+        _ argRefs: [TypeArgRef],
+        ast: ASTModule,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        localTypeParameters: [InternedString: SymbolID] = [:]
+    ) -> [TypeArg] {
+        var result: [TypeArg] = []
+        result.reserveCapacity(argRefs.count)
+        for argRef in argRefs {
+            switch argRef {
+            case .invariant(let innerRef):
+                let resolved = resolveTypeRef(
+                    innerRef,
+                    ast: ast,
+                    symbols: symbols,
+                    types: types,
+                    interner: interner,
+                    localTypeParameters: localTypeParameters
+                ) ?? types.anyType
+                result.append(.invariant(resolved))
+            case .out(let innerRef):
+                let resolved = resolveTypeRef(
+                    innerRef,
+                    ast: ast,
+                    symbols: symbols,
+                    types: types,
+                    interner: interner,
+                    localTypeParameters: localTypeParameters
+                ) ?? types.anyType
+                result.append(.out(resolved))
+            case .in(let innerRef):
+                let resolved = resolveTypeRef(
+                    innerRef,
+                    ast: ast,
+                    symbols: symbols,
+                    types: types,
+                    interner: interner,
+                    localTypeParameters: localTypeParameters
+                ) ?? types.anyType
+                result.append(.in(resolved))
+            case .star:
+                result.append(.star)
+            }
+        }
+        return result
     }
 
     private func applyNullability(_ typeID: TypeID, types: TypeSystem) -> TypeID {

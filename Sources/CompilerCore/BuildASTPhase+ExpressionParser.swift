@@ -135,7 +135,7 @@ extension BuildASTPhase {
             guard index > 0, index - 1 < tokens.count else { return true }
             let prev = tokens[index - 1]
             switch prev.kind {
-            case .intLiteral, .longLiteral, .floatLiteral, .doubleLiteral,
+            case .intLiteral, .longLiteral, .floatLiteral, .doubleLiteral, .charLiteral,
                  .identifier, .backtickedIdentifier,
                  .symbol(.rParen), .symbol(.rBracket),
                  .symbol(.bangBang),
@@ -151,6 +151,23 @@ extension BuildASTPhase {
                 return nil
             }
             while true {
+                if matches(.symbol(.lessThan)) {
+                    let savedIndex = index
+                    if let typeArgs = tryParseExplicitTypeArgs() {
+                        if matches(.symbol(.lParen)) {
+                            guard let open = consume() else { break }
+                            let args = parseCallArguments()
+                            let close = consumeIf(.symbol(.rParen))
+                            let fallbackEnd = close?.range.end ?? open.range.end
+                            let endRange = SourceRange(start: fallbackEnd, end: fallbackEnd)
+                            let range = mergeRanges(astArena.exprRange(expr), close?.range ?? endRange, fallback: open.range)
+                            expr = astArena.appendExpr(.call(callee: expr, typeArgs: typeArgs, args: args, range: range))
+                            continue
+                        }
+                    }
+                    index = savedIndex
+                }
+
                 if matches(.symbol(.lParen)) {
                     guard let open = consume() else { break }
                     let args = parseCallArguments()
@@ -158,7 +175,7 @@ extension BuildASTPhase {
                     let fallbackEnd = close?.range.end ?? open.range.end
                     let endRange = SourceRange(start: fallbackEnd, end: fallbackEnd)
                     let range = mergeRanges(astArena.exprRange(expr), close?.range ?? endRange, fallback: open.range)
-                    expr = astArena.appendExpr(.call(callee: expr, args: args, range: range))
+                    expr = astArena.appendExpr(.call(callee: expr, typeArgs: [], args: args, range: range))
                     continue
                 }
 
@@ -190,7 +207,16 @@ extension BuildASTPhase {
                         break
                     }
                     var args: [CallArgument] = []
+                    var typeArgs: [TypeRefID] = []
                     var memberEndRange = memberToken.range
+                    if matches(.symbol(.lessThan)) {
+                        let savedIndex = index
+                        if let ta = tryParseExplicitTypeArgs() {
+                            typeArgs = ta
+                        } else {
+                            index = savedIndex
+                        }
+                    }
                     if matches(.symbol(.lParen)),
                        let open = consume() {
                         args = parseCallArguments()
@@ -201,6 +227,7 @@ extension BuildASTPhase {
                     expr = astArena.appendExpr(.safeMemberCall(
                         receiver: expr,
                         callee: memberName,
+                        typeArgs: typeArgs,
                         args: args,
                         range: range
                     ))
@@ -216,7 +243,16 @@ extension BuildASTPhase {
                     break
                 }
                 var args: [CallArgument] = []
+                var typeArgs: [TypeRefID] = []
                 var memberEndRange = memberToken.range
+                if matches(.symbol(.lessThan)) {
+                    let savedIndex = index
+                    if let ta = tryParseExplicitTypeArgs() {
+                        typeArgs = ta
+                    } else {
+                        index = savedIndex
+                    }
+                }
                 if matches(.symbol(.lParen)),
                    let open = consume() {
                     args = parseCallArguments()
@@ -227,6 +263,7 @@ extension BuildASTPhase {
                 expr = astArena.appendExpr(.memberCall(
                     receiver: expr,
                     callee: memberName,
+                    typeArgs: typeArgs,
                     args: args,
                     range: range
                 ))
@@ -302,10 +339,37 @@ extension BuildASTPhase {
             }
 
             switch token.kind {
-            case .intLiteral(let text), .longLiteral(let text):
+            case .intLiteral(let text):
                 _ = consume()
-                let value = Int64(text.filter { $0.isNumber }) ?? 0
+                let value = Int64(text.filter { $0.isNumber || $0 == "-" }) ?? 0
                 return astArena.appendExpr(.intLiteral(value, token.range))
+
+            case .longLiteral(let text):
+                _ = consume()
+                let stripped = text.filter { $0.isNumber || $0 == "-" }
+                let value = Int64(stripped) ?? 0
+                return astArena.appendExpr(.longLiteral(value, token.range))
+
+            case .floatLiteral(let text):
+                _ = consume()
+                let stripped = String(text.dropLast()).replacingOccurrences(of: "_", with: "")
+                let value = Double(stripped) ?? 0.0
+                return astArena.appendExpr(.floatLiteral(value, token.range))
+
+            case .doubleLiteral(let text):
+                _ = consume()
+                let stripped: String
+                if text.last == "d" || text.last == "D" {
+                    stripped = String(text.dropLast()).replacingOccurrences(of: "_", with: "")
+                } else {
+                    stripped = text.replacingOccurrences(of: "_", with: "")
+                }
+                let value = Double(stripped) ?? 0.0
+                return astArena.appendExpr(.doubleLiteral(value, token.range))
+
+            case .charLiteral(let scalar):
+                _ = consume()
+                return astArena.appendExpr(.charLiteral(scalar, token.range))
 
             case .keyword(.true):
                 _ = consume()
@@ -710,24 +774,168 @@ extension BuildASTPhase {
 
         private func parseTypeReference(_ fallbackRange: SourceRange) -> TypeRefID? {
             guard let token = current() else { return nil }
+            let name: InternedString
             switch token.kind {
-            case .identifier(let name), .backtickedIdentifier(let name):
+            case .identifier(let n), .backtickedIdentifier(let n):
                 _ = consume()
-                let isNullable = consumeIf(.symbol(.question)) != nil
-                return astArena.appendTypeRef(.named(path: [name], nullable: isNullable))
+                name = n
             case .keyword(let kw):
                 _ = consume()
-                let name = interner.intern(kw.rawValue)
-                let isNullable = consumeIf(.symbol(.question)) != nil
-                return astArena.appendTypeRef(.named(path: [name], nullable: isNullable))
+                name = interner.intern(kw.rawValue)
             case .softKeyword(let kw):
                 _ = consume()
-                let name = interner.intern(kw.rawValue)
-                let isNullable = consumeIf(.symbol(.question)) != nil
-                return astArena.appendTypeRef(.named(path: [name], nullable: isNullable))
+                name = interner.intern(kw.rawValue)
             default:
                 return nil
             }
+            var typeArgs: [TypeArgRef] = []
+            if matches(.symbol(.lessThan)) {
+                let savedIndex = index
+                if let parsedArgs = tryParseTypeArgRefs() {
+                    typeArgs = parsedArgs
+                } else {
+                    index = savedIndex
+                }
+            }
+            let isNullable = consumeIf(.symbol(.question)) != nil
+            return astArena.appendTypeRef(.named(path: [name], args: typeArgs, nullable: isNullable))
+        }
+
+        private func tryParseExplicitTypeArgs() -> [TypeRefID]? {
+            guard matches(.symbol(.lessThan)) else { return nil }
+            let savedIndex = index
+            _ = consume()
+            var refs: [TypeRefID] = []
+            while true {
+                guard let token = current() else {
+                    index = savedIndex
+                    return nil
+                }
+                if token.kind == .symbol(.greaterThan) {
+                    if refs.isEmpty {
+                        index = savedIndex
+                        return nil
+                    }
+                    _ = consume()
+                    return refs
+                }
+                if !refs.isEmpty {
+                    guard consumeIf(.symbol(.comma)) != nil else {
+                        index = savedIndex
+                        return nil
+                    }
+                }
+                guard let typeRef = parseInlineTypeRef() else {
+                    index = savedIndex
+                    return nil
+                }
+                refs.append(typeRef)
+            }
+        }
+
+        private func tryParseTypeArgRefs() -> [TypeArgRef]? {
+            guard matches(.symbol(.lessThan)) else { return nil }
+            let savedIndex = index
+            _ = consume()
+            var args: [TypeArgRef] = []
+            while true {
+                guard let token = current() else {
+                    index = savedIndex
+                    return nil
+                }
+                if token.kind == .symbol(.greaterThan) {
+                    _ = consume()
+                    return args
+                }
+                if !args.isEmpty {
+                    guard consumeIf(.symbol(.comma)) != nil else {
+                        index = savedIndex
+                        return nil
+                    }
+                    guard let freshToken = current() else {
+                        index = savedIndex
+                        return nil
+                    }
+                    if freshToken.kind == .symbol(.greaterThan) {
+                        _ = consume()
+                        return args
+                    }
+                    if freshToken.kind == .symbol(.star) {
+                        _ = consume()
+                        args.append(.star)
+                        continue
+                    }
+                    var variance: TypeVariance = .invariant
+                    if case .softKeyword(.out) = freshToken.kind {
+                        variance = .out
+                        _ = consume()
+                    } else if case .keyword(.in) = freshToken.kind {
+                        variance = .in
+                        _ = consume()
+                    }
+                    guard let innerRef = parseInlineTypeRef() else {
+                        index = savedIndex
+                        return nil
+                    }
+                    switch variance {
+                    case .invariant: args.append(.invariant(innerRef))
+                    case .out: args.append(.out(innerRef))
+                    case .in: args.append(.in(innerRef))
+                    }
+                    continue
+                }
+                if token.kind == .symbol(.star) {
+                    _ = consume()
+                    args.append(.star)
+                    continue
+                }
+                var variance: TypeVariance = .invariant
+                if case .softKeyword(.out) = token.kind {
+                    variance = .out
+                    _ = consume()
+                } else if case .keyword(.in) = token.kind {
+                    variance = .in
+                    _ = consume()
+                }
+                guard let innerRef = parseInlineTypeRef() else {
+                    index = savedIndex
+                    return nil
+                }
+                switch variance {
+                case .invariant: args.append(.invariant(innerRef))
+                case .out: args.append(.out(innerRef))
+                case .in: args.append(.in(innerRef))
+                }
+            }
+        }
+
+        private func parseInlineTypeRef() -> TypeRefID? {
+            guard let token = current() else { return nil }
+            let name: InternedString
+            switch token.kind {
+            case .identifier(let n), .backtickedIdentifier(let n):
+                _ = consume()
+                name = n
+            case .keyword(let kw):
+                _ = consume()
+                name = interner.intern(kw.rawValue)
+            case .softKeyword(let kw):
+                _ = consume()
+                name = interner.intern(kw.rawValue)
+            default:
+                return nil
+            }
+            var innerArgs: [TypeArgRef] = []
+            if matches(.symbol(.lessThan)) {
+                let saved = index
+                if let parsed = tryParseTypeArgRefs() {
+                    innerArgs = parsed
+                } else {
+                    index = saved
+                }
+            }
+            let isNullable = consumeIf(.symbol(.question)) != nil
+            return astArena.appendTypeRef(.named(path: [name], args: innerArgs, nullable: isNullable))
         }
 
         private func binaryOperator(at token: Token?) -> BinaryOp? {

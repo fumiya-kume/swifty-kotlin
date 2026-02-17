@@ -11,6 +11,7 @@ public enum SyntaxKind: Equatable {
     case propertyDecl
     case typeAliasDecl
     case enumEntry
+    case constructorDecl
     case statement
     case block
     case loopStmt
