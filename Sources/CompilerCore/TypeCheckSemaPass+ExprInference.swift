@@ -882,6 +882,7 @@ extension TypeCheckSemaPassPhase {
                     }
                 }
                 var branchLocals = locals
+                var branchCtx = ctx
                 if let subjectLocalBinding, subjectLocalBinding.isStable {
                     if let cond = branch.condition {
                         let branchFlowState = ctx.dataFlow.branchOnWhenSubject(
@@ -891,6 +892,7 @@ extension TypeCheckSemaPassPhase {
                             base: ctx.flowState,
                             ast: ast, sema: sema, interner: interner
                         )
+                        branchCtx = ctx.with(flowState: branchFlowState)
                         if let narrowedType = ctx.dataFlow.resolvedTypeFromFlowState(
                             branchFlowState, symbol: subjectLocalBinding.symbol
                         ) {
@@ -903,17 +905,19 @@ extension TypeCheckSemaPassPhase {
                                 subjectType: subjectLocalBinding.type,
                                 base: ctx.flowState, sema: sema
                             )
+                            branchCtx = ctx.with(flowState: nonNullState)
                             applyFlowStateToLocals(nonNullState, locals: &branchLocals, sema: sema)
                         }
                     }
                 }
                 branchTypes.append(
-                    inferExpr(branch.body, ctx: ctx, locals: &branchLocals, expectedType: expectedType)
+                    inferExpr(branch.body, ctx: branchCtx, locals: &branchLocals, expectedType: expectedType)
                 )
             }
 
             if let elseExpr {
                 var elseLocals = locals
+                var elseCtx = ctx
                 if let subjectLocalBinding, subjectLocalBinding.isStable, hasExplicitNullBranch {
                     let elseFlowState = ctx.dataFlow.whenElseState(
                         subjectSymbol: subjectLocalBinding.symbol,
@@ -921,10 +925,11 @@ extension TypeCheckSemaPassPhase {
                         hasExplicitNullBranch: hasExplicitNullBranch,
                         base: ctx.flowState, sema: sema
                     )
+                    elseCtx = ctx.with(flowState: elseFlowState)
                     applyFlowStateToLocals(elseFlowState, locals: &elseLocals, sema: sema)
                 }
                 branchTypes.append(
-                    inferExpr(elseExpr, ctx: ctx, locals: &elseLocals, expectedType: expectedType)
+                    inferExpr(elseExpr, ctx: elseCtx, locals: &elseLocals, expectedType: expectedType)
                 )
             }
 
