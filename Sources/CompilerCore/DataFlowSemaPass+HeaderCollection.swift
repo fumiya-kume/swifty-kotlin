@@ -168,7 +168,8 @@ extension DataFlowSemaPassPhase {
                         ast: ast,
                         symbols: symbols,
                         types: types,
-                        interner: interner
+                        interner: interner,
+                        diagnostics: diagnostics
                     ) ?? anyType
                     paramTypes.append(resolvedType)
                     paramSymbols.append(paramSymbol)
@@ -217,7 +218,8 @@ extension DataFlowSemaPassPhase {
                         ast: ast,
                         symbols: symbols,
                         types: types,
-                        interner: interner
+                        interner: interner,
+                        diagnostics: diagnostics
                     ) ?? anyType
                     paramTypes.append(resolvedType)
                     paramSymbols.append(paramSymbol)
@@ -377,7 +379,8 @@ extension DataFlowSemaPassPhase {
                 symbols: symbols,
                 types: types,
                 interner: interner,
-                localTypeParameters: localTypeParameters
+                localTypeParameters: localTypeParameters,
+                diagnostics: diagnostics
             )
             for valueParam in funDecl.valueParams {
                 let paramFQName = localNamespaceFQName + [valueParam.name]
@@ -395,7 +398,8 @@ extension DataFlowSemaPassPhase {
                     symbols: symbols,
                     types: types,
                     interner: interner,
-                    localTypeParameters: localTypeParameters
+                    localTypeParameters: localTypeParameters,
+                    diagnostics: diagnostics
                 ) ?? anyType
                 paramTypes.append(resolvedType)
                 paramSymbols.append(paramSymbol)
@@ -409,7 +413,8 @@ extension DataFlowSemaPassPhase {
                 symbols: symbols,
                 types: types,
                 interner: interner,
-                localTypeParameters: localTypeParameters
+                localTypeParameters: localTypeParameters,
+                diagnostics: diagnostics
             ) {
                 returnType = explicit
             } else {
@@ -443,7 +448,8 @@ extension DataFlowSemaPassPhase {
                 ast: ast,
                 symbols: symbols,
                 types: types,
-                interner: interner
+                interner: interner,
+                diagnostics: diagnostics
             ) ?? types.nullableAnyType
             symbols.setPropertyType(resolvedType, for: symbol)
 
@@ -453,7 +459,8 @@ extension DataFlowSemaPassPhase {
                 ast: ast,
                 symbols: symbols,
                 types: types,
-                interner: interner
+                interner: interner,
+                diagnostics: diagnostics
             ) {
                 symbols.setTypeAliasUnderlyingType(resolvedUnderlying, for: symbol)
             }
@@ -574,7 +581,8 @@ extension DataFlowSemaPassPhase {
                     symbols: symbols,
                     types: types,
                     interner: interner,
-                    localTypeParameters: localTypeParameters
+                    localTypeParameters: localTypeParameters,
+                    diagnostics: diagnostics
                 ) ?? anyType
                 paramTypes.append(resolvedType)
                 paramSymbols.append(paramSymbol)
@@ -589,7 +597,8 @@ extension DataFlowSemaPassPhase {
                 symbols: symbols,
                 types: types,
                 interner: interner,
-                localTypeParameters: localTypeParameters
+                localTypeParameters: localTypeParameters,
+                diagnostics: diagnostics
             ) {
                 returnType = explicit
             } else {
@@ -653,7 +662,8 @@ extension DataFlowSemaPassPhase {
                 ast: ast,
                 symbols: symbols,
                 types: types,
-                interner: interner
+                interner: interner,
+                diagnostics: diagnostics
             ) ?? types.nullableAnyType
             symbols.setPropertyType(resolvedType, for: memberSymbol)
         }
@@ -867,7 +877,8 @@ extension DataFlowSemaPassPhase {
                 ast: ast,
                 symbols: symbols,
                 types: types,
-                interner: interner
+                interner: interner,
+                diagnostics: diagnostics
             ) {
                 symbols.setTypeAliasUnderlyingType(resolvedUnderlying, for: aliasSymbol)
             }
