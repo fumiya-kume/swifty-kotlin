@@ -97,6 +97,16 @@ extension BuildKIRPhase {
         for (paramSymbol, paramType) in zip(signature.valueParameterSymbols, signature.parameterTypes) {
             params.append(KIRParameter(symbol: paramSymbol, type: paramType))
         }
+        var reifiedTokenSymbols: [SymbolID] = []
+        if !signature.reifiedTypeParameterIndices.isEmpty {
+            for index in signature.reifiedTypeParameterIndices.sorted() {
+                guard index < signature.typeParameterSymbols.count else { continue }
+                let typeParamSymbol = signature.typeParameterSymbols[index]
+                let tokenSymbol = SymbolID(rawValue: -20_000 - typeParamSymbol.rawValue)
+                params.append(KIRParameter(symbol: tokenSymbol, type: intType))
+                reifiedTokenSymbols.append(tokenSymbol)
+            }
+        }
         let maskSymbol = defaultStubMaskSymbol(for: originalSymbol)
         params.append(KIRParameter(symbol: maskSymbol, type: intType))
 
@@ -165,6 +175,11 @@ extension BuildKIRPhase {
             callArgs.append(receiverExpr)
         }
         callArgs.append(contentsOf: resolvedParamExprs)
+        for tokenSym in reifiedTokenSymbols {
+            let tokenExpr = arena.appendExpr(.symbolRef(tokenSym), type: intType)
+            body.append(.constValue(result: tokenExpr, value: .symbolRef(tokenSym)))
+            callArgs.append(tokenExpr)
+        }
 
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: signature.returnType)
         body.append(.call(
