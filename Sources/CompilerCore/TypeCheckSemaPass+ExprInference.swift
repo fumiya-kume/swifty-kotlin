@@ -943,14 +943,16 @@ extension TypeCheckSemaPassPhase {
                             )
                         }
                     }
+                    var branchLocals = locals
                     branchTypes.append(
-                        inferExpr(branch.body, ctx: ctx, locals: &locals, expectedType: expectedType)
+                        inferExpr(branch.body, ctx: ctx, locals: &branchLocals, expectedType: expectedType)
                     )
                 }
 
                 if let elseExpr {
+                    var elseLocals = locals
                     branchTypes.append(
-                        inferExpr(elseExpr, ctx: ctx, locals: &locals, expectedType: expectedType)
+                        inferExpr(elseExpr, ctx: ctx, locals: &elseLocals, expectedType: expectedType)
                     )
                 }
 
