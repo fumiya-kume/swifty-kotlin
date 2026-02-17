@@ -159,13 +159,15 @@ extension TypeCheckSemaPassPhase {
     func collectLibraryTopLevelSymbolsByPackage(
         sema: SemaModule
     ) -> [[InternedString]: [SymbolID]] {
+        let allSymbols = sema.symbols.allSymbols()
+
         var knownPackages: Set<[InternedString]> = []
-        for symbol in sema.symbols.allSymbols() where symbol.kind == .package {
+        for symbol in allSymbols where symbol.kind == .package {
             knownPackages.insert(symbol.fqName)
         }
 
         var mapping: [[InternedString]: [SymbolID]] = [:]
-        for symbol in sema.symbols.allSymbols() {
+        for symbol in allSymbols {
             guard symbol.flags.contains(.synthetic),
                   symbol.kind != .package,
                   symbol.fqName.count >= 1 else {

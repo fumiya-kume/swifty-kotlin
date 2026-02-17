@@ -495,14 +495,16 @@ final class LibraryMetadataCoverageTests: XCTestCase {
             let helperSymbol = sema.symbols.allSymbols().first { symbol in
                 ctx.interner.resolve(symbol.name) == "helper" &&
                 symbol.kind == .function &&
-                symbol.flags.contains(.synthetic)
+                symbol.flags.contains(.synthetic) &&
+                symbol.fqName.map { ctx.interner.resolve($0) } == ["wc", "util", "helper"]
             }
             XCTAssertNotNil(helperSymbol, "Wildcard import should resolve library function 'helper'")
 
             let widgetSymbol = sema.symbols.allSymbols().first { symbol in
                 ctx.interner.resolve(symbol.name) == "Widget" &&
                 symbol.kind == .class &&
-                symbol.flags.contains(.synthetic)
+                symbol.flags.contains(.synthetic) &&
+                symbol.fqName.map { ctx.interner.resolve($0) } == ["wc", "util", "Widget"]
             }
             XCTAssertNotNil(widgetSymbol, "Wildcard import should resolve library class 'Widget'")
             XCTAssertFalse(ctx.diagnostics.diagnostics.contains { $0.code.hasPrefix("KSWIFTK-SEMA") })
@@ -547,7 +549,8 @@ final class LibraryMetadataCoverageTests: XCTestCase {
             let listOfSymbol = sema.symbols.allSymbols().first { symbol in
                 ctx.interner.resolve(symbol.name) == "listOf" &&
                 symbol.kind == .function &&
-                symbol.flags.contains(.synthetic)
+                symbol.flags.contains(.synthetic) &&
+                symbol.fqName.map { ctx.interner.resolve($0) } == ["kotlin", "collections", "listOf"]
             }
             XCTAssertNotNil(listOfSymbol, "Default import should resolve library function 'listOf' from kotlin.collections")
             XCTAssertFalse(ctx.diagnostics.diagnostics.contains { $0.code.hasPrefix("KSWIFTK-SEMA") })
@@ -595,21 +598,24 @@ final class LibraryMetadataCoverageTests: XCTestCase {
             let alphaSymbol = sema.symbols.allSymbols().first { symbol in
                 ctx.interner.resolve(symbol.name) == "alpha" &&
                 symbol.kind == .function &&
-                symbol.flags.contains(.synthetic)
+                symbol.flags.contains(.synthetic) &&
+                symbol.fqName.map { ctx.interner.resolve($0) } == ["mix", "api", "alpha"]
             }
             XCTAssertNotNil(alphaSymbol, "Explicit import should resolve library function 'alpha'")
 
             let betaSymbol = sema.symbols.allSymbols().first { symbol in
                 ctx.interner.resolve(symbol.name) == "beta" &&
                 symbol.kind == .function &&
-                symbol.flags.contains(.synthetic)
+                symbol.flags.contains(.synthetic) &&
+                symbol.fqName.map { ctx.interner.resolve($0) } == ["mix", "api", "beta"]
             }
             XCTAssertNotNil(betaSymbol, "Wildcard import should resolve library function 'beta'")
 
             let gammaSymbol = sema.symbols.allSymbols().first { symbol in
                 ctx.interner.resolve(symbol.name) == "Gamma" &&
                 symbol.kind == .class &&
-                symbol.flags.contains(.synthetic)
+                symbol.flags.contains(.synthetic) &&
+                symbol.fqName.map { ctx.interner.resolve($0) } == ["mix", "api", "Gamma"]
             }
             XCTAssertNotNil(gammaSymbol, "Wildcard import should resolve library class 'Gamma'")
             XCTAssertFalse(ctx.diagnostics.diagnostics.contains { $0.code.hasPrefix("KSWIFTK-SEMA") })
