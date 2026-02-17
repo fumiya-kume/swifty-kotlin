@@ -11,6 +11,7 @@ struct TypeInferenceContext {
     let scope: Scope
     let implicitReceiverType: TypeID?
     let loopDepth: Int
+    let flowState: DataFlowState
 
     func with(scope: Scope) -> TypeInferenceContext {
         TypeInferenceContext(
@@ -22,7 +23,8 @@ struct TypeInferenceContext {
             interner: interner,
             scope: scope,
             implicitReceiverType: implicitReceiverType,
-            loopDepth: loopDepth
+            loopDepth: loopDepth,
+            flowState: flowState
         )
     }
 
@@ -36,7 +38,8 @@ struct TypeInferenceContext {
             interner: interner,
             scope: scope,
             implicitReceiverType: implicitReceiverType,
-            loopDepth: loopDepth
+            loopDepth: loopDepth,
+            flowState: flowState
         )
     }
 
@@ -50,7 +53,23 @@ struct TypeInferenceContext {
             interner: interner,
             scope: scope,
             implicitReceiverType: implicitReceiverType,
-            loopDepth: loopDepth
+            loopDepth: loopDepth,
+            flowState: flowState
+        )
+    }
+
+    func with(flowState: DataFlowState) -> TypeInferenceContext {
+        TypeInferenceContext(
+            ast: ast,
+            sema: sema,
+            semaCtx: semaCtx,
+            resolver: resolver,
+            dataFlow: dataFlow,
+            interner: interner,
+            scope: scope,
+            implicitReceiverType: implicitReceiverType,
+            loopDepth: loopDepth,
+            flowState: flowState
         )
     }
 }
@@ -106,7 +125,8 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                 resolver: resolver, dataFlow: dataFlow,
                 interner: ctx.interner, scope: fileScope,
                 implicitReceiverType: nil,
-                loopDepth: 0
+                loopDepth: 0,
+                flowState: DataFlowState()
             )
             for declID in file.topLevelDecls {
                 guard let decl = ast.arena.decl(declID),

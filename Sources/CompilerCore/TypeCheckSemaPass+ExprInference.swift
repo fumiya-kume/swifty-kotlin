@@ -344,12 +344,20 @@ extension TypeCheckSemaPassPhase {
                     diagnostics: ctx.semaCtx.diagnostics
                 )
             }
+            let branch = ctx.dataFlow.branchOnCondition(
+                condition, base: ctx.flowState, locals: locals,
+                ast: ast, sema: sema, interner: interner
+            )
             var thenLocals = locals
-            let thenType = inferExpr(thenExpr, ctx: ctx, locals: &thenLocals, expectedType: expectedType)
+            applyFlowStateToLocals(branch.trueState, locals: &thenLocals, sema: sema)
+            let thenCtx = ctx.with(flowState: branch.trueState)
+            let thenType = inferExpr(thenExpr, ctx: thenCtx, locals: &thenLocals, expectedType: expectedType)
             let resolvedType: TypeID
             if let elseExpr {
                 var elseLocals = locals
-                let elseType = inferExpr(elseExpr, ctx: ctx, locals: &elseLocals, expectedType: expectedType)
+                applyFlowStateToLocals(branch.falseState, locals: &elseLocals, sema: sema)
+                let elseCtx = ctx.with(flowState: branch.falseState)
+                let elseType = inferExpr(elseExpr, ctx: elseCtx, locals: &elseLocals, expectedType: expectedType)
                 resolvedType = sema.types.lub([thenType, elseType])
                 for (name, local) in locals {
                     if !local.isInitialized,
@@ -851,7 +859,6 @@ extension TypeCheckSemaPassPhase {
             var hasFalseCase = false
             for branch in branches {
                 var isNullBranch = false
-                var branchSmartCastType: TypeID?
                 if let cond = branch.condition {
                     let condType = inferExpr(cond, ctx: ctx, locals: &locals)
                     if let condExpr = ast.arena.expr(cond) {
@@ -873,23 +880,31 @@ extension TypeCheckSemaPassPhase {
                             break
                         }
                     }
-                    branchSmartCastType = smartCastTypeForWhenSubjectCase(
-                        conditionID: cond, subjectType: subjectType,
-                        ast: ast, sema: sema, interner: interner
-                    )
                 }
                 var branchLocals = locals
                 if let subjectLocalBinding, subjectLocalBinding.isStable {
-                    if let branchSmartCastType {
-                        branchLocals[subjectLocalBinding.name] = (
-                            branchSmartCastType, subjectLocalBinding.symbol, subjectLocalBinding.isMutable, true
+                    if let cond = branch.condition {
+                        let branchFlowState = ctx.dataFlow.branchOnWhenSubject(
+                            subjectSymbol: subjectLocalBinding.symbol,
+                            subjectType: subjectType,
+                            conditionID: cond,
+                            base: ctx.flowState,
+                            ast: ast, sema: sema, interner: interner
                         )
-                    } else if hasExplicitNullBranch && !isNullBranch {
-                        branchLocals[subjectLocalBinding.name] = (
-                            makeNonNullable(subjectLocalBinding.type, types: sema.types),
-                            subjectLocalBinding.symbol,
-                            subjectLocalBinding.isMutable, true
-                        )
+                        if let narrowedType = ctx.dataFlow.resolvedTypeFromFlowState(
+                            branchFlowState, symbol: subjectLocalBinding.symbol
+                        ) {
+                            branchLocals[subjectLocalBinding.name] = (
+                                narrowedType, subjectLocalBinding.symbol, subjectLocalBinding.isMutable, true
+                            )
+                        } else if hasExplicitNullBranch && !isNullBranch {
+                            let nonNullState = ctx.dataFlow.whenNonNullBranchState(
+                                subjectSymbol: subjectLocalBinding.symbol,
+                                subjectType: subjectLocalBinding.type,
+                                base: ctx.flowState, sema: sema
+                            )
+                            applyFlowStateToLocals(nonNullState, locals: &branchLocals, sema: sema)
+                        }
                     }
                 }
                 branchTypes.append(
@@ -899,14 +914,14 @@ extension TypeCheckSemaPassPhase {
 
             if let elseExpr {
                 var elseLocals = locals
-                if let subjectLocalBinding,
-                   subjectLocalBinding.isStable,
-                   hasExplicitNullBranch {
-                    elseLocals[subjectLocalBinding.name] = (
-                        makeNonNullable(subjectLocalBinding.type, types: sema.types),
-                        subjectLocalBinding.symbol,
-                        subjectLocalBinding.isMutable, true
+                if let subjectLocalBinding, subjectLocalBinding.isStable, hasExplicitNullBranch {
+                    let elseFlowState = ctx.dataFlow.whenElseState(
+                        subjectSymbol: subjectLocalBinding.symbol,
+                        subjectType: subjectLocalBinding.type,
+                        hasExplicitNullBranch: hasExplicitNullBranch,
+                        base: ctx.flowState, sema: sema
                     )
+                    applyFlowStateToLocals(elseFlowState, locals: &elseLocals, sema: sema)
                 }
                 branchTypes.append(
                     inferExpr(elseExpr, ctx: ctx, locals: &elseLocals, expectedType: expectedType)
@@ -1031,6 +1046,21 @@ extension TypeCheckSemaPassPhase {
             sema.bindings.bindIdentifier(id, symbol: funSymbol)
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
+        }
+    }
+
+    func applyFlowStateToLocals(
+        _ state: DataFlowState,
+        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
+        sema: SemaModule
+    ) {
+        for (name, local) in locals {
+            guard let varState = state.variables[local.symbol],
+                  varState.possibleTypes.count == 1,
+                  let narrowed = varState.possibleTypes.first else {
+                continue
+            }
+            locals[name] = (narrowed, local.symbol, local.isMutable, local.isInitialized)
         }
     }
 

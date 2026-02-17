@@ -690,6 +690,120 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
         XCTAssertEqual(withAlias.alias, interner.intern("X"))
     }
 
+    func testConditionBranchStructCreation() {
+        let analyzer = DataFlowAnalyzer()
+        let sym = SymbolID(rawValue: 100)
+        let types = TypeSystem()
+        let intType = types.make(.primitive(.int, .nonNull))
+        let stringType = types.make(.primitive(.string, .nonNull))
+
+        let trueState = DataFlowState(variables: [
+            sym: VariableFlowState(possibleTypes: [intType], nullability: .nonNull, isStable: true)
+        ])
+        let falseState = DataFlowState(variables: [
+            sym: VariableFlowState(possibleTypes: [stringType], nullability: .nonNull, isStable: true)
+        ])
+        let branch = ConditionBranch(trueState: trueState, falseState: falseState)
+
+        XCTAssertEqual(branch.trueState.variables[sym]?.possibleTypes, [intType])
+        XCTAssertEqual(branch.falseState.variables[sym]?.possibleTypes, [stringType])
+
+        let merged = analyzer.merge(branch.trueState, branch.falseState)
+        XCTAssertEqual(merged.variables[sym]?.possibleTypes.count, 2)
+        XCTAssertTrue(merged.variables[sym]?.possibleTypes.contains(intType) == true)
+        XCTAssertTrue(merged.variables[sym]?.possibleTypes.contains(stringType) == true)
+    }
+
+    func testResolvedTypeFromFlowStateReturnsSingleType() {
+        let analyzer = DataFlowAnalyzer()
+        let types = TypeSystem()
+        let sym = SymbolID(rawValue: 200)
+        let intType = types.make(.primitive(.int, .nonNull))
+
+        let state = DataFlowState(variables: [
+            sym: VariableFlowState(possibleTypes: [intType], nullability: .nonNull, isStable: true)
+        ])
+        XCTAssertEqual(analyzer.resolvedTypeFromFlowState(state, symbol: sym), intType)
+
+        let multiState = DataFlowState(variables: [
+            sym: VariableFlowState(possibleTypes: [intType, types.anyType], nullability: .nonNull, isStable: true)
+        ])
+        XCTAssertNil(analyzer.resolvedTypeFromFlowState(multiState, symbol: sym))
+
+        XCTAssertNil(analyzer.resolvedTypeFromFlowState(DataFlowState(), symbol: sym))
+    }
+
+    func testWhenElseStateNarrowsNullability() {
+        let analyzer = DataFlowAnalyzer()
+        let types = TypeSystem()
+        let symbols = SymbolTable()
+        let sema = SemaModule(
+            symbols: symbols, types: types,
+            bindings: BindingTable(), diagnostics: DiagnosticEngine()
+        )
+        let sym = SymbolID(rawValue: 300)
+        let nullableInt = types.make(.primitive(.int, .nullable))
+
+        let elseState = analyzer.whenElseState(
+            subjectSymbol: sym, subjectType: nullableInt,
+            hasExplicitNullBranch: true, base: DataFlowState(), sema: sema
+        )
+        XCTAssertEqual(elseState.variables[sym]?.nullability, .nonNull)
+        XCTAssertEqual(elseState.variables[sym]?.isStable, true)
+
+        let noNullBranch = analyzer.whenElseState(
+            subjectSymbol: sym, subjectType: nullableInt,
+            hasExplicitNullBranch: false, base: DataFlowState(), sema: sema
+        )
+        XCTAssertNil(noNullBranch.variables[sym])
+    }
+
+    func testWhenNonNullBranchStateNarrowsToNonNull() {
+        let analyzer = DataFlowAnalyzer()
+        let types = TypeSystem()
+        let symbols = SymbolTable()
+        let sema = SemaModule(
+            symbols: symbols, types: types,
+            bindings: BindingTable(), diagnostics: DiagnosticEngine()
+        )
+        let sym = SymbolID(rawValue: 400)
+        let nullableString = types.make(.primitive(.string, .nullable))
+
+        let result = analyzer.whenNonNullBranchState(
+            subjectSymbol: sym, subjectType: nullableString,
+            base: DataFlowState(), sema: sema
+        )
+        XCTAssertEqual(result.variables[sym]?.nullability, .nonNull)
+        XCTAssertEqual(result.variables[sym]?.isStable, true)
+        XCTAssertEqual(result.variables[sym]?.possibleTypes.count, 1)
+    }
+
+    func testMergeCFGJoinPointPreservesWidestTypeAndNullability() {
+        let analyzer = DataFlowAnalyzer()
+        let types = TypeSystem()
+        let sym = SymbolID(rawValue: 500)
+        let intType = types.make(.primitive(.int, .nonNull))
+        let nullableInt = types.make(.primitive(.int, .nullable))
+
+        let lhs = DataFlowState(variables: [
+            sym: VariableFlowState(possibleTypes: [intType], nullability: .nonNull, isStable: true)
+        ])
+        let rhs = DataFlowState(variables: [
+            sym: VariableFlowState(possibleTypes: [nullableInt], nullability: .nullable, isStable: true)
+        ])
+        let merged = analyzer.merge(lhs, rhs)
+
+        XCTAssertEqual(merged.variables[sym]?.nullability, .nullable)
+        XCTAssertEqual(merged.variables[sym]?.possibleTypes.count, 2)
+        XCTAssertTrue(merged.variables[sym]?.isStable == true)
+
+        let unstable = DataFlowState(variables: [
+            sym: VariableFlowState(possibleTypes: [intType], nullability: .nonNull, isStable: false)
+        ])
+        let mergedUnstable = analyzer.merge(lhs, unstable)
+        XCTAssertEqual(mergedUnstable.variables[sym]?.isStable, false)
+    }
+
     func testSymbolTableSupportsOverloadedFunctionsWithSameFQName() {
         let interner = StringInterner()
         let symbols = SymbolTable()
