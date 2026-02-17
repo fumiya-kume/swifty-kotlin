@@ -281,9 +281,6 @@ extension DataFlowSemaPassPhase {
                   let kind = symbolKindFromMetadata(kindToken) else {
                 continue
             }
-            if kind == .package {
-                continue
-            }
             let mangledName = parts.count > 1 ? parts[1] : ""
 
             var fqName: [InternedString] = []

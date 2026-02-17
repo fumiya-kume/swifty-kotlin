@@ -6,7 +6,11 @@ extension TypeCheckSemaPassPhase {
         sema: SemaModule,
         interner: StringInterner
     ) -> [Int32: FileScope] {
-        let topLevelSymbolsByPackage = collectTopLevelSymbolsByPackage(ast: ast, sema: sema)
+        var topLevelSymbolsByPackage = collectTopLevelSymbolsByPackage(ast: ast, sema: sema)
+        let librarySymbolsByPackage = collectLibraryTopLevelSymbolsByPackage(sema: sema)
+        for (packagePath, symbols) in librarySymbolsByPackage {
+            topLevelSymbolsByPackage[packagePath, default: []].append(contentsOf: symbols)
+        }
         let defaultImportPackages = makeDefaultImportPackages(interner: interner)
         var fileScopes: [Int32: FileScope] = [:]
 
@@ -91,6 +95,30 @@ extension TypeCheckSemaPassPhase {
                 }
             }
         }
+    }
+
+    func collectLibraryTopLevelSymbolsByPackage(
+        sema: SemaModule
+    ) -> [[InternedString]: [SymbolID]] {
+        var knownPackages: Set<[InternedString]> = []
+        for symbol in sema.symbols.allSymbols() where symbol.kind == .package {
+            knownPackages.insert(symbol.fqName)
+        }
+
+        var mapping: [[InternedString]: [SymbolID]] = [:]
+        for symbol in sema.symbols.allSymbols() {
+            guard symbol.flags.contains(.synthetic),
+                  symbol.kind != .package,
+                  symbol.fqName.count >= 2 else {
+                continue
+            }
+            let candidatePackage = Array(symbol.fqName.dropLast())
+            guard knownPackages.contains(candidatePackage) else {
+                continue
+            }
+            mapping[candidatePackage, default: []].append(symbol.id)
+        }
+        return mapping
     }
 
     func makeDefaultImportPackages(interner: StringInterner) -> [[InternedString]] {
