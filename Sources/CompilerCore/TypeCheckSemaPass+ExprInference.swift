@@ -129,23 +129,25 @@ extension TypeCheckSemaPassPhase {
                 sema: sema,
                 diagnostics: ctx.semaCtx.diagnostics
             )
+            var bodyLocals = locals
             _ = inferExpr(
                 bodyExpr,
                 ctx: ctx.with(loopDepth: ctx.loopDepth + 1),
-                locals: &locals,
+                locals: &bodyLocals,
                 expectedType: nil
             )
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
 
         case .doWhileExpr(let bodyExpr, let conditionExpr, let range):
+            var bodyLocals = locals
             _ = inferExpr(
                 bodyExpr,
                 ctx: ctx.with(loopDepth: ctx.loopDepth + 1),
-                locals: &locals,
+                locals: &bodyLocals,
                 expectedType: nil
             )
-            let conditionType = inferExpr(conditionExpr, ctx: ctx, locals: &locals, expectedType: boolType)
+            let conditionType = inferExpr(conditionExpr, ctx: ctx, locals: &bodyLocals, expectedType: boolType)
             emitSubtypeConstraint(
                 left: conditionType,
                 right: boolType,
@@ -317,11 +319,20 @@ extension TypeCheckSemaPassPhase {
                     diagnostics: ctx.semaCtx.diagnostics
                 )
             }
-            let thenType = inferExpr(thenExpr, ctx: ctx, locals: &locals, expectedType: expectedType)
+            var thenLocals = locals
+            let thenType = inferExpr(thenExpr, ctx: ctx, locals: &thenLocals, expectedType: expectedType)
             let resolvedType: TypeID
             if let elseExpr {
-                let elseType = inferExpr(elseExpr, ctx: ctx, locals: &locals, expectedType: expectedType)
+                var elseLocals = locals
+                let elseType = inferExpr(elseExpr, ctx: ctx, locals: &elseLocals, expectedType: expectedType)
                 resolvedType = sema.types.lub([thenType, elseType])
+                for (name, local) in locals {
+                    if !local.isInitialized,
+                       let thenLocal = thenLocals[name], thenLocal.isInitialized,
+                       let elseLocal = elseLocals[name], elseLocal.isInitialized {
+                        locals[name] = (local.type, local.symbol, local.isMutable, true)
+                    }
+                }
             } else {
                 resolvedType = sema.types.unitType
             }
