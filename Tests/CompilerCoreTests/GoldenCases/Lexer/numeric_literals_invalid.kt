@@ -8,6 +8,7 @@ fun main() {
     val g = 0b_10
     val h = 0b10_
     val i = 42l
+    val i2 = 1.0l
     val j = 1.0d
     val k = 1.0D
     val l = 0b1010f

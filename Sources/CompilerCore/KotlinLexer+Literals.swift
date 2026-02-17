@@ -177,6 +177,13 @@ extension KotlinLexer {
                 "Use uppercase 'L' for Long suffix; lowercase 'l' is not allowed.",
                 range: makeRange(start: cursor, end: cursor + 1)
             )
+            if hasDot || hasExponent {
+                diagnostics.error(
+                    "KSWIFTK-LEX-0003",
+                    "Long suffix 'L' is not allowed on floating-point literals.",
+                    range: makeRange(start: cursor, end: cursor + 1)
+                )
+            }
             textEnd = cursor + 1
             let literal = text(from: start..<textEnd)
             offset = textEnd
