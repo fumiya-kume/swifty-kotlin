@@ -474,9 +474,19 @@ extension BuildASTPhase {
         interner: StringInterner,
         astArena: ASTArena
     ) -> ExprID? {
-        guard let head = statementTokens.first else {
+        guard !statementTokens.isEmpty else {
             return nil
         }
+        var startIndex = 0
+        while startIndex < statementTokens.count,
+              case .keyword(let kw) = statementTokens[startIndex].kind,
+              KotlinParser.isDeclarationModifierKeyword(kw) {
+            startIndex += 1
+        }
+        guard startIndex < statementTokens.count else {
+            return nil
+        }
+        let head = statementTokens[startIndex]
         let isMutable: Bool
         switch head.kind {
         case .keyword(.val):
@@ -487,7 +497,7 @@ extension BuildASTPhase {
             return nil
         }
 
-        guard let nameToken = statementTokens.dropFirst().first(where: { token in
+        guard let nameToken = statementTokens.dropFirst(startIndex + 1).first(where: { token in
             isTypeLikeNameToken(token.kind)
         }),
               let name = internedIdentifier(from: nameToken, interner: interner) else {
@@ -517,7 +527,8 @@ extension BuildASTPhase {
             return nil
         }
         let end = astArena.exprRange(initializerExpr)?.end ?? statementTokens.last?.range.end ?? head.range.end
-        let range = SourceRange(start: head.range.start, end: end)
+        let rangeStart = statementTokens[0].range.start
+        let range = SourceRange(start: rangeStart, end: end)
         return astArena.appendExpr(.localDecl(
             name: name,
             isMutable: isMutable,
@@ -719,5 +730,6 @@ extension BuildASTPhase {
             return false
         }
     }
+
 
 }

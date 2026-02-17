@@ -16,7 +16,7 @@ public final class KotlinParser {
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
         var sawTopLevelStatement = false
-        var sawTopLevelDeclOrHeader = false
+        var sawNonPropertyDecl = false
 
         var pendingImports: [SyntaxChild] = []
         var importRange = RangeAccumulator()
@@ -31,17 +31,18 @@ public final class KotlinParser {
             switch token.kind {
             case .keyword(.package):
                 node = parsePackageHeader()
-                sawTopLevelDeclOrHeader = true
+                sawNonPropertyDecl = true
             case .keyword(.import):
                 node = parseImportHeader()
-                sawTopLevelDeclOrHeader = true
                 pendingImports.append(.node(node))
                 importRange.append(arena.node(node).range)
                 range.append(arena.node(node).range)
                 continue
             case .keyword(let keyword) where isDeclarationKeyword(keyword):
                 node = parseDeclaration()
-                sawTopLevelDeclOrHeader = true
+                if arena.node(node).kind != .propertyDecl {
+                    sawNonPropertyDecl = true
+                }
             default:
                 let before = stream.index
                 node = parseStatement(inBlock: false)
@@ -82,7 +83,7 @@ public final class KotlinParser {
         }
 
         let rootKind: SyntaxKind
-        if sawTopLevelStatement && !sawTopLevelDeclOrHeader {
+        if sawTopLevelStatement && !sawNonPropertyDecl {
             rootKind = .script
         } else {
             rootKind = .kotlinFile
@@ -99,7 +100,7 @@ public final class KotlinParser {
     private func parseDeclaration() -> NodeID {
         var modifierChildren: [SyntaxChild] = []
         var modifierRange = RangeAccumulator()
-        while case .keyword(let keyword) = stream.peek().kind, isDeclarationModifierKeyword(keyword) {
+        while case .keyword(let keyword) = stream.peek().kind, Self.isDeclarationModifierKeyword(keyword) {
             _ = consumeToken(into: &modifierChildren, range: &modifierRange)
         }
         let token = stream.peek()
@@ -786,7 +787,7 @@ public final class KotlinParser {
         }
     }
 
-    private func isDeclarationModifierKeyword(_ keyword: Keyword) -> Bool {
+    static func isDeclarationModifierKeyword(_ keyword: Keyword) -> Bool {
         switch keyword {
         case .public, .private, .internal, .protected, .open, .abstract, .sealed, .data, .annotation,
              .inner, .expect, .actual, .const, .lateinit, .override, .final, .crossinline, .noinline, .tailrec,
@@ -798,7 +799,7 @@ public final class KotlinParser {
     }
 
     private func isDeclarationKeyword(_ keyword: Keyword) -> Bool {
-        if isDeclarationModifierKeyword(keyword) {
+        if Self.isDeclarationModifierKeyword(keyword) {
             return true
         }
         switch keyword {
@@ -1059,7 +1060,7 @@ public final class KotlinParser {
             return true
         }
         if case .keyword(let keyword) = token.kind {
-            return isDeclarationModifierKeyword(keyword) || keyword == .companion
+            return Self.isDeclarationModifierKeyword(keyword) || keyword == .companion
         }
         return false
     }
