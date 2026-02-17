@@ -14,7 +14,7 @@ swift build -c release                   # Release build
 bash Scripts/swift_test.sh                               # Run all tests (parallel by default)
 bash Scripts/swift_test.sh --filter SmokeTests           # Quick smoke tests
 bash Scripts/swift_test.sh --filter GoldenHarnessTests   # Golden (snapshot) tests
-bash Scripts/swift_test.sh --filter CompilerCoreTests.BackendPipelineCoverageTests  # Single test class
+bash Scripts/swift_test.sh --filter CompilerCoreTests.LoweringPassCoverageTests  # Single test class
 .build/debug/kswiftc path/to/file.kt -o out  # Run the compiler
 ```
 
@@ -35,7 +35,7 @@ bash Scripts/diff_kotlinc.sh Scripts/diff_cases             # All cases
 ### Coverage
 
 ```bash
-COVERAGE_THRESHOLD=95 Scripts/check_coverage.sh  # CI enforces 95% line coverage
+COVERAGE_THRESHOLD=97 Scripts/check_coverage.sh  # CI enforces 97% line coverage
 ```
 
 ## Architecture

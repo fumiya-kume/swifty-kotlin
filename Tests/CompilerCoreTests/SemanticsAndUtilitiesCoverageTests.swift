@@ -63,7 +63,7 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
         ))
     }
 
-    func testNameManglerBuildsErasedSignatureWithNullableAndSuspendFunctionTypes() {
+    func testNameManglerBuildsErasedSignatureWithNullableAndSuspendFunctionTypes() throws {
         let interner = StringInterner()
         let symbols = SymbolTable()
         let types = TypeSystem()
@@ -94,10 +94,7 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
             ),
             for: functionSymbolID
         )
-        guard let functionSymbol = symbols.symbol(functionSymbolID) else {
-            XCTFail("missing function symbol")
-            return
-        }
+        let functionSymbol = try XCTUnwrap(symbols.symbol(functionSymbolID), "missing function symbol")
 
         let encoded = mangler.mangledSignature(for: functionSymbol, symbols: symbols, types: types)
         XCTAssertTrue(encoded.contains("Q<I>"))
@@ -661,6 +658,36 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
         XCTAssertEqual(bindings.identifierSymbols[expr], fn)
         XCTAssertEqual(bindings.callBindings[expr]?.chosenCallee, fn)
         XCTAssertEqual(bindings.declSymbols[decl], fn)
+    }
+
+    func testInsertWithAliasRegistersSymbolUnderAliasName() {
+        let interner = StringInterner()
+        let symbols = SymbolTable()
+        let fn = symbols.define(
+            kind: .function,
+            name: interner.intern("originalName"),
+            fqName: [interner.intern("pkg"), interner.intern("originalName")],
+            declSite: nil,
+            visibility: .public
+        )
+
+        let scope = ImportScope(parent: nil, symbols: symbols)
+        let aliasName = interner.intern("AliasName")
+        scope.insertWithAlias(fn, asName: aliasName)
+
+        XCTAssertEqual(scope.lookup(aliasName), [fn])
+        XCTAssertTrue(scope.lookup(interner.intern("originalName")).isEmpty)
+    }
+
+    func testImportAliasDeclStoresAliasField() {
+        let interner = StringInterner()
+        let range = makeRange(start: 0, end: 10)
+
+        let noAlias = ImportDecl(range: range, path: [interner.intern("a"), interner.intern("B")], alias: nil)
+        XCTAssertNil(noAlias.alias)
+
+        let withAlias = ImportDecl(range: range, path: [interner.intern("a"), interner.intern("B")], alias: interner.intern("X"))
+        XCTAssertEqual(withAlias.alias, interner.intern("X"))
     }
 
     func testSymbolTableSupportsOverloadedFunctionsWithSameFQName() {
