@@ -91,8 +91,13 @@ final class ASTModelsTests: XCTestCase {
         let enumEntryDecl = EnumEntryDecl(range: range, name: interner.intern("Entry"))
         XCTAssertEqual(enumEntryDecl.range, range)
 
-        let importDecl = ImportDecl(range: range, path: [interner.intern("kotlin"), interner.intern("collections")])
+        let importDecl = ImportDecl(range: range, path: [interner.intern("kotlin"), interner.intern("collections")], alias: nil)
         XCTAssertEqual(importDecl.path.count, 2)
+        XCTAssertNil(importDecl.alias)
+
+        let aliasedImport = ImportDecl(range: range, path: [interner.intern("kotlin"), interner.intern("collections"), interner.intern("List")], alias: interner.intern("KList"))
+        XCTAssertEqual(aliasedImport.alias, interner.intern("KList"))
+        XCTAssertEqual(aliasedImport.path.count, 3)
 
         let typeParam = TypeParamDecl(name: interner.intern("T"))
         XCTAssertEqual(typeParam.name, interner.intern("T"))

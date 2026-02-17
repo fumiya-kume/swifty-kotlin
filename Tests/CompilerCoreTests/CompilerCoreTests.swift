@@ -725,6 +725,106 @@ final class CompilerCoreTests: XCTestCase {
         XCTAssertFalse(hasAmbiguousDiagnostic)
     }
 
+    func testImportAliasWildcardDiagnostic() throws {
+        let sources = [
+            """
+            package lib
+            fun helper(x: Int) = x
+            """,
+            """
+            package app
+            import lib as L
+            fun use() = 1
+            """
+        ]
+        let ctx = try makeContext(sources: sources)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasWildcardAlias = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0022"
+        })
+        XCTAssertTrue(hasWildcardAlias, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
+    }
+
+    func testImportAliasDuplicateDiagnostic() throws {
+        let sources = [
+            """
+            package lib
+            fun foo(x: Int) = x
+            fun bar(x: Int) = x
+            """,
+            """
+            package app
+            import lib.foo as X
+            import lib.bar as X
+            fun use() = 1
+            """
+        ]
+        let ctx = try makeContext(sources: sources)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasDuplicateAlias = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0023"
+        })
+        XCTAssertTrue(hasDuplicateAlias, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
+    }
+
+    func testImportAliasUnresolvedPathDiagnostic() throws {
+        let source = """
+        package app
+        import nonexistent.Thing as X
+        fun use() = 1
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasUnresolved = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0024"
+        })
+        XCTAssertTrue(hasUnresolved, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
+    }
+
+    func testImportAliasResolvesAcrossPackages() throws {
+        let sources = [
+            """
+            package lib
+            fun helper(x: Int) = x
+            """,
+            """
+            package app
+            import lib.helper as h
+            fun use() = h(1)
+            """
+        ]
+        let ctx = try makeContext(sources: sources)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasNoViableDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0002"
+        })
+        XCTAssertFalse(hasNoViableDiagnostic, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
+    }
+
     func testEmitObjectProducesMachOFile() throws {
         let source = "fun main() {}"
         let tempSource = try writeTempSource(source)
@@ -881,6 +981,60 @@ final class CompilerCoreTests: XCTestCase {
         case .expr, .unit:
             XCTFail("Block-body function should produce block expressions.")
         }
+    }
+
+    func testUnresolvedIdentifierEmitsDiagnostic() throws {
+        let source = """
+        fun test() = unknownVariable
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0022"
+        })
+        XCTAssertTrue(hasDiagnostic, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
+    }
+
+    func testUnresolvedFunctionCallEmitsDiagnostic() throws {
+        let source = """
+        fun test() = unknownFunction(1)
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0023"
+        })
+        XCTAssertTrue(hasDiagnostic, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
+    }
+
+    func testUnresolvedTypeAnnotationEmitsDiagnostic() throws {
+        let source = """
+        fun test(x: UnknownType) = x
+        """
+        let ctx = try makeContext(source: source)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasDiagnostic = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0025"
+        })
+        XCTAssertTrue(hasDiagnostic, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
     }
 
     private func makeContext(source: String) throws -> CompilationContext {

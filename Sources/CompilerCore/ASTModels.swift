@@ -365,6 +365,7 @@ public struct EnumEntryDecl {
 public struct ImportDecl {
     public let range: SourceRange
     public let path: [InternedString]
+    public let alias: InternedString?
 }
 
 public struct TypeParamDecl {
