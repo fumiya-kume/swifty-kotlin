@@ -42,12 +42,13 @@ final class LinkPhaseCoverageTests: XCTestCase {
                 try LinkPhase().run(appCtx)
 
                 XCTAssertTrue(FileManager.default.fileExists(atPath: outputPath))
-                let process = Process()
-                process.executableURL = URL(fileURLWithPath: outputPath)
-                process.arguments = []
-                try process.run()
-                process.waitUntilExit()
-                XCTAssertEqual(process.terminationStatus, 42)
+                do {
+                    _ = try CommandRunner.run(executable: outputPath, arguments: [])
+                    XCTFail("Expected non-zero exit")
+                    return
+                } catch CommandRunnerError.nonZeroExit(let failed) {
+                    XCTAssertEqual(failed.exitCode, 42)
+                }
             }
         }
     }
@@ -187,12 +188,13 @@ final class LinkPhaseCoverageTests: XCTestCase {
             try LinkPhase().run(appCtx)
 
             XCTAssertTrue(fm.fileExists(atPath: outputPath))
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: outputPath)
-            process.arguments = []
-            try process.run()
-            process.waitUntilExit()
-            XCTAssertEqual(process.terminationStatus, 42)
+            do {
+                _ = try CommandRunner.run(executable: outputPath, arguments: [])
+                XCTFail("Expected non-zero exit")
+                return
+            } catch CommandRunnerError.nonZeroExit(let failed) {
+                XCTAssertEqual(failed.exitCode, 42)
+            }
         }
     }
 

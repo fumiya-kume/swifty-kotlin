@@ -677,11 +677,24 @@ final class CodegenAndBackendCoverageTests: XCTestCase {
             try fm.createDirectory(at: workDir, withIntermediateDirectories: true)
             defer { try? fm.removeItem(at: workDir) }
 
-            let artifactBase = workDir.appendingPathComponent("deterministic").path
-            let first = try readCodegenArtifact(inputPath: path, emit: emit, outputPath: artifactBase)
-            let second = try readCodegenArtifact(inputPath: path, emit: emit, outputPath: artifactBase)
+            let artifactBase1 = workDir.appendingPathComponent("deterministic_1").path
+            let artifactBase2 = workDir.appendingPathComponent("deterministic_2").path
+            var first = try readCodegenArtifact(inputPath: path, emit: emit, outputPath: artifactBase1)
+            var second = try readCodegenArtifact(inputPath: path, emit: emit, outputPath: artifactBase2)
+            if emit == .llvmIR {
+                first = stripPathDependentLines(first)
+                second = stripPathDependentLines(second)
+            }
             XCTAssertEqual(first, second)
         }
+    }
+
+    private func stripPathDependentLines(_ data: Data) -> Data {
+        guard let text = String(data: data, encoding: .utf8) else { return data }
+        let filtered = text.components(separatedBy: "\n").filter { line in
+            !line.hasPrefix("source_filename = ") && !line.hasPrefix("; ModuleID = ")
+        }
+        return Data(filtered.joined(separator: "\n").utf8)
     }
 
     private func readCodegenArtifact(inputPath: String, emit: EmitMode, outputPath: String) throws -> Data {
