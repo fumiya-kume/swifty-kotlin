@@ -136,6 +136,7 @@ public final class LLVMBackend {
         "kk_op_sub": "-",
         "kk_op_mul": "*",
         "kk_op_div": "/",
+        "kk_op_mod": "%",
         "kk_op_eq": "==",
         "kk_op_ne": "!=",
         "kk_op_lt": "<",

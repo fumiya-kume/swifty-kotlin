@@ -2,7 +2,7 @@ import Foundation
 
 struct NormalizedCallResult {
     let arguments: [KIRExprID]
-    let defaultMask: Int32
+    let defaultMask: Int64
     let calleeHasDefaults: Bool
 }
 
@@ -128,7 +128,7 @@ extension BuildKIRPhase {
             body.append(.constValue(result: paramExpr, value: .symbolRef(paramSymbol)))
 
             if i < defaultExpressions.count, let defaultExprID = defaultExpressions[i] {
-                let bitValue = Int64(1 << i)
+                let bitValue = Int64(1) << i
                 let divisorExpr = arena.appendExpr(.intLiteral(bitValue), type: intType)
                 body.append(.constValue(result: divisorExpr, value: .intLiteral(bitValue)))
                 let dividedExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
@@ -271,7 +271,7 @@ extension BuildKIRPhase {
         var normalized: [KIRExprID] = []
         normalized.reserveCapacity(parameterCount)
         let intType = sema.types.make(.primitive(.int, .nonNull))
-        var mask: Int32 = 0
+        var mask: Int64 = 0
 
         for paramIndex in 0..<parameterCount {
             if let argIndices = argIndicesByParameter[paramIndex] {
@@ -308,7 +308,7 @@ extension BuildKIRPhase {
                   defaultExpressions[paramIndex] != nil else {
                 return NormalizedCallResult(arguments: providedArguments, defaultMask: 0, calleeHasDefaults: false)
             }
-            mask |= Int32(truncatingIfNeeded: Int64(1) << paramIndex)
+            mask |= Int64(1) << paramIndex
             let sentinel = arena.appendExpr(.intLiteral(0), type: signature.parameterTypes[paramIndex])
             instructions.append(.constValue(result: sentinel, value: .intLiteral(0)))
             normalized.append(sentinel)
