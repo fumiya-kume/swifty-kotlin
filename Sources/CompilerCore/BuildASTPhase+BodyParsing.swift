@@ -766,7 +766,7 @@ extension BuildASTPhase {
                 for stmtTokens in stmtGroups {
                     let filtered = stmtTokens.filter { $0.kind != .symbol(.semicolon) }
                     guard !filtered.isEmpty else { continue }
-                    if let localFun = parseLocalFunDeclExpr(from: filtered, interner: interner, astArena: astArena) {
+                    if let localFun = parseLocalFunDeclExpr(from: stmtTokens, interner: interner, astArena: astArena) {
                         blockExprs.append(localFun)
                     } else if let localDecl = parseLocalDeclarationExpr(from: filtered, interner: interner, astArena: astArena) {
                         blockExprs.append(localDecl)
