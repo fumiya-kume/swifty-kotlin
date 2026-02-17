@@ -151,7 +151,9 @@ run_case() {
   fi
 
   if [[ $is_script -eq 1 ]]; then
-    "$KOTLINC" -script "$kt_file" >"$ref_run_stdout" 2>"$ref_compile_stderr" || ref_compile_exit=$?
+    local kts_tmp="$tmp_dir/${basename%.kt}.kts"
+    cp "$kt_file" "$kts_tmp"
+    "$KOTLINC" -script "$kts_tmp" >"$ref_run_stdout" 2>"$ref_compile_stderr" || ref_compile_exit=$?
     if [[ $ref_compile_exit -ne 0 ]]; then
       : >"$ref_run_stdout"
     fi
