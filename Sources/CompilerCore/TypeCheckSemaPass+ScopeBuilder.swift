@@ -168,11 +168,16 @@ extension TypeCheckSemaPassPhase {
         for symbol in sema.symbols.allSymbols() {
             guard symbol.flags.contains(.synthetic),
                   symbol.kind != .package,
-                  symbol.fqName.count >= 2 else {
+                  symbol.fqName.count >= 1 else {
                 continue
             }
-            let candidatePackage = Array(symbol.fqName.dropLast())
-            guard knownPackages.contains(candidatePackage) else {
+            let candidatePackage: [InternedString]
+            if symbol.fqName.count == 1 {
+                candidatePackage = []
+            } else {
+                candidatePackage = Array(symbol.fqName.dropLast())
+            }
+            if !candidatePackage.isEmpty && !knownPackages.contains(candidatePackage) {
                 continue
             }
             mapping[candidatePackage, default: []].append(symbol.id)

@@ -472,7 +472,7 @@ final class LibraryMetadataCoverageTests: XCTestCase {
         let metadata = """
         symbols=3
         package _ fq=wc.util
-        function _ fq=wc.util.helper arity=1 sig=F1<I>I
+        function _ fq=wc.util.helper arity=1 sig=F1<I,I>
         class _ fq=wc.util.Widget
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)

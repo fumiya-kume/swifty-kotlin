@@ -140,6 +140,32 @@ extension DataFlowSemaPassPhase {
             }
         }
 
+        var syntheticPackagePaths: Set<[InternedString]> = []
+        for binding in importedBindings where binding.record.kind != .package {
+            let fq = binding.record.fqName
+            for length in 1..<fq.count {
+                let prefix = Array(fq.prefix(length))
+                syntheticPackagePaths.insert(prefix)
+            }
+        }
+        for packagePath in syntheticPackagePaths {
+            let existing = symbols.lookupAll(fqName: packagePath)
+            let alreadyHasPackage = existing.contains { id in
+                symbols.symbol(id)?.kind == .package
+            }
+            if !alreadyHasPackage {
+                let name = packagePath.last ?? interner.intern("_")
+                _ = symbols.define(
+                    kind: .package,
+                    name: name,
+                    fqName: packagePath,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+            }
+        }
+
         for edge in pendingSupertypeEdges {
             guard let superSymbol = symbols.lookupAll(fqName: edge.superFQName)
                 .compactMap({ symbols.symbol($0) })
