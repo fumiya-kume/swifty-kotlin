@@ -518,7 +518,7 @@ public enum Expr: Equatable {
     case memberCall(receiver: ExprID, callee: InternedString, typeArgs: [TypeRefID], args: [CallArgument], range: SourceRange)
     case arrayAccess(array: ExprID, index: ExprID, range: SourceRange)
     case binary(op: BinaryOp, lhs: ExprID, rhs: ExprID, range: SourceRange)
-    case whenExpr(subject: ExprID, branches: [WhenBranch], elseExpr: ExprID?, range: SourceRange)
+    case whenExpr(subject: ExprID?, branches: [WhenBranch], elseExpr: ExprID?, range: SourceRange)
     case returnExpr(value: ExprID?, range: SourceRange)
     case ifExpr(condition: ExprID, thenExpr: ExprID, elseExpr: ExprID?, range: SourceRange)
     case tryExpr(body: ExprID, catchClauses: [CatchClause], finallyExpr: ExprID?, range: SourceRange)

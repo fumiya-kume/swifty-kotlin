@@ -1245,15 +1245,18 @@ extension BuildKIRPhase {
             return unit
 
         case .whenExpr(let subject, let branches, let elseExpr, _):
-            let subjectID = lowerExpr(
-                subject,
-                ast: ast,
-                sema: sema,
-                arena: arena,
-                interner: interner,
-                propertyConstantInitializers: propertyConstantInitializers,
-                instructions: &instructions
-            )
+            var subjectID: KIRExprID?
+            if let subject {
+                subjectID = lowerExpr(
+                    subject,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+            }
             let endLabel = makeLoopLabel()
             let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.errorType)
 
@@ -1276,13 +1279,18 @@ extension BuildKIRPhase {
                         propertyConstantInitializers: propertyConstantInitializers,
                         instructions: &instructions
                     )
-                    let matchesID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
-                    instructions.append(.binary(
-                        op: .equal,
-                        lhs: subjectID,
-                        rhs: conditionValueID,
-                        result: matchesID
-                    ))
+                    let matchesID: KIRExprID
+                    if let subjectID {
+                        matchesID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
+                        instructions.append(.binary(
+                            op: .equal,
+                            lhs: subjectID,
+                            rhs: conditionValueID,
+                            result: matchesID
+                        ))
+                    } else {
+                        matchesID = conditionValueID
+                    }
                     instructions.append(.jumpIfEqual(lhs: matchesID, rhs: falseID, target: nextBranchLabels[index]))
                 }
 
