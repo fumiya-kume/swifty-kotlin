@@ -274,9 +274,15 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                     }
 
                 case .propertyDecl(let property):
+                    var propCtx = inferCtx
+                    if let parentSym = sema.symbols.parentSymbol(for: declSymbol),
+                       let parentInfo = sema.symbols.symbol(parentSym),
+                       parentInfo.kind == .class || parentInfo.kind == .interface || parentInfo.kind == .object {
+                        propCtx = inferCtx.with(enclosingClassSymbol: parentSym)
+                    }
                     typeCheckPropertyDecl(
                         property, symbol: declSymbol,
-                        ctx: inferCtx, solver: solver,
+                        ctx: propCtx, solver: solver,
                         diagnostics: ctx.diagnostics
                     )
                     let expr = ExprID(rawValue: declID.rawValue)
