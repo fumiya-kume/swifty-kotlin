@@ -176,7 +176,8 @@ extension TypeCheckSemaPassPhase {
             )
             for (name, local) in locals {
                 if !local.isInitialized,
-                   let bodyLocal = bodyLocals[name], bodyLocal.isInitialized {
+                   let bodyLocal = bodyLocals[name], bodyLocal.isInitialized,
+                   bodyLocal.symbol == local.symbol {
                     locals[name] = (local.type, local.symbol, local.isMutable, true)
                 }
             }
@@ -353,7 +354,9 @@ extension TypeCheckSemaPassPhase {
                 for (name, local) in locals {
                     if !local.isInitialized,
                        let thenLocal = thenLocals[name], thenLocal.isInitialized,
-                       let elseLocal = elseLocals[name], elseLocal.isInitialized {
+                       thenLocal.symbol == local.symbol,
+                       let elseLocal = elseLocals[name], elseLocal.isInitialized,
+                       elseLocal.symbol == local.symbol {
                         locals[name] = (local.type, local.symbol, local.isMutable, true)
                     }
                 }
