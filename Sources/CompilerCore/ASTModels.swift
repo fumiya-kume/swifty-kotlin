@@ -386,7 +386,7 @@ public struct TypeParamDecl {
     }
 }
 
-public struct ValueParamDecl {
+public struct ValueParamDecl: Equatable {
     public let name: InternedString
     public let type: TypeRefID?
     public let hasDefaultValue: Bool
@@ -522,6 +522,7 @@ public enum Expr: Equatable {
     case safeMemberCall(receiver: ExprID, callee: InternedString, typeArgs: [TypeRefID], args: [CallArgument], range: SourceRange)
     case compoundAssign(op: CompoundAssignOp, name: InternedString, value: ExprID, range: SourceRange)
     case throwExpr(value: ExprID, range: SourceRange)
+    case localFunDecl(name: InternedString, valueParams: [ValueParamDecl], returnType: TypeRefID?, body: FunctionBody, range: SourceRange)
 }
 
 public final class ASTArena {
@@ -598,7 +599,8 @@ public final class ASTArena {
              .nullAssert(_, let range),
              .safeMemberCall(_, _, _, _, let range),
              .compoundAssign(_, _, _, let range),
-             .throwExpr(_, let range):
+             .throwExpr(_, let range),
+             .localFunDecl(_, _, _, _, let range):
             return range
         }
     }
