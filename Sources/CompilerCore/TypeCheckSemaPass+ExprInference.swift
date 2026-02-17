@@ -767,9 +767,20 @@ extension TypeCheckSemaPassPhase {
                 }
                 return signature.receiverType != nil
             }
-            let (safeMemberVisible, _) = ctx.filterByVisibility(allSafeMemberCandidates)
+            let (safeMemberVisible, safeMemberInvisible) = ctx.filterByVisibility(allSafeMemberCandidates)
             let candidates = safeMemberVisible
             if candidates.isEmpty {
+                if let firstInvisible = safeMemberInvisible.first {
+                    let visLabel = firstInvisible.visibility == .protected ? "protected" : "private"
+                    let code = firstInvisible.visibility == .protected ? "KSWIFTK-SEMA-0041" : "KSWIFTK-SEMA-0040"
+                    ctx.semaCtx.diagnostics.error(
+                        code,
+                        "Cannot access '\(interner.resolve(calleeName))': it is \(visLabel).",
+                        range: range
+                    )
+                    sema.bindings.bindExprType(id, type: sema.types.errorType)
+                    return sema.types.errorType
+                }
                 let resultType = makeNullable(sema.types.anyType, types: sema.types)
                 sema.bindings.bindExprType(id, type: resultType)
                 return resultType

@@ -239,7 +239,13 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                         locals[param.name] = (type, paramSymbol, false, true)
                     }
 
-                    let funCtx = inferCtx.with(implicitReceiverType: signature.receiverType)
+                    var baseCtx = inferCtx
+                    if let parentSym = sema.symbols.parentSymbol(for: declSymbol),
+                       let parentInfo = sema.symbols.symbol(parentSym),
+                       parentInfo.kind == .class || parentInfo.kind == .interface || parentInfo.kind == .object {
+                        baseCtx = inferCtx.with(enclosingClassSymbol: parentSym)
+                    }
+                    let funCtx = baseCtx.with(implicitReceiverType: signature.receiverType)
                     let bodyType = inferFunctionBodyType(
                         function.body, ctx: funCtx, locals: &locals,
                         expectedType: signature.returnType
