@@ -26,6 +26,7 @@ fun main() {
     val dblExpMinus = 1e-3
     val dblDotExp = 1.5e10
     val dblDotExpMinus = 2.0e-4
+    val dblExpUnder = 1e1_0
 
     val flt = 1.0f
     val fltUpper = 1.0F
