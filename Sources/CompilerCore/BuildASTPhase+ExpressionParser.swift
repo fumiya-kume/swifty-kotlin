@@ -751,7 +751,7 @@ extension BuildASTPhase {
                 return astArena.appendExpr(.blockExpr(statements: [], trailingExpr: nil, range: range))
             }
             if statementGroups.count == 1 {
-                let tokens = statementGroups[0].filter { $0.kind != .symbol(.semicolon) }
+                let tokens = statementGroups[0]
                 if !isLocalDeclarationTokens(tokens) && !isLocalAssignmentTokens(tokens) {
                     if let nestedExpr = ExpressionParser(tokens: tokens, interner: interner, astArena: astArena).parse() {
                         return nestedExpr
@@ -761,13 +761,12 @@ extension BuildASTPhase {
 
             var statements: [ExprID] = []
             for group in statementGroups {
-                let tokens = group.filter { $0.kind != .symbol(.semicolon) }
-                guard !tokens.isEmpty else { continue }
-                if let localDecl = parseLocalDeclFromTokens(tokens) {
+                guard !group.isEmpty else { continue }
+                if let localDecl = parseLocalDeclFromTokens(group) {
                     statements.append(localDecl)
-                } else if let localAssign = parseLocalAssignFromTokens(tokens) {
+                } else if let localAssign = parseLocalAssignFromTokens(group) {
                     statements.append(localAssign)
-                } else if let expr = ExpressionParser(tokens: tokens, interner: interner, astArena: astArena).parse() {
+                } else if let expr = ExpressionParser(tokens: group, interner: interner, astArena: astArena).parse() {
                     statements.append(expr)
                 }
             }
@@ -918,9 +917,9 @@ extension BuildASTPhase {
                 depth.track(token.kind)
             }
             guard let assignIndex else { return nil }
-            let initializerTokens = tokens[(assignIndex + 1)...].filter { $0.kind != .symbol(.semicolon) }
+            let initializerTokens = Array(tokens[(assignIndex + 1)...])
             guard !initializerTokens.isEmpty else { return nil }
-            let parser = ExpressionParser(tokens: Array(initializerTokens), interner: interner, astArena: astArena)
+            let parser = ExpressionParser(tokens: initializerTokens, interner: interner, astArena: astArena)
             guard let initializerExpr = parser.parse() else { return nil }
             let rangeEnd = astArena.exprRange(initializerExpr)?.end ?? tokens.last?.range.end ?? head.range.end
             let range = SourceRange(start: tokens[0].range.start, end: rangeEnd)
@@ -948,7 +947,7 @@ extension BuildASTPhase {
             guard lhsTokens.count == 1, let name = tokenText(lhsTokens[0]) else {
                 return nil
             }
-            let valueTokens = tokens[(assignIndex + 1)...].filter { $0.kind != .symbol(.semicolon) }
+            let valueTokens = Array(tokens[(assignIndex + 1)...])
             guard !valueTokens.isEmpty else { return nil }
             let parser = ExpressionParser(tokens: Array(valueTokens), interner: interner, astArena: astArena)
             guard let valueExpr = parser.parse() else { return nil }
