@@ -260,6 +260,21 @@ public final class LLVMBackend {
             "  }",
             "  return (void*)s;",
             "}",
+            "static void* kk_any_to_string(intptr_t value, int32_t tag) {",
+            "  if (value == KK_NULL_SENTINEL) return kk_string_from_utf8((const uint8_t*)\"null\", 4);",
+            "  char buf[64];",
+            "  int len = 0;",
+            "  switch (tag) {",
+            #"    case 1: len = snprintf(buf, sizeof(buf), "%lld", (long long)value); break;"#,
+            #"    case 2: len = snprintf(buf, sizeof(buf), "%s", (value ? "true" : "false")); break;"#,
+            "    case 3: return (void*)value;",
+            #"    default: len = snprintf(buf, sizeof(buf), "%lld", (long long)value); break;"#,
+            "  }",
+            "  if (len < 0) len = 0;",
+            "  if (len >= (int)sizeof(buf)) len = (int)sizeof(buf) - 1;",
+            "  buf[len] = '\\0';",
+            "  return kk_string_from_utf8((const uint8_t*)buf, (int32_t)len);",
+            "}",
             "static void* kk_string_concat(void* a, void* b) {",
             "  if ((intptr_t)a == KK_NULL_SENTINEL) a = NULL;",
             "  if ((intptr_t)b == KK_NULL_SENTINEL) b = NULL;",
@@ -945,6 +960,19 @@ public final class LLVMBackend {
                     continue
                 }
 
+                if calleeName == "kk_any_to_string" {
+                    let arg = argVars.count > 0 ? argVars[0] : "0"
+                    let tagArg = argVars.count > 1 ? argVars[1] : "0"
+                    let expr = "(intptr_t)kk_any_to_string(\(arg), \(tagArg))"
+                    if let result {
+                        lines.append("  \(varName(result)) = \(expr);")
+                        syncRoot(result)
+                    } else {
+                        lines.append("  (void)\(expr);")
+                    }
+                    continue
+                }
+
                 if calleeName == "kk_string_concat" {
                     let lhs = argVars.count > 0 ? argVars[0] : "0"
                     let rhs = argVars.count > 1 ? argVars[1] : "0"
@@ -1292,6 +1320,7 @@ public final class LLVMBackend {
             "println",
             "kk_println_any",
             "kk_string_concat",
+            "kk_any_to_string",
             "kk_string_from_utf8",
             "kk_when_select",
             "kk_coroutine_suspended",

@@ -453,6 +453,73 @@ public final class BuildKIRPhase: CompilerPhase {
             instructions.append(.constValue(result: id, value: .stringLiteral(value)))
             return id
 
+        case .stringTemplate(let parts, _):
+            var partIDs: [KIRExprID] = []
+            for part in parts {
+                switch part {
+                case .literal(let interned):
+                    let partID = arena.appendExpr(.stringLiteral(interned), type: stringType)
+                    instructions.append(.constValue(result: partID, value: .stringLiteral(interned)))
+                    partIDs.append(partID)
+                case .expression(let exprID):
+                    let lowered = lowerExpr(
+                        exprID,
+                        ast: ast,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        propertyConstantInitializers: propertyConstantInitializers,
+                        instructions: &instructions
+                    )
+                    let exprType = sema.bindings.exprTypes[exprID]
+                    if let exprType, exprType != stringType {
+                        let tag: Int64
+                        switch sema.types.kind(of: exprType) {
+                        case .primitive(.boolean, _):
+                            tag = 2
+                        case .primitive(.string, _):
+                            tag = 3
+                        default:
+                            tag = 1
+                        }
+                        let tagID = arena.appendExpr(.intLiteral(tag), type: intType)
+                        instructions.append(.constValue(result: tagID, value: .intLiteral(tag)))
+                        let converted = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: stringType)
+                        instructions.append(.call(
+                            symbol: nil,
+                            callee: interner.intern("kk_any_to_string"),
+                            arguments: [lowered, tagID],
+                            result: converted,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        partIDs.append(converted)
+                    } else {
+                        partIDs.append(lowered)
+                    }
+                }
+            }
+            if partIDs.isEmpty {
+                let emptyStr = interner.intern("")
+                let id = arena.appendExpr(.stringLiteral(emptyStr), type: stringType)
+                instructions.append(.constValue(result: id, value: .stringLiteral(emptyStr)))
+                return id
+            }
+            var accumulated = partIDs[0]
+            for i in 1..<partIDs.count {
+                let concatResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: stringType)
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_concat"),
+                    arguments: [accumulated, partIDs[i]],
+                    result: concatResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                accumulated = concatResult
+            }
+            return accumulated
+
         case .nameRef(let name, _):
             if interner.resolve(name) == "null" {
                 let id = arena.appendExpr(.null, type: boundType ?? sema.types.nullableAnyType)
