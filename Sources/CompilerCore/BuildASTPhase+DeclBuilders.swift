@@ -238,8 +238,7 @@ extension BuildASTPhase {
                     tokenIndex += 1
 
                     var upperBound: TypeRefID? = nil
-                    if let astArena,
-                       tokenIndex < tokens.count,
+                    if tokenIndex < tokens.count,
                        tokens[tokenIndex].kind == .symbol(.colon) {
                         tokenIndex += 1
                         var boundTokens: [Token] = []
@@ -255,7 +254,9 @@ extension BuildASTPhase {
                             boundTokens.append(t)
                             tokenIndex += 1
                         }
-                        upperBound = parseTypeRef(from: boundTokens, interner: interner, astArena: astArena)
+                        if let astArena {
+                            upperBound = parseTypeRef(from: boundTokens, interner: interner, astArena: astArena)
+                        }
                     }
 
                     result.append(TypeParamDecl(name: name, variance: pendingVariance, isReified: pendingReified, upperBound: upperBound))
