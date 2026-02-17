@@ -733,7 +733,7 @@ extension BuildASTPhase {
         let body: FunctionBody
         if index < statementTokens.count, statementTokens[index].kind == .symbol(.assign) {
             index += 1
-            let exprTokens = Array(statementTokens[index...])
+            let exprTokens = Array(statementTokens[index...]).filter { $0.kind != .symbol(.semicolon) }
             let parser = ExpressionParser(tokens: exprTokens, interner: interner, astArena: astArena)
             if let exprID = parser.parse(), let exprRange = astArena.exprRange(exprID) {
                 body = .expr(exprID, exprRange)
@@ -868,7 +868,8 @@ extension BuildASTPhase {
              .symbol(.questionQuestion), .symbol(.questionColon),
              .symbol(.dot), .symbol(.questionDot),
              .symbol(.arrow), .symbol(.fatArrow),
-             .keyword(.as), .keyword(.is), .keyword(.in):
+             .keyword(.as), .keyword(.is), .keyword(.in),
+             .keyword(.else), .keyword(.catch), .keyword(.finally):
             return true
         default:
             return false
