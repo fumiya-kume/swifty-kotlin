@@ -883,7 +883,9 @@ extension TypeCheckSemaPassPhase {
             let signature = FunctionSignature(
                 parameterTypes: parameterTypes,
                 returnType: resolvedReturnType,
-                valueParameterSymbols: paramSymbols
+                valueParameterSymbols: paramSymbols,
+                valueParameterHasDefaultValues: valueParams.map { $0.hasDefaultValue },
+                valueParameterIsVararg: valueParams.map { $0.isVararg }
             )
             sema.symbols.setFunctionSignature(signature, for: funSymbol)
 
@@ -901,11 +903,13 @@ extension TypeCheckSemaPassPhase {
             bodyLocals[name] = (funType, funSymbol, false)
             switch body {
             case .block(let exprs, _):
-                for expr in exprs {
-                    _ = inferExpr(expr, ctx: ctx, locals: &bodyLocals, expectedType: nil)
+                for (index, expr) in exprs.enumerated() {
+                    let isLast = index == exprs.count - 1
+                    let expected = isLast ? resolvedReturnType : nil
+                    _ = inferExpr(expr, ctx: ctx, locals: &bodyLocals, expectedType: expected)
                 }
             case .expr(let exprID, _):
-                _ = inferExpr(exprID, ctx: ctx, locals: &bodyLocals, expectedType: nil)
+                _ = inferExpr(exprID, ctx: ctx, locals: &bodyLocals, expectedType: resolvedReturnType)
             case .unit:
                 break
             }

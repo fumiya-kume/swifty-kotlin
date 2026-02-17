@@ -338,7 +338,7 @@ final class GoldenHarnessTests: XCTestCase {
             return "compoundAssign(\(op)) name=\(interner.resolve(name)) value=e\(value.rawValue)"
         case .throwExpr(let value, _):
             return "throw value=e\(value.rawValue)"
-        case .localFunDecl(let name, let valueParams, _, let body, _):
+        case .localFunDecl(let name, let valueParams, let returnType, let body, _):
             let params = valueParams.map { interner.resolve($0.name) }.joined(separator: ",")
             let bodyStr: String
             switch body {
@@ -349,7 +349,8 @@ final class GoldenHarnessTests: XCTestCase {
             case .unit:
                 bodyStr = "unit"
             }
-            return "localFunDecl \(interner.resolve(name)) params=[\(params)] body=\(bodyStr)"
+            let retStr = returnType.map { "t\($0.rawValue)" } ?? "nil"
+            return "localFunDecl \(interner.resolve(name)) params=[\(params)] returnType=\(retStr) body=\(bodyStr)"
         }
     }
 
