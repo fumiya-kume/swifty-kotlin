@@ -53,6 +53,15 @@ extension TypeCheckSemaPassPhase {
             sema.bindings.bindExprType(id, type: stringType)
             return stringType
 
+        case .stringTemplate(let parts, _):
+            for part in parts {
+                if case .expression(let exprID) = part {
+                    _ = inferExpr(exprID, ctx: ctx, locals: &locals)
+                }
+            }
+            sema.bindings.bindExprType(id, type: stringType)
+            return stringType
+
         case .nameRef(let name, _):
             if interner.resolve(name) == "null" {
                 sema.bindings.bindExprType(id, type: sema.types.nullableAnyType)

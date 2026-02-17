@@ -439,27 +439,86 @@ extension BuildASTPhase {
 
         private func parseStringLiteral() -> ExprID? {
             guard let open = consume() else { return nil }
-            var pieces: [String] = []
             var end = open.range.end
             let closingKind = open.kind
 
+            var hasTemplate = false
+            var scanIdx = index
+            while scanIdx < tokens.count {
+                let tk = tokens[scanIdx]
+                if tk.kind == closingKind { break }
+                if case .templateExprStart = tk.kind { hasTemplate = true; break }
+                if case .templateSimpleNameStart = tk.kind { hasTemplate = true; break }
+                scanIdx += 1
+            }
+
+            if !hasTemplate {
+                var pieces: [String] = []
+                while let token = current() {
+                    if token.kind == closingKind {
+                        _ = consume()
+                        end = token.range.end
+                        break
+                    }
+                    if case .stringSegment(let segment) = token.kind {
+                        pieces.append(interner.resolve(segment))
+                    }
+                    end = token.range.end
+                    _ = consume()
+                }
+                let literal = pieces.joined()
+                let id = interner.intern(literal)
+                let range = SourceRange(start: open.range.start, end: end)
+                return astArena.appendExpr(.stringLiteral(id, range))
+            }
+
+            var parts: [StringTemplatePart] = []
             while let token = current() {
                 if token.kind == closingKind {
                     _ = consume()
                     end = token.range.end
                     break
                 }
+
                 if case .stringSegment(let segment) = token.kind {
-                    pieces.append(interner.resolve(segment))
+                    parts.append(.literal(segment))
+                    end = token.range.end
+                    _ = consume()
+                    continue
                 }
+
+                if case .templateSimpleNameStart = token.kind {
+                    _ = consume()
+                    if let nameToken = current(), let name = tokenText(nameToken) {
+                        _ = consume()
+                        let nameExprID = astArena.appendExpr(.nameRef(name, nameToken.range))
+                        parts.append(.expression(nameExprID))
+                        end = nameToken.range.end
+                    }
+                    continue
+                }
+
+                if case .templateExprStart = token.kind {
+                    _ = consume()
+                    if let exprID = parseExpression(minPrecedence: 0) {
+                        parts.append(.expression(exprID))
+                        if let exprRange = astArena.exprRange(exprID) {
+                            end = exprRange.end
+                        }
+                    }
+                    if let closeToken = current(), case .templateExprEnd = closeToken.kind {
+                        end = closeToken.range.end
+                        _ = consume()
+                    }
+                    continue
+                }
+
                 end = token.range.end
                 _ = consume()
             }
 
-            let literal = pieces.joined()
-            let id = interner.intern(literal)
             let range = SourceRange(start: open.range.start, end: end)
-            return astArena.appendExpr(.stringLiteral(id, range))
+            return astArena.appendExpr(.stringTemplate(parts: parts, range: range))
         }
 
         private func parseWhenExpression() -> ExprID? {
