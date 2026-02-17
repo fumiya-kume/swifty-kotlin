@@ -3,10 +3,10 @@ symbol s1 kind=class fq=golden.sema.Animal vis=public flags=_
 symbol s2 kind=constructor fq=golden.sema.Animal.<init> vis=public flags=_ sig=recv=_ params=[] ret=Class#1 suspend=0 defaults=[] vararg=[]
 symbol s3 kind=class fq=golden.sema.Dog vis=public flags=_
 symbol s4 kind=constructor fq=golden.sema.Dog.<init> vis=public flags=_ sig=recv=_ params=[] ret=Class#3 suspend=0 defaults=[] vararg=[]
-symbol s5 kind=function fq=golden.sema.accept vis=public flags=_ sig=recv=_ params=[T#6] ret=T#6 suspend=0 defaults=[0] vararg=[0] bounds=[Any]
+symbol s5 kind=function fq=golden.sema.accept vis=public flags=_ sig=recv=_ params=[T#6] ret=T#6 suspend=0 defaults=[0] vararg=[0] bounds=[<error>]
 symbol s6 kind=typeParameter fq=golden.sema.accept.$5.T vis=private flags=_
 symbol s7 kind=valueParameter fq=golden.sema.accept.$5.x vis=private flags=_
-symbol s8 kind=function fq=golden.sema.callValid vis=public flags=_ sig=recv=_ params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s8 kind=function fq=golden.sema.callValid vis=public flags=_ sig=recv=_ params=[] ret=<error> suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
   decl d0 class Animal sym=s1
   decl d1 class Dog sym=s3

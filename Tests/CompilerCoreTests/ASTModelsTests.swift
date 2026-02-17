@@ -91,8 +91,13 @@ final class ASTModelsTests: XCTestCase {
         let enumEntryDecl = EnumEntryDecl(range: range, name: interner.intern("Entry"))
         XCTAssertEqual(enumEntryDecl.range, range)
 
-        let importDecl = ImportDecl(range: range, path: [interner.intern("kotlin"), interner.intern("collections")])
+        let importDecl = ImportDecl(range: range, path: [interner.intern("kotlin"), interner.intern("collections")], alias: nil)
         XCTAssertEqual(importDecl.path.count, 2)
+        XCTAssertNil(importDecl.alias)
+
+        let aliasedImport = ImportDecl(range: range, path: [interner.intern("kotlin"), interner.intern("collections"), interner.intern("List")], alias: interner.intern("KList"))
+        XCTAssertEqual(aliasedImport.alias, interner.intern("KList"))
+        XCTAssertEqual(aliasedImport.path.count, 3)
 
         let typeParam = TypeParamDecl(name: interner.intern("T"))
         XCTAssertEqual(typeParam.name, interner.intern("T"))
@@ -119,6 +124,211 @@ final class ASTModelsTests: XCTestCase {
         XCTAssertTrue(compactModule.files.isEmpty)
         XCTAssertEqual(compactModule.declarationCount, 2)
         XCTAssertEqual(compactModule.tokenCount, 3)
+    }
+
+    func testExprRangeReturnsRangeForAllExprCases() {
+        let interner = StringInterner()
+        let arena = ASTArena()
+        let r = makeRange(start: 0, end: 10)
+        let dummyExprID = arena.appendExpr(.intLiteral(42, r))
+        let dummyTypeRefID = arena.appendTypeRef(.named(path: [interner.intern("Int")], args: [], nullable: false))
+        let name = interner.intern("x")
+
+        let cases: [Expr] = [
+            .intLiteral(1, r),
+            .longLiteral(1, r),
+            .floatLiteral(1.0, r),
+            .doubleLiteral(1.0, r),
+            .charLiteral(65, r),
+            .boolLiteral(true, r),
+            .stringLiteral(name, r),
+            .nameRef(name, r),
+            .forExpr(loopVariable: name, iterable: dummyExprID, body: dummyExprID, range: r),
+            .whileExpr(condition: dummyExprID, body: dummyExprID, range: r),
+            .doWhileExpr(body: dummyExprID, condition: dummyExprID, range: r),
+            .breakExpr(range: r),
+            .continueExpr(range: r),
+            .localDecl(name: name, isMutable: false, initializer: dummyExprID, range: r),
+            .localAssign(name: name, value: dummyExprID, range: r),
+            .arrayAssign(array: dummyExprID, index: dummyExprID, value: dummyExprID, range: r),
+            .call(callee: dummyExprID, typeArgs: [], args: [], range: r),
+            .memberCall(receiver: dummyExprID, callee: name, typeArgs: [], args: [], range: r),
+            .arrayAccess(array: dummyExprID, index: dummyExprID, range: r),
+            .binary(op: .add, lhs: dummyExprID, rhs: dummyExprID, range: r),
+            .whenExpr(subject: dummyExprID, branches: [], elseExpr: nil, range: r),
+            .returnExpr(value: nil, range: r),
+            .ifExpr(condition: dummyExprID, thenExpr: dummyExprID, elseExpr: nil, range: r),
+            .tryExpr(body: dummyExprID, catchClauses: [], finallyExpr: nil, range: r),
+            .unaryExpr(op: .not, operand: dummyExprID, range: r),
+            .isCheck(expr: dummyExprID, type: dummyTypeRefID, negated: false, range: r),
+            .asCast(expr: dummyExprID, type: dummyTypeRefID, isSafe: true, range: r),
+            .nullAssert(expr: dummyExprID, range: r),
+            .safeMemberCall(receiver: dummyExprID, callee: name, typeArgs: [], args: [], range: r),
+            .compoundAssign(op: .plusAssign, name: name, value: dummyExprID, range: r),
+            .throwExpr(value: dummyExprID, range: r),
+            .localFunDecl(name: name, valueParams: [], returnType: nil, body: .unit, range: r),
+        ]
+
+        for exprCase in cases {
+            let id = arena.appendExpr(exprCase)
+            XCTAssertEqual(arena.exprRange(id), r)
+        }
+    }
+
+    func testExprRangeReturnsNilForInvalidID() {
+        let arena = ASTArena()
+        XCTAssertNil(arena.exprRange(ExprID(rawValue: -1)))
+        XCTAssertNil(arena.exprRange(ExprID(rawValue: 999)))
+    }
+
+    func testSortedFilesReturnsByFileID() {
+        let arena = ASTArena()
+        let file0 = ASTFile(fileID: FileID(rawValue: 2), packageFQName: [], imports: [], topLevelDecls: [], scriptBody: [])
+        let file1 = ASTFile(fileID: FileID(rawValue: 0), packageFQName: [], imports: [], topLevelDecls: [], scriptBody: [])
+        let file2 = ASTFile(fileID: FileID(rawValue: 1), packageFQName: [], imports: [], topLevelDecls: [], scriptBody: [])
+        let module = ASTModule(files: [file0, file1, file2], arena: arena, declarationCount: 0, tokenCount: 0)
+        let sorted = module.sortedFiles
+        XCTAssertEqual(sorted[0].fileID, FileID(rawValue: 0))
+        XCTAssertEqual(sorted[1].fileID, FileID(rawValue: 1))
+        XCTAssertEqual(sorted[2].fileID, FileID(rawValue: 2))
+    }
+
+    func testTypeRefFunctionTypeLookup() {
+        let arena = ASTArena()
+        let paramTypeRef = arena.appendTypeRef(.named(path: [], args: [], nullable: false))
+        let returnTypeRef = arena.appendTypeRef(.named(path: [], args: [], nullable: false))
+        let funcTypeID = arena.appendTypeRef(.functionType(params: [paramTypeRef], returnType: returnTypeRef, isSuspend: true, nullable: false))
+        if case .functionType(let params, let ret, let suspend, let nullable) = arena.typeRef(funcTypeID) {
+            XCTAssertEqual(params.count, 1)
+            XCTAssertEqual(ret, returnTypeRef)
+            XCTAssertTrue(suspend)
+            XCTAssertFalse(nullable)
+        } else {
+            XCTFail("Expected .functionType")
+        }
+    }
+
+    func testTypeArgRefCases() {
+        let typeRef = TypeRefID(rawValue: 0)
+        let invariant = TypeArgRef.invariant(typeRef)
+        let outArg = TypeArgRef.out(typeRef)
+        let inArg = TypeArgRef.in(typeRef)
+        let star = TypeArgRef.star
+        XCTAssertNotEqual(invariant, star)
+        XCTAssertNotEqual(outArg, inArg)
+    }
+
+    func testPropertyAccessorDeclSetterWithExprBody() {
+        let interner = StringInterner()
+        let r = makeRange(start: 0, end: 5)
+        let exprID = ExprID(rawValue: 0)
+        let name = interner.intern("x")
+
+        let setter = PropertyAccessorDecl(range: r, kind: .setter, parameterName: name, body: .expr(exprID, r))
+        XCTAssertEqual(setter.kind, .setter)
+        XCTAssertEqual(setter.parameterName, name)
+        if case .expr(let e, _) = setter.body {
+            XCTAssertEqual(e, exprID)
+        } else {
+            XCTFail("Expected .expr body")
+        }
+    }
+
+    func testPropertyDeclWithAllFields() {
+        let interner = StringInterner()
+        let r = makeRange(start: 0, end: 5)
+        let typeRef = TypeRefID(rawValue: 0)
+        let exprID = ExprID(rawValue: 0)
+        let name = interner.intern("x")
+
+        let getter = PropertyAccessorDecl(range: r, kind: .getter)
+        let setter = PropertyAccessorDecl(range: r, kind: .setter, parameterName: name, body: .expr(exprID, r))
+        let propDecl = PropertyDecl(
+            range: r, name: name, modifiers: [.public], type: typeRef,
+            isVar: true, initializer: exprID, getter: getter, setter: setter, delegateExpression: exprID
+        )
+        XCTAssertTrue(propDecl.isVar)
+        XCTAssertNotNil(propDecl.getter)
+        XCTAssertNotNil(propDecl.setter)
+        XCTAssertNotNil(propDecl.delegateExpression)
+    }
+
+    func testValueParamDeclWithDefaultAndVararg() {
+        let interner = StringInterner()
+        let typeRef = TypeRefID(rawValue: 0)
+        let exprID = ExprID(rawValue: 0)
+        let name = interner.intern("x")
+
+        let param = ValueParamDecl(name: name, type: typeRef, hasDefaultValue: true, isVararg: true, defaultValue: exprID)
+        XCTAssertTrue(param.hasDefaultValue)
+        XCTAssertTrue(param.isVararg)
+        XCTAssertEqual(param.defaultValue, exprID)
+    }
+
+    func testTypeParamDeclWithVarianceAndBound() {
+        let interner = StringInterner()
+        let typeRef = TypeRefID(rawValue: 0)
+        let name = interner.intern("x")
+
+        let typeParam = TypeParamDecl(name: name, variance: .out, isReified: true, upperBound: typeRef)
+        XCTAssertEqual(typeParam.variance, .out)
+        XCTAssertTrue(typeParam.isReified)
+        XCTAssertEqual(typeParam.upperBound, typeRef)
+    }
+
+    func testFunDeclWithAllExplicitFields() {
+        let interner = StringInterner()
+        let r = makeRange(start: 0, end: 5)
+        let typeRef = TypeRefID(rawValue: 0)
+        let exprID = ExprID(rawValue: 0)
+        let name = interner.intern("x")
+
+        let typeParam = TypeParamDecl(name: name, variance: .out, isReified: true, upperBound: typeRef)
+        let param = ValueParamDecl(name: name, type: typeRef, hasDefaultValue: true, isVararg: true, defaultValue: exprID)
+        let funDecl = FunDecl(
+            range: r, name: name, modifiers: [.suspend, .inline],
+            typeParams: [typeParam], receiverType: typeRef, valueParams: [param],
+            returnType: typeRef, body: .block([exprID], r), isSuspend: true, isInline: true
+        )
+        XCTAssertTrue(funDecl.isSuspend)
+        XCTAssertTrue(funDecl.isInline)
+        XCTAssertEqual(funDecl.receiverType, typeRef)
+        XCTAssertEqual(funDecl.returnType, typeRef)
+        XCTAssertEqual(funDecl.typeParams.count, 1)
+    }
+
+    func testInterfaceDeclWithTypeParamsAndSuperTypes() {
+        let interner = StringInterner()
+        let r = makeRange(start: 0, end: 5)
+        let typeRef = TypeRefID(rawValue: 0)
+        let name = interner.intern("x")
+
+        let typeParam = TypeParamDecl(name: name, variance: .out, isReified: true, upperBound: typeRef)
+        let alias = TypeAliasDecl(range: r, name: name, modifiers: [], typeParams: [typeParam], underlyingType: typeRef)
+        XCTAssertEqual(alias.underlyingType, typeRef)
+        let iface = InterfaceDecl(
+            range: r, name: name, modifiers: [],
+            typeParams: [typeParam], superTypes: [typeRef], nestedTypeAliases: [alias]
+        )
+        XCTAssertEqual(iface.typeParams.count, 1)
+        XCTAssertEqual(iface.superTypes.count, 1)
+        XCTAssertEqual(iface.nestedTypeAliases.count, 1)
+    }
+
+    func testWhenBranchCallArgumentAndCatchClauseInit() {
+        let interner = StringInterner()
+        let r = makeRange(start: 0, end: 5)
+        let exprID = ExprID(rawValue: 0)
+        let name = interner.intern("x")
+
+        let branch = WhenBranch(condition: exprID, body: exprID, range: r)
+        XCTAssertEqual(branch.condition, exprID)
+        let callArg = CallArgument(label: name, isSpread: true, expr: exprID)
+        XCTAssertEqual(callArg.label, name)
+        XCTAssertTrue(callArg.isSpread)
+        let catchClause = CatchClause(paramName: name, paramTypeName: name, body: exprID, range: r)
+        XCTAssertEqual(catchClause.paramName, name)
+        XCTAssertEqual(catchClause.paramTypeName, name)
     }
 
     func testConstructorDeclAndDelegationCallInitializers() {

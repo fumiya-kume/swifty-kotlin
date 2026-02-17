@@ -104,7 +104,8 @@ public final class BuildASTPhase: CompilerPhase {
 
             case .importHeader:
                 let path = extractQualifiedPath(from: nodeID, in: cst, interner: ctx.interner, isPackageHeader: false)
-                importsByFile[fileRawID, default: []].append(ImportDecl(range: node.range, path: path))
+                let alias = extractImportAlias(from: nodeID, in: cst, interner: ctx.interner)
+                importsByFile[fileRawID, default: []].append(ImportDecl(range: node.range, path: path, alias: alias))
 
             case .importList:
                 for importChild in cst.children(of: nodeID) {
@@ -112,7 +113,8 @@ public final class BuildASTPhase: CompilerPhase {
                     let importNode = cst.node(importNodeID)
                     guard importNode.kind == .importHeader else { continue }
                     let path = extractQualifiedPath(from: importNodeID, in: cst, interner: ctx.interner, isPackageHeader: false)
-                    importsByFile[fileRawID, default: []].append(ImportDecl(range: importNode.range, path: path))
+                    let alias = extractImportAlias(from: importNodeID, in: cst, interner: ctx.interner)
+                    importsByFile[fileRawID, default: []].append(ImportDecl(range: importNode.range, path: path, alias: alias))
                 }
 
             case .classDecl:

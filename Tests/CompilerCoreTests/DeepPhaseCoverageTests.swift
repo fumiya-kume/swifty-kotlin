@@ -3,7 +3,15 @@ import XCTest
 @testable import CompilerCore
 
 final class DeepPhaseCoverageTests: XCTestCase {
-    func testSyntheticCSTDrivesFrontendSemaAndKIRPaths() throws {
+
+    private struct SyntheticCSTFixture {
+        let ctx: CompilationContext
+        let tokens: [Token]
+        let cst: SyntaxArena
+        let root: NodeID
+    }
+
+    private func makeSyntheticCSTFixture() -> SyntheticCSTFixture {
         let interner = StringInterner()
         let diagnostics = DiagnosticEngine()
         let options = CompilerOptions(
@@ -238,12 +246,19 @@ final class DeepPhaseCoverageTests: XCTestCase {
             .node(funBlockNode)
         ])
 
-        ctx.tokens = tokens
-        ctx.syntaxTree = cst
-        ctx.syntaxTreeRoot = root
+        return SyntheticCSTFixture(ctx: ctx, tokens: tokens, cst: cst, root: root)
+    }
+
+    func testSyntheticCSTDrivesFrontendSemaAndKIRPaths() throws {
+        let fixture = makeSyntheticCSTFixture()
+        let ctx = fixture.ctx
+        ctx.tokens = fixture.tokens
+        ctx.syntaxTree = fixture.cst
+        ctx.syntaxTreeRoot = fixture.root
 
         try BuildASTPhase().run(ctx)
         let ast = try XCTUnwrap(ctx.ast)
+        // CST contains: class, object, typealias, enum entry, 2 properties, 2 functions = 8+ decls
         XCTAssertGreaterThanOrEqual(ast.declarationCount, 8)
 
         try SemaPassesPhase().run(ctx)
@@ -251,6 +266,7 @@ final class DeepPhaseCoverageTests: XCTestCase {
         try LoweringPhase().run(ctx)
 
         let module = try XCTUnwrap(ctx.kir)
+        // At minimum: compute and blocky functions
         XCTAssertGreaterThanOrEqual(module.functionCount, 2)
         XCTAssertFalse(module.executedLowerings.isEmpty)
     }
