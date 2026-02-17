@@ -308,7 +308,7 @@ extension BuildKIRPhase {
                   defaultExpressions[paramIndex] != nil else {
                 return NormalizedCallResult(arguments: providedArguments, defaultMask: 0, calleeHasDefaults: false)
             }
-            mask |= Int32(1 << paramIndex)
+            mask |= Int32(truncatingIfNeeded: Int64(1) << paramIndex)
             let sentinel = arena.appendExpr(.intLiteral(0), type: signature.parameterTypes[paramIndex])
             instructions.append(.constValue(result: sentinel, value: .intLiteral(0)))
             normalized.append(sentinel)

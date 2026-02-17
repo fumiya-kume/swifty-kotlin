@@ -658,6 +658,19 @@ extension BuildKIRPhase {
                 var finalArguments = normalizedResult.arguments
                 finalArguments.insert(lhsID, at: 0)
                 if normalizedResult.defaultMask != 0 {
+                    if let sig = sema.symbols.functionSignature(for: callBinding.chosenCallee),
+                       !sig.reifiedTypeParameterIndices.isEmpty {
+                        for index in sig.reifiedTypeParameterIndices.sorted() {
+                            let concreteType = index < callBinding.substitutedTypeArguments.count
+                                ? callBinding.substitutedTypeArguments[index]
+                                : sema.types.anyType
+                            let tokenExpr = arena.appendExpr(
+                                .intLiteral(Int64(concreteType.rawValue)),
+                                type: intType
+                            )
+                            finalArguments.append(tokenExpr)
+                        }
+                    }
                     let maskExpr = arena.appendExpr(.intLiteral(Int64(normalizedResult.defaultMask)), type: intType)
                     instructions.append(.constValue(result: maskExpr, value: .intLiteral(Int64(normalizedResult.defaultMask))))
                     finalArguments.append(maskExpr)
@@ -674,6 +687,19 @@ extension BuildKIRPhase {
                         thrownResult: nil
                     ))
                 } else {
+                    if let sig = sema.symbols.functionSignature(for: callBinding.chosenCallee),
+                       !sig.reifiedTypeParameterIndices.isEmpty {
+                        for index in sig.reifiedTypeParameterIndices.sorted() {
+                            let concreteType = index < callBinding.substitutedTypeArguments.count
+                                ? callBinding.substitutedTypeArguments[index]
+                                : sema.types.anyType
+                            let tokenExpr = arena.appendExpr(
+                                .intLiteral(Int64(concreteType.rawValue)),
+                                type: intType
+                            )
+                            finalArguments.append(tokenExpr)
+                        }
+                    }
                     let loweredCalleeName: InternedString
                     if let externalLinkName = sema.symbols.externalLinkName(for: callBinding.chosenCallee),
                        !externalLinkName.isEmpty {
