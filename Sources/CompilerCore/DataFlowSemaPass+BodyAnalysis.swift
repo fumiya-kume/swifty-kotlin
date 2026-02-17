@@ -108,7 +108,6 @@ extension DataFlowSemaPassPhase {
                         }
                         return underlying
                     }
-                    return nullability == .nullable ? types.nullableAnyType : types.anyType
                 }
                 let resolvedArgs = resolveTypeArgRefs(
                     argRefs,
