@@ -668,6 +668,7 @@ extension BuildKIRPhase {
                                 .intLiteral(Int64(concreteType.rawValue)),
                                 type: intType
                             )
+                            instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(concreteType.rawValue))))
                             finalArguments.append(tokenExpr)
                         }
                     }
@@ -697,6 +698,7 @@ extension BuildKIRPhase {
                                 .intLiteral(Int64(concreteType.rawValue)),
                                 type: intType
                             )
+                            instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(concreteType.rawValue))))
                             finalArguments.append(tokenExpr)
                         }
                     }
@@ -845,6 +847,7 @@ extension BuildKIRPhase {
                             .intLiteral(Int64(concreteType.rawValue)),
                             type: intType
                         )
+                        instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(concreteType.rawValue))))
                         finalArgIDs.append(tokenExpr)
                     }
                 }
@@ -874,6 +877,7 @@ extension BuildKIRPhase {
                             .intLiteral(Int64(concreteType.rawValue)),
                             type: intType
                         )
+                        instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(concreteType.rawValue))))
                         finalArgIDs.append(tokenExpr)
                     }
                 }
@@ -957,6 +961,7 @@ extension BuildKIRPhase {
                             .intLiteral(Int64(concreteType.rawValue)),
                             type: intType
                         )
+                        instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(concreteType.rawValue))))
                         finalArguments.append(tokenExpr)
                     }
                 }
@@ -986,6 +991,7 @@ extension BuildKIRPhase {
                             .intLiteral(Int64(concreteType.rawValue)),
                             type: intType
                         )
+                        instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(concreteType.rawValue))))
                         finalArguments.append(tokenExpr)
                     }
                 }
@@ -1146,6 +1152,7 @@ extension BuildKIRPhase {
                             .intLiteral(Int64(concreteType.rawValue)),
                             type: intType
                         )
+                        instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(concreteType.rawValue))))
                         finalArguments.append(tokenExpr)
                     }
                 }
@@ -1175,6 +1182,7 @@ extension BuildKIRPhase {
                             .intLiteral(Int64(concreteType.rawValue)),
                             type: intType
                         )
+                        instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(concreteType.rawValue))))
                         finalArguments.append(tokenExpr)
                     }
                 }
