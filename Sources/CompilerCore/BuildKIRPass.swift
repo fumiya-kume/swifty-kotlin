@@ -650,7 +650,18 @@ public final class BuildKIRPhase: CompilerPhase {
 
         case .localFunDecl(_, _, _, _, _):
             if let symbol = sema.bindings.identifierSymbols[exprID] {
-                let funRef = arena.appendExpr(.symbolRef(symbol), type: boundType ?? sema.types.anyType)
+                let funType: TypeID
+                if let sig = sema.symbols.functionSignature(for: symbol) {
+                    funType = sema.types.make(.functionType(FunctionType(
+                        params: sig.parameterTypes,
+                        returnType: sig.returnType,
+                        isSuspend: sig.isSuspend,
+                        nullability: .nonNull
+                    )))
+                } else {
+                    funType = boundType ?? sema.types.anyType
+                }
+                let funRef = arena.appendExpr(.symbolRef(symbol), type: funType)
                 instructions.append(.constValue(result: funRef, value: .symbolRef(symbol)))
                 localValuesBySymbol[symbol] = funRef
             }
