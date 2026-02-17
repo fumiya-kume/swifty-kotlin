@@ -471,6 +471,12 @@ extension TypeCheckSemaPassPhase {
                     sema.bindings.bindExprType(id, type: builtinType)
                     return builtinType
                 }
+                if let calleeName,
+                   interner.resolve(calleeName) == "println",
+                   args.count <= 1 {
+                    sema.bindings.bindExprType(id, type: sema.types.unitType)
+                    return sema.types.unitType
+                }
                 let nameStr = calleeName.map { interner.resolve($0) } ?? "<unknown>"
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0023",
