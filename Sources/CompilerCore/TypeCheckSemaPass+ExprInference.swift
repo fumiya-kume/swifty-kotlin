@@ -442,11 +442,16 @@ extension TypeCheckSemaPassPhase {
                 calleeName = nil
             }
 
-            let candidates: [SymbolID]
+            var candidates: [SymbolID]
             if let calleeName {
                 candidates = scope.lookup(calleeName).filter { candidate in
                     guard let symbol = sema.symbols.symbol(candidate) else { return false }
                     return symbol.kind == .function || symbol.kind == .constructor
+                }
+                if candidates.isEmpty, let local = locals[calleeName] {
+                    if let sym = sema.symbols.symbol(local.symbol), sym.kind == .function {
+                        candidates = [local.symbol]
+                    }
                 }
             } else {
                 candidates = []
