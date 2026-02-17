@@ -127,6 +127,21 @@ extension BuildKIRPhase {
             )
             directMembers.append(kirID)
             allDecls.append(kirID)
+            if let defaults = functionDefaultArgumentsBySymbol[symbol],
+               let sig = signature {
+                let stubID = generateDefaultStubFunction(
+                    originalSymbol: symbol,
+                    originalName: function.name,
+                    signature: sig,
+                    defaultExpressions: defaults,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers
+                )
+                allDecls.append(stubID)
+            }
             currentImplicitReceiverExprID = nil
             currentImplicitReceiverSymbol = nil
         }

@@ -365,6 +365,21 @@ public final class BuildKIRPhase: CompilerPhase {
                         )
                     )
                     declIDs.append(kirID)
+                    if let defaults = functionDefaultArgumentsBySymbol[symbol],
+                       let sig = signature {
+                        let stubID = generateDefaultStubFunction(
+                            originalSymbol: symbol,
+                            originalName: function.name,
+                            signature: sig,
+                            defaultExpressions: defaults,
+                            ast: ast,
+                            sema: sema,
+                            arena: arena,
+                            interner: ctx.interner,
+                            propertyConstantInitializers: propertyConstantInitializers
+                        )
+                        declIDs.append(stubID)
+                    }
                     currentImplicitReceiverExprID = nil
                     currentImplicitReceiverSymbol = nil
 

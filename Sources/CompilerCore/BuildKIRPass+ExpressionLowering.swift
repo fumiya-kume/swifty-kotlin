@@ -650,7 +650,7 @@ extension BuildKIRPhase {
             if let callBinding = sema.bindings.callBindings[exprID],
                let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee),
                signature.receiverType != nil {
-                var finalArguments = normalizedCallArguments(
+                let normalizedResult = normalizedCallArguments(
                     providedArguments: [rhsID],
                     callBinding: callBinding,
                     chosenCallee: callBinding.chosenCallee,
@@ -662,24 +662,71 @@ extension BuildKIRPhase {
                     propertyConstantInitializers: propertyConstantInitializers,
                     instructions: &instructions
                 )
+                var finalArguments = normalizedResult.arguments
                 finalArguments.insert(lhsID, at: 0)
-                let loweredCalleeName: InternedString
-                if let externalLinkName = sema.symbols.externalLinkName(for: callBinding.chosenCallee),
-                   !externalLinkName.isEmpty {
-                    loweredCalleeName = interner.intern(externalLinkName)
-                } else if let symbol = sema.symbols.symbol(callBinding.chosenCallee) {
-                    loweredCalleeName = symbol.name
+                if normalizedResult.defaultMask != 0 {
+                    if let sig = sema.symbols.functionSignature(for: callBinding.chosenCallee),
+                       !sig.reifiedTypeParameterIndices.isEmpty {
+                        for index in sig.reifiedTypeParameterIndices.sorted() {
+                            let concreteType = index < callBinding.substitutedTypeArguments.count
+                                ? callBinding.substitutedTypeArguments[index]
+                                : sema.types.anyType
+                            let tokenExpr = arena.appendExpr(
+                                .intLiteral(Int64(concreteType.rawValue)),
+                                type: intType
+                            )
+                            instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(concreteType.rawValue))))
+                            finalArguments.append(tokenExpr)
+                        }
+                    }
+                    let maskExpr = arena.appendExpr(.intLiteral(Int64(normalizedResult.defaultMask)), type: intType)
+                    instructions.append(.constValue(result: maskExpr, value: .intLiteral(Int64(normalizedResult.defaultMask))))
+                    finalArguments.append(maskExpr)
+                    let stubName = interner.intern(
+                        (sema.symbols.symbol(callBinding.chosenCallee).map { interner.resolve($0.name) } ?? "unknown") + "$default"
+                    )
+                    let stubSym = defaultStubSymbol(for: callBinding.chosenCallee)
+                    instructions.append(.call(
+                        symbol: stubSym,
+                        callee: stubName,
+                        arguments: finalArguments,
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
                 } else {
-                    loweredCalleeName = binaryOperatorFunctionName(for: op, interner: interner)
+                    if let sig = sema.symbols.functionSignature(for: callBinding.chosenCallee),
+                       !sig.reifiedTypeParameterIndices.isEmpty {
+                        for index in sig.reifiedTypeParameterIndices.sorted() {
+                            let concreteType = index < callBinding.substitutedTypeArguments.count
+                                ? callBinding.substitutedTypeArguments[index]
+                                : sema.types.anyType
+                            let tokenExpr = arena.appendExpr(
+                                .intLiteral(Int64(concreteType.rawValue)),
+                                type: intType
+                            )
+                            instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(concreteType.rawValue))))
+                            finalArguments.append(tokenExpr)
+                        }
+                    }
+                    let loweredCalleeName: InternedString
+                    if let externalLinkName = sema.symbols.externalLinkName(for: callBinding.chosenCallee),
+                       !externalLinkName.isEmpty {
+                        loweredCalleeName = interner.intern(externalLinkName)
+                    } else if let symbol = sema.symbols.symbol(callBinding.chosenCallee) {
+                        loweredCalleeName = symbol.name
+                    } else {
+                        loweredCalleeName = binaryOperatorFunctionName(for: op, interner: interner)
+                    }
+                    instructions.append(.call(
+                        symbol: callBinding.chosenCallee,
+                        callee: loweredCalleeName,
+                        arguments: finalArguments,
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
                 }
-                instructions.append(.call(
-                    symbol: callBinding.chosenCallee,
-                    callee: loweredCalleeName,
-                    arguments: finalArguments,
-                    result: result,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
                 return result
             }
             if case .add = op, sema.bindings.exprTypes[exprID] == stringType {
@@ -781,7 +828,7 @@ extension BuildKIRPhase {
             let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
             let callBinding = sema.bindings.callBindings[exprID]
             let chosen = callBinding?.chosenCallee
-            var finalArgIDs = normalizedCallArguments(
+            let callNormalized = normalizedCallArguments(
                 providedArguments: loweredArgIDs,
                 callBinding: callBinding,
                 chosenCallee: chosen,
@@ -793,43 +840,77 @@ extension BuildKIRPhase {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
-            if let callBinding, let chosen,
-               let sig = sema.symbols.functionSignature(for: chosen),
-               !sig.reifiedTypeParameterIndices.isEmpty {
+            var finalArgIDs = callNormalized.arguments
+            if callNormalized.defaultMask != 0, let chosen {
                 let intType = sema.types.make(.primitive(.int, .nonNull))
-                for index in sig.reifiedTypeParameterIndices.sorted() {
-                    let concreteType = index < callBinding.substitutedTypeArguments.count
-                        ? callBinding.substitutedTypeArguments[index]
-                        : sema.types.anyType
-                    let tokenExpr = arena.appendExpr(
-                        .intLiteral(Int64(concreteType.rawValue)),
-                        type: intType
-                    )
-                    finalArgIDs.append(tokenExpr)
+                if let callBinding,
+                   let sig = sema.symbols.functionSignature(for: chosen),
+                   !sig.reifiedTypeParameterIndices.isEmpty {
+                    for index in sig.reifiedTypeParameterIndices.sorted() {
+                        let concreteType = index < callBinding.substitutedTypeArguments.count
+                            ? callBinding.substitutedTypeArguments[index]
+                            : sema.types.anyType
+                        let tokenExpr = arena.appendExpr(
+                            .intLiteral(Int64(concreteType.rawValue)),
+                            type: intType
+                        )
+                        instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(concreteType.rawValue))))
+                        finalArgIDs.append(tokenExpr)
+                    }
                 }
-            }
-            let loweredCalleeName: InternedString
-            if let chosen,
-               let externalLinkName = sema.symbols.externalLinkName(for: chosen),
-               !externalLinkName.isEmpty {
-                loweredCalleeName = interner.intern(externalLinkName)
-            } else if chosen == nil {
-                loweredCalleeName = loweredRuntimeBuiltinCallee(
-                    for: calleeName,
-                    argumentCount: finalArgIDs.count,
-                    interner: interner
-                ) ?? calleeName
+                let maskExpr = arena.appendExpr(.intLiteral(Int64(callNormalized.defaultMask)), type: intType)
+                instructions.append(.constValue(result: maskExpr, value: .intLiteral(Int64(callNormalized.defaultMask))))
+                finalArgIDs.append(maskExpr)
+                let stubName = interner.intern(interner.resolve(calleeName) + "$default")
+                let stubSym = defaultStubSymbol(for: chosen)
+                instructions.append(.call(
+                    symbol: stubSym,
+                    callee: stubName,
+                    arguments: finalArgIDs,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
             } else {
-                loweredCalleeName = calleeName
+                if let callBinding, let chosen,
+                   let sig = sema.symbols.functionSignature(for: chosen),
+                   !sig.reifiedTypeParameterIndices.isEmpty {
+                    let intType = sema.types.make(.primitive(.int, .nonNull))
+                    for index in sig.reifiedTypeParameterIndices.sorted() {
+                        let concreteType = index < callBinding.substitutedTypeArguments.count
+                            ? callBinding.substitutedTypeArguments[index]
+                            : sema.types.anyType
+                        let tokenExpr = arena.appendExpr(
+                            .intLiteral(Int64(concreteType.rawValue)),
+                            type: intType
+                        )
+                        instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(concreteType.rawValue))))
+                        finalArgIDs.append(tokenExpr)
+                    }
+                }
+                let loweredCalleeName: InternedString
+                if let chosen,
+                   let externalLinkName = sema.symbols.externalLinkName(for: chosen),
+                   !externalLinkName.isEmpty {
+                    loweredCalleeName = interner.intern(externalLinkName)
+                } else if chosen == nil {
+                    loweredCalleeName = loweredRuntimeBuiltinCallee(
+                        for: calleeName,
+                        argumentCount: finalArgIDs.count,
+                        interner: interner
+                    ) ?? calleeName
+                } else {
+                    loweredCalleeName = calleeName
+                }
+                instructions.append(.call(
+                    symbol: chosen,
+                    callee: loweredCalleeName,
+                    arguments: finalArgIDs,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
             }
-            instructions.append(.call(
-                symbol: chosen,
-                callee: loweredCalleeName,
-                arguments: finalArgIDs,
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
             return result
 
         case .memberCall(let receiverExpr, let calleeName, _, let args, _):
@@ -856,7 +937,7 @@ extension BuildKIRPhase {
             let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
             let callBinding = sema.bindings.callBindings[exprID]
             let chosen = callBinding?.chosenCallee
-            let normalizedArgs = normalizedCallArguments(
+            let memberNormalized = normalizedCallArguments(
                 providedArguments: loweredArgIDs,
                 callBinding: callBinding,
                 chosenCallee: chosen,
@@ -868,43 +949,76 @@ extension BuildKIRPhase {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
-            var finalArguments = normalizedArgs
+            var finalArguments = memberNormalized.arguments
             if let chosen,
                let signature = sema.symbols.functionSignature(for: chosen),
                signature.receiverType != nil {
                 finalArguments.insert(loweredReceiverID, at: 0)
             }
-            if let callBinding, let chosen,
-               let sig = sema.symbols.functionSignature(for: chosen),
-               !sig.reifiedTypeParameterIndices.isEmpty {
+            if memberNormalized.defaultMask != 0, let chosen {
                 let intType = sema.types.make(.primitive(.int, .nonNull))
-                for index in sig.reifiedTypeParameterIndices.sorted() {
-                    let concreteType = index < callBinding.substitutedTypeArguments.count
-                        ? callBinding.substitutedTypeArguments[index]
-                        : sema.types.anyType
-                    let tokenExpr = arena.appendExpr(
-                        .intLiteral(Int64(concreteType.rawValue)),
-                        type: intType
-                    )
-                    finalArguments.append(tokenExpr)
+                if let callBinding,
+                   let sig = sema.symbols.functionSignature(for: chosen),
+                   !sig.reifiedTypeParameterIndices.isEmpty {
+                    for index in sig.reifiedTypeParameterIndices.sorted() {
+                        let concreteType = index < callBinding.substitutedTypeArguments.count
+                            ? callBinding.substitutedTypeArguments[index]
+                            : sema.types.anyType
+                        let tokenExpr = arena.appendExpr(
+                            .intLiteral(Int64(concreteType.rawValue)),
+                            type: intType
+                        )
+                        instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(concreteType.rawValue))))
+                        finalArguments.append(tokenExpr)
+                    }
                 }
-            }
-            let loweredMemberCalleeName: InternedString
-            if let chosen,
-               let externalLinkName = sema.symbols.externalLinkName(for: chosen),
-               !externalLinkName.isEmpty {
-                loweredMemberCalleeName = interner.intern(externalLinkName)
+                let maskExpr = arena.appendExpr(.intLiteral(Int64(memberNormalized.defaultMask)), type: intType)
+                instructions.append(.constValue(result: maskExpr, value: .intLiteral(Int64(memberNormalized.defaultMask))))
+                finalArguments.append(maskExpr)
+                let stubName = interner.intern(interner.resolve(calleeName) + "$default")
+                let stubSym = defaultStubSymbol(for: chosen)
+                instructions.append(.call(
+                    symbol: stubSym,
+                    callee: stubName,
+                    arguments: finalArguments,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
             } else {
-                loweredMemberCalleeName = calleeName
+                if let callBinding, let chosen,
+                   let sig = sema.symbols.functionSignature(for: chosen),
+                   !sig.reifiedTypeParameterIndices.isEmpty {
+                    let intType = sema.types.make(.primitive(.int, .nonNull))
+                    for index in sig.reifiedTypeParameterIndices.sorted() {
+                        let concreteType = index < callBinding.substitutedTypeArguments.count
+                            ? callBinding.substitutedTypeArguments[index]
+                            : sema.types.anyType
+                        let tokenExpr = arena.appendExpr(
+                            .intLiteral(Int64(concreteType.rawValue)),
+                            type: intType
+                        )
+                        instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(concreteType.rawValue))))
+                        finalArguments.append(tokenExpr)
+                    }
+                }
+                let loweredMemberCalleeName: InternedString
+                if let chosen,
+                   let externalLinkName = sema.symbols.externalLinkName(for: chosen),
+                   !externalLinkName.isEmpty {
+                    loweredMemberCalleeName = interner.intern(externalLinkName)
+                } else {
+                    loweredMemberCalleeName = calleeName
+                }
+                instructions.append(.call(
+                    symbol: chosen,
+                    callee: loweredMemberCalleeName,
+                    arguments: finalArguments,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
             }
-            instructions.append(.call(
-                symbol: chosen,
-                callee: loweredMemberCalleeName,
-                arguments: finalArguments,
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
             return result
 
         case .unaryExpr(let op, let operandExpr, _):
@@ -1014,7 +1128,7 @@ extension BuildKIRPhase {
             let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
             let callBinding = sema.bindings.callBindings[exprID]
             let chosen = callBinding?.chosenCallee
-            let normalizedArgs = normalizedCallArguments(
+            let safeNormalized = normalizedCallArguments(
                 providedArguments: loweredArgIDs,
                 callBinding: callBinding,
                 chosenCallee: chosen,
@@ -1026,28 +1140,76 @@ extension BuildKIRPhase {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
-            var finalArguments = normalizedArgs
+            var finalArguments = safeNormalized.arguments
             if let chosen,
                let signature = sema.symbols.functionSignature(for: chosen),
                signature.receiverType != nil {
                 finalArguments.insert(loweredReceiverID, at: 0)
             }
-            let loweredMemberCalleeName: InternedString
-            if let chosen,
-               let externalLinkName = sema.symbols.externalLinkName(for: chosen),
-               !externalLinkName.isEmpty {
-                loweredMemberCalleeName = interner.intern(externalLinkName)
+            if safeNormalized.defaultMask != 0, let chosen {
+                let intType = sema.types.make(.primitive(.int, .nonNull))
+                if let callBinding,
+                   let sig = sema.symbols.functionSignature(for: chosen),
+                   !sig.reifiedTypeParameterIndices.isEmpty {
+                    for index in sig.reifiedTypeParameterIndices.sorted() {
+                        let concreteType = index < callBinding.substitutedTypeArguments.count
+                            ? callBinding.substitutedTypeArguments[index]
+                            : sema.types.anyType
+                        let tokenExpr = arena.appendExpr(
+                            .intLiteral(Int64(concreteType.rawValue)),
+                            type: intType
+                        )
+                        instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(concreteType.rawValue))))
+                        finalArguments.append(tokenExpr)
+                    }
+                }
+                let maskExpr = arena.appendExpr(.intLiteral(Int64(safeNormalized.defaultMask)), type: intType)
+                instructions.append(.constValue(result: maskExpr, value: .intLiteral(Int64(safeNormalized.defaultMask))))
+                finalArguments.append(maskExpr)
+                let stubName = interner.intern(interner.resolve(calleeName) + "$default")
+                let stubSym = defaultStubSymbol(for: chosen)
+                instructions.append(.call(
+                    symbol: stubSym,
+                    callee: stubName,
+                    arguments: finalArguments,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
             } else {
-                loweredMemberCalleeName = calleeName
+                if let callBinding, let chosen,
+                   let sig = sema.symbols.functionSignature(for: chosen),
+                   !sig.reifiedTypeParameterIndices.isEmpty {
+                    let intType = sema.types.make(.primitive(.int, .nonNull))
+                    for index in sig.reifiedTypeParameterIndices.sorted() {
+                        let concreteType = index < callBinding.substitutedTypeArguments.count
+                            ? callBinding.substitutedTypeArguments[index]
+                            : sema.types.anyType
+                        let tokenExpr = arena.appendExpr(
+                            .intLiteral(Int64(concreteType.rawValue)),
+                            type: intType
+                        )
+                        instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(concreteType.rawValue))))
+                        finalArguments.append(tokenExpr)
+                    }
+                }
+                let loweredMemberCalleeName: InternedString
+                if let chosen,
+                   let externalLinkName = sema.symbols.externalLinkName(for: chosen),
+                   !externalLinkName.isEmpty {
+                    loweredMemberCalleeName = interner.intern(externalLinkName)
+                } else {
+                    loweredMemberCalleeName = calleeName
+                }
+                instructions.append(.call(
+                    symbol: chosen,
+                    callee: loweredMemberCalleeName,
+                    arguments: finalArguments,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
             }
-            instructions.append(.call(
-                symbol: chosen,
-                callee: loweredMemberCalleeName,
-                arguments: finalArguments,
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
             return result
 
         case .compoundAssign(_, _, let valueExpr, _):
