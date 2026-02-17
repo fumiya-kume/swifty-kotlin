@@ -480,7 +480,7 @@ extension BuildKIRPhase {
             )
             let elseLabel = makeLoopLabel()
             let endLabel = makeLoopLabel()
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.errorType)
             let falseVal = arena.appendExpr(.boolLiteral(false), type: boolType)
             instructions.append(.constValue(result: falseVal, value: .boolLiteral(false)))
             instructions.append(.jumpIfEqual(lhs: conditionID, rhs: falseVal, target: elseLabel))
@@ -1093,13 +1093,12 @@ extension BuildKIRPhase {
                 instructions: &instructions
             )
             let endLabel = makeLoopLabel()
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.errorType)
 
             var nextBranchLabels: [Int32] = []
             for _ in branches {
                 nextBranchLabels.append(makeLoopLabel())
             }
-            let elseLabel = makeLoopLabel()
 
             for (index, branch) in branches.enumerated() {
                 if let conditionExprID = branch.condition {
@@ -1138,7 +1137,6 @@ extension BuildKIRPhase {
                 instructions.append(.label(nextBranchLabels[index]))
             }
 
-            instructions.append(.label(elseLabel))
             if let elseExpr {
                 let fallbackID = lowerExpr(
                     elseExpr,
