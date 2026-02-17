@@ -439,14 +439,15 @@ extension BuildASTPhase {
             guard isStatementLikeKind(node.kind) else {
                 continue
             }
-            let statementTokens = collectTokens(from: nodeID, in: arena).filter { token in
+            let rawTokens = collectTokens(from: nodeID, in: arena)
+            let statementTokens = rawTokens.filter { token in
                 token.kind != .symbol(.semicolon)
             }
             guard !statementTokens.isEmpty else {
                 continue
             }
             if let localFunDeclExpr = parseLocalFunDeclExpr(
-                from: statementTokens,
+                from: rawTokens,
                 interner: interner,
                 astArena: astArena
             ) {

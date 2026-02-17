@@ -887,10 +887,18 @@ extension TypeCheckSemaPassPhase {
             )
             sema.symbols.setFunctionSignature(signature, for: funSymbol)
 
+            let funType = sema.types.make(.functionType(FunctionType(
+                params: parameterTypes,
+                returnType: resolvedReturnType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+
             var bodyLocals = locals
             for (i, param) in valueParams.enumerated() {
                 bodyLocals[param.name] = (parameterTypes[i], paramSymbols[i], false)
             }
+            bodyLocals[name] = (funType, funSymbol, false)
             switch body {
             case .block(let exprs, _):
                 for expr in exprs {
@@ -901,13 +909,6 @@ extension TypeCheckSemaPassPhase {
             case .unit:
                 break
             }
-
-            let funType = sema.types.make(.functionType(FunctionType(
-                params: parameterTypes,
-                returnType: resolvedReturnType,
-                isSuspend: false,
-                nullability: .nonNull
-            )))
             locals[name] = (funType, funSymbol, false)
             sema.bindings.bindIdentifier(id, symbol: funSymbol)
             sema.bindings.bindExprType(id, type: sema.types.unitType)
