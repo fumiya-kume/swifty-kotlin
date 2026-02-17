@@ -133,6 +133,8 @@ run_case() {
   local cand_run_stdout="$tmp_dir/cand_run.stdout"
   local cand_run_stderr="$tmp_dir/cand_run.stderr"
 
+  : >"$ref_compile_stdout"
+  : >"$ref_compile_stderr"
   : >"$ref_run_stdout"
   : >"$ref_run_stderr"
   : >"$cand_run_stdout"
@@ -143,9 +145,28 @@ run_case() {
   local cand_compile_exit=0
   local cand_run_exit=0
 
-  "$KOTLINC" "$kt_file" -include-runtime -d "$ref_jar" >"$ref_compile_stdout" 2>"$ref_compile_stderr" || ref_compile_exit=$?
-  if [[ $ref_compile_exit -eq 0 ]]; then
-    "$JAVA_BIN" -jar "$ref_jar" >"$ref_run_stdout" 2>"$ref_run_stderr" || ref_run_exit=$?
+  local basename
+  basename="$(basename "$kt_file")"
+  local is_script=0
+  if [[ "$basename" == script_* ]]; then
+    is_script=1
+  fi
+
+  if [[ $is_script -eq 1 ]]; then
+    local kts_tmp="$tmp_dir/${basename%.kt}.kts"
+    cp "$kt_file" "$kts_tmp"
+    local script_exit=0
+    "$KOTLINC" -script "$kts_tmp" >"$ref_run_stdout" 2>"$ref_run_stderr" || script_exit=$?
+    if [[ $script_exit -ne 0 ]] && [[ ! -s "$ref_run_stdout" ]]; then
+      ref_compile_exit=$script_exit
+    else
+      ref_run_exit=$script_exit
+    fi
+  else
+    "$KOTLINC" "$kt_file" -include-runtime -d "$ref_jar" >"$ref_compile_stdout" 2>"$ref_compile_stderr" || ref_compile_exit=$?
+    if [[ $ref_compile_exit -eq 0 ]]; then
+      "$JAVA_BIN" -jar "$ref_jar" >"$ref_run_stdout" 2>"$ref_run_stderr" || ref_run_exit=$?
+    fi
   fi
 
   "$KSWIFTC" "$kt_file" -o "$cand_bin" >"$cand_compile_stdout" 2>"$cand_compile_stderr" || cand_compile_exit=$?

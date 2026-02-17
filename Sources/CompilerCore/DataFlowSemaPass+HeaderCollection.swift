@@ -349,6 +349,21 @@ extension DataFlowSemaPassPhase {
                     reifiedIndices.insert(index)
                 }
             }
+            for typeParam in funDecl.typeParams {
+                if let boundRef = typeParam.upperBound,
+                   let typeParamSym = localTypeParameters[typeParam.name] {
+                    if let boundType = resolveTypeRef(
+                        boundRef,
+                        ast: ast,
+                        symbols: symbols,
+                        types: types,
+                        interner: interner,
+                        localTypeParameters: localTypeParameters
+                    ) {
+                        symbols.setTypeParameterUpperBound(boundType, for: typeParamSym)
+                    }
+                }
+            }
             if !reifiedIndices.isEmpty && !funDecl.isInline {
                 diagnostics.error(
                     "KSWIFTK-SEMA-0020",
@@ -405,6 +420,7 @@ extension DataFlowSemaPassPhase {
                     returnType = anyType
                 }
             }
+            let upperBounds: [TypeID?] = typeParameterSymbols.map { symbols.typeParameterUpperBound(for: $0) }
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: receiverType,
@@ -415,7 +431,8 @@ extension DataFlowSemaPassPhase {
                     valueParameterHasDefaultValues: paramHasDefaultValues,
                     valueParameterIsVararg: paramIsVararg,
                     typeParameterSymbols: typeParameterSymbols,
-                    reifiedTypeParameterIndices: reifiedIndices
+                    reifiedTypeParameterIndices: reifiedIndices,
+                    typeParameterUpperBounds: upperBounds
                 ),
                 for: symbol
             )
@@ -517,6 +534,21 @@ extension DataFlowSemaPassPhase {
                     reifiedIndices.insert(index)
                 }
             }
+            for typeParam in funDecl.typeParams {
+                if let boundRef = typeParam.upperBound,
+                   let typeParamSym = localTypeParameters[typeParam.name] {
+                    if let boundType = resolveTypeRef(
+                        boundRef,
+                        ast: ast,
+                        symbols: symbols,
+                        types: types,
+                        interner: interner,
+                        localTypeParameters: localTypeParameters
+                    ) {
+                        symbols.setTypeParameterUpperBound(boundType, for: typeParamSym)
+                    }
+                }
+            }
 
             if !reifiedIndices.isEmpty && !funDecl.isInline {
                 diagnostics.error(
@@ -569,6 +601,7 @@ extension DataFlowSemaPassPhase {
                 }
             }
 
+            let memberUpperBounds: [TypeID?] = typeParameterSymbols.map { symbols.typeParameterUpperBound(for: $0) }
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: ownerType,
@@ -579,7 +612,8 @@ extension DataFlowSemaPassPhase {
                     valueParameterHasDefaultValues: paramHasDefaultValues,
                     valueParameterIsVararg: paramIsVararg,
                     typeParameterSymbols: typeParameterSymbols,
-                    reifiedTypeParameterIndices: reifiedIndices
+                    reifiedTypeParameterIndices: reifiedIndices,
+                    typeParameterUpperBounds: memberUpperBounds
                 ),
                 for: memberSymbol
             )

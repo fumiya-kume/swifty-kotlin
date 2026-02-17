@@ -104,7 +104,8 @@ final class ASTModelsTests: XCTestCase {
             fileID: FileID(rawValue: 1),
             packageFQName: [interner.intern("pkg")],
             imports: [importDecl],
-            topLevelDecls: [DeclID(rawValue: 0)]
+            topLevelDecls: [DeclID(rawValue: 0)],
+            scriptBody: []
         )
         XCTAssertEqual(file.fileID, FileID(rawValue: 1))
 

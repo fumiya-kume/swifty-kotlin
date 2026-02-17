@@ -2808,7 +2808,8 @@ final class BackendPipelineCoverageTests: XCTestCase {
             fileID: FileID(rawValue: 0),
             packageFQName: [interner.intern("pkg")],
             imports: [],
-            topLevelDecls: [helperDecl, calcDecl, propertyDecl, boolProperty, classDecl]
+            topLevelDecls: [helperDecl, calcDecl, propertyDecl, boolProperty, classDecl],
+            scriptBody: []
         )
         let module = ASTModule(files: [astFile], arena: astArena, declarationCount: 5, tokenCount: 0)
 
@@ -2954,7 +2955,8 @@ final class BackendPipelineCoverageTests: XCTestCase {
             fileID: FileID(rawValue: 0),
             packageFQName: [packageName],
             imports: [],
-            topLevelDecls: [pickDeclID, mainDeclID]
+            topLevelDecls: [pickDeclID, mainDeclID],
+            scriptBody: []
         )
         let astModule = ASTModule(files: [astFile], arena: astArena, declarationCount: 2, tokenCount: 0)
 

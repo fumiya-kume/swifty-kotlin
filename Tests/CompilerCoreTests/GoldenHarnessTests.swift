@@ -348,6 +348,19 @@ final class GoldenHarnessTests: XCTestCase {
             return "stringTemplate[\(rendered)]"
         case .throwExpr(let value, _):
             return "throw value=e\(value.rawValue)"
+        case .localFunDecl(let name, let valueParams, let returnType, let body, _):
+            let params = valueParams.map { interner.resolve($0.name) }.joined(separator: ",")
+            let bodyStr: String
+            switch body {
+            case .block(let exprs, _):
+                bodyStr = "block[\(exprs.map { "e\($0.rawValue)" }.joined(separator: ","))]"
+            case .expr(let exprID, _):
+                bodyStr = "e\(exprID.rawValue)"
+            case .unit:
+                bodyStr = "unit"
+            }
+            let retStr = returnType.map { "t\($0.rawValue)" } ?? "nil"
+            return "localFunDecl \(interner.resolve(name)) params=[\(params)] returnType=\(retStr) body=\(bodyStr)"
         }
     }
 
@@ -357,7 +370,14 @@ final class GoldenHarnessTests: XCTestCase {
         let returnType = types.renderType(signature.returnType)
         let defaults = signature.valueParameterHasDefaultValues.map { $0 ? "1" : "0" }.joined(separator: ",")
         let vararg = signature.valueParameterIsVararg.map { $0 ? "1" : "0" }.joined(separator: ",")
-        return "recv=\(receiver) params=[\(parameters)] ret=\(returnType) suspend=\(signature.isSuspend ? 1 : 0) defaults=[\(defaults)] vararg=[\(vararg)]"
+        var result = "recv=\(receiver) params=[\(parameters)] ret=\(returnType) suspend=\(signature.isSuspend ? 1 : 0) defaults=[\(defaults)] vararg=[\(vararg)]"
+        if !signature.typeParameterUpperBounds.isEmpty && signature.typeParameterUpperBounds.contains(where: { $0 != nil }) {
+            let bounds = signature.typeParameterUpperBounds.map { bound in
+                bound.map { types.renderType($0) } ?? "_"
+            }.joined(separator: ",")
+            result += " bounds=[\(bounds)]"
+        }
+        return result
     }
 
     private func renderSymbolFlags(_ flags: SymbolFlags) -> String {
