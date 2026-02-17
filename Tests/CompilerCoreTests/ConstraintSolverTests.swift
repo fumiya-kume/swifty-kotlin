@@ -2,16 +2,12 @@ import XCTest
 @testable import CompilerCore
 
 final class ConstraintSolverTests: XCTestCase {
-    private var solver: ConstraintSolver!
-    private var types: TypeSystem!
-
-    override func setUp() {
-        super.setUp()
-        solver = ConstraintSolver()
-        types = TypeSystem()
+    private func makeDeps() -> (solver: ConstraintSolver, types: TypeSystem) {
+        (ConstraintSolver(), TypeSystem())
     }
 
     func testSolveInitializesSubstitutionForAllVariables() {
+        let (solver, types) = makeDeps()
         let vars = [TypeVarID(rawValue: 1), TypeVarID(rawValue: 2)]
         let constraints: [Constraint] = []
 
@@ -24,6 +20,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testSolveSupportsSubtypeEqualAndSupertypeConstraints() {
+        let (solver, types) = makeDeps()
         let intType = types.make(.primitive(.int, .nonNull))
         let boolType = types.make(.primitive(.boolean, .nonNull))
         let nullableAny = types.nullableAnyType
@@ -45,6 +42,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testSolveReturnsFailureDiagnosticForUnsatisfiedConstraint() {
+        let (solver, types) = makeDeps()
         let intType = types.make(.primitive(.int, .nonNull))
         let boolType = types.make(.primitive(.boolean, .nonNull))
         let variable = TypeVarID(rawValue: 4)
@@ -64,6 +62,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testSolveVariableConstraintsBindsTypeVariablesFromEqualityAndBounds() {
+        let (solver, types) = makeDeps()
         let intType = types.make(.primitive(.int, .nonNull))
         let anyType = types.anyType
         let t0 = TypeVarID(rawValue: 10)
@@ -83,6 +82,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testSolveVariableToVariableRelationPropagatesBounds() {
+        let (solver, types) = makeDeps()
         let intType = types.make(.primitive(.int, .nonNull))
         let anyType = types.anyType
         let t0 = TypeVarID(rawValue: 20)
@@ -100,6 +100,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testSolvePostSubstitutionConstraintVerificationFailure() throws {
+        let (solver, types) = makeDeps()
         let intType = types.make(.primitive(.int, .nonNull))
         let boolType = types.make(.primitive(.boolean, .nonNull))
         let t0 = TypeVarID(rawValue: 30)
@@ -118,6 +119,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testSolveSupertypeConstraintKindSatisfaction() {
+        let (solver, types) = makeDeps()
         let intType = types.make(.primitive(.int, .nonNull))
         let anyType = types.anyType
         let t0 = TypeVarID(rawValue: 40)
@@ -133,6 +135,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testSolveOnlyUpperBoundsUsesGLB() {
+        let (solver, types) = makeDeps()
         let anyType = types.anyType
         let t0 = TypeVarID(rawValue: 50)
 
@@ -146,6 +149,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testSolveVariableConstraintsFailsOnConflictingBounds() throws {
+        let (solver, types) = makeDeps()
         let intType = types.make(.primitive(.int, .nonNull))
         let boolType = types.make(.primitive(.boolean, .nonNull))
         let t0 = TypeVarID(rawValue: 12)
@@ -166,6 +170,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testSolveSupertypeConstraintAddsLowerBound() {
+        let (solver, types) = makeDeps()
         let intType = types.make(.primitive(.int, .nonNull))
         let t0 = TypeVarID(rawValue: 31)
 
@@ -179,6 +184,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testSolveFailsWhenCandidateIsErrorType() throws {
+        let (solver, types) = makeDeps()
         let t0 = TypeVarID(rawValue: 41)
         let blame = makeRange(start: 40, end: 45)
 
@@ -193,6 +199,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testSolveResolvesVariableWithOnlyUpperBound() {
+        let (solver, types) = makeDeps()
         let intType = types.make(.primitive(.int, .nonNull))
         let t0 = TypeVarID(rawValue: 51)
 
@@ -206,6 +213,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testSolveResolvesVariableWithCompatibleLowerAndUpperBounds() {
+        let (solver, types) = makeDeps()
         let intType = types.make(.primitive(.int, .nonNull))
         let anyType = types.anyType
         let t0 = TypeVarID(rawValue: 61)
@@ -229,6 +237,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testSolveDuplicateBoundsAreDeduped() {
+        let (solver, types) = makeDeps()
         let intType = types.make(.primitive(.int, .nonNull))
         let t0 = TypeVarID(rawValue: 70)
 
@@ -243,6 +252,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testSolveBlameRangeFromRightSideVariable() {
+        let (solver, types) = makeDeps()
         let intType = types.make(.primitive(.int, .nonNull))
         let boolType = types.make(.primitive(.boolean, .nonNull))
         let t0 = TypeVarID(rawValue: 80)
@@ -274,6 +284,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testSolveVarToVarConvergesWithoutChange() {
+        let (solver, types) = makeDeps()
         let intType = types.make(.primitive(.int, .nonNull))
         let t0 = TypeVarID(rawValue: 92)
         let t1 = TypeVarID(rawValue: 93)
@@ -333,6 +344,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testSolveBothBoundsUsesLowerCandidate(){
+        let (solver, types) = makeDeps()
         let intType = types.make(.primitive(.int, .nonNull))
         let anyType = types.anyType
         let t0 = TypeVarID(rawValue: 60)
@@ -348,6 +360,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testSolveErrorCandidateReportsFailure() throws {
+        let (solver, types) = makeDeps()
         let t0 = TypeVarID(rawValue: 70)
         let blame = makeRange(start: 5, end: 8)
 
@@ -362,6 +375,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testSolveMultipleVarRelationsConverge() {
+        let (solver, types) = makeDeps()
         let intType = types.make(.primitive(.int, .nonNull))
         let anyType = types.anyType
         let t0 = TypeVarID(rawValue: 80)
@@ -386,6 +400,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testConstraintOperandEquality() {
+        let types = TypeSystem()
         let intType = types.make(.primitive(.int, .nonNull))
         let op1 = ConstraintOperand.type(intType)
         let op2 = ConstraintOperand.type(intType)
@@ -398,6 +413,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testSolveSupertypeConstraintViolationReportsFailure() {
+        let (solver, types) = makeDeps()
         let intType = types.make(.primitive(.int, .nonNull))
         let boolType = types.make(.primitive(.boolean, .nonNull))
         let t0 = TypeVarID(rawValue: 90)
@@ -411,6 +427,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testFirstRelevantBlameRangeFindsRightSideVariable() {
+        let (solver, types) = makeDeps()
         let intType = types.make(.primitive(.int, .nonNull))
         let boolType = types.make(.primitive(.boolean, .nonNull))
         let t0 = TypeVarID(rawValue: 100)
@@ -427,6 +444,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testSolveUnresolvedVariableInConstraintProducesFailure() throws {
+        let (solver, types) = makeDeps()
         let intType = types.make(.primitive(.int, .nonNull))
         let t0 = TypeVarID(rawValue: 60)
         let tUnknown = TypeVarID(rawValue: 99)
@@ -444,6 +462,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testSolveConflictingBoundsWithMixedTypeTypeConstraints() {
+        let (solver, types) = makeDeps()
         let intType = types.make(.primitive(.int, .nonNull))
         let boolType = types.make(.primitive(.boolean, .nonNull))
         let anyType = types.anyType
@@ -461,6 +480,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testSolveCandidateErrorTypeFromUpperBoundsOnly() throws {
+        let (solver, types) = makeDeps()
         let t0 = TypeVarID(rawValue: 101)
         let blame = makeRange(start: 0, end: 1)
 
@@ -480,6 +500,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testSolveRenderBoundsIncludesEmptyMarker() throws {
+        let (solver, types) = makeDeps()
         let t0 = TypeVarID(rawValue: 110)
         let blame = makeRange(start: 60, end: 65)
 
@@ -493,6 +514,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testSolveHandlesUnregisteredVariablesInConstraints() {
+        let (solver, types) = makeDeps()
         let intType = types.make(.primitive(.int, .nonNull))
         let t0 = TypeVarID(rawValue: 0)
         let t1 = TypeVarID(rawValue: 1) // not in vars
@@ -520,6 +542,7 @@ final class ConstraintSolverTests: XCTestCase {
     }
 
     func testSolvePostSubstitutionEqualConstraintViolationMessage() {
+        let (solver, types) = makeDeps()
         let intType = types.make(.primitive(.int, .nonNull))
         let boolType = types.make(.primitive(.boolean, .nonNull))
         let t0 = TypeVarID(rawValue: 120)

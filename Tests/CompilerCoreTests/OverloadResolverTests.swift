@@ -2,22 +2,13 @@ import XCTest
 @testable import CompilerCore
 
 final class OverloadResolverTests: XCTestCase {
-    private var setup: (ctx: SemaModule, symbols: SymbolTable, types: TypeSystem, interner: StringInterner)!
-    private var resolver: OverloadResolver!
-    private var types: TypeSystem!
-    private var symbols: SymbolTable!
-    private var interner: StringInterner!
-
-    override func setUp() {
-        super.setUp()
-        setup = makeSemaModule()
-        resolver = OverloadResolver()
-        types = setup.types
-        symbols = setup.symbols
-        interner = setup.interner
+    private func makeEnv() -> (resolver: OverloadResolver, types: TypeSystem, symbols: SymbolTable, interner: StringInterner, ctx: SemaModule) {
+        let setup = makeSemaModule()
+        return (OverloadResolver(), setup.types, setup.symbols, setup.interner, setup.ctx)
     }
 
     func testResolveCallReturnsNoViableDiagnosticAfterAllCandidateFilters() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
         let intType = types.make(.primitive(.int, .nonNull))
         let boolType = types.make(.primitive(.boolean, .nonNull))
         let call = CallExpr(
@@ -89,7 +80,7 @@ final class OverloadResolverTests: XCTestCase {
             candidates: candidates,
             call: call,
             expectedType: boolType,
-            ctx: setup.ctx
+            ctx: ctx
         )
 
         XCTAssertNil(resolved.chosenCallee)
@@ -99,6 +90,7 @@ final class OverloadResolverTests: XCTestCase {
     }
 
     func testResolveCallReturnsAmbiguousDiagnosticForMultipleViableCandidates() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let call = CallExpr(
@@ -135,7 +127,7 @@ final class OverloadResolverTests: XCTestCase {
             candidates: [first, second],
             call: call,
             expectedType: nil,
-            ctx: setup.ctx
+            ctx: ctx
         )
 
         XCTAssertNil(resolved.chosenCallee)
@@ -143,6 +135,7 @@ final class OverloadResolverTests: XCTestCase {
     }
 
     func testResolveCallReturnsChosenCandidateAndIdentityMapping() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let boolType = types.make(.primitive(.boolean, .nonNull))
@@ -169,7 +162,7 @@ final class OverloadResolverTests: XCTestCase {
             candidates: [constructor],
             call: call,
             expectedType: boolType,
-            ctx: setup.ctx
+            ctx: ctx
         )
 
         XCTAssertEqual(resolved.chosenCallee, constructor)
@@ -179,6 +172,7 @@ final class OverloadResolverTests: XCTestCase {
     }
 
     func testResolveCallPrefersMostSpecificCandidate() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let anyType = types.anyType
@@ -217,7 +211,7 @@ final class OverloadResolverTests: XCTestCase {
             candidates: [genericLike, intSpecific],
             call: call,
             expectedType: nil,
-            ctx: setup.ctx
+            ctx: ctx
         )
 
         XCTAssertEqual(resolved.chosenCallee, intSpecific)
@@ -225,6 +219,7 @@ final class OverloadResolverTests: XCTestCase {
     }
 
     func testResolveCallInfersGenericTypeArgumentFromParameter() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let typeParamSymbol = defineSymbol(
@@ -261,7 +256,7 @@ final class OverloadResolverTests: XCTestCase {
             candidates: [generic],
             call: call,
             expectedType: intType,
-            ctx: setup.ctx
+            ctx: ctx
         )
 
         XCTAssertEqual(resolved.chosenCallee, generic)
@@ -271,6 +266,7 @@ final class OverloadResolverTests: XCTestCase {
     }
 
     func testResolveCallReturnsConstraintDiagnosticForGenericMismatch() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let boolType = types.make(.primitive(.boolean, .nonNull))
@@ -308,7 +304,7 @@ final class OverloadResolverTests: XCTestCase {
             candidates: [generic],
             call: call,
             expectedType: boolType,
-            ctx: setup.ctx
+            ctx: ctx
         )
 
         XCTAssertNil(resolved.chosenCallee)
@@ -316,6 +312,7 @@ final class OverloadResolverTests: XCTestCase {
     }
 
     func testResolveCallSkipsExtensionCandidateWithoutReceiver() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let stringType = types.make(.primitive(.string, .nonNull))
@@ -345,7 +342,7 @@ final class OverloadResolverTests: XCTestCase {
             candidates: [ext],
             call: call,
             expectedType: nil,
-            ctx: setup.ctx
+            ctx: ctx
         )
 
         XCTAssertNil(resolved.chosenCallee)
@@ -353,6 +350,7 @@ final class OverloadResolverTests: XCTestCase {
     }
 
     func testResolveCallAcceptsExtensionCandidateWithImplicitReceiver() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let stringType = types.make(.primitive(.string, .nonNull))
@@ -383,7 +381,7 @@ final class OverloadResolverTests: XCTestCase {
             call: call,
             expectedType: nil,
             implicitReceiverType: stringType,
-            ctx: setup.ctx
+            ctx: ctx
         )
 
         XCTAssertEqual(resolved.chosenCallee, ext)
@@ -391,6 +389,7 @@ final class OverloadResolverTests: XCTestCase {
     }
 
     func testResolveCallAllowsOmittedDefaultArguments() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let fn = defineSymbol(
@@ -433,7 +432,7 @@ final class OverloadResolverTests: XCTestCase {
             candidates: [fn],
             call: call,
             expectedType: nil,
-            ctx: setup.ctx
+            ctx: ctx
         )
 
         XCTAssertEqual(resolved.chosenCallee, fn)
@@ -442,6 +441,7 @@ final class OverloadResolverTests: XCTestCase {
     }
 
     func testResolveCallSupportsNamedArgumentsAndParameterMapping() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let boolType = types.make(.primitive(.boolean, .nonNull))
@@ -487,7 +487,7 @@ final class OverloadResolverTests: XCTestCase {
             candidates: [fn],
             call: call,
             expectedType: nil,
-            ctx: setup.ctx
+            ctx: ctx
         )
 
         XCTAssertEqual(resolved.chosenCallee, fn)
@@ -496,6 +496,7 @@ final class OverloadResolverTests: XCTestCase {
     }
 
     func testResolveCallSupportsMixedPositionalAndNamedArguments() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let boolType = types.make(.primitive(.boolean, .nonNull))
@@ -541,7 +542,7 @@ final class OverloadResolverTests: XCTestCase {
             candidates: [fn],
             call: call,
             expectedType: nil,
-            ctx: setup.ctx
+            ctx: ctx
         )
 
         XCTAssertEqual(resolved.chosenCallee, fn)
@@ -550,6 +551,7 @@ final class OverloadResolverTests: XCTestCase {
     }
 
     func testResolveCallRejectsPositionalArgumentAfterNamedArgument() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let boolType = types.make(.primitive(.boolean, .nonNull))
@@ -595,7 +597,7 @@ final class OverloadResolverTests: XCTestCase {
             candidates: [fn],
             call: call,
             expectedType: nil,
-            ctx: setup.ctx
+            ctx: ctx
         )
 
         XCTAssertNil(resolved.chosenCallee)
@@ -603,6 +605,7 @@ final class OverloadResolverTests: XCTestCase {
     }
 
     func testResolveCallSupportsTrailingVarargMapping() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let fn = defineSymbol(
@@ -645,7 +648,7 @@ final class OverloadResolverTests: XCTestCase {
             candidates: [fn],
             call: call,
             expectedType: nil,
-            ctx: setup.ctx
+            ctx: ctx
         )
 
         XCTAssertEqual(resolved.chosenCallee, fn)
@@ -654,6 +657,7 @@ final class OverloadResolverTests: XCTestCase {
     }
 
     func testResolveCallSupportsNonTrailingVarargWithNamedTail() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let boolType = types.make(.primitive(.boolean, .nonNull))
@@ -701,7 +705,7 @@ final class OverloadResolverTests: XCTestCase {
             candidates: [fn],
             call: call,
             expectedType: nil,
-            ctx: setup.ctx
+            ctx: ctx
         )
 
         XCTAssertEqual(resolved.chosenCallee, fn)
@@ -710,6 +714,7 @@ final class OverloadResolverTests: XCTestCase {
     }
 
     func testResolveCallRejectsSpreadArgumentForNonVarargParameter() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let fn = defineSymbol(
@@ -744,7 +749,7 @@ final class OverloadResolverTests: XCTestCase {
             candidates: [fn],
             call: call,
             expectedType: nil,
-            ctx: setup.ctx
+            ctx: ctx
         )
 
         XCTAssertNil(resolved.chosenCallee)
@@ -752,6 +757,7 @@ final class OverloadResolverTests: XCTestCase {
     }
 
     func testResolveCallAcceptsGenericWithSatisfiedUpperBound() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let anyType = types.anyType
@@ -790,7 +796,7 @@ final class OverloadResolverTests: XCTestCase {
             candidates: [generic],
             call: call,
             expectedType: nil,
-            ctx: setup.ctx
+            ctx: ctx
         )
 
         XCTAssertEqual(resolved.chosenCallee, generic)
@@ -798,6 +804,7 @@ final class OverloadResolverTests: XCTestCase {
     }
 
     func testResolveCallRejectsGenericWithViolatedUpperBound() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let boolType = types.make(.primitive(.boolean, .nonNull))
@@ -836,7 +843,7 @@ final class OverloadResolverTests: XCTestCase {
             candidates: [generic],
             call: call,
             expectedType: nil,
-            ctx: setup.ctx
+            ctx: ctx
         )
 
         XCTAssertNil(resolved.chosenCallee)
@@ -844,6 +851,7 @@ final class OverloadResolverTests: XCTestCase {
     }
 
     func testResolveCallRejectsGenericWithViolatedUpperBoundFromSymbolTable() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let boolType = types.make(.primitive(.boolean, .nonNull))
@@ -882,7 +890,7 @@ final class OverloadResolverTests: XCTestCase {
             candidates: [generic],
             call: call,
             expectedType: nil,
-            ctx: setup.ctx
+            ctx: ctx
         )
 
         XCTAssertNil(resolved.chosenCallee)
@@ -890,6 +898,7 @@ final class OverloadResolverTests: XCTestCase {
     }
 
     func testResolveCallHandlesOversizedFlagsArrays() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let fn = defineSymbol(kind: .function, name: "overflags", suffix: "overflags", symbols: symbols, interner: interner)
@@ -910,12 +919,13 @@ final class OverloadResolverTests: XCTestCase {
             calleeName: interner.intern("overflags"),
             args: [CallArg(type: intType)]
         )
-        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: setup.ctx)
+        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
         XCTAssertEqual(resolved.chosenCallee, fn)
         XCTAssertNil(resolved.diagnostic)
     }
 
     func testResolveCallHandlesUndersizedFlagsArrays() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let fn = defineSymbol(kind: .function, name: "underflags", suffix: "underflags", symbols: symbols, interner: interner)
@@ -936,11 +946,12 @@ final class OverloadResolverTests: XCTestCase {
             calleeName: interner.intern("underflags"),
             args: [CallArg(type: intType), CallArg(type: intType)]
         )
-        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: setup.ctx)
+        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
         XCTAssertEqual(resolved.chosenCallee, fn)
     }
 
     func testResolveCallRejectsDuplicateNamedArgument() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let fn = defineSymbol(kind: .function, name: "dupNamed", suffix: "dupNamed", symbols: symbols, interner: interner)
@@ -958,11 +969,12 @@ final class OverloadResolverTests: XCTestCase {
                 CallArg(label: interner.intern("x"), type: intType)
             ]
         )
-        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: setup.ctx)
+        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
         XCTAssertNil(resolved.chosenCallee)
     }
 
     func testResolveCallRejectsNamedSpreadOnNonVararg() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let fn = defineSymbol(kind: .function, name: "namedSpreadBad", suffix: "namedSpreadBad", symbols: symbols, interner: interner)
@@ -977,11 +989,12 @@ final class OverloadResolverTests: XCTestCase {
             calleeName: interner.intern("namedSpreadBad"),
             args: [CallArg(label: interner.intern("x"), isSpread: true, type: intType)]
         )
-        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: setup.ctx)
+        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
         XCTAssertNil(resolved.chosenCallee)
     }
 
     func testResolveCallRejectsArgsForZeroParamFunction() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let fn = defineSymbol(kind: .function, name: "noParams", suffix: "noParams", symbols: symbols, interner: interner)
@@ -995,11 +1008,12 @@ final class OverloadResolverTests: XCTestCase {
             calleeName: interner.intern("noParams"),
             args: [CallArg(type: intType)]
         )
-        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: setup.ctx)
+        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
         XCTAssertNil(resolved.chosenCallee)
     }
 
     func testResolveCallAcceptsNamedVarargArgument() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let fn = defineSymbol(kind: .function, name: "namedVararg", suffix: "namedVararg", symbols: symbols, interner: interner)
@@ -1022,12 +1036,13 @@ final class OverloadResolverTests: XCTestCase {
                 CallArg(label: interner.intern("x"), type: intType)
             ]
         )
-        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: setup.ctx)
+        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
         XCTAssertEqual(resolved.chosenCallee, fn)
         XCTAssertEqual(resolved.parameterMapping, [0: 0, 1: 0])
     }
 
     func testResolveCallHandlesMissingParameterSymbols() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let fn = defineSymbol(kind: .function, name: "missingSyms", suffix: "missingSyms", symbols: symbols, interner: interner)
@@ -1046,12 +1061,13 @@ final class OverloadResolverTests: XCTestCase {
             calleeName: interner.intern("missingSyms"),
             args: [CallArg(type: intType), CallArg(type: intType)]
         )
-        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: setup.ctx)
+        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
         XCTAssertEqual(resolved.chosenCallee, fn)
         XCTAssertEqual(resolved.parameterMapping, [0: 0, 1: 1])
     }
 
     func testResolveCallRejectsUnknownNamedLabel() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let fn = defineSymbol(kind: .function, name: "unknownLabel", suffix: "unknownLabel", symbols: symbols, interner: interner)
@@ -1066,11 +1082,12 @@ final class OverloadResolverTests: XCTestCase {
             calleeName: interner.intern("unknownLabel"),
             args: [CallArg(label: interner.intern("z"), type: intType)]
         )
-        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: setup.ctx)
+        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
         XCTAssertNil(resolved.chosenCallee)
     }
 
     func testResolveCallRejectsTooManyPositionalArgs() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let fn = defineSymbol(kind: .function, name: "oneParam", suffix: "oneParam", symbols: symbols, interner: interner)
@@ -1085,11 +1102,12 @@ final class OverloadResolverTests: XCTestCase {
             calleeName: interner.intern("oneParam"),
             args: [CallArg(type: intType), CallArg(type: intType)]
         )
-        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: setup.ctx)
+        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
         XCTAssertNil(resolved.chosenCallee)
     }
 
     func testResolveCallSkipsNamedBoundParamForPositionalArg() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let boolType = types.make(.primitive(.boolean, .nonNull))
@@ -1118,11 +1136,12 @@ final class OverloadResolverTests: XCTestCase {
                 CallArg(label: interner.intern("c"), type: intType)
             ]
         )
-        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: setup.ctx)
+        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
         XCTAssertEqual(resolved.chosenCallee, fn)
     }
 
     func testResolveCallSkipsTypeParamWithoutSubstitution() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let anyType = types.anyType
@@ -1147,11 +1166,12 @@ final class OverloadResolverTests: XCTestCase {
             calleeName: interner.intern("skipTP"),
             args: [CallArg(type: intType)]
         )
-        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: setup.ctx)
+        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
         XCTAssertEqual(resolved.chosenCallee, fn)
     }
 
     func testResolveCallForwardsConstraintFailureDiagnostic() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let boolType = types.make(.primitive(.boolean, .nonNull))
@@ -1174,12 +1194,13 @@ final class OverloadResolverTests: XCTestCase {
             calleeName: interner.intern("fwd"),
             args: [CallArg(type: intType)]
         )
-        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: setup.ctx)
+        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
         XCTAssertNil(resolved.chosenCallee)
         XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-SEMA-0030")
     }
 
     func testResolveCallNoTypeVarsButUnsatisfiedConstraint() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let boolType = types.make(.primitive(.boolean, .nonNull))
@@ -1196,11 +1217,12 @@ final class OverloadResolverTests: XCTestCase {
             calleeName: interner.intern("strict"),
             args: [CallArg(type: intType)]
         )
-        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: setup.ctx)
+        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
         XCTAssertNil(resolved.chosenCallee)
     }
 
     func testResolveCallWithMultipleTypeParametersInConstraints() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
         let boolType = types.make(.primitive(.boolean, .nonNull))
@@ -1231,7 +1253,7 @@ final class OverloadResolverTests: XCTestCase {
             calleeName: interner.intern("multiTP"),
             args: [CallArg(type: intType), CallArg(type: boolType)]
         )
-        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: setup.ctx)
+        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
         XCTAssertEqual(resolved.chosenCallee, fn)
     }
 

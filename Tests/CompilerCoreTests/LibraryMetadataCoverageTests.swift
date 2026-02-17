@@ -86,13 +86,13 @@ final class LibraryMetadataCoverageTests: XCTestCase {
                 XCTAssertFalse(sema.importedInlineFunctions.isEmpty)
 
                 let kir = try XCTUnwrap(appCtx.kir)
-                guard let mainFunction = kir.arena.declarations.compactMap({ decl -> KIRFunction? in
-                    guard case .function(let function) = decl else { return nil }
-                    return appCtx.interner.resolve(function.name) == "main" ? function : nil
-                }).first else {
-                    XCTFail("Expected lowered main function")
-                    return
-                }
+                let mainFunction = try XCTUnwrap(
+                    kir.arena.declarations.compactMap({ decl -> KIRFunction? in
+                        guard case .function(let function) = decl else { return nil }
+                        return appCtx.interner.resolve(function.name) == "main" ? function : nil
+                    }).first,
+                    "Expected lowered main function"
+                )
 
                 let calls = mainFunction.body.compactMap { instruction -> String? in
                     guard case .call(_, let callee, _, _, _, _) = instruction else {
