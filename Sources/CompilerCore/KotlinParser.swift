@@ -41,7 +41,7 @@ public final class KotlinParser {
                 continue
             case .keyword(let keyword) where isDeclarationKeyword(keyword):
                 node = parseDeclaration()
-                if keyword != .val && keyword != .var {
+                if arena.node(node).kind != .propertyDecl {
                     sawNonPropertyDecl = true
                 }
             default:
