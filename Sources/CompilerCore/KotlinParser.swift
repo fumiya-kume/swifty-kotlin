@@ -31,6 +31,7 @@ public final class KotlinParser {
             switch token.kind {
             case .keyword(.package):
                 node = parsePackageHeader()
+                sawNonPropertyDecl = true
             case .keyword(.import):
                 node = parseImportHeader()
                 pendingImports.append(.node(node))
