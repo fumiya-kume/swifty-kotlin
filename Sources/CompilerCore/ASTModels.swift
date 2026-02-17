@@ -79,6 +79,7 @@ public struct ASTFile {
     public let packageFQName: [InternedString]
     public let imports: [ImportDecl]
     public let topLevelDecls: [DeclID]
+    public let scriptBody: [ExprID]
 }
 
 public enum ConstructorDelegationKind: Equatable {

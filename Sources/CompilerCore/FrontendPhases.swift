@@ -89,6 +89,8 @@ public final class BuildASTPhase: CompilerPhase {
         var importsByFile: [Int32: [ImportDecl]] = [:]
         var declarationsByFile: [Int32: [DeclID]] = [:]
 
+        let isScript = cst.node(ctx.syntaxTreeRoot).kind == .script
+
         for child in cst.children(of: ctx.syntaxTreeRoot) {
             guard case .node(let nodeID) = child else {
                 continue
@@ -146,6 +148,32 @@ public final class BuildASTPhase: CompilerPhase {
             }
         }
 
+        var scriptExprsByFile: [Int32: [ExprID]] = [:]
+        if isScript {
+            let scriptExprs = blockExpressions(
+                from: ctx.syntaxTreeRoot,
+                in: cst,
+                interner: ctx.interner,
+                astArena: arena
+            )
+            if !scriptExprs.isEmpty {
+                let rootNode = cst.node(ctx.syntaxTreeRoot)
+                let fileRawID = rootNode.range.start.file.rawValue
+                scriptExprsByFile[fileRawID] = scriptExprs
+
+                let mainName = ctx.interner.intern("main")
+                let mainDecl = FunDecl(
+                    range: rootNode.range,
+                    name: mainName,
+                    modifiers: [],
+                    body: .block(scriptExprs, rootNode.range)
+                )
+                let declID = arena.appendDecl(.funDecl(mainDecl))
+                declarations.append(declID)
+                declarationsByFile[fileRawID, default: []].append(declID)
+            }
+        }
+
         let tokenFileIDs = Set(ctx.tokens.map { $0.range.start.file.rawValue })
         let fileIDs = tokenFileIDs.filter { $0 != FileID.invalid.rawValue }.sorted()
         let files: [ASTFile] = fileIDs.map { rawID in
@@ -153,7 +181,8 @@ public final class BuildASTPhase: CompilerPhase {
                 fileID: FileID(rawValue: rawID),
                 packageFQName: packageByFile[rawID] ?? [],
                 imports: importsByFile[rawID] ?? [],
-                topLevelDecls: declarationsByFile[rawID] ?? []
+                topLevelDecls: declarationsByFile[rawID] ?? [],
+                scriptBody: scriptExprsByFile[rawID] ?? []
             )
         }
 
