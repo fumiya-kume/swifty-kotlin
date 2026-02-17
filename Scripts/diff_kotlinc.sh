@@ -159,6 +159,7 @@ run_case() {
     "$KOTLINC" -script "$kts_tmp" >"$ref_run_stdout" 2>"$ref_run_stderr" || script_exit=$?
     if [[ $script_exit -ne 0 ]] && [[ ! -s "$ref_run_stdout" ]]; then
       ref_compile_exit=$script_exit
+      cp "$ref_run_stderr" "$ref_compile_stderr"
     else
       ref_run_exit=$script_exit
     fi
