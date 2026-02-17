@@ -615,13 +615,38 @@ extension TypeCheckSemaPassPhase {
                 inferExpr(argument.expr, ctx: ctx, locals: &locals)
             }
 
+            let isSuperCall = ast.arena.expr(receiverID).map { expr in
+                if case .superRef = expr { true } else { false }
+            } ?? false
+
+            var supertypeSymbols: Set<SymbolID> = []
+            if isSuperCall, let currentReceiverType = ctx.implicitReceiverType,
+               let classSymbol = nominalSymbol(of: currentReceiverType, types: sema.types) {
+                var queue = sema.symbols.directSupertypes(for: classSymbol)
+                var visited: Set<SymbolID> = [classSymbol]
+                while !queue.isEmpty {
+                    let next = queue.removeFirst()
+                    if visited.insert(next).inserted {
+                        supertypeSymbols.insert(next)
+                        queue.append(contentsOf: sema.symbols.directSupertypes(for: next))
+                    }
+                }
+            }
+
             let candidates = scope.lookup(calleeName).filter { candidate in
                 guard let symbol = sema.symbols.symbol(candidate),
                       symbol.kind == .function,
                       let signature = sema.symbols.functionSignature(for: candidate) else {
                     return false
                 }
-                return signature.receiverType != nil
+                guard signature.receiverType != nil else { return false }
+                if isSuperCall, !supertypeSymbols.isEmpty {
+                    if let parent = sema.symbols.parentSymbol(for: candidate) {
+                        return supertypeSymbols.contains(parent)
+                    }
+                    return false
+                }
+                return true
             }
             if candidates.isEmpty {
                 ctx.semaCtx.diagnostics.error(
@@ -666,6 +691,9 @@ extension TypeCheckSemaPassPhase {
                     parameterMapping: resolved.parameterMapping
                 )
             )
+            if isSuperCall {
+                sema.bindings.markSuperCall(id)
+            }
             let returnType: TypeID
             if let signature = sema.symbols.functionSignature(for: chosen) {
                 let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
@@ -831,124 +859,168 @@ extension TypeCheckSemaPassPhase {
             return sema.types.unitType
 
         case .whenExpr(let subjectID, let branches, let elseExpr, let range):
-            let subjectType = inferExpr(subjectID, ctx: ctx, locals: &locals)
-            let subjectLocalBinding: (name: InternedString, type: TypeID, symbol: SymbolID, isStable: Bool, isMutable: Bool)? = {
-                guard let subjectExpr = ast.arena.expr(subjectID),
-                      case .nameRef(let subjectName, _) = subjectExpr,
-                      let local = locals[subjectName] else {
-                    return nil
-                }
-                return (
-                    subjectName, local.type, local.symbol,
-                    isStableLocalSymbol(local.symbol, sema: sema),
-                    local.isMutable
-                )
-            }()
-            let hasExplicitNullBranch = branches.contains { branch in
-                guard let condition = branch.condition,
-                      let conditionExpr = ast.arena.expr(condition),
-                      case .nameRef(let name, _) = conditionExpr else {
-                    return false
-                }
-                return interner.resolve(name) == "null"
-            }
-            var branchTypes: [TypeID] = []
-            var covered: Set<InternedString> = []
-            var hasNullCase = false
-            var hasTrueCase = false
-            var hasFalseCase = false
-            for branch in branches {
-                var isNullBranch = false
-                if let cond = branch.condition {
-                    let condType = inferExpr(cond, ctx: ctx, locals: &locals)
-                    if let condExpr = ast.arena.expr(cond) {
-                        switch condExpr {
-                        case .boolLiteral(true, _):
-                            if condType == boolType { hasTrueCase = true }
-                            covered.insert(interner.intern("true"))
-                        case .boolLiteral(false, _):
-                            if condType == boolType { hasFalseCase = true }
-                            covered.insert(interner.intern("false"))
-                        case .nameRef(let name, _):
-                            if interner.resolve(name) == "null" {
-                                hasNullCase = true
-                                isNullBranch = true
-                            } else {
-                                covered.insert(name)
-                            }
-                        default:
-                            break
-                        }
+            if let subjectID {
+                let subjectType = inferExpr(subjectID, ctx: ctx, locals: &locals)
+                let subjectLocalBinding: (name: InternedString, type: TypeID, symbol: SymbolID, isStable: Bool, isMutable: Bool)? = {
+                    guard let subjectExpr = ast.arena.expr(subjectID),
+                          case .nameRef(let subjectName, _) = subjectExpr,
+                          let local = locals[subjectName] else {
+                        return nil
                     }
-                }
-                var branchLocals = locals
-                var branchCtx = ctx
-                if let subjectLocalBinding, subjectLocalBinding.isStable {
-                    if let cond = branch.condition {
-                        let branchFlowState = ctx.dataFlow.branchOnWhenSubject(
-                            subjectSymbol: subjectLocalBinding.symbol,
-                            subjectType: subjectType,
-                            conditionID: cond,
-                            base: ctx.flowState,
-                            ast: ast, sema: sema, interner: interner
-                        )
-                        branchCtx = ctx.with(flowState: branchFlowState)
-                        if let narrowedType = ctx.dataFlow.resolvedTypeFromFlowState(
-                            branchFlowState, symbol: subjectLocalBinding.symbol
-                        ) {
-                            branchLocals[subjectLocalBinding.name] = (
-                                narrowedType, subjectLocalBinding.symbol, subjectLocalBinding.isMutable, true
-                            )
-                        } else if hasExplicitNullBranch && !isNullBranch {
-                            let nonNullState = ctx.dataFlow.whenNonNullBranchState(
-                                subjectSymbol: subjectLocalBinding.symbol,
-                                subjectType: subjectLocalBinding.type,
-                                base: ctx.flowState, sema: sema
-                            )
-                            branchCtx = ctx.with(flowState: nonNullState)
-                            applyFlowStateToLocals(nonNullState, locals: &branchLocals, sema: sema)
-                        }
-                    }
-                }
-                branchTypes.append(
-                    inferExpr(branch.body, ctx: branchCtx, locals: &branchLocals, expectedType: expectedType)
-                )
-            }
-
-            if let elseExpr {
-                var elseLocals = locals
-                var elseCtx = ctx
-                if let subjectLocalBinding, subjectLocalBinding.isStable, hasExplicitNullBranch {
-                    let elseFlowState = ctx.dataFlow.whenElseState(
-                        subjectSymbol: subjectLocalBinding.symbol,
-                        subjectType: subjectLocalBinding.type,
-                        hasExplicitNullBranch: hasExplicitNullBranch,
-                        base: ctx.flowState, sema: sema
+                    return (
+                        subjectName, local.type, local.symbol,
+                        isStableLocalSymbol(local.symbol, sema: sema),
+                        local.isMutable
                     )
-                    elseCtx = ctx.with(flowState: elseFlowState)
-                    applyFlowStateToLocals(elseFlowState, locals: &elseLocals, sema: sema)
+                }()
+                let hasExplicitNullBranch = branches.contains { branch in
+                    guard let condition = branch.condition,
+                          let conditionExpr = ast.arena.expr(condition),
+                          case .nameRef(let name, _) = conditionExpr else {
+                        return false
+                    }
+                    return interner.resolve(name) == "null"
                 }
-                branchTypes.append(
-                    inferExpr(elseExpr, ctx: elseCtx, locals: &elseLocals, expectedType: expectedType)
-                )
-            }
+                var branchTypes: [TypeID] = []
+                var covered: Set<InternedString> = []
+                var hasNullCase = false
+                var hasTrueCase = false
+                var hasFalseCase = false
+                for branch in branches {
+                    var isNullBranch = false
+                    if let cond = branch.condition {
+                        let condType = inferExpr(cond, ctx: ctx, locals: &locals)
+                        if let condExpr = ast.arena.expr(cond) {
+                            switch condExpr {
+                            case .boolLiteral(true, _):
+                                if condType == boolType { hasTrueCase = true }
+                                covered.insert(interner.intern("true"))
+                            case .boolLiteral(false, _):
+                                if condType == boolType { hasFalseCase = true }
+                                covered.insert(interner.intern("false"))
+                            case .nameRef(let name, _):
+                                if interner.resolve(name) == "null" {
+                                    hasNullCase = true
+                                    isNullBranch = true
+                                } else {
+                                    covered.insert(name)
+                                }
+                            default:
+                                break
+                            }
+                        }
+                    }
+                    var branchLocals = locals
+                    var branchCtx = ctx
+                    if let subjectLocalBinding, subjectLocalBinding.isStable {
+                        if let cond = branch.condition {
+                            let branchFlowState = ctx.dataFlow.branchOnWhenSubject(
+                                subjectSymbol: subjectLocalBinding.symbol,
+                                subjectType: subjectType,
+                                conditionID: cond,
+                                base: ctx.flowState,
+                                ast: ast, sema: sema, interner: interner
+                            )
+                            branchCtx = ctx.with(flowState: branchFlowState)
+                            if let narrowedType = ctx.dataFlow.resolvedTypeFromFlowState(
+                                branchFlowState, symbol: subjectLocalBinding.symbol
+                            ) {
+                                branchLocals[subjectLocalBinding.name] = (
+                                    narrowedType, subjectLocalBinding.symbol, subjectLocalBinding.isMutable, true
+                                )
+                            } else if hasExplicitNullBranch && !isNullBranch {
+                                let nonNullState = ctx.dataFlow.whenNonNullBranchState(
+                                    subjectSymbol: subjectLocalBinding.symbol,
+                                    subjectType: subjectLocalBinding.type,
+                                    base: ctx.flowState, sema: sema
+                                )
+                                branchCtx = ctx.with(flowState: nonNullState)
+                                applyFlowStateToLocals(nonNullState, locals: &branchLocals, sema: sema)
+                            }
+                        }
+                    }
+                    branchTypes.append(
+                        inferExpr(branch.body, ctx: branchCtx, locals: &branchLocals, expectedType: expectedType)
+                    )
+                }
 
-            let summary = WhenBranchSummary(
-                coveredSymbols: covered, hasElse: elseExpr != nil,
-                hasNullCase: hasNullCase, hasTrueCase: hasTrueCase,
-                hasFalseCase: hasFalseCase
-            )
-            if !ctx.dataFlow.isWhenExhaustive(subjectType: subjectType, branches: summary, sema: sema) {
-                ctx.semaCtx.diagnostics.error(
-                    "KSWIFTK-SEMA-0004",
-                    "Non-exhaustive when expression.",
-                    range: range
-                )
-            }
+                if let elseExpr {
+                    var elseLocals = locals
+                    var elseCtx = ctx
+                    if let subjectLocalBinding, subjectLocalBinding.isStable, hasExplicitNullBranch {
+                        let elseFlowState = ctx.dataFlow.whenElseState(
+                            subjectSymbol: subjectLocalBinding.symbol,
+                            subjectType: subjectLocalBinding.type,
+                            hasExplicitNullBranch: hasExplicitNullBranch,
+                            base: ctx.flowState, sema: sema
+                        )
+                        elseCtx = ctx.with(flowState: elseFlowState)
+                        applyFlowStateToLocals(elseFlowState, locals: &elseLocals, sema: sema)
+                    }
+                    branchTypes.append(
+                        inferExpr(elseExpr, ctx: elseCtx, locals: &elseLocals, expectedType: expectedType)
+                    )
+                }
 
-            let type = sema.types.lub(branchTypes)
-            sema.bindings.bindExprType(id, type: type)
-            return type
+                let summary = WhenBranchSummary(
+                    coveredSymbols: covered, hasElse: elseExpr != nil,
+                    hasNullCase: hasNullCase, hasTrueCase: hasTrueCase,
+                    hasFalseCase: hasFalseCase
+                )
+                if !ctx.dataFlow.isWhenExhaustive(subjectType: subjectType, branches: summary, sema: sema) {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0004",
+                        "Non-exhaustive when expression.",
+                        range: range
+                    )
+                }
+
+                let type = sema.types.lub(branchTypes)
+                sema.bindings.bindExprType(id, type: type)
+                return type
+            } else {
+                var branchTypes: [TypeID] = []
+                for branch in branches {
+                    if let cond = branch.condition {
+                        let condType = inferExpr(cond, ctx: ctx, locals: &locals)
+                        if condType != boolType && condType != sema.types.errorType {
+                            ctx.semaCtx.diagnostics.error(
+                                "KSWIFTK-SEMA-0032",
+                                "Subject-less when branch condition must be a Boolean expression.",
+                                range: branch.range
+                            )
+                        }
+                    }
+                    var branchLocals = locals
+                    branchTypes.append(
+                        inferExpr(branch.body, ctx: ctx, locals: &branchLocals, expectedType: expectedType)
+                    )
+                }
+
+                if let elseExpr {
+                    var elseLocals = locals
+                    branchTypes.append(
+                        inferExpr(elseExpr, ctx: ctx, locals: &elseLocals, expectedType: expectedType)
+                    )
+                }
+
+                let summary = WhenBranchSummary(
+                    coveredSymbols: [], hasElse: elseExpr != nil,
+                    hasNullCase: false, hasTrueCase: false,
+                    hasFalseCase: false
+                )
+                if !ctx.dataFlow.isWhenExhaustive(subjectType: boolType, branches: summary, sema: sema) {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0004",
+                        "Non-exhaustive when expression.",
+                        range: range
+                    )
+                }
+
+                let type = sema.types.lub(branchTypes)
+                sema.bindings.bindExprType(id, type: type)
+                return type
+            }
 
         case .throwExpr(let value, _):
             _ = inferExpr(value, ctx: ctx, locals: &locals, expectedType: nil)
@@ -1051,6 +1123,56 @@ extension TypeCheckSemaPassPhase {
             sema.bindings.bindIdentifier(id, symbol: funSymbol)
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
+
+        case .superRef(let range):
+            guard let receiverType = ctx.implicitReceiverType else {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0050",
+                    "'super' is not allowed outside of a class body.",
+                    range: range
+                )
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
+            if let classSymbol = nominalSymbol(of: receiverType, types: sema.types) {
+                let supertypes = sema.symbols.directSupertypes(for: classSymbol)
+                let classSupertypes = supertypes.filter {
+                    let kind = sema.symbols.symbol($0)?.kind
+                    return kind == .class || kind == .enumClass
+                }
+                if let superclass = classSupertypes.first {
+                    let superType = sema.types.make(.classType(ClassType(classSymbol: superclass)))
+                    sema.bindings.bindExprType(id, type: superType)
+                    return superType
+                }
+            }
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-0052",
+                "Class has no superclass.",
+                range: range
+            )
+            sema.bindings.bindExprType(id, type: sema.types.errorType)
+            return sema.types.errorType
+
+        case .thisRef(let label, let range):
+            guard let receiverType = ctx.implicitReceiverType else {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0051",
+                    "'this' is not allowed in this context.",
+                    range: range
+                )
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
+            if label != nil {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0053",
+                    "Qualified 'this@Label' is not yet supported.",
+                    range: range
+                )
+            }
+            sema.bindings.bindExprType(id, type: receiverType)
+            return receiverType
         }
     }
 
