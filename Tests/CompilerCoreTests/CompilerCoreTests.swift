@@ -725,6 +725,32 @@ final class CompilerCoreTests: XCTestCase {
         XCTAssertFalse(hasAmbiguousDiagnostic)
     }
 
+    func testImportAliasWildcardDiagnostic() throws {
+        let sources = [
+            """
+            package lib
+            fun helper(x: Int) = x
+            """,
+            """
+            package app
+            import lib as L
+            fun use() = 1
+            """
+        ]
+        let ctx = try makeContext(sources: sources)
+
+        try LoadSourcesPhase().run(ctx)
+        try LexPhase().run(ctx)
+        try ParsePhase().run(ctx)
+        try BuildASTPhase().run(ctx)
+        try SemaPassesPhase().run(ctx)
+
+        let hasWildcardAlias = ctx.diagnostics.diagnostics.contains(where: { diag in
+            diag.code == "KSWIFTK-SEMA-0022"
+        })
+        XCTAssertTrue(hasWildcardAlias, "codes: \(ctx.diagnostics.diagnostics.map(\.code))")
+    }
+
     func testImportAliasDuplicateDiagnostic() throws {
         let sources = [
             """

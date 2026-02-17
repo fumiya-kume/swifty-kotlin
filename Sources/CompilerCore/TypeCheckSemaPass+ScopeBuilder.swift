@@ -67,7 +67,7 @@ extension TypeCheckSemaPassPhase {
         diagnostics: DiagnosticEngine,
         interner: StringInterner
     ) {
-        var usedAliasNames: [InternedString: SourceRange] = [:]
+        var usedAliasNames: Set<InternedString> = []
 
         for importDecl in file.imports {
             if let alias = importDecl.alias {
@@ -99,7 +99,7 @@ extension TypeCheckSemaPassPhase {
                     continue
                 }
 
-                if usedAliasNames[alias] != nil {
+                if usedAliasNames.contains(alias) {
                     diagnostics.error(
                         "KSWIFTK-SEMA-0023",
                         "Import alias conflicts with a previous import alias in the same file.",
@@ -119,7 +119,7 @@ extension TypeCheckSemaPassPhase {
                     explicitImportScope.insertWithAlias(importedSymbol, asName: alias)
                 }
 
-                usedAliasNames[alias] = importDecl.range
+                usedAliasNames.insert(alias)
                 continue
             }
 
