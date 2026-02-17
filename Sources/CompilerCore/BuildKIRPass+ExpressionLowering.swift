@@ -451,7 +451,7 @@ extension BuildKIRPhase {
 
         case .returnExpr(let value, _):
             if let value {
-                return lowerExpr(
+                let lowered = lowerExpr(
                     value,
                     ast: ast,
                     sema: sema,
@@ -460,8 +460,11 @@ extension BuildKIRPhase {
                     propertyConstantInitializers: propertyConstantInitializers,
                     instructions: &instructions
                 )
+                instructions.append(.returnValue(lowered))
+            } else {
+                instructions.append(.returnUnit)
             }
-            let unit = arena.appendExpr(.unit, type: boundType ?? sema.types.unitType)
+            let unit = arena.appendExpr(.unit, type: sema.types.nothingType)
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
@@ -477,11 +480,10 @@ extension BuildKIRPhase {
             )
             let elseLabel = makeLoopLabel()
             let endLabel = makeLoopLabel()
-            let falseID = arena.appendExpr(.boolLiteral(false), type: boolType)
-            instructions.append(.constValue(result: falseID, value: .boolLiteral(false)))
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
-            instructions.append(.jumpIfEqual(lhs: conditionID, rhs: falseID, target: elseLabel))
-
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.errorType)
+            let falseVal = arena.appendExpr(.boolLiteral(false), type: boolType)
+            instructions.append(.constValue(result: falseVal, value: .boolLiteral(false)))
+            instructions.append(.jumpIfEqual(lhs: conditionID, rhs: falseVal, target: elseLabel))
             let thenID = lowerExpr(
                 thenExpr,
                 ast: ast,
@@ -493,7 +495,6 @@ extension BuildKIRPhase {
             )
             instructions.append(.copy(from: thenID, to: result))
             instructions.append(.jump(endLabel))
-
             instructions.append(.label(elseLabel))
             if let elseExpr {
                 let elseID = lowerExpr(
@@ -507,9 +508,9 @@ extension BuildKIRPhase {
                 )
                 instructions.append(.copy(from: elseID, to: result))
             } else {
-                let unitID = arena.appendExpr(.unit, type: sema.types.unitType)
-                instructions.append(.constValue(result: unitID, value: .unit))
-                instructions.append(.copy(from: unitID, to: result))
+                let unitVal = arena.appendExpr(.unit, type: sema.types.unitType)
+                instructions.append(.constValue(result: unitVal, value: .unit))
+                instructions.append(.copy(from: unitVal, to: result))
             }
             instructions.append(.label(endLabel))
             return result
@@ -1092,7 +1093,7 @@ extension BuildKIRPhase {
                 instructions: &instructions
             )
             let endLabel = makeLoopLabel()
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.errorType)
 
             var nextBranchLabels: [Int32] = []
             for _ in branches {
@@ -1138,7 +1139,7 @@ extension BuildKIRPhase {
             }
 
             if let elseExpr {
-                let elseID = lowerExpr(
+                let fallbackID = lowerExpr(
                     elseExpr,
                     ast: ast,
                     sema: sema,
@@ -1147,11 +1148,11 @@ extension BuildKIRPhase {
                     propertyConstantInitializers: propertyConstantInitializers,
                     instructions: &instructions
                 )
-                instructions.append(.copy(from: elseID, to: result))
+                instructions.append(.copy(from: fallbackID, to: result))
             } else {
-                let unitID = arena.appendExpr(.unit, type: sema.types.unitType)
-                instructions.append(.constValue(result: unitID, value: .unit))
-                instructions.append(.copy(from: unitID, to: result))
+                let unitVal = arena.appendExpr(.unit, type: sema.types.unitType)
+                instructions.append(.constValue(result: unitVal, value: .unit))
+                instructions.append(.copy(from: unitVal, to: result))
             }
             instructions.append(.label(endLabel))
             return result
@@ -1180,6 +1181,22 @@ extension BuildKIRPhase {
                 )
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+            instructions.append(.constValue(result: unit, value: .unit))
+            return unit
+
+        case .superRef:
+            if let currentImplicitReceiverExprID {
+                return currentImplicitReceiverExprID
+            }
+            let unit = arena.appendExpr(.unit, type: boundType ?? sema.types.errorType)
+            instructions.append(.constValue(result: unit, value: .unit))
+            return unit
+
+        case .thisRef:
+            if let currentImplicitReceiverExprID {
+                return currentImplicitReceiverExprID
+            }
+            let unit = arena.appendExpr(.unit, type: boundType ?? sema.types.errorType)
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
         }

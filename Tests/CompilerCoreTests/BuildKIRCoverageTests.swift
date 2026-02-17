@@ -860,6 +860,134 @@ final class BuildKIRCoverageTests: XCTestCase {
         }
     }
 
+    // MARK: - Nested Return Propagation (P5-48)
+
+    func testNestedReturnInsideIfBranchEmitsReturnValueInstruction() throws {
+        let source = """
+        fun choose(flag: Boolean): Int {
+            if (flag) {
+                return 1
+            }
+            return 0
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "choose", in: module, interner: ctx.interner)
+            let returnValues = body.compactMap { instruction -> KIRExprID? in
+                guard case .returnValue(let id) = instruction else { return nil }
+                return id
+            }
+            XCTAssertGreaterThanOrEqual(returnValues.count, 2, "Expected at least 2 returnValue instructions (if-branch + fallthrough), got \(returnValues.count)")
+        }
+    }
+
+    func testNestedReturnInsideBothIfElseBranchesEmitsReturnValues() throws {
+        let source = """
+        fun pick(flag: Boolean): Int {
+            if (flag) {
+                return 1
+            } else {
+                return 2
+            }
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "pick", in: module, interner: ctx.interner)
+            let returnValues = body.compactMap { instruction -> KIRExprID? in
+                guard case .returnValue(let id) = instruction else { return nil }
+                return id
+            }
+            XCTAssertGreaterThanOrEqual(returnValues.count, 2, "Expected at least 2 returnValue instructions (then-branch + else-branch), got \(returnValues.count)")
+        }
+    }
+
+    func testNestedReturnInsideWhenBranchEmitsReturnValueInstruction() throws {
+        let source = """
+        fun describe(x: Int): Int {
+            return when (x) {
+                1 -> return 10
+                2 -> return 20
+                else -> 0
+            }
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "describe", in: module, interner: ctx.interner)
+            let returnValues = body.compactMap { instruction -> KIRExprID? in
+                guard case .returnValue(let id) = instruction else { return nil }
+                return id
+            }
+            XCTAssertGreaterThanOrEqual(returnValues.count, 2, "Expected at least 2 returnValue instructions for when-branch returns, got \(returnValues.count)")
+        }
+    }
+
+    func testIfExprLoweringUsesLabelBasedBranching() throws {
+        let source = """
+        fun branch(flag: Boolean): Int {
+            val x = if (flag) 1 else 2
+            return x
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "branch", in: module, interner: ctx.interner)
+            let hasJump = body.contains { instruction in
+                if case .jump = instruction { return true }
+                return false
+            }
+            let hasLabel = body.contains { instruction in
+                if case .label = instruction { return true }
+                return false
+            }
+            XCTAssertTrue(hasJump, "if-expr lowering should use jump instructions for branching")
+            XCTAssertTrue(hasLabel, "if-expr lowering should use label instructions for branching")
+        }
+    }
+
+    func testWhenExprLoweringUsesLabelBasedBranching() throws {
+        let source = """
+        fun pick(x: Int): Int {
+            return when (x) {
+                1 -> 10
+                2 -> 20
+                else -> 0
+            }
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "pick", in: module, interner: ctx.interner)
+            let labelCount = body.filter { instruction in
+                if case .label = instruction { return true }
+                return false
+            }.count
+            let jumpCount = body.filter { instruction in
+                if case .jump = instruction { return true }
+                return false
+            }.count
+            XCTAssertGreaterThanOrEqual(labelCount, 2, "when-expr should have labels for branch dispatch")
+            XCTAssertGreaterThanOrEqual(jumpCount, 2, "when-expr should have jumps for branch dispatch")
+        }
+    }
+
     func testVarargNonTrailingWithNamedTailPacksCorrectly() throws {
         let source = """
         fun tagged(vararg nums: Int, tail: Int): Int = tail
