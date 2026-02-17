@@ -39,6 +39,7 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_kxmini_launch_with_cont"),
             ctx.interner.intern("kk_kxmini_async_with_cont"),
             ctx.interner.intern("kk_array_new"),
+            ctx.interner.intern("kk_vararg_spread_concat"),
             ctx.interner.intern("kk_box_int"),
             ctx.interner.intern("kk_box_bool"),
             ctx.interner.intern("kk_box_long"),
@@ -79,7 +80,8 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_println_long"),
             ctx.interner.intern("kk_int_to_float_bits"),
             ctx.interner.intern("kk_int_to_double_bits"),
-            ctx.interner.intern("kk_float_to_double_bits")
+            ctx.interner.intern("kk_float_to_double_bits"),
+            ctx.interner.intern("kk_any_to_string")
         ]
 
         let boxIntCallee = ctx.interner.intern("kk_box_int")

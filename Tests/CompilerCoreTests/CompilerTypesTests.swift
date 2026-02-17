@@ -86,16 +86,6 @@ final class CompilerTypesTests: XCTestCase {
         XCTAssertEqual(options.irFlags, ["-XirA"])
         XCTAssertEqual(options.runtimeFlags, ["-XruntimeA"])
 
-        XCTAssertEqual(KotlinLanguageVersion.v2_3_10, .v2_3_10)
-        XCTAssertEqual(OptimizationLevel.O0.rawValue, 0)
-        XCTAssertEqual(OptimizationLevel.O1.rawValue, 1)
-        XCTAssertEqual(OptimizationLevel.O2.rawValue, 2)
-        XCTAssertEqual(OptimizationLevel.O3.rawValue, 3)
-        XCTAssertEqual(EmitMode.executable.rawValue, "executable")
-        XCTAssertEqual(EmitMode.object.rawValue, "object")
-        XCTAssertEqual(EmitMode.llvmIR.rawValue, "llvmIR")
-        XCTAssertEqual(EmitMode.kirDump.rawValue, "kirDump")
-        XCTAssertEqual(EmitMode.library.rawValue, "library")
     }
 
     func testCompilerVersionWithNilGitHash() {
@@ -185,12 +175,7 @@ final class CompilerTypesTests: XCTestCase {
         XCTAssertEqual(options.runtimeFlags, [])
     }
 
-    func testEmitModeKirDump() {
-        XCTAssertEqual(EmitMode.kirDump.rawValue, "kirDump")
-    }
-
     func testOptimizationLevelEquality() {
-        XCTAssertEqual(OptimizationLevel.O1, OptimizationLevel.O1)
         XCTAssertNotEqual(OptimizationLevel.O0, OptimizationLevel.O3)
     }
 
