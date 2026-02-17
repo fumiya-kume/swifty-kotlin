@@ -683,8 +683,11 @@ extension DataFlowSemaPassPhase {
                 collectNestedTypeAliases(
                     nestedClass.nestedTypeAliases,
                     ownerFQName: nestedFQName,
+                    ast: ast,
                     symbols: symbols,
-                    diagnostics: diagnostics
+                    types: types,
+                    diagnostics: diagnostics,
+                    interner: interner
                 )
                 collectMemberHeaders(
                     memberFunctions: nestedClass.memberFunctions,
@@ -733,8 +736,11 @@ extension DataFlowSemaPassPhase {
                 collectNestedTypeAliases(
                     nestedInterface.nestedTypeAliases,
                     ownerFQName: nestedFQName,
+                    ast: ast,
                     symbols: symbols,
-                    diagnostics: diagnostics
+                    types: types,
+                    diagnostics: diagnostics,
+                    interner: interner
                 )
             default:
                 continue
@@ -770,8 +776,11 @@ extension DataFlowSemaPassPhase {
             collectNestedTypeAliases(
                 nestedObject.nestedTypeAliases,
                 ownerFQName: nestedFQName,
+                ast: ast,
                 symbols: symbols,
-                diagnostics: diagnostics
+                types: types,
+                diagnostics: diagnostics,
+                interner: interner
             )
             collectMemberHeaders(
                 memberFunctions: nestedObject.memberFunctions,
