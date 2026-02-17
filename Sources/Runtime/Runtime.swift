@@ -421,12 +421,12 @@ public func kk_array_set(_ arrayRaw: Int, _ index: Int, _ value: Int, _ outThrow
 }
 
 @_cdecl("kk_vararg_spread_concat")
-public func kk_vararg_spread_concat(_ pairs: UnsafePointer<Int>, _ pairCount: Int) -> Int {
+public func kk_vararg_spread_concat(_ pairsArrayRaw: Int, _ pairCount: Int) -> Int {
+    guard let pairs = runtimeArrayBox(from: pairsArrayRaw) else { return kk_array_new(0) }
     var elements: [Int] = []
-    var i = 0
-    while i < pairCount * 2 {
-        let marker = pairs[i]
-        let value = pairs[i + 1]
+    for i in 0..<pairCount {
+        let marker = pairs.elements[i * 2]
+        let value = pairs.elements[i * 2 + 1]
         if marker == -1 {
             if let array = runtimeArrayBox(from: value) {
                 elements.append(contentsOf: array.elements)
@@ -434,7 +434,6 @@ public func kk_vararg_spread_concat(_ pairs: UnsafePointer<Int>, _ pairCount: In
         } else {
             elements.append(value)
         }
-        i += 2
     }
     let result = kk_array_new(elements.count)
     if let box = runtimeArrayBox(from: result) {

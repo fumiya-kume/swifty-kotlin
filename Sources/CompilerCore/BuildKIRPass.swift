@@ -1893,26 +1893,51 @@ public final class BuildKIRPhase: CompilerPhase {
         }
 
         if hasAnySpread {
-            var concatArgs: [KIRExprID] = []
-            for idx in argIndices {
+            let pairsCount = argIndices.count
+            let pairsArraySize = pairsCount * 2
+            let pairsArray = emitArrayNew(
+                count: pairsArraySize,
+                arena: arena,
+                interner: interner,
+                intType: intType,
+                anyType: anyType,
+                instructions: &instructions
+            )
+            for (pairIdx, idx) in argIndices.enumerated() {
                 let isSpread = idx < spreadFlags.count && spreadFlags[idx]
-                if isSpread {
-                    let marker = arena.appendExpr(.intLiteral(-1), type: intType)
-                    instructions.append(.constValue(result: marker, value: .intLiteral(-1)))
-                    concatArgs.append(marker)
-                    concatArgs.append(providedArguments[idx])
-                } else {
-                    let marker = arena.appendExpr(.intLiteral(1), type: intType)
-                    instructions.append(.constValue(result: marker, value: .intLiteral(1)))
-                    concatArgs.append(marker)
-                    concatArgs.append(providedArguments[idx])
-                }
+                let markerValue: Int64 = isSpread ? -1 : 1
+                let markerExpr = arena.appendExpr(.intLiteral(markerValue), type: intType)
+                instructions.append(.constValue(result: markerExpr, value: .intLiteral(markerValue)))
+                let markerIdxExpr = arena.appendExpr(.intLiteral(Int64(pairIdx * 2)), type: intType)
+                instructions.append(.constValue(result: markerIdxExpr, value: .intLiteral(Int64(pairIdx * 2))))
+                let setMarkerResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: anyType)
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_array_set"),
+                    arguments: [pairsArray, markerIdxExpr, markerExpr],
+                    result: setMarkerResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                let valueIdxExpr = arena.appendExpr(.intLiteral(Int64(pairIdx * 2 + 1)), type: intType)
+                instructions.append(.constValue(result: valueIdxExpr, value: .intLiteral(Int64(pairIdx * 2 + 1))))
+                let setValueResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: anyType)
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_array_set"),
+                    arguments: [pairsArray, valueIdxExpr, providedArguments[idx]],
+                    result: setValueResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
             }
+            let pairCountExpr = arena.appendExpr(.intLiteral(Int64(pairsCount)), type: intType)
+            instructions.append(.constValue(result: pairCountExpr, value: .intLiteral(Int64(pairsCount))))
             let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: anyType)
             instructions.append(.call(
                 symbol: nil,
                 callee: interner.intern("kk_vararg_spread_concat"),
-                arguments: concatArgs,
+                arguments: [pairsArray, pairCountExpr],
                 result: result,
                 canThrow: false,
                 thrownResult: nil
