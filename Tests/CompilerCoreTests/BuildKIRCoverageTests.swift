@@ -47,7 +47,8 @@ final class BuildKIRCoverageTests: XCTestCase {
                 "CoroutineLowering",
                 "ABILowering"
             ])
-            XCTAssertGreaterThan(module.functionCount, 0)
+            // Source defines add, susp, chooser, main
+            XCTAssertGreaterThanOrEqual(module.functionCount, 4)
         }
     }
 
@@ -60,21 +61,10 @@ final class BuildKIRCoverageTests: XCTestCase {
             try runToKIR(ctx)
 
             let module = try XCTUnwrap(ctx.kir)
-            let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let function) = decl else {
-                    return nil
-                }
-                return ctx.interner.resolve(function.name) == "main" ? function : nil
-            }.first
-            let body = try XCTUnwrap(mainFunction?.body)
-            let callees = body.compactMap { instruction -> String? in
-                            guard case .call(_, let callee, _, _, _, _) = instruction else {
-                                return nil
-                            }
-                            return ctx.interner.resolve(callee)
-                        }
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: body, interner: ctx.interner)
 
-                        XCTAssertTrue(callees.contains("kk_string_concat"))
+            XCTAssertTrue(callees.contains("kk_string_concat"))
             XCTAssertFalse(body.contains { instruction in
                 guard case .binary(let op, _, _, _) = instruction else {
                     return false
@@ -99,13 +89,7 @@ final class BuildKIRCoverageTests: XCTestCase {
             try runToKIR(ctx)
 
             let module = try XCTUnwrap(ctx.kir)
-            let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let function) = decl else {
-                    return nil
-                }
-                return ctx.interner.resolve(function.name) == "main" ? function : nil
-            }.first
-            let body = try XCTUnwrap(mainFunction?.body)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
 
             let binaryOps = body.compactMap { instruction -> KIRBinaryOp? in
                 guard case .binary(let op, _, _, _) = instruction else {
@@ -138,21 +122,10 @@ final class BuildKIRCoverageTests: XCTestCase {
             try runToKIR(ctx)
 
             let module = try XCTUnwrap(ctx.kir)
-            let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let function) = decl else {
-                    return nil
-                }
-                return ctx.interner.resolve(function.name) == "main" ? function : nil
-            }.first
-            let body = try XCTUnwrap(mainFunction?.body)
-            let callees = Set(body.compactMap { instruction -> String? in
-                            guard case .call(_, let callee, _, _, _, _) = instruction else {
-                                return nil
-                            }
-                            return ctx.interner.resolve(callee)
-                        })
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = Set(extractCallees(from: body, interner: ctx.interner))
 
-                        XCTAssertTrue(callees.contains("kk_op_ne"))
+            XCTAssertTrue(callees.contains("kk_op_ne"))
             XCTAssertTrue(callees.contains("kk_op_lt"))
             XCTAssertTrue(callees.contains("kk_op_le"))
             XCTAssertTrue(callees.contains("kk_op_gt"))
@@ -175,13 +148,7 @@ final class BuildKIRCoverageTests: XCTestCase {
             try runToKIR(ctx)
 
             let module = try XCTUnwrap(ctx.kir)
-            let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let function) = decl else {
-                    return nil
-                }
-                return ctx.interner.resolve(function.name) == "main" ? function : nil
-            }.first
-            let body = try XCTUnwrap(mainFunction?.body)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
 
             // The built-in binary .add instruction should be used, not a call.
             XCTAssertTrue(body.contains { instruction in
@@ -214,20 +181,8 @@ final class BuildKIRCoverageTests: XCTestCase {
             try LoweringPhase().run(ctx)
 
             let module = try XCTUnwrap(ctx.kir)
-            let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let function) = decl else {
-                    return nil
-                }
-                return ctx.interner.resolve(function.name) == "main" ? function : nil
-            }.first
-            let body = try XCTUnwrap(mainFunction?.body)
-
-            let callNames = body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _, _) = instruction else {
-                    return nil
-                }
-                return ctx.interner.resolve(callee)
-            }
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
             XCTAssertTrue(callNames.contains("kk_box_int"))
             XCTAssertTrue(callNames.contains("kk_box_bool"))
         }
@@ -247,13 +202,7 @@ final class BuildKIRCoverageTests: XCTestCase {
             try LoweringPhase().run(ctx)
 
             let module = try XCTUnwrap(ctx.kir)
-            let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let function) = decl else {
-                    return nil
-                }
-                return ctx.interner.resolve(function.name) == "main" ? function : nil
-            }.first
-            let body = try XCTUnwrap(mainFunction?.body)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
 
             let boxingThrowFlags = body.compactMap { instruction -> Bool? in
                 guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
@@ -286,30 +235,13 @@ final class BuildKIRCoverageTests: XCTestCase {
             try LoweringPhase().run(ctx)
 
             let module = try XCTUnwrap(ctx.kir)
-            let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let function) = decl else {
-                    return nil
-                }
-                return ctx.interner.resolve(function.name) == "main" ? function : nil
-            }.first
-            let body = try XCTUnwrap(mainFunction?.body)
-
-            let callNames = body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _, _) = instruction else {
-                    return nil
-                }
-                return ctx.interner.resolve(callee)
-            }
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
             XCTAssertTrue(callNames.contains("kk_array_new"))
             XCTAssertTrue(callNames.contains("kk_array_set"))
             XCTAssertTrue(callNames.contains("kk_array_get"))
 
-            let throwFlags: [String: [Bool]] = body.reduce(into: [:]) { partial, instruction in
-                guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
-                    return
-                }
-                partial[ctx.interner.resolve(callee), default: []].append(canThrow)
-            }
+            let throwFlags = extractThrowFlags(from: body, interner: ctx.interner)
             XCTAssertEqual(throwFlags["kk_array_new"]?.allSatisfy({ $0 == false }), true)
             XCTAssertEqual(throwFlags["kk_array_set"]?.allSatisfy({ $0 == true }), true)
             XCTAssertEqual(throwFlags["kk_array_get"]?.allSatisfy({ $0 == true }), true)
@@ -445,7 +377,14 @@ final class BuildKIRCoverageTests: XCTestCase {
         }
     }
 
-    func testTypeCheckAndBuildKIRCoverExpressionVariants() throws {
+    // MARK: - Expression Variants Coverage
+
+    private func makeExpressionVariantsFixture() -> (
+        ctx: CompilationContext,
+        exprIDs: (eUnaryPlus: ExprID, eUnaryMinus: ExprID, eUnaryNot: ExprID,
+                  eNe: ExprID, eLt: ExprID, eLe: ExprID,
+                  eGt: ExprID, eGe: ExprID, eAnd: ExprID, eOr: ExprID)
+    ) {
         let interner = StringInterner()
         let diagnostics = DiagnosticEngine()
         let symbols = SymbolTable()
@@ -581,26 +520,33 @@ final class BuildKIRCoverageTests: XCTestCase {
         ctx.ast = module
         ctx.sema = SemaModule(symbols: symbols, types: types, bindings: bindings, diagnostics: diagnostics)
 
+        return (ctx, (eUnaryPlus, eUnaryMinus, eUnaryNot, eNe, eLt, eLe, eGt, eGe, eAnd, eOr))
+    }
+
+    func testTypeCheckAndBuildKIRCoverExpressionVariants() throws {
+        let (ctx, exprIDs) = makeExpressionVariantsFixture()
+
         try DataFlowSemaPassPhase().run(ctx)
         try TypeCheckSemaPassPhase().run(ctx)
         try BuildKIRPhase().run(ctx)
         try LoweringPhase().run(ctx)
 
         let kir = try XCTUnwrap(ctx.kir)
+        // helper + calc functions
         XCTAssertGreaterThanOrEqual(kir.functionCount, 2)
         XCTAssertFalse(kir.executedLowerings.isEmpty)
         XCTAssertFalse(kir.arena.exprTypes.isEmpty)
         XCTAssertFalse((ctx.sema?.bindings.exprTypes ?? [:]).isEmpty)
-        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[eUnaryPlus])
-        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[eUnaryMinus])
-        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[eUnaryNot])
-        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[eNe])
-        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[eLt])
-        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[eLe])
-        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[eGt])
-        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[eGe])
-        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[eAnd])
-        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[eOr])
+        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[exprIDs.eUnaryPlus])
+        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[exprIDs.eUnaryMinus])
+        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[exprIDs.eUnaryNot])
+        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[exprIDs.eNe])
+        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[exprIDs.eLt])
+        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[exprIDs.eLe])
+        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[exprIDs.eGt])
+        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[exprIDs.eGe])
+        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[exprIDs.eAnd])
+        XCTAssertNotNil(ctx.sema?.bindings.exprTypes[exprIDs.eOr])
     }
 
     func testBuildKIRLowersLoopExpressionsToControlFlowInstructions() throws {
@@ -618,19 +564,14 @@ final class BuildKIRCoverageTests: XCTestCase {
             try runToKIR(ctx)
 
             let kir = try XCTUnwrap(ctx.kir)
-            let interner = ctx.interner
-            let loopFunction = kir.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let function) = decl else {
-                    return nil
-                }
-                return interner.resolve(function.name) == "loop" ? function : nil
-            }.first
-            let body = try XCTUnwrap(loopFunction?.body)
+            let body = try findKIRFunctionBody(named: "loop", in: kir, interner: ctx.interner)
 
             let labelCount = body.filter { instruction in
                 if case .label = instruction { return true }
                 return false
             }.count
+            // while/do-while/for each need loop-start + loop-end labels;
+            // 3 loops need at least 4 labels (some may share via break/continue)
             XCTAssertGreaterThanOrEqual(labelCount, 4)
 
             let jumpCount = body.filter { instruction in
@@ -638,21 +579,26 @@ final class BuildKIRCoverageTests: XCTestCase {
                 if case .jumpIfEqual = instruction { return true }
                 return false
             }.count
+            // Each loop has conditional jump + unconditional jump-back;
+            // 3 loops need at least 4 jumps
             XCTAssertGreaterThanOrEqual(jumpCount, 4)
 
-            let callees = body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _, _) = instruction else {
-                    return nil
-                }
-                return interner.resolve(callee)
-            }
+            let callees = extractCallees(from: body, interner: ctx.interner)
             XCTAssertTrue(callees.contains("iterator"))
             XCTAssertTrue(callees.contains("hasNext"))
             XCTAssertTrue(callees.contains("next"))
         }
     }
 
-    func testBuildKIRAddsHiddenTypeTokenForInlineReifiedCalls() throws {
+    // MARK: - Reified Type Token Coverage
+
+    private func makeReifiedCallFixture() -> (
+        ctx: CompilationContext,
+        pickSymbol: SymbolID,
+        mainSymbol: SymbolID,
+        typeParameterSymbol: SymbolID,
+        intType: TypeID
+    ) {
         let interner = StringInterner()
         let symbols = SymbolTable()
         let types = TypeSystem()
@@ -795,6 +741,12 @@ final class BuildKIRCoverageTests: XCTestCase {
             diagnostics: diagnostics
         )
 
+        return (ctx, pickSymbol, mainSymbol, typeParameterSymbol, intType)
+    }
+
+    func testBuildKIRAddsHiddenTypeTokenForInlineReifiedCalls() throws {
+        let (ctx, pickSymbol, mainSymbol, typeParameterSymbol, intType) = makeReifiedCallFixture()
+
         try BuildKIRPhase().run(ctx)
 
         let kir = try XCTUnwrap(ctx.kir)
@@ -811,7 +763,8 @@ final class BuildKIRCoverageTests: XCTestCase {
             return function.symbol == mainSymbol ? function : nil
         }.first)
 
-        let expectedTokenSymbol = SymbolID(rawValue: -20_000 - typeParameterSymbol.rawValue)
+        // Type token symbols use a negative offset to avoid collision with real symbol IDs
+        let expectedTokenSymbol = SymbolID(rawValue: Int32(typeTokenSymbolOffset) - typeParameterSymbol.rawValue)
         XCTAssertEqual(pickFunction.params.count, 2)
         XCTAssertEqual(pickFunction.params.last?.symbol, expectedTokenSymbol)
 

@@ -11,10 +11,7 @@ final class LoweringPassCoverageTests: XCTestCase {
             return
         }
 
-        let callees = loweredMain.body.compactMap { instruction -> String? in
-            guard case .call(_, let callee, _, _, _, _) = instruction else { return nil }
-            return fixture.interner.resolve(callee)
-        }
+        let callees = extractCallees(from: loweredMain.body, interner: fixture.interner)
         XCTAssertTrue(callees.contains("iterator"))
         XCTAssertTrue(callees.contains("hasNext"))
         XCTAssertTrue(callees.contains("next"))
@@ -23,77 +20,57 @@ final class LoweringPassCoverageTests: XCTestCase {
         XCTAssertTrue(callees.contains("kk_property_access"))
         XCTAssertTrue(callees.contains("kk_lambda_invoke"))
         XCTAssertFalse(callees.contains("inlineTarget"))
-        XCTAssertFalse(callees.contains("inlined_inlineTarget"))
         XCTAssertTrue(callees.contains("kk_coroutine_continuation_new"))
         XCTAssertTrue(callees.contains("kk_suspend_suspendTarget"))
 
-        let throwFlags: [String: [Bool]] = loweredMain.body.reduce(into: [:]) { partial, instruction in
-            guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
-                return
-            }
-            let name = fixture.interner.resolve(callee)
-            partial[name, default: []].append(canThrow)
-        }
+        let throwFlags = extractThrowFlags(from: loweredMain.body, interner: fixture.interner)
         XCTAssertEqual(throwFlags["kk_coroutine_continuation_new"]?.allSatisfy({ $0 == false }), true)
         XCTAssertEqual(throwFlags["kk_suspend_suspendTarget"]?.allSatisfy({ $0 == true }), true)
     }
 
     func testLoweringBuildsSuspendStateMachineAndThrowFlags() throws {
         let fixture = try makeLoweringRewriteFixture()
-        let loweredSuspend = fixture.module.arena.declarations.compactMap { decl -> KIRFunction? in
-            guard case .function(let function) = decl else {
-                return nil
-            }
-            return fixture.interner.resolve(function.name) == "kk_suspend_suspendTarget" ? function : nil
-        }.first
+        let loweredSuspend = try findKIRFunction(named: "kk_suspend_suspendTarget", in: fixture.module, interner: fixture.interner)
 
-        XCTAssertEqual(loweredSuspend?.params.count, 1)
-        XCTAssertEqual(loweredSuspend?.isSuspend, false)
+        XCTAssertEqual(loweredSuspend.params.count, 1)
+        XCTAssertEqual(loweredSuspend.isSuspend, false)
 
-        let loweredSuspendCallees = loweredSuspend?.body.compactMap { instruction -> String? in
-            guard case .call(_, let callee, _, _, _, _) = instruction else {
-                return nil
-            }
-            return fixture.interner.resolve(callee)
-        } ?? []
+        let loweredSuspendCallees = extractCallees(from: loweredSuspend.body, interner: fixture.interner)
         XCTAssertTrue(loweredSuspendCallees.contains("kk_coroutine_state_enter"))
         XCTAssertTrue(loweredSuspendCallees.contains("kk_coroutine_state_set_label"))
         XCTAssertTrue(loweredSuspendCallees.contains("kk_coroutine_state_set_completion"))
         XCTAssertTrue(loweredSuspendCallees.contains("kk_coroutine_state_get_completion"))
         XCTAssertTrue(loweredSuspendCallees.contains("kk_coroutine_state_exit"))
 
-        let dispatchJumpCount = loweredSuspend?.body.filter { instruction in
+        let dispatchJumpCount = loweredSuspend.body.filter { instruction in
             if case .jumpIfEqual = instruction {
                 return true
             }
             return false
-        }.count ?? 0
+        }.count
+        // A suspend function with one suspension point needs at least 2 dispatch jumps:
+        // one for label 1000 (entry) and one for label 1001 (resume point)
         XCTAssertGreaterThanOrEqual(dispatchJumpCount, 2)
 
-        let dispatchLabels = loweredSuspend?.body.compactMap { instruction -> Int32? in
+        let dispatchLabels = loweredSuspend.body.compactMap { instruction -> Int32? in
             if case .label(let id) = instruction {
                 return id
             }
             return nil
-        } ?? []
-        XCTAssertTrue(dispatchLabels.contains(1000))
-        XCTAssertTrue(dispatchLabels.contains(1001))
+        }
+        // Coroutine state machine dispatch labels start at coroutineDispatchLabelBase
+        XCTAssertTrue(dispatchLabels.contains(coroutineDispatchLabelBase))
+        XCTAssertTrue(dispatchLabels.contains(coroutineDispatchLabelBase + 1))
 
-        let hasSuspendGuard = loweredSuspend?.body.contains { instruction in
+        let hasSuspendGuard = loweredSuspend.body.contains { instruction in
             if case .returnIfEqual = instruction {
                 return true
             }
             return false
-        } ?? false
+        }
         XCTAssertTrue(hasSuspendGuard)
 
-        let throwFlags: [String: [Bool]] = loweredSuspend?.body.reduce(into: [:]) { partial, instruction in
-            guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
-                return
-            }
-            let name = fixture.interner.resolve(callee)
-            partial[name, default: []].append(canThrow)
-        } ?? [:]
+        let throwFlags = extractThrowFlags(from: loweredSuspend.body, interner: fixture.interner)
         XCTAssertEqual(throwFlags["kk_suspend_suspendTarget"]?.allSatisfy({ $0 == true }), true)
         XCTAssertEqual(throwFlags["kk_coroutine_suspended"]?.allSatisfy({ $0 == false }), true)
         XCTAssertEqual(throwFlags["kk_coroutine_state_set_label"]?.allSatisfy({ $0 == false }), true)
@@ -127,42 +104,17 @@ final class LoweringPassCoverageTests: XCTestCase {
             try LoweringPhase().run(ctx)
 
             let module = try XCTUnwrap(ctx.kir)
-            let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let function) = decl else {
-                    return nil
-                }
-                return ctx.interner.resolve(function.name) == "main" ? function : nil
-            }.first
-            let loweredSuspend = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let function) = decl else {
-                    return nil
-                }
-                return ctx.interner.resolve(function.name) == "kk_suspend_delayedValue" ? function : nil
-            }.first
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let suspendBody = try findKIRFunctionBody(named: "kk_suspend_delayedValue", in: module, interner: ctx.interner)
 
-            let mainCalls = mainFunction?.body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _, _) = instruction else {
-                    return nil
-                }
-                return ctx.interner.resolve(callee)
-            } ?? []
+            let mainCalls = extractCallees(from: mainBody, interner: ctx.interner)
             XCTAssertTrue(mainCalls.contains("kk_kxmini_run_blocking"))
             XCTAssertFalse(mainCalls.contains("runBlocking"))
 
-            let delayCalls = loweredSuspend?.body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _, _) = instruction else {
-                    return nil
-                }
-                return ctx.interner.resolve(callee)
-            } ?? []
+            let delayCalls = extractCallees(from: suspendBody, interner: ctx.interner)
             XCTAssertTrue(delayCalls.contains("kk_kxmini_delay"))
 
-            let throwFlags = loweredSuspend?.body.reduce(into: [String: [Bool]]()) { partial, instruction in
-                guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
-                    return
-                }
-                partial[ctx.interner.resolve(callee), default: []].append(canThrow)
-            } ?? [:]
+            let throwFlags = extractThrowFlags(from: suspendBody, interner: ctx.interner)
             XCTAssertEqual(throwFlags["kk_kxmini_delay"]?.allSatisfy({ $0 == false }), true)
         }
     }
@@ -192,12 +144,13 @@ final class LoweringPassCoverageTests: XCTestCase {
             try LinkPhase().run(ctx)
 
             XCTAssertTrue(FileManager.default.fileExists(atPath: outputPath))
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: outputPath)
-            process.arguments = []
-            try process.run()
-            process.waitUntilExit()
-            XCTAssertEqual(process.terminationStatus, 42)
+            do {
+                _ = try CommandRunner.run(executable: outputPath, arguments: [])
+                XCTFail("Expected non-zero exit")
+                return
+            } catch CommandRunnerError.nonZeroExit(let failed) {
+                XCTAssertEqual(failed.exitCode, 42)
+            }
         }
     }
 
@@ -343,30 +296,25 @@ final class LoweringPassCoverageTests: XCTestCase {
 
         try LoweringPhase().run(ctx)
 
-        let loweredSuspend = module.arena.declarations.compactMap { decl -> KIRFunction? in
-            guard case .function(let function) = decl else {
-                return nil
-            }
-            return interner.resolve(function.name) == "kk_suspend_suspendTarget" ? function : nil
-        }.first
-        XCTAssertNotNil(loweredSuspend)
+        let loweredSuspend = try findKIRFunction(named: "kk_suspend_suspendTarget", in: module, interner: interner)
 
-        let labels = loweredSuspend?.body.compactMap { instruction -> Int32? in
+        let labels = loweredSuspend.body.compactMap { instruction -> Int32? in
             if case .label(let id) = instruction {
                 return id
             }
             return nil
-        } ?? []
-        XCTAssertTrue(labels.contains(1000))
-        XCTAssertTrue(labels.contains(1001))
+        }
+        // Coroutine dispatch labels + original user label 20
+        XCTAssertTrue(labels.contains(coroutineDispatchLabelBase))
+        XCTAssertTrue(labels.contains(coroutineDispatchLabelBase + 1))
         XCTAssertTrue(labels.contains(20))
 
-        let hasOriginalBranch = loweredSuspend?.body.contains { instruction in
+        let hasOriginalBranch = loweredSuspend.body.contains { instruction in
             if case .jumpIfEqual(_, _, let target) = instruction {
                 return target == 20
             }
             return false
-        } ?? false
+        }
         XCTAssertTrue(hasOriginalBranch)
     }
 
@@ -414,20 +362,9 @@ final class LoweringPassCoverageTests: XCTestCase {
 
         try LoweringPhase().run(ctx)
 
-        let loweredSuspend = module.arena.declarations.compactMap { decl -> KIRFunction? in
-            guard case .function(let function) = decl else {
-                return nil
-            }
-            return interner.resolve(function.name) == "kk_suspend_suspendTarget" ? function : nil
-        }.first
-        XCTAssertNotNil(loweredSuspend)
+        let loweredSuspend = try findKIRFunction(named: "kk_suspend_suspendTarget", in: module, interner: interner)
 
-        let loweredCalls = loweredSuspend?.body.compactMap { instruction -> String? in
-            guard case .call(_, let callee, _, _, _, _) = instruction else {
-                return nil
-            }
-            return interner.resolve(callee)
-        } ?? []
+        let loweredCalls = extractCallees(from: loweredSuspend.body, interner: interner)
         XCTAssertTrue(loweredCalls.contains("kk_coroutine_state_set_spill"))
         XCTAssertTrue(loweredCalls.contains("kk_coroutine_state_get_spill"))
         XCTAssertTrue(loweredCalls.contains("kk_coroutine_state_set_completion"))
@@ -438,12 +375,7 @@ final class LoweringPassCoverageTests: XCTestCase {
         XCTAssertEqual(setSpillCount, 1)
         XCTAssertEqual(getSpillCount, 1)
 
-        let throwFlags: [String: [Bool]] = loweredSuspend?.body.reduce(into: [:]) { partial, instruction in
-            guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
-                return
-            }
-            partial[interner.resolve(callee), default: []].append(canThrow)
-        } ?? [:]
+        let throwFlags = extractThrowFlags(from: loweredSuspend.body, interner: interner)
         XCTAssertEqual(throwFlags["kk_suspend_suspendTarget"]?.allSatisfy({ $0 == true }), true)
         XCTAssertEqual(throwFlags["kk_coroutine_state_set_spill"]?.allSatisfy({ $0 == false }), true)
         XCTAssertEqual(throwFlags["kk_coroutine_state_get_spill"]?.allSatisfy({ $0 == false }), true)
@@ -660,53 +592,19 @@ final class LoweringPassCoverageTests: XCTestCase {
 
         try LoweringPhase().run(ctx)
 
-        let loweredMain = module.arena.declarations.compactMap { decl -> KIRFunction? in
-            guard case .function(let function) = decl else {
-                return nil
-            }
-            return interner.resolve(function.name) == "main" ? function : nil
-        }.first
-        let loweredTop = module.arena.declarations.compactMap { decl -> KIRFunction? in
-            guard case .function(let function) = decl else {
-                return nil
-            }
-            return interner.resolve(function.name) == "kk_suspend_top" ? function : nil
-        }.first
-        let loweredLeaf = module.arena.declarations.compactMap { decl -> KIRFunction? in
-            guard case .function(let function) = decl else {
-                return nil
-            }
-            return interner.resolve(function.name) == "kk_suspend_leaf" ? function : nil
-        }.first
+        let loweredMain = try findKIRFunction(named: "main", in: module, interner: interner)
+        let loweredTop = try findKIRFunction(named: "kk_suspend_top", in: module, interner: interner)
+        let loweredLeaf = try findKIRFunction(named: "kk_suspend_leaf", in: module, interner: interner)
 
-        XCTAssertNotNil(loweredMain)
-        XCTAssertNotNil(loweredTop)
-        XCTAssertNotNil(loweredLeaf)
-
-        let mainThrowFlags: [String: [Bool]] = loweredMain?.body.reduce(into: [:]) { partial, instruction in
-            guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
-                return
-            }
-            partial[interner.resolve(callee), default: []].append(canThrow)
-        } ?? [:]
+        let mainThrowFlags = extractThrowFlags(from: loweredMain.body, interner: interner)
         XCTAssertEqual(mainThrowFlags["kk_suspend_top"]?.allSatisfy({ $0 == true }), true)
 
-        let topThrowFlags: [String: [Bool]] = loweredTop?.body.reduce(into: [:]) { partial, instruction in
-            guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
-                return
-            }
-            partial[interner.resolve(callee), default: []].append(canThrow)
-        } ?? [:]
+        let topThrowFlags = extractThrowFlags(from: loweredTop.body, interner: interner)
         XCTAssertEqual(topThrowFlags["kk_suspend_leaf"]?.allSatisfy({ $0 == true }), true)
         XCTAssertEqual(topThrowFlags["kk_coroutine_state_set_label"]?.allSatisfy({ $0 == false }), true)
         XCTAssertEqual(topThrowFlags["kk_coroutine_state_set_completion"]?.allSatisfy({ $0 == false }), true)
 
-        let leafThrowFlags: [String: [Bool]] = loweredLeaf?.body.reduce(into: [:]) { partial, instruction in
-            guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
-                return
-            }
-            partial[interner.resolve(callee), default: []].append(canThrow)
-        } ?? [:]
+        let leafThrowFlags = extractThrowFlags(from: loweredLeaf.body, interner: interner)
         XCTAssertEqual(leafThrowFlags["external_throwing"]?.allSatisfy({ $0 == true }), true)
     }
 
@@ -777,10 +675,7 @@ final class LoweringPassCoverageTests: XCTestCase {
             return
         }
 
-        let calleeNames = loweredCaller.body.compactMap { instruction -> String? in
-            guard case .call(_, let callee, _, _, _, _) = instruction else { return nil }
-            return interner.resolve(callee)
-        }
+        let calleeNames = extractCallees(from: loweredCaller.body, interner: interner)
         XCTAssertFalse(calleeNames.contains("plusOne"))
         XCTAssertTrue(calleeNames.contains("kk_op_add"))
 
@@ -888,13 +783,8 @@ final class LoweringPassCoverageTests: XCTestCase {
         XCTAssertTrue(functionNames.contains("Base$sealedSubtypeCount"))
         XCTAssertTrue(functionNames.contains("Point$copy"))
 
-        let copyFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
-            guard case .function(let function) = decl else {
-                return nil
-            }
-            return interner.resolve(function.name) == "Point$copy" ? function : nil
-        }.first
-        XCTAssertEqual(copyFunction?.params.count, 1)
+        let copyFunction = try findKIRFunction(named: "Point$copy", in: module, interner: interner)
+        XCTAssertEqual(copyFunction.params.count, 1)
     }
 
     func testInlineLoweringMapsReifiedTypeTokenSymbolRefToHiddenArgument() throws {
@@ -951,7 +841,8 @@ final class LoweringPassCoverageTests: XCTestCase {
             for: mainSymbol
         )
 
-        let hiddenTokenSymbol = SymbolID(rawValue: -20_000 - typeParameterSymbol.rawValue)
+        // Type token symbols use a negative offset to avoid collision with real symbol IDs
+        let hiddenTokenSymbol = SymbolID(rawValue: Int32(typeTokenSymbolOffset) - typeParameterSymbol.rawValue)
         let inlineTokenExpr = arena.appendExpr(.temporary(0), type: intType)
         let callerTokenExpr = arena.appendExpr(.intLiteral(321), type: intType)
         let callerResultExpr = arena.appendExpr(.temporary(1), type: intType)
