@@ -93,9 +93,22 @@ extension DataFlowSemaPassPhase {
                 break
             }
 
-            if let symbol = symbols.lookupAll(fqName: path)
+            if let resolved = symbols.lookupAll(fqName: path)
                 .compactMap({ symbols.symbol($0) })
-                .first(where: { isNominalTypeSymbol($0.kind) })?.id {
+                .first(where: { isNominalTypeSymbol($0.kind) }) {
+                if resolved.kind == .typeAlias {
+                    if let underlying = resolveTypeAliasUnderlying(
+                        resolved.id,
+                        symbols: symbols,
+                        types: types,
+                        visited: []
+                    ) {
+                        if nullability == .nullable {
+                            return applyNullability(underlying, types: types)
+                        }
+                        return underlying
+                    }
+                }
                 let resolvedArgs = resolveTypeArgRefs(
                     argRefs,
                     ast: ast,
@@ -104,7 +117,7 @@ extension DataFlowSemaPassPhase {
                     interner: interner,
                     localTypeParameters: localTypeParameters
                 )
-                return types.make(.classType(ClassType(classSymbol: symbol, args: resolvedArgs, nullability: nullability)))
+                return types.make(.classType(ClassType(classSymbol: resolved.id, args: resolvedArgs, nullability: nullability)))
             }
             return nullability == .nullable ? types.nullableAnyType : types.anyType
 
@@ -188,5 +201,55 @@ extension DataFlowSemaPassPhase {
             }
         }
         return result
+    }
+
+    private func applyNullability(_ typeID: TypeID, types: TypeSystem) -> TypeID {
+        switch types.kind(of: typeID) {
+        case .primitive(let p, _):
+            return types.make(.primitive(p, .nullable))
+        case .classType(let ct):
+            return types.make(.classType(ClassType(classSymbol: ct.classSymbol, args: ct.args, nullability: .nullable)))
+        case .typeParam(let tp):
+            return types.make(.typeParam(TypeParamType(symbol: tp.symbol, nullability: .nullable)))
+        case .functionType(let ft):
+            return types.make(.functionType(FunctionType(receiver: ft.receiver, params: ft.params, returnType: ft.returnType, isSuspend: ft.isSuspend, nullability: .nullable)))
+        case .any, .unit, .nothing:
+            return types.nullableAnyType
+        default:
+            return types.nullableAnyType
+        }
+    }
+
+    private func resolveTypeAliasUnderlying(
+        _ symbolID: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        visited: Set<SymbolID>
+    ) -> TypeID? {
+        guard !visited.contains(symbolID) else {
+            return nil
+        }
+        guard let underlying = symbols.typeAliasUnderlyingType(for: symbolID) else {
+            return nil
+        }
+        if case .classType(let classType) = types.kind(of: underlying),
+           let targetSymbol = symbols.symbol(classType.classSymbol),
+           targetSymbol.kind == .typeAlias {
+            var newVisited = visited
+            newVisited.insert(symbolID)
+            if let resolved = resolveTypeAliasUnderlying(
+                classType.classSymbol,
+                symbols: symbols,
+                types: types,
+                visited: newVisited
+            ) {
+                if classType.nullability == .nullable {
+                    return applyNullability(resolved, types: types)
+                }
+                return resolved
+            }
+            return nil
+        }
+        return underlying
     }
 }

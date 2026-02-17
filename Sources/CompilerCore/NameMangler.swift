@@ -76,6 +76,12 @@ public final class NameMangler {
             }
             return encodeType(propertyType, symbols: symbols, types: types, nameResolver: nameResolver)
 
+        case .typeAlias:
+            guard let underlyingType = symbols.typeAliasUnderlyingType(for: symbol.id) else {
+                return "_"
+            }
+            return encodeType(underlyingType, symbols: symbols, types: types, nameResolver: nameResolver)
+
         default:
             return "_"
         }

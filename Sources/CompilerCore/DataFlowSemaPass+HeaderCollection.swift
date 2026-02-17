@@ -129,8 +129,11 @@ extension DataFlowSemaPassPhase {
             collectNestedTypeAliases(
                 classDecl.nestedTypeAliases,
                 ownerFQName: fqName,
+                ast: ast,
                 symbols: symbols,
-                diagnostics: diagnostics
+                types: types,
+                diagnostics: diagnostics,
+                interner: interner
             )
 
             let ctorName = interner.intern("<init>")
@@ -285,8 +288,11 @@ extension DataFlowSemaPassPhase {
             collectNestedTypeAliases(
                 interfaceDecl.nestedTypeAliases,
                 ownerFQName: fqName,
+                ast: ast,
                 symbols: symbols,
-                diagnostics: diagnostics
+                types: types,
+                diagnostics: diagnostics,
+                interner: interner
             )
 
         case .objectDecl(let objectDecl):
@@ -294,8 +300,11 @@ extension DataFlowSemaPassPhase {
             collectNestedTypeAliases(
                 objectDecl.nestedTypeAliases,
                 ownerFQName: fqName,
+                ast: ast,
                 symbols: symbols,
-                diagnostics: diagnostics
+                types: types,
+                diagnostics: diagnostics,
+                interner: interner
             )
             collectMemberHeaders(
                 memberFunctions: objectDecl.memberFunctions,
@@ -421,7 +430,18 @@ extension DataFlowSemaPassPhase {
             ) ?? types.nullableAnyType
             symbols.setPropertyType(resolvedType, for: symbol)
 
-        case .typeAliasDecl, .enumEntryDecl:
+        case .typeAliasDecl(let typeAliasDecl):
+            if let resolvedUnderlying = resolveTypeRef(
+                typeAliasDecl.underlyingType,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                interner: interner
+            ) {
+                symbols.setTypeAliasUnderlyingType(resolvedUnderlying, for: symbol)
+            }
+
+        case .enumEntryDecl:
             break
         }
     }
@@ -663,8 +683,11 @@ extension DataFlowSemaPassPhase {
                 collectNestedTypeAliases(
                     nestedClass.nestedTypeAliases,
                     ownerFQName: nestedFQName,
+                    ast: ast,
                     symbols: symbols,
-                    diagnostics: diagnostics
+                    types: types,
+                    diagnostics: diagnostics,
+                    interner: interner
                 )
                 collectMemberHeaders(
                     memberFunctions: nestedClass.memberFunctions,
@@ -713,8 +736,11 @@ extension DataFlowSemaPassPhase {
                 collectNestedTypeAliases(
                     nestedInterface.nestedTypeAliases,
                     ownerFQName: nestedFQName,
+                    ast: ast,
                     symbols: symbols,
-                    diagnostics: diagnostics
+                    types: types,
+                    diagnostics: diagnostics,
+                    interner: interner
                 )
             default:
                 continue
@@ -750,8 +776,11 @@ extension DataFlowSemaPassPhase {
             collectNestedTypeAliases(
                 nestedObject.nestedTypeAliases,
                 ownerFQName: nestedFQName,
+                ast: ast,
                 symbols: symbols,
-                diagnostics: diagnostics
+                types: types,
+                diagnostics: diagnostics,
+                interner: interner
             )
             collectMemberHeaders(
                 memberFunctions: nestedObject.memberFunctions,
@@ -775,8 +804,11 @@ extension DataFlowSemaPassPhase {
     private func collectNestedTypeAliases(
         _ aliases: [TypeAliasDecl],
         ownerFQName: [InternedString],
+        ast: ASTModule,
         symbols: SymbolTable,
-        diagnostics: DiagnosticEngine
+        types: TypeSystem,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner
     ) {
         for alias in aliases {
             let aliasFQName = ownerFQName + [alias.name]
@@ -788,7 +820,7 @@ extension DataFlowSemaPassPhase {
                     range: alias.range
                 )
             }
-            _ = symbols.define(
+            let aliasSymbol = symbols.define(
                 kind: .typeAlias,
                 name: alias.name,
                 fqName: aliasFQName,
@@ -796,6 +828,15 @@ extension DataFlowSemaPassPhase {
                 visibility: visibility(from: alias.modifiers),
                 flags: flags(from: alias.modifiers)
             )
+            if let resolvedUnderlying = resolveTypeRef(
+                alias.underlyingType,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                interner: interner
+            ) {
+                symbols.setTypeAliasUnderlyingType(resolvedUnderlying, for: aliasSymbol)
+            }
         }
     }
 

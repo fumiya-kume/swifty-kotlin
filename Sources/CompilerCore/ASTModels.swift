@@ -338,6 +338,22 @@ public struct TypeAliasDecl {
     public let range: SourceRange
     public let name: InternedString
     public let modifiers: Modifiers
+    public let typeParams: [TypeParamDecl]
+    public let underlyingType: TypeRefID?
+
+    public init(
+        range: SourceRange,
+        name: InternedString,
+        modifiers: Modifiers,
+        typeParams: [TypeParamDecl] = [],
+        underlyingType: TypeRefID? = nil
+    ) {
+        self.range = range
+        self.name = name
+        self.modifiers = modifiers
+        self.typeParams = typeParams
+        self.underlyingType = underlyingType
+    }
 }
 
 public struct EnumEntryDecl {
