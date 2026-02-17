@@ -261,7 +261,8 @@ public final class DataFlowAnalyzer {
             }
             switch conditionSymbol.kind {
             case .field:
-                guard let ownerID = enumOwnerSymbolID(for: conditionSymbol, symbols: sema.symbols) else {
+                guard let ownerID = enumOwnerSymbolID(for: conditionSymbol, symbols: sema.symbols),
+                      nominalSymbolID(of: subjectType, types: sema.types) == ownerID else {
                     return base
                 }
                 let narrowed = sema.types.make(.classType(ClassType(
@@ -277,6 +278,10 @@ public final class DataFlowAnalyzer {
                 )
                 return DataFlowState(variables: vars)
             case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
+                guard let subjectNominal = nominalSymbolID(of: subjectType, types: sema.types),
+                      isNominalSubtype(conditionSymbolID, of: subjectNominal, symbols: sema.symbols) else {
+                    return base
+                }
                 let narrowed = sema.types.make(.classType(ClassType(
                     classSymbol: conditionSymbolID,
                     args: [],
@@ -418,6 +423,35 @@ public final class DataFlowAnalyzer {
         default:
             return type
         }
+    }
+
+    private func nominalSymbolID(of type: TypeID, types: TypeSystem) -> SymbolID? {
+        if case .classType(let classType) = types.kind(of: type) {
+            return classType.classSymbol
+        }
+        return nil
+    }
+
+    private func isNominalSubtype(
+        _ candidate: SymbolID,
+        of base: SymbolID,
+        symbols: SymbolTable
+    ) -> Bool {
+        if candidate == base {
+            return true
+        }
+        var queue = symbols.directSupertypes(for: candidate)
+        var visited: Set<SymbolID> = [candidate]
+        while !queue.isEmpty {
+            let next = queue.removeFirst()
+            if next == base {
+                return true
+            }
+            if visited.insert(next).inserted {
+                queue.append(contentsOf: symbols.directSupertypes(for: next))
+            }
+        }
+        return false
     }
 
     private func enumOwnerSymbolID(for entrySymbol: SemanticSymbol, symbols: SymbolTable) -> SymbolID? {
