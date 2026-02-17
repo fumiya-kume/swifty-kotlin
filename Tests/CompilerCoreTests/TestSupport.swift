@@ -1,4 +1,5 @@
 import Foundation
+import XCTest
 @testable import CompilerCore
 
 func makeRange(file: FileID = FileID(rawValue: 0), start: Int = 0, end: Int = 1) -> SourceRange {
@@ -90,8 +91,32 @@ func runFrontend(_ ctx: CompilationContext) throws {
     try BuildASTPhase().run(ctx)
 }
 
-func runToKIR(_ ctx: CompilationContext) throws {
+func runSema(_ ctx: CompilationContext) throws {
     try runFrontend(ctx)
     try SemaPassesPhase().run(ctx)
+}
+
+func runToKIR(_ ctx: CompilationContext) throws {
+    try runSema(ctx)
     try BuildKIRPhase().run(ctx)
+}
+
+func assertHasDiagnostic(
+    _ code: String,
+    in ctx: CompilationContext,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) {
+    let found = ctx.diagnostics.diagnostics.contains { $0.code == code }
+    XCTAssertTrue(found, "Expected diagnostic \(code), got: \(ctx.diagnostics.diagnostics.map(\.code))", file: file, line: line)
+}
+
+func assertNoDiagnostic(
+    _ code: String,
+    in ctx: CompilationContext,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) {
+    let found = ctx.diagnostics.diagnostics.contains { $0.code == code }
+    XCTAssertFalse(found, "Unexpected diagnostic \(code), got: \(ctx.diagnostics.diagnostics.map(\.code))", file: file, line: line)
 }
