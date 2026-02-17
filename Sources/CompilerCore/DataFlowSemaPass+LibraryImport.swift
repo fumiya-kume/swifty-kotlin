@@ -140,6 +140,36 @@ extension DataFlowSemaPassPhase {
             }
         }
 
+        var syntheticPackagePaths: Set<[InternedString]> = []
+        for binding in importedBindings where binding.record.kind != .package {
+            let fq = binding.record.fqName
+            for length in 1..<fq.count {
+                let prefix = Array(fq.prefix(length))
+                syntheticPackagePaths.insert(prefix)
+            }
+        }
+        for packagePath in syntheticPackagePaths {
+            let existing = symbols.lookupAll(fqName: packagePath)
+            let alreadyHasPackage = existing.contains { id in
+                symbols.symbol(id)?.kind == .package
+            }
+            let hasNonPackageSymbol = existing.contains { id in
+                guard let kind = symbols.symbol(id)?.kind else { return false }
+                return kind != .package
+            }
+            if !alreadyHasPackage && !hasNonPackageSymbol {
+                let name = packagePath.last ?? interner.intern("_")
+                _ = symbols.define(
+                    kind: .package,
+                    name: name,
+                    fqName: packagePath,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+            }
+        }
+
         for edge in pendingSupertypeEdges {
             guard let superSymbol = symbols.lookupAll(fqName: edge.superFQName)
                 .compactMap({ symbols.symbol($0) })
@@ -279,9 +309,6 @@ extension DataFlowSemaPassPhase {
             let parts = line.split(separator: " ").map(String.init)
             guard let kindToken = parts.first,
                   let kind = symbolKindFromMetadata(kindToken) else {
-                continue
-            }
-            if kind == .package {
                 continue
             }
             let mangledName = parts.count > 1 ? parts[1] : ""
