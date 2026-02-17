@@ -425,22 +425,35 @@ public func kk_vararg_spread_concat(_ pairsArrayRaw: Int, _ pairCount: Int) -> I
     guard let pairs = runtimeArrayBox(from: pairsArrayRaw),
           pairCount > 0,
           pairs.elements.count >= pairCount * 2 else { return kk_array_new(0) }
-    var elements: [Int] = []
+    var totalCount = 0
     for i in 0..<pairCount {
         let marker = pairs.elements[i * 2]
         let value = pairs.elements[i * 2 + 1]
         if marker == -1 {
             if let array = runtimeArrayBox(from: value) {
-                elements.append(contentsOf: array.elements)
+                totalCount += array.elements.count
             }
         } else {
-            elements.append(value)
+            totalCount += 1
         }
     }
-    let result = kk_array_new(elements.count)
+    let result = kk_array_new(totalCount)
     if let box = runtimeArrayBox(from: result) {
-        for (idx, elem) in elements.enumerated() {
-            box.elements[idx] = elem
+        var writeIndex = 0
+        for i in 0..<pairCount {
+            let marker = pairs.elements[i * 2]
+            let value = pairs.elements[i * 2 + 1]
+            if marker == -1 {
+                if let array = runtimeArrayBox(from: value) {
+                    for elem in array.elements {
+                        box.elements[writeIndex] = elem
+                        writeIndex += 1
+                    }
+                }
+            } else {
+                box.elements[writeIndex] = value
+                writeIndex += 1
+            }
         }
     }
     return result

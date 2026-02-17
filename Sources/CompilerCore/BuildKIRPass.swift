@@ -1910,23 +1910,21 @@ public final class BuildKIRPhase: CompilerPhase {
                 instructions.append(.constValue(result: markerExpr, value: .intLiteral(markerValue)))
                 let markerIdxExpr = arena.appendExpr(.intLiteral(Int64(pairIdx * 2)), type: intType)
                 instructions.append(.constValue(result: markerIdxExpr, value: .intLiteral(Int64(pairIdx * 2))))
-                let setMarkerResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: anyType)
                 instructions.append(.call(
                     symbol: nil,
                     callee: interner.intern("kk_array_set"),
                     arguments: [pairsArray, markerIdxExpr, markerExpr],
-                    result: setMarkerResult,
+                    result: nil,
                     canThrow: false,
                     thrownResult: nil
                 ))
                 let valueIdxExpr = arena.appendExpr(.intLiteral(Int64(pairIdx * 2 + 1)), type: intType)
                 instructions.append(.constValue(result: valueIdxExpr, value: .intLiteral(Int64(pairIdx * 2 + 1))))
-                let setValueResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: anyType)
                 instructions.append(.call(
                     symbol: nil,
                     callee: interner.intern("kk_array_set"),
                     arguments: [pairsArray, valueIdxExpr, providedArguments[idx]],
-                    result: setValueResult,
+                    result: nil,
                     canThrow: false,
                     thrownResult: nil
                 ))
@@ -1957,12 +1955,11 @@ public final class BuildKIRPhase: CompilerPhase {
         for (slotIndex, argIndex) in argIndices.enumerated() {
             let indexExpr = arena.appendExpr(.intLiteral(Int64(slotIndex)), type: intType)
             instructions.append(.constValue(result: indexExpr, value: .intLiteral(Int64(slotIndex))))
-            let setResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: anyType)
             instructions.append(.call(
                 symbol: nil,
                 callee: interner.intern("kk_array_set"),
                 arguments: [arrayID, indexExpr, providedArguments[argIndex]],
-                result: setResult,
+                result: nil,
                 canThrow: false,
                 thrownResult: nil
             ))
