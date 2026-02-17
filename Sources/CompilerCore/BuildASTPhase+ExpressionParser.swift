@@ -996,6 +996,7 @@ extension BuildASTPhase {
             return astArena.appendExpr(.localDecl(
                 name: name,
                 isMutable: isMutable,
+                typeAnnotation: nil,
                 initializer: initializerExpr,
                 range: range
             ))

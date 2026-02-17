@@ -1,5 +1,11 @@
 import Foundation
 
+struct NormalizedCallResult {
+    let arguments: [KIRExprID]
+    let defaultMask: Int32
+    let calleeHasDefaults: Bool
+}
+
 extension BuildKIRPhase {
     func collectFunctionDefaultArgumentExpressions(
         ast: ASTModule,
@@ -47,6 +53,153 @@ extension BuildKIRPhase {
         }
     }
 
+    func defaultStubSymbol(for originalSymbol: SymbolID) -> SymbolID {
+        SymbolID(rawValue: -40_000 - originalSymbol.rawValue)
+    }
+
+    func defaultStubMaskSymbol(for originalSymbol: SymbolID) -> SymbolID {
+        SymbolID(rawValue: -30_000 - originalSymbol.rawValue)
+    }
+
+    func generateDefaultStubFunction(
+        originalSymbol: SymbolID,
+        originalName: InternedString,
+        signature: FunctionSignature,
+        defaultExpressions: [ExprID?],
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind]
+    ) -> KIRDeclID {
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+        let paramCount = signature.parameterTypes.count
+
+        let savedLocalValues = localValuesBySymbol
+        let savedReceiverExprID = currentImplicitReceiverExprID
+        let savedReceiverSymbol = currentImplicitReceiverSymbol
+        let savedLoopStack = loopControlStack
+        let savedNextLabel = nextLoopLabel
+        localValuesBySymbol.removeAll(keepingCapacity: true)
+        currentImplicitReceiverExprID = nil
+        currentImplicitReceiverSymbol = nil
+        loopControlStack.removeAll(keepingCapacity: true)
+        nextLoopLabel = 10_000
+
+        var params: [KIRParameter] = []
+        if let receiverType = signature.receiverType {
+            let receiverSym = syntheticReceiverParameterSymbol(functionSymbol: originalSymbol)
+            params.append(KIRParameter(symbol: receiverSym, type: receiverType))
+            let receiverExpr = arena.appendExpr(.symbolRef(receiverSym), type: receiverType)
+            currentImplicitReceiverSymbol = receiverSym
+            currentImplicitReceiverExprID = receiverExpr
+        }
+        for (paramSymbol, paramType) in zip(signature.valueParameterSymbols, signature.parameterTypes) {
+            params.append(KIRParameter(symbol: paramSymbol, type: paramType))
+        }
+        let maskSymbol = defaultStubMaskSymbol(for: originalSymbol)
+        params.append(KIRParameter(symbol: maskSymbol, type: intType))
+
+        var body: [KIRInstruction] = [.beginBlock]
+
+        if let receiverExpr = currentImplicitReceiverExprID,
+           let receiverSym = currentImplicitReceiverSymbol {
+            body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
+        }
+
+        let maskExpr = arena.appendExpr(.symbolRef(maskSymbol), type: intType)
+        body.append(.constValue(result: maskExpr, value: .symbolRef(maskSymbol)))
+
+        var resolvedParamExprs: [KIRExprID] = []
+        for i in 0..<paramCount {
+            let paramSymbol = signature.valueParameterSymbols[i]
+            let paramType = signature.parameterTypes[i]
+            let paramExpr = arena.appendExpr(.symbolRef(paramSymbol), type: paramType)
+            body.append(.constValue(result: paramExpr, value: .symbolRef(paramSymbol)))
+
+            if i < defaultExpressions.count, let defaultExprID = defaultExpressions[i] {
+                let bitValue = Int64(1 << i)
+                let divisorExpr = arena.appendExpr(.intLiteral(bitValue), type: intType)
+                body.append(.constValue(result: divisorExpr, value: .intLiteral(bitValue)))
+                let dividedExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+                body.append(.binary(op: .divide, lhs: maskExpr, rhs: divisorExpr, result: dividedExpr))
+                let twoExpr = arena.appendExpr(.intLiteral(2), type: intType)
+                body.append(.constValue(result: twoExpr, value: .intLiteral(2)))
+                let bitExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+                body.append(.binary(op: .modulo, lhs: dividedExpr, rhs: twoExpr, result: bitExpr))
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: intType)
+                body.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+
+                let skipLabel = makeLoopLabel()
+                let afterLabel = makeLoopLabel()
+                body.append(.jumpIfEqual(lhs: bitExpr, rhs: zeroExpr, target: skipLabel))
+
+                localValuesBySymbol[paramSymbol] = paramExpr
+                let defaultVal = lowerExpr(
+                    defaultExprID,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &body
+                )
+                let resolvedExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: paramType)
+                body.append(.copy(from: defaultVal, to: resolvedExpr))
+                body.append(.jump(afterLabel))
+
+                body.append(.label(skipLabel))
+                body.append(.copy(from: paramExpr, to: resolvedExpr))
+
+                body.append(.label(afterLabel))
+                localValuesBySymbol[paramSymbol] = resolvedExpr
+                resolvedParamExprs.append(resolvedExpr)
+            } else {
+                localValuesBySymbol[paramSymbol] = paramExpr
+                resolvedParamExprs.append(paramExpr)
+            }
+        }
+
+        var callArgs: [KIRExprID] = []
+        if let receiverExpr = currentImplicitReceiverExprID {
+            callArgs.append(receiverExpr)
+        }
+        callArgs.append(contentsOf: resolvedParamExprs)
+
+        let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: signature.returnType)
+        body.append(.call(
+            symbol: originalSymbol,
+            callee: originalName,
+            arguments: callArgs,
+            result: result,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        body.append(.returnValue(result))
+        body.append(.endBlock)
+
+        let stubSym = defaultStubSymbol(for: originalSymbol)
+        let stubName = interner.intern(interner.resolve(originalName) + "$default")
+
+        let declID = arena.appendDecl(.function(KIRFunction(
+            symbol: stubSym,
+            name: stubName,
+            params: params,
+            returnType: signature.returnType,
+            body: body,
+            isSuspend: signature.isSuspend,
+            isInline: false
+        )))
+
+        localValuesBySymbol = savedLocalValues
+        currentImplicitReceiverExprID = savedReceiverExprID
+        currentImplicitReceiverSymbol = savedReceiverSymbol
+        loopControlStack = savedLoopStack
+        nextLoopLabel = savedNextLabel
+
+        return declID
+    }
+
     func normalizedCallArguments(
         providedArguments: [KIRExprID],
         callBinding: CallBinding?,
@@ -58,17 +211,19 @@ extension BuildKIRPhase {
         interner: StringInterner,
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
-    ) -> [KIRExprID] {
+    ) -> NormalizedCallResult {
         guard let callBinding,
               let chosenCallee,
               let signature = sema.symbols.functionSignature(for: chosenCallee) else {
-            return providedArguments
+            return NormalizedCallResult(arguments: providedArguments, defaultMask: 0, calleeHasDefaults: false)
         }
 
         let parameterCount = signature.parameterTypes.count
         guard parameterCount > 0 else {
-            return providedArguments
+            return NormalizedCallResult(arguments: providedArguments, defaultMask: 0, calleeHasDefaults: false)
         }
+
+        let hasAnyDefaults = functionDefaultArgumentsBySymbol[chosenCallee] != nil
 
         let isVararg = normalizeVarargFlags(signature.valueParameterIsVararg, count: parameterCount)
 
@@ -86,14 +241,14 @@ extension BuildKIRPhase {
         let hasOutOfRangeMapping = argIndicesByParameter.keys.contains(where: { $0 < 0 || $0 >= parameterCount })
         let hasMergedParameterMapping = argIndicesByParameter.values.contains(where: { $0.count > 1 })
         if hasOutOfRangeMapping {
-            return providedArguments
+            return NormalizedCallResult(arguments: providedArguments, defaultMask: 0, calleeHasDefaults: false)
         }
         if hasMergedParameterMapping {
             let allMergedAreVararg = argIndicesByParameter.allSatisfy { paramIndex, argIndices in
                 argIndices.count <= 1 || isVararg[paramIndex]
             }
             if !allMergedAreVararg {
-                return providedArguments
+                return NormalizedCallResult(arguments: providedArguments, defaultMask: 0, calleeHasDefaults: false)
             }
         }
 
@@ -101,6 +256,7 @@ extension BuildKIRPhase {
         var normalized: [KIRExprID] = []
         normalized.reserveCapacity(parameterCount)
         let intType = sema.types.make(.primitive(.int, .nonNull))
+        var mask: Int32 = 0
 
         for paramIndex in 0..<parameterCount {
             if let argIndices = argIndicesByParameter[paramIndex] {
@@ -134,21 +290,15 @@ extension BuildKIRPhase {
                 continue
             }
             guard paramIndex < defaultExpressions.count,
-                  let defaultExprID = defaultExpressions[paramIndex] else {
-                return providedArguments
+                  defaultExpressions[paramIndex] != nil else {
+                return NormalizedCallResult(arguments: providedArguments, defaultMask: 0, calleeHasDefaults: false)
             }
-            let loweredDefault = lowerExpr(
-                defaultExprID,
-                ast: ast,
-                sema: sema,
-                arena: arena,
-                interner: interner,
-                propertyConstantInitializers: propertyConstantInitializers,
-                instructions: &instructions
-            )
-            normalized.append(loweredDefault)
+            mask |= Int32(1 << paramIndex)
+            let sentinel = arena.appendExpr(.intLiteral(0), type: signature.parameterTypes[paramIndex])
+            instructions.append(.constValue(result: sentinel, value: .intLiteral(0)))
+            normalized.append(sentinel)
         }
-        return normalized
+        return NormalizedCallResult(arguments: normalized, defaultMask: mask, calleeHasDefaults: hasAnyDefaults)
     }
 
     private func normalizeVarargFlags(_ flags: [Bool], count: Int) -> [Bool] {

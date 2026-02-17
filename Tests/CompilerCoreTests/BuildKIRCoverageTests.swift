@@ -860,6 +860,112 @@ final class BuildKIRCoverageTests: XCTestCase {
         }
     }
 
+    func testDefaultArgGeneratesStubFunctionInKIR() throws {
+        let source = """
+        fun greetUser(name: String, greeting: String = "Hello"): String = greeting
+        fun main() = greetUser("Alice")
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let allFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case .function(let function) = decl else { return nil }
+                return function
+            }
+            let stubNames = allFunctions.map { ctx.interner.resolve($0.name) }
+                .filter { $0.hasSuffix("$default") }
+            XCTAssertTrue(stubNames.contains("greetUser$default"), "Expected greetUser$default stub, got: \(stubNames)")
+        }
+    }
+
+    func testDefaultArgCallSiteRedirectsToStub() throws {
+        let source = """
+        fun add(a: Int, b: Int = 10): Int = a + b
+        fun main() = add(5)
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: body, interner: ctx.interner)
+            XCTAssertTrue(callees.contains("add$default"), "Expected call to add$default stub, got: \(callees)")
+        }
+    }
+
+    func testDefaultArgStubContainsMaskParameterAndOriginalCall() throws {
+        let source = """
+        fun compute(x: Int, y: Int = 1, z: Int = 2): Int = x + y + z
+        fun main() = compute(10)
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let stubFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case .function(let function) = decl else { return nil }
+                return ctx.interner.resolve(function.name) == "compute$default" ? function : nil
+            }.first
+            XCTAssertNotNil(stubFunction, "Expected compute$default stub function")
+            if let stub = stubFunction {
+                let paramCount = stub.params.count
+                XCTAssertGreaterThanOrEqual(paramCount, 4, "Stub should have original params + mask param")
+                let stubCallees = extractCallees(from: stub.body, interner: ctx.interner)
+                XCTAssertTrue(stubCallees.contains("compute"), "Stub should call original function, got: \(stubCallees)")
+            }
+        }
+    }
+
+    func testDefaultArgEvaluationOrderLeftToRight() throws {
+        let source = """
+        fun ordered(a: Int = 1, b: Int = 2, c: Int = 3): Int = a + b + c
+        fun main() = ordered()
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let stubFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case .function(let function) = decl else { return nil }
+                return ctx.interner.resolve(function.name) == "ordered$default" ? function : nil
+            }.first
+            XCTAssertNotNil(stubFunction, "Expected ordered$default stub function")
+            if let stub = stubFunction {
+                var labelOrder: [Int32] = []
+                for instruction in stub.body {
+                    if case .label(let id) = instruction {
+                        labelOrder.append(id)
+                    }
+                }
+                for i in 1..<labelOrder.count {
+                    XCTAssertGreaterThan(labelOrder[i], labelOrder[i - 1], "Labels should be in ascending order for left-to-right evaluation")
+                }
+            }
+        }
+    }
+
+    func testDefaultArgNoStubWhenAllArgsProvided() throws {
+        let source = """
+        fun add(a: Int, b: Int = 10): Int = a + b
+        fun main() = add(5, 20)
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: body, interner: ctx.interner)
+            XCTAssertTrue(callees.contains("add"), "Expected direct call to add, got: \(callees)")
+            XCTAssertFalse(callees.contains("add$default"), "Should not call stub when all args provided, got: \(callees)")
+        }
+    }
+
     func testVarargNonTrailingWithNamedTailPacksCorrectly() throws {
         let source = """
         fun tagged(vararg nums: Int, tail: Int): Int = tail
