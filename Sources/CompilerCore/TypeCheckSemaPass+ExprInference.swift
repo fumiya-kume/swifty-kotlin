@@ -866,6 +866,20 @@ extension TypeCheckSemaPassPhase {
             sema.bindings.bindExprType(id, type: sema.types.nothingType)
             return sema.types.nothingType
 
+        case .blockExpr(let statements, let trailingExpr, _):
+            var blockLocals = locals
+            for stmt in statements {
+                _ = inferExpr(stmt, ctx: ctx, locals: &blockLocals, expectedType: nil)
+            }
+            let resultType: TypeID
+            if let trailingExpr {
+                resultType = inferExpr(trailingExpr, ctx: ctx, locals: &blockLocals, expectedType: expectedType)
+            } else {
+                resultType = sema.types.unitType
+            }
+            sema.bindings.bindExprType(id, type: resultType)
+            return resultType
+
         case .localFunDecl(let name, let valueParams, let returnTypeRef, let body, let range):
             var parameterTypes: [TypeID] = []
             var paramSymbols: [SymbolID] = []

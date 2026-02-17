@@ -745,14 +745,216 @@ extension BuildASTPhase {
                 }
             }
 
-            let trimmed = blockTokens.filter { token in
-                token.kind != .symbol(.semicolon)
+            let statementGroups = splitBlockTokensIntoStatements(blockTokens)
+            if statementGroups.isEmpty {
+                let range = SourceRange(start: openBrace.range.start, end: end)
+                return astArena.appendExpr(.blockExpr(statements: [], trailingExpr: nil, range: range))
             }
-            if let nestedExpr = ExpressionParser(tokens: trimmed, interner: interner, astArena: astArena).parse() {
-                return nestedExpr
+            if statementGroups.count == 1 {
+                let tokens = statementGroups[0].filter { $0.kind != .symbol(.semicolon) }
+                if !isLocalDeclarationTokens(tokens) && !isLocalAssignmentTokens(tokens) {
+                    if let nestedExpr = ExpressionParser(tokens: tokens, interner: interner, astArena: astArena).parse() {
+                        return nestedExpr
+                    }
+                }
             }
+
+            var statements: [ExprID] = []
+            for group in statementGroups {
+                let tokens = group.filter { $0.kind != .symbol(.semicolon) }
+                guard !tokens.isEmpty else { continue }
+                if let localDecl = parseLocalDeclFromTokens(tokens) {
+                    statements.append(localDecl)
+                } else if let localAssign = parseLocalAssignFromTokens(tokens) {
+                    statements.append(localAssign)
+                } else if let expr = ExpressionParser(tokens: tokens, interner: interner, astArena: astArena).parse() {
+                    statements.append(expr)
+                }
+            }
+
+            var trailingExpr: ExprID?
+            if let lastID = statements.last, let lastExpr = astArena.expr(lastID) {
+                switch lastExpr {
+                case .localDecl, .localAssign, .compoundAssign, .localFunDecl:
+                    break
+                default:
+                    trailingExpr = statements.removeLast()
+                }
+            }
+
             let range = SourceRange(start: openBrace.range.start, end: end)
-            return astArena.appendExpr(.nameRef(interner.intern("Unit"), range))
+            return astArena.appendExpr(.blockExpr(statements: statements, trailingExpr: trailingExpr, range: range))
+        }
+
+        private func splitBlockTokensIntoStatements(_ tokens: [Token]) -> [[Token]] {
+            var groups: [[Token]] = []
+            var current: [Token] = []
+            var depth = BracketDepth()
+            for token in tokens {
+                if depth.isAtTopLevel {
+                    if token.kind == .symbol(.semicolon) {
+                        if !current.isEmpty {
+                            groups.append(current)
+                            current = []
+                        }
+                        continue
+                    }
+                    let hasNewline = token.leadingTrivia.contains { piece in
+                        if case .newline = piece { return true }
+                        return false
+                    }
+                    if hasNewline && !current.isEmpty {
+                        let lastIsContinuation = current.last.map { isBinaryOperatorTokenKind($0.kind) } ?? false
+                        let nextIsContinuation = isBinaryOperatorTokenKind(token.kind)
+                        if !lastIsContinuation && !nextIsContinuation {
+                            groups.append(current)
+                            current = []
+                        }
+                    }
+                }
+                depth.track(token.kind)
+                current.append(token)
+            }
+            if !current.isEmpty {
+                groups.append(current)
+            }
+            return groups
+        }
+
+        private func isBinaryOperatorTokenKind(_ kind: TokenKind) -> Bool {
+            switch kind {
+            case .symbol(.plus), .symbol(.minus), .symbol(.star), .symbol(.slash), .symbol(.percent),
+                 .symbol(.ampAmp), .symbol(.barBar),
+                 .symbol(.equalEqual), .symbol(.bangEqual),
+                 .symbol(.lessThan), .symbol(.lessOrEqual), .symbol(.greaterThan), .symbol(.greaterOrEqual),
+                 .symbol(.assign), .symbol(.plusAssign), .symbol(.minusAssign),
+                 .symbol(.starAssign), .symbol(.slashAssign), .symbol(.percentAssign),
+                 .symbol(.dotDot), .symbol(.dotDotLt),
+                 .symbol(.questionQuestion), .symbol(.questionColon),
+                 .symbol(.dot), .symbol(.questionDot),
+                 .symbol(.arrow), .symbol(.fatArrow),
+                 .keyword(.as), .keyword(.is), .keyword(.in),
+                 .keyword(.else), .keyword(.catch), .keyword(.finally):
+                return true
+            default:
+                return false
+            }
+        }
+
+        private func isLocalDeclarationTokens(_ tokens: [Token]) -> Bool {
+            guard !tokens.isEmpty else { return false }
+            var i = 0
+            while i < tokens.count {
+                if case .keyword(let kw) = tokens[i].kind,
+                   KotlinParser.isDeclarationModifierKeyword(kw) {
+                    i += 1
+                    continue
+                }
+                break
+            }
+            guard i < tokens.count else { return false }
+            switch tokens[i].kind {
+            case .keyword(.val), .keyword(.var):
+                return true
+            default:
+                return false
+            }
+        }
+
+        private func isLocalAssignmentTokens(_ tokens: [Token]) -> Bool {
+            guard tokens.count >= 3 else { return false }
+            var depth = BracketDepth()
+            for token in tokens {
+                if token.kind == .symbol(.assign) && depth.isAtTopLevel {
+                    return true
+                }
+                depth.track(token.kind)
+            }
+            return false
+        }
+
+        private func parseLocalDeclFromTokens(_ tokens: [Token]) -> ExprID? {
+            guard !tokens.isEmpty else { return nil }
+            var startIndex = 0
+            while startIndex < tokens.count {
+                if case .keyword(let kw) = tokens[startIndex].kind,
+                   KotlinParser.isDeclarationModifierKeyword(kw) {
+                    startIndex += 1
+                    continue
+                }
+                break
+            }
+            guard startIndex < tokens.count else { return nil }
+            let head = tokens[startIndex]
+            let isMutable: Bool
+            switch head.kind {
+            case .keyword(.val):
+                isMutable = false
+            case .keyword(.var):
+                isMutable = true
+            default:
+                return nil
+            }
+
+            let nameToken = tokens.dropFirst(startIndex + 1).first(where: { token in
+                switch token.kind {
+                case .identifier, .backtickedIdentifier:
+                    return true
+                default:
+                    return false
+                }
+            })
+            guard let nameToken, let name = tokenText(nameToken) else {
+                return nil
+            }
+
+            var assignIndex: Int?
+            var depth = BracketDepth()
+            for (index, token) in tokens.enumerated() {
+                if token.kind == .symbol(.assign) && depth.isAtTopLevel {
+                    assignIndex = index
+                    break
+                }
+                depth.track(token.kind)
+            }
+            guard let assignIndex else { return nil }
+            let initializerTokens = tokens[(assignIndex + 1)...].filter { $0.kind != .symbol(.semicolon) }
+            guard !initializerTokens.isEmpty else { return nil }
+            let parser = ExpressionParser(tokens: Array(initializerTokens), interner: interner, astArena: astArena)
+            guard let initializerExpr = parser.parse() else { return nil }
+            let rangeEnd = astArena.exprRange(initializerExpr)?.end ?? tokens.last?.range.end ?? head.range.end
+            let range = SourceRange(start: tokens[0].range.start, end: rangeEnd)
+            return astArena.appendExpr(.localDecl(
+                name: name,
+                isMutable: isMutable,
+                initializer: initializerExpr,
+                range: range
+            ))
+        }
+
+        private func parseLocalAssignFromTokens(_ tokens: [Token]) -> ExprID? {
+            guard tokens.count >= 3 else { return nil }
+            var assignIndex: Int?
+            var depth = BracketDepth()
+            for (index, token) in tokens.enumerated() {
+                if token.kind == .symbol(.assign) && depth.isAtTopLevel {
+                    assignIndex = index
+                    break
+                }
+                depth.track(token.kind)
+            }
+            guard let assignIndex, assignIndex > 0 else { return nil }
+            let lhsTokens = Array(tokens[..<assignIndex])
+            guard lhsTokens.count == 1, let name = tokenText(lhsTokens[0]) else {
+                return nil
+            }
+            let valueTokens = tokens[(assignIndex + 1)...].filter { $0.kind != .symbol(.semicolon) }
+            guard !valueTokens.isEmpty else { return nil }
+            let parser = ExpressionParser(tokens: Array(valueTokens), interner: interner, astArena: astArena)
+            guard let valueExpr = parser.parse() else { return nil }
+            let rangeEnd = astArena.exprRange(valueExpr)?.end ?? tokens.last?.range.end ?? lhsTokens[0].range.end
+            let range = SourceRange(start: tokens[0].range.start, end: rangeEnd)
+            return astArena.appendExpr(.localAssign(name: name, value: valueExpr, range: range))
         }
 
         private func skipBalancedParenthesisIfNeeded() {

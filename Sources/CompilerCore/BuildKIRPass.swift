@@ -1395,6 +1395,33 @@ public final class BuildKIRPhase: CompilerPhase {
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
+        case .blockExpr(let statements, let trailingExpr, _):
+            for stmt in statements {
+                _ = lowerExpr(
+                    stmt,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+            }
+            if let trailingExpr {
+                return lowerExpr(
+                    trailingExpr,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+            }
+            let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+            instructions.append(.constValue(result: unit, value: .unit))
+            return unit
+
         case .whenExpr(let subject, let branches, let elseExpr, _):
             let subjectID = lowerExpr(
                 subject,
