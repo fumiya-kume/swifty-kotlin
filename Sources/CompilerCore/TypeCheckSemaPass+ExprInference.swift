@@ -939,7 +939,7 @@ extension TypeCheckSemaPassPhase {
                             ctx.semaCtx.diagnostics.error(
                                 "KSWIFTK-SEMA-0032",
                                 "Subject-less when branch condition must be a Boolean expression.",
-                                range: range
+                                range: branch.range
                             )
                         }
                     }
