@@ -3,6 +3,13 @@ import XCTest
 
 final class ABIMismatchTests: XCTestCase {
 
+    // MARK: - Helpers
+
+    private func requireSpec(_ name: String, file: StaticString = #filePath, line: UInt = #line) throws -> RuntimeABIFunctionSpec {
+        let spec = RuntimeABISpec.allFunctions.first(where: { $0.name == name })
+        return try XCTUnwrap(spec, "'\(name)' not found in RuntimeABISpec.allFunctions", file: file, line: line)
+    }
+
     // MARK: - Spec Integrity
 
     func testSpecVersionIsNonEmpty() {
@@ -54,22 +61,27 @@ final class ABIMismatchTests: XCTestCase {
     // MARK: - Category Counts
 
     func testMemoryFunctionCount() {
+        // kk_alloc, kk_gc_collect, kk_write_barrier
         XCTAssertEqual(RuntimeABISpec.memoryFunctions.count, 3)
     }
 
     func testExceptionFunctionCount() {
+        // kk_throwable_new, kk_panic
         XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 2)
     }
 
     func testStringFunctionCount() {
+        // kk_string_from_utf8, kk_string_concat
         XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 2)
     }
 
     func testPrintlnFunctionCount() {
+        // kk_println_any
         XCTAssertEqual(RuntimeABISpec.printlnFunctions.count, 1)
     }
 
     func testCoroutineFunctionCount() {
+        // kk_coroutine_suspended
         XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 1)
     }
 
@@ -84,11 +96,8 @@ final class ABIMismatchTests: XCTestCase {
 
     // MARK: - J16.1 Signature Verification
 
-    func testKKAllocSignature() {
-        guard let spec = RuntimeABISpec.allFunctions.first(where: { $0.name == "kk_alloc" }) else {
-            XCTFail("kk_alloc not found in spec")
-            return
-        }
+    func testKKAllocSignature() throws {
+        let spec = try requireSpec("kk_alloc")
         XCTAssertEqual(spec.returnType, .opaquePointer)
         XCTAssertEqual(spec.parameters.count, 2)
         XCTAssertEqual(spec.parameters[0].name, "size")
@@ -97,124 +106,88 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(spec.parameters[1].type, .opaquePointer)
     }
 
-    func testKKGcCollectSignature() {
-        guard let spec = RuntimeABISpec.allFunctions.first(where: { $0.name == "kk_gc_collect" }) else {
-            XCTFail("kk_gc_collect not found in spec")
-            return
-        }
+    func testKKGcCollectSignature() throws {
+        let spec = try requireSpec("kk_gc_collect")
         XCTAssertEqual(spec.returnType, .void)
         XCTAssertEqual(spec.parameters.count, 0)
     }
 
-    func testKKWriteBarrierSignature() {
-        guard let spec = RuntimeABISpec.allFunctions.first(where: { $0.name == "kk_write_barrier" }) else {
-            XCTFail("kk_write_barrier not found in spec")
-            return
-        }
+    func testKKWriteBarrierSignature() throws {
+        let spec = try requireSpec("kk_write_barrier")
         XCTAssertEqual(spec.returnType, .void)
         XCTAssertEqual(spec.parameters.count, 2)
         XCTAssertEqual(spec.parameters[0].type, .opaquePointer)
         XCTAssertEqual(spec.parameters[1].type, .fieldAddrPointer)
     }
 
-    func testKKThrowableNewSignature() {
-        guard let spec = RuntimeABISpec.allFunctions.first(where: { $0.name == "kk_throwable_new" }) else {
-            XCTFail("kk_throwable_new not found in spec")
-            return
-        }
+    func testKKThrowableNewSignature() throws {
+        let spec = try requireSpec("kk_throwable_new")
         XCTAssertEqual(spec.returnType, .opaquePointer)
         XCTAssertEqual(spec.parameters.count, 1)
         XCTAssertEqual(spec.parameters[0].type, .nullableOpaquePointer)
     }
 
-    func testKKPanicSignature() {
-        guard let spec = RuntimeABISpec.allFunctions.first(where: { $0.name == "kk_panic" }) else {
-            XCTFail("kk_panic not found in spec")
-            return
-        }
+    func testKKPanicSignature() throws {
+        let spec = try requireSpec("kk_panic")
         XCTAssertEqual(spec.returnType, .noreturn)
         XCTAssertEqual(spec.parameters.count, 1)
         XCTAssertEqual(spec.parameters[0].type, .constCCharPointer)
     }
 
-    func testKKStringFromUTF8Signature() {
-        guard let spec = RuntimeABISpec.allFunctions.first(where: { $0.name == "kk_string_from_utf8" }) else {
-            XCTFail("kk_string_from_utf8 not found in spec")
-            return
-        }
+    func testKKStringFromUTF8Signature() throws {
+        let spec = try requireSpec("kk_string_from_utf8")
         XCTAssertEqual(spec.returnType, .opaquePointer)
         XCTAssertEqual(spec.parameters.count, 2)
         XCTAssertEqual(spec.parameters[0].type, .constUInt8Pointer)
         XCTAssertEqual(spec.parameters[1].type, .int32)
     }
 
-    func testKKStringConcatSignature() {
-        guard let spec = RuntimeABISpec.allFunctions.first(where: { $0.name == "kk_string_concat" }) else {
-            XCTFail("kk_string_concat not found in spec")
-            return
-        }
+    func testKKStringConcatSignature() throws {
+        let spec = try requireSpec("kk_string_concat")
         XCTAssertEqual(spec.returnType, .opaquePointer)
         XCTAssertEqual(spec.parameters.count, 2)
         XCTAssertEqual(spec.parameters[0].type, .nullableOpaquePointer)
         XCTAssertEqual(spec.parameters[1].type, .nullableOpaquePointer)
     }
 
-    func testKKPrintlnAnySignature() {
-        guard let spec = RuntimeABISpec.allFunctions.first(where: { $0.name == "kk_println_any" }) else {
-            XCTFail("kk_println_any not found in spec")
-            return
-        }
+    func testKKPrintlnAnySignature() throws {
+        let spec = try requireSpec("kk_println_any")
         XCTAssertEqual(spec.returnType, .void)
         XCTAssertEqual(spec.parameters.count, 1)
         XCTAssertEqual(spec.parameters[0].type, .nullableOpaquePointer)
     }
 
-    func testKKCoroutineSuspendedSignature() {
-        guard let spec = RuntimeABISpec.allFunctions.first(where: { $0.name == "kk_coroutine_suspended" }) else {
-            XCTFail("kk_coroutine_suspended not found in spec")
-            return
-        }
+    func testKKCoroutineSuspendedSignature() throws {
+        let spec = try requireSpec("kk_coroutine_suspended")
         XCTAssertEqual(spec.returnType, .opaquePointer)
         XCTAssertEqual(spec.parameters.count, 0)
     }
 
     // MARK: - C Declaration Generation
 
-    func testCDeclarationForKKAlloc() {
-        guard let spec = RuntimeABISpec.allFunctions.first(where: { $0.name == "kk_alloc" }) else {
-            XCTFail("kk_alloc not found in spec")
-            return
-        }
+    func testCDeclarationForKKAlloc() throws {
+        let spec = try requireSpec("kk_alloc")
         XCTAssertEqual(
             spec.cDeclaration,
             "void * kk_alloc(uint32_t size, void * typeInfo);"
         )
     }
 
-    func testCDeclarationForKKGcCollect() {
-        guard let spec = RuntimeABISpec.allFunctions.first(where: { $0.name == "kk_gc_collect" }) else {
-            XCTFail("kk_gc_collect not found in spec")
-            return
-        }
+    func testCDeclarationForKKGcCollect() throws {
+        let spec = try requireSpec("kk_gc_collect")
         XCTAssertEqual(spec.cDeclaration, "void kk_gc_collect(void);")
     }
 
-    func testCDeclarationForKKPrintlnAny() {
-        guard let spec = RuntimeABISpec.allFunctions.first(where: { $0.name == "kk_println_any" }) else {
-            XCTFail("kk_println_any not found in spec")
-            return
-        }
+    func testCDeclarationForKKPrintlnAny() throws {
+        let spec = try requireSpec("kk_println_any")
         XCTAssertEqual(
             spec.cDeclaration,
             "void kk_println_any(void * _Nullable obj);"
         )
     }
 
-    func testCDeclarationForKKPanic() {
-        guard let spec = RuntimeABISpec.allFunctions.first(where: { $0.name == "kk_panic" }) else {
-            XCTFail("kk_panic not found in spec")
-            return
-        }
+    func testCDeclarationForKKPanic() throws {
+        let spec = try requireSpec("kk_panic")
         XCTAssertEqual(
             spec.cDeclaration,
             "_Noreturn void kk_panic(const char * cstr);"

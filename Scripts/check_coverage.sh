@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-threshold="${COVERAGE_THRESHOLD:-95}"
+threshold="${COVERAGE_THRESHOLD:-97}"
 
 readonly targets=(
   "Sources/CompilerCore/TokenStream.swift"

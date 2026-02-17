@@ -67,6 +67,25 @@ final class SourceManagerTests: XCTestCase {
         )
     }
 
+    func testLineColumnReturnsDefaultForEmptyFile() {
+        let manager = SourceManager()
+        let id = manager.addFile(path: "empty.kt", contents: Data())
+        let loc = SourceLocation(file: id, offset: 0)
+        XCTAssertEqual(manager.lineColumn(of: loc), LineColumn(line: 1, column: 1))
+    }
+
+    func testAddFileByPathThrowsForNonExistentFile() {
+        let manager = SourceManager()
+        XCTAssertThrowsError(try manager.addFile(path: "/non/existent/file.kt"))
+    }
+
+    func testNegativeFileIDUsesSafeFallbacks() {
+        let manager = SourceManager()
+        let negativeID = FileID(rawValue: -1)
+        XCTAssertEqual(manager.contents(of: negativeID), Data())
+        XCTAssertEqual(manager.path(of: negativeID), "")
+    }
+
     func testSliceClampsBoundsAndNormalizesInvertedRanges() {
         let manager = SourceManager()
         let id = manager.addFile(path: "slice.kt", contents: Data("abcdef".utf8))

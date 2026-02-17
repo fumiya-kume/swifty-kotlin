@@ -63,7 +63,7 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
         ))
     }
 
-    func testNameManglerBuildsErasedSignatureWithNullableAndSuspendFunctionTypes() {
+    func testNameManglerBuildsErasedSignatureWithNullableAndSuspendFunctionTypes() throws {
         let interner = StringInterner()
         let symbols = SymbolTable()
         let types = TypeSystem()
@@ -94,10 +94,7 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
             ),
             for: functionSymbolID
         )
-        guard let functionSymbol = symbols.symbol(functionSymbolID) else {
-            XCTFail("missing function symbol")
-            return
-        }
+        let functionSymbol = try XCTUnwrap(symbols.symbol(functionSymbolID), "missing function symbol")
 
         let encoded = mangler.mangledSignature(for: functionSymbol, symbols: symbols, types: types)
         XCTAssertTrue(encoded.contains("Q<I>"))
