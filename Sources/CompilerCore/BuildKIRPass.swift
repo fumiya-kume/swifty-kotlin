@@ -395,3 +395,4 @@ public final class BuildKIRPhase: CompilerPhase {
         ctx.kir = module
     }
 }
+
