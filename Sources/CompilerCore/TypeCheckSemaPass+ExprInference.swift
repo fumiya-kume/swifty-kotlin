@@ -937,7 +937,7 @@ extension TypeCheckSemaPassPhase {
                         let condType = inferExpr(cond, ctx: ctx, locals: &locals)
                         if condType != boolType && condType != sema.types.errorType {
                             ctx.semaCtx.diagnostics.error(
-                                "KSWIFTK-SEMA-0020",
+                                "KSWIFTK-SEMA-0032",
                                 "Subject-less when branch condition must be a Boolean expression.",
                                 range: range
                             )
