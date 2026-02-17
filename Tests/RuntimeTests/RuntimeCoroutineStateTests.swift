@@ -33,6 +33,13 @@ func runtime_test_suspend_async(_ continuation: Int, _ outThrown: UnsafeMutableP
     return kk_coroutine_state_exit(continuation, 73)
 }
 
+@_cdecl("runtime_test_suspend_with_arg")
+func runtime_test_suspend_with_arg(_ continuation: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    let arg = kk_coroutine_launcher_arg_get(continuation, 0)
+    outThrown?.pointee = 0
+    return kk_coroutine_state_exit(continuation, Int(arg) + 10)
+}
+
 final class RuntimeCoroutineStateTests: XCTestCase {
     override func setUp() {
         super.setUp()
@@ -100,5 +107,84 @@ final class RuntimeCoroutineStateTests: XCTestCase {
         let handle = kk_kxmini_async(entryRaw, runtimeKxMiniAsyncFunctionID)
         XCTAssertNotEqual(handle, 0)
         XCTAssertEqual(kk_kxmini_async_await(handle), 73)
+    }
+
+    func testLauncherArgSetAndGetRoundTrips() {
+        let continuation = kk_coroutine_continuation_new(5000)
+        defer { _ = kk_coroutine_state_exit(continuation, 0) }
+
+        XCTAssertEqual(kk_coroutine_launcher_arg_set(continuation, 0, 42), 42)
+        XCTAssertEqual(kk_coroutine_launcher_arg_set(continuation, 1, 99), 99)
+        XCTAssertEqual(kk_coroutine_launcher_arg_get(continuation, 0), 42)
+        XCTAssertEqual(kk_coroutine_launcher_arg_get(continuation, 1), 99)
+        XCTAssertEqual(kk_coroutine_launcher_arg_get(continuation, 2), 0)
+    }
+
+    func testLauncherArgsSurviveStateEnterReset() {
+        let continuation = kk_coroutine_continuation_new(5001)
+        defer { _ = kk_coroutine_state_exit(continuation, 0) }
+
+        _ = kk_coroutine_launcher_arg_set(continuation, 0, 77)
+        XCTAssertEqual(kk_coroutine_state_enter(continuation, 5001), 0)
+        _ = kk_coroutine_state_enter(continuation, 9999)
+        XCTAssertEqual(kk_coroutine_launcher_arg_get(continuation, 0), 77)
+    }
+
+    func testRunBlockingWithContPassesArgsThroughLauncherArgs() {
+        let functionID = 5002
+        let continuation = kk_coroutine_continuation_new(functionID)
+        _ = kk_coroutine_launcher_arg_set(continuation, 0, 32)
+
+        let entryRaw = unsafeBitCast(
+            runtime_test_suspend_with_arg as RuntimeTestSuspendEntry,
+            to: Int.self
+        )
+        let result = kk_kxmini_run_blocking_with_cont(entryRaw, continuation)
+        XCTAssertEqual(result, 42)
+    }
+
+    func testLaunchWithContRunsAsynchronously() {
+        let functionID = 5003
+        let continuation = kk_coroutine_continuation_new(functionID)
+        _ = kk_coroutine_launcher_arg_set(continuation, 0, 0)
+
+        let entryRaw = unsafeBitCast(
+            runtime_test_suspend_launch as RuntimeTestSuspendEntry,
+            to: Int.self
+        )
+        XCTAssertEqual(kk_kxmini_launch_with_cont(entryRaw, continuation), 0)
+        XCTAssertEqual(runtimeKxMiniLaunchSignal.wait(timeout: .now() + .seconds(1)), .success)
+    }
+
+    func testAsyncWithContReturnsAwaitableResult() {
+        let functionID = 5004
+        let continuation = kk_coroutine_continuation_new(functionID)
+        _ = kk_coroutine_launcher_arg_set(continuation, 0, 63)
+
+        let entryRaw = unsafeBitCast(
+            runtime_test_suspend_with_arg as RuntimeTestSuspendEntry,
+            to: Int.self
+        )
+        let handle = kk_kxmini_async_with_cont(entryRaw, continuation)
+        XCTAssertNotEqual(handle, 0)
+        XCTAssertEqual(kk_kxmini_async_await(handle), 73)
+    }
+
+    func testRunBlockingWithContInvalidEntryDoesNotCrash() {
+        let continuation = kk_coroutine_continuation_new(5005)
+        _ = kk_coroutine_launcher_arg_set(continuation, 0, 123)
+        _ = kk_kxmini_run_blocking_with_cont(0, continuation)
+    }
+
+    func testLaunchWithContInvalidEntryDoesNotCrash() {
+        let continuation = kk_coroutine_continuation_new(5006)
+        _ = kk_coroutine_launcher_arg_set(continuation, 0, 0)
+        _ = kk_kxmini_launch_with_cont(0, continuation)
+    }
+
+    func testAsyncWithContInvalidEntryDoesNotCrash() {
+        let continuation = kk_coroutine_continuation_new(5007)
+        _ = kk_coroutine_launcher_arg_set(continuation, 0, 1)
+        _ = kk_kxmini_async_with_cont(0, continuation)
     }
 }

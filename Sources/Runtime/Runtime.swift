@@ -90,6 +90,7 @@ private final class RuntimeContinuationState {
     var label: Int64
     var completion: Int64
     var spillSlots: [Int64: Int64]
+    var launcherArgs: [Int64: Int64]
     private let stateLock = NSLock()
     private let resumeSemaphore = DispatchSemaphore(value: 0)
     private var delayTimers: [ObjectIdentifier: DispatchSourceTimer]
@@ -99,12 +100,14 @@ private final class RuntimeContinuationState {
         label: Int64 = 0,
         completion: Int64 = 0,
         spillSlots: [Int64: Int64] = [:],
+        launcherArgs: [Int64: Int64] = [:],
         delayTimers: [ObjectIdentifier: DispatchSourceTimer] = [:]
     ) {
         self.functionID = functionID
         self.label = label
         self.completion = completion
         self.spillSlots = spillSlots
+        self.launcherArgs = launcherArgs
         self.delayTimers = delayTimers
     }
 
@@ -681,6 +684,47 @@ public func kk_kxmini_async(_ entryPointRaw: Int, _ functionID: Int) -> Int {
     return Int(bitPattern: taskPtr)
 }
 
+@_cdecl("kk_coroutine_launcher_arg_set")
+public func kk_coroutine_launcher_arg_set(_ continuation: Int, _ index: Int64, _ value: Int64) -> Int64 {
+    guard let state = runtimeContinuationState(from: continuation) else {
+        return 0
+    }
+    state.launcherArgs[index] = value
+    return value
+}
+
+@_cdecl("kk_coroutine_launcher_arg_get")
+public func kk_coroutine_launcher_arg_get(_ continuation: Int, _ index: Int64) -> Int64 {
+    guard let state = runtimeContinuationState(from: continuation) else {
+        return 0
+    }
+    return state.launcherArgs[index] ?? 0
+}
+
+@_cdecl("kk_kxmini_run_blocking_with_cont")
+public func kk_kxmini_run_blocking_with_cont(_ entryPointRaw: Int, _ continuation: Int) -> Int {
+    runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
+}
+
+@_cdecl("kk_kxmini_launch_with_cont")
+public func kk_kxmini_launch_with_cont(_ entryPointRaw: Int, _ continuation: Int) -> Int {
+    KxMiniRuntime.launch {
+        _ = runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
+    }
+    return 0
+}
+
+@_cdecl("kk_kxmini_async_with_cont")
+public func kk_kxmini_async_with_cont(_ entryPointRaw: Int, _ continuation: Int) -> Int {
+    let task = RuntimeAsyncTask()
+    let taskPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(task).toOpaque())
+    KxMiniRuntime.launch {
+        let result = runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
+        task.complete(with: result)
+    }
+    return Int(bitPattern: taskPtr)
+}
+
 @_cdecl("kk_kxmini_async_await")
 public func kk_kxmini_async_await(_ handle: Int) -> Int {
     guard let handlePtr = UnsafeMutableRawPointer(bitPattern: handle) else {
@@ -736,11 +780,19 @@ private func runtimeAllocateThrowable(message: String) -> Int {
 }
 
 private func runSuspendEntryLoop(entryPointRaw: Int, functionID: Int) -> Int {
+    guard suspendEntryPoint(from: entryPointRaw) != nil else {
+        return 0
+    }
+    let continuation = kk_coroutine_continuation_new(functionID)
+    return runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
+}
+
+private func runSuspendEntryLoopWithContinuation(entryPointRaw: Int, continuation: Int) -> Int {
     guard let entryPoint = suspendEntryPoint(from: entryPointRaw) else {
+        _ = kk_coroutine_state_exit(continuation, 0)
         return 0
     }
 
-    let continuation = kk_coroutine_continuation_new(functionID)
     let suspendedToken = Int(bitPattern: kk_coroutine_suspended())
     var outThrown: Int = 0
 
