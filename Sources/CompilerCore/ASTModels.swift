@@ -501,6 +501,7 @@ public enum Expr: Equatable {
     case nullAssert(expr: ExprID, range: SourceRange)
     case safeMemberCall(receiver: ExprID, callee: InternedString, typeArgs: [TypeRefID], args: [CallArgument], range: SourceRange)
     case compoundAssign(op: CompoundAssignOp, name: InternedString, value: ExprID, range: SourceRange)
+    case throwExpr(value: ExprID, range: SourceRange)
 }
 
 public final class ASTArena {
@@ -576,7 +577,8 @@ public final class ASTArena {
              .asCast(_, _, _, let range),
              .nullAssert(_, let range),
              .safeMemberCall(_, _, _, _, let range),
-             .compoundAssign(_, _, _, let range):
+             .compoundAssign(_, _, _, let range),
+             .throwExpr(_, let range):
             return range
         }
     }
