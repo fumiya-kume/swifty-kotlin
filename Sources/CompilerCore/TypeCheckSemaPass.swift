@@ -293,7 +293,8 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                     break
 
                 case .objectDecl(let objectDecl):
-                    typeCheckInitBlocks(objectDecl.initBlocks, ctx: inferCtx)
+                    let objectCtx = inferCtx.with(enclosingClassSymbol: declSymbol)
+                    typeCheckInitBlocks(objectDecl.initBlocks, ctx: objectCtx)
 
                 case .typeAliasDecl, .enumEntryDecl:
                     continue
