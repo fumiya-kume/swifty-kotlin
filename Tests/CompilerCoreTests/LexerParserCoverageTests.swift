@@ -562,6 +562,137 @@ final class LexerParserCoverageTests: XCTestCase {
         }
     }
 
+    func testMultiFileParseBoundaryProducesPerFileASTFiles() throws {
+        let fileA = """
+        package demo
+        fun greet(name: String) = "Hello"
+        class Greeter
+        """
+        let fileB = """
+        package demo
+        import demo.*
+        fun farewell(name: String) = "Bye"
+        object Singleton
+        """
+
+        try withTemporaryFiles(contents: [fileA, fileB]) { paths in
+            let ctx = makeCompilationContext(inputs: paths)
+            try runFrontend(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            XCTAssertEqual(ast.files.count, 2)
+
+            XCTAssertEqual(ctx.tokensByFile.count, 2)
+            XCTAssertEqual(ctx.syntaxTrees.count, 2)
+
+            for (_, fileTokens) in ctx.tokensByFile {
+                XCTAssertTrue(fileTokens.last.map { $0.kind == .eof } ?? false)
+            }
+
+            let file0 = ast.files[0]
+            let file1 = ast.files[1]
+            XCTAssertNotEqual(file0.fileID, file1.fileID)
+
+            let file0DeclNames = file0.topLevelDecls.compactMap { declID -> String? in
+                guard let decl = ast.arena.decl(declID) else { return nil }
+                switch decl {
+                case .funDecl(let f): return ctx.interner.resolve(f.name)
+                case .classDecl(let c): return ctx.interner.resolve(c.name)
+                default: return nil
+                }
+            }
+            let file1DeclNames = file1.topLevelDecls.compactMap { declID -> String? in
+                guard let decl = ast.arena.decl(declID) else { return nil }
+                switch decl {
+                case .funDecl(let f): return ctx.interner.resolve(f.name)
+                case .objectDecl(let o): return ctx.interner.resolve(o.name)
+                default: return nil
+                }
+            }
+
+            XCTAssertTrue(file0DeclNames.contains("greet"))
+            XCTAssertTrue(file0DeclNames.contains("Greeter"))
+            XCTAssertFalse(file0DeclNames.contains("farewell"))
+
+            XCTAssertTrue(file1DeclNames.contains("farewell"))
+            XCTAssertTrue(file1DeclNames.contains("Singleton"))
+            XCTAssertFalse(file1DeclNames.contains("greet"))
+        }
+    }
+
+    func testMultiFileCrossFileBoundaryDoesNotConcatenateStatements() throws {
+        let fileA = """
+        fun alpha() = 1
+        """
+        let fileB = """
+        fun beta() = 2
+        """
+
+        try withTemporaryFiles(contents: [fileA, fileB]) { paths in
+            let ctx = makeCompilationContext(inputs: paths)
+            try runFrontend(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            XCTAssertEqual(ast.files.count, 2)
+
+            let allFunNames = ast.arena.declarations().compactMap { decl -> String? in
+                guard case .funDecl(let f) = decl else { return nil }
+                return ctx.interner.resolve(f.name)
+            }
+            XCTAssertTrue(allFunNames.contains("alpha"))
+            XCTAssertTrue(allFunNames.contains("beta"))
+            XCTAssertEqual(allFunNames.count, 2)
+
+            XCTAssertEqual(ctx.syntaxTrees.count, 2)
+            for (_, cst, root) in ctx.syntaxTrees {
+                XCTAssertEqual(cst.node(root).kind, .kotlinFile)
+            }
+
+            XCTAssertFalse(ctx.diagnostics.hasError)
+        }
+    }
+
+    func testMultiFilePerFileScriptAndKotlinFileDetermination() throws {
+        let fileA = """
+        fun helper() = 42
+        class MyClass
+        """
+        let fileB = """
+        1 + 2
+        """
+
+        try withTemporaryFiles(contents: [fileA, fileB]) { paths in
+            let ctx = makeCompilationContext(inputs: paths)
+            try runFrontend(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            XCTAssertEqual(ast.files.count, 2)
+            XCTAssertEqual(ctx.syntaxTrees.count, 2)
+
+            let rootKinds = ctx.syntaxTrees.map { $0.1.node($0.2).kind }
+            XCTAssertTrue(rootKinds.contains(.kotlinFile))
+            XCTAssertTrue(rootKinds.contains(.script))
+
+            let scriptFile = ast.files.first(where: { !$0.scriptBody.isEmpty })
+            XCTAssertNotNil(scriptFile)
+
+            let kotlinFile = ast.files.first(where: { $0.scriptBody.isEmpty })
+            XCTAssertNotNil(kotlinFile)
+            let kotlinDeclNames = (kotlinFile?.topLevelDecls ?? []).compactMap { declID -> String? in
+                guard let decl = ast.arena.decl(declID) else { return nil }
+                switch decl {
+                case .funDecl(let f): return ctx.interner.resolve(f.name)
+                case .classDecl(let c): return ctx.interner.resolve(c.name)
+                default: return nil
+                }
+            }
+            XCTAssertTrue(kotlinDeclNames.contains("helper"))
+            XCTAssertTrue(kotlinDeclNames.contains("MyClass"))
+
+            XCTAssertFalse(ctx.diagnostics.hasError)
+        }
+    }
+
     private func lex(_ source: String) -> (tokens: [Token], interner: StringInterner, diagnostics: DiagnosticEngine) {
         let diagnostics = DiagnosticEngine()
         let interner = StringInterner()

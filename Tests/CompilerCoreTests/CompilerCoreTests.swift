@@ -731,6 +731,87 @@ final class CompilerCoreTests: XCTestCase {
         }
     }
 
+    func testSubjectLessWhenParsesCorrectly() throws {
+        let source = """
+        fun classify(x: Int, y: Int): Int {
+            return when {
+                x > 0 -> 1
+                y > 0 -> 2
+                else -> 0
+            }
+        }
+        """
+        let ctx = try makeContext(source: source)
+        try runFrontend(ctx)
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let file = try XCTUnwrap(ast.files.first)
+        let declID = try XCTUnwrap(file.topLevelDecls.first)
+        guard let decl = ast.arena.decl(declID), case .funDecl(let function) = decl else {
+            XCTFail("Expected top-level function declaration.")
+            return
+        }
+
+        switch function.body {
+        case .block(let stmts, _):
+            guard let returnExprID = stmts.first,
+                  let returnExpr = ast.arena.expr(returnExprID),
+                  case .returnExpr(let whenID, _) = returnExpr,
+                  let whenID,
+                  let whenExpr = ast.arena.expr(whenID),
+                  case .whenExpr(let subject, let branches, let elseExpr, _) = whenExpr else {
+                XCTFail("Expected return of when expression.")
+                return
+            }
+            XCTAssertNil(subject, "Subject-less when must have nil subject.")
+            XCTAssertEqual(branches.count, 2)
+            XCTAssertNotNil(elseExpr)
+        case .expr, .unit:
+            XCTFail("Block-body function should produce block expressions.")
+        }
+    }
+
+    func testSubjectLessWhenGuardChainSemaPassesWithElse() throws {
+        let source = """
+        fun classify(x: Int, y: Int): Int = when {
+            x > 0 -> 1
+            y > 0 -> 2
+            else -> 0
+        }
+        """
+        let ctx = try makeContext(source: source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
+    }
+
+    func testSubjectLessWhenWithoutElseIsNonExhaustive() throws {
+        let source = """
+        fun classify(x: Int): Int {
+            when {
+                x > 0 -> 1
+            }
+        }
+        """
+        let ctx = try makeContext(source: source)
+        try runSema(ctx)
+
+        assertHasDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
+    }
+
+    func testSubjectLessWhenWithNonBooleanConditionEmitsDiagnostic() throws {
+        let source = """
+        fun test() = when {
+            42 -> "invalid"
+            else -> "ok"
+        }
+        """
+        let ctx = try makeContext(source: source)
+        try runSema(ctx)
+
+        assertHasDiagnostic("KSWIFTK-SEMA-0032", in: ctx)
+    }
+
     func testUnresolvedIdentifierEmitsDiagnostic() throws {
         let source = """
         fun test() = unknownVariable

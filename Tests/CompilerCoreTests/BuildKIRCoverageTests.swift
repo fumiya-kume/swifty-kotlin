@@ -860,6 +860,240 @@ final class BuildKIRCoverageTests: XCTestCase {
         }
     }
 
+    func testDefaultArgGeneratesStubFunctionInKIR() throws {
+        let source = """
+        fun greetUser(name: String, greeting: String = "Hello"): String = greeting
+        fun main() = greetUser("Alice")
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let allFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case .function(let function) = decl else { return nil }
+                return function
+            }
+            let stubNames = allFunctions.map { ctx.interner.resolve($0.name) }
+                .filter { $0.hasSuffix("$default") }
+            XCTAssertTrue(stubNames.contains("greetUser$default"), "Expected greetUser$default stub, got: \(stubNames)")
+        }
+    }
+
+    func testDefaultArgCallSiteRedirectsToStub() throws {
+        let source = """
+        fun add(a: Int, b: Int = 10): Int = a + b
+        fun main() = add(5)
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: body, interner: ctx.interner)
+            XCTAssertTrue(callees.contains("add$default"), "Expected call to add$default stub, got: \(callees)")
+        }
+    }
+
+    func testDefaultArgStubContainsMaskParameterAndOriginalCall() throws {
+        let source = """
+        fun compute(x: Int, y: Int = 1, z: Int = 2): Int = x + y + z
+        fun main() = compute(10)
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let stubFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case .function(let function) = decl else { return nil }
+                return ctx.interner.resolve(function.name) == "compute$default" ? function : nil
+            }.first
+            XCTAssertNotNil(stubFunction, "Expected compute$default stub function")
+            if let stub = stubFunction {
+                let paramCount = stub.params.count
+                XCTAssertGreaterThanOrEqual(paramCount, 4, "Stub should have original params + mask param")
+                let stubCallees = extractCallees(from: stub.body, interner: ctx.interner)
+                XCTAssertTrue(stubCallees.contains("compute"), "Stub should call original function, got: \(stubCallees)")
+            }
+        }
+    }
+
+    func testDefaultArgEvaluationOrderLeftToRight() throws {
+        let source = """
+        fun ordered(a: Int = 1, b: Int = 2, c: Int = 3): Int = a + b + c
+        fun main() = ordered()
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let stubFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case .function(let function) = decl else { return nil }
+                return ctx.interner.resolve(function.name) == "ordered$default" ? function : nil
+            }.first
+            XCTAssertNotNil(stubFunction, "Expected ordered$default stub function")
+            if let stub = stubFunction {
+                var labelOrder: [Int32] = []
+                for instruction in stub.body {
+                    if case .label(let id) = instruction {
+                        labelOrder.append(id)
+                    }
+                }
+                for i in 1..<labelOrder.count {
+                    XCTAssertGreaterThan(labelOrder[i], labelOrder[i - 1], "Labels should be in ascending order for left-to-right evaluation")
+                }
+            }
+        }
+    }
+
+    func testDefaultArgNoStubWhenAllArgsProvided() throws {
+        let source = """
+        fun add(a: Int, b: Int = 10): Int = a + b
+        fun main() = add(5, 20)
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: body, interner: ctx.interner)
+            XCTAssertTrue(callees.contains("add"), "Expected direct call to add, got: \(callees)")
+            XCTAssertFalse(callees.contains("add$default"), "Should not call stub when all args provided, got: \(callees)")
+        }
+    }
+
+    // MARK: - Nested Return Propagation (P5-48)
+
+    func testNestedReturnInsideIfBranchEmitsReturnValueInstruction() throws {
+        let source = """
+        fun choose(flag: Boolean): Int {
+            if (flag) {
+                return 1
+            }
+            return 0
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "choose", in: module, interner: ctx.interner)
+            let returnValues = body.compactMap { instruction -> KIRExprID? in
+                guard case .returnValue(let id) = instruction else { return nil }
+                return id
+            }
+            XCTAssertGreaterThanOrEqual(returnValues.count, 2, "Expected at least 2 returnValue instructions (if-branch + fallthrough), got \(returnValues.count)")
+        }
+    }
+
+    func testNestedReturnInsideBothIfElseBranchesEmitsReturnValues() throws {
+        let source = """
+        fun pick(flag: Boolean): Int {
+            if (flag) {
+                return 1
+            } else {
+                return 2
+            }
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "pick", in: module, interner: ctx.interner)
+            let returnValues = body.compactMap { instruction -> KIRExprID? in
+                guard case .returnValue(let id) = instruction else { return nil }
+                return id
+            }
+            XCTAssertGreaterThanOrEqual(returnValues.count, 2, "Expected at least 2 returnValue instructions (then-branch + else-branch), got \(returnValues.count)")
+        }
+    }
+
+    func testNestedReturnInsideWhenBranchEmitsReturnValueInstruction() throws {
+        let source = """
+        fun describe(x: Int): Int {
+            return when (x) {
+                1 -> return 10
+                2 -> return 20
+                else -> 0
+            }
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "describe", in: module, interner: ctx.interner)
+            let returnValues = body.compactMap { instruction -> KIRExprID? in
+                guard case .returnValue(let id) = instruction else { return nil }
+                return id
+            }
+            XCTAssertGreaterThanOrEqual(returnValues.count, 2, "Expected at least 2 returnValue instructions for when-branch returns, got \(returnValues.count)")
+        }
+    }
+
+    func testIfExprLoweringUsesLabelBasedBranching() throws {
+        let source = """
+        fun branch(flag: Boolean): Int {
+            val x = if (flag) 1 else 2
+            return x
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "branch", in: module, interner: ctx.interner)
+            let hasJump = body.contains { instruction in
+                if case .jump = instruction { return true }
+                return false
+            }
+            let hasLabel = body.contains { instruction in
+                if case .label = instruction { return true }
+                return false
+            }
+            XCTAssertTrue(hasJump, "if-expr lowering should use jump instructions for branching")
+            XCTAssertTrue(hasLabel, "if-expr lowering should use label instructions for branching")
+        }
+    }
+
+    func testWhenExprLoweringUsesLabelBasedBranching() throws {
+        let source = """
+        fun pick(x: Int): Int {
+            return when (x) {
+                1 -> 10
+                2 -> 20
+                else -> 0
+            }
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "pick", in: module, interner: ctx.interner)
+            let labelCount = body.filter { instruction in
+                if case .label = instruction { return true }
+                return false
+            }.count
+            let jumpCount = body.filter { instruction in
+                if case .jump = instruction { return true }
+                return false
+            }.count
+            XCTAssertGreaterThanOrEqual(labelCount, 2, "when-expr should have labels for branch dispatch")
+            XCTAssertGreaterThanOrEqual(jumpCount, 2, "when-expr should have jumps for branch dispatch")
+        }
+    }
+
     func testVarargNonTrailingWithNamedTailPacksCorrectly() throws {
         let source = """
         fun tagged(vararg nums: Int, tail: Int): Int = tail
@@ -881,6 +1115,142 @@ final class BuildKIRCoverageTests: XCTestCase {
             }
             XCTAssertTrue(callNames.contains("kk_array_new"), "Expected kk_array_new for non-trailing vararg, got: \(callNames)")
             XCTAssertTrue(callNames.contains("kk_array_set"), "Expected kk_array_set for non-trailing vararg, got: \(callNames)")
+        }
+    }
+
+    // MARK: - if/when Control Flow (P5-51)
+
+    func testIfExprUsesControlFlowInsteadOfSelect() throws {
+        let source = """
+        fun pick(flag: Boolean): Int = if (flag) 1 else 2
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "pick", in: module, interner: ctx.interner)
+
+            let hasSelect = body.contains { instruction in
+                if case .select = instruction { return true }
+                return false
+            }
+            XCTAssertFalse(hasSelect, "ifExpr should not emit .select; expected control-flow jumps")
+
+            let labelCount = body.filter { if case .label = $0 { return true }; return false }.count
+            XCTAssertGreaterThanOrEqual(labelCount, 2, "ifExpr needs at least elseLabel + endLabel")
+
+            let jumpCount = body.filter { instruction in
+                if case .jump = instruction { return true }
+                if case .jumpIfEqual = instruction { return true }
+                return false
+            }.count
+            XCTAssertGreaterThanOrEqual(jumpCount, 2, "ifExpr needs conditional + unconditional jump")
+        }
+    }
+
+    func testWhenExprUsesControlFlowInsteadOfSelect() throws {
+        let source = """
+        fun pick(x: Int): Int = when (x) { 1 -> 10, 2 -> 20, else -> 0 }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "pick", in: module, interner: ctx.interner)
+
+            let hasSelect = body.contains { instruction in
+                if case .select = instruction { return true }
+                return false
+            }
+            XCTAssertFalse(hasSelect, "whenExpr should not emit .select; expected control-flow jumps")
+
+            let labelCount = body.filter { if case .label = $0 { return true }; return false }.count
+            XCTAssertGreaterThanOrEqual(labelCount, 3, "whenExpr with 2 branches + else needs at least 3 labels")
+        }
+    }
+
+    func testIfExprSideEffectsDoNotLeakFromUnselectedBranch() throws {
+        let source = """
+        fun sideEffect(x: Int): Int = x
+        fun test(flag: Boolean): Int {
+            if (flag) sideEffect(1) else sideEffect(2)
+            return 0
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "test", in: module, interner: ctx.interner)
+
+            let hasSelect = body.contains { instruction in
+                if case .select = instruction { return true }
+                return false
+            }
+            XCTAssertFalse(hasSelect, "Side-effect branches must use control flow, not select")
+
+            let sideEffectCalls = body.filter { instruction in
+                guard case .call(_, let callee, _, _, _, _) = instruction else { return false }
+                return ctx.interner.resolve(callee) == "sideEffect"
+            }
+            XCTAssertEqual(sideEffectCalls.count, 2, "Both branches should have sideEffect calls in IR")
+
+            let jumpIfEqualCount = body.filter { if case .jumpIfEqual = $0 { return true }; return false }.count
+            XCTAssertGreaterThanOrEqual(jumpIfEqualCount, 1, "Condition should guard branch entry via jumpIfEqual")
+        }
+    }
+
+    func testIfExprReturnInUnselectedBranchDoesNotLeak() throws {
+        let source = """
+        fun earlyReturn(flag: Boolean): Int {
+            val result = if (flag) return 42 else 0
+            return result
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "earlyReturn", in: module, interner: ctx.interner)
+
+            let hasSelect = body.contains { instruction in
+                if case .select = instruction { return true }
+                return false
+            }
+            XCTAssertFalse(hasSelect, "return-in-branch must use control flow, not select")
+        }
+    }
+
+    func testWhenExprSideEffectsDoNotLeakFromUnselectedBranch() throws {
+        let source = """
+        fun effect(x: Int): Int = x
+        fun test(v: Int): Int = when (v) { 1 -> effect(10), 2 -> effect(20), else -> effect(30) }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "test", in: module, interner: ctx.interner)
+
+            let hasSelect = body.contains { instruction in
+                if case .select = instruction { return true }
+                return false
+            }
+            XCTAssertFalse(hasSelect, "when branches with side effects must use control flow, not select")
+
+            let effectCalls = body.filter { instruction in
+                guard case .call(_, let callee, _, _, _, _) = instruction else { return false }
+                return ctx.interner.resolve(callee) == "effect"
+            }
+            XCTAssertEqual(effectCalls.count, 3, "All 3 branches should have effect calls in IR")
+
+            let labelCount = body.filter { if case .label = $0 { return true }; return false }.count
+            XCTAssertGreaterThanOrEqual(labelCount, 3, "Each branch needs labels for control flow")
         }
     }
 }

@@ -311,7 +311,8 @@ final class GoldenHarnessTests: XCTestCase {
                 return "\(condition)->e\(branch.body.rawValue)"
             }.joined(separator: ",")
             let renderedElse = elseExpr.map { "e\($0.rawValue)" } ?? "_"
-            return "when subject=e\(subject.rawValue) branches=[\(renderedBranches)] else=\(renderedElse)"
+            let renderedSubject = subject.map { "e\($0.rawValue)" } ?? "_"
+            return "when subject=\(renderedSubject) branches=[\(renderedBranches)] else=\(renderedElse)"
         case .returnExpr(let value, _):
             let renderedValue = value.map { "e\($0.rawValue)" } ?? "_"
             return "return value=\(renderedValue)"
@@ -367,6 +368,13 @@ final class GoldenHarnessTests: XCTestCase {
             let stmts = statements.map { "e\($0.rawValue)" }.joined(separator: ",")
             let trailing = trailingExpr.map { "e\($0.rawValue)" } ?? "_"
             return "blockExpr stmts=[\(stmts)] trailing=\(trailing)"
+        case .superRef:
+            return "super"
+        case .thisRef(let label, _):
+            if let label {
+                return "this@\(interner.resolve(label))"
+            }
+            return "this"
         }
     }
 

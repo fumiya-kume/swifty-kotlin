@@ -811,6 +811,13 @@ private struct NativeEmitter {
                 lowered = bindings.buildMul(builder, lhs: lhs, rhs: rhs, name: "mul_\(instructionIndex)")
             case "kk_op_div":
                 lowered = bindings.buildSDiv(builder, lhs: lhs, rhs: rhs, name: "div_\(instructionIndex)")
+            case "kk_op_mod":
+                if let quotient = bindings.buildSDiv(builder, lhs: lhs, rhs: rhs, name: "mod_q_\(instructionIndex)"),
+                   let product = bindings.buildMul(builder, lhs: quotient, rhs: rhs, name: "mod_p_\(instructionIndex)") {
+                    lowered = bindings.buildSub(builder, lhs: lhs, rhs: product, name: "mod_\(instructionIndex)")
+                } else {
+                    lowered = nil
+                }
             case "kk_op_eq":
                 if let compared = bindings.buildICmpEqual(builder, lhs: lhs, rhs: rhs, name: "eq_\(instructionIndex)") {
                     lowered = bindings.buildZExt(builder, value: compared, type: int64Type, name: "eq64_\(instructionIndex)")
@@ -957,7 +964,12 @@ private struct NativeEmitter {
                 case .divide:
                     lowered = bindings.buildSDiv(builder, lhs: lhsValue, rhs: rhsValue, name: "bin_div_\(instructionIndex)")
                 case .modulo:
-                    lowered = nil
+                    if let quotient = bindings.buildSDiv(builder, lhs: lhsValue, rhs: rhsValue, name: "bin_mod_q_\(instructionIndex)"),
+                       let product = bindings.buildMul(builder, lhs: quotient, rhs: rhsValue, name: "bin_mod_p_\(instructionIndex)") {
+                        lowered = bindings.buildSub(builder, lhs: lhsValue, rhs: product, name: "bin_mod_\(instructionIndex)")
+                    } else {
+                        lowered = nil
+                    }
                 case .equal:
                     if let compared = bindings.buildICmpEqual(
                         builder,
