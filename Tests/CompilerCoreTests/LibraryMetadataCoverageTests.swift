@@ -505,6 +505,7 @@ final class LibraryMetadataCoverageTests: XCTestCase {
                 symbol.flags.contains(.synthetic)
             }
             XCTAssertNotNil(widgetSymbol, "Wildcard import should resolve library class 'Widget'")
+            XCTAssertFalse(ctx.diagnostics.diagnostics.contains { $0.code.hasPrefix("KSWIFTK-SEMA") })
         }
     }
 
@@ -549,6 +550,7 @@ final class LibraryMetadataCoverageTests: XCTestCase {
                 symbol.flags.contains(.synthetic)
             }
             XCTAssertNotNil(listOfSymbol, "Default import should resolve library function 'listOf' from kotlin.collections")
+            XCTAssertFalse(ctx.diagnostics.diagnostics.contains { $0.code.hasPrefix("KSWIFTK-SEMA") })
         }
     }
 
@@ -610,6 +612,7 @@ final class LibraryMetadataCoverageTests: XCTestCase {
                 symbol.flags.contains(.synthetic)
             }
             XCTAssertNotNil(gammaSymbol, "Wildcard import should resolve library class 'Gamma'")
+            XCTAssertFalse(ctx.diagnostics.diagnostics.contains { $0.code.hasPrefix("KSWIFTK-SEMA") })
         }
     }
 }
