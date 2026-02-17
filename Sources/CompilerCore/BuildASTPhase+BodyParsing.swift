@@ -760,9 +760,29 @@ extension BuildASTPhase {
                 index += 1
             }
             if !bodyTokens.isEmpty {
-                let parser = ExpressionParser(tokens: bodyTokens, interner: interner, astArena: astArena)
-                if let exprID = parser.parse(), let exprRange = astArena.exprRange(exprID) {
-                    body = .block([exprID], exprRange)
+                let stmtGroups = splitTokensIntoStatements(bodyTokens)
+                var blockExprs: [ExprID] = []
+                for stmtTokens in stmtGroups {
+                    let filtered = stmtTokens.filter { $0.kind != .symbol(.semicolon) }
+                    guard !filtered.isEmpty else { continue }
+                    if let localFun = parseLocalFunDeclExpr(from: filtered, interner: interner, astArena: astArena) {
+                        blockExprs.append(localFun)
+                    } else if let localDecl = parseLocalDeclarationExpr(from: filtered, interner: interner, astArena: astArena) {
+                        blockExprs.append(localDecl)
+                    } else if let localAssign = parseLocalAssignmentExpr(from: filtered, interner: interner, astArena: astArena) {
+                        blockExprs.append(localAssign)
+                    } else {
+                        let parser = ExpressionParser(tokens: filtered, interner: interner, astArena: astArena)
+                        if let exprID = parser.parse() {
+                            blockExprs.append(exprID)
+                        }
+                    }
+                }
+                if !blockExprs.isEmpty,
+                   let firstRange = astArena.exprRange(blockExprs.first!),
+                   let lastRange = astArena.exprRange(blockExprs.last!) {
+                    let bodyRange = SourceRange(start: firstRange.start, end: lastRange.end)
+                    body = .block(blockExprs, bodyRange)
                 } else {
                     let bodyRange = SourceRange(
                         start: statementTokens[braceStart].range.start,
@@ -798,6 +818,37 @@ extension BuildASTPhase {
             body: body,
             range: range
         ))
+    }
+
+    func splitTokensIntoStatements(_ tokens: [Token]) -> [[Token]] {
+        var groups: [[Token]] = []
+        var current: [Token] = []
+        var depth = BracketDepth()
+        for token in tokens {
+            if depth.isAtTopLevel {
+                if token.kind == .symbol(.semicolon) {
+                    if !current.isEmpty {
+                        groups.append(current)
+                        current = []
+                    }
+                    continue
+                }
+                let hasNewline = token.leadingTrivia.contains { piece in
+                    if case .newline = piece { return true }
+                    return false
+                }
+                if hasNewline && !current.isEmpty {
+                    groups.append(current)
+                    current = []
+                }
+            }
+            depth.track(token.kind)
+            current.append(token)
+        }
+        if !current.isEmpty {
+            groups.append(current)
+        }
+        return groups
     }
 
     func skipBalancedBracket(
