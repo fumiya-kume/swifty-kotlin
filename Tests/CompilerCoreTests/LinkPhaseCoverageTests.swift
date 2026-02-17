@@ -116,6 +116,9 @@ final class LinkPhaseCoverageTests: XCTestCase {
                 return
             } catch CommandRunnerError.nonZeroExit(let failed) {
                 result = failed
+            } catch {
+                XCTFail("Unexpected error: \(error)")
+                return
             }
 
             XCTAssertEqual(result.exitCode, 1)

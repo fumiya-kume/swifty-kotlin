@@ -281,6 +281,9 @@ final class BuildKIRCoverageTests: XCTestCase {
                 return
             } catch CommandRunnerError.nonZeroExit(let failed) {
                 result = failed
+            } catch {
+                XCTFail("Unexpected error: \(error)")
+                return
             }
             XCTAssertEqual(result.exitCode, 1)
             XCTAssertTrue(result.stderr.contains("KSWIFTK-LINK-0003"))
