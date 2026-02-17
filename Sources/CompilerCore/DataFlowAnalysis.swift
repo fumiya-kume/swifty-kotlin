@@ -205,12 +205,20 @@ public final class DataFlowAnalyzer {
               let firstName = path.first else {
             return ConditionBranch(trueState: base, falseState: base)
         }
-        let targetSymbols = sema.symbols.allSymbols().filter { $0.name == firstName }
-        guard let targetSymbol = targetSymbols.first else {
+        let candidates = sema.symbols.lookupAll(fqName: [firstName]).filter { symbolID in
+            guard let sym = sema.symbols.symbol(symbolID) else { return false }
+            switch sym.kind {
+            case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
+                return true
+            default:
+                return false
+            }
+        }
+        guard let targetSymbolID = candidates.first else {
             return ConditionBranch(trueState: base, falseState: base)
         }
         let narrowedType = sema.types.make(.classType(ClassType(
-            classSymbol: targetSymbol.id,
+            classSymbol: targetSymbolID,
             args: [],
             nullability: nullable ? .nullable : .nonNull
         )))
