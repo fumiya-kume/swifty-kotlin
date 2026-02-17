@@ -153,11 +153,13 @@ run_case() {
   if [[ $is_script -eq 1 ]]; then
     local kts_tmp="$tmp_dir/${basename%.kt}.kts"
     cp "$kt_file" "$kts_tmp"
-    "$KOTLINC" -script "$kts_tmp" >"$ref_run_stdout" 2>"$ref_compile_stderr" || ref_compile_exit=$?
-    if [[ $ref_compile_exit -ne 0 ]]; then
-      : >"$ref_run_stdout"
+    local script_exit=0
+    "$KOTLINC" -script "$kts_tmp" >"$ref_run_stdout" 2>"$ref_compile_stderr" || script_exit=$?
+    if [[ $script_exit -ne 0 ]] && [[ ! -s "$ref_run_stdout" ]]; then
+      ref_compile_exit=$script_exit
+    else
+      ref_run_exit=$script_exit
     fi
-    ref_run_exit=0
   else
     "$KOTLINC" "$kt_file" -include-runtime -d "$ref_jar" >"$ref_compile_stdout" 2>"$ref_compile_stderr" || ref_compile_exit=$?
     if [[ $ref_compile_exit -eq 0 ]]; then

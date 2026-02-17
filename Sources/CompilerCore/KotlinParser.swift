@@ -16,7 +16,7 @@ public final class KotlinParser {
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
         var sawTopLevelStatement = false
-        var sawTopLevelDeclOrHeader = false
+        var sawNonPropertyDecl = false
 
         var pendingImports: [SyntaxChild] = []
         var importRange = RangeAccumulator()
@@ -31,17 +31,19 @@ public final class KotlinParser {
             switch token.kind {
             case .keyword(.package):
                 node = parsePackageHeader()
-                sawTopLevelDeclOrHeader = true
+                sawNonPropertyDecl = true
             case .keyword(.import):
                 node = parseImportHeader()
-                sawTopLevelDeclOrHeader = true
+                sawNonPropertyDecl = true
                 pendingImports.append(.node(node))
                 importRange.append(arena.node(node).range)
                 range.append(arena.node(node).range)
                 continue
             case .keyword(let keyword) where isDeclarationKeyword(keyword):
                 node = parseDeclaration()
-                sawTopLevelDeclOrHeader = true
+                if keyword != .val && keyword != .var {
+                    sawNonPropertyDecl = true
+                }
             default:
                 let before = stream.index
                 node = parseStatement(inBlock: false)
@@ -82,7 +84,7 @@ public final class KotlinParser {
         }
 
         let rootKind: SyntaxKind
-        if sawTopLevelStatement && !sawTopLevelDeclOrHeader {
+        if sawTopLevelStatement && !sawNonPropertyDecl {
             rootKind = .script
         } else {
             rootKind = .kotlinFile
