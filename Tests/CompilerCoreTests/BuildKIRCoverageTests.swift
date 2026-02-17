@@ -883,4 +883,140 @@ final class BuildKIRCoverageTests: XCTestCase {
             XCTAssertTrue(callNames.contains("kk_array_set"), "Expected kk_array_set for non-trailing vararg, got: \(callNames)")
         }
     }
+
+    // MARK: - if/when Control Flow (P5-51)
+
+    func testIfExprUsesControlFlowInsteadOfSelect() throws {
+        let source = """
+        fun pick(flag: Boolean): Int = if (flag) 1 else 2
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "pick", in: module, interner: ctx.interner)
+
+            let hasSelect = body.contains { instruction in
+                if case .select = instruction { return true }
+                return false
+            }
+            XCTAssertFalse(hasSelect, "ifExpr should not emit .select; expected control-flow jumps")
+
+            let labelCount = body.filter { if case .label = $0 { return true }; return false }.count
+            XCTAssertGreaterThanOrEqual(labelCount, 2, "ifExpr needs at least elseLabel + endLabel")
+
+            let jumpCount = body.filter { instruction in
+                if case .jump = instruction { return true }
+                if case .jumpIfEqual = instruction { return true }
+                return false
+            }.count
+            XCTAssertGreaterThanOrEqual(jumpCount, 2, "ifExpr needs conditional + unconditional jump")
+        }
+    }
+
+    func testWhenExprUsesControlFlowInsteadOfSelect() throws {
+        let source = """
+        fun pick(x: Int): Int = when (x) { 1 -> 10, 2 -> 20, else -> 0 }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "pick", in: module, interner: ctx.interner)
+
+            let hasSelect = body.contains { instruction in
+                if case .select = instruction { return true }
+                return false
+            }
+            XCTAssertFalse(hasSelect, "whenExpr should not emit .select; expected control-flow jumps")
+
+            let labelCount = body.filter { if case .label = $0 { return true }; return false }.count
+            XCTAssertGreaterThanOrEqual(labelCount, 3, "whenExpr with 2 branches + else needs at least 3 labels")
+        }
+    }
+
+    func testIfExprSideEffectsDoNotLeakFromUnselectedBranch() throws {
+        let source = """
+        fun sideEffect(x: Int): Int = x
+        fun test(flag: Boolean): Int {
+            if (flag) sideEffect(1) else sideEffect(2)
+            return 0
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "test", in: module, interner: ctx.interner)
+
+            let hasSelect = body.contains { instruction in
+                if case .select = instruction { return true }
+                return false
+            }
+            XCTAssertFalse(hasSelect, "Side-effect branches must use control flow, not select")
+
+            let sideEffectCalls = body.filter { instruction in
+                guard case .call(_, let callee, _, _, _, _) = instruction else { return false }
+                return ctx.interner.resolve(callee) == "sideEffect"
+            }
+            XCTAssertEqual(sideEffectCalls.count, 2, "Both branches should have sideEffect calls in IR")
+
+            let jumpIfEqualCount = body.filter { if case .jumpIfEqual = $0 { return true }; return false }.count
+            XCTAssertGreaterThanOrEqual(jumpIfEqualCount, 1, "Condition should guard branch entry via jumpIfEqual")
+        }
+    }
+
+    func testIfExprReturnInUnselectedBranchDoesNotLeak() throws {
+        let source = """
+        fun earlyReturn(flag: Boolean): Int {
+            val result = if (flag) return 42 else 0
+            return result
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "earlyReturn", in: module, interner: ctx.interner)
+
+            let hasSelect = body.contains { instruction in
+                if case .select = instruction { return true }
+                return false
+            }
+            XCTAssertFalse(hasSelect, "return-in-branch must use control flow, not select")
+        }
+    }
+
+    func testWhenExprSideEffectsDoNotLeakFromUnselectedBranch() throws {
+        let source = """
+        fun effect(x: Int): Int = x
+        fun test(v: Int): Int = when (v) { 1 -> effect(10), 2 -> effect(20), else -> effect(30) }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "test", in: module, interner: ctx.interner)
+
+            let hasSelect = body.contains { instruction in
+                if case .select = instruction { return true }
+                return false
+            }
+            XCTAssertFalse(hasSelect, "when branches with side effects must use control flow, not select")
+
+            let effectCalls = body.filter { instruction in
+                guard case .call(_, let callee, _, _, _, _) = instruction else { return false }
+                return ctx.interner.resolve(callee) == "effect"
+            }
+            XCTAssertEqual(effectCalls.count, 3, "All 3 branches should have effect calls in IR")
+
+            let labelCount = body.filter { if case .label = $0 { return true }; return false }.count
+            XCTAssertGreaterThanOrEqual(labelCount, 3, "Each branch needs labels for control flow")
+        }
+    }
 }
