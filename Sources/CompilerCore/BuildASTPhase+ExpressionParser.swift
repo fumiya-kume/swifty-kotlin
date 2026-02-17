@@ -528,13 +528,12 @@ extension BuildASTPhase {
             guard let whenToken = consume() else {
                 return nil
             }
-            guard consumeIf(.symbol(.lParen)) != nil else {
-                return nil
+            var subject: ExprID?
+            if matches(.symbol(.lParen)) {
+                _ = consume()
+                subject = parseExpression(minPrecedence: 0)
+                _ = consumeIf(.symbol(.rParen))
             }
-            guard let subject = parseExpression(minPrecedence: 0) else {
-                return nil
-            }
-            _ = consumeIf(.symbol(.rParen))
             guard consumeIf(.symbol(.lBrace)) != nil else {
                 return nil
             }
@@ -996,6 +995,7 @@ extension BuildASTPhase {
             return astArena.appendExpr(.localDecl(
                 name: name,
                 isMutable: isMutable,
+                typeAnnotation: nil,
                 initializer: initializerExpr,
                 range: range
             ))

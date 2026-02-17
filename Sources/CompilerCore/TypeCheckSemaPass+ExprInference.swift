@@ -823,112 +823,154 @@ extension TypeCheckSemaPassPhase {
             return sema.types.unitType
 
         case .whenExpr(let subjectID, let branches, let elseExpr, let range):
-            let subjectType = inferExpr(subjectID, ctx: ctx, locals: &locals)
-            let subjectLocalBinding: (name: InternedString, type: TypeID, symbol: SymbolID, isStable: Bool, isMutable: Bool)? = {
-                guard let subjectExpr = ast.arena.expr(subjectID),
-                      case .nameRef(let subjectName, _) = subjectExpr,
-                      let local = locals[subjectName] else {
-                    return nil
+            if let subjectID {
+                let subjectType = inferExpr(subjectID, ctx: ctx, locals: &locals)
+                let subjectLocalBinding: (name: InternedString, type: TypeID, symbol: SymbolID, isStable: Bool, isMutable: Bool)? = {
+                    guard let subjectExpr = ast.arena.expr(subjectID),
+                          case .nameRef(let subjectName, _) = subjectExpr,
+                          let local = locals[subjectName] else {
+                        return nil
+                    }
+                    return (
+                        subjectName, local.type, local.symbol,
+                        isStableLocalSymbol(local.symbol, sema: sema),
+                        local.isMutable
+                    )
+                }()
+                let hasExplicitNullBranch = branches.contains { branch in
+                    guard let condition = branch.condition,
+                          let conditionExpr = ast.arena.expr(condition),
+                          case .nameRef(let name, _) = conditionExpr else {
+                        return false
+                    }
+                    return interner.resolve(name) == "null"
                 }
-                return (
-                    subjectName, local.type, local.symbol,
-                    isStableLocalSymbol(local.symbol, sema: sema),
-                    local.isMutable
-                )
-            }()
-            let hasExplicitNullBranch = branches.contains { branch in
-                guard let condition = branch.condition,
-                      let conditionExpr = ast.arena.expr(condition),
-                      case .nameRef(let name, _) = conditionExpr else {
-                    return false
-                }
-                return interner.resolve(name) == "null"
-            }
-            var branchTypes: [TypeID] = []
-            var covered: Set<InternedString> = []
-            var hasNullCase = false
-            var hasTrueCase = false
-            var hasFalseCase = false
-            for branch in branches {
-                var isNullBranch = false
-                var branchSmartCastType: TypeID?
-                if let cond = branch.condition {
-                    let condType = inferExpr(cond, ctx: ctx, locals: &locals)
-                    if let condExpr = ast.arena.expr(cond) {
-                        switch condExpr {
-                        case .boolLiteral(true, _):
-                            if condType == boolType { hasTrueCase = true }
-                            covered.insert(interner.intern("true"))
-                        case .boolLiteral(false, _):
-                            if condType == boolType { hasFalseCase = true }
-                            covered.insert(interner.intern("false"))
-                        case .nameRef(let name, _):
-                            if interner.resolve(name) == "null" {
-                                hasNullCase = true
-                                isNullBranch = true
-                            } else {
-                                covered.insert(name)
+                var branchTypes: [TypeID] = []
+                var covered: Set<InternedString> = []
+                var hasNullCase = false
+                var hasTrueCase = false
+                var hasFalseCase = false
+                for branch in branches {
+                    var isNullBranch = false
+                    var branchSmartCastType: TypeID?
+                    if let cond = branch.condition {
+                        let condType = inferExpr(cond, ctx: ctx, locals: &locals)
+                        if let condExpr = ast.arena.expr(cond) {
+                            switch condExpr {
+                            case .boolLiteral(true, _):
+                                if condType == boolType { hasTrueCase = true }
+                                covered.insert(interner.intern("true"))
+                            case .boolLiteral(false, _):
+                                if condType == boolType { hasFalseCase = true }
+                                covered.insert(interner.intern("false"))
+                            case .nameRef(let name, _):
+                                if interner.resolve(name) == "null" {
+                                    hasNullCase = true
+                                    isNullBranch = true
+                                } else {
+                                    covered.insert(name)
+                                }
+                            default:
+                                break
                             }
-                        default:
-                            break
+                        }
+                        branchSmartCastType = smartCastTypeForWhenSubjectCase(
+                            conditionID: cond, subjectType: subjectType,
+                            ast: ast, sema: sema, interner: interner
+                        )
+                    }
+                    var branchLocals = locals
+                    if let subjectLocalBinding, subjectLocalBinding.isStable {
+                        if let branchSmartCastType {
+                            branchLocals[subjectLocalBinding.name] = (
+                                branchSmartCastType, subjectLocalBinding.symbol, subjectLocalBinding.isMutable, true
+                            )
+                        } else if hasExplicitNullBranch && !isNullBranch {
+                            branchLocals[subjectLocalBinding.name] = (
+                                makeNonNullable(subjectLocalBinding.type, types: sema.types),
+                                subjectLocalBinding.symbol,
+                                subjectLocalBinding.isMutable, true
+                            )
                         }
                     }
-                    branchSmartCastType = smartCastTypeForWhenSubjectCase(
-                        conditionID: cond, subjectType: subjectType,
-                        ast: ast, sema: sema, interner: interner
+                    branchTypes.append(
+                        inferExpr(branch.body, ctx: ctx, locals: &branchLocals, expectedType: expectedType)
                     )
                 }
-                var branchLocals = locals
-                if let subjectLocalBinding, subjectLocalBinding.isStable {
-                    if let branchSmartCastType {
-                        branchLocals[subjectLocalBinding.name] = (
-                            branchSmartCastType, subjectLocalBinding.symbol, subjectLocalBinding.isMutable, true
-                        )
-                    } else if hasExplicitNullBranch && !isNullBranch {
-                        branchLocals[subjectLocalBinding.name] = (
+
+                if let elseExpr {
+                    var elseLocals = locals
+                    if let subjectLocalBinding,
+                       subjectLocalBinding.isStable,
+                       hasExplicitNullBranch {
+                        elseLocals[subjectLocalBinding.name] = (
                             makeNonNullable(subjectLocalBinding.type, types: sema.types),
                             subjectLocalBinding.symbol,
                             subjectLocalBinding.isMutable, true
                         )
                     }
-                }
-                branchTypes.append(
-                    inferExpr(branch.body, ctx: ctx, locals: &branchLocals, expectedType: expectedType)
-                )
-            }
-
-            if let elseExpr {
-                var elseLocals = locals
-                if let subjectLocalBinding,
-                   subjectLocalBinding.isStable,
-                   hasExplicitNullBranch {
-                    elseLocals[subjectLocalBinding.name] = (
-                        makeNonNullable(subjectLocalBinding.type, types: sema.types),
-                        subjectLocalBinding.symbol,
-                        subjectLocalBinding.isMutable, true
+                    branchTypes.append(
+                        inferExpr(elseExpr, ctx: ctx, locals: &elseLocals, expectedType: expectedType)
                     )
                 }
-                branchTypes.append(
-                    inferExpr(elseExpr, ctx: ctx, locals: &elseLocals, expectedType: expectedType)
-                )
-            }
 
-            let summary = WhenBranchSummary(
-                coveredSymbols: covered, hasElse: elseExpr != nil,
-                hasNullCase: hasNullCase, hasTrueCase: hasTrueCase,
-                hasFalseCase: hasFalseCase
-            )
-            if !ctx.dataFlow.isWhenExhaustive(subjectType: subjectType, branches: summary, sema: sema) {
-                ctx.semaCtx.diagnostics.error(
-                    "KSWIFTK-SEMA-0004",
-                    "Non-exhaustive when expression.",
-                    range: range
+                let summary = WhenBranchSummary(
+                    coveredSymbols: covered, hasElse: elseExpr != nil,
+                    hasNullCase: hasNullCase, hasTrueCase: hasTrueCase,
+                    hasFalseCase: hasFalseCase
                 )
-            }
+                if !ctx.dataFlow.isWhenExhaustive(subjectType: subjectType, branches: summary, sema: sema) {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0004",
+                        "Non-exhaustive when expression.",
+                        range: range
+                    )
+                }
 
-            let type = sema.types.lub(branchTypes)
-            sema.bindings.bindExprType(id, type: type)
-            return type
+                let type = sema.types.lub(branchTypes)
+                sema.bindings.bindExprType(id, type: type)
+                return type
+            } else {
+                var branchTypes: [TypeID] = []
+                for branch in branches {
+                    if let cond = branch.condition {
+                        let condType = inferExpr(cond, ctx: ctx, locals: &locals)
+                        if condType != boolType && condType != sema.types.errorType {
+                            ctx.semaCtx.diagnostics.error(
+                                "KSWIFTK-SEMA-0020",
+                                "Subject-less when branch condition must be a Boolean expression.",
+                                range: range
+                            )
+                        }
+                    }
+                    branchTypes.append(
+                        inferExpr(branch.body, ctx: ctx, locals: &locals, expectedType: expectedType)
+                    )
+                }
+
+                if let elseExpr {
+                    branchTypes.append(
+                        inferExpr(elseExpr, ctx: ctx, locals: &locals, expectedType: expectedType)
+                    )
+                }
+
+                let summary = WhenBranchSummary(
+                    coveredSymbols: [], hasElse: elseExpr != nil,
+                    hasNullCase: false, hasTrueCase: false,
+                    hasFalseCase: false
+                )
+                if !ctx.dataFlow.isWhenExhaustive(subjectType: boolType, branches: summary, sema: sema) {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0004",
+                        "Non-exhaustive when expression.",
+                        range: range
+                    )
+                }
+
+                let type = sema.types.lub(branchTypes)
+                sema.bindings.bindExprType(id, type: type)
+                return type
+            }
 
         case .throwExpr(let value, _):
             _ = inferExpr(value, ctx: ctx, locals: &locals, expectedType: nil)
