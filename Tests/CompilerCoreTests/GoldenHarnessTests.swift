@@ -346,6 +346,8 @@ final class GoldenHarnessTests: XCTestCase {
                 }
             }.joined(separator: ",")
             return "stringTemplate[\(rendered)]"
+        case .throwExpr(let value, _):
+            return "throw value=e\(value.rawValue)"
         }
     }
 

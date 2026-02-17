@@ -838,6 +838,11 @@ extension TypeCheckSemaPassPhase {
             let type = sema.types.lub(branchTypes)
             sema.bindings.bindExprType(id, type: type)
             return type
+
+        case .throwExpr(let value, _):
+            _ = inferExpr(value, ctx: ctx, locals: &locals, expectedType: nil)
+            sema.bindings.bindExprType(id, type: sema.types.nothingType)
+            return sema.types.nothingType
         }
     }
 

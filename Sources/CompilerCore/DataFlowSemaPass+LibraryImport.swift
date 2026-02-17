@@ -103,6 +103,18 @@ extension DataFlowSemaPassPhase {
                     metadataPath: binding.metadataPath
                 )
                 symbols.setPropertyType(propertyType, for: symbol)
+            } else if record.kind == .typeAlias {
+                let underlyingType = importedTypeAliasUnderlyingType(
+                    record: record,
+                    symbols: symbols,
+                    types: types,
+                    diagnostics: diagnostics,
+                    interner: interner,
+                    metadataPath: binding.metadataPath
+                )
+                if let underlyingType {
+                    symbols.setTypeAliasUnderlyingType(underlyingType, for: symbol)
+                }
             }
 
             if isNominalLayoutTargetSymbol(record.kind) {
@@ -448,6 +460,36 @@ extension DataFlowSemaPassPhase {
             metadataPath: metadataPath,
             ownerFQName: record.fqName
         ) ?? types.anyType
+    }
+
+    private func importedTypeAliasUnderlyingType(
+        record: ImportedLibrarySymbolRecord,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner,
+        metadataPath: String
+    ) -> TypeID? {
+        guard let encodedSignature = record.typeSignature else {
+            return nil
+        }
+        guard let decoded = decodeImportedTypeSignature(
+            token: encodedSignature,
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            diagnostics: diagnostics,
+            metadataPath: metadataPath,
+            ownerFQName: record.fqName
+        ) else {
+            diagnostics.warning(
+                "KSWIFTK-LIB-0003",
+                "Invalid typealias signature metadata at \(metadataPath): \(renderFQName(record.fqName, interner: interner))",
+                range: nil
+            )
+            return nil
+        }
+        return decoded
     }
 
     private func decodeImportedTypeSignature(

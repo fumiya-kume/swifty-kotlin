@@ -304,6 +304,20 @@ public final class BuildKIRPhase: CompilerPhase {
                                 terminatedByReturn = true
                                 break
                             }
+                            if let expr = ast.arena.expr(exprID),
+                               case .throwExpr = expr {
+                                _ = lowerExpr(
+                                    exprID,
+                                    ast: ast,
+                                    sema: sema,
+                                    arena: arena,
+                                    interner: ctx.interner,
+                                    propertyConstantInitializers: propertyConstantInitializers,
+                                    instructions: &body
+                                )
+                                terminatedByReturn = true
+                                break
+                            }
                             lastValue = lowerExpr(
                                 exprID,
                                 ast: ast,
@@ -1413,6 +1427,21 @@ public final class BuildKIRPhase: CompilerPhase {
                 localValuesBySymbol[symbol] = valueID
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+            instructions.append(.constValue(result: unit, value: .unit))
+            return unit
+
+        case .throwExpr(let valueExpr, _):
+            let thrownValue = lowerExpr(
+                valueExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            instructions.append(.rethrow(value: thrownValue))
+            let unit = arena.appendExpr(.unit, type: sema.types.nothingType)
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 

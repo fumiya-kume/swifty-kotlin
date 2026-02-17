@@ -338,6 +338,22 @@ public struct TypeAliasDecl {
     public let range: SourceRange
     public let name: InternedString
     public let modifiers: Modifiers
+    public let typeParams: [TypeParamDecl]
+    public let underlyingType: TypeRefID?
+
+    public init(
+        range: SourceRange,
+        name: InternedString,
+        modifiers: Modifiers,
+        typeParams: [TypeParamDecl] = [],
+        underlyingType: TypeRefID? = nil
+    ) {
+        self.range = range
+        self.name = name
+        self.modifiers = modifiers
+        self.typeParams = typeParams
+        self.underlyingType = underlyingType
+    }
 }
 
 public struct EnumEntryDecl {
@@ -507,6 +523,7 @@ public enum Expr: Equatable {
     case nullAssert(expr: ExprID, range: SourceRange)
     case safeMemberCall(receiver: ExprID, callee: InternedString, typeArgs: [TypeRefID], args: [CallArgument], range: SourceRange)
     case compoundAssign(op: CompoundAssignOp, name: InternedString, value: ExprID, range: SourceRange)
+    case throwExpr(value: ExprID, range: SourceRange)
 }
 
 public final class ASTArena {
@@ -583,7 +600,8 @@ public final class ASTArena {
              .nullAssert(_, let range),
              .safeMemberCall(_, _, _, _, let range),
              .compoundAssign(_, _, _, let range),
-             .stringTemplate(_, let range):
+             .stringTemplate(_, let range),
+             .throwExpr(_, let range):
             return range
         }
     }
