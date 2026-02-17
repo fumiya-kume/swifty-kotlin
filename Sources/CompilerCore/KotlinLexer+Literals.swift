@@ -4,13 +4,22 @@ extension KotlinLexer {
         var hasDot = false
         var hasExponent = false
         var parsedPrefix = false
+        var isHexOrBin = false
 
         if bytes[cursor] == 0x30 && cursor + 1 < bytes.count {
             let marker = bytes[cursor + 1]
             if marker == 0x78 || marker == 0x58 {
                 parsedPrefix = true
+                isHexOrBin = true
                 cursor += 2
                 let startDigits = cursor
+                if cursor < bytes.count && bytes[cursor] == 0x5F {
+                    diagnostics.error(
+                        "KSWIFTK-LEX-0006",
+                        "Invalid underscore placement in numeric literal.",
+                        range: makeRange(start: cursor, end: min(cursor + 1, bytes.count))
+                    )
+                }
                 while cursor < bytes.count {
                     let ch = bytes[cursor]
                     if isHexDigit(ch) {
@@ -32,8 +41,16 @@ extension KotlinLexer {
                 }
             } else if marker == 0x62 || marker == 0x42 {
                 parsedPrefix = true
+                isHexOrBin = true
                 cursor += 2
                 let startDigits = cursor
+                if cursor < bytes.count && bytes[cursor] == 0x5F {
+                    diagnostics.error(
+                        "KSWIFTK-LEX-0006",
+                        "Invalid underscore placement in numeric literal.",
+                        range: makeRange(start: cursor, end: min(cursor + 1, bytes.count))
+                    )
+                }
                 while cursor < bytes.count {
                     let ch = bytes[cursor]
                     if isBinaryDigit(ch) {
@@ -56,25 +73,18 @@ extension KotlinLexer {
             } else if marker == 0x6F || marker == 0x4F {
                 parsedPrefix = true
                 cursor += 2
-                let startDigits = cursor
+                diagnostics.error(
+                    "KSWIFTK-LEX-0003",
+                    "Octal literal prefix '0o' is not supported in Kotlin.",
+                    range: makeRange(start: start, end: cursor)
+                )
                 while cursor < bytes.count {
                     let ch = bytes[cursor]
-                    if isOctalDigit(ch) {
-                        cursor += 1
-                        continue
-                    }
-                    if ch == 0x5F && cursor + 1 < bytes.count && isOctalDigit(bytes[cursor + 1]) {
+                    if isOctalDigit(ch) || ch == 0x5F {
                         cursor += 1
                         continue
                     }
                     break
-                }
-                if cursor == startDigits {
-                    diagnostics.error(
-                        "KSWIFTK-LEX-0003",
-                        "Invalid number format in numeric literal.",
-                        range: makeRange(start: start, end: min(cursor + 1, bytes.count))
-                    )
                 }
             }
         }
@@ -88,7 +98,7 @@ extension KotlinLexer {
                 }
                 if ch == 0x5F {
                     if cursor + 1 >= bytes.count || !isDigit(bytes[cursor + 1]) {
-                        diagnostics.warning(
+                        diagnostics.error(
                             "KSWIFTK-LEX-0006",
                             "Invalid underscore placement in numeric literal.",
                             range: makeRange(start: cursor, end: min(cursor + 1, bytes.count))
@@ -100,15 +110,11 @@ extension KotlinLexer {
                     continue
                 }
                 if ch == 0x2E && !hasDot {
+                    if cursor + 1 >= bytes.count || !isDigit(bytes[cursor + 1]) {
+                        break
+                    }
                     hasDot = true
                     cursor += 1
-                    if cursor >= bytes.count || !isDigit(bytes[cursor]) {
-                        diagnostics.error(
-                            "KSWIFTK-LEX-0003",
-                            "Invalid number format in numeric literal.",
-                            range: makeRange(start: start, end: min(cursor + 1, bytes.count))
-                        )
-                    }
                     continue
                 }
                 break
@@ -122,8 +128,24 @@ extension KotlinLexer {
                 cursor += 1
             }
             let exponentStart = cursor
-            while cursor < bytes.count && isDigit(bytes[cursor]) {
-                cursor += 1
+            if cursor < bytes.count && bytes[cursor] == 0x5F {
+                diagnostics.error(
+                    "KSWIFTK-LEX-0006",
+                    "Invalid underscore placement in numeric literal.",
+                    range: makeRange(start: cursor, end: min(cursor + 1, bytes.count))
+                )
+            }
+            while cursor < bytes.count {
+                let ch = bytes[cursor]
+                if isDigit(ch) {
+                    cursor += 1
+                    continue
+                }
+                if ch == 0x5F && cursor + 1 < bytes.count && isDigit(bytes[cursor + 1]) {
+                    cursor += 1
+                    continue
+                }
+                break
             }
             if exponentStart == cursor {
                 diagnostics.error(
@@ -137,29 +159,57 @@ extension KotlinLexer {
         let suffix = cursor < bytes.count ? bytes[cursor] : nil
         var textEnd = cursor
 
-        if suffix == 0x4C || suffix == 0x6C {
+        if suffix == 0x4C {
+            if hasDot || hasExponent {
+                diagnostics.error(
+                    "KSWIFTK-LEX-0003",
+                    "Long suffix 'L' is not allowed on floating-point literals.",
+                    range: makeRange(start: cursor, end: cursor + 1)
+                )
+            }
+            textEnd = cursor + 1
+            let literal = text(from: start..<textEnd)
+            offset = textEnd
+            return Token(kind: .longLiteral(literal), range: makeRange(start: start, end: textEnd), leadingTrivia: leadingTrivia)
+        } else if suffix == 0x6C {
+            diagnostics.error(
+                "KSWIFTK-LEX-0003",
+                "Use uppercase 'L' for Long suffix; lowercase 'l' is not allowed.",
+                range: makeRange(start: cursor, end: cursor + 1)
+            )
+            if hasDot || hasExponent {
+                diagnostics.error(
+                    "KSWIFTK-LEX-0003",
+                    "Long suffix 'L' is not allowed on floating-point literals.",
+                    range: makeRange(start: cursor, end: cursor + 1)
+                )
+            }
             textEnd = cursor + 1
             let literal = text(from: start..<textEnd)
             offset = textEnd
             return Token(kind: .longLiteral(literal), range: makeRange(start: start, end: textEnd), leadingTrivia: leadingTrivia)
         } else if suffix == 0x46 || suffix == 0x66 {
+            if isHexOrBin {
+                diagnostics.error(
+                    "KSWIFTK-LEX-0003",
+                    "Float suffix is not allowed on hex or binary literals.",
+                    range: makeRange(start: cursor, end: cursor + 1)
+                )
+            }
             textEnd = cursor + 1
             let literal = text(from: start..<textEnd)
             offset = textEnd
             return Token(kind: .floatLiteral(literal), range: makeRange(start: start, end: textEnd), leadingTrivia: leadingTrivia)
         } else if suffix == 0x44 || suffix == 0x64 {
+            diagnostics.error(
+                "KSWIFTK-LEX-0003",
+                "Double suffix 'd'/'D' is not supported in Kotlin.",
+                range: makeRange(start: cursor, end: cursor + 1)
+            )
             textEnd = cursor + 1
             let literal = text(from: start..<textEnd)
             offset = textEnd
             return Token(kind: .doubleLiteral(literal), range: makeRange(start: start, end: textEnd), leadingTrivia: leadingTrivia)
-        }
-
-        if (hasDot || hasExponent) && suffix == nil {
-            diagnostics.error(
-                "KSWIFTK-LEX-0003",
-                "Invalid number format in numeric literal.",
-                range: makeRange(start: start, end: textEnd)
-            )
         }
 
         offset = textEnd
