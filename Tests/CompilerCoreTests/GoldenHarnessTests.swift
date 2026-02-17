@@ -336,6 +336,16 @@ final class GoldenHarnessTests: XCTestCase {
             return "safeMemberCall recv=e\(receiver.rawValue) callee=\(interner.resolve(callee)) args=[\(renderedArgs)]"
         case .compoundAssign(let op, let name, let value, _):
             return "compoundAssign(\(op)) name=\(interner.resolve(name)) value=e\(value.rawValue)"
+        case .stringTemplate(let parts, _):
+            let rendered = parts.map { part -> String in
+                switch part {
+                case .literal(let text):
+                    return "lit(\(interner.resolve(text)))"
+                case .expression(let exprID):
+                    return "expr(e\(exprID.rawValue))"
+                }
+            }.joined(separator: ",")
+            return "stringTemplate[\(rendered)]"
         case .throwExpr(let value, _):
             return "throw value=e\(value.rawValue)"
         case .localFunDecl(let name, let valueParams, let returnType, let body, _):

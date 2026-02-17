@@ -365,6 +365,7 @@ public struct EnumEntryDecl {
 public struct ImportDecl {
     public let range: SourceRange
     public let path: [InternedString]
+    public let alias: InternedString?
 }
 
 public struct TypeParamDecl {
@@ -490,6 +491,11 @@ public struct CatchClause: Equatable {
     }
 }
 
+public enum StringTemplatePart: Equatable {
+    case literal(InternedString)
+    case expression(ExprID)
+}
+
 public enum Expr: Equatable {
     case intLiteral(Int64, SourceRange)
     case longLiteral(Int64, SourceRange)
@@ -498,6 +504,7 @@ public enum Expr: Equatable {
     case charLiteral(UInt32, SourceRange)
     case boolLiteral(Bool, SourceRange)
     case stringLiteral(InternedString, SourceRange)
+    case stringTemplate(parts: [StringTemplatePart], range: SourceRange)
     case nameRef(InternedString, SourceRange)
     case forExpr(loopVariable: InternedString?, iterable: ExprID, body: ExprID, range: SourceRange)
     case whileExpr(condition: ExprID, body: ExprID, range: SourceRange)
@@ -599,6 +606,7 @@ public final class ASTArena {
              .nullAssert(_, let range),
              .safeMemberCall(_, _, _, _, let range),
              .compoundAssign(_, _, _, let range),
+             .stringTemplate(_, let range),
              .throwExpr(_, let range),
              .localFunDecl(_, _, _, _, let range):
             return range

@@ -82,11 +82,41 @@ extension BuildASTPhase {
             if !isPackageHeader, case .keyword(.import) = token.kind {
                 continue
             }
+            if !isPackageHeader, case .keyword(.as) = token.kind {
+                break
+            }
             if let name = internedIdentifier(from: token, interner: interner) {
                 names.append(name)
             }
         }
         return names
+    }
+
+    func extractImportAlias(
+        from nodeID: NodeID,
+        in arena: SyntaxArena,
+        interner: StringInterner
+    ) -> InternedString? {
+        var foundAs = false
+        for child in arena.children(of: nodeID) {
+            guard case .token(let tokenID) = child,
+                  let token = resolveToken(tokenID, in: arena) else {
+                continue
+            }
+            if foundAs {
+                if case .missing = token.kind {
+                    return interner.intern("")
+                }
+                return internedIdentifier(from: token, interner: interner)
+            }
+            if case .keyword(.as) = token.kind {
+                foundAs = true
+            }
+        }
+        if foundAs {
+            return interner.intern("")
+        }
+        return nil
     }
 
     func internedIdentifier(from token: Token, interner: StringInterner) -> InternedString? {
