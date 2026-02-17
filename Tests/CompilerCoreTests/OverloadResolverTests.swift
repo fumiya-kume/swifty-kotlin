@@ -812,6 +812,159 @@ final class OverloadResolverTests: XCTestCase {
         XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-SEMA-0002")
     }
 
+    func testResolveCallAcceptsGenericWithSatisfiedUpperBound() {
+        let setup = makeSemaModule()
+        let resolver = OverloadResolver()
+        let types = setup.types
+        let symbols = setup.symbols
+        let interner = setup.interner
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let anyType = types.anyType
+        let typeParamSymbol = defineSymbol(
+            kind: .typeParameter,
+            name: "T",
+            suffix: "bound_ok_T",
+            symbols: symbols,
+            interner: interner
+        )
+        let typeParamType = types.make(.typeParam(TypeParamType(symbol: typeParamSymbol, nullability: .nonNull)))
+
+        let generic = defineSymbol(
+            kind: .function,
+            name: "bounded",
+            suffix: "bound_ok",
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [typeParamType],
+                returnType: typeParamType,
+                typeParameterSymbols: [typeParamSymbol],
+                typeParameterUpperBounds: [anyType]
+            ),
+            for: generic
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 200, end: 210),
+            calleeName: interner.intern("bounded"),
+            args: [CallArg(type: intType)]
+        )
+        let resolved = resolver.resolveCall(
+            candidates: [generic],
+            call: call,
+            expectedType: nil,
+            ctx: setup.ctx
+        )
+
+        XCTAssertEqual(resolved.chosenCallee, generic)
+        XCTAssertNil(resolved.diagnostic)
+    }
+
+    func testResolveCallRejectsGenericWithViolatedUpperBound() {
+        let setup = makeSemaModule()
+        let resolver = OverloadResolver()
+        let types = setup.types
+        let symbols = setup.symbols
+        let interner = setup.interner
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let typeParamSymbol = defineSymbol(
+            kind: .typeParameter,
+            name: "T",
+            suffix: "bound_bad_T",
+            symbols: symbols,
+            interner: interner
+        )
+        let typeParamType = types.make(.typeParam(TypeParamType(symbol: typeParamSymbol, nullability: .nonNull)))
+
+        let generic = defineSymbol(
+            kind: .function,
+            name: "bounded",
+            suffix: "bound_bad",
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [typeParamType],
+                returnType: typeParamType,
+                typeParameterSymbols: [typeParamSymbol],
+                typeParameterUpperBounds: [boolType]
+            ),
+            for: generic
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 211, end: 220),
+            calleeName: interner.intern("bounded"),
+            args: [CallArg(type: intType)]
+        )
+        let resolved = resolver.resolveCall(
+            candidates: [generic],
+            call: call,
+            expectedType: nil,
+            ctx: setup.ctx
+        )
+
+        XCTAssertNil(resolved.chosenCallee)
+        XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-SEMA-0030")
+    }
+
+    func testResolveCallRejectsGenericWithViolatedUpperBoundFromSymbolTable() {
+        let setup = makeSemaModule()
+        let resolver = OverloadResolver()
+        let types = setup.types
+        let symbols = setup.symbols
+        let interner = setup.interner
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let typeParamSymbol = defineSymbol(
+            kind: .typeParameter,
+            name: "T",
+            suffix: "bound_st_T",
+            symbols: symbols,
+            interner: interner
+        )
+        let typeParamType = types.make(.typeParam(TypeParamType(symbol: typeParamSymbol, nullability: .nonNull)))
+
+        let generic = defineSymbol(
+            kind: .function,
+            name: "bounded",
+            suffix: "bound_st",
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.setTypeParameterUpperBound(boolType, for: typeParamSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [typeParamType],
+                returnType: typeParamType,
+                typeParameterSymbols: [typeParamSymbol]
+            ),
+            for: generic
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 221, end: 230),
+            calleeName: interner.intern("bounded"),
+            args: [CallArg(type: intType)]
+        )
+        let resolved = resolver.resolveCall(
+            candidates: [generic],
+            call: call,
+            expectedType: nil,
+            ctx: setup.ctx
+        )
+
+        XCTAssertNil(resolved.chosenCallee)
+        XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-SEMA-0030")
+    }
+
     private func defineSymbol(
         kind: SymbolKind,
         name: String,
