@@ -530,6 +530,7 @@ public enum Expr: Equatable {
     case compoundAssign(op: CompoundAssignOp, name: InternedString, value: ExprID, range: SourceRange)
     case throwExpr(value: ExprID, range: SourceRange)
     case localFunDecl(name: InternedString, valueParams: [ValueParamDecl], returnType: TypeRefID?, body: FunctionBody, range: SourceRange)
+    case blockExpr(statements: [ExprID], trailingExpr: ExprID?, range: SourceRange)
 }
 
 public final class ASTArena {
@@ -608,7 +609,8 @@ public final class ASTArena {
              .compoundAssign(_, _, _, let range),
              .stringTemplate(_, let range),
              .throwExpr(_, let range),
-             .localFunDecl(_, _, _, _, let range):
+             .localFunDecl(_, _, _, _, let range),
+             .blockExpr(_, _, let range):
             return range
         }
     }

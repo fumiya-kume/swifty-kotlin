@@ -363,6 +363,10 @@ final class GoldenHarnessTests: XCTestCase {
             }
             let retStr = returnType.map { "t\($0.rawValue)" } ?? "nil"
             return "localFunDecl \(interner.resolve(name)) params=[\(params)] returnType=\(retStr) body=\(bodyStr)"
+        case .blockExpr(let statements, let trailingExpr, _):
+            let stmts = statements.map { "e\($0.rawValue)" }.joined(separator: ",")
+            let trailing = trailingExpr.map { "e\($0.rawValue)" } ?? "_"
+            return "blockExpr stmts=[\(stmts)] trailing=\(trailing)"
         }
     }
 
