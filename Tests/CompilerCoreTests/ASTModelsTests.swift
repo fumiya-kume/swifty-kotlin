@@ -148,7 +148,7 @@ final class ASTModelsTests: XCTestCase {
             .doWhileExpr(body: dummyExprID, condition: dummyExprID, range: r),
             .breakExpr(range: r),
             .continueExpr(range: r),
-            .localDecl(name: name, isMutable: false, initializer: dummyExprID, range: r),
+            .localDecl(name: name, isMutable: false, typeAnnotation: nil, initializer: dummyExprID, range: r),
             .localAssign(name: name, value: dummyExprID, range: r),
             .arrayAssign(array: dummyExprID, index: dummyExprID, value: dummyExprID, range: r),
             .call(callee: dummyExprID, typeArgs: [], args: [], range: r),

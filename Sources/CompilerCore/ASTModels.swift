@@ -511,7 +511,7 @@ public enum Expr: Equatable {
     case doWhileExpr(body: ExprID, condition: ExprID, range: SourceRange)
     case breakExpr(range: SourceRange)
     case continueExpr(range: SourceRange)
-    case localDecl(name: InternedString, isMutable: Bool, initializer: ExprID, range: SourceRange)
+    case localDecl(name: InternedString, isMutable: Bool, typeAnnotation: TypeRefID?, initializer: ExprID?, range: SourceRange)
     case localAssign(name: InternedString, value: ExprID, range: SourceRange)
     case arrayAssign(array: ExprID, index: ExprID, value: ExprID, range: SourceRange)
     case call(callee: ExprID, typeArgs: [TypeRefID], args: [CallArgument], range: SourceRange)
@@ -589,7 +589,7 @@ public final class ASTArena {
              .doWhileExpr(_, _, let range),
              .breakExpr(let range),
              .continueExpr(let range),
-             .localDecl(_, _, _, let range),
+             .localDecl(_, _, _, _, let range),
              .localAssign(_, _, let range),
              .arrayAssign(_, _, _, let range),
              .call(_, _, _, let range),
