@@ -420,6 +420,31 @@ public func kk_array_set(_ arrayRaw: Int, _ index: Int, _ value: Int, _ outThrow
     return value
 }
 
+@_cdecl("kk_vararg_spread_concat")
+public func kk_vararg_spread_concat(_ pairs: UnsafePointer<Int>, _ pairCount: Int) -> Int {
+    var elements: [Int] = []
+    var i = 0
+    while i < pairCount * 2 {
+        let marker = pairs[i]
+        let value = pairs[i + 1]
+        if marker == -1 {
+            if let array = runtimeArrayBox(from: value) {
+                elements.append(contentsOf: array.elements)
+            }
+        } else {
+            elements.append(value)
+        }
+        i += 2
+    }
+    let result = kk_array_new(elements.count)
+    if let box = runtimeArrayBox(from: result) {
+        for (idx, elem) in elements.enumerated() {
+            box.elements[idx] = elem
+        }
+    }
+    return result
+}
+
 @_cdecl("kk_box_int")
 public func kk_box_int(_ value: Int) -> Int {
     if value == runtimeNullSentinelInt { return value }

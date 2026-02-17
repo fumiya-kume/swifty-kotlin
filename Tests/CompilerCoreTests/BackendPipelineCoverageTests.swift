@@ -3453,6 +3453,100 @@ final class BackendPipelineCoverageTests: XCTestCase {
         return KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [mainID])], arena: arena)
     }
 
+    func testVarargMultiplePositionalArgsPackedToArrayInKIR() throws {
+        let source = """
+        fun sum(vararg items: Int): Int = 0
+        fun main() = sum(1, 2, 3)
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case .function(let function) = decl else { return nil }
+                return ctx.interner.resolve(function.name) == "main" ? function : nil
+            }.first
+            let body = try XCTUnwrap(mainFunction?.body)
+            let callNames = body.compactMap { instruction -> String? in
+                guard case .call(_, let callee, _, _, _, _) = instruction else { return nil }
+                return ctx.interner.resolve(callee)
+            }
+            XCTAssertTrue(callNames.contains("kk_array_new"), "Expected kk_array_new for vararg packing, got: \(callNames)")
+            XCTAssertTrue(callNames.contains("kk_array_set"), "Expected kk_array_set for vararg packing, got: \(callNames)")
+        }
+    }
+
+    func testVarargWithDefaultAndNamedArgsCombination() throws {
+        let source = """
+        fun greet(prefix: String = "Hi", vararg names: Int): Int = 0
+        fun main() = greet("Hello", 1, 2)
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case .function(let function) = decl else { return nil }
+                return ctx.interner.resolve(function.name) == "main" ? function : nil
+            }.first
+            let body = try XCTUnwrap(mainFunction?.body)
+            let callNames = body.compactMap { instruction -> String? in
+                guard case .call(_, let callee, _, _, _, _) = instruction else { return nil }
+                return ctx.interner.resolve(callee)
+            }
+            XCTAssertTrue(callNames.contains("kk_array_new"), "Expected kk_array_new for vararg packing with default arg, got: \(callNames)")
+        }
+    }
+
+    func testVarargEmptyProducesEmptyArrayInKIR() throws {
+        let source = """
+        fun noArgs(vararg items: Int): Int = 0
+        fun main() = noArgs()
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case .function(let function) = decl else { return nil }
+                return ctx.interner.resolve(function.name) == "main" ? function : nil
+            }.first
+            let body = try XCTUnwrap(mainFunction?.body)
+            let callNames = body.compactMap { instruction -> String? in
+                guard case .call(_, let callee, _, _, _, _) = instruction else { return nil }
+                return ctx.interner.resolve(callee)
+            }
+            XCTAssertTrue(callNames.contains("kk_array_new"), "Expected kk_array_new for empty vararg, got: \(callNames)")
+        }
+    }
+
+    func testVarargNonTrailingWithNamedTailPacksCorrectly() throws {
+        let source = """
+        fun tagged(vararg nums: Int, tail: Int): Int = tail
+        fun main() = tagged(10, 20, tail = 99)
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case .function(let function) = decl else { return nil }
+                return ctx.interner.resolve(function.name) == "main" ? function : nil
+            }.first
+            let body = try XCTUnwrap(mainFunction?.body)
+            let callNames = body.compactMap { instruction -> String? in
+                guard case .call(_, let callee, _, _, _, _) = instruction else { return nil }
+                return ctx.interner.resolve(callee)
+            }
+            XCTAssertTrue(callNames.contains("kk_array_new"), "Expected kk_array_new for non-trailing vararg, got: \(callNames)")
+            XCTAssertTrue(callNames.contains("kk_array_set"), "Expected kk_array_set for non-trailing vararg, got: \(callNames)")
+        }
+    }
+
     private func llvmCapiBindingsAvailable() -> Bool {
         guard let bindings = LLVMCAPIBindings.load() else {
             return false
