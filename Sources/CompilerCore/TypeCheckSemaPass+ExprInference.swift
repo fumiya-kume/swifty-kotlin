@@ -607,13 +607,40 @@ extension TypeCheckSemaPassPhase {
                 inferExpr(argument.expr, ctx: ctx, locals: &locals)
             }
 
+            let isSuperCall: Bool
+            if let receiverExpr = ast.arena.expr(receiverID) {
+                if case .superRef = receiverExpr {
+                    isSuperCall = true
+                } else {
+                    isSuperCall = false
+                }
+            } else {
+                isSuperCall = false
+            }
+
+            var supertypeSymbols: Set<SymbolID> = []
+            if isSuperCall, let currentReceiverType = ctx.implicitReceiverType,
+               let classSymbol = nominalSymbol(of: currentReceiverType, types: sema.types) {
+                let supertypes = sema.symbols.directSupertypes(for: classSymbol)
+                for st in supertypes {
+                    supertypeSymbols.insert(st)
+                }
+            }
+
             let candidates = scope.lookup(calleeName).filter { candidate in
                 guard let symbol = sema.symbols.symbol(candidate),
                       symbol.kind == .function,
                       let signature = sema.symbols.functionSignature(for: candidate) else {
                     return false
                 }
-                return signature.receiverType != nil
+                guard signature.receiverType != nil else { return false }
+                if isSuperCall, !supertypeSymbols.isEmpty {
+                    if let parent = sema.symbols.parentSymbol(for: candidate) {
+                        return supertypeSymbols.contains(parent)
+                    }
+                    return false
+                }
+                return true
             }
             if candidates.isEmpty {
                 ctx.semaCtx.diagnostics.error(
@@ -658,6 +685,9 @@ extension TypeCheckSemaPassPhase {
                     parameterMapping: resolved.parameterMapping
                 )
             )
+            if isSuperCall {
+                sema.bindings.markSuperCall(id)
+            }
             let returnType: TypeID
             if let signature = sema.symbols.functionSignature(for: chosen) {
                 let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
@@ -1031,6 +1061,57 @@ extension TypeCheckSemaPassPhase {
             sema.bindings.bindIdentifier(id, symbol: funSymbol)
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
+
+        case .superRef(let range):
+            guard let receiverType = ctx.implicitReceiverType else {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0050",
+                    "'super' is not allowed outside of a class body.",
+                    range: range
+                )
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
+            if let classSymbol = nominalSymbol(of: receiverType, types: sema.types) {
+                let supertypes = sema.symbols.directSupertypes(for: classSymbol)
+                let classSupertypes = supertypes.filter {
+                    let kind = sema.symbols.symbol($0)?.kind
+                    return kind == .class || kind == .enumClass
+                }
+                if let superclass = classSupertypes.first {
+                    let superType = sema.types.make(.classType(ClassType(classSymbol: superclass)))
+                    sema.bindings.bindExprType(id, type: superType)
+                    return superType
+                }
+            }
+            sema.bindings.bindExprType(id, type: receiverType)
+            return receiverType
+
+        case .thisRef(let label, let range):
+            if label == nil {
+                guard let receiverType = ctx.implicitReceiverType else {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0051",
+                        "'this' is not allowed in this context.",
+                        range: range
+                    )
+                    sema.bindings.bindExprType(id, type: sema.types.errorType)
+                    return sema.types.errorType
+                }
+                sema.bindings.bindExprType(id, type: receiverType)
+                return receiverType
+            }
+            guard let receiverType = ctx.implicitReceiverType else {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0051",
+                    "'this' is not allowed in this context.",
+                    range: range
+                )
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
+            sema.bindings.bindExprType(id, type: receiverType)
+            return receiverType
         }
     }
 

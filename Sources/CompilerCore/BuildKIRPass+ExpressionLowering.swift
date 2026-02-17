@@ -1172,6 +1172,22 @@ extension BuildKIRPhase {
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
+
+        case .superRef:
+            if let currentImplicitReceiverExprID {
+                return currentImplicitReceiverExprID
+            }
+            let unit = arena.appendExpr(.unit, type: boundType ?? sema.types.errorType)
+            instructions.append(.constValue(result: unit, value: .unit))
+            return unit
+
+        case .thisRef:
+            if let currentImplicitReceiverExprID {
+                return currentImplicitReceiverExprID
+            }
+            let unit = arena.appendExpr(.unit, type: boundType ?? sema.types.errorType)
+            instructions.append(.constValue(result: unit, value: .unit))
+            return unit
         }
     }
 }

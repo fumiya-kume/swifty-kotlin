@@ -333,6 +333,15 @@ extension BuildASTPhase {
             }
         }
 
+        private func identifierFromToken(_ token: Token) -> InternedString? {
+            switch token.kind {
+            case .identifier(let name), .backtickedIdentifier(let name):
+                return name
+            default:
+                return nil
+            }
+        }
+
         private func parsePrimary() -> ExprID? {
             guard let token = current() else {
                 return nil
@@ -414,6 +423,23 @@ extension BuildASTPhase {
 
             case .keyword(.when):
                 return parseWhenExpression()
+
+            case .keyword(.super):
+                _ = consume()
+                return astArena.appendExpr(.superRef(token.range))
+
+            case .keyword(.this):
+                _ = consume()
+                if let atToken = current(), atToken.kind == .symbol(.at),
+                   let labelToken = peek(1),
+                   let labelName = identifierFromToken(labelToken) {
+                    _ = consume()
+                    _ = consume()
+                    let endRange = labelToken.range
+                    let range = SourceRange(start: token.range.start, end: endRange.end)
+                    return astArena.appendExpr(.thisRef(label: labelName, range))
+                }
+                return astArena.appendExpr(.thisRef(label: nil, token.range))
 
             case .keyword(let keyword):
                 _ = consume()
@@ -996,6 +1022,7 @@ extension BuildASTPhase {
             return astArena.appendExpr(.localDecl(
                 name: name,
                 isMutable: isMutable,
+                typeAnnotation: nil,
                 initializer: initializerExpr,
                 range: range
             ))

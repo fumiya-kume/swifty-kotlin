@@ -419,6 +419,7 @@ public final class BindingTable {
     public private(set) var identifierSymbols: [ExprID: SymbolID] = [:]
     public private(set) var callBindings: [ExprID: CallBinding] = [:]
     public private(set) var declSymbols: [DeclID: SymbolID] = [:]
+    public private(set) var superCallExprs: Set<ExprID> = []
 
     public init() {}
 
@@ -436,6 +437,10 @@ public final class BindingTable {
 
     public func bindDecl(_ decl: DeclID, symbol: SymbolID) {
         declSymbols[decl] = symbol
+    }
+
+    public func markSuperCall(_ expr: ExprID) {
+        superCallExprs.insert(expr)
     }
 }
 
