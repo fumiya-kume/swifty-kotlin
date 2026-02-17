@@ -788,9 +788,12 @@ extension BuildASTPhase {
         private func splitBlockTokensIntoStatements(_ tokens: [Token]) -> [[Token]] {
             var groups: [[Token]] = []
             var current: [Token] = []
-            var depth = BracketDepth()
+            var parenDepth = 0
+            var bracketDepth = 0
+            var braceDepth = 0
             for token in tokens {
-                if depth.isAtTopLevel {
+                let isTopLevel = parenDepth == 0 && bracketDepth == 0 && braceDepth == 0
+                if isTopLevel {
                     if token.kind == .symbol(.semicolon) {
                         if !current.isEmpty {
                             groups.append(current)
@@ -811,7 +814,15 @@ extension BuildASTPhase {
                         }
                     }
                 }
-                depth.track(token.kind)
+                switch token.kind {
+                case .symbol(.lParen):    parenDepth += 1
+                case .symbol(.rParen):    parenDepth = max(0, parenDepth - 1)
+                case .symbol(.lBracket):  bracketDepth += 1
+                case .symbol(.rBracket):  bracketDepth = max(0, bracketDepth - 1)
+                case .symbol(.lBrace):    braceDepth += 1
+                case .symbol(.rBrace):    braceDepth = max(0, braceDepth - 1)
+                default: break
+                }
                 current.append(token)
             }
             if !current.isEmpty {
