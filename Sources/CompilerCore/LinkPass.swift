@@ -60,6 +60,9 @@ public final class LinkPhase: CompilerPhase {
             }
 
             var args: [String] = linkInputs
+            if ctx.options.debugInfo {
+                args.append("-g")
+            }
             args.append("-o")
             args.append(ctx.options.outputPath)
             args.append(contentsOf: clangTargetArgs(ctx.options.target))
