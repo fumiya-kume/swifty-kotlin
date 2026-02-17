@@ -607,23 +607,21 @@ extension TypeCheckSemaPassPhase {
                 inferExpr(argument.expr, ctx: ctx, locals: &locals)
             }
 
-            let isSuperCall: Bool
-            if let receiverExpr = ast.arena.expr(receiverID) {
-                if case .superRef = receiverExpr {
-                    isSuperCall = true
-                } else {
-                    isSuperCall = false
-                }
-            } else {
-                isSuperCall = false
-            }
+            let isSuperCall = ast.arena.expr(receiverID).map { expr in
+                if case .superRef = expr { true } else { false }
+            } ?? false
 
             var supertypeSymbols: Set<SymbolID> = []
             if isSuperCall, let currentReceiverType = ctx.implicitReceiverType,
                let classSymbol = nominalSymbol(of: currentReceiverType, types: sema.types) {
-                let supertypes = sema.symbols.directSupertypes(for: classSymbol)
-                for st in supertypes {
-                    supertypeSymbols.insert(st)
+                var queue = sema.symbols.directSupertypes(for: classSymbol)
+                var visited: Set<SymbolID> = [classSymbol]
+                while !queue.isEmpty {
+                    let next = queue.removeFirst()
+                    if visited.insert(next).inserted {
+                        supertypeSymbols.insert(next)
+                        queue.append(contentsOf: sema.symbols.directSupertypes(for: next))
+                    }
                 }
             }
 
@@ -1084,23 +1082,15 @@ extension TypeCheckSemaPassPhase {
                     return superType
                 }
             }
-            sema.bindings.bindExprType(id, type: receiverType)
-            return receiverType
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-0052",
+                "Class has no superclass.",
+                range: range
+            )
+            sema.bindings.bindExprType(id, type: sema.types.errorType)
+            return sema.types.errorType
 
         case .thisRef(let label, let range):
-            if label == nil {
-                guard let receiverType = ctx.implicitReceiverType else {
-                    ctx.semaCtx.diagnostics.error(
-                        "KSWIFTK-SEMA-0051",
-                        "'this' is not allowed in this context.",
-                        range: range
-                    )
-                    sema.bindings.bindExprType(id, type: sema.types.errorType)
-                    return sema.types.errorType
-                }
-                sema.bindings.bindExprType(id, type: receiverType)
-                return receiverType
-            }
             guard let receiverType = ctx.implicitReceiverType else {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0051",
@@ -1109,6 +1099,13 @@ extension TypeCheckSemaPassPhase {
                 )
                 sema.bindings.bindExprType(id, type: sema.types.errorType)
                 return sema.types.errorType
+            }
+            if label != nil {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0053",
+                    "Qualified 'this@Label' is not yet supported.",
+                    range: range
+                )
             }
             sema.bindings.bindExprType(id, type: receiverType)
             return receiverType
