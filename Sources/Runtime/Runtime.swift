@@ -420,6 +420,45 @@ public func kk_array_set(_ arrayRaw: Int, _ index: Int, _ value: Int, _ outThrow
     return value
 }
 
+@_cdecl("kk_vararg_spread_concat")
+public func kk_vararg_spread_concat(_ pairsArrayRaw: Int, _ pairCount: Int) -> Int {
+    guard let pairs = runtimeArrayBox(from: pairsArrayRaw),
+          pairCount > 0,
+          pairs.elements.count >= pairCount * 2 else { return kk_array_new(0) }
+    var totalCount = 0
+    for i in 0..<pairCount {
+        let marker = pairs.elements[i * 2]
+        let value = pairs.elements[i * 2 + 1]
+        if marker == -1 {
+            if let array = runtimeArrayBox(from: value) {
+                totalCount += array.elements.count
+            }
+        } else {
+            totalCount += 1
+        }
+    }
+    let result = kk_array_new(totalCount)
+    if let box = runtimeArrayBox(from: result) {
+        var writeIndex = 0
+        for i in 0..<pairCount {
+            let marker = pairs.elements[i * 2]
+            let value = pairs.elements[i * 2 + 1]
+            if marker == -1 {
+                if let array = runtimeArrayBox(from: value) {
+                    for elem in array.elements {
+                        box.elements[writeIndex] = elem
+                        writeIndex += 1
+                    }
+                }
+            } else {
+                box.elements[writeIndex] = value
+                writeIndex += 1
+            }
+        }
+    }
+    return result
+}
+
 @_cdecl("kk_box_int")
 public func kk_box_int(_ value: Int) -> Int {
     if value == runtimeNullSentinelInt { return value }
