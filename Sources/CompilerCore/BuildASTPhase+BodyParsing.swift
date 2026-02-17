@@ -585,14 +585,6 @@ extension BuildASTPhase {
         } else {
             end = statementTokens.last?.range.end ?? head.range.end
         }
-        guard !initializerTokens.isEmpty else {
-            return nil
-        }
-        let parser = ExpressionParser(tokens: Array(initializerTokens), interner: interner, astArena: astArena)
-        guard let initializerExpr = parser.parse() else {
-            return nil
-        }
-        let end = astArena.exprRange(initializerExpr)?.end ?? statementTokens.last?.range.end ?? head.range.end
         let rangeStart = statementTokens[0].range.start
         let range = SourceRange(start: rangeStart, end: end)
         return astArena.appendExpr(.localDecl(

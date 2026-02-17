@@ -7,15 +7,15 @@ symbol s5 kind=local fq=__local_9.result vis=private flags=_
 file f0 package=golden.sema
   decl d0 fun main suspend=0 inline=0 sym=s1
 expr e0 string(world) type=String
-expr e1 localDecl name mutable=0 init=e0 type=Unit ref=s2
+expr e1 localDecl name mutable=0 type=_ init=e0 type=Unit ref=s2
 expr e2 int(42) type=Int
-expr e3 localDecl x mutable=0 init=e2 type=Unit ref=s3
+expr e3 localDecl x mutable=0 type=_ init=e2 type=Unit ref=s3
 expr e4 name(name) type=String ref=s2
 expr e5 stringTemplate[lit(Hello ),expr(e4)] type=String
-expr e6 localDecl greeting mutable=0 init=e5 type=Unit ref=s4
+expr e6 localDecl greeting mutable=0 type=_ init=e5 type=Unit ref=s4
 expr e7 name(x) type=Int ref=s3
 expr e8 stringTemplate[lit(value=),expr(e7)] type=String
-expr e9 localDecl result mutable=0 init=e8 type=Unit ref=s5
+expr e9 localDecl result mutable=0 type=_ init=e8 type=Unit ref=s5
 expr e10 name(println) type=_
 expr e11 name(greeting) type=String ref=s4
 expr e12 call callee=e10 args=[_:e11] type=Unit

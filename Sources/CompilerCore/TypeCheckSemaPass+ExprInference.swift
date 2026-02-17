@@ -77,7 +77,7 @@ extension TypeCheckSemaPassPhase {
                     ctx.semaCtx.diagnostics.error(
                         "KSWIFTK-SEMA-0020",
                         "Variable '\(interner.resolve(name))' must be initialized before use.",
-                        range: range
+                        range: nameRange
                     )
                 }
                 sema.bindings.bindIdentifier(id, symbol: local.symbol)
@@ -995,9 +995,9 @@ extension TypeCheckSemaPassPhase {
 
             var bodyLocals = locals
             for (i, param) in valueParams.enumerated() {
-                bodyLocals[param.name] = (parameterTypes[i], paramSymbols[i], false)
+                bodyLocals[param.name] = (parameterTypes[i], paramSymbols[i], false, true)
             }
-            bodyLocals[name] = (funType, funSymbol, false)
+            bodyLocals[name] = (funType, funSymbol, false, true)
             switch body {
             case .block(let exprs, _):
                 for (index, expr) in exprs.enumerated() {
@@ -1010,7 +1010,7 @@ extension TypeCheckSemaPassPhase {
             case .unit:
                 break
             }
-            locals[name] = (funType, funSymbol, false)
+            locals[name] = (funType, funSymbol, false, true)
             sema.bindings.bindIdentifier(id, symbol: funSymbol)
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
