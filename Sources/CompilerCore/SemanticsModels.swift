@@ -63,6 +63,7 @@ public struct FunctionSignature {
     public let valueParameterIsVararg: [Bool]
     public let typeParameterSymbols: [SymbolID]
     public let reifiedTypeParameterIndices: Set<Int>
+    public let typeParameterUpperBounds: [TypeID?]
 
     public init(
         receiverType: TypeID? = nil,
@@ -73,7 +74,8 @@ public struct FunctionSignature {
         valueParameterHasDefaultValues: [Bool] = [],
         valueParameterIsVararg: [Bool] = [],
         typeParameterSymbols: [SymbolID] = [],
-        reifiedTypeParameterIndices: Set<Int> = []
+        reifiedTypeParameterIndices: Set<Int> = [],
+        typeParameterUpperBounds: [TypeID?] = []
     ) {
         self.receiverType = receiverType
         self.parameterTypes = parameterTypes
@@ -84,6 +86,7 @@ public struct FunctionSignature {
         self.valueParameterIsVararg = valueParameterIsVararg
         self.typeParameterSymbols = typeParameterSymbols
         self.reifiedTypeParameterIndices = reifiedTypeParameterIndices
+        self.typeParameterUpperBounds = typeParameterUpperBounds
     }
 }
 
@@ -180,6 +183,14 @@ open class BaseScope: Scope {
         }
         locals[symbol.name] = bucket
     }
+
+    open func insertWithAlias(_ sym: SymbolID, asName: InternedString) {
+        var bucket = locals[asName, default: []]
+        if !bucket.contains(sym) {
+            bucket.append(sym)
+        }
+        locals[asName] = bucket
+    }
 }
 
 public final class FileScope: BaseScope {}
@@ -214,6 +225,7 @@ public final class SymbolTable {
     private var externalLinkNames: [SymbolID: String] = [:]
     private var typeAliasUnderlyingTypes: [SymbolID: TypeID] = [:]
     private var parentSymbols: [SymbolID: SymbolID] = [:]
+    private var typeParameterUpperBoundsMap: [SymbolID: TypeID] = [:]
 
     public init() {}
 
@@ -379,6 +391,14 @@ public final class SymbolTable {
 
     public func parentSymbol(for child: SymbolID) -> SymbolID? {
         parentSymbols[child]
+    }
+
+    public func setTypeParameterUpperBound(_ bound: TypeID, for symbol: SymbolID) {
+        typeParameterUpperBoundsMap[symbol] = bound
+    }
+
+    public func typeParameterUpperBound(for symbol: SymbolID) -> TypeID? {
+        typeParameterUpperBoundsMap[symbol]
     }
 }
 

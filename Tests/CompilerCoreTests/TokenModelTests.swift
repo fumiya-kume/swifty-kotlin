@@ -23,6 +23,40 @@ final class TokenModelTests: XCTestCase {
         XCTAssertEqual(interner.resolve(InternedString(rawValue: 100)), "")
     }
 
+    func testTriviaPieceBlockCommentAndShebang() {
+        let block = TriviaPiece.blockComment("/* comment */")
+        let shebang = TriviaPiece.shebang("#!/usr/bin/env kotlin")
+        XCTAssertNotEqual(block, shebang)
+        XCTAssertEqual(block, .blockComment("/* comment */"))
+        XCTAssertEqual(shebang, .shebang("#!/usr/bin/env kotlin"))
+    }
+
+    func testTokenKindMissingBacktickedIdentifierAndCharLiteral() {
+        let interner = StringInterner()
+        let range = makeRange(start: 0, end: 1)
+
+        let missing = Token(kind: .missing(expected: .keyword(.fun)), range: range)
+        XCTAssertEqual(missing.kind, .missing(expected: .keyword(.fun)))
+
+        let backticked = Token(kind: .backtickedIdentifier(interner.intern("myFun")), range: range)
+        guard case .backtickedIdentifier(let name) = backticked.kind else {
+            return XCTFail("Expected backtickedIdentifier")
+        }
+        XCTAssertEqual(interner.resolve(name), "myFun")
+
+        let charLit = Token(kind: .charLiteral(65), range: range)
+        guard case .charLiteral(let code) = charLit.kind else {
+            return XCTFail("Expected charLiteral")
+        }
+        XCTAssertEqual(code, 65)
+    }
+
+    func testInternedStringInvalidAndEquality() {
+        XCTAssertEqual(InternedString.invalid.rawValue, -1)
+        XCTAssertEqual(InternedString(), InternedString.invalid)
+        XCTAssertNotEqual(InternedString(rawValue: 0), InternedString(rawValue: 1))
+    }
+
     func testTokenInitializerHandlesDefaultsAndExplicitTrivia() {
         let range = makeRange(start: 0, end: 4)
         let defaultToken = Token(kind: .keyword(.fun), range: range)

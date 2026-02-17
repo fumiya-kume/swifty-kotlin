@@ -156,6 +156,16 @@ public final class OverloadResolver {
             return .rejected
         }
 
+        if let boundViolation = checkTypeParameterBounds(
+            signature: signature,
+            substitution: substitution,
+            typeVarBySymbol: typeVarBySymbol,
+            range: call.range,
+            ctx: ctx
+        ) {
+            return .constraintFailure(boundViolation)
+        }
+
         let instantiatedParameterTypes: [TypeID] = call.args.indices.compactMap { argIndex in
             guard let paramIndex = parameterMapping[argIndex],
                   paramIndex >= 0,
@@ -499,6 +509,38 @@ public final class OverloadResolver {
         case .supertype:
             return typeSystem.isSubtype(rhs, lhs)
         }
+    }
+
+    private func checkTypeParameterBounds(
+        signature: FunctionSignature,
+        substitution: [TypeVarID: TypeID],
+        typeVarBySymbol: [SymbolID: TypeVarID],
+        range: SourceRange,
+        ctx: SemaModule
+    ) -> Diagnostic? {
+        for (index, typeParamSymbol) in signature.typeParameterSymbols.enumerated() {
+            let upperBound: TypeID?
+            if index < signature.typeParameterUpperBounds.count {
+                upperBound = signature.typeParameterUpperBounds[index]
+            } else {
+                upperBound = ctx.symbols.typeParameterUpperBound(for: typeParamSymbol)
+            }
+            guard let bound = upperBound else { continue }
+            guard let typeVar = typeVarBySymbol[typeParamSymbol],
+                  let substitutedType = substitution[typeVar] else {
+                continue
+            }
+            if !ctx.types.isSubtype(substitutedType, bound) {
+                return Diagnostic(
+                    severity: .error,
+                    code: "KSWIFTK-SEMA-0030",
+                    message: "Type argument does not satisfy upper bound constraint.",
+                    primaryRange: range,
+                    secondaryRanges: []
+                )
+            }
+        }
+        return nil
     }
 
     private func pickMostSpecific(

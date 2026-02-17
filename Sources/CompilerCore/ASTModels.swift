@@ -79,6 +79,7 @@ public struct ASTFile {
     public let packageFQName: [InternedString]
     public let imports: [ImportDecl]
     public let topLevelDecls: [DeclID]
+    public let scriptBody: [ExprID]
 }
 
 public enum ConstructorDelegationKind: Equatable {
@@ -364,25 +365,29 @@ public struct EnumEntryDecl {
 public struct ImportDecl {
     public let range: SourceRange
     public let path: [InternedString]
+    public let alias: InternedString?
 }
 
 public struct TypeParamDecl {
     public let name: InternedString
     public let variance: TypeVariance
     public let isReified: Bool
+    public let upperBound: TypeRefID?
 
     public init(
         name: InternedString,
         variance: TypeVariance = .invariant,
-        isReified: Bool = false
+        isReified: Bool = false,
+        upperBound: TypeRefID? = nil
     ) {
         self.name = name
         self.variance = variance
         self.isReified = isReified
+        self.upperBound = upperBound
     }
 }
 
-public struct ValueParamDecl {
+public struct ValueParamDecl: Equatable {
     public let name: InternedString
     public let type: TypeRefID?
     public let hasDefaultValue: Bool
@@ -486,6 +491,11 @@ public struct CatchClause: Equatable {
     }
 }
 
+public enum StringTemplatePart: Equatable {
+    case literal(InternedString)
+    case expression(ExprID)
+}
+
 public enum Expr: Equatable {
     case intLiteral(Int64, SourceRange)
     case longLiteral(Int64, SourceRange)
@@ -494,6 +504,7 @@ public enum Expr: Equatable {
     case charLiteral(UInt32, SourceRange)
     case boolLiteral(Bool, SourceRange)
     case stringLiteral(InternedString, SourceRange)
+    case stringTemplate(parts: [StringTemplatePart], range: SourceRange)
     case nameRef(InternedString, SourceRange)
     case forExpr(loopVariable: InternedString?, iterable: ExprID, body: ExprID, range: SourceRange)
     case whileExpr(condition: ExprID, body: ExprID, range: SourceRange)
@@ -518,6 +529,7 @@ public enum Expr: Equatable {
     case safeMemberCall(receiver: ExprID, callee: InternedString, typeArgs: [TypeRefID], args: [CallArgument], range: SourceRange)
     case compoundAssign(op: CompoundAssignOp, name: InternedString, value: ExprID, range: SourceRange)
     case throwExpr(value: ExprID, range: SourceRange)
+    case localFunDecl(name: InternedString, valueParams: [ValueParamDecl], returnType: TypeRefID?, body: FunctionBody, range: SourceRange)
 }
 
 public final class ASTArena {
@@ -594,7 +606,9 @@ public final class ASTArena {
              .nullAssert(_, let range),
              .safeMemberCall(_, _, _, _, let range),
              .compoundAssign(_, _, _, let range),
-             .throwExpr(_, let range):
+             .stringTemplate(_, let range),
+             .throwExpr(_, let range),
+             .localFunDecl(_, _, _, _, let range):
             return range
         }
     }

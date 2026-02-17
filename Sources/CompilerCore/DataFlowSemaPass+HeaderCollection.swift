@@ -168,7 +168,8 @@ extension DataFlowSemaPassPhase {
                         ast: ast,
                         symbols: symbols,
                         types: types,
-                        interner: interner
+                        interner: interner,
+                        diagnostics: diagnostics
                     ) ?? anyType
                     paramTypes.append(resolvedType)
                     paramSymbols.append(paramSymbol)
@@ -217,7 +218,8 @@ extension DataFlowSemaPassPhase {
                         ast: ast,
                         symbols: symbols,
                         types: types,
-                        interner: interner
+                        interner: interner,
+                        diagnostics: diagnostics
                     ) ?? anyType
                     paramTypes.append(resolvedType)
                     paramSymbols.append(paramSymbol)
@@ -349,6 +351,21 @@ extension DataFlowSemaPassPhase {
                     reifiedIndices.insert(index)
                 }
             }
+            for typeParam in funDecl.typeParams {
+                if let boundRef = typeParam.upperBound,
+                   let typeParamSym = localTypeParameters[typeParam.name] {
+                    if let boundType = resolveTypeRef(
+                        boundRef,
+                        ast: ast,
+                        symbols: symbols,
+                        types: types,
+                        interner: interner,
+                        localTypeParameters: localTypeParameters
+                    ) {
+                        symbols.setTypeParameterUpperBound(boundType, for: typeParamSym)
+                    }
+                }
+            }
             if !reifiedIndices.isEmpty && !funDecl.isInline {
                 diagnostics.error(
                     "KSWIFTK-SEMA-0020",
@@ -362,7 +379,8 @@ extension DataFlowSemaPassPhase {
                 symbols: symbols,
                 types: types,
                 interner: interner,
-                localTypeParameters: localTypeParameters
+                localTypeParameters: localTypeParameters,
+                diagnostics: diagnostics
             )
             for valueParam in funDecl.valueParams {
                 let paramFQName = localNamespaceFQName + [valueParam.name]
@@ -380,7 +398,8 @@ extension DataFlowSemaPassPhase {
                     symbols: symbols,
                     types: types,
                     interner: interner,
-                    localTypeParameters: localTypeParameters
+                    localTypeParameters: localTypeParameters,
+                    diagnostics: diagnostics
                 ) ?? anyType
                 paramTypes.append(resolvedType)
                 paramSymbols.append(paramSymbol)
@@ -394,7 +413,8 @@ extension DataFlowSemaPassPhase {
                 symbols: symbols,
                 types: types,
                 interner: interner,
-                localTypeParameters: localTypeParameters
+                localTypeParameters: localTypeParameters,
+                diagnostics: diagnostics
             ) {
                 returnType = explicit
             } else {
@@ -405,6 +425,7 @@ extension DataFlowSemaPassPhase {
                     returnType = anyType
                 }
             }
+            let upperBounds: [TypeID?] = typeParameterSymbols.map { symbols.typeParameterUpperBound(for: $0) }
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: receiverType,
@@ -415,7 +436,8 @@ extension DataFlowSemaPassPhase {
                     valueParameterHasDefaultValues: paramHasDefaultValues,
                     valueParameterIsVararg: paramIsVararg,
                     typeParameterSymbols: typeParameterSymbols,
-                    reifiedTypeParameterIndices: reifiedIndices
+                    reifiedTypeParameterIndices: reifiedIndices,
+                    typeParameterUpperBounds: upperBounds
                 ),
                 for: symbol
             )
@@ -426,7 +448,8 @@ extension DataFlowSemaPassPhase {
                 ast: ast,
                 symbols: symbols,
                 types: types,
-                interner: interner
+                interner: interner,
+                diagnostics: diagnostics
             ) ?? types.nullableAnyType
             symbols.setPropertyType(resolvedType, for: symbol)
 
@@ -436,7 +459,8 @@ extension DataFlowSemaPassPhase {
                 ast: ast,
                 symbols: symbols,
                 types: types,
-                interner: interner
+                interner: interner,
+                diagnostics: diagnostics
             ) {
                 symbols.setTypeAliasUnderlyingType(resolvedUnderlying, for: symbol)
             }
@@ -517,6 +541,21 @@ extension DataFlowSemaPassPhase {
                     reifiedIndices.insert(index)
                 }
             }
+            for typeParam in funDecl.typeParams {
+                if let boundRef = typeParam.upperBound,
+                   let typeParamSym = localTypeParameters[typeParam.name] {
+                    if let boundType = resolveTypeRef(
+                        boundRef,
+                        ast: ast,
+                        symbols: symbols,
+                        types: types,
+                        interner: interner,
+                        localTypeParameters: localTypeParameters
+                    ) {
+                        symbols.setTypeParameterUpperBound(boundType, for: typeParamSym)
+                    }
+                }
+            }
 
             if !reifiedIndices.isEmpty && !funDecl.isInline {
                 diagnostics.error(
@@ -542,7 +581,8 @@ extension DataFlowSemaPassPhase {
                     symbols: symbols,
                     types: types,
                     interner: interner,
-                    localTypeParameters: localTypeParameters
+                    localTypeParameters: localTypeParameters,
+                    diagnostics: diagnostics
                 ) ?? anyType
                 paramTypes.append(resolvedType)
                 paramSymbols.append(paramSymbol)
@@ -557,7 +597,8 @@ extension DataFlowSemaPassPhase {
                 symbols: symbols,
                 types: types,
                 interner: interner,
-                localTypeParameters: localTypeParameters
+                localTypeParameters: localTypeParameters,
+                diagnostics: diagnostics
             ) {
                 returnType = explicit
             } else {
@@ -569,6 +610,7 @@ extension DataFlowSemaPassPhase {
                 }
             }
 
+            let memberUpperBounds: [TypeID?] = typeParameterSymbols.map { symbols.typeParameterUpperBound(for: $0) }
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: ownerType,
@@ -579,7 +621,8 @@ extension DataFlowSemaPassPhase {
                     valueParameterHasDefaultValues: paramHasDefaultValues,
                     valueParameterIsVararg: paramIsVararg,
                     typeParameterSymbols: typeParameterSymbols,
-                    reifiedTypeParameterIndices: reifiedIndices
+                    reifiedTypeParameterIndices: reifiedIndices,
+                    typeParameterUpperBounds: memberUpperBounds
                 ),
                 for: memberSymbol
             )
@@ -619,7 +662,8 @@ extension DataFlowSemaPassPhase {
                 ast: ast,
                 symbols: symbols,
                 types: types,
-                interner: interner
+                interner: interner,
+                diagnostics: diagnostics
             ) ?? types.nullableAnyType
             symbols.setPropertyType(resolvedType, for: memberSymbol)
         }
@@ -833,7 +877,8 @@ extension DataFlowSemaPassPhase {
                 ast: ast,
                 symbols: symbols,
                 types: types,
-                interner: interner
+                interner: interner,
+                diagnostics: diagnostics
             ) {
                 symbols.setTypeAliasUnderlyingType(resolvedUnderlying, for: aliasSymbol)
             }

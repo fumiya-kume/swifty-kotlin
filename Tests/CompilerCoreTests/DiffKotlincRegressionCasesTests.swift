@@ -20,7 +20,10 @@ final class DiffKotlincRegressionCasesTests: XCTestCase {
         for file in files {
             let contents = try String(contentsOf: file, encoding: .utf8)
             XCTAssertFalse(contents.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, "Empty case file: \(file.lastPathComponent)")
-            XCTAssertTrue(contents.contains("fun "), "Regression case should include a function: \(file.lastPathComponent)")
+            let isScript = file.lastPathComponent.hasPrefix("script_")
+            if !isScript {
+                XCTAssertTrue(contents.contains("fun "), "Regression case should include a function: \(file.lastPathComponent)")
+            }
         }
     }
 }

@@ -53,7 +53,16 @@ extension TypeCheckSemaPassPhase {
             sema.bindings.bindExprType(id, type: stringType)
             return stringType
 
-        case .nameRef(let name, let range):
+        case .stringTemplate(let parts, _):
+            for part in parts {
+                if case .expression(let exprID) = part {
+                    _ = inferExpr(exprID, ctx: ctx, locals: &locals)
+                }
+            }
+            sema.bindings.bindExprType(id, type: stringType)
+            return stringType
+
+        case .nameRef(let name, let nameRange):
             if interner.resolve(name) == "null" {
                 sema.bindings.bindExprType(id, type: sema.types.nullableAnyType)
                 return sema.types.nullableAnyType
@@ -76,6 +85,15 @@ extension TypeCheckSemaPassPhase {
                 return local.type
             }
             let candidates = scope.lookup(name).compactMap { sema.symbols.symbol($0) }
+            if candidates.isEmpty {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0022",
+                    "Unresolved reference '\(interner.resolve(name))'.",
+                    range: nameRange
+                )
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
             if let first = candidates.first {
                 sema.bindings.bindIdentifier(id, symbol: first.id)
             }
@@ -492,11 +510,16 @@ extension TypeCheckSemaPassPhase {
                 calleeName = nil
             }
 
-            let candidates: [SymbolID]
+            var candidates: [SymbolID]
             if let calleeName {
                 candidates = scope.lookup(calleeName).filter { candidate in
                     guard let symbol = sema.symbols.symbol(candidate) else { return false }
                     return symbol.kind == .function || symbol.kind == .constructor
+                }
+                if candidates.isEmpty, let local = locals[calleeName] {
+                    if let sym = sema.symbols.symbol(local.symbol), sym.kind == .function {
+                        candidates = [local.symbol]
+                    }
                 }
             } else {
                 candidates = []
@@ -512,6 +535,18 @@ extension TypeCheckSemaPassPhase {
                     sema.bindings.bindExprType(id, type: builtinType)
                     return builtinType
                 }
+                if let calleeName,
+                   interner.resolve(calleeName) == "println",
+                   args.count <= 1 {
+                    sema.bindings.bindExprType(id, type: sema.types.unitType)
+                    return sema.types.unitType
+                }
+                let nameStr = calleeName.map { interner.resolve($0) } ?? "<unknown>"
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0023",
+                    "Unresolved function '\(nameStr)'.",
+                    range: range
+                )
                 sema.bindings.bindExprType(id, type: sema.types.errorType)
                 return sema.types.errorType
             }
@@ -578,6 +613,11 @@ extension TypeCheckSemaPassPhase {
                 return signature.receiverType != nil
             }
             if candidates.isEmpty {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0024",
+                    "Unresolved member function '\(interner.resolve(calleeName))'.",
+                    range: range
+                )
                 sema.bindings.bindExprType(id, type: sema.types.errorType)
                 return sema.types.errorType
             }
@@ -656,7 +696,7 @@ extension TypeCheckSemaPassPhase {
 
         case .asCast(let exprID, let typeRefID, let isSafe, _):
             _ = inferExpr(exprID, ctx: ctx, locals: &locals)
-            let targetType = resolveTypeRef(typeRefID, ast: ast, sema: sema, interner: interner)
+            let targetType = resolveTypeRef(typeRefID, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
             let type: TypeID
             if isSafe {
                 type = makeNullable(targetType, types: sema.types)
@@ -891,6 +931,89 @@ extension TypeCheckSemaPassPhase {
             _ = inferExpr(value, ctx: ctx, locals: &locals, expectedType: nil)
             sema.bindings.bindExprType(id, type: sema.types.nothingType)
             return sema.types.nothingType
+
+        case .localFunDecl(let name, let valueParams, let returnTypeRef, let body, let range):
+            var parameterTypes: [TypeID] = []
+            var paramSymbols: [SymbolID] = []
+            for param in valueParams {
+                let paramType: TypeID
+                if let typeRefID = param.type {
+                    paramType = resolveTypeRef(typeRefID, ast: ast, sema: sema, interner: interner)
+                } else {
+                    paramType = sema.types.anyType
+                }
+                parameterTypes.append(paramType)
+                let paramSymbol = sema.symbols.define(
+                    kind: .valueParameter,
+                    name: param.name,
+                    fqName: [
+                        ctx.interner.intern("__localfun_\(id.rawValue)"),
+                        param.name
+                    ],
+                    declSite: range,
+                    visibility: .private,
+                    flags: []
+                )
+                sema.symbols.setPropertyType(paramType, for: paramSymbol)
+                paramSymbols.append(paramSymbol)
+            }
+
+            let resolvedReturnType: TypeID
+            if let returnTypeRef {
+                resolvedReturnType = resolveTypeRef(returnTypeRef, ast: ast, sema: sema, interner: interner)
+            } else {
+                resolvedReturnType = sema.types.unitType
+            }
+
+            let funSymbol = sema.symbols.define(
+                kind: .function,
+                name: name,
+                fqName: [
+                    ctx.interner.intern("__localfun_\(id.rawValue)"),
+                    name
+                ],
+                declSite: range,
+                visibility: .private,
+                flags: []
+            )
+
+            let signature = FunctionSignature(
+                parameterTypes: parameterTypes,
+                returnType: resolvedReturnType,
+                valueParameterSymbols: paramSymbols,
+                valueParameterHasDefaultValues: valueParams.map { $0.hasDefaultValue },
+                valueParameterIsVararg: valueParams.map { $0.isVararg }
+            )
+            sema.symbols.setFunctionSignature(signature, for: funSymbol)
+
+            let funType = sema.types.make(.functionType(FunctionType(
+                params: parameterTypes,
+                returnType: resolvedReturnType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+
+            var bodyLocals = locals
+            for (i, param) in valueParams.enumerated() {
+                bodyLocals[param.name] = (parameterTypes[i], paramSymbols[i], false)
+            }
+            bodyLocals[name] = (funType, funSymbol, false)
+            switch body {
+            case .block(let exprs, _):
+                for (index, expr) in exprs.enumerated() {
+                    let isLast = index == exprs.count - 1
+                    let expected = isLast ? resolvedReturnType : nil
+                    _ = inferExpr(expr, ctx: ctx, locals: &bodyLocals, expectedType: expected)
+                }
+            case .expr(let exprID, _):
+                _ = inferExpr(exprID, ctx: ctx, locals: &bodyLocals, expectedType: resolvedReturnType)
+            case .unit:
+                break
+            }
+            locals[name] = (funType, funSymbol, false)
+            sema.bindings.bindIdentifier(id, symbol: funSymbol)
+            sema.bindings.bindExprType(id, type: sema.types.unitType)
+            return sema.types.unitType
         }
     }
 
@@ -1042,15 +1165,16 @@ extension TypeCheckSemaPassPhase {
         _ typeRefID: TypeRefID,
         ast: ASTModule,
         sema: SemaModule,
-        interner: StringInterner
+        interner: StringInterner,
+        diagnostics: DiagnosticEngine? = nil
     ) -> TypeID {
         guard let typeRef = ast.arena.typeRef(typeRefID) else {
-            return sema.types.anyType
+            return sema.types.errorType
         }
         switch typeRef {
         case .named(let path, let argRefs, let nullable):
             guard let firstName = path.first else {
-                return sema.types.anyType
+                return sema.types.errorType
             }
             let name = interner.resolve(firstName)
             let nullability: Nullability = nullable ? .nullable : .nonNull
@@ -1087,7 +1211,8 @@ extension TypeCheckSemaPassPhase {
                 }
                 if let symbolID = candidates.first {
                     let resolvedArgs = resolveTypeArgRefsForTypeCheck(
-                        argRefs, ast: ast, sema: sema, interner: interner
+                        argRefs, ast: ast, sema: sema, interner: interner,
+                        diagnostics: diagnostics
                     )
                     return sema.types.make(.classType(ClassType(
                         classSymbol: symbolID,
@@ -1095,13 +1220,18 @@ extension TypeCheckSemaPassPhase {
                         nullability: nullability
                     )))
                 }
-                return nullable ? sema.types.nullableAnyType : sema.types.anyType
+                diagnostics?.error(
+                    "KSWIFTK-SEMA-0025",
+                    "Unresolved type '\(name)'.",
+                    range: nil
+                )
+                return sema.types.errorType
             }
 
         case .functionType(let paramRefIDs, let returnRefID, let isSuspend, let nullable):
             let nullability: Nullability = nullable ? .nullable : .nonNull
-            let paramTypes = paramRefIDs.map { resolveTypeRef($0, ast: ast, sema: sema, interner: interner) }
-            let returnType = resolveTypeRef(returnRefID, ast: ast, sema: sema, interner: interner)
+            let paramTypes = paramRefIDs.map { resolveTypeRef($0, ast: ast, sema: sema, interner: interner, diagnostics: diagnostics) }
+            let returnType = resolveTypeRef(returnRefID, ast: ast, sema: sema, interner: interner, diagnostics: diagnostics)
             return sema.types.make(.functionType(FunctionType(
                 params: paramTypes,
                 returnType: returnType,
@@ -1115,16 +1245,17 @@ extension TypeCheckSemaPassPhase {
         _ argRefs: [TypeArgRef],
         ast: ASTModule,
         sema: SemaModule,
-        interner: StringInterner
+        interner: StringInterner,
+        diagnostics: DiagnosticEngine? = nil
     ) -> [TypeArg] {
         argRefs.map { argRef in
             switch argRef {
             case .invariant(let innerRef):
-                return .invariant(resolveTypeRef(innerRef, ast: ast, sema: sema, interner: interner))
+                return .invariant(resolveTypeRef(innerRef, ast: ast, sema: sema, interner: interner, diagnostics: diagnostics))
             case .out(let innerRef):
-                return .out(resolveTypeRef(innerRef, ast: ast, sema: sema, interner: interner))
+                return .out(resolveTypeRef(innerRef, ast: ast, sema: sema, interner: interner, diagnostics: diagnostics))
             case .in(let innerRef):
-                return .in(resolveTypeRef(innerRef, ast: ast, sema: sema, interner: interner))
+                return .in(resolveTypeRef(innerRef, ast: ast, sema: sema, interner: interner, diagnostics: diagnostics))
             case .star:
                 return .star
             }
