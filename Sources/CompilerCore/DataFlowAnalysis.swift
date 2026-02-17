@@ -245,7 +245,7 @@ public final class DataFlowAnalyzer {
         var falseVars = base.variables
         falseVars[symbol] = VariableFlowState(
             possibleTypes: [falseType],
-            nullability: base.variables[symbol]?.nullability ?? .nonNull,
+            nullability: base.variables[symbol]?.nullability ?? (makeTypeNonNullable(falseType, types: sema.types) != falseType ? .nullable : .nonNull),
             isStable: true
         )
         return ConditionBranch(
