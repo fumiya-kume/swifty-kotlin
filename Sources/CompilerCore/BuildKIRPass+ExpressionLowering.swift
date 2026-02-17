@@ -1098,7 +1098,9 @@ extension BuildKIRPhase {
             for _ in branches {
                 nextBranchLabels.append(makeLoopLabel())
             }
-            let elseLabel = makeLoopLabel()
+
+            let falseID = arena.appendExpr(.boolLiteral(false), type: boolType)
+            instructions.append(.constValue(result: falseID, value: .boolLiteral(false)))
 
             for (index, branch) in branches.enumerated() {
                 if let conditionExprID = branch.condition {
@@ -1118,8 +1120,6 @@ extension BuildKIRPhase {
                         rhs: conditionValueID,
                         result: matchesID
                     ))
-                    let falseID = arena.appendExpr(.boolLiteral(false), type: boolType)
-                    instructions.append(.constValue(result: falseID, value: .boolLiteral(false)))
                     instructions.append(.jumpIfEqual(lhs: matchesID, rhs: falseID, target: nextBranchLabels[index]))
                 }
 
@@ -1137,7 +1137,6 @@ extension BuildKIRPhase {
                 instructions.append(.label(nextBranchLabels[index]))
             }
 
-            instructions.append(.label(elseLabel))
             if let elseExpr {
                 let elseID = lowerExpr(
                     elseExpr,
