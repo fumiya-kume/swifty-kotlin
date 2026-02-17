@@ -176,7 +176,7 @@ public final class LLVMBackend {
     public static func cFunctionSymbol(for function: KIRFunction, interner: StringInterner) -> String {
         let rawName = interner.resolve(function.name)
         let safeName = sanitizeForCSymbol(rawName)
-        let suffix = max(0, function.symbol.rawValue)
+        let suffix = abs(function.symbol.rawValue)
         return "kk_fn_\(safeName)_\(suffix)"
     }
 
