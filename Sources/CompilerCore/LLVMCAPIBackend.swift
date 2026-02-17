@@ -348,7 +348,7 @@ private struct NativeEmitter {
         let isOptimized = optLevel != .O0
         guard bindings.diBuilderCreateCompileUnit(
             diBuilder,
-            lang: 12,
+            lang: 11,
             file: diFile,
             producer: "kswiftk",
             isOptimized: isOptimized
