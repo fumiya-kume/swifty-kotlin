@@ -422,7 +422,9 @@ public func kk_array_set(_ arrayRaw: Int, _ index: Int, _ value: Int, _ outThrow
 
 @_cdecl("kk_vararg_spread_concat")
 public func kk_vararg_spread_concat(_ pairsArrayRaw: Int, _ pairCount: Int) -> Int {
-    guard let pairs = runtimeArrayBox(from: pairsArrayRaw) else { return kk_array_new(0) }
+    guard let pairs = runtimeArrayBox(from: pairsArrayRaw),
+          pairCount > 0,
+          pairs.elements.count >= pairCount * 2 else { return kk_array_new(0) }
     var elements: [Int] = []
     for i in 0..<pairCount {
         let marker = pairs.elements[i * 2]

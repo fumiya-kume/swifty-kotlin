@@ -3477,7 +3477,7 @@ final class BackendPipelineCoverageTests: XCTestCase {
         }
     }
 
-    func testVarargWithDefaultAndNamedArgsCombination() throws {
+    func testVarargWithDefaultParamPacksCorrectly() throws {
         let source = """
         fun greet(prefix: String = "Hi", vararg names: Int): Int = 0
         fun main() = greet("Hello", 1, 2)
