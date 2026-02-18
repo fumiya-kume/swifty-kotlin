@@ -31,10 +31,10 @@ extension BuildASTPhase {
     }
 
     final class ExpressionParser {
-        private let tokens: [Token]
-        private let interner: StringInterner
-        private let astArena: ASTArena
-        private var index: Int = 0
+        internal let tokens: [Token]
+        internal let interner: StringInterner
+        internal let astArena: ASTArena
+        internal var index: Int = 0
 
         init(tokens: [Token], interner: StringInterner, astArena: ASTArena) {
             self.tokens = tokens
@@ -50,7 +50,7 @@ extension BuildASTPhase {
             parseExpression(minPrecedence: 0)
         }
 
-        private func parseExpression(minPrecedence: Int) -> ExprID? {
+        internal func parseExpression(minPrecedence: Int) -> ExprID? {
             guard var lhs = parsePrefixUnary() else {
                 return nil
             }
@@ -320,7 +320,7 @@ extension BuildASTPhase {
             }
         }
 
-        private func tokenText(_ token: Token) -> InternedString? {
+        internal func tokenText(_ token: Token) -> InternedString? {
             switch token.kind {
             case .identifier(let name), .backtickedIdentifier(let name):
                 return name
@@ -550,528 +550,7 @@ extension BuildASTPhase {
             return astArena.appendExpr(.stringTemplate(parts: parts, range: range))
         }
 
-        private func parseWhenExpression() -> ExprID? {
-            guard let whenToken = consume() else {
-                return nil
-            }
-            var subject: ExprID?
-            if matches(.symbol(.lParen)) {
-                _ = consume()
-                subject = parseExpression(minPrecedence: 0)
-                _ = consumeIf(.symbol(.rParen))
-            }
-            guard consumeIf(.symbol(.lBrace)) != nil else {
-                return nil
-            }
-
-            var branches: [WhenBranch] = []
-            var elseExpr: ExprID?
-            var end = whenToken.range.end
-
-            while let token = current() {
-                if token.kind == .symbol(.rBrace) {
-                    end = token.range.end
-                    _ = consume()
-                    break
-                }
-
-                let branchStart = token.range.start
-                var condition: ExprID?
-                if token.kind == .keyword(.else) {
-                    _ = consume()
-                } else {
-                    condition = parseExpression(minPrecedence: 0)
-                }
-
-                _ = consumeIf(.symbol(.arrow))
-                let body = parseExpression(minPrecedence: 0)
-                while matches(.symbol(.semicolon)) || matches(.symbol(.comma)) {
-                    _ = consume()
-                }
-
-                if let body {
-                    let branchRange = SourceRange(start: branchStart, end: astArena.exprRange(body)?.end ?? branchStart)
-                    let branch = WhenBranch(condition: condition, body: body, range: branchRange)
-                    if condition == nil {
-                        elseExpr = body
-                    } else {
-                        branches.append(branch)
-                    }
-                    end = branchRange.end
-                }
-            }
-
-            let range = SourceRange(start: whenToken.range.start, end: end)
-            return astArena.appendExpr(.whenExpr(subject: subject, branches: branches, elseExpr: elseExpr, range: range))
-        }
-
-        private func parseReturnExpression() -> ExprID? {
-            guard let returnToken = consume() else {
-                return nil
-            }
-            let value = parseExpression(minPrecedence: 0)
-            let end = value.flatMap { astArena.exprRange($0)?.end } ?? returnToken.range.end
-            let range = SourceRange(start: returnToken.range.start, end: end)
-            return astArena.appendExpr(.returnExpr(value: value, range: range))
-        }
-
-        private func parseThrowExpression() -> ExprID? {
-            guard let throwToken = consume() else {
-                return nil
-            }
-            guard let value = parseExpression(minPrecedence: 0) else {
-                return nil
-            }
-            let end = astArena.exprRange(value)?.end ?? throwToken.range.end
-            let range = SourceRange(start: throwToken.range.start, end: end)
-            return astArena.appendExpr(.throwExpr(value: value, range: range))
-        }
-
-        private func parseForExpression() -> ExprID? {
-            guard let forToken = consume() else {
-                return nil
-            }
-            guard consumeIf(.symbol(.lParen)) != nil else {
-                return nil
-            }
-
-            var loopVariable: InternedString?
-            if let token = current(),
-               token.kind != .keyword(.in),
-               let name = tokenText(token) {
-                loopVariable = name
-                _ = consume()
-            }
-
-            while let token = current(),
-                  token.kind != .keyword(.in),
-                  token.kind != .symbol(.rParen) {
-                _ = consume()
-            }
-            _ = consumeIf(.keyword(.in))
-
-            guard let iterable = parseExpression(minPrecedence: 0) else {
-                return nil
-            }
-            _ = consumeIf(.symbol(.rParen))
-
-            guard let body = parseExpression(minPrecedence: 0) else {
-                return nil
-            }
-            let end = astArena.exprRange(body)?.end ?? forToken.range.end
-            let range = SourceRange(start: forToken.range.start, end: end)
-            return astArena.appendExpr(.forExpr(loopVariable: loopVariable, iterable: iterable, body: body, range: range))
-        }
-
-        private func parseWhileExpression() -> ExprID? {
-            guard let whileToken = consume() else {
-                return nil
-            }
-            guard consumeIf(.symbol(.lParen)) != nil else {
-                return nil
-            }
-            guard let condition = parseExpression(minPrecedence: 0) else {
-                return nil
-            }
-            _ = consumeIf(.symbol(.rParen))
-            guard let body = parseExpression(minPrecedence: 0) else {
-                return nil
-            }
-            let end = astArena.exprRange(body)?.end ?? whileToken.range.end
-            let range = SourceRange(start: whileToken.range.start, end: end)
-            return astArena.appendExpr(.whileExpr(condition: condition, body: body, range: range))
-        }
-
-        private func parseDoWhileExpression() -> ExprID? {
-            guard let doToken = consume() else {
-                return nil
-            }
-            guard let body = parseExpression(minPrecedence: 0) else {
-                return nil
-            }
-            guard matches(.keyword(.while)),
-                  consume() != nil,
-                  consumeIf(.symbol(.lParen)) != nil,
-                  let condition = parseExpression(minPrecedence: 0) else {
-                return nil
-            }
-            _ = consumeIf(.symbol(.rParen))
-            let end = astArena.exprRange(condition)?.end ?? astArena.exprRange(body)?.end ?? doToken.range.end
-            let range = SourceRange(start: doToken.range.start, end: end)
-            return astArena.appendExpr(.doWhileExpr(body: body, condition: condition, range: range))
-        }
-
-        private func parseIfExpression() -> ExprID? {
-            guard let ifToken = consume() else {
-                return nil
-            }
-            guard consumeIf(.symbol(.lParen)) != nil else {
-                return nil
-            }
-            guard let condition = parseExpression(minPrecedence: 0) else {
-                return nil
-            }
-            _ = consumeIf(.symbol(.rParen))
-
-            guard let thenExpr = parseExpression(minPrecedence: 0) else {
-                return nil
-            }
-
-            var elseExpr: ExprID?
-            if matches(.keyword(.else)) {
-                _ = consume()
-                elseExpr = parseExpression(minPrecedence: 0)
-            }
-
-            let end = elseExpr
-                .flatMap { astArena.exprRange($0)?.end }
-                ?? astArena.exprRange(thenExpr)?.end
-                ?? ifToken.range.end
-            let range = SourceRange(start: ifToken.range.start, end: end)
-            return astArena.appendExpr(.ifExpr(condition: condition, thenExpr: thenExpr, elseExpr: elseExpr, range: range))
-        }
-
-        private func parseTryExpression() -> ExprID? {
-            guard let tryToken = consume() else {
-                return nil
-            }
-            guard let bodyExpr = parseExpression(minPrecedence: 0) else {
-                return nil
-            }
-
-            var catchClauses: [CatchClause] = []
-            while matches(.keyword(.catch)) {
-                let catchToken = consume()!
-                let (paramName, paramTypeName) = parseCatchParameter()
-                if let catchExpr = parseExpression(minPrecedence: 0) {
-                    let clauseEnd = astArena.exprRange(catchExpr)?.end ?? catchToken.range.end
-                    let clauseRange = SourceRange(start: catchToken.range.start, end: clauseEnd)
-                    catchClauses.append(CatchClause(paramName: paramName, paramTypeName: paramTypeName, body: catchExpr, range: clauseRange))
-                } else {
-                    break
-                }
-            }
-
-            var finallyExpr: ExprID?
-            if matches(.keyword(.finally)) {
-                _ = consume()
-                finallyExpr = parseExpression(minPrecedence: 0)
-            }
-
-            let tailEnd = finallyExpr
-                .flatMap { astArena.exprRange($0)?.end }
-                ?? catchClauses.last.flatMap { astArena.exprRange($0.body)?.end }
-                ?? astArena.exprRange(bodyExpr)?.end
-                ?? tryToken.range.end
-            let range = SourceRange(start: tryToken.range.start, end: tailEnd)
-            return astArena.appendExpr(.tryExpr(body: bodyExpr, catchClauses: catchClauses, finallyExpr: finallyExpr, range: range))
-        }
-
-        private func parseCatchParameter() -> (paramName: InternedString?, paramTypeName: InternedString?) {
-            guard matches(.symbol(.lParen)) else {
-                return (nil, nil)
-            }
-            _ = consume()
-            var paramName: InternedString?
-            var paramTypeName: InternedString?
-            if case .identifier(let name) = current()?.kind {
-                paramName = name
-                _ = consume()
-                if matches(.symbol(.colon)) {
-                    _ = consume()
-                    if case .identifier(let typeName) = current()?.kind {
-                        paramTypeName = typeName
-                        _ = consume()
-                    }
-                }
-            }
-            var depth = 1
-            while let token = current(), depth > 0 {
-                _ = consume()
-                switch token.kind {
-                case .symbol(.lParen):
-                    depth += 1
-                case .symbol(.rParen):
-                    depth -= 1
-                default:
-                    continue
-                }
-            }
-            return (paramName, paramTypeName)
-        }
-
-        private func parseBlockExpression() -> ExprID? {
-            guard let openBrace = consume() else {
-                return nil
-            }
-            var depth = 1
-            var blockTokens: [Token] = []
-            var end = openBrace.range.end
-
-            while let token = current() {
-                _ = consume()
-                switch token.kind {
-                case .symbol(.lBrace):
-                    depth += 1
-                    blockTokens.append(token)
-                case .symbol(.rBrace):
-                    depth -= 1
-                    if depth == 0 {
-                        end = token.range.end
-                        break
-                    }
-                    blockTokens.append(token)
-                default:
-                    blockTokens.append(token)
-                }
-                if depth == 0 {
-                    break
-                }
-            }
-
-            let statementGroups = splitBlockTokensIntoStatements(blockTokens)
-            if statementGroups.isEmpty {
-                let range = SourceRange(start: openBrace.range.start, end: end)
-                return astArena.appendExpr(.blockExpr(statements: [], trailingExpr: nil, range: range))
-            }
-            if statementGroups.count == 1 {
-                let tokens = statementGroups[0]
-                if !isLocalDeclarationTokens(tokens) && !isLocalAssignmentTokens(tokens) {
-                    if let nestedExpr = ExpressionParser(tokens: tokens, interner: interner, astArena: astArena).parse() {
-                        return nestedExpr
-                    }
-                }
-            }
-
-            var statements: [ExprID] = []
-            for group in statementGroups {
-                guard !group.isEmpty else { continue }
-                if let localDecl = parseLocalDeclFromTokens(group) {
-                    statements.append(localDecl)
-                } else if let localAssign = parseLocalAssignFromTokens(group) {
-                    statements.append(localAssign)
-                } else if let expr = ExpressionParser(tokens: group, interner: interner, astArena: astArena).parse() {
-                    statements.append(expr)
-                }
-            }
-
-            var trailingExpr: ExprID?
-            if let lastID = statements.last, let lastExpr = astArena.expr(lastID) {
-                switch lastExpr {
-                case .localDecl, .localAssign, .compoundAssign, .localFunDecl:
-                    break
-                default:
-                    trailingExpr = statements.removeLast()
-                }
-            }
-
-            let range = SourceRange(start: openBrace.range.start, end: end)
-            return astArena.appendExpr(.blockExpr(statements: statements, trailingExpr: trailingExpr, range: range))
-        }
-
-        private func splitBlockTokensIntoStatements(_ tokens: [Token]) -> [[Token]] {
-            var groups: [[Token]] = []
-            var current: [Token] = []
-            var parenDepth = 0
-            var bracketDepth = 0
-            var braceDepth = 0
-            for token in tokens {
-                let isTopLevel = parenDepth == 0 && bracketDepth == 0 && braceDepth == 0
-                if isTopLevel {
-                    if token.kind == .symbol(.semicolon) {
-                        if !current.isEmpty {
-                            groups.append(current)
-                            current = []
-                        }
-                        continue
-                    }
-                    let hasNewline = token.leadingTrivia.contains { piece in
-                        if case .newline = piece { return true }
-                        return false
-                    }
-                    if hasNewline && !current.isEmpty {
-                        let lastIsContinuation = current.last.map { isBinaryOperatorTokenKind($0.kind) } ?? false
-                        let nextIsContinuation = isBinaryOperatorTokenKind(token.kind)
-                        if !lastIsContinuation && !nextIsContinuation {
-                            groups.append(current)
-                            current = []
-                        }
-                    }
-                }
-                switch token.kind {
-                case .symbol(.lParen):    parenDepth += 1
-                case .symbol(.rParen):    parenDepth = max(0, parenDepth - 1)
-                case .symbol(.lBracket):  bracketDepth += 1
-                case .symbol(.rBracket):  bracketDepth = max(0, bracketDepth - 1)
-                case .symbol(.lBrace):    braceDepth += 1
-                case .symbol(.rBrace):    braceDepth = max(0, braceDepth - 1)
-                default: break
-                }
-                current.append(token)
-            }
-            if !current.isEmpty {
-                groups.append(current)
-            }
-            return groups
-        }
-
-        private func isBinaryOperatorTokenKind(_ kind: TokenKind) -> Bool {
-            switch kind {
-            case .symbol(.plus), .symbol(.minus), .symbol(.star), .symbol(.slash), .symbol(.percent),
-                 .symbol(.ampAmp), .symbol(.barBar),
-                 .symbol(.equalEqual), .symbol(.bangEqual),
-                 .symbol(.lessThan), .symbol(.lessOrEqual), .symbol(.greaterThan), .symbol(.greaterOrEqual),
-                 .symbol(.assign), .symbol(.plusAssign), .symbol(.minusAssign),
-                 .symbol(.starAssign), .symbol(.slashAssign), .symbol(.percentAssign),
-                 .symbol(.dotDot), .symbol(.dotDotLt),
-                 .symbol(.questionQuestion), .symbol(.questionColon),
-                 .symbol(.dot), .symbol(.questionDot),
-                 .symbol(.arrow), .symbol(.fatArrow),
-                 .keyword(.as), .keyword(.is), .keyword(.in),
-                 .keyword(.else), .keyword(.catch), .keyword(.finally):
-                return true
-            default:
-                return false
-            }
-        }
-
-        private func isLocalDeclarationTokens(_ tokens: [Token]) -> Bool {
-            guard !tokens.isEmpty else { return false }
-            var i = 0
-            while i < tokens.count {
-                if case .keyword(let kw) = tokens[i].kind,
-                   KotlinParser.isDeclarationModifierKeyword(kw) {
-                    i += 1
-                    continue
-                }
-                break
-            }
-            guard i < tokens.count else { return false }
-            switch tokens[i].kind {
-            case .keyword(.val), .keyword(.var):
-                return true
-            default:
-                return false
-            }
-        }
-
-        private func isLocalAssignmentTokens(_ tokens: [Token]) -> Bool {
-            guard tokens.count >= 3 else { return false }
-            var depth = BracketDepth()
-            for token in tokens {
-                if token.kind == .symbol(.assign) && depth.isAtTopLevel {
-                    return true
-                }
-                depth.track(token.kind)
-            }
-            return false
-        }
-
-        private func parseLocalDeclFromTokens(_ tokens: [Token]) -> ExprID? {
-            guard !tokens.isEmpty else { return nil }
-            var startIndex = 0
-            while startIndex < tokens.count {
-                if case .keyword(let kw) = tokens[startIndex].kind,
-                   KotlinParser.isDeclarationModifierKeyword(kw) {
-                    startIndex += 1
-                    continue
-                }
-                break
-            }
-            guard startIndex < tokens.count else { return nil }
-            let head = tokens[startIndex]
-            let isMutable: Bool
-            switch head.kind {
-            case .keyword(.val):
-                isMutable = false
-            case .keyword(.var):
-                isMutable = true
-            default:
-                return nil
-            }
-
-            let nameToken = tokens.dropFirst(startIndex + 1).first(where: { token in
-                switch token.kind {
-                case .identifier, .backtickedIdentifier:
-                    return true
-                default:
-                    return false
-                }
-            })
-            guard let nameToken, let name = tokenText(nameToken) else {
-                return nil
-            }
-
-            var assignIndex: Int?
-            var depth = BracketDepth()
-            for (index, token) in tokens.enumerated() {
-                if token.kind == .symbol(.assign) && depth.isAtTopLevel {
-                    assignIndex = index
-                    break
-                }
-                depth.track(token.kind)
-            }
-            guard let assignIndex else { return nil }
-            let initializerTokens = Array(tokens[(assignIndex + 1)...])
-            guard !initializerTokens.isEmpty else { return nil }
-            let parser = ExpressionParser(tokens: initializerTokens, interner: interner, astArena: astArena)
-            guard let initializerExpr = parser.parse() else { return nil }
-            let rangeEnd = astArena.exprRange(initializerExpr)?.end ?? tokens.last?.range.end ?? head.range.end
-            let range = SourceRange(start: tokens[0].range.start, end: rangeEnd)
-            return astArena.appendExpr(.localDecl(
-                name: name,
-                isMutable: isMutable,
-                typeAnnotation: nil,
-                initializer: initializerExpr,
-                range: range
-            ))
-        }
-
-        private func parseLocalAssignFromTokens(_ tokens: [Token]) -> ExprID? {
-            guard tokens.count >= 3 else { return nil }
-            var assignIndex: Int?
-            var depth = BracketDepth()
-            for (index, token) in tokens.enumerated() {
-                if token.kind == .symbol(.assign) && depth.isAtTopLevel {
-                    assignIndex = index
-                    break
-                }
-                depth.track(token.kind)
-            }
-            guard let assignIndex, assignIndex > 0 else { return nil }
-            let lhsTokens = Array(tokens[..<assignIndex])
-            guard lhsTokens.count == 1, let name = tokenText(lhsTokens[0]) else {
-                return nil
-            }
-            let valueTokens = Array(tokens[(assignIndex + 1)...])
-            guard !valueTokens.isEmpty else { return nil }
-            let parser = ExpressionParser(tokens: Array(valueTokens), interner: interner, astArena: astArena)
-            guard let valueExpr = parser.parse() else { return nil }
-            let rangeEnd = astArena.exprRange(valueExpr)?.end ?? tokens.last?.range.end ?? lhsTokens[0].range.end
-            let range = SourceRange(start: tokens[0].range.start, end: rangeEnd)
-            return astArena.appendExpr(.localAssign(name: name, value: valueExpr, range: range))
-        }
-
-        private func skipBalancedParenthesisIfNeeded() {
-            guard matches(.symbol(.lParen)) else {
-                return
-            }
-            _ = consume()
-            var depth = 1
-            while let token = current(), depth > 0 {
-                _ = consume()
-                switch token.kind {
-                case .symbol(.lParen):
-                    depth += 1
-                case .symbol(.rParen):
-                    depth -= 1
-                default:
-                    continue
-                }
-            }
-        }
-
-        private func mergeRanges(_ lhs: SourceRange?, _ rhs: SourceRange?, fallback: SourceRange) -> SourceRange {
+        internal func mergeRanges(_ lhs: SourceRange?, _ rhs: SourceRange?, fallback: SourceRange) -> SourceRange {
             switch (lhs, rhs) {
             case let (lhs?, rhs?):
                 return SourceRange(start: lhs.start, end: rhs.end)
@@ -1082,172 +561,6 @@ extension BuildASTPhase {
             default:
                 return fallback
             }
-        }
-
-        private func parseTypeReference(_ fallbackRange: SourceRange) -> TypeRefID? {
-            guard let token = current() else { return nil }
-            let name: InternedString
-            switch token.kind {
-            case .identifier(let n), .backtickedIdentifier(let n):
-                _ = consume()
-                name = n
-            case .keyword(let kw):
-                _ = consume()
-                name = interner.intern(kw.rawValue)
-            case .softKeyword(let kw):
-                _ = consume()
-                name = interner.intern(kw.rawValue)
-            default:
-                return nil
-            }
-            var typeArgs: [TypeArgRef] = []
-            if matches(.symbol(.lessThan)) {
-                let savedIndex = index
-                if let parsedArgs = tryParseTypeArgRefs() {
-                    typeArgs = parsedArgs
-                } else {
-                    index = savedIndex
-                }
-            }
-            let isNullable = consumeIf(.symbol(.question)) != nil
-            return astArena.appendTypeRef(.named(path: [name], args: typeArgs, nullable: isNullable))
-        }
-
-        private func tryParseExplicitTypeArgs() -> [TypeRefID]? {
-            guard matches(.symbol(.lessThan)) else { return nil }
-            let savedIndex = index
-            _ = consume()
-            var refs: [TypeRefID] = []
-            while true {
-                guard let token = current() else {
-                    index = savedIndex
-                    return nil
-                }
-                if token.kind == .symbol(.greaterThan) {
-                    if refs.isEmpty {
-                        index = savedIndex
-                        return nil
-                    }
-                    _ = consume()
-                    return refs
-                }
-                if !refs.isEmpty {
-                    guard consumeIf(.symbol(.comma)) != nil else {
-                        index = savedIndex
-                        return nil
-                    }
-                }
-                guard let typeRef = parseInlineTypeRef() else {
-                    index = savedIndex
-                    return nil
-                }
-                refs.append(typeRef)
-            }
-        }
-
-        private func tryParseTypeArgRefs() -> [TypeArgRef]? {
-            guard matches(.symbol(.lessThan)) else { return nil }
-            let savedIndex = index
-            _ = consume()
-            var args: [TypeArgRef] = []
-            while true {
-                guard let token = current() else {
-                    index = savedIndex
-                    return nil
-                }
-                if token.kind == .symbol(.greaterThan) {
-                    _ = consume()
-                    return args
-                }
-                if !args.isEmpty {
-                    guard consumeIf(.symbol(.comma)) != nil else {
-                        index = savedIndex
-                        return nil
-                    }
-                    guard let freshToken = current() else {
-                        index = savedIndex
-                        return nil
-                    }
-                    if freshToken.kind == .symbol(.greaterThan) {
-                        _ = consume()
-                        return args
-                    }
-                    if freshToken.kind == .symbol(.star) {
-                        _ = consume()
-                        args.append(.star)
-                        continue
-                    }
-                    var variance: TypeVariance = .invariant
-                    if case .softKeyword(.out) = freshToken.kind {
-                        variance = .out
-                        _ = consume()
-                    } else if case .keyword(.in) = freshToken.kind {
-                        variance = .in
-                        _ = consume()
-                    }
-                    guard let innerRef = parseInlineTypeRef() else {
-                        index = savedIndex
-                        return nil
-                    }
-                    switch variance {
-                    case .invariant: args.append(.invariant(innerRef))
-                    case .out: args.append(.out(innerRef))
-                    case .in: args.append(.in(innerRef))
-                    }
-                    continue
-                }
-                if token.kind == .symbol(.star) {
-                    _ = consume()
-                    args.append(.star)
-                    continue
-                }
-                var variance: TypeVariance = .invariant
-                if case .softKeyword(.out) = token.kind {
-                    variance = .out
-                    _ = consume()
-                } else if case .keyword(.in) = token.kind {
-                    variance = .in
-                    _ = consume()
-                }
-                guard let innerRef = parseInlineTypeRef() else {
-                    index = savedIndex
-                    return nil
-                }
-                switch variance {
-                case .invariant: args.append(.invariant(innerRef))
-                case .out: args.append(.out(innerRef))
-                case .in: args.append(.in(innerRef))
-                }
-            }
-        }
-
-        private func parseInlineTypeRef() -> TypeRefID? {
-            guard let token = current() else { return nil }
-            let name: InternedString
-            switch token.kind {
-            case .identifier(let n), .backtickedIdentifier(let n):
-                _ = consume()
-                name = n
-            case .keyword(let kw):
-                _ = consume()
-                name = interner.intern(kw.rawValue)
-            case .softKeyword(let kw):
-                _ = consume()
-                name = interner.intern(kw.rawValue)
-            default:
-                return nil
-            }
-            var innerArgs: [TypeArgRef] = []
-            if matches(.symbol(.lessThan)) {
-                let saved = index
-                if let parsed = tryParseTypeArgRefs() {
-                    innerArgs = parsed
-                } else {
-                    index = saved
-                }
-            }
-            let isNullable = consumeIf(.symbol(.question)) != nil
-            return astArena.appendTypeRef(.named(path: [name], args: innerArgs, nullable: isNullable))
         }
 
         private func binaryOperator(at token: Token?) -> BinaryOp? {
@@ -1323,14 +636,15 @@ extension BuildASTPhase {
             }
         }
 
-        private func current() -> Token? {
+        @discardableResult
+        internal func current() -> Token? {
             if index >= 0 && index < tokens.count {
                 return tokens[index]
             }
             return nil
         }
 
-        private func peek(_ offset: Int) -> Token? {
+        internal func peek(_ offset: Int) -> Token? {
             let target = index + offset
             if target >= 0 && target < tokens.count {
                 return tokens[target]
@@ -1338,7 +652,8 @@ extension BuildASTPhase {
             return nil
         }
 
-        private func consume() -> Token? {
+        @discardableResult
+        internal func consume() -> Token? {
             guard let token = current() else {
                 return nil
             }
@@ -1346,11 +661,12 @@ extension BuildASTPhase {
             return token
         }
 
-        private func matches(_ kind: TokenKind) -> Bool {
+        internal func matches(_ kind: TokenKind) -> Bool {
             current()?.kind == kind
         }
 
-        private func consumeIf(_ kind: TokenKind) -> Token? {
+        @discardableResult
+        internal func consumeIf(_ kind: TokenKind) -> Token? {
             guard matches(kind) else {
                 return nil
             }
