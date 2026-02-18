@@ -57,6 +57,7 @@ extension NativeEmitter {
         var values: [Int32: LLVMCAPIBindings.LLVMValueRef] = [:]
         var externalFunctions: [String: LLVMFunction] = [:]
         var generatedStringLiteralCount: Int32 = 0
+        let builderState = EmissionBuilderState(builder: builder, int64Type: int64Type, zeroValue: zeroValue)
 
         var copyTargetAllocas: [Int32: LLVMCAPIBindings.LLVMValueRef] = [:]
         for instruction in function.body {
@@ -98,93 +99,17 @@ extension NativeEmitter {
         }
 
         func valueForConstant(_ expression: KIRExprKind, expressionRawID: Int32?) -> LLVMCAPIBindings.LLVMValueRef {
-            switch expression {
-            case .intLiteral(let number):
-                return bindings.constInt(int64Type, value: UInt64(bitPattern: number), signExtend: true) ?? zeroValue
-            case .longLiteral(let number):
-                return bindings.constInt(int64Type, value: UInt64(bitPattern: number), signExtend: true) ?? zeroValue
-            case .floatLiteral(let value):
-                var f = Float(value)
-                var bits: UInt32 = 0
-                memcpy(&bits, &f, MemoryLayout<UInt32>.size)
-                return bindings.constInt(int64Type, value: UInt64(bits)) ?? zeroValue
-            case .doubleLiteral(let value):
-                var d = value
-                var bits: UInt64 = 0
-                memcpy(&bits, &d, MemoryLayout<UInt64>.size)
-                return bindings.constInt(int64Type, value: bits) ?? zeroValue
-            case .charLiteral(let scalar):
-                return bindings.constInt(int64Type, value: UInt64(scalar)) ?? zeroValue
-            case .boolLiteral(let value):
-                return bindings.constInt(int64Type, value: value ? 1 : 0) ?? zeroValue
-            case .stringLiteral(let interned):
-                let text = interner.resolve(interned)
-                let literalID: Int32
-                if let expressionRawID {
-                    literalID = expressionRawID
-                } else {
-                    literalID = generatedStringLiteralCount
-                    generatedStringLiteralCount += 1
+            emitConstantValue(
+                expression,
+                expressionRawID: expressionRawID,
+                state: builderState,
+                parameterValues: parameterValues,
+                internalFunctions: internalFunctions,
+                generatedStringLiteralCount: &generatedStringLiteralCount,
+                declareExternalFunction: { name, argCount, appendThrown in
+                    declareExternalFunction(named: name, argumentCount: argCount, appendThrownChannel: appendThrown)
                 }
-                guard let globalStringPointer = bindings.buildGlobalStringPtr(
-                    builder,
-                    value: text,
-                    name: "str_lit_\(literalID)"
-                ) else {
-                    return zeroValue
-                }
-                guard let pointerAsInt = bindings.buildPtrToInt(
-                    builder,
-                    value: globalStringPointer,
-                    type: int64Type,
-                    name: "str_ptr_\(literalID)"
-                ) else {
-                    return zeroValue
-                }
-                let lengthValue = bindings.constInt(int64Type, value: UInt64(text.utf8.count)) ?? zeroValue
-                guard let stringFromUTF8 = declareExternalFunction(
-                    named: "kk_string_from_utf8",
-                    argumentCount: 2,
-                    appendThrownChannel: false
-                ) else {
-                    return zeroValue
-                }
-                return bindings.buildCall(
-                    builder,
-                    functionType: stringFromUTF8.type,
-                    callee: stringFromUTF8.value,
-                    arguments: [pointerAsInt, lengthValue],
-                    name: "str_from_utf8_\(literalID)"
-                ) ?? zeroValue
-            case .symbolRef(let symbol):
-                if let parameter = parameterValues[symbol] {
-                    return parameter
-                }
-                if let internalFunction = internalFunctions[symbol],
-                   let functionPointer = bindings.buildPtrToInt(
-                    builder,
-                    value: internalFunction.value,
-                    type: int64Type,
-                    name: "fn_ptr_\(symbol.rawValue)"
-                   ) {
-                    return functionPointer
-                }
-                return zeroValue
-            case .temporary(let raw):
-                return bindings.constInt(
-                    int64Type,
-                    value: UInt64(bitPattern: Int64(raw)),
-                    signExtend: true
-                ) ?? zeroValue
-            case .null:
-                return bindings.constInt(
-                    int64Type,
-                    value: UInt64(bitPattern: Int64.min),
-                    signExtend: true
-                ) ?? zeroValue
-            case .unit:
-                return zeroValue
-            }
+            )
         }
 
         func resolveValue(_ id: KIRExprID) -> LLVMCAPIBindings.LLVMValueRef {
@@ -336,87 +261,16 @@ extension NativeEmitter {
             result: KIRExprID?,
             instructionIndex: Int
         ) -> Bool {
-            let lhs = argumentValues.count > 0 ? argumentValues[0] : zeroValue
-            let rhs = argumentValues.count > 1 ? argumentValues[1] : zeroValue
-
-            let lowered: LLVMCAPIBindings.LLVMValueRef?
-            switch calleeName {
-            case "kk_op_add":
-                lowered = bindings.buildAdd(builder, lhs: lhs, rhs: rhs, name: "add_\(instructionIndex)")
-            case "kk_op_sub":
-                lowered = bindings.buildSub(builder, lhs: lhs, rhs: rhs, name: "sub_\(instructionIndex)")
-            case "kk_op_mul":
-                lowered = bindings.buildMul(builder, lhs: lhs, rhs: rhs, name: "mul_\(instructionIndex)")
-            case "kk_op_div":
-                lowered = bindings.buildSDiv(builder, lhs: lhs, rhs: rhs, name: "div_\(instructionIndex)")
-            case "kk_op_mod":
-                if let quotient = bindings.buildSDiv(builder, lhs: lhs, rhs: rhs, name: "mod_q_\(instructionIndex)"),
-                   let product = bindings.buildMul(builder, lhs: quotient, rhs: rhs, name: "mod_p_\(instructionIndex)") {
-                    lowered = bindings.buildSub(builder, lhs: lhs, rhs: product, name: "mod_\(instructionIndex)")
-                } else {
-                    lowered = nil
-                }
-            case "kk_op_eq":
-                if let compared = bindings.buildICmpEqual(builder, lhs: lhs, rhs: rhs, name: "eq_\(instructionIndex)") {
-                    lowered = bindings.buildZExt(builder, value: compared, type: int64Type, name: "eq64_\(instructionIndex)")
-                } else {
-                    lowered = nil
-                }
-            case "kk_op_ne":
-                if let compared = bindings.buildICmpNotEqual(builder, lhs: lhs, rhs: rhs, name: "ne_\(instructionIndex)") {
-                    lowered = bindings.buildZExt(builder, value: compared, type: int64Type, name: "ne64_\(instructionIndex)")
-                } else {
-                    lowered = nil
-                }
-            case "kk_op_lt":
-                if let compared = bindings.buildICmpSignedLessThan(builder, lhs: lhs, rhs: rhs, name: "lt_\(instructionIndex)") {
-                    lowered = bindings.buildZExt(builder, value: compared, type: int64Type, name: "lt64_\(instructionIndex)")
-                } else {
-                    lowered = nil
-                }
-            case "kk_op_le":
-                if let compared = bindings.buildICmpSignedLessOrEqual(builder, lhs: lhs, rhs: rhs, name: "le_\(instructionIndex)") {
-                    lowered = bindings.buildZExt(builder, value: compared, type: int64Type, name: "le64_\(instructionIndex)")
-                } else {
-                    lowered = nil
-                }
-            case "kk_op_gt":
-                if let compared = bindings.buildICmpSignedGreaterThan(builder, lhs: lhs, rhs: rhs, name: "gt_\(instructionIndex)") {
-                    lowered = bindings.buildZExt(builder, value: compared, type: int64Type, name: "gt64_\(instructionIndex)")
-                } else {
-                    lowered = nil
-                }
-            case "kk_op_ge":
-                if let compared = bindings.buildICmpSignedGreaterOrEqual(builder, lhs: lhs, rhs: rhs, name: "ge_\(instructionIndex)") {
-                    lowered = bindings.buildZExt(builder, value: compared, type: int64Type, name: "ge64_\(instructionIndex)")
-                } else {
-                    lowered = nil
-                }
-            case "kk_op_and":
-                if let lhsBool = buildBoolCondition(from: lhs, name: "and_lhs_\(instructionIndex)"),
-                   let rhsBool = buildBoolCondition(from: rhs, name: "and_rhs_\(instructionIndex)"),
-                   let lhsInt = bindings.buildZExt(builder, value: lhsBool, type: int64Type, name: "and_lhs64_\(instructionIndex)"),
-                   let rhsInt = bindings.buildZExt(builder, value: rhsBool, type: int64Type, name: "and_rhs64_\(instructionIndex)") {
-                    lowered = bindings.buildMul(builder, lhs: lhsInt, rhs: rhsInt, name: "and64_\(instructionIndex)")
-                } else {
-                    lowered = nil
-                }
-            case "kk_op_or":
-                if let lhsBool = buildBoolCondition(from: lhs, name: "or_lhs_\(instructionIndex)"),
-                   let rhsBool = buildBoolCondition(from: rhs, name: "or_rhs_\(instructionIndex)"),
-                   let lhsInt = bindings.buildZExt(builder, value: lhsBool, type: int64Type, name: "or_lhs64_\(instructionIndex)"),
-                   let rhsInt = bindings.buildZExt(builder, value: rhsBool, type: int64Type, name: "or_rhs64_\(instructionIndex)"),
-                   let sum = bindings.buildAdd(builder, lhs: lhsInt, rhs: rhsInt, name: "or_sum_\(instructionIndex)"),
-                   let nonZero = bindings.buildICmpNotEqual(builder, lhs: sum, rhs: zeroValue, name: "or_nonzero_\(instructionIndex)") {
-                    lowered = bindings.buildZExt(builder, value: nonZero, type: int64Type, name: "or64_\(instructionIndex)")
-                } else {
-                    lowered = nil
-                }
-            default:
+            let builtinResult = lowerBuiltinCall(
+                calleeName: calleeName,
+                argumentValues: argumentValues,
+                state: builderState,
+                instructionIndex: instructionIndex
+            )
+            guard builtinResult.handled else {
                 return false
             }
-
-            storeResult(result, lowered)
+            storeResult(result, builtinResult.value)
             return true
         }
 
