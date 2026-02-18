@@ -76,14 +76,13 @@ final class ASTModelsTests: XCTestCase {
         XCTAssertNil(arena.typeRef(TypeRefID(rawValue: 999)))
     }
 
-    func testModelStructsAndModuleInitializers() {
+    func testDeclModelStructInitializers() {
         let interner = StringInterner()
         let range = makeRange(start: 5, end: 9)
         let typeRef = TypeRefID(rawValue: 4)
-        let name = interner.intern("Name")
 
-        let objectDecl = ObjectDecl(range: range, name: name, modifiers: [.public])
-        XCTAssertEqual(objectDecl.name, name)
+        let objectDecl = ObjectDecl(range: range, name: interner.intern("Name"), modifiers: [.public])
+        XCTAssertEqual(objectDecl.name, interner.intern("Name"))
 
         let typeAliasDecl = TypeAliasDecl(range: range, name: interner.intern("Alias"), modifiers: [.internal])
         XCTAssertEqual(typeAliasDecl.modifiers, [.internal])
@@ -104,6 +103,12 @@ final class ASTModelsTests: XCTestCase {
 
         let valueParam = ValueParamDecl(name: interner.intern("value"), type: typeRef)
         XCTAssertEqual(valueParam.type, typeRef)
+    }
+
+    func testASTFileInitializer() {
+        let interner = StringInterner()
+        let range = makeRange(start: 5, end: 9)
+        let importDecl = ImportDecl(range: range, path: [interner.intern("kotlin"), interner.intern("collections")], alias: nil)
 
         let file = ASTFile(
             fileID: FileID(rawValue: 1),
@@ -113,6 +118,20 @@ final class ASTModelsTests: XCTestCase {
             scriptBody: []
         )
         XCTAssertEqual(file.fileID, FileID(rawValue: 1))
+        XCTAssertEqual(file.packageFQName.count, 1)
+        XCTAssertEqual(file.imports.count, 1)
+        XCTAssertEqual(file.topLevelDecls.count, 1)
+    }
+
+    func testASTModuleFullAndCompactInitializers() {
+        let interner = StringInterner()
+        let file = ASTFile(
+            fileID: FileID(rawValue: 0),
+            packageFQName: [interner.intern("pkg")],
+            imports: [],
+            topLevelDecls: [],
+            scriptBody: []
+        )
 
         let fullArena = ASTArena()
         let fullModule = ASTModule(files: [file], arena: fullArena, declarationCount: 7, tokenCount: 13)
@@ -169,9 +188,9 @@ final class ASTModelsTests: XCTestCase {
             .localFunDecl(name: name, valueParams: [], returnType: nil, body: .unit, range: r),
         ]
 
-        for exprCase in cases {
+        for (index, exprCase) in cases.enumerated() {
             let id = arena.appendExpr(exprCase)
-            XCTAssertEqual(arena.exprRange(id), r)
+            XCTAssertEqual(arena.exprRange(id), r, "Expr case at index \(index) failed")
         }
     }
 
@@ -248,9 +267,9 @@ final class ASTModelsTests: XCTestCase {
             isVar: true, initializer: exprID, getter: getter, setter: setter, delegateExpression: exprID
         )
         XCTAssertTrue(propDecl.isVar)
-        XCTAssertNotNil(propDecl.getter)
-        XCTAssertNotNil(propDecl.setter)
-        XCTAssertNotNil(propDecl.delegateExpression)
+        XCTAssertEqual(propDecl.getter?.kind, .getter)
+        XCTAssertEqual(propDecl.setter?.kind, .setter)
+        XCTAssertEqual(propDecl.delegateExpression, exprID)
     }
 
     func testValueParamDeclWithDefaultAndVararg() {
