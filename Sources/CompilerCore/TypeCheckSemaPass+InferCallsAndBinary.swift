@@ -15,6 +15,7 @@ extension TypeCheckSemaPassPhase {
         let sema = ctx.sema
         let interner = ctx.interner
         let scope = ctx.scope
+
         let boolType = sema.types.make(.primitive(.boolean, .nonNull))
         let intType = sema.types.make(.primitive(.int, .nonNull))
         let longType = sema.types.make(.primitive(.long, .nonNull))
@@ -56,27 +57,7 @@ extension TypeCheckSemaPassPhase {
                 sema.bindings.bindExprType(id, type: sema.types.errorType)
                 return sema.types.errorType
             }
-            sema.bindings.bindCall(
-                id,
-                binding: CallBinding(
-                    chosenCallee: chosen,
-                    substitutedTypeArguments: resolved.substitutedTypeArguments
-                        .sorted(by: { $0.key.rawValue < $1.key.rawValue })
-                        .map(\.value),
-                    parameterMapping: resolved.parameterMapping
-                )
-            )
-            let returnType: TypeID
-            if let signature = sema.symbols.functionSignature(for: chosen) {
-                let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
-                returnType = sema.types.substituteTypeParameters(
-                    in: signature.returnType,
-                    substitution: resolved.substitutedTypeArguments,
-                    typeVarBySymbol: typeVarBySymbol
-                )
-            } else {
-                returnType = sema.types.anyType
-            }
+            let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
             sema.bindings.bindExprType(id, type: returnType)
             return returnType
         }
@@ -220,27 +201,7 @@ extension TypeCheckSemaPassPhase {
             sema.bindings.bindExprType(id, type: sema.types.errorType)
             return sema.types.errorType
         }
-        sema.bindings.bindCall(
-            id,
-            binding: CallBinding(
-                chosenCallee: chosen,
-                substitutedTypeArguments: resolved.substitutedTypeArguments
-                    .sorted(by: { $0.key.rawValue < $1.key.rawValue })
-                    .map(\.value),
-                parameterMapping: resolved.parameterMapping
-            )
-        )
-        let returnType: TypeID
-        if let signature = sema.symbols.functionSignature(for: chosen) {
-            let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
-            returnType = sema.types.substituteTypeParameters(
-                in: signature.returnType,
-                substitution: resolved.substitutedTypeArguments,
-                typeVarBySymbol: typeVarBySymbol
-            )
-        } else {
-            returnType = sema.types.anyType
-        }
+        let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
         sema.bindings.bindExprType(id, type: returnType)
         return returnType
     }
@@ -331,29 +292,9 @@ extension TypeCheckSemaPassPhase {
             sema.bindings.bindExprType(id, type: sema.types.errorType)
             return sema.types.errorType
         }
-        sema.bindings.bindCall(
-            id,
-            binding: CallBinding(
-                chosenCallee: chosen,
-                substitutedTypeArguments: resolved.substitutedTypeArguments
-                    .sorted(by: { $0.key.rawValue < $1.key.rawValue })
-                    .map(\.value),
-                parameterMapping: resolved.parameterMapping
-            )
-        )
+        let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
         if isSuperCall {
             sema.bindings.markSuperCall(id)
-        }
-        let returnType: TypeID
-        if let signature = sema.symbols.functionSignature(for: chosen) {
-            let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
-            returnType = sema.types.substituteTypeParameters(
-                in: signature.returnType,
-                substitution: resolved.substitutedTypeArguments,
-                typeVarBySymbol: typeVarBySymbol
-            )
-        } else {
-            returnType = sema.types.anyType
         }
         sema.bindings.bindExprType(id, type: returnType)
         return returnType
@@ -413,6 +354,18 @@ extension TypeCheckSemaPassPhase {
             sema.bindings.bindExprType(id, type: sema.types.errorType)
             return sema.types.errorType
         }
+        let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
+        let nullableReturn = makeNullable(returnType, types: sema.types)
+        sema.bindings.bindExprType(id, type: nullableReturn)
+        return nullableReturn
+    }
+
+    private func bindCallAndResolveReturnType(
+        _ id: ExprID,
+        chosen: SymbolID,
+        resolved: ResolvedCall,
+        sema: SemaModule
+    ) -> TypeID {
         sema.bindings.bindCall(
             id,
             binding: CallBinding(
@@ -423,20 +376,15 @@ extension TypeCheckSemaPassPhase {
                 parameterMapping: resolved.parameterMapping
             )
         )
-        let returnType: TypeID
         if let signature = sema.symbols.functionSignature(for: chosen) {
             let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
-            returnType = sema.types.substituteTypeParameters(
+            return sema.types.substituteTypeParameters(
                 in: signature.returnType,
                 substitution: resolved.substitutedTypeArguments,
                 typeVarBySymbol: typeVarBySymbol
             )
-        } else {
-            returnType = sema.types.anyType
         }
-        let nullableReturn = makeNullable(returnType, types: sema.types)
-        sema.bindings.bindExprType(id, type: nullableReturn)
-        return nullableReturn
+        return sema.types.anyType
     }
 
     func inferCompoundAssignExpr(
@@ -450,6 +398,7 @@ extension TypeCheckSemaPassPhase {
     ) -> TypeID {
         let sema = ctx.sema
         let interner = ctx.interner
+
         let intType = sema.types.make(.primitive(.int, .nonNull))
         let stringType = sema.types.make(.primitive(.string, .nonNull))
 
