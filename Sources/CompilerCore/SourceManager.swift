@@ -1,6 +1,6 @@
 import Foundation
 
-public final class SourceManager {
+public final class SourceManager: @unchecked Sendable {
     private struct FileRecord {
         let path: String
         let contents: Data

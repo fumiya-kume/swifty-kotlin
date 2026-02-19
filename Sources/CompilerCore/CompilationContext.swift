@@ -1,4 +1,4 @@
-public final class CompilationContext {
+public final class CompilationContext: @unchecked Sendable {
     public let options: CompilerOptions
     public let sourceManager: SourceManager
     public let diagnostics: DiagnosticEngine

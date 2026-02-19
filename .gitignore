@@ -4,3 +4,4 @@ a.out
 *.o
 firebase-debug.log
 .DS_Store
+.build-codex-run/

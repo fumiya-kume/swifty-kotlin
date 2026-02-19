@@ -45,7 +45,7 @@ public struct SyntaxNode: Equatable {
     public let childCount: Int16
 }
 
-public final class SyntaxArena {
+public final class SyntaxArena: @unchecked Sendable {
     public private(set) var nodes: [SyntaxNode] = []
     public private(set) var children: [SyntaxChild] = []
     public private(set) var tokens: [Token] = []
