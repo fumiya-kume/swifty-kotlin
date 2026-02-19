@@ -36,18 +36,39 @@ public final class LexPhase: CompilerPhase {
     public init() {}
 
     public func run(_ ctx: CompilationContext) throws {
+        let fileIDs = ctx.sourceManager.fileIDs().sorted(by: { $0.rawValue < $1.rawValue })
+        let interner = ctx.interner
+        let diagnostics = ctx.diagnostics
+        let sourceManager = ctx.sourceManager
+
+        let semaphore = DispatchSemaphore(value: 0)
+        nonisolated(unsafe) var tokensByFile: [(FileID, [Token])] = []
+        Task {
+            tokensByFile = await withTaskGroup(of: (FileID, [Token]).self) { group in
+                for fileID in fileIDs {
+                    group.addTask {
+                        let contents = sourceManager.contents(of: fileID)
+                        let lexer = KotlinLexer(
+                            file: fileID,
+                            source: contents,
+                            interner: interner,
+                            diagnostics: diagnostics
+                        )
+                        return (fileID, lexer.lexAll())
+                    }
+                }
+                var results: [(FileID, [Token])] = []
+                for await result in group {
+                    results.append(result)
+                }
+                return results.sorted(by: { $0.0.rawValue < $1.0.rawValue })
+            }
+            semaphore.signal()
+        }
+        semaphore.wait()
+
         var allTokens: [Token] = []
-        var tokensByFile: [(FileID, [Token])] = []
-        for fileID in ctx.sourceManager.fileIDs().sorted(by: { $0.rawValue < $1.rawValue }) {
-            let contents = ctx.sourceManager.contents(of: fileID)
-            let lexer = KotlinLexer(
-                file: fileID,
-                source: contents,
-                interner: ctx.interner,
-                diagnostics: ctx.diagnostics
-            )
-            let fileTokens = lexer.lexAll()
-            tokensByFile.append((fileID, fileTokens))
+        for (_, fileTokens) in tokensByFile {
             if let last = fileTokens.last, case .eof = last.kind {
                 allTokens.append(contentsOf: fileTokens.dropLast())
             } else {
@@ -65,16 +86,35 @@ public final class ParsePhase: CompilerPhase {
     public init() {}
 
     public func run(_ ctx: CompilationContext) throws {
-        var syntaxTrees: [(FileID, SyntaxArena, NodeID)] = []
-        for (fileID, fileTokens) in ctx.tokensByFile {
-            let parser = KotlinParser(
-                tokens: fileTokens,
-                interner: ctx.interner,
-                diagnostics: ctx.diagnostics
-            )
-            let parsed = parser.parseFile()
-            syntaxTrees.append((fileID, parsed.arena, parsed.root))
+        let interner = ctx.interner
+        let diagnostics = ctx.diagnostics
+        let tokensByFile = ctx.tokensByFile
+
+        let semaphore = DispatchSemaphore(value: 0)
+        nonisolated(unsafe) var syntaxTrees: [(FileID, SyntaxArena, NodeID)] = []
+        Task {
+            syntaxTrees = await withTaskGroup(of: (FileID, SyntaxArena, NodeID).self) { group in
+                for (fileID, fileTokens) in tokensByFile {
+                    group.addTask {
+                        let parser = KotlinParser(
+                            tokens: fileTokens,
+                            interner: interner,
+                            diagnostics: diagnostics
+                        )
+                        let parsed = parser.parseFile()
+                        return (fileID, parsed.arena, parsed.root)
+                    }
+                }
+                var results: [(FileID, SyntaxArena, NodeID)] = []
+                for await result in group {
+                    results.append(result)
+                }
+                return results.sorted(by: { $0.0.rawValue < $1.0.rawValue })
+            }
+            semaphore.signal()
         }
+        semaphore.wait()
+
         ctx.syntaxTrees = syntaxTrees
         if let first = syntaxTrees.first {
             ctx.syntaxTree = first.1

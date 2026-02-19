@@ -1,3 +1,5 @@
+import Foundation
+
 public struct InternedString: Hashable {
     public let rawValue: Int32
 
@@ -8,14 +10,17 @@ public struct InternedString: Hashable {
     }
 }
 
-public final class StringInterner {
+public final class StringInterner: @unchecked Sendable {
     private var nextID: Int32 = 0
     private var map: [String: Int32] = [:]
     private var values: [String] = []
+    private let lock = NSLock()
 
     public init() {}
 
     public func intern(_ string: String) -> InternedString {
+        lock.lock()
+        defer { lock.unlock() }
         if let existing = map[string] {
             return InternedString(rawValue: existing)
         }
@@ -27,6 +32,8 @@ public final class StringInterner {
     }
 
     public func resolve(_ id: InternedString) -> String {
+        lock.lock()
+        defer { lock.unlock() }
         let index = Int(id.rawValue)
         guard index >= 0 && index < values.count else {
             return ""
