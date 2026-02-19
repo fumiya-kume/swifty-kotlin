@@ -15,12 +15,15 @@ public struct Diagnostic: Equatable {
     public let secondaryRanges: [SourceRange]
 }
 
-public final class DiagnosticEngine {
+public final class DiagnosticEngine: @unchecked Sendable {
+    private let lock = NSLock()
     public private(set) var diagnostics: [Diagnostic] = []
 
     public init() {}
 
     public func emit(_ diagnostic: Diagnostic) {
+        lock.lock()
+        defer { lock.unlock() }
         diagnostics.append(diagnostic)
     }
 
