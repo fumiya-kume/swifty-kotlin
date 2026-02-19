@@ -144,7 +144,13 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
         XCTAssertTrue(constructor.contains("__K__"))
     }
 
-    func testDataFlowMergeAndWhenExhaustivenessAcrossKinds() {
+    private func makeWhenExhaustivenessFixture() -> (
+        analyzer: DataFlowAnalyzer,
+        interner: StringInterner,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        sema: SemaModule
+    ) {
         let analyzer = DataFlowAnalyzer()
         let interner = StringInterner()
         let symbols = SymbolTable()
@@ -155,6 +161,11 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
             bindings: BindingTable(),
             diagnostics: DiagnosticEngine()
         )
+        return (analyzer, interner, symbols, types, sema)
+    }
+
+    func testDataFlowMerge() {
+        let (analyzer, _, _, types, _) = makeWhenExhaustivenessFixture()
 
         let sym = SymbolID(rawValue: 1)
         let lhs = DataFlowState(variables: [
@@ -184,6 +195,10 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
         XCTAssertTrue(merged.variables[sym]?.possibleTypes.contains(rhsType) == true)
         XCTAssertEqual(merged.variables[sym]?.nullability, .nullable)
         XCTAssertEqual(merged.variables[sym]?.isStable, false)
+    }
+
+    func testWhenExhaustivenessBooleanSubject() {
+        let (analyzer, _, _, types, sema) = makeWhenExhaustivenessFixture()
 
         let boolType = types.make(.primitive(.boolean, .nonNull))
         XCTAssertTrue(analyzer.isWhenExhaustive(
@@ -201,6 +216,10 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
             branches: WhenBranchSummary(coveredSymbols: [], hasElse: true),
             sema: sema
         ))
+    }
+
+    func testWhenExhaustivenessEnumAndSealedSubjects() {
+        let (analyzer, interner, symbols, types, sema) = makeWhenExhaustivenessFixture()
 
         let classType = types.make(.classType(ClassType(classSymbol: SymbolID(rawValue: 9))))
         XCTAssertFalse(analyzer.isWhenExhaustive(
@@ -309,6 +328,10 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
             ),
             sema: sema
         ))
+    }
+
+    func testWhenExhaustivenessEdgeCases() {
+        let (analyzer, _, _, types, sema) = makeWhenExhaustivenessFixture()
 
         XCTAssertFalse(analyzer.isWhenExhaustive(
             subjectType: types.nullableAnyType,
@@ -344,12 +367,11 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
         ))
     }
 
-    func testTypeSystemSubtypeLUBAndGLBCoversVarianceAndIntersections() {
+    func testTypeSystemSubtypePrimitivesAndSpecialTypes() {
         let types = TypeSystem()
 
         let intNN = types.make(.primitive(.int, .nonNull))
         let intNullable = types.make(.primitive(.int, .nullable))
-        let boolNN = types.make(.primitive(.boolean, .nonNull))
 
         XCTAssertTrue(types.isSubtype(intNN, intNN))
         XCTAssertTrue(types.isSubtype(types.nothingType, intNN))
@@ -360,8 +382,15 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
         XCTAssertFalse(types.isSubtype(intNullable, types.anyType))
         XCTAssertTrue(types.isSubtype(intNN, intNullable))
         XCTAssertFalse(types.isSubtype(intNullable, intNN))
+    }
 
+    func testTypeSystemSubtypeGenericVarianceProjections() {
+        let types = TypeSystem()
+
+        let intNN = types.make(.primitive(.int, .nonNull))
+        let boolNN = types.make(.primitive(.boolean, .nonNull))
         let classSym = SymbolID(rawValue: 100)
+
         let classAOutInt = types.make(.classType(ClassType(
             classSymbol: classSym,
             args: [.out(intNN)],
@@ -405,6 +434,24 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
             nullability: .nonNull
         )))
         XCTAssertFalse(types.isSubtype(classInvariantInt, classOtherSymbol))
+
+        let classStarLHS = types.make(.classType(ClassType(
+            classSymbol: classSym,
+            args: [.star],
+            nullability: .nonNull
+        )))
+        let classStarRHS = types.make(.classType(ClassType(
+            classSymbol: classSym,
+            args: [.star],
+            nullability: .nonNull
+        )))
+        XCTAssertTrue(types.isSubtype(classStarLHS, classStarRHS))
+    }
+
+    func testTypeSystemSubtypeNominalHierarchyAndDeclSiteVariance() {
+        let types = TypeSystem()
+
+        let intNN = types.make(.primitive(.int, .nonNull))
 
         let baseNominal = SymbolID(rawValue: 200)
         let midNominal = SymbolID(rawValue: 201)
@@ -464,18 +511,12 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
             nullability: .nonNull
         )))
         XCTAssertFalse(types.isSubtype(contravariantOutProjection, contravariantInvariantInt))
+    }
 
-        let classStarLHS = types.make(.classType(ClassType(
-            classSymbol: classSym,
-            args: [.star],
-            nullability: .nonNull
-        )))
-        let classStarRHS = types.make(.classType(ClassType(
-            classSymbol: classSym,
-            args: [.star],
-            nullability: .nonNull
-        )))
-        XCTAssertTrue(types.isSubtype(classStarLHS, classStarRHS))
+    func testTypeSystemSubtypeFunctionAndTypeParam() {
+        let types = TypeSystem()
+
+        let intNN = types.make(.primitive(.int, .nonNull))
 
         let fnA = types.make(.functionType(FunctionType(
             receiver: intNN,
@@ -507,9 +548,18 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
         XCTAssertTrue(types.isSubtype(typeParamNN, types.anyType))
         XCTAssertFalse(types.isSubtype(typeParamNullable, types.anyType))
 
+        let boolNN = types.make(.primitive(.boolean, .nonNull))
         let lhsIntersection = types.make(.intersection([intNN, boolNN]))
         XCTAssertFalse(types.isSubtype(lhsIntersection, intNN))
         XCTAssertTrue(types.isSubtype(intNN, types.make(.intersection([intNN, boolNN]))))
+    }
+
+    func testTypeSystemLUBAndGLB() {
+        let types = TypeSystem()
+
+        let intNN = types.make(.primitive(.int, .nonNull))
+        let intNullable = types.make(.primitive(.int, .nullable))
+        let boolNN = types.make(.primitive(.boolean, .nonNull))
 
         XCTAssertEqual(types.lub([]), types.errorType)
         XCTAssertEqual(types.lub([intNN, intNN]), intNN)
@@ -634,8 +684,8 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
         )
 
         XCTAssertEqual(symbols.count, 2)
-        XCTAssertNotNil(symbols.symbol(pkg))
-        XCTAssertNotNil(symbols.lookup(fqName: [interner.intern("pkg")]))
+        XCTAssertEqual(symbols.symbol(pkg)?.kind, .package)
+        XCTAssertEqual(symbols.lookup(fqName: [interner.intern("pkg")]), pkg)
 
         let signature = FunctionSignature(parameterTypes: [TypeSystem().anyType], returnType: TypeSystem().unitType)
         symbols.setFunctionSignature(signature, for: fn)
