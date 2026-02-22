@@ -164,6 +164,26 @@ extension TypeCheckSemaPassPhase {
                     candidates = [local.symbol]
                 }
             }
+            // Kotlin: `ClassName(args)` is a constructor call. If no function/constructor
+            // candidates were found, check if calleeName resolves to a class symbol and
+            // look up its constructors from the symbol table by FQ name.
+            if candidates.isEmpty {
+                let classSymbols = scope.lookup(calleeName).filter { candidate in
+                    guard let symbol = sema.symbols.symbol(candidate) else { return false }
+                    return symbol.kind == .class
+                }
+                if let classSym = classSymbols.first,
+                   let classSymbol = sema.symbols.symbol(classSym) {
+                    let initName = interner.intern("<init>")
+                    let ctorFQName = classSymbol.fqName + [initName]
+                    let ctorSymbols = sema.symbols.lookupAll(fqName: ctorFQName)
+                    if !ctorSymbols.isEmpty {
+                        let (vis, invis) = ctx.filterByVisibility(ctorSymbols)
+                        candidates = vis
+                        callInvisible.append(contentsOf: invis)
+                    }
+                }
+            }
         } else {
             candidates = []
         }
