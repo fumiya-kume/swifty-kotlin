@@ -86,7 +86,7 @@ final class PropertyLoweringPass: LoweringPass {
                     continue
                 }
 
-                guard callee == getterName|| callee == setterName else {
+                guard callee == getterName || callee == setterName else {
                     loweredBody.append(instruction)
                     continue
                 }
