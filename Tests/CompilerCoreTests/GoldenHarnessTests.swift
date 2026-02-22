@@ -351,6 +351,15 @@ final class GoldenHarnessTests: XCTestCase {
             return "stringTemplate[\(rendered)]"
         case .throwExpr(let value, _):
             return "throw value=e\(value.rawValue)"
+        case .lambdaLiteral(let params, let body, _):
+            let renderedParams = params.map { interner.resolve($0) }.joined(separator: ",")
+            return "lambda params=[\(renderedParams)] body=e\(body.rawValue)"
+        case .objectLiteral(let superTypes, _):
+            let renderedSuperTypes = superTypes.map { "t\($0.rawValue)" }.joined(separator: ",")
+            return "objectLiteral supers=[\(renderedSuperTypes)]"
+        case .callableRef(let receiver, let member, _):
+            let renderedReceiver = receiver.map { "e\($0.rawValue)" } ?? "_"
+            return "callableRef recv=\(renderedReceiver) member=\(interner.resolve(member))"
         case .localFunDecl(let name, let valueParams, let returnType, let body, _):
             let params = valueParams.map { interner.resolve($0.name) }.joined(separator: ",")
             let bodyStr: String

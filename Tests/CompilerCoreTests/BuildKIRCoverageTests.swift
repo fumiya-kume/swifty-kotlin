@@ -166,6 +166,178 @@ final class BuildKIRCoverageTests: XCTestCase {
         }
     }
 
+    // MARK: - Member operator/member call integration (P5-19)
+
+    func testBuildKIRUsesChosenMemberOperatorSymbolForBinaryPlusExpression() throws {
+        let source = """
+        class Vec {
+            operator fun plus(other: Vec): Vec = this
+        }
+        fun useOperator(a: Vec, b: Vec): Vec = a + b
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let ast = try XCTUnwrap(ctx.ast)
+
+            let operatorExprID = try XCTUnwrap(topLevelExpressionBodyExprID(
+                named: "useOperator",
+                ast: ast,
+                interner: ctx.interner
+            ))
+            guard let operatorExpr = ast.arena.expr(operatorExprID),
+                  case .binary(let op, _, _, _) = operatorExpr else {
+                XCTFail("Expected useOperator body to be a binary expression.")
+                return
+            }
+            XCTAssertEqual(op, .add)
+            let resolvedBinding = try XCTUnwrap(sema.bindings.callBindings[operatorExprID])
+            let chosenSymbol = resolvedBinding.chosenCallee
+            let chosenSemanticSymbol = try XCTUnwrap(sema.symbols.symbol(chosenSymbol))
+            XCTAssertEqual(ctx.interner.resolve(chosenSemanticSymbol.name), "plus")
+            let ownerSymbolID = try XCTUnwrap(sema.symbols.parentSymbol(for: chosenSymbol))
+            let ownerSymbol = try XCTUnwrap(sema.symbols.symbol(ownerSymbolID))
+            XCTAssertEqual(ctx.interner.resolve(ownerSymbol.name), "Vec")
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: chosenSymbol))
+            XCTAssertNotNil(signature.receiverType)
+            XCTAssertEqual(sema.bindings.exprTypes[operatorExprID], signature.returnType)
+
+            try BuildKIRPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+
+            let body = try findKIRFunctionBody(named: "useOperator", in: module, interner: ctx.interner)
+            let resolvedCall = try XCTUnwrap(body.first { instruction in
+                guard case .call(let symbol, _, _, _, _, _) = instruction else {
+                    return false
+                }
+                return symbol == chosenSymbol
+            })
+            guard case .call(let callSymbol, let callee, let arguments, _, _, _) = resolvedCall else {
+                XCTFail("Expected chosen call instruction for useOperator.")
+                return
+            }
+
+            XCTAssertEqual(callSymbol, chosenSymbol)
+            XCTAssertEqual(ctx.interner.resolve(callee), "plus")
+            XCTAssertFalse(ctx.interner.resolve(callee).hasPrefix("kk_op_"))
+            XCTAssertFalse(body.contains { instruction in
+                guard case .binary(let op, _, _, _) = instruction else {
+                    return false
+                }
+                return op == .add
+            })
+            XCTAssertFalse(body.contains { instruction in
+                guard case .call(_, let callCallee, _, _, _, _) = instruction else {
+                    return false
+                }
+                return ctx.interner.resolve(callCallee).hasPrefix("kk_op_")
+            })
+            XCTAssertEqual(
+                symbolNames(for: arguments, module: module, sema: sema, interner: ctx.interner),
+                ["a", "b"]
+            )
+        }
+    }
+
+    func testBuildKIRLowersExplicitMemberCallByInsertingReceiverArgument() throws {
+        let source = """
+        class Vec {
+            fun plus(other: Vec): Vec = this
+        }
+        fun useMemberCall(a: Vec, b: Vec): Vec = a.plus(b)
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let ast = try XCTUnwrap(ctx.ast)
+
+            let memberExprID = try XCTUnwrap(topLevelExpressionBodyExprID(
+                named: "useMemberCall",
+                ast: ast,
+                interner: ctx.interner
+            ))
+            guard let memberExpr = ast.arena.expr(memberExprID),
+                  case .memberCall = memberExpr else {
+                XCTFail("Expected useMemberCall body to be a member call expression.")
+                return
+            }
+            let resolvedBinding = try XCTUnwrap(sema.bindings.callBindings[memberExprID])
+            let chosenSymbol = resolvedBinding.chosenCallee
+            let chosenSemanticSymbol = try XCTUnwrap(sema.symbols.symbol(chosenSymbol))
+            XCTAssertEqual(ctx.interner.resolve(chosenSemanticSymbol.name), "plus")
+            let ownerSymbolID = try XCTUnwrap(sema.symbols.parentSymbol(for: chosenSymbol))
+            let ownerSymbol = try XCTUnwrap(sema.symbols.symbol(ownerSymbolID))
+            XCTAssertEqual(ctx.interner.resolve(ownerSymbol.name), "Vec")
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: chosenSymbol))
+            XCTAssertNotNil(signature.receiverType)
+            XCTAssertEqual(sema.bindings.exprTypes[memberExprID], signature.returnType)
+
+            try BuildKIRPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+
+            let body = try findKIRFunctionBody(named: "useMemberCall", in: module, interner: ctx.interner)
+            let memberCall = try XCTUnwrap(body.first { instruction in
+                guard case .call(let symbol, _, _, _, _, _) = instruction else {
+                    return false
+                }
+                return symbol == chosenSymbol
+            })
+            guard case .call(let callSymbol, let callee, let arguments, _, _, _) = memberCall else {
+                XCTFail("Expected chosen call instruction for useMemberCall.")
+                return
+            }
+
+            XCTAssertEqual(callSymbol, chosenSymbol)
+            XCTAssertEqual(ctx.interner.resolve(callee), "plus")
+            XCTAssertEqual(
+                symbolNames(for: arguments, module: module, sema: sema, interner: ctx.interner),
+                ["a", "b"]
+            )
+        }
+    }
+
+    func testThisBasedMemberCallCompilesAndUsesImplicitReceiverInLowering() throws {
+        let source = """
+        class Vec
+        fun Vec.plus(other: Vec): Vec = this
+        fun Vec.combine(other: Vec): Vec = this.plus(other)
+        fun useCombine(a: Vec, b: Vec): Vec = a.combine(b)
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            XCTAssertFalse(ctx.diagnostics.hasError, "Expected this-based member call program to compile without errors.")
+
+            let module = try XCTUnwrap(ctx.kir)
+            let combineFunction = try findKIRFunction(named: "combine", in: module, interner: ctx.interner)
+            let plusCall = try XCTUnwrap(combineFunction.body.first { instruction in
+                guard case .call(_, let callee, _, _, _, _) = instruction else {
+                    return false
+                }
+                return ctx.interner.resolve(callee) == "plus"
+            })
+            guard case .call(_, _, let arguments, _, _, _) = plusCall else {
+                XCTFail("Expected combine to lower to a call to plus.")
+                return
+            }
+
+            let implicitReceiverSymbol = try XCTUnwrap(combineFunction.params.first?.symbol)
+            XCTAssertEqual(arguments.count, 2)
+            guard case .symbolRef(let insertedReceiver)? = module.arena.expr(arguments[0]) else {
+                XCTFail("Expected first argument to be a symbolRef for implicit this receiver.")
+                return
+            }
+            XCTAssertEqual(insertedReceiver, implicitReceiverSymbol)
+        }
+    }
+
     func testABILoweringInsertsBoxingCallsForPrimitiveToAnyBoundary() throws {
         let source = """
         fun acceptAny(x: Any?) = x
@@ -1252,5 +1424,569 @@ final class BuildKIRCoverageTests: XCTestCase {
             let labelCount = body.filter { if case .label = $0 { return true }; return false }.count
             XCTAssertGreaterThanOrEqual(labelCount, 3, "Each branch needs labels for control flow")
         }
+    }
+
+    func testTryCatchFinallyLoweringUsesOrderedTypeDispatchAndThrownSlotRouting() throws {
+        let source = """
+        class MyErr
+
+        fun bodyCall(x: Int): Int = x
+        fun catchCall(x: Int): Int = x + 1
+        fun finallyCall(): Int = 0
+
+        fun demo(v: Int): Int {
+            return try {
+                bodyCall(v)
+            } catch (e: Int) {
+                catchCall(e)
+            } catch (e: MyErr) {
+                7
+            } finally {
+                finallyCall()
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let module = try XCTUnwrap(ctx.kir)
+
+            let tryExprID = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                if case .tryExpr = expr {
+                    return true
+                }
+                return false
+            })
+            guard case .tryExpr(_, let catchClauses, _, _)? = ast.arena.expr(tryExprID) else {
+                XCTFail("Expected try expression in demo.")
+                return
+            }
+            XCTAssertEqual(catchClauses.count, 2)
+
+            let catchBindings = try catchClauses.map { clause in
+                try XCTUnwrap(sema.bindings.catchClauseBinding(for: clause.body))
+            }
+            XCTAssertNotEqual(catchBindings[0].parameterSymbol, .invalid)
+            XCTAssertNotEqual(catchBindings[1].parameterSymbol, .invalid)
+
+            let body = try findKIRFunctionBody(named: "demo", in: module, interner: ctx.interner)
+
+            let matcherCalls = body.compactMap { instruction -> KIRInstruction? in
+                guard case .call(_, let callee, let arguments, _, _, _) = instruction,
+                      ctx.interner.resolve(callee) == "kk_catch_type_matches" else {
+                    return nil
+                }
+                let _ = arguments
+                return instruction
+            }
+            XCTAssertTrue(matcherCalls.isEmpty, "Try-catch lowering should not require runtime matcher helper calls.")
+
+            let labelPositions: [Int32: Int] = body.enumerated().reduce(into: [:]) { partial, entry in
+                if case .label(let labelID) = entry.element {
+                    partial[labelID] = entry.offset
+                }
+            }
+
+            func thrownEdge(for calleeName: String) -> (callIndex: Int, thrownSlot: KIRExprID, typeSlot: KIRExprID, target: Int32)? {
+                guard let callIndex = body.firstIndex(where: { instruction in
+                    guard case .call(_, let callee, _, _, _, _) = instruction else {
+                        return false
+                    }
+                    return ctx.interner.resolve(callee) == calleeName
+                }) else {
+                    return nil
+                }
+                guard case .call(_, _, _, _, _, let thrownResult?) = body[callIndex] else {
+                    return nil
+                }
+                let tokenConstIndex = callIndex + 1
+                let tokenCopyIndex = callIndex + 2
+                let jumpIndex = callIndex + 3
+                guard body.indices.contains(tokenConstIndex),
+                      body.indices.contains(tokenCopyIndex),
+                      body.indices.contains(jumpIndex),
+                      case .constValue(let unknownTypeToken, .intLiteral(0)) = body[tokenConstIndex],
+                      case .copy(from: unknownTypeToken, to: let typeSlot) = body[tokenCopyIndex],
+                      case .jumpIfNotNull(let value, let target) = body[jumpIndex],
+                      value == thrownResult else {
+                    return nil
+                }
+                return (callIndex, thrownResult, typeSlot, target)
+            }
+
+            guard let bodyEdge = thrownEdge(for: "bodyCall"),
+                  let catchEdge = thrownEdge(for: "catchCall"),
+                  let finallyEdge = thrownEdge(for: "finallyCall") else {
+                XCTFail("Expected throw-aware edges for body/catch/finally calls.")
+                return
+            }
+
+            XCTAssertEqual(bodyEdge.thrownSlot, catchEdge.thrownSlot)
+            XCTAssertEqual(bodyEdge.thrownSlot, finallyEdge.thrownSlot)
+            XCTAssertEqual(bodyEdge.typeSlot, catchEdge.typeSlot)
+            XCTAssertEqual(bodyEdge.typeSlot, finallyEdge.typeSlot)
+            let sharedExceptionSlot = bodyEdge.thrownSlot
+            let sharedExceptionTypeSlot = bodyEdge.typeSlot
+
+            guard let bodyDispatchPos = labelPositions[bodyEdge.target],
+                  let finallyEntryPos = labelPositions[catchEdge.target],
+                  let rethrowPos = labelPositions[finallyEdge.target] else {
+                XCTFail("Expected target labels for body/catch/finally throw edges.")
+                return
+            }
+            XCTAssertLessThan(bodyDispatchPos, finallyEntryPos, "Body exceptions should route to catch dispatch before finally.")
+            XCTAssertLessThan(finallyEntryPos, rethrowPos, "Finally exceptions should route directly to outer rethrow.")
+            XCTAssertNotEqual(bodyEdge.target, catchEdge.target)
+            XCTAssertNotEqual(catchEdge.target, finallyEdge.target)
+
+            let typeComparisons = body.enumerated().compactMap { index, instruction -> (index: Int, typeToken: Int64)? in
+                guard case .binary(op: .equal, lhs: let lhs, rhs: let rhs, result: _) = instruction,
+                      lhs == sharedExceptionTypeSlot,
+                      case .intLiteral(let token)? = module.arena.expr(rhs) else {
+                    return nil
+                }
+                return (index, token)
+            }
+            let expectedTypeTokens = catchBindings.map { Int64($0.parameterType.rawValue) }
+            XCTAssertEqual(typeComparisons.count, expectedTypeTokens.count, "Expected one type comparison per catch clause.")
+            XCTAssertEqual(typeComparisons.map(\.typeToken), expectedTypeTokens)
+            guard typeComparisons.count == expectedTypeTokens.count else {
+                return
+            }
+
+            guard body.indices.contains(typeComparisons[0].index + 1),
+                  case .jumpIfEqual(_, _, let firstMismatchTarget) = body[typeComparisons[0].index + 1],
+                let firstMismatchLabelPos = labelPositions[firstMismatchTarget] else {
+                XCTFail("Expected mismatch branch after first catch matcher.")
+                return
+            }
+            XCTAssertLessThan(firstMismatchLabelPos, typeComparisons[1].index, "First catch mismatch should fall through to second catch dispatch.")
+
+            guard body.indices.contains(typeComparisons[1].index + 1),
+                  case .jumpIfEqual(_, _, let unmatchedLabel) = body[typeComparisons[1].index + 1],
+                let unmatchedLabelPos = labelPositions[unmatchedLabel] else {
+                XCTFail("Expected unmatched-catch branch after last matcher.")
+                return
+            }
+            let unmatchedJumpIndex = body.index(after: unmatchedLabelPos)
+            guard body.indices.contains(unmatchedJumpIndex),
+                  case .jump(let unmatchedTarget) = body[unmatchedJumpIndex] else {
+                XCTFail("Expected unmatched-catch path to jump to finally.")
+                return
+            }
+            XCTAssertEqual(unmatchedTarget, catchEdge.target, "Unmatched catches must enter finally before rethrow.")
+
+            let finallyGuardJump = body.enumerated().contains { index, instruction in
+                guard index > finallyEdge.callIndex + 3,
+                      case .jumpIfNotNull(let value, let target) = instruction else {
+                    return false
+                }
+                return value == sharedExceptionSlot && target == finallyEdge.target
+            }
+            XCTAssertTrue(finallyGuardJump, "Expected post-finally rethrow guard for pending exception slot.")
+            XCTAssertTrue(body.contains { instruction in
+                if case .rethrow(let value) = instruction {
+                    return value == sharedExceptionSlot
+                }
+                return false
+            })
+
+            guard case .call(_, _, let catchArguments, _, _, _) = body[catchEdge.callIndex],
+                  let firstCatchArgument = catchArguments.first else {
+                XCTFail("Expected catchCall argument in first catch body.")
+                return
+            }
+            XCTAssertEqual(module.arena.exprType(firstCatchArgument), catchBindings[0].parameterType)
+        }
+    }
+
+    func testBuildKIRLowersObjectLiteralToGeneratedFactoryReturningRuntimeObjectEntity() throws {
+        let source = """
+        interface Marker
+        fun make(): Marker = object : Marker {}
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let module = try XCTUnwrap(ctx.kir)
+            let makeExprID = try XCTUnwrap(topLevelExpressionBodyExprID(
+                named: "make",
+                ast: ast,
+                interner: ctx.interner
+            ))
+            let makeBody = try findKIRFunctionBody(named: "make", in: module, interner: ctx.interner)
+            let objectFactoryCall = try XCTUnwrap(makeBody.first { instruction in
+                guard case .call(_, let callee, _, _, _, _) = instruction else {
+                    return false
+                }
+                return ctx.interner.resolve(callee).hasPrefix("kk_object_literal_")
+            })
+
+            guard case .call(let factorySymbol, let callee, let arguments, let result, _, _) = objectFactoryCall else {
+                XCTFail("Expected object literal to lower to generated factory call.")
+                return
+            }
+
+            let generatedFactorySymbol = try XCTUnwrap(factorySymbol)
+            XCTAssertGreaterThan(generatedFactorySymbol.rawValue, 0)
+            XCTAssertTrue(ctx.interner.resolve(callee).hasPrefix("kk_object_literal_"))
+            XCTAssertTrue(arguments.isEmpty)
+            let resultExprID = try XCTUnwrap(result)
+            XCTAssertEqual(module.arena.exprType(resultExprID), sema.bindings.exprTypes[makeExprID])
+            if case .unit? = module.arena.expr(resultExprID) {
+                XCTFail("Object literal must not lower to unit.")
+            }
+
+            let generatedFactoryDeclIndex = try XCTUnwrap(module.arena.declarations.firstIndex(where: { decl in
+                guard case .function(let function) = decl else {
+                    return false
+                }
+                return function.symbol == generatedFactorySymbol
+            }))
+            guard case .function(let generatedFactory) = module.arena.declarations[generatedFactoryDeclIndex] else {
+                XCTFail("Expected generated object factory function declaration.")
+                return
+            }
+            let hasAllocationRuntimeCall = generatedFactory.body.contains { instruction in
+                guard case .call(_, let loweredCallee, _, _, _, _) = instruction else {
+                    return false
+                }
+                let calleeName = ctx.interner.resolve(loweredCallee)
+                return calleeName == "kk_alloc" || calleeName == "kk_array_new"
+            }
+            XCTAssertTrue(
+                hasAllocationRuntimeCall,
+                "Expected generated object factory to include allocation runtime call."
+            )
+
+            let generatedNominalDeclIndex = try XCTUnwrap(module.arena.declarations.firstIndex(where: { decl in
+                guard case .nominalType(let nominal) = decl else {
+                    return false
+                }
+                return sema.symbols.symbol(nominal.symbol) == nil
+            }))
+
+            let generatedFactoryDeclID = KIRDeclID(rawValue: Int32(generatedFactoryDeclIndex))
+            let generatedNominalDeclID = KIRDeclID(rawValue: Int32(generatedNominalDeclIndex))
+            let fileDeclIDs = Set(module.files.flatMap(\.decls))
+            XCTAssertTrue(fileDeclIDs.contains(generatedFactoryDeclID))
+            XCTAssertTrue(fileDeclIDs.contains(generatedNominalDeclID))
+        }
+    }
+
+    // MARK: - Lambda / CallableRef Lowering (P5-20)
+
+    func testBuildKIRObjectLiteralArgumentIsNotLoweredToUnitPlaceholder() throws {
+        let source = """
+        interface I
+        fun consume(value: I): I = value
+        fun main(): I {
+            val instance = object : I {}
+            return consume(instance)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let consumeCall = try XCTUnwrap(mainBody.first { instruction in
+                guard case .call(_, let callee, _, _, _, _) = instruction else {
+                    return false
+                }
+                return ctx.interner.resolve(callee) == "consume"
+            })
+            guard case .call(_, _, let arguments, _, _, _) = consumeCall else {
+                XCTFail("Expected call instruction for consume(instance).")
+                return
+            }
+            let objectArgument = try XCTUnwrap(arguments.first)
+            let objectArgumentExpr = try XCTUnwrap(module.arena.expr(objectArgument))
+            if case .unit = objectArgumentExpr {
+                XCTFail("object literal must not be lowered to .unit placeholder at call sites.")
+            }
+        }
+    }
+
+    func testBuildKIRLowersLambdaLiteralToGeneratedCallableAndPrependsCapturesOnCall() throws {
+        let source = """
+        fun main(): Int {
+            val base = 40
+            val add = { x -> base + x }
+            return add(2)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let lambdaCall = try XCTUnwrap(mainBody.first { instruction in
+                guard case .call(_, let callee, _, _, _, _) = instruction else {
+                    return false
+                }
+                return ctx.interner.resolve(callee).hasPrefix("kk_lambda_")
+            })
+
+            guard case .call(let callSymbol, let callee, let arguments, _, _, _) = lambdaCall else {
+                XCTFail("Expected lowered lambda call in main.")
+                return
+            }
+            XCTAssertNotNil(callSymbol)
+            XCTAssertTrue(ctx.interner.resolve(callee).hasPrefix("kk_lambda_"))
+            XCTAssertEqual(arguments.count, 2)
+            guard case .intLiteral(40)? = module.arena.expr(arguments[0]) else {
+                XCTFail("Expected first lambda call argument to be captured 'base'.")
+                return
+            }
+            guard case .intLiteral(2)? = module.arena.expr(arguments[1]) else {
+                XCTFail("Expected second lambda call argument to be the explicit call argument.")
+                return
+            }
+
+            let generatedLambdaFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case .function(let function) = decl,
+                      ctx.interner.resolve(function.name).hasPrefix("kk_lambda_") else {
+                    return nil
+                }
+                return function
+            }
+            XCTAssertFalse(generatedLambdaFunctions.isEmpty)
+            if let generatedSymbol = callSymbol,
+               let generatedFunction = generatedLambdaFunctions.first(where: { $0.symbol == generatedSymbol }) {
+                XCTAssertEqual(generatedFunction.params.count, 2)
+            }
+        }
+    }
+
+    func testBuildKIRCallableValueCallRespectsParameterMappingBeforePrependingCaptures() throws {
+        let source = """
+        fun main(): Int {
+            val base = 100
+            val add = { a, b -> base + a + b }
+            return add(1, 2)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let addCallExprID = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case .call(let calleeExprID, _, _, _) = expr,
+                      let calleeExpr = ast.arena.expr(calleeExprID),
+                      case .nameRef(let calleeName, _) = calleeExpr else {
+                    return false
+                }
+                return ctx.interner.resolve(calleeName) == "add"
+            })
+            let existingBinding = try XCTUnwrap(sema.bindings.callableValueCalls[addCallExprID])
+            sema.bindings.bindCallableValueCall(
+                addCallExprID,
+                binding: CallableValueCallBinding(
+                    target: existingBinding.target,
+                    functionType: existingBinding.functionType,
+                    parameterMapping: [0: 1, 1: 0]
+                )
+            )
+
+            try BuildKIRPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let lambdaCall = try XCTUnwrap(mainBody.first { instruction in
+                guard case .call(_, let callee, _, _, _, _) = instruction else {
+                    return false
+                }
+                return ctx.interner.resolve(callee).hasPrefix("kk_lambda_")
+            })
+
+            guard case .call(_, _, let arguments, _, _, _) = lambdaCall else {
+                XCTFail("Expected callable-value call to lowered lambda target.")
+                return
+            }
+            XCTAssertEqual(arguments.count, 3)
+            guard case .intLiteral(100)? = module.arena.expr(arguments[0]) else {
+                XCTFail("Expected capture argument to stay prepended at index 0.")
+                return
+            }
+            guard case .intLiteral(2)? = module.arena.expr(arguments[1]) else {
+                XCTFail("Expected parameter mapping to reorder explicit args before call emission.")
+                return
+            }
+            guard case .intLiteral(1)? = module.arena.expr(arguments[2]) else {
+                XCTFail("Expected reordered second parameter argument.")
+                return
+            }
+        }
+    }
+
+    func testSyntheticLambdaSymbolGenerationNeverUsesZeroOrInvalidSentinel() {
+        let phase = BuildKIRPhase()
+        let zeroExprSymbol = phase.syntheticLambdaSymbol(for: ExprID(rawValue: 0))
+        let maxExprSymbol = phase.syntheticLambdaSymbol(for: ExprID(rawValue: Int32.max))
+
+        XCTAssertEqual(zeroExprSymbol, phase.syntheticLambdaSymbol(for: ExprID(rawValue: 0)))
+        XCTAssertGreaterThan(zeroExprSymbol.rawValue, 0)
+        XCTAssertNotEqual(zeroExprSymbol.rawValue, 0)
+        XCTAssertNotEqual(zeroExprSymbol, .invalid)
+
+        XCTAssertGreaterThan(maxExprSymbol.rawValue, 0)
+        XCTAssertNotEqual(maxExprSymbol.rawValue, 0)
+        XCTAssertNotEqual(maxExprSymbol, .invalid)
+        XCTAssertNotEqual(maxExprSymbol, zeroExprSymbol)
+    }
+
+    func testBuildKIRLowersCallableRefToCallableSymbolValue() throws {
+        let source = """
+        fun inc(x: Int): Int = x + 1
+        fun main(): Int {
+            val f = ::inc
+            return f(2)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let module = try XCTUnwrap(ctx.kir)
+            let incSymbol = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
+                symbol.kind == .function && ctx.interner.resolve(symbol.name) == "inc"
+            })?.id)
+
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let incCall = try XCTUnwrap(mainBody.first { instruction in
+                guard case .call(let symbol, _, _, _, _, _) = instruction else {
+                    return false
+                }
+                return symbol == incSymbol
+            })
+
+            guard case .call(let callSymbol, let callee, let arguments, _, _, _) = incCall else {
+                XCTFail("Expected callable reference call to inc.")
+                return
+            }
+            XCTAssertEqual(callSymbol, incSymbol)
+            XCTAssertEqual(ctx.interner.resolve(callee), "inc")
+            XCTAssertEqual(arguments.count, 1)
+            guard case .intLiteral(2)? = module.arena.expr(arguments[0]) else {
+                XCTFail("Expected callable reference call to forward the explicit argument.")
+                return
+            }
+        }
+    }
+
+    func testBuildKIRPrependsBoundCallableRefReceiverAsCaptureArgument() throws {
+        let source = """
+        class Box {
+            fun plus(x: Int): Int = x
+        }
+        fun main(box: Box): Int {
+            val f = box::plus
+            return f(7)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let module = try XCTUnwrap(ctx.kir)
+            let plusSymbol = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
+                symbol.kind == .function && ctx.interner.resolve(symbol.name) == "plus"
+            })?.id)
+
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let plusCall = try XCTUnwrap(mainBody.first { instruction in
+                guard case .call(let symbol, _, _, _, _, _) = instruction else {
+                    return false
+                }
+                return symbol == plusSymbol
+            })
+
+            guard case .call(_, let callee, let arguments, _, _, _) = plusCall else {
+                XCTFail("Expected bound callable reference to lower to plus call.")
+                return
+            }
+            XCTAssertEqual(ctx.interner.resolve(callee), "plus")
+            XCTAssertEqual(arguments.count, 2)
+            guard case .symbolRef(let receiverSymbol)? = module.arena.expr(arguments[0]),
+                  let receiver = sema.symbols.symbol(receiverSymbol) else {
+                XCTFail("Expected first argument to be captured receiver symbol.")
+                return
+            }
+            XCTAssertEqual(ctx.interner.resolve(receiver.name), "box")
+            guard case .intLiteral(7)? = module.arena.expr(arguments[1]) else {
+                XCTFail("Expected second argument to be call-site argument.")
+                return
+            }
+        }
+    }
+
+    private func topLevelExpressionBodyExprID(
+        named functionName: String,
+        ast: ASTModule,
+        interner: StringInterner
+    ) -> ExprID? {
+        ast.files
+            .flatMap(\.topLevelDecls)
+            .compactMap { declID -> ExprID? in
+                guard let decl = ast.arena.decl(declID),
+                      case .funDecl(let funDecl) = decl,
+                      interner.resolve(funDecl.name) == functionName,
+                      case .expr(let exprID, _) = funDecl.body else {
+                    return nil
+                }
+                return exprID
+            }
+            .first
+    }
+
+    private func symbolNames(
+        for arguments: [KIRExprID],
+        module: KIRModule,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> [String] {
+        arguments.compactMap { argument in
+            guard case .symbolRef(let symbolID)? = module.arena.expr(argument),
+                  let symbol = sema.symbols.symbol(symbolID) else {
+                return nil
+            }
+            return interner.resolve(symbol.name)
+        }
+    }
+
+    private func firstExprID(
+        in ast: ASTModule,
+        where predicate: (ExprID, Expr) -> Bool
+    ) -> ExprID? {
+        for index in ast.arena.exprs.indices {
+            let exprID = ExprID(rawValue: Int32(index))
+            guard let expr = ast.arena.expr(exprID) else {
+                continue
+            }
+            if predicate(exprID, expr) {
+                return exprID
+            }
+        }
+        return nil
     }
 }

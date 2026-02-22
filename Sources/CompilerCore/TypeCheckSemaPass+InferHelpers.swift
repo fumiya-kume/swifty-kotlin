@@ -359,6 +359,60 @@ extension TypeCheckSemaPassPhase {
         return nil
     }
 
+    func collectMemberFunctionCandidates(
+        named calleeName: InternedString,
+        receiverType: TypeID,
+        sema: SemaModule,
+        allowedOwnerSymbols: Set<SymbolID>? = nil
+    ) -> [SymbolID] {
+        guard let receiverNominal = nominalSymbol(of: receiverType, types: sema.types) else {
+            return []
+        }
+
+        var ownerQueue: [SymbolID] = [receiverNominal]
+        var visitedOwners: Set<SymbolID> = []
+        var ownersInLookupOrder: [SymbolID] = []
+        while !ownerQueue.isEmpty {
+            let owner = ownerQueue.removeFirst()
+            guard visitedOwners.insert(owner).inserted else {
+                continue
+            }
+            if let allowedOwnerSymbols {
+                if allowedOwnerSymbols.contains(owner) {
+                    ownersInLookupOrder.append(owner)
+                }
+            } else {
+                ownersInLookupOrder.append(owner)
+            }
+            ownerQueue.append(contentsOf: sema.symbols.directSupertypes(for: owner))
+        }
+
+        if ownersInLookupOrder.isEmpty {
+            return []
+        }
+
+        var candidates: [SymbolID] = []
+        var seenCandidates: Set<SymbolID> = []
+        for owner in ownersInLookupOrder {
+            guard let ownerSymbol = sema.symbols.symbol(owner) else {
+                continue
+            }
+            let memberFQName = ownerSymbol.fqName + [calleeName]
+            for candidate in sema.symbols.lookupAll(fqName: memberFQName) {
+                guard seenCandidates.insert(candidate).inserted,
+                      let symbol = sema.symbols.symbol(candidate),
+                      symbol.kind == .function,
+                      sema.symbols.parentSymbol(for: candidate) == owner,
+                      let signature = sema.symbols.functionSignature(for: candidate),
+                      signature.receiverType != nil else {
+                    continue
+                }
+                candidates.append(candidate)
+            }
+        }
+        return candidates
+    }
+
     func enumOwnerSymbol(for entrySymbol: SemanticSymbol, symbols: SymbolTable) -> SymbolID? {
         guard entrySymbol.kind == .field,
               entrySymbol.fqName.count >= 2 else {
@@ -390,5 +444,260 @@ extension TypeCheckSemaPassPhase {
             }
         }
         return false
+    }
+
+    func callableTargetForCalleeExpr(
+        _ calleeExprID: ExprID,
+        sema: SemaModule
+    ) -> CallableTarget? {
+        if let explicitTarget = sema.bindings.callableTarget(for: calleeExprID) {
+            return explicitTarget
+        }
+        guard let symbol = sema.bindings.identifierSymbol(for: calleeExprID) else {
+            return nil
+        }
+        guard let semanticSymbol = sema.symbols.symbol(symbol) else {
+            return .localValue(symbol)
+        }
+        if semanticSymbol.kind == .function || semanticSymbol.kind == .constructor {
+            return .symbol(symbol)
+        }
+        return .localValue(symbol)
+    }
+
+    func callableFunctionType(
+        for signature: FunctionSignature,
+        bindReceiver: Bool,
+        sema: SemaModule
+    ) -> TypeID {
+        var params = signature.parameterTypes
+        if !bindReceiver, let receiverType = signature.receiverType {
+            params.insert(receiverType, at: 0)
+        }
+        return sema.types.make(.functionType(FunctionType(
+            params: params,
+            returnType: signature.returnType,
+            isSuspend: signature.isSuspend,
+            nullability: .nonNull
+        )))
+    }
+
+    func chooseCallableReferenceTarget(
+        from candidates: [SymbolID],
+        expectedType: TypeID?,
+        bindReceiver: Bool,
+        sema: SemaModule
+    ) -> SymbolID? {
+        let sorted = candidates.sorted(by: { $0.rawValue < $1.rawValue })
+        guard !sorted.isEmpty else {
+            return nil
+        }
+        guard let expectedType else {
+            return sorted.first
+        }
+        guard case .functionType = sema.types.kind(of: expectedType) else {
+            return sorted.first
+        }
+        if let matched = sorted.first(where: { symbolID in
+            guard let signature = sema.symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            let inferredType = callableFunctionType(
+                for: signature,
+                bindReceiver: bindReceiver,
+                sema: sema
+            )
+            return sema.types.isSubtype(inferredType, expectedType)
+        }) {
+            return matched
+        }
+        return sorted.first
+    }
+
+    func collectCapturedOuterSymbols(
+        in exprID: ExprID,
+        ast: ASTModule,
+        sema: SemaModule,
+        outerSymbols: Set<SymbolID>,
+        skipNestedClosures: Bool = true
+    ) -> [SymbolID] {
+        guard !outerSymbols.isEmpty else {
+            return []
+        }
+
+        var captured: Set<SymbolID> = []
+
+        func recordCapture(for targetExprID: ExprID) {
+            guard let symbol = sema.bindings.identifierSymbol(for: targetExprID),
+                  outerSymbols.contains(symbol) else {
+                return
+            }
+            captured.insert(symbol)
+        }
+
+        func visitBody(_ body: FunctionBody) {
+            switch body {
+            case .block(let exprs, _):
+                for expr in exprs {
+                    visit(expr)
+                }
+            case .expr(let expr, _):
+                visit(expr)
+            case .unit:
+                break
+            }
+        }
+
+        func visit(_ currentExprID: ExprID) {
+            guard let expr = ast.arena.expr(currentExprID) else {
+                return
+            }
+            switch expr {
+            case .nameRef:
+                recordCapture(for: currentExprID)
+
+            case .forExpr(_, let iterable, let body, _):
+                visit(iterable)
+                visit(body)
+
+            case .whileExpr(let condition, let body, _):
+                visit(condition)
+                visit(body)
+
+            case .doWhileExpr(let body, let condition, _):
+                visit(body)
+                visit(condition)
+
+            case .localDecl(_, _, _, let initializer, _):
+                if let initializer {
+                    visit(initializer)
+                }
+
+            case .localAssign(_, let value, _):
+                visit(value)
+
+            case .arrayAssign(let array, let index, let value, _):
+                visit(array)
+                visit(index)
+                visit(value)
+
+            case .call(let callee, _, let args, _):
+                visit(callee)
+                for arg in args {
+                    visit(arg.expr)
+                }
+
+            case .memberCall(let receiver, _, _, let args, _):
+                visit(receiver)
+                for arg in args {
+                    visit(arg.expr)
+                }
+
+            case .arrayAccess(let array, let index, _):
+                visit(array)
+                visit(index)
+
+            case .binary(_, let lhs, let rhs, _):
+                visit(lhs)
+                visit(rhs)
+
+            case .whenExpr(let subject, let branches, let elseExpr, _):
+                if let subject {
+                    visit(subject)
+                }
+                for branch in branches {
+                    if let condition = branch.condition {
+                        visit(condition)
+                    }
+                    visit(branch.body)
+                }
+                if let elseExpr {
+                    visit(elseExpr)
+                }
+
+            case .returnExpr(let value, _):
+                if let value {
+                    visit(value)
+                }
+
+            case .ifExpr(let condition, let thenExpr, let elseExpr, _):
+                visit(condition)
+                visit(thenExpr)
+                if let elseExpr {
+                    visit(elseExpr)
+                }
+
+            case .tryExpr(let body, let catchClauses, let finallyExpr, _):
+                visit(body)
+                for catchClause in catchClauses {
+                    visit(catchClause.body)
+                }
+                if let finallyExpr {
+                    visit(finallyExpr)
+                }
+
+            case .unaryExpr(_, let operand, _):
+                visit(operand)
+
+            case .isCheck(let value, _, _, _):
+                visit(value)
+
+            case .asCast(let value, _, _, _):
+                visit(value)
+
+            case .nullAssert(let value, _):
+                visit(value)
+
+            case .safeMemberCall(let receiver, _, _, let args, _):
+                visit(receiver)
+                for arg in args {
+                    visit(arg.expr)
+                }
+
+            case .compoundAssign(_, _, let value, _):
+                visit(value)
+
+            case .throwExpr(let value, _):
+                visit(value)
+
+            case .lambdaLiteral(_, let body, _):
+                if !skipNestedClosures {
+                    visit(body)
+                }
+
+            case .callableRef(let receiver, _, _):
+                if let receiver {
+                    visit(receiver)
+                }
+
+            case .localFunDecl(_, _, _, let body, _):
+                if !skipNestedClosures {
+                    visitBody(body)
+                }
+
+            case .blockExpr(let statements, let trailingExpr, _):
+                for statement in statements {
+                    visit(statement)
+                }
+                if let trailingExpr {
+                    visit(trailingExpr)
+                }
+
+            case .stringTemplate(let parts, _):
+                for part in parts {
+                    if case .expression(let expr) = part {
+                        visit(expr)
+                    }
+                }
+
+            case .intLiteral, .longLiteral, .floatLiteral, .doubleLiteral,
+                 .charLiteral, .boolLiteral, .stringLiteral, .breakExpr,
+                 .continueExpr, .objectLiteral, .superRef, .thisRef:
+                break
+            }
+        }
+
+        visit(exprID)
+        return captured.sorted(by: { $0.rawValue < $1.rawValue })
     }
 }

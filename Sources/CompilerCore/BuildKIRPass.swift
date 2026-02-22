@@ -9,6 +9,12 @@ public final class BuildKIRPhase: CompilerPhase {
     var currentImplicitReceiverSymbol: SymbolID?
     var loopControlStack: [(continueLabel: Int32, breakLabel: Int32)] = []
     var nextLoopLabel: Int32 = 10_000
+    var pendingGeneratedCallableDeclIDs: [KIRDeclID] = []
+    var callableValueInfoByExprID: [KIRExprID: KIRCallableValueInfo] = [:]
+    var syntheticLambdaSymbolsByExprID: [ExprID: SymbolID] = [:]
+    var syntheticObjectLiteralSymbolsByExprID: [ExprID: (nominalSymbol: SymbolID, constructorSymbol: SymbolID, constructorName: InternedString)] = [:]
+    var emittedObjectLiteralExprIDs: Set<ExprID> = []
+    var nextSyntheticLambdaSymbolRawValue: Int32 = 1
 
     public init() {}
 
@@ -16,6 +22,13 @@ public final class BuildKIRPhase: CompilerPhase {
         guard let ast = ctx.ast, let sema = ctx.sema else {
             throw CompilerPipelineError.invalidInput("Sema phase did not run.")
         }
+
+        pendingGeneratedCallableDeclIDs.removeAll(keepingCapacity: true)
+        callableValueInfoByExprID.removeAll(keepingCapacity: true)
+        syntheticLambdaSymbolsByExprID.removeAll(keepingCapacity: true)
+        syntheticObjectLiteralSymbolsByExprID.removeAll(keepingCapacity: true)
+        emittedObjectLiteralExprIDs.removeAll(keepingCapacity: true)
+        initializeSyntheticLambdaSymbolAllocator(sema: sema)
 
         let arena = KIRArena()
         var files: [KIRFile] = []
@@ -73,6 +86,7 @@ public final class BuildKIRPhase: CompilerPhase {
                         currentImplicitReceiverSymbol = nil
                         loopControlStack.removeAll(keepingCapacity: true)
                         nextLoopLabel = 10_000
+                        beginCallableLoweringScope()
 
                         let receiverSymbol = syntheticReceiverParameterSymbol(functionSymbol: ctorSymbol)
                         var params = [KIRParameter(symbol: receiverSymbol, type: signature.returnType)]
@@ -224,6 +238,7 @@ public final class BuildKIRPhase: CompilerPhase {
                             )
                         )
                         declIDs.append(ctorKirID)
+                        declIDs.append(contentsOf: drainGeneratedCallableDecls())
                     }
 
                 case .interfaceDecl:
@@ -252,6 +267,7 @@ public final class BuildKIRPhase: CompilerPhase {
                     currentImplicitReceiverSymbol = nil
                     loopControlStack.removeAll(keepingCapacity: true)
                     nextLoopLabel = 10_000
+                    beginCallableLoweringScope()
                     let signature = sema.symbols.functionSignature(for: symbol)
                     var params: [KIRParameter] = []
                     if let signature {
@@ -380,6 +396,7 @@ public final class BuildKIRPhase: CompilerPhase {
                         )
                         declIDs.append(stubID)
                     }
+                    declIDs.append(contentsOf: drainGeneratedCallableDecls())
                     currentImplicitReceiverExprID = nil
                     currentImplicitReceiverSymbol = nil
 
@@ -410,4 +427,3 @@ public final class BuildKIRPhase: CompilerPhase {
         ctx.kir = module
     }
 }
-

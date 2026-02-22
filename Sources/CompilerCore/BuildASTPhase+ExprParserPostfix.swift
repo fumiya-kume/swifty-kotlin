@@ -55,6 +55,18 @@ extension BuildASTPhase.ExpressionParser {
                 continue
             }
 
+            if matches(.symbol(.doubleColon)) {
+                guard let opToken = consume(),
+                      let memberToken = current(),
+                      let memberName = tokenText(memberToken) else {
+                    break
+                }
+                _ = consume()
+                let range = mergeRanges(astArena.exprRange(expr), memberToken.range, fallback: opToken.range)
+                expr = astArena.appendExpr(.callableRef(receiver: expr, member: memberName, range: range))
+                continue
+            }
+
             let isSafeDot = matches(.symbol(.questionDot))
             let isDot = isSafeDot || matches(.symbol(.dot))
             guard isDot else {

@@ -549,6 +549,245 @@ final class CompilerCoreTests: XCTestCase {
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
     }
 
+    func testLambdaInferenceCapturesOuterLocalAndResolvesLocalCallableCall() throws {
+        let source = """
+        fun host(seed: Int): Int {
+            val offset = seed
+            val add: (Int) -> Int = { value -> value + offset }
+            return add(1)
+        }
+        """
+        let ctx = try makeContext(source: source)
+        try runSema(ctx)
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let sema = try XCTUnwrap(ctx.sema)
+        let lambdaExprID = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+            if case .lambdaLiteral = expr { return true }
+            return false
+        })
+        let addCallExprID = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+            guard case .call(let calleeExprID, _, _, _) = expr,
+                  let calleeExpr = ast.arena.expr(calleeExprID),
+                  case .nameRef(let calleeName, _) = calleeExpr else {
+                return false
+            }
+            return ctx.interner.resolve(calleeName) == "add"
+        })
+
+        let lambdaType = try XCTUnwrap(sema.bindings.exprTypes[lambdaExprID])
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+        guard case .functionType(let functionType) = sema.types.kind(of: lambdaType) else {
+            XCTFail("Lambda should infer function type.")
+            return
+        }
+        XCTAssertEqual(functionType.params, [intType])
+        XCTAssertEqual(functionType.returnType, intType)
+
+        let offsetSymbol = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
+            symbol.kind == .local && ctx.interner.resolve(symbol.name) == "offset"
+        })?.id)
+        XCTAssertEqual(sema.bindings.captureSymbolsByExpr[lambdaExprID], [offsetSymbol])
+        XCTAssertNotNil(sema.bindings.callableValueCalls[addCallExprID])
+    }
+
+    func testCallableReferenceInfersFunctionTypeAndBindsTargetSymbol() throws {
+        let source = """
+        fun target(x: Int): Int = x + 1
+        fun use(): Int {
+            val ref: (Int) -> Int = ::target
+            return ref(1)
+        }
+        """
+        let ctx = try makeContext(source: source)
+        try runSema(ctx)
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let sema = try XCTUnwrap(ctx.sema)
+        let callableRefExprID = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+            if case .callableRef = expr { return true }
+            return false
+        })
+        let refCallExprID = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+            guard case .call(let calleeExprID, _, _, _) = expr,
+                  let calleeExpr = ast.arena.expr(calleeExprID),
+                  case .nameRef(let calleeName, _) = calleeExpr else {
+                return false
+            }
+            return ctx.interner.resolve(calleeName) == "ref"
+        })
+        let targetSymbol = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
+            symbol.kind == .function && ctx.interner.resolve(symbol.name) == "target"
+        })?.id)
+
+        XCTAssertEqual(sema.bindings.identifierSymbols[callableRefExprID], targetSymbol)
+        XCTAssertEqual(sema.bindings.callableTargets[callableRefExprID], .symbol(targetSymbol))
+        XCTAssertEqual(sema.bindings.captureSymbolsByExpr[callableRefExprID], [])
+
+        let refType = try XCTUnwrap(sema.bindings.exprTypes[callableRefExprID])
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+        guard case .functionType(let functionType) = sema.types.kind(of: refType) else {
+            XCTFail("Callable reference should infer function type.")
+            return
+        }
+        XCTAssertEqual(functionType.params, [intType])
+        XCTAssertEqual(functionType.returnType, intType)
+        XCTAssertNotNil(sema.bindings.callableValueCalls[refCallExprID])
+    }
+
+    func testBoundCallableReferenceCapturesReceiverAndResolvesExtensionTarget() throws {
+        let source = """
+        fun Int.incByOne(): Int = this + 1
+        fun host(seed: Int): Int {
+            val ref: () -> Int = seed::incByOne
+            return ref()
+        }
+        """
+        let ctx = try makeContext(source: source)
+        try runSema(ctx)
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let sema = try XCTUnwrap(ctx.sema)
+        let callableRefExprID = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+            if case .callableRef = expr { return true }
+            return false
+        })
+        let extensionSymbol = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
+            symbol.kind == .function && ctx.interner.resolve(symbol.name) == "incByOne"
+        })?.id)
+        let seedSymbol = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
+            symbol.kind == .valueParameter && ctx.interner.resolve(symbol.name) == "seed"
+        })?.id)
+
+        XCTAssertEqual(sema.bindings.callableTargets[callableRefExprID], .symbol(extensionSymbol))
+        XCTAssertEqual(sema.bindings.captureSymbolsByExpr[callableRefExprID], [seedSymbol])
+
+        let callableType = try XCTUnwrap(sema.bindings.exprTypes[callableRefExprID])
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+        guard case .functionType(let functionType) = sema.types.kind(of: callableType) else {
+            XCTFail("Bound callable reference should infer function type.")
+            return
+        }
+        XCTAssertEqual(functionType.params.count, 0)
+        XCTAssertEqual(functionType.returnType, intType)
+    }
+
+    func testCallableReferenceOverloadSelectionBindsDeterministicTargetSymbol() throws {
+        let source = """
+        fun target(x: String): String = x
+        fun target(x: Int): Int = x + 1
+        fun use(): Int {
+            val ref: (Int) -> Int = ::target
+            return ref(1)
+        }
+        """
+        let ctx = try makeContext(source: source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
+        assertNoDiagnostic("KSWIFTK-SEMA-0003", in: ctx)
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let sema = try XCTUnwrap(ctx.sema)
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+        let callableRefExprID = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+            if case .callableRef = expr { return true }
+            return false
+        })
+        let intOverloadSymbol = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
+            guard symbol.kind == .function,
+                  ctx.interner.resolve(symbol.name) == "target",
+                  let signature = sema.symbols.functionSignature(for: symbol.id),
+                  signature.parameterTypes.count == 1,
+                  signature.parameterTypes[0] == intType else {
+                return false
+            }
+            return true
+        })?.id)
+
+        XCTAssertEqual(sema.bindings.identifierSymbols[callableRefExprID], intOverloadSymbol)
+        XCTAssertEqual(sema.bindings.callableTargets[callableRefExprID], .symbol(intOverloadSymbol))
+    }
+
+    func testDirectCallableReferenceCallPropagatesSymbolTargetBinding() throws {
+        let source = """
+        fun target(x: String): String = x
+        fun target(x: Int): Int = x + 1
+        fun use(): Int = (::target)(1)
+        """
+        let ctx = try makeContext(source: source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
+        assertNoDiagnostic("KSWIFTK-SEMA-0003", in: ctx)
+        assertNoDiagnostic("KSWIFTK-SEMA-0023", in: ctx)
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let sema = try XCTUnwrap(ctx.sema)
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+        let intOverloadSymbol = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
+            guard symbol.kind == .function,
+                  ctx.interner.resolve(symbol.name) == "target",
+                  let signature = sema.symbols.functionSignature(for: symbol.id),
+                  signature.parameterTypes.count == 1,
+                  signature.parameterTypes[0] == intType else {
+                return false
+            }
+            return true
+        })?.id)
+        let callExprID = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+            guard case .call(let calleeExprID, _, _, _) = expr,
+                  let calleeExpr = ast.arena.expr(calleeExprID) else {
+                return false
+            }
+            if case .callableRef = calleeExpr {
+                return true
+            }
+            return false
+        })
+
+        let callBinding = try XCTUnwrap(sema.bindings.callableValueCalls[callExprID])
+        XCTAssertEqual(callBinding.target, .symbol(intOverloadSymbol))
+        XCTAssertEqual(callBinding.parameterMapping, [0: 0])
+        XCTAssertEqual(sema.bindings.callableTargets[callExprID], .symbol(intOverloadSymbol))
+    }
+
+    func testFunctionTypeParameterCallUsesCallableValueResolution() throws {
+        let source = """
+        fun apply(f: (Int) -> Int, x: Int): Int = f(x)
+        """
+        let ctx = try makeContext(source: source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0023", in: ctx)
+        assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let sema = try XCTUnwrap(ctx.sema)
+        let callExprID = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+            guard case .call(let calleeExprID, _, _, _) = expr,
+                  let calleeExpr = ast.arena.expr(calleeExprID),
+                  case .nameRef(let calleeName, _) = calleeExpr else {
+                return false
+            }
+            return ctx.interner.resolve(calleeName) == "f"
+        })
+        let fParamSymbol = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
+            symbol.kind == .valueParameter && ctx.interner.resolve(symbol.name) == "f"
+        })?.id)
+        let callableCallBinding = try XCTUnwrap(sema.bindings.callableValueCalls[callExprID])
+        XCTAssertEqual(callableCallBinding.target, .localValue(fParamSymbol))
+        XCTAssertEqual(callableCallBinding.parameterMapping, [0: 0])
+
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+        guard case .functionType(let functionType) = sema.types.kind(of: callableCallBinding.functionType) else {
+            XCTFail("Callable value call binding should store function type.")
+            return
+        }
+        XCTAssertEqual(functionType.params, [intType])
+        XCTAssertEqual(functionType.returnType, intType)
+    }
+
     func testEmitObjectProducesMachOFile() throws {
         let source = "fun main() {}"
         let tempSource = try writeTempSource(source)
@@ -563,7 +802,7 @@ final class CompilerCoreTests: XCTestCase {
             inputs: [tempSource.path],
             outputPath: outputURL.path,
             emit: .object,
-            target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+            target: defaultTargetTriple()
         )
         let driver = CompilerDriver(
             version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
@@ -587,7 +826,7 @@ final class CompilerCoreTests: XCTestCase {
             inputs: [tempSource.path],
             outputPath: outputURL.path,
             emit: .executable,
-            target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+            target: defaultTargetTriple()
         )
         let driver = CompilerDriver(
             version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
@@ -626,7 +865,7 @@ final class CompilerCoreTests: XCTestCase {
             inputs: [tempSource.path],
             outputPath: outputBase,
             emit: .kirDump,
-            target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+            target: defaultTargetTriple()
         )
         let driver = CompilerDriver(
             version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
@@ -701,6 +940,94 @@ final class CompilerCoreTests: XCTestCase {
         case .expr, .unit:
             XCTFail("Block-body function should produce block expressions.")
         }
+    }
+
+    func testLambdaLiteralExpressionBodyParsesAsDedicatedExprNode() throws {
+        let source = """
+        fun build() = { x: Int -> x + 1 }
+        """
+        let ctx = try makeContext(source: source)
+        try runFrontend(ctx)
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let function = try XCTUnwrap(topLevelFunction(named: "build", in: ast, interner: ctx.interner))
+        guard case .expr(let exprID, _) = function.body,
+              let expr = ast.arena.expr(exprID),
+              case .lambdaLiteral(let params, let bodyExprID, _) = expr else {
+            XCTFail("Expected lambda literal expression body.")
+            return
+        }
+
+        XCTAssertEqual(params.map { ctx.interner.resolve($0) }, ["x"])
+        guard let bodyExpr = ast.arena.expr(bodyExprID),
+              case .binary = bodyExpr else {
+            XCTFail("Expected parsed lambda body expression.")
+            return
+        }
+    }
+
+    func testObjectLiteralExpressionBodyParsesAsDedicatedExprNode() throws {
+        let source = """
+        interface I
+        fun build() = object : I {}
+        """
+        let ctx = try makeContext(source: source)
+        try runFrontend(ctx)
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let function = try XCTUnwrap(topLevelFunction(named: "build", in: ast, interner: ctx.interner))
+        guard case .expr(let exprID, _) = function.body,
+              let expr = ast.arena.expr(exprID),
+              case .objectLiteral(let superTypes, _) = expr else {
+            XCTFail("Expected object literal expression body.")
+            return
+        }
+
+        XCTAssertEqual(superTypes.count, 1)
+        let superType = try XCTUnwrap(ast.arena.typeRef(superTypes[0]))
+        guard case .named(let path, _, _) = superType,
+              let first = path.first else {
+            XCTFail("Expected named super type in object literal.")
+            return
+        }
+        XCTAssertEqual(ctx.interner.resolve(first), "I")
+    }
+
+    func testCallableReferenceExpressionBodyParsesAsDedicatedExprNode() throws {
+        let source = """
+        fun target(x: Int) = x
+        fun unbound() = ::target
+        fun bound(x: Int) = x::toString
+        """
+        let ctx = try makeContext(source: source)
+        try runFrontend(ctx)
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let unbound = try XCTUnwrap(topLevelFunction(named: "unbound", in: ast, interner: ctx.interner))
+        guard case .expr(let unboundExprID, _) = unbound.body,
+              let unboundExpr = ast.arena.expr(unboundExprID),
+              case .callableRef(let unboundReceiver, let unboundMember, _) = unboundExpr else {
+            XCTFail("Expected unbound callable reference.")
+            return
+        }
+        XCTAssertNil(unboundReceiver)
+        XCTAssertEqual(ctx.interner.resolve(unboundMember), "target")
+
+        let bound = try XCTUnwrap(topLevelFunction(named: "bound", in: ast, interner: ctx.interner))
+        guard case .expr(let boundExprID, _) = bound.body,
+              let boundExpr = ast.arena.expr(boundExprID),
+              case .callableRef(let boundReceiver, let boundMember, _) = boundExpr else {
+            XCTFail("Expected bound callable reference.")
+            return
+        }
+        XCTAssertEqual(ctx.interner.resolve(boundMember), "toString")
+        let receiverExprID = try XCTUnwrap(boundReceiver)
+        guard let receiverExpr = ast.arena.expr(receiverExprID),
+              case .nameRef(let receiverName, _) = receiverExpr else {
+            XCTFail("Expected callable reference receiver expression.")
+            return
+        }
+        XCTAssertEqual(ctx.interner.resolve(receiverName), "x")
     }
 
     func testSubjectLessWhenParsesCorrectly() throws {
@@ -822,7 +1149,7 @@ final class CompilerCoreTests: XCTestCase {
             inputs: [tempURL.path],
             outputPath: tempURL.deletingPathExtension().appendingPathExtension("out").path,
             emit: .kirDump,
-            target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+            target: defaultTargetTriple()
         )
         return CompilationContext(
             options: options,
@@ -849,7 +1176,7 @@ final class CompilerCoreTests: XCTestCase {
             inputs: inputPaths,
             outputPath: tempDir.appendingPathComponent("out.kir").path,
             emit: .kirDump,
-            target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+            target: defaultTargetTriple()
         )
         return CompilationContext(
             options: options,
@@ -857,6 +1184,41 @@ final class CompilerCoreTests: XCTestCase {
             diagnostics: DiagnosticEngine(),
             interner: StringInterner()
         )
+    }
+
+    private func topLevelFunction(
+        named name: String,
+        in ast: ASTModule,
+        interner: StringInterner
+    ) -> FunDecl? {
+        for file in ast.files {
+            for declID in file.topLevelDecls {
+                guard let decl = ast.arena.decl(declID),
+                      case .funDecl(let function) = decl else {
+                    continue
+                }
+                if interner.resolve(function.name) == name {
+                    return function
+                }
+            }
+        }
+        return nil
+    }
+
+    private func firstExprID(
+        in ast: ASTModule,
+        where predicate: (ExprID, Expr) -> Bool
+    ) -> ExprID? {
+        for index in ast.arena.exprs.indices {
+            let exprID = ExprID(rawValue: Int32(index))
+            guard let expr = ast.arena.expr(exprID) else {
+                continue
+            }
+            if predicate(exprID, expr) {
+                return exprID
+            }
+        }
+        return nil
     }
 
     private func writeTempSource(_ source: String) throws -> URL {
