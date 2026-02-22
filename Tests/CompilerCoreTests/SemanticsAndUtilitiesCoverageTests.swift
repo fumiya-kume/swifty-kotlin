@@ -703,11 +703,28 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
         bindings.bindExprType(expr, type: TypeSystem().anyType)
         bindings.bindIdentifier(expr, symbol: fn)
         bindings.bindCall(expr, binding: CallBinding(chosenCallee: fn, substitutedTypeArguments: [], parameterMapping: [0: 0]))
+        bindings.bindCallableTarget(expr, target: .symbol(fn))
+        bindings.bindCallableValueCall(
+            expr,
+            binding: CallableValueCallBinding(
+                target: .localValue(fn),
+                functionType: TypeSystem().anyType,
+                parameterMapping: [0: 0]
+            )
+        )
+        bindings.bindCallableTarget(expr, target: .localValue(fn))
+        bindings.bindCaptureSymbols(expr, symbols: [fn, fn])
         bindings.bindDecl(decl, symbol: fn)
+        bindings.bindCatchClause(expr, binding: CatchClauseBinding(parameterSymbol: fn, parameterType: TypeSystem().anyType))
 
-        XCTAssertEqual(bindings.identifierSymbols[expr], fn)
-        XCTAssertEqual(bindings.callBindings[expr]?.chosenCallee, fn)
-        XCTAssertEqual(bindings.declSymbols[decl], fn)
+        XCTAssertEqual(bindings.identifierSymbol(for: expr), fn)
+        XCTAssertEqual(bindings.callBinding(for: expr)?.chosenCallee, fn)
+        XCTAssertEqual(bindings.callableTarget(for: expr), .localValue(fn))
+        XCTAssertEqual(bindings.callableValueCallBinding(for: expr)?.parameterMapping, [0: 0])
+        XCTAssertEqual(bindings.catchClauseBinding(for: expr)?.parameterSymbol, fn)
+        XCTAssertEqual(bindings.captureSymbols(for: expr), [fn])
+        XCTAssertEqual(bindings.declSymbol(for: decl), fn)
+        XCTAssertFalse(bindings.isSuperCallExpr(expr))
     }
 
     func testInsertWithAliasRegistersSymbolUnderAliasName() {

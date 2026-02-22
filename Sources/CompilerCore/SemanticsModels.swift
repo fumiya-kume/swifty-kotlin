@@ -423,10 +423,41 @@ public struct CallBinding {
     }
 }
 
+public enum CallableTarget: Equatable {
+    case symbol(SymbolID)
+    case localValue(SymbolID)
+}
+
+public struct CallableValueCallBinding {
+    public let target: CallableTarget?
+    public let functionType: TypeID
+    public let parameterMapping: [Int: Int]
+
+    public init(target: CallableTarget?, functionType: TypeID, parameterMapping: [Int: Int]) {
+        self.target = target
+        self.functionType = functionType
+        self.parameterMapping = parameterMapping
+    }
+}
+
+public struct CatchClauseBinding: Equatable {
+    public let parameterSymbol: SymbolID
+    public let parameterType: TypeID
+
+    public init(parameterSymbol: SymbolID = .invalid, parameterType: TypeID) {
+        self.parameterSymbol = parameterSymbol
+        self.parameterType = parameterType
+    }
+}
+
 public final class BindingTable {
     public private(set) var exprTypes: [ExprID: TypeID] = [:]
     public private(set) var identifierSymbols: [ExprID: SymbolID] = [:]
     public private(set) var callBindings: [ExprID: CallBinding] = [:]
+    public private(set) var callableTargets: [ExprID: CallableTarget] = [:]
+    public private(set) var callableValueCalls: [ExprID: CallableValueCallBinding] = [:]
+    public private(set) var catchClauseBindings: [ExprID: CatchClauseBinding] = [:]
+    public private(set) var captureSymbolsByExpr: [ExprID: [SymbolID]] = [:]
     public private(set) var declSymbols: [DeclID: SymbolID] = [:]
     public private(set) var superCallExprs: Set<ExprID> = []
 
@@ -444,12 +475,65 @@ public final class BindingTable {
         callBindings[expr] = binding
     }
 
+    public func bindCallableTarget(_ expr: ExprID, target: CallableTarget) {
+        callableTargets[expr] = target
+    }
+
+    public func bindCallableValueCall(_ expr: ExprID, binding: CallableValueCallBinding) {
+        callableValueCalls[expr] = binding
+    }
+
+    public func bindCatchClause(_ catchBodyExpr: ExprID, binding: CatchClauseBinding) {
+        catchClauseBindings[catchBodyExpr] = binding
+    }
+
+    public func bindCaptureSymbols(_ expr: ExprID, symbols: [SymbolID]) {
+        let unique = Array(Set(symbols)).sorted(by: { $0.rawValue < $1.rawValue })
+        captureSymbolsByExpr[expr] = unique
+    }
+
     public func bindDecl(_ decl: DeclID, symbol: SymbolID) {
         declSymbols[decl] = symbol
     }
 
     public func markSuperCall(_ expr: ExprID) {
         superCallExprs.insert(expr)
+    }
+
+    public func exprType(for expr: ExprID) -> TypeID? {
+        exprTypes[expr]
+    }
+
+    public func identifierSymbol(for expr: ExprID) -> SymbolID? {
+        identifierSymbols[expr]
+    }
+
+    public func callBinding(for expr: ExprID) -> CallBinding? {
+        callBindings[expr]
+    }
+
+    public func callableTarget(for expr: ExprID) -> CallableTarget? {
+        callableTargets[expr]
+    }
+
+    public func callableValueCallBinding(for expr: ExprID) -> CallableValueCallBinding? {
+        callableValueCalls[expr]
+    }
+
+    public func catchClauseBinding(for catchBodyExpr: ExprID) -> CatchClauseBinding? {
+        catchClauseBindings[catchBodyExpr]
+    }
+
+    public func captureSymbols(for expr: ExprID) -> [SymbolID] {
+        captureSymbolsByExpr[expr] ?? []
+    }
+
+    public func declSymbol(for decl: DeclID) -> SymbolID? {
+        declSymbols[decl]
+    }
+
+    public func isSuperCallExpr(_ expr: ExprID) -> Bool {
+        superCallExprs.contains(expr)
     }
 }
 

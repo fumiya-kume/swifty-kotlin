@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-02-16
+最終更新: 2026-02-22
 
 ## P0 (Core Correctness)
 
@@ -227,24 +227,25 @@
   - [x] `TypeSystem.lub` / `TypeSystem.glb` の公開 API を追加し既存 `leastUpperBound` / `greatestLowerBound` と整合させる
   - [x] 既存テスト・呼び出し側を移行し、互換エイリアス（deprecated）方針を明文化する
 
-- [ ] P5-19: 演算子解決を sema 選択結果ベースへ移行する（spec.md J9/J12.2）
+- [x] P5-19: 演算子解決を sema 選択結果ベースへ移行する（spec.md J9/J12.2）
   - [x] `binary` 推論で extension operator 候補解決を導入し、固定型ルールのみを使う経路を縮小する
   - [x] BuildKIR の `binary` lowering で chosen callee symbol を直接 call する経路を追加し、`kk_op_*` 変換は fallback のみに限定する
   - [x] 演算子オーバーロード（extension）diff ケースを追加する（`Scripts/diff_cases/operator_extension.kt`）
-  - [ ] member operator 候補解決と member call lowering の統合（class member pipeline 完了後）
+  - [x] member operator 候補解決と member call lowering の統合（class member pipeline 完了後）
 
-- [ ] P5-20: lambda / object literal / callable reference を front-to-back で実装する（spec.md J5/J6/J12）
-  - [ ] Parser/AST に `lambdaLiteral` / `objectLiteral` / `callableRef` の実ノードを導入する
-  - [ ] Sema で capture 解析と型推論（function type / receiver）を実装する
-  - [ ] KIR + `LambdaClosureConversionPass` を marker 依存から実体クロージャ変換へ置換する
-  - [ ] lambda/object/callable ref の回帰ケースを追加する
+- [x] P5-20: lambda / object literal / callable reference を front-to-back で実装する（spec.md J5/J6/J12）
+  - [x] Parser/AST に `lambdaLiteral` / `objectLiteral` / `callableRef` の実ノードを導入する
+  - [x] Sema で lambda/callable reference の capture 解析と型推論（function type / receiver）を実装する
+  - [x] KIR で lambda/callable reference を実体 callable symbol + capture 引数へ lower し、呼び出しを marker 非依存化する
+  - [x] object literal を匿名オブジェクト実体として lowering/backend へ接続する（生成 constructor/factory 経路 + allocation call）
+  - [x] lambda/object/callable ref の回帰ケースを追加する
 
-- [ ] P5-21: `try/catch/finally` の例外チャネル制御フローを KIR/Lowering で実装する（spec.md J11.3/J13.3）
-  - [ ] BuildKIR の `tryExpr` lowering で catch/finally を捨てる現実装を置換し、分岐ブロックを生成する
-  - [ ] catch parameter（`catch (e: E)` の `e`）をスコープへ束縛し、catch body で参照可能にする
-  - [ ] 複数 catch 節を宣言順で評価し、例外型（`E`）に一致した節だけへ遷移する型マッチを実装する
-  - [ ] `outThrown` を監視して catch へ遷移し、catch 未処理時は呼び出し元へ再送する経路を実装する
-  - [ ] `finally` の常時実行順序（normal/exception 両経路）を保証する
+- [x] P5-21: `try/catch/finally` の例外チャネル制御フローを KIR/Lowering で実装する（spec.md J11.3/J13.3）
+  - [x] BuildKIR の `tryExpr` lowering で catch/finally を捨てる現実装を置換し、分岐ブロックを生成する
+  - [x] catch parameter（`catch (e: E)` の `e`）をスコープへ束縛し、catch body で参照可能にする
+  - [x] 複数 catch 節を宣言順で評価し、例外型（`E`）に一致した節だけへ遷移する型マッチを実装する
+  - [x] `outThrown` を監視して catch へ遷移し、catch 未処理時は呼び出し元へ再送する経路を実装する
+  - [x] `finally` の常時実行順序（normal/exception 両経路）を保証する
 
 - [ ] P5-22: 式パーサ/型推論を Kotlin 基本演算子セットへ拡張する（spec.md J5/J6/J9）
   - [x] unary 演算（`!`/unary `+`/unary `-`）と優先順位を実装する
@@ -469,11 +470,3 @@
   - [ ] `LinkPhase` の entry wrapper 生成を UUID 一時ファイル依存から安定パス + 内容差分更新へ置換する
   - [ ] synthetic C backend の巨大 runtime stub 文字列を固定オブジェクト化し、毎回の C 生成量を削減する
   - [ ] codegen/link の subprocess 実行時間を個別に計測し、`time-phases` 出力へ統合する
-
-## In Progress
-
-- [ ] P5-19: 演算子解決を sema 選択結果ベースへ移行する（spec.md J9/J12.2）
-  - [x] `binary` 推論で extension operator 候補解決を導入し、固定型ルールのみを使う経路を縮小する
-  - [x] BuildKIR の `binary` lowering で chosen callee symbol を直接 call する経路を追加し、`kk_op_*` 変換は fallback のみに限定する
-  - [x] 演算子オーバーロード（extension）diff ケースを追加する（`Scripts/diff_cases/operator_extension.kt`）
-  - [ ] member operator 候補解決と member call lowering の統合（class member pipeline 完了後）

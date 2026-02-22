@@ -100,6 +100,9 @@ extension BuildASTPhase.ExpressionParser {
             }
             return astArena.appendExpr(.thisRef(label: nil, token.range))
 
+        case .keyword(.object):
+            return parseObjectLiteral()
+
         case .keyword(let keyword):
             _ = consume()
             return astArena.appendExpr(.nameRef(interner.intern(keyword.rawValue), token.range))
@@ -111,6 +114,9 @@ extension BuildASTPhase.ExpressionParser {
         case .stringQuote, .rawStringQuote:
             return parseStringLiteral()
 
+        case .symbol(.doubleColon):
+            return parseCallableReferenceWithoutReceiver()
+
         case .symbol(.lParen):
             _ = consume()
             let expr = parseExpression(minPrecedence: 0)
@@ -118,7 +124,7 @@ extension BuildASTPhase.ExpressionParser {
             return expr
 
         case .symbol(.lBrace):
-            return parseBlockExpression()
+            return parseLambdaLiteral() ?? parseBlockExpression()
 
         default:
             return nil
