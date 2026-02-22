@@ -204,6 +204,46 @@ extension BuildASTPhase.ExpressionParser {
             return nil
         }
 
+        // Find the index of the name token within the tokens array.
+        let nameIndex = tokens.firstIndex(where: { $0.range.start == nameToken.range.start }) ?? (startIndex + 1)
+
+        // Parse type annotation if a colon follows the name.
+        var typeAnnotation: TypeRefID?
+        var colonIndex: Int?
+        for i in (nameIndex + 1)..<tokens.count {
+            let token = tokens[i]
+            if token.kind == .symbol(.colon) {
+                colonIndex = i
+                break
+            }
+            if token.kind == .symbol(.assign) || token.kind == .symbol(.semicolon) {
+                break
+            }
+        }
+        if let colonIndex {
+            var typeTokens: [Token] = []
+            var typeDepth = BuildASTPhase.BracketDepth()
+            var idx = colonIndex + 1
+            while idx < tokens.count {
+                let token = tokens[idx]
+                if typeDepth.isAtTopLevel {
+                    if token.kind == .symbol(.assign) || token.kind == .symbol(.semicolon) {
+                        break
+                    }
+                }
+                typeDepth.track(token.kind)
+                typeTokens.append(token)
+                idx += 1
+            }
+            if !typeTokens.isEmpty {
+                let typeParser = BuildASTPhase.ExpressionParser(
+                    tokens: typeTokens, interner: interner, astArena: astArena
+                )
+                let fallbackRange = typeTokens[0].range
+                typeAnnotation = typeParser.parseTypeReference(fallbackRange)
+            }
+        }
+
         var assignIndex: Int?
         var depth = BuildASTPhase.BracketDepth()
         for (index, token) in tokens.enumerated() {
@@ -213,17 +253,32 @@ extension BuildASTPhase.ExpressionParser {
             }
             depth.track(token.kind)
         }
-        guard let assignIndex else { return nil }
-        let initializerTokens = Array(tokens[(assignIndex + 1)...])
-        guard !initializerTokens.isEmpty else { return nil }
-        let parser = BuildASTPhase.ExpressionParser(tokens: initializerTokens, interner: interner, astArena: astArena)
-        guard let initializerExpr = parser.parse() else { return nil }
-        let rangeEnd = astArena.exprRange(initializerExpr)?.end ?? tokens.last?.range.end ?? head.range.end
+
+        var initializerExpr: ExprID?
+        if let assignIndex {
+            let initializerTokens = Array(tokens[(assignIndex + 1)...])
+            if !initializerTokens.isEmpty {
+                let parser = BuildASTPhase.ExpressionParser(tokens: initializerTokens, interner: interner, astArena: astArena)
+                initializerExpr = parser.parse()
+            }
+        }
+
+        // Require at least a type annotation or an initializer.
+        if typeAnnotation == nil && initializerExpr == nil {
+            return nil
+        }
+
+        let rangeEnd: SourceLocation
+        if let initializerExpr {
+            rangeEnd = astArena.exprRange(initializerExpr)?.end ?? tokens.last?.range.end ?? head.range.end
+        } else {
+            rangeEnd = tokens.last?.range.end ?? head.range.end
+        }
         let range = SourceRange(start: tokens[0].range.start, end: rangeEnd)
         return astArena.appendExpr(.localDecl(
             name: name,
             isMutable: isMutable,
-            typeAnnotation: nil,
+            typeAnnotation: typeAnnotation,
             initializer: initializerExpr,
             range: range
         ))

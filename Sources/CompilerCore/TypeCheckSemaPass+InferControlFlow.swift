@@ -306,6 +306,7 @@ extension TypeCheckSemaPassPhase {
             var hasNullCase = false
             var hasTrueCase = false
             var hasFalseCase = false
+            var allBranchLocals: [[InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)]] = []
             for branch in branches {
                 var isNullBranch = false
                 if let cond = branch.condition {
@@ -362,6 +363,7 @@ extension TypeCheckSemaPassPhase {
                 branchTypes.append(
                     inferExpr(branch.body, ctx: branchCtx, locals: &branchLocals, expectedType: expectedType)
                 )
+                allBranchLocals.append(branchLocals)
             }
 
             if let elseExpr {
@@ -380,6 +382,7 @@ extension TypeCheckSemaPassPhase {
                 branchTypes.append(
                     inferExpr(elseExpr, ctx: elseCtx, locals: &elseLocals, expectedType: expectedType)
                 )
+                allBranchLocals.append(elseLocals)
             }
 
             let summary = WhenBranchSummary(
@@ -387,7 +390,8 @@ extension TypeCheckSemaPassPhase {
                 hasNullCase: hasNullCase, hasTrueCase: hasTrueCase,
                 hasFalseCase: hasFalseCase
             )
-            if !ctx.dataFlow.isWhenExhaustive(subjectType: subjectType, branches: summary, sema: sema) {
+            let isExhaustive = ctx.dataFlow.isWhenExhaustive(subjectType: subjectType, branches: summary, sema: sema)
+            if !isExhaustive {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0004",
                     "Non-exhaustive when expression.",
@@ -395,11 +399,27 @@ extension TypeCheckSemaPassPhase {
                 )
             }
 
+            // Propagate definite initialization across exhaustive when branches.
+            if isExhaustive && !allBranchLocals.isEmpty {
+                for (name, local) in locals {
+                    if !local.isInitialized {
+                        let allInit = allBranchLocals.allSatisfy { branchLocal in
+                            guard let bl = branchLocal[name] else { return false }
+                            return bl.isInitialized && bl.symbol == local.symbol
+                        }
+                        if allInit {
+                            locals[name] = (local.type, local.symbol, local.isMutable, true)
+                        }
+                    }
+                }
+            }
+
             let type = sema.types.lub(branchTypes)
             sema.bindings.bindExprType(id, type: type)
             return type
         } else {
             var branchTypes: [TypeID] = []
+            var allBranchLocals: [[InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)]] = []
             for branch in branches {
                 if let cond = branch.condition {
                     let condType = inferExpr(cond, ctx: ctx, locals: &locals)
@@ -415,6 +435,7 @@ extension TypeCheckSemaPassPhase {
                 branchTypes.append(
                     inferExpr(branch.body, ctx: ctx, locals: &branchLocals, expectedType: expectedType)
                 )
+                allBranchLocals.append(branchLocals)
             }
 
             if let elseExpr {
@@ -422,6 +443,7 @@ extension TypeCheckSemaPassPhase {
                 branchTypes.append(
                     inferExpr(elseExpr, ctx: ctx, locals: &elseLocals, expectedType: expectedType)
                 )
+                allBranchLocals.append(elseLocals)
             }
 
             let summary = WhenBranchSummary(
@@ -429,12 +451,28 @@ extension TypeCheckSemaPassPhase {
                 hasNullCase: false, hasTrueCase: false,
                 hasFalseCase: false
             )
-            if !ctx.dataFlow.isWhenExhaustive(subjectType: boolType, branches: summary, sema: sema) {
+            let isExhaustive = ctx.dataFlow.isWhenExhaustive(subjectType: boolType, branches: summary, sema: sema)
+            if !isExhaustive {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0004",
                     "Non-exhaustive when expression.",
                     range: range
                 )
+            }
+
+            // Propagate definite initialization across exhaustive when branches.
+            if isExhaustive && !allBranchLocals.isEmpty {
+                for (name, local) in locals {
+                    if !local.isInitialized {
+                        let allInit = allBranchLocals.allSatisfy { branchLocal in
+                            guard let bl = branchLocal[name] else { return false }
+                            return bl.isInitialized && bl.symbol == local.symbol
+                        }
+                        if allInit {
+                            locals[name] = (local.type, local.symbol, local.isMutable, true)
+                        }
+                    }
+                }
             }
 
             let type = sema.types.lub(branchTypes)
