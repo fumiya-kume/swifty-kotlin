@@ -66,6 +66,11 @@ extension TypeCheckSemaPassPhase {
                 return sema.types.errorType
             }
             guard let chosen = resolved.chosenCallee else {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0002",
+                    "No viable overload found for operator '\(interner.resolve(operatorName))'.",
+                    range: range
+                )
                 sema.bindings.bindExprType(id, type: sema.types.errorType)
                 return sema.types.errorType
             }
@@ -188,6 +193,12 @@ extension TypeCheckSemaPassPhase {
                 return sema.types.errorType
             }
             guard let chosen = resolved.chosenCallee else {
+                let nameStr = calleeName.map { interner.resolve($0) } ?? "<unknown>"
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0023",
+                    "Unresolved function '\(nameStr)'.",
+                    range: range
+                )
                 sema.bindings.bindExprType(id, type: sema.types.errorType)
                 return sema.types.errorType
             }
@@ -426,6 +437,11 @@ extension TypeCheckSemaPassPhase {
             return sema.types.errorType
         }
         guard let chosen = resolved.chosenCallee else {
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-0024",
+                "Unresolved member function '\(interner.resolve(calleeName))'.",
+                range: range
+            )
             sema.bindings.bindExprType(id, type: sema.types.errorType)
             return sema.types.errorType
         }
@@ -512,6 +528,11 @@ extension TypeCheckSemaPassPhase {
             return sema.types.errorType
         }
         guard let chosen = resolved.chosenCallee else {
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-0024",
+                "Unresolved member function '\(interner.resolve(calleeName))'.",
+                range: range
+            )
             sema.bindings.bindExprType(id, type: sema.types.errorType)
             return sema.types.errorType
         }

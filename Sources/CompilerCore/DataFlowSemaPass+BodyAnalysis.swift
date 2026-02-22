@@ -42,7 +42,8 @@ extension DataFlowSemaPassPhase {
                     ast: ast,
                     symbols: symbols,
                     types: types,
-                    interner: interner
+                    interner: interner,
+                    diagnostics: diagnostics
                 ) ?? types.anyType
                 bindings.bindExprType(expr, type: boundType)
             }
