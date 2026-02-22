@@ -411,7 +411,11 @@ extension TypeCheckSemaPassPhase {
         }
         let (memberVisible, memberInvisible) = ctx.filterByVisibility(allMemberCandidates)
         let candidates = memberVisible
-        if candidates.isEmpty && receiverType != sema.types.errorType {
+        if candidates.isEmpty {
+            if receiverType == sema.types.errorType {
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
             if let firstInvisible = memberInvisible.first {
                 let visLabel = firstInvisible.visibility == .protected ? "protected" : "private"
                 let code = firstInvisible.visibility == .protected ? "KSWIFTK-SEMA-0041" : "KSWIFTK-SEMA-0040"
@@ -506,7 +510,11 @@ extension TypeCheckSemaPassPhase {
         }
         let (safeMemberVisible, safeMemberInvisible) = ctx.filterByVisibility(allSafeMemberCandidates)
         let candidates = safeMemberVisible
-        if candidates.isEmpty && nonNullReceiver != sema.types.errorType {
+        if candidates.isEmpty {
+            if nonNullReceiver == sema.types.errorType {
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
             if let firstInvisible = safeMemberInvisible.first {
                 let visLabel = firstInvisible.visibility == .protected ? "protected" : "private"
                 let code = firstInvisible.visibility == .protected ? "KSWIFTK-SEMA-0041" : "KSWIFTK-SEMA-0040"
