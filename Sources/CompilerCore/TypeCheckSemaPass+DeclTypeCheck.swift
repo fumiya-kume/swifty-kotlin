@@ -119,6 +119,7 @@ extension TypeCheckSemaPassPhase {
         for ctor in constructors {
             var locals: [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)] = [:]
             let ctorSymbols = sema.symbols.allSymbols().filter { $0.kind == .constructor && $0.declSite == ctor.range }
+            let currentCtorSymbolID = ctorSymbols.first?.id
             if let ctorSymbol = ctorSymbols.first,
                let signature = sema.symbols.functionSignature(for: ctorSymbol.id) {
                 for (index, paramSymbol) in signature.valueParameterSymbols.enumerated() {
@@ -178,7 +179,9 @@ extension TypeCheckSemaPassPhase {
                     let candidates = sema.symbols.lookupAll(fqName: delegationTargetFQName)
                         .filter { candidate in
                             guard let symbol = sema.symbols.symbol(candidate) else { return false }
-                            return symbol.kind == .constructor
+                            // Exclude the current constructor to prevent self-delegation
+                            // (which would cause infinite recursion at runtime).
+                            return symbol.kind == .constructor && candidate != currentCtorSymbolID
                         }
 
                     if candidates.isEmpty {
