@@ -48,7 +48,7 @@ extension TypeCheckSemaPassPhase {
         } else {
             operatorCandidates = []
         }
-        if !lhsIsPrimitive && operatorCandidates.isEmpty {
+        if !lhsIsPrimitive && operatorCandidates.isEmpty && lhs != sema.types.errorType && rhs != sema.types.errorType {
             switch op {
             case .add, .subtract, .multiply, .divide, .modulo:
                 ctx.semaCtx.diagnostics.error(
