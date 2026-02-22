@@ -9,7 +9,8 @@ public enum RuntimeABICType: String, Equatable {
     case constCCharPointer = "const char *"
     case fieldAddrPointer = "void **"
     case constTypeInfoPointer = "const KTypeInfo *"
-    case nullableRawPointer = "void * _Nullable *"
+    case nullableRawPointerPointer = "void ** _Nullable"
+    case int64 = "int64_t"
     case constRawPointer = "const void *"
     case nullableConstRawPointer = "const void * _Nullable"
     case nullableIntptrPointer = "intptr_t * _Nullable"
@@ -150,7 +151,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_register_global_root",
             parameters: [
-                RuntimeABIParameter(name: "slot", type: .nullableRawPointer)
+                RuntimeABIParameter(name: "slot", type: .nullableRawPointerPointer)
             ],
             returnType: .void,
             section: "GC"
@@ -158,7 +159,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_unregister_global_root",
             parameters: [
-                RuntimeABIParameter(name: "slot", type: .nullableRawPointer)
+                RuntimeABIParameter(name: "slot", type: .nullableRawPointerPointer)
             ],
             returnType: .void,
             section: "GC"
@@ -343,19 +344,19 @@ public enum RuntimeABISpec {
             name: "kk_coroutine_launcher_arg_set",
             parameters: [
                 RuntimeABIParameter(name: "continuation", type: .intptr),
-                RuntimeABIParameter(name: "index", type: .intptr),
-                RuntimeABIParameter(name: "value", type: .intptr)
+                RuntimeABIParameter(name: "index", type: .int64),
+                RuntimeABIParameter(name: "value", type: .int64)
             ],
-            returnType: .intptr,
+            returnType: .int64,
             section: "Coroutine"
         ),
         RuntimeABIFunctionSpec(
             name: "kk_coroutine_launcher_arg_get",
             parameters: [
                 RuntimeABIParameter(name: "continuation", type: .intptr),
-                RuntimeABIParameter(name: "index", type: .intptr)
+                RuntimeABIParameter(name: "index", type: .int64)
             ],
-            returnType: .intptr,
+            returnType: .int64,
             section: "Coroutine"
         ),
         RuntimeABIFunctionSpec(

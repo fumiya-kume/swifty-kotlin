@@ -96,13 +96,13 @@ public enum RuntimeABIExterns {
 
     public static let kk_register_global_root = ExternDecl(
         name: "kk_register_global_root",
-        parameterTypes: ["void * _Nullable *"],
+        parameterTypes: ["void ** _Nullable"],
         returnType: "void"
     )
 
     public static let kk_unregister_global_root = ExternDecl(
         name: "kk_unregister_global_root",
-        parameterTypes: ["void * _Nullable *"],
+        parameterTypes: ["void ** _Nullable"],
         returnType: "void"
     )
 
@@ -236,14 +236,14 @@ public enum RuntimeABIExterns {
 
     public static let kk_coroutine_launcher_arg_set = ExternDecl(
         name: "kk_coroutine_launcher_arg_set",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
-        returnType: "intptr_t"
+        parameterTypes: ["intptr_t", "int64_t", "int64_t"],
+        returnType: "int64_t"
     )
 
     public static let kk_coroutine_launcher_arg_get = ExternDecl(
         name: "kk_coroutine_launcher_arg_get",
-        parameterTypes: ["intptr_t", "intptr_t"],
-        returnType: "intptr_t"
+        parameterTypes: ["intptr_t", "int64_t"],
+        returnType: "int64_t"
     )
 
     public static let kk_kxmini_run_blocking_with_cont = ExternDecl(
