@@ -14,11 +14,13 @@ public struct CallExpr {
     public let range: SourceRange
     public let calleeName: InternedString
     public let args: [CallArg]
+    public let explicitTypeArgs: [TypeID]
 
-    public init(range: SourceRange, calleeName: InternedString, args: [CallArg]) {
+    public init(range: SourceRange, calleeName: InternedString, args: [CallArg], explicitTypeArgs: [TypeID] = []) {
         self.range = range
         self.calleeName = calleeName
         self.args = args
+        self.explicitTypeArgs = explicitTypeArgs
     }
 }
 
@@ -96,6 +98,13 @@ public final class OverloadResolver {
 
         let typeVarBySymbol = ctx.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
 
+        // Apply explicit type argument constraints if provided
+        if !call.explicitTypeArgs.isEmpty {
+            guard call.explicitTypeArgs.count == signature.typeParameterSymbols.count else {
+                return .rejected
+            }
+        }
+
         guard var constraints = buildReceiverConstraints(
             signature: signature,
             implicitReceiverType: implicitReceiverType,
@@ -123,6 +132,21 @@ public final class OverloadResolver {
             typeSystem: ctx.types
         ) else {
             return .rejected
+        }
+
+        // Add equality constraints for explicit type arguments
+        for (index, explicitArg) in call.explicitTypeArgs.enumerated() {
+            let typeParamSymbol = signature.typeParameterSymbols[index]
+            if let typeVar = typeVarBySymbol[typeParamSymbol] {
+                constraints.append(
+                    VariableConstraint(
+                        kind: .equal,
+                        left: .variable(typeVar),
+                        right: .type(explicitArg),
+                        blameRange: call.range
+                    )
+                )
+            }
         }
 
         if let expectedType {

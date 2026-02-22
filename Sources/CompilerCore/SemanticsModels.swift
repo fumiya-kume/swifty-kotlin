@@ -222,6 +222,7 @@ public final class SymbolTable {
     private var functionSignatures: [SymbolID: FunctionSignature] = [:]
     private var propertyTypes: [SymbolID: TypeID] = [:]
     private var directSupertypes: [SymbolID: [SymbolID]] = [:]
+    private var supertypeTypeArgsMap: [SymbolID: [SymbolID: [TypeArg]]] = [:]
     private var nominalLayouts: [SymbolID: NominalLayout] = [:]
     private var nominalLayoutHints: [SymbolID: NominalLayoutHint] = [:]
     private var externalLinkNames: [SymbolID: String] = [:]
@@ -350,6 +351,14 @@ public final class SymbolTable {
 
     public func directSupertypes(for symbol: SymbolID) -> [SymbolID] {
         directSupertypes[symbol] ?? []
+    }
+
+    public func setSupertypeTypeArgs(_ args: [TypeArg], for child: SymbolID, supertype parent: SymbolID) {
+        supertypeTypeArgsMap[child, default: [:]][parent] = args
+    }
+
+    public func supertypeTypeArgs(for child: SymbolID, supertype parent: SymbolID) -> [TypeArg] {
+        supertypeTypeArgsMap[child]?[parent] ?? []
     }
 
     public func directSubtypes(of symbol: SymbolID) -> [SymbolID] {

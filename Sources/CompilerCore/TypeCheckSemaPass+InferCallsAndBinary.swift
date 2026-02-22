@@ -130,7 +130,8 @@ extension TypeCheckSemaPassPhase {
         range: SourceRange,
         ctx: TypeInferenceContext,
         locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
-        expectedType: TypeID?
+        expectedType: TypeID?,
+        explicitTypeArgs: [TypeID] = []
     ) -> TypeID {
         let ast = ctx.ast
         let sema = ctx.sema
@@ -176,7 +177,8 @@ extension TypeCheckSemaPassPhase {
                 call: CallExpr(
                     range: range,
                     calleeName: calleeName ?? InternedString(),
-                    args: resolvedArgs
+                    args: resolvedArgs,
+                    explicitTypeArgs: explicitTypeArgs
                 ),
                 expectedType: expectedType,
                 implicitReceiverType: ctx.implicitReceiverType,
@@ -327,7 +329,8 @@ extension TypeCheckSemaPassPhase {
         range: SourceRange,
         ctx: TypeInferenceContext,
         locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
-        expectedType: TypeID?
+        expectedType: TypeID?,
+        explicitTypeArgs: [TypeID] = []
     ) -> TypeID {
         let ast = ctx.ast
         let sema = ctx.sema
@@ -414,7 +417,8 @@ extension TypeCheckSemaPassPhase {
             call: CallExpr(
                 range: range,
                 calleeName: calleeName,
-                args: resolvedArgs
+                args: resolvedArgs,
+                explicitTypeArgs: explicitTypeArgs
             ),
             expectedType: expectedType,
             implicitReceiverType: receiverType,
@@ -445,7 +449,8 @@ extension TypeCheckSemaPassPhase {
         range: SourceRange,
         ctx: TypeInferenceContext,
         locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
-        expectedType: TypeID?
+        expectedType: TypeID?,
+        explicitTypeArgs: [TypeID] = []
     ) -> TypeID {
         let sema = ctx.sema
         let interner = ctx.interner
@@ -500,7 +505,8 @@ extension TypeCheckSemaPassPhase {
             call: CallExpr(
                 range: range,
                 calleeName: calleeName,
-                args: resolvedArgs
+                args: resolvedArgs,
+                explicitTypeArgs: explicitTypeArgs
             ),
             expectedType: expectedType,
             implicitReceiverType: nonNullReceiver,
