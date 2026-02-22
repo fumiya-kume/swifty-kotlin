@@ -20,7 +20,8 @@ final class LambdaClosureConversionPass: LoweringPass {
                     arguments: arguments,
                     result: result,
                     canThrow: canThrow,
-                    thrownResult: thrownResult
+                    thrownResult: thrownResult,
+                    isSuperCall: isSuperCall
                 )
             }
             return updated

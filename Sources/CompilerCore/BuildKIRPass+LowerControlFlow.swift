@@ -431,7 +431,7 @@ extension BuildKIRPhase {
         let intType = sema.types.make(.primitive(.int, .nonNull))
         for instruction in loweredInstructions {
             switch instruction {
-            case .call(let symbol, let callee, let arguments, let result, _, let thrownResult, _)
+            case .call(let symbol, let callee, let arguments, let result, _, let thrownResult, let isSuperCall)
                 where thrownResult == nil:
                 instructions.append(.call(
                     symbol: symbol,
@@ -439,7 +439,8 @@ extension BuildKIRPhase {
                     arguments: arguments,
                     result: result,
                     canThrow: true,
-                    thrownResult: exceptionSlot
+                    thrownResult: exceptionSlot,
+                    isSuperCall: isSuperCall
                 ))
                 let unknownTypeToken = arena.appendExpr(.intLiteral(0), type: intType)
                 instructions.append(.constValue(result: unknownTypeToken, value: .intLiteral(0)))
