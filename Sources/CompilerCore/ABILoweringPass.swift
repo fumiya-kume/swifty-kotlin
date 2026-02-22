@@ -119,6 +119,21 @@ final class ABILoweringPass: LoweringPass {
             var idx = 0
             while idx < function.body.count {
                 let instruction = function.body[idx]
+                if case .virtualCall(let vcSymbol, let vcCallee, let vcReceiver, let vcArguments, let vcResult, _, let vcThrownResult, let vcDispatch) = instruction {
+                    let vcCanThrow = !nonThrowingCallees.contains(vcCallee)
+                    newBody.append(.virtualCall(
+                        symbol: vcSymbol,
+                        callee: vcCallee,
+                        receiver: vcReceiver,
+                        arguments: vcArguments,
+                        result: vcResult,
+                        canThrow: vcCanThrow,
+                        thrownResult: vcThrownResult,
+                        dispatch: vcDispatch
+                    ))
+                    idx += 1
+                    continue
+                }
                 guard case .call(let callSymbol, let callee, let arguments, let result, _, let thrownResult) = instruction else {
                     newBody.append(instruction)
                     idx += 1

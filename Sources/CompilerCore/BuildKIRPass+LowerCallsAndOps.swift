@@ -264,14 +264,30 @@ extension BuildKIRPhase {
             } else {
                 loweredMemberCalleeName = calleeName
             }
-            instructions.append(.call(
-                symbol: chosen,
-                callee: loweredMemberCalleeName,
-                arguments: finalArguments,
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
+            let isSuperCall = sema.bindings.isSuperCallExpr(exprID)
+            if !isSuperCall,
+               let chosen,
+               let dispatchKind = resolveVirtualDispatch(callee: chosen, sema: sema) {
+                instructions.append(.virtualCall(
+                    symbol: chosen,
+                    callee: loweredMemberCalleeName,
+                    receiver: loweredReceiverID,
+                    arguments: finalArguments,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil,
+                    dispatch: dispatchKind
+                ))
+            } else {
+                instructions.append(.call(
+                    symbol: chosen,
+                    callee: loweredMemberCalleeName,
+                    arguments: finalArguments,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            }
         }
         return result
     }
@@ -385,16 +401,68 @@ extension BuildKIRPhase {
             } else {
                 loweredMemberCalleeName = calleeName
             }
-            instructions.append(.call(
-                symbol: chosen,
-                callee: loweredMemberCalleeName,
-                arguments: finalArguments,
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
+            let isSafeSuper = sema.bindings.isSuperCallExpr(exprID)
+            if !isSafeSuper,
+               let chosen,
+               let dispatchKind = resolveVirtualDispatch(callee: chosen, sema: sema) {
+                instructions.append(.virtualCall(
+                    symbol: chosen,
+                    callee: loweredMemberCalleeName,
+                    receiver: loweredReceiverID,
+                    arguments: finalArguments,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil,
+                    dispatch: dispatchKind
+                ))
+            } else {
+                instructions.append(.call(
+                    symbol: chosen,
+                    callee: loweredMemberCalleeName,
+                    arguments: finalArguments,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            }
         }
         return result
+    }
+
+    /// Determine if a callee method requires virtual dispatch.
+    /// Returns `.vtable(slot:)` for class methods or `.itable(slot:)` for interface methods,
+    /// or `nil` if the call should use direct (static) dispatch.
+    private func resolveVirtualDispatch(callee: SymbolID, sema: SemaModule) -> KIRDispatchKind? {
+        guard let calleeSymbol = sema.symbols.symbol(callee),
+              calleeSymbol.kind == .function else {
+            return nil
+        }
+        guard let parentID = sema.symbols.parentSymbol(for: callee),
+              let parentSymbol = sema.symbols.symbol(parentID) else {
+            return nil
+        }
+        guard let layout = sema.symbols.nominalLayout(for: parentID) else {
+            return nil
+        }
+        if parentSymbol.kind == .interface {
+            if let itableSlot = layout.itableSlots[parentID] {
+                if let vtableSlot = layout.vtableSlots[callee] {
+                    return .itable(slot: vtableSlot)
+                }
+                _ = itableSlot
+            }
+            if let vtableSlot = layout.vtableSlots[callee] {
+                return .itable(slot: vtableSlot)
+            }
+            return nil
+        }
+        if parentSymbol.kind == .class {
+            if let vtableSlot = layout.vtableSlots[callee] {
+                return .vtable(slot: vtableSlot)
+            }
+            return nil
+        }
+        return nil
     }
 
     private func normalizedCallableValueArguments(

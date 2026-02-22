@@ -191,6 +191,30 @@ final class InlineLoweringPass: LoweringPass {
                     )
                 )
 
+            case .virtualCall(let symbol, let callee, let receiver, let args, let result, let canThrow, let thrownResult, let dispatch):
+                let loweredResult = result.map { expr -> KIRExprID in
+                    let cloned = cloneExpr(expr, in: module.arena)
+                    localExprMap[expr] = cloned
+                    return cloned
+                }
+                let loweredThrownResult = thrownResult.map { expr -> KIRExprID in
+                    let cloned = cloneExpr(expr, in: module.arena)
+                    localExprMap[expr] = cloned
+                    return cloned
+                }
+                lowered.append(
+                    .virtualCall(
+                        symbol: symbol,
+                        callee: callee,
+                        receiver: resolveAlias(of: receiver, aliases: localExprMap),
+                        arguments: args.map { resolveAlias(of: $0, aliases: localExprMap) },
+                        result: loweredResult,
+                        canThrow: canThrow,
+                        thrownResult: loweredThrownResult,
+                        dispatch: dispatch
+                    )
+                )
+
             case .select(let condition, let thenValue, let elseValue, let result):
                 let loweredResult = cloneExpr(result, in: module.arena)
                 localExprMap[result] = loweredResult
@@ -278,6 +302,18 @@ final class InlineLoweringPass: LoweringPass {
                 thrownResult: thrownResult
             )
 
+        case .virtualCall(let symbol, let callee, let receiver, let arguments, let result, let canThrow, let thrownResult, let dispatch):
+            return .virtualCall(
+                symbol: symbol,
+                callee: callee,
+                receiver: resolveAlias(of: receiver, aliases: aliases),
+                arguments: arguments.map { resolveAlias(of: $0, aliases: aliases) },
+                result: result,
+                canThrow: canThrow,
+                thrownResult: thrownResult,
+                dispatch: dispatch
+            )
+
         case .returnValue(let value):
             return .returnValue(resolveAlias(of: value, aliases: aliases))
 
@@ -334,6 +370,8 @@ final class InlineLoweringPass: LoweringPass {
         case .binary(_, _, _, let result):
             return result
         case .call(_, _, _, let result, _, _):
+            return result
+        case .virtualCall(_, _, _, _, let result, _, _, _):
             return result
         case .unary(_, _, let result):
             return result
