@@ -195,6 +195,27 @@ final class CompilerTypesTests: XCTestCase {
         XCTAssertNotEqual(t1, t3)
     }
 
+    func testOptimizationLevelRawValues() {
+        XCTAssertEqual(OptimizationLevel.O0.rawValue, 0)
+        XCTAssertEqual(OptimizationLevel.O1.rawValue, 1)
+        XCTAssertEqual(OptimizationLevel.O2.rawValue, 2)
+        XCTAssertEqual(OptimizationLevel.O3.rawValue, 3)
+    }
+
+    func testEmitModeRawValues() {
+        XCTAssertEqual(EmitMode.executable.rawValue, "executable")
+        XCTAssertEqual(EmitMode.object.rawValue, "object")
+        XCTAssertEqual(EmitMode.llvmIR.rawValue, "llvmIR")
+        XCTAssertEqual(EmitMode.kirDump.rawValue, "kirDump")
+        XCTAssertEqual(EmitMode.library.rawValue, "library")
+    }
+
+    func testKotlinLanguageVersionEquality() {
+        let v1 = KotlinLanguageVersion.v2_3_10
+        let v2 = KotlinLanguageVersion.v2_3_10
+        XCTAssertEqual(v1, v2)
+    }
+
     func testCompilerOptionsEquality() {
         let target = TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
         let o1 = CompilerOptions(
