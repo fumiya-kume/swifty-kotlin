@@ -923,6 +923,106 @@ final class DataFlowAndSemaCoverageTests: XCTestCase {
         }
     }
 
+    func testTryCatchClauseBindingsResolvePrimitiveAndNominalTypes() throws {
+        let source = """
+        class MyError
+
+        fun risky(): Int {
+            return try {
+                42
+            } catch (e: Int) {
+                e
+            } catch (e: MyError) {
+                0
+            }
+        }
+
+        fun main() = risky()
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let tryExprID = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                if case .tryExpr = expr {
+                    return true
+                }
+                return false
+            })
+            guard case .tryExpr(_, let catchClauses, _, _)? = ast.arena.expr(tryExprID) else {
+                XCTFail("Expected try expression")
+                return
+            }
+            XCTAssertEqual(catchClauses.count, 2)
+
+            let firstBinding = try XCTUnwrap(sema.bindings.catchClauseBinding(for: catchClauses[0].body))
+            let secondBinding = try XCTUnwrap(sema.bindings.catchClauseBinding(for: catchClauses[1].body))
+            XCTAssertNotEqual(firstBinding.parameterSymbol, .invalid)
+            XCTAssertNotEqual(secondBinding.parameterSymbol, .invalid)
+            XCTAssertNotEqual(firstBinding.parameterSymbol, secondBinding.parameterSymbol)
+
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            XCTAssertEqual(firstBinding.parameterType, intType)
+            XCTAssertEqual(sema.symbols.propertyType(for: firstBinding.parameterSymbol), intType)
+
+            let customErrorSymbol = sema.symbols.allSymbols().first { symbol in
+                symbol.kind == .class && ctx.interner.resolve(symbol.name) == "MyError"
+            }
+            let resolvedCustomErrorSymbol = try XCTUnwrap(customErrorSymbol)
+            guard case .classType(let customErrorType) = sema.types.kind(of: secondBinding.parameterType) else {
+                XCTFail("Expected nominal catch parameter type")
+                return
+            }
+            XCTAssertEqual(customErrorType.classSymbol, resolvedCustomErrorSymbol.id)
+            XCTAssertEqual(sema.symbols.propertyType(for: secondBinding.parameterSymbol), secondBinding.parameterType)
+
+            let catchNameRef = try XCTUnwrap(firstExprID(in: ast) { exprID, expr in
+                guard case .nameRef(let name, _) = expr else {
+                    return false
+                }
+                return ctx.interner.resolve(name) == "e"
+                    && sema.bindings.identifierSymbol(for: exprID) == firstBinding.parameterSymbol
+            })
+            XCTAssertEqual(sema.bindings.identifierSymbol(for: catchNameRef), firstBinding.parameterSymbol)
+            XCTAssertEqual(sema.bindings.exprType(for: catchNameRef), intType)
+        }
+    }
+
+    func testTryCatchClauseBindingWithoutParameterDefaultsToAny() throws {
+        let source = """
+        fun risky(): Int {
+            return try {
+                42
+            } catch {
+                0
+            }
+        }
+        fun main() = risky()
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let tryExprID = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                if case .tryExpr = expr {
+                    return true
+                }
+                return false
+            })
+            guard case .tryExpr(_, let catchClauses, _, _)? = ast.arena.expr(tryExprID) else {
+                XCTFail("Expected try expression")
+                return
+            }
+            let binding = try XCTUnwrap(sema.bindings.catchClauseBinding(for: catchClauses[0].body))
+            XCTAssertEqual(binding.parameterSymbol, .invalid)
+            XCTAssertEqual(binding.parameterType, sema.types.anyType)
+        }
+    }
+
     // MARK: - ExprInference: uninitialized variable use
 
     func testUninitializedVariableUseEmitsDiagnostic() throws {
@@ -1031,5 +1131,21 @@ final class DataFlowAndSemaCoverageTests: XCTestCase {
             try runToKIR(ctx)
             assertNoDiagnostic("KSWIFTK-SEMA-0014", in: ctx)
         }
+    }
+
+    private func firstExprID(
+        in ast: ASTModule,
+        where predicate: (ExprID, Expr) -> Bool
+    ) -> ExprID? {
+        for index in ast.arena.exprs.indices {
+            let exprID = ExprID(rawValue: Int32(index))
+            guard let expr = ast.arena.expr(exprID) else {
+                continue
+            }
+            if predicate(exprID, expr) {
+                return exprID
+            }
+        }
+        return nil
     }
 }

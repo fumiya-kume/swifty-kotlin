@@ -164,22 +164,37 @@ extension TypeCheckSemaPassPhase {
         expectedType: TypeID?
     ) -> TypeID {
         let sema = ctx.sema
+        let interner = ctx.interner
         var branchTypes: [TypeID] = []
         branchTypes.append(inferExpr(body, ctx: ctx, locals: &locals, expectedType: expectedType))
-        for clause in catchClauses {
+        for (index, clause) in catchClauses.enumerated() {
             var catchLocals = locals
+            let catchParamType = resolveCatchClauseParameterType(
+                clause.paramTypeName,
+                sema: sema,
+                interner: interner
+            )
+            var catchParamSymbol = SymbolID.invalid
             if let paramName = clause.paramName {
-                let catchParamSymbol = sema.symbols.define(
+                catchParamSymbol = sema.symbols.define(
                     kind: .local,
                     name: paramName,
-                    fqName: [paramName],
+                    fqName: [
+                        interner.intern("__try_\(id.rawValue)_catch_\(index)"),
+                        paramName
+                    ],
                     declSite: clause.range,
                     visibility: .internal
                 )
-                sema.symbols.setPropertyType(sema.types.anyType, for: catchParamSymbol)
-                catchLocals[paramName] = (sema.types.anyType, catchParamSymbol, false, true)
+                sema.symbols.setPropertyType(catchParamType, for: catchParamSymbol)
+                catchLocals[paramName] = (catchParamType, catchParamSymbol, false, true)
+                // Keep legacy binding for lowering while explicit catch bindings are adopted.
                 sema.bindings.bindIdentifier(clause.body, symbol: catchParamSymbol)
             }
+            sema.bindings.bindCatchClause(
+                clause.body,
+                binding: CatchClauseBinding(parameterSymbol: catchParamSymbol, parameterType: catchParamType)
+            )
             branchTypes.append(inferExpr(clause.body, ctx: ctx, locals: &catchLocals, expectedType: expectedType))
         }
         if let finallyExpr {
@@ -188,6 +203,56 @@ extension TypeCheckSemaPassPhase {
         let resolvedType = sema.types.lub(branchTypes)
         sema.bindings.bindExprType(id, type: resolvedType)
         return resolvedType
+    }
+
+    private func resolveCatchClauseParameterType(
+        _ typeName: InternedString?,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID {
+        guard let typeName else {
+            return sema.types.anyType
+        }
+        switch interner.resolve(typeName) {
+        case "Int":
+            return sema.types.make(.primitive(.int, .nonNull))
+        case "Long":
+            return sema.types.make(.primitive(.long, .nonNull))
+        case "Float":
+            return sema.types.make(.primitive(.float, .nonNull))
+        case "Double":
+            return sema.types.make(.primitive(.double, .nonNull))
+        case "Boolean":
+            return sema.types.make(.primitive(.boolean, .nonNull))
+        case "Char":
+            return sema.types.make(.primitive(.char, .nonNull))
+        case "String":
+            return sema.types.make(.primitive(.string, .nonNull))
+        case "Any":
+            return sema.types.anyType
+        case "Unit":
+            return sema.types.unitType
+        case "Nothing":
+            return sema.types.nothingType
+        default:
+            let candidates = sema.symbols.lookupAll(fqName: [typeName])
+                .filter { symbolID in
+                    guard let symbol = sema.symbols.symbol(symbolID) else {
+                        return false
+                    }
+                    switch symbol.kind {
+                    case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
+                        return true
+                    default:
+                        return false
+                    }
+                }
+                .sorted { $0.rawValue < $1.rawValue }
+            guard let symbol = candidates.first else {
+                return sema.types.anyType
+            }
+            return sema.types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
+        }
     }
 
     func inferWhenExpr(

@@ -715,11 +715,13 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
         bindings.bindCallableTarget(expr, target: .localValue(fn))
         bindings.bindCaptureSymbols(expr, symbols: [fn, fn])
         bindings.bindDecl(decl, symbol: fn)
+        bindings.bindCatchClause(expr, binding: CatchClauseBinding(parameterSymbol: fn, parameterType: TypeSystem().anyType))
 
         XCTAssertEqual(bindings.identifierSymbol(for: expr), fn)
         XCTAssertEqual(bindings.callBinding(for: expr)?.chosenCallee, fn)
         XCTAssertEqual(bindings.callableTarget(for: expr), .localValue(fn))
         XCTAssertEqual(bindings.callableValueCallBinding(for: expr)?.parameterMapping, [0: 0])
+        XCTAssertEqual(bindings.catchClauseBinding(for: expr)?.parameterSymbol, fn)
         XCTAssertEqual(bindings.captureSymbols(for: expr), [fn])
         XCTAssertEqual(bindings.declSymbol(for: decl), fn)
         XCTAssertFalse(bindings.isSuperCallExpr(expr))

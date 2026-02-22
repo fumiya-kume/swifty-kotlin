@@ -1426,6 +1426,184 @@ final class BuildKIRCoverageTests: XCTestCase {
         }
     }
 
+    func testTryCatchFinallyLoweringUsesOrderedTypeDispatchAndThrownSlotRouting() throws {
+        let source = """
+        class MyErr
+
+        fun bodyCall(x: Int): Int = x
+        fun catchCall(x: Int): Int = x + 1
+        fun finallyCall(): Int = 0
+
+        fun demo(v: Int): Int {
+            return try {
+                bodyCall(v)
+            } catch (e: Int) {
+                catchCall(e)
+            } catch (e: MyErr) {
+                7
+            } finally {
+                finallyCall()
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let module = try XCTUnwrap(ctx.kir)
+
+            let tryExprID = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                if case .tryExpr = expr {
+                    return true
+                }
+                return false
+            })
+            guard case .tryExpr(_, let catchClauses, _, _)? = ast.arena.expr(tryExprID) else {
+                XCTFail("Expected try expression in demo.")
+                return
+            }
+            XCTAssertEqual(catchClauses.count, 2)
+
+            let catchBindings = try catchClauses.map { clause in
+                try XCTUnwrap(sema.bindings.catchClauseBinding(for: clause.body))
+            }
+            XCTAssertNotEqual(catchBindings[0].parameterSymbol, .invalid)
+            XCTAssertNotEqual(catchBindings[1].parameterSymbol, .invalid)
+
+            let body = try findKIRFunctionBody(named: "demo", in: module, interner: ctx.interner)
+
+            let matcherCalls = body.compactMap { instruction -> KIRInstruction? in
+                guard case .call(_, let callee, let arguments, _, _, _) = instruction,
+                      ctx.interner.resolve(callee) == "kk_catch_type_matches" else {
+                    return nil
+                }
+                let _ = arguments
+                return instruction
+            }
+            XCTAssertTrue(matcherCalls.isEmpty, "Try-catch lowering should not require runtime matcher helper calls.")
+
+            let labelPositions: [Int32: Int] = body.enumerated().reduce(into: [:]) { partial, entry in
+                if case .label(let labelID) = entry.element {
+                    partial[labelID] = entry.offset
+                }
+            }
+
+            func thrownEdge(for calleeName: String) -> (callIndex: Int, thrownSlot: KIRExprID, typeSlot: KIRExprID, target: Int32)? {
+                guard let callIndex = body.firstIndex(where: { instruction in
+                    guard case .call(_, let callee, _, _, _, _) = instruction else {
+                        return false
+                    }
+                    return ctx.interner.resolve(callee) == calleeName
+                }) else {
+                    return nil
+                }
+                guard case .call(_, _, _, _, _, let thrownResult?) = body[callIndex] else {
+                    return nil
+                }
+                let tokenConstIndex = callIndex + 1
+                let tokenCopyIndex = callIndex + 2
+                let jumpIndex = callIndex + 3
+                guard body.indices.contains(tokenConstIndex),
+                      body.indices.contains(tokenCopyIndex),
+                      body.indices.contains(jumpIndex),
+                      case .constValue(let unknownTypeToken, .intLiteral(0)) = body[tokenConstIndex],
+                      case .copy(from: unknownTypeToken, to: let typeSlot) = body[tokenCopyIndex],
+                      case .jumpIfNotNull(let value, let target) = body[jumpIndex],
+                      value == thrownResult else {
+                    return nil
+                }
+                return (callIndex, thrownResult, typeSlot, target)
+            }
+
+            guard let bodyEdge = thrownEdge(for: "bodyCall"),
+                  let catchEdge = thrownEdge(for: "catchCall"),
+                  let finallyEdge = thrownEdge(for: "finallyCall") else {
+                XCTFail("Expected throw-aware edges for body/catch/finally calls.")
+                return
+            }
+
+            XCTAssertEqual(bodyEdge.thrownSlot, catchEdge.thrownSlot)
+            XCTAssertEqual(bodyEdge.thrownSlot, finallyEdge.thrownSlot)
+            XCTAssertEqual(bodyEdge.typeSlot, catchEdge.typeSlot)
+            XCTAssertEqual(bodyEdge.typeSlot, finallyEdge.typeSlot)
+            let sharedExceptionSlot = bodyEdge.thrownSlot
+            let sharedExceptionTypeSlot = bodyEdge.typeSlot
+
+            guard let bodyDispatchPos = labelPositions[bodyEdge.target],
+                  let finallyEntryPos = labelPositions[catchEdge.target],
+                  let rethrowPos = labelPositions[finallyEdge.target] else {
+                XCTFail("Expected target labels for body/catch/finally throw edges.")
+                return
+            }
+            XCTAssertLessThan(bodyDispatchPos, finallyEntryPos, "Body exceptions should route to catch dispatch before finally.")
+            XCTAssertLessThan(finallyEntryPos, rethrowPos, "Finally exceptions should route directly to outer rethrow.")
+            XCTAssertNotEqual(bodyEdge.target, catchEdge.target)
+            XCTAssertNotEqual(catchEdge.target, finallyEdge.target)
+
+            let typeComparisons = body.enumerated().compactMap { index, instruction -> (index: Int, typeToken: Int64)? in
+                guard case .binary(op: .equal, lhs: let lhs, rhs: let rhs, result: _) = instruction,
+                      lhs == sharedExceptionTypeSlot,
+                      case .intLiteral(let token)? = module.arena.expr(rhs) else {
+                    return nil
+                }
+                return (index, token)
+            }
+            let expectedTypeTokens = catchBindings.map { Int64($0.parameterType.rawValue) }
+            XCTAssertEqual(typeComparisons.count, expectedTypeTokens.count, "Expected one type comparison per catch clause.")
+            XCTAssertEqual(typeComparisons.map(\.typeToken), expectedTypeTokens)
+            guard typeComparisons.count == expectedTypeTokens.count else {
+                return
+            }
+
+            guard body.indices.contains(typeComparisons[0].index + 1),
+                  case .jumpIfEqual(_, _, let firstMismatchTarget) = body[typeComparisons[0].index + 1],
+                let firstMismatchLabelPos = labelPositions[firstMismatchTarget] else {
+                XCTFail("Expected mismatch branch after first catch matcher.")
+                return
+            }
+            XCTAssertLessThan(firstMismatchLabelPos, typeComparisons[1].index, "First catch mismatch should fall through to second catch dispatch.")
+
+            guard body.indices.contains(typeComparisons[1].index + 1),
+                  case .jumpIfEqual(_, _, let unmatchedLabel) = body[typeComparisons[1].index + 1],
+                let unmatchedLabelPos = labelPositions[unmatchedLabel] else {
+                XCTFail("Expected unmatched-catch branch after last matcher.")
+                return
+            }
+            let unmatchedJumpIndex = body.index(after: unmatchedLabelPos)
+            guard body.indices.contains(unmatchedJumpIndex),
+                  case .jump(let unmatchedTarget) = body[unmatchedJumpIndex] else {
+                XCTFail("Expected unmatched-catch path to jump to finally.")
+                return
+            }
+            XCTAssertEqual(unmatchedTarget, catchEdge.target, "Unmatched catches must enter finally before rethrow.")
+
+            let finallyGuardJump = body.enumerated().contains { index, instruction in
+                guard index > finallyEdge.callIndex + 3,
+                      case .jumpIfNotNull(let value, let target) = instruction else {
+                    return false
+                }
+                return value == sharedExceptionSlot && target == finallyEdge.target
+            }
+            XCTAssertTrue(finallyGuardJump, "Expected post-finally rethrow guard for pending exception slot.")
+            XCTAssertTrue(body.contains { instruction in
+                if case .rethrow(let value) = instruction {
+                    return value == sharedExceptionSlot
+                }
+                return false
+            })
+
+            guard case .call(_, _, let catchArguments, _, _, _) = body[catchEdge.callIndex],
+                  let firstCatchArgument = catchArguments.first else {
+                XCTFail("Expected catchCall argument in first catch body.")
+                return
+            }
+            XCTAssertEqual(module.arena.exprType(firstCatchArgument), catchBindings[0].parameterType)
+        }
+    }
+
     func testBuildKIRLowersObjectLiteralToGeneratedFactoryReturningRuntimeObjectEntity() throws {
         let source = """
         interface Marker
