@@ -405,9 +405,11 @@ extension TypeCheckSemaPassPhase {
             var cumulativeFalseState = ctx.flowState
             for branch in branches {
                 var branchLocals = locals
-                var branchCtx = ctx
+                let condCtx = ctx.with(flowState: cumulativeFalseState)
+                applyFlowStateToLocals(cumulativeFalseState, locals: &branchLocals, sema: sema)
+                var branchCtx = condCtx
                 if let cond = branch.condition {
-                    let condType = inferExpr(cond, ctx: ctx, locals: &branchLocals)
+                    let condType = inferExpr(cond, ctx: condCtx, locals: &branchLocals)
                     if condType != boolType && condType != sema.types.errorType {
                         ctx.semaCtx.diagnostics.error(
                             "KSWIFTK-SEMA-0032",
