@@ -65,6 +65,24 @@ extension BuildASTPhase {
             guard isStatementLikeKind(node.kind) else {
                 continue
             }
+
+            // CST-aware fast path: for structured control flow nodes,
+            // skip local decl/assign probing and parse directly as expressions.
+            if isControlFlowExprKind(node.kind) {
+                let rawTokens = collectTokens(from: nodeID, in: arena)
+                let statementTokens = rawTokens.filter { token in
+                    token.kind != .symbol(.semicolon)
+                }
+                guard !statementTokens.isEmpty else {
+                    continue
+                }
+                let parser = ExpressionParser(tokens: statementTokens, interner: interner, astArena: astArena)
+                if let exprID = parser.parse() {
+                    result.append(exprID)
+                }
+                continue
+            }
+
             let rawTokens = collectTokens(from: nodeID, in: arena)
             let statementTokens = rawTokens.filter { token in
                 token.kind != .symbol(.semicolon)
@@ -226,6 +244,19 @@ extension BuildASTPhase {
         case .statement, .propertyDecl, .loopStmt,
              .ifExpr, .whenExpr, .tryExpr, .callExpr,
              .funDecl:
+            return true
+        default:
+            return false
+        }
+    }
+
+    /// Returns true for SyntaxKind values that represent structured control flow
+    /// expressions in the CST. These nodes are parsed directly by the parser with
+    /// proper sub-node structure, so the AST builder can skip local decl/assign
+    /// probing and parse them directly as expressions.
+    func isControlFlowExprKind(_ kind: SyntaxKind) -> Bool {
+        switch kind {
+        case .ifExpr, .whenExpr, .tryExpr, .loopStmt:
             return true
         default:
             return false

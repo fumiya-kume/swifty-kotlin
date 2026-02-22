@@ -116,6 +116,8 @@ final class ABILoweringPass: LoweringPass {
             var newBody: [KIRInstruction] = []
             newBody.reserveCapacity(function.body.count)
 
+            let functionReturnKind: TypeKind? = types.map { $0.kind(of: function.returnType) }
+
             var idx = 0
             while idx < function.body.count {
                 let instruction = function.body[idx]
@@ -254,6 +256,104 @@ final class ABILoweringPass: LoweringPass {
                     idx += 1
                     continue
                 }
+
+                // Handle returnValue: box primitive if function returns Any/Any?
+                if case .returnValue(let value) = instruction, let types {
+                    if let functionReturnKind, isAnyOrNullableAny(functionReturnKind) {
+                        let valueType = intrinsicArgType(value, arena: module.arena, types: types)
+                        if let valueType {
+                            if let boxCallee = boxCalleeForPrimitive(
+                                types.kind(of: valueType),
+                                boxIntCallee: boxIntCallee,
+                                boxBoolCallee: boxBoolCallee,
+                                boxLongCallee: boxLongCallee,
+                                boxFloatCallee: boxFloatCallee,
+                                boxDoubleCallee: boxDoubleCallee,
+                                boxCharCallee: boxCharCallee
+                            ) {
+                                let boxedResult = module.arena.appendExpr(
+                                    .temporary(Int32(module.arena.expressions.count)),
+                                    type: function.returnType
+                                )
+                                newBody.append(.call(
+                                    symbol: nil,
+                                    callee: boxCallee,
+                                    arguments: [value],
+                                    result: boxedResult,
+                                    canThrow: false,
+                                    thrownResult: nil
+                                ))
+                                newBody.append(.returnValue(boxedResult))
+                                idx += 1
+                                continue
+                            }
+                        }
+                    }
+                    newBody.append(instruction)
+                    idx += 1
+                    continue
+                }
+
+                // Handle copy: insert boxing/unboxing at type boundaries
+                if case .copy(let from, let to) = instruction, let types {
+                    let fromType = intrinsicArgType(from, arena: module.arena, types: types)
+                    let toType = module.arena.exprType(to)
+                    if let fromType, let toType {
+                        let fromKind = types.kind(of: fromType)
+                        let toKind = types.kind(of: toType)
+                        // Box: primitive → Any/Any? or nonNull primitive → nullable primitive
+                        if isAnyOrNullableAny(toKind) || needsBoxingForCopy(sourceKind: fromKind, targetKind: toKind) {
+                            if let boxCallee = boxCalleeForPrimitive(
+                                fromKind,
+                                boxIntCallee: boxIntCallee,
+                                boxBoolCallee: boxBoolCallee,
+                                boxLongCallee: boxLongCallee,
+                                boxFloatCallee: boxFloatCallee,
+                                boxDoubleCallee: boxDoubleCallee,
+                                boxCharCallee: boxCharCallee
+                            ) {
+                                newBody.append(.call(
+                                    symbol: nil,
+                                    callee: boxCallee,
+                                    arguments: [from],
+                                    result: to,
+                                    canThrow: false,
+                                    thrownResult: nil
+                                ))
+                                idx += 1
+                                continue
+                            }
+                        }
+                        // Unbox: Any/Any? or nullable primitive → nonNull primitive
+                        if needsUnboxing(sourceKind: fromKind, targetKind: toKind) {
+                            if let unboxCallee = unboxingCallee(
+                                sourceKind: fromKind,
+                                targetKind: toKind,
+                                unboxIntCallee: unboxIntCallee,
+                                unboxBoolCallee: unboxBoolCallee,
+                                unboxLongCallee: unboxLongCallee,
+                                unboxFloatCallee: unboxFloatCallee,
+                                unboxDoubleCallee: unboxDoubleCallee,
+                                unboxCharCallee: unboxCharCallee
+                            ) {
+                                newBody.append(.call(
+                                    symbol: nil,
+                                    callee: unboxCallee,
+                                    arguments: [from],
+                                    result: to,
+                                    canThrow: false,
+                                    thrownResult: nil
+                                ))
+                                idx += 1
+                                continue
+                            }
+                        }
+                    }
+                    newBody.append(instruction)
+                    idx += 1
+                    continue
+                }
+
                 guard case .call(let callSymbol, let callee, let arguments, let result, _, let thrownResult) = instruction else {
                     newBody.append(instruction)
                     idx += 1
@@ -328,10 +428,10 @@ final class ABILoweringPass: LoweringPass {
                     }
                     if let returnType {
                         let returnKind = types.kind(of: returnType)
-                        if isAnyOrNullableAny(returnKind) {
-                            let resultType = module.arena.exprType(result)
-                            if let resultType {
-                                let resultKind = types.kind(of: resultType)
+                        let resultType = module.arena.exprType(result)
+                        if let resultType {
+                            let resultKind = types.kind(of: resultType)
+                            if needsUnboxing(sourceKind: returnKind, targetKind: resultKind) {
                                 resolvedUnboxCallee = unboxingCallee(
                                     sourceKind: returnKind,
                                     targetKind: resultKind,
@@ -462,7 +562,7 @@ final class ABILoweringPass: LoweringPass {
         unboxDoubleCallee: InternedString,
         unboxCharCallee: InternedString
     ) -> InternedString? {
-        guard isAnyOrNullableAny(sourceKind) else {
+        guard needsUnboxing(sourceKind: sourceKind, targetKind: targetKind) else {
             return nil
         }
 
@@ -517,6 +617,65 @@ final class ABILoweringPass: LoweringPass {
             return true
         }
         return false
+    }
+
+    /// Determines whether unboxing is needed when converting from sourceKind to targetKind.
+    /// Unboxing is required when:
+    /// - Source is Any or Any? and target is a primitive (existing behavior)
+    /// - Source is a nullable primitive and target is a non-null primitive of the same kind
+    private func needsUnboxing(sourceKind: TypeKind, targetKind: TypeKind) -> Bool {
+        if isAnyOrNullableAny(sourceKind) {
+            if case .primitive(_, .nonNull) = targetKind {
+                return true
+            }
+            return false
+        }
+        if case .primitive(let sourcePrimitive, .nullable) = sourceKind,
+           case .primitive(let targetPrimitive, .nonNull) = targetKind,
+           sourcePrimitive == targetPrimitive {
+            return true
+        }
+        return false
+    }
+
+    /// Determines whether a copy from sourceKind to targetKind requires boxing.
+    /// Boxing is needed when a non-null primitive is copied to a nullable primitive slot.
+    private func needsBoxingForCopy(sourceKind: TypeKind, targetKind: TypeKind) -> Bool {
+        if case .primitive(let sourcePrimitive, .nonNull) = sourceKind,
+           case .primitive(let targetPrimitive, .nullable) = targetKind,
+           sourcePrimitive == targetPrimitive {
+            return true
+        }
+        return false
+    }
+
+    /// Returns the boxing callee for a given primitive type kind, or nil if the kind is not a
+    /// primitive that needs boxing (e.g., String or non-primitive types).
+    private func boxCalleeForPrimitive(
+        _ kind: TypeKind,
+        boxIntCallee: InternedString,
+        boxBoolCallee: InternedString,
+        boxLongCallee: InternedString,
+        boxFloatCallee: InternedString,
+        boxDoubleCallee: InternedString,
+        boxCharCallee: InternedString
+    ) -> InternedString? {
+        switch kind {
+        case .primitive(.int, .nonNull):
+            return boxIntCallee
+        case .primitive(.long, .nonNull):
+            return boxLongCallee
+        case .primitive(.boolean, .nonNull):
+            return boxBoolCallee
+        case .primitive(.float, .nonNull):
+            return boxFloatCallee
+        case .primitive(.double, .nonNull):
+            return boxDoubleCallee
+        case .primitive(.char, .nonNull):
+            return boxCharCallee
+        default:
+            return nil
+        }
     }
 
     private func returnTypeForCall(
