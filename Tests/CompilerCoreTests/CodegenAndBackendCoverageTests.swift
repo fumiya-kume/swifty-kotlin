@@ -506,7 +506,7 @@ final class CodegenAndBackendCoverageTests: XCTestCase {
         let interner = StringInterner()
         let module = makeComplexKIRModule(interner: interner)
         let backend = LLVMBackend(
-            target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: "14.0"),
+            target: defaultTargetTriple(),
             optLevel: .O2,
             debugInfo: true,
             diagnostics: DiagnosticEngine()
@@ -548,7 +548,7 @@ final class CodegenAndBackendCoverageTests: XCTestCase {
 
         let failingDiagnostics = DiagnosticEngine()
         let failingBackend = LLVMBackend(
-            target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil),
+            target: defaultTargetTriple(),
             optLevel: .O0,
             debugInfo: false,
             diagnostics: failingDiagnostics
@@ -605,7 +605,7 @@ final class CodegenAndBackendCoverageTests: XCTestCase {
         let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [mainID])], arena: arena)
 
         let backend = LLVMBackend(
-            target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: "14.0"),
+            target: defaultTargetTriple(),
             optLevel: .O0,
             debugInfo: false,
             diagnostics: DiagnosticEngine()
@@ -643,7 +643,7 @@ final class CodegenAndBackendCoverageTests: XCTestCase {
         let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [mainID])], arena: arena)
 
         let backend = LLVMBackend(
-            target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: "14.0"),
+            target: defaultTargetTriple(),
             optLevel: .O0,
             debugInfo: false,
             diagnostics: DiagnosticEngine()
