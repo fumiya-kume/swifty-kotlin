@@ -290,27 +290,38 @@ extension KotlinParser {
         stopBeforeCatchFinally: Bool
     ) {
         var parenDepth = 0
-        let hadChildren = !children.isEmpty
+        var bracketDepth = 0
+        let startChildCount = children.count
         while !stream.atEOF() {
             let token = stream.peek()
             if shouldStopStatementBefore(token, inBlock: inBlock) { break }
-            if stopBeforeElse && parenDepth == 0 && token.kind == .keyword(.else) { break }
-            if stopBeforeCatchFinally && parenDepth == 0 {
+            if stopBeforeElse && parenDepth == 0 && bracketDepth == 0
+                && token.kind == .keyword(.else) { break }
+            if stopBeforeCatchFinally && parenDepth == 0 && bracketDepth == 0 {
                 if case .keyword(.catch) = token.kind { break }
                 if case .keyword(.finally) = token.kind { break }
             }
             if inBlock,
-               hadChildren || !children.isEmpty,
+               children.count > startChildCount,
                parenDepth == 0,
+               bracketDepth == 0,
                hasLeadingNewline(token),
                shouldSplitStatementOnNewline(token.kind) {
                 break
+            }
+
+            // Handle nested blocks (e.g. trailing lambdas)
+            if case .symbol(.lBrace) = token.kind, inBlock {
+                children.append(.node(parseBlock()))
+                continue
             }
 
             _ = consumeToken(into: &children, range: &range)
             switch token.kind {
             case .symbol(.lParen): parenDepth += 1
             case .symbol(.rParen): parenDepth = max(0, parenDepth - 1)
+            case .symbol(.lBracket): bracketDepth += 1
+            case .symbol(.rBracket): bracketDepth = max(0, bracketDepth - 1)
             case .symbol(.semicolon): return
             default: break
             }
