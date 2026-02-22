@@ -240,12 +240,12 @@
   - [x] object literal を匿名オブジェクト実体として lowering/backend へ接続する（生成 constructor/factory 経路 + allocation call）
   - [x] lambda/object/callable ref の回帰ケースを追加する
 
-- [ ] P5-21: `try/catch/finally` の例外チャネル制御フローを KIR/Lowering で実装する（spec.md J11.3/J13.3）
-  - [ ] BuildKIR の `tryExpr` lowering で catch/finally を捨てる現実装を置換し、分岐ブロックを生成する
-  - [ ] catch parameter（`catch (e: E)` の `e`）をスコープへ束縛し、catch body で参照可能にする
-  - [ ] 複数 catch 節を宣言順で評価し、例外型（`E`）に一致した節だけへ遷移する型マッチを実装する
-  - [ ] `outThrown` を監視して catch へ遷移し、catch 未処理時は呼び出し元へ再送する経路を実装する
-  - [ ] `finally` の常時実行順序（normal/exception 両経路）を保証する
+- [x] P5-21: `try/catch/finally` の例外チャネル制御フローを KIR/Lowering で実装する（spec.md J11.3/J13.3）
+  - [x] BuildKIR の `tryExpr` lowering で catch/finally を捨てる現実装を置換し、分岐ブロックを生成する
+  - [x] catch parameter（`catch (e: E)` の `e`）をスコープへ束縛し、catch body で参照可能にする
+  - [x] 複数 catch 節を宣言順で評価し、例外型（`E`）に一致した節だけへ遷移する型マッチを実装する
+  - [x] `outThrown` を監視して catch へ遷移し、catch 未処理時は呼び出し元へ再送する経路を実装する
+  - [x] `finally` の常時実行順序（normal/exception 両経路）を保証する
 
 - [ ] P5-22: 式パーサ/型推論を Kotlin 基本演算子セットへ拡張する（spec.md J5/J6/J9）
   - [x] unary 演算（`!`/unary `+`/unary `-`）と優先順位を実装する
