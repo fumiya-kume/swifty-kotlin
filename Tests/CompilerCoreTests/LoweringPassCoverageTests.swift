@@ -1124,7 +1124,7 @@ final class LoweringPassCoverageTests: XCTestCase {
     }
 
     func testCoroutineLauncherWithSuspendLambdaCapturesGeneratesThunk() throws {
-        // Simulates: val x = 42; runBlocking { delay(1); x }
+        // Simulates: val x = 42; runBlocking { x }
         // The lambda captures `x`, so it has 1 capture param and 0 value params.
         // The launcher call should include the capture value as an extra arg,
         // and the CoroutineLoweringPass should generate a thunk that forwards it.
@@ -1230,7 +1230,7 @@ final class LoweringPassCoverageTests: XCTestCase {
     }
 
     func testCoroutineLauncherWithZeroCapturesSuspendLambdaUsesOriginalPath() throws {
-        // Simulates: runBlocking { delay(1); 42 }
+        // Simulates: runBlocking { 42 }
         // The lambda has no captures and no value params → uses zero-arg path.
         let interner = StringInterner()
         let arena = KIRArena()
@@ -1312,8 +1312,8 @@ final class LoweringPassCoverageTests: XCTestCase {
         XCTAssertFalse(ctx.diagnostics.diagnostics.contains { $0.severity == .error })
     }
 
-    func testCoroutineLauncherLaunchAndAsyncWithSuspendLambdaCapturesGenerateThunk() throws {
-        // Verify that launch and async also correctly handle lambdas with captures
+    func testCoroutineLauncherLaunchWithSuspendLambdaCapturesGeneratesThunk() throws {
+        // Verify that launch correctly handles lambdas with captures
         let interner = StringInterner()
         let arena = KIRArena()
         let types = TypeSystem()

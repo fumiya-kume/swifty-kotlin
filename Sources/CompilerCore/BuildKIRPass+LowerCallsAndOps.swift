@@ -86,19 +86,22 @@ extension BuildKIRPhase {
         // (runBlocking/launch/async), the capture values must be included in
         // the call arguments so the CoroutineLoweringPass can store them in
         // the continuation via launcherArgs and forward them through the thunk.
-        let resolvedSourceCallee = interner.resolve(sourceCalleeName)
-        if resolvedSourceCallee == "runBlocking"
-            || resolvedSourceCallee == "launch"
-            || resolvedSourceCallee == "async" {
-            var expandedArgs: [KIRExprID] = []
-            for argID in finalArgIDs {
-                expandedArgs.append(argID)
-                if let callableInfo = callableValueInfoByExprID[argID],
-                   !callableInfo.captureArguments.isEmpty {
-                    expandedArgs.append(contentsOf: callableInfo.captureArguments)
-                }
+        // Guard on chosen == nil && loweredCallable == nil to avoid misfiring
+        // on user-defined functions that happen to share a launcher name.
+        // Only expand captures for the first argument (the launcher entry
+        // function reference); subsequent arguments are value args for the
+        // referenced suspend function and should not be expanded.
+        if chosen == nil,
+           loweredCallable == nil {
+            let resolvedSourceCallee = interner.resolve(sourceCalleeName)
+            if resolvedSourceCallee == "runBlocking"
+                || resolvedSourceCallee == "launch"
+                || resolvedSourceCallee == "async",
+               let firstArg = finalArgIDs.first,
+               let callableInfo = callableValueInfoByExprID[firstArg],
+               !callableInfo.captureArguments.isEmpty {
+                finalArgIDs.insert(contentsOf: callableInfo.captureArguments, at: 1)
             }
-            finalArgIDs = expandedArgs
         }
         if callNormalized.defaultMask != 0, let chosen {
             let intType = sema.types.make(.primitive(.int, .nonNull))
