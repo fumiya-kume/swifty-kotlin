@@ -1138,11 +1138,8 @@ final class LoweringPassCoverageTests: XCTestCase {
         let targetSym = SymbolID(rawValue: 3001)
         let targetParamSym = SymbolID(rawValue: 3002)
 
-        let range = makeRange()
-        let packageName = interner.intern("pkg")
         let targetName = interner.intern("acceptAny")
 
-        _ = symbols.define(kind: .function, name: targetName, fqName: [packageName, targetName], declSite: range, visibility: .public)
         symbols.setFunctionSignature(
             FunctionSignature(parameterTypes: [anyNullableType], returnType: types.unitType, valueParameterSymbols: [targetParamSym]),
             for: targetSym
@@ -1207,11 +1204,8 @@ final class LoweringPassCoverageTests: XCTestCase {
         let targetSym = SymbolID(rawValue: 3101)
         let targetParamSym = SymbolID(rawValue: 3102)
 
-        let range = makeRange()
-        let packageName = interner.intern("pkg")
         let targetName = interner.intern("acceptAny")
 
-        _ = symbols.define(kind: .function, name: targetName, fqName: [packageName, targetName], declSite: range, visibility: .public)
         symbols.setFunctionSignature(
             FunctionSignature(parameterTypes: [anyNullableType], returnType: types.unitType, valueParameterSymbols: [targetParamSym]),
             for: targetSym
@@ -1276,11 +1270,8 @@ final class LoweringPassCoverageTests: XCTestCase {
         let targetSym = SymbolID(rawValue: 3201)
         let targetParamSym = SymbolID(rawValue: 3202)
 
-        let range = makeRange()
-        let packageName = interner.intern("pkg")
         let targetName = interner.intern("acceptNullableInt")
 
-        _ = symbols.define(kind: .function, name: targetName, fqName: [packageName, targetName], declSite: range, visibility: .public)
         symbols.setFunctionSignature(
             FunctionSignature(parameterTypes: [nullableIntType], returnType: types.unitType, valueParameterSymbols: [targetParamSym]),
             for: targetSym
@@ -1344,11 +1335,8 @@ final class LoweringPassCoverageTests: XCTestCase {
         let callerSym = SymbolID(rawValue: 3300)
         let targetSym = SymbolID(rawValue: 3301)
 
-        let range = makeRange()
-        let packageName = interner.intern("pkg")
         let targetName = interner.intern("getAny")
 
-        _ = symbols.define(kind: .function, name: targetName, fqName: [packageName, targetName], declSite: range, visibility: .public)
         symbols.setFunctionSignature(
             FunctionSignature(parameterTypes: [], returnType: anyNullableType),
             for: targetSym
@@ -1411,11 +1399,8 @@ final class LoweringPassCoverageTests: XCTestCase {
         let callerSym = SymbolID(rawValue: 3400)
         let targetSym = SymbolID(rawValue: 3401)
 
-        let range = makeRange()
-        let packageName = interner.intern("pkg")
         let targetName = interner.intern("getNullableInt")
 
-        _ = symbols.define(kind: .function, name: targetName, fqName: [packageName, targetName], declSite: range, visibility: .public)
         symbols.setFunctionSignature(
             FunctionSignature(parameterTypes: [], returnType: nullableIntType),
             for: targetSym
@@ -1618,8 +1603,6 @@ final class LoweringPassCoverageTests: XCTestCase {
         let symbols = SymbolTable()
 
         let anyNullableType = types.make(.any(.nullable))
-        let range = makeRange()
-        let packageName = interner.intern("pkg")
 
         // Define primitives and their expected boxing callees
         let primitives: [(TypeKind, KIRExprKind, String)] = [
@@ -1640,7 +1623,6 @@ final class LoweringPassCoverageTests: XCTestCase {
             let targetParamSym = SymbolID(rawValue: Int32(4002 + index * 10))
             let targetName = interner.intern("accept_\(expectedCallee)")
 
-            _ = symbols.define(kind: .function, name: targetName, fqName: [packageName, targetName], declSite: range, visibility: .public)
             symbols.setFunctionSignature(
                 FunctionSignature(parameterTypes: [anyNullableType], returnType: types.unitType, valueParameterSymbols: [targetParamSym]),
                 for: targetSym
