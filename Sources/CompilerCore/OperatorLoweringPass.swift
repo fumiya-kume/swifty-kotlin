@@ -88,7 +88,7 @@ final class OperatorLoweringPass: LoweringPass {
                     newBody.append(.call(symbol: nil, callee: callee, arguments: [operand], result: result, canThrow: false, thrownResult: nil))
                 case .nullAssert(let operand, let result):
                     newBody.append(.call(symbol: nil, callee: ctx.interner.intern("kk_op_notnull"), arguments: [operand], result: result, canThrow: true, thrownResult: nil))
-                case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult, _):
+                case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult, let isSuperCall):
                     if (callee == printlnCallee || callee == kkPrintlnAnyCallee),
                        arguments.count == 1,
                        let types {
@@ -96,16 +96,16 @@ final class OperatorLoweringPass: LoweringPass {
                         if let argType {
                             switch types.kind(of: argType) {
                             case .primitive(.long, _):
-                                newBody.append(.call(symbol: symbol, callee: ctx.interner.intern("kk_println_long"), arguments: arguments, result: result, canThrow: canThrow, thrownResult: thrownResult))
+                                newBody.append(.call(symbol: symbol, callee: ctx.interner.intern("kk_println_long"), arguments: arguments, result: result, canThrow: canThrow, thrownResult: thrownResult, isSuperCall: isSuperCall))
                                 continue
                             case .primitive(.float, _):
-                                newBody.append(.call(symbol: symbol, callee: ctx.interner.intern("kk_println_float"), arguments: arguments, result: result, canThrow: canThrow, thrownResult: thrownResult))
+                                newBody.append(.call(symbol: symbol, callee: ctx.interner.intern("kk_println_float"), arguments: arguments, result: result, canThrow: canThrow, thrownResult: thrownResult, isSuperCall: isSuperCall))
                                 continue
                             case .primitive(.double, _):
-                                newBody.append(.call(symbol: symbol, callee: ctx.interner.intern("kk_println_double"), arguments: arguments, result: result, canThrow: canThrow, thrownResult: thrownResult))
+                                newBody.append(.call(symbol: symbol, callee: ctx.interner.intern("kk_println_double"), arguments: arguments, result: result, canThrow: canThrow, thrownResult: thrownResult, isSuperCall: isSuperCall))
                                 continue
                             case .primitive(.char, _):
-                                newBody.append(.call(symbol: symbol, callee: ctx.interner.intern("kk_println_char"), arguments: arguments, result: result, canThrow: canThrow, thrownResult: thrownResult))
+                                newBody.append(.call(symbol: symbol, callee: ctx.interner.intern("kk_println_char"), arguments: arguments, result: result, canThrow: canThrow, thrownResult: thrownResult, isSuperCall: isSuperCall))
                                 continue
                             default:
                                 break
