@@ -218,6 +218,7 @@ public final class BlockScope: BaseScope {}
 public final class SymbolTable {
     private var symbolsStorage: [SemanticSymbol] = []
     private var byFQName: [[InternedString]: [SymbolID]] = [:]
+    private var byShortName: [InternedString: [SymbolID]] = [:]
     private var functionSignatures: [SymbolID: FunctionSignature] = [:]
     private var propertyTypes: [SymbolID: TypeID] = [:]
     private var directSupertypes: [SymbolID: [SymbolID]] = [:]
@@ -254,6 +255,10 @@ public final class SymbolTable {
 
     public func lookupAll(fqName: [InternedString]) -> [SymbolID] {
         byFQName[fqName] ?? []
+    }
+
+    public func lookupByShortName(_ name: InternedString) -> [SymbolID] {
+        byShortName[name] ?? []
     }
 
     public func define(
@@ -308,6 +313,7 @@ public final class SymbolTable {
         )
         symbolsStorage.append(symbol)
         byFQName[fqName, default: []].append(id)
+        byShortName[name, default: []].append(id)
         return id
     }
 
