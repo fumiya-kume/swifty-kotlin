@@ -323,10 +323,10 @@
   - [x] script 評価用の synthetic entry（`main` 相当）へ lowering する
   - [x] script 実行回帰ケースを `diff_kotlinc.sh` に追加する
 
-- [ ] P5-36: import alias（`import a.b.C as X`）を解決規則へ組み込む（spec.md J5/J7）
-  - [ ] `ImportDecl` に alias 情報を追加し、Parser/AST builder で `as` 句を保持する
-  - [ ] `populateImportScopes` で alias 名を明示 import 優先順位に従って登録する
-  - [ ] alias 衝突・未解決 import の診断を追加する
+- [x] P5-36: import alias（`import a.b.C as X`）を解決規則へ組み込む（spec.md J5/J7）
+  - [x] `ImportDecl` に alias 情報を追加し、Parser/AST builder で `as` 句を保持する
+  - [x] `populateImportScopes` で alias 名を明示 import 優先順位に従って登録する
+  - [x] alias 衝突・未解決 import の診断を追加する
 
 - [x] P5-37: string template 補間（`$name`/`${expr}`）を AST/KIR/codegen で実装する（spec.md J4/J5/J6/J12）
   - [x] 字句/構文で template segment と埋め込み式を保持し、`Expr` に string template ノードを導入する

@@ -96,10 +96,16 @@ extension DataFlowSemaPassPhase {
             let declaredItableSize = layoutHint?.declaredItableSize ?? 0
             let itableSize = max(nextItableSlot, declaredItableSize)
 
-            let ownFields = symbols.allSymbols().filter { symbol in
-                (symbol.kind == .field || symbol.kind == .property) &&
-                isDirectMemberSymbol(symbol, of: nominalSymbol)
-            }.sorted(by: { $0.id.rawValue < $1.id.rawValue })
+            let ownFields: [SemanticSymbol]
+            if nominalSymbol.kind == .interface {
+                // Interfaces have no backing field storage; skip property fields.
+                ownFields = []
+            } else {
+                ownFields = symbols.allSymbols().filter { symbol in
+                    (symbol.kind == .field || symbol.kind == .property) &&
+                    isDirectMemberSymbol(symbol, of: nominalSymbol)
+                }.sorted(by: { $0.id.rawValue < $1.id.rawValue })
+            }
             let ownFieldCount = ownFields.count
             let inheritedFieldCount = superClass.flatMap { symbols.nominalLayout(for: $0)?.instanceFieldCount } ?? 0
             // Keep nominal layout in sync with Runtime.KKObjHeader (typeInfo + flags/size).
