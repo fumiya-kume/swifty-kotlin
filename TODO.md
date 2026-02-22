@@ -307,30 +307,30 @@
   - [ ] Sema に alias target 解決と循環検出を追加し、型解決時に展開する
   - [ ] metadata export/import で typealias シグネチャを保存/復元し、不整合診断を追加する
 
-- [ ] P5-33: `throw` 式の表現と `outThrown` 送出を実装する（spec.md J11.3/J13.3）
-  - [ ] AST `Expr` に throw ノードを追加し、式パーサで `throw` を専用構文として扱う
-  - [ ] 型推論で `throw` の型を `Nothing` として扱い、制御フロー合流規則に反映する
-  - [ ] KIR/Lowering/Codegen で throwable 値を `outThrown` へ設定して即 return する経路を追加する
+- [x] P5-33: `throw` 式の表現と `outThrown` 送出を実装する（spec.md J11.3/J13.3）
+  - [x] AST `Expr` に throw ノードを追加し、式パーサで `throw` を専用構文として扱う
+  - [x] 型推論で `throw` の型を `Nothing` として扱い、制御フロー合流規則に反映する
+  - [x] KIR/Lowering/Codegen で throwable 値を `outThrown` へ設定して即 return する経路を追加する
 
-- [ ] P5-34: リテラル型サーフェス（Long/Float/Double/Char）を front-to-back で実装する（spec.md J4/J8/J12/J15）
-  - [ ] AST/式パーサで `long`/`float`/`double`/`char` literal を保持する
-  - [ ] 型推論で primitive 型を正しく付与し、二項演算の型規則を拡張する
-  - [ ] KIR/Codegen/runtime call で各 primitive 演算と表示の最小経路を実装する
+- [x] P5-34: リテラル型サーフェス（Long/Float/Double/Char）を front-to-back で実装する（spec.md J4/J8/J12/J15）
+  - [x] AST/式パーサで `long`/`float`/`double`/`char` literal を保持する
+  - [x] 型推論で primitive 型を正しく付与し、二項演算の型規則を拡張する
+  - [x] KIR/Codegen/runtime call で各 primitive 演算と表示の最小経路を実装する
 
-- [ ] P5-35: script ルートの top-level statement を AST 以降へ接続する（spec.md J0.4/J5/J6）
-  - [ ] `SyntaxKind.script` 配下の statement 群を BuildAST で保持する
-  - [ ] script 評価用の synthetic entry（`main` 相当）へ lowering する
-  - [ ] script 実行回帰ケースを `diff_kotlinc.sh` に追加する
+- [x] P5-35: script ルートの top-level statement を AST 以降へ接続する（spec.md J0.4/J5/J6）
+  - [x] `SyntaxKind.script` 配下の statement 群を BuildAST で保持する
+  - [x] script 評価用の synthetic entry（`main` 相当）へ lowering する
+  - [x] script 実行回帰ケースを `diff_kotlinc.sh` に追加する
 
 - [ ] P5-36: import alias（`import a.b.C as X`）を解決規則へ組み込む（spec.md J5/J7）
   - [ ] `ImportDecl` に alias 情報を追加し、Parser/AST builder で `as` 句を保持する
   - [ ] `populateImportScopes` で alias 名を明示 import 優先順位に従って登録する
   - [ ] alias 衝突・未解決 import の診断を追加する
 
-- [ ] P5-37: string template 補間（`$name`/`${expr}`）を AST/KIR/codegen で実装する（spec.md J4/J5/J6/J12）
-  - [ ] 字句/構文で template segment と埋め込み式を保持し、`Expr` に string template ノードを導入する
-  - [ ] 型推論で template 埋め込み値を `String` 変換規則へ接続する
-  - [ ] KIR で `kk_string_concat` 連結へ lowering し、補間ケースの回帰テストを追加する
+- [x] P5-37: string template 補間（`$name`/`${expr}`）を AST/KIR/codegen で実装する（spec.md J4/J5/J6/J12）
+  - [x] 字句/構文で template segment と埋め込み式を保持し、`Expr` に string template ノードを導入する
+  - [x] 型推論で template 埋め込み値を `String` 変換規則へ接続する
+  - [x] KIR で `kk_string_concat` 連結へ lowering し、補間ケースの回帰テストを追加する
 
 - [ ] P5-38: 型パラメータ境界（`T : Upper` / `where` 句）を Parser/Sema/Resolver に実装する（spec.md J6/J8/J9）
   - [ ] `TypeParamDecl` に upper bound 情報を保持し、宣言ヘッダで `where` 句を抽出する
