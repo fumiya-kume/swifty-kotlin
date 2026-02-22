@@ -97,16 +97,16 @@ extension DataFlowSemaPassPhase {
             if let resolved = symbols.lookupAll(fqName: path)
                 .compactMap({ symbols.symbol($0) })
                 .first(where: { isNominalTypeSymbol($0.kind) }) {
+                let resolvedArgs = resolveTypeArgRefs(
+                    argRefs,
+                    ast: ast,
+                    symbols: symbols,
+                    types: types,
+                    interner: interner,
+                    localTypeParameters: localTypeParameters,
+                    diagnostics: diagnostics
+                )
                 if resolved.kind == .typeAlias {
-                    let resolvedArgs = resolveTypeArgRefs(
-                        argRefs,
-                        ast: ast,
-                        symbols: symbols,
-                        types: types,
-                        interner: interner,
-                        localTypeParameters: localTypeParameters,
-                        diagnostics: diagnostics
-                    )
                     if let underlying = resolveTypeAliasUnderlying(
                         resolved.id,
                         symbols: symbols,
@@ -124,15 +124,6 @@ extension DataFlowSemaPassPhase {
                     // underlying type is not yet available (e.g. unresolved RHS,
                     // imported alias without signature metadata).
                 }
-                let resolvedArgs = resolveTypeArgRefs(
-                    argRefs,
-                    ast: ast,
-                    symbols: symbols,
-                    types: types,
-                    interner: interner,
-                    localTypeParameters: localTypeParameters,
-                    diagnostics: diagnostics
-                )
                 return types.make(.classType(ClassType(classSymbol: resolved.id, args: resolvedArgs, nullability: nullability)))
             }
             diagnostics?.error(
