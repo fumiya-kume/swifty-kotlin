@@ -503,11 +503,11 @@ extension CoroutineLoweringPass {
                 isVirtual: false,
                 originalInstruction: instruction
             )
-        case .virtualCall(let symbol, let callee, let receiver, let arguments, let result, let canThrow, _, let dispatch):
+        case .virtualCall(let symbol, let callee, _, let arguments, let result, let canThrow, _, _):
             return CallInfo(
                 symbol: symbol,
                 callee: callee,
-                arguments: [receiver] + arguments,
+                arguments: arguments,
                 result: result,
                 canThrow: canThrow,
                 isVirtual: true,

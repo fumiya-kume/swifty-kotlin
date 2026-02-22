@@ -193,7 +193,7 @@ extension CoroutineLoweringPass {
                                 symbol: suspendCallInfo.symbol,
                                 callee: loweredSuspendCallee,
                                 receiver: receiver,
-                                arguments: Array(loweredSuspendArguments.dropFirst()),
+                                arguments: loweredSuspendArguments,
                                 result: suspensionResult,
                                 canThrow: suspendCallInfo.canThrow,
                                 thrownResult: nil,

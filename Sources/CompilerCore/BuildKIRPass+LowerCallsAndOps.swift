@@ -268,11 +268,20 @@ extension BuildKIRPhase {
             if !isSuperCall,
                let chosen,
                let dispatchKind = resolveVirtualDispatch(callee: chosen, sema: sema) {
+                // For virtualCall, the receiver is a separate field, so remove it
+                // from finalArguments (it was inserted at index 0 above).
+                var vcArguments = finalArguments
+                if let chosen2 = Optional(chosen),
+                   let signature = sema.symbols.functionSignature(for: chosen2),
+                   signature.receiverType != nil,
+                   !vcArguments.isEmpty {
+                    vcArguments.removeFirst()
+                }
                 instructions.append(.virtualCall(
                     symbol: chosen,
                     callee: loweredMemberCalleeName,
                     receiver: loweredReceiverID,
-                    arguments: finalArguments,
+                    arguments: vcArguments,
                     result: result,
                     canThrow: false,
                     thrownResult: nil,
@@ -405,11 +414,20 @@ extension BuildKIRPhase {
             if !isSafeSuper,
                let chosen,
                let dispatchKind = resolveVirtualDispatch(callee: chosen, sema: sema) {
+                // For virtualCall, the receiver is a separate field, so remove it
+                // from finalArguments (it was inserted at index 0 above).
+                var vcArguments = finalArguments
+                if let chosen2 = Optional(chosen),
+                   let signature = sema.symbols.functionSignature(for: chosen2),
+                   signature.receiverType != nil,
+                   !vcArguments.isEmpty {
+                    vcArguments.removeFirst()
+                }
                 instructions.append(.virtualCall(
                     symbol: chosen,
                     callee: loweredMemberCalleeName,
                     receiver: loweredReceiverID,
-                    arguments: finalArguments,
+                    arguments: vcArguments,
                     result: result,
                     canThrow: false,
                     thrownResult: nil,

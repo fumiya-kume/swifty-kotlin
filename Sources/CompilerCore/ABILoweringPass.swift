@@ -135,13 +135,11 @@ final class ABILoweringPass: LoweringPass {
                         }
                         if let vcSignature {
                             let parameterTypes = vcSignature.parameterTypes
-                            let receiverOffset = vcSignature.receiverType != nil ? 1 : 0
                             for argIndex in vcArguments.indices {
-                                let paramIndex = argIndex - receiverOffset
-                                guard paramIndex >= 0 && paramIndex < parameterTypes.count else {
+                                guard argIndex < parameterTypes.count else {
                                     continue
                                 }
-                                let paramType = parameterTypes[paramIndex]
+                                let paramType = parameterTypes[argIndex]
                                 let argType = intrinsicArgType(vcArguments[argIndex], arena: module.arena, types: types)
                                 guard let argType else {
                                     continue
