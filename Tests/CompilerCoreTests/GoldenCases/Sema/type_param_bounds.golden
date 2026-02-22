@@ -15,5 +15,5 @@ file f0 package=golden.sema
 expr e0 name(x) type=T#6 ref=s7
 expr e1 name(accept) type=_
 expr e2 name(Dog) type=T#6
-expr e3 call callee=e2 args=[] type=<error>
-expr e4 call callee=e1 args=[_:e3] type=<error>
+expr e3 call callee=e2 args=[] type=Class#3 call=s4 map=[] targs=[]
+expr e4 call callee=e1 args=[_:e3] type=Class#3 call=s5 map=[0->0] targs=[Class#3]
