@@ -331,15 +331,12 @@ extension LLVMBackend {
                     ensureDeclared(thrownResult, declared: &declared, lines: &lines)
                 }
 
-                let slot: Int
-                let lookupFunc: String
+                let lookupExpr: String
                 switch dispatch {
-                case .vtable(let s):
-                    slot = s
-                    lookupFunc = "kk_vtable_lookup"
-                case .itable(let s):
-                    slot = s
-                    lookupFunc = "kk_itable_lookup"
+                case .vtable(let slot):
+                    lookupExpr = "kk_vtable_lookup(\(varName(receiver)), \(slot))"
+                case .itable(let interfaceSlot, let methodSlot):
+                    lookupExpr = "kk_itable_lookup(\(varName(receiver)), \(interfaceSlot), \(methodSlot))"
                 }
 
                 let target: String
@@ -353,7 +350,7 @@ extension LLVMBackend {
                 }
 
                 let fptr = "vfn_\(callIndex)"
-                lines.append("  KKVTableEntry \(fptr) = \(lookupFunc)(\(varName(receiver)), \(slot));")
+                lines.append("  KKVTableEntry \(fptr) = \(lookupExpr);")
 
                 var callArguments = argVars
                 var thrownSlotName: String? = nil

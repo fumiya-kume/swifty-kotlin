@@ -78,7 +78,7 @@ public enum KIRExprKind: Equatable {
 
 public enum KIRDispatchKind: Equatable {
     case vtable(slot: Int)
-    case itable(slot: Int)
+    case itable(interfaceSlot: Int, methodSlot: Int)
 }
 
 public enum KIRInstruction: Equatable {
@@ -348,8 +348,8 @@ public final class KIRModule {
             switch dispatch {
             case .vtable(let slot):
                 dispatchLabel = "vtable[\(slot)]"
-            case .itable(let slot):
-                dispatchLabel = "itable[\(slot)]"
+            case .itable(let interfaceSlot, let methodSlot):
+                dispatchLabel = "itable[\(interfaceSlot):\(methodSlot)]"
             }
             return "virtualCall \(calleeName) symbol=\(symbolLabel) receiver=r\(receiver.rawValue) args=[\(args)] ret=\(ret) thrown=\(canThrow) thrownResult=\(thrownRet) dispatch=\(dispatchLabel)"
         case .jumpIfNotNull(let value, let target):

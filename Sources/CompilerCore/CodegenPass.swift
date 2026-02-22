@@ -265,8 +265,8 @@ public final class CodegenPhase: CompilerPhase {
             switch dispatch {
             case .vtable(let slot):
                 dispatchStr = "vtable:\(slot)"
-            case .itable(let slot):
-                dispatchStr = "itable:\(slot)"
+            case .itable(let interfaceSlot, let methodSlot):
+                dispatchStr = "itable:\(interfaceSlot):\(methodSlot)"
             }
             return "virtualCall symbol=\(symbolValue) calleeB64=\(calleeName) receiver=\(receiver.rawValue) args=[\(args)] result=\(resultValue) canThrow=\(canThrow ? 1 : 0) thrownResult=\(thrownResultValue) dispatch=\(dispatchStr)"
         case .jumpIfNotNull(let value, let target):

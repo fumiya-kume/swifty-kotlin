@@ -445,14 +445,9 @@ extension BuildKIRPhase {
             return nil
         }
         if parentSymbol.kind == .interface {
-            if let itableSlot = layout.itableSlots[parentID] {
-                if let vtableSlot = layout.vtableSlots[callee] {
-                    return .itable(slot: vtableSlot)
-                }
-                _ = itableSlot
-            }
-            if let vtableSlot = layout.vtableSlots[callee] {
-                return .itable(slot: vtableSlot)
+            let interfaceSlot = layout.itableSlots[parentID] ?? 0
+            if let methodSlot = layout.vtableSlots[callee] {
+                return .itable(interfaceSlot: interfaceSlot, methodSlot: methodSlot)
             }
             return nil
         }
