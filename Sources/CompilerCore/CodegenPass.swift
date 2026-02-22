@@ -248,7 +248,7 @@ public final class CodegenPhase: CompilerPhase {
             return "unary op=\(op) operand=\(operand.rawValue) result=\(result.rawValue)"
         case .nullAssert(let operand, let result):
             return "nullAssert operand=\(operand.rawValue) result=\(result.rawValue)"
-        case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult):
+        case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult, _):
             let args = arguments.map { String($0.rawValue) }.joined(separator: ",")
             let symbolValue = symbol.map { String($0.rawValue) } ?? "_"
             let resultValue = result.map { String($0.rawValue) } ?? "_"

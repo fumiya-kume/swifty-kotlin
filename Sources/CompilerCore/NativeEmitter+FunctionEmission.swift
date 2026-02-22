@@ -386,7 +386,10 @@ extension NativeEmitter {
             case .nullAssert(let operand, let result):
                 storeResult(result, resolveValue(operand))
 
-            case .call(let symbol, let callee, let arguments, let result, let usesThrownChannel, let thrownResult):
+            case .call(let symbol, let callee, let arguments, let result, let usesThrownChannel, let thrownResult, let isSuperCall):
+                // super calls always use direct dispatch – when virtual dispatch
+                // is introduced the isSuperCall flag will bypass vtable lookup.
+                _ = isSuperCall
                 guard !bindings.hasTerminator(currentBlock) else {
                     continue
                 }

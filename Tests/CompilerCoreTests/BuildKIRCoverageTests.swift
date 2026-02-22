@@ -158,7 +158,7 @@ final class BuildKIRCoverageTests: XCTestCase {
                 return op == .add
             })
             XCTAssertFalse(body.contains { instruction in
-                guard case .call(_, let callee, _, _, _, _) = instruction else {
+                guard case .call(_, let callee, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return ctx.interner.resolve(callee) == "plus"
@@ -210,12 +210,12 @@ final class BuildKIRCoverageTests: XCTestCase {
 
             let body = try findKIRFunctionBody(named: "useOperator", in: module, interner: ctx.interner)
             let resolvedCall = try XCTUnwrap(body.first { instruction in
-                guard case .call(let symbol, _, _, _, _, _) = instruction else {
+                guard case .call(let symbol, _, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return symbol == chosenSymbol
             })
-            guard case .call(let callSymbol, let callee, let arguments, _, _, _) = resolvedCall else {
+            guard case .call(let callSymbol, let callee, let arguments, _, _, _, _) = resolvedCall else {
                 XCTFail("Expected chosen call instruction for useOperator.")
                 return
             }
@@ -230,7 +230,7 @@ final class BuildKIRCoverageTests: XCTestCase {
                 return op == .add
             })
             XCTAssertFalse(body.contains { instruction in
-                guard case .call(_, let callCallee, _, _, _, _) = instruction else {
+                guard case .call(_, let callCallee, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return ctx.interner.resolve(callCallee).hasPrefix("kk_op_")
@@ -283,12 +283,12 @@ final class BuildKIRCoverageTests: XCTestCase {
 
             let body = try findKIRFunctionBody(named: "useMemberCall", in: module, interner: ctx.interner)
             let memberCall = try XCTUnwrap(body.first { instruction in
-                guard case .call(let symbol, _, _, _, _, _) = instruction else {
+                guard case .call(let symbol, _, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return symbol == chosenSymbol
             })
-            guard case .call(let callSymbol, let callee, let arguments, _, _, _) = memberCall else {
+            guard case .call(let callSymbol, let callee, let arguments, _, _, _, _) = memberCall else {
                 XCTFail("Expected chosen call instruction for useMemberCall.")
                 return
             }
@@ -318,12 +318,12 @@ final class BuildKIRCoverageTests: XCTestCase {
             let module = try XCTUnwrap(ctx.kir)
             let combineFunction = try findKIRFunction(named: "combine", in: module, interner: ctx.interner)
             let plusCall = try XCTUnwrap(combineFunction.body.first { instruction in
-                guard case .call(_, let callee, _, _, _, _) = instruction else {
+                guard case .call(_, let callee, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return ctx.interner.resolve(callee) == "plus"
             })
-            guard case .call(_, _, let arguments, _, _, _) = plusCall else {
+            guard case .call(_, _, let arguments, _, _, _, _) = plusCall else {
                 XCTFail("Expected combine to lower to a call to plus.")
                 return
             }
@@ -377,7 +377,7 @@ final class BuildKIRCoverageTests: XCTestCase {
             let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
 
             let boxingThrowFlags = body.compactMap { instruction -> Bool? in
-                guard case .call(_, let callee, _, _, let canThrow, _) = instruction else {
+                guard case .call(_, let callee, _, _, let canThrow, _, _) = instruction else {
                     return nil
                 }
                 let name = ctx.interner.resolve(callee)
@@ -944,12 +944,12 @@ final class BuildKIRCoverageTests: XCTestCase {
         XCTAssertEqual(pickFunction.params.last?.symbol, expectedTokenSymbol)
 
         guard let callInstruction = mainFunction.body.first(where: { instruction in
-            guard case .call(let symbol, _, _, _, _, _) = instruction else {
+            guard case .call(let symbol, _, _, _, _, _, _) = instruction else {
                 return false
             }
             return symbol == pickSymbol
         }),
-        case .call(_, _, let arguments, _, _, _) = callInstruction else {
+        case .call(_, _, let arguments, _, _, _, _) = callInstruction else {
             XCTFail("Expected main to call inline reified function.")
             return
         }
@@ -978,7 +978,7 @@ final class BuildKIRCoverageTests: XCTestCase {
             }.first
             let body = try XCTUnwrap(mainFunction?.body)
             let callNames = body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _, _) = instruction else { return nil }
+                guard case .call(_, let callee, _, _, _, _, _) = instruction else { return nil }
                 return ctx.interner.resolve(callee)
             }
             XCTAssertTrue(callNames.contains("kk_array_new"), "Expected kk_array_new for vararg packing, got: \(callNames)")
@@ -1002,7 +1002,7 @@ final class BuildKIRCoverageTests: XCTestCase {
             }.first
             let body = try XCTUnwrap(mainFunction?.body)
             let callNames = body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _, _) = instruction else { return nil }
+                guard case .call(_, let callee, _, _, _, _, _) = instruction else { return nil }
                 return ctx.interner.resolve(callee)
             }
             XCTAssertTrue(callNames.contains("kk_array_new"), "Expected kk_array_new for vararg packing with default arg, got: \(callNames)")
@@ -1025,7 +1025,7 @@ final class BuildKIRCoverageTests: XCTestCase {
             }.first
             let body = try XCTUnwrap(mainFunction?.body)
             let callNames = body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _, _) = instruction else { return nil }
+                guard case .call(_, let callee, _, _, _, _, _) = instruction else { return nil }
                 return ctx.interner.resolve(callee)
             }
             XCTAssertTrue(callNames.contains("kk_array_new"), "Expected kk_array_new for empty vararg, got: \(callNames)")
@@ -1282,7 +1282,7 @@ final class BuildKIRCoverageTests: XCTestCase {
             }.first
             let body = try XCTUnwrap(mainFunction?.body)
             let callNames = body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _, _) = instruction else { return nil }
+                guard case .call(_, let callee, _, _, _, _, _) = instruction else { return nil }
                 return ctx.interner.resolve(callee)
             }
             XCTAssertTrue(callNames.contains("kk_array_new"), "Expected kk_array_new for non-trailing vararg, got: \(callNames)")
@@ -1365,7 +1365,7 @@ final class BuildKIRCoverageTests: XCTestCase {
             XCTAssertFalse(hasSelect, "Side-effect branches must use control flow, not select")
 
             let sideEffectCalls = body.filter { instruction in
-                guard case .call(_, let callee, _, _, _, _) = instruction else { return false }
+                guard case .call(_, let callee, _, _, _, _, _) = instruction else { return false }
                 return ctx.interner.resolve(callee) == "sideEffect"
             }
             XCTAssertEqual(sideEffectCalls.count, 2, "Both branches should have sideEffect calls in IR")
@@ -1416,7 +1416,7 @@ final class BuildKIRCoverageTests: XCTestCase {
             XCTAssertFalse(hasSelect, "when branches with side effects must use control flow, not select")
 
             let effectCalls = body.filter { instruction in
-                guard case .call(_, let callee, _, _, _, _) = instruction else { return false }
+                guard case .call(_, let callee, _, _, _, _, _) = instruction else { return false }
                 return ctx.interner.resolve(callee) == "effect"
             }
             XCTAssertEqual(effectCalls.count, 3, "All 3 branches should have effect calls in IR")
@@ -1476,7 +1476,7 @@ final class BuildKIRCoverageTests: XCTestCase {
             let body = try findKIRFunctionBody(named: "demo", in: module, interner: ctx.interner)
 
             let matcherCalls = body.compactMap { instruction -> KIRInstruction? in
-                guard case .call(_, let callee, let arguments, _, _, _) = instruction,
+                guard case .call(_, let callee, let arguments, _, _, _, _) = instruction,
                       ctx.interner.resolve(callee) == "kk_catch_type_matches" else {
                     return nil
                 }
@@ -1493,14 +1493,14 @@ final class BuildKIRCoverageTests: XCTestCase {
 
             func thrownEdge(for calleeName: String) -> (callIndex: Int, thrownSlot: KIRExprID, typeSlot: KIRExprID, target: Int32)? {
                 guard let callIndex = body.firstIndex(where: { instruction in
-                    guard case .call(_, let callee, _, _, _, _) = instruction else {
+                    guard case .call(_, let callee, _, _, _, _, _) = instruction else {
                         return false
                     }
                     return ctx.interner.resolve(callee) == calleeName
                 }) else {
                     return nil
                 }
-                guard case .call(_, _, _, _, _, let thrownResult?) = body[callIndex] else {
+                guard case .call(_, _, _, _, _, let thrownResult?, _) = body[callIndex] else {
                     return nil
                 }
                 let tokenConstIndex = callIndex + 1
@@ -1595,7 +1595,7 @@ final class BuildKIRCoverageTests: XCTestCase {
                 return false
             })
 
-            guard case .call(_, _, let catchArguments, _, _, _) = body[catchEdge.callIndex],
+            guard case .call(_, _, let catchArguments, _, _, _, _) = body[catchEdge.callIndex],
                   let firstCatchArgument = catchArguments.first else {
                 XCTFail("Expected catchCall argument in first catch body.")
                 return
@@ -1624,13 +1624,13 @@ final class BuildKIRCoverageTests: XCTestCase {
             ))
             let makeBody = try findKIRFunctionBody(named: "make", in: module, interner: ctx.interner)
             let objectFactoryCall = try XCTUnwrap(makeBody.first { instruction in
-                guard case .call(_, let callee, _, _, _, _) = instruction else {
+                guard case .call(_, let callee, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return ctx.interner.resolve(callee).hasPrefix("kk_object_literal_")
             })
 
-            guard case .call(let factorySymbol, let callee, let arguments, let result, _, _) = objectFactoryCall else {
+            guard case .call(let factorySymbol, let callee, let arguments, let result, _, _, _) = objectFactoryCall else {
                 XCTFail("Expected object literal to lower to generated factory call.")
                 return
             }
@@ -1656,7 +1656,7 @@ final class BuildKIRCoverageTests: XCTestCase {
                 return
             }
             let hasAllocationRuntimeCall = generatedFactory.body.contains { instruction in
-                guard case .call(_, let loweredCallee, _, _, _, _) = instruction else {
+                guard case .call(_, let loweredCallee, _, _, _, _, _) = instruction else {
                     return false
                 }
                 let calleeName = ctx.interner.resolve(loweredCallee)
@@ -1701,12 +1701,12 @@ final class BuildKIRCoverageTests: XCTestCase {
             let module = try XCTUnwrap(ctx.kir)
             let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let consumeCall = try XCTUnwrap(mainBody.first { instruction in
-                guard case .call(_, let callee, _, _, _, _) = instruction else {
+                guard case .call(_, let callee, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return ctx.interner.resolve(callee) == "consume"
             })
-            guard case .call(_, _, let arguments, _, _, _) = consumeCall else {
+            guard case .call(_, _, let arguments, _, _, _, _) = consumeCall else {
                 XCTFail("Expected call instruction for consume(instance).")
                 return
             }
@@ -1734,13 +1734,13 @@ final class BuildKIRCoverageTests: XCTestCase {
             let module = try XCTUnwrap(ctx.kir)
             let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let lambdaCall = try XCTUnwrap(mainBody.first { instruction in
-                guard case .call(_, let callee, _, _, _, _) = instruction else {
+                guard case .call(_, let callee, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return ctx.interner.resolve(callee).hasPrefix("kk_lambda_")
             })
 
-            guard case .call(let callSymbol, let callee, let arguments, _, _, _) = lambdaCall else {
+            guard case .call(let callSymbol, let callee, let arguments, _, _, _, _) = lambdaCall else {
                 XCTFail("Expected lowered lambda call in main.")
                 return
             }
@@ -1809,13 +1809,13 @@ final class BuildKIRCoverageTests: XCTestCase {
             let module = try XCTUnwrap(ctx.kir)
             let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let lambdaCall = try XCTUnwrap(mainBody.first { instruction in
-                guard case .call(_, let callee, _, _, _, _) = instruction else {
+                guard case .call(_, let callee, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return ctx.interner.resolve(callee).hasPrefix("kk_lambda_")
             })
 
-            guard case .call(_, _, let arguments, _, _, _) = lambdaCall else {
+            guard case .call(_, _, let arguments, _, _, _, _) = lambdaCall else {
                 XCTFail("Expected callable-value call to lowered lambda target.")
                 return
             }
@@ -1872,13 +1872,13 @@ final class BuildKIRCoverageTests: XCTestCase {
 
             let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let incCall = try XCTUnwrap(mainBody.first { instruction in
-                guard case .call(let symbol, _, _, _, _, _) = instruction else {
+                guard case .call(let symbol, _, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return symbol == incSymbol
             })
 
-            guard case .call(let callSymbol, let callee, let arguments, _, _, _) = incCall else {
+            guard case .call(let callSymbol, let callee, let arguments, _, _, _, _) = incCall else {
                 XCTFail("Expected callable reference call to inc.")
                 return
             }
@@ -1915,13 +1915,13 @@ final class BuildKIRCoverageTests: XCTestCase {
 
             let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let plusCall = try XCTUnwrap(mainBody.first { instruction in
-                guard case .call(let symbol, _, _, _, _, _) = instruction else {
+                guard case .call(let symbol, _, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return symbol == plusSymbol
             })
 
-            guard case .call(_, let callee, let arguments, _, _, _) = plusCall else {
+            guard case .call(_, let callee, let arguments, _, _, _, _) = plusCall else {
                 XCTFail("Expected bound callable reference to lower to plus call.")
                 return
             }

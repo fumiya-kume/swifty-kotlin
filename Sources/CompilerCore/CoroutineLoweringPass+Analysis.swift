@@ -25,7 +25,7 @@ extension CoroutineLoweringPass {
             guard let tailInstruction = block.instructions.last else {
                 continue
             }
-            guard case .call(let symbol, let callee, _, let result, _, _) = tailInstruction.instruction,
+            guard case .call(let symbol, let callee, _, let result, _, _, _) = tailInstruction.instruction,
                   isSuspendCall(
                     symbol: symbol,
                     callee: callee,
@@ -79,7 +79,7 @@ extension CoroutineLoweringPass {
             for indexed in cfgBlock.instructions {
                 chunk.append(indexed)
 
-                guard case .call(let symbol, let callee, _, _, _, _) = indexed.instruction else {
+                guard case .call(let symbol, let callee, _, _, _, _, _) = indexed.instruction else {
                     continue
                 }
                 guard isSuspendCall(
@@ -400,7 +400,7 @@ extension CoroutineLoweringPass {
             return Set([lhs, rhs])
         case .select(let condition, let thenValue, let elseValue, _):
             return Set([condition, thenValue, elseValue])
-        case .call(_, _, let arguments, _, _, _):
+        case .call(_, _, let arguments, _, _, _, _):
             return Set(arguments)
         case .returnIfEqual(let lhs, let rhs):
             return Set([lhs, rhs])
@@ -425,7 +425,7 @@ extension CoroutineLoweringPass {
             return Set([result])
         case .select(_, _, _, let result):
             return Set([result])
-        case .call(_, _, _, let result, _, let thrownResult):
+        case .call(_, _, _, let result, _, let thrownResult, _):
             var ids = Set<KIRExprID>()
             if let result { ids.insert(result) }
             if let thrownResult { ids.insert(thrownResult) }

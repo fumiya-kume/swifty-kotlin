@@ -187,7 +187,7 @@ func extractCallees(
     interner: StringInterner
 ) -> [String] {
     body.compactMap { instruction -> String? in
-        guard case .call(_, let callee, _, _, _, _) = instruction else { return nil }
+        guard case .call(_, let callee, _, _, _, _, _) = instruction else { return nil }
         return interner.resolve(callee)
     }
 }
@@ -197,7 +197,7 @@ func extractThrowFlags(
     interner: StringInterner
 ) -> [String: [Bool]] {
     body.reduce(into: [:]) { partial, instruction in
-        guard case .call(_, let callee, _, _, let canThrow, _) = instruction else { return }
+        guard case .call(_, let callee, _, _, let canThrow, _, _) = instruction else { return }
         partial[interner.resolve(callee), default: []].append(canThrow)
     }
 }

@@ -219,7 +219,7 @@ final class ABILoweringPass: LoweringPass {
                     continue
                 }
 
-                guard case .call(let callSymbol, let callee, let arguments, let result, _, let thrownResult) = instruction else {
+                guard case .call(let callSymbol, let callee, let arguments, let result, _, let thrownResult, _) = instruction else {
                     newBody.append(instruction)
                     idx += 1
                     continue

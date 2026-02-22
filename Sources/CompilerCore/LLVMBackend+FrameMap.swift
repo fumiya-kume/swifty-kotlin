@@ -71,7 +71,7 @@ extension LLVMBackend {
                 ids.insert(lhs)
                 ids.insert(rhs)
                 ids.insert(result)
-            case .call(_, _, let arguments, let result, _, let thrownResult):
+            case .call(_, _, let arguments, let result, _, let thrownResult, _):
                 for arg in arguments {
                     ids.insert(arg)
                 }

@@ -431,7 +431,7 @@ extension BuildKIRPhase {
         let intType = sema.types.make(.primitive(.int, .nonNull))
         for instruction in loweredInstructions {
             switch instruction {
-            case .call(let symbol, let callee, let arguments, let result, _, let thrownResult)
+            case .call(let symbol, let callee, let arguments, let result, _, let thrownResult, _)
                 where thrownResult == nil:
                 instructions.append(.call(
                     symbol: symbol,

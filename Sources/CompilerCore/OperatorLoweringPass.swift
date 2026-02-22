@@ -88,7 +88,7 @@ final class OperatorLoweringPass: LoweringPass {
                     newBody.append(.call(symbol: nil, callee: callee, arguments: [operand], result: result, canThrow: false, thrownResult: nil))
                 case .nullAssert(let operand, let result):
                     newBody.append(.call(symbol: nil, callee: ctx.interner.intern("kk_op_notnull"), arguments: [operand], result: result, canThrow: true, thrownResult: nil))
-                case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult):
+                case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult, _):
                     if (callee == printlnCallee || callee == kkPrintlnAnyCallee),
                        arguments.count == 1,
                        let types {

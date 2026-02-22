@@ -483,12 +483,19 @@ extension TypeCheckSemaPassPhase {
                 sema.bindings.bindExprType(id, type: sema.types.errorType)
                 return sema.types.errorType
             }
-            if label != nil {
+            if let label {
+                if let qualifiedType = ctx.resolveQualifiedThis(label: label) {
+                    sema.bindings.bindExprType(id, type: qualifiedType)
+                    return qualifiedType
+                }
+                let labelStr = interner.resolve(label)
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0053",
-                    "Qualified 'this@Label' is not yet supported.",
+                    "Unresolved label '\(labelStr)' for qualified 'this'.",
                     range: range
                 )
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
             }
             sema.bindings.bindExprType(id, type: receiverType)
             return receiverType
