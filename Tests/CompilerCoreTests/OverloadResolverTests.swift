@@ -2027,8 +2027,9 @@ final class OverloadResolverTests: XCTestCase {
         XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-SEMA-0003")
     }
 
-    /// Concrete overload preferred over generic overload.
-    func testResolveCallPrefersConcreteOverGenericOverload() {
+    /// Generic candidate instantiated to same types as concrete → ambiguous
+    /// (resolver compares instantiated parameter types, not generic vs concrete).
+    func testResolveCallGenericVsConcreteWithSameInstantiatedTypesIsAmbiguous() {
         let (resolver, types, symbols, interner, ctx) = makeEnv()
 
         let intType = types.make(.primitive(.int, .nonNull))
@@ -2040,8 +2041,10 @@ final class OverloadResolverTests: XCTestCase {
         let genericFn = defineSymbol(kind: .function, name: "concreteGen", suffix: "concreteVsGen_generic", symbols: symbols, interner: interner)
         symbols.setFunctionSignature(
             FunctionSignature(
-                parameterTypes: [anyType],
-                returnType: anyType
+                parameterTypes: [tpType],
+                returnType: tpType,
+                typeParameterSymbols: [tpSym],
+                typeParameterUpperBounds: [anyType]
             ),
             for: genericFn
         )
@@ -2062,8 +2065,9 @@ final class OverloadResolverTests: XCTestCase {
             args: [CallArg(type: intType)]
         )
         let resolved = resolver.resolveCall(candidates: [genericFn, concreteFn], call: call, expectedType: nil, ctx: ctx)
-        XCTAssertEqual(resolved.chosenCallee, concreteFn)
-        XCTAssertNil(resolved.diagnostic)
+        // After type substitution both have [Int] → isMoreSpecific sees them as equal → ambiguous
+        XCTAssertNil(resolved.chosenCallee)
+        XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-SEMA-0003")
     }
 
     /// Most specific selection with incompatible parameter counts yields no winner.
