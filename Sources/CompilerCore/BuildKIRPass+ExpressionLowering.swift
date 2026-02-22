@@ -274,6 +274,20 @@ extension BuildKIRPhase {
                             terminatedByReturn = true
                             break
                         }
+                        if let bodyExpr = ast.arena.expr(bodyExprID),
+                           case .throwExpr = bodyExpr {
+                            _ = lowerExpr(
+                                bodyExprID,
+                                ast: ast,
+                                sema: sema,
+                                arena: arena,
+                                interner: interner,
+                                propertyConstantInitializers: propertyConstantInitializers,
+                                instructions: &localFunBodyInstructions
+                            )
+                            terminatedByReturn = true
+                            break
+                        }
                         lastValue = lowerExpr(
                             bodyExprID,
                             ast: ast,
