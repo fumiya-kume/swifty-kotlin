@@ -111,6 +111,12 @@ extension DataFlowSemaPassPhase {
                 )
             }
             let classType = types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
+            let classScope = ClassMemberScope(
+                parent: scope,
+                symbols: symbols,
+                ownerSymbol: symbol,
+                thisType: classType
+            )
             collectNestedTypeAliases(
                 classDecl.nestedTypeAliases,
                 ownerFQName: fqName,
@@ -259,7 +265,7 @@ extension DataFlowSemaPassPhase {
                 symbols: symbols,
                 types: types,
                 bindings: bindings,
-                scope: scope,
+                scope: classScope,
                 diagnostics: diagnostics,
                 interner: interner
             )
@@ -284,6 +290,12 @@ extension DataFlowSemaPassPhase {
 
         case .objectDecl(let objectDecl):
             let objectType = types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
+            let objectScope = ClassMemberScope(
+                parent: scope,
+                symbols: symbols,
+                ownerSymbol: symbol,
+                thisType: objectType
+            )
             collectNestedTypeAliases(
                 objectDecl.nestedTypeAliases,
                 ownerFQName: fqName,
@@ -305,7 +317,7 @@ extension DataFlowSemaPassPhase {
                 symbols: symbols,
                 types: types,
                 bindings: bindings,
-                scope: scope,
+                scope: objectScope,
                 diagnostics: diagnostics,
                 interner: interner
             )

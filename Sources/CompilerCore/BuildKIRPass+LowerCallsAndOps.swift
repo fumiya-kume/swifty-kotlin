@@ -13,11 +13,23 @@ extension BuildKIRPhase {
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
         let boundType = sema.bindings.exprTypes[exprID]
-        let calleeName: InternedString
+        let loweredCalleeExprID = lowerExpr(
+            calleeExpr,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+        let loweredCallable = callableValueInfoByExprID[loweredCalleeExprID]
+        let sourceCalleeName: InternedString
         if let callee = ast.arena.expr(calleeExpr), case .nameRef(let name, _) = callee {
-            calleeName = name
+            sourceCalleeName = name
+        } else if let loweredCallable {
+            sourceCalleeName = loweredCallable.callee
         } else {
-            calleeName = sema.symbols.allSymbols().first?.name ?? InternedString()
+            sourceCalleeName = interner.intern("<unknown>")
         }
         let loweredArgIDs = args.map { argument in
             lowerExpr(
@@ -32,20 +44,42 @@ extension BuildKIRPhase {
         }
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
         let callBinding = sema.bindings.callBindings[exprID]
+        let callableValueCallBinding = sema.bindings.callableValueCalls[exprID]
         let chosen = callBinding?.chosenCallee
-        let callNormalized = normalizedCallArguments(
-            providedArguments: loweredArgIDs,
-            callBinding: callBinding,
-            chosenCallee: chosen,
-            spreadFlags: args.map(\.isSpread),
-            ast: ast,
-            sema: sema,
-            arena: arena,
-            interner: interner,
-            propertyConstantInitializers: propertyConstantInitializers,
-            instructions: &instructions
-        )
+        let callNormalized: NormalizedCallResult
+        if callBinding != nil {
+            callNormalized = normalizedCallArguments(
+                providedArguments: loweredArgIDs,
+                callBinding: callBinding,
+                chosenCallee: chosen,
+                spreadFlags: args.map(\.isSpread),
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+        } else {
+            callNormalized = NormalizedCallResult(
+                arguments: normalizedCallableValueArguments(
+                    providedArguments: loweredArgIDs,
+                    callableValueCallBinding: callableValueCallBinding,
+                    sema: sema
+                ),
+                defaultMask: 0,
+                calleeHasDefaults: false
+            )
+        }
         var finalArgIDs = callNormalized.arguments
+        if let loweredCallable {
+            finalArgIDs.insert(contentsOf: loweredCallable.captureArguments, at: 0)
+        } else if let chosen,
+           let signature = sema.symbols.functionSignature(for: chosen),
+           signature.receiverType != nil,
+           let implicitReceiver = currentImplicitReceiverExprID {
+            finalArgIDs.insert(implicitReceiver, at: 0)
+        }
         if callNormalized.defaultMask != 0, let chosen {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             if let callBinding,
@@ -66,7 +100,7 @@ extension BuildKIRPhase {
             let maskExpr = arena.appendExpr(.intLiteral(Int64(callNormalized.defaultMask)), type: intType)
             instructions.append(.constValue(result: maskExpr, value: .intLiteral(Int64(callNormalized.defaultMask))))
             finalArgIDs.append(maskExpr)
-            let stubName = interner.intern(interner.resolve(calleeName) + "$default")
+            let stubName = interner.intern(interner.resolve(sourceCalleeName) + "$default")
             let stubSym = defaultStubSymbol(for: chosen)
             instructions.append(.call(
                 symbol: stubSym,
@@ -98,17 +132,19 @@ extension BuildKIRPhase {
                let externalLinkName = sema.symbols.externalLinkName(for: chosen),
                !externalLinkName.isEmpty {
                 loweredCalleeName = interner.intern(externalLinkName)
+            } else if let loweredCallable {
+                loweredCalleeName = loweredCallable.callee
             } else if chosen == nil {
                 loweredCalleeName = loweredRuntimeBuiltinCallee(
-                    for: calleeName,
+                    for: sourceCalleeName,
                     argumentCount: finalArgIDs.count,
                     interner: interner
-                ) ?? calleeName
+                ) ?? sourceCalleeName
             } else {
-                loweredCalleeName = calleeName
+                loweredCalleeName = sourceCalleeName
             }
             instructions.append(.call(
-                symbol: chosen,
+                symbol: chosen ?? loweredCallable?.symbol,
                 callee: loweredCalleeName,
                 arguments: finalArgIDs,
                 result: result,
@@ -359,5 +395,39 @@ extension BuildKIRPhase {
             ))
         }
         return result
+    }
+
+    private func normalizedCallableValueArguments(
+        providedArguments: [KIRExprID],
+        callableValueCallBinding: CallableValueCallBinding?,
+        sema: SemaModule
+    ) -> [KIRExprID] {
+        guard let callableValueCallBinding,
+              case .functionType(let functionType) = sema.types.kind(of: callableValueCallBinding.functionType) else {
+            return providedArguments
+        }
+
+        let parameterCount = functionType.params.count
+        guard parameterCount == providedArguments.count,
+              !callableValueCallBinding.parameterMapping.isEmpty else {
+            return providedArguments
+        }
+
+        var reordered = Array(repeating: KIRExprID.invalid, count: parameterCount)
+        for (argIndex, paramIndex) in callableValueCallBinding.parameterMapping {
+            guard argIndex >= 0,
+                  argIndex < providedArguments.count,
+                  paramIndex >= 0,
+                  paramIndex < parameterCount,
+                  reordered[paramIndex] == .invalid else {
+                return providedArguments
+            }
+            reordered[paramIndex] = providedArguments[argIndex]
+        }
+
+        guard !reordered.contains(.invalid) else {
+            return providedArguments
+        }
+        return reordered
     }
 }
