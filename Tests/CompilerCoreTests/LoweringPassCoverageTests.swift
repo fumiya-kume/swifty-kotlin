@@ -1742,6 +1742,7 @@ final class LoweringPassCoverageTests: XCTestCase {
         let v1 = arena.appendExpr(.temporary(1))
         let v2 = arena.appendExpr(.temporary(2))
         let v3 = arena.appendExpr(.temporary(3))
+        let vFalse = arena.appendExpr(.boolLiteral(false))
 
         let mainFn = KIRFunction(
             symbol: mainSym,
@@ -1751,7 +1752,8 @@ final class LoweringPassCoverageTests: XCTestCase {
             body: [
                 .call(symbol: nil, callee: interner.intern("iterator"), arguments: [v0], result: v3, canThrow: false, thrownResult: nil),
                 .call(symbol: nil, callee: interner.intern("kk_for_lowered"), arguments: [v3], result: v1, canThrow: false, thrownResult: nil),
-                .jumpIfEqual(lhs: v0, rhs: v2, target: 800),
+                .constValue(result: vFalse, value: .boolLiteral(false)),
+                .jumpIfEqual(lhs: v0, rhs: vFalse, target: 800),
                 .copy(from: v1, to: v1),
                 .jump(801),
                 .label(800),

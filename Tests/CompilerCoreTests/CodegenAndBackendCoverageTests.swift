@@ -366,7 +366,7 @@ final class CodegenAndBackendCoverageTests: XCTestCase {
         let throwingResult = arena.appendExpr(.temporary(7))
         let whenCondition = arena.appendExpr(.boolLiteral(true))
         let whenResult = arena.appendExpr(.temporary(8))
-        let selectResult = arena.appendExpr(.temporary(9))
+        let falseConst = arena.appendExpr(.boolLiteral(false))
         let continuationResult = arena.appendExpr(.temporary(10))
         let stateExitResult = arena.appendExpr(.temporary(11))
 
@@ -422,8 +422,9 @@ final class CodegenAndBackendCoverageTests: XCTestCase {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                // Legacy select/kk_when_select replaced by control flow
-                .jumpIfEqual(lhs: whenCondition, rhs: concatResult, target: 900),
+                // Control flow for if/when: branch on condition == false
+                .constValue(result: falseConst, value: .boolLiteral(false)),
+                .jumpIfEqual(lhs: whenCondition, rhs: falseConst, target: 900),
                 .copy(from: concatResult, to: whenResult),
                 .jump(901),
                 .label(900),
@@ -488,8 +489,9 @@ final class CodegenAndBackendCoverageTests: XCTestCase {
         XCTAssertTrue(ir.contains("@kk_unregister_coroutine_root"))
         XCTAssertTrue(ir.contains("coroutine_root_register"))
         XCTAssertTrue(ir.contains("coroutine_root_unregister"))
-        // select i1 no longer emitted; control flow uses branches instead
-        XCTAssertTrue(ir.contains("br ") || ir.contains("icmp") || ir.contains("label"))
+        // select i1 no longer emitted; control flow uses conditional branches instead
+        let hasConditionalBranch = ir.contains("br i1") || ir.contains("icmp eq")
+        XCTAssertTrue(hasConditionalBranch)
         XCTAssertTrue(ir.contains("thrown_slot_"))
         XCTAssertTrue(ir.contains("@external_throwing"))
     }
@@ -735,6 +737,7 @@ final class CodegenAndBackendCoverageTests: XCTestCase {
         let e7 = arena.appendExpr(.temporary(7))
         let e8 = arena.appendExpr(.temporary(8))
         let e9 = arena.appendExpr(.unit)
+        let eFalse = arena.appendExpr(.boolLiteral(false))
 
         let callee = KIRFunction(
             symbol: calleeSym,
@@ -773,7 +776,8 @@ final class CodegenAndBackendCoverageTests: XCTestCase {
                 .call(symbol: nil, callee: interner.intern("kk_op_mul"), arguments: [e0, e1], result: e7, canThrow: false, thrownResult: nil),
                 .call(symbol: nil, callee: interner.intern("kk_op_div"), arguments: [e0, e1], result: e8, canThrow: false, thrownResult: nil),
                 .call(symbol: nil, callee: interner.intern("kk_op_eq"), arguments: [e0, e1], result: e5, canThrow: false, thrownResult: nil),
-                .jumpIfEqual(lhs: e2, rhs: e0, target: 800),
+                .constValue(result: eFalse, value: .boolLiteral(false)),
+                .jumpIfEqual(lhs: e2, rhs: eFalse, target: 800),
                 .copy(from: e0, to: e5),
                 .jump(801),
                 .label(800),

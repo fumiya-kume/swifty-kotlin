@@ -73,12 +73,14 @@ extension DataFlowSemaPassPhase {
         var body: [KIRInstruction] = []
         body.reserveCapacity(bodyLines.count)
         var importLabelCounter: Int32 = 900_000
+        var importExprCounter: Int32 = 900_000
         for line in bodyLines {
             let instructions = parseImportedInlineInstructions(
                 line: line,
                 parameterSymbolMapping: parameterSymbolMapping,
                 interner: interner,
-                labelCounter: &importLabelCounter
+                labelCounter: &importLabelCounter,
+                exprCounter: &importExprCounter
             )
             body.append(contentsOf: instructions)
         }
@@ -106,7 +108,8 @@ extension DataFlowSemaPassPhase {
         line: String,
         parameterSymbolMapping: [Int32: SymbolID],
         interner: StringInterner,
-        labelCounter: inout Int32
+        labelCounter: inout Int32,
+        exprCounter: inout Int32
     ) -> [KIRInstruction] {
         let parts = line.split(separator: " ")
         guard let opcode = parts.first else {
@@ -125,7 +128,8 @@ extension DataFlowSemaPassPhase {
             let elseLabel = labelCounter
             let endLabel = labelCounter + 1
             labelCounter += 2
-            let falseExprID = KIRExprID(rawValue: -2)
+            let falseExprID = KIRExprID(rawValue: exprCounter)
+            exprCounter += 1
             return [
                 .constValue(result: falseExprID, value: .boolLiteral(false)),
                 .jumpIfEqual(lhs: KIRExprID(rawValue: condition), rhs: falseExprID, target: elseLabel),
