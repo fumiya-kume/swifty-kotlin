@@ -418,7 +418,7 @@ extension TypeCheckSemaPassPhase {
                         )
                     }
                     let condBranch = ctx.dataFlow.branchOnCondition(
-                        cond, base: cumulativeFalseState, locals: locals,
+                        cond, base: cumulativeFalseState, locals: branchLocals,
                         ast: ast, sema: sema, interner: interner
                     )
                     branchCtx = ctx.with(flowState: condBranch.trueState)
