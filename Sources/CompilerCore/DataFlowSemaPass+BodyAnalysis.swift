@@ -120,7 +120,9 @@ extension DataFlowSemaPassPhase {
                         }
                         return underlying
                     }
-                    return types.errorType
+                    // Fall through to class-type path for error recovery when
+                    // underlying type is not yet available (e.g. unresolved RHS,
+                    // imported alias without signature metadata).
                 }
                 let resolvedArgs = resolveTypeArgRefs(
                     argRefs,

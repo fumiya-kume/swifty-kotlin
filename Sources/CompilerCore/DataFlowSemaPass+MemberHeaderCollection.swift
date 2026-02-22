@@ -439,7 +439,13 @@ extension DataFlowSemaPassPhase {
             if !typeParameterSymbols.isEmpty {
                 symbols.setTypeAliasTypeParameters(typeParameterSymbols, for: aliasSymbol)
             }
-            if let resolvedUnderlying = resolveTypeRef(
+            if alias.underlyingType == nil {
+                diagnostics.error(
+                    "KSWIFTK-SEMA-0031",
+                    "Type alias '\(interner.resolve(alias.name))' must have a right-hand side type.",
+                    range: alias.range
+                )
+            } else if let resolvedUnderlying = resolveTypeRef(
                 alias.underlyingType,
                 ast: ast,
                 symbols: symbols,
