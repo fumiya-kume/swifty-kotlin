@@ -10,7 +10,7 @@ permissions:
 jobs:
   smoke-tests:
     name: Smoke Tests
-    runs-on: [self-hosted, macOS]
+    runs-on: [self-hosted, macOS, ARM64]
     steps:
       - uses: actions/checkout@v4
       - name: Show toolchain versions
@@ -21,7 +21,7 @@ jobs:
 
   diff-regression:
     name: kotlinc Diff Regression
-    runs-on: [self-hosted, macOS]
+    runs-on: [self-hosted, macOS, ARM64]
     steps:
       - uses: actions/checkout@v4
       - name: Verify prerequisites
@@ -49,7 +49,7 @@ jobs:
 
   test-and-coverage:
     name: Test and Coverage Gate
-    runs-on: [self-hosted, macOS]
+    runs-on: [self-hosted, macOS, ARM64]
     steps:
       - uses: actions/checkout@v4
       - name: Verify prerequisites
