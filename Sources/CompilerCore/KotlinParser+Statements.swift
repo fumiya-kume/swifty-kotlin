@@ -41,6 +41,18 @@ extension KotlinParser {
             return parseLoopStatement(inBlock: inBlock)
         }
 
+        // Dispatch to dedicated structured parsers for major constructs
+        switch stream.peek().kind {
+        case .keyword(.if):
+            return parseIfStatement(inBlock: inBlock)
+        case .keyword(.when):
+            return parseWhenStatement(inBlock: inBlock)
+        case .keyword(.try):
+            return parseTryStatement(inBlock: inBlock)
+        default:
+            break
+        }
+
         let leadingKind = classifyStatementLeadingToken(stream.peek())
 
         let startCount = stream.index
@@ -99,6 +111,215 @@ extension KotlinParser {
             range: range.value ?? invalidRange, children)
     }
 
+    // MARK: - Structured Control Flow Parsers
+
+    /// Parse a structured `if` expression: `if (condition) then-branch [else else-branch]`
+    internal func parseIfStatement(inBlock: Bool) -> NodeID {
+        var children: [SyntaxChild] = []
+        var range = RangeAccumulator()
+
+        // Consume 'if'
+        _ = consumeToken(into: &children, range: &range)
+
+        // Parse condition '(' ... ')'
+        if case .symbol(.lParen) = stream.peek().kind {
+            let conditionGroup = parseBalancedGroup(opening: .lParen, closing: .rParen)
+            children.append(.node(conditionGroup))
+            range.append(arena.node(conditionGroup).range)
+        }
+
+        // Parse then-branch
+        appendBranchBody(inBlock: inBlock, into: &children, range: &range, stopBeforeElse: true)
+
+        // Parse optional 'else' branch
+        if case .keyword(.else) = stream.peek().kind {
+            _ = consumeToken(into: &children, range: &range)
+            appendBranchBody(inBlock: inBlock, into: &children, range: &range, stopBeforeElse: false)
+        }
+
+        return arena.appendNode(kind: .ifExpr, range: range.value ?? invalidRange, children)
+    }
+
+    /// Parse a structured `when` expression: `when [(subject)] { branches }`
+    internal func parseWhenStatement(inBlock: Bool) -> NodeID {
+        _ = inBlock
+        var children: [SyntaxChild] = []
+        var range = RangeAccumulator()
+
+        // Consume 'when'
+        _ = consumeToken(into: &children, range: &range)
+
+        // Parse optional subject '(' ... ')'
+        if case .symbol(.lParen) = stream.peek().kind {
+            let subjectGroup = parseBalancedGroup(opening: .lParen, closing: .rParen)
+            children.append(.node(subjectGroup))
+            range.append(arena.node(subjectGroup).range)
+        }
+
+        // Parse body block
+        if case .symbol(.lBrace) = stream.peek().kind {
+            let body = parseBlock()
+            children.append(.node(body))
+            range.append(arena.node(body).range)
+        }
+
+        return arena.appendNode(kind: .whenExpr, range: range.value ?? invalidRange, children)
+    }
+
+    /// Parse a structured `try` expression: `try body [catch (params) body]* [finally body]`
+    internal func parseTryStatement(inBlock: Bool) -> NodeID {
+        var children: [SyntaxChild] = []
+        var range = RangeAccumulator()
+
+        // Consume 'try'
+        _ = consumeToken(into: &children, range: &range)
+
+        // Parse try body
+        appendTryBody(inBlock: inBlock, into: &children, range: &range)
+
+        // Parse catch clauses
+        while case .keyword(.catch) = stream.peek().kind {
+            _ = consumeToken(into: &children, range: &range)
+            if case .symbol(.lParen) = stream.peek().kind {
+                let paramGroup = parseBalancedGroup(opening: .lParen, closing: .rParen)
+                children.append(.node(paramGroup))
+                range.append(arena.node(paramGroup).range)
+            }
+            appendTryBody(inBlock: inBlock, into: &children, range: &range)
+        }
+
+        // Parse finally clause
+        if case .keyword(.finally) = stream.peek().kind {
+            _ = consumeToken(into: &children, range: &range)
+            appendTryBody(inBlock: inBlock, into: &children, range: &range)
+        }
+
+        return arena.appendNode(kind: .tryExpr, range: range.value ?? invalidRange, children)
+    }
+
+    // MARK: - Branch Body Helpers
+
+    /// Appends a branch body for if/else. Can be a block, a nested control flow,
+    /// or a simple inline expression (stops before `else` if requested).
+    internal func appendBranchBody(
+        inBlock: Bool,
+        into children: inout [SyntaxChild],
+        range: inout RangeAccumulator,
+        stopBeforeElse: Bool
+    ) {
+        let token = stream.peek()
+        switch token.kind {
+        case .symbol(.lBrace):
+            let block = parseBlock()
+            children.append(.node(block))
+            range.append(arena.node(block).range)
+        case .keyword(.if):
+            let node = parseIfStatement(inBlock: inBlock)
+            children.append(.node(node))
+            range.append(arena.node(node).range)
+        case .keyword(.when):
+            let node = parseWhenStatement(inBlock: inBlock)
+            children.append(.node(node))
+            range.append(arena.node(node).range)
+        case .keyword(.try):
+            let node = parseTryStatement(inBlock: inBlock)
+            children.append(.node(node))
+            range.append(arena.node(node).range)
+        case .keyword(.for), .keyword(.while), .keyword(.do):
+            let node = parseLoopStatement(inBlock: inBlock)
+            children.append(.node(node))
+            range.append(arena.node(node).range)
+        default:
+            consumeInlineBody(
+                inBlock: inBlock,
+                into: &children,
+                range: &range,
+                stopBeforeElse: stopBeforeElse,
+                stopBeforeCatchFinally: false
+            )
+        }
+    }
+
+    /// Appends a try/catch/finally body. Can be a block, a nested control flow,
+    /// or inline tokens (stops before `catch`/`finally`).
+    internal func appendTryBody(
+        inBlock: Bool,
+        into children: inout [SyntaxChild],
+        range: inout RangeAccumulator
+    ) {
+        let token = stream.peek()
+        switch token.kind {
+        case .symbol(.lBrace):
+            let block = parseBlock()
+            children.append(.node(block))
+            range.append(arena.node(block).range)
+        case .keyword(.if):
+            let node = parseIfStatement(inBlock: inBlock)
+            children.append(.node(node))
+            range.append(arena.node(node).range)
+        case .keyword(.when):
+            let node = parseWhenStatement(inBlock: inBlock)
+            children.append(.node(node))
+            range.append(arena.node(node).range)
+        case .keyword(.try):
+            let node = parseTryStatement(inBlock: inBlock)
+            children.append(.node(node))
+            range.append(arena.node(node).range)
+        case .keyword(.for), .keyword(.while), .keyword(.do):
+            let node = parseLoopStatement(inBlock: inBlock)
+            children.append(.node(node))
+            range.append(arena.node(node).range)
+        default:
+            consumeInlineBody(
+                inBlock: inBlock,
+                into: &children,
+                range: &range,
+                stopBeforeElse: false,
+                stopBeforeCatchFinally: true
+            )
+        }
+    }
+
+    /// Consume inline tokens for a non-block body of a control flow construct.
+    /// Stops at statement boundaries, and optionally before `else` or `catch`/`finally`.
+    internal func consumeInlineBody(
+        inBlock: Bool,
+        into children: inout [SyntaxChild],
+        range: inout RangeAccumulator,
+        stopBeforeElse: Bool,
+        stopBeforeCatchFinally: Bool
+    ) {
+        var parenDepth = 0
+        let hadChildren = !children.isEmpty
+        while !stream.atEOF() {
+            let token = stream.peek()
+            if shouldStopStatementBefore(token, inBlock: inBlock) { break }
+            if stopBeforeElse && parenDepth == 0 && token.kind == .keyword(.else) { break }
+            if stopBeforeCatchFinally && parenDepth == 0 {
+                if case .keyword(.catch) = token.kind { break }
+                if case .keyword(.finally) = token.kind { break }
+            }
+            if inBlock,
+               hadChildren || !children.isEmpty,
+               parenDepth == 0,
+               hasLeadingNewline(token),
+               shouldSplitStatementOnNewline(token.kind) {
+                break
+            }
+
+            _ = consumeToken(into: &children, range: &range)
+            switch token.kind {
+            case .symbol(.lParen): parenDepth += 1
+            case .symbol(.rParen): parenDepth = max(0, parenDepth - 1)
+            case .symbol(.semicolon): return
+            default: break
+            }
+            if !inBlock, hasLeadingNewline(stream.peek()) { break }
+        }
+    }
+
+    // MARK: - Statement Classification (for non-dispatched cases)
+
     internal func classifyStatementLeadingToken(_ token: Token) -> SyntaxKind {
         switch token.kind {
         case .keyword(.if):
@@ -141,6 +362,8 @@ extension KotlinParser {
             return .statement
         }
     }
+
+    // MARK: - Loop Parsing
 
     internal func parseLoopStatement(inBlock: Bool) -> NodeID {
         _ = inBlock
