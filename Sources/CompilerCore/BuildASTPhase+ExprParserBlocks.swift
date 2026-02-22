@@ -35,14 +35,6 @@ extension BuildASTPhase.ExpressionParser {
             let range = SourceRange(start: openBrace.range.start, end: end)
             return astArena.appendExpr(.blockExpr(statements: [], trailingExpr: nil, range: range))
         }
-        if statementGroups.count == 1 {
-            let tokens = statementGroups[0]
-            if !isLocalDeclarationTokens(tokens) && !isLocalAssignmentTokens(tokens) {
-                if let nestedExpr = BuildASTPhase.ExpressionParser(tokens: tokens, interner: interner, astArena: astArena).parse() {
-                    return nestedExpr
-                }
-            }
-        }
 
         var statements: [ExprID] = []
         for group in statementGroups {
