@@ -315,7 +315,7 @@ extension BuildKIRPhase {
     func syntheticLambdaParamSymbol(lambdaExprID: ExprID, paramIndex: Int) -> SymbolID {
         boundedNegativeSyntheticSymbol(
             Int64(-1_000_000)
-                - Int64(lambdaExprID.rawValue)
+                - Int64(lambdaExprID.rawValue) * 256
                 - Int64(paramIndex)
         )
     }

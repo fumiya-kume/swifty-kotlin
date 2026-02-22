@@ -252,7 +252,7 @@ extension TypeCheckSemaPassPhase {
                 parameterTypes = Array(repeating: sema.types.anyType, count: params.count)
             }
             for (offset, param) in params.enumerated() {
-                let syntheticSymbol = SymbolID(rawValue: -1_000_000 - id.rawValue - Int32(offset))
+                let syntheticSymbol = SymbolID(rawValue: Int32(clamping: Int64(-1_000_000) - Int64(id.rawValue) * 256 - Int64(offset)))
                 let parameterType = offset < parameterTypes.count ? parameterTypes[offset] : sema.types.anyType
                 lambdaLocals[param] = (
                     type: parameterType,
