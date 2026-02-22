@@ -2064,11 +2064,12 @@ final class BuildKIRCoverageTests: XCTestCase {
                 guard case .call(_, _, let arguments, _, _, _) = call else { continue }
                 for arg in arguments {
                     guard let argKind = module.arena.expr(arg) else { continue }
-                    // The packed array argument should NOT be a result of kk_box_int.
-                    // It should be a temporary (array ref) or symbolRef.
+                    // The argument to sum should be a temporary holding the
+                    // array reference produced by kk_array_new, NOT a raw
+                    // kk_box_int result.  An intLiteral here would mean the
+                    // vararg array was never constructed—flag it.
                     if case .intLiteral = argKind {
-                        // intLiteral as a direct arg to sum means boxing was skipped (correct)
-                        continue
+                        XCTFail("Unexpected intLiteral as direct argument to sum; expected a packed array reference.")
                     }
                 }
             }
