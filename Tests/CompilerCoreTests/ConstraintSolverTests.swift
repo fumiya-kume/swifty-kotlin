@@ -779,9 +779,10 @@ final class ConstraintSolverTests: XCTestCase {
         let failure = try XCTUnwrap(solution.failure)
         XCTAssertEqual(failure.code, "KSWIFTK-TYPE-0001")
         XCTAssertTrue(failure.message.contains("Conflicting bounds"))
+        XCTAssertEqual(failure.primaryRange, blame0)
     }
 
-    func testSolveTypeTypeFailurePlusVariableConflict() {
+    func testSolveTypeTypeFailurePlusVariableConflict(){
         let (solver, types) = makeDeps()
         let intType = types.make(.primitive(.int, .nonNull))
         let boolType = types.make(.primitive(.boolean, .nonNull))
