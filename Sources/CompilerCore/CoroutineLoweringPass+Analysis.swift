@@ -25,10 +25,11 @@ extension CoroutineLoweringPass {
             guard let tailInstruction = block.instructions.last else {
                 continue
             }
-            guard case .call(let symbol, let callee, _, let result, _, _) = tailInstruction.instruction,
+            let callInfo = extractCallInfo(tailInstruction.instruction)
+            guard let callInfo,
                   isSuspendCall(
-                    symbol: symbol,
-                    callee: callee,
+                    symbol: callInfo.symbol,
+                    callee: callInfo.callee,
                     suspendFunctionSymbols: suspendFunctionSymbols,
                     suspendFunctionNames: suspendFunctionNames,
                     runtimeSuspendCallNames: runtimeSuspendCallNames
@@ -37,7 +38,7 @@ extension CoroutineLoweringPass {
             }
             let transition = SuspendTransition(
                 sourceInstructionIndex: tailInstruction.sourceIndex,
-                callResultExpr: result
+                callResultExpr: callInfo.result
             )
             transitionsByResumeLabel[nextResumeLabel] = transition
             transitionSourceIndexes.insert(tailInstruction.sourceIndex)
@@ -79,12 +80,13 @@ extension CoroutineLoweringPass {
             for indexed in cfgBlock.instructions {
                 chunk.append(indexed)
 
-                guard case .call(let symbol, let callee, _, _, _, _) = indexed.instruction else {
+                let callInfo = extractCallInfo(indexed.instruction)
+                guard let callInfo else {
                     continue
                 }
                 guard isSuspendCall(
-                    symbol: symbol,
-                    callee: callee,
+                    symbol: callInfo.symbol,
+                    callee: callInfo.callee,
                     suspendFunctionSymbols: suspendFunctionSymbols,
                     suspendFunctionNames: suspendFunctionNames,
                     runtimeSuspendCallNames: runtimeSuspendCallNames
@@ -477,6 +479,43 @@ extension CoroutineLoweringPass {
             }
         }
         return order
+    }
+
+    struct CallInfo {
+        let symbol: SymbolID?
+        let callee: InternedString
+        let arguments: [KIRExprID]
+        let result: KIRExprID?
+        let canThrow: Bool
+        let isVirtual: Bool
+        let originalInstruction: KIRInstruction
+    }
+
+    func extractCallInfo(_ instruction: KIRInstruction) -> CallInfo? {
+        switch instruction {
+        case .call(let symbol, let callee, let arguments, let result, let canThrow, _):
+            return CallInfo(
+                symbol: symbol,
+                callee: callee,
+                arguments: arguments,
+                result: result,
+                canThrow: canThrow,
+                isVirtual: false,
+                originalInstruction: instruction
+            )
+        case .virtualCall(let symbol, let callee, let receiver, let arguments, let result, _, _, _):
+            return CallInfo(
+                symbol: symbol,
+                callee: callee,
+                arguments: [receiver] + arguments,
+                result: result,
+                canThrow: false,
+                isVirtual: true,
+                originalInstruction: instruction
+            )
+        default:
+            return nil
+        }
     }
 
     func isSuspendCall(

@@ -127,10 +127,11 @@ extension CoroutineLoweringPass {
 
             for stateInstruction in block.instructions {
                 let instruction = stateInstruction.instruction
-                if case .call(let symbol, let callee, let arguments, let result, let canThrow, _) = instruction,
+                let suspendCallInfo = extractCallInfo(instruction)
+                if let suspendCallInfo,
                    isSuspendCall(
-                    symbol: symbol,
-                    callee: callee,
+                    symbol: suspendCallInfo.symbol,
+                    callee: suspendCallInfo.callee,
                     suspendFunctionSymbols: suspendFunctionSymbols,
                    suspendFunctionNames: suspendFunctionNames,
                    runtimeSuspendCallNames: runtimeSuspendCallNames
@@ -176,25 +177,29 @@ extension CoroutineLoweringPass {
                         )
                     )
 
-                    let suspensionResult = result ?? module.arena.appendExpr(
+                    let suspensionResult = suspendCallInfo.result ?? module.arena.appendExpr(
                         .temporary(Int32(module.arena.expressions.count)),
                         type: continuationType
                     )
-                    let loweredSuspendCallee = callee == sourceDelayCallee ? runtimeDelayCallee : callee
-                    var loweredSuspendArguments = arguments
-                    if callee == sourceDelayCallee {
+                    let loweredSuspendCallee = suspendCallInfo.callee == sourceDelayCallee ? runtimeDelayCallee : suspendCallInfo.callee
+                    var loweredSuspendArguments = suspendCallInfo.arguments
+                    if suspendCallInfo.callee == sourceDelayCallee {
                         loweredSuspendArguments.append(continuationExpr)
                     }
-                    lowered.append(
-                        .call(
-                            symbol: symbol,
-                            callee: loweredSuspendCallee,
-                            arguments: loweredSuspendArguments,
-                            result: suspensionResult,
-                            canThrow: canThrow,
-                            thrownResult: nil
+                    if suspendCallInfo.isVirtual {
+                        lowered.append(suspendCallInfo.originalInstruction)
+                    } else {
+                        lowered.append(
+                            .call(
+                                symbol: suspendCallInfo.symbol,
+                                callee: loweredSuspendCallee,
+                                arguments: loweredSuspendArguments,
+                                result: suspensionResult,
+                                canThrow: suspendCallInfo.canThrow,
+                                thrownResult: nil
+                            )
                         )
-                    )
+                    }
 
                     let suspendedExpr = module.arena.appendExpr(
                         .temporary(Int32(module.arena.expressions.count)),
