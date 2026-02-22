@@ -12,6 +12,7 @@ public enum RuntimeABICType: String, Equatable {
     case nullableRawPointer = "void * _Nullable *"
     case constRawPointer = "const void *"
     case nullableConstRawPointer = "const void * _Nullable"
+    case nullableIntptrPointer = "intptr_t * _Nullable"
     case noreturn = "_Noreturn void"
 }
 
@@ -435,7 +436,7 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "arrayRaw", type: .intptr),
                 RuntimeABIParameter(name: "index", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableRawPointer)
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)
             ],
             returnType: .intptr,
             section: "Array"
@@ -446,7 +447,7 @@ public enum RuntimeABISpec {
                 RuntimeABIParameter(name: "arrayRaw", type: .intptr),
                 RuntimeABIParameter(name: "index", type: .intptr),
                 RuntimeABIParameter(name: "value", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableRawPointer)
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)
             ],
             returnType: .intptr,
             section: "Array"

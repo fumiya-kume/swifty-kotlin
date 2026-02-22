@@ -300,13 +300,13 @@ public enum RuntimeABIExterns {
 
     public static let kk_array_get = ExternDecl(
         name: "kk_array_get",
-        parameterTypes: ["intptr_t", "intptr_t", "void * _Nullable *"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
     public static let kk_array_set = ExternDecl(
         name: "kk_array_set",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "void * _Nullable *"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
