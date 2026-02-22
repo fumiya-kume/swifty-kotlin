@@ -84,13 +84,25 @@ extension TypeCheckSemaPassPhase {
                 sema.bindings.bindExprType(id, type: local.type)
                 return local.type
             }
-            let candidates = scope.lookup(name).compactMap { sema.symbols.symbol($0) }
+            let allCandidateIDs = scope.lookup(name)
+            let (visibleIDs, invisibleSyms) = ctx.filterByVisibility(allCandidateIDs)
+            let candidates = visibleIDs.compactMap { sema.symbols.symbol($0) }
             if candidates.isEmpty {
-                ctx.semaCtx.diagnostics.error(
-                    "KSWIFTK-SEMA-0022",
-                    "Unresolved reference '\(interner.resolve(name))'.",
-                    range: nameRange
-                )
+                if let firstInvisible = invisibleSyms.first {
+                    let visLabel = firstInvisible.visibility == .protected ? "protected" : "private"
+                    let code = firstInvisible.visibility == .protected ? "KSWIFTK-SEMA-0041" : "KSWIFTK-SEMA-0040"
+                    ctx.semaCtx.diagnostics.error(
+                        code,
+                        "Cannot access '\(interner.resolve(name))': it is \(visLabel).",
+                        range: nameRange
+                    )
+                } else {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0022",
+                        "Unresolved reference '\(interner.resolve(name))'.",
+                        range: nameRange
+                    )
+                }
                 sema.bindings.bindExprType(id, type: sema.types.errorType)
                 return sema.types.errorType
             }
