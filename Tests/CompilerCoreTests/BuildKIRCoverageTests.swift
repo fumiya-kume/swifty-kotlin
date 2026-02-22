@@ -1974,6 +1974,95 @@ final class BuildKIRCoverageTests: XCTestCase {
         }
     }
 
+    // MARK: - P5-42: Local function scope registration and KIR generation
+
+    func testLocalFunctionScopeRegistrationAllowsCallResolution() throws {
+        let source = """
+        fun main(): Int {
+            fun helper(x: Int): Int = x * 2
+            return helper(21)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Local function call should resolve without errors: \(ctx.diagnostics.diagnostics.map(\.message))")
+        }
+    }
+
+    func testLocalFunctionKIRGenerationEmitsFunctionDecl() throws {
+        let source = """
+        fun main(): Int {
+            fun add(a: Int, b: Int): Int = a + b
+            return add(1, 2)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Expected no errors: \(ctx.diagnostics.diagnostics.map(\.message))")
+            let module = try XCTUnwrap(ctx.kir)
+            // The module should contain at least 2 functions: main and the local function add.
+            XCTAssertGreaterThanOrEqual(module.functionCount, 2, "Expected KIR to contain both main and local function 'add'")
+        }
+    }
+
+    func testNestedLocalFunctionScopeResolution() throws {
+        let source = """
+        fun outer(): Int {
+            fun middle(): Int {
+                fun inner(): Int = 7
+                return inner()
+            }
+            return middle()
+        }
+        fun main() = outer()
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Nested local functions should resolve: \(ctx.diagnostics.diagnostics.map(\.message))")
+            let module = try XCTUnwrap(ctx.kir)
+            // outer, middle, inner, main => at least 4 functions
+            XCTAssertGreaterThanOrEqual(module.functionCount, 4)
+        }
+    }
+
+    func testLocalFunctionWithBlockBodyKIRGeneration() throws {
+        let source = """
+        fun main(): Int {
+            fun compute(x: Int): Int {
+                val doubled = x * 2
+                return doubled + 1
+            }
+            return compute(10)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Local function with block body: \(ctx.diagnostics.diagnostics.map(\.message))")
+            let module = try XCTUnwrap(ctx.kir)
+            XCTAssertGreaterThanOrEqual(module.functionCount, 2)
+        }
+    }
+
+    func testLocalFunctionCalledMultipleTimes() throws {
+        let source = """
+        fun main(): Int {
+            fun square(n: Int): Int = n * n
+            val a = square(3)
+            val b = square(4)
+            return a + b
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Multiple calls to local function: \(ctx.diagnostics.diagnostics.map(\.message))")
+        }
+    }
+
     private func firstExprID(
         in ast: ASTModule,
         where predicate: (ExprID, Expr) -> Bool

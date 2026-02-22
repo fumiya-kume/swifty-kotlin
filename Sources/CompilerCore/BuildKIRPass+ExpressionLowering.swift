@@ -180,10 +180,11 @@ extension BuildKIRPhase {
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
-        case .localFunDecl(_, _, _, _, _):
+        case .localFunDecl(let localFunName, let localFunValueParams, _, let localFunBody, _):
             if let symbol = sema.bindings.identifierSymbols[exprID] {
+                let sig = sema.symbols.functionSignature(for: symbol)
                 let funType: TypeID
-                if let sig = sema.symbols.functionSignature(for: symbol) {
+                if let sig {
                     funType = sema.types.make(.functionType(FunctionType(
                         params: sig.parameterTypes,
                         returnType: sig.returnType,
@@ -196,12 +197,130 @@ extension BuildKIRPhase {
                 let funRef = arena.appendExpr(.symbolRef(symbol), type: funType)
                 instructions.append(.constValue(result: funRef, value: .symbolRef(symbol)))
                 localValuesBySymbol[symbol] = funRef
+
+                let localFunCalleeName = callableTargetName(for: symbol, sema: sema, interner: interner)
                 registerCallableValue(
                     funRef,
                     symbol: symbol,
-                    callee: callableTargetName(for: symbol, sema: sema, interner: interner),
+                    callee: localFunCalleeName,
                     captureArguments: []
                 )
+
+                // Emit the local function body as a KIRFunction declaration.
+                let localFunParams: [KIRParameter]
+                let localFunReturnType: TypeID
+                if let sig {
+                    localFunParams = zip(sig.valueParameterSymbols, sig.parameterTypes).map { pair in
+                        KIRParameter(symbol: pair.0, type: pair.1)
+                    }
+                    localFunReturnType = sig.returnType
+                } else {
+                    localFunParams = localFunValueParams.enumerated().map { index, _ in
+                        KIRParameter(
+                            symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: index),
+                            type: sema.types.anyType
+                        )
+                    }
+                    localFunReturnType = sema.types.unitType
+                }
+
+                let savedLocalValues = localValuesBySymbol
+                let savedReceiverExprID = currentImplicitReceiverExprID
+                let savedReceiverSymbol = currentImplicitReceiverSymbol
+                let savedLoopStack = loopControlStack
+                let savedNextLabel = nextLoopLabel
+                defer {
+                    localValuesBySymbol = savedLocalValues
+                    currentImplicitReceiverExprID = savedReceiverExprID
+                    currentImplicitReceiverSymbol = savedReceiverSymbol
+                    loopControlStack = savedLoopStack
+                    nextLoopLabel = savedNextLabel
+                }
+
+                localValuesBySymbol.removeAll(keepingCapacity: true)
+                currentImplicitReceiverExprID = nil
+                currentImplicitReceiverSymbol = nil
+                loopControlStack.removeAll(keepingCapacity: true)
+                nextLoopLabel = 10_000
+
+                var localFunBodyInstructions: [KIRInstruction] = [.beginBlock]
+                for param in localFunParams {
+                    let paramExpr = arena.appendExpr(.symbolRef(param.symbol), type: param.type)
+                    localFunBodyInstructions.append(.constValue(result: paramExpr, value: .symbolRef(param.symbol)))
+                    localValuesBySymbol[param.symbol] = paramExpr
+                }
+
+                switch localFunBody {
+                case .block(let bodyExprIDs, _):
+                    var lastValue: KIRExprID?
+                    var terminatedByReturn = false
+                    for bodyExprID in bodyExprIDs {
+                        if let bodyExpr = ast.arena.expr(bodyExprID),
+                           case .returnExpr(let value, _) = bodyExpr {
+                            if let value {
+                                let lowered = lowerExpr(
+                                    value,
+                                    ast: ast,
+                                    sema: sema,
+                                    arena: arena,
+                                    interner: interner,
+                                    propertyConstantInitializers: propertyConstantInitializers,
+                                    instructions: &localFunBodyInstructions
+                                )
+                                localFunBodyInstructions.append(.returnValue(lowered))
+                            } else {
+                                localFunBodyInstructions.append(.returnUnit)
+                            }
+                            terminatedByReturn = true
+                            break
+                        }
+                        lastValue = lowerExpr(
+                            bodyExprID,
+                            ast: ast,
+                            sema: sema,
+                            arena: arena,
+                            interner: interner,
+                            propertyConstantInitializers: propertyConstantInitializers,
+                            instructions: &localFunBodyInstructions
+                        )
+                    }
+                    if !terminatedByReturn {
+                        if let lastValue {
+                            localFunBodyInstructions.append(.returnValue(lastValue))
+                        } else {
+                            localFunBodyInstructions.append(.returnUnit)
+                        }
+                    }
+                case .expr(let bodyExprID, _):
+                    let value = lowerExpr(
+                        bodyExprID,
+                        ast: ast,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        propertyConstantInitializers: propertyConstantInitializers,
+                        instructions: &localFunBodyInstructions
+                    )
+                    localFunBodyInstructions.append(.returnValue(value))
+                case .unit:
+                    localFunBodyInstructions.append(.returnUnit)
+                }
+                localFunBodyInstructions.append(.endBlock)
+
+                let localFunDeclID = arena.appendDecl(
+                    .function(
+                        KIRFunction(
+                            symbol: symbol,
+                            name: localFunName,
+                            params: localFunParams,
+                            returnType: localFunReturnType,
+                            body: localFunBodyInstructions,
+                            isSuspend: sig?.isSuspend ?? false,
+                            isInline: false
+                        )
+                    )
+                )
+                pendingGeneratedCallableDeclIDs.append(localFunDeclID)
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))

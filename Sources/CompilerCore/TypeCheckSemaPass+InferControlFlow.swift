@@ -535,6 +535,7 @@ extension TypeCheckSemaPassPhase {
             break
         }
         locals[name] = (funType, funSymbol, false, true)
+        ctx.scope.insert(funSymbol)
         sema.bindings.bindIdentifier(id, symbol: funSymbol)
         sema.bindings.bindExprType(id, type: sema.types.unitType)
         return sema.types.unitType
