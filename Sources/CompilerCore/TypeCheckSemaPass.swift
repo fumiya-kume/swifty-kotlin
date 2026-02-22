@@ -433,7 +433,12 @@ extension TypeCheckSemaPassPhase {
             .with(implicitReceiverType: classType)
 
         typeCheckInitBlocks(classDecl.initBlocks, ctx: classCtx)
-        typeCheckSecondaryConstructors(classDecl.secondaryConstructors, ctx: classCtx)
+        typeCheckSecondaryConstructors(
+            classDecl.secondaryConstructors,
+            ctx: classCtx,
+            ownerSymbol: symbol,
+            hasPrimaryConstructor: !classDecl.primaryConstructorParams.isEmpty || classDecl.secondaryConstructors.isEmpty
+        )
         typeCheckClassLikeMembers(
             memberFunctions: classDecl.memberFunctions,
             memberProperties: classDecl.memberProperties,

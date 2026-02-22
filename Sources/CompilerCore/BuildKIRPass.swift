@@ -238,6 +238,21 @@ public final class BuildKIRPhase: CompilerPhase {
                             )
                         )
                         declIDs.append(ctorKirID)
+                        // Generate default argument stub for constructors with defaults.
+                        if let defaults = functionDefaultArgumentsBySymbol[ctorSymbol] {
+                            let stubID = generateDefaultStubFunction(
+                                originalSymbol: ctorSymbol,
+                                originalName: classDecl.name,
+                                signature: signature,
+                                defaultExpressions: defaults,
+                                ast: ast,
+                                sema: sema,
+                                arena: arena,
+                                interner: ctx.interner,
+                                propertyConstantInitializers: propertyConstantInitializers
+                            )
+                            declIDs.append(stubID)
+                        }
                         declIDs.append(contentsOf: drainGeneratedCallableDecls())
                     }
 
