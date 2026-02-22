@@ -1211,6 +1211,158 @@ final class BuildKIRCoverageTests: XCTestCase {
         }
     }
 
+    func testNestedReturnInIfBranchDoesNotEmitDeadCopyInstruction() throws {
+        let source = """
+        fun choose(flag: Boolean): Int {
+            if (flag) {
+                return 1
+            }
+            return 0
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "choose", in: module, interner: ctx.interner)
+
+            // After a returnValue instruction, there should be no copy to the if-result
+            // that uses a Nothing-typed dead expression as source.
+            var foundReturnInBranch = false
+            var deadCopyAfterReturn = false
+            for (index, instruction) in body.enumerated() {
+                if case .returnValue = instruction {
+                    foundReturnInBranch = true
+                    // Check if the next non-label instruction is a copy
+                    if index + 1 < body.count {
+                        if case .copy = body[index + 1] {
+                            deadCopyAfterReturn = true
+                        }
+                    }
+                }
+            }
+            XCTAssertTrue(foundReturnInBranch, "Expected returnValue in if-branch")
+            XCTAssertFalse(deadCopyAfterReturn, "No dead copy should follow a returnValue instruction in a terminated branch")
+        }
+    }
+
+    func testNestedReturnInBothIfElseBranchesDoesNotEmitDeadEpilogue() throws {
+        let source = """
+        fun pick(flag: Boolean): Int {
+            if (flag) {
+                return 1
+            } else {
+                return 2
+            }
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "pick", in: module, interner: ctx.interner)
+
+            let returnValues = body.compactMap { instruction -> KIRExprID? in
+                guard case .returnValue(let id) = instruction else { return nil }
+                return id
+            }
+            // Should have exactly 2 returns: one from each branch, no spurious epilogue return
+            XCTAssertEqual(returnValues.count, 2, "Expected exactly 2 returnValue instructions (then + else), got \(returnValues.count)")
+        }
+    }
+
+    func testNestedReturnInWhenBranchDoesNotEmitDeadCopyInstruction() throws {
+        let source = """
+        fun classify(x: Int): Int {
+            when (x) {
+                1 -> return 10
+                2 -> return 20
+                else -> return 30
+            }
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "classify", in: module, interner: ctx.interner)
+
+            let returnValues = body.compactMap { instruction -> KIRExprID? in
+                guard case .returnValue(let id) = instruction else { return nil }
+                return id
+            }
+            XCTAssertGreaterThanOrEqual(returnValues.count, 3, "Expected at least 3 returnValue instructions for when-branch returns, got \(returnValues.count)")
+
+            // Verify no dead copy follows a returnValue in the when branches
+            var deadCopyAfterReturn = false
+            for (index, instruction) in body.enumerated() {
+                if case .returnValue = instruction {
+                    if index + 1 < body.count {
+                        if case .copy = body[index + 1] {
+                            deadCopyAfterReturn = true
+                        }
+                    }
+                }
+            }
+            XCTAssertFalse(deadCopyAfterReturn, "No dead copy should follow a returnValue in when branches")
+        }
+    }
+
+    func testBlockExprStopsLoweringAfterNestedReturn() throws {
+        let source = """
+        fun earlyReturn(flag: Boolean): Int {
+            if (flag) {
+                return 42
+                val x = 99
+            }
+            return 0
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "earlyReturn", in: module, interner: ctx.interner)
+
+            // The val x = 99 after return should not produce any const 99 in the body
+            let has99 = body.contains { instruction in
+                guard case .constValue(_, let value) = instruction else { return false }
+                if case .intLiteral(99) = value { return true }
+                return false
+            }
+            XCTAssertFalse(has99, "Dead code after return in block should not be lowered")
+        }
+    }
+
+    func testNestedReturnInTryCatchBranchPropagatesCorrectly() throws {
+        let source = """
+        fun safeDivide(a: Int, b: Int): Int {
+            try {
+                return a / b
+            } catch (e: Any) {
+                return 0
+            }
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "safeDivide", in: module, interner: ctx.interner)
+
+            let returnValues = body.compactMap { instruction -> KIRExprID? in
+                guard case .returnValue(let id) = instruction else { return nil }
+                return id
+            }
+            XCTAssertGreaterThanOrEqual(returnValues.count, 2, "Expected at least 2 returnValue instructions (try body + catch), got \(returnValues.count)")
+        }
+    }
+
     func testIfExprLoweringUsesLabelBasedBranching() throws {
         let source = """
         fun branch(flag: Boolean): Int {
