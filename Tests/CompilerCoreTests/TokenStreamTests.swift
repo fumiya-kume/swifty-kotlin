@@ -89,7 +89,7 @@ final class TokenStreamTests: XCTestCase {
         }
     }
 
-    func testConsumeIfWithComplexPredicate() {
+    func testConsumeIfPredicateCanAccessTokenDetails() {
         let interner = StringInterner()
         let id = makeToken(kind: .identifier(interner.intern("hello")))
         let plus = makeToken(kind: .symbol(.plus), start: 5, end: 6)
