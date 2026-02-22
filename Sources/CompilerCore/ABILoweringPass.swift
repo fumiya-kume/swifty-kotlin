@@ -190,10 +190,10 @@ final class ABILoweringPass: LoweringPass {
                         }
                         if let returnType {
                             let returnKind = types.kind(of: returnType)
-                            if isAnyOrNullableAny(returnKind) {
-                                let resultType = module.arena.exprType(vcResult)
-                                if let resultType {
-                                    let resultKind = types.kind(of: resultType)
+                            let resultType = module.arena.exprType(vcResult)
+                            if let resultType {
+                                let resultKind = types.kind(of: resultType)
+                                if needsUnboxing(sourceKind: returnKind, targetKind: resultKind) {
                                     vcUnboxCallee = unboxingCallee(
                                         sourceKind: returnKind,
                                         targetKind: resultKind,

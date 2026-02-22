@@ -452,6 +452,13 @@ extension BuildKIRPhase {
             return nil
         }
         if parentSymbol.kind == .class {
+            // Only use virtual dispatch if the class actually has subtypes.
+            // In Kotlin, classes are final by default; virtual dispatch is only
+            // needed when the class is open/abstract (has known subtypes).
+            let subtypes = sema.symbols.directSubtypes(of: parentID)
+            guard !subtypes.isEmpty else {
+                return nil
+            }
             if let vtableSlot = layout.vtableSlots[callee] {
                 return .vtable(slot: vtableSlot)
             }
