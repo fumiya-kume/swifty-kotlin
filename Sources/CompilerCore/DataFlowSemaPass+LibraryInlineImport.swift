@@ -72,15 +72,15 @@ extension DataFlowSemaPassPhase {
 
         var body: [KIRInstruction] = []
         body.reserveCapacity(bodyLines.count)
+        var importLabelCounter: Int32 = 900_000
         for line in bodyLines {
-            guard let instruction = parseImportedInlineInstruction(
+            let instructions = parseImportedInlineInstructions(
                 line: line,
                 parameterSymbolMapping: parameterSymbolMapping,
-                interner: interner
-            ) else {
-                continue
-            }
-            body.append(instruction)
+                interner: interner,
+                labelCounter: &importLabelCounter
+            )
+            body.append(contentsOf: instructions)
         }
         if body.isEmpty {
             body = [.returnUnit]
@@ -102,17 +102,60 @@ extension DataFlowSemaPassPhase {
         return SymbolID(rawValue: raw)
     }
 
-    private func parseImportedInlineInstruction(
+    private func parseImportedInlineInstructions(
         line: String,
         parameterSymbolMapping: [Int32: SymbolID],
-        interner: StringInterner
-    ) -> KIRInstruction? {
+        interner: StringInterner,
+        labelCounter: inout Int32
+    ) -> [KIRInstruction] {
         let parts = line.split(separator: " ")
         guard let opcode = parts.first else {
-            return nil
+            return []
         }
         let pairs = parseInlineKeyValuePairs(parts.dropFirst())
 
+        // Legacy select: expand to control flow (jumpIfEqual + copy + jump + label)
+        if opcode == "select" {
+            guard let conditionRaw = pairs["condition"], let condition = Int32(conditionRaw),
+                  let thenRaw = pairs["then"], let thenValue = Int32(thenRaw),
+                  let elseRaw = pairs["else"], let elseValue = Int32(elseRaw),
+                  let resultRaw = pairs["result"], let result = Int32(resultRaw) else {
+                return []
+            }
+            let elseLabel = labelCounter
+            let endLabel = labelCounter + 1
+            labelCounter += 2
+            let falseExprID = KIRExprID(rawValue: -2)
+            return [
+                .constValue(result: falseExprID, value: .boolLiteral(false)),
+                .jumpIfEqual(lhs: KIRExprID(rawValue: condition), rhs: falseExprID, target: elseLabel),
+                .copy(from: KIRExprID(rawValue: thenValue), to: KIRExprID(rawValue: result)),
+                .jump(endLabel),
+                .label(elseLabel),
+                .copy(from: KIRExprID(rawValue: elseValue), to: KIRExprID(rawValue: result)),
+                .label(endLabel)
+            ]
+        }
+
+        guard let instruction = parseImportedInlineInstruction(
+            line: line,
+            pairs: pairs,
+            opcode: opcode,
+            parameterSymbolMapping: parameterSymbolMapping,
+            interner: interner
+        ) else {
+            return []
+        }
+        return [instruction]
+    }
+
+    private func parseImportedInlineInstruction(
+        line: String,
+        pairs: [String: String],
+        opcode: Substring,
+        parameterSymbolMapping: [Int32: SymbolID],
+        interner: StringInterner
+    ) -> KIRInstruction? {
         switch opcode {
         case "nop":
             return .nop
@@ -176,19 +219,6 @@ extension DataFlowSemaPassPhase {
             return .returnIfEqual(
                 lhs: KIRExprID(rawValue: lhs),
                 rhs: KIRExprID(rawValue: rhs)
-            )
-        case "select":
-            guard let conditionRaw = pairs["condition"], let condition = Int32(conditionRaw),
-                  let thenRaw = pairs["then"], let thenValue = Int32(thenRaw),
-                  let elseRaw = pairs["else"], let elseValue = Int32(elseRaw),
-                  let resultRaw = pairs["result"], let result = Int32(resultRaw) else {
-                return nil
-            }
-            return .select(
-                condition: KIRExprID(rawValue: condition),
-                thenValue: KIRExprID(rawValue: thenValue),
-                elseValue: KIRExprID(rawValue: elseValue),
-                result: KIRExprID(rawValue: result)
             )
         case "call":
             guard let calleeEncoded = pairs["calleeB64"],

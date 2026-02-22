@@ -422,16 +422,14 @@ final class CodegenAndBackendCoverageTests: XCTestCase {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .call(
-                    symbol: nil,
-                    callee: interner.intern("kk_when_select"),
-                    arguments: [whenCondition, concatResult, completionLoaded],
-                    result: whenResult,
-                    canThrow: false,
-                    thrownResult: nil
-                ),
-                .select(condition: whenCondition, thenValue: whenResult, elseValue: concatResult, result: selectResult),
-                .call(symbol: nil, callee: interner.intern("println"), arguments: [selectResult], result: nil, canThrow: false, thrownResult: nil),
+                // Legacy select/kk_when_select replaced by control flow
+                .jumpIfEqual(lhs: whenCondition, rhs: concatResult, target: 900),
+                .copy(from: concatResult, to: whenResult),
+                .jump(901),
+                .label(900),
+                .copy(from: completionLoaded, to: whenResult),
+                .label(901),
+                .call(symbol: nil, callee: interner.intern("println"), arguments: [whenResult], result: nil, canThrow: false, thrownResult: nil),
                 .call(
                     symbol: nil,
                     callee: interner.intern("kk_coroutine_continuation_new"),
@@ -490,7 +488,8 @@ final class CodegenAndBackendCoverageTests: XCTestCase {
         XCTAssertTrue(ir.contains("@kk_unregister_coroutine_root"))
         XCTAssertTrue(ir.contains("coroutine_root_register"))
         XCTAssertTrue(ir.contains("coroutine_root_unregister"))
-        XCTAssertTrue(ir.contains("select i1"))
+        // select i1 no longer emitted; control flow uses branches instead
+        XCTAssertTrue(ir.contains("br ") || ir.contains("icmp") || ir.contains("label"))
         XCTAssertTrue(ir.contains("thrown_slot_"))
         XCTAssertTrue(ir.contains("@external_throwing"))
     }
@@ -774,7 +773,12 @@ final class CodegenAndBackendCoverageTests: XCTestCase {
                 .call(symbol: nil, callee: interner.intern("kk_op_mul"), arguments: [e0, e1], result: e7, canThrow: false, thrownResult: nil),
                 .call(symbol: nil, callee: interner.intern("kk_op_div"), arguments: [e0, e1], result: e8, canThrow: false, thrownResult: nil),
                 .call(symbol: nil, callee: interner.intern("kk_op_eq"), arguments: [e0, e1], result: e5, canThrow: false, thrownResult: nil),
-                .call(symbol: nil, callee: interner.intern("kk_when_select"), arguments: [e2, e0, e1], result: e5, canThrow: false, thrownResult: nil),
+                .jumpIfEqual(lhs: e2, rhs: e0, target: 800),
+                .copy(from: e0, to: e5),
+                .jump(801),
+                .label(800),
+                .copy(from: e1, to: e5),
+                .label(801),
                 .call(symbol: calleeSym, callee: interner.intern("ignored"), arguments: [], result: e5, canThrow: false, thrownResult: nil),
                 .returnValue(e5),
                 .endBlock
