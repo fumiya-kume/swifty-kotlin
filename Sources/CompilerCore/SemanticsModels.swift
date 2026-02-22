@@ -226,6 +226,7 @@ public final class SymbolTable {
     private var typeAliasUnderlyingTypes: [SymbolID: TypeID] = [:]
     private var parentSymbols: [SymbolID: SymbolID] = [:]
     private var typeParameterUpperBoundsMap: [SymbolID: TypeID] = [:]
+    private var sourceFileIDs: [SymbolID: FileID] = [:]
 
     public init() {}
 
@@ -399,6 +400,14 @@ public final class SymbolTable {
 
     public func typeParameterUpperBound(for symbol: SymbolID) -> TypeID? {
         typeParameterUpperBoundsMap[symbol]
+    }
+
+    public func setSourceFileID(_ fileID: FileID, for symbol: SymbolID) {
+        sourceFileIDs[symbol] = fileID
+    }
+
+    public func sourceFileID(for symbol: SymbolID) -> FileID? {
+        sourceFileIDs[symbol]
     }
 }
 

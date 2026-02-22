@@ -1,0 +1,21 @@
+symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s1 kind=function fq=golden.sema.publicFun vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s2 kind=function fq=golden.sema.internalFun vis=internal flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s3 kind=function fq=golden.sema.privateFun vis=private flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s4 kind=function fq=golden.sema.useAll vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+file f0 package=golden.sema
+  decl d0 fun publicFun suspend=0 inline=0 sym=s1
+  decl d1 fun internalFun suspend=0 inline=0 sym=s2
+  decl d2 fun privateFun suspend=0 inline=0 sym=s3
+  decl d3 fun useAll suspend=0 inline=0 sym=s4
+expr e0 int(1) type=Int
+expr e1 int(2) type=Int
+expr e2 int(3) type=Int
+expr e3 name(publicFun) type=Int
+expr e4 call callee=e3 args=[] type=Int call=s1 map=[] targs=[]
+expr e5 name(internalFun) type=_
+expr e6 call callee=e5 args=[] type=Int call=s2 map=[] targs=[]
+expr e7 binary(add) lhs=e4 rhs=e6 type=Int
+expr e8 name(privateFun) type=_
+expr e9 call callee=e8 args=[] type=Int call=s3 map=[] targs=[]
+expr e10 binary(add) lhs=e7 rhs=e9 type=Int

@@ -138,11 +138,15 @@ extension TypeCheckSemaPassPhase {
         }
 
         var candidates: [SymbolID]
+        var callInvisible: [SemanticSymbol] = []
         if let calleeName {
-            candidates = scope.lookup(calleeName).filter { candidate in
+            let allCallCandidates = scope.lookup(calleeName).filter { candidate in
                 guard let symbol = sema.symbols.symbol(candidate) else { return false }
                 return symbol.kind == .function || symbol.kind == .constructor
             }
+            let (vis, invis) = ctx.filterByVisibility(allCallCandidates)
+            candidates = vis
+            callInvisible = invis
             if candidates.isEmpty, let local = locals[calleeName] {
                 if let sym = sema.symbols.symbol(local.symbol), sym.kind == .function {
                     candidates = [local.symbol]
@@ -168,12 +172,22 @@ extension TypeCheckSemaPassPhase {
                 sema.bindings.bindExprType(id, type: sema.types.unitType)
                 return sema.types.unitType
             }
-            let nameStr = calleeName.map { interner.resolve($0) } ?? "<unknown>"
-            ctx.semaCtx.diagnostics.error(
-                "KSWIFTK-SEMA-0023",
-                "Unresolved function '\(nameStr)'.",
-                range: range
-            )
+            if let firstInvisible = callInvisible.first, let calleeName {
+                let visLabel = firstInvisible.visibility == .protected ? "protected" : "private"
+                let code = firstInvisible.visibility == .protected ? "KSWIFTK-SEMA-0041" : "KSWIFTK-SEMA-0040"
+                ctx.semaCtx.diagnostics.error(
+                    code,
+                    "Cannot access '\(interner.resolve(calleeName))': it is \(visLabel).",
+                    range: range
+                )
+            } else {
+                let nameStr = calleeName.map { interner.resolve($0) } ?? "<unknown>"
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0023",
+                    "Unresolved function '\(nameStr)'.",
+                    range: range
+                )
+            }
             sema.bindings.bindExprType(id, type: sema.types.errorType)
             return sema.types.errorType
         }
@@ -244,7 +258,7 @@ extension TypeCheckSemaPassPhase {
             }
         }
 
-        let candidates = scope.lookup(calleeName).filter { candidate in
+        let allMemberCandidates = scope.lookup(calleeName).filter { candidate in
             guard let symbol = sema.symbols.symbol(candidate),
                   symbol.kind == .function,
                   let signature = sema.symbols.functionSignature(for: candidate) else {
@@ -259,12 +273,24 @@ extension TypeCheckSemaPassPhase {
             }
             return true
         }
+        let (memberVisible, memberInvisible) = ctx.filterByVisibility(allMemberCandidates)
+        let candidates = memberVisible
         if candidates.isEmpty {
-            ctx.semaCtx.diagnostics.error(
-                "KSWIFTK-SEMA-0024",
-                "Unresolved member function '\(interner.resolve(calleeName))'.",
-                range: range
-            )
+            if let firstInvisible = memberInvisible.first {
+                let visLabel = firstInvisible.visibility == .protected ? "protected" : "private"
+                let code = firstInvisible.visibility == .protected ? "KSWIFTK-SEMA-0041" : "KSWIFTK-SEMA-0040"
+                ctx.semaCtx.diagnostics.error(
+                    code,
+                    "Cannot access '\(interner.resolve(calleeName))': it is \(visLabel).",
+                    range: range
+                )
+            } else {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0024",
+                    "Unresolved member function '\(interner.resolve(calleeName))'.",
+                    range: range
+                )
+            }
             sema.bindings.bindExprType(id, type: sema.types.errorType)
             return sema.types.errorType
         }
@@ -311,6 +337,7 @@ extension TypeCheckSemaPassPhase {
         expectedType: TypeID?
     ) -> TypeID {
         let sema = ctx.sema
+        let interner = ctx.interner
         let scope = ctx.scope
 
         let receiverType = inferExpr(receiverID, ctx: ctx, locals: &locals)
@@ -318,7 +345,7 @@ extension TypeCheckSemaPassPhase {
             inferExpr(argument.expr, ctx: ctx, locals: &locals)
         }
         let nonNullReceiver = makeNonNullable(receiverType, types: sema.types)
-        let candidates = scope.lookup(calleeName).filter { candidate in
+        let allSafeMemberCandidates = scope.lookup(calleeName).filter { candidate in
             guard let symbol = sema.symbols.symbol(candidate),
                   symbol.kind == .function,
                   let signature = sema.symbols.functionSignature(for: candidate) else {
@@ -326,7 +353,20 @@ extension TypeCheckSemaPassPhase {
             }
             return signature.receiverType != nil
         }
+        let (safeMemberVisible, safeMemberInvisible) = ctx.filterByVisibility(allSafeMemberCandidates)
+        let candidates = safeMemberVisible
         if candidates.isEmpty {
+            if let firstInvisible = safeMemberInvisible.first {
+                let visLabel = firstInvisible.visibility == .protected ? "protected" : "private"
+                let code = firstInvisible.visibility == .protected ? "KSWIFTK-SEMA-0041" : "KSWIFTK-SEMA-0040"
+                ctx.semaCtx.diagnostics.error(
+                    code,
+                    "Cannot access '\(interner.resolve(calleeName))': it is \(visLabel).",
+                    range: range
+                )
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
             let resultType = makeNullable(sema.types.anyType, types: sema.types)
             sema.bindings.bindExprType(id, type: resultType)
             return resultType
