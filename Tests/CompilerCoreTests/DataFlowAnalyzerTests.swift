@@ -81,13 +81,25 @@ final class DataFlowAnalyzerTests: XCTestCase {
         XCTAssertTrue(summary.hasFalseCase)
     }
 
-    func testWhenBranchSummaryAutoDetectsTrueFalseFromInternedStrings() {
-        // InternedString(rawValue: 1) = true, InternedString(rawValue: 2) = false
+    func testWhenBranchSummaryAutoDetectsTrueFalseFromCoveredSymbols() {
+        // WhenBranchSummary.init hardcodes InternedString(rawValue: 1) as "true"
+        // and InternedString(rawValue: 2) as "false" (see DataFlowAnalysis.swift:38-39).
+        // This test verifies that auto-detection logic.
         let trueStr = InternedString(rawValue: 1)
         let falseStr = InternedString(rawValue: 2)
         let summary = WhenBranchSummary(coveredSymbols: [trueStr, falseStr], hasElse: false)
         XCTAssertTrue(summary.hasTrueCase)
         XCTAssertTrue(summary.hasFalseCase)
+
+        // Verify explicit parameters override auto-detection
+        let overridden = WhenBranchSummary(
+            coveredSymbols: [trueStr, falseStr],
+            hasElse: false,
+            hasTrueCase: false,
+            hasFalseCase: false
+        )
+        XCTAssertFalse(overridden.hasTrueCase)
+        XCTAssertFalse(overridden.hasFalseCase)
     }
 
     // MARK: - ConditionBranch
