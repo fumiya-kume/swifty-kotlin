@@ -2063,6 +2063,46 @@ final class BuildKIRCoverageTests: XCTestCase {
         }
     }
 
+    func testLocalFunctionCapturesOuterVal() throws {
+        let source = """
+        fun main(): Int {
+            val outer = 10
+            fun addOuter(x: Int): Int = x + outer
+            return addOuter(5)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Local function capturing outer val should compile without errors: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+            let module = try XCTUnwrap(ctx.kir)
+            XCTAssertGreaterThanOrEqual(module.functionCount, 2)
+        }
+    }
+
+    func testLocalFunctionScopeDoesNotLeakBetweenTopLevelFunctions() throws {
+        let source = """
+        fun first(): Int {
+            fun helper(): Int = 1
+            return helper()
+        }
+        fun second(): Int {
+            return helper()
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertTrue(
+                ctx.diagnostics.hasError,
+                "Local function should not be visible outside its defining top-level function: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     private func firstExprID(
         in ast: ASTModule,
         where predicate: (ExprID, Expr) -> Bool
