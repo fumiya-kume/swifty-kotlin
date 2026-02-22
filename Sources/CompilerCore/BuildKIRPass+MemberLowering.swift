@@ -324,6 +324,12 @@ extension BuildKIRPhase {
         case .getter:
             returnType = propertyType
             accessorName = interner.intern("get")
+            // Map the backing field symbol so `field` references in the getter
+            // resolve to a backing field access expression.
+            if let backingFieldSym = sema.symbols.backingFieldSymbol(for: propertySymbol) {
+                let bfExprID = arena.appendExpr(.symbolRef(backingFieldSym), type: propertyType)
+                localValuesBySymbol[backingFieldSym] = bfExprID
+            }
         case .setter:
             returnType = sema.types.unitType
             accessorName = interner.intern("set")
@@ -331,11 +337,17 @@ extension BuildKIRPhase {
             params.append(KIRParameter(symbol: valueParamSymbol, type: propertyType))
             let valueExprID = arena.appendExpr(.symbolRef(valueParamSymbol), type: propertyType)
             localValuesBySymbol[valueParamSymbol] = valueExprID
-            // Sema binds the setter parameter name to the property symbol
-            // (see TypeCheckSemaPass+DeclTypeCheck.swift), so also map the
-            // property symbol so that sema-bound references resolve to the
-            // setter value parameter during body lowering.
-            localValuesBySymbol[propertySymbol] = valueExprID
+            // Sema binds the setter parameter name to a synthetic setter-value
+            // symbol (offset -40_000) distinct from both the property symbol
+            // and the backing field symbol.
+            let semaSetterValueSymbol = SymbolID(rawValue: -(propertySymbol.rawValue + 40_000))
+            localValuesBySymbol[semaSetterValueSymbol] = valueExprID
+            // Map the backing field symbol so `field` references in the setter
+            // resolve to backing field storage, not the value parameter.
+            if let backingFieldSym = sema.symbols.backingFieldSymbol(for: propertySymbol) {
+                let bfExprID = arena.appendExpr(.symbolRef(backingFieldSym), type: propertyType)
+                localValuesBySymbol[backingFieldSym] = bfExprID
+            }
         }
 
         var body: [KIRInstruction] = [.beginBlock]

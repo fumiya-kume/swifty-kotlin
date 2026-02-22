@@ -55,7 +55,10 @@ extension TypeCheckSemaPassPhase {
         if let getter = property.getter {
             var getterLocals: [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)] = [:]
             if let fieldType = inferredPropertyType {
-                getterLocals[interner.intern("field")] = (fieldType, symbol, true, true)
+                // Bind `field` to the backing field symbol when available so that
+                // KIR lowering can distinguish field access from property access.
+                let fieldSymbol = sema.symbols.backingFieldSymbol(for: symbol) ?? symbol
+                getterLocals[interner.intern("field")] = (fieldType, fieldSymbol, true, true)
             }
             let getterType = inferFunctionBodyType(
                 getter.body, ctx: ctx, locals: &getterLocals,
@@ -96,9 +99,16 @@ extension TypeCheckSemaPassPhase {
                 )
             }
             var setterLocals: [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)] = [:]
-            setterLocals[interner.intern("field")] = (finalPropertyType, symbol, true, true)
+            // Bind `field` to the backing field symbol so KIR lowering can
+            // distinguish it from the setter value parameter.
+            let fieldSymbol = sema.symbols.backingFieldSymbol(for: symbol) ?? symbol
+            setterLocals[interner.intern("field")] = (finalPropertyType, fieldSymbol, true, true)
             let parameterName = setter.parameterName ?? interner.intern("value")
-            setterLocals[parameterName] = (finalPropertyType, symbol, true, true)
+            // Use a synthetic setter-value symbol distinct from both the property
+            // symbol and the backing field symbol so that references to the value
+            // parameter don't collide with field references in KIR lowering.
+            let setterValueSymbol = SymbolID(rawValue: -(symbol.rawValue + 40_000))
+            setterLocals[parameterName] = (finalPropertyType, setterValueSymbol, true, true)
             let setterType = inferFunctionBodyType(
                 setter.body, ctx: ctx, locals: &setterLocals,
                 expectedType: sema.types.unitType
