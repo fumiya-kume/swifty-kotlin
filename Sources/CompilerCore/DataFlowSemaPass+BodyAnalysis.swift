@@ -248,7 +248,7 @@ extension DataFlowSemaPassPhase {
     ) -> TypeID? {
         guard !visited.contains(symbolID) else {
             diagnostics?.error(
-                "KSWIFTK-SEMA-0030",
+                "KSWIFTK-SEMA-0060",
                 "Cyclic typealias definition detected.",
                 range: symbols.symbol(symbolID)?.declSite
             )
@@ -310,7 +310,7 @@ extension DataFlowSemaPassPhase {
             case .in(let argType):
                 substitution[paramSymbol] = argType
             case .star:
-                substitution[paramSymbol] = types.anyType
+                continue
             }
         }
         guard !substitution.isEmpty else {

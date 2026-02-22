@@ -441,7 +441,7 @@ extension DataFlowSemaPassPhase {
             }
             if alias.underlyingType == nil {
                 diagnostics.error(
-                    "KSWIFTK-SEMA-0031",
+                    "KSWIFTK-SEMA-0061",
                     "Type alias '\(interner.resolve(alias.name))' must have a right-hand side type.",
                     range: alias.range
                 )
