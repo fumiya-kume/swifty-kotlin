@@ -170,7 +170,7 @@ extension TypeCheckSemaPassPhase {
             if candidates.isEmpty {
                 let classSymbols = scope.lookup(calleeName).filter { candidate in
                     guard let symbol = sema.symbols.symbol(candidate) else { return false }
-                    return symbol.kind == .class
+                    return symbol.kind == .class || symbol.kind == .enumClass || symbol.kind == .annotationClass
                 }
                 if let classSym = classSymbols.first,
                    let classSymbol = sema.symbols.symbol(classSym) {
