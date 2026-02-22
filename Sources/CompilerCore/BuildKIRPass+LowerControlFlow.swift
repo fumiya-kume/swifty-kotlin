@@ -588,8 +588,8 @@ extension BuildKIRPhase {
         let falseID = arena.appendExpr(.boolLiteral(false), type: boolType)
         instructions.append(.constValue(result: falseID, value: .boolLiteral(false)))
 
-        // Only assume all-terminated when there are explicit branches to check.
-        var allBranchesTerminated = !branches.isEmpty
+        // Vacuously true when branches is empty (only else exists).
+        var allBranchesTerminated = true
         for (index, branch) in branches.enumerated() {
             if let conditionExprID = branch.condition {
                 let conditionValueID = lowerExpr(
