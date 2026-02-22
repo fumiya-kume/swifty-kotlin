@@ -49,13 +49,18 @@ extension TypeCheckSemaPassPhase {
             operatorCandidates = []
         }
         if !lhsIsPrimitive && operatorCandidates.isEmpty {
-            ctx.semaCtx.diagnostics.error(
-                "KSWIFTK-SEMA-0002",
-                "No viable overload found for operator '\(interner.resolve(operatorName))'.",
-                range: range
-            )
-            sema.bindings.bindExprType(id, type: sema.types.errorType)
-            return sema.types.errorType
+            switch op {
+            case .add, .subtract, .multiply, .divide, .modulo:
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0002",
+                    "No viable overload found for operator '\(interner.resolve(operatorName))'.",
+                    range: range
+                )
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            default:
+                break
+            }
         }
         if !operatorCandidates.isEmpty {
             let resolved = ctx.resolver.resolveCall(
