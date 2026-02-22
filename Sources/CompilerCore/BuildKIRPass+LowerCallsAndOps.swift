@@ -80,6 +80,26 @@ extension BuildKIRPhase {
            let implicitReceiver = currentImplicitReceiverExprID {
             finalArgIDs.insert(implicitReceiver, at: 0)
         }
+
+        // Inject callable value captures for coroutine launcher arguments.
+        // When a suspend lambda/closure with captures is passed to a launcher
+        // (runBlocking/launch/async), the capture values must be included in
+        // the call arguments so the CoroutineLoweringPass can store them in
+        // the continuation via launcherArgs and forward them through the thunk.
+        let resolvedSourceCallee = interner.resolve(sourceCalleeName)
+        if resolvedSourceCallee == "runBlocking"
+            || resolvedSourceCallee == "launch"
+            || resolvedSourceCallee == "async" {
+            var expandedArgs: [KIRExprID] = []
+            for argID in finalArgIDs {
+                expandedArgs.append(argID)
+                if let callableInfo = callableValueInfoByExprID[argID],
+                   !callableInfo.captureArguments.isEmpty {
+                    expandedArgs.append(contentsOf: callableInfo.captureArguments)
+                }
+            }
+            finalArgIDs = expandedArgs
+        }
         if callNormalized.defaultMask != 0, let chosen {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             if let callBinding,
