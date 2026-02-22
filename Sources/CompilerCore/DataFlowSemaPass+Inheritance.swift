@@ -87,6 +87,7 @@ extension DataFlowSemaPassPhase {
                 .first(where: { isNominalTypeSymbol($0.kind) })?.id {
                 let resolvedArgs = resolveTypeArgRefsForInheritance(
                     argRefs,
+                    currentPackage: currentPackage,
                     ast: ast,
                     symbols: symbols,
                     types: types
@@ -99,6 +100,7 @@ extension DataFlowSemaPassPhase {
 
     private func resolveTypeArgRefsForInheritance(
         _ argRefs: [TypeArgRef],
+        currentPackage: [InternedString],
         ast: ASTModule,
         symbols: SymbolTable,
         types: TypeSystem
@@ -110,17 +112,17 @@ extension DataFlowSemaPassPhase {
         for argRef in argRefs {
             switch argRef {
             case .invariant(let innerRef):
-                guard let resolved = resolveTypeRefForInheritance(innerRef, ast: ast, symbols: symbols, types: types) else {
+                guard let resolved = resolveTypeRefForInheritance(innerRef, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types) else {
                     return []
                 }
                 result.append(.invariant(resolved))
             case .out(let innerRef):
-                guard let resolved = resolveTypeRefForInheritance(innerRef, ast: ast, symbols: symbols, types: types) else {
+                guard let resolved = resolveTypeRefForInheritance(innerRef, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types) else {
                     return []
                 }
                 result.append(.out(resolved))
             case .in(let innerRef):
-                guard let resolved = resolveTypeRefForInheritance(innerRef, ast: ast, symbols: symbols, types: types) else {
+                guard let resolved = resolveTypeRefForInheritance(innerRef, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types) else {
                     return []
                 }
                 result.append(.in(resolved))
@@ -133,6 +135,7 @@ extension DataFlowSemaPassPhase {
 
     private func resolveTypeRefForInheritance(
         _ typeRefID: TypeRefID,
+        currentPackage: [InternedString],
         ast: ASTModule,
         symbols: SymbolTable,
         types: TypeSystem
@@ -146,31 +149,30 @@ extension DataFlowSemaPassPhase {
             guard !path.isEmpty else {
                 return nil
             }
-            let resolvedSymbol = symbols.lookupAll(fqName: path)
-                .compactMap({ symbols.symbol($0) })
-                .first(where: { isNominalTypeSymbol($0.kind) })
-            if let nominalSymbol = resolvedSymbol {
-                let resolvedArgs = resolveTypeArgRefsForInheritance(argRefs, ast: ast, symbols: symbols, types: types)
-                return types.make(.classType(ClassType(classSymbol: nominalSymbol.id, args: resolvedArgs, nullability: nullability)))
+            // Try both raw path and package-qualified path (same as resolveNominalSymbolAndTypeArgs)
+            var candidatePaths: [[InternedString]] = [path]
+            if path.count == 1 && !currentPackage.isEmpty {
+                candidatePaths.append(currentPackage + path)
             }
-            // Fall back to primitive type names using the raw string from the symbol table
-            // We check the interned string by looking up the name
-            if path.count == 1 {
-                // Try to resolve as primitive - we need string interner but don't have it here.
-                // Return nil for unresolvable types in inheritance context.
-                return nil
+            for candidatePath in candidatePaths {
+                if let nominalSymbol = symbols.lookupAll(fqName: candidatePath)
+                    .compactMap({ symbols.symbol($0) })
+                    .first(where: { isNominalTypeSymbol($0.kind) }) {
+                    let resolvedArgs = resolveTypeArgRefsForInheritance(argRefs, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types)
+                    return types.make(.classType(ClassType(classSymbol: nominalSymbol.id, args: resolvedArgs, nullability: nullability)))
+                }
             }
             return nil
         case .functionType(let paramRefIDs, let returnRefID, let isSuspend, let nullable):
             let nullability: Nullability = nullable ? .nullable : .nonNull
             var paramTypes: [TypeID] = []
             for paramRef in paramRefIDs {
-                guard let paramType = resolveTypeRefForInheritance(paramRef, ast: ast, symbols: symbols, types: types) else {
+                guard let paramType = resolveTypeRefForInheritance(paramRef, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types) else {
                     return nil
                 }
                 paramTypes.append(paramType)
             }
-            let returnType = resolveTypeRefForInheritance(returnRefID, ast: ast, symbols: symbols, types: types) ?? types.unitType
+            let returnType = resolveTypeRefForInheritance(returnRefID, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types) ?? types.unitType
             return types.make(.functionType(FunctionType(
                 params: paramTypes,
                 returnType: returnType,
