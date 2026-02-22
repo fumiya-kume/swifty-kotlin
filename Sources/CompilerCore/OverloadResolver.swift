@@ -136,7 +136,6 @@ public final class OverloadResolver {
 
         // Add equality constraints for explicit type arguments
         for (index, explicitArg) in call.explicitTypeArgs.enumerated() {
-            guard index < signature.typeParameterSymbols.count else { break }
             let typeParamSymbol = signature.typeParameterSymbols[index]
             if let typeVar = typeVarBySymbol[typeParamSymbol] {
                 constraints.append(

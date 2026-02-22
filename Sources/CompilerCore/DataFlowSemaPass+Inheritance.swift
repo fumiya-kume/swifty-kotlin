@@ -162,6 +162,11 @@ extension DataFlowSemaPassPhase {
                     return types.make(.classType(ClassType(classSymbol: nominalSymbol.id, args: resolvedArgs, nullability: nullability)))
                 }
             }
+            // Note: Primitive/built-in types (e.g., Int, String, Boolean) cannot be resolved here
+            // because DataFlowSemaPass does not have access to StringInterner. When a type arg
+            // references a primitive, resolution fails and the all-or-nothing fallback in
+            // resolveTypeArgRefsForInheritance drops all type args for that supertype edge.
+            // This is a known limitation; the full TypeCheckSemaPass resolves these correctly later.
             return nil
         case .functionType(let paramRefIDs, let returnRefID, let isSuspend, let nullable):
             let nullability: Nullability = nullable ? .nullable : .nonNull
