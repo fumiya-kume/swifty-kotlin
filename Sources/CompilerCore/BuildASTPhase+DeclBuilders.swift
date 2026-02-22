@@ -42,13 +42,18 @@ extension BuildASTPhase {
         let rawTypeParams = declarationTypeParameters(from: nodeID, in: arena, interner: interner, astArena: astArena)
         let whereClauses = declarationWhereClauses(from: nodeID, in: arena, interner: interner, astArena: astArena)
         let typeParams = applyWhereClauses(rawTypeParams, whereClauses: whereClauses)
+        let members = declarationMemberDecls(from: nodeID, in: arena, interner: interner, astArena: astArena)
         return InterfaceDecl(
             range: node.range,
             name: declarationName(from: nodeID, in: arena, interner: interner),
             modifiers: declarationModifiers(from: nodeID, in: arena),
             typeParams: typeParams,
             superTypes: declarationSuperTypes(from: nodeID, in: arena, interner: interner, astArena: astArena),
-            nestedTypeAliases: declarationNestedTypeAliases(from: nodeID, in: arena, interner: interner, astArena: astArena)
+            nestedTypeAliases: declarationNestedTypeAliases(from: nodeID, in: arena, interner: interner, astArena: astArena),
+            memberFunctions: members.functions,
+            memberProperties: members.properties,
+            nestedClasses: members.nestedClasses,
+            nestedObjects: members.nestedObjects
         )
     }
 

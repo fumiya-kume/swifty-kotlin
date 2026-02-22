@@ -2114,6 +2114,123 @@ final class OverloadResolverTests: XCTestCase {
         XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-SEMA-0003")
     }
 
+    // MARK: - P5-39: positional args after named args for vararg
+
+    func testResolveCallAcceptsPositionalArgsAfterNamedArgForVarargParameter() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let stringType = types.make(.primitive(.string, .nonNull))
+        let fn = defineSymbol(
+            kind: .function,
+            name: "namedThenVararg",
+            suffix: "namedThenVararg",
+            symbols: symbols,
+            interner: interner
+        )
+        let paramA = defineSymbol(
+            kind: .valueParameter,
+            name: "a",
+            suffix: "namedThenVararg_a",
+            symbols: symbols,
+            interner: interner
+        )
+        let paramB = defineSymbol(
+            kind: .valueParameter,
+            name: "b",
+            suffix: "namedThenVararg_b",
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [stringType, intType],
+                returnType: intType,
+                valueParameterSymbols: [paramA, paramB],
+                valueParameterIsVararg: [false, true]
+            ),
+            for: fn
+        )
+
+        // f(a = "x", 2, 3) — positional args 2,3 should bind to vararg param b
+        let call = CallExpr(
+            range: makeRange(start: 461, end: 480),
+            calleeName: interner.intern("namedThenVararg"),
+            args: [
+                CallArg(label: interner.intern("a"), type: stringType),
+                CallArg(type: intType),
+                CallArg(type: intType)
+            ]
+        )
+        let resolved = resolver.resolveCall(
+            candidates: [fn],
+            call: call,
+            expectedType: nil,
+            ctx: ctx
+        )
+
+        XCTAssertEqual(resolved.chosenCallee, fn)
+        XCTAssertNil(resolved.diagnostic)
+        // arg 0 → param 0 (named "a"), args 1,2 → param 1 (vararg "b")
+        XCTAssertEqual(resolved.parameterMapping, [0: 0, 1: 1, 2: 1])
+    }
+
+    func testResolveCallRejectsPositionalAfterNamedArgForNonVarargParameter() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let fn = defineSymbol(
+            kind: .function,
+            name: "namedThenNonVararg",
+            suffix: "namedThenNonVararg",
+            symbols: symbols,
+            interner: interner
+        )
+        let paramA = defineSymbol(
+            kind: .valueParameter,
+            name: "a",
+            suffix: "namedThenNonVararg_a",
+            symbols: symbols,
+            interner: interner
+        )
+        let paramB = defineSymbol(
+            kind: .valueParameter,
+            name: "b",
+            suffix: "namedThenNonVararg_b",
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType, boolType],
+                returnType: boolType,
+                valueParameterSymbols: [paramA, paramB]
+                // no valueParameterIsVararg → b is NOT vararg
+            ),
+            for: fn
+        )
+
+        // f(a = 1, true) — positional after named for non-vararg should still be rejected
+        let call = CallExpr(
+            range: makeRange(start: 481, end: 500),
+            calleeName: interner.intern("namedThenNonVararg"),
+            args: [
+                CallArg(label: interner.intern("a"), type: intType),
+                CallArg(type: boolType)
+            ]
+        )
+        let resolved = resolver.resolveCall(
+            candidates: [fn],
+            call: call,
+            expectedType: nil,
+            ctx: ctx
+        )
+
+        XCTAssertNil(resolved.chosenCallee)
+        XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-SEMA-0002")
+    }
+
     private func defineSymbol(
         kind: SymbolKind,
         name: String,
