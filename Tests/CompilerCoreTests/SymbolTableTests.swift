@@ -526,8 +526,8 @@ final class SemaModuleTests: XCTestCase {
         let (sema, symbols, types, _) = makeSemaModule()
         XCTAssertTrue(sema.symbols === symbols)
         XCTAssertTrue(sema.types === types)
-        XCTAssertNotNil(sema.bindings)
-        XCTAssertNotNil(sema.diagnostics)
+        XCTAssertTrue(sema.bindings.exprTypes.isEmpty)
+        XCTAssertTrue(sema.diagnostics.diagnostics.isEmpty)
     }
 
     func testSemaModuleImportedInlineFunctionsDefault() {

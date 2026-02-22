@@ -45,7 +45,7 @@ final class DriverTests: XCTestCase {
         let options = CompilerOptions(
             moduleName: "Test",
             inputs: [],
-            outputPath: "/tmp/test_out",
+            outputPath: NSTemporaryDirectory() + "test_out_\(UUID().uuidString)",
             emit: .kirDump,
             target: defaultTargetTriple()
         )
@@ -62,7 +62,7 @@ final class DriverTests: XCTestCase {
         let options = CompilerOptions(
             moduleName: "Test",
             inputs: ["/nonexistent/path.kt"],
-            outputPath: "/tmp/test_out",
+            outputPath: NSTemporaryDirectory() + "test_out_\(UUID().uuidString)",
             emit: .kirDump,
             target: defaultTargetTriple()
         )
@@ -79,7 +79,7 @@ final class DriverTests: XCTestCase {
             let options = CompilerOptions(
                 moduleName: "Test",
                 inputs: [path],
-                outputPath: "/tmp/test_out",
+                outputPath: NSTemporaryDirectory() + "test_out_\(UUID().uuidString)",
                 emit: .kirDump,
                 target: defaultTargetTriple()
             )
@@ -89,7 +89,7 @@ final class DriverTests: XCTestCase {
         }
     }
 
-    func testRunForTestingReturnsDiagnosticsNotPrinted() throws {
+    func testRunForTestingReturnsDiagnosticsForInvalidProgram() throws {
         try withTemporaryFile(contents: "fun main() { val x: Int = \"wrong\" }") { path in
             let driver = CompilerDriver(
                 version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
@@ -98,13 +98,13 @@ final class DriverTests: XCTestCase {
             let options = CompilerOptions(
                 moduleName: "Test",
                 inputs: [path],
-                outputPath: "/tmp/test_out",
+                outputPath: NSTemporaryDirectory() + "test_out_\(UUID().uuidString)",
                 emit: .kirDump,
                 target: defaultTargetTriple()
             )
             let result = driver.runForTesting(options: options)
-            // Should have diagnostics available regardless of exit code
-            XCTAssertNotNil(result.diagnostics)
+            // Should have diagnostics for the type mismatch
+            XCTAssertFalse(result.diagnostics.isEmpty, "Expected diagnostics for invalid program, but got none")
         }
     }
 
@@ -118,12 +118,13 @@ final class DriverTests: XCTestCase {
         let options = CompilerOptions(
             moduleName: "Test",
             inputs: [],
-            outputPath: "/tmp/test_out",
+            outputPath: NSTemporaryDirectory() + "test_out_\(UUID().uuidString)",
             emit: .kirDump,
             target: defaultTargetTriple()
         )
-        let exitCode = driver.run(options: options)
-        XCTAssertEqual(exitCode, 1)
+        // Use runForTesting to avoid printing diagnostics to stderr during tests
+        let result = driver.runForTesting(options: options)
+        XCTAssertEqual(result.exitCode, 1)
     }
 
     // MARK: - CompilerDriver Init
@@ -131,6 +132,15 @@ final class DriverTests: XCTestCase {
     func testCompilerDriverInit() {
         let version = CompilerVersion(major: 1, minor: 2, patch: 3, gitHash: "abc123")
         let driver = CompilerDriver(version: version, kotlinVersion: .v2_3_10)
-        XCTAssertNotNil(driver)
+        // Verify the driver works by running with empty inputs
+        let options = CompilerOptions(
+            moduleName: "Test",
+            inputs: [],
+            outputPath: NSTemporaryDirectory() + "test_out_\(UUID().uuidString)",
+            emit: .kirDump,
+            target: defaultTargetTriple()
+        )
+        let result = driver.runForTesting(options: options)
+        XCTAssertEqual(result.exitCode, 1)
     }
 }
