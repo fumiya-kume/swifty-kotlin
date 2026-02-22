@@ -2110,6 +2110,7 @@ final class OverloadResolverTests: XCTestCase {
         )
         let resolved = resolver.resolveCall(candidates: [fn1, fn2], call: call, expectedType: nil, ctx: ctx)
         // Both match, isMoreSpecific requires same count → ambiguous
+        XCTAssertNil(resolved.chosenCallee)
         XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-SEMA-0003")
     }
 
