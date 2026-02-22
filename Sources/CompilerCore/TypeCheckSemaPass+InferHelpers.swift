@@ -283,6 +283,19 @@ extension TypeCheckSemaPassPhase {
         }
     }
 
+    func resolveExplicitTypeArgs(
+        _ typeArgRefs: [TypeRefID],
+        ast: ASTModule,
+        sema: SemaModule,
+        interner: StringInterner,
+        diagnostics: DiagnosticEngine? = nil
+    ) -> [TypeID] {
+        guard !typeArgRefs.isEmpty else { return [] }
+        return typeArgRefs.map { typeRefID in
+            resolveTypeRef(typeRefID, ast: ast, sema: sema, interner: interner, diagnostics: diagnostics)
+        }
+    }
+
     func compoundAssignToBinaryOp(_ op: CompoundAssignOp) -> BinaryOp {
         switch op {
         case .plusAssign: return .add

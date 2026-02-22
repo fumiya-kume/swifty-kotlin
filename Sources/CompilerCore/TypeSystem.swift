@@ -3,6 +3,7 @@ public final class TypeSystem {
     private var idToKind: [TypeKind] = []
     private var nominalDirectSupertypes: [SymbolID: [SymbolID]] = [:]
     private var nominalTypeParameterVariancesMap: [SymbolID: [TypeVariance]] = [:]
+    private var nominalSupertypeTypeArgsMap: [SymbolID: [SymbolID: [TypeArg]]] = [:]
 
     public let errorType: TypeID
     public let unitType: TypeID
@@ -66,5 +67,13 @@ public final class TypeSystem {
 
     public func nominalTypeParameterVariances(for symbol: SymbolID) -> [TypeVariance] {
         nominalTypeParameterVariancesMap[symbol] ?? []
+    }
+
+    public func setNominalSupertypeTypeArgs(_ args: [TypeArg], for child: SymbolID, supertype parent: SymbolID) {
+        nominalSupertypeTypeArgsMap[child, default: [:]][parent] = args
+    }
+
+    public func nominalSupertypeTypeArgs(for child: SymbolID, supertype parent: SymbolID) -> [TypeArg] {
+        nominalSupertypeTypeArgsMap[child]?[parent] ?? []
     }
 }
