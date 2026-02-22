@@ -256,9 +256,22 @@ public final class BuildKIRPhase: CompilerPhase {
                         declIDs.append(contentsOf: drainGeneratedCallableDecls())
                     }
 
-                case .interfaceDecl:
-                    let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol)))
+                case .interfaceDecl(let interfaceDecl):
+                    // Interface properties have no backing storage; pass empty list.
+                    let (directMembers, allDecls) = lowerMemberDecls(
+                        memberFunctions: interfaceDecl.memberFunctions,
+                        memberProperties: [],
+                        nestedClasses: interfaceDecl.nestedClasses,
+                        nestedObjects: interfaceDecl.nestedObjects,
+                        ast: ast,
+                        sema: sema,
+                        arena: arena,
+                        interner: ctx.interner,
+                        propertyConstantInitializers: propertyConstantInitializers
+                    )
+                    let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: directMembers)))
                     declIDs.append(kirID)
+                    declIDs.append(contentsOf: allDecls)
 
                 case .objectDecl(let objectDecl):
                     let (directMembers, allDecls) = lowerMemberDecls(

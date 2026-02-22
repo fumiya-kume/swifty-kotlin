@@ -106,6 +106,10 @@ public struct InterfaceDecl {
     public let typeParams: [TypeParamDecl]
     public let superTypes: [TypeRefID]
     public let nestedTypeAliases: [TypeAliasDecl]
+    public let memberFunctions: [DeclID]
+    public let memberProperties: [DeclID]
+    public let nestedClasses: [DeclID]
+    public let nestedObjects: [DeclID]
 
     public init(
         range: SourceRange,
@@ -113,7 +117,11 @@ public struct InterfaceDecl {
         modifiers: Modifiers,
         typeParams: [TypeParamDecl] = [],
         superTypes: [TypeRefID] = [],
-        nestedTypeAliases: [TypeAliasDecl] = []
+        nestedTypeAliases: [TypeAliasDecl] = [],
+        memberFunctions: [DeclID] = [],
+        memberProperties: [DeclID] = [],
+        nestedClasses: [DeclID] = [],
+        nestedObjects: [DeclID] = []
     ) {
         self.range = range
         self.name = name
@@ -121,6 +129,10 @@ public struct InterfaceDecl {
         self.typeParams = typeParams
         self.superTypes = superTypes
         self.nestedTypeAliases = nestedTypeAliases
+        self.memberFunctions = memberFunctions
+        self.memberProperties = memberProperties
+        self.nestedClasses = nestedClasses
+        self.nestedObjects = nestedObjects
     }
 }
 
