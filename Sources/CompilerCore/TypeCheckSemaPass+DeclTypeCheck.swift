@@ -72,6 +72,18 @@ extension TypeCheckSemaPassPhase {
             }
         }
 
+        // Type-check delegated property expression (`by` clause).
+        if let delegateExpr = property.delegateExpression {
+            var delegateLocals: [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)] = [:]
+            let delegateType = inferExpr(
+                delegateExpr, ctx: ctx, locals: &delegateLocals,
+                expectedType: nil
+            )
+            // The delegate type is recorded; getValue/setValue lowering happens
+            // in PropertyLoweringPass.
+            _ = delegateType
+        }
+
         let finalPropertyType = inferredPropertyType ?? sema.types.nullableAnyType
         sema.symbols.setPropertyType(finalPropertyType, for: symbol)
 
