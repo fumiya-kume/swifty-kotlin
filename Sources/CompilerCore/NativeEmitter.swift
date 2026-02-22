@@ -172,6 +172,9 @@ struct NativeEmitter {
                     diContext: diContext
                 )
             } catch {
+                if let diContext {
+                    bindings.disposeDIBuilder(diContext.diBuilder)
+                }
                 bindings.disposeModule(llvmModule)
                 bindings.disposeContext(context)
                 throw error
