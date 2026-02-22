@@ -352,7 +352,7 @@ extension LLVMBackend {
                 let fptr = "vfn_\(callIndex)"
                 lines.append("  KKVTableEntry \(fptr) = \(lookupExpr);")
 
-                var callArguments = argVars
+                var callArguments = [varName(receiver)] + argVars
                 var thrownSlotName: String? = nil
                 if usesThrownChannel {
                     let thrSlot = "thrown_\(callIndex)"

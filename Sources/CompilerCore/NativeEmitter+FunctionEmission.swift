@@ -560,7 +560,7 @@ extension NativeEmitter {
                     }
                 }
 
-            case .virtualCall(let symbol, let callee, _, let arguments, let result, let usesThrownChannel, let thrownResult, _):
+            case .virtualCall(let symbol, let callee, let receiver, let arguments, let result, let usesThrownChannel, let thrownResult, _):
                 // Virtual dispatch: fall back to direct call via symbol/callee resolution.
                 // The vtable/itable lookup is handled by the C backend; the LLVM IR backend
                 // emits a direct call using the statically resolved callee for now.
@@ -569,7 +569,7 @@ extension NativeEmitter {
                 }
 
                 let calleeName = interner.resolve(callee)
-                let argumentValues = arguments.map(resolveValue)
+                let argumentValues = [resolveValue(receiver)] + arguments.map(resolveValue)
 
                 let calleeFunction: LLVMFunction?
                 let isInternalCall = symbol.flatMap { internalFunctions[$0] } != nil
