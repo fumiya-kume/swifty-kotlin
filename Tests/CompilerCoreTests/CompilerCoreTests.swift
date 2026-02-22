@@ -802,7 +802,7 @@ final class CompilerCoreTests: XCTestCase {
             inputs: [tempSource.path],
             outputPath: outputURL.path,
             emit: .object,
-            target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+            target: defaultTargetTriple()
         )
         let driver = CompilerDriver(
             version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
@@ -826,7 +826,7 @@ final class CompilerCoreTests: XCTestCase {
             inputs: [tempSource.path],
             outputPath: outputURL.path,
             emit: .executable,
-            target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+            target: defaultTargetTriple()
         )
         let driver = CompilerDriver(
             version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
@@ -865,7 +865,7 @@ final class CompilerCoreTests: XCTestCase {
             inputs: [tempSource.path],
             outputPath: outputBase,
             emit: .kirDump,
-            target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+            target: defaultTargetTriple()
         )
         let driver = CompilerDriver(
             version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
@@ -1149,7 +1149,7 @@ final class CompilerCoreTests: XCTestCase {
             inputs: [tempURL.path],
             outputPath: tempURL.deletingPathExtension().appendingPathExtension("out").path,
             emit: .kirDump,
-            target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+            target: defaultTargetTriple()
         )
         return CompilationContext(
             options: options,
@@ -1176,7 +1176,7 @@ final class CompilerCoreTests: XCTestCase {
             inputs: inputPaths,
             outputPath: tempDir.appendingPathComponent("out.kir").path,
             emit: .kirDump,
-            target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+            target: defaultTargetTriple()
         )
         return CompilationContext(
             options: options,

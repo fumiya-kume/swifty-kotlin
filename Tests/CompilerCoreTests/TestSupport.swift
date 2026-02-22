@@ -76,7 +76,7 @@ func makeSemaModule() -> (ctx: SemaModule, symbols: SymbolTable, types: TypeSyst
 }
 
 func defaultTargetTriple() -> TargetTriple {
-    TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+    TargetTriple.hostDefault()
 }
 
 func makeCompilationContext(

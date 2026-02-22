@@ -82,7 +82,7 @@ var debugInfo = false
 var frontendFlags: [String] = []
 var irFlags: [String] = []
 var runtimeFlags: [String] = []
-var target = TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+var target = TargetTriple.hostDefault()
 
 var index = 0
 while index < args.count {
