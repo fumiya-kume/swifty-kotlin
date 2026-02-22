@@ -312,7 +312,9 @@ extension KotlinParser {
 
             // Handle nested blocks (e.g. trailing lambdas)
             if case .symbol(.lBrace) = token.kind, inBlock {
-                children.append(.node(parseBlock()))
+                let block = parseBlock()
+                children.append(.node(block))
+                range.append(arena.node(block).range)
                 continue
             }
 
