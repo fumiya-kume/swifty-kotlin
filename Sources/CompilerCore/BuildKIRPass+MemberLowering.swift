@@ -403,7 +403,9 @@ extension BuildKIRPhase {
         body.append(.endBlock)
 
         // Use a synthetic symbol derived from the property symbol for the accessor.
-        let accessorSymbolOffset: Int32 = accessorKind == .getter ? -10_000 : -11_000
+        // Offsets -12_000 / -13_000 avoid collision with receiver parameter symbols
+        // which use -10_000 (see syntheticReceiverParameterSymbol).
+        let accessorSymbolOffset: Int32 = accessorKind == .getter ? -12_000 : -13_000
         let syntheticAccessorSymbol = SymbolID(rawValue: accessorSymbolOffset - propertySymbol.rawValue)
 
         let kirID = arena.appendDecl(

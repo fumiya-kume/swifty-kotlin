@@ -10,6 +10,7 @@ final class PropertyLoweringPass: LoweringPass {
         let setValueName = ctx.interner.intern("setValue")
         let loweredCallee = ctx.interner.intern("kk_property_access")
         let boolType = ctx.sema?.types.make(.primitive(.boolean, .nonNull))
+        let interner = ctx.interner
 
         module.arena.transformFunctions { function in
             var updated = function
@@ -52,7 +53,15 @@ final class PropertyLoweringPass: LoweringPass {
 
                 // Lower delegated property getValue/setValue calls to
                 // kk_property_access with the delegate-aware signature.
-                if callee == getValueName || callee == setValueName {
+                // Only rewrite calls whose symbol is a delegate storage field
+                // (name starts with $delegate_) to avoid rewriting user-defined
+                // getValue/setValue methods.
+                if (callee == getValueName || callee == setValueName),
+                   let sema = ctx.sema,
+                   let sym = symbol,
+                   let symInfo = sema.symbols.symbol(sym),
+                   symInfo.kind == .field,
+                   interner.resolve(symInfo.name).hasPrefix("$delegate_") {
                     let isSetter = callee == setValueName
                     let accessorKind = module.arena.appendExpr(
                         .temporary(Int32(module.arena.expressions.count)),

@@ -201,10 +201,11 @@ extension DataFlowSemaPassPhase {
             symbols.setPropertyType(resolvedType, for: memberSymbol)
 
             // Materialize a backing field symbol for properties with custom accessors
-            // or an initializer (Kotlin `field` identifier in getter/setter bodies).
+            // (Kotlin `field` identifier in getter/setter bodies).
+            // Simple properties with only an initializer don't need a separate
+            // backing field — the property symbol IS the storage.
             let needsBackingField = propertyDecl.getter != nil
                 || propertyDecl.setter != nil
-                || propertyDecl.initializer != nil
             if needsBackingField && propertyDecl.delegateExpression == nil {
                 let fieldName = interner.intern("$backing_\(interner.resolve(propertyDecl.name))")
                 let fieldFQName = ownerFQName + [fieldName]
