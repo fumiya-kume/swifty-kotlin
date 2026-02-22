@@ -131,4 +131,26 @@ extension LLVMCAPIBindings {
     func int32Type(context: LLVMContextRef?) -> LLVMTypeRef? {
         int32TypeFn?(context)
     }
+
+    var debugLocationAvailable: Bool {
+        setCurrentDebugLocation2Fn != nil && diBuilderCreateDebugLocationFn != nil
+    }
+
+    func createDebugLocation(
+        context: LLVMContextRef?,
+        line: UInt32,
+        column: UInt32,
+        scope: LLVMMetadataRef?,
+        inlinedAt: LLVMMetadataRef? = nil
+    ) -> LLVMMetadataRef? {
+        diBuilderCreateDebugLocationFn?(context, line, column, scope, inlinedAt)
+    }
+
+    func setCurrentDebugLocation(_ builder: LLVMBuilderRef?, location: LLVMMetadataRef?) {
+        setCurrentDebugLocation2Fn?(builder, location)
+    }
+
+    func clearCurrentDebugLocation(_ builder: LLVMBuilderRef?) {
+        setCurrentDebugLocation2Fn?(builder, nil)
+    }
 }

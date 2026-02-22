@@ -6,6 +6,14 @@ struct NativeEmitter {
         let type: LLVMCAPIBindings.LLVMTypeRef
     }
 
+    struct DebugInfoContext {
+        let diBuilder: LLVMCAPIBindings.LLVMDIBuilderRef
+        let file: LLVMCAPIBindings.LLVMMetadataRef
+        let compileUnit: LLVMCAPIBindings.LLVMMetadataRef
+        let subroutineType: LLVMCAPIBindings.LLVMMetadataRef?
+        let subprograms: [SymbolID: LLVMCAPIBindings.LLVMMetadataRef]
+    }
+
     let target: TargetTriple
     let optLevel: OptimizationLevel
     let debugInfo: Bool
@@ -137,6 +145,16 @@ struct NativeEmitter {
             internalFunctions[function.symbol] = LLVMFunction(value: functionValue, type: functionType)
         }
 
+        // Create debug info context BEFORE emitting function bodies so that
+        // debug locations can be attached to instructions during emission.
+        let diContext: DebugInfoContext? = debugInfo
+            ? createDebugInfoContext(
+                llvmModule: llvmModule,
+                context: context,
+                internalFunctions: internalFunctions
+            )
+            : nil
+
         for declaration in module.arena.declarations {
             guard case .function(let function) = declaration,
                   let llvmFunction = internalFunctions[function.symbol] else {
@@ -150,7 +168,8 @@ struct NativeEmitter {
                     context: context,
                     int64Type: int64Type,
                     outThrownPointerType: outThrownPointerType,
-                    internalFunctions: internalFunctions
+                    internalFunctions: internalFunctions,
+                    diContext: diContext
                 )
             } catch {
                 bindings.disposeModule(llvmModule)
@@ -159,32 +178,31 @@ struct NativeEmitter {
             }
         }
 
-        if debugInfo {
-            attachMinimalDebugInfo(
+        if let diContext {
+            finalizeDebugInfo(
+                diContext: diContext,
                 llvmModule: llvmModule,
-                context: context,
-                internalFunctions: internalFunctions
+                context: context
             )
         }
 
         return (context: context, module: llvmModule)
     }
 
-    func attachMinimalDebugInfo(
+    /// Creates debug info metadata (DIBuilder, compile unit, file, subprograms)
+    /// BEFORE function bodies are emitted so that debug locations can be set
+    /// on instructions during emission.
+    func createDebugInfoContext(
         llvmModule: LLVMCAPIBindings.LLVMModuleRef,
         context: LLVMCAPIBindings.LLVMContextRef,
         internalFunctions: [SymbolID: LLVMFunction]
-    ) {
+    ) -> DebugInfoContext? {
         guard bindings.debugInfoAvailable else {
-            return
+            return nil
         }
 
         guard let diBuilder = bindings.createDIBuilder(module: llvmModule) else {
-            return
-        }
-        defer {
-            bindings.finalizeDIBuilder(diBuilder)
-            bindings.disposeDIBuilder(diBuilder)
+            return nil
         }
 
         guard let diFile = bindings.diBuilderCreateFile(
@@ -192,18 +210,20 @@ struct NativeEmitter {
             filename: "kswiftk_module.kt",
             directory: "."
         ) else {
-            return
+            bindings.disposeDIBuilder(diBuilder)
+            return nil
         }
 
         let isOptimized = optLevel != .O0
-        guard bindings.diBuilderCreateCompileUnit(
+        guard let compileUnit = bindings.diBuilderCreateCompileUnit(
             diBuilder,
             lang: 11,
             file: diFile,
             producer: "kswiftk",
             isOptimized: isOptimized
-        ) != nil else {
-            return
+        ) else {
+            bindings.disposeDIBuilder(diBuilder)
+            return nil
         }
 
         let subroutineType = bindings.diBuilderCreateSubroutineType(
@@ -211,6 +231,8 @@ struct NativeEmitter {
             file: diFile,
             parameterTypes: []
         )
+
+        var subprograms: [SymbolID: LLVMCAPIBindings.LLVMMetadataRef] = [:]
 
         for declaration in module.arena.declarations {
             guard case .function(let function) = declaration,
@@ -235,7 +257,26 @@ struct NativeEmitter {
                 continue
             }
             bindings.setSubprogram(llvmFunction.value, subprogram: subprogram)
+            subprograms[function.symbol] = subprogram
         }
+
+        return DebugInfoContext(
+            diBuilder: diBuilder,
+            file: diFile,
+            compileUnit: compileUnit,
+            subroutineType: subroutineType,
+            subprograms: subprograms
+        )
+    }
+
+    /// Finalizes the DIBuilder, adds module flags, and disposes the DIBuilder.
+    func finalizeDebugInfo(
+        diContext: DebugInfoContext,
+        llvmModule: LLVMCAPIBindings.LLVMModuleRef,
+        context: LLVMCAPIBindings.LLVMContextRef
+    ) {
+        bindings.finalizeDIBuilder(diContext.diBuilder)
+        bindings.disposeDIBuilder(diContext.diBuilder)
 
         if let int32Type = bindings.int32Type(context: context),
            let debugVersionConst = bindings.constInt(int32Type, value: 3),
