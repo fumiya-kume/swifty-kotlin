@@ -327,12 +327,15 @@ extension BuildKIRPhase {
         case .setter:
             returnType = sema.types.unitType
             accessorName = interner.intern("set")
-            let valueName = setterParamName ?? interner.intern("value")
             let valueParamSymbol = SymbolID(rawValue: -(propertySymbol.rawValue + 30_000))
             params.append(KIRParameter(symbol: valueParamSymbol, type: propertyType))
             let valueExprID = arena.appendExpr(.symbolRef(valueParamSymbol), type: propertyType)
             localValuesBySymbol[valueParamSymbol] = valueExprID
-            _ = valueName
+            // Sema binds the setter parameter name to the property symbol
+            // (see TypeCheckSemaPass+DeclTypeCheck.swift), so also map the
+            // property symbol so that sema-bound references resolve to the
+            // setter value parameter during body lowering.
+            localValuesBySymbol[propertySymbol] = valueExprID
         }
 
         var body: [KIRInstruction] = [.beginBlock]
