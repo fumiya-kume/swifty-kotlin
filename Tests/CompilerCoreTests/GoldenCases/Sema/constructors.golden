@@ -1,12 +1,12 @@
 symbol s0 kind=package fq=_root_ vis=public flags=_
 symbol s1 kind=class fq=Point vis=public flags=_
-symbol s2 kind=constructor fq=Point.<init> vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Class#1 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s2 kind=constructor fq=Point.<init> vis=public flags=_ sig=recv=Class#1 params=[Int,Int] ret=Class#1 suspend=0 defaults=[0,0] vararg=[0,0]
 symbol s3 kind=valueParameter fq=Point.<init>.$2.x vis=private flags=_
 symbol s4 kind=valueParameter fq=Point.<init>.$2.y vis=private flags=_
 symbol s5 kind=class fq=Named vis=public flags=_
-symbol s6 kind=constructor fq=Named.<init> vis=public flags=_ sig=recv=_ params=[String] ret=Class#5 suspend=0 defaults=[0] vararg=[0]
+symbol s6 kind=constructor fq=Named.<init> vis=public flags=_ sig=recv=Class#5 params=[String] ret=Class#5 suspend=0 defaults=[0] vararg=[0]
 symbol s7 kind=valueParameter fq=Named.<init>.$6.name vis=private flags=_
-symbol s8 kind=constructor fq=Named.<init> vis=public flags=_ sig=recv=_ params=[] ret=Class#5 suspend=0 defaults=[] vararg=[]
+symbol s8 kind=constructor fq=Named.<init> vis=public flags=_ sig=recv=Class#5 params=[] ret=Class#5 suspend=0 defaults=[] vararg=[]
 symbol s9 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s10 kind=local fq=__local_5.p vis=private flags=_
 symbol s11 kind=local fq=__local_9.n vis=private flags=_

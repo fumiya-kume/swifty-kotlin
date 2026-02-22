@@ -285,6 +285,7 @@ extension DataFlowSemaPassPhase {
                     }
                     symbols.setFunctionSignature(
                         FunctionSignature(
+                            receiverType: nestedType,
                             parameterTypes: paramTypes,
                             returnType: nestedType,
                             valueParameterSymbols: paramSymbols,
@@ -334,6 +335,7 @@ extension DataFlowSemaPassPhase {
                     }
                     symbols.setFunctionSignature(
                         FunctionSignature(
+                            receiverType: nestedType,
                             parameterTypes: paramTypes,
                             returnType: nestedType,
                             valueParameterSymbols: paramSymbols,

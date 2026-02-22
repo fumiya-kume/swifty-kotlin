@@ -169,6 +169,7 @@ extension DataFlowSemaPassPhase {
                 }
                 symbols.setFunctionSignature(
                     FunctionSignature(
+                        receiverType: classType,
                         parameterTypes: paramTypes,
                         returnType: classType,
                         valueParameterSymbols: paramSymbols,
@@ -219,6 +220,7 @@ extension DataFlowSemaPassPhase {
                 }
                 symbols.setFunctionSignature(
                     FunctionSignature(
+                        receiverType: classType,
                         parameterTypes: paramTypes,
                         returnType: classType,
                         valueParameterSymbols: paramSymbols,
