@@ -3,17 +3,32 @@ symbol s1 kind=class fq=golden.sema.Animal vis=public flags=_
 symbol s2 kind=constructor fq=golden.sema.Animal.<init> vis=public flags=_ sig=recv=_ params=[] ret=Class#1 suspend=0 defaults=[] vararg=[]
 symbol s3 kind=class fq=golden.sema.Dog vis=public flags=_
 symbol s4 kind=constructor fq=golden.sema.Dog.<init> vis=public flags=_ sig=recv=_ params=[] ret=Class#3 suspend=0 defaults=[] vararg=[]
-symbol s5 kind=function fq=golden.sema.accept vis=public flags=_ sig=recv=_ params=[T#6] ret=T#6 suspend=0 defaults=[0] vararg=[0] bounds=[<error>]
+symbol s5 kind=function fq=golden.sema.accept vis=public flags=_ sig=recv=_ params=[T#6] ret=T#6 suspend=0 defaults=[0] vararg=[0] bounds=[Class#1]
 symbol s6 kind=typeParameter fq=golden.sema.accept.$5.T vis=private flags=_
 symbol s7 kind=valueParameter fq=golden.sema.accept.$5.x vis=private flags=_
-symbol s8 kind=function fq=golden.sema.callValid vis=public flags=_ sig=recv=_ params=[] ret=<error> suspend=0 defaults=[] vararg=[]
+symbol s8 kind=function fq=golden.sema.callValid vis=public flags=_ sig=recv=_ params=[] ret=Class#1 suspend=0 defaults=[] vararg=[]
+symbol s9 kind=function fq=golden.sema.unbounded vis=public flags=_ sig=recv=_ params=[T#10] ret=T#10 suspend=0 defaults=[0] vararg=[0]
+symbol s10 kind=typeParameter fq=golden.sema.unbounded.$9.T vis=private flags=_
+symbol s11 kind=valueParameter fq=golden.sema.unbounded.$9.x vis=private flags=_
+symbol s12 kind=function fq=golden.sema.callUnbounded vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s13 kind=function fq=golden.sema.acceptWhere vis=public flags=_ sig=recv=_ params=[T#14] ret=T#14 suspend=0 defaults=[0] vararg=[0] bounds=[Class#1]
+symbol s14 kind=typeParameter fq=golden.sema.acceptWhere.$13.T vis=private flags=_
+symbol s15 kind=valueParameter fq=golden.sema.acceptWhere.$13.x vis=private flags=_
 file f0 package=golden.sema
   decl d0 class Animal sym=s1
   decl d1 class Dog sym=s3
   decl d2 fun accept suspend=0 inline=0 sym=s5
   decl d3 fun callValid suspend=0 inline=0 sym=s8
+  decl d4 fun unbounded suspend=0 inline=0 sym=s9
+  decl d5 fun callUnbounded suspend=0 inline=0 sym=s12
+  decl d6 fun acceptWhere suspend=0 inline=0 sym=s13
 expr e0 name(x) type=T#6 ref=s7
 expr e1 name(accept) type=_
 expr e2 name(Dog) type=T#6
 expr e3 call callee=e2 args=[] type=<error>
 expr e4 call callee=e1 args=[_:e3] type=<error>
+expr e5 name(x) type=T#10 ref=s11
+expr e6 name(unbounded) type=T#14
+expr e7 int(42) type=Int
+expr e8 call callee=e6 args=[_:e7] type=Int call=s9 map=[0->0] targs=[Int]
+expr e9 name(x) type=T#14 ref=s15
