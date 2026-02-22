@@ -25,6 +25,7 @@ extension BuildASTPhase {
             modifiers: declarationModifiers(from: nodeID, in: arena),
             typeParams: typeParams,
             primaryConstructorParams: declarationValueParameters(from: nodeID, in: arena, interner: interner, astArena: astArena),
+            hasPrimaryConstructorSyntax: declarationHasPrimaryConstructorSyntax(from: nodeID, in: arena),
             superTypes: declarationSuperTypes(from: nodeID, in: arena, interner: interner, astArena: astArena),
             nestedTypeAliases: declarationNestedTypeAliases(from: nodeID, in: arena, interner: interner, astArena: astArena),
             enumEntries: declarationEnumEntries(from: nodeID, in: arena, interner: interner),
@@ -35,6 +36,41 @@ extension BuildASTPhase {
             nestedClasses: members.nestedClasses,
             nestedObjects: members.nestedObjects
         )
+    }
+
+    /// Detects whether the class header contains explicit constructor parentheses,
+    /// distinguishing `class Foo()` from `class Foo`.
+    func declarationHasPrimaryConstructorSyntax(from nodeID: NodeID, in arena: SyntaxArena) -> Bool {
+        let tokens = collectTokens(from: nodeID, in: arena)
+        // Skip past the class keyword and name (and optional type params in `<>`).
+        // A `(` before any `:` or `{` indicates primary constructor syntax.
+        var angleBracketDepth = 0
+        var pastClassName = false
+        for token in tokens {
+            if !pastClassName {
+                if case .keyword(.class) = token.kind {
+                    pastClassName = true
+                }
+                continue
+            }
+            // Skip type parameter angle brackets: `class Foo<T>(...)`
+            if token.kind == .symbol(.lessThan) {
+                angleBracketDepth += 1
+                continue
+            }
+            if token.kind == .symbol(.greaterThan) {
+                angleBracketDepth = max(0, angleBracketDepth - 1)
+                continue
+            }
+            if angleBracketDepth > 0 { continue }
+            if case .symbol(.lParen) = token.kind {
+                return true
+            }
+            if token.kind == .symbol(.colon) || token.kind == .symbol(.lBrace) {
+                return false
+            }
+        }
+        return false
     }
 
     func makeInterfaceDecl(from nodeID: NodeID, in arena: SyntaxArena, interner: StringInterner, astArena: ASTArena) -> InterfaceDecl {

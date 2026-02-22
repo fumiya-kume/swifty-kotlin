@@ -437,7 +437,7 @@ extension TypeCheckSemaPassPhase {
             classDecl.secondaryConstructors,
             ctx: classCtx,
             ownerSymbol: symbol,
-            hasPrimaryConstructor: !classDecl.primaryConstructorParams.isEmpty || classDecl.secondaryConstructors.isEmpty
+            hasPrimaryConstructor: classDecl.hasPrimaryConstructorSyntax
         )
         typeCheckClassLikeMembers(
             memberFunctions: classDecl.memberFunctions,

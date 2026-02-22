@@ -51,6 +51,9 @@ public struct ClassDecl {
     public let modifiers: Modifiers
     public let typeParams: [TypeParamDecl]
     public let primaryConstructorParams: [ValueParamDecl]
+    /// `true` when the class header contains explicit constructor parentheses,
+    /// distinguishing `class Foo()` (has primary ctor) from `class Foo` (no primary ctor).
+    public let hasPrimaryConstructorSyntax: Bool
     public let superTypes: [TypeRefID]
     public let nestedTypeAliases: [TypeAliasDecl]
     public let enumEntries: [EnumEntryDecl]
@@ -67,6 +70,7 @@ public struct ClassDecl {
         modifiers: Modifiers,
         typeParams: [TypeParamDecl] = [],
         primaryConstructorParams: [ValueParamDecl] = [],
+        hasPrimaryConstructorSyntax: Bool = false,
         superTypes: [TypeRefID] = [],
         nestedTypeAliases: [TypeAliasDecl] = [],
         enumEntries: [EnumEntryDecl] = [],
@@ -82,6 +86,7 @@ public struct ClassDecl {
         self.modifiers = modifiers
         self.typeParams = typeParams
         self.primaryConstructorParams = primaryConstructorParams
+        self.hasPrimaryConstructorSyntax = hasPrimaryConstructorSyntax
         self.superTypes = superTypes
         self.nestedTypeAliases = nestedTypeAliases
         self.enumEntries = enumEntries
