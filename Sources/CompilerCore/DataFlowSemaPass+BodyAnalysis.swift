@@ -315,65 +315,126 @@ extension DataFlowSemaPassPhase {
                 range: nil
             )
         }
-        var substitution: [SymbolID: TypeID] = [:]
+        var argSubstitution: [SymbolID: TypeArg] = [:]
         for (index, paramSymbol) in typeParamSymbols.enumerated() {
             guard index < typeArgs.count else { break }
-            switch typeArgs[index] {
-            case .invariant(let argType):
-                substitution[paramSymbol] = argType
-            case .out(let argType):
-                substitution[paramSymbol] = argType
-            case .in(let argType):
-                substitution[paramSymbol] = argType
-            case .star:
-                continue
-            }
+            argSubstitution[paramSymbol] = typeArgs[index]
         }
-        guard !substitution.isEmpty else {
+        guard !argSubstitution.isEmpty else {
             return typeID
         }
-        return applySubstitution(typeID, substitution: substitution, types: types, symbols: symbols)
+        return applySubstitution(typeID, argSubstitution: argSubstitution, types: types, symbols: symbols)
     }
 
     private func applySubstitution(
         _ typeID: TypeID,
-        substitution: [SymbolID: TypeID],
+        argSubstitution: [SymbolID: TypeArg],
         types: TypeSystem,
         symbols: SymbolTable
     ) -> TypeID {
         switch types.kind(of: typeID) {
         case .typeParam(let tp):
-            if let replacement = substitution[tp.symbol] {
-                if tp.nullability == .nullable {
-                    return applyNullability(replacement, types: types)
+            if let replacement = argSubstitution[tp.symbol] {
+                // In non-arg positions, extract the TypeID from the TypeArg.
+                // For .star, leave the type parameter unsubstituted.
+                let replacementType: TypeID
+                switch replacement {
+                case .invariant(let inner), .out(let inner), .in(let inner):
+                    replacementType = inner
+                case .star:
+                    return typeID
                 }
-                return replacement
+                if tp.nullability == .nullable {
+                    return applyNullability(replacementType, types: types)
+                }
+                return replacementType
             }
             return typeID
         case .classType(let ct):
             let newArgs = ct.args.map { arg -> TypeArg in
-                switch arg {
-                case .invariant(let inner):
-                    return .invariant(applySubstitution(inner, substitution: substitution, types: types, symbols: symbols))
-                case .out(let inner):
-                    return .out(applySubstitution(inner, substitution: substitution, types: types, symbols: symbols))
-                case .in(let inner):
-                    return .in(applySubstitution(inner, substitution: substitution, types: types, symbols: symbols))
-                case .star:
-                    return .star
-                }
+                substituteArg(arg, argSubstitution: argSubstitution, types: types, symbols: symbols)
             }
             return types.make(.classType(ClassType(classSymbol: ct.classSymbol, args: newArgs, nullability: ct.nullability)))
         case .functionType(let ft):
-            let newReceiver = ft.receiver.map { applySubstitution($0, substitution: substitution, types: types, symbols: symbols) }
-            let newParams = ft.params.map { applySubstitution($0, substitution: substitution, types: types, symbols: symbols) }
-            let newReturn = applySubstitution(ft.returnType, substitution: substitution, types: types, symbols: symbols)
+            let newReceiver = ft.receiver.map { applySubstitution($0, argSubstitution: argSubstitution, types: types, symbols: symbols) }
+            let newParams = ft.params.map { applySubstitution($0, argSubstitution: argSubstitution, types: types, symbols: symbols) }
+            let newReturn = applySubstitution(ft.returnType, argSubstitution: argSubstitution, types: types, symbols: symbols)
             return types.make(.functionType(FunctionType(receiver: newReceiver, params: newParams, returnType: newReturn, isSuspend: ft.isSuspend, nullability: ft.nullability)))
         case .primitive, .any, .unit, .nothing, .error:
             return typeID
         case .intersection(let parts):
-            let newParts = parts.map { applySubstitution($0, substitution: substitution, types: types, symbols: symbols) }
+            let newParts = parts.map { applySubstitution($0, argSubstitution: argSubstitution, types: types, symbols: symbols) }
             return types.make(.intersection(newParts))
+        }
+    }
+
+    /// Substitute a type argument, preserving use-site projections through expansion.
+    /// - `.invariant(T)` in the RHS: replace with the full `TypeArg` from the use-site
+    ///   (e.g., `Foo<out String>` expands `Box<T>` to `Box<out String>`)
+    /// - `.out(T)` / `.in(T)` in the RHS: keep the declaration-site projection,
+    ///   substitute inner type; `.star` substitution yields `.star`
+    /// - `.star`: preserved as-is
+    private func substituteArg(
+        _ arg: TypeArg,
+        argSubstitution: [SymbolID: TypeArg],
+        types: TypeSystem,
+        symbols: SymbolTable
+    ) -> TypeArg {
+        switch arg {
+        case .invariant(let inner):
+            // If the inner type is a bare type parameter with a substitution,
+            // replace the entire arg with the use-site TypeArg (preserving projection).
+            if case .typeParam(let tp) = types.kind(of: inner),
+               let replacement = argSubstitution[tp.symbol] {
+                if tp.nullability == .nullable {
+                    return applyNullabilityToArg(replacement, types: types)
+                }
+                return replacement
+            }
+            return .invariant(applySubstitution(inner, argSubstitution: argSubstitution, types: types, symbols: symbols))
+        case .out(let inner):
+            if case .typeParam(let tp) = types.kind(of: inner),
+               let replacement = argSubstitution[tp.symbol] {
+                // Declaration-site has `.out`; if use-site is `.star`, star wins.
+                if case .star = replacement { return .star }
+                let innerType = typeArgInnerType(replacement)
+                let resolved = tp.nullability == .nullable ? applyNullability(innerType, types: types) : innerType
+                return .out(resolved)
+            }
+            return .out(applySubstitution(inner, argSubstitution: argSubstitution, types: types, symbols: symbols))
+        case .in(let inner):
+            if case .typeParam(let tp) = types.kind(of: inner),
+               let replacement = argSubstitution[tp.symbol] {
+                if case .star = replacement { return .star }
+                let innerType = typeArgInnerType(replacement)
+                let resolved = tp.nullability == .nullable ? applyNullability(innerType, types: types) : innerType
+                return .in(resolved)
+            }
+            return .in(applySubstitution(inner, argSubstitution: argSubstitution, types: types, symbols: symbols))
+        case .star:
+            return .star
+        }
+    }
+
+    private func applyNullabilityToArg(_ arg: TypeArg, types: TypeSystem) -> TypeArg {
+        switch arg {
+        case .invariant(let inner):
+            return .invariant(applyNullability(inner, types: types))
+        case .out(let inner):
+            return .out(applyNullability(inner, types: types))
+        case .in(let inner):
+            return .in(applyNullability(inner, types: types))
+        case .star:
+            return .star
+        }
+    }
+
+    private func typeArgInnerType(_ arg: TypeArg) -> TypeID {
+        switch arg {
+        case .invariant(let inner), .out(let inner), .in(let inner):
+            return inner
+        case .star:
+            fatalError("typeArgInnerType called on .star")
         }
     }
 }
