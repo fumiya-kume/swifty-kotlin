@@ -180,10 +180,23 @@ extension BuildKIRPhase {
                 directMembers.append(kirID)
                 allDecls.append(kirID)
                 allDecls.append(contentsOf: nestedAll)
-            case .interfaceDecl:
-                let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol)))
+            case .interfaceDecl(let nestedInterface):
+                // Interface properties have no backing storage; pass empty list.
+                let (nestedDirect, nestedAll) = lowerMemberDecls(
+                    memberFunctions: nestedInterface.memberFunctions,
+                    memberProperties: [],
+                    nestedClasses: nestedInterface.nestedClasses,
+                    nestedObjects: nestedInterface.nestedObjects,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers
+                )
+                let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: nestedDirect)))
                 directMembers.append(kirID)
                 allDecls.append(kirID)
+                allDecls.append(contentsOf: nestedAll)
             default:
                 continue
             }

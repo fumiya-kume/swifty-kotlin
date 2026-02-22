@@ -1,4 +1,5 @@
 symbol s0 kind=package fq=golden.sema vis=public flags=_
 symbol s1 kind=interface fq=golden.sema.Greeter vis=public flags=_
+symbol s2 kind=function fq=golden.sema.Greeter.greet vis=public flags=_ sig=recv=Class#1 params=[] ret=String suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 interface Greeter sym=s1
+  decl d1 interface Greeter sym=s1

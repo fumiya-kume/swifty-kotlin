@@ -424,7 +424,19 @@ public final class OverloadResolver {
             }
 
             if sawNamedArgument {
-                return nil
+                // In Kotlin, positional arguments after named arguments
+                // are allowed only when they bind to a vararg parameter.
+                // Advance the cursor past already-bound non-vararg params.
+                while positionalCursor < paramCount &&
+                        !isVararg[positionalCursor] &&
+                        boundNonVarargParams.contains(positionalCursor) {
+                    positionalCursor += 1
+                }
+                if positionalCursor >= paramCount || !isVararg[positionalCursor] {
+                    return nil
+                }
+                mapping[argIndex] = positionalCursor
+                continue
             }
 
             while positionalCursor < paramCount &&

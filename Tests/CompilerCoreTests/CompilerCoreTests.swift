@@ -549,6 +549,135 @@ final class CompilerCoreTests: XCTestCase {
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
     }
 
+    func testImportAliasReturnTypeIsInferred() throws {
+        let sources = [
+            """
+            package lib
+            fun compute(x: Int): Int = x + 1
+            """,
+            """
+            package app
+            import lib.compute as calc
+            fun use(): Int = calc(5)
+            """
+        ]
+        let ctx = try makeContext(sources: sources)
+        try runSema(ctx)
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let useSymbol = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
+            symbol.kind == .function && ctx.interner.resolve(symbol.name) == "use"
+        })?.id)
+        let useSignature = try XCTUnwrap(sema.symbols.functionSignature(for: useSymbol))
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+        XCTAssertEqual(useSignature.returnType, intType)
+        assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
+    }
+
+    func testImportAliasMultipleDistinctAliasesInSameFile() throws {
+        let sources = [
+            """
+            package lib
+            fun foo(x: Int) = x
+            fun bar(x: Int) = x + 1
+            """,
+            """
+            package app
+            import lib.foo as f
+            import lib.bar as b
+            fun use() = f(1) + b(2)
+            """
+        ]
+        let ctx = try makeContext(sources: sources)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
+        assertNoDiagnostic("KSWIFTK-SEMA-0023", in: ctx)
+    }
+
+    func testImportAliasCoexistsWithNonAliasedImport() throws {
+        let sources = [
+            """
+            package lib
+            fun foo(x: Int) = x
+            fun bar(x: Int) = x + 1
+            """,
+            """
+            package app
+            import lib.foo as f
+            import lib.bar
+            fun use() = f(1) + bar(2)
+            """
+        ]
+        let ctx = try makeContext(sources: sources)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
+    }
+
+    func testImportAliasEmptyAliasNameIsIgnored() throws {
+        let source = """
+        package app
+        import kotlin.io.println as
+        fun use() = 1
+        """
+        let ctx = try makeContext(source: source)
+        try runSema(ctx)
+
+        // Parser should insert missing token; alias with empty name is skipped
+        assertNoDiagnostic("KSWIFTK-SEMA-0022", in: ctx)
+        assertNoDiagnostic("KSWIFTK-SEMA-0023", in: ctx)
+    }
+
+    func testImportAliasBuildASTPreservesAliasField() throws {
+        let sources = [
+            """
+            package lib
+            fun helper(x: Int) = x
+            """,
+            """
+            package app
+            import lib.helper as h
+            fun use() = h(1)
+            """
+        ]
+        let ctx = try makeContext(sources: sources)
+        try runFrontend(ctx)
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let appFile = try XCTUnwrap(ast.files.first(where: { file in
+            file.packageFQName.map { ctx.interner.resolve($0) } == ["app"]
+        }))
+        let aliasedImport = try XCTUnwrap(appFile.imports.first(where: { importDecl in
+            importDecl.alias != nil
+        }))
+        XCTAssertEqual(ctx.interner.resolve(aliasedImport.alias!), "h")
+        XCTAssertEqual(aliasedImport.path.map { ctx.interner.resolve($0) }, ["lib", "helper"])
+    }
+
+    func testImportAliasNonAliasedImportHasNilAlias() throws {
+        let sources = [
+            """
+            package lib
+            fun helper(x: Int) = x
+            """,
+            """
+            package app
+            import lib.helper
+            fun use() = helper(1)
+            """
+        ]
+        let ctx = try makeContext(sources: sources)
+        try runFrontend(ctx)
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let appFile = try XCTUnwrap(ast.files.first(where: { file in
+            file.packageFQName.map { ctx.interner.resolve($0) } == ["app"]
+        }))
+        let regularImport = try XCTUnwrap(appFile.imports.first)
+        XCTAssertNil(regularImport.alias)
+    }
+
     func testLambdaInferenceCapturesOuterLocalAndResolvesLocalCallableCall() throws {
         let source = """
         fun host(seed: Int): Int {
@@ -802,7 +931,7 @@ final class CompilerCoreTests: XCTestCase {
             inputs: [tempSource.path],
             outputPath: outputURL.path,
             emit: .object,
-            target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+            target: defaultTargetTriple()
         )
         let driver = CompilerDriver(
             version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
@@ -826,7 +955,7 @@ final class CompilerCoreTests: XCTestCase {
             inputs: [tempSource.path],
             outputPath: outputURL.path,
             emit: .executable,
-            target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+            target: defaultTargetTriple()
         )
         let driver = CompilerDriver(
             version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
@@ -865,7 +994,7 @@ final class CompilerCoreTests: XCTestCase {
             inputs: [tempSource.path],
             outputPath: outputBase,
             emit: .kirDump,
-            target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+            target: defaultTargetTriple()
         )
         let driver = CompilerDriver(
             version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
@@ -1149,7 +1278,7 @@ final class CompilerCoreTests: XCTestCase {
             inputs: [tempURL.path],
             outputPath: tempURL.deletingPathExtension().appendingPathExtension("out").path,
             emit: .kirDump,
-            target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+            target: defaultTargetTriple()
         )
         return CompilationContext(
             options: options,
@@ -1176,7 +1305,7 @@ final class CompilerCoreTests: XCTestCase {
             inputs: inputPaths,
             outputPath: tempDir.appendingPathComponent("out.kir").path,
             emit: .kirDump,
-            target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+            target: defaultTargetTriple()
         )
         return CompilationContext(
             options: options,
