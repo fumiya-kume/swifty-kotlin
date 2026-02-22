@@ -30,6 +30,17 @@ public struct TargetTriple: Equatable {
         self.os = os
         self.osVersion = osVersion
     }
+
+    public static func hostDefault() -> TargetTriple {
+        #if arch(arm64)
+        let arch = "arm64"
+        #elseif arch(x86_64)
+        let arch = "x86_64"
+        #else
+        let arch = "arm64"
+        #endif
+        return TargetTriple(arch: arch, vendor: "apple", os: "macosx", osVersion: nil)
+    }
 }
 
 public enum OptimizationLevel: Int {

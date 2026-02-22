@@ -9,8 +9,11 @@ permissions:
 
 jobs:
   smoke-tests:
-    name: Smoke Tests
-    runs-on: [self-hosted, macOS, ARM64]
+    name: Smoke Tests (${{ matrix.arch }})
+    runs-on: [self-hosted, macOS, "${{ matrix.arch }}"]
+    strategy:
+      matrix:
+        arch: [ARM64, X64]
     steps:
       - uses: actions/checkout@v4
       - name: Show toolchain versions
@@ -20,8 +23,11 @@ jobs:
         run: bash Scripts/swift_test.sh --filter SmokeTests
 
   diff-regression:
-    name: kotlinc Diff Regression
-    runs-on: [self-hosted, macOS, ARM64]
+    name: kotlinc Diff Regression (${{ matrix.arch }})
+    runs-on: [self-hosted, macOS, "${{ matrix.arch }}"]
+    strategy:
+      matrix:
+        arch: [ARM64, X64]
     steps:
       - uses: actions/checkout@v4
       - name: Verify prerequisites
@@ -48,8 +54,11 @@ jobs:
           exit 1
 
   test-and-coverage:
-    name: Test and Coverage Gate
-    runs-on: [self-hosted, macOS, ARM64]
+    name: Test and Coverage Gate (${{ matrix.arch }})
+    runs-on: [self-hosted, macOS, "${{ matrix.arch }}"]
+    strategy:
+      matrix:
+        arch: [ARM64, X64]
     steps:
       - uses: actions/checkout@v4
       - name: Verify prerequisites
