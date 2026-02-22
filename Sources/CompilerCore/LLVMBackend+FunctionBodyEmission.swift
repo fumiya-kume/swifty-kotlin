@@ -365,6 +365,7 @@ extension LLVMBackend {
                     callArguments.append("&\(thrSlot)")
                 } else if isInternalFunction {
                     callArguments.append("NULL")
+                    callIndex += 1
                 } else {
                     callIndex += 1
                 }
