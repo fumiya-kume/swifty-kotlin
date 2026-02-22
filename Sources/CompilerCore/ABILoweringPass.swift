@@ -139,9 +139,16 @@ final class ABILoweringPass: LoweringPass {
                     if let signature {
                         let parameterTypes = signature.parameterTypes
                         let receiverOffset = signature.receiverType != nil ? 1 : 0
+                        let varargFlags = signature.valueParameterIsVararg
                         for argIndex in arguments.indices {
                             let paramIndex = argIndex - receiverOffset
                             guard paramIndex >= 0 && paramIndex < parameterTypes.count else {
+                                continue
+                            }
+                            // Skip boxing for vararg parameters: the argument is
+                            // already a packed array produced by BuildKIRPhase, so
+                            // the element-level paramType does not apply.
+                            if paramIndex < varargFlags.count && varargFlags[paramIndex] {
                                 continue
                             }
                             let paramType = parameterTypes[paramIndex]
