@@ -588,6 +588,7 @@ extension BuildKIRPhase {
         let falseID = arena.appendExpr(.boolLiteral(false), type: boolType)
         instructions.append(.constValue(result: falseID, value: .boolLiteral(false)))
 
+        var allBranchesTerminated = true
         for (index, branch) in branches.enumerated() {
             if let conditionExprID = branch.condition {
                 let conditionValueID = lowerExpr(
@@ -627,10 +628,12 @@ extension BuildKIRPhase {
             if !branchTerminated {
                 instructions.append(.copy(from: bodyID, to: result))
                 instructions.append(.jump(endLabel))
+                allBranchesTerminated = false
             }
             instructions.append(.label(nextBranchLabels[index]))
         }
 
+        var elseTerminated = false
         if let elseExpr {
             let fallbackID = lowerExpr(
                 elseExpr,
@@ -641,7 +644,7 @@ extension BuildKIRPhase {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
-            let elseTerminated = isTerminatedExpr(fallbackID, arena: arena, sema: sema)
+            elseTerminated = isTerminatedExpr(fallbackID, arena: arena, sema: sema)
             if !elseTerminated {
                 instructions.append(.copy(from: fallbackID, to: result))
             }
@@ -651,6 +654,10 @@ extension BuildKIRPhase {
             instructions.append(.copy(from: unitVal, to: result))
         }
         instructions.append(.label(endLabel))
+        // Propagate Nothing type when all branches (including else) terminate
+        if allBranchesTerminated && elseTerminated {
+            arena.setExprType(sema.types.nothingType, for: result)
+        }
         return result
     }
 }
