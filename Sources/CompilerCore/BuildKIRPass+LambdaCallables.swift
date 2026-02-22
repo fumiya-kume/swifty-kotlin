@@ -299,9 +299,13 @@ extension BuildKIRPhase {
         if let existing = syntheticLambdaSymbolsByExprID[exprID] {
             return existing
         }
-        let symbol = SymbolID(rawValue: nextSyntheticLambdaSymbolRawID())
+        let symbol = allocateSyntheticGeneratedSymbol()
         syntheticLambdaSymbolsByExprID[exprID] = symbol
         return symbol
+    }
+
+    func allocateSyntheticGeneratedSymbol() -> SymbolID {
+        SymbolID(rawValue: nextSyntheticLambdaSymbolRawID())
     }
 
     func syntheticLambdaName(for exprID: ExprID, interner: StringInterner) -> InternedString {

@@ -12,6 +12,8 @@ public final class BuildKIRPhase: CompilerPhase {
     var pendingGeneratedCallableDeclIDs: [KIRDeclID] = []
     var callableValueInfoByExprID: [KIRExprID: KIRCallableValueInfo] = [:]
     var syntheticLambdaSymbolsByExprID: [ExprID: SymbolID] = [:]
+    var syntheticObjectLiteralSymbolsByExprID: [ExprID: (nominalSymbol: SymbolID, constructorSymbol: SymbolID, constructorName: InternedString)] = [:]
+    var emittedObjectLiteralExprIDs: Set<ExprID> = []
     var nextSyntheticLambdaSymbolRawValue: Int32 = 1
 
     public init() {}
@@ -24,6 +26,8 @@ public final class BuildKIRPhase: CompilerPhase {
         pendingGeneratedCallableDeclIDs.removeAll(keepingCapacity: true)
         callableValueInfoByExprID.removeAll(keepingCapacity: true)
         syntheticLambdaSymbolsByExprID.removeAll(keepingCapacity: true)
+        syntheticObjectLiteralSymbolsByExprID.removeAll(keepingCapacity: true)
+        emittedObjectLiteralExprIDs.removeAll(keepingCapacity: true)
         initializeSyntheticLambdaSymbolAllocator(sema: sema)
 
         let arena = KIRArena()

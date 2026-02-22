@@ -427,10 +427,15 @@ extension BuildKIRPhase {
                 instructions: &instructions
             )
 
-        case .objectLiteral:
-            let unit = arena.appendExpr(.unit, type: boundType ?? sema.types.anyType)
-            instructions.append(.constValue(result: unit, value: .unit))
-            return unit
+        case .objectLiteral(let superTypes, _):
+            return lowerObjectLiteralExpr(
+                exprID,
+                superTypes: superTypes,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
 
         case .whenExpr(let subject, let branches, let elseExpr, _):
             return lowerWhenExpr(exprID, subject: subject, branches: branches, elseExpr: elseExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)

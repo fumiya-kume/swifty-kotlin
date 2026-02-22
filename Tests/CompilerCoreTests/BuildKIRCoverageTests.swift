@@ -1426,7 +1426,119 @@ final class BuildKIRCoverageTests: XCTestCase {
         }
     }
 
+    func testBuildKIRLowersObjectLiteralToGeneratedFactoryReturningRuntimeObjectEntity() throws {
+        let source = """
+        interface Marker
+        fun make(): Marker = object : Marker {}
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let module = try XCTUnwrap(ctx.kir)
+            let makeExprID = try XCTUnwrap(topLevelExpressionBodyExprID(
+                named: "make",
+                ast: ast,
+                interner: ctx.interner
+            ))
+            let makeBody = try findKIRFunctionBody(named: "make", in: module, interner: ctx.interner)
+            let objectFactoryCall = try XCTUnwrap(makeBody.first { instruction in
+                guard case .call(_, let callee, _, _, _, _) = instruction else {
+                    return false
+                }
+                return ctx.interner.resolve(callee).hasPrefix("kk_object_literal_")
+            })
+
+            guard case .call(let factorySymbol, let callee, let arguments, let result, _, _) = objectFactoryCall else {
+                XCTFail("Expected object literal to lower to generated factory call.")
+                return
+            }
+
+            let generatedFactorySymbol = try XCTUnwrap(factorySymbol)
+            XCTAssertGreaterThan(generatedFactorySymbol.rawValue, 0)
+            XCTAssertTrue(ctx.interner.resolve(callee).hasPrefix("kk_object_literal_"))
+            XCTAssertTrue(arguments.isEmpty)
+            let resultExprID = try XCTUnwrap(result)
+            XCTAssertEqual(module.arena.exprType(resultExprID), sema.bindings.exprTypes[makeExprID])
+            if case .unit? = module.arena.expr(resultExprID) {
+                XCTFail("Object literal must not lower to unit.")
+            }
+
+            let generatedFactoryDeclIndex = try XCTUnwrap(module.arena.declarations.firstIndex(where: { decl in
+                guard case .function(let function) = decl else {
+                    return false
+                }
+                return function.symbol == generatedFactorySymbol
+            }))
+            guard case .function(let generatedFactory) = module.arena.declarations[generatedFactoryDeclIndex] else {
+                XCTFail("Expected generated object factory function declaration.")
+                return
+            }
+            let hasAllocationRuntimeCall = generatedFactory.body.contains { instruction in
+                guard case .call(_, let loweredCallee, _, _, _, _) = instruction else {
+                    return false
+                }
+                let calleeName = ctx.interner.resolve(loweredCallee)
+                return calleeName == "kk_alloc" || calleeName == "kk_array_new"
+            }
+            XCTAssertTrue(
+                hasAllocationRuntimeCall,
+                "Expected generated object factory to include allocation runtime call."
+            )
+
+            let generatedNominalDeclIndex = try XCTUnwrap(module.arena.declarations.firstIndex(where: { decl in
+                guard case .nominalType(let nominal) = decl else {
+                    return false
+                }
+                return sema.symbols.symbol(nominal.symbol) == nil
+            }))
+
+            let generatedFactoryDeclID = KIRDeclID(rawValue: Int32(generatedFactoryDeclIndex))
+            let generatedNominalDeclID = KIRDeclID(rawValue: Int32(generatedNominalDeclIndex))
+            let fileDeclIDs = Set(module.files.flatMap(\.decls))
+            XCTAssertTrue(fileDeclIDs.contains(generatedFactoryDeclID))
+            XCTAssertTrue(fileDeclIDs.contains(generatedNominalDeclID))
+        }
+    }
+
     // MARK: - Lambda / CallableRef Lowering (P5-20)
+
+    func testBuildKIRObjectLiteralArgumentIsNotLoweredToUnitPlaceholder() throws {
+        let source = """
+        interface I
+        fun consume(value: I): I = value
+        fun main(): I {
+            val instance = object : I {}
+            return consume(instance)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let consumeCall = try XCTUnwrap(mainBody.first { instruction in
+                guard case .call(_, let callee, _, _, _, _) = instruction else {
+                    return false
+                }
+                return ctx.interner.resolve(callee) == "consume"
+            })
+            guard case .call(_, _, let arguments, _, _, _) = consumeCall else {
+                XCTFail("Expected call instruction for consume(instance).")
+                return
+            }
+            let objectArgument = try XCTUnwrap(arguments.first)
+            let objectArgumentExpr = try XCTUnwrap(module.arena.expr(objectArgument))
+            if case .unit = objectArgumentExpr {
+                XCTFail("object literal must not be lowered to .unit placeholder at call sites.")
+            }
+        }
+    }
 
     func testBuildKIRLowersLambdaLiteralToGeneratedCallableAndPrependsCapturesOnCall() throws {
         let source = """
