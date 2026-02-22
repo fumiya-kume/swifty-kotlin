@@ -177,7 +177,9 @@ extension DataFlowSemaPassPhase {
                 }
                 paramTypes.append(paramType)
             }
-            let returnType = resolveTypeRefForInheritance(returnRefID, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types) ?? types.unitType
+            guard let returnType = resolveTypeRefForInheritance(returnRefID, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types) else {
+                return nil
+            }
             return types.make(.functionType(FunctionType(
                 params: paramTypes,
                 returnType: returnType,
