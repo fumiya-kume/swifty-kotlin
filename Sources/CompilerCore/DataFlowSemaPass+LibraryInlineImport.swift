@@ -130,7 +130,9 @@ extension DataFlowSemaPassPhase {
             labelCounter += 2
             let falseExprID = KIRExprID(rawValue: exprCounter)
             exprCounter += 1
+            // Define result expr so InlineLoweringPass can clone it via localExprMap
             return [
+                .constValue(result: KIRExprID(rawValue: result), value: .unit),
                 .constValue(result: falseExprID, value: .boolLiteral(false)),
                 .jumpIfEqual(lhs: KIRExprID(rawValue: condition), rhs: falseExprID, target: elseLabel),
                 .copy(from: KIRExprID(rawValue: thenValue), to: KIRExprID(rawValue: result)),
