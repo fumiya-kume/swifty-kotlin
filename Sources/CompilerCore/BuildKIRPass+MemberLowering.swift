@@ -181,9 +181,10 @@ extension BuildKIRPhase {
                 allDecls.append(kirID)
                 allDecls.append(contentsOf: nestedAll)
             case .interfaceDecl(let nestedInterface):
+                // Interface properties have no backing storage; pass empty list.
                 let (nestedDirect, nestedAll) = lowerMemberDecls(
                     memberFunctions: nestedInterface.memberFunctions,
-                    memberProperties: nestedInterface.memberProperties,
+                    memberProperties: [],
                     nestedClasses: nestedInterface.nestedClasses,
                     nestedObjects: nestedInterface.nestedObjects,
                     ast: ast,

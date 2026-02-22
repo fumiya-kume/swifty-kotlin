@@ -242,9 +242,10 @@ public final class BuildKIRPhase: CompilerPhase {
                     }
 
                 case .interfaceDecl(let interfaceDecl):
+                    // Interface properties have no backing storage; pass empty list.
                     let (directMembers, allDecls) = lowerMemberDecls(
                         memberFunctions: interfaceDecl.memberFunctions,
-                        memberProperties: interfaceDecl.memberProperties,
+                        memberProperties: [],
                         nestedClasses: interfaceDecl.nestedClasses,
                         nestedObjects: interfaceDecl.nestedObjects,
                         ast: ast,
