@@ -2053,7 +2053,7 @@ final class BuildKIRCoverageTests: XCTestCase {
             // If boxing were incorrectly applied, we would see kk_box_int
             // targeting the array argument passed to `sum`.
             let sumCalls = body.filter { instruction in
-                guard case .call(_, let callee, _, _, _, _) = instruction else { return false }
+                guard case .call(_, let callee, _, _, _, _, _) = instruction else { return false }
                 return ctx.interner.resolve(callee) == "sum"
             }
             XCTAssertFalse(sumCalls.isEmpty, "Expected a call to sum after ABI lowering.")
@@ -2061,7 +2061,7 @@ final class BuildKIRCoverageTests: XCTestCase {
             // Verify that arguments to sum are not individually boxed—the
             // array_new/array_set calls produce the packed array argument.
             for call in sumCalls {
-                guard case .call(_, _, let arguments, _, _, _) = call else { continue }
+                guard case .call(_, _, let arguments, _, _, _, _) = call else { continue }
                 for arg in arguments {
                     guard let argKind = module.arena.expr(arg) else { continue }
                     // The argument to sum should be a temporary holding the
