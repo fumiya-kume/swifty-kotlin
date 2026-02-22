@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-02-16
+最終更新: 2026-02-22
 
 ## P0 (Core Correctness)
 
@@ -233,11 +233,11 @@
   - [x] 演算子オーバーロード（extension）diff ケースを追加する（`Scripts/diff_cases/operator_extension.kt`）
   - [x] member operator 候補解決と member call lowering の統合（class member pipeline 完了後）
 
-- [ ] P5-20: lambda / object literal / callable reference を front-to-back で実装する（spec.md J5/J6/J12）
+- [x] P5-20: lambda / object literal / callable reference を front-to-back で実装する（spec.md J5/J6/J12）
   - [x] Parser/AST に `lambdaLiteral` / `objectLiteral` / `callableRef` の実ノードを導入する
   - [x] Sema で lambda/callable reference の capture 解析と型推論（function type / receiver）を実装する
   - [x] KIR で lambda/callable reference を実体 callable symbol + capture 引数へ lower し、呼び出しを marker 非依存化する
-  - [ ] object literal を匿名オブジェクト実体として lowering/backend へ接続する（現状は `BuildKIR` で placeholder lowering）
+  - [x] object literal を匿名オブジェクト実体として lowering/backend へ接続する（生成 constructor/factory 経路 + allocation call）
   - [x] lambda/object/callable ref の回帰ケースを追加する
 
 - [ ] P5-21: `try/catch/finally` の例外チャネル制御フローを KIR/Lowering で実装する（spec.md J11.3/J13.3）
