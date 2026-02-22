@@ -74,7 +74,7 @@ final class LinkPhaseCoverageTests: XCTestCase {
                 inputs: [path],
                 outputPath: out,
                 emit: .executable,
-                target: TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: "14.0")
+                target: defaultTargetTriple()
             )
             let ctx = CompilationContext(
                 options: options,
