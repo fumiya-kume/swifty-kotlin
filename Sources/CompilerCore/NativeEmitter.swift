@@ -147,7 +147,7 @@ struct NativeEmitter {
 
         // Create debug info context BEFORE emitting function bodies so that
         // debug locations can be attached to instructions during emission.
-        let diContext: DebugInfoContext? = debugInfo
+        let diContext: DebugInfoContext? = (debugInfo && bindings.debugLocationAvailable)
             ? createDebugInfoContext(
                 llvmModule: llvmModule,
                 context: context,
