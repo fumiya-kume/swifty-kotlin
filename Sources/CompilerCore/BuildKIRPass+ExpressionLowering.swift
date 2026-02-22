@@ -199,23 +199,17 @@ extension BuildKIRPhase {
                 localValuesBySymbol[symbol] = funRef
 
                 let localFunCalleeName = callableTargetName(for: symbol, sema: sema, interner: interner)
-                registerCallableValue(
-                    funRef,
-                    symbol: symbol,
-                    callee: localFunCalleeName,
-                    captureArguments: []
-                )
 
                 // Emit the local function body as a KIRFunction declaration.
-                let localFunParams: [KIRParameter]
+                let localFunValueParamList: [KIRParameter]
                 let localFunReturnType: TypeID
                 if let sig {
-                    localFunParams = zip(sig.valueParameterSymbols, sig.parameterTypes).map { pair in
+                    localFunValueParamList = zip(sig.valueParameterSymbols, sig.parameterTypes).map { pair in
                         KIRParameter(symbol: pair.0, type: pair.1)
                     }
                     localFunReturnType = sig.returnType
                 } else {
-                    localFunParams = localFunValueParams.enumerated().map { index, _ in
+                    localFunValueParamList = localFunValueParams.enumerated().map { index, _ in
                         KIRParameter(
                             symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: index),
                             type: sema.types.anyType
@@ -223,6 +217,72 @@ extension BuildKIRPhase {
                     }
                     localFunReturnType = sema.types.unitType
                 }
+
+                // Compute capture symbols by collecting referenced identifiers
+                // from the local function body, filtering to those available in
+                // the current scope (analogous to lambda capture analysis).
+                var captureBodyExprIDs: [ExprID] = []
+                switch localFunBody {
+                case .block(let bodyExprIDs, _):
+                    captureBodyExprIDs = bodyExprIDs
+                case .expr(let bodyExprID, _):
+                    captureBodyExprIDs = [bodyExprID]
+                case .unit:
+                    break
+                }
+
+                var referencedSymbols: [SymbolID] = []
+                var seenSymbols: Set<SymbolID> = []
+                for bodyExprID in captureBodyExprIDs {
+                    collectBoundIdentifierSymbols(
+                        in: bodyExprID,
+                        ast: ast,
+                        sema: sema,
+                        referenced: &referencedSymbols,
+                        seen: &seenSymbols
+                    )
+                }
+                let localFunParamSymbols = Set(localFunValueParamList.map { $0.symbol })
+                let captureSymbols = referencedSymbols.filter { sym in
+                    if localFunParamSymbols.contains(sym) { return false }
+                    if sym == symbol { return false }
+                    if localValuesBySymbol[sym] != nil { return true }
+                    if sym == currentImplicitReceiverSymbol,
+                       currentImplicitReceiverExprID != nil { return true }
+                    guard let semanticSymbol = sema.symbols.symbol(sym) else { return false }
+                    return semanticSymbol.kind == .valueParameter
+                }
+
+                var captureBindings: [(capturedSymbol: SymbolID, param: KIRParameter, valueExpr: KIRExprID)] = []
+                captureBindings.reserveCapacity(captureSymbols.count)
+                for (index, capturedSymbol) in captureSymbols.enumerated() {
+                    guard let captureValue = captureValueExpr(
+                        for: capturedSymbol,
+                        sema: sema,
+                        arena: arena,
+                        instructions: &instructions
+                    ) else {
+                        continue
+                    }
+                    let captureType = arena.exprType(captureValue) ?? typeForSymbolReference(capturedSymbol, sema: sema)
+                    let captureParamSymbol = syntheticLambdaCaptureParamSymbol(
+                        lambdaExprID: exprID,
+                        captureIndex: index
+                    )
+                    let captureParam = KIRParameter(symbol: captureParamSymbol, type: captureType)
+                    captureBindings.append((
+                        capturedSymbol: capturedSymbol,
+                        param: captureParam,
+                        valueExpr: captureValue
+                    ))
+                }
+
+                registerCallableValue(
+                    funRef,
+                    symbol: symbol,
+                    callee: localFunCalleeName,
+                    captureArguments: captureBindings.map { $0.valueExpr }
+                )
 
                 let savedLocalValues = localValuesBySymbol
                 let savedReceiverExprID = currentImplicitReceiverExprID
@@ -244,7 +304,19 @@ extension BuildKIRPhase {
                 nextLoopLabel = 10_000
 
                 var localFunBodyInstructions: [KIRInstruction] = [.beginBlock]
-                for param in localFunParams {
+
+                // Bind capture parameters so body references resolve correctly.
+                for capture in captureBindings {
+                    let captureExpr = arena.appendExpr(.symbolRef(capture.param.symbol), type: capture.param.type)
+                    localFunBodyInstructions.append(.constValue(result: captureExpr, value: .symbolRef(capture.param.symbol)))
+                    localValuesBySymbol[capture.capturedSymbol] = captureExpr
+                    if capture.capturedSymbol == savedReceiverSymbol {
+                        currentImplicitReceiverExprID = captureExpr
+                        currentImplicitReceiverSymbol = capture.param.symbol
+                    }
+                }
+
+                for param in localFunValueParamList {
                     let paramExpr = arena.appendExpr(.symbolRef(param.symbol), type: param.type)
                     localFunBodyInstructions.append(.constValue(result: paramExpr, value: .symbolRef(param.symbol)))
                     localValuesBySymbol[param.symbol] = paramExpr
@@ -326,7 +398,7 @@ extension BuildKIRPhase {
                         KIRFunction(
                             symbol: symbol,
                             name: localFunName,
-                            params: localFunParams,
+                            params: captureBindings.map { $0.param } + localFunValueParamList,
                             returnType: localFunReturnType,
                             body: localFunBodyInstructions,
                             isSuspend: sig?.isSuspend ?? false,

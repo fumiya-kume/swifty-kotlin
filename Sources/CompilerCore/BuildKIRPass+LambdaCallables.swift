@@ -469,7 +469,7 @@ extension BuildKIRPhase {
         return classType.classSymbol
     }
 
-    private func computeCaptureSymbolsForLambda(
+    func computeCaptureSymbolsForLambda(
         lambdaExprID: ExprID,
         lambdaParamCount: Int,
         lambdaBodyExprID: ExprID,
@@ -507,7 +507,7 @@ extension BuildKIRPhase {
         )
     }
 
-    private func lexicalCaptureSymbolsForLambda(
+    func lexicalCaptureSymbolsForLambda(
         lambdaExprID: ExprID,
         lambdaParamCount: Int,
         lambdaBodyExprID: ExprID,
@@ -545,7 +545,7 @@ extension BuildKIRPhase {
         return captures
     }
 
-    private func canCaptureSymbolForLambda(
+    func canCaptureSymbolForLambda(
         _ symbol: SymbolID,
         lambdaExprID: ExprID,
         lambdaParamCount: Int,
@@ -569,7 +569,7 @@ extension BuildKIRPhase {
         return semanticSymbol.kind == .valueParameter
     }
 
-    private func captureValueExpr(
+    func captureValueExpr(
         for symbol: SymbolID,
         sema: SemaModule,
         arena: KIRArena,
@@ -593,7 +593,7 @@ extension BuildKIRPhase {
         return symbolExpr
     }
 
-    private func uniqueSymbolsPreservingOrder(_ symbols: [SymbolID]) -> [SymbolID] {
+    func uniqueSymbolsPreservingOrder(_ symbols: [SymbolID]) -> [SymbolID] {
         var seen: Set<SymbolID> = []
         var ordered: [SymbolID] = []
         ordered.reserveCapacity(symbols.count)
@@ -603,7 +603,7 @@ extension BuildKIRPhase {
         return ordered
     }
 
-    private func collectBoundIdentifierSymbols(
+    func collectBoundIdentifierSymbols(
         in exprID: ExprID,
         ast: ASTModule,
         sema: SemaModule,
@@ -768,7 +768,7 @@ extension BuildKIRPhase {
         }
     }
 
-    private func containsImplicitReceiverReference(in exprID: ExprID, ast: ASTModule) -> Bool {
+    func containsImplicitReceiverReference(in exprID: ExprID, ast: ASTModule) -> Bool {
         guard let expr = ast.arena.expr(exprID) else {
             return false
         }
