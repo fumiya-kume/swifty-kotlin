@@ -1327,6 +1327,28 @@ final class CompilerCoreTests: XCTestCase {
         assertHasDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
     }
 
+    func testUnresolvedSafeMemberCallEmitsDiagnostic() throws {
+        let source = """
+        class Foo
+        fun test(f: Foo?) = f?.missing()
+        """
+        let ctx = try makeContext(source: source)
+        try runSema(ctx)
+
+        assertHasDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+    }
+
+    func testUnresolvedBinaryOperatorEmitsDiagnostic() throws {
+        let source = """
+        class Foo
+        fun test(f: Foo): Foo = f + f
+        """
+        let ctx = try makeContext(source: source)
+        try runSema(ctx)
+
+        assertHasDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
+    }
+
     func testUnresolvedTypeAnnotationOnLocalVarEmitsDiagnostic() throws {
         let source = """
         fun test() {

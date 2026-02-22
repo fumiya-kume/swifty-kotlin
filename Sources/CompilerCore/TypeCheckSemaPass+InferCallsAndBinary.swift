@@ -48,6 +48,15 @@ extension TypeCheckSemaPassPhase {
         } else {
             operatorCandidates = []
         }
+        if !lhsIsPrimitive && operatorCandidates.isEmpty {
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-0002",
+                "No viable overload found for operator '\(interner.resolve(operatorName))'.",
+                range: range
+            )
+            sema.bindings.bindExprType(id, type: sema.types.errorType)
+            return sema.types.errorType
+        }
         if !operatorCandidates.isEmpty {
             let resolved = ctx.resolver.resolveCall(
                 candidates: operatorCandidates,
@@ -504,9 +513,13 @@ extension TypeCheckSemaPassPhase {
                 sema.bindings.bindExprType(id, type: sema.types.errorType)
                 return sema.types.errorType
             }
-            let resultType = makeNullable(sema.types.anyType, types: sema.types)
-            sema.bindings.bindExprType(id, type: resultType)
-            return resultType
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-0024",
+                "Unresolved member function '\(interner.resolve(calleeName))'.",
+                range: range
+            )
+            sema.bindings.bindExprType(id, type: sema.types.errorType)
+            return sema.types.errorType
         }
         let resolvedArgs: [CallArg] = zip(args, argTypes).map { argument, type in
             CallArg(label: argument.label, isSpread: argument.isSpread, type: type)
