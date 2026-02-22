@@ -1235,10 +1235,16 @@ final class BuildKIRCoverageTests: XCTestCase {
                 if case .returnValue = instruction {
                     foundReturnInBranch = true
                     // Check if the next non-label instruction is a copy
-                    if index + 1 < body.count {
-                        if case .copy = body[index + 1] {
+                    var nextIndex = index + 1
+                    while nextIndex < body.count {
+                        if case .label = body[nextIndex] {
+                            nextIndex += 1
+                            continue
+                        }
+                        if case .copy = body[nextIndex] {
                             deadCopyAfterReturn = true
                         }
+                        break
                     }
                 }
             }
@@ -1300,10 +1306,16 @@ final class BuildKIRCoverageTests: XCTestCase {
             var deadCopyAfterReturn = false
             for (index, instruction) in body.enumerated() {
                 if case .returnValue = instruction {
-                    if index + 1 < body.count {
-                        if case .copy = body[index + 1] {
+                    var nextIndex = index + 1
+                    while nextIndex < body.count {
+                        if case .label = body[nextIndex] {
+                            nextIndex += 1
+                            continue
+                        }
+                        if case .copy = body[nextIndex] {
                             deadCopyAfterReturn = true
                         }
+                        break
                     }
                 }
             }
