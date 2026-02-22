@@ -490,7 +490,7 @@ final class ABILoweringPass: LoweringPass {
     /// - Source is a nullable primitive and target is a non-null primitive of the same kind
     private func needsUnboxing(sourceKind: TypeKind, targetKind: TypeKind) -> Bool {
         if isAnyOrNullableAny(sourceKind) {
-            if case .primitive = targetKind {
+            if case .primitive(_, .nonNull) = targetKind {
                 return true
             }
             return false
@@ -526,17 +526,17 @@ final class ABILoweringPass: LoweringPass {
         boxCharCallee: InternedString
     ) -> InternedString? {
         switch kind {
-        case .primitive(.int, _):
+        case .primitive(.int, .nonNull):
             return boxIntCallee
-        case .primitive(.long, _):
+        case .primitive(.long, .nonNull):
             return boxLongCallee
-        case .primitive(.boolean, _):
+        case .primitive(.boolean, .nonNull):
             return boxBoolCallee
-        case .primitive(.float, _):
+        case .primitive(.float, .nonNull):
             return boxFloatCallee
-        case .primitive(.double, _):
+        case .primitive(.double, .nonNull):
             return boxDoubleCallee
-        case .primitive(.char, _):
+        case .primitive(.char, .nonNull):
             return boxCharCallee
         default:
             return nil
