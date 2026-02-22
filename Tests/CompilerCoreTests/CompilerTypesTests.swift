@@ -233,4 +233,16 @@ final class CompilerTypesTests: XCTestCase {
         XCTAssertEqual(o1, o2)
         XCTAssertNotEqual(o1, o3)
     }
+
+    func testHostDefaultTargetTripleMatchesCompileArchitecture() {
+        let host = TargetTriple.hostDefault()
+        #if arch(arm64)
+        XCTAssertEqual(host.arch, "arm64")
+        #elseif arch(x86_64)
+        XCTAssertEqual(host.arch, "x86_64")
+        #endif
+        XCTAssertEqual(host.vendor, "apple")
+        XCTAssertEqual(host.os, "macosx")
+        XCTAssertNil(host.osVersion)
+    }
 }
