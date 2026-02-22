@@ -94,9 +94,16 @@ extension DataFlowSemaPassPhase {
                 break
             }
 
-            if let resolved = symbols.lookupAll(fqName: path)
-                .compactMap({ symbols.symbol($0) })
-                .first(where: { isNominalTypeSymbol($0.kind) }) {
+            let candidates: [SemanticSymbol]
+            let fqCandidates = symbols.lookupAll(fqName: path).compactMap { symbols.symbol($0) }
+            if !fqCandidates.isEmpty {
+                candidates = fqCandidates
+            } else if path.count == 1 {
+                candidates = symbols.lookupByShortName(shortName).compactMap { symbols.symbol($0) }
+            } else {
+                candidates = []
+            }
+            if let resolved = candidates.first(where: { isNominalTypeSymbol($0.kind) }) {
                 let resolvedArgs = resolveTypeArgRefs(
                     argRefs,
                     ast: ast,

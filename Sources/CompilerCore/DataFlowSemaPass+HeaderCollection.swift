@@ -277,13 +277,35 @@ extension DataFlowSemaPassPhase {
                     for: symbol
                 )
             }
-            _ = types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
+            let interfaceType = types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
+            let interfaceScope = ClassMemberScope(
+                parent: scope,
+                symbols: symbols,
+                ownerSymbol: symbol,
+                thisType: interfaceType
+            )
             collectNestedTypeAliases(
                 interfaceDecl.nestedTypeAliases,
                 ownerFQName: fqName,
                 ast: ast,
                 symbols: symbols,
                 types: types,
+                diagnostics: diagnostics,
+                interner: interner
+            )
+            collectMemberHeaders(
+                memberFunctions: interfaceDecl.memberFunctions,
+                memberProperties: interfaceDecl.memberProperties,
+                nestedClasses: interfaceDecl.nestedClasses,
+                nestedObjects: interfaceDecl.nestedObjects,
+                ownerFQName: fqName,
+                ownerSymbol: symbol,
+                ownerType: interfaceType,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                bindings: bindings,
+                scope: interfaceScope,
                 diagnostics: diagnostics,
                 interner: interner
             )
