@@ -103,27 +103,32 @@ extension DataFlowSemaPassPhase {
         symbols: SymbolTable,
         types: TypeSystem
     ) -> [TypeArg] {
-        argRefs.compactMap { argRef in
+        // Use all-or-nothing semantics: if any type arg fails to resolve,
+        // return an empty array to preserve positional integrity.
+        var result: [TypeArg] = []
+        result.reserveCapacity(argRefs.count)
+        for argRef in argRefs {
             switch argRef {
             case .invariant(let innerRef):
                 guard let resolved = resolveTypeRefForInheritance(innerRef, ast: ast, symbols: symbols, types: types) else {
-                    return nil
+                    return []
                 }
-                return .invariant(resolved)
+                result.append(.invariant(resolved))
             case .out(let innerRef):
                 guard let resolved = resolveTypeRefForInheritance(innerRef, ast: ast, symbols: symbols, types: types) else {
-                    return nil
+                    return []
                 }
-                return .out(resolved)
+                result.append(.out(resolved))
             case .in(let innerRef):
                 guard let resolved = resolveTypeRefForInheritance(innerRef, ast: ast, symbols: symbols, types: types) else {
-                    return nil
+                    return []
                 }
-                return .in(resolved)
+                result.append(.in(resolved))
             case .star:
-                return .star
+                result.append(.star)
             }
         }
+        return result
     }
 
     private func resolveTypeRefForInheritance(
