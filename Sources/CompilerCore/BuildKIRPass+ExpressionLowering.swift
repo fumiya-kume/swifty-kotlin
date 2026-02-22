@@ -441,7 +441,6 @@ extension BuildKIRPhase {
             return lowerWhenExpr(exprID, subject: subject, branches: branches, elseExpr: elseExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
         case .blockExpr(let statements, let trailingExpr, _):
-            var lastLowered: KIRExprID?
             for stmt in statements {
                 let loweredStmt = lowerExpr(
                     stmt,
@@ -452,7 +451,6 @@ extension BuildKIRPhase {
                     propertyConstantInitializers: propertyConstantInitializers,
                     instructions: &instructions
                 )
-                lastLowered = loweredStmt
                 // If the statement is a terminator (return/throw), stop lowering
                 if isTerminatedExpr(loweredStmt, arena: arena, sema: sema) {
                     return loweredStmt
