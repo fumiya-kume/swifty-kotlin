@@ -196,6 +196,12 @@ extension BuildKIRPhase {
                 let funRef = arena.appendExpr(.symbolRef(symbol), type: funType)
                 instructions.append(.constValue(result: funRef, value: .symbolRef(symbol)))
                 localValuesBySymbol[symbol] = funRef
+                registerCallableValue(
+                    funRef,
+                    symbol: symbol,
+                    callee: callableTargetName(for: symbol, sema: sema, interner: interner),
+                    captureArguments: []
+                )
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))
@@ -392,6 +398,37 @@ extension BuildKIRPhase {
             )
             instructions.append(.rethrow(value: thrownValue))
             let unit = arena.appendExpr(.unit, type: sema.types.nothingType)
+            instructions.append(.constValue(result: unit, value: .unit))
+            return unit
+
+        case .lambdaLiteral(let params, let bodyExpr, _):
+            return lowerLambdaLiteralExpr(
+                exprID,
+                params: params,
+                bodyExpr: bodyExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+
+        case .callableRef(let receiverExpr, let memberName, _):
+            return lowerCallableRefExpr(
+                exprID,
+                receiverExpr: receiverExpr,
+                memberName: memberName,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+
+        case .objectLiteral:
+            let unit = arena.appendExpr(.unit, type: boundType ?? sema.types.anyType)
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 

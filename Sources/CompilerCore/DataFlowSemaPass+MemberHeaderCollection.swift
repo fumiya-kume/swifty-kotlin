@@ -45,6 +45,7 @@ extension DataFlowSemaPassPhase {
             )
             bindings.bindDecl(declID, symbol: memberSymbol)
             symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
+            scope.insert(memberSymbol)
 
             let localNamespaceFQName = memberFQName + [interner.intern("$\(memberSymbol.rawValue)")]
             var paramTypes: [TypeID] = []
@@ -187,6 +188,7 @@ extension DataFlowSemaPassPhase {
             )
             bindings.bindDecl(declID, symbol: memberSymbol)
             symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
+            scope.insert(memberSymbol)
 
             let resolvedType = resolveTypeRef(
                 propertyDecl.type,
@@ -225,8 +227,15 @@ extension DataFlowSemaPassPhase {
                 )
                 bindings.bindDecl(declID, symbol: nestedSymbol)
                 symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)
+                scope.insert(nestedSymbol)
 
                 let nestedType = types.make(.classType(ClassType(classSymbol: nestedSymbol, args: [], nullability: .nonNull)))
+                let nestedScope = ClassMemberScope(
+                    parent: scope,
+                    symbols: symbols,
+                    ownerSymbol: nestedSymbol,
+                    thisType: nestedType
+                )
                 if !nestedClass.typeParams.isEmpty {
                     types.setNominalTypeParameterVariances(
                         nestedClass.typeParams.map(\.variance),
@@ -276,7 +285,7 @@ extension DataFlowSemaPassPhase {
                     symbols: symbols,
                     types: types,
                     bindings: bindings,
-                    scope: scope,
+                    scope: nestedScope,
                     diagnostics: diagnostics,
                     interner: interner
                 )
@@ -300,6 +309,7 @@ extension DataFlowSemaPassPhase {
                 )
                 bindings.bindDecl(declID, symbol: nestedSymbol)
                 symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)
+                scope.insert(nestedSymbol)
 
                 _ = types.make(.classType(ClassType(classSymbol: nestedSymbol, args: [], nullability: .nonNull)))
                 if !nestedInterface.typeParams.isEmpty {
@@ -346,8 +356,15 @@ extension DataFlowSemaPassPhase {
             )
             bindings.bindDecl(declID, symbol: nestedSymbol)
             symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)
+            scope.insert(nestedSymbol)
 
             let nestedType = types.make(.classType(ClassType(classSymbol: nestedSymbol, args: [], nullability: .nonNull)))
+            let nestedScope = ClassMemberScope(
+                parent: scope,
+                symbols: symbols,
+                ownerSymbol: nestedSymbol,
+                thisType: nestedType
+            )
             collectNestedTypeAliases(
                 nestedObject.nestedTypeAliases,
                 ownerFQName: nestedFQName,
@@ -369,7 +386,7 @@ extension DataFlowSemaPassPhase {
                 symbols: symbols,
                 types: types,
                 bindings: bindings,
-                scope: scope,
+                scope: nestedScope,
                 diagnostics: diagnostics,
                 interner: interner
             )

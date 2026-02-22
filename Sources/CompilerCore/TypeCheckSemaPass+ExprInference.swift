@@ -234,6 +234,186 @@ extension TypeCheckSemaPassPhase {
             sema.bindings.bindExprType(id, type: sema.types.nothingType)
             return sema.types.nothingType
 
+        case .lambdaLiteral(let params, let body, _):
+            let expectedFunctionType: FunctionType?
+            if let expectedType,
+               case .functionType(let functionType) = sema.types.kind(of: expectedType) {
+                expectedFunctionType = functionType
+            } else {
+                expectedFunctionType = nil
+            }
+
+            var lambdaLocals = locals
+            let outerSymbols = Set(locals.values.map { $0.symbol })
+            let parameterTypes: [TypeID]
+            if let expectedFunctionType, expectedFunctionType.params.count == params.count {
+                parameterTypes = expectedFunctionType.params
+            } else {
+                parameterTypes = Array(repeating: sema.types.anyType, count: params.count)
+            }
+            for (offset, param) in params.enumerated() {
+                let syntheticSymbol = SymbolID(rawValue: -1_000_000 - id.rawValue - Int32(offset))
+                let parameterType = offset < parameterTypes.count ? parameterTypes[offset] : sema.types.anyType
+                lambdaLocals[param] = (
+                    type: parameterType,
+                    symbol: syntheticSymbol,
+                    isMutable: false,
+                    isInitialized: true
+                )
+            }
+
+            let inferredBodyType = inferExpr(
+                body,
+                ctx: ctx,
+                locals: &lambdaLocals,
+                expectedType: expectedFunctionType?.returnType
+            )
+            let captures = collectCapturedOuterSymbols(
+                in: body,
+                ast: ast,
+                sema: sema,
+                outerSymbols: outerSymbols
+            )
+            sema.bindings.bindCaptureSymbols(id, symbols: captures)
+
+            if let expectedType, let expectedFunctionType {
+                emitSubtypeConstraint(
+                    left: inferredBodyType,
+                    right: expectedFunctionType.returnType,
+                    range: ast.arena.exprRange(body),
+                    solver: ConstraintSolver(),
+                    sema: sema,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+                sema.bindings.bindExprType(id, type: expectedType)
+                return expectedType
+            }
+
+            let inferredFunctionType = sema.types.make(.functionType(FunctionType(
+                params: parameterTypes,
+                returnType: inferredBodyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            sema.bindings.bindExprType(id, type: inferredFunctionType)
+            return inferredFunctionType
+
+        case .objectLiteral(let superTypes, _):
+            let objectType = superTypes.first.map {
+                resolveTypeRef($0, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
+            } ?? sema.types.anyType
+            sema.bindings.bindExprType(id, type: objectType)
+            return objectType
+
+        case .callableRef(let receiver, let member, let range):
+            let outerSymbols = Set(locals.values.map { $0.symbol })
+
+            let receiverType: TypeID?
+            if let receiver {
+                receiverType = inferExpr(receiver, ctx: ctx, locals: &locals, expectedType: nil)
+            } else {
+                receiverType = nil
+            }
+
+            var candidates: [SymbolID] = []
+            if let receiverType {
+                let nonNullReceiver = makeNonNullable(receiverType, types: sema.types)
+                let memberCandidates = collectMemberFunctionCandidates(
+                    named: member,
+                    receiverType: nonNullReceiver,
+                    sema: sema
+                )
+                if !memberCandidates.isEmpty {
+                    candidates = memberCandidates
+                } else {
+                    candidates = scope.lookup(member).filter { symbolID in
+                        guard let symbol = sema.symbols.symbol(symbolID),
+                              symbol.kind == .function,
+                              let signature = sema.symbols.functionSignature(for: symbolID),
+                              let declaredReceiver = signature.receiverType else {
+                            return false
+                        }
+                        return sema.types.isSubtype(nonNullReceiver, declaredReceiver)
+                    }
+                }
+            } else {
+                candidates = scope.lookup(member).filter { symbolID in
+                    guard let symbol = sema.symbols.symbol(symbolID) else {
+                        return false
+                    }
+                    return symbol.kind == .function || symbol.kind == .constructor
+                }
+                if candidates.isEmpty,
+                   let local = locals[member],
+                   let localSymbol = sema.symbols.symbol(local.symbol),
+                   localSymbol.kind == .function {
+                    candidates = [local.symbol]
+                }
+            }
+
+            let chosen = chooseCallableReferenceTarget(
+                from: candidates,
+                expectedType: expectedType,
+                bindReceiver: receiver != nil,
+                sema: sema
+            )
+
+            if let chosen,
+               let signature = sema.symbols.functionSignature(for: chosen) {
+                let inferredType = callableFunctionType(
+                    for: signature,
+                    bindReceiver: receiver != nil,
+                    sema: sema
+                )
+                let resultType: TypeID
+                if let expectedType,
+                   case .functionType = sema.types.kind(of: expectedType) {
+                    emitSubtypeConstraint(
+                        left: inferredType,
+                        right: expectedType,
+                        range: range,
+                        solver: ConstraintSolver(),
+                        sema: sema,
+                        diagnostics: ctx.semaCtx.diagnostics
+                    )
+                    resultType = expectedType
+                } else {
+                    resultType = inferredType
+                }
+                sema.bindings.bindIdentifier(id, symbol: chosen)
+                sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+                let captures = receiver.map { recv in
+                    collectCapturedOuterSymbols(
+                        in: recv,
+                        ast: ast,
+                        sema: sema,
+                        outerSymbols: outerSymbols
+                    )
+                } ?? []
+                sema.bindings.bindCaptureSymbols(id, symbols: captures)
+                sema.bindings.bindExprType(id, type: resultType)
+                return resultType
+            }
+
+            let fallbackType: TypeID
+            if let expectedType,
+               case .functionType = sema.types.kind(of: expectedType) {
+                fallbackType = expectedType
+            } else {
+                fallbackType = sema.types.anyType
+            }
+            let fallbackCaptures = receiver.map { recv in
+                collectCapturedOuterSymbols(
+                    in: recv,
+                    ast: ast,
+                    sema: sema,
+                    outerSymbols: outerSymbols
+                )
+            } ?? []
+            sema.bindings.bindCaptureSymbols(id, symbols: fallbackCaptures)
+            sema.bindings.bindExprType(id, type: fallbackType)
+            return fallbackType
+
         case .blockExpr(let statements, let trailingExpr, _):
             var blockLocals = locals
             for stmt in statements {

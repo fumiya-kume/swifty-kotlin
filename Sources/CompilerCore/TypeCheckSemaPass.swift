@@ -115,67 +115,44 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                 }
                 switch decl {
                 case .funDecl(let function):
-                    guard let signature = sema.symbols.functionSignature(for: declSymbol) else {
-                        continue
-                    }
-
-                    var locals: [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)] = [:]
-                    for (index, paramSymbol) in signature.valueParameterSymbols.enumerated() {
-                        guard let param = sema.symbols.symbol(paramSymbol) else {
-                            continue
-                        }
-                        let type = index < signature.parameterTypes.count ? signature.parameterTypes[index] : sema.types.anyType
-                        locals[param.name] = (type, paramSymbol, false, true)
-                    }
-
-                    let funCtx = inferCtx.with(implicitReceiverType: signature.receiverType)
-                    let bodyType = inferFunctionBodyType(
-                        function.body, ctx: funCtx, locals: &locals,
-                        expectedType: signature.returnType
-                    )
-                    emitSubtypeConstraint(
-                        left: bodyType, right: signature.returnType,
-                        range: function.range, solver: solver,
-                        sema: sema, diagnostics: ctx.diagnostics
-                    )
-
-                    if function.returnType == nil && bodyType != sema.types.errorType {
-                        sema.symbols.setFunctionSignature(
-                            FunctionSignature(
-                                receiverType: signature.receiverType,
-                                parameterTypes: signature.parameterTypes,
-                                returnType: bodyType,
-                                isSuspend: signature.isSuspend,
-                                valueParameterSymbols: signature.valueParameterSymbols,
-                                valueParameterHasDefaultValues: signature.valueParameterHasDefaultValues,
-                                valueParameterIsVararg: signature.valueParameterIsVararg,
-                                typeParameterSymbols: signature.typeParameterSymbols,
-                                reifiedTypeParameterIndices: signature.reifiedTypeParameterIndices
-                            ),
-                            for: declSymbol
-                        )
-                    }
-
-                case .propertyDecl(let property):
-                    typeCheckPropertyDecl(
-                        property, symbol: declSymbol,
-                        ctx: inferCtx, solver: solver,
+                    typeCheckFunctionDecl(
+                        function,
+                        symbol: declSymbol,
+                        ctx: inferCtx,
+                        solver: solver,
                         diagnostics: ctx.diagnostics
                     )
-                    let expr = ExprID(rawValue: declID.rawValue)
-                    sema.bindings.bindIdentifier(expr, symbol: declSymbol)
-                    let propertyType = sema.symbols.propertyType(for: declSymbol) ?? sema.types.nullableAnyType
-                    sema.bindings.bindExprType(expr, type: propertyType)
+
+                case .propertyDecl(let property):
+                    typeCheckBoundPropertyDecl(
+                        property,
+                        declID: declID,
+                        symbol: declSymbol,
+                        ctx: inferCtx,
+                        solver: solver,
+                        diagnostics: ctx.diagnostics
+                    )
 
                 case .classDecl(let classDecl):
-                    typeCheckInitBlocks(classDecl.initBlocks, ctx: inferCtx)
-                    typeCheckSecondaryConstructors(classDecl.secondaryConstructors, ctx: inferCtx)
+                    typeCheckClassDecl(
+                        classDecl,
+                        symbol: declSymbol,
+                        ctx: inferCtx,
+                        solver: solver,
+                        diagnostics: ctx.diagnostics
+                    )
 
                 case .interfaceDecl:
                     break
 
                 case .objectDecl(let objectDecl):
-                    typeCheckInitBlocks(objectDecl.initBlocks, ctx: inferCtx)
+                    typeCheckObjectDecl(
+                        objectDecl,
+                        symbol: declSymbol,
+                        ctx: inferCtx,
+                        solver: solver,
+                        diagnostics: ctx.diagnostics
+                    )
 
                 case .typeAliasDecl, .enumEntryDecl:
                     continue
@@ -208,5 +185,267 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
         if !solution.isSuccess, let failure = solution.failure {
             diagnostics.emit(failure)
         }
+    }
+}
+
+extension TypeCheckSemaPassPhase {
+    private typealias LocalBindings = [InternedString: (
+        type: TypeID,
+        symbol: SymbolID,
+        isMutable: Bool,
+        isInitialized: Bool
+    )]
+
+    func typeCheckFunctionDecl(
+        _ function: FunDecl,
+        symbol: SymbolID,
+        ctx: TypeInferenceContext,
+        solver: ConstraintSolver,
+        diagnostics: DiagnosticEngine
+    ) {
+        let sema = ctx.sema
+        guard let signature = sema.symbols.functionSignature(for: symbol) else {
+            return
+        }
+
+        var locals: LocalBindings = [:]
+        for (index, paramSymbol) in signature.valueParameterSymbols.enumerated() {
+            guard let param = sema.symbols.symbol(paramSymbol) else {
+                continue
+            }
+            let type = index < signature.parameterTypes.count
+                ? signature.parameterTypes[index]
+                : sema.types.anyType
+            locals[param.name] = (type, paramSymbol, false, true)
+        }
+
+        let functionCtx = ctx.with(implicitReceiverType: signature.receiverType)
+        let bodyType = inferFunctionBodyType(
+            function.body,
+            ctx: functionCtx,
+            locals: &locals,
+            expectedType: signature.returnType
+        )
+        emitSubtypeConstraint(
+            left: bodyType,
+            right: signature.returnType,
+            range: function.range,
+            solver: solver,
+            sema: sema,
+            diagnostics: diagnostics
+        )
+
+        if function.returnType == nil && bodyType != sema.types.errorType {
+            sema.symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: signature.receiverType,
+                    parameterTypes: signature.parameterTypes,
+                    returnType: bodyType,
+                    isSuspend: signature.isSuspend,
+                    valueParameterSymbols: signature.valueParameterSymbols,
+                    valueParameterHasDefaultValues: signature.valueParameterHasDefaultValues,
+                    valueParameterIsVararg: signature.valueParameterIsVararg,
+                    typeParameterSymbols: signature.typeParameterSymbols,
+                    reifiedTypeParameterIndices: signature.reifiedTypeParameterIndices
+                ),
+                for: symbol
+            )
+        }
+    }
+
+    func typeCheckBoundPropertyDecl(
+        _ property: PropertyDecl,
+        declID: DeclID,
+        symbol: SymbolID,
+        ctx: TypeInferenceContext,
+        solver: ConstraintSolver,
+        diagnostics: DiagnosticEngine
+    ) {
+        let sema = ctx.sema
+        typeCheckPropertyDecl(
+            property,
+            symbol: symbol,
+            ctx: ctx,
+            solver: solver,
+            diagnostics: diagnostics
+        )
+        let expr = ExprID(rawValue: declID.rawValue)
+        sema.bindings.bindIdentifier(expr, symbol: symbol)
+        let propertyType = sema.symbols.propertyType(for: symbol) ?? sema.types.nullableAnyType
+        sema.bindings.bindExprType(expr, type: propertyType)
+    }
+
+    func typeCheckClassDecl(
+        _ classDecl: ClassDecl,
+        symbol: SymbolID,
+        ctx: TypeInferenceContext,
+        solver: ConstraintSolver,
+        diagnostics: DiagnosticEngine
+    ) {
+        let sema = ctx.sema
+        let classType = sema.types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
+        let classScope = buildClassMemberScope(
+            ownerSymbol: symbol,
+            ownerType: classType,
+            memberFunctions: classDecl.memberFunctions,
+            memberProperties: classDecl.memberProperties,
+            nestedClasses: classDecl.nestedClasses,
+            nestedObjects: classDecl.nestedObjects,
+            ctx: ctx
+        )
+        let classCtx = ctx
+            .with(scope: classScope)
+            .with(implicitReceiverType: classType)
+
+        typeCheckInitBlocks(classDecl.initBlocks, ctx: classCtx)
+        typeCheckSecondaryConstructors(classDecl.secondaryConstructors, ctx: classCtx)
+        typeCheckClassLikeMembers(
+            memberFunctions: classDecl.memberFunctions,
+            memberProperties: classDecl.memberProperties,
+            nestedClasses: classDecl.nestedClasses,
+            nestedObjects: classDecl.nestedObjects,
+            ctx: classCtx,
+            solver: solver,
+            diagnostics: diagnostics
+        )
+    }
+
+    func typeCheckObjectDecl(
+        _ objectDecl: ObjectDecl,
+        symbol: SymbolID,
+        ctx: TypeInferenceContext,
+        solver: ConstraintSolver,
+        diagnostics: DiagnosticEngine
+    ) {
+        let sema = ctx.sema
+        let objectType = sema.types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
+        let objectScope = buildClassMemberScope(
+            ownerSymbol: symbol,
+            ownerType: objectType,
+            memberFunctions: objectDecl.memberFunctions,
+            memberProperties: objectDecl.memberProperties,
+            nestedClasses: objectDecl.nestedClasses,
+            nestedObjects: objectDecl.nestedObjects,
+            ctx: ctx
+        )
+        let objectCtx = ctx
+            .with(scope: objectScope)
+            .with(implicitReceiverType: objectType)
+
+        typeCheckInitBlocks(objectDecl.initBlocks, ctx: objectCtx)
+        typeCheckClassLikeMembers(
+            memberFunctions: objectDecl.memberFunctions,
+            memberProperties: objectDecl.memberProperties,
+            nestedClasses: objectDecl.nestedClasses,
+            nestedObjects: objectDecl.nestedObjects,
+            ctx: objectCtx,
+            solver: solver,
+            diagnostics: diagnostics
+        )
+    }
+
+    func typeCheckClassLikeMembers(
+        memberFunctions: [DeclID],
+        memberProperties: [DeclID],
+        nestedClasses: [DeclID],
+        nestedObjects: [DeclID],
+        ctx: TypeInferenceContext,
+        solver: ConstraintSolver,
+        diagnostics: DiagnosticEngine
+    ) {
+        let ast = ctx.ast
+        let sema = ctx.sema
+
+        for declID in memberFunctions {
+            guard let decl = ast.arena.decl(declID),
+                  case .funDecl(let function) = decl,
+                  let symbol = sema.bindings.declSymbols[declID] else {
+                continue
+            }
+            typeCheckFunctionDecl(
+                function,
+                symbol: symbol,
+                ctx: ctx,
+                solver: solver,
+                diagnostics: diagnostics
+            )
+        }
+
+        for declID in memberProperties {
+            guard let decl = ast.arena.decl(declID),
+                  case .propertyDecl(let property) = decl,
+                  let symbol = sema.bindings.declSymbols[declID] else {
+                continue
+            }
+            typeCheckBoundPropertyDecl(
+                property,
+                declID: declID,
+                symbol: symbol,
+                ctx: ctx,
+                solver: solver,
+                diagnostics: diagnostics
+            )
+        }
+
+        for declID in nestedClasses {
+            guard let decl = ast.arena.decl(declID),
+                  let symbol = sema.bindings.declSymbols[declID] else {
+                continue
+            }
+            switch decl {
+            case .classDecl(let classDecl):
+                typeCheckClassDecl(
+                    classDecl,
+                    symbol: symbol,
+                    ctx: ctx,
+                    solver: solver,
+                    diagnostics: diagnostics
+                )
+            case .interfaceDecl:
+                continue
+            default:
+                continue
+            }
+        }
+
+        for declID in nestedObjects {
+            guard let decl = ast.arena.decl(declID),
+                  case .objectDecl(let objectDecl) = decl,
+                  let symbol = sema.bindings.declSymbols[declID] else {
+                continue
+            }
+            typeCheckObjectDecl(
+                objectDecl,
+                symbol: symbol,
+                ctx: ctx,
+                solver: solver,
+                diagnostics: diagnostics
+            )
+        }
+    }
+
+    func buildClassMemberScope(
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        memberFunctions: [DeclID],
+        memberProperties: [DeclID],
+        nestedClasses: [DeclID],
+        nestedObjects: [DeclID],
+        ctx: TypeInferenceContext
+    ) -> ClassMemberScope {
+        let sema = ctx.sema
+        let classScope = ClassMemberScope(
+            parent: ctx.scope,
+            symbols: sema.symbols,
+            ownerSymbol: ownerSymbol,
+            thisType: ownerType
+        )
+
+        for declID in memberFunctions + memberProperties + nestedClasses + nestedObjects {
+            if let symbol = sema.bindings.declSymbols[declID] {
+                classScope.insert(symbol)
+            }
+        }
+        return classScope
     }
 }

@@ -127,6 +127,7 @@ extension BuildASTPhase.ExpressionParser {
              .symbol(.dotDot), .symbol(.dotDotLt),
              .symbol(.questionQuestion), .symbol(.questionColon),
              .symbol(.dot), .symbol(.questionDot),
+             .symbol(.doubleColon),
              .symbol(.arrow), .symbol(.fatArrow),
              .keyword(.as), .keyword(.is), .keyword(.in),
              .keyword(.else), .keyword(.catch), .keyword(.finally):

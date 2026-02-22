@@ -185,6 +185,9 @@ final class ASTModelsTests: XCTestCase {
             .safeMemberCall(receiver: dummyExprID, callee: name, typeArgs: [], args: [], range: r),
             .compoundAssign(op: .plusAssign, name: name, value: dummyExprID, range: r),
             .throwExpr(value: dummyExprID, range: r),
+            .lambdaLiteral(params: [name], body: dummyExprID, range: r),
+            .objectLiteral(superTypes: [dummyTypeRefID], range: r),
+            .callableRef(receiver: dummyExprID, member: name, range: r),
             .localFunDecl(name: name, valueParams: [], returnType: nil, body: .unit, range: r),
         ]
 

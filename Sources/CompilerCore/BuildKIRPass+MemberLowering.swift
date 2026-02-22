@@ -26,6 +26,7 @@ extension BuildKIRPhase {
             currentImplicitReceiverSymbol = nil
             loopControlStack.removeAll(keepingCapacity: true)
             nextLoopLabel = 10_000
+            beginCallableLoweringScope()
 
             let signature = sema.symbols.functionSignature(for: symbol)
             var params: [KIRParameter] = []
@@ -142,6 +143,7 @@ extension BuildKIRPhase {
                 )
                 allDecls.append(stubID)
             }
+            allDecls.append(contentsOf: drainGeneratedCallableDecls())
             currentImplicitReceiverExprID = nil
             currentImplicitReceiverSymbol = nil
         }
