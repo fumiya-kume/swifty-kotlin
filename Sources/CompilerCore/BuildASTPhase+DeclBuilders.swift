@@ -40,6 +40,23 @@ extension BuildASTPhase {
 
     /// Detects whether the class header contains explicit constructor parentheses,
     /// distinguishing `class Foo()` from `class Foo`.
+    ///
+    /// This uses token-level scanning because the CST does not distinguish
+    /// "no primary constructor" from "primary constructor with zero parameters";
+    /// both produce an empty `primaryConstructorParams` array. The function
+    /// scans tokens after the `class` keyword, skipping type-parameter angle
+    /// brackets (`<…>`), and returns `true` if it encounters `(` before `:` or `{`.
+    ///
+    /// Examples:
+    /// - `class Foo()` → `true`
+    /// - `class Foo`   → `false`
+    /// - `class Foo<T>()` → `true`
+    /// - `class Foo<T>` → `false`
+    /// - `class Foo : Bar` → `false`
+    ///
+    /// Limitation: nested generic bounds (e.g. `class Foo<T: List<Int>>()`) use
+    /// `<` and `>` tokens that are tracked via depth counting; the lexer does not
+    /// emit `>>` as a single token, so this is handled correctly.
     func declarationHasPrimaryConstructorSyntax(from nodeID: NodeID, in arena: SyntaxArena) -> Bool {
         let tokens = collectTokens(from: nodeID, in: arena)
         // Skip past the class keyword and name (and optional type params in `<>`).

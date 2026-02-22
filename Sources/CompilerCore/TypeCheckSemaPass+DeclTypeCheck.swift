@@ -181,7 +181,14 @@ extension TypeCheckSemaPassPhase {
                             return symbol.kind == .constructor
                         }
 
-                    if !candidates.isEmpty {
+                    if candidates.isEmpty {
+                        let targetKind = delegation.kind == .this ? "this" : "super"
+                        sema.diagnostics.error(
+                            "KSWIFTK-SEMA-0051",
+                            "Unresolved \(targetKind)() delegation target: no matching constructor found.",
+                            range: delegation.range
+                        )
+                    } else {
                         let callExpr = CallExpr(
                             range: delegation.range,
                             calleeName: ctx.interner.intern("<init>"),
@@ -197,6 +204,15 @@ extension TypeCheckSemaPassPhase {
                             sema.diagnostics.emit(diagnostic)
                         }
                     }
+                } else if ownerSymbol != nil {
+                    // Owner exists but delegation target FQ name could not be
+                    // resolved (e.g. super() with no superclass).
+                    let targetKind = delegation.kind == .this ? "this" : "super"
+                    sema.diagnostics.error(
+                        "KSWIFTK-SEMA-0051",
+                        "Unresolved \(targetKind)() delegation target: no matching constructor found.",
+                        range: delegation.range
+                    )
                 }
             }
             _ = inferFunctionBodyType(ctor.body, ctx: ctx, locals: &locals, expectedType: nil)
