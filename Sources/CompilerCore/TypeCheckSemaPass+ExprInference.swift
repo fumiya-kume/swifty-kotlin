@@ -314,4 +314,19 @@ extension TypeCheckSemaPassPhase {
             return receiverType
         }
     }
+
+    func applyFlowStateToLocals(
+        _ state: DataFlowState,
+        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
+        sema: SemaModule
+    ) {
+        for (name, local) in locals {
+            guard let varState = state.variables[local.symbol],
+                  varState.possibleTypes.count == 1,
+                  let narrowed = varState.possibleTypes.first else {
+                continue
+            }
+            locals[name] = (narrowed, local.symbol, local.isMutable, local.isInitialized)
+        }
+    }
 }

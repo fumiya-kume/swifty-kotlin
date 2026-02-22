@@ -74,6 +74,7 @@ struct TypeInferenceContext {
     let scope: Scope
     let implicitReceiverType: TypeID?
     let loopDepth: Int
+    let flowState: DataFlowState
     let currentFileID: FileID
     let enclosingClassSymbol: SymbolID?
     let visibilityChecker: VisibilityChecker
@@ -89,6 +90,7 @@ struct TypeInferenceContext {
             scope: scope,
             implicitReceiverType: implicitReceiverType,
             loopDepth: loopDepth,
+            flowState: flowState,
             currentFileID: currentFileID,
             enclosingClassSymbol: enclosingClassSymbol,
             visibilityChecker: visibilityChecker
@@ -106,6 +108,7 @@ struct TypeInferenceContext {
             scope: scope,
             implicitReceiverType: implicitReceiverType,
             loopDepth: loopDepth,
+            flowState: flowState,
             currentFileID: currentFileID,
             enclosingClassSymbol: enclosingClassSymbol,
             visibilityChecker: visibilityChecker
@@ -123,6 +126,25 @@ struct TypeInferenceContext {
             scope: scope,
             implicitReceiverType: implicitReceiverType,
             loopDepth: loopDepth,
+            flowState: flowState,
+            currentFileID: currentFileID,
+            enclosingClassSymbol: enclosingClassSymbol,
+            visibilityChecker: visibilityChecker
+        )
+    }
+
+    func with(flowState: DataFlowState) -> TypeInferenceContext {
+        TypeInferenceContext(
+            ast: ast,
+            sema: sema,
+            semaCtx: semaCtx,
+            resolver: resolver,
+            dataFlow: dataFlow,
+            interner: interner,
+            scope: scope,
+            implicitReceiverType: implicitReceiverType,
+            loopDepth: loopDepth,
+            flowState: flowState,
             currentFileID: currentFileID,
             enclosingClassSymbol: enclosingClassSymbol,
             visibilityChecker: visibilityChecker
@@ -140,6 +162,7 @@ struct TypeInferenceContext {
             scope: scope,
             implicitReceiverType: implicitReceiverType,
             loopDepth: loopDepth,
+            flowState: flowState,
             currentFileID: currentFileID,
             enclosingClassSymbol: enclosingClassSymbol,
             visibilityChecker: visibilityChecker
@@ -215,6 +238,7 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                 interner: ctx.interner, scope: fileScope,
                 implicitReceiverType: nil,
                 loopDepth: 0,
+                flowState: DataFlowState(),
                 currentFileID: file.fileID,
                 enclosingClassSymbol: nil,
                 visibilityChecker: checker
