@@ -39,3 +39,11 @@ fun compoundMod(x: Int): Int {
     e %= 4
     return e
 }
+
+fun safeCallExample(s: String?): Int? = s?.hashCode()
+
+fun arrayAssignExample(): Int {
+    var arr = IntArray(3)
+    arr[0] = 42
+    return arr[0]
+}
