@@ -70,7 +70,7 @@ public final class NameMangler {
             )
             return encodeType(erasedFunctionType, symbols: symbols, types: types, nameResolver: nameResolver)
 
-        case .property, .field:
+        case .property, .field, .backingField:
             guard let propertyType = symbols.propertyType(for: symbol.id) else {
                 return "_"
             }
@@ -137,6 +137,8 @@ public final class NameMangler {
             return "N"
         case .field:
             return "D"
+        case .backingField:
+            return "BF"
         case .typeParameter:
             return "Y"
         case .valueParameter:

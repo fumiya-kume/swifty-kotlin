@@ -20,6 +20,7 @@ public enum SymbolKind: Equatable {
     case constructor
     case property
     case field
+    case backingField
     case typeParameter
     case valueParameter
     case local
@@ -226,6 +227,7 @@ public final class SymbolTable {
     private var externalLinkNames: [SymbolID: String] = [:]
     private var typeAliasUnderlyingTypes: [SymbolID: TypeID] = [:]
     private var parentSymbols: [SymbolID: SymbolID] = [:]
+    private var backingFieldSymbols: [SymbolID: SymbolID] = [:]
     private var typeParameterUpperBoundsMap: [SymbolID: TypeID] = [:]
     private var sourceFileIDs: [SymbolID: FileID] = [:]
 
@@ -398,6 +400,14 @@ public final class SymbolTable {
 
     public func parentSymbol(for child: SymbolID) -> SymbolID? {
         parentSymbols[child]
+    }
+
+    public func setBackingFieldSymbol(_ backingField: SymbolID, for property: SymbolID) {
+        backingFieldSymbols[property] = backingField
+    }
+
+    public func backingFieldSymbol(for property: SymbolID) -> SymbolID? {
+        backingFieldSymbols[property]
     }
 
     public func setTypeParameterUpperBound(_ bound: TypeID, for symbol: SymbolID) {
