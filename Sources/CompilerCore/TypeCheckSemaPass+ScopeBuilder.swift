@@ -147,6 +147,11 @@ extension TypeCheckSemaPassPhase {
                 }
                 continue
             }
+            if !importedSymbols.isEmpty && hasPackageImport {
+                for importedSymbol in importedSymbols {
+                    explicitImportScope.insert(importedSymbol)
+                }
+            }
 
             if hasPackageImport {
                 for importedSymbol in topLevelSymbolsByPackage[importDecl.path] ?? [] {

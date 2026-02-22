@@ -310,13 +310,17 @@ public final class SymbolTable {
     }
 
     private func canCoexistAsOverload(kind: SymbolKind, existingKinds: [SymbolKind]) -> Bool {
-        if kind == .package || existingKinds.contains(.package) {
+        if kind == .package {
+            return true
+        }
+        let existingNonPackageKinds = existingKinds.filter { $0 != .package }
+        if existingNonPackageKinds.isEmpty {
             return true
         }
         guard isOverloadable(kind) else {
             return false
         }
-        return existingKinds.allSatisfy { isOverloadable($0) }
+        return existingNonPackageKinds.allSatisfy { isOverloadable($0) }
     }
 
     private func isOverloadable(_ kind: SymbolKind) -> Bool {
