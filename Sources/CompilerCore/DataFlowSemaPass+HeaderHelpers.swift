@@ -70,6 +70,36 @@ extension DataFlowSemaPassPhase {
         kind == .function || kind == .constructor
     }
 
+    func registerTypeAliasTypeParameters(
+        _ typeParams: [TypeParamDecl],
+        aliasSymbol: SymbolID,
+        parentFQName: [InternedString],
+        declSite: SourceRange?,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> [InternedString: SymbolID] {
+        var localTypeParameters: [InternedString: SymbolID] = [:]
+        var typeParameterSymbols: [SymbolID] = []
+        let localNamespaceFQName = parentFQName + [interner.intern("$\(aliasSymbol.rawValue)")]
+        for typeParam in typeParams {
+            let typeParamFQName = localNamespaceFQName + [typeParam.name]
+            let typeParamSymbol = symbols.define(
+                kind: .typeParameter,
+                name: typeParam.name,
+                fqName: typeParamFQName,
+                declSite: declSite,
+                visibility: .private,
+                flags: []
+            )
+            typeParameterSymbols.append(typeParamSymbol)
+            localTypeParameters[typeParam.name] = typeParamSymbol
+        }
+        if !typeParameterSymbols.isEmpty {
+            symbols.setTypeAliasTypeParameters(typeParameterSymbols, for: aliasSymbol)
+        }
+        return localTypeParameters
+    }
+
     func validateConstructorDelegation(
         ast: ASTModule,
         symbols: SymbolTable,

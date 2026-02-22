@@ -420,25 +420,14 @@ extension DataFlowSemaPassPhase {
                 visibility: visibility(from: alias.modifiers),
                 flags: flags(from: alias.modifiers)
             )
-            var localTypeParameters: [InternedString: SymbolID] = [:]
-            var typeParameterSymbols: [SymbolID] = []
-            let localNamespaceFQName = aliasFQName + [interner.intern("$\(aliasSymbol.rawValue)")]
-            for typeParam in alias.typeParams {
-                let typeParamFQName = localNamespaceFQName + [typeParam.name]
-                let typeParamSymbol = symbols.define(
-                    kind: .typeParameter,
-                    name: typeParam.name,
-                    fqName: typeParamFQName,
-                    declSite: alias.range,
-                    visibility: .private,
-                    flags: []
-                )
-                typeParameterSymbols.append(typeParamSymbol)
-                localTypeParameters[typeParam.name] = typeParamSymbol
-            }
-            if !typeParameterSymbols.isEmpty {
-                symbols.setTypeAliasTypeParameters(typeParameterSymbols, for: aliasSymbol)
-            }
+            let localTypeParameters = registerTypeAliasTypeParameters(
+                alias.typeParams,
+                aliasSymbol: aliasSymbol,
+                parentFQName: aliasFQName,
+                declSite: alias.range,
+                symbols: symbols,
+                interner: interner
+            )
             if alias.underlyingType == nil {
                 diagnostics.error(
                     "KSWIFTK-SEMA-0061",

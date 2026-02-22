@@ -238,7 +238,7 @@ extension DataFlowSemaPassPhase {
         }
     }
 
-    func resolveTypeAliasUnderlying(
+    private func resolveTypeAliasUnderlying(
         _ symbolID: SymbolID,
         symbols: SymbolTable,
         types: TypeSystem,
@@ -262,7 +262,8 @@ extension DataFlowSemaPassPhase {
             aliasSymbol: symbolID,
             typeArgs: typeArgs,
             symbols: symbols,
-            types: types
+            types: types,
+            diagnostics: diagnostics
         )
         if case .classType(let classType) = types.kind(of: expanded),
            let targetSymbol = symbols.symbol(classType.classSymbol),
@@ -293,11 +294,19 @@ extension DataFlowSemaPassPhase {
         aliasSymbol: SymbolID,
         typeArgs: [TypeArg],
         symbols: SymbolTable,
-        types: TypeSystem
+        types: TypeSystem,
+        diagnostics: DiagnosticEngine? = nil
     ) -> TypeID {
         let typeParamSymbols = symbols.typeAliasTypeParameters(for: aliasSymbol)
         guard !typeParamSymbols.isEmpty, !typeArgs.isEmpty else {
             return typeID
+        }
+        if typeArgs.count != typeParamSymbols.count {
+            diagnostics?.error(
+                "KSWIFTK-SEMA-0062",
+                "Type argument count mismatch: expected \(typeParamSymbols.count) but got \(typeArgs.count).",
+                range: nil
+            )
         }
         var substitution: [SymbolID: TypeID] = [:]
         for (index, paramSymbol) in typeParamSymbols.enumerated() {
