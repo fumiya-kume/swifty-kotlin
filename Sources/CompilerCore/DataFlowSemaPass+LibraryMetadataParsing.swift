@@ -231,6 +231,14 @@ extension DataFlowSemaPassPhase {
             )
             return nil
         }
+        if case .error = types.kind(of: decoded) {
+            diagnostics.warning(
+                "KSWIFTK-LIB-0006",
+                "Inconsistent typealias metadata at \(metadataPath): underlying type for '\(renderFQName(record.fqName, interner: interner))' resolved to error type.",
+                range: nil
+            )
+            return nil
+        }
         return decoded
     }
 

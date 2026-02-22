@@ -451,12 +451,38 @@ extension DataFlowSemaPassPhase {
             symbols.setPropertyType(resolvedType, for: symbol)
 
         case .typeAliasDecl(let typeAliasDecl):
-            if let resolvedUnderlying = resolveTypeRef(
+            var localTypeParameters: [InternedString: SymbolID] = [:]
+            var typeParameterSymbols: [SymbolID] = []
+            let localNamespaceFQName = fqName + [interner.intern("$\(symbol.rawValue)")]
+            for typeParam in typeAliasDecl.typeParams {
+                let typeParamFQName = localNamespaceFQName + [typeParam.name]
+                let typeParamSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: typeParam.name,
+                    fqName: typeParamFQName,
+                    declSite: typeAliasDecl.range,
+                    visibility: .private,
+                    flags: []
+                )
+                typeParameterSymbols.append(typeParamSymbol)
+                localTypeParameters[typeParam.name] = typeParamSymbol
+            }
+            if !typeParameterSymbols.isEmpty {
+                symbols.setTypeAliasTypeParameters(typeParameterSymbols, for: symbol)
+            }
+            if typeAliasDecl.underlyingType == nil {
+                diagnostics.error(
+                    "KSWIFTK-SEMA-0031",
+                    "Type alias '\(interner.resolve(typeAliasDecl.name))' must have a right-hand side type.",
+                    range: typeAliasDecl.range
+                )
+            } else if let resolvedUnderlying = resolveTypeRef(
                 typeAliasDecl.underlyingType,
                 ast: ast,
                 symbols: symbols,
                 types: types,
                 interner: interner,
+                localTypeParameters: localTypeParameters,
                 diagnostics: diagnostics
             ) {
                 symbols.setTypeAliasUnderlyingType(resolvedUnderlying, for: symbol)

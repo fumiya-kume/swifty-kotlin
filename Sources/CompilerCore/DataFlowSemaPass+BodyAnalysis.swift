@@ -98,17 +98,29 @@ extension DataFlowSemaPassPhase {
                 .compactMap({ symbols.symbol($0) })
                 .first(where: { isNominalTypeSymbol($0.kind) }) {
                 if resolved.kind == .typeAlias {
+                    let resolvedArgs = resolveTypeArgRefs(
+                        argRefs,
+                        ast: ast,
+                        symbols: symbols,
+                        types: types,
+                        interner: interner,
+                        localTypeParameters: localTypeParameters,
+                        diagnostics: diagnostics
+                    )
                     if let underlying = resolveTypeAliasUnderlying(
                         resolved.id,
                         symbols: symbols,
                         types: types,
-                        visited: []
+                        typeArgs: resolvedArgs,
+                        visited: [],
+                        diagnostics: diagnostics
                     ) {
                         if nullability == .nullable {
                             return applyNullability(underlying, types: types)
                         }
                         return underlying
                     }
+                    return types.errorType
                 }
                 let resolvedArgs = resolveTypeArgRefs(
                     argRefs,
@@ -233,28 +245,45 @@ extension DataFlowSemaPassPhase {
         }
     }
 
-    private func resolveTypeAliasUnderlying(
+    func resolveTypeAliasUnderlying(
         _ symbolID: SymbolID,
         symbols: SymbolTable,
         types: TypeSystem,
-        visited: Set<SymbolID>
+        typeArgs: [TypeArg] = [],
+        visited: Set<SymbolID>,
+        diagnostics: DiagnosticEngine? = nil
     ) -> TypeID? {
         guard !visited.contains(symbolID) else {
+            diagnostics?.error(
+                "KSWIFTK-SEMA-0030",
+                "Cyclic typealias definition detected.",
+                range: symbols.symbol(symbolID)?.declSite
+            )
             return nil
         }
         guard let underlying = symbols.typeAliasUnderlyingType(for: symbolID) else {
             return nil
         }
-        if case .classType(let classType) = types.kind(of: underlying),
+        let expanded = substituteTypeAliasParams(
+            underlying,
+            aliasSymbol: symbolID,
+            typeArgs: typeArgs,
+            symbols: symbols,
+            types: types
+        )
+        if case .classType(let classType) = types.kind(of: expanded),
            let targetSymbol = symbols.symbol(classType.classSymbol),
            targetSymbol.kind == .typeAlias {
             var newVisited = visited
             newVisited.insert(symbolID)
+            let chainArgs = classType.args
             if let resolved = resolveTypeAliasUnderlying(
                 classType.classSymbol,
                 symbols: symbols,
                 types: types,
-                visited: newVisited
+                typeArgs: chainArgs,
+                visited: newVisited,
+                diagnostics: diagnostics
             ) {
                 if classType.nullability == .nullable {
                     return applyNullability(resolved, types: types)
@@ -263,6 +292,79 @@ extension DataFlowSemaPassPhase {
             }
             return nil
         }
-        return underlying
+        return expanded
+    }
+
+    private func substituteTypeAliasParams(
+        _ typeID: TypeID,
+        aliasSymbol: SymbolID,
+        typeArgs: [TypeArg],
+        symbols: SymbolTable,
+        types: TypeSystem
+    ) -> TypeID {
+        let typeParamSymbols = symbols.typeAliasTypeParameters(for: aliasSymbol)
+        guard !typeParamSymbols.isEmpty, !typeArgs.isEmpty else {
+            return typeID
+        }
+        var substitution: [SymbolID: TypeID] = [:]
+        for (index, paramSymbol) in typeParamSymbols.enumerated() {
+            guard index < typeArgs.count else { break }
+            switch typeArgs[index] {
+            case .invariant(let argType):
+                substitution[paramSymbol] = argType
+            case .out(let argType):
+                substitution[paramSymbol] = argType
+            case .in(let argType):
+                substitution[paramSymbol] = argType
+            case .star:
+                substitution[paramSymbol] = types.anyType
+            }
+        }
+        guard !substitution.isEmpty else {
+            return typeID
+        }
+        return applySubstitution(typeID, substitution: substitution, types: types, symbols: symbols)
+    }
+
+    private func applySubstitution(
+        _ typeID: TypeID,
+        substitution: [SymbolID: TypeID],
+        types: TypeSystem,
+        symbols: SymbolTable
+    ) -> TypeID {
+        switch types.kind(of: typeID) {
+        case .typeParam(let tp):
+            if let replacement = substitution[tp.symbol] {
+                if tp.nullability == .nullable {
+                    return applyNullability(replacement, types: types)
+                }
+                return replacement
+            }
+            return typeID
+        case .classType(let ct):
+            let newArgs = ct.args.map { arg -> TypeArg in
+                switch arg {
+                case .invariant(let inner):
+                    return .invariant(applySubstitution(inner, substitution: substitution, types: types, symbols: symbols))
+                case .out(let inner):
+                    return .out(applySubstitution(inner, substitution: substitution, types: types, symbols: symbols))
+                case .in(let inner):
+                    return .in(applySubstitution(inner, substitution: substitution, types: types, symbols: symbols))
+                case .star:
+                    return .star
+                }
+            }
+            return types.make(.classType(ClassType(classSymbol: ct.classSymbol, args: newArgs, nullability: ct.nullability)))
+        case .functionType(let ft):
+            let newReceiver = ft.receiver.map { applySubstitution($0, substitution: substitution, types: types, symbols: symbols) }
+            let newParams = ft.params.map { applySubstitution($0, substitution: substitution, types: types, symbols: symbols) }
+            let newReturn = applySubstitution(ft.returnType, substitution: substitution, types: types, symbols: symbols)
+            return types.make(.functionType(FunctionType(receiver: newReceiver, params: newParams, returnType: newReturn, isSuspend: ft.isSuspend, nullability: ft.nullability)))
+        case .primitive, .any, .unit, .nothing, .error:
+            return typeID
+        case .intersection(let parts):
+            let newParts = parts.map { applySubstitution($0, substitution: substitution, types: types, symbols: symbols) }
+            return types.make(.intersection(newParts))
+        }
     }
 }

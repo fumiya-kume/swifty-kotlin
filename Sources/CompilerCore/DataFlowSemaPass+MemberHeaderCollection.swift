@@ -420,12 +420,32 @@ extension DataFlowSemaPassPhase {
                 visibility: visibility(from: alias.modifiers),
                 flags: flags(from: alias.modifiers)
             )
+            var localTypeParameters: [InternedString: SymbolID] = [:]
+            var typeParameterSymbols: [SymbolID] = []
+            let localNamespaceFQName = aliasFQName + [interner.intern("$\(aliasSymbol.rawValue)")]
+            for typeParam in alias.typeParams {
+                let typeParamFQName = localNamespaceFQName + [typeParam.name]
+                let typeParamSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: typeParam.name,
+                    fqName: typeParamFQName,
+                    declSite: alias.range,
+                    visibility: .private,
+                    flags: []
+                )
+                typeParameterSymbols.append(typeParamSymbol)
+                localTypeParameters[typeParam.name] = typeParamSymbol
+            }
+            if !typeParameterSymbols.isEmpty {
+                symbols.setTypeAliasTypeParameters(typeParameterSymbols, for: aliasSymbol)
+            }
             if let resolvedUnderlying = resolveTypeRef(
                 alias.underlyingType,
                 ast: ast,
                 symbols: symbols,
                 types: types,
                 interner: interner,
+                localTypeParameters: localTypeParameters,
                 diagnostics: diagnostics
             ) {
                 symbols.setTypeAliasUnderlyingType(resolvedUnderlying, for: aliasSymbol)
