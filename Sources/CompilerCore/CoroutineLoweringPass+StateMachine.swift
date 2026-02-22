@@ -186,8 +186,20 @@ extension CoroutineLoweringPass {
                     if suspendCallInfo.callee == sourceDelayCallee {
                         loweredSuspendArguments.append(continuationExpr)
                     }
-                    if suspendCallInfo.isVirtual {
-                        lowered.append(suspendCallInfo.originalInstruction)
+                    if suspendCallInfo.isVirtual,
+                       case .virtualCall(_, _, let receiver, _, _, _, _, let dispatch) = suspendCallInfo.originalInstruction {
+                        lowered.append(
+                            .virtualCall(
+                                symbol: suspendCallInfo.symbol,
+                                callee: loweredSuspendCallee,
+                                receiver: receiver,
+                                arguments: Array(loweredSuspendArguments.dropFirst()),
+                                result: suspensionResult,
+                                canThrow: suspendCallInfo.canThrow,
+                                thrownResult: nil,
+                                dispatch: dispatch
+                            )
+                        )
                     } else {
                         lowered.append(
                             .call(
