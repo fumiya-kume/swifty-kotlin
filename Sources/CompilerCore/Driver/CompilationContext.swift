@@ -15,6 +15,13 @@ public final class CompilationContext: @unchecked Sendable {
     public var generatedObjectPath: String? = nil
     public var generatedLLVMIRPath: String? = nil
 
+    /// Incremental compilation cache (non-nil when incremental mode is active).
+    public var incrementalCache: IncrementalCompilationCache? = nil
+
+    /// Set of file paths that need recompilation in incremental mode.
+    /// `nil` means full build (all files).
+    public var incrementalRecompileSet: Set<String>? = nil
+
     public init(
         options: CompilerOptions,
         sourceManager: SourceManager,
@@ -25,5 +32,19 @@ public final class CompilationContext: @unchecked Sendable {
         self.sourceManager = sourceManager
         self.diagnostics = diagnostics
         self.interner = interner
+    }
+
+    /// Returns `true` when incremental compilation is active.
+    public var isIncremental: Bool {
+        incrementalCache != nil
+    }
+
+    /// Returns `true` when the given file path needs recompilation
+    /// (always `true` in non-incremental mode).
+    public func needsRecompilation(path: String) -> Bool {
+        guard let recompileSet = incrementalRecompileSet else {
+            return true
+        }
+        return recompileSet.contains(path)
     }
 }
