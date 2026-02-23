@@ -161,7 +161,7 @@ final class SuperCallAndQualifiedThisTests: XCTestCase {
         let source = """
         class Outer {
             fun getOuter(): Outer = this
-            class Inner {
+            inner class Inner {
                 fun getOuter(): Outer = this@Outer
             }
         }

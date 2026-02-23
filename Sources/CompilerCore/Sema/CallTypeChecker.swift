@@ -257,15 +257,26 @@ final class CallTypeChecker {
         if !memberCandidates.isEmpty {
             allCandidates = memberCandidates
         } else {
-            allCandidates = scope.lookup(calleeName).filter { candidate in
-                guard let symbol = sema.symbols.symbol(candidate),
-                      symbol.kind == .function,
-                      let signature = sema.symbols.functionSignature(for: candidate) else { return false }
-                guard signature.receiverType != nil else { return false }
-                if isSuperCall, !supertypeSymbols.isEmpty {
-                    return sema.symbols.parentSymbol(for: candidate).map { supertypeSymbols.contains($0) } ?? false
+            // Try inner class constructor resolution: outer.Inner() → Inner's <init>
+            let innerCtorCandidates = driver.helpers.collectInnerClassConstructorCandidates(
+                named: calleeName,
+                receiverType: memberLookupType,
+                sema: sema,
+                interner: interner
+            )
+            if !innerCtorCandidates.isEmpty {
+                allCandidates = innerCtorCandidates
+            } else {
+                allCandidates = scope.lookup(calleeName).filter { candidate in
+                    guard let symbol = sema.symbols.symbol(candidate),
+                          symbol.kind == .function,
+                          let signature = sema.symbols.functionSignature(for: candidate) else { return false }
+                    guard signature.receiverType != nil else { return false }
+                    if isSuperCall, !supertypeSymbols.isEmpty {
+                        return sema.symbols.parentSymbol(for: candidate).map { supertypeSymbols.contains($0) } ?? false
+                    }
+                    return true
                 }
-                return true
             }
         }
         let (visible, invisible) = ctx.filterByVisibility(allCandidates)

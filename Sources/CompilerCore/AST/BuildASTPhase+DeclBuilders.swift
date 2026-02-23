@@ -19,10 +19,12 @@ extension BuildASTPhase {
         let rawTypeParams = declarationTypeParameters(from: nodeID, in: arena, interner: interner, astArena: astArena)
         let whereClauses = declarationWhereClauses(from: nodeID, in: arena, interner: interner, astArena: astArena)
         let typeParams = applyWhereClauses(rawTypeParams, whereClauses: whereClauses)
+        let modifiers = declarationModifiers(from: nodeID, in: arena)
         return ClassDecl(
             range: node.range,
             name: declarationName(from: nodeID, in: arena, interner: interner),
-            modifiers: declarationModifiers(from: nodeID, in: arena),
+            modifiers: modifiers,
+            isInner: modifiers.contains(.inner),
             typeParams: typeParams,
             primaryConstructorParams: declarationValueParameters(from: nodeID, in: arena, interner: interner, astArena: astArena),
             hasPrimaryConstructorSyntax: declarationHasPrimaryConstructorSyntax(from: nodeID, in: arena),

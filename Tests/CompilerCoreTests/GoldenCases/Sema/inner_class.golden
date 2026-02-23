@@ -1,0 +1,31 @@
+symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s1 kind=class fq=golden.sema.Outer vis=public flags=_
+symbol s2 kind=constructor fq=golden.sema.Outer.<init> vis=public flags=_ sig=recv=Class#1 params=[Int] ret=Class#1 suspend=0 defaults=[0] vararg=[0]
+symbol s3 kind=valueParameter fq=golden.sema.Outer.<init>.$2.x vis=private flags=_
+symbol s4 kind=class fq=golden.sema.Outer.Inner vis=public flags=innerClass
+symbol s5 kind=constructor fq=golden.sema.Outer.Inner.<init> vis=public flags=_ sig=recv=Class#4 params=[] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s6 kind=function fq=golden.sema.Outer.Inner.getX vis=public flags=_ sig=recv=Class#4 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s7 kind=class fq=golden.sema.Outer.Nested vis=public flags=_
+symbol s8 kind=constructor fq=golden.sema.Outer.Nested.<init> vis=public flags=_ sig=recv=Class#7 params=[] ret=Class#7 suspend=0 defaults=[] vararg=[]
+symbol s9 kind=function fq=golden.sema.Outer.Nested.tryAccess vis=public flags=_ sig=recv=Class#7 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s10 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s11 kind=local fq=__local_7.outer vis=private flags=_
+symbol s12 kind=local fq=__local_10.inner vis=private flags=_
+symbol s13 kind=local fq=__local_13.result vis=private flags=_
+file f0 package=golden.sema
+  decl d4 class Outer sym=s1
+  decl d5 fun main suspend=0 inline=0 sym=s10
+expr e0 this@Outer type=Class#1
+expr e1 memberCall recv=e0 callee=x args=[] type=<error>
+expr e2 this@Outer type=<error>
+expr e3 memberCall recv=e2 callee=x args=[] type=<error>
+expr e4 name(Outer) type=_
+expr e5 int(42) type=Int
+expr e6 call callee=e4 args=[_:e5] type=Class#1 call=s2 map=[0->0] targs=[]
+expr e7 localDecl outer mutable=0 type=_ init=e6 type=Unit ref=s11
+expr e8 name(outer) type=Class#1 ref=s11
+expr e9 memberCall recv=e8 callee=Inner args=[] type=Class#4 call=s5 map=[] targs=[]
+expr e10 localDecl inner mutable=0 type=_ init=e9 type=Unit ref=s12
+expr e11 name(inner) type=Class#4 ref=s12
+expr e12 memberCall recv=e11 callee=getX args=[] type=Int call=s6 map=[] targs=[]
+expr e13 localDecl result mutable=0 type=_ init=e12 type=Unit ref=s13
