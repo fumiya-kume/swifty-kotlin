@@ -86,12 +86,12 @@ public final class CompilerDriver {
             for phase in phases {
                 let phaseName = type(of: phase).name
                 ctx.phaseTimer?.beginPhase(phaseName)
+                defer { ctx.phaseTimer?.endPhase() }
 
                 // After loading sources, compute fingerprints and determine
                 // which files need recompilation.
                 if phase is LoadSourcesPhase {
                     try phase.run(ctx)
-                    ctx.phaseTimer?.endPhase()
                     if ctx.diagnostics.hasError { break }
                     if incrementalEnabled {
                         setupIncrementalRecompileSet(ctx: ctx)
@@ -100,7 +100,6 @@ public final class CompilerDriver {
                 }
 
                 try phase.run(ctx)
-                ctx.phaseTimer?.endPhase()
                 if ctx.diagnostics.hasError {
                     break
                 }
