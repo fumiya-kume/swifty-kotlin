@@ -22,7 +22,7 @@ final class ControlFlowTypeChecker {
         let iterableType = driver.inferExpr(iterableExpr, ctx: ctx, locals: &locals, expectedType: nil)
         var bodyLocals = locals
         if let loopVariable {
-            let elementType = driver.helpers.arrayElementType(for: iterableType, sema: sema, interner: ctx.interner) ?? sema.types.anyType
+            let elementType = driver.helpers.iterableElementType(for: iterableType, sema: sema, interner: ctx.interner) ?? sema.types.anyType
             let loopVariableSymbol = sema.symbols.define(
                 kind: .local,
                 name: loopVariable,

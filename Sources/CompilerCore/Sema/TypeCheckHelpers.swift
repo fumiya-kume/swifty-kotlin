@@ -31,15 +31,25 @@ struct TypeCheckHelpers {
         }
     }
 
+    /// Returns the element type for iterating over the given type in a for-loop.
+    /// Handles both array types and range/progression types (Int representing IntRange).
+    func iterableElementType(
+        for iterableType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID? {
+        // Range/progression types (Int) are iterable over Int elements
+        if iterableType == sema.types.intType {
+            return sema.types.intType
+        }
+        return arrayElementType(for: iterableType, sema: sema, interner: interner)
+    }
+
     func arrayElementType(
         for arrayType: TypeID,
         sema: SemaModule,
         interner: StringInterner
     ) -> TypeID? {
-        // Range/progression types (Int) are iterable over Int elements
-        if arrayType == sema.types.intType {
-            return sema.types.intType
-        }
         guard case .classType(let classType) = sema.types.kind(of: arrayType),
               let symbol = sema.symbols.symbol(classType.classSymbol) else {
             return nil
