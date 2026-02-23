@@ -29,11 +29,7 @@ final class MemberLowerer {
                   let symbol = sema.bindings.declSymbols[declID] else {
                 continue
             }
-            driver.ctx.localValuesBySymbol.removeAll(keepingCapacity: true)
-            driver.ctx.currentImplicitReceiverExprID = nil
-            driver.ctx.currentImplicitReceiverSymbol = nil
-            driver.ctx.loopControlStack.removeAll(keepingCapacity: true)
-            driver.ctx.nextLoopLabel = 10_000
+            driver.ctx.resetScopeForFunction()
             driver.ctx.beginCallableLoweringScope()
 
             let signature = sema.symbols.functionSignature(for: symbol)
@@ -317,11 +313,7 @@ final class MemberLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         allDecls: inout [KIRDeclID]
     ) {
-        driver.ctx.localValuesBySymbol.removeAll(keepingCapacity: true)
-        driver.ctx.currentImplicitReceiverExprID = nil
-        driver.ctx.currentImplicitReceiverSymbol = nil
-        driver.ctx.loopControlStack.removeAll(keepingCapacity: true)
-        driver.ctx.nextLoopLabel = 10_000
+        driver.ctx.resetScopeForFunction()
         driver.ctx.beginCallableLoweringScope()
 
         let ownerSymbol = sema.symbols.parentSymbol(for: propertySymbol)

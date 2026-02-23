@@ -108,11 +108,7 @@ final class KIRLoweringDriver {
                         guard let signature = sema.symbols.functionSignature(for: ctorSymbol) else {
                             continue
                         }
-                        ctx.localValuesBySymbol.removeAll(keepingCapacity: true)
-                        ctx.currentImplicitReceiverExprID = nil
-                        ctx.currentImplicitReceiverSymbol = nil
-                        ctx.loopControlStack.removeAll(keepingCapacity: true)
-                        ctx.nextLoopLabel = 10_000
+                        ctx.resetScopeForFunction()
                         ctx.beginCallableLoweringScope()
 
                         let receiverSymbol = callSupportLowerer.syntheticReceiverParameterSymbol(functionSymbol: ctorSymbol)
@@ -340,11 +336,7 @@ final class KIRLoweringDriver {
                     declIDs.append(contentsOf: allDecls)
 
                 case .funDecl(let function):
-                    ctx.localValuesBySymbol.removeAll(keepingCapacity: true)
-                    ctx.currentImplicitReceiverExprID = nil
-                    ctx.currentImplicitReceiverSymbol = nil
-                    ctx.loopControlStack.removeAll(keepingCapacity: true)
-                    ctx.nextLoopLabel = 10_000
+                    ctx.resetScopeForFunction()
                     ctx.beginCallableLoweringScope()
                     let signature = sema.symbols.functionSignature(for: symbol)
                     var params: [KIRParameter] = []

@@ -340,24 +340,10 @@ final class ExprLowerer {
                     captureArguments: captureBindings.map { $0.valueExpr }
                 )
 
-                let savedLocalValues = driver.ctx.localValuesBySymbol
-                let savedReceiverExprID = driver.ctx.currentImplicitReceiverExprID
-                let savedReceiverSymbol = driver.ctx.currentImplicitReceiverSymbol
-                let savedLoopStack = driver.ctx.loopControlStack
-                let savedNextLabel = driver.ctx.nextLoopLabel
-                defer {
-                    driver.ctx.localValuesBySymbol = savedLocalValues
-                    driver.ctx.currentImplicitReceiverExprID = savedReceiverExprID
-                    driver.ctx.currentImplicitReceiverSymbol = savedReceiverSymbol
-                    driver.ctx.loopControlStack = savedLoopStack
-                    driver.ctx.nextLoopLabel = savedNextLabel
-                }
-
-                driver.ctx.localValuesBySymbol.removeAll(keepingCapacity: true)
-                driver.ctx.currentImplicitReceiverExprID = nil
-                driver.ctx.currentImplicitReceiverSymbol = nil
-                driver.ctx.loopControlStack.removeAll(keepingCapacity: true)
-                driver.ctx.nextLoopLabel = 10_000
+                let scopeSnapshot = driver.ctx.saveScope()
+                let savedReceiverSymbol = scopeSnapshot.currentImplicitReceiverSymbol
+                defer { driver.ctx.restoreScope(scopeSnapshot) }
+                driver.ctx.resetScopeForFunction()
 
                 var localFunBodyInstructions: [KIRInstruction] = [.beginBlock]
 

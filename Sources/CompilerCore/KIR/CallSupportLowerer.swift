@@ -115,16 +115,8 @@ final class CallSupportLowerer {
         let intType = sema.types.make(.primitive(.int, .nonNull))
         let paramCount = signature.parameterTypes.count
 
-        let savedLocalValues = driver.ctx.localValuesBySymbol
-        let savedReceiverExprID = driver.ctx.currentImplicitReceiverExprID
-        let savedReceiverSymbol = driver.ctx.currentImplicitReceiverSymbol
-        let savedLoopStack = driver.ctx.loopControlStack
-        let savedNextLabel = driver.ctx.nextLoopLabel
-        driver.ctx.localValuesBySymbol.removeAll(keepingCapacity: true)
-        driver.ctx.currentImplicitReceiverExprID = nil
-        driver.ctx.currentImplicitReceiverSymbol = nil
-        driver.ctx.loopControlStack.removeAll(keepingCapacity: true)
-        driver.ctx.nextLoopLabel = 10_000
+        let scopeSnapshot = driver.ctx.saveScope()
+        driver.ctx.resetScopeForFunction()
 
         var params: [KIRParameter] = []
         if let receiverType = signature.receiverType {
@@ -246,11 +238,7 @@ final class CallSupportLowerer {
             isInline: false
         )))
 
-        driver.ctx.localValuesBySymbol = savedLocalValues
-        driver.ctx.currentImplicitReceiverExprID = savedReceiverExprID
-        driver.ctx.currentImplicitReceiverSymbol = savedReceiverSymbol
-        driver.ctx.loopControlStack = savedLoopStack
-        driver.ctx.nextLoopLabel = savedNextLabel
+        driver.ctx.restoreScope(scopeSnapshot)
 
         return declID
     }

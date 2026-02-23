@@ -2,9 +2,10 @@ import Foundation
 
 /// Holds all mutable state for the KIR lowering pass.
 ///
-/// Replaces the 12 mutable instance properties that were previously scattered
+/// Centralises the 12 mutable instance properties that were previously scattered
 /// across `BuildKIRPhase` and its extensions. Provides structured scope management
-/// via `withNewScope {}` to replace the error-prone manual save/defer/restore pattern.
+/// helpers (`saveScope`, `restoreScope`, `resetScopeForFunction`, `withNewScope`)
+/// so that each call site can choose the appropriate granularity.
 final class KIRLoweringContext {
     // MARK: - Scope State (saved/restored per function/lambda)
 
