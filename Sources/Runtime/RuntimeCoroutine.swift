@@ -427,8 +427,9 @@ internal final class RuntimeChannelHandle {
             return 0
         }
         let value = buffer.removeFirst()
+        let shouldSignalSender = capacity == 0 && waitingSenders > 0
         lock.unlock()
-        if capacity == 0 {
+        if shouldSignalSender {
             sendSemaphore.signal()
         }
         return value
