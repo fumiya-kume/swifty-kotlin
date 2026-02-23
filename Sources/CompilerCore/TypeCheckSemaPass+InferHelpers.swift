@@ -1,48 +1,20 @@
 import Foundation
 
 extension TypeCheckSemaPassPhase {
-    func makeNonNullable(_ type: TypeID, types: TypeSystem) -> TypeID {
-        switch types.kind(of: type) {
-        case .any(.nullable):
-            return types.anyType
+    func emitVisibilityError(
+        for symbol: SemanticSymbol,
+        name: String,
+        range: SourceRange?,
+        diagnostics: DiagnosticEngine
+    ) {
+        let visLabel = symbol.visibility == .protected ? "protected" : "private"
+        let code = symbol.visibility == .protected ? "KSWIFTK-SEMA-0041" : "KSWIFTK-SEMA-0040"
+        diagnostics.error(code, "Cannot access '\(name)': it is \(visLabel).", range: range)
+    }
 
-        case .primitive(let primitive, .nullable):
-            return types.make(.primitive(primitive, .nonNull))
-
-        case .classType(let classType):
-            guard classType.nullability == .nullable else {
-                return type
-            }
-            return types.make(.classType(ClassType(
-                classSymbol: classType.classSymbol,
-                args: classType.args,
-                nullability: .nonNull
-            )))
-
-        case .typeParam(let typeParam):
-            guard typeParam.nullability == .nullable else {
-                return type
-            }
-            return types.make(.typeParam(TypeParamType(
-                symbol: typeParam.symbol,
-                nullability: .nonNull
-            )))
-
-        case .functionType(let functionType):
-            guard functionType.nullability == .nullable else {
-                return type
-            }
-            return types.make(.functionType(FunctionType(
-                receiver: functionType.receiver,
-                params: functionType.params,
-                returnType: functionType.returnType,
-                isSuspend: functionType.isSuspend,
-                nullability: .nonNull
-            )))
-
-        default:
-            return type
-        }
+    func bindAndReturnErrorType(_ id: ExprID, sema: SemaModule) -> TypeID {
+        sema.bindings.bindExprType(id, type: sema.types.errorType)
+        return sema.types.errorType
     }
 
     func isStableLocalSymbol(_ symbolID: SymbolID, sema: SemaModule) -> Bool {
@@ -68,7 +40,7 @@ extension TypeCheckSemaPassPhase {
         }
         switch interner.resolve(symbol.name) {
         case "IntArray":
-            return sema.types.make(.primitive(.int, .nonNull))
+            return sema.types.intType
         default:
             return nil
         }
@@ -145,6 +117,22 @@ extension TypeCheckSemaPassPhase {
         }
     }
 
+    func resolveBuiltinTypeName(_ name: String, nullability: Nullability = .nonNull, types: TypeSystem) -> TypeID? {
+        switch name {
+        case "Int":     return types.withNullability(nullability, for: types.intType)
+        case "Long":    return types.withNullability(nullability, for: types.longType)
+        case "Float":   return types.withNullability(nullability, for: types.floatType)
+        case "Double":  return types.withNullability(nullability, for: types.doubleType)
+        case "Boolean": return types.withNullability(nullability, for: types.booleanType)
+        case "Char":    return types.withNullability(nullability, for: types.charType)
+        case "String":  return types.withNullability(nullability, for: types.stringType)
+        case "Any":     return nullability == .nullable ? types.nullableAnyType : types.anyType
+        case "Unit":    return types.unitType
+        case "Nothing": return types.nothingType
+        default:        return nil
+        }
+    }
+
     func resolveTypeRef(
         _ typeRefID: TypeRefID,
         ast: ASTModule,
@@ -162,28 +150,10 @@ extension TypeCheckSemaPassPhase {
             }
             let name = interner.resolve(firstName)
             let nullability: Nullability = nullable ? .nullable : .nonNull
-            switch name {
-            case "Int":
-                return sema.types.make(.primitive(.int, nullability))
-            case "Long":
-                return sema.types.make(.primitive(.long, nullability))
-            case "Float":
-                return sema.types.make(.primitive(.float, nullability))
-            case "Double":
-                return sema.types.make(.primitive(.double, nullability))
-            case "Boolean":
-                return sema.types.make(.primitive(.boolean, nullability))
-            case "Char":
-                return sema.types.make(.primitive(.char, nullability))
-            case "String":
-                return sema.types.make(.primitive(.string, nullability))
-            case "Any":
-                return nullable ? sema.types.nullableAnyType : sema.types.anyType
-            case "Unit":
-                return sema.types.unitType
-            case "Nothing":
-                return sema.types.nothingType
-            default:
+            if let builtin = resolveBuiltinTypeName(name, nullability: nullability, types: sema.types) {
+                return builtin
+            }
+            do {
                 let candidates = sema.symbols.lookupAll(fqName: [firstName]).filter { symbolID in
                     guard let sym = sema.symbols.symbol(symbolID) else { return false }
                     switch sym.kind {
@@ -246,43 +216,6 @@ extension TypeCheckSemaPassPhase {
         }
     }
 
-    func makeNullable(_ type: TypeID, types: TypeSystem) -> TypeID {
-        switch types.kind(of: type) {
-        case .any(.nonNull):
-            return types.nullableAnyType
-        case .any(.nullable):
-            return type
-        case .primitive(let primitive, .nonNull):
-            return types.make(.primitive(primitive, .nullable))
-        case .primitive(_, .nullable):
-            return type
-        case .classType(let classType):
-            guard classType.nullability == .nonNull else { return type }
-            return types.make(.classType(ClassType(
-                classSymbol: classType.classSymbol,
-                args: classType.args,
-                nullability: .nullable
-            )))
-        case .typeParam(let typeParam):
-            guard typeParam.nullability == .nonNull else { return type }
-            return types.make(.typeParam(TypeParamType(
-                symbol: typeParam.symbol,
-                nullability: .nullable
-            )))
-        case .functionType(let functionType):
-            guard functionType.nullability == .nonNull else { return type }
-            return types.make(.functionType(FunctionType(
-                receiver: functionType.receiver,
-                params: functionType.params,
-                returnType: functionType.returnType,
-                isSuspend: functionType.isSuspend,
-                nullability: .nullable
-            )))
-        default:
-            return type
-        }
-    }
-
     func resolveExplicitTypeArgs(
         _ typeArgRefs: [TypeRefID],
         ast: ASTModule,
@@ -293,6 +226,18 @@ extension TypeCheckSemaPassPhase {
         guard !typeArgRefs.isEmpty else { return [] }
         return typeArgRefs.map { typeRefID in
             resolveTypeRef(typeRefID, ast: ast, sema: sema, interner: interner, diagnostics: diagnostics)
+        }
+    }
+
+    /// Check if an expression is a terminating expression (return/throw) for elvis guard narrowing.
+    func isTerminatingExpr(_ expr: Expr) -> Bool {
+        switch expr {
+        case .returnExpr:
+            return true
+        case .throwExpr:
+            return true
+        default:
+            return false
         }
     }
 
@@ -320,7 +265,7 @@ extension TypeCheckSemaPassPhase {
         case .boolLiteral:
             switch sema.types.kind(of: subjectType) {
             case .primitive(.boolean, _):
-                return sema.types.make(.primitive(.boolean, .nonNull))
+                return sema.types.booleanType
             default:
                 return nil
             }
@@ -527,190 +472,4 @@ extension TypeCheckSemaPassPhase {
         return sorted.first
     }
 
-    func collectCapturedOuterSymbols(
-        in exprID: ExprID,
-        ast: ASTModule,
-        sema: SemaModule,
-        outerSymbols: Set<SymbolID>,
-        skipNestedClosures: Bool = true
-    ) -> [SymbolID] {
-        guard !outerSymbols.isEmpty else {
-            return []
-        }
-
-        var captured: Set<SymbolID> = []
-
-        func recordCapture(for targetExprID: ExprID) {
-            guard let symbol = sema.bindings.identifierSymbol(for: targetExprID),
-                  outerSymbols.contains(symbol) else {
-                return
-            }
-            captured.insert(symbol)
-        }
-
-        func visitBody(_ body: FunctionBody) {
-            switch body {
-            case .block(let exprs, _):
-                for expr in exprs {
-                    visit(expr)
-                }
-            case .expr(let expr, _):
-                visit(expr)
-            case .unit:
-                break
-            }
-        }
-
-        func visit(_ currentExprID: ExprID) {
-            guard let expr = ast.arena.expr(currentExprID) else {
-                return
-            }
-            switch expr {
-            case .nameRef:
-                recordCapture(for: currentExprID)
-
-            case .forExpr(_, let iterable, let body, _):
-                visit(iterable)
-                visit(body)
-
-            case .whileExpr(let condition, let body, _):
-                visit(condition)
-                visit(body)
-
-            case .doWhileExpr(let body, let condition, _):
-                visit(body)
-                visit(condition)
-
-            case .localDecl(_, _, _, let initializer, _):
-                if let initializer {
-                    visit(initializer)
-                }
-
-            case .localAssign(_, let value, _):
-                visit(value)
-
-            case .arrayAssign(let array, let index, let value, _):
-                visit(array)
-                visit(index)
-                visit(value)
-
-            case .call(let callee, _, let args, _):
-                visit(callee)
-                for arg in args {
-                    visit(arg.expr)
-                }
-
-            case .memberCall(let receiver, _, _, let args, _):
-                visit(receiver)
-                for arg in args {
-                    visit(arg.expr)
-                }
-
-            case .arrayAccess(let array, let index, _):
-                visit(array)
-                visit(index)
-
-            case .binary(_, let lhs, let rhs, _):
-                visit(lhs)
-                visit(rhs)
-
-            case .whenExpr(let subject, let branches, let elseExpr, _):
-                if let subject {
-                    visit(subject)
-                }
-                for branch in branches {
-                    if let condition = branch.condition {
-                        visit(condition)
-                    }
-                    visit(branch.body)
-                }
-                if let elseExpr {
-                    visit(elseExpr)
-                }
-
-            case .returnExpr(let value, _):
-                if let value {
-                    visit(value)
-                }
-
-            case .ifExpr(let condition, let thenExpr, let elseExpr, _):
-                visit(condition)
-                visit(thenExpr)
-                if let elseExpr {
-                    visit(elseExpr)
-                }
-
-            case .tryExpr(let body, let catchClauses, let finallyExpr, _):
-                visit(body)
-                for catchClause in catchClauses {
-                    visit(catchClause.body)
-                }
-                if let finallyExpr {
-                    visit(finallyExpr)
-                }
-
-            case .unaryExpr(_, let operand, _):
-                visit(operand)
-
-            case .isCheck(let value, _, _, _):
-                visit(value)
-
-            case .asCast(let value, _, _, _):
-                visit(value)
-
-            case .nullAssert(let value, _):
-                visit(value)
-
-            case .safeMemberCall(let receiver, _, _, let args, _):
-                visit(receiver)
-                for arg in args {
-                    visit(arg.expr)
-                }
-
-            case .compoundAssign(_, _, let value, _):
-                visit(value)
-
-            case .throwExpr(let value, _):
-                visit(value)
-
-            case .lambdaLiteral(_, let body, _):
-                if !skipNestedClosures {
-                    visit(body)
-                }
-
-            case .callableRef(let receiver, _, _):
-                if let receiver {
-                    visit(receiver)
-                }
-
-            case .localFunDecl(_, _, _, let body, _):
-                if !skipNestedClosures {
-                    visitBody(body)
-                }
-
-            case .blockExpr(let statements, let trailingExpr, _):
-                for statement in statements {
-                    visit(statement)
-                }
-                if let trailingExpr {
-                    visit(trailingExpr)
-                }
-
-            case .stringTemplate(let parts, _):
-                for part in parts {
-                    if case .expression(let expr) = part {
-                        visit(expr)
-                    }
-                }
-
-            case .intLiteral, .longLiteral, .floatLiteral, .doubleLiteral,
-                 .charLiteral, .boolLiteral, .stringLiteral, .breakExpr,
-                 .continueExpr, .objectLiteral, .superRef, .thisRef:
-                break
-            }
-        }
-
-        visit(exprID)
-        return captured.sorted(by: { $0.rawValue < $1.rawValue })
-    }
 }

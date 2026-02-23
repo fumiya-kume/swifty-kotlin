@@ -1210,6 +1210,170 @@ final class BuildKIRCoverageTests: XCTestCase {
         }
     }
 
+    func testNestedReturnInIfBranchDoesNotEmitDeadCopyInstruction() throws {
+        let source = """
+        fun choose(flag: Boolean): Int {
+            if (flag) {
+                return 1
+            }
+            return 0
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "choose", in: module, interner: ctx.interner)
+
+            // After a returnValue instruction, there should be no copy to the if-result
+            // that uses a Nothing-typed dead expression as source.
+            var foundReturnInBranch = false
+            var deadCopyAfterReturn = false
+            for (index, instruction) in body.enumerated() {
+                if case .returnValue = instruction {
+                    foundReturnInBranch = true
+                    // Check if the next non-label instruction is a copy
+                    var nextIndex = index + 1
+                    while nextIndex < body.count {
+                        if case .label = body[nextIndex] {
+                            nextIndex += 1
+                            continue
+                        }
+                        if case .copy = body[nextIndex] {
+                            deadCopyAfterReturn = true
+                        }
+                        break
+                    }
+                }
+            }
+            XCTAssertTrue(foundReturnInBranch, "Expected returnValue in if-branch")
+            XCTAssertFalse(deadCopyAfterReturn, "No dead copy should follow a returnValue instruction in a terminated branch")
+        }
+    }
+
+    func testNestedReturnInBothIfElseBranchesDoesNotEmitDeadEpilogue() throws {
+        let source = """
+        fun pick(flag: Boolean): Int {
+            if (flag) {
+                return 1
+            } else {
+                return 2
+            }
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "pick", in: module, interner: ctx.interner)
+
+            let returnValues = body.compactMap { instruction -> KIRExprID? in
+                guard case .returnValue(let id) = instruction else { return nil }
+                return id
+            }
+            // Should have exactly 2 returns: one from each branch, no spurious epilogue return
+            XCTAssertEqual(returnValues.count, 2, "Expected exactly 2 returnValue instructions (then + else), got \(returnValues.count)")
+        }
+    }
+
+    func testNestedReturnInWhenBranchDoesNotEmitDeadCopyInstruction() throws {
+        let source = """
+        fun classify(x: Int): Int {
+            when (x) {
+                1 -> return 10
+                2 -> return 20
+                else -> return 30
+            }
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "classify", in: module, interner: ctx.interner)
+
+            let returnValues = body.compactMap { instruction -> KIRExprID? in
+                guard case .returnValue(let id) = instruction else { return nil }
+                return id
+            }
+            XCTAssertGreaterThanOrEqual(returnValues.count, 3, "Expected at least 3 returnValue instructions for when-branch returns, got \(returnValues.count)")
+
+            // Verify no dead copy follows a returnValue in the when branches
+            var deadCopyAfterReturn = false
+            for (index, instruction) in body.enumerated() {
+                if case .returnValue = instruction {
+                    var nextIndex = index + 1
+                    while nextIndex < body.count {
+                        if case .label = body[nextIndex] {
+                            nextIndex += 1
+                            continue
+                        }
+                        if case .copy = body[nextIndex] {
+                            deadCopyAfterReturn = true
+                        }
+                        break
+                    }
+                }
+            }
+            XCTAssertFalse(deadCopyAfterReturn, "No dead copy should follow a returnValue in when branches")
+        }
+    }
+
+    func testBlockExprStopsLoweringAfterNestedReturn() throws {
+        let source = """
+        fun earlyReturn(flag: Boolean): Int {
+            if (flag) {
+                return 42
+                val x = 99
+            }
+            return 0
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "earlyReturn", in: module, interner: ctx.interner)
+
+            // The val x = 99 after return should not produce any const 99 in the body
+            let has99 = body.contains { instruction in
+                guard case .constValue(_, let value) = instruction else { return false }
+                if case .intLiteral(99) = value { return true }
+                return false
+            }
+            XCTAssertFalse(has99, "Dead code after return in block should not be lowered")
+        }
+    }
+
+    func testNestedReturnInTryCatchBranchPropagatesCorrectly() throws {
+        let source = """
+        fun safeDivide(a: Int, b: Int): Int {
+            try {
+                return a / b
+            } catch (e: Any) {
+                return 0
+            }
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "safeDivide", in: module, interner: ctx.interner)
+
+            let returnValues = body.compactMap { instruction -> KIRExprID? in
+                guard case .returnValue(let id) = instruction else { return nil }
+                return id
+            }
+            XCTAssertGreaterThanOrEqual(returnValues.count, 2, "Expected at least 2 returnValue instructions (try body + catch), got \(returnValues.count)")
+        }
+    }
+
     func testIfExprLoweringUsesLabelBasedBranching() throws {
         let source = """
         fun branch(flag: Boolean): Int {
@@ -2146,6 +2310,266 @@ final class BuildKIRCoverageTests: XCTestCase {
                 return nil
             }
             return interner.resolve(symbol.name)
+        }
+    }
+
+    // MARK: - P5-42: Local function scope registration and KIR generation
+
+    func testLocalFunctionScopeRegistrationAllowsCallResolution() throws {
+        let source = """
+        fun main(): Int {
+            fun helper(x: Int): Int = x * 2
+            return helper(21)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Local function call should resolve without errors: \(ctx.diagnostics.diagnostics.map(\.message))")
+        }
+    }
+
+    func testLocalFunctionKIRGenerationEmitsFunctionDecl() throws {
+        let source = """
+        fun main(): Int {
+            fun add(a: Int, b: Int): Int = a + b
+            return add(1, 2)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Expected no errors: \(ctx.diagnostics.diagnostics.map(\.message))")
+            let module = try XCTUnwrap(ctx.kir)
+            // The module should contain at least 2 functions: main and the local function add.
+            XCTAssertGreaterThanOrEqual(module.functionCount, 2, "Expected KIR to contain both main and local function 'add'")
+        }
+    }
+
+    func testNestedLocalFunctionScopeResolution() throws {
+        let source = """
+        fun outer(): Int {
+            fun middle(): Int {
+                fun inner(): Int = 7
+                return inner()
+            }
+            return middle()
+        }
+        fun main() = outer()
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Nested local functions should resolve: \(ctx.diagnostics.diagnostics.map(\.message))")
+            let module = try XCTUnwrap(ctx.kir)
+            // outer, middle, inner, main => at least 4 functions
+            XCTAssertGreaterThanOrEqual(module.functionCount, 4)
+        }
+    }
+
+    func testLocalFunctionWithBlockBodyKIRGeneration() throws {
+        let source = """
+        fun main(): Int {
+            fun compute(x: Int): Int {
+                val doubled = x * 2
+                return doubled + 1
+            }
+            return compute(10)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Local function with block body: \(ctx.diagnostics.diagnostics.map(\.message))")
+            let module = try XCTUnwrap(ctx.kir)
+            XCTAssertGreaterThanOrEqual(module.functionCount, 2)
+        }
+    }
+
+    func testLocalFunctionCalledMultipleTimes() throws {
+        let source = """
+        fun main(): Int {
+            fun square(n: Int): Int = n * n
+            val a = square(3)
+            val b = square(4)
+            return a + b
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Multiple calls to local function: \(ctx.diagnostics.diagnostics.map(\.message))")
+        }
+    }
+
+    func testLocalFunctionCapturesOuterVal() throws {
+        let source = """
+        fun main(): Int {
+            val outer = 10
+            fun addOuter(x: Int): Int = x + outer
+            return addOuter(5)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Local function capturing outer val should compile without errors: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+            let module = try XCTUnwrap(ctx.kir)
+            XCTAssertGreaterThanOrEqual(module.functionCount, 2)
+        }
+    }
+
+    func testNestedLocalFunctionCaptureFromParentScope() throws {
+        let source = """
+        fun outer(): Int {
+            fun middle(): Int {
+                val x = 5
+                fun inner(): Int = x + 1
+                return inner()
+            }
+            return middle()
+        }
+        fun main() = outer()
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Nested local function capture should be handled: \(ctx.diagnostics.diagnostics.map(\.message))")
+            let module = try XCTUnwrap(ctx.kir)
+            // outer, middle, inner, main => at least 4 functions with capture analysis performed correctly
+            XCTAssertGreaterThanOrEqual(module.functionCount, 4)
+        }
+    }
+
+    func testLocalFunctionCapturesMultipleOuterVals() throws {
+        let source = """
+        fun compute(): Int {
+            val a = 10
+            val b = 20
+            fun sum(): Int = a + b
+            return sum()
+        }
+        fun main() = compute()
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Local function capturing multiple outer vals should compile: \(ctx.diagnostics.diagnostics.map(\.message))")
+            let module = try XCTUnwrap(ctx.kir)
+            // compute, sum, main => at least 3 functions
+            XCTAssertGreaterThanOrEqual(module.functionCount, 3)
+        }
+    }
+
+    func testLocalFunctionScopeDoesNotLeakBetweenTopLevelFunctions() throws {
+        let source = """
+        fun first(): Int {
+            fun helper(): Int = 1
+            return helper()
+        }
+        fun second(): Int {
+            return helper()
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertTrue(
+                ctx.diagnostics.hasError,
+                "Local function should not be visible outside its defining top-level function: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
+    func testNestedLocalFunctionCallForwardsCaptureArguments() throws {
+        // Regression test: h() captures g(), and g() captures x.
+        // When h's body calls g(), the capture arguments for g (i.e. x)
+        // must be forwarded correctly via transitive capture.
+        let source = """
+        fun main(): Int {
+            val x = 10
+            fun g(): Int = x
+            fun h(): Int = g()
+            return h()
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Nested local function call with capture forwarding should compile: \(ctx.diagnostics.diagnostics.map(\.message))")
+            let module = try XCTUnwrap(ctx.kir)
+            // main, g, h => at least 3 functions
+            XCTAssertGreaterThanOrEqual(module.functionCount, 3, "Expected at least 3 functions (main + g + h)")
+        }
+    }
+
+    func testNestedLocalFunctionForwardsNonLiteralValCapture() throws {
+        // Regression test: g() captures a local val x initialized with a
+        // non-literal expression (1 + 2), and h() calls g(). The transitive
+        // capture must detect x and the callable info remapping must use the
+        // direct outerExprToBodyExpr mapping (not symbol reverse lookup) so
+        // non-symbolRef expressions like call results remap correctly.
+        let source = """
+        fun main(): Int {
+            val x = 1 + 2
+            fun g(): Int = x
+            fun h(): Int = g()
+            return h()
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Nested local function forwarding non-literal val capture should compile: \(ctx.diagnostics.diagnostics.map(\.message))")
+            let module = try XCTUnwrap(ctx.kir)
+            // main, g, h => at least 3 functions
+            XCTAssertGreaterThanOrEqual(module.functionCount, 3, "Expected at least 3 functions (main + g + h)")
+        }
+    }
+
+    func testNestedLocalFunctionForwardsValueParameterCapture() throws {
+        // Regression test: g() captures a value parameter p of the enclosing
+        // function, and h() calls g(). The transitive capture must detect p
+        // even though it's not in localValuesBySymbol (value parameters use
+        // captureValueExpr's .valueParameter fallback path).
+        let source = """
+        fun main(p: Int): Int {
+            fun g(): Int = p
+            fun h(): Int = g()
+            return h()
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Nested local function forwarding value parameter capture should compile: \(ctx.diagnostics.diagnostics.map(\.message))")
+            let module = try XCTUnwrap(ctx.kir)
+            // main, g, h => at least 3 functions
+            XCTAssertGreaterThanOrEqual(module.functionCount, 3, "Expected at least 3 functions (main + g + h)")
+        }
+    }
+
+    func testRecursiveLocalFunctionWithCaptureResolvesCorrectly() throws {
+        let source = """
+        fun main() {
+            val limit = 10
+            fun countdown(n: Int): Int {
+                if (n <= 0) return limit
+                return countdown(n - 1)
+            }
+            countdown(5)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Recursive local function with capture should compile without errors: \(ctx.diagnostics.diagnostics.map(\.message))")
+            let module = try XCTUnwrap(ctx.kir)
+            // Should have at least main + countdown
+            XCTAssertGreaterThanOrEqual(module.functionCount, 2, "Expected at least 2 functions (main + countdown)")
         }
     }
 

@@ -243,6 +243,25 @@ public final class LLVMBackend {
         }
         lines.append("")
 
+        if !functions.isEmpty {
+            lines.append("static void kk_register_module_frame_maps(void) __attribute__((constructor));")
+            lines.append("static void kk_unregister_module_frame_maps(void) __attribute__((destructor));")
+            lines.append("static void kk_register_module_frame_maps(void) {")
+            for function in functions {
+                let functionID = max(0, Int(function.symbol.rawValue))
+                let frameMapSymbol = frameMapDescriptorSymbol(for: function)
+                lines.append("  kk_register_frame_map(\(functionID)u, &\(frameMapSymbol));")
+            }
+            lines.append("}")
+            lines.append("static void kk_unregister_module_frame_maps(void) {")
+            for function in functions {
+                let functionID = max(0, Int(function.symbol.rawValue))
+                lines.append("  kk_register_frame_map(\(functionID)u, NULL);")
+            }
+            lines.append("}")
+            lines.append("")
+        }
+
         for function in functions {
             lines.append(functionPrototype(function: function, interner: interner) + ";")
         }
@@ -334,14 +353,23 @@ public final class LLVMBackend {
                 continue
             }
             for instruction in function.body {
-                guard case .call(let symbol, let callee, _, _, _, _, _) = instruction else {
+                let calleeInfo: (symbol: SymbolID?, callee: InternedString)?
+                switch instruction {
+                case .call(let symbol, let callee, _, _, _, _, _):
+                    calleeInfo = (symbol, callee)
+                case .virtualCall(let symbol, let callee, _, _, _, _, _, _):
+                    calleeInfo = (symbol, callee)
+                default:
+                    calleeInfo = nil
+                }
+                guard let calleeInfo else {
                     continue
                 }
-                if let symbol, functionSymbols[symbol] != nil {
+                if let symbol = calleeInfo.symbol, functionSymbols[symbol] != nil {
                     continue
                 }
 
-                let calleeName = interner.resolve(callee)
+                let calleeName = interner.resolve(calleeInfo.callee)
                 guard !calleeName.isEmpty else {
                     continue
                 }

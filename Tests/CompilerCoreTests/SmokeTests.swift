@@ -161,10 +161,4 @@ final class SmokeTests: XCTestCase {
         )
     }
 
-    private func llvmCapiBindingsAvailable() -> Bool {
-        guard let bindings = LLVMCAPIBindings.load() else {
-            return false
-        }
-        return bindings.smokeTestContextLifecycle()
-    }
 }

@@ -569,7 +569,7 @@ extension BuildKIRPhase {
         return semanticSymbol.kind == .valueParameter
     }
 
-    private func captureValueExpr(
+    func captureValueExpr(
         for symbol: SymbolID,
         sema: SemaModule,
         arena: KIRArena,
@@ -603,7 +603,7 @@ extension BuildKIRPhase {
         return ordered
     }
 
-    private func collectBoundIdentifierSymbols(
+    func collectBoundIdentifierSymbols(
         in exprID: ExprID,
         ast: ASTModule,
         sema: SemaModule,
@@ -768,7 +768,7 @@ extension BuildKIRPhase {
         }
     }
 
-    private func containsImplicitReceiverReference(in exprID: ExprID, ast: ASTModule) -> Bool {
+    func containsImplicitReceiverReference(in exprID: ExprID, ast: ASTModule) -> Bool {
         guard let expr = ast.arena.expr(exprID) else {
             return false
         }

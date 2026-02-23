@@ -28,7 +28,6 @@ extension LLVMBackend {
                 lines.append("  kk_gc_roots[\(slot)] = p\(index);")
             }
         }
-        lines.append("  kk_register_frame_map(\(functionID)u, &\(frameMapDescriptorSymbol(for: function)));")
         if frameMapPlan.rootCount > 0 {
             lines.append("  kk_push_frame(\(functionID)u, kk_gc_roots);")
         } else {
@@ -284,6 +283,78 @@ extension LLVMBackend {
                 }
                 if calleeName == "kk_coroutine_state_exit", let continuation = argVars.first {
                     lines.append("  kk_unregister_coroutine_root((void*)(uintptr_t)\(continuation));")
+                }
+                if let thrownSlotName {
+                    if let thrownResult {
+                        lines.append("  \(varName(thrownResult)) = \(thrownSlotName);")
+                    } else {
+                        lines.append("  if (\(thrownSlotName) != 0) {")
+                        lines.append("    if (outThrown) { *outThrown = \(thrownSlotName); }")
+                        lines.append("    kk_pop_frame();")
+                        lines.append("    return 0;")
+                        lines.append("  }")
+                    }
+                }
+
+            case .virtualCall(let symbol, let callee, let receiver, let arguments, let result, let usesThrownChannel, let thrownResult, let dispatch):
+                let calleeName = interner.resolve(callee)
+                ensureDeclared(receiver, declared: &declared, lines: &lines)
+                let argVars = arguments.map { arg -> String in
+                    ensureDeclared(arg, declared: &declared, lines: &lines)
+                    return varName(arg)
+                }
+
+                if let result {
+                    ensureDeclared(result, declared: &declared, lines: &lines)
+                }
+                if let thrownResult {
+                    ensureDeclared(thrownResult, declared: &declared, lines: &lines)
+                }
+
+                let lookupExpr: String
+                switch dispatch {
+                case .vtable(let slot):
+                    lookupExpr = "kk_vtable_lookup(\(varName(receiver)), \(slot))"
+                case .itable(let interfaceSlot, let methodSlot):
+                    lookupExpr = "kk_itable_lookup(\(varName(receiver)), \(interfaceSlot), \(methodSlot))"
+                }
+
+                let target: String
+                let isInternalFunction: Bool
+                if let symbol, let resolved = functionSymbols[symbol] {
+                    target = resolved
+                    isInternalFunction = true
+                } else {
+                    target = calleeName.isEmpty ? "0" : calleeName
+                    isInternalFunction = false
+                }
+
+                let fptr = "vfn_\(callIndex)"
+                lines.append("  KKVTableEntry \(fptr) = \(lookupExpr);")
+
+                var callArguments = [varName(receiver)] + argVars
+                var thrownSlotName: String? = nil
+                if usesThrownChannel {
+                    let thrSlot = "thrown_\(callIndex)"
+                    callIndex += 1
+                    lines.append("  intptr_t \(thrSlot) = 0;")
+                    thrownSlotName = thrSlot
+                    callArguments.append("&\(thrSlot)")
+                } else if isInternalFunction {
+                    callArguments.append("NULL")
+                    callIndex += 1
+                } else {
+                    callIndex += 1
+                }
+
+                let argsJoined = callArguments.joined(separator: ", ")
+                let directCallExpr = "\(target)(\(argsJoined))"
+                let virtualCallExpr = "((intptr_t(*)())\(fptr))(\(argsJoined))"
+                if let result {
+                    lines.append("  \(varName(result)) = (\(fptr) ? \(virtualCallExpr) : \(directCallExpr));")
+                    syncRoot(result)
+                } else {
+                    lines.append("  if (\(fptr)) { (void)\(virtualCallExpr); } else { (void)\(directCallExpr); }")
                 }
                 if let thrownSlotName {
                     if let thrownResult {

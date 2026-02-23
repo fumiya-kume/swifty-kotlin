@@ -560,4 +560,85 @@ final class DataFlowAnalyzerTests: XCTestCase {
         )
         XCTAssertEqual(result.variables[sym]?.possibleTypes, [intType])
     }
+
+    // MARK: - narrowToNonNull (P5-66)
+
+    func testNarrowToNonNullNarrowsNullableIntToNonNull() {
+        let analyzer = DataFlowAnalyzer()
+        let (_, _, types, _) = makeSemaModule()
+        let sym = SymbolID(rawValue: 0)
+        let base = DataFlowState()
+        let nullableInt = types.make(.primitive(.int, .nullable))
+        let nonNullInt = types.make(.primitive(.int, .nonNull))
+
+        let result = analyzer.narrowToNonNull(symbol: sym, type: nullableInt, base: base, types: types)
+        XCTAssertEqual(result.variables[sym]?.possibleTypes, [nonNullInt])
+        XCTAssertEqual(result.variables[sym]?.nullability, .nonNull)
+        XCTAssertTrue(result.variables[sym]?.isStable == true)
+    }
+
+    func testNarrowToNonNullPreservesExistingVariables() {
+        let analyzer = DataFlowAnalyzer()
+        let (_, _, types, _) = makeSemaModule()
+        let sym1 = SymbolID(rawValue: 0)
+        let sym2 = SymbolID(rawValue: 1)
+        let intType = types.make(.primitive(.int, .nonNull))
+        let nullableString = types.make(.primitive(.string, .nullable))
+        let nonNullString = types.make(.primitive(.string, .nonNull))
+        let existing = VariableFlowState(possibleTypes: [intType], nullability: .nonNull, isStable: true)
+        let base = DataFlowState(variables: [sym1: existing])
+
+        let result = analyzer.narrowToNonNull(symbol: sym2, type: nullableString, base: base, types: types)
+        XCTAssertEqual(result.variables[sym1]?.possibleTypes, [intType])
+        XCTAssertEqual(result.variables[sym2]?.possibleTypes, [nonNullString])
+    }
+
+    func testNarrowToNonNullAlreadyNonNullIsIdentity() {
+        let analyzer = DataFlowAnalyzer()
+        let (_, _, types, _) = makeSemaModule()
+        let sym = SymbolID(rawValue: 0)
+        let base = DataFlowState()
+        let nonNullInt = types.make(.primitive(.int, .nonNull))
+
+        let result = analyzer.narrowToNonNull(symbol: sym, type: nonNullInt, base: base, types: types)
+        XCTAssertEqual(result.variables[sym]?.possibleTypes, [nonNullInt])
+        XCTAssertEqual(result.variables[sym]?.nullability, .nonNull)
+    }
+
+    // MARK: - invalidateVariable (P5-66)
+
+    func testInvalidateVariableRemovesSmartCast() {
+        let analyzer = DataFlowAnalyzer()
+        let types = TypeSystem()
+        let sym = SymbolID(rawValue: 0)
+        let intType = types.make(.primitive(.int, .nonNull))
+        let flow = VariableFlowState(possibleTypes: [intType], nullability: .nonNull, isStable: true)
+        let base = DataFlowState(variables: [sym: flow])
+
+        let result = analyzer.invalidateVariable(symbol: sym, base: base)
+        XCTAssertNil(result.variables[sym])
+    }
+
+    func testInvalidateVariablePreservesOtherVariables() {
+        let analyzer = DataFlowAnalyzer()
+        let types = TypeSystem()
+        let sym1 = SymbolID(rawValue: 0)
+        let sym2 = SymbolID(rawValue: 1)
+        let intType = types.make(.primitive(.int, .nonNull))
+        let flow = VariableFlowState(possibleTypes: [intType], nullability: .nonNull, isStable: true)
+        let base = DataFlowState(variables: [sym1: flow, sym2: flow])
+
+        let result = analyzer.invalidateVariable(symbol: sym1, base: base)
+        XCTAssertNil(result.variables[sym1])
+        XCTAssertNotNil(result.variables[sym2])
+    }
+
+    func testInvalidateVariableOnEmptyStateIsNoOp() {
+        let analyzer = DataFlowAnalyzer()
+        let sym = SymbolID(rawValue: 0)
+        let base = DataFlowState()
+
+        let result = analyzer.invalidateVariable(symbol: sym, base: base)
+        XCTAssertTrue(result.variables.isEmpty)
+    }
 }
