@@ -65,8 +65,14 @@ public final class SemaCacheContext {
     // MARK: - Overload resolution cache
 
     /// Cache key for ``OverloadResolver.resolveCall``.
+    ///
+    /// Includes the current ``FunctionSignature`` of each candidate so that
+    /// mutations to signatures during type checking (e.g. when a function's
+    /// return type is inferred from its body) cause a cache miss rather than
+    /// returning stale results.
     struct CallResolutionKey: Hashable {
         let candidates: [SymbolID]
+        let candidateSignatures: [FunctionSignature?]
         let calleeName: InternedString
         let argTypes: [TypeID]
         let argLabels: [InternedString?]
@@ -94,14 +100,21 @@ public final class SemaCacheContext {
     }
 
     /// Builds a ``CallResolutionKey`` from the parameters of ``OverloadResolver.resolveCall``.
+    ///
+    /// The ``symbols`` table is used to snapshot each candidate's current
+    /// ``FunctionSignature`` so the key becomes invalid when a signature is
+    /// mutated during type checking.
     static func makeCallResolutionKey(
         candidates: [SymbolID],
         call: CallExpr,
         expectedType: TypeID?,
-        implicitReceiverType: TypeID?
+        implicitReceiverType: TypeID?,
+        symbols: SymbolTable
     ) -> CallResolutionKey {
-        CallResolutionKey(
-            candidates: candidates.sorted(by: { $0.rawValue < $1.rawValue }),
+        let sorted = candidates.sorted(by: { $0.rawValue < $1.rawValue })
+        return CallResolutionKey(
+            candidates: sorted,
+            candidateSignatures: sorted.map { symbols.functionSignature(for: $0) },
             calleeName: call.calleeName,
             argTypes: call.args.map(\.type),
             argLabels: call.args.map(\.label),

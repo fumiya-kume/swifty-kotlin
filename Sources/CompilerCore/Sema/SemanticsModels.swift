@@ -54,7 +54,7 @@ public struct SemanticSymbol {
     public let flags: SymbolFlags
 }
 
-public struct FunctionSignature {
+public struct FunctionSignature: Hashable {
     public let receiverType: TypeID?
     public let parameterTypes: [TypeID]
     public let returnType: TypeID

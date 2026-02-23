@@ -63,7 +63,8 @@ public final class OverloadResolver {
                 candidates: candidates,
                 call: call,
                 expectedType: expectedType,
-                implicitReceiverType: implicitReceiverType
+                implicitReceiverType: implicitReceiverType,
+                symbols: ctx.symbols
             )
             if let cached = cache.cachedCallResolution(for: key) {
                 cache.recordCallResolutionHit()
