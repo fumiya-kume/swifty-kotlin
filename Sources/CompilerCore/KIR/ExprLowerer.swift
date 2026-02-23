@@ -1,7 +1,14 @@
 import Foundation
 
-// Internal visibility is required for cross-file extension decomposition
-extension BuildKIRPhase {
+/// Delegate class for KIR lowering: ExprLowerer.
+/// Holds an unowned reference to the driver for mutual recursion.
+final class ExprLowerer {
+    unowned let driver: KIRLoweringDriver
+
+    init(driver: KIRLoweringDriver) {
+        self.driver = driver
+    }
+
     func lowerExpr(
         _ exprID: ExprID,
         ast: ASTModule,
@@ -135,11 +142,11 @@ extension BuildKIRPhase {
                 return id
             }
             if interner.resolve(name) == "this",
-               let currentImplicitReceiverExprID {
-                return currentImplicitReceiverExprID
+               let receiverExprID = driver.ctx.currentImplicitReceiverExprID {
+                return receiverExprID
             }
             if let symbol = sema.bindings.identifierSymbols[exprID] {
-                if let localValue = localValuesBySymbol[symbol] {
+                if let localValue = driver.ctx.localValuesBySymbol[symbol] {
                     return localValue
                 }
                 if let constant = propertyConstantInitializers[symbol] {
@@ -156,16 +163,16 @@ extension BuildKIRPhase {
             return id
 
         case .forExpr(_, let iterableExpr, let bodyExpr, _):
-            return lowerForExpr(exprID, iterableExpr: iterableExpr, bodyExpr: bodyExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+            return driver.controlFlowLowerer.lowerForExpr(exprID, iterableExpr: iterableExpr, bodyExpr: bodyExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
         case .whileExpr(let conditionExpr, let bodyExpr, _):
-            return lowerWhileExpr(exprID, conditionExpr: conditionExpr, bodyExpr: bodyExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+            return driver.controlFlowLowerer.lowerWhileExpr(exprID, conditionExpr: conditionExpr, bodyExpr: bodyExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
         case .doWhileExpr(let bodyExpr, let conditionExpr, _):
-            return lowerDoWhileExpr(exprID, bodyExpr: bodyExpr, conditionExpr: conditionExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+            return driver.controlFlowLowerer.lowerDoWhileExpr(exprID, bodyExpr: bodyExpr, conditionExpr: conditionExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
         case .breakExpr:
-            if let breakLabel = loopControlStack.last?.breakLabel {
+            if let breakLabel = driver.ctx.loopControlStack.last?.breakLabel {
                 instructions.append(.jump(breakLabel))
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
@@ -173,7 +180,7 @@ extension BuildKIRPhase {
             return unit
 
         case .continueExpr:
-            if let continueLabel = loopControlStack.last?.continueLabel {
+            if let continueLabel = driver.ctx.loopControlStack.last?.continueLabel {
                 instructions.append(.jump(continueLabel))
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
@@ -196,9 +203,9 @@ extension BuildKIRPhase {
                 }
                 let funRef = arena.appendExpr(.symbolRef(symbol), type: funType)
                 instructions.append(.constValue(result: funRef, value: .symbolRef(symbol)))
-                localValuesBySymbol[symbol] = funRef
+                driver.ctx.localValuesBySymbol[symbol] = funRef
 
-                let localFunCalleeName = callableTargetName(for: symbol, sema: sema, interner: interner)
+                let localFunCalleeName = driver.lambdaLowerer.callableTargetName(for: symbol, sema: sema, interner: interner)
 
                 // Emit the local function body as a KIRFunction declaration.
                 let localFunValueParamList: [KIRParameter]
@@ -211,7 +218,7 @@ extension BuildKIRPhase {
                 } else {
                     localFunValueParamList = localFunValueParams.enumerated().map { index, _ in
                         KIRParameter(
-                            symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: index),
+                            symbol: driver.lambdaLowerer.syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: index),
                             type: sema.types.anyType
                         )
                     }
@@ -234,7 +241,7 @@ extension BuildKIRPhase {
                 var referencedSymbols: [SymbolID] = []
                 var seenSymbols: Set<SymbolID> = []
                 for bodyExprID in captureBodyExprIDs {
-                    collectBoundIdentifierSymbols(
+                    driver.lambdaLowerer.collectBoundIdentifierSymbols(
                         in: bodyExprID,
                         ast: ast,
                         sema: sema,
@@ -246,9 +253,9 @@ extension BuildKIRPhase {
                 var captureSymbols = referencedSymbols.filter { sym in
                     if localFunParamSymbols.contains(sym) { return false }
                     if sym == symbol { return false }
-                    if localValuesBySymbol[sym] != nil { return true }
-                    if sym == currentImplicitReceiverSymbol,
-                       currentImplicitReceiverExprID != nil { return true }
+                    if driver.ctx.localValuesBySymbol[sym] != nil { return true }
+                    if sym == driver.ctx.currentImplicitReceiverSymbol,
+                       driver.ctx.currentImplicitReceiverExprID != nil { return true }
                     guard let semanticSymbol = sema.symbols.symbol(sym) else { return false }
                     return semanticSymbol.kind == .valueParameter
                 }
@@ -256,11 +263,11 @@ extension BuildKIRPhase {
                 // Implicit receiver (this/super) is not collected by
                 // collectBoundIdentifierSymbols, so check separately —
                 // mirrors the post-filter in lexicalCaptureSymbolsForLambda.
-                if let receiverSymbol = currentImplicitReceiverSymbol,
-                   currentImplicitReceiverExprID != nil,
+                if let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol,
+                   driver.ctx.currentImplicitReceiverExprID != nil,
                    !captureSymbols.contains(receiverSymbol) {
                     let needsReceiver = captureBodyExprIDs.contains { bodyExprID in
-                        containsImplicitReceiverReference(in: bodyExprID, ast: ast)
+                        driver.lambdaLowerer.containsImplicitReceiverReference(in: bodyExprID, ast: ast)
                     }
                     if needsReceiver {
                         captureSymbols.append(receiverSymbol)
@@ -271,18 +278,18 @@ extension BuildKIRPhase {
                 // its own captures, also capture those dependencies so call
                 // sites inside the body can forward correct capture arguments.
                 // Build a deterministic reverse map (KIRExprID → SymbolID) from
-                // localValuesBySymbol so we avoid nondeterministic Dictionary
+                // driver.ctx.localValuesBySymbol so we avoid nondeterministic Dictionary
                 // iteration with first(where:).
                 var exprIDToSymbol: [KIRExprID: SymbolID] = [:]
-                for (sym, expr) in localValuesBySymbol {
+                for (sym, expr) in driver.ctx.localValuesBySymbol {
                     exprIDToSymbol[expr] = sym
                 }
                 var transitiveChanged = true
                 while transitiveChanged {
                     transitiveChanged = false
                     for sym in captureSymbols {
-                        guard let outerExpr = localValuesBySymbol[sym],
-                              let callableInfo = callableValueInfoByExprID[outerExpr] else {
+                        guard let outerExpr = driver.ctx.localValuesBySymbol[sym],
+                              let callableInfo = driver.ctx.callableValueInfoByExprID[outerExpr] else {
                             continue
                         }
                         for captureArg in callableInfo.captureArguments {
@@ -291,8 +298,8 @@ extension BuildKIRPhase {
                                 transitiveSym = found
                             } else if case .symbolRef(let argSym) = arena.expr(captureArg) {
                                 transitiveSym = argSym
-                            } else if captureArg == currentImplicitReceiverExprID {
-                                transitiveSym = currentImplicitReceiverSymbol
+                            } else if captureArg == driver.ctx.currentImplicitReceiverExprID {
+                                transitiveSym = driver.ctx.currentImplicitReceiverSymbol
                             }
                             if let transitiveSym, !captureSymbols.contains(transitiveSym) {
                                 captureSymbols.append(transitiveSym)
@@ -305,7 +312,7 @@ extension BuildKIRPhase {
                 var captureBindings: [(capturedSymbol: SymbolID, param: KIRParameter, valueExpr: KIRExprID)] = []
                 captureBindings.reserveCapacity(captureSymbols.count)
                 for (index, capturedSymbol) in captureSymbols.enumerated() {
-                    guard let captureValue = captureValueExpr(
+                    guard let captureValue = driver.lambdaLowerer.captureValueExpr(
                         for: capturedSymbol,
                         sema: sema,
                         arena: arena,
@@ -313,8 +320,8 @@ extension BuildKIRPhase {
                     ) else {
                         continue
                     }
-                    let captureType = arena.exprType(captureValue) ?? typeForSymbolReference(capturedSymbol, sema: sema)
-                    let captureParamSymbol = syntheticLambdaCaptureParamSymbol(
+                    let captureType = arena.exprType(captureValue) ?? driver.lambdaLowerer.typeForSymbolReference(capturedSymbol, sema: sema)
+                    let captureParamSymbol = driver.lambdaLowerer.syntheticLambdaCaptureParamSymbol(
                         lambdaExprID: exprID,
                         captureIndex: index
                     )
@@ -326,31 +333,17 @@ extension BuildKIRPhase {
                     ))
                 }
 
-                registerCallableValue(
+                driver.ctx.registerCallableValue(
                     funRef,
                     symbol: symbol,
                     callee: localFunCalleeName,
                     captureArguments: captureBindings.map { $0.valueExpr }
                 )
 
-                let savedLocalValues = localValuesBySymbol
-                let savedReceiverExprID = currentImplicitReceiverExprID
-                let savedReceiverSymbol = currentImplicitReceiverSymbol
-                let savedLoopStack = loopControlStack
-                let savedNextLabel = nextLoopLabel
-                defer {
-                    localValuesBySymbol = savedLocalValues
-                    currentImplicitReceiverExprID = savedReceiverExprID
-                    currentImplicitReceiverSymbol = savedReceiverSymbol
-                    loopControlStack = savedLoopStack
-                    nextLoopLabel = savedNextLabel
-                }
-
-                localValuesBySymbol.removeAll(keepingCapacity: true)
-                currentImplicitReceiverExprID = nil
-                currentImplicitReceiverSymbol = nil
-                loopControlStack.removeAll(keepingCapacity: true)
-                nextLoopLabel = 10_000
+                let scopeSnapshot = driver.ctx.saveScope()
+                let savedReceiverSymbol = scopeSnapshot.currentImplicitReceiverSymbol
+                defer { driver.ctx.restoreScope(scopeSnapshot) }
+                driver.ctx.resetScopeForFunction()
 
                 var localFunBodyInstructions: [KIRInstruction] = [.beginBlock]
 
@@ -358,17 +351,17 @@ extension BuildKIRPhase {
                 for capture in captureBindings {
                     let captureExpr = arena.appendExpr(.symbolRef(capture.param.symbol), type: capture.param.type)
                     localFunBodyInstructions.append(.constValue(result: captureExpr, value: .symbolRef(capture.param.symbol)))
-                    localValuesBySymbol[capture.capturedSymbol] = captureExpr
+                    driver.ctx.localValuesBySymbol[capture.capturedSymbol] = captureExpr
                     if capture.capturedSymbol == savedReceiverSymbol {
-                        currentImplicitReceiverExprID = captureExpr
-                        currentImplicitReceiverSymbol = capture.param.symbol
+                        driver.ctx.currentImplicitReceiverExprID = captureExpr
+                        driver.ctx.currentImplicitReceiverSymbol = capture.param.symbol
                     }
                 }
 
                 for param in localFunValueParamList {
                     let paramExpr = arena.appendExpr(.symbolRef(param.symbol), type: param.type)
                     localFunBodyInstructions.append(.constValue(result: paramExpr, value: .symbolRef(param.symbol)))
-                    localValuesBySymbol[param.symbol] = paramExpr
+                    driver.ctx.localValuesBySymbol[param.symbol] = paramExpr
                 }
 
                 // Propagate callable value info for captured callables so that
@@ -378,20 +371,20 @@ extension BuildKIRPhase {
                 // intLiteral, etc.) without needing reverse lookups.
                 var outerExprToBodyExpr: [KIRExprID: KIRExprID] = [:]
                 for capture in captureBindings {
-                    if let bodyExpr = localValuesBySymbol[capture.capturedSymbol] {
+                    if let bodyExpr = driver.ctx.localValuesBySymbol[capture.capturedSymbol] {
                         outerExprToBodyExpr[capture.valueExpr] = bodyExpr
                     }
                 }
                 for capture in captureBindings {
-                    if let outerCallableInfo = callableValueInfoByExprID[capture.valueExpr],
-                       let bodyCallableExpr = localValuesBySymbol[capture.capturedSymbol] {
+                    if let outerCallableInfo = driver.ctx.callableValueInfoByExprID[capture.valueExpr],
+                       let bodyCallableExpr = driver.ctx.localValuesBySymbol[capture.capturedSymbol] {
                         var remappedArgs: [KIRExprID] = []
                         var mappingFailed = false
                         for argExpr in outerCallableInfo.captureArguments {
                             if let bodyArgExpr = outerExprToBodyExpr[argExpr] {
                                 remappedArgs.append(bodyArgExpr)
                             } else if case .symbolRef(let argSym) = arena.expr(argExpr),
-                                      let bodyArgExpr = localValuesBySymbol[argSym] {
+                                      let bodyArgExpr = driver.ctx.localValuesBySymbol[argSym] {
                                 remappedArgs.append(bodyArgExpr)
                             } else {
                                 assertionFailure("BuildKIRPhase: failed to remap capture argument for local function body")
@@ -400,7 +393,7 @@ extension BuildKIRPhase {
                             }
                         }
                         if !mappingFailed {
-                            registerCallableValue(
+                            driver.ctx.registerCallableValue(
                                 bodyCallableExpr,
                                 symbol: outerCallableInfo.symbol,
                                 callee: outerCallableInfo.callee,
@@ -416,14 +409,14 @@ extension BuildKIRPhase {
                 // (not the outer values) since we're in the body's scope.
                 let bodyFunRef = arena.appendExpr(.symbolRef(symbol), type: funType)
                 localFunBodyInstructions.append(.constValue(result: bodyFunRef, value: .symbolRef(symbol)))
-                localValuesBySymbol[symbol] = bodyFunRef
+                driver.ctx.localValuesBySymbol[symbol] = bodyFunRef
                 let recursiveCaptureArguments: [KIRExprID] = captureBindings.map { binding in
-                    guard let value = localValuesBySymbol[binding.capturedSymbol] else {
+                    guard let value = driver.ctx.localValuesBySymbol[binding.capturedSymbol] else {
                         preconditionFailure("BuildKIRPhase: missing capture binding for recursive local function '\(symbol)'")
                     }
                     return value
                 }
-                registerCallableValue(
+                driver.ctx.registerCallableValue(
                     bodyFunRef,
                     symbol: symbol,
                     callee: localFunCalleeName,
@@ -478,7 +471,7 @@ extension BuildKIRPhase {
                             instructions: &localFunBodyInstructions
                         )
                         // Detect nested termination (e.g., if/when/try with return in all branches)
-                        if let lastValue, isTerminatedExpr(lastValue, arena: arena, sema: sema) {
+                        if let lastValue, driver.controlFlowLowerer.isTerminatedExpr(lastValue, arena: arena, sema: sema) {
                             terminatedByReturn = true
                             break
                         }
@@ -519,7 +512,7 @@ extension BuildKIRPhase {
                         )
                     )
                 )
-                pendingGeneratedCallableDeclIDs.append(localFunDeclID)
+                driver.ctx.pendingGeneratedCallableDeclIDs.append(localFunDeclID)
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))
@@ -537,7 +530,7 @@ extension BuildKIRPhase {
                     instructions: &instructions
                 )
                 if let symbol = sema.bindings.identifierSymbols[exprID] {
-                    localValuesBySymbol[symbol] = initializerID
+                    driver.ctx.localValuesBySymbol[symbol] = initializerID
                 }
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
@@ -555,17 +548,17 @@ extension BuildKIRPhase {
                 instructions: &instructions
             )
             if let symbol = sema.bindings.identifierSymbols[exprID] {
-                localValuesBySymbol[symbol] = valueID
+                driver.ctx.localValuesBySymbol[symbol] = valueID
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
         case .arrayAccess(let arrayExpr, let indexExpr, _):
-            return lowerArrayAccessExpr(exprID, arrayExpr: arrayExpr, indexExpr: indexExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+            return driver.callLowerer.lowerArrayAccessExpr(exprID, arrayExpr: arrayExpr, indexExpr: indexExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
         case .arrayAssign(let arrayExpr, let indexExpr, let valueExpr, _):
-            return lowerArrayAssignExpr(exprID, arrayExpr: arrayExpr, indexExpr: indexExpr, valueExpr: valueExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+            return driver.callLowerer.lowerArrayAssignExpr(exprID, arrayExpr: arrayExpr, indexExpr: indexExpr, valueExpr: valueExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
         case .returnExpr(let value, _):
             if let value {
@@ -587,19 +580,19 @@ extension BuildKIRPhase {
             return unit
 
         case .ifExpr(let condition, let thenExpr, let elseExpr, _):
-            return lowerIfExpr(exprID, condition: condition, thenExpr: thenExpr, elseExpr: elseExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+            return driver.controlFlowLowerer.lowerIfExpr(exprID, condition: condition, thenExpr: thenExpr, elseExpr: elseExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
         case .tryExpr(let bodyExpr, let catchClauses, let finallyExpr, _):
-            return lowerTryExpr(exprID, bodyExpr: bodyExpr, catchClauses: catchClauses, finallyExpr: finallyExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+            return driver.controlFlowLowerer.lowerTryExpr(exprID, bodyExpr: bodyExpr, catchClauses: catchClauses, finallyExpr: finallyExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
         case .binary(let op, let lhs, let rhs, _):
-            return lowerBinaryExpr(exprID, op: op, lhs: lhs, rhs: rhs, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+            return driver.callLowerer.lowerBinaryExpr(exprID, op: op, lhs: lhs, rhs: rhs, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
         case .call(let calleeExpr, _, let args, _):
-            return lowerCallExpr(exprID, calleeExpr: calleeExpr, args: args, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+            return driver.callLowerer.lowerCallExpr(exprID, calleeExpr: calleeExpr, args: args, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
         case .memberCall(let receiverExpr, let calleeName, _, let args, _):
-            return lowerMemberCallExpr(exprID, receiverExpr: receiverExpr, calleeName: calleeName, args: args, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+            return driver.callLowerer.lowerMemberCallExpr(exprID, receiverExpr: receiverExpr, calleeName: calleeName, args: args, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
         case .unaryExpr(let op, let operandExpr, _):
             let operandID = lowerExpr(
@@ -685,7 +678,7 @@ extension BuildKIRPhase {
             return result
 
         case .safeMemberCall(let receiverExpr, let calleeName, _, let args, _):
-            return lowerSafeMemberCallExpr(exprID, receiverExpr: receiverExpr, calleeName: calleeName, args: args, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+            return driver.callLowerer.lowerSafeMemberCallExpr(exprID, receiverExpr: receiverExpr, calleeName: calleeName, args: args, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
         case .compoundAssign(_, _, let valueExpr, _):
             let valueID = lowerExpr(
@@ -698,7 +691,7 @@ extension BuildKIRPhase {
                 instructions: &instructions
             )
             if let symbol = sema.bindings.identifierSymbols[exprID] {
-                localValuesBySymbol[symbol] = valueID
+                driver.ctx.localValuesBySymbol[symbol] = valueID
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))
@@ -720,7 +713,7 @@ extension BuildKIRPhase {
             return unit
 
         case .lambdaLiteral(let params, let bodyExpr, _):
-            return lowerLambdaLiteralExpr(
+            return driver.lambdaLowerer.lowerLambdaLiteralExpr(
                 exprID,
                 params: params,
                 bodyExpr: bodyExpr,
@@ -733,7 +726,7 @@ extension BuildKIRPhase {
             )
 
         case .callableRef(let receiverExpr, let memberName, _):
-            return lowerCallableRefExpr(
+            return driver.lambdaLowerer.lowerCallableRefExpr(
                 exprID,
                 receiverExpr: receiverExpr,
                 memberName: memberName,
@@ -746,7 +739,7 @@ extension BuildKIRPhase {
             )
 
         case .objectLiteral(let superTypes, _):
-            return lowerObjectLiteralExpr(
+            return driver.objectLiteralLowerer.lowerObjectLiteralExpr(
                 exprID,
                 superTypes: superTypes,
                 sema: sema,
@@ -756,7 +749,7 @@ extension BuildKIRPhase {
             )
 
         case .whenExpr(let subject, let branches, let elseExpr, _):
-            return lowerWhenExpr(exprID, subject: subject, branches: branches, elseExpr: elseExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+            return driver.controlFlowLowerer.lowerWhenExpr(exprID, subject: subject, branches: branches, elseExpr: elseExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
         case .blockExpr(let statements, let trailingExpr, _):
             for stmt in statements {
@@ -770,7 +763,7 @@ extension BuildKIRPhase {
                     instructions: &instructions
                 )
                 // If the statement is a terminator (return/throw), stop lowering
-                if isTerminatedExpr(loweredStmt, arena: arena, sema: sema) {
+                if driver.controlFlowLowerer.isTerminatedExpr(loweredStmt, arena: arena, sema: sema) {
                     return loweredStmt
                 }
             }
@@ -790,16 +783,16 @@ extension BuildKIRPhase {
             return unit
 
         case .superRef:
-            if let currentImplicitReceiverExprID {
-                return currentImplicitReceiverExprID
+            if let receiverExprID = driver.ctx.currentImplicitReceiverExprID {
+                return receiverExprID
             }
             let unit = arena.appendExpr(.unit, type: boundType ?? sema.types.errorType)
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
         case .thisRef:
-            if let currentImplicitReceiverExprID {
-                return currentImplicitReceiverExprID
+            if let receiverExprID = driver.ctx.currentImplicitReceiverExprID {
+                return receiverExprID
             }
             let unit = arena.appendExpr(.unit, type: boundType ?? sema.types.errorType)
             instructions.append(.constValue(result: unit, value: .unit))

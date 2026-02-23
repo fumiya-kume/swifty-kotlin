@@ -1,6 +1,14 @@
 import Foundation
 
-extension BuildKIRPhase {
+/// Delegate class for KIR lowering: ObjectLiteralLowerer.
+/// Holds an unowned reference to the driver for mutual recursion.
+final class ObjectLiteralLowerer {
+    unowned let driver: KIRLoweringDriver
+
+    init(driver: KIRLoweringDriver) {
+        self.driver = driver
+    }
+
     func lowerObjectLiteralExpr(
         _ exprID: ExprID,
         superTypes: [TypeRefID],
@@ -37,18 +45,18 @@ extension BuildKIRPhase {
         for exprID: ExprID,
         interner: StringInterner
     ) -> (nominalSymbol: SymbolID, constructorSymbol: SymbolID, constructorName: InternedString) {
-        if let existing = syntheticObjectLiteralSymbolsByExprID[exprID] {
+        if let existing = driver.ctx.syntheticObjectLiteralSymbolsByExprID[exprID] {
             return existing
         }
-        let nominalSymbol = allocateSyntheticGeneratedSymbol()
-        let constructorSymbol = allocateSyntheticGeneratedSymbol()
+        let nominalSymbol = driver.ctx.allocateSyntheticGeneratedSymbol()
+        let constructorSymbol = driver.ctx.allocateSyntheticGeneratedSymbol()
         let constructorName = interner.intern("kk_object_literal_\(exprID.rawValue)")
         let generated = (
             nominalSymbol: nominalSymbol,
             constructorSymbol: constructorSymbol,
             constructorName: constructorName
         )
-        syntheticObjectLiteralSymbolsByExprID[exprID] = generated
+        driver.ctx.syntheticObjectLiteralSymbolsByExprID[exprID] = generated
         return generated
     }
 
@@ -61,12 +69,12 @@ extension BuildKIRPhase {
         arena: KIRArena,
         interner: StringInterner
     ) {
-        guard emittedObjectLiteralExprIDs.insert(exprID).inserted else {
+        guard driver.ctx.emittedObjectLiteralExprIDs.insert(exprID).inserted else {
             return
         }
 
         let nominalDeclID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbols.nominalSymbol)))
-        pendingGeneratedCallableDeclIDs.append(nominalDeclID)
+        driver.ctx.pendingGeneratedCallableDeclIDs.append(nominalDeclID)
 
         let intType = sema.types.make(.primitive(.int, .nonNull))
         let storageSlotCount = max(1, superTypeCount)
@@ -98,6 +106,6 @@ extension BuildKIRPhase {
                 )
             )
         )
-        pendingGeneratedCallableDeclIDs.append(constructorDeclID)
+        driver.ctx.pendingGeneratedCallableDeclIDs.append(constructorDeclID)
     }
 }

@@ -1,6 +1,14 @@
 import Foundation
 
-extension TypeCheckSemaPassPhase {
+/// Handles local declaration and assignment type inference.
+/// Derived from TypeCheckSemaPass+InferDecls.swift.
+final class LocalDeclTypeChecker {
+    unowned let driver: TypeCheckDriver
+
+    init(driver: TypeCheckDriver) {
+        self.driver = driver
+    }
+
     func inferLocalDeclExpr(
         _ id: ExprID,
         name: InternedString,
@@ -9,7 +17,7 @@ extension TypeCheckSemaPassPhase {
         initializer: ExprID?,
         range: SourceRange,
         ctx: TypeInferenceContext,
-        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)]
+        locals: inout LocalBindings
     ) -> TypeID {
         let ast = ctx.ast
         let sema = ctx.sema
@@ -17,19 +25,19 @@ extension TypeCheckSemaPassPhase {
 
         var declaredType: TypeID?
         if let typeAnnotation {
-            declaredType = resolveTypeRef(typeAnnotation, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
+            declaredType = driver.helpers.resolveTypeRef(typeAnnotation, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
         }
 
         var initializerType: TypeID?
         if let initializer {
-            initializerType = inferExpr(initializer, ctx: ctx, locals: &locals, expectedType: declaredType)
+            initializerType = driver.inferExpr(initializer, ctx: ctx, locals: &locals, expectedType: declaredType)
         }
 
         let localType: TypeID
         if let declaredType {
             localType = declaredType
             if let initializerType {
-                emitSubtypeConstraint(
+                driver.emitSubtypeConstraint(
                     left: initializerType, right: declaredType,
                     range: range, solver: ConstraintSolver(),
                     sema: sema, diagnostics: ctx.semaCtx.diagnostics
@@ -64,12 +72,12 @@ extension TypeCheckSemaPassPhase {
         value: ExprID,
         range: SourceRange,
         ctx: TypeInferenceContext,
-        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)]
+        locals: inout LocalBindings
     ) -> TypeID {
         let sema = ctx.sema
         let interner = ctx.interner
 
-        let valueType = inferExpr(value, ctx: ctx, locals: &locals, expectedType: nil)
+        let valueType = driver.inferExpr(value, ctx: ctx, locals: &locals, expectedType: nil)
         guard let local = locals[name] else {
             ctx.semaCtx.diagnostics.error(
                 "KSWIFTK-SEMA-0013",
@@ -87,7 +95,7 @@ extension TypeCheckSemaPassPhase {
                 range: range
             )
         } else {
-            emitSubtypeConstraint(
+            driver.emitSubtypeConstraint(
                 left: valueType,
                 right: local.type,
                 range: range,
@@ -95,8 +103,6 @@ extension TypeCheckSemaPassPhase {
                 sema: sema,
                 diagnostics: ctx.semaCtx.diagnostics
             )
-            // Smart cast invalidation: reset to declared type on reassignment (P5-66).
-            // Any previous smart cast narrowing for this variable is discarded.
             locals[name] = (local.type, local.symbol, local.isMutable, true)
         }
         sema.bindings.bindExprType(id, type: sema.types.unitType)
@@ -109,16 +115,16 @@ extension TypeCheckSemaPassPhase {
         indexExpr: ExprID,
         range: SourceRange,
         ctx: TypeInferenceContext,
-        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)]
+        locals: inout LocalBindings
     ) -> TypeID {
         let ast = ctx.ast
         let sema = ctx.sema
         let interner = ctx.interner
         let intType = sema.types.make(.primitive(.int, .nonNull))
 
-        let arrayType = inferExpr(arrayExpr, ctx: ctx, locals: &locals, expectedType: nil)
-        let indexType = inferExpr(indexExpr, ctx: ctx, locals: &locals, expectedType: intType)
-        emitSubtypeConstraint(
+        let arrayType = driver.inferExpr(arrayExpr, ctx: ctx, locals: &locals, expectedType: nil)
+        let indexType = driver.inferExpr(indexExpr, ctx: ctx, locals: &locals, expectedType: intType)
+        driver.emitSubtypeConstraint(
             left: indexType,
             right: intType,
             range: ast.arena.exprRange(indexExpr) ?? range,
@@ -126,7 +132,7 @@ extension TypeCheckSemaPassPhase {
             sema: sema,
             diagnostics: ctx.semaCtx.diagnostics
         )
-        let elementType = arrayElementType(for: arrayType, sema: sema, interner: interner) ?? sema.types.anyType
+        let elementType = driver.helpers.arrayElementType(for: arrayType, sema: sema, interner: interner) ?? sema.types.anyType
         sema.bindings.bindExprType(id, type: elementType)
         return elementType
     }
@@ -138,16 +144,16 @@ extension TypeCheckSemaPassPhase {
         valueExpr: ExprID,
         range: SourceRange,
         ctx: TypeInferenceContext,
-        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)]
+        locals: inout LocalBindings
     ) -> TypeID {
         let ast = ctx.ast
         let sema = ctx.sema
         let interner = ctx.interner
         let intType = sema.types.make(.primitive(.int, .nonNull))
 
-        let arrayType = inferExpr(arrayExpr, ctx: ctx, locals: &locals, expectedType: nil)
-        let indexType = inferExpr(indexExpr, ctx: ctx, locals: &locals, expectedType: intType)
-        emitSubtypeConstraint(
+        let arrayType = driver.inferExpr(arrayExpr, ctx: ctx, locals: &locals, expectedType: nil)
+        let indexType = driver.inferExpr(indexExpr, ctx: ctx, locals: &locals, expectedType: intType)
+        driver.emitSubtypeConstraint(
             left: indexType,
             right: intType,
             range: ast.arena.exprRange(indexExpr) ?? range,
@@ -155,10 +161,10 @@ extension TypeCheckSemaPassPhase {
             sema: sema,
             diagnostics: ctx.semaCtx.diagnostics
         )
-        let elementExpectedType = arrayElementType(for: arrayType, sema: sema, interner: interner)
-        let valueType = inferExpr(valueExpr, ctx: ctx, locals: &locals, expectedType: elementExpectedType)
+        let elementExpectedType = driver.helpers.arrayElementType(for: arrayType, sema: sema, interner: interner)
+        let valueType = driver.inferExpr(valueExpr, ctx: ctx, locals: &locals, expectedType: elementExpectedType)
         if let elementExpectedType {
-            emitSubtypeConstraint(
+            driver.emitSubtypeConstraint(
                 left: valueType,
                 right: elementExpectedType,
                 range: ast.arena.exprRange(valueExpr) ?? range,
@@ -179,7 +185,7 @@ extension TypeCheckSemaPassPhase {
         body: FunctionBody,
         range: SourceRange,
         ctx: TypeInferenceContext,
-        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)]
+        locals: inout LocalBindings
     ) -> TypeID {
         let ast = ctx.ast
         let sema = ctx.sema
@@ -190,7 +196,7 @@ extension TypeCheckSemaPassPhase {
         for param in valueParams {
             let paramType: TypeID
             if let typeRefID = param.type {
-                paramType = resolveTypeRef(typeRefID, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
+                paramType = driver.helpers.resolveTypeRef(typeRefID, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
             } else {
                 paramType = sema.types.anyType
             }
@@ -212,7 +218,7 @@ extension TypeCheckSemaPassPhase {
 
         let resolvedReturnType: TypeID
         if let returnTypeRef {
-            resolvedReturnType = resolveTypeRef(returnTypeRef, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
+            resolvedReturnType = driver.helpers.resolveTypeRef(returnTypeRef, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
         } else {
             resolvedReturnType = sema.types.unitType
         }
@@ -255,10 +261,10 @@ extension TypeCheckSemaPassPhase {
             for (index, expr) in exprs.enumerated() {
                 let isLast = index == exprs.count - 1
                 let expected = isLast ? resolvedReturnType : nil
-                _ = inferExpr(expr, ctx: ctx, locals: &bodyLocals, expectedType: expected)
+                _ = driver.inferExpr(expr, ctx: ctx, locals: &bodyLocals, expectedType: expected)
             }
         case .expr(let exprID, _):
-            _ = inferExpr(exprID, ctx: ctx, locals: &bodyLocals, expectedType: resolvedReturnType)
+            _ = driver.inferExpr(exprID, ctx: ctx, locals: &bodyLocals, expectedType: resolvedReturnType)
         case .unit:
             break
         }

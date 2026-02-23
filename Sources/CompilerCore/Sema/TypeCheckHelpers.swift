@@ -1,6 +1,8 @@
 import Foundation
 
-extension TypeCheckSemaPassPhase {
+/// Stateless utility functions for type checking. No back-reference to the driver needed.
+/// Derived from TypeCheckSemaPass+InferHelpers.swift.
+struct TypeCheckHelpers {
     func emitVisibilityError(
         for symbol: SemanticSymbol,
         name: String,
@@ -473,5 +475,4 @@ extension TypeCheckSemaPassPhase {
         }
         return sorted.first
     }
-
 }

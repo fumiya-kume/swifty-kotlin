@@ -1,13 +1,21 @@
 import Foundation
 
-extension TypeCheckSemaPassPhase {
+/// Handles call expression type inference (function calls, member calls, safe member calls).
+/// Derived from TypeCheckSemaPass+InferCallsAndBinary.swift.
+final class CallTypeChecker {
+    unowned let driver: TypeCheckDriver
+
+    init(driver: TypeCheckDriver) {
+        self.driver = driver
+    }
+
     func inferCallExpr(
         _ id: ExprID,
         calleeID: ExprID,
         args: [CallArgument],
         range: SourceRange,
         ctx: TypeInferenceContext,
-        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
+        locals: inout LocalBindings,
         expectedType: TypeID?,
         explicitTypeArgs: [TypeID] = []
     ) -> TypeID {
@@ -17,7 +25,7 @@ extension TypeCheckSemaPassPhase {
         let scope = ctx.scope
 
         let argTypes = args.map { argument in
-            inferExpr(argument.expr, ctx: ctx, locals: &locals)
+            driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
         }
 
         let calleeExpr = ast.arena.expr(calleeID)
@@ -43,9 +51,6 @@ extension TypeCheckSemaPassPhase {
                     candidates = [local.symbol]
                 }
             }
-            // Kotlin: `ClassName(args)` is a constructor call. If no function/constructor
-            // candidates were found, check if calleeName resolves to a class symbol and
-            // look up its constructors from the symbol table by FQ name.
             if candidates.isEmpty {
                 let classSymbols = scope.lookup(calleeName).filter { candidate in
                     guard let symbol = sema.symbols.symbol(candidate) else { return false }
@@ -128,13 +133,13 @@ extension TypeCheckSemaPassPhase {
                 isSuspend: false,
                 nullability: .nonNull
             )))
-            callableCalleeType = inferExpr(
+            callableCalleeType = driver.inferExpr(
                 calleeID,
                 ctx: ctx,
                 locals: &locals,
                 expectedType: contextualCalleeType
             )
-            callableTarget = callableTargetForCalleeExpr(calleeID, sema: sema)
+            callableTarget = driver.helpers.callableTargetForCalleeExpr(calleeID, sema: sema)
         }
 
         if let callableCalleeType,
@@ -145,7 +150,7 @@ extension TypeCheckSemaPassPhase {
             return result
         }
 
-        if let builtinType = kxMiniCoroutineBuiltinReturnType(
+        if let builtinType = driver.helpers.kxMiniCoroutineBuiltinReturnType(
             calleeName: calleeName,
             argumentCount: args.count,
             sema: sema,
@@ -161,7 +166,7 @@ extension TypeCheckSemaPassPhase {
             return sema.types.unitType
         }
         if let firstInvisible = callInvisible.first, let calleeName {
-            emitVisibilityError(for: firstInvisible, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
+            driver.helpers.emitVisibilityError(for: firstInvisible, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
         } else {
             let nameStr = calleeName.map { interner.resolve($0) } ?? "<unknown>"
             ctx.semaCtx.diagnostics.error(
@@ -181,7 +186,7 @@ extension TypeCheckSemaPassPhase {
         args: [CallArgument],
         range: SourceRange,
         ctx: TypeInferenceContext,
-        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
+        locals: inout LocalBindings,
         expectedType: TypeID?,
         explicitTypeArgs: [TypeID] = []
     ) -> TypeID {
@@ -195,7 +200,7 @@ extension TypeCheckSemaPassPhase {
         args: [CallArgument],
         range: SourceRange,
         ctx: TypeInferenceContext,
-        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
+        locals: inout LocalBindings,
         expectedType: TypeID?,
         explicitTypeArgs: [TypeID] = []
     ) -> TypeID {
@@ -209,7 +214,7 @@ extension TypeCheckSemaPassPhase {
         args: [CallArgument],
         range: SourceRange,
         ctx: TypeInferenceContext,
-        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
+        locals: inout LocalBindings,
         expectedType: TypeID?,
         explicitTypeArgs: [TypeID],
         safeCall: Bool
@@ -219,8 +224,8 @@ extension TypeCheckSemaPassPhase {
         let interner = ctx.interner
         let scope = ctx.scope
 
-        let receiverType = inferExpr(receiverID, ctx: ctx, locals: &locals)
-        let argTypes = args.map { inferExpr($0.expr, ctx: ctx, locals: &locals) }
+        let receiverType = driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
+        let argTypes = args.map { driver.inferExpr($0.expr, ctx: ctx, locals: &locals) }
         let lookupReceiverType = safeCall ? sema.types.makeNonNullable(receiverType) : receiverType
 
         var isSuperCall = false
@@ -228,7 +233,7 @@ extension TypeCheckSemaPassPhase {
         if !safeCall {
             isSuperCall = ast.arena.expr(receiverID).map { if case .superRef = $0 { true } else { false } } ?? false
             if isSuperCall, let currentReceiverType = ctx.implicitReceiverType,
-               let classSymbol = nominalSymbol(of: currentReceiverType, types: sema.types) {
+               let classSymbol = driver.helpers.nominalSymbol(of: currentReceiverType, types: sema.types) {
                 var queue = sema.symbols.directSupertypes(for: classSymbol)
                 var visited: Set<SymbolID> = [classSymbol]
                 while !queue.isEmpty {
@@ -242,7 +247,7 @@ extension TypeCheckSemaPassPhase {
         }
 
         let memberLookupType = (isSuperCall ? ctx.implicitReceiverType : nil) ?? lookupReceiverType
-        let memberCandidates = collectMemberFunctionCandidates(
+        let memberCandidates = driver.helpers.collectMemberFunctionCandidates(
             named: calleeName,
             receiverType: memberLookupType,
             sema: sema,
@@ -267,11 +272,11 @@ extension TypeCheckSemaPassPhase {
         let candidates = visible
         if candidates.isEmpty {
             if lookupReceiverType == sema.types.errorType {
-                return bindAndReturnErrorType(id, sema: sema)
+                return driver.helpers.bindAndReturnErrorType(id, sema: sema)
             }
             if let firstInvisible = invisible.first {
-                emitVisibilityError(for: firstInvisible, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
-                return bindAndReturnErrorType(id, sema: sema)
+                driver.helpers.emitVisibilityError(for: firstInvisible, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
+                return driver.helpers.bindAndReturnErrorType(id, sema: sema)
             }
             if safeCall {
                 let resultType = sema.types.nullableAnyType
@@ -279,7 +284,7 @@ extension TypeCheckSemaPassPhase {
                 return resultType
             }
             ctx.semaCtx.diagnostics.error("KSWIFTK-SEMA-0024", "Unresolved member function '\(interner.resolve(calleeName))'.", range: range)
-            return bindAndReturnErrorType(id, sema: sema)
+            return driver.helpers.bindAndReturnErrorType(id, sema: sema)
         }
 
         let resolvedArgs = zip(args, argTypes).map { CallArg(label: $0.label, isSpread: $0.isSpread, type: $1) }
@@ -292,11 +297,11 @@ extension TypeCheckSemaPassPhase {
         )
         if let diagnostic = resolved.diagnostic {
             ctx.semaCtx.diagnostics.emit(diagnostic)
-            return bindAndReturnErrorType(id, sema: sema)
+            return driver.helpers.bindAndReturnErrorType(id, sema: sema)
         }
         guard let chosen = resolved.chosenCallee else {
             ctx.semaCtx.diagnostics.error("KSWIFTK-SEMA-0024", "Unresolved member function '\(interner.resolve(calleeName))'.", range: range)
-            return bindAndReturnErrorType(id, sema: sema)
+            return driver.helpers.bindAndReturnErrorType(id, sema: sema)
         }
         let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
         if isSuperCall { sema.bindings.markSuperCall(id) }
@@ -362,7 +367,7 @@ extension TypeCheckSemaPassPhase {
         var parameterMapping: [Int: Int] = [:]
         for index in argTypes.indices {
             parameterMapping[index] = index
-            emitSubtypeConstraint(
+            driver.emitSubtypeConstraint(
                 left: argTypes[index],
                 right: functionType.params[index],
                 range: ast.arena.exprRange(args[index].expr) ?? range,
@@ -372,7 +377,7 @@ extension TypeCheckSemaPassPhase {
             )
         }
         if let expectedType {
-            emitSubtypeConstraint(
+            driver.emitSubtypeConstraint(
                 left: functionType.returnType,
                 right: expectedType,
                 range: range,

@@ -1,6 +1,8 @@
 import Foundation
 
-extension TypeCheckSemaPassPhase {
+/// Stateless utility for building file-level scopes during type checking.
+/// Derived from TypeCheckSemaPass+ScopeBuilder.swift.
+struct TypeCheckScopeBuilder {
     func buildFileScopes(
         ast: ASTModule,
         sema: SemaModule,
