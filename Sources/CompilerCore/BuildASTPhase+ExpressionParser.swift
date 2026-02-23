@@ -232,11 +232,9 @@ extension BuildASTPhase {
                 return 120
             case .add, .subtract:
                 return 110
-            case .rangeTo, .rangeUntil:
-                return 100
-            case .inCheck, .notInCheck:
-                return 85
-            case .elvis:
+                case .rangeTo, .rangeUntil:
+                    return 100
+                case .elvis:
                 return 90
             case .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
                 return 80

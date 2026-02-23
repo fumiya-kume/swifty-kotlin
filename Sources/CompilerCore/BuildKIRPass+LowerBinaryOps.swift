@@ -186,28 +186,6 @@ extension BuildKIRPhase {
                 thrownResult: nil
             ))
             return result
-        case .inCheck:
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_op_contains"),
-                arguments: [rhsID, lhsID],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-        case .notInCheck:
-            let containsResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.make(.primitive(.boolean, .nonNull)))
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_op_contains"),
-                arguments: [rhsID, lhsID],
-                result: containsResult,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            instructions.append(.unary(op: .not, operand: containsResult, result: result))
-            return result
         }
         instructions.append(.binary(op: kirOp, lhs: lhsID, rhs: rhsID, result: result))
         return result

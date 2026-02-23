@@ -143,8 +143,6 @@ extension TypeCheckSemaPassPhase {
             type = sema.types.lub([nonNullLhs, rhs])
         case .rangeTo, .rangeUntil:
             type = sema.types.anyType
-        case .inCheck, .notInCheck:
-            type = boolType
         }
         sema.bindings.bindExprType(id, type: type)
         return type

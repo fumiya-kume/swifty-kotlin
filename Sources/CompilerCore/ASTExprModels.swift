@@ -27,8 +27,6 @@ public enum BinaryOp: Equatable {
     case elvis
     case rangeTo
     case rangeUntil
-    case inCheck
-    case notInCheck
 }
 
 public enum UnaryOp: Equatable {
