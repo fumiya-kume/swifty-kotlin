@@ -228,7 +228,7 @@ if [[ -n "$BASELINE" && -f "$BASELINE" ]]; then
     echo ""
 
     # Generate a temporary JSON for comparison when --format tsv was used.
-    local compare_json="$JSON_FILE"
+    compare_json="$JSON_FILE"
     if [[ ! -f "$compare_json" ]]; then
         compare_json="${TMPDIR_BENCH}/compare_results.json"
         {
