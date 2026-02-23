@@ -938,11 +938,11 @@ final class CallLowerer {
         }
         let opName: String
         switch op {
-        case .plusAssign: opName = "kk_op_plus"
-        case .minusAssign: opName = "kk_op_minus"
-        case .timesAssign: opName = "kk_op_times"
+        case .plusAssign: opName = "kk_op_add"
+        case .minusAssign: opName = "kk_op_sub"
+        case .timesAssign: opName = "kk_op_mul"
         case .divAssign: opName = "kk_op_div"
-        case .modAssign: opName = "kk_op_rem"
+        case .modAssign: opName = "kk_op_mod"
         }
         instructions.append(.call(
             symbol: nil,

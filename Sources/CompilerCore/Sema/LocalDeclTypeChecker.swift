@@ -161,9 +161,9 @@ final class LocalDeclTypeChecker {
         }
 
         // Fallback: built-in array access (single Int index)
-        for indexExpr in indices {
+        for (i, indexExpr) in indices.enumerated() {
             driver.emitSubtypeConstraint(
-                left: driver.inferExpr(indexExpr, ctx: ctx, locals: &locals, expectedType: intType),
+                left: indexTypes[i],
                 right: intType,
                 range: ast.arena.exprRange(indexExpr) ?? range,
                 solver: ConstraintSolver(),
@@ -230,9 +230,9 @@ final class LocalDeclTypeChecker {
         }
 
         // Fallback: built-in array assign (single Int index)
-        for indexExpr in indices {
+        for (i, indexExpr) in indices.enumerated() {
             driver.emitSubtypeConstraint(
-                left: driver.inferExpr(indexExpr, ctx: ctx, locals: &locals, expectedType: intType),
+                left: indexTypes[i],
                 right: intType,
                 range: ast.arena.exprRange(indexExpr) ?? range,
                 solver: ConstraintSolver(),
