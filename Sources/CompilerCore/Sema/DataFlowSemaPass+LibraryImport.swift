@@ -303,8 +303,6 @@ extension DataFlowSemaPassPhase {
             }
         case .primitive, .any, .unit, .nothing, .error:
             break
-        case .intersection:
-            break
         }
     }
 
