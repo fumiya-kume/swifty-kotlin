@@ -91,6 +91,9 @@ public final class LLVMBackend {
     /// subsequent compilations within the same process.
     func cachedRuntimeStubPath() -> String? {
         let triple = targetTripleString()
+        let source = cRuntimePreamble().joined(separator: "\n")
+        let cacheKey = stableFNV1a64Hex(triple + "_" + stableFNV1a64Hex(source))
+
         Self.runtimeStubLock.lock()
         defer { Self.runtimeStubLock.unlock() }
 
@@ -103,15 +106,13 @@ public final class LLVMBackend {
             .appendingPathComponent("kswiftk_rt_stubs")
         try? FileManager.default.createDirectory(at: stubDir, withIntermediateDirectories: true)
 
-        let stubSource = stubDir.appendingPathComponent("kk_runtime_\(stableFNV1a64Hex(triple)).c")
-        let stubObject = stubDir.appendingPathComponent("kk_runtime_\(stableFNV1a64Hex(triple)).o")
+        let stubSource = stubDir.appendingPathComponent("kk_runtime_\(cacheKey).c")
+        let stubObject = stubDir.appendingPathComponent("kk_runtime_\(cacheKey).o")
 
         if FileManager.default.fileExists(atPath: stubObject.path) {
             Self.runtimeStubCache[triple] = stubObject.path
             return stubObject.path
         }
-
-        let source = cRuntimePreamble().joined(separator: "\n")
         do {
             try source.write(to: stubSource, atomically: true, encoding: .utf8)
             let clangPath = CommandRunner.resolveExecutable("clang", fallback: "/usr/bin/clang")
