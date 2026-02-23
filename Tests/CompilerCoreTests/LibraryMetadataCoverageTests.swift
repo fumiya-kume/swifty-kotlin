@@ -95,7 +95,7 @@ final class LibraryMetadataCoverageTests: XCTestCase {
                 )
 
                 let calls = mainFunction.body.compactMap { instruction -> String? in
-                    guard case .call(_, let callee, _, _, _, _) = instruction else {
+                    guard case .call(_, let callee, _, _, _, _, _) = instruction else {
                         return nil
                     }
                     return appCtx.interner.resolve(callee)

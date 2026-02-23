@@ -127,7 +127,7 @@ extension CoroutineLoweringPass {
 
             for stateInstruction in block.instructions {
                 let instruction = stateInstruction.instruction
-                if case .call(let symbol, let callee, let arguments, let result, let canThrow, _) = instruction,
+                if case .call(let symbol, let callee, let arguments, let result, let canThrow, _, let isSuperCall) = instruction,
                    isSuspendCall(
                     symbol: symbol,
                     callee: callee,
@@ -192,7 +192,8 @@ extension CoroutineLoweringPass {
                             arguments: loweredSuspendArguments,
                             result: suspensionResult,
                             canThrow: canThrow,
-                            thrownResult: nil
+                            thrownResult: nil,
+                            isSuperCall: isSuperCall
                         )
                     )
 

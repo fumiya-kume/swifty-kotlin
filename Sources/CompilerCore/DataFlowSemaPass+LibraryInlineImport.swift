@@ -242,13 +242,16 @@ extension DataFlowSemaPassPhase {
             }
             let canThrowRaw = pairs["canThrow"] ?? "0"
             let canThrow = canThrowRaw == "1" || canThrowRaw == "true"
+            let isSuperCallRaw = pairs["isSuperCall"] ?? "0"
+            let isSuperCall = isSuperCallRaw == "1" || isSuperCallRaw == "true"
             return .call(
                 symbol: nil,
                 callee: interner.intern(calleeName),
                 arguments: args,
                 result: result,
                 canThrow: canThrow,
-                thrownResult: nil
+                thrownResult: nil,
+                isSuperCall: isSuperCall
             )
         default:
             return nil

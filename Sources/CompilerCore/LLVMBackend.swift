@@ -334,7 +334,7 @@ public final class LLVMBackend {
                 continue
             }
             for instruction in function.body {
-                guard case .call(let symbol, let callee, _, _, _, _) = instruction else {
+                guard case .call(let symbol, let callee, _, _, _, _, _) = instruction else {
                     continue
                 }
                 if let symbol, functionSymbols[symbol] != nil {

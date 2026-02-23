@@ -232,7 +232,7 @@ final class LoweringPassCoverageTests: XCTestCase {
         }
 
         let rawSuspendCalls = loweredCaller.body.contains { instruction in
-            guard case .call(_, let callee, _, _, _, _) = instruction else {
+            guard case .call(_, let callee, _, _, _, _, _) = instruction else {
                 return false
             }
             return interner.resolve(callee) == "susp"
@@ -240,7 +240,7 @@ final class LoweringPassCoverageTests: XCTestCase {
         XCTAssertFalse(rawSuspendCalls)
 
         let rewrittenSuspendCalls = loweredCaller.body.compactMap { instruction -> (name: String, arity: Int, canThrow: Bool)? in
-            guard case .call(_, let callee, let arguments, _, let canThrow, _) = instruction else {
+            guard case .call(_, let callee, let arguments, _, let canThrow, _, _) = instruction else {
                 return nil
             }
             let name = interner.resolve(callee)
@@ -919,7 +919,7 @@ final class LoweringPassCoverageTests: XCTestCase {
         }
 
         let loweredCallees = loweredMain.body.compactMap { instruction -> InternedString? in
-            guard case .call(_, let callee, _, _, _, _) = instruction else {
+            guard case .call(_, let callee, _, _, _, _, _) = instruction else {
                 return nil
             }
             return callee
@@ -1025,7 +1025,7 @@ final class LoweringPassCoverageTests: XCTestCase {
         XCTAssertEqual(thunk.params.count, 1)
 
         let thunkCallees = thunk.body.compactMap { instruction -> String? in
-            guard case .call(_, let callee, _, _, _, _) = instruction else { return nil }
+            guard case .call(_, let callee, _, _, _, _, _) = instruction else { return nil }
             return interner.resolve(callee)
         }
         XCTAssertTrue(thunkCallees.contains("kk_coroutine_launcher_arg_get"))
@@ -1036,7 +1036,7 @@ final class LoweringPassCoverageTests: XCTestCase {
             return
         }
         let mainCallees = loweredMain.body.compactMap { instruction -> String? in
-            guard case .call(_, let callee, _, _, _, _) = instruction else { return nil }
+            guard case .call(_, let callee, _, _, _, _, _) = instruction else { return nil }
             return interner.resolve(callee)
         }
         XCTAssertTrue(mainCallees.contains("kk_coroutine_continuation_new"))
@@ -1115,7 +1115,7 @@ final class LoweringPassCoverageTests: XCTestCase {
             return
         }
         let mainCallees = loweredMain.body.compactMap { instruction -> String? in
-            guard case .call(_, let callee, _, _, _, _) = instruction else { return nil }
+            guard case .call(_, let callee, _, _, _, _, _) = instruction else { return nil }
             return interner.resolve(callee)
         }
         XCTAssertTrue(mainCallees.contains("kk_kxmini_run_blocking"))
@@ -1207,7 +1207,7 @@ final class LoweringPassCoverageTests: XCTestCase {
         XCTAssertEqual(thunk.params.count, 1)
 
         let thunkCallees = thunk.body.compactMap { instruction -> String? in
-            guard case .call(_, let callee, _, _, _, _) = instruction else { return nil }
+            guard case .call(_, let callee, _, _, _, _, _) = instruction else { return nil }
             return interner.resolve(callee)
         }
         XCTAssertTrue(thunkCallees.contains("kk_coroutine_launcher_arg_get"))
@@ -1219,7 +1219,7 @@ final class LoweringPassCoverageTests: XCTestCase {
             return
         }
         let mainCallees = loweredMain.body.compactMap { instruction -> String? in
-            guard case .call(_, let callee, _, _, _, _) = instruction else { return nil }
+            guard case .call(_, let callee, _, _, _, _, _) = instruction else { return nil }
             return interner.resolve(callee)
         }
         XCTAssertTrue(mainCallees.contains("kk_coroutine_continuation_new"))
@@ -1303,7 +1303,7 @@ final class LoweringPassCoverageTests: XCTestCase {
             return
         }
         let mainCallees = loweredMain.body.compactMap { instruction -> String? in
-            guard case .call(_, let callee, _, _, _, _) = instruction else { return nil }
+            guard case .call(_, let callee, _, _, _, _, _) = instruction else { return nil }
             return interner.resolve(callee)
         }
         // Zero-arg path: should use kk_kxmini_run_blocking, NOT _with_cont
@@ -1393,7 +1393,7 @@ final class LoweringPassCoverageTests: XCTestCase {
             return
         }
         let mainCallees = loweredMain.body.compactMap { instruction -> String? in
-            guard case .call(_, let callee, _, _, _, _) = instruction else { return nil }
+            guard case .call(_, let callee, _, _, _, _, _) = instruction else { return nil }
             return interner.resolve(callee)
         }
         XCTAssertTrue(mainCallees.contains("kk_kxmini_launch_with_cont"))

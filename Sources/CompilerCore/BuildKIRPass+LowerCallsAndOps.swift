@@ -236,6 +236,7 @@ extension BuildKIRPhase {
             )
         }
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+        let isSuperCall = sema.bindings.isSuperCallExpr(exprID)
         let callBinding = sema.bindings.callBindings[exprID]
         let chosen = callBinding?.chosenCallee
         let memberNormalized = normalizedCallArguments(
@@ -284,7 +285,8 @@ extension BuildKIRPhase {
                 arguments: finalArguments,
                 result: result,
                 canThrow: false,
-                thrownResult: nil
+                thrownResult: nil,
+                isSuperCall: isSuperCall
             ))
         } else {
             if let callBinding, let chosen,
@@ -317,7 +319,8 @@ extension BuildKIRPhase {
                 arguments: finalArguments,
                 result: result,
                 canThrow: false,
-                thrownResult: nil
+                thrownResult: nil,
+                isSuperCall: isSuperCall
             ))
         }
         return result
@@ -357,6 +360,7 @@ extension BuildKIRPhase {
             )
         }
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+        let isSuperCall = sema.bindings.isSuperCallExpr(exprID)
         let callBinding = sema.bindings.callBindings[exprID]
         let chosen = callBinding?.chosenCallee
         let safeNormalized = normalizedCallArguments(
@@ -405,7 +409,8 @@ extension BuildKIRPhase {
                 arguments: finalArguments,
                 result: result,
                 canThrow: false,
-                thrownResult: nil
+                thrownResult: nil,
+                isSuperCall: isSuperCall
             ))
         } else {
             if let callBinding, let chosen,
@@ -438,7 +443,8 @@ extension BuildKIRPhase {
                 arguments: finalArguments,
                 result: result,
                 canThrow: false,
-                thrownResult: nil
+                thrownResult: nil,
+                isSuperCall: isSuperCall
             ))
         }
         return result

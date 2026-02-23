@@ -131,7 +131,10 @@ extension LLVMBackend {
                 lines.append("  \(varName(result)) = \(varName(operand));")
                 syncRoot(result)
 
-            case .call(let symbol, let callee, let arguments, let result, let usesThrownChannel, let thrownResult):
+            case .call(let symbol, let callee, let arguments, let result, let usesThrownChannel, let thrownResult, let isSuperCall):
+                // super calls always use direct dispatch – when virtual dispatch
+                // is introduced the isSuperCall flag will bypass vtable lookup.
+                _ = isSuperCall
                 let calleeName = interner.resolve(callee)
                 let argVars = arguments.map { arg -> String in
                     ensureDeclared(arg, declared: &declared, lines: &lines)
