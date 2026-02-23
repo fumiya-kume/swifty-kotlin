@@ -1892,6 +1892,29 @@ final class LibraryMetadataCoverageTests: XCTestCase {
         XCTAssertEqual(decoded[0].arity, 2)
     }
 
+    func testMetadataEncoderIncludesArityForConstructor() {
+        let record = MetadataRecord(
+            kind: .constructor,
+            mangledName: "_kk_demo_Foo_init",
+            fqName: "demo.Foo.init",
+            arity: 2,
+            isSuspend: false,
+            isInline: false
+        )
+        let encoder = MetadataEncoder()
+        let serialized = encoder.serialize([record])
+        XCTAssertTrue(serialized.contains("arity=2"))
+        XCTAssertTrue(serialized.contains("suspend=0"))
+        XCTAssertTrue(serialized.contains("inline=0"))
+
+        let decoder = MetadataDecoder()
+        let decoded = decoder.decode(serialized)
+        XCTAssertEqual(decoded.count, 1)
+        XCTAssertEqual(decoded[0].kind, .constructor)
+        XCTAssertEqual(decoded[0].fqName, "demo.Foo.init")
+        XCTAssertEqual(decoded[0].arity, 2)
+    }
+
     func testMetadataRoundTripForSuspendFunction() {
         let record = MetadataRecord(
             kind: .function,

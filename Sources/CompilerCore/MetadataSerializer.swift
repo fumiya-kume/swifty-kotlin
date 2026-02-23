@@ -141,7 +141,7 @@ public final class MetadataEncoder {
             var typeSignature: String?
             var externalLinkName: String?
 
-            if symbol.kind == .function, let signature = symbols.functionSignature(for: symbol.id) {
+            if (symbol.kind == .function || symbol.kind == .constructor), let signature = symbols.functionSignature(for: symbol.id) {
                 arity = signature.parameterTypes.count
                 isSuspend = signature.isSuspend
                 isInline = symbol.flags.contains(.inlineFunction)
@@ -249,7 +249,7 @@ public final class MetadataEncoder {
                 record.mangledName,
                 "fq=\(record.fqName)"
             ]
-            if record.kind == .function {
+            if record.kind == .function || record.kind == .constructor {
                 fields.append("arity=\(record.arity)")
                 fields.append("suspend=\(record.isSuspend ? 1 : 0)")
                 fields.append("inline=\(record.isInline ? 1 : 0)")
