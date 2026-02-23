@@ -651,11 +651,11 @@
   - [ ] `listOf`/`mapOf`/`arrayOf` を含む diff/golden ケースを追加する
   - **完了条件**: `listOf(1, 2, 3).size` / `for (x in listOf(...))` が `kotlinc` と同一出力になる
 
-- [ ] P5-85: コレクション型の型引数推論（`listOf(1, 2)` → `List<Int>`）を overload resolver に統合する（spec.md J8/J9）
-  - [ ] `TypeInferenceEngine` で generic stub 関数への型引数推論を vararg element 型から行う
-  - [ ] 混在型（`listOf(1, "a")`）の LUB 型推論（`List<Any>`）を実装する
-  - [ ] explicit 型引数（`listOf<Number>(1, 2.0)`）と推論結果を統合する
-  - [ ] 型引数推論の diff/golden ケース（unifrom/mixed element type）を追加する
+- [x] P5-85: コレクション型の型引数推論（`listOf(1, 2)` → `List<Int>`）を overload resolver に統合する（spec.md J8/J9）
+  - [x] `TypeInferenceEngine` で generic stub 関数への型引数推論を vararg element 型から行う
+  - [x] 混在型（`listOf(1, "a")`）の LUB 型推論（`List<Any>`）を実装する
+  - [x] explicit 型引数（`listOf<Number>(1, 2.0)`）と推論結果を統合する
+  - [x] 型引数推論の diff/golden ケース（unifrom/mixed element type）を追加する
   - **完了条件**: `listOf(1, 2, 3)` の型が `List<Int>` と推論され、混在型が `List<Any>` となる
 
 ---
@@ -1016,11 +1016,11 @@
   - [ ] F-bound generics の diff/golden ケースを追加する
   - **完了条件**: `fun <T> max(a: T, b: T): T where T : Comparable<T>` が `max(1, 2)` / `max("a", "b")` で動作する
 
-- [ ] P5-126: generic function の型推論（引数型・expected type からの自動推論）を完全実装する（spec.md J8/J9）
-  - [ ] 引数型からの逆算（`foo(listOf(1, 2))` → `T = List<Int>`）を `TypeInferenceEngine` で実装する
-  - [ ] expected type（代入先型）からの backward 推論を実装する
-  - [ ] 推論失敗時に型引数の明示を要求する `KSWIFTK-SEMA-INFER` 診断を出す
-  - [ ] 各種推論シナリオの diff/golden ケース（引数型・expected type・推論失敗）を追加する
+- [x] P5-126: generic function の型推論（引数型・expected type からの自動推論）を完全実装する（spec.md J8/J9）
+  - [x] 引数型からの逆算（`foo(listOf(1, 2))` → `T = List<Int>`）を `TypeInferenceEngine` で実装する
+  - [x] expected type（代入先型）からの backward 推論を実装する
+  - [x] 推論失敗時に型引数の明示を要求する `KSWIFTK-SEMA-INFER` 診断を出す
+  - [x] 各種推論シナリオの diff/golden ケース（引数型・expected type・推論失敗）を追加する
   - **完了条件**: `fun <T> id(x: T): T = x` の `id(42)` が `Int` 型を返し explicit `<Int>` と同一になる
 
 - [ ] P5-127: variance（`out T`/`in T`）の declaration-site 制約違反診断を実装する（spec.md J8）

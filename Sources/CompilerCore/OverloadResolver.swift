@@ -159,19 +159,14 @@ public final class OverloadResolver {
         }
 
         if let expectedType {
-            let lhsOperand = operand(
-                for: signature.returnType,
+            let returnDecomposed = decomposeSubtypeConstraint(
+                subtype: signature.returnType,
+                supertype: expectedType,
                 typeVarBySymbol: typeVarBySymbol,
-                typeSystem: ctx.types
+                typeSystem: ctx.types,
+                blameRange: call.range
             )
-            constraints.append(
-                VariableConstraint(
-                    kind: .subtype,
-                    left: lhsOperand,
-                    right: .type(expectedType),
-                    blameRange: call.range
-                )
-            )
+            constraints.append(contentsOf: returnDecomposed)
         }
 
         let solveResult = solveConstraints(
@@ -187,6 +182,18 @@ public final class OverloadResolver {
             return .constraintFailure(diagnostic)
         case .rejected:
             return .rejected
+        }
+
+        // Emit KSWIFTK-SEMA-INFER when a type variable could not be inferred
+        // (solver returned errorType because it had no bounds).
+        if let inferDiag = checkForUninferredTypeVariables(
+            signature: signature,
+            substitution: substitution,
+            typeVarBySymbol: typeVarBySymbol,
+            range: call.range,
+            typeSystem: ctx.types
+        ) {
+            return .constraintFailure(inferDiag)
         }
 
         if let boundViolation = checkTypeParameterBounds(
@@ -265,19 +272,16 @@ public final class OverloadResolver {
                 constraints.removeAll(keepingCapacity: false)
                 break
             }
-            let rhsOperand = operand(
-                for: signature.parameterTypes[paramIndex],
+            let paramType = signature.parameterTypes[paramIndex]
+            let argType = call.args[argIndex].type
+            let decomposed = decomposeSubtypeConstraint(
+                subtype: argType,
+                supertype: paramType,
                 typeVarBySymbol: typeVarBySymbol,
-                typeSystem: typeSystem
+                typeSystem: typeSystem,
+                blameRange: call.range
             )
-            constraints.append(
-                VariableConstraint(
-                    kind: .subtype,
-                    left: .type(call.args[argIndex].type),
-                    right: rhsOperand,
-                    blameRange: call.range
-                )
-            )
+            constraints.append(contentsOf: decomposed)
         }
         return !(constraints.isEmpty && !call.args.isEmpty)
     }
@@ -538,6 +542,217 @@ public final class OverloadResolver {
         return .type(type)
     }
 
+    /// Checks whether a type contains any type parameters mapped in `typeVarBySymbol`.
+    private func containsTypeVariable(
+        _ type: TypeID,
+        typeVarBySymbol: [SymbolID: TypeVarID],
+        typeSystem: TypeSystem
+    ) -> Bool {
+        switch typeSystem.kind(of: type) {
+        case .typeParam(let typeParam):
+            return typeVarBySymbol[typeParam.symbol] != nil
+        case .classType(let classType):
+            return classType.args.contains { arg in
+                switch arg {
+                case .invariant(let inner), .out(let inner), .in(let inner):
+                    return containsTypeVariable(inner, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem)
+                case .star:
+                    return false
+                }
+            }
+        case .functionType(let functionType):
+            if containsTypeVariable(functionType.returnType, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem) {
+                return true
+            }
+            return functionType.params.contains {
+                containsTypeVariable($0, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem)
+            }
+        default:
+            return false
+        }
+    }
+
+    /// Decomposes `subtype <: supertype` into fine-grained constraints that expose
+    /// type variables nested inside generic class types and function types.
+    ///
+    /// For example, given `List<Int> <: List<T>` where `T` is a type variable, this
+    /// produces the equality constraint `Int == T` (for invariant type arguments).
+    /// For `out` positions it produces `Int <: T`, and for `in` positions `T <: Int`.
+    ///
+    /// When the supertype is a direct type parameter, it produces a single
+    /// `subtype <: variable` constraint, matching the previous `operand()` behavior.
+    ///
+    /// Falls back to a simple `subtype <: supertype` type constraint when no
+    /// decomposition is possible (different class symbols, non-generic types, etc.).
+    private func decomposeSubtypeConstraint(
+        subtype: TypeID,
+        supertype: TypeID,
+        typeVarBySymbol: [SymbolID: TypeVarID],
+        typeSystem: TypeSystem,
+        blameRange: SourceRange?
+    ) -> [VariableConstraint] {
+        let supertypeKind = typeSystem.kind(of: supertype)
+
+        // Case 1: supertype is a direct type parameter → single variable constraint.
+        if case .typeParam(let typeParam) = supertypeKind,
+           let variable = typeVarBySymbol[typeParam.symbol] {
+            return [VariableConstraint(
+                kind: .subtype,
+                left: .type(subtype),
+                right: .variable(variable),
+                blameRange: blameRange
+            )]
+        }
+
+        // Case 2: supertype is a class type with type args containing type variables.
+        if case .classType(let superClass) = supertypeKind,
+           !superClass.args.isEmpty,
+           containsTypeVariable(supertype, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem) {
+            let subtypeKind = typeSystem.kind(of: subtype)
+            if case .classType(let subClass) = subtypeKind,
+               subClass.classSymbol == superClass.classSymbol,
+               subClass.args.count == superClass.args.count {
+                var result: [VariableConstraint] = []
+                for (subArg, superArg) in zip(subClass.args, superClass.args) {
+                    let decomposed = decomposeTypeArgConstraint(
+                        subArg: subArg,
+                        superArg: superArg,
+                        typeVarBySymbol: typeVarBySymbol,
+                        typeSystem: typeSystem,
+                        blameRange: blameRange
+                    )
+                    result.append(contentsOf: decomposed)
+                }
+                return result
+            }
+            // Different class symbols or mismatched arity – fall through to
+            // simple constraint.
+        }
+
+        // Case 3: supertype is a function type with type variables in params/return.
+        if case .functionType(let superFunc) = supertypeKind,
+           containsTypeVariable(supertype, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem) {
+            let subtypeKind = typeSystem.kind(of: subtype)
+            if case .functionType(let subFunc) = subtypeKind,
+               subFunc.params.count == superFunc.params.count {
+                var result: [VariableConstraint] = []
+                // Function types are contravariant in parameter types.
+                for (subParam, superParam) in zip(subFunc.params, superFunc.params) {
+                    result.append(contentsOf: decomposeSubtypeConstraint(
+                        subtype: superParam,
+                        supertype: subParam,
+                        typeVarBySymbol: typeVarBySymbol,
+                        typeSystem: typeSystem,
+                        blameRange: blameRange
+                    ))
+                }
+                // Covariant in return type.
+                result.append(contentsOf: decomposeSubtypeConstraint(
+                    subtype: subFunc.returnType,
+                    supertype: superFunc.returnType,
+                    typeVarBySymbol: typeVarBySymbol,
+                    typeSystem: typeSystem,
+                    blameRange: blameRange
+                ))
+                return result
+            }
+        }
+
+        // Case 4: subtype contains type variables (e.g. return type T or List<T>).
+        let subtypeKind = typeSystem.kind(of: subtype)
+        if case .typeParam(let typeParam) = subtypeKind,
+           let variable = typeVarBySymbol[typeParam.symbol] {
+            return [VariableConstraint(
+                kind: .subtype,
+                left: .variable(variable),
+                right: .type(supertype),
+                blameRange: blameRange
+            )]
+        }
+
+        if case .classType(let subClass) = subtypeKind,
+           !subClass.args.isEmpty,
+           containsTypeVariable(subtype, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem) {
+            if case .classType(let superClass) = supertypeKind,
+               subClass.classSymbol == superClass.classSymbol,
+               subClass.args.count == superClass.args.count {
+                var result: [VariableConstraint] = []
+                for (subArg, superArg) in zip(subClass.args, superClass.args) {
+                    let decomposed = decomposeTypeArgConstraint(
+                        subArg: subArg,
+                        superArg: superArg,
+                        typeVarBySymbol: typeVarBySymbol,
+                        typeSystem: typeSystem,
+                        blameRange: blameRange
+                    )
+                    result.append(contentsOf: decomposed)
+                }
+                return result
+            }
+        }
+
+        // Default: simple type-to-type constraint.
+        return [VariableConstraint(
+            kind: .subtype,
+            left: .type(subtype),
+            right: .type(supertype),
+            blameRange: blameRange
+        )]
+    }
+
+    /// Decomposes a pair of type arguments into constraints respecting variance.
+    /// Invariant args produce equality constraints, `out` produces subtype,
+    /// `in` produces supertype (reversed direction).
+    private func decomposeTypeArgConstraint(
+        subArg: TypeArg,
+        superArg: TypeArg,
+        typeVarBySymbol: [SymbolID: TypeVarID],
+        typeSystem: TypeSystem,
+        blameRange: SourceRange?
+    ) -> [VariableConstraint] {
+        switch (subArg, superArg) {
+        case (.invariant(let subInner), .invariant(let superInner)):
+            // Invariant: both directions (equality).
+            var result = decomposeSubtypeConstraint(
+                subtype: subInner, supertype: superInner,
+                typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
+                blameRange: blameRange
+            )
+            result.append(contentsOf: decomposeSubtypeConstraint(
+                subtype: superInner, supertype: subInner,
+                typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
+                blameRange: blameRange
+            ))
+            return result
+
+        case (.invariant(let subInner), .out(let superInner)),
+             (.out(let subInner), .out(let superInner)):
+            // Covariant: sub <: super.
+            return decomposeSubtypeConstraint(
+                subtype: subInner, supertype: superInner,
+                typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
+                blameRange: blameRange
+            )
+
+        case (.invariant(let subInner), .in(let superInner)),
+             (.in(let subInner), .in(let superInner)):
+            // Contravariant: super <: sub.
+            return decomposeSubtypeConstraint(
+                subtype: superInner, supertype: subInner,
+                typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
+                blameRange: blameRange
+            )
+
+        case (_, .star), (.star, _):
+            // Star projection: no constraints.
+            return []
+
+        default:
+            // Incompatible variance combinations – fall back to no constraint.
+            return []
+        }
+    }
+
     private func isConstraintSatisfiedWithoutVariables(
         _ constraint: VariableConstraint,
         typeSystem: TypeSystem
@@ -554,6 +769,56 @@ public final class OverloadResolver {
         case .supertype:
             return typeSystem.isSubtype(rhs, lhs)
         }
+    }
+
+    /// Returns a diagnostic when the solver resolved a type variable to `errorType`,
+    /// meaning no constraints existed to determine it.  The caller should require
+    /// explicit type arguments in that case.
+    private func checkForUninferredTypeVariables(
+        signature: FunctionSignature,
+        substitution: [TypeVarID: TypeID],
+        typeVarBySymbol: [SymbolID: TypeVarID],
+        range: SourceRange,
+        typeSystem: TypeSystem
+    ) -> Diagnostic? {
+        for typeParamSymbol in signature.typeParameterSymbols {
+            guard let typeVar = typeVarBySymbol[typeParamSymbol] else {
+                continue
+            }
+            let resolved = substitution[typeVar]
+            // A type variable is "uninferred" when it was either never
+            // included in the substitution (no constraints at all) or the
+            // solver explicitly set it to errorType.
+            guard resolved == nil || resolved == typeSystem.errorType else {
+                continue
+            }
+            // Only report for type parameters that actually appear in the
+            // return type or parameter types. Unused type parameters
+            // (e.g. `fun <T, U> foo(x: T): T` where U is never used)
+            // are silently ignored.
+            let usedInReturn = containsTypeVariable(
+                signature.returnType,
+                typeVarBySymbol: [typeParamSymbol: typeVar],
+                typeSystem: typeSystem
+            )
+            let usedInParams = signature.parameterTypes.contains {
+                containsTypeVariable(
+                    $0,
+                    typeVarBySymbol: [typeParamSymbol: typeVar],
+                    typeSystem: typeSystem
+                )
+            }
+            if usedInReturn || usedInParams {
+                return Diagnostic(
+                    severity: .error,
+                    code: "KSWIFTK-SEMA-INFER",
+                    message: "Cannot infer type argument; provide explicit type arguments.",
+                    primaryRange: range,
+                    secondaryRanges: []
+                )
+            }
+        }
+        return nil
     }
 
     private func checkTypeParameterBounds(
