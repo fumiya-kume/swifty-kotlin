@@ -122,6 +122,10 @@ extension DataFlowSemaPassPhase {
                 )
                 if let underlyingType {
                     symbols.setTypeAliasUnderlyingType(underlyingType, for: symbol)
+                    let syntheticParams = collectSyntheticTypeParameters(underlyingType, types: types)
+                    if !syntheticParams.isEmpty {
+                        symbols.setTypeAliasTypeParameters(syntheticParams, for: symbol)
+                    }
                 }
             }
 
@@ -241,6 +245,52 @@ extension DataFlowSemaPassPhase {
         let symbol: SymbolID
         let metadataPath: String
         let inlineKIRDir: String?
+    }
+
+    /// Walk a decoded type and collect all synthetic type parameter symbols
+    /// (those with rawValue <= syntheticTypeParameterBase). Returns them sorted
+    /// by index order (T0, T1, T2, ...) matching the original generic parameter list.
+    private func collectSyntheticTypeParameters(_ typeID: TypeID, types: TypeSystem) -> [SymbolID] {
+        var collected: Set<SymbolID> = []
+        collectSyntheticTypeParamsRecursive(typeID, types: types, base: Self.syntheticTypeParameterBase, into: &collected)
+        return collected.sorted { $0.rawValue > $1.rawValue }
+    }
+
+    private func collectSyntheticTypeParamsRecursive(
+        _ typeID: TypeID,
+        types: TypeSystem,
+        base: Int32,
+        into collected: inout Set<SymbolID>
+    ) {
+        switch types.kind(of: typeID) {
+        case .typeParam(let tp):
+            if tp.symbol.rawValue <= base {
+                collected.insert(tp.symbol)
+            }
+        case .classType(let ct):
+            for arg in ct.args {
+                switch arg {
+                case .invariant(let inner), .out(let inner), .in(let inner):
+                    collectSyntheticTypeParamsRecursive(inner, types: types, base: base, into: &collected)
+                case .star:
+                    break
+                }
+            }
+        case .functionType(let ft):
+            if let receiver = ft.receiver {
+                collectSyntheticTypeParamsRecursive(receiver, types: types, base: base, into: &collected)
+            }
+            for param in ft.params {
+                collectSyntheticTypeParamsRecursive(param, types: types, base: base, into: &collected)
+            }
+            collectSyntheticTypeParamsRecursive(ft.returnType, types: types, base: base, into: &collected)
+        case .intersection(let parts):
+            for part in parts {
+                collectSyntheticTypeParamsRecursive(part, types: types, base: base, into: &collected)
+            }
+        case .primitive, .any, .unit, .nothing, .error:
+            break
+        }
     }
 
     func renderFQName(_ fqName: [InternedString], interner: StringInterner) -> String {

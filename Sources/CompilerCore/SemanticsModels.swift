@@ -227,6 +227,7 @@ public final class SymbolTable {
     private var nominalLayoutHints: [SymbolID: NominalLayoutHint] = [:]
     private var externalLinkNames: [SymbolID: String] = [:]
     private var typeAliasUnderlyingTypes: [SymbolID: TypeID] = [:]
+    private var typeAliasTypeParameters: [SymbolID: [SymbolID]] = [:]
     private var parentSymbols: [SymbolID: SymbolID] = [:]
     private var backingFieldSymbols: [SymbolID: SymbolID] = [:]
     private var typeParameterUpperBoundsMap: [SymbolID: TypeID] = [:]
@@ -408,6 +409,14 @@ public final class SymbolTable {
 
     public func typeAliasUnderlyingType(for symbol: SymbolID) -> TypeID? {
         typeAliasUnderlyingTypes[symbol]
+    }
+
+    public func setTypeAliasTypeParameters(_ params: [SymbolID], for symbol: SymbolID) {
+        typeAliasTypeParameters[symbol] = params
+    }
+
+    public func typeAliasTypeParameters(for symbol: SymbolID) -> [SymbolID] {
+        typeAliasTypeParameters[symbol] ?? []
     }
 
     public func setParentSymbol(_ parent: SymbolID, for child: SymbolID) {
