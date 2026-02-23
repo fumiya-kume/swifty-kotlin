@@ -192,10 +192,10 @@ final class ABILoweringPass: LoweringPass {
                             returnType = signatureByName[vcCallee]?.returnType
                         }
                         if let returnType {
-                            let returnKind = types.kind(of: returnType)
+                            let returnKind = resolveValueClassKind(types.kind(of: returnType), types: types, symbols: symbols)
                             let resultType = module.arena.exprType(vcResult)
                             if let resultType {
-                                let resultKind = types.kind(of: resultType)
+                                let resultKind = resolveValueClassKind(types.kind(of: resultType), types: types, symbols: symbols)
                                 if needsUnboxing(sourceKind: returnKind, targetKind: resultKind) {
                                     vcUnboxCallee = unboxingCallee(
                                         sourceKind: returnKind,
@@ -447,10 +447,10 @@ final class ABILoweringPass: LoweringPass {
                         returnType = signatureByName[callee]?.returnType
                     }
                     if let returnType {
-                        let returnKind = types.kind(of: returnType)
+                        let returnKind = resolveValueClassKind(types.kind(of: returnType), types: types, symbols: symbols)
                         let resultType = module.arena.exprType(result)
                         if let resultType {
-                            let resultKind = types.kind(of: resultType)
+                            let resultKind = resolveValueClassKind(types.kind(of: resultType), types: types, symbols: symbols)
                             if needsUnboxing(sourceKind: returnKind, targetKind: resultKind) {
                                 resolvedUnboxCallee = unboxingCallee(
                                     sourceKind: returnKind,
