@@ -349,6 +349,8 @@ public final class DataFlowAnalyzer {
                     return false
                 }
             }
+            // Known limitation: when multiple symbols share the same simple name across packages,
+            // candidates.first is non-deterministic. This matches branchOnIsCheck behavior.
             guard let targetSymbolID = candidates.first else {
                 return base
             }
@@ -521,6 +523,7 @@ public final class DataFlowAnalyzer {
     }
 
     /// Narrow a variable to non-null in the given flow state.
+    /// Infrastructure for future smart cast call sites (e.g., property narrowing, when-subject exhaustive narrowing).
     public func narrowToNonNull(
         symbol: SymbolID,
         type: TypeID,
@@ -538,6 +541,8 @@ public final class DataFlowAnalyzer {
     }
 
     /// Invalidate (remove) smart cast information for a variable after reassignment.
+    /// Infrastructure for future DataFlowState-level invalidation (locals-level invalidation is already handled
+    /// by `inferLocalAssignExpr` resetting `locals[name]` to the declared type).
     public func invalidateVariable(
         symbol: SymbolID,
         base: DataFlowState
