@@ -15,6 +15,7 @@ struct TypeInferenceContext {
     let currentFileID: FileID
     var enclosingClassSymbol: SymbolID?
     let visibilityChecker: VisibilityChecker
+    var outerReceiverTypes: [(label: InternedString, type: TypeID)]
 
     func with(scope newScope: Scope) -> TypeInferenceContext {
         var copy = self; copy.scope = newScope; return copy
@@ -34,6 +35,19 @@ struct TypeInferenceContext {
 
     func with(enclosingClassSymbol newSymbol: SymbolID?) -> TypeInferenceContext {
         var copy = self; copy.enclosingClassSymbol = newSymbol; return copy
+    }
+
+    func withOuterReceiver(label: InternedString, type: TypeID) -> TypeInferenceContext {
+        var copy = self
+        copy.outerReceiverTypes = self.outerReceiverTypes + [(label: label, type: type)]
+        return copy
+    }
+
+    func resolveQualifiedThis(label: InternedString) -> TypeID? {
+        for entry in outerReceiverTypes.reversed() where entry.label == label {
+            return entry.type
+        }
+        return nil
     }
 
     func filterByVisibility(_ candidates: [SymbolID]) -> (visible: [SymbolID], invisible: [SemanticSymbol]) {

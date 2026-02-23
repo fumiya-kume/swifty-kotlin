@@ -57,7 +57,8 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                 flowState: DataFlowState(),
                 currentFileID: file.fileID,
                 enclosingClassSymbol: nil,
-                visibilityChecker: checker
+                visibilityChecker: checker,
+                outerReceiverTypes: []
             )
             for declID in file.topLevelDecls {
                 guard let decl = ast.arena.decl(declID),
@@ -244,7 +245,9 @@ extension TypeCheckSemaPassPhase {
             nestedObjects: classDecl.nestedObjects,
             ctx: ctx
         )
+        let classLabel = sema.symbols.symbol(symbol)?.name ?? ctx.interner.intern("")
         let classCtx = ctx
+            .withOuterReceiver(label: classLabel, type: classType)
             .with(scope: classScope)
             .with(implicitReceiverType: classType)
 
@@ -279,7 +282,9 @@ extension TypeCheckSemaPassPhase {
             nestedObjects: objectDecl.nestedObjects,
             ctx: ctx
         )
+        let objectLabel = sema.symbols.symbol(symbol)?.name ?? ctx.interner.intern("")
         let objectCtx = ctx
+            .withOuterReceiver(label: objectLabel, type: objectType)
             .with(scope: objectScope)
             .with(implicitReceiverType: objectType)
 
