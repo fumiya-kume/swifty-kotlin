@@ -244,6 +244,21 @@ extension DataFlowSemaPassPhase {
                 diagnostics: diagnostics,
                 interner: interner
             )
+            // Process companion object: register as nested object and link to owner class
+            if let companionDeclID = classDecl.companionObject {
+                collectCompanionObjectHeader(
+                    companionDeclID: companionDeclID,
+                    ownerFQName: fqName,
+                    ownerSymbol: symbol,
+                    ast: ast,
+                    symbols: symbols,
+                    types: types,
+                    bindings: bindings,
+                    scope: classScope,
+                    diagnostics: diagnostics,
+                    interner: interner
+                )
+            }
 
         case .interfaceDecl(let interfaceDecl):
             if !interfaceDecl.typeParams.isEmpty {
@@ -284,6 +299,21 @@ extension DataFlowSemaPassPhase {
                 diagnostics: diagnostics,
                 interner: interner
             )
+            // Process companion object for interface
+            if let companionDeclID = interfaceDecl.companionObject {
+                collectCompanionObjectHeader(
+                    companionDeclID: companionDeclID,
+                    ownerFQName: fqName,
+                    ownerSymbol: symbol,
+                    ast: ast,
+                    symbols: symbols,
+                    types: types,
+                    bindings: bindings,
+                    scope: interfaceScope,
+                    diagnostics: diagnostics,
+                    interner: interner
+                )
+            }
 
         case .objectDecl(let objectDecl):
             let objectType = types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))

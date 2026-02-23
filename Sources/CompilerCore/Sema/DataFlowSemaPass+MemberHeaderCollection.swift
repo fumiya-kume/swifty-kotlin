@@ -452,6 +452,83 @@ extension DataFlowSemaPassPhase {
         }
     }
 
+    /// Collects companion object header: creates the companion symbol, links it to the owner class,
+    /// and registers companion members under BOTH the companion FQ name AND the owner class FQ name
+    /// so that `ClassName.memberName` resolves to companion members.
+    func collectCompanionObjectHeader(
+        companionDeclID: DeclID,
+        ownerFQName: [InternedString],
+        ownerSymbol: SymbolID,
+        ast: ASTModule,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        bindings: BindingTable,
+        scope: Scope,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner
+    ) {
+        guard let decl = ast.arena.decl(companionDeclID),
+              case .objectDecl(let companionObject) = decl else {
+            return
+        }
+
+        // Companion objects default to name "Companion" if the parsed name is empty or just "Companion"
+        let companionName: InternedString
+        let parsedName = interner.resolve(companionObject.name)
+        if parsedName.isEmpty {
+            companionName = interner.intern("Companion")
+        } else {
+            companionName = companionObject.name
+        }
+
+        let companionFQName = ownerFQName + [companionName]
+        let companionSymbol = symbols.define(
+            kind: .object,
+            name: companionName,
+            fqName: companionFQName,
+            declSite: companionObject.range,
+            visibility: visibility(from: companionObject.modifiers),
+            flags: flags(from: companionObject.modifiers)
+        )
+        bindings.bindDecl(companionDeclID, symbol: companionSymbol)
+        symbols.setParentSymbol(ownerSymbol, for: companionSymbol)
+        symbols.setCompanionObjectSymbol(companionSymbol, for: ownerSymbol)
+        scope.insert(companionSymbol)
+
+        let companionType = types.make(.classType(ClassType(classSymbol: companionSymbol, args: [], nullability: .nonNull)))
+        let companionScope = ClassMemberScope(
+            parent: scope,
+            symbols: symbols,
+            ownerSymbol: companionSymbol,
+            thisType: companionType
+        )
+        collectNestedTypeAliases(
+            companionObject.nestedTypeAliases,
+            ownerFQName: companionFQName,
+            ast: ast,
+            symbols: symbols,
+            types: types,
+            diagnostics: diagnostics,
+            interner: interner
+        )
+        collectMemberHeaders(
+            memberFunctions: companionObject.memberFunctions,
+            memberProperties: companionObject.memberProperties,
+            nestedClasses: companionObject.nestedClasses,
+            nestedObjects: companionObject.nestedObjects,
+            ownerFQName: companionFQName,
+            ownerSymbol: companionSymbol,
+            ownerType: companionType,
+            ast: ast,
+            symbols: symbols,
+            types: types,
+            bindings: bindings,
+            scope: companionScope,
+            diagnostics: diagnostics,
+            interner: interner
+        )
+    }
+
     func collectNestedTypeAliases(
         _ aliases: [TypeAliasDecl],
         ownerFQName: [InternedString],

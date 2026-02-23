@@ -85,11 +85,16 @@ final class KIRLoweringDriver {
 
                 switch decl {
                 case .classDecl(let classDecl):
+                    // Collect nested objects including the companion object
+                    var allNestedObjects = classDecl.nestedObjects
+                    if let companionDeclID = classDecl.companionObject {
+                        allNestedObjects.append(companionDeclID)
+                    }
                     let (directMembers, allDecls) = memberLowerer.lowerMemberDecls(
                         memberFunctions: classDecl.memberFunctions,
                         memberProperties: classDecl.memberProperties,
                         nestedClasses: classDecl.nestedClasses,
-                        nestedObjects: classDecl.nestedObjects,
+                        nestedObjects: allNestedObjects,
                         ast: ast,
                         sema: sema,
                         arena: arena,
@@ -304,11 +309,15 @@ final class KIRLoweringDriver {
 
                 case .interfaceDecl(let interfaceDecl):
                     // Interface properties have no backing storage; pass empty list.
+                    var ifaceNestedObjects = interfaceDecl.nestedObjects
+                    if let companionDeclID = interfaceDecl.companionObject {
+                        ifaceNestedObjects.append(companionDeclID)
+                    }
                     let (directMembers, allDecls) = memberLowerer.lowerMemberDecls(
                         memberFunctions: interfaceDecl.memberFunctions,
                         memberProperties: [],
                         nestedClasses: interfaceDecl.nestedClasses,
-                        nestedObjects: interfaceDecl.nestedObjects,
+                        nestedObjects: ifaceNestedObjects,
                         ast: ast,
                         sema: sema,
                         arena: arena,

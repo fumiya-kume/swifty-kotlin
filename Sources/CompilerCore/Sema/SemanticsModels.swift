@@ -236,6 +236,7 @@ public final class SymbolTable {
     private var typeParameterUpperBoundsMap: [SymbolID: TypeID] = [:]
     private var sourceFileIDs: [SymbolID: FileID] = [:]
     private var annotationsStorage: [SymbolID: [MetadataAnnotationRecord]] = [:]
+    private var companionObjectSymbols: [SymbolID: SymbolID] = [:]
 
     public init() {}
 
@@ -469,6 +470,14 @@ public final class SymbolTable {
 
     public func annotations(for symbol: SymbolID) -> [MetadataAnnotationRecord] {
         annotationsStorage[symbol] ?? []
+    }
+
+    public func setCompanionObjectSymbol(_ companion: SymbolID, for owner: SymbolID) {
+        companionObjectSymbols[owner] = companion
+    }
+
+    public func companionObjectSymbol(for owner: SymbolID) -> SymbolID? {
+        companionObjectSymbols[owner]
     }
 
     // MARK: - Indexed queries

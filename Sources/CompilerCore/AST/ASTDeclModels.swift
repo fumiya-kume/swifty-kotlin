@@ -63,6 +63,9 @@ public struct ClassDecl {
     public let memberProperties: [DeclID]
     public let nestedClasses: [DeclID]
     public let nestedObjects: [DeclID]
+    /// The companion object declared inside this class, if any.
+    /// A class may have at most one companion object.
+    public let companionObject: DeclID?
 
     public init(
         range: SourceRange,
@@ -79,7 +82,8 @@ public struct ClassDecl {
         memberFunctions: [DeclID] = [],
         memberProperties: [DeclID] = [],
         nestedClasses: [DeclID] = [],
-        nestedObjects: [DeclID] = []
+        nestedObjects: [DeclID] = [],
+        companionObject: DeclID? = nil
     ) {
         self.range = range
         self.name = name
@@ -96,6 +100,7 @@ public struct ClassDecl {
         self.memberProperties = memberProperties
         self.nestedClasses = nestedClasses
         self.nestedObjects = nestedObjects
+        self.companionObject = companionObject
     }
 }
 
@@ -110,6 +115,8 @@ public struct InterfaceDecl {
     public let memberProperties: [DeclID]
     public let nestedClasses: [DeclID]
     public let nestedObjects: [DeclID]
+    /// The companion object declared inside this interface, if any.
+    public let companionObject: DeclID?
 
     public init(
         range: SourceRange,
@@ -121,7 +128,8 @@ public struct InterfaceDecl {
         memberFunctions: [DeclID] = [],
         memberProperties: [DeclID] = [],
         nestedClasses: [DeclID] = [],
-        nestedObjects: [DeclID] = []
+        nestedObjects: [DeclID] = [],
+        companionObject: DeclID? = nil
     ) {
         self.range = range
         self.name = name
@@ -133,6 +141,7 @@ public struct InterfaceDecl {
         self.memberProperties = memberProperties
         self.nestedClasses = nestedClasses
         self.nestedObjects = nestedObjects
+        self.companionObject = companionObject
     }
 }
 

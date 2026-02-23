@@ -371,6 +371,23 @@ struct TypeCheckHelpers {
                 }
                 candidates.append(candidate)
             }
+            // Companion object fallback: if no direct members found, look in companion object
+            if candidates.isEmpty,
+               let companionSymbol = sema.symbols.companionObjectSymbol(for: owner),
+               let companionSym = sema.symbols.symbol(companionSymbol) {
+                let companionMemberFQName = companionSym.fqName + [calleeName]
+                for candidate in sema.symbols.lookupAll(fqName: companionMemberFQName) {
+                    guard seenCandidates.insert(candidate).inserted,
+                          let symbol = sema.symbols.symbol(candidate),
+                          symbol.kind == .function,
+                          sema.symbols.parentSymbol(for: candidate) == companionSymbol,
+                          let signature = sema.symbols.functionSignature(for: candidate),
+                          signature.receiverType != nil else {
+                        continue
+                    }
+                    candidates.append(candidate)
+                }
+            }
         }
         return candidates
     }

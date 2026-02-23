@@ -253,10 +253,48 @@ final class CallTypeChecker {
             sema: sema,
             allowedOwnerSymbols: isSuperCall && !supertypeSymbols.isEmpty ? supertypeSymbols : nil
         )
+
+        // Track whether we redirected to a companion object so that we can
+        // pass the companion type (not the owner class type) as the implicit
+        // receiver when resolving the call.
+        var companionReceiverType: TypeID?
+
         let allCandidates: [SymbolID]
         if !memberCandidates.isEmpty {
+            // Check if the found candidates belong to a companion object so we
+            // can supply the correct implicit receiver type later.
+            if let first = memberCandidates.first,
+               let parentSymbol = sema.symbols.parentSymbol(for: first),
+               let ownerNominal = driver.helpers.nominalSymbol(of: memberLookupType, types: sema.types),
+               parentSymbol != ownerNominal,
+               sema.symbols.companionObjectSymbol(for: ownerNominal) == parentSymbol {
+                companionReceiverType = sema.types.make(.classType(ClassType(classSymbol: parentSymbol, args: [], nullability: .nonNull)))
+            }
             allCandidates = memberCandidates
         } else {
+            // Before falling back to scope lookup, try companion property access.
+            // `Foo.MAX_COUNT` is parsed as a memberCall with empty args; the callee
+            // name refers to a property, not a function.
+            if let ownerNominal = driver.helpers.nominalSymbol(of: memberLookupType, types: sema.types),
+               let companionSymbol = sema.symbols.companionObjectSymbol(for: ownerNominal),
+               let companionSym = sema.symbols.symbol(companionSymbol) {
+                let companionMemberFQName = companionSym.fqName + [calleeName]
+                let propertyCandidate = sema.symbols.lookupAll(fqName: companionMemberFQName).first(where: { cid in
+                    guard let sym = sema.symbols.symbol(cid),
+                          sym.kind == .property,
+                          sema.symbols.parentSymbol(for: cid) == companionSymbol else {
+                        return false
+                    }
+                    return true
+                })
+                if let propSymbol = propertyCandidate,
+                   let propType = sema.symbols.propertyType(for: propSymbol) {
+                    sema.bindings.bindIdentifier(id, symbol: propSymbol)
+                    sema.bindings.bindExprType(id, type: propType)
+                    return propType
+                }
+            }
+
             allCandidates = scope.lookup(calleeName).filter { candidate in
                 guard let symbol = sema.symbols.symbol(candidate),
                       symbol.kind == .function,
@@ -287,12 +325,16 @@ final class CallTypeChecker {
             return driver.helpers.bindAndReturnErrorType(id, sema: sema)
         }
 
+        // Use the companion type as implicit receiver when the candidates were
+        // redirected from the owner class to its companion object.
+        let effectiveReceiverType = companionReceiverType ?? lookupReceiverType
+
         let resolvedArgs = zip(args, argTypes).map { CallArg(label: $0.label, isSpread: $0.isSpread, type: $1) }
         let resolved = ctx.resolver.resolveCall(
             candidates: candidates,
             call: CallExpr(range: range, calleeName: calleeName, args: resolvedArgs, explicitTypeArgs: explicitTypeArgs),
             expectedType: expectedType,
-            implicitReceiverType: lookupReceiverType,
+            implicitReceiverType: effectiveReceiverType,
             ctx: ctx.semaCtx
         )
         if let diagnostic = resolved.diagnostic {
