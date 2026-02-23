@@ -318,14 +318,16 @@ final class LambdaLowerer {
     }
 
     private func typeForValueParameterSymbol(_ symbol: SymbolID, sema: SemaModule) -> TypeID? {
-        for semanticSymbol in sema.symbols.allSymbols() {
-            guard (semanticSymbol.kind == .function || semanticSymbol.kind == .constructor),
-                  let signature = sema.symbols.functionSignature(for: semanticSymbol.id),
-                  let index = signature.valueParameterSymbols.firstIndex(of: symbol),
-                  index < signature.parameterTypes.count else {
-                continue
+        let kinds: [SymbolKind] = [.function, .constructor]
+        for kind in kinds {
+            for candidateID in sema.symbols.symbols(ofKind: kind) {
+                guard let signature = sema.symbols.functionSignature(for: candidateID),
+                      let index = signature.valueParameterSymbols.firstIndex(of: symbol),
+                      index < signature.parameterTypes.count else {
+                    continue
+                }
+                return signature.parameterTypes[index]
             }
-            return signature.parameterTypes[index]
         }
         return nil
     }
@@ -387,12 +389,9 @@ final class LambdaLowerer {
         }
 
         if candidates.isEmpty {
-            candidates = sema.symbols.allSymbols().compactMap { symbol in
-                guard symbol.name == memberName,
-                      symbol.kind == .function || symbol.kind == .constructor else {
-                    return nil
-                }
-                return symbol.id
+            candidates = sema.symbols.lookupByShortName(memberName).filter { symbolID in
+                guard let symbol = sema.symbols.symbol(symbolID) else { return false }
+                return symbol.kind == .function || symbol.kind == .constructor
             }
         }
 

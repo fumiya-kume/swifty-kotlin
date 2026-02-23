@@ -642,17 +642,15 @@ public final class DataFlowAnalyzer {
     }
 
     private func enumEntryNames(for enumSymbol: SemanticSymbol, sema: SemaModule) -> Set<InternedString> {
-        let enumFQName = enumSymbol.fqName
-        let expectedCount = enumFQName.count + 1
-        let entries = sema.symbols.allSymbols().filter { symbol in
-            guard symbol.kind == .field else {
-                return false
+        let childIDs = sema.symbols.children(ofFQName: enumSymbol.fqName)
+        var names: Set<InternedString> = []
+        for childID in childIDs {
+            guard let child = sema.symbols.symbol(childID),
+                  child.kind == .field else {
+                continue
             }
-            guard symbol.fqName.count == expectedCount else {
-                return false
-            }
-            return Array(symbol.fqName.dropLast()) == enumFQName
+            names.insert(child.name)
         }
-        return Set(entries.map(\.name))
+        return names
     }
 }

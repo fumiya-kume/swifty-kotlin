@@ -42,7 +42,7 @@ public struct FileID: Hashable {
     }
 }
 
-public struct SourceLocation: Equatable {
+public struct SourceLocation: Hashable {
     public let file: FileID
     public let offset: Int
 
@@ -52,7 +52,7 @@ public struct SourceLocation: Equatable {
     }
 }
 
-public struct SourceRange: Equatable {
+public struct SourceRange: Hashable {
     public let start: SourceLocation
     public let end: SourceLocation
 
