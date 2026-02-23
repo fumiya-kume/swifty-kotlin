@@ -396,12 +396,12 @@ internal final class RuntimeChannelHandle {
             return
         }
         buffer.append(value)
+        if capacity == 0 {
+            waitingSenders += 1
+        }
         lock.unlock()
         receiveSemaphore.signal()
         if capacity == 0 {
-            lock.lock()
-            waitingSenders += 1
-            lock.unlock()
             sendSemaphore.wait()
             lock.lock()
             waitingSenders -= 1
