@@ -14,6 +14,17 @@ final class NormalizeBlocksPass: LoweringPass {
                     break
                 }
             }
+            // Also run if any function body doesn't end with a return
+            if let last = function.body.last {
+                switch last {
+                case .returnUnit, .returnValue:
+                    break
+                default:
+                    return true
+                }
+            } else {
+                return true
+            }
         }
         return false
     }

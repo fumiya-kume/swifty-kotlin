@@ -4,12 +4,18 @@ final class OperatorLoweringPass: LoweringPass {
     static let name = "OperatorLowering"
 
     func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool {
+        let printlnCallee = ctx.interner.intern("println")
+        let kkPrintlnAnyCallee = ctx.interner.intern("kk_println_any")
         for decl in module.arena.declarations {
             guard case .function(let function) = decl else { continue }
             for instruction in function.body {
                 switch instruction {
                 case .binary, .unary, .nullAssert:
                     return true
+                case .call(_, let callee, _, _, _, _, _):
+                    if callee == printlnCallee || callee == kkPrintlnAnyCallee {
+                        return true
+                    }
                 default:
                     break
                 }
