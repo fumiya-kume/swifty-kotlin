@@ -183,11 +183,13 @@ extension TypeCheckSemaPassPhase {
         case .binary(let op, let lhsID, let rhsID, let range):
             return inferBinaryExpr(id, op: op, lhsID: lhsID, rhsID: rhsID, range: range, ctx: ctx, locals: &locals, expectedType: expectedType)
 
-        case .call(let calleeID, _, let args, let range):
-            return inferCallExpr(id, calleeID: calleeID, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType)
+        case .call(let calleeID, let typeArgRefs, let args, let range):
+            let explicitTypeArgs = resolveExplicitTypeArgs(typeArgRefs, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
+            return inferCallExpr(id, calleeID: calleeID, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType, explicitTypeArgs: explicitTypeArgs)
 
-        case .memberCall(let receiverID, let calleeName, _, let args, let range):
-            return inferMemberCallExpr(id, receiverID: receiverID, calleeName: calleeName, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType)
+        case .memberCall(let receiverID, let calleeName, let typeArgRefs, let args, let range):
+            let explicitTypeArgs = resolveExplicitTypeArgs(typeArgRefs, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
+            return inferMemberCallExpr(id, receiverID: receiverID, calleeName: calleeName, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType, explicitTypeArgs: explicitTypeArgs)
 
         case .unaryExpr(let op, let operandID, let range):
             let operandType = inferExpr(operandID, ctx: ctx, locals: &locals)
@@ -232,8 +234,9 @@ extension TypeCheckSemaPassPhase {
             sema.bindings.bindExprType(id, type: type)
             return type
 
-        case .safeMemberCall(let receiverID, let calleeName, _, let args, let range):
-            return inferSafeMemberCallExpr(id, receiverID: receiverID, calleeName: calleeName, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType)
+        case .safeMemberCall(let receiverID, let calleeName, let typeArgRefs, let args, let range):
+            let explicitTypeArgs = resolveExplicitTypeArgs(typeArgRefs, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
+            return inferSafeMemberCallExpr(id, receiverID: receiverID, calleeName: calleeName, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType, explicitTypeArgs: explicitTypeArgs)
 
         case .compoundAssign(let op, let name, let valueExpr, let range):
             return inferCompoundAssignExpr(id, op: op, name: name, valueExpr: valueExpr, range: range, ctx: ctx, locals: &locals)

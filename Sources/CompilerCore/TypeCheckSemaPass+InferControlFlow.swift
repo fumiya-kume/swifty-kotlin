@@ -425,9 +425,16 @@ extension TypeCheckSemaPassPhase {
         } else {
             var branchTypes: [TypeID] = []
             var allBranchLocals: [[InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)]] = []
+            var hasTrueCase = false
+            var hasFalseCase = false
+            var cumulativeFalseState = ctx.flowState
             for branch in branches {
+                var branchLocals = locals
+                let condCtx = ctx.with(flowState: cumulativeFalseState)
+                applyFlowStateToLocals(cumulativeFalseState, locals: &branchLocals, sema: sema)
+                var branchCtx = condCtx
                 if let cond = branch.condition {
-                    let condType = inferExpr(cond, ctx: ctx, locals: &locals)
+                    let condType = inferExpr(cond, ctx: condCtx, locals: &branchLocals)
                     if condType != boolType && condType != sema.types.errorType {
                         ctx.semaCtx.diagnostics.error(
                             "KSWIFTK-SEMA-0032",
@@ -435,26 +442,44 @@ extension TypeCheckSemaPassPhase {
                             range: branch.range
                         )
                     }
+                    let condBranch = ctx.dataFlow.branchOnCondition(
+                        cond, base: cumulativeFalseState, locals: branchLocals,
+                        ast: ast, sema: sema, interner: interner
+                    )
+                    branchCtx = ctx.with(flowState: condBranch.trueState)
+                    applyFlowStateToLocals(condBranch.trueState, locals: &branchLocals, sema: sema)
+                    cumulativeFalseState = condBranch.falseState
+                    if let condExpr = ast.arena.expr(cond) {
+                        switch condExpr {
+                        case .boolLiteral(true, _):
+                            hasTrueCase = true
+                        case .boolLiteral(false, _):
+                            hasFalseCase = true
+                        default:
+                            break
+                        }
+                    }
                 }
-                var branchLocals = locals
                 branchTypes.append(
-                    inferExpr(branch.body, ctx: ctx, locals: &branchLocals, expectedType: expectedType)
+                    inferExpr(branch.body, ctx: branchCtx, locals: &branchLocals, expectedType: expectedType)
                 )
                 allBranchLocals.append(branchLocals)
             }
 
             if let elseExpr {
                 var elseLocals = locals
+                let elseCtx = ctx.with(flowState: cumulativeFalseState)
+                applyFlowStateToLocals(cumulativeFalseState, locals: &elseLocals, sema: sema)
                 branchTypes.append(
-                    inferExpr(elseExpr, ctx: ctx, locals: &elseLocals, expectedType: expectedType)
+                    inferExpr(elseExpr, ctx: elseCtx, locals: &elseLocals, expectedType: expectedType)
                 )
                 allBranchLocals.append(elseLocals)
             }
 
             let summary = WhenBranchSummary(
                 coveredSymbols: [], hasElse: elseExpr != nil,
-                hasNullCase: false, hasTrueCase: false,
-                hasFalseCase: false
+                hasNullCase: false, hasTrueCase: hasTrueCase,
+                hasFalseCase: hasFalseCase
             )
             let isExhaustive = ctx.dataFlow.isWhenExhaustive(subjectType: boolType, branches: summary, sema: sema)
             if !isExhaustive {
