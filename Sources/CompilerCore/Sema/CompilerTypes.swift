@@ -116,7 +116,9 @@ public struct CompilerOptions: Equatable {
     }
 
     /// The number of frontend parallel jobs parsed from `-Xfrontend jobs=N`.
-    /// Returns 1 (sequential) when the flag is not present.
+    /// When the flag is not set, defaults to the number of active processors
+    /// so that LexPhase/ParsePhase remain fully parallel (matching pre-PR
+    /// behaviour).  Pass `jobs=1` to explicitly serialize all phases.
     public var frontendJobs: Int {
         for flag in frontendFlags {
             if flag.hasPrefix("jobs="),
@@ -125,7 +127,7 @@ public struct CompilerOptions: Equatable {
                 return n
             }
         }
-        return 1
+        return ProcessInfo.processInfo.activeProcessorCount
     }
 
     @available(*, deprecated, message: "Use debugInfo instead.")
