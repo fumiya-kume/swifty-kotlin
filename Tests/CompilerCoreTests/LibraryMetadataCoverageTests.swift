@@ -1340,4 +1340,299 @@ final class LibraryMetadataCoverageTests: XCTestCase {
             XCTAssertTrue(semaErrors.isEmpty, "No SEMA errors expected: \(semaErrors.map(\.code))")
         }
     }
+
+    // MARK: - MetadataSerializer Round-Trip Tests
+
+    func testMetadataEncoderDecoderRoundTripForFunctionRecord() {
+        let record = MetadataRecord(
+            kind: .function,
+            mangledName: "_kk_ext_id",
+            fqName: "ext.id",
+            arity: 1,
+            isSuspend: false,
+            isInline: true,
+            typeSignature: "F1<I,I>",
+            externalLinkName: "_ext_id"
+        )
+        let encoder = MetadataEncoder()
+        let serialized = encoder.serialize([record])
+        let decoder = MetadataDecoder()
+        let decoded = decoder.decode(serialized)
+
+        XCTAssertEqual(decoded.count, 1)
+        let r = decoded[0]
+        XCTAssertEqual(r.kind, .function)
+        XCTAssertEqual(r.mangledName, "_kk_ext_id")
+        XCTAssertEqual(r.fqName, "ext.id")
+        XCTAssertEqual(r.arity, 1)
+        XCTAssertEqual(r.isSuspend, false)
+        XCTAssertEqual(r.isInline, true)
+        XCTAssertEqual(r.typeSignature, "F1<I,I>")
+        XCTAssertEqual(r.externalLinkName, "_ext_id")
+    }
+
+    func testMetadataEncoderDecoderRoundTripForClassWithLayout() {
+        let record = MetadataRecord(
+            kind: .class,
+            mangledName: "_kk_ext_Box",
+            fqName: "ext.Box",
+            declaredFieldCount: 2,
+            declaredInstanceSizeWords: 4,
+            declaredVtableSize: 1,
+            declaredItableSize: 1,
+            superFQName: "ext.Base",
+            fieldOffsets: "ext.Box.x@2,ext.Box.y@3",
+            vtableSlots: "ext.Box.get#0#0@0",
+            itableSlots: "ext.IFace@0"
+        )
+        let encoder = MetadataEncoder()
+        let serialized = encoder.serialize([record])
+        let decoder = MetadataDecoder()
+        let decoded = decoder.decode(serialized)
+
+        XCTAssertEqual(decoded.count, 1)
+        let r = decoded[0]
+        XCTAssertEqual(r.kind, .class)
+        XCTAssertEqual(r.fqName, "ext.Box")
+        XCTAssertEqual(r.declaredFieldCount, 2)
+        XCTAssertEqual(r.declaredInstanceSizeWords, 4)
+        XCTAssertEqual(r.declaredVtableSize, 1)
+        XCTAssertEqual(r.declaredItableSize, 1)
+        XCTAssertEqual(r.superFQName, "ext.Base")
+        XCTAssertEqual(r.fieldOffsets, "ext.Box.x@2,ext.Box.y@3")
+        XCTAssertEqual(r.vtableSlots, "ext.Box.get#0#0@0")
+        XCTAssertEqual(r.itableSlots, "ext.IFace@0")
+    }
+
+    func testMetadataEncoderDecoderRoundTripForDataClassFlag() {
+        let record = MetadataRecord(
+            kind: .class,
+            mangledName: "_kk_data_Point",
+            fqName: "demo.Point",
+            isDataClass: true
+        )
+        let encoder = MetadataEncoder()
+        let serialized = encoder.serialize([record])
+        XCTAssertTrue(serialized.contains("dataClass=1"))
+
+        let decoder = MetadataDecoder()
+        let decoded = decoder.decode(serialized)
+        XCTAssertEqual(decoded.count, 1)
+        XCTAssertTrue(decoded[0].isDataClass)
+        XCTAssertFalse(decoded[0].isSealedClass)
+    }
+
+    func testMetadataEncoderDecoderRoundTripForSealedClassFlag() {
+        let record = MetadataRecord(
+            kind: .class,
+            mangledName: "_kk_sealed_Shape",
+            fqName: "demo.Shape",
+            isSealedClass: true
+        )
+        let encoder = MetadataEncoder()
+        let serialized = encoder.serialize([record])
+        XCTAssertTrue(serialized.contains("sealedClass=1"))
+
+        let decoder = MetadataDecoder()
+        let decoded = decoder.decode(serialized)
+        XCTAssertEqual(decoded.count, 1)
+        XCTAssertFalse(decoded[0].isDataClass)
+        XCTAssertTrue(decoded[0].isSealedClass)
+    }
+
+    func testMetadataEncoderDecoderRoundTripForAnnotations() {
+        let annotations = [
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.Deprecated",
+                arguments: ["Use newMethod instead"],
+                useSiteTarget: nil
+            ),
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.jvm.JvmStatic",
+                arguments: [],
+                useSiteTarget: "get"
+            ),
+        ]
+        let record = MetadataRecord(
+            kind: .function,
+            mangledName: "_kk_old",
+            fqName: "demo.oldMethod",
+            annotations: annotations
+        )
+        let encoder = MetadataEncoder()
+        let serialized = encoder.serialize([record])
+        XCTAssertTrue(serialized.contains("annotations="))
+
+        let decoder = MetadataDecoder()
+        let decoded = decoder.decode(serialized)
+        XCTAssertEqual(decoded.count, 1)
+        XCTAssertEqual(decoded[0].annotations.count, 2)
+        XCTAssertEqual(decoded[0].annotations[0].annotationFQName, "kotlin.Deprecated")
+        XCTAssertEqual(decoded[0].annotations[0].arguments, ["Use newMethod instead"])
+        XCTAssertNil(decoded[0].annotations[0].useSiteTarget)
+        XCTAssertEqual(decoded[0].annotations[1].annotationFQName, "kotlin.jvm.JvmStatic")
+        XCTAssertEqual(decoded[0].annotations[1].arguments, [])
+        XCTAssertEqual(decoded[0].annotations[1].useSiteTarget, "get")
+    }
+
+    func testMetadataDecoderHandlesLegacyFormatWithoutNewFields() {
+        // Simulate old metadata without dataClass/sealedClass/annotations fields
+        let legacy = """
+        symbols=1
+        class _kk_ext_C fq=ext.C fields=0 layoutWords=3 vtable=0 itable=0
+        """
+        let decoder = MetadataDecoder()
+        let decoded = decoder.decode(legacy)
+        XCTAssertEqual(decoded.count, 1)
+        XCTAssertEqual(decoded[0].kind, .class)
+        XCTAssertEqual(decoded[0].fqName, "ext.C")
+        XCTAssertFalse(decoded[0].isDataClass)
+        XCTAssertFalse(decoded[0].isSealedClass)
+        XCTAssertTrue(decoded[0].annotations.isEmpty)
+    }
+
+    func testMetadataRoundTripMultipleRecords() {
+        let records = [
+            MetadataRecord(
+                kind: .class,
+                mangledName: "_kk_Point",
+                fqName: "demo.Point",
+                declaredFieldCount: 2,
+                declaredInstanceSizeWords: 4,
+                isDataClass: true,
+                annotations: [
+                    MetadataAnnotationRecord(annotationFQName: "kotlin.Serializable")
+                ]
+            ),
+            MetadataRecord(
+                kind: .function,
+                mangledName: "_kk_demo_greet",
+                fqName: "demo.greet",
+                arity: 1,
+                isSuspend: true,
+                typeSignature: "F1<S,U>"
+            ),
+            MetadataRecord(
+                kind: .property,
+                mangledName: "_kk_demo_name",
+                fqName: "demo.name",
+                typeSignature: "S"
+            ),
+        ]
+        let encoder = MetadataEncoder()
+        let serialized = encoder.serialize(records)
+        let decoder = MetadataDecoder()
+        let decoded = decoder.decode(serialized)
+
+        XCTAssertEqual(decoded.count, 3)
+
+        XCTAssertEqual(decoded[0].kind, .class)
+        XCTAssertEqual(decoded[0].fqName, "demo.Point")
+        XCTAssertTrue(decoded[0].isDataClass)
+        XCTAssertEqual(decoded[0].annotations.count, 1)
+        XCTAssertEqual(decoded[0].annotations[0].annotationFQName, "kotlin.Serializable")
+
+        XCTAssertEqual(decoded[1].kind, .function)
+        XCTAssertEqual(decoded[1].fqName, "demo.greet")
+        XCTAssertEqual(decoded[1].arity, 1)
+        XCTAssertTrue(decoded[1].isSuspend)
+        XCTAssertEqual(decoded[1].typeSignature, "F1<S,U>")
+
+        XCTAssertEqual(decoded[2].kind, .property)
+        XCTAssertEqual(decoded[2].fqName, "demo.name")
+        XCTAssertEqual(decoded[2].typeSignature, "S")
+    }
+
+    func testMetadataImportRestoresDataClassFlagViaLibrary() throws {
+        let fm = FileManager.default
+        let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let libDir = baseDir.appendingPathExtension("kklib")
+        try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
+
+        let manifest = """
+        {
+          "formatVersion": 1,
+          "moduleName": "ExtDataClass",
+          "metadata": "metadata.bin"
+        }
+        """
+        let metadata = """
+        symbols=1
+        class _kk_Point fq=ext.Point fields=2 layoutWords=4 vtable=0 itable=0 dataClass=1
+        """
+        try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
+
+        try withTemporaryFile(contents: "fun main() = 0") { path in
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "DataClassImport",
+                emit: .kirDump,
+                searchPaths: [libDir.path]
+            )
+            try runToKIR(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let pointSymbol = sema.symbols.allSymbols().first { symbol in
+                ctx.interner.resolve(symbol.name) == "Point" && symbol.kind == .class
+            }
+            XCTAssertNotNil(pointSymbol)
+            XCTAssertTrue(pointSymbol?.flags.contains(.dataType) ?? false)
+            XCTAssertFalse(pointSymbol?.flags.contains(.sealedType) ?? true)
+        }
+    }
+
+    func testMetadataImportRestoresAnnotationsViaLibrary() throws {
+        let fm = FileManager.default
+        let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let libDir = baseDir.appendingPathExtension("kklib")
+        try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
+
+        let manifest = """
+        {
+          "formatVersion": 1,
+          "moduleName": "ExtAnnotated",
+          "metadata": "metadata.bin"
+        }
+        """
+        // Build the annotations field using the same encoding the encoder uses
+        let encoder = MetadataEncoder()
+        let annotatedRecord = MetadataRecord(
+            kind: .function,
+            mangledName: "_kk_ext_old",
+            fqName: "ext.oldMethod",
+            arity: 0,
+            annotations: [
+                MetadataAnnotationRecord(annotationFQName: "kotlin.Deprecated", arguments: ["replaced"])
+            ]
+        )
+        let serialized = encoder.serialize([annotatedRecord])
+        // Extract the single line for the function
+        let functionLine = serialized.split(whereSeparator: \.isNewline)
+            .first { $0.hasPrefix("function") }
+        XCTAssertNotNil(functionLine)
+
+        let metadata = "symbols=1\n\(functionLine!)\n"
+        try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
+
+        try withTemporaryFile(contents: "fun main() = 0") { path in
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "AnnotatedImport",
+                emit: .kirDump,
+                searchPaths: [libDir.path]
+            )
+            try runToKIR(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let ext = ctx.interner.intern("ext")
+            let oldMethod = ctx.interner.intern("oldMethod")
+            let symbolID = try XCTUnwrap(sema.symbols.lookupAll(fqName: [ext, oldMethod]).first)
+            let annotations = sema.symbols.annotations(for: symbolID)
+            XCTAssertEqual(annotations.count, 1)
+            XCTAssertEqual(annotations[0].annotationFQName, "kotlin.Deprecated")
+            XCTAssertEqual(annotations[0].arguments, ["replaced"])
+        }
+    }
 }
