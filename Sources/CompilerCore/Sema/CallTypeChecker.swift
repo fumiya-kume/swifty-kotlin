@@ -247,38 +247,34 @@ final class CallTypeChecker {
         }
 
         let memberLookupType = (isSuperCall ? ctx.implicitReceiverType : nil) ?? lookupReceiverType
-        let memberCandidates = driver.helpers.collectMemberFunctionCandidates(
-            named: calleeName,
-            receiverType: memberLookupType,
-            sema: sema,
-            allowedOwnerSymbols: isSuperCall && !supertypeSymbols.isEmpty ? supertypeSymbols : nil
-        )
 
-        // Track whether we redirected to a companion object so that we can
-        // pass the companion type (not the owner class type) as the implicit
-        // receiver when resolving the call.
+        // Detect class-name receiver: when the receiver is a name reference to
+        // a class/interface/enumClass symbol, only companion members should be
+        // accessible (not instance methods).  This prevents `Foo.instanceMethod()`
+        // from resolving when there is no companion with that name.
+        let isClassNameReceiver: Bool = {
+            guard let receiverSymbolID = sema.bindings.identifierSymbol(for: receiverID),
+                  let receiverSymbol = sema.symbols.symbol(receiverSymbolID) else {
+                return false
+            }
+            return receiverSymbol.kind == .class || receiverSymbol.kind == .interface || receiverSymbol.kind == .enumClass
+        }()
+
+        // Track the companion type so we can pass it (not the owner class type)
+        // as the implicit receiver when resolving the call.
         var companionReceiverType: TypeID?
 
         let allCandidates: [SymbolID]
-        if !memberCandidates.isEmpty {
-            // Check if the found candidates belong to a companion object so we
-            // can supply the correct implicit receiver type later.
-            if let first = memberCandidates.first,
-               let parentSymbol = sema.symbols.parentSymbol(for: first),
-               let ownerNominal = driver.helpers.nominalSymbol(of: memberLookupType, types: sema.types),
-               parentSymbol != ownerNominal,
-               sema.symbols.companionObjectSymbol(for: ownerNominal) == parentSymbol {
-                companionReceiverType = sema.types.make(.classType(ClassType(classSymbol: parentSymbol, args: [], nullability: .nonNull)))
-            }
-            allCandidates = memberCandidates
-        } else {
-            // Before falling back to scope lookup, try companion property access.
-            // `Foo.MAX_COUNT` is parsed as a memberCall with empty args; the callee
-            // name refers to a property, not a function.
+        if isClassNameReceiver {
+            // Class-name receiver: only companion members are valid targets.
+            // Skip collectMemberFunctionCandidates which would find instance
+            // methods and shadow companion members of the same name.
             if let ownerNominal = driver.helpers.nominalSymbol(of: memberLookupType, types: sema.types),
                let companionSymbol = sema.symbols.companionObjectSymbol(for: ownerNominal),
                let companionSym = sema.symbols.symbol(companionSymbol) {
                 let companionMemberFQName = companionSym.fqName + [calleeName]
+
+                // Try companion property access first (e.g. Foo.MAX_COUNT)
                 let propertyCandidate = sema.symbols.lookupAll(fqName: companionMemberFQName).first(where: { cid in
                     guard let sym = sema.symbols.symbol(cid),
                           sym.kind == .property,
@@ -293,17 +289,57 @@ final class CallTypeChecker {
                     sema.bindings.bindExprType(id, type: propType)
                     return propType
                 }
-            }
 
-            allCandidates = scope.lookup(calleeName).filter { candidate in
-                guard let symbol = sema.symbols.symbol(candidate),
-                      symbol.kind == .function,
-                      let signature = sema.symbols.functionSignature(for: candidate) else { return false }
-                guard signature.receiverType != nil else { return false }
-                if isSuperCall, !supertypeSymbols.isEmpty {
-                    return sema.symbols.parentSymbol(for: candidate).map { supertypeSymbols.contains($0) } ?? false
+                // Then try companion function candidates
+                var companionCandidates: [SymbolID] = []
+                for candidate in sema.symbols.lookupAll(fqName: companionMemberFQName) {
+                    guard let symbol = sema.symbols.symbol(candidate),
+                          symbol.kind == .function,
+                          sema.symbols.parentSymbol(for: candidate) == companionSymbol,
+                          let signature = sema.symbols.functionSignature(for: candidate),
+                          signature.receiverType != nil else {
+                        continue
+                    }
+                    companionCandidates.append(candidate)
                 }
-                return true
+                if !companionCandidates.isEmpty {
+                    companionReceiverType = sema.types.make(.classType(ClassType(classSymbol: companionSymbol, args: [], nullability: .nonNull)))
+                }
+                allCandidates = companionCandidates
+            } else {
+                allCandidates = []
+            }
+        } else {
+            // Normal instance receiver: use standard member lookup with
+            // companion fallback via collectMemberFunctionCandidates.
+            let memberCandidates = driver.helpers.collectMemberFunctionCandidates(
+                named: calleeName,
+                receiverType: memberLookupType,
+                sema: sema,
+                allowedOwnerSymbols: isSuperCall && !supertypeSymbols.isEmpty ? supertypeSymbols : nil
+            )
+            if !memberCandidates.isEmpty {
+                // Check if the found candidates belong to a companion object so we
+                // can supply the correct implicit receiver type later.
+                if let first = memberCandidates.first,
+                   let parentSymbol = sema.symbols.parentSymbol(for: first),
+                   let ownerNominal = driver.helpers.nominalSymbol(of: memberLookupType, types: sema.types),
+                   parentSymbol != ownerNominal,
+                   sema.symbols.companionObjectSymbol(for: ownerNominal) == parentSymbol {
+                    companionReceiverType = sema.types.make(.classType(ClassType(classSymbol: parentSymbol, args: [], nullability: .nonNull)))
+                }
+                allCandidates = memberCandidates
+            } else {
+                allCandidates = scope.lookup(calleeName).filter { candidate in
+                    guard let symbol = sema.symbols.symbol(candidate),
+                          symbol.kind == .function,
+                          let signature = sema.symbols.functionSignature(for: candidate) else { return false }
+                    guard signature.receiverType != nil else { return false }
+                    if isSuperCall, !supertypeSymbols.isEmpty {
+                        return sema.symbols.parentSymbol(for: candidate).map { supertypeSymbols.contains($0) } ?? false
+                    }
+                    return true
+                }
             }
         }
         let (visible, invisible) = ctx.filterByVisibility(allCandidates)

@@ -568,9 +568,17 @@ final class ExprTypeChecker {
             if symbol.kind == .property || symbol.kind == .field {
                 return sema.symbols.propertyType(for: symbol.id)
             }
-            // For class/object/interface/enum symbols, resolve to their nominal type
-            // so that member calls like `ClassName.memberName()` can resolve correctly.
-            if symbol.kind == .class || symbol.kind == .object || symbol.kind == .interface || symbol.kind == .enumClass {
+            // Objects are singletons – always resolve to their nominal type so
+            // that `ObjectName.member()` works.
+            if symbol.kind == .object {
+                return sema.types.make(.classType(ClassType(classSymbol: symbol.id, args: [], nullability: .nonNull)))
+            }
+            // For class/interface/enum symbols, only resolve to nominal type when
+            // they have a companion object so that `ClassName.companionMember()`
+            // can resolve.  Without a companion, keep the previous anyType
+            // fallback so that `ClassName.instanceMethod()` correctly errors.
+            if (symbol.kind == .class || symbol.kind == .interface || symbol.kind == .enumClass),
+               sema.symbols.companionObjectSymbol(for: symbol.id) != nil {
                 return sema.types.make(.classType(ClassType(classSymbol: symbol.id, args: [], nullability: .nonNull)))
             }
             return nil
