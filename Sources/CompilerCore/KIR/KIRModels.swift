@@ -220,7 +220,10 @@ public final class KIRArena {
             guard case .function(let function) = declarations[index] else {
                 continue
             }
-            declarations[index] = .function(transform(function))
+            let transformed = transform(function)
+            if transformed.body != function.body {
+                declarations[index] = .function(transformed)
+            }
         }
     }
 }

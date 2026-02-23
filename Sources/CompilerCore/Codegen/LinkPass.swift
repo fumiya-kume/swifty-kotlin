@@ -55,6 +55,10 @@ public final class LinkPhase: CompilerPhase {
             try wrapperSource.write(to: wrapperURL, atomically: true, encoding: .utf8)
 
             var linkInputs: [String] = [objectPath, wrapperURL.path]
+            if let stubPath = ctx.runtimeStubObjectPath,
+               FileManager.default.fileExists(atPath: stubPath) {
+                linkInputs.append(stubPath)
+            }
             for extraObject in autoLinkedObjects where !linkInputs.contains(extraObject) {
                 linkInputs.append(extraObject)
             }

@@ -8,6 +8,18 @@ struct InlineExpansion {
 final class InlineLoweringPass: LoweringPass {
     static let name = "InlineLowering"
 
+    func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool {
+        for decl in module.arena.declarations {
+            if case .function(let function) = decl, function.isInline {
+                return true
+            }
+        }
+        if let imported = ctx.sema?.importedInlineFunctions, !imported.isEmpty {
+            return true
+        }
+        return false
+    }
+
     func run(module: KIRModule, ctx: KIRContext) throws {
         let unitType = ctx.sema?.types.unitType
         var inlineFunctionsBySymbol = Dictionary(uniqueKeysWithValues: module.arena.declarations.compactMap { decl -> (SymbolID, KIRFunction)? in
