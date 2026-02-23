@@ -180,10 +180,11 @@ extension BuildKIRPhase {
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
-        case .localFunDecl(_, _, _, _, _):
+        case .localFunDecl(let localFunName, let localFunValueParams, _, let localFunBody, _):
             if let symbol = sema.bindings.identifierSymbols[exprID] {
+                let sig = sema.symbols.functionSignature(for: symbol)
                 let funType: TypeID
-                if let sig = sema.symbols.functionSignature(for: symbol) {
+                if let sig {
                     funType = sema.types.make(.functionType(FunctionType(
                         params: sig.parameterTypes,
                         returnType: sig.returnType,
@@ -196,12 +197,329 @@ extension BuildKIRPhase {
                 let funRef = arena.appendExpr(.symbolRef(symbol), type: funType)
                 instructions.append(.constValue(result: funRef, value: .symbolRef(symbol)))
                 localValuesBySymbol[symbol] = funRef
+
+                let localFunCalleeName = callableTargetName(for: symbol, sema: sema, interner: interner)
+
+                // Emit the local function body as a KIRFunction declaration.
+                let localFunValueParamList: [KIRParameter]
+                let localFunReturnType: TypeID
+                if let sig {
+                    localFunValueParamList = zip(sig.valueParameterSymbols, sig.parameterTypes).map { pair in
+                        KIRParameter(symbol: pair.0, type: pair.1)
+                    }
+                    localFunReturnType = sig.returnType
+                } else {
+                    localFunValueParamList = localFunValueParams.enumerated().map { index, _ in
+                        KIRParameter(
+                            symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: index),
+                            type: sema.types.anyType
+                        )
+                    }
+                    localFunReturnType = sema.types.unitType
+                }
+
+                // Compute capture symbols by collecting referenced identifiers
+                // from the local function body, filtering to those available in
+                // the current scope (analogous to lambda capture analysis).
+                var captureBodyExprIDs: [ExprID] = []
+                switch localFunBody {
+                case .block(let bodyExprIDs, _):
+                    captureBodyExprIDs = bodyExprIDs
+                case .expr(let bodyExprID, _):
+                    captureBodyExprIDs = [bodyExprID]
+                case .unit:
+                    break
+                }
+
+                var referencedSymbols: [SymbolID] = []
+                var seenSymbols: Set<SymbolID> = []
+                for bodyExprID in captureBodyExprIDs {
+                    collectBoundIdentifierSymbols(
+                        in: bodyExprID,
+                        ast: ast,
+                        sema: sema,
+                        referenced: &referencedSymbols,
+                        seen: &seenSymbols
+                    )
+                }
+                let localFunParamSymbols = Set(localFunValueParamList.map { $0.symbol })
+                var captureSymbols = referencedSymbols.filter { sym in
+                    if localFunParamSymbols.contains(sym) { return false }
+                    if sym == symbol { return false }
+                    if localValuesBySymbol[sym] != nil { return true }
+                    if sym == currentImplicitReceiverSymbol,
+                       currentImplicitReceiverExprID != nil { return true }
+                    guard let semanticSymbol = sema.symbols.symbol(sym) else { return false }
+                    return semanticSymbol.kind == .valueParameter
+                }
+
+                // Implicit receiver (this/super) is not collected by
+                // collectBoundIdentifierSymbols, so check separately —
+                // mirrors the post-filter in lexicalCaptureSymbolsForLambda.
+                if let receiverSymbol = currentImplicitReceiverSymbol,
+                   currentImplicitReceiverExprID != nil,
+                   !captureSymbols.contains(receiverSymbol) {
+                    let needsReceiver = captureBodyExprIDs.contains { bodyExprID in
+                        containsImplicitReceiverReference(in: bodyExprID, ast: ast)
+                    }
+                    if needsReceiver {
+                        captureSymbols.append(receiverSymbol)
+                    }
+                }
+
+                // Transitive capture: if a captured symbol is a callable with
+                // its own captures, also capture those dependencies so call
+                // sites inside the body can forward correct capture arguments.
+                // Build a deterministic reverse map (KIRExprID → SymbolID) from
+                // localValuesBySymbol so we avoid nondeterministic Dictionary
+                // iteration with first(where:).
+                var exprIDToSymbol: [KIRExprID: SymbolID] = [:]
+                for (sym, expr) in localValuesBySymbol {
+                    exprIDToSymbol[expr] = sym
+                }
+                var transitiveChanged = true
+                while transitiveChanged {
+                    transitiveChanged = false
+                    for sym in captureSymbols {
+                        guard let outerExpr = localValuesBySymbol[sym],
+                              let callableInfo = callableValueInfoByExprID[outerExpr] else {
+                            continue
+                        }
+                        for captureArg in callableInfo.captureArguments {
+                            var transitiveSym: SymbolID?
+                            if let found = exprIDToSymbol[captureArg] {
+                                transitiveSym = found
+                            } else if case .symbolRef(let argSym) = arena.expr(captureArg) {
+                                transitiveSym = argSym
+                            } else if captureArg == currentImplicitReceiverExprID {
+                                transitiveSym = currentImplicitReceiverSymbol
+                            }
+                            if let transitiveSym, !captureSymbols.contains(transitiveSym) {
+                                captureSymbols.append(transitiveSym)
+                                transitiveChanged = true
+                            }
+                        }
+                    }
+                }
+
+                var captureBindings: [(capturedSymbol: SymbolID, param: KIRParameter, valueExpr: KIRExprID)] = []
+                captureBindings.reserveCapacity(captureSymbols.count)
+                for (index, capturedSymbol) in captureSymbols.enumerated() {
+                    guard let captureValue = captureValueExpr(
+                        for: capturedSymbol,
+                        sema: sema,
+                        arena: arena,
+                        instructions: &instructions
+                    ) else {
+                        continue
+                    }
+                    let captureType = arena.exprType(captureValue) ?? typeForSymbolReference(capturedSymbol, sema: sema)
+                    let captureParamSymbol = syntheticLambdaCaptureParamSymbol(
+                        lambdaExprID: exprID,
+                        captureIndex: index
+                    )
+                    let captureParam = KIRParameter(symbol: captureParamSymbol, type: captureType)
+                    captureBindings.append((
+                        capturedSymbol: capturedSymbol,
+                        param: captureParam,
+                        valueExpr: captureValue
+                    ))
+                }
+
                 registerCallableValue(
                     funRef,
                     symbol: symbol,
-                    callee: callableTargetName(for: symbol, sema: sema, interner: interner),
-                    captureArguments: []
+                    callee: localFunCalleeName,
+                    captureArguments: captureBindings.map { $0.valueExpr }
                 )
+
+                let savedLocalValues = localValuesBySymbol
+                let savedReceiverExprID = currentImplicitReceiverExprID
+                let savedReceiverSymbol = currentImplicitReceiverSymbol
+                let savedLoopStack = loopControlStack
+                let savedNextLabel = nextLoopLabel
+                defer {
+                    localValuesBySymbol = savedLocalValues
+                    currentImplicitReceiverExprID = savedReceiverExprID
+                    currentImplicitReceiverSymbol = savedReceiverSymbol
+                    loopControlStack = savedLoopStack
+                    nextLoopLabel = savedNextLabel
+                }
+
+                localValuesBySymbol.removeAll(keepingCapacity: true)
+                currentImplicitReceiverExprID = nil
+                currentImplicitReceiverSymbol = nil
+                loopControlStack.removeAll(keepingCapacity: true)
+                nextLoopLabel = 10_000
+
+                var localFunBodyInstructions: [KIRInstruction] = [.beginBlock]
+
+                // Bind capture parameters so body references resolve correctly.
+                for capture in captureBindings {
+                    let captureExpr = arena.appendExpr(.symbolRef(capture.param.symbol), type: capture.param.type)
+                    localFunBodyInstructions.append(.constValue(result: captureExpr, value: .symbolRef(capture.param.symbol)))
+                    localValuesBySymbol[capture.capturedSymbol] = captureExpr
+                    if capture.capturedSymbol == savedReceiverSymbol {
+                        currentImplicitReceiverExprID = captureExpr
+                        currentImplicitReceiverSymbol = capture.param.symbol
+                    }
+                }
+
+                for param in localFunValueParamList {
+                    let paramExpr = arena.appendExpr(.symbolRef(param.symbol), type: param.type)
+                    localFunBodyInstructions.append(.constValue(result: paramExpr, value: .symbolRef(param.symbol)))
+                    localValuesBySymbol[param.symbol] = paramExpr
+                }
+
+                // Propagate callable value info for captured callables so that
+                // calls inside the body find correct capture arguments.
+                // Build a direct outer-expr → body-expr mapping from capture
+                // bindings. This works for any expression kind (symbolRef,
+                // intLiteral, etc.) without needing reverse lookups.
+                var outerExprToBodyExpr: [KIRExprID: KIRExprID] = [:]
+                for capture in captureBindings {
+                    if let bodyExpr = localValuesBySymbol[capture.capturedSymbol] {
+                        outerExprToBodyExpr[capture.valueExpr] = bodyExpr
+                    }
+                }
+                for capture in captureBindings {
+                    if let outerCallableInfo = callableValueInfoByExprID[capture.valueExpr],
+                       let bodyCallableExpr = localValuesBySymbol[capture.capturedSymbol] {
+                        var remappedArgs: [KIRExprID] = []
+                        var mappingFailed = false
+                        for argExpr in outerCallableInfo.captureArguments {
+                            if let bodyArgExpr = outerExprToBodyExpr[argExpr] {
+                                remappedArgs.append(bodyArgExpr)
+                            } else if case .symbolRef(let argSym) = arena.expr(argExpr),
+                                      let bodyArgExpr = localValuesBySymbol[argSym] {
+                                remappedArgs.append(bodyArgExpr)
+                            } else {
+                                assertionFailure("BuildKIRPhase: failed to remap capture argument for local function body")
+                                mappingFailed = true
+                                break
+                            }
+                        }
+                        if !mappingFailed {
+                            registerCallableValue(
+                                bodyCallableExpr,
+                                symbol: outerCallableInfo.symbol,
+                                callee: outerCallableInfo.callee,
+                                captureArguments: remappedArgs
+                            )
+                        }
+                    }
+                }
+
+                // Re-register the local function symbol inside its own body
+                // so that recursive calls resolve correctly with capture arguments.
+                // Inside the body, capture arguments reference the capture *parameters*
+                // (not the outer values) since we're in the body's scope.
+                let bodyFunRef = arena.appendExpr(.symbolRef(symbol), type: funType)
+                localFunBodyInstructions.append(.constValue(result: bodyFunRef, value: .symbolRef(symbol)))
+                localValuesBySymbol[symbol] = bodyFunRef
+                let recursiveCaptureArguments: [KIRExprID] = captureBindings.map { binding in
+                    guard let value = localValuesBySymbol[binding.capturedSymbol] else {
+                        preconditionFailure("BuildKIRPhase: missing capture binding for recursive local function '\(symbol)'")
+                    }
+                    return value
+                }
+                registerCallableValue(
+                    bodyFunRef,
+                    symbol: symbol,
+                    callee: localFunCalleeName,
+                    captureArguments: recursiveCaptureArguments
+                )
+
+                switch localFunBody {
+                case .block(let bodyExprIDs, _):
+                    var lastValue: KIRExprID?
+                    var terminatedByReturn = false
+                    for bodyExprID in bodyExprIDs {
+                        if let bodyExpr = ast.arena.expr(bodyExprID),
+                           case .returnExpr(let value, _) = bodyExpr {
+                            if let value {
+                                let lowered = lowerExpr(
+                                    value,
+                                    ast: ast,
+                                    sema: sema,
+                                    arena: arena,
+                                    interner: interner,
+                                    propertyConstantInitializers: propertyConstantInitializers,
+                                    instructions: &localFunBodyInstructions
+                                )
+                                localFunBodyInstructions.append(.returnValue(lowered))
+                            } else {
+                                localFunBodyInstructions.append(.returnUnit)
+                            }
+                            terminatedByReturn = true
+                            break
+                        }
+                        if let bodyExpr = ast.arena.expr(bodyExprID),
+                           case .throwExpr = bodyExpr {
+                            _ = lowerExpr(
+                                bodyExprID,
+                                ast: ast,
+                                sema: sema,
+                                arena: arena,
+                                interner: interner,
+                                propertyConstantInitializers: propertyConstantInitializers,
+                                instructions: &localFunBodyInstructions
+                            )
+                            terminatedByReturn = true
+                            break
+                        }
+                        lastValue = lowerExpr(
+                            bodyExprID,
+                            ast: ast,
+                            sema: sema,
+                            arena: arena,
+                            interner: interner,
+                            propertyConstantInitializers: propertyConstantInitializers,
+                            instructions: &localFunBodyInstructions
+                        )
+                        // Detect nested termination (e.g., if/when/try with return in all branches)
+                        if let lastValue, isTerminatedExpr(lastValue, arena: arena, sema: sema) {
+                            terminatedByReturn = true
+                            break
+                        }
+                    }
+                    if !terminatedByReturn {
+                        if let lastValue {
+                            localFunBodyInstructions.append(.returnValue(lastValue))
+                        } else {
+                            localFunBodyInstructions.append(.returnUnit)
+                        }
+                    }
+                case .expr(let bodyExprID, _):
+                    let value = lowerExpr(
+                        bodyExprID,
+                        ast: ast,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        propertyConstantInitializers: propertyConstantInitializers,
+                        instructions: &localFunBodyInstructions
+                    )
+                    localFunBodyInstructions.append(.returnValue(value))
+                case .unit:
+                    localFunBodyInstructions.append(.returnUnit)
+                }
+                localFunBodyInstructions.append(.endBlock)
+
+                let localFunDeclID = arena.appendDecl(
+                    .function(
+                        KIRFunction(
+                            symbol: symbol,
+                            name: localFunName,
+                            params: captureBindings.map { $0.param } + localFunValueParamList,
+                            returnType: localFunReturnType,
+                            body: localFunBodyInstructions,
+                            isSuspend: sig?.isSuspend ?? false,
+                            isInline: false
+                        )
+                    )
+                )
+                pendingGeneratedCallableDeclIDs.append(localFunDeclID)
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))
