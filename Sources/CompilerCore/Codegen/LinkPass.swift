@@ -158,6 +158,8 @@ public final class LinkPhase: CompilerPhase {
 
     /// Returns a deterministic URL for the entry wrapper C source file,
     /// derived from the output path so the same compilation reuses the file.
+    /// Files are placed under a dedicated `kswiftk` subdirectory to avoid
+    /// collisions with unrelated entries in the shared temp directory.
     private func stableEntryWrapperURL(outputPath: String) -> URL {
         var hash: UInt64 = 0xcbf29ce484222325
         for byte in outputPath.utf8 {
@@ -165,8 +167,10 @@ public final class LinkPhase: CompilerPhase {
             hash &*= 0x100000001b3
         }
         let key = String(hash, radix: 16)
-        return FileManager.default.temporaryDirectory
-            .appendingPathComponent("kswiftk_entry_\(key).c")
+        let cacheDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("kswiftk", isDirectory: true)
+        try? FileManager.default.createDirectory(at: cacheDir, withIntermediateDirectories: true)
+        return cacheDir.appendingPathComponent("entry_\(key).c")
     }
 
     /// Writes `content` to `url` only when the file does not already exist

@@ -37,7 +37,7 @@ public enum CommandRunner {
         phaseTimer: PhaseTimer? = nil,
         subPhaseName: String? = nil
     ) throws -> CommandResult {
-        let startTime: UInt64 = phaseTimer != nil ? DispatchTime.now().uptimeNanoseconds : 0
+        let startTime: UInt64 = (phaseTimer != nil && subPhaseName != nil) ? DispatchTime.now().uptimeNanoseconds : 0
         let process = Process()
         process.executableURL = URL(fileURLWithPath: executable)
         process.arguments = arguments
