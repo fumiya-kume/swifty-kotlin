@@ -223,41 +223,11 @@ final class ASTArenaAdditionalTests: XCTestCase {
         XCTAssertNil(arena.typeRef(TypeRefID(rawValue: 999)))
     }
 
-    func testASTModuleConvenienceInit() {
-        let module = ASTModule(declarationCount: 5, tokenCount: 20)
-        XCTAssertEqual(module.declarationCount, 5)
-        XCTAssertEqual(module.tokenCount, 20)
-        XCTAssertTrue(module.files.isEmpty)
-    }
-
-    func testASTModuleSortedFiles() {
-        let arena = ASTArena()
-        let interner = StringInterner()
-        let file0 = ASTFile(
-            fileID: FileID(rawValue: 2),
-            packageFQName: [interner.intern("b")],
-            imports: [],
-            topLevelDecls: [],
-            scriptBody: []
-        )
-        let file1 = ASTFile(
-            fileID: FileID(rawValue: 0),
-            packageFQName: [interner.intern("a")],
-            imports: [],
-            topLevelDecls: [],
-            scriptBody: []
-        )
-        let module = ASTModule(
-            files: [file0, file1],
-            arena: arena,
-            declarationCount: 0,
-            tokenCount: 0
-        )
-        let sorted = module.sortedFiles
-        XCTAssertEqual(sorted[0].fileID.rawValue, 0)
-        XCTAssertEqual(sorted[1].fileID.rawValue, 2)
-    }
 }
+
+// Note: testASTModuleConvenienceInit and testASTModuleSortedFiles were removed
+// as they duplicate testASTModuleFullAndCompactInitializers and
+// testSortedFilesReturnsByFileID in ASTModelsTests.swift.
 
 // MARK: - DataFlowAnalyzer Struct Init Edge Cases
 
@@ -293,7 +263,10 @@ final class DataFlowStructTests: XCTestCase {
     func testWhenBranchSummaryAutoDerivation() {
         // When hasTrueCase/hasFalseCase are not explicitly provided,
         // they should be derived from coveredSymbols containing
-        // InternedString(rawValue: 1) and InternedString(rawValue: 2)
+        // InternedString(rawValue: 1) and InternedString(rawValue: 2).
+        // WARNING: These sentinel values are coupled to DataFlowAnalysis.swift:38-39.
+        // If the implementation changes these magic constants, this test must be
+        // updated in sync.
         let trueSymbol = InternedString(rawValue: 1)
         let falseSymbol = InternedString(rawValue: 2)
 
@@ -355,108 +328,11 @@ final class DiagnosticEngineAdditionalTests: XCTestCase {
     }
 }
 
-// MARK: - Scope Subclass Tests
-
-final class ScopeSubclassTests: XCTestCase {
-
-    func testFileScopeInheritsBaseScopeBehavior() {
-        let interner = StringInterner()
-        let symbols = SymbolTable()
-        let scope = FileScope(parent: nil, symbols: symbols)
-        let id = symbols.define(
-            kind: .function,
-            name: interner.intern("f"),
-            fqName: [interner.intern("f")],
-            declSite: nil,
-            visibility: .public
-        )
-        scope.insert(id)
-        XCTAssertEqual(scope.lookup(interner.intern("f")), [id])
-        XCTAssertEqual(scope.lookup(interner.intern("missing")), [])
-        XCTAssertNil(scope.parent)
-    }
-
-    func testPackageScopeInheritsBaseScopeBehavior() {
-        let interner = StringInterner()
-        let symbols = SymbolTable()
-        let scope = PackageScope(parent: nil, symbols: symbols)
-        let id = symbols.define(
-            kind: .class,
-            name: interner.intern("MyClass"),
-            fqName: [interner.intern("MyClass")],
-            declSite: nil,
-            visibility: .public
-        )
-        scope.insert(id)
-        XCTAssertEqual(scope.lookup(interner.intern("MyClass")), [id])
-    }
-
-    func testImportScopeInheritsBaseScopeBehavior() {
-        let interner = StringInterner()
-        let symbols = SymbolTable()
-        let scope = ImportScope(parent: nil, symbols: symbols)
-        let id = symbols.define(
-            kind: .function,
-            name: interner.intern("imported"),
-            fqName: [interner.intern("imported")],
-            declSite: nil,
-            visibility: .public
-        )
-        scope.insert(id)
-        XCTAssertEqual(scope.lookup(interner.intern("imported")), [id])
-    }
-
-    func testFunctionScopeInheritsBaseScopeBehavior() {
-        let interner = StringInterner()
-        let symbols = SymbolTable()
-        let scope = FunctionScope(parent: nil, symbols: symbols)
-        let id = symbols.define(
-            kind: .local,
-            name: interner.intern("x"),
-            fqName: [interner.intern("x")],
-            declSite: nil,
-            visibility: .internal
-        )
-        scope.insert(id)
-        XCTAssertEqual(scope.lookup(interner.intern("x")), [id])
-    }
-
-    func testBlockScopeInheritsBaseScopeBehavior() {
-        let interner = StringInterner()
-        let symbols = SymbolTable()
-        let scope = BlockScope(parent: nil, symbols: symbols)
-        let id = symbols.define(
-            kind: .local,
-            name: interner.intern("y"),
-            fqName: [interner.intern("y")],
-            declSite: nil,
-            visibility: .internal
-        )
-        scope.insert(id)
-        XCTAssertEqual(scope.lookup(interner.intern("y")), [id])
-    }
-
-    func testScopeChainDelegation() {
-        let interner = StringInterner()
-        let symbols = SymbolTable()
-        let parentScope = PackageScope(parent: nil, symbols: symbols)
-        let childScope = FileScope(parent: parentScope, symbols: symbols)
-        let grandChildScope = FunctionScope(parent: childScope, symbols: symbols)
-
-        let id = symbols.define(
-            kind: .class,
-            name: interner.intern("Top"),
-            fqName: [interner.intern("Top")],
-            declSite: nil,
-            visibility: .public
-        )
-        parentScope.insert(id)
-
-        // grandchild should find symbol through parent chain
-        XCTAssertEqual(grandChildScope.lookup(interner.intern("Top")), [id])
-        XCTAssertNotNil(grandChildScope.parent)
-    }
-}
+// Note: Scope subclass tests (FileScope, BlockScope, ImportScope) were removed
+// as BaseScope behavior is already thoroughly tested in SymbolTableTests.swift.
+// PackageScope and FunctionScope are empty final classes with no unique logic.
+// The 3-level scope chain delegation test was also removed since
+// testBaseScopeLookupDelegatesToParent in SymbolTableTests.swift covers this.
 
 // MARK: - CallableValueCallBinding and CatchClauseBinding Init Tests
 
