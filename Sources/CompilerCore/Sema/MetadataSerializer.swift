@@ -34,6 +34,9 @@ public struct MetadataRecord {
     // P5-75: value class flag
     public let isValueClass: Bool
 
+    // P5-75: value class underlying type signature (e.g. "I" for Int)
+    public let valueClassUnderlyingTypeSig: String?
+
     public init(
         kind: SymbolKind,
         mangledName: String = "",
@@ -54,7 +57,8 @@ public struct MetadataRecord {
         isDataClass: Bool = false,
         isSealedClass: Bool = false,
         annotations: [MetadataAnnotationRecord] = [],
-        isValueClass: Bool = false
+        isValueClass: Bool = false,
+        valueClassUnderlyingTypeSig: String? = nil
     ) {
         self.kind = kind
         self.mangledName = mangledName
@@ -76,6 +80,7 @@ public struct MetadataRecord {
         self.isSealedClass = isSealedClass
         self.annotations = annotations
         self.isValueClass = isValueClass
+        self.valueClassUnderlyingTypeSig = valueClassUnderlyingTypeSig
     }
 }
 
@@ -216,6 +221,17 @@ public final class MetadataEncoder {
             let isSealedClass = symbol.flags.contains(.sealedType)
             let isValueClass = symbol.flags.contains(.valueType)
 
+            var valueClassUnderlyingTypeSig: String?
+            if isValueClass,
+               let underlyingType = symbols.valueClassUnderlyingType(for: symbol.id) {
+                valueClassUnderlyingTypeSig = mangler.encodeType(
+                    underlyingType,
+                    symbols: symbols,
+                    types: types,
+                    nameResolver: { interner.resolve($0) }
+                )
+            }
+
             let annotationEntries = symbols.annotations(for: symbol.id)
 
             records.append(MetadataRecord(
@@ -238,7 +254,8 @@ public final class MetadataEncoder {
                 isDataClass: isDataClass,
                 isSealedClass: isSealedClass,
                 annotations: annotationEntries,
-                isValueClass: isValueClass
+                isValueClass: isValueClass,
+                valueClassUnderlyingTypeSig: valueClassUnderlyingTypeSig
             ))
         }
         return records
@@ -311,6 +328,9 @@ public final class MetadataEncoder {
             }
             if record.isValueClass {
                 fields.append("valueClass=1")
+                if let vSig = record.valueClassUnderlyingTypeSig {
+                    fields.append("valueUnderlying=\(vSig)")
+                }
             }
             if !record.annotations.isEmpty {
                 fields.append("annotations=\(encodeAnnotations(record.annotations))")
@@ -450,6 +470,7 @@ public final class MetadataDecoder {
             var isDataClass = false
             var isSealedClass = false
             var isValueClass = false
+            var valueClassUnderlyingTypeSig: String?
             var annotations: [MetadataAnnotationRecord] = []
 
             for part in parts.dropFirst() {
@@ -493,6 +514,8 @@ public final class MetadataDecoder {
                     isSealedClass = value == "1" || value == "true"
                 case "valueClass":
                     isValueClass = value == "1" || value == "true"
+                case "valueUnderlying":
+                    valueClassUnderlyingTypeSig = value.isEmpty ? nil : value
                 case "annotations":
                     annotations = decodeAnnotations(value)
                 default:
@@ -524,7 +547,8 @@ public final class MetadataDecoder {
                 isDataClass: isDataClass,
                 isSealedClass: isSealedClass,
                 annotations: annotations,
-                isValueClass: isValueClass
+                isValueClass: isValueClass,
+                valueClassUnderlyingTypeSig: valueClassUnderlyingTypeSig
             ))
         }
         return records

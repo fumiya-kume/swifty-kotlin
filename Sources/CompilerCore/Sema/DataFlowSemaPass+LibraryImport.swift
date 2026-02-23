@@ -124,7 +124,25 @@ extension DataFlowSemaPassPhase {
                     metadataPath: binding.metadataPath
                 )
                 symbols.setPropertyType(propertyType, for: symbol)
-            } else if record.kind == .typeAlias {
+            }
+
+            // P5-75: restore value class underlying type from metadata
+            if record.isValueClass, let vSig = record.valueClassUnderlyingTypeSig {
+                let underlyingType = importedValueClassUnderlyingType(
+                    signature: vSig,
+                    symbols: symbols,
+                    types: types,
+                    diagnostics: diagnostics,
+                    interner: interner,
+                    metadataPath: binding.metadataPath,
+                    ownerFQName: record.fqName
+                )
+                if let underlyingType {
+                    symbols.setValueClassUnderlyingType(underlyingType, for: symbol)
+                }
+            }
+
+            if record.kind == .typeAlias {
                 let underlyingType = importedTypeAliasUnderlyingType(
                     record: record,
                     symbols: symbols,
@@ -254,6 +272,7 @@ extension DataFlowSemaPassPhase {
         let isDataClass: Bool
         let isSealedClass: Bool
         let isValueClass: Bool
+        let valueClassUnderlyingTypeSig: String?
         let annotations: [MetadataAnnotationRecord]
     }
 
