@@ -331,7 +331,10 @@ public final class DataFlowAnalyzer {
                 return DataFlowState(variables: vars)
             }
             return base
-        case .isCheck(_, let typeRefID, _, _):
+        case .isCheck(_, let typeRefID, let negated, _):
+            guard !negated else {
+                return base
+            }
             guard let typeRef = ast.arena.typeRef(typeRefID),
                   case .named(let path, _, let nullable) = typeRef,
                   let firstName = path.first else {
