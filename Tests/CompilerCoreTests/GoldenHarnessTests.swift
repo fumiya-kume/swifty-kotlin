@@ -384,6 +384,10 @@ final class GoldenHarnessTests: XCTestCase {
                 return "this@\(interner.resolve(label))"
             }
             return "this"
+        case .inExpr(let lhs, let rhs, _):
+            return "inExpr lhs=e\(lhs.rawValue) rhs=e\(rhs.rawValue)"
+        case .notInExpr(let lhs, let rhs, _):
+            return "notInExpr lhs=e\(lhs.rawValue) rhs=e\(rhs.rawValue)"
         }
     }
 

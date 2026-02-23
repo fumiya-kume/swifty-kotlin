@@ -765,6 +765,11 @@ extension BuildKIRPhase {
             if let trailingExpr {
                 collectBoundIdentifierSymbols(in: trailingExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
             }
+
+        case .inExpr(let lhsExpr, let rhsExpr, _),
+             .notInExpr(let lhsExpr, let rhsExpr, _):
+            collectBoundIdentifierSymbols(in: lhsExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
+            collectBoundIdentifierSymbols(in: rhsExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
         }
     }
 
@@ -930,6 +935,11 @@ extension BuildKIRPhase {
                 return containsImplicitReceiverReference(in: trailingExpr, ast: ast)
             }
             return false
+
+        case .inExpr(let lhsExpr, let rhsExpr, _),
+             .notInExpr(let lhsExpr, let rhsExpr, _):
+            return containsImplicitReceiverReference(in: lhsExpr, ast: ast)
+                || containsImplicitReceiverReference(in: rhsExpr, ast: ast)
         }
     }
 }
