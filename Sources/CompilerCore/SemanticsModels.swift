@@ -227,6 +227,7 @@ public final class SymbolTable {
     private var nominalLayoutHints: [SymbolID: NominalLayoutHint] = [:]
     private var externalLinkNames: [SymbolID: String] = [:]
     private var typeAliasUnderlyingTypes: [SymbolID: TypeID] = [:]
+    private var typeAliasTypeParameters: [SymbolID: [SymbolID]] = [:]
     private var parentSymbols: [SymbolID: SymbolID] = [:]
     private var backingFieldSymbols: [SymbolID: SymbolID] = [:]
     private var typeParameterUpperBoundsMap: [SymbolID: TypeID] = [:]
@@ -319,10 +320,17 @@ public final class SymbolTable {
     }
 
     private func canCoexistAsOverload(kind: SymbolKind, existingKinds: [SymbolKind]) -> Bool {
+        if kind == .package {
+            return true
+        }
+        let existingNonPackageKinds = existingKinds.filter { $0 != .package }
+        if existingNonPackageKinds.isEmpty {
+            return true
+        }
         guard isOverloadable(kind) else {
             return false
         }
-        return existingKinds.allSatisfy { isOverloadable($0) }
+        return existingNonPackageKinds.allSatisfy { isOverloadable($0) }
     }
 
     private func isOverloadable(_ kind: SymbolKind) -> Bool {
@@ -401,6 +409,14 @@ public final class SymbolTable {
 
     public func typeAliasUnderlyingType(for symbol: SymbolID) -> TypeID? {
         typeAliasUnderlyingTypes[symbol]
+    }
+
+    public func setTypeAliasTypeParameters(_ params: [SymbolID], for symbol: SymbolID) {
+        typeAliasTypeParameters[symbol] = params
+    }
+
+    public func typeAliasTypeParameters(for symbol: SymbolID) -> [SymbolID] {
+        typeAliasTypeParameters[symbol] ?? []
     }
 
     public func setParentSymbol(_ parent: SymbolID, for child: SymbolID) {

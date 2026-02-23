@@ -1,6 +1,10 @@
 import Foundation
 
 extension DataFlowSemaPassPhase {
+    /// Base value for synthetic type parameter symbol IDs used in metadata encoding.
+    /// Shared between MetadataTypeSignatureParser (encoding) and collectSyntheticTypeParameters (decoding).
+    static var syntheticTypeParameterBase: Int32 { -1_000_000 }
+
     func definePackageSymbol(for file: ASTFile, symbols: SymbolTable, interner: StringInterner) -> SymbolID {
         let package = file.packageFQName.isEmpty ? [interner.intern("_root_")] : file.packageFQName
         let name = package.last ?? interner.intern("_root_")
@@ -68,6 +72,36 @@ extension DataFlowSemaPassPhase {
 
     func isOverloadableSymbol(_ kind: SymbolKind) -> Bool {
         kind == .function || kind == .constructor
+    }
+
+    func registerTypeAliasTypeParameters(
+        _ typeParams: [TypeParamDecl],
+        aliasSymbol: SymbolID,
+        parentFQName: [InternedString],
+        declSite: SourceRange?,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> [InternedString: SymbolID] {
+        var localTypeParameters: [InternedString: SymbolID] = [:]
+        var typeParameterSymbols: [SymbolID] = []
+        let localNamespaceFQName = parentFQName + [interner.intern("$\(aliasSymbol.rawValue)")]
+        for typeParam in typeParams {
+            let typeParamFQName = localNamespaceFQName + [typeParam.name]
+            let typeParamSymbol = symbols.define(
+                kind: .typeParameter,
+                name: typeParam.name,
+                fqName: typeParamFQName,
+                declSite: declSite,
+                visibility: .private,
+                flags: []
+            )
+            typeParameterSymbols.append(typeParamSymbol)
+            localTypeParameters[typeParam.name] = typeParamSymbol
+        }
+        if !typeParameterSymbols.isEmpty {
+            symbols.setTypeAliasTypeParameters(typeParameterSymbols, for: aliasSymbol)
+        }
+        return localTypeParameters
     }
 
     func validateConstructorDelegation(

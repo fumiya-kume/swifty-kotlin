@@ -78,6 +78,7 @@ struct TypeInferenceContext {
     let currentFileID: FileID
     let enclosingClassSymbol: SymbolID?
     let visibilityChecker: VisibilityChecker
+    let outerReceiverTypes: [(label: InternedString, type: TypeID)]
 
     func with(scope: Scope) -> TypeInferenceContext {
         TypeInferenceContext(
@@ -93,7 +94,8 @@ struct TypeInferenceContext {
             flowState: flowState,
             currentFileID: currentFileID,
             enclosingClassSymbol: enclosingClassSymbol,
-            visibilityChecker: visibilityChecker
+            visibilityChecker: visibilityChecker,
+            outerReceiverTypes: outerReceiverTypes
         )
     }
 
@@ -111,7 +113,8 @@ struct TypeInferenceContext {
             flowState: flowState,
             currentFileID: currentFileID,
             enclosingClassSymbol: enclosingClassSymbol,
-            visibilityChecker: visibilityChecker
+            visibilityChecker: visibilityChecker,
+            outerReceiverTypes: outerReceiverTypes
         )
     }
 
@@ -129,7 +132,8 @@ struct TypeInferenceContext {
             flowState: flowState,
             currentFileID: currentFileID,
             enclosingClassSymbol: enclosingClassSymbol,
-            visibilityChecker: visibilityChecker
+            visibilityChecker: visibilityChecker,
+            outerReceiverTypes: outerReceiverTypes
         )
     }
 
@@ -147,7 +151,8 @@ struct TypeInferenceContext {
             flowState: flowState,
             currentFileID: currentFileID,
             enclosingClassSymbol: enclosingClassSymbol,
-            visibilityChecker: visibilityChecker
+            visibilityChecker: visibilityChecker,
+            outerReceiverTypes: outerReceiverTypes
         )
     }
 
@@ -165,8 +170,39 @@ struct TypeInferenceContext {
             flowState: flowState,
             currentFileID: currentFileID,
             enclosingClassSymbol: enclosingClassSymbol,
-            visibilityChecker: visibilityChecker
+            visibilityChecker: visibilityChecker,
+            outerReceiverTypes: outerReceiverTypes
         )
+    }
+
+    func withOuterReceiver(label: InternedString, type: TypeID) -> TypeInferenceContext {
+        var newOuters = outerReceiverTypes
+        newOuters.append((label: label, type: type))
+        return TypeInferenceContext(
+            ast: ast,
+            sema: sema,
+            semaCtx: semaCtx,
+            resolver: resolver,
+            dataFlow: dataFlow,
+            interner: interner,
+            scope: scope,
+            implicitReceiverType: implicitReceiverType,
+            loopDepth: loopDepth,
+            flowState: flowState,
+            currentFileID: currentFileID,
+            enclosingClassSymbol: enclosingClassSymbol,
+            visibilityChecker: visibilityChecker,
+            outerReceiverTypes: newOuters
+        )
+    }
+
+    func resolveQualifiedThis(label: InternedString) -> TypeID? {
+        for entry in outerReceiverTypes.reversed() {
+            if entry.label == label {
+                return entry.type
+            }
+        }
+        return nil
     }
 
     func filterByVisibility(_ candidates: [SymbolID]) -> (visible: [SymbolID], invisible: [SemanticSymbol]) {
@@ -241,7 +277,8 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                 flowState: DataFlowState(),
                 currentFileID: file.fileID,
                 enclosingClassSymbol: nil,
-                visibilityChecker: checker
+                visibilityChecker: checker,
+                outerReceiverTypes: []
             )
             for declID in file.topLevelDecls {
                 guard let decl = ast.arena.decl(declID),
@@ -428,12 +465,19 @@ extension TypeCheckSemaPassPhase {
             nestedObjects: classDecl.nestedObjects,
             ctx: ctx
         )
+        let classLabel = sema.symbols.symbol(symbol)?.name ?? ctx.interner.intern("")
         let classCtx = ctx
+            .withOuterReceiver(label: classLabel, type: classType)
             .with(scope: classScope)
             .with(implicitReceiverType: classType)
 
         typeCheckInitBlocks(classDecl.initBlocks, ctx: classCtx)
-        typeCheckSecondaryConstructors(classDecl.secondaryConstructors, ctx: classCtx)
+        typeCheckSecondaryConstructors(
+            classDecl.secondaryConstructors,
+            ctx: classCtx,
+            ownerSymbol: symbol,
+            hasPrimaryConstructor: classDecl.hasPrimaryConstructorSyntax
+        )
         typeCheckClassLikeMembers(
             memberFunctions: classDecl.memberFunctions,
             memberProperties: classDecl.memberProperties,
@@ -463,7 +507,9 @@ extension TypeCheckSemaPassPhase {
             nestedObjects: objectDecl.nestedObjects,
             ctx: ctx
         )
+        let objectLabel = sema.symbols.symbol(symbol)?.name ?? ctx.interner.intern("")
         let objectCtx = ctx
+            .withOuterReceiver(label: objectLabel, type: objectType)
             .with(scope: objectScope)
             .with(implicitReceiverType: objectType)
 

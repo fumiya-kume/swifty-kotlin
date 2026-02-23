@@ -35,7 +35,7 @@ final class InlineLoweringPass: LoweringPass {
                     aliases.removeValue(forKey: defined)
                 }
 
-                guard case .call(let symbol, let callee, let arguments, let result, _, _) = instruction else {
+                guard case .call(let symbol, let callee, let arguments, let result, _, _, _) = instruction else {
                     loweredBody.append(instruction)
                     continue
                 }
@@ -169,7 +169,7 @@ final class InlineLoweringPass: LoweringPass {
                     )
                 )
 
-            case .call(let symbol, let callee, let args, let result, let canThrow, let thrownResult):
+            case .call(let symbol, let callee, let args, let result, let canThrow, let thrownResult, let isSuperCall):
                 let loweredResult = result.map { expr -> KIRExprID in
                     let cloned = cloneExpr(expr, in: module.arena)
                     localExprMap[expr] = cloned
@@ -187,7 +187,8 @@ final class InlineLoweringPass: LoweringPass {
                         arguments: args.map { resolveAlias(of: $0, aliases: localExprMap) },
                         result: loweredResult,
                         canThrow: canThrow,
-                        thrownResult: loweredThrownResult
+                        thrownResult: loweredThrownResult,
+                        isSuperCall: isSuperCall
                     )
                 )
 
@@ -279,14 +280,15 @@ final class InlineLoweringPass: LoweringPass {
                 result: result
             )
 
-        case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult):
+        case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult, let isSuperCall):
             return .call(
                 symbol: symbol,
                 callee: callee,
                 arguments: arguments.map { resolveAlias(of: $0, aliases: aliases) },
                 result: result,
                 canThrow: canThrow,
-                thrownResult: thrownResult
+                thrownResult: thrownResult,
+                isSuperCall: isSuperCall
             )
 
         case .virtualCall(let symbol, let callee, let receiver, let arguments, let result, let canThrow, let thrownResult, let dispatch):
@@ -356,7 +358,7 @@ final class InlineLoweringPass: LoweringPass {
             return result
         case .binary(_, _, _, let result):
             return result
-        case .call(_, _, _, let result, _, _):
+        case .call(_, _, _, let result, _, _, _):
             return result
         case .virtualCall(_, _, _, _, let result, _, _, _):
             return result

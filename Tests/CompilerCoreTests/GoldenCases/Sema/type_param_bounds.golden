@@ -1,8 +1,8 @@
 symbol s0 kind=package fq=golden.sema vis=public flags=_
 symbol s1 kind=class fq=golden.sema.Animal vis=public flags=_
-symbol s2 kind=constructor fq=golden.sema.Animal.<init> vis=public flags=_ sig=recv=_ params=[] ret=Class#1 suspend=0 defaults=[] vararg=[]
+symbol s2 kind=constructor fq=golden.sema.Animal.<init> vis=public flags=_ sig=recv=Class#1 params=[] ret=Class#1 suspend=0 defaults=[] vararg=[]
 symbol s3 kind=class fq=golden.sema.Dog vis=public flags=_
-symbol s4 kind=constructor fq=golden.sema.Dog.<init> vis=public flags=_ sig=recv=_ params=[] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s4 kind=constructor fq=golden.sema.Dog.<init> vis=public flags=_ sig=recv=Class#3 params=[] ret=Class#3 suspend=0 defaults=[] vararg=[]
 symbol s5 kind=function fq=golden.sema.accept vis=public flags=_ sig=recv=_ params=[T#6] ret=T#6 suspend=0 defaults=[0] vararg=[0] bounds=[Class#1]
 symbol s6 kind=typeParameter fq=golden.sema.accept.$5.T vis=private flags=_
 symbol s7 kind=valueParameter fq=golden.sema.accept.$5.x vis=private flags=_
@@ -25,8 +25,8 @@ file f0 package=golden.sema
 expr e0 name(x) type=T#6 ref=s7
 expr e1 name(accept) type=_
 expr e2 name(Dog) type=T#6
-expr e3 call callee=e2 args=[] type=<error>
-expr e4 call callee=e1 args=[_:e3] type=<error>
+expr e3 call callee=e2 args=[] type=Class#3 call=s4 map=[] targs=[]
+expr e4 call callee=e1 args=[_:e3] type=Class#3 call=s5 map=[0->0] targs=[Class#3]
 expr e5 name(x) type=T#10 ref=s11
 expr e6 name(unbounded) type=T#14
 expr e7 int(42) type=Int

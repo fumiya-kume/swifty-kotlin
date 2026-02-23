@@ -356,7 +356,7 @@ final class ABILoweringPass: LoweringPass {
                     continue
                 }
 
-                guard case .call(let callSymbol, let callee, let arguments, let result, _, let thrownResult) = instruction else {
+                guard case .call(let callSymbol, let callee, let arguments, let result, _, let thrownResult, let isSuperCall) = instruction else {
                     newBody.append(instruction)
                     idx += 1
                     continue
@@ -468,7 +468,8 @@ final class ABILoweringPass: LoweringPass {
                         arguments: boxedArguments,
                         result: tempResult,
                         canThrow: canThrow,
-                        thrownResult: thrownResult
+                        thrownResult: thrownResult,
+                        isSuperCall: isSuperCall
                     ))
                     if thrownResult != nil {
                         let nextIdx = idx + 1
@@ -493,7 +494,8 @@ final class ABILoweringPass: LoweringPass {
                         arguments: boxedArguments,
                         result: result,
                         canThrow: canThrow,
-                        thrownResult: thrownResult
+                        thrownResult: thrownResult,
+                        isSuperCall: isSuperCall
                     ))
                 }
                 idx += 1

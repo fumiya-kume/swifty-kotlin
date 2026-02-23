@@ -400,7 +400,7 @@ extension CoroutineLoweringPass {
             return Set([lhs, rhs])
         case .binary(_, let lhs, let rhs, _):
             return Set([lhs, rhs])
-        case .call(_, _, let arguments, _, _, _):
+        case .call(_, _, let arguments, _, _, _, _):
             return Set(arguments)
         case .virtualCall(_, _, let receiver, let arguments, _, _, _, _):
             return Set([receiver] + arguments)
@@ -425,7 +425,7 @@ extension CoroutineLoweringPass {
             return Set([result])
         case .binary(_, _, _, let result):
             return Set([result])
-        case .call(_, _, _, let result, _, let thrownResult):
+        case .call(_, _, _, let result, _, let thrownResult, _):
             var ids = Set<KIRExprID>()
             if let result { ids.insert(result) }
             if let thrownResult { ids.insert(thrownResult) }
@@ -484,12 +484,13 @@ extension CoroutineLoweringPass {
         let result: KIRExprID?
         let canThrow: Bool
         let isVirtual: Bool
+        let isSuperCall: Bool
         let originalInstruction: KIRInstruction
     }
 
     func extractCallInfo(_ instruction: KIRInstruction) -> CallInfo? {
         switch instruction {
-        case .call(let symbol, let callee, let arguments, let result, let canThrow, _):
+        case .call(let symbol, let callee, let arguments, let result, let canThrow, _, let isSuperCall):
             return CallInfo(
                 symbol: symbol,
                 callee: callee,
@@ -497,6 +498,7 @@ extension CoroutineLoweringPass {
                 result: result,
                 canThrow: canThrow,
                 isVirtual: false,
+                isSuperCall: isSuperCall,
                 originalInstruction: instruction
             )
         case .virtualCall(let symbol, let callee, _, let arguments, let result, let canThrow, _, _):
@@ -507,6 +509,7 @@ extension CoroutineLoweringPass {
                 result: result,
                 canThrow: canThrow,
                 isVirtual: true,
+                isSuperCall: false,
                 originalInstruction: instruction
             )
         default:

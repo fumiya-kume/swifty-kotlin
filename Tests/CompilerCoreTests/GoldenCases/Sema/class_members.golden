@@ -1,6 +1,6 @@
 symbol s0 kind=package fq=golden.sema vis=public flags=_
 symbol s1 kind=class fq=golden.sema.Counter vis=public flags=_
-symbol s2 kind=constructor fq=golden.sema.Counter.<init> vis=public flags=_ sig=recv=_ params=[Int] ret=Class#1 suspend=0 defaults=[0] vararg=[0]
+symbol s2 kind=constructor fq=golden.sema.Counter.<init> vis=public flags=_ sig=recv=Class#1 params=[Int] ret=Class#1 suspend=0 defaults=[0] vararg=[0]
 symbol s3 kind=valueParameter fq=golden.sema.Counter.<init>.$2.initial vis=private flags=_
 symbol s4 kind=function fq=golden.sema.Counter.increment vis=public flags=_ sig=recv=Class#1 params=[] ret=Any suspend=0 defaults=[] vararg=[]
 symbol s5 kind=function fq=golden.sema.Counter.get vis=public flags=_ sig=recv=Class#1 params=[] ret=Int suspend=0 defaults=[] vararg=[]

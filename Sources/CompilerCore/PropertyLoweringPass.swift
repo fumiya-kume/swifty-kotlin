@@ -18,7 +18,7 @@ final class PropertyLoweringPass: LoweringPass {
             loweredBody.reserveCapacity(function.body.count)
 
             for instruction in function.body {
-                guard case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult) = instruction else {
+                guard case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult, let isSuperCall) = instruction else {
                     // Rewrite backing field copy instructions to
                     // kk_property_access when the target is a backing field symbol.
                     if case .copy(let from, let to) = instruction,
@@ -79,7 +79,8 @@ final class PropertyLoweringPass: LoweringPass {
                             arguments: loweredArguments,
                             result: result,
                             canThrow: canThrow,
-                            thrownResult: thrownResult
+                            thrownResult: thrownResult,
+                            isSuperCall: isSuperCall
                         )
                     )
                     continue
@@ -110,7 +111,8 @@ final class PropertyLoweringPass: LoweringPass {
                         arguments: loweredArguments,
                         result: result,
                         canThrow: canThrow,
-                        thrownResult: thrownResult
+                        thrownResult: thrownResult,
+                        isSuperCall: isSuperCall
                     )
                 )
             }

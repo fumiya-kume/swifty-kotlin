@@ -336,7 +336,7 @@ public final class LLVMBackend {
             for instruction in function.body {
                 let calleeInfo: (symbol: SymbolID?, callee: InternedString)?
                 switch instruction {
-                case .call(let symbol, let callee, _, _, _, _):
+                case .call(let symbol, let callee, _, _, _, _, _):
                     calleeInfo = (symbol, callee)
                 case .virtualCall(let symbol, let callee, _, _, _, _, _, _):
                     calleeInfo = (symbol, callee)

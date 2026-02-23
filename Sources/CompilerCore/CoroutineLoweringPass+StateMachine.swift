@@ -208,7 +208,8 @@ extension CoroutineLoweringPass {
                                 arguments: loweredSuspendArguments,
                                 result: suspensionResult,
                                 canThrow: suspendCallInfo.canThrow,
-                                thrownResult: nil
+                                thrownResult: nil,
+                                isSuperCall: suspendCallInfo.isSuperCall
                             )
                         )
                     }

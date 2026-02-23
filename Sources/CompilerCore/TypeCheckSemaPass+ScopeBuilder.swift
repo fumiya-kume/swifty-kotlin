@@ -132,22 +132,27 @@ extension TypeCheckSemaPassPhase {
                 continue
             }
 
+            let hasPackageImport = resolved.contains { symbolID in
+                sema.symbols.symbol(symbolID)?.kind == .package
+            }
             let importedSymbols = resolved.filter { symbolID in
                 guard let symbol = sema.symbols.symbol(symbolID) else {
                     return false
                 }
                 return symbol.kind != .package
             }
-            if !importedSymbols.isEmpty {
+            if !importedSymbols.isEmpty && !hasPackageImport {
                 for importedSymbol in importedSymbols {
                     explicitImportScope.insert(importedSymbol)
                 }
                 continue
             }
-
-            let hasPackageImport = resolved.contains { symbolID in
-                sema.symbols.symbol(symbolID)?.kind == .package
+            if !importedSymbols.isEmpty && hasPackageImport {
+                for importedSymbol in importedSymbols {
+                    explicitImportScope.insert(importedSymbol)
+                }
             }
+
             if hasPackageImport {
                 for importedSymbol in topLevelSymbolsByPackage[importDecl.path] ?? [] {
                     wildcardImportScope.insert(importedSymbol)

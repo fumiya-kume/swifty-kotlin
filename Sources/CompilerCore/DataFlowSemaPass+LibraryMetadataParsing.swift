@@ -231,6 +231,14 @@ extension DataFlowSemaPassPhase {
             )
             return nil
         }
+        if case .error = types.kind(of: decoded) {
+            diagnostics.warning(
+                "KSWIFTK-LIB-0006",
+                "Inconsistent typealias metadata at \(metadataPath): underlying type for '\(renderFQName(record.fqName, interner: interner))' resolved to error type.",
+                range: nil
+            )
+            return decoded
+        }
         return decoded
     }
 
@@ -264,7 +272,7 @@ extension DataFlowSemaPassPhase {
         private let diagnostics: DiagnosticEngine
         private let metadataPath: String
         private let ownerFQName: [InternedString]
-        private let syntheticTypeParameterBase: Int32 = -1_000_000
+        private let syntheticTypeParameterBase: Int32 = DataFlowSemaPassPhase.syntheticTypeParameterBase
 
         init(
             source: String,

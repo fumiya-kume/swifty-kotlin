@@ -409,7 +409,7 @@ final class VirtualDispatchTests: XCTestCase {
         // Check that boxing call was inserted before the virtualCall
         let callees = lowered.body.compactMap { instruction -> String? in
             switch instruction {
-            case .call(_, let callee, _, _, _, _):
+            case .call(_, let callee, _, _, _, _, _):
                 return interner.resolve(callee)
             case .virtualCall(_, let callee, _, _, _, _, _, _):
                 return "vc:" + interner.resolve(callee)
@@ -494,7 +494,7 @@ final class VirtualDispatchTests: XCTestCase {
         let lowered = try findKIRFunction(named: "main", in: module, interner: interner)
         let callees = lowered.body.compactMap { instruction -> String? in
             switch instruction {
-            case .call(_, let callee, _, _, _, _):
+            case .call(_, let callee, _, _, _, _, _):
                 return interner.resolve(callee)
             default:
                 return nil
