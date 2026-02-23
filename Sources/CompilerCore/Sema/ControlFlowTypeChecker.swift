@@ -1,6 +1,14 @@
 import Foundation
 
-extension TypeCheckSemaPassPhase {
+/// Handles control flow expression type inference (for, while, do-while, if, try, when).
+/// Derived from TypeCheckSemaPass+InferControlFlow.swift.
+final class ControlFlowTypeChecker {
+    unowned let driver: TypeCheckDriver
+
+    init(driver: TypeCheckDriver) {
+        self.driver = driver
+    }
+
     func inferForExpr(
         _ id: ExprID,
         loopVariable: InternedString?,
@@ -8,13 +16,13 @@ extension TypeCheckSemaPassPhase {
         bodyExpr: ExprID,
         range: SourceRange,
         ctx: TypeInferenceContext,
-        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)]
+        locals: inout LocalBindings
     ) -> TypeID {
         let sema = ctx.sema
-        let iterableType = inferExpr(iterableExpr, ctx: ctx, locals: &locals, expectedType: nil)
+        let iterableType = driver.inferExpr(iterableExpr, ctx: ctx, locals: &locals, expectedType: nil)
         var bodyLocals = locals
         if let loopVariable {
-            let elementType = arrayElementType(for: iterableType, sema: sema, interner: ctx.interner) ?? sema.types.anyType
+            let elementType = driver.helpers.arrayElementType(for: iterableType, sema: sema, interner: ctx.interner) ?? sema.types.anyType
             let loopVariableSymbol = sema.symbols.define(
                 kind: .local,
                 name: loopVariable,
@@ -29,7 +37,7 @@ extension TypeCheckSemaPassPhase {
             bodyLocals[loopVariable] = (elementType, loopVariableSymbol, false, true)
             sema.bindings.bindIdentifier(id, symbol: loopVariableSymbol)
         }
-        _ = inferExpr(
+        _ = driver.inferExpr(
             bodyExpr,
             ctx: ctx.copying(loopDepth: ctx.loopDepth + 1),
             locals: &bodyLocals,
@@ -45,14 +53,14 @@ extension TypeCheckSemaPassPhase {
         bodyExpr: ExprID,
         range: SourceRange,
         ctx: TypeInferenceContext,
-        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)]
+        locals: inout LocalBindings
     ) -> TypeID {
         let ast = ctx.ast
         let sema = ctx.sema
         let interner = ctx.interner
         let boolType = sema.types.booleanType
-        let conditionType = inferExpr(conditionExpr, ctx: ctx, locals: &locals, expectedType: boolType)
-        emitSubtypeConstraint(
+        let conditionType = driver.inferExpr(conditionExpr, ctx: ctx, locals: &locals, expectedType: boolType)
+        driver.emitSubtypeConstraint(
             left: conditionType,
             right: boolType,
             range: ast.arena.exprRange(conditionExpr) ?? range,
@@ -66,9 +74,9 @@ extension TypeCheckSemaPassPhase {
             ast: ast, sema: sema, interner: interner
         )
         var bodyLocals = locals
-        applyFlowStateToLocals(branch.trueState, locals: &bodyLocals, sema: sema)
+        driver.exprChecker.applyFlowStateToLocals(branch.trueState, locals: &bodyLocals, sema: sema)
         let bodyCtx = ctx.copying(loopDepth: ctx.loopDepth + 1, flowState: branch.trueState)
-        _ = inferExpr(
+        _ = driver.inferExpr(
             bodyExpr,
             ctx: bodyCtx,
             locals: &bodyLocals,
@@ -84,20 +92,20 @@ extension TypeCheckSemaPassPhase {
         conditionExpr: ExprID,
         range: SourceRange,
         ctx: TypeInferenceContext,
-        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)]
+        locals: inout LocalBindings
     ) -> TypeID {
         let ast = ctx.ast
         let sema = ctx.sema
         let boolType = sema.types.booleanType
         var bodyLocals = locals
-        _ = inferExpr(
+        _ = driver.inferExpr(
             bodyExpr,
             ctx: ctx.copying(loopDepth: ctx.loopDepth + 1),
             locals: &bodyLocals,
             expectedType: nil
         )
-        let conditionType = inferExpr(conditionExpr, ctx: ctx, locals: &bodyLocals, expectedType: boolType)
-        emitSubtypeConstraint(
+        let conditionType = driver.inferExpr(conditionExpr, ctx: ctx, locals: &bodyLocals, expectedType: boolType)
+        driver.emitSubtypeConstraint(
             left: conditionType,
             right: boolType,
             range: ast.arena.exprRange(conditionExpr) ?? range,
@@ -122,16 +130,16 @@ extension TypeCheckSemaPassPhase {
         thenExpr: ExprID,
         elseExpr: ExprID?,
         ctx: TypeInferenceContext,
-        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
+        locals: inout LocalBindings,
         expectedType: TypeID?
     ) -> TypeID {
         let ast = ctx.ast
         let sema = ctx.sema
         let interner = ctx.interner
         let boolType = sema.types.booleanType
-        let conditionType = inferExpr(condition, ctx: ctx, locals: &locals)
+        let conditionType = driver.inferExpr(condition, ctx: ctx, locals: &locals)
         if conditionType != boolType {
-            emitSubtypeConstraint(
+            driver.emitSubtypeConstraint(
                 left: conditionType,
                 right: boolType,
                 range: ast.arena.exprRange(condition),
@@ -145,15 +153,15 @@ extension TypeCheckSemaPassPhase {
             ast: ast, sema: sema, interner: interner
         )
         var thenLocals = locals
-        applyFlowStateToLocals(branch.trueState, locals: &thenLocals, sema: sema)
+        driver.exprChecker.applyFlowStateToLocals(branch.trueState, locals: &thenLocals, sema: sema)
         let thenCtx = ctx.copying(flowState: branch.trueState)
-        let thenType = inferExpr(thenExpr, ctx: thenCtx, locals: &thenLocals, expectedType: expectedType)
+        let thenType = driver.inferExpr(thenExpr, ctx: thenCtx, locals: &thenLocals, expectedType: expectedType)
         let resolvedType: TypeID
         if let elseExpr {
             var elseLocals = locals
-            applyFlowStateToLocals(branch.falseState, locals: &elseLocals, sema: sema)
+            driver.exprChecker.applyFlowStateToLocals(branch.falseState, locals: &elseLocals, sema: sema)
             let elseCtx = ctx.copying(flowState: branch.falseState)
-            let elseType = inferExpr(elseExpr, ctx: elseCtx, locals: &elseLocals, expectedType: expectedType)
+            let elseType = driver.inferExpr(elseExpr, ctx: elseCtx, locals: &elseLocals, expectedType: expectedType)
             resolvedType = sema.types.lub([thenType, elseType])
             for (name, local) in locals {
                 if !local.isInitialized,
@@ -177,18 +185,14 @@ extension TypeCheckSemaPassPhase {
         catchClauses: [CatchClause],
         finallyExpr: ExprID?,
         ctx: TypeInferenceContext,
-        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
+        locals: inout LocalBindings,
         expectedType: TypeID?
     ) -> TypeID {
         let sema = ctx.sema
         let interner = ctx.interner
         var branchTypes: [TypeID] = []
-        // Use a separate copy for the try body so that initialization state
-        // from inside the try block doesn't leak into catch clauses. The try
-        // body may throw before reaching an initialization, so catch clauses
-        // must see the pre-try state of locals.
         var tryBodyLocals = locals
-        branchTypes.append(inferExpr(body, ctx: ctx, locals: &tryBodyLocals, expectedType: expectedType))
+        branchTypes.append(driver.inferExpr(body, ctx: ctx, locals: &tryBodyLocals, expectedType: expectedType))
         for (index, clause) in catchClauses.enumerated() {
             var catchLocals = locals
             let catchParamType = resolveCatchClauseParameterType(
@@ -210,17 +214,16 @@ extension TypeCheckSemaPassPhase {
                 )
                 sema.symbols.setPropertyType(catchParamType, for: catchParamSymbol)
                 catchLocals[paramName] = (catchParamType, catchParamSymbol, false, true)
-                // Keep legacy binding for lowering while explicit catch bindings are adopted.
                 sema.bindings.bindIdentifier(clause.body, symbol: catchParamSymbol)
             }
             sema.bindings.bindCatchClause(
                 clause.body,
                 binding: CatchClauseBinding(parameterSymbol: catchParamSymbol, parameterType: catchParamType)
             )
-            branchTypes.append(inferExpr(clause.body, ctx: ctx, locals: &catchLocals, expectedType: expectedType))
+            branchTypes.append(driver.inferExpr(clause.body, ctx: ctx, locals: &catchLocals, expectedType: expectedType))
         }
         if let finallyExpr {
-            _ = inferExpr(finallyExpr, ctx: ctx, locals: &locals, expectedType: nil)
+            _ = driver.inferExpr(finallyExpr, ctx: ctx, locals: &locals, expectedType: nil)
         }
         let resolvedType = sema.types.lub(branchTypes)
         sema.bindings.bindExprType(id, type: resolvedType)
@@ -236,7 +239,7 @@ extension TypeCheckSemaPassPhase {
             return sema.types.anyType
         }
         let name = interner.resolve(typeName)
-        if let builtin = resolveBuiltinTypeName(name, types: sema.types) {
+        if let builtin = driver.helpers.resolveBuiltinTypeName(name, types: sema.types) {
             return builtin
         }
         let candidates = sema.symbols.lookupAll(fqName: [typeName])
@@ -263,7 +266,7 @@ extension TypeCheckSemaPassPhase {
         elseExpr: ExprID?,
         range: SourceRange,
         ctx: TypeInferenceContext,
-        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
+        locals: inout LocalBindings,
         expectedType: TypeID?
     ) -> TypeID {
         let ast = ctx.ast
@@ -272,7 +275,7 @@ extension TypeCheckSemaPassPhase {
         let boolType = sema.types.booleanType
 
         if let subjectID {
-            let subjectType = inferExpr(subjectID, ctx: ctx, locals: &locals)
+            let subjectType = driver.inferExpr(subjectID, ctx: ctx, locals: &locals)
             let subjectLocalBinding: (name: InternedString, type: TypeID, symbol: SymbolID, isStable: Bool, isMutable: Bool)? = {
                 guard let subjectExpr = ast.arena.expr(subjectID),
                       case .nameRef(let subjectName, _) = subjectExpr,
@@ -281,7 +284,7 @@ extension TypeCheckSemaPassPhase {
                 }
                 return (
                     subjectName, local.type, local.symbol,
-                    isStableLocalSymbol(local.symbol, sema: sema),
+                    driver.helpers.isStableLocalSymbol(local.symbol, sema: sema),
                     local.isMutable
                 )
             }()
@@ -298,11 +301,11 @@ extension TypeCheckSemaPassPhase {
             var hasNullCase = false
             var hasTrueCase = false
             var hasFalseCase = false
-            var allBranchLocals: [[InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)]] = []
+            var allBranchLocals: [LocalBindings] = []
             for branch in branches {
                 var isNullBranch = false
                 if let cond = branch.condition {
-                    let condType = inferExpr(cond, ctx: ctx, locals: &locals)
+                    let condType = driver.inferExpr(cond, ctx: ctx, locals: &locals)
                     if let condExpr = ast.arena.expr(cond) {
                         switch condExpr {
                         case .boolLiteral(true, _):
@@ -348,12 +351,12 @@ extension TypeCheckSemaPassPhase {
                                 base: ctx.flowState, sema: sema
                             )
                             branchCtx = ctx.copying(flowState: nonNullState)
-                            applyFlowStateToLocals(nonNullState, locals: &branchLocals, sema: sema)
+                            driver.exprChecker.applyFlowStateToLocals(nonNullState, locals: &branchLocals, sema: sema)
                         }
                     }
                 }
                 branchTypes.append(
-                    inferExpr(branch.body, ctx: branchCtx, locals: &branchLocals, expectedType: expectedType)
+                    driver.inferExpr(branch.body, ctx: branchCtx, locals: &branchLocals, expectedType: expectedType)
                 )
                 allBranchLocals.append(branchLocals)
             }
@@ -369,10 +372,10 @@ extension TypeCheckSemaPassPhase {
                         base: ctx.flowState, sema: sema
                     )
                     elseCtx = ctx.copying(flowState: elseFlowState)
-                    applyFlowStateToLocals(elseFlowState, locals: &elseLocals, sema: sema)
+                    driver.exprChecker.applyFlowStateToLocals(elseFlowState, locals: &elseLocals, sema: sema)
                 }
                 branchTypes.append(
-                    inferExpr(elseExpr, ctx: elseCtx, locals: &elseLocals, expectedType: expectedType)
+                    driver.inferExpr(elseExpr, ctx: elseCtx, locals: &elseLocals, expectedType: expectedType)
                 )
                 allBranchLocals.append(elseLocals)
             }
@@ -411,17 +414,17 @@ extension TypeCheckSemaPassPhase {
             return type
         } else {
             var branchTypes: [TypeID] = []
-            var allBranchLocals: [[InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)]] = []
+            var allBranchLocals: [LocalBindings] = []
             var hasTrueCase = false
             var hasFalseCase = false
             var cumulativeFalseState = ctx.flowState
             for branch in branches {
                 var branchLocals = locals
                 let condCtx = ctx.copying(flowState: cumulativeFalseState)
-                applyFlowStateToLocals(cumulativeFalseState, locals: &branchLocals, sema: sema)
+                driver.exprChecker.applyFlowStateToLocals(cumulativeFalseState, locals: &branchLocals, sema: sema)
                 var branchCtx = condCtx
                 if let cond = branch.condition {
-                    let condType = inferExpr(cond, ctx: condCtx, locals: &branchLocals)
+                    let condType = driver.inferExpr(cond, ctx: condCtx, locals: &branchLocals)
                     if condType != boolType && condType != sema.types.errorType {
                         ctx.semaCtx.diagnostics.error(
                             "KSWIFTK-SEMA-0032",
@@ -434,7 +437,7 @@ extension TypeCheckSemaPassPhase {
                         ast: ast, sema: sema, interner: interner
                     )
                     branchCtx = ctx.copying(flowState: condBranch.trueState)
-                    applyFlowStateToLocals(condBranch.trueState, locals: &branchLocals, sema: sema)
+                    driver.exprChecker.applyFlowStateToLocals(condBranch.trueState, locals: &branchLocals, sema: sema)
                     cumulativeFalseState = condBranch.falseState
                     if let condExpr = ast.arena.expr(cond) {
                         switch condExpr {
@@ -448,7 +451,7 @@ extension TypeCheckSemaPassPhase {
                     }
                 }
                 branchTypes.append(
-                    inferExpr(branch.body, ctx: branchCtx, locals: &branchLocals, expectedType: expectedType)
+                    driver.inferExpr(branch.body, ctx: branchCtx, locals: &branchLocals, expectedType: expectedType)
                 )
                 allBranchLocals.append(branchLocals)
             }
@@ -456,9 +459,9 @@ extension TypeCheckSemaPassPhase {
             if let elseExpr {
                 var elseLocals = locals
                 let elseCtx = ctx.copying(flowState: cumulativeFalseState)
-                applyFlowStateToLocals(cumulativeFalseState, locals: &elseLocals, sema: sema)
+                driver.exprChecker.applyFlowStateToLocals(cumulativeFalseState, locals: &elseLocals, sema: sema)
                 branchTypes.append(
-                    inferExpr(elseExpr, ctx: elseCtx, locals: &elseLocals, expectedType: expectedType)
+                    driver.inferExpr(elseExpr, ctx: elseCtx, locals: &elseLocals, expectedType: expectedType)
                 )
                 allBranchLocals.append(elseLocals)
             }
@@ -497,5 +500,4 @@ extension TypeCheckSemaPassPhase {
             return type
         }
     }
-
 }
