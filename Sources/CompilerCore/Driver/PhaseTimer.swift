@@ -9,6 +9,8 @@ public final class PhaseTimer {
         public let name: String
         public let startTime: UInt64
         public let endTime: UInt64
+        /// Sub-phase records (e.g. individual subprocess invocations).
+        public let subRecords: [PhaseRecord]
 
         /// Duration in nanoseconds.
         public var durationNanos: UInt64 {
@@ -19,11 +21,19 @@ public final class PhaseTimer {
         public var durationMs: Double {
             Double(durationNanos) / 1_000_000.0
         }
+
+        public init(name: String, startTime: UInt64, endTime: UInt64, subRecords: [PhaseRecord] = []) {
+            self.name = name
+            self.startTime = startTime
+            self.endTime = endTime
+            self.subRecords = subRecords
+        }
     }
 
     private var records: [PhaseRecord] = []
     private var currentPhaseName: String?
     private var currentPhaseStart: UInt64 = 0
+    private var currentSubRecords: [PhaseRecord] = []
 
     public init() {}
 
@@ -33,6 +43,7 @@ public final class PhaseTimer {
     public func beginPhase(_ name: String) {
         currentPhaseName = name
         currentPhaseStart = DispatchTime.now().uptimeNanoseconds
+        currentSubRecords = []
     }
 
     /// Mark the end of the current phase.
@@ -42,9 +53,22 @@ public final class PhaseTimer {
         records.append(PhaseRecord(
             name: name,
             startTime: currentPhaseStart,
-            endTime: endTime
+            endTime: endTime,
+            subRecords: currentSubRecords
         ))
         currentPhaseName = nil
+        currentSubRecords = []
+    }
+
+    /// Record a sub-phase timing within the current phase.
+    /// Typically used to measure individual subprocess invocations
+    /// (e.g. clang calls during Codegen or Link).
+    public func recordSubPhase(_ name: String, startTime: UInt64, endTime: UInt64) {
+        currentSubRecords.append(PhaseRecord(
+            name: name,
+            startTime: startTime,
+            endTime: endTime
+        ))
     }
 
     // MARK: - Access
@@ -70,20 +94,26 @@ public final class PhaseTimer {
     public func printSummary() {
         let total = totalMs
         FileHandle.standardError.write(Data("===== Phase Timing Summary =====\n".utf8))
-        let header = String(format: "%-20s %10s %8s\n", "Phase", "Time (ms)", "%")
+        let header = String(format: "%-24s %10s %8s\n", "Phase", "Time (ms)", "%")
         FileHandle.standardError.write(Data(header.utf8))
-        let separator = String(repeating: "-", count: 42) + "\n"
+        let separator = String(repeating: "-", count: 46) + "\n"
         FileHandle.standardError.write(Data(separator.utf8))
 
         for record in records {
             let ms = record.durationMs
             let pct = total > 0 ? (ms / total) * 100.0 : 0.0
-            let line = String(format: "%-20s %10.2f %7.1f%%\n", record.name, ms, pct)
+            let line = String(format: "%-24s %10.2f %7.1f%%\n", record.name, ms, pct)
             FileHandle.standardError.write(Data(line.utf8))
+            for sub in record.subRecords {
+                let subMs = sub.durationMs
+                let subPct = total > 0 ? (subMs / total) * 100.0 : 0.0
+                let subLine = String(format: "  %-22s %10.2f %7.1f%%\n", sub.name, subMs, subPct)
+                FileHandle.standardError.write(Data(subLine.utf8))
+            }
         }
 
         FileHandle.standardError.write(Data(separator.utf8))
-        let totalLine = String(format: "%-20s %10.2f %7.1f%%\n", "TOTAL", total, 100.0)
+        let totalLine = String(format: "%-24s %10.2f %7.1f%%\n", "TOTAL", total, 100.0)
         FileHandle.standardError.write(Data(totalLine.utf8))
     }
 
@@ -99,6 +129,11 @@ public final class PhaseTimer {
             let ms = record.durationMs
             let pct = total > 0 ? (ms / total) * 100.0 : 0.0
             lines.append("\(record.name)\t\(String(format: "%.2f", ms))\t\(String(format: "%.1f", pct))")
+            for sub in record.subRecords {
+                let subMs = sub.durationMs
+                let subPct = total > 0 ? (subMs / total) * 100.0 : 0.0
+                lines.append("  \(sub.name)\t\(String(format: "%.2f", subMs))\t\(String(format: "%.1f", subPct))")
+            }
         }
         lines.append("TOTAL\t\(String(format: "%.2f", total))\t100.0")
         return lines.joined(separator: "\n") + "\n"
@@ -111,11 +146,23 @@ public final class PhaseTimer {
         for record in records {
             let ms = record.durationMs
             let pct = total > 0 ? (ms / total) * 100.0 : 0.0
-            result.append([
+            var entry: [String: Any] = [
                 "phase": record.name,
                 "duration_ms": round(ms * 100) / 100,
                 "percent": round(pct * 10) / 10
-            ])
+            ]
+            if !record.subRecords.isEmpty {
+                entry["sub_phases"] = record.subRecords.map { sub in
+                    let subMs = sub.durationMs
+                    let subPct = total > 0 ? (subMs / total) * 100.0 : 0.0
+                    return [
+                        "phase": sub.name,
+                        "duration_ms": round(subMs * 100) / 100,
+                        "percent": round(subPct * 10) / 10
+                    ] as [String: Any]
+                }
+            }
+            result.append(entry)
         }
         result.append([
             "phase": "TOTAL",

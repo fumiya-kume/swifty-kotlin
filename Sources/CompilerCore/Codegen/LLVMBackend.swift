@@ -18,6 +18,9 @@ public final class LLVMBackend {
     let debugInfo: Bool
     let diagnostics: DiagnosticEngine
 
+    /// Optional phase timer for recording subprocess wall-clock durations.
+    var phaseTimer: PhaseTimer?
+
     /// Process-wide cache for the pre-compiled runtime stub object.
     /// Key: target triple string, Value: path to the cached .o file.
     private static var runtimeStubCache: [String: String] = [:]
@@ -118,7 +121,12 @@ public final class LLVMBackend {
             let clangPath = CommandRunner.resolveExecutable("clang", fallback: "/usr/bin/clang")
             var args = ["-x", "c", "-std=c11", "-c", stubSource.path, "-o", stubObject.path]
             args.append(contentsOf: clangTargetArgs())
-            _ = try CommandRunner.run(executable: clangPath, arguments: args)
+            _ = try CommandRunner.run(
+                executable: clangPath,
+                arguments: args,
+                phaseTimer: phaseTimer,
+                subPhaseName: "Codegen/clang-stub"
+            )
             Self.runtimeStubCache[triple] = stubObject.path
             return stubObject.path
         } catch {
@@ -152,7 +160,12 @@ public final class LLVMBackend {
             args.append(contentsOf: ["-o", outputPath])
             args.append(contentsOf: clangTargetArgs())
             let clangPath = CommandRunner.resolveExecutable("clang", fallback: "/usr/bin/clang")
-            _ = try CommandRunner.run(executable: clangPath, arguments: args)
+            _ = try CommandRunner.run(
+                executable: clangPath,
+                arguments: args,
+                phaseTimer: phaseTimer,
+                subPhaseName: "Codegen/clang"
+            )
         } catch let error as CommandRunnerError {
             reportBackendError(
                 code: errorCode,

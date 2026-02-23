@@ -47,12 +47,11 @@ public final class LinkPhase: CompilerPhase {
           return (int)result;
         }
         """
-        let wrapperURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "_entry.c")
-        defer { try? FileManager.default.removeItem(at: wrapperURL) }
+        let wrapperURL = stableEntryWrapperURL(outputPath: ctx.options.outputPath)
         let autoLinkedObjects = discoverLibraryObjects(searchPaths: ctx.options.searchPaths)
 
         do {
-            try wrapperSource.write(to: wrapperURL, atomically: true, encoding: .utf8)
+            try writeIfChanged(content: wrapperSource, to: wrapperURL)
 
             var linkInputs: [String] = [objectPath, wrapperURL.path]
             if let stubPath = ctx.runtimeStubObjectPath,
@@ -77,7 +76,12 @@ public final class LinkPhase: CompilerPhase {
                 args.append("-l\(library)")
             }
             let clangPath = CommandRunner.resolveExecutable("clang", fallback: "/usr/bin/clang")
-            _ = try CommandRunner.run(executable: clangPath, arguments: args)
+            _ = try CommandRunner.run(
+                executable: clangPath,
+                arguments: args,
+                phaseTimer: ctx.phaseTimer,
+                subPhaseName: "Link/clang"
+            )
         } catch let error as CommandRunnerError {
             let message: String
             switch error {
@@ -150,6 +154,31 @@ public final class LinkPhase: CompilerPhase {
             }
         }
         return collected
+    }
+
+    /// Returns a deterministic URL for the entry wrapper C source file,
+    /// derived from the output path so the same compilation reuses the file.
+    private func stableEntryWrapperURL(outputPath: String) -> URL {
+        var hash: UInt64 = 0xcbf29ce484222325
+        for byte in outputPath.utf8 {
+            hash ^= UInt64(byte)
+            hash &*= 0x100000001b3
+        }
+        let key = String(hash, radix: 16)
+        return FileManager.default.temporaryDirectory
+            .appendingPathComponent("kswiftk_entry_\(key).c")
+    }
+
+    /// Writes `content` to `url` only when the file does not already exist
+    /// or when the existing content differs, avoiding unnecessary I/O and
+    /// downstream rebuilds.
+    private func writeIfChanged(content: String, to url: URL) throws {
+        if FileManager.default.fileExists(atPath: url.path),
+           let existing = try? String(contentsOf: url, encoding: .utf8),
+           existing == content {
+            return
+        }
+        try content.write(to: url, atomically: true, encoding: .utf8)
     }
 
     private func objectPaths(from libraryDir: String) -> [String] {

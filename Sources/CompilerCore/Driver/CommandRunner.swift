@@ -27,11 +27,17 @@ public enum CommandRunner {
         return fallback
     }
 
+    /// Runs a command and records its wall-clock time as a sub-phase in the
+    /// given `PhaseTimer`, if non-nil.  The `subPhaseName` label appears in
+    /// the `time-phases` output.
     public static func run(
         executable: String,
         arguments: [String],
-        currentDirectoryPath: String? = nil
+        currentDirectoryPath: String? = nil,
+        phaseTimer: PhaseTimer? = nil,
+        subPhaseName: String? = nil
     ) throws -> CommandResult {
+        let startTime: UInt64 = phaseTimer != nil ? DispatchTime.now().uptimeNanoseconds : 0
         let process = Process()
         process.executableURL = URL(fileURLWithPath: executable)
         process.arguments = arguments
@@ -58,6 +64,12 @@ public enum CommandRunner {
             stdout: String(decoding: stdoutData, as: UTF8.self),
             stderr: String(decoding: stderrData, as: UTF8.self)
         )
+        // Record subprocess wall-clock time when a timer is active.
+        if let timer = phaseTimer, let label = subPhaseName {
+            let endTime = DispatchTime.now().uptimeNanoseconds
+            timer.recordSubPhase(label, startTime: startTime, endTime: endTime)
+        }
+
         if result.exitCode != 0 {
             throw CommandRunnerError.nonZeroExit(result)
         }
