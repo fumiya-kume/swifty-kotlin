@@ -11,6 +11,7 @@ public final class SourceManager: @unchecked Sendable {
 
     public init() {}
 
+    @discardableResult
     public func addFile(path: String, contents: Data) -> FileID {
         let id = FileID(rawValue: files.count)
         let record = FileRecord(
@@ -22,6 +23,7 @@ public final class SourceManager: @unchecked Sendable {
         return id
     }
 
+    @discardableResult
     public func addFile(path: String) throws -> FileID {
         let contents = try Data(contentsOf: URL(fileURLWithPath: path))
         return addFile(path: path, contents: contents)

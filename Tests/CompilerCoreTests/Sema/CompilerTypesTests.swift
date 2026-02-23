@@ -39,6 +39,7 @@ final class CompilerTypesTests: XCTestCase {
         XCTAssertEqual(options.runtimeFlags, [])
     }
 
+    @available(*, deprecated)
     func testDeprecatedEmitsDebugInfoPropertyAndInit() {
         let target = TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
 
@@ -154,6 +155,7 @@ final class CompilerTypesTests: XCTestCase {
         XCTAssertEqual(options.runtimeFlags, ["-Xr"])
     }
 
+    @available(*, deprecated)
     func testDeprecatedInitWithEmitsDebugInfoDefaultArguments() {
         let options = CompilerOptions(
             moduleName: "M2",
