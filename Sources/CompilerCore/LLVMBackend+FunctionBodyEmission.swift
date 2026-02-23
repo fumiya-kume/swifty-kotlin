@@ -74,14 +74,6 @@ extension LLVMBackend {
                 }
                 syncRoot(result)
 
-            case .select(let condition, let thenValue, let elseValue, let result):
-                ensureDeclared(condition, declared: &declared, lines: &lines)
-                ensureDeclared(thenValue, declared: &declared, lines: &lines)
-                ensureDeclared(elseValue, declared: &declared, lines: &lines)
-                ensureDeclared(result, declared: &declared, lines: &lines)
-                lines.append("  \(varName(result)) = (\(varName(condition)) ? \(varName(thenValue)) : \(varName(elseValue)));")
-                syncRoot(result)
-
             case .binary(let op, let lhs, let rhs, let result):
                 ensureDeclared(result, declared: &declared, lines: &lines)
                 ensureDeclared(lhs, declared: &declared, lines: &lines)
@@ -255,20 +247,6 @@ extension LLVMBackend {
                         syncRoot(result)
                     } else {
                         lines.append("  (void)\(expr);")
-                    }
-                    continue
-                }
-
-                if calleeName == "kk_when_select" {
-                    let condition = argVars.count > 0 ? argVars[0] : "0"
-                    let thenValue = argVars.count > 1 ? argVars[1] : "0"
-                    let elseValue = argVars.count > 2 ? argVars[2] : "0"
-                    let value = "(\(condition) ? \(thenValue) : \(elseValue))"
-                    if let result {
-                        lines.append("  \(varName(result)) = \(value);")
-                        syncRoot(result)
-                    } else {
-                        lines.append("  (void)\(value);")
                     }
                     continue
                 }

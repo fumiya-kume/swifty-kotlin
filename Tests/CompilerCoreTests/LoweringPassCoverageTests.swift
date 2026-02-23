@@ -16,7 +16,8 @@ final class LoweringPassCoverageTests: XCTestCase {
         XCTAssertTrue(callees.contains("hasNext"))
         XCTAssertTrue(callees.contains("next"))
         XCTAssertFalse(callees.contains("kk_for_lowered"))
-        XCTAssertTrue(callees.contains("kk_when_select"))
+        // kk_when_select removed; select is now control flow (jumpIfEqual + copy + jump + label)
+        XCTAssertFalse(callees.contains("kk_when_select"))
         XCTAssertTrue(callees.contains("kk_property_access"))
         XCTAssertTrue(callees.contains("kk_lambda_invoke"))
         XCTAssertFalse(callees.contains("inlineTarget"))
@@ -2021,6 +2022,7 @@ final class LoweringPassCoverageTests: XCTestCase {
         let v1 = arena.appendExpr(.temporary(1))
         let v2 = arena.appendExpr(.temporary(2))
         let v3 = arena.appendExpr(.temporary(3))
+        let vFalse = arena.appendExpr(.boolLiteral(false))
 
         let mainFn = KIRFunction(
             symbol: mainSym,
@@ -2030,7 +2032,12 @@ final class LoweringPassCoverageTests: XCTestCase {
             body: [
                 .call(symbol: nil, callee: interner.intern("iterator"), arguments: [v0], result: v3, canThrow: false, thrownResult: nil),
                 .call(symbol: nil, callee: interner.intern("kk_for_lowered"), arguments: [v3], result: v1, canThrow: false, thrownResult: nil),
-                .select(condition: v0, thenValue: v1, elseValue: v2, result: v1),
+                .constValue(result: vFalse, value: .boolLiteral(false)),
+                .jumpIfEqual(lhs: v0, rhs: vFalse, target: 800),
+                .jump(801),
+                .label(800),
+                .copy(from: v2, to: v1),
+                .label(801),
                 .call(symbol: nil, callee: interner.intern("get"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil),
                 .call(symbol: nil, callee: interner.intern("set"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil),
                 .call(symbol: nil, callee: interner.intern("<lambda>"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil),

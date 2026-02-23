@@ -39,7 +39,6 @@ final class BuildKIRCoverageTests: XCTestCase {
                 "NormalizeBlocks",
                 "OperatorLowering",
                 "ForLowering",
-                "WhenLowering",
                 "PropertyLowering",
                 "DataEnumSealedSynthesis",
                 "LambdaClosureConversion",
@@ -1303,12 +1302,7 @@ final class BuildKIRCoverageTests: XCTestCase {
             let module = try XCTUnwrap(ctx.kir)
             let body = try findKIRFunctionBody(named: "pick", in: module, interner: ctx.interner)
 
-            let hasSelect = body.contains { instruction in
-                if case .select = instruction { return true }
-                return false
-            }
-            XCTAssertFalse(hasSelect, "ifExpr should not emit .select; expected control-flow jumps")
-
+            // .select was removed from KIRInstruction; verify control-flow is used
             let labelCount = body.filter { if case .label = $0 { return true }; return false }.count
             XCTAssertGreaterThanOrEqual(labelCount, 2, "ifExpr needs at least elseLabel + endLabel")
 
@@ -1332,12 +1326,7 @@ final class BuildKIRCoverageTests: XCTestCase {
             let module = try XCTUnwrap(ctx.kir)
             let body = try findKIRFunctionBody(named: "pick", in: module, interner: ctx.interner)
 
-            let hasSelect = body.contains { instruction in
-                if case .select = instruction { return true }
-                return false
-            }
-            XCTAssertFalse(hasSelect, "whenExpr should not emit .select; expected control-flow jumps")
-
+            // .select was removed from KIRInstruction; verify control-flow is used
             let labelCount = body.filter { if case .label = $0 { return true }; return false }.count
             XCTAssertGreaterThanOrEqual(labelCount, 3, "whenExpr with 2 branches + else needs at least 3 labels")
         }
@@ -1358,12 +1347,7 @@ final class BuildKIRCoverageTests: XCTestCase {
             let module = try XCTUnwrap(ctx.kir)
             let body = try findKIRFunctionBody(named: "test", in: module, interner: ctx.interner)
 
-            let hasSelect = body.contains { instruction in
-                if case .select = instruction { return true }
-                return false
-            }
-            XCTAssertFalse(hasSelect, "Side-effect branches must use control flow, not select")
-
+            // .select was removed; verify control flow guards side-effect branches
             let sideEffectCalls = body.filter { instruction in
                 guard case .call(_, let callee, _, _, _, _, _) = instruction else { return false }
                 return ctx.interner.resolve(callee) == "sideEffect"
@@ -1389,11 +1373,12 @@ final class BuildKIRCoverageTests: XCTestCase {
             let module = try XCTUnwrap(ctx.kir)
             let body = try findKIRFunctionBody(named: "earlyReturn", in: module, interner: ctx.interner)
 
-            let hasSelect = body.contains { instruction in
-                if case .select = instruction { return true }
-                return false
-            }
-            XCTAssertFalse(hasSelect, "return-in-branch must use control flow, not select")
+            // .select was removed; return-in-branch uses control flow with labels/jumps
+            let labelCount = body.filter { if case .label = $0 { return true }; return false }.count
+            XCTAssertGreaterThanOrEqual(labelCount, 2, "return-in-branch needs labels for control flow")
+
+            let hasReturnValue = body.contains { if case .returnValue = $0 { return true }; return false }
+            XCTAssertTrue(hasReturnValue, "Branch with return 42 should emit returnValue")
         }
     }
 
@@ -1409,12 +1394,7 @@ final class BuildKIRCoverageTests: XCTestCase {
             let module = try XCTUnwrap(ctx.kir)
             let body = try findKIRFunctionBody(named: "test", in: module, interner: ctx.interner)
 
-            let hasSelect = body.contains { instruction in
-                if case .select = instruction { return true }
-                return false
-            }
-            XCTAssertFalse(hasSelect, "when branches with side effects must use control flow, not select")
-
+            // .select was removed; verify control flow guards side-effect branches
             let effectCalls = body.filter { instruction in
                 guard case .call(_, let callee, _, _, _, _, _) = instruction else { return false }
                 return ctx.interner.resolve(callee) == "effect"

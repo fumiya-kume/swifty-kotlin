@@ -87,7 +87,6 @@ public enum KIRInstruction: Equatable {
     case binary(op: KIRBinaryOp, lhs: KIRExprID, rhs: KIRExprID, result: KIRExprID)
     case unary(op: KIRUnaryOp, operand: KIRExprID, result: KIRExprID)
     case nullAssert(operand: KIRExprID, result: KIRExprID)
-    case select(condition: KIRExprID, thenValue: KIRExprID, elseValue: KIRExprID, result: KIRExprID)
     case call(symbol: SymbolID?, callee: InternedString, arguments: [KIRExprID], result: KIRExprID?, canThrow: Bool, thrownResult: KIRExprID?, isSuperCall: Bool = false)
     case jumpIfNotNull(value: KIRExprID, target: Int32)
     case copy(from: KIRExprID, to: KIRExprID)
@@ -313,8 +312,6 @@ public final class KIRModule {
             return "unary \(op) r\(operand.rawValue) -> r\(result.rawValue)"
         case .nullAssert(let operand, let result):
             return "nullAssert r\(operand.rawValue) -> r\(result.rawValue)"
-        case .select(let condition, let thenValue, let elseValue, let result):
-            return "select r\(condition.rawValue) ? r\(thenValue.rawValue) : r\(elseValue.rawValue) -> r\(result.rawValue)"
         case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult, let isSuperCall):
             let calleeName = interner.resolve(callee)
             let args = arguments.map { "r\($0.rawValue)" }.joined(separator: ", ")

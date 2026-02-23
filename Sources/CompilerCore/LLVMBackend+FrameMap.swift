@@ -62,11 +62,6 @@ extension LLVMBackend {
                 ids.insert(rhs)
             case .constValue(let result, _):
                 ids.insert(result)
-            case .select(let condition, let thenValue, let elseValue, let result):
-                ids.insert(condition)
-                ids.insert(thenValue)
-                ids.insert(elseValue)
-                ids.insert(result)
             case .binary(_, let lhs, let rhs, let result):
                 ids.insert(lhs)
                 ids.insert(rhs)
