@@ -280,6 +280,218 @@ public func kk_kxmini_delay(_ milliseconds: Int, _ continuation: Int) -> Int {
     return Int(bitPattern: kk_coroutine_suspended())
 }
 
+// MARK: - Flow Runtime Stubs (P5-88)
+
+/// Opaque handle wrapping a flow emitter function pointer and its continuation.
+internal final class RuntimeFlowHandle {
+    let emitterFnPtr: Int
+    var collectedValues: [Int] = []
+
+    init(emitterFnPtr: Int) {
+        self.emitterFnPtr = emitterFnPtr
+    }
+}
+
+@_cdecl("kk_flow_create")
+public func kk_flow_create(_ emitterFnPtr: Int, _ continuation: Int) -> Int {
+    let flow = RuntimeFlowHandle(emitterFnPtr: emitterFnPtr)
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(flow).toOpaque())
+    RuntimeStorage.lock.lock()
+    RuntimeStorage.objectPointers.insert(UInt(bitPattern: ptr))
+    RuntimeStorage.lock.unlock()
+    return Int(bitPattern: ptr)
+}
+
+@_cdecl("kk_flow_emit")
+public func kk_flow_emit(_ flowHandle: Int, _ value: Int, _ continuation: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: flowHandle) else {
+        return 0
+    }
+    let flow = Unmanaged<RuntimeFlowHandle>.fromOpaque(ptr).takeUnretainedValue()
+    flow.collectedValues.append(value)
+    return value
+}
+
+@_cdecl("kk_flow_collect")
+public func kk_flow_collect(_ flowHandle: Int, _ collectorFnPtr: Int, _ continuation: Int) -> Int {
+    // Stub: invoke collector on each emitted value; full suspend semantics deferred
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: flowHandle) else {
+        return 0
+    }
+    let flow = Unmanaged<RuntimeFlowHandle>.fromOpaque(ptr).takeUnretainedValue()
+    // Collect emitted values — actual suspend-based collection is a future lowering task
+    _ = flow.collectedValues
+    return 0
+}
+
+// MARK: - Dispatcher Runtime Stubs (P5-133)
+
+/// Dispatcher tag constants used as opaque handles.
+private enum RuntimeDispatcherTag {
+    static let defaultDispatcher: Int = 0x4B4B4401  // "KKD\x01"
+    static let ioDispatcher: Int = 0x4B4B4402        // "KKD\x02"
+    static let mainDispatcher: Int = 0x4B4B4403      // "KKD\x03"
+}
+
+@_cdecl("kk_dispatcher_default")
+public func kk_dispatcher_default() -> Int {
+    RuntimeDispatcherTag.defaultDispatcher
+}
+
+@_cdecl("kk_dispatcher_io")
+public func kk_dispatcher_io() -> Int {
+    RuntimeDispatcherTag.ioDispatcher
+}
+
+@_cdecl("kk_dispatcher_main")
+public func kk_dispatcher_main() -> Int {
+    RuntimeDispatcherTag.mainDispatcher
+}
+
+@_cdecl("kk_with_context")
+public func kk_with_context(_ dispatcher: Int, _ blockFnPtr: Int, _ continuation: Int) -> Int {
+    // Stub: execute blockFnPtr on the appropriate dispatch queue.
+    // For now, all dispatchers execute synchronously on the current thread.
+    guard let entryPoint = suspendEntryPoint(from: blockFnPtr) else {
+        return 0
+    }
+    var outThrown: Int = 0
+    let result = entryPoint(continuation, &outThrown)
+    if outThrown != 0 {
+        return 0
+    }
+    return result
+}
+
+// MARK: - Channel Runtime Stubs (P5-134)
+
+/// Minimal unbuffered channel: sender blocks until receiver arrives and vice versa.
+internal final class RuntimeChannelHandle {
+    private let lock = NSLock()
+    private var buffer: [Int] = []
+    private let capacity: Int
+    private var closed = false
+    private let sendSemaphore = DispatchSemaphore(value: 0)
+    private let receiveSemaphore = DispatchSemaphore(value: 0)
+
+    init(capacity: Int) {
+        self.capacity = max(0, capacity)
+    }
+
+    func send(_ value: Int) {
+        lock.lock()
+        buffer.append(value)
+        lock.unlock()
+        receiveSemaphore.signal()
+        if capacity == 0 {
+            sendSemaphore.wait()
+        }
+    }
+
+    func receive() -> Int {
+        receiveSemaphore.wait()
+        lock.lock()
+        let value = buffer.isEmpty ? 0 : buffer.removeFirst()
+        lock.unlock()
+        if capacity == 0 {
+            sendSemaphore.signal()
+        }
+        return value
+    }
+
+    func close() {
+        lock.lock()
+        closed = true
+        lock.unlock()
+        receiveSemaphore.signal()
+    }
+}
+
+@_cdecl("kk_channel_create")
+public func kk_channel_create(_ capacity: Int) -> Int {
+    let channel = RuntimeChannelHandle(capacity: capacity)
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(channel).toOpaque())
+    RuntimeStorage.lock.lock()
+    RuntimeStorage.objectPointers.insert(UInt(bitPattern: ptr))
+    RuntimeStorage.lock.unlock()
+    return Int(bitPattern: ptr)
+}
+
+@_cdecl("kk_channel_send")
+public func kk_channel_send(_ handle: Int, _ value: Int, _ continuation: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
+        return 0
+    }
+    let channel = Unmanaged<RuntimeChannelHandle>.fromOpaque(ptr).takeUnretainedValue()
+    channel.send(value)
+    return value
+}
+
+@_cdecl("kk_channel_receive")
+public func kk_channel_receive(_ handle: Int, _ continuation: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
+        return 0
+    }
+    let channel = Unmanaged<RuntimeChannelHandle>.fromOpaque(ptr).takeUnretainedValue()
+    return channel.receive()
+}
+
+@_cdecl("kk_channel_close")
+public func kk_channel_close(_ handle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
+        return 0
+    }
+    let channel = Unmanaged<RuntimeChannelHandle>.fromOpaque(ptr).takeUnretainedValue()
+    channel.close()
+    return 0
+}
+
+// MARK: - Deferred / awaitAll Runtime Stub (P5-135)
+
+@_cdecl("kk_await_all")
+public func kk_await_all(_ handlesArray: Int, _ count: Int) -> Int {
+    // Await each handle sequentially and return the result of the last one.
+    // handlesArray points to a KKArray of async task handles.
+    guard count > 0 else {
+        return 0
+    }
+    var lastResult: Int = 0
+    for i in 0..<count {
+        // Read handle from array using kk_array_get pattern
+        let handleValue = runtimeReadArrayElement(arrayRaw: handlesArray, index: i)
+        if handleValue != 0 {
+            guard let handlePtr = UnsafeMutableRawPointer(bitPattern: handleValue) else {
+                continue
+            }
+            let task = Unmanaged<RuntimeAsyncTask>.fromOpaque(handlePtr).takeRetainedValue()
+            lastResult = task.awaitResult()
+        }
+    }
+    return lastResult
+}
+
+/// Read an element from a runtime array by index (mirrors kk_array_get without throw).
+private func runtimeReadArrayElement(arrayRaw: Int, index: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: arrayRaw) else {
+        return 0
+    }
+    RuntimeStorage.lock.lock()
+    let isObjectPointer = RuntimeStorage.objectPointers.contains(UInt(bitPattern: ptr))
+    RuntimeStorage.lock.unlock()
+    guard isObjectPointer else {
+        return 0
+    }
+    guard let arrayBox = tryCast(ptr, to: RuntimeArrayBox.self) else {
+        return 0
+    }
+    guard index >= 0, index < arrayBox.elements.count else {
+        return 0
+    }
+    return arrayBox.elements[index]
+}
+
+// MARK: - Suspend Entry Loop
+
 internal func runSuspendEntryLoop(entryPointRaw: Int, functionID: Int) -> Int {
     guard suspendEntryPoint(from: entryPointRaw) != nil else {
         return 0

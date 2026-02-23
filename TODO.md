@@ -681,8 +681,8 @@
 
 ### コルーチン拡張
 
-- [ ] P5-88: `Flow<T>` 最小 stub と `collect` 展開を coroutine lowering へ接続する（spec.md J17）
-  - [ ] runtime/stdlib stub に `kk_flow_of` / `kk_flow_collect` の suspend 対応 C ABI を追加する
+- [x] P5-88 (runtime ABI): `Flow<T>` の runtime C ABI stub を Coroutine Runtime ABI タスクへ統合済み
+  - [x] `kk_flow_create` / `kk_flow_emit` / `kk_flow_collect` を RuntimeABISpec・RuntimeABIExterns・C preamble に追加
   - [ ] `flow { emit(x) }` を `Flow<T>` ビルダとして lowering し、emit point を suspension として扱う
   - [ ] `collect { value -> ... }` を suspend 呼び出しのループ展開として lowering する
   - [ ] backpressure なし hot skip / cold flow の基本動作を diff/golden ケースで追加する
@@ -1075,24 +1075,28 @@
 
 ### ⚡ Coroutines（エッジケース）
 
-- [ ] P5-133: `withContext(Dispatchers.IO)` による dispatcher 切り替えを実装する（spec.md J17）
-  - [ ] `withContext` を suspend 関数 runtime stub に追加し、dispatcher 切り替えを model 化する
+> **Note**: P5-88 / P5-133 / P5-134 / P5-135 の runtime C ABI stub 部分は
+> 「Coroutine Runtime ABI」タスクとして統合済み。各 `kk_*` 関数は
+> `RuntimeABISpec` / `RuntimeABIExterns` / `RuntimeCoroutine.swift` / C preamble に一括定義されている。
+> 残りのサブタスク（lowering・diff/golden ケース）は個別に実装する。
+
+- [x] P5-133 (runtime ABI): `withContext` / Dispatchers の runtime C ABI stub を Coroutine Runtime ABI タスクへ統合済み
+  - [x] `kk_dispatcher_default` / `kk_dispatcher_io` / `kk_dispatcher_main` / `kk_with_context` を RuntimeABISpec・RuntimeABIExterns・C preamble に追加
   - [ ] `withContext` body を新たな coroutine context で実行し、完了後に元 context へ戻る lowering を実装する
-  - [ ] `Dispatchers.IO` / `Dispatchers.Default` / `Dispatchers.Main` を runtime stub として定義する
   - [ ] `withContext` の diff/golden ケース（context 切り替え・例外伝播）を追加する
   - **完了条件**: `withContext(Dispatchers.IO) { heavyWork() }` が別 dispatcher で実行され結果を返す
 
-- [ ] P5-134: `Channel<T>` の基本 send/receive を coroutine lowering へ接続する（spec.md J17）
-  - [ ] runtime stub に `kk_channel_new` / `kk_channel_send` / `kk_channel_receive` / `kk_channel_close` を追加する
+- [x] P5-134 (runtime ABI): `Channel<T>` の runtime C ABI stub を Coroutine Runtime ABI タスクへ統合済み
+  - [x] `kk_channel_create` / `kk_channel_send` / `kk_channel_receive` / `kk_channel_close` を RuntimeABISpec・RuntimeABIExterns・C preamble に追加
   - [ ] `channel.send(value)` / `channel.receive()` を suspension point として KIR に lowering する
   - [ ] unbuffered channel の rendezvous semantics（sender が receiver を待つ）を runtime で実装する
   - [ ] producer/consumer pattern の diff/golden ケースを追加する
   - **完了条件**: `val ch = Channel<Int>(); launch { ch.send(42) }; println(ch.receive())` が `42` を出力する
 
-- [ ] P5-135: `async`/`await`（`Deferred<T>`）を front-to-back で実装する（spec.md J17）
+- [x] P5-135 (runtime ABI): `async`/`await`（`Deferred<T>`）の runtime C ABI stub を Coroutine Runtime ABI タスクへ統合済み
+  - [x] `kk_await_all` を RuntimeABISpec・RuntimeABIExterns・C preamble に追加（`kk_kxmini_async` / `kk_kxmini_async_await` は既存）
   - [ ] `async { }` が `Deferred<T>` を返す lowering を実装する
   - [ ] `deferred.await()` を suspension point として実装し、結果型 `T` を推論する
-  - [ ] 複数 `async` の並列実行と `awaitAll` を runtime stub に追加する
   - [ ] async/await の diff/golden ケース（並列計算・例外伝播）を追加する
   - **完了条件**: `val result = async { 1 + 2 }.await()` が `3` を返し `kotlinc` と同一出力になる
 

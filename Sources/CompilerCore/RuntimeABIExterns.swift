@@ -264,6 +264,86 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // Flow (P5-88)
+
+    public static let kk_flow_create = ExternDecl(
+        name: "kk_flow_create",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_flow_emit = ExternDecl(
+        name: "kk_flow_emit",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_flow_collect = ExternDecl(
+        name: "kk_flow_collect",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // Dispatchers / withContext (P5-133)
+
+    public static let kk_dispatcher_default = ExternDecl(
+        name: "kk_dispatcher_default",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_dispatcher_io = ExternDecl(
+        name: "kk_dispatcher_io",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_dispatcher_main = ExternDecl(
+        name: "kk_dispatcher_main",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_with_context = ExternDecl(
+        name: "kk_with_context",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // Channel (P5-134)
+
+    public static let kk_channel_create = ExternDecl(
+        name: "kk_channel_create",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_channel_send = ExternDecl(
+        name: "kk_channel_send",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_channel_receive = ExternDecl(
+        name: "kk_channel_receive",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_channel_close = ExternDecl(
+        name: "kk_channel_close",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // Deferred / awaitAll (P5-135)
+
+    public static let kk_await_all = ExternDecl(
+        name: "kk_await_all",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - Boxing
 
     public static let kk_box_int = ExternDecl(
@@ -363,6 +443,22 @@ public enum RuntimeABIExterns {
         kk_kxmini_run_blocking_with_cont,
         kk_kxmini_launch_with_cont,
         kk_kxmini_async_with_cont,
+        // Flow
+        kk_flow_create,
+        kk_flow_emit,
+        kk_flow_collect,
+        // Dispatchers / withContext
+        kk_dispatcher_default,
+        kk_dispatcher_io,
+        kk_dispatcher_main,
+        kk_with_context,
+        // Channel
+        kk_channel_create,
+        kk_channel_send,
+        kk_channel_receive,
+        kk_channel_close,
+        // Deferred / awaitAll
+        kk_await_all,
         // Boxing
         kk_box_int,
         kk_box_bool,
