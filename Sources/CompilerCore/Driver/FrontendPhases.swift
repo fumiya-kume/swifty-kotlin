@@ -229,9 +229,6 @@ public final class BuildASTPhase: CompilerPhase {
         let semaphore = DispatchSemaphore(value: 0)
         nonisolated(unsafe) var perFileResults: [PerFileResult] = []
 
-        // Capture self (BuildASTPhase) for calling helper methods.
-        let phase = self
-
         Task {
             let taskResults = await withTaskGroup(of: PerFileResult.self) { group in
                 var activeCount = 0
@@ -241,13 +238,17 @@ public final class BuildASTPhase: CompilerPhase {
                 func addFileTask(at index: Int) {
                     let (fileID, cst, root) = syntaxTrees[index]
                     group.addTask {
+                        // Each task gets its own BuildASTPhase so that
+                        // `tokenCache` is not shared across concurrent tasks
+                        // (different SyntaxArenas may reuse the same NodeID space).
+                        let taskPhase = BuildASTPhase()
                         var declarations: [DeclID] = []
                         var packageByFile: [Int32: [InternedString]] = [:]
                         var importsByFile: [Int32: [ImportDecl]] = [:]
                         var declarationsByFile: [Int32: [DeclID]] = [:]
                         var scriptExprsByFile: [Int32: [ExprID]] = [:]
 
-                        phase.buildFileAST(
+                        taskPhase.buildFileAST(
                             fileID: fileID,
                             cst: cst,
                             root: root,
