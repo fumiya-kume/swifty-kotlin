@@ -1,4 +1,4 @@
-public final class ASTArena {
+public final class ASTArena: @unchecked Sendable {
     public private(set) var decls: [Decl] = []
     public private(set) var exprs: [Expr] = []
     public private(set) var typeRefs: [TypeRef] = []

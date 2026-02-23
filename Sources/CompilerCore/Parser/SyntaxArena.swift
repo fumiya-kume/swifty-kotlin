@@ -85,6 +85,12 @@ public final class SyntaxArena: @unchecked Sendable {
         return nodes[index]
     }
 
+    public func token(_ id: TokenID) -> Token? {
+        let index = Int(id.rawValue)
+        guard index >= 0 && index < tokens.count else { return nil }
+        return tokens[index]
+    }
+
     public func children(of id: NodeID) -> ArraySlice<SyntaxChild> {
         let node = node(id)
         if node.firstChildIndex < 0 || node.childCount < 0 {

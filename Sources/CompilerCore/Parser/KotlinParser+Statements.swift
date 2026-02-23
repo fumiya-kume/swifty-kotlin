@@ -360,14 +360,10 @@ extension KotlinParser {
                    arena.node(childID).kind == .block {
                     return .callExpr
                 }
-                if case .token(let tokenID) = child {
-                    let index = Int(tokenID.rawValue)
-                    if index >= 0 && index < arena.tokens.count {
-                        let token = arena.tokens[index]
-                        if token.kind == .symbol(.lParen) {
-                            return .callExpr
-                        }
-                    }
+                if case .token(let tokenID) = child,
+                   let token = arena.token(tokenID),
+                   token.kind == .symbol(.lParen) {
+                    return .callExpr
                 }
             }
             return .statement
