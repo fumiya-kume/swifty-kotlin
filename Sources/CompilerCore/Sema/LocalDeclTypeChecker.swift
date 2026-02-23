@@ -268,18 +268,21 @@ final class LocalDeclTypeChecker {
         let sema = ctx.sema
         let interner = ctx.interner
         let intType = sema.types.intType
+        let stringType = sema.types.stringType
 
         let receiverType = driver.inferExpr(receiverExpr, ctx: ctx, locals: &locals, expectedType: nil)
 
         // Infer index types
+        var indexTypes: [TypeID] = []
         for indexExpr in indices {
-            _ = driver.inferExpr(indexExpr, ctx: ctx, locals: &locals, expectedType: intType)
+            let indexType = driver.inferExpr(indexExpr, ctx: ctx, locals: &locals, expectedType: intType)
+            indexTypes.append(indexType)
         }
 
         // Infer value type
         let valueType = driver.inferExpr(valueExpr, ctx: ctx, locals: &locals, expectedType: nil)
 
-        // Resolve get to determine element type
+        // Resolve get via proper overload resolution to determine element type
         let getName = interner.intern("get")
         let getCandidates = driver.helpers.collectMemberFunctionCandidates(
             named: getName,
@@ -288,17 +291,55 @@ final class LocalDeclTypeChecker {
         )
         var elementType: TypeID = driver.helpers.arrayElementType(for: receiverType, sema: sema, interner: interner) ?? sema.types.anyType
         if !getCandidates.isEmpty {
-            if let chosen = getCandidates.first,
+            let callArgs = indexTypes.map { CallArg(type: $0) }
+            let resolved = ctx.resolver.resolveCall(
+                candidates: getCandidates,
+                call: CallExpr(
+                    range: range,
+                    calleeName: getName,
+                    args: callArgs
+                ),
+                expectedType: nil,
+                implicitReceiverType: receiverType,
+                ctx: ctx.semaCtx
+            )
+            if let chosen = resolved.chosenCallee,
                let signature = sema.symbols.functionSignature(for: chosen) {
                 elementType = signature.returnType
             }
         }
 
-        // The compound operation produces the element type
+        // Determine the result type of the compound binary operation
         let underlyingOp = driver.helpers.compoundAssignToBinaryOp(op)
-        let _ = underlyingOp
-        let _ = valueType
-        let _ = elementType
+        let resultType: TypeID
+        switch underlyingOp {
+        case .add:
+            resultType = (elementType == stringType || valueType == stringType) ? stringType : intType
+        case .subtract, .multiply, .divide, .modulo:
+            resultType = intType
+        default:
+            resultType = elementType
+        }
+
+        // Emit constraint: value must be compatible with element type
+        driver.emitSubtypeConstraint(
+            left: valueType,
+            right: elementType,
+            range: ctx.ast.arena.exprRange(valueExpr) ?? range,
+            solver: ConstraintSolver(),
+            sema: sema,
+            diagnostics: ctx.semaCtx.diagnostics
+        )
+
+        // Emit constraint: result of binary op must be compatible with element type for set
+        driver.emitSubtypeConstraint(
+            left: resultType,
+            right: elementType,
+            range: range,
+            solver: ConstraintSolver(),
+            sema: sema,
+            diagnostics: ctx.semaCtx.diagnostics
+        )
 
         sema.bindings.bindExprType(id, type: sema.types.unitType)
         return sema.types.unitType
