@@ -1442,6 +1442,121 @@ final class CompilerCoreTests: XCTestCase {
         assertHasDiagnostic("KSWIFTK-SEMA-0025", in: ctx)
     }
 
+    // MARK: - P5-40 Cascading diagnostic suppression
+
+    func testCascadingBinaryAddOnUnresolvedIdentifierEmitsOnlyOneError() throws {
+        let source = """
+        fun test(): Int = noSuchVar + 1
+        """
+        let ctx = try makeContext(source: source)
+        try runSema(ctx)
+
+        assertDiagnosticCount("KSWIFTK-SEMA-0022", expected: 1, in: ctx)
+        assertDiagnosticCount("KSWIFTK-SEMA-0002", expected: 0, in: ctx)
+    }
+
+    func testCascadingMemberCallOnUnresolvedReceiverEmitsOnlyOneError() throws {
+        let source = """
+        fun test(): Int = unknownObj.method()
+        """
+        let ctx = try makeContext(source: source)
+        try runSema(ctx)
+
+        assertDiagnosticCount("KSWIFTK-SEMA-0022", expected: 1, in: ctx)
+        assertDiagnosticCount("KSWIFTK-SEMA-0024", expected: 0, in: ctx)
+    }
+
+    func testCascadingSafeMemberCallOnUnresolvedReceiverEmitsOnlyOneError() throws {
+        let source = """
+        fun test() = missingVar?.call()
+        """
+        let ctx = try makeContext(source: source)
+        try runSema(ctx)
+
+        assertDiagnosticCount("KSWIFTK-SEMA-0022", expected: 1, in: ctx)
+        assertDiagnosticCount("KSWIFTK-SEMA-0024", expected: 0, in: ctx)
+    }
+
+    func testCascadingBinarySubtractOnUnresolvedIdentifierEmitsOnlyOneError() throws {
+        let source = """
+        fun test(): Int = noSuchVar - 1
+        """
+        let ctx = try makeContext(source: source)
+        try runSema(ctx)
+
+        assertDiagnosticCount("KSWIFTK-SEMA-0022", expected: 1, in: ctx)
+        assertDiagnosticCount("KSWIFTK-SEMA-0002", expected: 0, in: ctx)
+    }
+
+    func testCascadingBinaryMultiplyOnUnresolvedIdentifierEmitsOnlyOneError() throws {
+        let source = """
+        fun test(): Int = noSuchVar * 2
+        """
+        let ctx = try makeContext(source: source)
+        try runSema(ctx)
+
+        assertDiagnosticCount("KSWIFTK-SEMA-0022", expected: 1, in: ctx)
+        assertDiagnosticCount("KSWIFTK-SEMA-0002", expected: 0, in: ctx)
+    }
+
+    // MARK: - P5-40 Resolved negative tests (no spurious diagnostics)
+
+    func testResolvedMemberCallDoesNotEmitUnresolvedDiagnostic() throws {
+        let source = """
+        class Foo {
+            fun bar(): Int = 42
+        }
+        fun test(f: Foo): Int = f.bar()
+        """
+        let ctx = try makeContext(source: source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+    }
+
+    func testResolvedSafeMemberCallDoesNotEmitUnresolvedDiagnostic() throws {
+        let source = """
+        class Foo {
+            fun bar(): Int = 42
+        }
+        fun test(f: Foo?): Int? = f?.bar()
+        """
+        let ctx = try makeContext(source: source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+    }
+
+    func testResolvedBinaryAddDoesNotEmitOperatorDiagnostic() throws {
+        let source = """
+        fun test(): Int = 1 + 2
+        """
+        let ctx = try makeContext(source: source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
+    }
+
+    func testResolvedBinaryComparisonDoesNotEmitOperatorDiagnostic() throws {
+        let source = """
+        fun test(): Boolean = 1 == 2
+        """
+        let ctx = try makeContext(source: source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
+    }
+
+    func testResolvedStringConcatDoesNotEmitOperatorDiagnostic() throws {
+        let source = """
+        fun test(): String = "a" + "b"
+        """
+        let ctx = try makeContext(source: source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
+    }
+
     private func makeContext(source: String) throws -> CompilationContext {
         let tempURL = try writeTempSource(source)
 
