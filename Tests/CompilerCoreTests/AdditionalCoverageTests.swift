@@ -103,7 +103,7 @@ final class BindingTableAdditionalTests: XCTestCase {
     func testExprTypeForMethod() {
         let bindings = BindingTable()
         let types = TypeSystem()
-        let expr = ExprID(rawValue: 10)
+        let expr = ExprID(rawValue: 1)
         let intType = types.make(.primitive(.int, .nonNull))
         bindings.bindExprType(expr, type: intType)
         XCTAssertEqual(bindings.exprType(for: expr), intType)
@@ -116,8 +116,8 @@ final class BindingTableAdditionalTests: XCTestCase {
 
     func testIdentifierSymbolForMethod() {
         let bindings = BindingTable()
-        let expr = ExprID(rawValue: 5)
-        let sym = SymbolID(rawValue: 42)
+        let expr = ExprID(rawValue: 1)
+        let sym = SymbolID(rawValue: 1)
         bindings.bindIdentifier(expr, symbol: sym)
         XCTAssertEqual(bindings.identifierSymbol(for: expr), sym)
     }
@@ -129,16 +129,16 @@ final class BindingTableAdditionalTests: XCTestCase {
 
     func testCallBindingForMethod() {
         let bindings = BindingTable()
-        let expr = ExprID(rawValue: 3)
+        let expr = ExprID(rawValue: 1)
         let binding = CallBinding(
-            chosenCallee: SymbolID(rawValue: 7),
+            chosenCallee: SymbolID(rawValue: 1),
             substitutedTypeArguments: [],
             parameterMapping: [0: 1, 1: 0]
         )
         bindings.bindCall(expr, binding: binding)
         let retrieved = bindings.callBinding(for: expr)
         XCTAssertNotNil(retrieved)
-        XCTAssertEqual(retrieved?.chosenCallee, SymbolID(rawValue: 7))
+        XCTAssertEqual(retrieved?.chosenCallee, SymbolID(rawValue: 1))
         XCTAssertEqual(retrieved?.parameterMapping, [0: 1, 1: 0])
     }
 
@@ -149,8 +149,8 @@ final class BindingTableAdditionalTests: XCTestCase {
 
     func testDeclSymbolForMethod() {
         let bindings = BindingTable()
-        let decl = DeclID(rawValue: 2)
-        let sym = SymbolID(rawValue: 15)
+        let decl = DeclID(rawValue: 1)
+        let sym = SymbolID(rawValue: 1)
         bindings.bindDecl(decl, symbol: sym)
         XCTAssertEqual(bindings.declSymbol(for: decl), sym)
     }
@@ -160,9 +160,9 @@ final class BindingTableAdditionalTests: XCTestCase {
         XCTAssertNil(bindings.declSymbol(for: DeclID(rawValue: 99)))
     }
 
-    func testIsSuperCallExprMethod() {
+    func testIsSuperCallExprMarkAndCheck() {
         let bindings = BindingTable()
-        let expr = ExprID(rawValue: 20)
+        let expr = ExprID(rawValue: 1)
         XCTAssertFalse(bindings.isSuperCallExpr(expr))
         bindings.markSuperCall(expr)
         XCTAssertTrue(bindings.isSuperCallExpr(expr))
@@ -203,9 +203,10 @@ final class TypeSystemAdditionalTests: XCTestCase {
 
 final class ASTArenaAdditionalTests: XCTestCase {
 
-    func testDeclReturnsNilForNegativeID() {
+    func testDeclReturnsNilForInvalidID() {
         let arena = ASTArena()
-        XCTAssertNil(arena.decl(DeclID(rawValue: -1)))
+        // DeclID uses Int32, so -1 is the canonical .invalid sentinel
+        XCTAssertNil(arena.decl(DeclID.invalid))
     }
 
     func testDeclReturnsNilForOutOfRangeID() {
@@ -213,7 +214,7 @@ final class ASTArenaAdditionalTests: XCTestCase {
         XCTAssertNil(arena.decl(DeclID(rawValue: 999)))
     }
 
-    func testTypeRefReturnsNilForNegativeID() {
+    func testTypeRefReturnsNilForInvalidID() {
         let arena = ASTArena()
         XCTAssertNil(arena.typeRef(TypeRefID(rawValue: -1)))
     }
@@ -345,23 +346,28 @@ final class BindingModelAdditionalTests: XCTestCase {
             returnType: types.unitType
         )))
         let binding = CallableValueCallBinding(
-            target: .symbol(SymbolID(rawValue: 5)),
+            target: .symbol(SymbolID(rawValue: 1)),
             functionType: fnType,
             parameterMapping: [0: 0]
         )
-        XCTAssertEqual(binding.target, .symbol(SymbolID(rawValue: 5)))
+        XCTAssertEqual(binding.target, .symbol(SymbolID(rawValue: 1)))
         XCTAssertEqual(binding.functionType, fnType)
         XCTAssertEqual(binding.parameterMapping, [0: 0])
     }
 
     func testCallableValueCallBindingNilTarget() {
         let types = TypeSystem()
+        let fnType = types.make(.functionType(FunctionType(
+            params: [],
+            returnType: types.unitType
+        )))
         let binding = CallableValueCallBinding(
             target: nil,
-            functionType: types.unitType,
+            functionType: fnType,
             parameterMapping: [:]
         )
         XCTAssertNil(binding.target)
+        XCTAssertEqual(binding.functionType, fnType)
     }
 
     func testCatchClauseBindingDefaultParameterSymbol() {
@@ -373,7 +379,7 @@ final class BindingModelAdditionalTests: XCTestCase {
 
     func testCatchClauseBindingWithExplicitSymbol() {
         let types = TypeSystem()
-        let sym = SymbolID(rawValue: 42)
+        let sym = SymbolID(rawValue: 1)
         let binding = CatchClauseBinding(parameterSymbol: sym, parameterType: types.anyType)
         XCTAssertEqual(binding.parameterSymbol, sym)
     }
