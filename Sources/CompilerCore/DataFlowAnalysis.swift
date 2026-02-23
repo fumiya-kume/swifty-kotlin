@@ -331,7 +331,13 @@ public final class DataFlowAnalyzer {
                 return DataFlowState(variables: vars)
             }
             return base
-        case .isCheck(_, let typeRefID, let negated, _):
+        case .isCheck(let exprID, let typeRefID, let negated, _):
+            // Only narrow when the isCheck's expr refers to the when subject.
+            // This prevents incorrect narrowing for `when(x) { y is String -> ... }`.
+            if let checkedSymbol = sema.bindings.identifierSymbols[exprID],
+               checkedSymbol != subjectSymbol {
+                return base
+            }
             guard !negated else {
                 return base
             }
