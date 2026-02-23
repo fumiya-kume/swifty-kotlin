@@ -2145,6 +2145,27 @@ final class BuildKIRCoverageTests: XCTestCase {
         }
     }
 
+    func testRecursiveLocalFunctionWithCaptureResolvesCorrectly() throws {
+        let source = """
+        fun main() {
+            val limit = 10
+            fun countdown(n: Int): Int {
+                if (n <= 0) return limit
+                return countdown(n - 1)
+            }
+            countdown(5)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Recursive local function with capture should compile without errors: \(ctx.diagnostics.diagnostics.map(\.message))")
+            let module = try XCTUnwrap(ctx.kir)
+            // Should have at least main + countdown
+            XCTAssertGreaterThanOrEqual(module.functionCount, 2, "Expected at least 2 functions (main + countdown)")
+        }
+    }
+
     private func firstExprID(
         in ast: ASTModule,
         where predicate: (ExprID, Expr) -> Bool

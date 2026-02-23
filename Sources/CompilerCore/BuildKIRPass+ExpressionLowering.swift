@@ -336,6 +336,20 @@ extension BuildKIRPhase {
                     localValuesBySymbol[param.symbol] = paramExpr
                 }
 
+                // Re-register the local function symbol inside its own body
+                // so that recursive calls resolve correctly with capture arguments.
+                // Inside the body, capture arguments reference the capture *parameters*
+                // (not the outer values) since we're in the body's scope.
+                let bodyFunRef = arena.appendExpr(.symbolRef(symbol), type: funType)
+                localFunBodyInstructions.append(.constValue(result: bodyFunRef, value: .symbolRef(symbol)))
+                localValuesBySymbol[symbol] = bodyFunRef
+                registerCallableValue(
+                    bodyFunRef,
+                    symbol: symbol,
+                    callee: localFunCalleeName,
+                    captureArguments: captureBindings.compactMap { localValuesBySymbol[$0.capturedSymbol] }
+                )
+
                 switch localFunBody {
                 case .block(let bodyExprIDs, _):
                     var lastValue: KIRExprID?
