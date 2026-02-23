@@ -218,8 +218,8 @@ fi
 
 echo ""
 echo "Results saved:"
-[[ "$FORMAT" != "json" ]] && echo "  TSV:  $TSV_FILE"
-[[ "$FORMAT" != "tsv" ]] && echo "  JSON: $JSON_FILE"
+if [[ "$FORMAT" != "json" ]]; then echo "  TSV:  $TSV_FILE"; fi
+if [[ "$FORMAT" != "tsv" ]]; then echo "  JSON: $JSON_FILE"; fi
 
 # Baseline comparison
 if [[ -n "$BASELINE" && -f "$BASELINE" ]]; then
