@@ -101,9 +101,8 @@ extension KotlinParser {
     internal func childRange(_ child: SyntaxChild) -> SourceRange {
         switch child {
         case .token(let tokenID):
-            let index = Int(tokenID.rawValue)
-            guard index >= 0 && index < arena.tokens.count else { return invalidRange }
-            return arena.tokens[index].range
+            guard let token = arena.token(tokenID) else { return invalidRange }
+            return token.range
         case .node(let nodeID):
             return arena.node(nodeID).range
         }

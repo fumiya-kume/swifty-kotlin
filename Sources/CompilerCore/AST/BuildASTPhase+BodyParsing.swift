@@ -205,11 +205,7 @@ extension BuildASTPhase {
     }
 
     func resolveToken(_ tokenID: TokenID, in arena: SyntaxArena) -> Token? {
-        let index = Int(tokenID.rawValue)
-        guard index >= 0 && index < arena.tokens.count else {
-            return nil
-        }
-        return arena.tokens[index]
+        arena.token(tokenID)
     }
 
     func collectTokens(from nodeID: NodeID, in arena: SyntaxArena) -> [Token] {
