@@ -33,13 +33,17 @@ struct TypeCheckHelpers {
 
     /// Returns the element type for iterating over the given type in a for-loop.
     /// Handles both array types and range/progression types (Int representing IntRange).
+    /// - Parameter isRangeExpr: true when the iterable expression is a range operator
+    ///   (rangeTo, rangeUntil, downTo, step), allowing Int to be treated as iterable.
     func iterableElementType(
         for iterableType: TypeID,
+        isRangeExpr: Bool,
         sema: SemaModule,
         interner: StringInterner
     ) -> TypeID? {
-        // Range/progression types (Int) are iterable over Int elements
-        if iterableType == sema.types.intType {
+        // Range/progression types (Int) are iterable over Int elements,
+        // but only when the expression is actually a range operator.
+        if isRangeExpr && iterableType == sema.types.intType {
             return sema.types.intType
         }
         return arrayElementType(for: iterableType, sema: sema, interner: interner)

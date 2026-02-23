@@ -22,7 +22,8 @@ final class ControlFlowTypeChecker {
         let iterableType = driver.inferExpr(iterableExpr, ctx: ctx, locals: &locals, expectedType: nil)
         var bodyLocals = locals
         if let loopVariable {
-            let elementType = driver.helpers.iterableElementType(for: iterableType, sema: sema, interner: ctx.interner) ?? sema.types.anyType
+            let isRangeExpr = Self.isRangeExpression(iterableExpr, ast: ctx.ast)
+            let elementType = driver.helpers.iterableElementType(for: iterableType, isRangeExpr: isRangeExpr, sema: sema, interner: ctx.interner) ?? sema.types.anyType
             let loopVariableSymbol = sema.symbols.define(
                 kind: .local,
                 name: loopVariable,
@@ -498,6 +499,23 @@ final class ControlFlowTypeChecker {
             let type = sema.types.lub(branchTypes)
             sema.bindings.bindExprType(id, type: type)
             return type
+        }
+    }
+
+    /// Returns true if the given expression is a range/progression operator
+    /// (rangeTo, rangeUntil, downTo, step).
+    static func isRangeExpression(_ exprID: ExprID, ast: ASTModule) -> Bool {
+        guard let expr = ast.arena.expr(exprID) else { return false }
+        switch expr {
+        case .binary(let op, _, _, _):
+            switch op {
+            case .rangeTo, .rangeUntil, .downTo, .step:
+                return true
+            default:
+                return false
+            }
+        default:
+            return false
         }
     }
 }
