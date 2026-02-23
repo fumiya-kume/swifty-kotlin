@@ -254,6 +254,18 @@ extension TypeCheckSemaPassPhase {
 
         case .thisRef(let label, let range):
             return inferThisRefExpr(id, label: label, range: range, ctx: ctx)
+
+        case .inExpr(let lhsID, let rhsID, _):
+            _ = inferExpr(lhsID, ctx: ctx, locals: &locals)
+            _ = inferExpr(rhsID, ctx: ctx, locals: &locals)
+            sema.bindings.bindExprType(id, type: boolType)
+            return boolType
+
+        case .notInExpr(let lhsID, let rhsID, _):
+            _ = inferExpr(lhsID, ctx: ctx, locals: &locals)
+            _ = inferExpr(rhsID, ctx: ctx, locals: &locals)
+            sema.bindings.bindExprType(id, type: boolType)
+            return boolType
         }
     }
 
@@ -423,7 +435,7 @@ extension TypeCheckSemaPassPhase {
                     locals[elvisVarName] = (nonNullType, elvisLocal.symbol, elvisLocal.isMutable, elvisLocal.isInitialized)
                 }
             }
-        case .rangeTo:
+        case .rangeTo, .rangeUntil:
             type = sema.types.anyType
         }
         sema.bindings.bindExprType(id, type: type)

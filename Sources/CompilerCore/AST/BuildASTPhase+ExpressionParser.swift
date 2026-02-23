@@ -78,6 +78,28 @@ extension BuildASTPhase {
                     continue
                 }
 
+                if let token = current(), token.kind == .keyword(.in) {
+                    let prec = 85
+                    guard prec >= minPrecedence else { break }
+                    _ = consume()
+                    guard let rhs = parseExpression(minPrecedence: prec + 1) else { break }
+                    let range = mergeRanges(astArena.exprRange(lhs), astArena.exprRange(rhs), fallback: token.range)
+                    lhs = astArena.appendExpr(.inExpr(lhs: lhs, rhs: rhs, range: range))
+                    continue
+                }
+
+                if let token = current(), token.kind == .symbol(.bang),
+                   let next = peek(1), next.kind == .keyword(.in) {
+                    let prec = 85
+                    guard prec >= minPrecedence else { break }
+                    _ = consume()
+                    _ = consume()
+                    guard let rhs = parseExpression(minPrecedence: prec + 1) else { break }
+                    let range = mergeRanges(astArena.exprRange(lhs), astArena.exprRange(rhs), fallback: token.range)
+                    lhs = astArena.appendExpr(.notInExpr(lhs: lhs, rhs: rhs, range: range))
+                    continue
+                }
+
                 if let token = current(), token.kind == .keyword(.as) {
                     let prec = 130
                     guard prec >= minPrecedence else { break }
@@ -108,7 +130,7 @@ extension BuildASTPhase {
             }
             switch token.kind {
             case .symbol(.bang):
-                if let next = peek(1), next.kind == .keyword(.is) {
+                if let next = peek(1), next.kind == .keyword(.is) || next.kind == .keyword(.in) {
                     return parsePostfixOrPrimary()
                 }
                 _ = consume()
@@ -192,6 +214,8 @@ extension BuildASTPhase {
                 return .elvis
             case .symbol(.dotDot):
                 return .rangeTo
+            case .symbol(.dotDotLt):
+                return .rangeUntil
             default:
                 return nil
             }
@@ -208,9 +232,9 @@ extension BuildASTPhase {
                 return 120
             case .add, .subtract:
                 return 110
-            case .rangeTo:
-                return 100
-            case .elvis:
+                case .rangeTo, .rangeUntil:
+                    return 100
+                case .elvis:
                 return 90
             case .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
                 return 80

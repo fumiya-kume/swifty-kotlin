@@ -76,7 +76,9 @@ public final class ASTArena {
              .localFunDecl(_, _, _, _, let range),
              .blockExpr(_, _, let range),
              .superRef(let range),
-             .thisRef(_, let range):
+             .thisRef(_, let range),
+             .inExpr(_, _, let range),
+             .notInExpr(_, _, let range):
             return range
         }
     }

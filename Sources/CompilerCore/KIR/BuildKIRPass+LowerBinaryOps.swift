@@ -176,6 +176,16 @@ extension BuildKIRPhase {
                 thrownResult: nil
             ))
             return result
+        case .rangeUntil:
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_op_rangeUntil"),
+                arguments: [lhsID, rhsID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
         }
         instructions.append(.binary(op: kirOp, lhs: lhsID, rhs: rhsID, result: result))
         return result

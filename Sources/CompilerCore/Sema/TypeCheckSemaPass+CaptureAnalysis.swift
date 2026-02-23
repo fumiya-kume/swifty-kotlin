@@ -177,6 +177,11 @@ extension TypeCheckSemaPassPhase {
                     }
                 }
 
+            case .inExpr(let lhs, let rhs, _),
+                 .notInExpr(let lhs, let rhs, _):
+                visit(lhs)
+                visit(rhs)
+
             case .intLiteral, .longLiteral, .floatLiteral, .doubleLiteral,
                  .charLiteral, .boolLiteral, .stringLiteral, .breakExpr,
                  .continueExpr, .objectLiteral, .superRef, .thisRef:
