@@ -214,7 +214,7 @@ final class LocalDeclTypeChecker {
             var callArgTypes = indexTypes
             callArgTypes.append(valueType)
             let callArgs = callArgTypes.map { CallArg(type: $0) }
-            let _ = ctx.resolver.resolveCall(
+            let resolved = ctx.resolver.resolveCall(
                 candidates: setCandidates,
                 call: CallExpr(
                     range: range,
@@ -225,8 +225,10 @@ final class LocalDeclTypeChecker {
                 implicitReceiverType: receiverType,
                 ctx: ctx.semaCtx
             )
-            sema.bindings.bindExprType(id, type: sema.types.unitType)
-            return sema.types.unitType
+            if resolved.chosenCallee != nil {
+                sema.bindings.bindExprType(id, type: sema.types.unitType)
+                return sema.types.unitType
+            }
         }
 
         // Fallback: built-in array assign (single Int index)
