@@ -37,7 +37,7 @@ extension DataFlowSemaPassPhase {
             }
             let metadataPath = manifestInfo.metadataPath
             let records: [ImportedLibrarySymbolRecord]
-            if let cached = cache?.cachedMetadataRecords(metadataPath: metadataPath) {
+            if let cached = cache?.cachedMetadataRecords(metadataPath: metadataPath, interner: interner) {
                 records = cached
             } else {
                 guard let parsed = parseLibraryMetadata(
@@ -48,7 +48,7 @@ extension DataFlowSemaPassPhase {
                     continue
                 }
                 records = parsed
-                cache?.cacheMetadataRecords(records, metadataPath: metadataPath)
+                cache?.cacheMetadataRecords(records, metadataPath: metadataPath, interner: interner)
             }
 
             for record in records {

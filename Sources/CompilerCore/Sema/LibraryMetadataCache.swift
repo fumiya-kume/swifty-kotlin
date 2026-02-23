@@ -5,7 +5,13 @@ import Foundation
 ///
 /// This avoids redundant file I/O and parsing when the same `.kklib` directory is
 /// referenced across compilations or when multiple symbols share the same type signature.
+///
+/// - Important: This class is **not** thread-safe. It is designed for use within a
+///   single compilation session on one thread — the same threading model used by the
+///   rest of the Sema pipeline.
 public final class LibraryMetadataCache {
+
+    public init() {}
 
     // MARK: - Manifest cache (path + mtime)
 
@@ -35,28 +41,43 @@ public final class LibraryMetadataCache {
         manifestCache[key] = info
     }
 
-    // MARK: - Metadata records cache (path + mtime)
+    // MARK: - Metadata records cache (path + mtime + StringInterner identity)
 
     private struct MetadataCacheKey: Hashable {
         let metadataPath: String
         let mtimeNanos: Int64
     }
 
+    /// `ImportedLibrarySymbolRecord` contains `InternedString` values whose IDs are
+    /// only meaningful for the `StringInterner` that created them. We track the current
+    /// interner and auto-clear the metadata cache when a different interner is seen.
+    private var currentInternerID: ObjectIdentifier?
     private var metadataCache: [MetadataCacheKey: [DataFlowSemaPassPhase.ImportedLibrarySymbolRecord]] = [:]
 
     /// Returns cached metadata records if the metadata file has not been modified
-    /// since the last parse, or `nil` on cache miss.
-    func cachedMetadataRecords(metadataPath: String) -> [DataFlowSemaPassPhase.ImportedLibrarySymbolRecord]? {
+    /// since the last parse and the same `StringInterner` is in use, or `nil` on cache miss.
+    func cachedMetadataRecords(metadataPath: String, interner: StringInterner) -> [DataFlowSemaPassPhase.ImportedLibrarySymbolRecord]? {
+        let intID = ObjectIdentifier(interner)
+        if currentInternerID != intID {
+            return nil  // different interner — treat as miss
+        }
         let mtime = Self.fileMtimeNanos(path: metadataPath)
         let key = MetadataCacheKey(metadataPath: metadataPath, mtimeNanos: mtime)
         return metadataCache[key]
     }
 
     /// Stores parsed metadata records for the given metadata file path.
+    /// Automatically clears the metadata cache when a different `StringInterner` is encountered.
     func cacheMetadataRecords(
         _ records: [DataFlowSemaPassPhase.ImportedLibrarySymbolRecord],
-        metadataPath: String
+        metadataPath: String,
+        interner: StringInterner
     ) {
+        let intID = ObjectIdentifier(interner)
+        if currentInternerID != intID {
+            metadataCache.removeAll()
+            currentInternerID = intID
+        }
         let mtime = Self.fileMtimeNanos(path: metadataPath)
         let key = MetadataCacheKey(metadataPath: metadataPath, mtimeNanos: mtime)
         metadataCache[key] = records
@@ -70,10 +91,16 @@ public final class LibraryMetadataCache {
     private var currentTypeSystemID: ObjectIdentifier?
     private var signatureCache: [String: TypeID?] = [:]
 
-    /// Returns a cached type ID for the given encoded signature string, or `nil` on miss.
+    /// Returns a cached type ID for the given encoded signature string.
+    ///
     /// The cache is automatically invalidated when a different `TypeSystem` is passed.
-    /// Note: the cached value itself may be `Optional<TypeID>.some(nil)` when the previous
-    /// parse returned nil (malformed signature).
+    ///
+    /// The return type is a *double optional*:
+    /// - `nil` (outer optional) means there is no cached entry for this signature
+    ///   under the current `TypeSystem` (cache miss).
+    /// - `.some(nil)` means there is a cached entry whose value is `nil`, i.e. a previous
+    ///   attempt to parse the signature failed or produced no `TypeID`.
+    /// - `.some(.some(id))` means there is a cached successful parse result.
     func cachedSignature(_ signature: String, types: TypeSystem) -> TypeID?? {
         let tsID = ObjectIdentifier(types)
         if currentTypeSystemID != tsID {
