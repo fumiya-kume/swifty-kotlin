@@ -121,6 +121,143 @@ final class ABILoweringPass: LoweringPass {
             var idx = 0
             while idx < function.body.count {
                 let instruction = function.body[idx]
+                if case .virtualCall(let vcSymbol, let vcCallee, let vcReceiver, let vcArguments, let vcResult, _, let vcThrownResult, let vcDispatch) = instruction {
+                    let vcCanThrow = !nonThrowingCallees.contains(vcCallee)
+
+                    var vcBoxedArguments = vcArguments
+                    if let types {
+                        var vcSignature: FunctionSignature?
+                        if let symbols, let vcSymbol {
+                            vcSignature = symbols.functionSignature(for: vcSymbol)
+                        }
+                        if vcSignature == nil {
+                            vcSignature = signatureByName[vcCallee]
+                        }
+                        if let vcSignature {
+                            let parameterTypes = vcSignature.parameterTypes
+                            let varargFlags = vcSignature.valueParameterIsVararg
+                            for argIndex in vcArguments.indices {
+                                guard argIndex < parameterTypes.count else {
+                                    continue
+                                }
+                                if argIndex < varargFlags.count && varargFlags[argIndex] {
+                                    continue
+                                }
+                                let paramType = parameterTypes[argIndex]
+                                let argType = intrinsicArgType(vcArguments[argIndex], arena: module.arena, types: types)
+                                guard let argType else {
+                                    continue
+                                }
+                                if let boxCallee = boxingCallee(
+                                    argType: argType,
+                                    paramType: paramType,
+                                    types: types,
+                                    boxIntCallee: boxIntCallee,
+                                    boxBoolCallee: boxBoolCallee,
+                                    boxLongCallee: boxLongCallee,
+                                    boxFloatCallee: boxFloatCallee,
+                                    boxDoubleCallee: boxDoubleCallee,
+                                    boxCharCallee: boxCharCallee
+                                ) {
+                                    let boxedResult = module.arena.appendExpr(
+                                        .temporary(Int32(module.arena.expressions.count)),
+                                        type: paramType
+                                    )
+                                    newBody.append(.call(
+                                        symbol: nil,
+                                        callee: boxCallee,
+                                        arguments: [vcArguments[argIndex]],
+                                        result: boxedResult,
+                                        canThrow: false,
+                                        thrownResult: nil
+                                    ))
+                                    vcBoxedArguments[argIndex] = boxedResult
+                                }
+                            }
+                        }
+                    }
+
+                    var vcUnboxCallee: InternedString?
+                    var vcReturnType: TypeID?
+                    if let types, let vcResult {
+                        var returnType: TypeID?
+                        if let vcSymbol {
+                            returnType = returnTypeForCall(
+                                callSymbol: vcSymbol,
+                                symbols: symbols
+                            )
+                        }
+                        if returnType == nil {
+                            returnType = signatureByName[vcCallee]?.returnType
+                        }
+                        if let returnType {
+                            let returnKind = types.kind(of: returnType)
+                            let resultType = module.arena.exprType(vcResult)
+                            if let resultType {
+                                let resultKind = types.kind(of: resultType)
+                                if needsUnboxing(sourceKind: returnKind, targetKind: resultKind) {
+                                    vcUnboxCallee = unboxingCallee(
+                                        sourceKind: returnKind,
+                                        targetKind: resultKind,
+                                        unboxIntCallee: unboxIntCallee,
+                                        unboxBoolCallee: unboxBoolCallee,
+                                        unboxLongCallee: unboxLongCallee,
+                                        unboxFloatCallee: unboxFloatCallee,
+                                        unboxDoubleCallee: unboxDoubleCallee,
+                                        unboxCharCallee: unboxCharCallee
+                                    )
+                                    vcReturnType = returnType
+                                }
+                            }
+                        }
+                    }
+
+                    if let vcUnboxCallee, let vcReturnType, let vcResult {
+                        let tempResult = module.arena.appendExpr(
+                            .temporary(Int32(module.arena.expressions.count)),
+                            type: vcReturnType
+                        )
+                        newBody.append(.virtualCall(
+                            symbol: vcSymbol,
+                            callee: vcCallee,
+                            receiver: vcReceiver,
+                            arguments: vcBoxedArguments,
+                            result: tempResult,
+                            canThrow: vcCanThrow,
+                            thrownResult: vcThrownResult,
+                            dispatch: vcDispatch
+                        ))
+                        if vcThrownResult != nil {
+                            let nextIdx = idx + 1
+                            if nextIdx < function.body.count,
+                               case .jumpIfNotNull = function.body[nextIdx] {
+                                newBody.append(function.body[nextIdx])
+                                idx += 1
+                            }
+                        }
+                        newBody.append(.call(
+                            symbol: nil,
+                            callee: vcUnboxCallee,
+                            arguments: [tempResult],
+                            result: vcResult,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                    } else {
+                        newBody.append(.virtualCall(
+                            symbol: vcSymbol,
+                            callee: vcCallee,
+                            receiver: vcReceiver,
+                            arguments: vcBoxedArguments,
+                            result: vcResult,
+                            canThrow: vcCanThrow,
+                            thrownResult: vcThrownResult,
+                            dispatch: vcDispatch
+                        ))
+                    }
+                    idx += 1
+                    continue
+                }
 
                 // Handle returnValue: box primitive if function returns Any/Any?
                 if case .returnValue(let value) = instruction, let types {

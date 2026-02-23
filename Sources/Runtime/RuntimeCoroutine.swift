@@ -384,6 +384,10 @@ internal final class RuntimeChannelHandle {
             lock.unlock()
             return
         }
+        if capacity > 0 && buffer.count >= capacity {
+            lock.unlock()
+            return
+        }
         buffer.append(value)
         lock.unlock()
         receiveSemaphore.signal()
@@ -393,6 +397,12 @@ internal final class RuntimeChannelHandle {
     }
 
     func receive() -> Int {
+        lock.lock()
+        if closed && buffer.isEmpty {
+            lock.unlock()
+            return 0
+        }
+        lock.unlock()
         receiveSemaphore.wait()
         lock.lock()
         let value = buffer.isEmpty ? 0 : buffer.removeFirst()
