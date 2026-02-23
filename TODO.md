@@ -490,7 +490,7 @@
   - [x] DataFlowState の merge（CFG join 点）で nullability 情報を conservative merge（nullable ← nullable ∪ non-null）する
   - [x] smart cast 済み変数への `.method()` 呼び出しが `?.` 不要で解決されることを確認する
   - [x] P5-55 で追加済の true/false 分岐モデルへ nullability 判定を接続する
-  - [ ] nullability smart cast の境界ケース（再代入後の失効、ラムダ内キャプチャ）の診断回帰ケースを追加する
+  - [x] nullability smart cast の境界ケース（再代入後の失効、ラムダ内キャプチャ）の診断回帰ケースを追加する
   - **完了条件**: `if (x != null) x.length` 系パターンが warning・unsafe キャストなしでコンパイルし、再代入後は smart cast が失効する
 
 ---
