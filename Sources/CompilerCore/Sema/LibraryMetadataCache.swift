@@ -86,9 +86,11 @@ public final class LibraryMetadataCache {
     // MARK: - Type signature memoization (signature string + TypeSystem identity)
 
     /// TypeID values are indices into a specific TypeSystem's internal storage,
-    /// so we must scope the signature cache per TypeSystem instance to avoid
-    /// returning stale IDs that reference the wrong type table.
+    /// and class-type signatures embed SymbolIDs from a specific SymbolTable.
+    /// We must scope the signature cache per both TypeSystem and SymbolTable
+    /// instance to avoid returning stale IDs.
     private var currentTypeSystemID: ObjectIdentifier?
+    private var currentSymbolTableID: ObjectIdentifier?
     private var signatureCache: [String: TypeID?] = [:]
 
     /// Returns a cached type ID for the given encoded signature string.
@@ -97,14 +99,15 @@ public final class LibraryMetadataCache {
     ///
     /// The return type is a *double optional*:
     /// - `nil` (outer optional) means there is no cached entry for this signature
-    ///   under the current `TypeSystem` (cache miss).
+    ///   under the current `TypeSystem`/`SymbolTable` (cache miss).
     /// - `.some(nil)` means there is a cached entry whose value is `nil`, i.e. a previous
     ///   attempt to parse the signature failed or produced no `TypeID`.
     /// - `.some(.some(id))` means there is a cached successful parse result.
-    func cachedSignature(_ signature: String, types: TypeSystem) -> TypeID?? {
+    func cachedSignature(_ signature: String, types: TypeSystem, symbols: SymbolTable) -> TypeID?? {
         let tsID = ObjectIdentifier(types)
-        if currentTypeSystemID != tsID {
-            return nil  // different TypeSystem — treat as miss
+        let stID = ObjectIdentifier(symbols)
+        if currentTypeSystemID != tsID || currentSymbolTableID != stID {
+            return nil  // different TypeSystem or SymbolTable — treat as miss
         }
         guard let entry = signatureCache[signature] else {
             return nil  // cache miss — outer optional is nil
@@ -113,12 +116,14 @@ public final class LibraryMetadataCache {
     }
 
     /// Stores a type signature parse result (including `nil` for failures).
-    /// Automatically clears the cache when a different `TypeSystem` is encountered.
-    func cacheSignature(_ result: TypeID?, for signature: String, types: TypeSystem) {
+    /// Automatically clears the cache when a different `TypeSystem` or `SymbolTable` is encountered.
+    func cacheSignature(_ result: TypeID?, for signature: String, types: TypeSystem, symbols: SymbolTable) {
         let tsID = ObjectIdentifier(types)
-        if currentTypeSystemID != tsID {
+        let stID = ObjectIdentifier(symbols)
+        if currentTypeSystemID != tsID || currentSymbolTableID != stID {
             signatureCache.removeAll()
             currentTypeSystemID = tsID
+            currentSymbolTableID = stID
         }
         signatureCache[signature] = result
     }

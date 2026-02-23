@@ -218,7 +218,7 @@ extension DataFlowSemaPassPhase {
         ownerFQName: [InternedString],
         cache: LibraryMetadataCache? = nil
     ) -> TypeID? {
-        if let cache = cache, let cached = cache.cachedSignature(token, types: types) {
+        if let cache = cache, let cached = cache.cachedSignature(token, types: types, symbols: symbols) {
             return cached
         }
         var parser = MetadataTypeSignatureParser(
@@ -231,7 +231,7 @@ extension DataFlowSemaPassPhase {
             ownerFQName: ownerFQName
         )
         let result = parser.parse()
-        cache?.cacheSignature(result, for: token, types: types)
+        cache?.cacheSignature(result, for: token, types: types, symbols: symbols)
         return result
     }
 
