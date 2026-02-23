@@ -270,6 +270,9 @@ extension BuildKIRPhase {
                 // Transitive capture: if a captured symbol is a callable with
                 // its own captures, also capture those dependencies so call
                 // sites inside the body can forward correct capture arguments.
+                // Resolve capture argument KIRExprIDs back to symbols using
+                // localValuesBySymbol first, then arena.expr() for value
+                // parameters that aren't in localValuesBySymbol.
                 var transitiveChanged = true
                 while transitiveChanged {
                     transitiveChanged = false
@@ -279,15 +282,16 @@ extension BuildKIRPhase {
                             continue
                         }
                         for captureArg in callableInfo.captureArguments {
-                            if let transitiveSym = localValuesBySymbol.first(where: { $0.value == captureArg })?.key,
-                               !captureSymbols.contains(transitiveSym) {
-                                captureSymbols.append(transitiveSym)
-                                transitiveChanged = true
+                            var transitiveSym: SymbolID?
+                            if let found = localValuesBySymbol.first(where: { $0.value == captureArg })?.key {
+                                transitiveSym = found
+                            } else if case .symbolRef(let argSym) = arena.expr(captureArg) {
+                                transitiveSym = argSym
+                            } else if captureArg == currentImplicitReceiverExprID {
+                                transitiveSym = currentImplicitReceiverSymbol
                             }
-                            if captureArg == currentImplicitReceiverExprID,
-                               let receiverSym = currentImplicitReceiverSymbol,
-                               !captureSymbols.contains(receiverSym) {
-                                captureSymbols.append(receiverSym)
+                            if let transitiveSym, !captureSymbols.contains(transitiveSym) {
+                                captureSymbols.append(transitiveSym)
                                 transitiveChanged = true
                             }
                         }
@@ -365,17 +369,28 @@ extension BuildKIRPhase {
 
                 // Propagate callable value info for captured callables so that
                 // calls inside the body find correct capture arguments.
-                // Build outer→body expression mapping from capture bindings.
-                var outerToBodyExpr: [KIRExprID: KIRExprID] = [:]
+                // Use symbol-based mapping (not expression-based) to handle
+                // value parameters where captureValueExpr creates fresh IDs.
+                var capturedSymbolToBodyExpr: [SymbolID: KIRExprID] = [:]
                 for capture in captureBindings {
                     if let bodyExpr = localValuesBySymbol[capture.capturedSymbol] {
-                        outerToBodyExpr[capture.valueExpr] = bodyExpr
+                        capturedSymbolToBodyExpr[capture.capturedSymbol] = bodyExpr
                     }
                 }
                 for capture in captureBindings {
                     if let outerCallableInfo = callableValueInfoByExprID[capture.valueExpr],
                        let bodyCallableExpr = localValuesBySymbol[capture.capturedSymbol] {
-                        let remappedArgs = outerCallableInfo.captureArguments.compactMap { outerToBodyExpr[$0] }
+                        let remappedArgs = outerCallableInfo.captureArguments.compactMap { argExpr -> KIRExprID? in
+                            // Resolve the capture argument's symbol via localValuesBySymbol
+                            // or arena lookup (for value parameters not in localValuesBySymbol).
+                            if let argSym = localValuesBySymbol.first(where: { $0.value == argExpr })?.key {
+                                return capturedSymbolToBodyExpr[argSym]
+                            }
+                            if case .symbolRef(let argSym) = arena.expr(argExpr) {
+                                return capturedSymbolToBodyExpr[argSym]
+                            }
+                            return nil
+                        }
                         if remappedArgs.count == outerCallableInfo.captureArguments.count {
                             registerCallableValue(
                                 bodyCallableExpr,

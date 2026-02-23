@@ -2167,6 +2167,28 @@ final class BuildKIRCoverageTests: XCTestCase {
         }
     }
 
+    func testNestedLocalFunctionForwardsValueParameterCapture() throws {
+        // Regression test: g() captures a value parameter p of the enclosing
+        // function, and h() calls g(). The transitive capture must detect p
+        // even though it's not in localValuesBySymbol (value parameters use
+        // captureValueExpr's .valueParameter fallback path).
+        let source = """
+        fun main(p: Int): Int {
+            fun g(): Int = p
+            fun h(): Int = g()
+            return h()
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Nested local function forwarding value parameter capture should compile: \(ctx.diagnostics.diagnostics.map(\.message))")
+            let module = try XCTUnwrap(ctx.kir)
+            // main, g, h => at least 3 functions
+            XCTAssertGreaterThanOrEqual(module.functionCount, 3, "Expected at least 3 functions (main + g + h)")
+        }
+    }
+
     func testRecursiveLocalFunctionWithCaptureResolvesCorrectly() throws {
         let source = """
         fun main() {
