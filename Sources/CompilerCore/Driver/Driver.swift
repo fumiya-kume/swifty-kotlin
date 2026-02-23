@@ -55,6 +55,15 @@ public final class CompilerDriver {
             interner: interner
         )
 
+        // Set up incremental compilation if enabled.
+        let incrementalEnabled = isIncrementalEnabled(options: options)
+        if incrementalEnabled {
+            let cachePath = resolveIncrementalCachePath(options: options)
+            let cache = IncrementalCompilationCache(cachePath: cachePath)
+            cache.loadPreviousState()
+            ctx.incrementalCache = cache
+        }
+
         let phases: [CompilerPhase] = [
             LoadSourcesPhase(),
             LexPhase(),
@@ -69,6 +78,17 @@ public final class CompilerDriver {
 
         do {
             for phase in phases {
+                // After loading sources, compute fingerprints and determine
+                // which files need recompilation.
+                if phase is LoadSourcesPhase {
+                    try phase.run(ctx)
+                    if ctx.diagnostics.hasError { break }
+                    if incrementalEnabled {
+                        setupIncrementalRecompileSet(ctx: ctx)
+                    }
+                    continue
+                }
+
                 try phase.run(ctx)
                 if ctx.diagnostics.hasError {
                     break
@@ -84,10 +104,221 @@ public final class CompilerDriver {
             }
         }
 
+        // Save the incremental cache on successful compilation.
+        if !ctx.diagnostics.hasError, let cache = ctx.incrementalCache {
+            let depGraph = buildDependencyGraph(ctx: ctx)
+            cache.saveState(dependencyGraph: depGraph)
+        }
+
         if printDiagnostics {
             ctx.diagnostics.printDiagnostics(from: sourceManager)
         }
 
         return (ctx.diagnostics.hasError ? 1 : 0, ctx.diagnostics.diagnostics)
+    }
+
+    // MARK: - Incremental compilation helpers
+
+    /// Checks whether incremental compilation is enabled via frontend flags
+    /// or cache path.
+    private func isIncrementalEnabled(options: CompilerOptions) -> Bool {
+        if options.incrementalCachePath != nil {
+            return true
+        }
+        return options.frontendFlags.contains("incremental")
+    }
+
+    /// Resolves the cache directory path, falling back to a default derived
+    /// from the output path.
+    private func resolveIncrementalCachePath(options: CompilerOptions) -> String {
+        if let explicit = options.incrementalCachePath {
+            return explicit
+        }
+        // Default: place cache next to the output.
+        let outputURL = URL(fileURLWithPath: options.outputPath)
+        let parentDir = outputURL.deletingLastPathComponent().path
+        return parentDir + "/.kswiftk-cache"
+    }
+
+    /// Computes fingerprints for loaded sources and determines the
+    /// incremental recompilation set.
+    private func setupIncrementalRecompileSet(ctx: CompilationContext) {
+        guard let cache = ctx.incrementalCache else { return }
+
+        let allPaths = ctx.options.inputs
+        cache.computeCurrentFingerprints(for: allPaths, sourceManager: ctx.sourceManager)
+
+        if let recompileSet = cache.recompilationSet(allPaths: allPaths) {
+            if recompileSet.isEmpty {
+                // Nothing changed — we still run the full pipeline (with
+                // all cached intermediate results) to produce a consistent output.
+                // In future, we could short-circuit here.
+                ctx.incrementalRecompileSet = nil
+            } else {
+                ctx.incrementalRecompileSet = recompileSet
+            }
+        } else {
+            // No previous cache — full build.
+            ctx.incrementalRecompileSet = nil
+        }
+    }
+
+    /// Builds a dependency graph from the current compilation state.
+    private func buildDependencyGraph(ctx: CompilationContext) -> DependencyGraph {
+        let graph = DependencyGraph()
+        guard let sema = ctx.sema, let ast = ctx.ast else {
+            return graph
+        }
+
+        let interner = ctx.interner
+        let symbols = sema.symbols
+
+        // For each AST file, record which symbols it provides and depends on.
+        for file in ast.files {
+            let fileID = file.fileID
+            let filePath = ctx.sourceManager.path(of: fileID)
+            guard !filePath.isEmpty else { continue }
+
+            var provided = Set<String>()
+            var depended = Set<String>()
+
+            // Collect provided symbols: top-level declarations in this file.
+            for declID in file.topLevelDecls {
+                guard let decl = ast.arena.decl(declID) else { continue }
+                let declName = extractDeclName(decl, interner: interner)
+                if let name = declName {
+                    provided.insert(name)
+                }
+            }
+
+            // Collect provided symbols from SymbolTable's sourceFileID tracking.
+            for sym in symbols.allSymbols() {
+                let symFileID = symbols.sourceFileID(for: sym.id)
+                if symFileID == fileID {
+                    provided.insert(interner.resolve(sym.name))
+                }
+            }
+
+            // Imports declare dependencies on external symbols.
+            for imp in file.imports {
+                let importPath = imp.path.map { interner.resolve($0) }.joined(separator: ".")
+                depended.insert(importPath)
+            }
+
+            // Walk top-level declarations to find referenced names.
+            for declID in file.topLevelDecls {
+                collectDeclDependencies(
+                    declID: declID,
+                    ast: ast,
+                    interner: interner,
+                    provided: provided,
+                    depended: &depended
+                )
+            }
+
+            graph.recordProvided(filePath: filePath, symbols: provided)
+            graph.recordDepended(filePath: filePath, symbols: depended)
+        }
+
+        return graph
+    }
+
+    /// Extracts the declaration name as a String, if available.
+    private func extractDeclName(_ decl: Decl, interner: StringInterner) -> String? {
+        switch decl {
+        case .classDecl(let d):
+            return interner.resolve(d.name)
+        case .interfaceDecl(let d):
+            return interner.resolve(d.name)
+        case .funDecl(let d):
+            return interner.resolve(d.name)
+        case .propertyDecl(let d):
+            return interner.resolve(d.name)
+        case .typeAliasDecl(let d):
+            return interner.resolve(d.name)
+        case .objectDecl(let d):
+            return interner.resolve(d.name)
+        case .enumEntryDecl(let d):
+            return interner.resolve(d.name)
+        }
+    }
+
+    /// Recursively collects symbol names referenced by a declaration.
+    private func collectDeclDependencies(
+        declID: DeclID,
+        ast: ASTModule,
+        interner: StringInterner,
+        provided: Set<String>,
+        depended: inout Set<String>
+    ) {
+        guard let decl = ast.arena.decl(declID) else { return }
+
+        switch decl {
+        case .classDecl(let d):
+            for superType in d.superTypes {
+                collectTypeRefDependencies(typeRefID: superType, ast: ast, interner: interner, depended: &depended)
+            }
+            let memberIDs = d.memberFunctions + d.memberProperties + d.nestedClasses + d.nestedObjects
+            for memberID in memberIDs {
+                collectDeclDependencies(declID: memberID, ast: ast, interner: interner, provided: provided, depended: &depended)
+            }
+        case .interfaceDecl(let d):
+            for superType in d.superTypes {
+                collectTypeRefDependencies(typeRefID: superType, ast: ast, interner: interner, depended: &depended)
+            }
+            let memberIDs = d.memberFunctions + d.memberProperties + d.nestedClasses + d.nestedObjects
+            for memberID in memberIDs {
+                collectDeclDependencies(declID: memberID, ast: ast, interner: interner, provided: provided, depended: &depended)
+            }
+        case .objectDecl(let d):
+            for superType in d.superTypes {
+                collectTypeRefDependencies(typeRefID: superType, ast: ast, interner: interner, depended: &depended)
+            }
+            let memberIDs = d.memberFunctions + d.memberProperties + d.nestedClasses + d.nestedObjects
+            for memberID in memberIDs {
+                collectDeclDependencies(declID: memberID, ast: ast, interner: interner, provided: provided, depended: &depended)
+            }
+        case .funDecl(let d):
+            for param in d.valueParams {
+                if let typeRef = param.type {
+                    collectTypeRefDependencies(typeRefID: typeRef, ast: ast, interner: interner, depended: &depended)
+                }
+            }
+            if let retType = d.returnType {
+                collectTypeRefDependencies(typeRefID: retType, ast: ast, interner: interner, depended: &depended)
+            }
+        case .propertyDecl(let d):
+            if let typeRef = d.type {
+                collectTypeRefDependencies(typeRefID: typeRef, ast: ast, interner: interner, depended: &depended)
+            }
+        case .typeAliasDecl(let d):
+            if let underlyingType = d.underlyingType {
+                collectTypeRefDependencies(typeRefID: underlyingType, ast: ast, interner: interner, depended: &depended)
+            }
+        case .enumEntryDecl:
+            break
+        }
+    }
+
+    /// Collects type reference dependencies.
+    private func collectTypeRefDependencies(
+        typeRefID: TypeRefID,
+        ast: ASTModule,
+        interner: StringInterner,
+        depended: inout Set<String>
+    ) {
+        guard let typeRef = ast.arena.typeRef(typeRefID) else { return }
+
+        switch typeRef {
+        case .named(let path, _, _):
+            for component in path {
+                depended.insert(interner.resolve(component))
+            }
+        case .functionType(let paramTypes, let returnType, _, _):
+            for paramType in paramTypes {
+                collectTypeRefDependencies(typeRefID: paramType, ast: ast, interner: interner, depended: &depended)
+            }
+            collectTypeRefDependencies(typeRefID: returnType, ast: ast, interner: interner, depended: &depended)
+        }
     }
 }

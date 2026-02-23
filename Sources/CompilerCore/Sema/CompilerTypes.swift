@@ -73,6 +73,11 @@ public struct CompilerOptions: Equatable {
     public var irFlags: [String]
     public var runtimeFlags: [String]
 
+    /// Path to the incremental compilation cache directory.
+    /// When non-nil and the `incremental` frontend flag is set, the compiler
+    /// will attempt to reuse results from the previous build.
+    public var incrementalCachePath: String?
+
     public init(
         moduleName: String,
         inputs: [String],
@@ -86,7 +91,8 @@ public struct CompilerOptions: Equatable {
         debugInfo: Bool = false,
         frontendFlags: [String] = [],
         irFlags: [String] = [],
-        runtimeFlags: [String] = []
+        runtimeFlags: [String] = [],
+        incrementalCachePath: String? = nil
     ) {
         self.moduleName = moduleName
         self.inputs = inputs
@@ -101,6 +107,7 @@ public struct CompilerOptions: Equatable {
         self.frontendFlags = frontendFlags
         self.irFlags = irFlags
         self.runtimeFlags = runtimeFlags
+        self.incrementalCachePath = incrementalCachePath
     }
 
     @available(*, deprecated, message: "Use debugInfo instead.")
