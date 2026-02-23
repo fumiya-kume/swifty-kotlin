@@ -331,6 +331,47 @@ public final class DataFlowAnalyzer {
                 return DataFlowState(variables: vars)
             }
             return base
+        case .isCheck(let exprID, let typeRefID, let negated, _):
+            // Only narrow when the isCheck's expr refers to the when subject.
+            // This prevents incorrect narrowing for `when(x) { y is String -> ... }`.
+            if let checkedSymbol = sema.bindings.identifierSymbols[exprID],
+               checkedSymbol != subjectSymbol {
+                return base
+            }
+            guard !negated else {
+                return base
+            }
+            guard let typeRef = ast.arena.typeRef(typeRefID),
+                  case .named(let path, _, let nullable) = typeRef,
+                  let firstName = path.first else {
+                return base
+            }
+            let candidates = sema.symbols.lookupAll(fqName: [firstName]).filter { symbolID in
+                guard let sym = sema.symbols.symbol(symbolID) else { return false }
+                switch sym.kind {
+                case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
+                    return true
+                default:
+                    return false
+                }
+            }
+            // Known limitation: when multiple symbols share the same simple name across packages,
+            // candidates.first is non-deterministic. This matches branchOnIsCheck behavior.
+            guard let targetSymbolID = candidates.first else {
+                return base
+            }
+            let narrowed = sema.types.make(.classType(ClassType(
+                classSymbol: targetSymbolID,
+                args: [],
+                nullability: nullable ? .nullable : .nonNull
+            )))
+            var vars = base.variables
+            vars[subjectSymbol] = VariableFlowState(
+                possibleTypes: [narrowed],
+                nullability: nullable ? .nullable : .nonNull,
+                isStable: true
+            )
+            return DataFlowState(variables: vars)
         default:
             return base
         }
@@ -485,6 +526,36 @@ public final class DataFlowAnalyzer {
         return symbols.lookupAll(fqName: ownerFQName).first(where: { symbolID in
             symbols.symbol(symbolID)?.kind == .enumClass
         })
+    }
+
+    /// Narrow a variable to non-null in the given flow state.
+    /// Infrastructure for future smart cast call sites (e.g., property narrowing, when-subject exhaustive narrowing).
+    public func narrowToNonNull(
+        symbol: SymbolID,
+        type: TypeID,
+        base: DataFlowState,
+        types: TypeSystem
+    ) -> DataFlowState {
+        let nonNullType = makeTypeNonNullable(type, types: types)
+        var vars = base.variables
+        vars[symbol] = VariableFlowState(
+            possibleTypes: [nonNullType],
+            nullability: .nonNull,
+            isStable: true
+        )
+        return DataFlowState(variables: vars)
+    }
+
+    /// Invalidate (remove) smart cast information for a variable after reassignment.
+    /// Infrastructure for future DataFlowState-level invalidation (locals-level invalidation is already handled
+    /// by `inferLocalAssignExpr` resetting `locals[name]` to the declared type).
+    public func invalidateVariable(
+        symbol: SymbolID,
+        base: DataFlowState
+    ) -> DataFlowState {
+        var vars = base.variables
+        vars.removeValue(forKey: symbol)
+        return DataFlowState(variables: vars)
     }
 
     public func merge(_ lhs: DataFlowState, _ rhs: DataFlowState) -> DataFlowState {

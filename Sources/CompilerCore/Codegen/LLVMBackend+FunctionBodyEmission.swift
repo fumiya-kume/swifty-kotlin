@@ -28,7 +28,6 @@ extension LLVMBackend {
                 lines.append("  kk_gc_roots[\(slot)] = p\(index);")
             }
         }
-        lines.append("  kk_register_frame_map(\(functionID)u, &\(frameMapDescriptorSymbol(for: function)));")
         if frameMapPlan.rootCount > 0 {
             lines.append("  kk_push_frame(\(functionID)u, kk_gc_roots);")
         } else {

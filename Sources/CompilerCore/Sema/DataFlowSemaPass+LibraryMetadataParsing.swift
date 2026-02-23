@@ -15,117 +15,77 @@ extension DataFlowSemaPassPhase {
             return nil
         }
 
+        let decoder = MetadataDecoder()
+        let metadataRecords = decoder.decode(content)
+
         var records: [ImportedLibrarySymbolRecord] = []
-        for rawLine in content.split(whereSeparator: \.isNewline) {
-            let line = rawLine.trimmingCharacters(in: .whitespacesAndNewlines)
-            if line.isEmpty || line.hasPrefix("symbols=") {
-                continue
-            }
-            let parts = line.split(separator: " ").map(String.init)
-            guard let kindToken = parts.first,
-                  let kind = symbolKindFromMetadata(kindToken) else {
-                continue
-            }
-            let mangledName = parts.count > 1 ? parts[1] : ""
-
-            var fqName: [InternedString] = []
-            var arity = 0
-            var isSuspend = false
-            var isInline = false
-            var typeSignature: String? = nil
-            var externalLinkName: String? = nil
-            var declaredFieldCount: Int? = nil
-            var declaredInstanceSizeWords: Int? = nil
-            var declaredVtableSize: Int? = nil
-            var declaredItableSize: Int? = nil
-            var superFQName: [InternedString]? = nil
-            var fieldOffsets: [ImportedFieldOffsetEntry] = []
-            var vtableSlots: [ImportedVTableSlotEntry] = []
-            var itableSlots: [ImportedITableSlotEntry] = []
-
-            for part in parts.dropFirst() {
-                guard let separatorIndex = part.firstIndex(of: "=") else {
-                    continue
-                }
-                let key = String(part[..<separatorIndex])
-                let value = String(part[part.index(after: separatorIndex)...])
-                switch key {
-                case "fq":
-                    fqName = value
-                        .split(separator: ".")
-                        .map { interner.intern(String($0)) }
-                case "arity":
-                    arity = Int(value) ?? 0
-                case "suspend":
-                    isSuspend = value == "1" || value == "true"
-                case "inline":
-                    isInline = value == "1" || value == "true"
-                case "sig":
-                    typeSignature = value.isEmpty ? nil : value
-                case "link":
-                    externalLinkName = value.isEmpty ? nil : value
-                case "fields":
-                    declaredFieldCount = Int(value)
-                case "layoutWords":
-                    declaredInstanceSizeWords = Int(value)
-                case "vtable":
-                    declaredVtableSize = Int(value)
-                case "itable":
-                    declaredItableSize = Int(value)
-                case "superFq":
-                    let parsed = value
-                        .split(separator: ".")
-                        .map { interner.intern(String($0)) }
-                    superFQName = parsed.isEmpty ? nil : parsed
-                case "fieldOffsets":
-                    fieldOffsets = parseImportedFieldOffsets(
-                        token: value,
-                        diagnostics: diagnostics,
-                        metadataPath: path,
-                        ownerFQName: fqName,
-                        interner: interner
-                    )
-                case "vtableSlots":
-                    vtableSlots = parseImportedVTableSlots(
-                        token: value,
-                        diagnostics: diagnostics,
-                        metadataPath: path,
-                        ownerFQName: fqName,
-                        interner: interner
-                    )
-                case "itableSlots":
-                    itableSlots = parseImportedITableSlots(
-                        token: value,
-                        diagnostics: diagnostics,
-                        metadataPath: path,
-                        ownerFQName: fqName,
-                        interner: interner
-                    )
-                default:
-                    continue
-                }
-            }
-
+        for metadataRecord in metadataRecords {
+            let fqName = metadataRecord.fqName
+                .split(separator: ".")
+                .map { interner.intern(String($0)) }
             guard !fqName.isEmpty else {
                 continue
             }
+            let superFQName: [InternedString]? = metadataRecord.superFQName.flatMap { value in
+                let parsed = value.split(separator: ".").map { interner.intern(String($0)) }
+                return parsed.isEmpty ? nil : parsed
+            }
+            let fieldOffsets: [ImportedFieldOffsetEntry]
+            if let fieldOffsetsStr = metadataRecord.fieldOffsets {
+                fieldOffsets = parseImportedFieldOffsets(
+                    token: fieldOffsetsStr,
+                    diagnostics: diagnostics,
+                    metadataPath: path,
+                    ownerFQName: fqName,
+                    interner: interner
+                )
+            } else {
+                fieldOffsets = []
+            }
+            let vtableSlots: [ImportedVTableSlotEntry]
+            if let vtableSlotsStr = metadataRecord.vtableSlots {
+                vtableSlots = parseImportedVTableSlots(
+                    token: vtableSlotsStr,
+                    diagnostics: diagnostics,
+                    metadataPath: path,
+                    ownerFQName: fqName,
+                    interner: interner
+                )
+            } else {
+                vtableSlots = []
+            }
+            let itableSlots: [ImportedITableSlotEntry]
+            if let itableSlotsStr = metadataRecord.itableSlots {
+                itableSlots = parseImportedITableSlots(
+                    token: itableSlotsStr,
+                    diagnostics: diagnostics,
+                    metadataPath: path,
+                    ownerFQName: fqName,
+                    interner: interner
+                )
+            } else {
+                itableSlots = []
+            }
             records.append(ImportedLibrarySymbolRecord(
-                kind: kind,
-                mangledName: mangledName,
+                kind: metadataRecord.kind,
+                mangledName: metadataRecord.mangledName,
                 fqName: fqName,
-                arity: arity,
-                isSuspend: isSuspend,
-                isInline: isInline,
-                typeSignature: typeSignature,
-                externalLinkName: externalLinkName,
-                declaredFieldCount: declaredFieldCount,
-                declaredInstanceSizeWords: declaredInstanceSizeWords,
-                declaredVtableSize: declaredVtableSize,
-                declaredItableSize: declaredItableSize,
+                arity: metadataRecord.arity,
+                isSuspend: metadataRecord.isSuspend,
+                isInline: metadataRecord.isInline,
+                typeSignature: metadataRecord.typeSignature,
+                externalLinkName: metadataRecord.externalLinkName,
+                declaredFieldCount: metadataRecord.declaredFieldCount,
+                declaredInstanceSizeWords: metadataRecord.declaredInstanceSizeWords,
+                declaredVtableSize: metadataRecord.declaredVtableSize,
+                declaredItableSize: metadataRecord.declaredItableSize,
                 superFQName: superFQName,
                 fieldOffsets: fieldOffsets,
                 vtableSlots: vtableSlots,
-                itableSlots: itableSlots
+                itableSlots: itableSlots,
+                isDataClass: metadataRecord.isDataClass,
+                isSealedClass: metadataRecord.isSealedClass,
+                annotations: metadataRecord.annotations
             ))
         }
 

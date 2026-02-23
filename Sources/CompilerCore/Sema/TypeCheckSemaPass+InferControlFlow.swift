@@ -49,6 +49,7 @@ extension TypeCheckSemaPassPhase {
     ) -> TypeID {
         let ast = ctx.ast
         let sema = ctx.sema
+        let interner = ctx.interner
         let boolType = sema.types.booleanType
         let conditionType = inferExpr(conditionExpr, ctx: ctx, locals: &locals, expectedType: boolType)
         emitSubtypeConstraint(
@@ -59,10 +60,17 @@ extension TypeCheckSemaPassPhase {
             sema: sema,
             diagnostics: ctx.semaCtx.diagnostics
         )
+        // Smart cast: apply condition branching to the while body (P5-66)
+        let branch = ctx.dataFlow.branchOnCondition(
+            conditionExpr, base: ctx.flowState, locals: locals,
+            ast: ast, sema: sema, interner: interner
+        )
         var bodyLocals = locals
+        applyFlowStateToLocals(branch.trueState, locals: &bodyLocals, sema: sema)
+        let bodyCtx = ctx.copying(loopDepth: ctx.loopDepth + 1, flowState: branch.trueState)
         _ = inferExpr(
             bodyExpr,
-            ctx: ctx.copying(loopDepth: ctx.loopDepth + 1),
+            ctx: bodyCtx,
             locals: &bodyLocals,
             expectedType: nil
         )
