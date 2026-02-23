@@ -22,6 +22,10 @@ public final class CompilationContext: @unchecked Sendable {
     /// `nil` means full build (all files).
     public var incrementalRecompileSet: Set<String>? = nil
 
+    /// Phase timer for recording per-phase wall-clock durations.
+    /// Non-nil when the `time-phases` frontend flag is active.
+    public var phaseTimer: PhaseTimer? = nil
+
     public init(
         options: CompilerOptions,
         sourceManager: SourceManager,
