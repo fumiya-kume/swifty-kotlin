@@ -89,7 +89,7 @@ extension DataFlowSemaPassPhase {
             case "Unit":
                 return nullability == .nullable ? types.nullableAnyType : types.unitType
             case "Nothing":
-                return types.nothingType
+                return nullability == .nullable ? types.nullableNothingType : types.nothingType
             default:
                 break
             }
