@@ -413,10 +413,10 @@
   - [x] top-level `private` の file スコープ制約と member `protected` 制約を検証する
   - [x] 不可視参照時の診断（`KSWIFTK-SEMA-*`）と回帰ケースを追加する
 
-- [ ] P5-54: `.kklib` manifest の固定スキーマ検証と互換性チェックを実装する（spec.md J14.2）
-  - [ ] `formatVersion`/`moduleName`/`kotlinLanguageVersion`/`target` を読み取り、欠落・不整合を診断する
-  - [ ] 現在ターゲットと非互換な library を import した場合に `KSWIFTK-LIB-*` で失敗させる
-  - [ ] `objects`/`metadata`/`inlineKIRDir` のパス妥当性チェックを追加する
+- [x] P5-54: `.kklib` manifest の固定スキーマ検証と互換性チェックを実装する（spec.md J14.2）
+  - [x] `formatVersion`/`moduleName`/`kotlinLanguageVersion`/`target` を読み取り、欠落・不整合を診断する
+  - [x] 現在ターゲットと非互換な library を import した場合に `KSWIFTK-LIB-*` で失敗させる
+  - [x] `objects`/`metadata`/`inlineKIRDir` のパス妥当性チェックを追加する
 
 - [x] P5-55: Data-flow 解析を true/false 分岐状態モデルへ拡張する（spec.md J10.1）
   - [x] `DataFlowState` を式条件（`if`/`when`/logical op）で分岐生成し、CFG 合流点で merge する
