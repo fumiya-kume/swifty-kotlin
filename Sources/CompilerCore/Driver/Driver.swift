@@ -150,9 +150,9 @@ public final class CompilerDriver {
 
         if let recompileSet = cache.recompilationSet(allPaths: allPaths) {
             if recompileSet.isEmpty {
-                // Nothing changed — we still run the full pipeline (with
-                // all cached intermediate results) to produce a consistent output.
-                // In future, we could short-circuit here.
+                // Nothing changed — we still run the full pipeline to produce
+                // a consistent output. In the future, we could short-circuit
+                // here or reuse cached intermediate results more aggressively.
                 ctx.incrementalRecompileSet = nil
             } else {
                 ctx.incrementalRecompileSet = recompileSet
@@ -173,6 +173,14 @@ public final class CompilerDriver {
         let interner = ctx.interner
         let symbols = sema.symbols
 
+        // Pre-build a map from FileID -> provided symbol names in one pass
+        // over the symbol table, avoiding O(files * symbols) scanning.
+        var symbolsByFile: [FileID: Set<String>] = [:]
+        for sym in symbols.allSymbols() {
+            guard let symFileID = symbols.sourceFileID(for: sym.id) else { continue }
+            symbolsByFile[symFileID, default: []].insert(interner.resolve(sym.name))
+        }
+
         // For each AST file, record which symbols it provides and depends on.
         for file in ast.files {
             let fileID = file.fileID
@@ -191,18 +199,19 @@ public final class CompilerDriver {
                 }
             }
 
-            // Collect provided symbols from SymbolTable's sourceFileID tracking.
-            for sym in symbols.allSymbols() {
-                let symFileID = symbols.sourceFileID(for: sym.id)
-                if symFileID == fileID {
-                    provided.insert(interner.resolve(sym.name))
-                }
+            // Collect provided symbols from pre-built map.
+            if let fileSymbols = symbolsByFile[fileID] {
+                provided.formUnion(fileSymbols)
             }
 
-            // Imports declare dependencies on external symbols.
+            // Imports: use alias if present, otherwise the last path component
+            // (simple name) to match provided symbol granularity.
             for imp in file.imports {
-                let importPath = imp.path.map { interner.resolve($0) }.joined(separator: ".")
-                depended.insert(importPath)
+                if let alias = imp.alias {
+                    depended.insert(interner.resolve(alias))
+                } else if let last = imp.path.last {
+                    depended.insert(interner.resolve(last))
+                }
             }
 
             // Walk top-level declarations to find referenced names.
@@ -311,8 +320,11 @@ public final class CompilerDriver {
 
         switch typeRef {
         case .named(let path, _, _):
-            for component in path {
-                depended.insert(interner.resolve(component))
+            // Use only the last path component (the simple type name) to match
+            // provided symbol granularity. Earlier components are package/module
+            // qualifiers that don't correspond to per-file provided symbols.
+            if let last = path.last {
+                depended.insert(interner.resolve(last))
             }
         case .functionType(let paramTypes, let returnType, _, _):
             for paramType in paramTypes {

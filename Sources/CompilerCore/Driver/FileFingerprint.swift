@@ -10,13 +10,14 @@ public struct FileFingerprint: Equatable, Codable {
     /// SHA-256 hex digest of the file contents.
     public let contentHash: String
 
-    /// Last-modified time as seconds since the Unix epoch.
-    public let mtime: Double
+    /// Last-modified time as nanoseconds since the Unix epoch.
+    /// Stored as `Int64` to avoid floating-point round-trip issues through JSON.
+    public let mtimeNanos: Int64
 
-    public init(path: String, contentHash: String, mtime: Double) {
+    public init(path: String, contentHash: String, mtimeNanos: Int64) {
         self.path = path
         self.contentHash = contentHash
-        self.mtime = mtime
+        self.mtimeNanos = mtimeNanos
     }
 
     /// Computes a fingerprint for the file at the given path.
@@ -32,8 +33,8 @@ public struct FileFingerprint: Equatable, Codable {
     /// Computes a fingerprint from already-loaded file contents.
     public static func compute(for path: String, contents: Data) -> FileFingerprint {
         let hash = sha256Hex(contents)
-        let mtime = fileMtime(path: path)
-        return FileFingerprint(path: path, contentHash: hash, mtime: mtime)
+        let mtimeNanos = fileMtimeNanos(path: path)
+        return FileFingerprint(path: path, contentHash: hash, mtimeNanos: mtimeNanos)
     }
 
     /// Returns `true` when the content hash differs from `other`.
@@ -44,7 +45,7 @@ public struct FileFingerprint: Equatable, Codable {
     /// Quick mtime-based check: returns `true` when the mtime is unchanged,
     /// meaning we can *probably* skip re-hashing.
     public func mtimeUnchanged(from other: FileFingerprint) -> Bool {
-        path == other.path && mtime == other.mtime
+        path == other.path && mtimeNanos == other.mtimeNanos
     }
 
     // MARK: - Private helpers
@@ -150,12 +151,13 @@ public struct FileFingerprint: Equatable, Codable {
         (value >> amount) | (value << (32 - amount))
     }
 
-    private static func fileMtime(path: String) -> Double {
+    private static func fileMtimeNanos(path: String) -> Int64 {
         let url = URL(fileURLWithPath: path)
         guard let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
               let date = attrs[.modificationDate] as? Date else {
             return 0
         }
-        return date.timeIntervalSince1970
+        // Convert to nanoseconds to avoid floating-point round-trip issues.
+        return Int64(date.timeIntervalSince1970 * 1_000_000_000)
     }
 }

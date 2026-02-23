@@ -2,13 +2,13 @@ import Foundation
 
 /// Manages the on-disk cache for incremental compilation.
 ///
-/// The cache directory layout is:
+/// The primary cache files used by this type are:
 /// ```
 /// <cachePath>/
 ///   manifest.json       — file fingerprints from the previous build
 ///   deps.json           — dependency graph (symbol ↔ file relationships)
-///   per-file/
-///     <hash>.kirbin     — serialized per-file frontend results
+///   per-file/           — (reserved for per-file artifacts; not used here yet)
+///     <hash>.kirbin     — serialized per-file frontend results (written/read by other components)
 /// ```
 public final class IncrementalCompilationCache {
 
@@ -19,7 +19,8 @@ public final class IncrementalCompilationCache {
     private var previousFingerprints: [String: FileFingerprint] = [:]
 
     /// Dependency graph from the *previous* successful compilation.
-    private var previousDependencyGraph: DependencyGraph = DependencyGraph()
+    /// `nil` means no valid dependency graph was loaded (deps.json missing or corrupt).
+    private var previousDependencyGraph: DependencyGraph?
 
     /// Fingerprints computed for the *current* compilation inputs.
     private var currentFingerprints: [String: FileFingerprint] = [:]
@@ -30,8 +31,12 @@ public final class IncrementalCompilationCache {
 
     // MARK: - Loading previous state
 
+    /// Current supported manifest version. Older/newer versions are ignored.
+    private static let supportedManifestVersion = 1
+
     /// Loads the manifest and dependency graph from the cache directory.
-    /// If the cache doesn't exist or is corrupt, starts fresh.
+    /// If the cache doesn't exist, is corrupt, or has an unsupported version,
+    /// starts fresh.
     public func loadPreviousState() {
         let fm = FileManager.default
         let manifestPath = cachePath + "/manifest.json"
@@ -40,7 +45,8 @@ public final class IncrementalCompilationCache {
         if fm.fileExists(atPath: manifestPath),
            let data = try? Data(contentsOf: URL(fileURLWithPath: manifestPath)) {
             let decoder = JSONDecoder()
-            if let manifest = try? decoder.decode(CacheManifest.self, from: data) {
+            if let manifest = try? decoder.decode(CacheManifest.self, from: data),
+               manifest.version == Self.supportedManifestVersion {
                 for fp in manifest.fingerprints {
                     previousFingerprints[fp.path] = fp
                 }
@@ -124,10 +130,16 @@ public final class IncrementalCompilationCache {
     }
 
     /// Computes the full recompilation set using the dependency graph.
-    /// Returns `nil` if no cache is available (full build needed).
+    /// Returns `nil` if no cache is available (full build needed), including
+    /// when the dependency graph is missing or corrupt.
     public func recompilationSet(allPaths: [String]) -> Set<String>? {
         if previousFingerprints.isEmpty {
             // No previous build — full build needed.
+            return nil
+        }
+
+        guard let depGraph = previousDependencyGraph else {
+            // Dependency graph missing or corrupt — full build needed.
             return nil
         }
 
@@ -136,7 +148,7 @@ public final class IncrementalCompilationCache {
             return Set()
         }
 
-        let recompFiles = previousDependencyGraph.recompilationSet(
+        let recompFiles = depGraph.recompilationSet(
             changedFiles: changed,
             allFiles: allPaths
         )
@@ -149,7 +161,7 @@ public final class IncrementalCompilationCache {
     }
 
     /// Returns the previous dependency graph (for querying after load).
-    public var dependencyGraph: DependencyGraph {
+    public var dependencyGraph: DependencyGraph? {
         previousDependencyGraph
     }
 
@@ -173,13 +185,23 @@ public final class IncrementalCompilationCache {
             let encoder = JSONEncoder()
             encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
             let manifestData = try encoder.encode(manifest)
-            try manifestData.write(to: URL(fileURLWithPath: cachePath + "/manifest.json"))
+            try manifestData.write(
+                to: URL(fileURLWithPath: cachePath + "/manifest.json"),
+                options: .atomic
+            )
 
             // Save dependency graph
             let depsData = try dependencyGraph.serialize()
-            try depsData.write(to: URL(fileURLWithPath: cachePath + "/deps.json"))
+            try depsData.write(
+                to: URL(fileURLWithPath: cachePath + "/deps.json"),
+                options: .atomic
+            )
         } catch {
             // Cache save failure is non-fatal — next build will do a full compile.
+            let message = "[IncrementalCompilationCache] Failed to save cache at '\(cachePath)': \(error)\n"
+            if let data = message.data(using: .utf8) {
+                FileHandle.standardError.write(data)
+            }
         }
     }
 
@@ -187,7 +209,7 @@ public final class IncrementalCompilationCache {
     public func clearCache() {
         try? FileManager.default.removeItem(atPath: cachePath)
         previousFingerprints = [:]
-        previousDependencyGraph = DependencyGraph()
+        previousDependencyGraph = nil
         currentFingerprints = [:]
     }
 }

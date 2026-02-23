@@ -73,9 +73,10 @@ public struct CompilerOptions: Equatable {
     public var irFlags: [String]
     public var runtimeFlags: [String]
 
-    /// Path to the incremental compilation cache directory.
-    /// When non-nil and the `incremental` frontend flag is set, the compiler
-    /// will attempt to reuse results from the previous build.
+    /// Path to the incremental compilation cache directory, if any.
+    /// Incremental compilation is enabled when either this is non-nil or the
+    /// `incremental` frontend flag is set; when enabled and a cache is
+    /// available, the compiler will attempt to reuse results from previous builds.
     public var incrementalCachePath: String?
 
     public init(
