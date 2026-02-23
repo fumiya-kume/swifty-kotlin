@@ -95,6 +95,8 @@ extension TypeCheckSemaPassPhase {
                 sema: sema,
                 diagnostics: ctx.semaCtx.diagnostics
             )
+            // Smart cast invalidation: reset to declared type on reassignment (P5-66).
+            // Any previous smart cast narrowing for this variable is discarded.
             locals[name] = (local.type, local.symbol, local.isMutable, true)
         }
         sema.bindings.bindExprType(id, type: sema.types.unitType)

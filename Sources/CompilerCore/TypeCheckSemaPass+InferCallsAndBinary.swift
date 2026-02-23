@@ -141,6 +141,17 @@ extension TypeCheckSemaPassPhase {
         case .elvis:
             let nonNullLhs = makeNonNullable(lhs, types: sema.types)
             type = sema.types.lub([nonNullLhs, rhs])
+            // Smart cast: `x ?: return` / `x ?: throw` narrows x to non-null (P5-66)
+            if let rhsExpr = ast.arena.expr(rhsID),
+               isTerminatingExpr(rhsExpr) {
+                if let lhsExpr = ast.arena.expr(lhsID),
+                   case .nameRef(let elvisVarName, _) = lhsExpr,
+                   let elvisLocal = locals[elvisVarName],
+                   isStableLocalSymbol(elvisLocal.symbol, sema: sema) {
+                    let nonNullType = makeNonNullable(elvisLocal.type, types: sema.types)
+                    locals[elvisVarName] = (nonNullType, elvisLocal.symbol, elvisLocal.isMutable, elvisLocal.isInitialized)
+                }
+            }
         case .rangeTo:
             type = sema.types.anyType
         }

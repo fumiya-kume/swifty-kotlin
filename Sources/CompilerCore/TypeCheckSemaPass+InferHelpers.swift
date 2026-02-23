@@ -296,6 +296,23 @@ extension TypeCheckSemaPassPhase {
         }
     }
 
+    /// Check if an expression is a terminating expression (return/throw) for elvis guard narrowing.
+    func isTerminatingExpr(_ expr: Expr) -> Bool {
+        switch expr {
+        case .returnExpr:
+            return true
+        case .throwExpr:
+            return true
+        case .blockExpr(_, let trailingExpr, _):
+            guard let trailingExpr else { return false }
+            // Recursion not possible without AST arena access; treat block trailing as opaque.
+            let _ = trailingExpr
+            return false
+        default:
+            return false
+        }
+    }
+
     func compoundAssignToBinaryOp(_ op: CompoundAssignOp) -> BinaryOp {
         switch op {
         case .plusAssign: return .add

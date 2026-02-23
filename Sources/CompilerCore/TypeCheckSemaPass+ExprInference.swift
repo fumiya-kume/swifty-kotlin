@@ -225,12 +225,27 @@ extension TypeCheckSemaPassPhase {
             } else {
                 type = targetType
             }
+            // Smart cast: after `x as T`, narrow x to T in flow state (P5-100)
+            if !isSafe,
+               let castSubjectExpr = ast.arena.expr(exprID),
+               case .nameRef(let castVarName, _) = castSubjectExpr,
+               let castLocal = locals[castVarName],
+               isStableLocalSymbol(castLocal.symbol, sema: sema) {
+                locals[castVarName] = (targetType, castLocal.symbol, castLocal.isMutable, castLocal.isInitialized)
+            }
             sema.bindings.bindExprType(id, type: type)
             return type
 
         case .nullAssert(let exprID, _):
             let operandType = inferExpr(exprID, ctx: ctx, locals: &locals)
             let type = makeNonNullable(operandType, types: sema.types)
+            // Smart cast: after `x!!`, narrow x to non-null in subsequent code (P5-66)
+            if let assertSubjectExpr = ast.arena.expr(exprID),
+               case .nameRef(let assertVarName, _) = assertSubjectExpr,
+               let assertLocal = locals[assertVarName],
+               isStableLocalSymbol(assertLocal.symbol, sema: sema) {
+                locals[assertVarName] = (type, assertLocal.symbol, assertLocal.isMutable, assertLocal.isInitialized)
+            }
             sema.bindings.bindExprType(id, type: type)
             return type
 
