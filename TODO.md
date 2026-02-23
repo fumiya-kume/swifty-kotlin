@@ -769,7 +769,7 @@
   - [ ] `Nothing` を LUB 規則のボトム型として扱い、`if/when/try` の分岐合流で正しく処理する
   - [ ] `Nothing?` と `Nothing` の区別（`null` は `Nothing?`）を型システムに反映する
   - [ ] 到達不能コード（`Nothing` の後の文）を DataFlow が unreachable と判定し diagnostic を出す
-  - [ ] `throw`/`return` による分岐縮小の diff/golden ケース（型推論・到達不能）を追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-96`
   - **完了条件**: `val x: Int = if (cond) 1 else throw E()` が型エラーなしで `Int` と推論され、到達不能行が診断される
 
 - [ ] P5-97: intersection type（`T & U`）と captured type を型システムに追加する（spec.md J8）
@@ -777,7 +777,7 @@
   - [ ] `inferExpr` で smart cast 後の refinement 型を intersection として表現できるようにする
   - [ ] intersection 型のサブタイプ規則（`A & B <: A`、`A & B <: B`）を `TypeSystem.isSubtype` に追加する
   - [ ] `T & Any`（definitely non-nullable）の型推論と `?.` 解決への影響を実装する
-  - [ ] intersection smart cast の diff/golden ケースを追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-97`
   - **完了条件**: `fun <T> foo(x: T & Any)` の引数が non-null として扱われ、smart cast が不要になる
 
 - [ ] P5-98: 型投影（`out T` / `in T` / `*`）の use-site variance を完全実装する（spec.md J8）
@@ -785,7 +785,7 @@
   - [ ] star projection `*` を `out Any?` として扱い、write を禁止・read を `Any?` として型付けする
   - [ ] use-site variance と declaration-site variance の合成規則（in×in=out 等）を `TypeSystem` に実装する
   - [ ] variance 違反のメンバアクセスに `KSWIFTK-SEMA-VAR-*` 診断を出す
-  - [ ] star projection / `in T` / `out T` の diff/golden ケースを追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-98`
   - **完了条件**: `val list: MutableList<out Number>` で `.add(...)` が型エラー、`.get(0)` が `Number` になる
 
 - [ ] P5-99: typealias の generic alias・循環検出・展開深度制限を完全実装する（spec.md J6/J8）
@@ -793,7 +793,7 @@
   - [ ] 循環 alias（`typealias A = B; typealias B = A`）を detect し `KSWIFTK-SEMA-ALIAS-CYCLE` を出す
   - [ ] alias 展開後の型が variance 制約を壊さないことを検証する
   - [ ] recursive type の展開に最大深度制限（例: 32 段）を設けてループを防ぐ
-  - [ ] generic alias diff/golden ケース（lambda alias・circular alias エラー）を追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-99`
   - **完了条件**: `typealias Predicate<T> = (T) -> Boolean` が call-site で正しく展開され型チェックが通る
 
 ---
@@ -806,7 +806,7 @@
   - [ ] `as?` は cast 失敗時に `null` を返し、型を `TargetType?` へ narrow する
   - [ ] KIR に cast チェック命令を追加し、codegen で runtime `kk_typecheck` 呼び出しへ lowering する
   - [ ] `as` cast 後の smart cast（P5-66 連携）伝播を実装する
-  - [ ] unsafe/safe cast の diff/golden ケース（成功・失敗・null 入力）を追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-100`
   - **完了条件**: `x as String` が非 String で `ClassCastException`、`x as? String` が `null` を返し `kotlinc` と一致
 
 - [ ] P5-101: `is` / `!is` 型検査と smart cast を完全実装する（spec.md J9/J10）
@@ -815,7 +815,7 @@
   - [ ] `!is` チェック後の else branch でも narrow を適用する
   - [ ] ジェネリクス型（`x is List<*>`）の reified 制限と erasure 警告を実装する
   - [ ] `is` check を `&&` / `||` と組み合わせた場合の smart cast 伝播を実装する
-  - [ ] `is`/`!is` の diff/golden ケース（基本・&&条件・ジェネリクス erasure 警告）を追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-101`
   - **完了条件**: `if (x is String) x.length` が smart cast で動作し、`x !is String` branch で元の型になる
 
 - [ ] P5-102: 演算子の優先順位テーブルを Kotlin 仕様完全準拠で実装する（spec.md J5）
@@ -823,14 +823,14 @@
   - [ ] infix 関数呼び出し（`a shl b`・`a or b`）を中置演算子として正しい優先順位で解析する
   - [ ] `!!` の postfix 優先順位（`.` より低くないこと）を確認する
   - [ ] `a + b * c - d / e` 等の混在式が正しい AST 木を生成することを golden で固定する
-  - [ ] 優先順位境界での結合テスト（parser golden）を追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-102`
   - **完了条件**: `1 + 2 * 3 == 7`・`true || false && false == true` が `kotlinc` と同一に評価される
 
 - [ ] P5-103: bitwise / shift 演算子（`and`/`or`/`xor`/`inv`/`shl`/`shr`/`ushr`）を infix 関数として実装する（spec.md J9）
   - [ ] `Int`/`Long` の `and`/`or`/`xor`/`inv`/`shl`/`shr`/`ushr` を stdlib infix 関数として stub 実装する
   - [ ] Sema で infix 関数呼び出し構文（`a shl 3`）を overload resolver に通す
   - [ ] bit 演算の結果型推論（`Int and Int → Int`）を実装する
-  - [ ] `inv()` の unary 用法と `and`/`or`/`xor` の二項用法の diff/golden ケースを追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-103`
   - **完了条件**: `(0xFF and 0x0F).toString(16)` が `kotlinc` と同一出力（`"f"`）になる
 
 - [ ] P5-104: `@Label` / `return@label` / `break@label` / `continue@label` を完全実装する（spec.md J5/J6）
@@ -838,7 +838,7 @@
   - [ ] Sema で label scope を管理し、`return@label` が lambda/fun のいずれを対象にするか解決する
   - [ ] `break@outer` / `continue@outer` を nested loop の外側ループ制御フローへ接続する
   - [ ] `return@label` がラムダ内から外側関数へ non-local return する場合の lowering を実装する
-  - [ ] labeled break/continue/return の diff/golden ケース（入れ子ループ・inline lambda non-local return）を追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-104`
   - **完了条件**: `outer@ for (...) { for (...) { break@outer } }` が外側ループを抜け `kotlinc` と一致
 
 ---
@@ -850,7 +850,7 @@
   - [ ] Sema で複数条件を OR 結合として型検査し、exhaustiveness に反映する
   - [ ] KIR lowering で複数条件を OR jump として展開し、重複ヒットを排除する
   - [ ] sealed/enum × 複数条件の exhaustiveness 診断精度を向上する
-  - [ ] `,` 区切り複数条件・range guard の diff/golden ケースを追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-105`
   - **完了条件**: `when (x) { 1, 2 -> "few"; else -> "many" }` が `kotlinc` と同一動作する
 
 - [ ] P5-106: `try` を式として使う場合の型推論と `finally` 影響を実装する（spec.md J6/J11）
@@ -858,14 +858,14 @@
   - [ ] `finally` ブロックの戻り値が型推論を汚染しない（`Unit` 扱い）ことを保証する
   - [ ] `catch` ブランチが複数ある場合の各ブランチ型合流を実装する
   - [ ] some exception type のみ catch し残りを再 throw する制御フロー型推論を実装する
-  - [ ] try 式の diff/golden ケース（型合流・finally 影響なし・複数 catch）を追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-106`
   - **完了条件**: `val x: String = try { "ok" } catch (e: Exception) { "err" }` が型エラーなしでコンパイルされる
 
 - [ ] P5-107: `do-while` の condition スコープと `break`/`continue`・初回実行を完全実装する（spec.md J5/J6）
   - [ ] `do { body } while (cond)` のパースで condition が body スコープ外であることを保証する
   - [ ] `do-while` 内の `break` / `continue` を正しい label ターゲットに接続する
   - [ ] do-while の初回実行保証（condition が false でも body が 1 回実行）を codegen で保証する
-  - [ ] do-while + label + break の diff/golden ケースを追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-107`
   - **完了条件**: `do { ... } while (false)` が body を 1 回実行し、`break` が正しくループを脱出する
 
 ---
@@ -876,28 +876,28 @@
   - [ ] top-level `val`/`var` を property シンボルとして扱い、getter/setter ABI を生成する
   - [ ] top-level property の初期化順序（宣言順・依存あり）を global initializer で保証する
   - [ ] top-level `var` への setter を通した代入（`Pkg.x = 1`）を解決する
-  - [ ] top-level getter/setter を持つ property の diff/golden ケースを追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-108`
   - **完了条件**: top-level `val pi = 3.14` と `var counter = 0` が `kotlinc` と同一動作する
 
 - [ ] P5-109: `const val` のコンパイル時定数畳み込みを実装する（spec.md J6/J7）
   - [ ] `const val` を宣言時に型チェックし、primitive/String 限定であることを検証する
   - [ ] `const val` を参照する式を Sema/KIR で定数値に畳み込み、実 getter 呼び出しを省く
   - [ ] annotation 引数に `const val` を使えることを Sema で検証する（P5-86 連携）
-  - [ ] companion object / top-level の `const val` の diff/golden ケースを追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-109`
   - **完了条件**: `const val MAX = 100; if (x > MAX) ...` が `if (x > 100)` と同等にコンパイルされる
 
 - [ ] P5-110: `lateinit var` の初期化チェックと `isInitialized` を実装する（spec.md J6/J7）
   - [ ] `lateinit var` を Sema で認識し、nullable でないこと・reference type 制約を検証する
   - [ ] 未初期化 `lateinit var` へのアクセス時に `UninitializedPropertyAccessException` を `outThrown` 経由で throw する
   - [ ] `::x.isInitialized` を property reference の特別属性として Sema/KIR に接続する
-  - [ ] lateinit を使った diff/golden ケース（初期化前アクセス例外・isInitialized）を追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-110`
   - **完了条件**: 未初期化 `lateinit var` アクセスが `UninitializedPropertyAccessException` を throw する
 
 - [ ] P5-111: `object` declaration（singleton）の lazy 初期化と init block 実行順序を実装する（spec.md J6/J7）
   - [ ] `object Foo { ... }` を one-time lazy init singleton としてシンボル化し、global initializer guard を生成する
   - [ ] object への最初のアクセス時に初期化が走り、2 回目以降はキャッシュを返すことを保証する
   - [ ] object body の init block 実行順序（property initializer → init block）を codegen で保証する
-  - [ ] object singleton の diff/golden ケース（lazy init・init block 順序）を追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-111`
   - **完了条件**: `object Counter { var n = 0 }` が singleton 保証で動作し、`kotlinc` と同一出力になる
 
 ---
@@ -908,42 +908,42 @@
   - [ ] `abstract class` / `abstract fun` / `abstract val` を Sema で認識し、インスタンス化禁止を診断する
   - [ ] concrete subclass がすべての abstract member を override しない場合に `KSWIFTK-SEMA-ABSTRACT` を出す
   - [ ] `abstract class` への direct `super.foo()` 呼び出しを禁止し診断する
-  - [ ] abstract class inheritance と override の diff/golden ケースを追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-112`
   - **完了条件**: `abstract class A { abstract fun f() }; class B : A() { override fun f() = 1 }` が正しくコンパイルされる
 
 - [ ] P5-113: `interface` default method（body あり fun in interface）を front-to-back で実装する（spec.md J6/J7/J13.2）
   - [ ] interface body 内に body を持つ fun 宣言を Parser/AST/Sema で保持する
   - [ ] concrete class が override しない場合に interface default 実装を itable 経由で dispatch する
   - [ ] default method と concrete override の共存を vtable/itable で正しく表現する（P5-25 連携）
-  - [ ] interface default method の diff/golden ケース（デフォルト利用・override・property default getter）を追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-113`
   - **完了条件**: interface default method が override されない場合に default 実装が呼ばれる
 
 - [ ] P5-114: 多重インターフェース実装と diamond override の解決規則を実装する（spec.md J7/J13.2）
   - [ ] class が複数 interface を実装する場合の itable 割当ロジックを拡張する（slot conflict 解決）
   - [ ] 同名 default method を複数 interface が持つ場合に override を強制し `KSWIFTK-SEMA-DIAMOND` を出す
   - [ ] `super<InterfaceName>.method()` で特定 interface の default 実装を明示呼び出しできる
-  - [ ] diamond 継承の itable 共有・override 強制の diff/golden ケースを追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-114`
   - **完了条件**: `class C : A, B` で両方に同名 default method があると `override` を強制し診断が出る
 
 - [ ] P5-115: `open` / `final` / `override` 修飾子の継承制約を完全実装する（spec.md J6/J7）
   - [ ] `final` class または `final fun` を override しようとした場合に `KSWIFTK-SEMA-FINAL` を出す
   - [ ] `open` でない class への subclass 化を診断する（Kotlin はデフォルト `final`）
   - [ ] `override` 修飾子なしで親の関数を隠蔽した場合に Error/Warning を出す
-  - [ ] `open`/`final`/`override` の diff/golden ケースを追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-115`
   - **完了条件**: non-open class の継承は診断され、`open class` の継承と override が `kotlinc` と一致する
 
 - [ ] P5-116: `data object` / anonymous object の型と等値比較を実装する（spec.md J6）
   - [ ] `data object Singleton` を singleton かつ equals/hashCode/toString 合成ありとして扱う
   - [ ] anonymous object（`object : Interface { ... }`）を object literal（P5-20）と統合する
   - [ ] anonymous object の型を local nominal として推論し、呼び出しスコープ内で有効にする
-  - [ ] data object / anonymous object の diff/golden ケースを追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-116`
   - **完了条件**: `data object None` が `None == None` → `true`、`None.toString()` → `"None"` を返す
 
 - [ ] P5-117: constructor の `init` block と primary constructor property の初期化順序を保証する（spec.md J7）
   - [ ] primary constructor の `val`/`var` パラメータを property として宣言と同時に初期化する
   - [ ] class body 内の property 初期化と `init { }` block の実行を宣言順（上から下）で保証する
   - [ ] secondary constructor が `this(...)` で primary を必ず委譲（または `super(...)` 委譲）することを検証する
-  - [ ] 初期化順序に依存したコードの diff/golden ケース（`init` block 2 つ・property 依存）を追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-117`
   - **完了条件**: `class A { val x = f(); init { println(x) }; val y = x + 1 }` が宣言順で初期化される
 
 ---
@@ -961,7 +961,7 @@
   - [ ] `infix fun T.foo(arg: Type)` を parser/AST で infix function として保持する
   - [ ] `a foo b` 形式の中置呼び出しを Sema で receiver + infix function 呼び出しへ解決する
   - [ ] infix 関数の優先順位を通常関数呼び出しより低く、`||`/`&&` より高く設定する（P5-102 連携）
-  - [ ] `to`（`Pair` infix）/ カスタム infix の diff/golden ケースを追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-119`
   - **完了条件**: `1 to "one"` が `Pair(1, "one")` に、カスタム infix 関数が正しい優先順位で評価される
 
 - [ ] P5-120: `operator fun` の全標準 operator を網羅し診断を整備する（spec.md J9）
@@ -969,7 +969,7 @@
   - [ ] operator 名と引数・戻り値の型制約を Sema で検証する（例: `inc()` は receiver 型を返す）
   - [ ] `operator` 修飾子なしで operator 名の関数を演算子として使おうとした場合に診断する
   - [ ] `inc`/`dec`（prefix/postfix `++`/`--`）の pre/post セマンティクスを正しく lowering する
-  - [ ] 全 operator 記号 → 関数名マッピングの diff/golden ケースを追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-120`
   - **完了条件**: `operator fun inc()` が `++x` に desugared され、`operator` なし fun は演算子として使えない
 
 - [ ] P5-121: function type / lambda の `it`・型省略・destructuring を完全実装する（spec.md J9/J12）
@@ -977,7 +977,7 @@
   - [ ] lambda パラメータの型が context から推論される場合（`list.map { it + 1 }`）に型注釈を省略できる
   - [ ] lambda パラメータを `(a, b)` 形式で destructuring する（P5-82 連携）
   - [ ] trailing lambda 構文（`foo(1) { it * 2 }`）を parser で正しく扱う（P5-20 連携）
-  - [ ] `it`・型省略・destructuring の diff/golden ケースを追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-121`
   - **完了条件**: `listOf(1,2,3).map { it * 2 }` / `pairs.map { (a,b) -> a + b }` が `kotlinc` と一致
 
 ---
@@ -988,21 +988,21 @@
   - [ ] `val String.firstChar: Char get() = this[0]` を extension property シンボルとして Sema に登録する
   - [ ] extension property の `get`/`set` を extension function として ABI lowering する
   - [ ] extension property を import・overload resolver で解決し、member property より低い優先順位を保つ
-  - [ ] extension property の diff/golden ケース（読み取り・書き込み・import）を追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-122`
   - **完了条件**: `val String.firstChar get() = this[0]` が `"hello".firstChar` で `'h'` を返す
 
 - [ ] P5-123: getter/setter 内で backing field を参照する `field` キーワードを実装する（spec.md J7）
   - [ ] getter/setter body 内で `field` を backing field への参照として Sema で解決する
   - [ ] `field` への代入（setter 内）と読み取り（getter 内）を backing field load/store IR に lowering する
   - [ ] `field` を getter/setter 外で使うと `KSWIFTK-SEMA-FIELD` 診断を出す
-  - [ ] `field` を使う diff/golden ケース（カスタム setter で validate してから set）を追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-123`
   - **完了条件**: `var x: Int = 0; set(v) { field = if (v < 0) 0 else v }` が setter で field に正しく書き込む
 
 - [ ] P5-124: `provideDelegate` operator と `KProperty<*>` stub を完全連携させる（spec.md J7/J9）
   - [ ] property 初期化時に `provideDelegate(thisRef, property)` を自動呼び出しし、delegate オブジェクトをキャッシュする
   - [ ] `thisRef` 引数（property が属する receiver）と `property` 引数（`KProperty<*>` stub）を lowering で渡す
   - [ ] `KProperty<*>` stub（name/returnType 最小）を metadata 経由で compiler から参照できる形で定義する
-  - [ ] `provideDelegate` を持つ delegate の diff/golden ケースを追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-124`
   - **完了条件**: `operator fun provideDelegate(...)` が property 初期化時に呼ばれ `getValue` が使用される
 
 ---
@@ -1013,7 +1013,7 @@
   - [ ] `where` 句の複数 upper bound を `TypeParamDecl` に保持し、overload 解決で全境界を検証する
   - [ ] `T : Comparable<T>` のような自己参照 upper bound（F-bound）を循環検出せずに解決する
   - [ ] 複数 upper bound に違反する型引数に `KSWIFTK-SEMA-BOUND` 診断を出す
-  - [ ] F-bound generics の diff/golden ケースを追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-125`
   - **完了条件**: `fun <T> max(a: T, b: T): T where T : Comparable<T>` が `max(1, 2)` / `max("a", "b")` で動作する
 
 - [x] P5-126: generic function の型推論（引数型・expected type からの自動推論）を完全実装する（spec.md J8/J9）
@@ -1028,14 +1028,14 @@
   - [ ] `class Sink<in T>` で `out` 位置（戻り値）に `T` が登場したら診断する
   - [ ] private member は variance チェックの例外となる規則（Kotlin 仕様）を実装する
   - [ ] contravariance の subtype 逆転（`Consumer<in Number>` に `IntConsumer` を代入不可）を型システムに反映する
-  - [ ] variance 違反・安全な use の diff/golden ケースを追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-127`
   - **完了条件**: `class Producer<out T>(val value: T)` は OK、`fun set(v: T) {}` 追加は `KSWIFTK-SEMA-VARIANCE` になる
 
 - [ ] P5-128: `reified` inline 関数での `T::class` / `typeOf<T>()` を完全実装する（spec.md J12.2）
   - [ ] `reified T` の inline body 内で `T::class`・`typeOf<T>()` が有効になるよう lowering する
   - [ ] `typeOf<T>()` を runtime 型トークン（`KClass` stub）へ lowering し、`simpleName`・`qualifiedName` を実装する
   - [ ] non-inline 文脈で `T::class`（non-reified）を使った場合に `KSWIFTK-SEMA-REIFIED` 診断を出す
-  - [ ] `reified T` × `typeOf` / `T::class` の diff/golden ケースを追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-128`
   - **完了条件**: `inline fun <reified T> typeNameOf() = T::class.simpleName` が正しい型名を返す
 
 - [ ] P5-129: generic lambda と SAM conversion（functional interface）を実装する（spec.md J8/J12）
@@ -1043,7 +1043,7 @@
   - [ ] lambda を SAM 型（`Runnable`・カスタム functional interface）へ暗黙変換する
   - [ ] SAM conversion 後の型推論と overload 解決への影響を実装する
   - [ ] SAM lambda が `invoke` 経由で呼ばれることと、object キャッシュを確認する
-  - [ ] `fun interface` / SAM conversion の diff/golden ケースを追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-129`
   - **完了条件**: `fun interface Action { fun run() }; val a: Action = { println("hi") }; a.run()` が動作する
 
 ---
@@ -1054,21 +1054,21 @@
   - [ ] externally-declared symbol（`.kklib` import）で nullability 情報がない型を platform type として表現する
   - [ ] platform type は nullable にも non-null にも代入でき、利用時に nullability 警告を出す
   - [ ] platform type を明示した nullable/non-null へ代入する文脈で型チェックを緩和する
-  - [ ] platform type の diff/golden ケースを追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-130`
   - **完了条件**: 外部 API から返された型が `T!` として扱われ、null チェックなし使用に `KSWIFTK-SEMA-PLATFORM` warning が出る
 
 - [ ] P5-131: nullable receiver（`T?.foo()`）拡張関数を Sema で解決する（spec.md J7/J9）
   - [ ] `fun String?.isNullOrEmpty()` のような nullable receiver の拡張関数を Sema で登録・解決する
   - [ ] nullable receiver 拡張は `?.` なしに直接呼べることを Sema で許可する
   - [ ] nullable receiver 拡張の優先順位（non-null receiver extension より低い）を解決規則に反映する
-  - [ ] nullable receiver 拡張の diff/golden ケースを追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-131`
   - **完了条件**: `null.isNullOrEmpty()` が `NullPointerException` を出さず `true` を返し `kotlinc` と一致する
 
 - [ ] P5-132: nullable な型引数（`List<String?>`）と non-null 型引数（`List<String>`）の区別を実装する（spec.md J8）
   - [ ] `List<String?>` と `List<String>` を異なる型として扱い代入を制限する
   - [ ] `T` が `String?` にバインドされる場合と `String` にバインドされる場合を overload 解決で区別する
   - [ ] nullable 型引数を持つ generic type の `get()`/`set()` 呼び出し型を正しく推論する
-  - [ ] `List<String?>` の diff/golden ケース（nullable element access）を追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-132`
   - **完了条件**: `val list: List<String?> = listOf("a", null)` の `list[1]` が `String?` 型になる
 
 ---
@@ -1083,28 +1083,28 @@
 - [x] P5-133 (runtime ABI): `withContext` / Dispatchers の runtime C ABI stub を Coroutine Runtime ABI タスクへ統合済み
   - [x] `kk_dispatcher_default` / `kk_dispatcher_io` / `kk_dispatcher_main` / `kk_with_context` を RuntimeABISpec・RuntimeABIExterns・C preamble に追加
   - [ ] `withContext` body を新たな coroutine context で実行し、完了後に元 context へ戻る lowering を実装する
-  - [ ] `withContext` の diff/golden ケース（context 切り替え・例外伝播）を追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-133`
   - **完了条件**: `withContext(Dispatchers.IO) { heavyWork() }` が別 dispatcher で実行され結果を返す
 
 - [x] P5-134 (runtime ABI): `Channel<T>` の runtime C ABI stub を Coroutine Runtime ABI タスクへ統合済み
   - [x] `kk_channel_create` / `kk_channel_send` / `kk_channel_receive` / `kk_channel_close` を RuntimeABISpec・RuntimeABIExterns・C preamble に追加
   - [ ] `channel.send(value)` / `channel.receive()` を suspension point として KIR に lowering する
   - [ ] unbuffered channel の rendezvous semantics（sender が receiver を待つ）を runtime で実装する
-  - [ ] producer/consumer pattern の diff/golden ケースを追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-134`
   - **完了条件**: `val ch = Channel<Int>(); launch { ch.send(42) }; println(ch.receive())` が `42` を出力する
 
 - [x] P5-135 (runtime ABI): `async`/`await`（`Deferred<T>`）の runtime C ABI stub を Coroutine Runtime ABI タスクへ統合済み
   - [x] `kk_await_all` を RuntimeABISpec・RuntimeABIExterns・C preamble に追加（`kk_kxmini_async` / `kk_kxmini_async_await` は既存）
   - [ ] `async { }` が `Deferred<T>` を返す lowering を実装する
   - [ ] `deferred.await()` を suspension point として実装し、結果型 `T` を推論する
-  - [ ] async/await の diff/golden ケース（並列計算・例外伝播）を追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-135`
   - **完了条件**: `val result = async { 1 + 2 }.await()` が `3` を返し `kotlinc` と同一出力になる
 
 - [ ] P5-136: coroutine cancellation と `CancellationException` の伝播を実装する（spec.md J17）
   - [ ] cancellation を suspension point で確認するチェックを各 `kk_coroutine_*` helper に追加する
   - [ ] `job.cancel()` 呼び出し後に子 coroutine が次の suspension point で `CancellationException` を受け取る
   - [ ] `CancellationException` は silent re-throw（catch で再 throw）する規則を Sema/runtime に反映する
-  - [ ] cancellation propagation の diff/golden ケースを追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-136`
   - **完了条件**: `launch { while(true) delay(10) }.cancel()` が coroutine を停止し `CancellationException` が伝播する
 
 ---
@@ -1120,14 +1120,14 @@
     - `also { it -> Unit }` → receiver を `it`、戻り値は receiver
     - `with(obj) { this -> R }` → 通常（非 extension）関数
   - [ ] null 安全 `let`（`nullable?.let { ... }`）のショートサーキット動作を確認する
-  - [ ] スコープ関数の diff/golden ケース（null-safe let・builder apply）を追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-137`
   - **完了条件**: `val len = "hello".let { it.length }` が `5` を返し `kotlinc` と一致する
 
 - [ ] P5-138: `buildString`/`buildList`/`buildMap` DSL builder を実装する（spec.md J9/J12）
   - [ ] `buildString { append("a"); append("b") }` を `StringBuilder` ベースの DSL として実装する
   - [ ] `buildList { add(1); add(2) }` を mutable list builder として実装する
   - [ ] builder lambda の receiver (`StringBuilder`/`MutableList`) を Sema で `this` として束縛する
-  - [ ] builder DSL の diff/golden ケース（buildString・buildList）を追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-138`
   - **完了条件**: `buildString { append("hello "); append("world") }` が `"hello world"` を返す
 
 - [ ] P5-139: `Sequence<T>` と lazy evaluation chain（`asSequence`/`map`/`filter`/`toList`）を実装する
@@ -1135,7 +1135,7 @@
   - [ ] `asSequence()`・`map`・`filter`・`take`・`toList()` を Sequence extension stub として実装する
   - [ ] Sequence は terminal operation（`toList()` 等）まで評価しない lazy semantics を保証する
   - [ ] `sequence { yield(x) }` builder を coroutine-based lazy generator として stub 実装する
-  - [ ] Sequence chain の diff/golden ケースを追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-139`
   - **完了条件**: `listOf(1,2,3).asSequence().map { it*2 }.filter { it>2 }.toList()` が `[4, 6]` を返す
 
 ---
@@ -1146,14 +1146,14 @@
   - [ ] `expect fun foo()` を abstract-like 宣言として Parser/AST で保持する
   - [ ] `actual fun foo()` を対応する `expect` の実装として Sema でマッチングする
   - [ ] `expect` に対する `actual` が存在しない場合に `KSWIFTK-MPP-UNRESOLVED` を出す
-  - [ ] `expect`/`actual` の最小 diff/golden ケース（common + platform モジュール構成）を追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-140`
   - **完了条件**: `expect fun platform()` に対する `actual fun platform()` が正しくリンクされ動作する
 
 - [ ] P5-141: file-level annotation（`@file:JvmName`・`@file:Suppress`）と package-level 制約を実装する（spec.md J6）
   - [ ] `@file:AnnotationName` を Parser/AST でファイルレベル annotation として保持する
   - [ ] `@file:Suppress("CODE")` をファイル全体への診断抑制として Sema で適用する
   - [ ] `@file:JvmName("...")` を ABI / metadata で保持し、他モジュールから参照できるようにする
-  - [ ] file-level annotation の diff/golden ケースを追加する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-141`
   - **完了条件**: `@file:Suppress("UNUSED")` がファイル全体の UNUSED 警告を抑制する
 
 ---
@@ -1175,3 +1175,56 @@
 | 🟢 P3 低 | P5-133〜P5-136 | Coroutine 拡張（withContext・Channel・async/await・cancellation） |
 | 🟢 P3 低 | P5-137〜P5-139 | Stdlib DSL（スコープ関数・builder・Sequence） |
 | 🟢 P3 低 | P5-140/141 | Multiplatform（expect/actual）・file annotation |
+
+---
+
+## 🧪 テストケース一括管理
+
+P5 タスクの diff/golden テストケース追加は `Scripts/test_case_registry.json` で一元管理する。
+各タスクの「diff/golden ケースを追加する」サブタスクは、以下のワークフローで一括処理できる。
+
+### ワークフロー
+
+```bash
+# 特定タスクのテストケースを一括生成
+bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-100
+
+# カテゴリ単位で一括生成（例: expressions カテゴリの全テスト）
+bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --category expressions
+
+# 単体テストの手動生成
+bash Scripts/generate_test_case.sh --type golden-sema --name my_test --from-file path/to/template.kt
+
+# golden ファイルの自動更新
+UPDATE_GOLDEN=1 swift test --filter GoldenHarnessTests
+```
+
+### ファイル構成
+
+| パス | 説明 |
+|---|---|
+| `Scripts/test_case_registry.json` | 全 P5 タスクのテストケース定義（タスク ID・カテゴリ・テンプレートパス） |
+| `Scripts/generate_test_case.sh` | テストケース scaffold ジェネレータ |
+| `Scripts/test_templates/{lexer,parser,sema,diff}/` | カテゴリ別 Kotlin テンプレート |
+| `Tests/CompilerCoreTests/GoldenCases/{Lexer,Parser,Sema}/` | golden テスト（`.kt` + `.golden`） |
+| `Scripts/diff_cases/` | diff テスト（`kotlinc` との出力比較） |
+
+### カテゴリ別テストケースバッチ
+
+以下のカテゴリで関連タスクのテストを一括生成できる:
+
+| カテゴリ | 対象タスク | テスト数 |
+|---|---|---|
+| `lexer` | P5-93, P5-94, P5-95 | 4 |
+| `types` | P5-96, P5-97, P5-98, P5-99 | 7 |
+| `expressions` | P5-100, P5-101, P5-102, P5-103, P5-104 | 10 |
+| `control_flow` | P5-105, P5-106, P5-107 | 5 |
+| `declarations` | P5-108, P5-109, P5-110, P5-111 | 7 |
+| `class_object` | P5-112, P5-113, P5-114, P5-115, P5-116, P5-117 | 11 |
+| `functions` | P5-118, P5-119, P5-120, P5-121 | 7 |
+| `properties` | P5-122, P5-123, P5-124 | 5 |
+| `generics` | P5-125, P5-126, P5-127, P5-128, P5-129 | 7 |
+| `null_safety` | P5-130, P5-131, P5-132 | 3 |
+| `coroutines` | P5-133, P5-134, P5-135, P5-136 | 4 |
+| `stdlib` | P5-137, P5-138, P5-139 | 4 |
+| `multiplatform` | P5-140, P5-141 | 2 |
