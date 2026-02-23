@@ -276,6 +276,7 @@ extension DataFlowSemaPassPhase {
                     flags: []
                 )
                 nestedScope.insert(nestedPrimaryCtorSymbol)
+                symbols.setParentSymbol(nestedSymbol, for: nestedPrimaryCtorSymbol)
                 do {
                     var paramTypes: [TypeID] = []
                     var paramSymbols: [SymbolID] = []
@@ -327,6 +328,7 @@ extension DataFlowSemaPassPhase {
                         flags: []
                     )
                     nestedScope.insert(secCtorSymbol)
+                    symbols.setParentSymbol(nestedSymbol, for: secCtorSymbol)
                     var paramTypes: [TypeID] = []
                     var paramSymbols: [SymbolID] = []
                     var paramHasDefaultValues: [Bool] = []

@@ -155,7 +155,7 @@ extension TypeCheckSemaPassPhase {
             // primary constructor exists (Kotlin spec).
             if ctor.delegationCall == nil && hasPrimaryConstructor {
                 sema.diagnostics.error(
-                    "KSWIFTK-SEMA-0050",
+                    "KSWIFTK-SEMA-0054",
                     "Secondary constructor must delegate to another constructor via this() or super().",
                     range: ctor.range
                 )
@@ -209,7 +209,7 @@ extension TypeCheckSemaPassPhase {
                     if candidates.isEmpty {
                         let targetKind = delegation.kind == .this ? "this" : "super"
                         sema.diagnostics.error(
-                            "KSWIFTK-SEMA-0051",
+                            "KSWIFTK-SEMA-0055",
                             "Unresolved \(targetKind)() delegation target: no matching constructor found.",
                             range: delegation.range
                         )
@@ -234,7 +234,7 @@ extension TypeCheckSemaPassPhase {
                     // resolved (e.g. super() with no superclass).
                     let targetKind = delegation.kind == .this ? "this" : "super"
                     sema.diagnostics.error(
-                        "KSWIFTK-SEMA-0051",
+                        "KSWIFTK-SEMA-0055",
                         "Unresolved \(targetKind)() delegation target: no matching constructor found.",
                         range: delegation.range
                     )
