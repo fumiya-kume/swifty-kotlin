@@ -22,7 +22,7 @@
     {
       "task": "P5-95",
       "category": "lexer",
-      "description": "Numeric literal formats (binary, hex, underscore, suffix, out-of-range)",
+      "description": "Numeric literal formats (binary, hex, underscore, suffix)",
       "cases": [
         { "type": "golden-lexer", "name": "numeric_formats_extended", "template": "Scripts/test_templates/lexer/numeric_formats_extended.kt" }
       ]
@@ -239,7 +239,7 @@
     {
       "task": "P5-120",
       "category": "functions",
-      "description": "operator fun - all standard operators",
+      "description": "operator fun (plus/minus/times/unaryMinus/get)",
       "cases": [
         { "type": "golden-sema", "name": "operator_fun_all", "template": "Scripts/test_templates/sema/operator_fun_all.kt" },
         { "type": "diff", "name": "operator_fun", "template": "Scripts/test_templates/diff/operator_fun.kt" }
@@ -381,7 +381,7 @@
     {
       "task": "P5-137",
       "category": "stdlib",
-      "description": "Scope functions (let/run/apply/also/with)",
+      "description": "Scope functions (let/run/apply/also)",
       "cases": [
         { "type": "golden-sema", "name": "scope_functions", "template": "Scripts/test_templates/sema/scope_functions.kt" },
         { "type": "diff", "name": "scope_functions", "template": "Scripts/test_templates/diff/scope_functions.kt" }

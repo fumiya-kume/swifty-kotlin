@@ -205,7 +205,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --type)        shift; TYPE="$1" ;;
         --name)        shift; NAME="$1" ;;
-        --source)      shift; SOURCE="$(echo -e "$1")" ;;
+        --source)      shift; SOURCE="$(printf '%b' "$1")" ;;
         --from-file)   shift; FROM_FILE="$1" ;;
         --task)        shift; TASK="$1" ;;
         --category)    shift; CATEGORY="$1" ;;
