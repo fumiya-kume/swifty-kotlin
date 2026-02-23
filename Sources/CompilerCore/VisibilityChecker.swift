@@ -43,8 +43,10 @@ struct VisibilityChecker {
     private func isSubclass(_ candidate: SymbolID, of ancestor: SymbolID) -> Bool {
         var visited: Set<Int32> = []
         var queue = symbols.directSupertypes(for: candidate)
-        while !queue.isEmpty {
-            let current = queue.removeFirst()
+        var index = 0
+        while index < queue.count {
+            let current = queue[index]
+            index += 1
             if current == ancestor { return true }
             if visited.contains(current.rawValue) { continue }
             visited.insert(current.rawValue)

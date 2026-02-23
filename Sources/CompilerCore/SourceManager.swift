@@ -45,6 +45,10 @@ public final class SourceManager: @unchecked Sendable {
         files.count
     }
 
+    internal func containsFile(path: String) -> Bool {
+        files.contains { $0.path == path }
+    }
+
     internal func fileIDs() -> [FileID] {
         return files.enumerated().map { FileID(rawValue: $0.offset) }
     }

@@ -230,22 +230,24 @@ func firstExprID(
 // MARK: - Source Context Helpers
 
 func makeContextFromSource(_ source: String) throws -> CompilationContext {
-    let tempURL = FileManager.default.temporaryDirectory
-        .appendingPathComponent(UUID().uuidString + ".kt")
-    try source.write(to: tempURL, atomically: true, encoding: .utf8)
-    return makeCompilationContext(inputs: [tempURL.path])
+    let fakePath = FileManager.default.temporaryDirectory
+        .appendingPathComponent(UUID().uuidString + ".kt").path
+    let ctx = makeCompilationContext(inputs: [fakePath])
+    ctx.sourceManager.addFile(path: fakePath, contents: Data(source.utf8))
+    return ctx
 }
 
 func makeContextFromSources(_ sources: [String]) throws -> CompilationContext {
     let tempDir = FileManager.default.temporaryDirectory
         .appendingPathComponent(UUID().uuidString)
-    try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
-    let inputPaths = try sources.enumerated().map { index, source in
-        let fileURL = tempDir.appendingPathComponent("input\(index).kt")
-        try source.write(to: fileURL, atomically: true, encoding: .utf8)
-        return fileURL.path
+    let fakePaths = sources.enumerated().map { index, _ in
+        tempDir.appendingPathComponent("input\(index).kt").path
     }
-    return makeCompilationContext(inputs: inputPaths)
+    let ctx = makeCompilationContext(inputs: fakePaths)
+    for (path, source) in zip(fakePaths, sources) {
+        ctx.sourceManager.addFile(path: path, contents: Data(source.utf8))
+    }
+    return ctx
 }
 
 // MARK: - LLVM Helpers

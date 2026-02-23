@@ -37,6 +37,24 @@ struct TypeInferenceContext {
         var copy = self; copy.enclosingClassSymbol = newSymbol; return copy
     }
 
+    func copying(
+        scope: Scope? = nil,
+        implicitReceiverType: TypeID?? = nil,
+        loopDepth: Int? = nil,
+        flowState: DataFlowState? = nil,
+        enclosingClassSymbol: SymbolID?? = nil,
+        outerReceiverTypes: [(label: InternedString, type: TypeID)]? = nil
+    ) -> TypeInferenceContext {
+        var copy = self
+        if let scope { copy.scope = scope }
+        if let implicitReceiverType { copy.implicitReceiverType = implicitReceiverType }
+        if let loopDepth { copy.loopDepth = loopDepth }
+        if let flowState { copy.flowState = flowState }
+        if let enclosingClassSymbol { copy.enclosingClassSymbol = enclosingClassSymbol }
+        if let outerReceiverTypes { copy.outerReceiverTypes = outerReceiverTypes }
+        return copy
+    }
+
     func withOuterReceiver(label: InternedString, type: TypeID) -> TypeInferenceContext {
         var copy = self
         copy.outerReceiverTypes = self.outerReceiverTypes + [(label: label, type: type)]

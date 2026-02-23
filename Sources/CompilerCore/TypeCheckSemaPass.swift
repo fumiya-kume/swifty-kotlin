@@ -171,7 +171,7 @@ extension TypeCheckSemaPassPhase {
             locals[param.name] = (type, paramSymbol, false, true)
         }
 
-        let functionCtx = ctx.with(implicitReceiverType: signature.receiverType)
+        let functionCtx = ctx.copying(implicitReceiverType: signature.receiverType)
         let bodyType = inferFunctionBodyType(
             function.body,
             ctx: functionCtx,
@@ -248,11 +248,10 @@ extension TypeCheckSemaPassPhase {
         let classLabel = sema.symbols.symbol(symbol)?.name ?? ctx.interner.intern("")
         let classCtx = ctx
             .withOuterReceiver(label: classLabel, type: classType)
-            .with(scope: classScope)
-            .with(implicitReceiverType: classType)
+            .copying(scope: classScope, implicitReceiverType: classType)
 
         typeCheckInitBlocks(classDecl.initBlocks, ctx: classCtx)
-        typeCheckSecondaryConstructors(classDecl.secondaryConstructors, ctx: classCtx)
+        typeCheckSecondaryConstructors(classDecl.secondaryConstructors, ctx: classCtx, ownerSymbol: symbol, hasPrimaryConstructor: classDecl.hasPrimaryConstructorSyntax)
         typeCheckClassLikeMembers(
             memberFunctions: classDecl.memberFunctions,
             memberProperties: classDecl.memberProperties,
@@ -285,8 +284,7 @@ extension TypeCheckSemaPassPhase {
         let objectLabel = sema.symbols.symbol(symbol)?.name ?? ctx.interner.intern("")
         let objectCtx = ctx
             .withOuterReceiver(label: objectLabel, type: objectType)
-            .with(scope: objectScope)
-            .with(implicitReceiverType: objectType)
+            .copying(scope: objectScope, implicitReceiverType: objectType)
 
         typeCheckInitBlocks(objectDecl.initBlocks, ctx: objectCtx)
         typeCheckClassLikeMembers(
