@@ -2167,6 +2167,29 @@ final class BuildKIRCoverageTests: XCTestCase {
         }
     }
 
+    func testNestedLocalFunctionForwardsLocalValCapture() throws {
+        // Regression test: g() captures a local val x (not a value parameter),
+        // and h() calls g(). The transitive capture must detect x and the
+        // callable info remapping must use the direct outer-expr → body-expr
+        // mapping (not reverse symbol lookup) so int-literal expressions work.
+        let source = """
+        fun main(): Int {
+            val x = 10
+            fun g(): Int = x
+            fun h(): Int = g()
+            return h()
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Nested local function forwarding local val capture should compile: \(ctx.diagnostics.diagnostics.map(\.message))")
+            let module = try XCTUnwrap(ctx.kir)
+            // main, g, h => at least 3 functions
+            XCTAssertGreaterThanOrEqual(module.functionCount, 3, "Expected at least 3 functions (main + g + h)")
+        }
+    }
+
     func testNestedLocalFunctionForwardsValueParameterCapture() throws {
         // Regression test: g() captures a value parameter p of the enclosing
         // function, and h() calls g(). The transitive capture must detect p
