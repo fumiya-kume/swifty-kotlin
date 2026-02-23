@@ -437,6 +437,18 @@ extension TypeCheckSemaPassPhase {
             } else {
                 resultType = sema.types.unitType
             }
+            // Propagate initialization state changes for outer-scope variables
+            // back to the caller. New locals declared inside the block are not
+            // propagated (they go out of scope), but if a variable that already
+            // existed in `locals` was initialized inside the block, the updated
+            // state should be visible to the caller.
+            for (name, outerLocal) in locals {
+                if let blockLocal = blockLocals[name],
+                   blockLocal.symbol == outerLocal.symbol,
+                   !outerLocal.isInitialized && blockLocal.isInitialized {
+                    locals[name] = (outerLocal.type, outerLocal.symbol, outerLocal.isMutable, true)
+                }
+            }
             sema.bindings.bindExprType(id, type: resultType)
             return resultType
 
