@@ -138,6 +138,7 @@ extension DataFlowSemaPassPhase {
                 flags: []
             )
             scope.insert(primaryCtorSymbol)
+            symbols.setParentSymbol(symbol, for: primaryCtorSymbol)
             do {
                 var paramTypes: [TypeID] = []
                 var paramSymbols: [SymbolID] = []
@@ -190,6 +191,7 @@ extension DataFlowSemaPassPhase {
                     flags: []
                 )
                 scope.insert(secCtorSymbol)
+                symbols.setParentSymbol(symbol, for: secCtorSymbol)
                 var paramTypes: [TypeID] = []
                 var paramSymbols: [SymbolID] = []
                 var paramHasDefaultValues: [Bool] = []
