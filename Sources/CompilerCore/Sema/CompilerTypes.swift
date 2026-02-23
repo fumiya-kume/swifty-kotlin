@@ -115,6 +115,19 @@ public struct CompilerOptions: Equatable {
         self.incrementalCachePath = incrementalCachePath
     }
 
+    /// The number of frontend parallel jobs parsed from `-Xfrontend jobs=N`.
+    /// Returns 1 (sequential) when the flag is not present.
+    public var frontendJobs: Int {
+        for flag in frontendFlags {
+            if flag.hasPrefix("jobs="),
+               let n = Int(flag.dropFirst(5)),
+               n >= 1 {
+                return n
+            }
+        }
+        return 1
+    }
+
     @available(*, deprecated, message: "Use debugInfo instead.")
     public var emitsDebugInfo: Bool {
         get { debugInfo }

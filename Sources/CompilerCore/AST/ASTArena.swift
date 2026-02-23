@@ -1,4 +1,7 @@
+import Foundation
+
 public final class ASTArena: @unchecked Sendable {
+    private let lock = NSLock()
     public private(set) var decls: [Decl] = []
     public private(set) var exprs: [Expr] = []
     public private(set) var typeRefs: [TypeRef] = []
@@ -6,6 +9,8 @@ public final class ASTArena: @unchecked Sendable {
     public init() {}
 
     public func appendDecl(_ decl: Decl) -> DeclID {
+        lock.lock()
+        defer { lock.unlock() }
         let id = Int32(decls.count)
         decls.append(decl)
         return DeclID(rawValue: id)
@@ -13,15 +18,21 @@ public final class ASTArena: @unchecked Sendable {
 
     public func decl(_ id: DeclID) -> Decl? {
         let index = Int(id.rawValue)
+        lock.lock()
+        defer { lock.unlock() }
         guard decls.indices.contains(index) else { return nil }
         return decls[index]
     }
 
     public func declarations() -> [Decl] {
-        decls
+        lock.lock()
+        defer { lock.unlock() }
+        return decls
     }
 
     public func appendExpr(_ expr: Expr) -> ExprID {
+        lock.lock()
+        defer { lock.unlock() }
         let id = ExprID(rawValue: Int32(exprs.count))
         exprs.append(expr)
         return id
@@ -29,6 +40,8 @@ public final class ASTArena: @unchecked Sendable {
 
     public func expr(_ id: ExprID) -> Expr? {
         let index = Int(id.rawValue)
+        lock.lock()
+        defer { lock.unlock() }
         guard exprs.indices.contains(index) else { return nil }
         return exprs[index]
     }
@@ -84,6 +97,8 @@ public final class ASTArena: @unchecked Sendable {
     }
 
     public func appendTypeRef(_ typeRef: TypeRef) -> TypeRefID {
+        lock.lock()
+        defer { lock.unlock() }
         let id = TypeRefID(rawValue: Int32(typeRefs.count))
         typeRefs.append(typeRef)
         return id
@@ -91,6 +106,8 @@ public final class ASTArena: @unchecked Sendable {
 
     public func typeRef(_ id: TypeRefID) -> TypeRef? {
         let index = Int(id.rawValue)
+        lock.lock()
+        defer { lock.unlock() }
         guard typeRefs.indices.contains(index) else { return nil }
         return typeRefs[index]
     }

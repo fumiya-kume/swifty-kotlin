@@ -1,3 +1,31 @@
+/// Per-file intermediate representation produced by frontend phases.
+/// Each `FileIR` holds the tokens, CST, and AST results for a single
+/// source file, enabling file-level parallel processing.
+public struct FileIR {
+    public let fileID: FileID
+    public var tokens: [Token]
+    public var syntaxArena: SyntaxArena?
+    public var syntaxRoot: NodeID
+    public var astFile: ASTFile?
+    public var astArena: ASTArena?
+
+    public init(
+        fileID: FileID,
+        tokens: [Token] = [],
+        syntaxArena: SyntaxArena? = nil,
+        syntaxRoot: NodeID = NodeID(),
+        astFile: ASTFile? = nil,
+        astArena: ASTArena? = nil
+    ) {
+        self.fileID = fileID
+        self.tokens = tokens
+        self.syntaxArena = syntaxArena
+        self.syntaxRoot = syntaxRoot
+        self.astFile = astFile
+        self.astArena = astArena
+    }
+}
+
 public final class CompilationContext: @unchecked Sendable {
     public let options: CompilerOptions
     public let sourceManager: SourceManager
@@ -14,6 +42,10 @@ public final class CompilationContext: @unchecked Sendable {
     public var kir: KIRModule? = nil
     public var generatedObjectPath: String? = nil
     public var generatedLLVMIRPath: String? = nil
+
+    /// Per-file intermediate representations keyed by FileID.
+    /// Populated by frontend phases when file-parallel mode is active.
+    public var fileIRs: [FileID: FileIR] = [:]
 
     /// Incremental compilation cache (non-nil when incremental mode is active).
     public var incrementalCache: IncrementalCompilationCache? = nil
@@ -46,5 +78,11 @@ public final class CompilationContext: @unchecked Sendable {
             return true
         }
         return recompileSet.contains(path)
+    }
+
+    /// The number of frontend parallel jobs parsed from `-Xfrontend jobs=N`.
+    /// Returns 1 (sequential) if the flag is not set.
+    public var frontendJobs: Int {
+        options.frontendJobs
     }
 }
