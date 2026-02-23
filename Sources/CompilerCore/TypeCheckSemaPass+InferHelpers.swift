@@ -303,11 +303,6 @@ extension TypeCheckSemaPassPhase {
             return true
         case .throwExpr:
             return true
-        case .blockExpr(_, let trailingExpr, _):
-            guard let trailingExpr else { return false }
-            // Recursion not possible without AST arena access; treat block trailing as opaque.
-            let _ = trailingExpr
-            return false
         default:
             return false
         }
