@@ -85,6 +85,7 @@ extension DataFlowSemaPassPhase {
                 itableSlots: itableSlots,
                 isDataClass: metadataRecord.isDataClass,
                 isSealedClass: metadataRecord.isSealedClass,
+                isValueClass: metadataRecord.isValueClass,
                 annotations: metadataRecord.annotations
             ))
         }

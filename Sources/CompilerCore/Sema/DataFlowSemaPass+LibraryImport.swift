@@ -55,6 +55,9 @@ extension DataFlowSemaPassPhase {
                 if record.isSealedClass {
                     flags.insert(.sealedType)
                 }
+                if record.isValueClass {
+                    flags.insert(.valueType)
+                }
                 let symbol = symbols.define(
                     kind: record.kind,
                     name: name,
@@ -250,6 +253,7 @@ extension DataFlowSemaPassPhase {
         let itableSlots: [ImportedITableSlotEntry]
         let isDataClass: Bool
         let isSealedClass: Bool
+        let isValueClass: Bool
         let annotations: [MetadataAnnotationRecord]
     }
 

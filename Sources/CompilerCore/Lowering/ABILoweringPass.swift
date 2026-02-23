@@ -157,7 +157,8 @@ final class ABILoweringPass: LoweringPass {
                                     boxLongCallee: boxLongCallee,
                                     boxFloatCallee: boxFloatCallee,
                                     boxDoubleCallee: boxDoubleCallee,
-                                    boxCharCallee: boxCharCallee
+                                    boxCharCallee: boxCharCallee,
+                                    symbols: symbols
                                 ) {
                                     let boxedResult = module.arena.appendExpr(
                                         .temporary(Int32(module.arena.expressions.count)),
@@ -204,7 +205,9 @@ final class ABILoweringPass: LoweringPass {
                                         unboxLongCallee: unboxLongCallee,
                                         unboxFloatCallee: unboxFloatCallee,
                                         unboxDoubleCallee: unboxDoubleCallee,
-                                        unboxCharCallee: unboxCharCallee
+                                        unboxCharCallee: unboxCharCallee,
+                                        types: types,
+                                        symbols: symbols
                                     )
                                     vcReturnType = returnType
                                 }
@@ -264,15 +267,18 @@ final class ABILoweringPass: LoweringPass {
                     if let functionReturnKind, isAnyOrNullableAny(functionReturnKind) {
                         let valueType = intrinsicArgType(value, arena: module.arena, types: types)
                         if let valueType {
-                            if let boxCallee = boxCalleeForPrimitive(
-                                types.kind(of: valueType),
-                                boxIntCallee: boxIntCallee,
-                                boxBoolCallee: boxBoolCallee,
-                                boxLongCallee: boxLongCallee,
-                                boxFloatCallee: boxFloatCallee,
-                                boxDoubleCallee: boxDoubleCallee,
-                                boxCharCallee: boxCharCallee
-                            ) {
+                                let resolvedValueKind = resolveValueClassKind(
+                                    types.kind(of: valueType), types: types, symbols: symbols
+                                )
+                                if let boxCallee = boxCalleeForPrimitive(
+                                    resolvedValueKind,
+                                    boxIntCallee: boxIntCallee,
+                                    boxBoolCallee: boxBoolCallee,
+                                    boxLongCallee: boxLongCallee,
+                                    boxFloatCallee: boxFloatCallee,
+                                    boxDoubleCallee: boxDoubleCallee,
+                                    boxCharCallee: boxCharCallee
+                                ) {
                                 let boxedResult = module.arena.appendExpr(
                                     .temporary(Int32(module.arena.expressions.count)),
                                     type: function.returnType
@@ -301,8 +307,10 @@ final class ABILoweringPass: LoweringPass {
                     let fromType = intrinsicArgType(from, arena: module.arena, types: types)
                     let toType = module.arena.exprType(to)
                     if let fromType, let toType {
-                        let fromKind = types.kind(of: fromType)
-                        let toKind = types.kind(of: toType)
+                        let rawFromKind = types.kind(of: fromType)
+                        let fromKind = resolveValueClassKind(rawFromKind, types: types, symbols: symbols)
+                        let rawToKind = types.kind(of: toType)
+                        let toKind = resolveValueClassKind(rawToKind, types: types, symbols: symbols)
                         // Box: primitive → Any/Any? or nonNull primitive → nullable primitive
                         if isAnyOrNullableAny(toKind) || needsBoxingForCopy(sourceKind: fromKind, targetKind: toKind) {
                             if let boxCallee = boxCalleeForPrimitive(
@@ -336,7 +344,9 @@ final class ABILoweringPass: LoweringPass {
                                 unboxLongCallee: unboxLongCallee,
                                 unboxFloatCallee: unboxFloatCallee,
                                 unboxDoubleCallee: unboxDoubleCallee,
-                                unboxCharCallee: unboxCharCallee
+                                unboxCharCallee: unboxCharCallee,
+                                types: types,
+                                symbols: symbols
                             ) {
                                 newBody.append(.call(
                                     symbol: nil,
@@ -402,7 +412,8 @@ final class ABILoweringPass: LoweringPass {
                                 boxLongCallee: boxLongCallee,
                                 boxFloatCallee: boxFloatCallee,
                                 boxDoubleCallee: boxDoubleCallee,
-                                boxCharCallee: boxCharCallee
+                                boxCharCallee: boxCharCallee,
+                                symbols: symbols
                             ) {
                                 let boxedResult = module.arena.appendExpr(
                                     .temporary(Int32(module.arena.expressions.count)),
@@ -449,7 +460,9 @@ final class ABILoweringPass: LoweringPass {
                                     unboxLongCallee: unboxLongCallee,
                                     unboxFloatCallee: unboxFloatCallee,
                                     unboxDoubleCallee: unboxDoubleCallee,
-                                    unboxCharCallee: unboxCharCallee
+                                    unboxCharCallee: unboxCharCallee,
+                                    types: types,
+                                    symbols: symbols
                                 )
                                 resolvedReturnType = returnType
                             }
@@ -507,6 +520,25 @@ final class ABILoweringPass: LoweringPass {
         module.recordLowering(Self.name)
     }
 
+    /// Resolves a value class type to its underlying primitive type kind.
+    /// If the type is a value class with a primitive underlying type, returns
+    /// the underlying type's kind. Otherwise returns the original kind.
+    private func resolveValueClassKind(
+        _ kind: TypeKind,
+        types: TypeSystem,
+        symbols: SymbolTable?
+    ) -> TypeKind {
+        guard let symbols else { return kind }
+        if case .classType(let ct) = kind {
+            let sym = symbols.symbol(ct.classSymbol)
+            if let sym, sym.flags.contains(.valueType),
+               let underlyingType = symbols.valueClassUnderlyingType(for: ct.classSymbol) {
+                return types.kind(of: underlyingType)
+            }
+        }
+        return kind
+    }
+
     private func boxingCallee(
         argType: TypeID,
         paramType: TypeID,
@@ -516,9 +548,11 @@ final class ABILoweringPass: LoweringPass {
         boxLongCallee: InternedString,
         boxFloatCallee: InternedString,
         boxDoubleCallee: InternedString,
-        boxCharCallee: InternedString
+        boxCharCallee: InternedString,
+        symbols: SymbolTable? = nil
     ) -> InternedString? {
-        let argKind = types.kind(of: argType)
+        let rawArgKind = types.kind(of: argType)
+        let argKind = resolveValueClassKind(rawArgKind, types: types, symbols: symbols)
         let paramKind = types.kind(of: paramType)
 
         guard isAnyOrNullableAny(paramKind) else {
@@ -571,13 +605,21 @@ final class ABILoweringPass: LoweringPass {
         unboxLongCallee: InternedString,
         unboxFloatCallee: InternedString,
         unboxDoubleCallee: InternedString,
-        unboxCharCallee: InternedString
+        unboxCharCallee: InternedString,
+        types: TypeSystem? = nil,
+        symbols: SymbolTable? = nil
     ) -> InternedString? {
-        guard needsUnboxing(sourceKind: sourceKind, targetKind: targetKind) else {
+        let resolvedTargetKind: TypeKind
+        if let types, let symbols {
+            resolvedTargetKind = resolveValueClassKind(targetKind, types: types, symbols: symbols)
+        } else {
+            resolvedTargetKind = targetKind
+        }
+        guard needsUnboxing(sourceKind: sourceKind, targetKind: resolvedTargetKind) else {
             return nil
         }
 
-        switch targetKind {
+        switch resolvedTargetKind {
         case .primitive(.int, _):
             return unboxIntCallee
         case .primitive(.long, _):

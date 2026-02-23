@@ -31,6 +31,9 @@ public struct MetadataRecord {
     // P5-86: annotation metadata
     public let annotations: [MetadataAnnotationRecord]
 
+    // P5-75: value class flag
+    public let isValueClass: Bool
+
     public init(
         kind: SymbolKind,
         mangledName: String = "",
@@ -50,7 +53,8 @@ public struct MetadataRecord {
         itableSlots: String? = nil,
         isDataClass: Bool = false,
         isSealedClass: Bool = false,
-        annotations: [MetadataAnnotationRecord] = []
+        annotations: [MetadataAnnotationRecord] = [],
+        isValueClass: Bool = false
     ) {
         self.kind = kind
         self.mangledName = mangledName
@@ -71,6 +75,7 @@ public struct MetadataRecord {
         self.isDataClass = isDataClass
         self.isSealedClass = isSealedClass
         self.annotations = annotations
+        self.isValueClass = isValueClass
     }
 }
 
@@ -209,6 +214,7 @@ public final class MetadataEncoder {
 
             let isDataClass = symbol.flags.contains(.dataType)
             let isSealedClass = symbol.flags.contains(.sealedType)
+            let isValueClass = symbol.flags.contains(.valueType)
 
             let annotationEntries = symbols.annotations(for: symbol.id)
 
@@ -231,7 +237,8 @@ public final class MetadataEncoder {
                 itableSlots: itableSlotsStr,
                 isDataClass: isDataClass,
                 isSealedClass: isSealedClass,
-                annotations: annotationEntries
+                annotations: annotationEntries,
+                isValueClass: isValueClass
             ))
         }
         return records
@@ -301,6 +308,9 @@ public final class MetadataEncoder {
             }
             if record.isSealedClass {
                 fields.append("sealedClass=1")
+            }
+            if record.isValueClass {
+                fields.append("valueClass=1")
             }
             if !record.annotations.isEmpty {
                 fields.append("annotations=\(encodeAnnotations(record.annotations))")
@@ -439,6 +449,7 @@ public final class MetadataDecoder {
             var itableSlots: String?
             var isDataClass = false
             var isSealedClass = false
+            var isValueClass = false
             var annotations: [MetadataAnnotationRecord] = []
 
             for part in parts.dropFirst() {
@@ -480,6 +491,8 @@ public final class MetadataDecoder {
                     isDataClass = value == "1" || value == "true"
                 case "sealedClass":
                     isSealedClass = value == "1" || value == "true"
+                case "valueClass":
+                    isValueClass = value == "1" || value == "true"
                 case "annotations":
                     annotations = decodeAnnotations(value)
                 default:
@@ -510,7 +523,8 @@ public final class MetadataDecoder {
                 itableSlots: itableSlots,
                 isDataClass: isDataClass,
                 isSealedClass: isSealedClass,
-                annotations: annotations
+                annotations: annotations,
+                isValueClass: isValueClass
             ))
         }
         return records
