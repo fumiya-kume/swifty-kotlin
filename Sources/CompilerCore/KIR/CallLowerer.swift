@@ -706,7 +706,7 @@ final class CallLowerer {
                 case .lessOrEqual:  cmpOp = .lessOrEqual
                 case .greaterThan:  cmpOp = .greaterThan
                 case .greaterOrEqual: cmpOp = .greaterOrEqual
-                default: cmpOp = .lessThan // unreachable due to isCompareToDesugaring guard
+                default: fatalError("Unreachable: isCompareToDesugaring should only be true for comparison operators")
                 }
                 instructions.append(.binary(op: cmpOp, lhs: callResult, rhs: zeroExpr, result: result))
             }
@@ -753,7 +753,7 @@ final class CallLowerer {
                 case .lessOrEqual:   cmpOp = .lessOrEqual
                 case .greaterThan:   cmpOp = .greaterThan
                 case .greaterOrEqual: cmpOp = .greaterOrEqual
-                default: cmpOp = .lessThan
+                default: fatalError("Unreachable: unexpected comparison operator for string operands")
                 }
                 instructions.append(.binary(op: cmpOp, lhs: compareResult, rhs: zeroExpr, result: result))
                 return result

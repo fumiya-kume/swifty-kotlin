@@ -282,7 +282,7 @@ extension LLVMBackend {
             "  int32_t minLen = l < r ? l : r;",
             "  if (minLen > 0 && lhs->bytes && rhs->bytes) {",
             "    int c = memcmp(lhs->bytes, rhs->bytes, (size_t)minLen);",
-            "    if (c != 0) return (intptr_t)c;",
+            "    if (c != 0) return (intptr_t)(c < 0 ? -1 : 1);",
             "  }",
             "  if (l < r) return (intptr_t)-1;",
             "  if (l > r) return (intptr_t)1;",
