@@ -237,7 +237,7 @@ extension DataFlowSemaPassPhase {
                 "Inconsistent typealias metadata at \(metadataPath): underlying type for '\(renderFQName(record.fqName, interner: interner))' resolved to error type.",
                 range: nil
             )
-            return nil
+            return decoded
         }
         return decoded
     }
