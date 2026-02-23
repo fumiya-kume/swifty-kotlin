@@ -725,6 +725,42 @@ final class CallLowerer {
             )
             return result
         }
+        // String comparison desugaring: route <, <=, >, >= on String operands
+        // through kk_string_compareTo (content comparison) instead of the default
+        // kk_op_lt/le/gt/ge path which compares raw pointer addresses.
+        let lhsType = sema.bindings.exprTypes[lhs]
+        let rhsType = sema.bindings.exprTypes[rhs]
+        let nullableStringType = sema.types.make(.primitive(.string, .nullable))
+        let isStringOperand = (lhsType == stringType || lhsType == nullableStringType)
+                           && (rhsType == stringType || rhsType == nullableStringType)
+        if isStringOperand {
+            switch op {
+            case .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
+                let compareResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_compareTo"),
+                    arguments: [lhsID, rhsID],
+                    result: compareResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                let cmpOp: KIRBinaryOp
+                switch op {
+                case .lessThan:      cmpOp = .lessThan
+                case .lessOrEqual:   cmpOp = .lessOrEqual
+                case .greaterThan:   cmpOp = .greaterThan
+                case .greaterOrEqual: cmpOp = .greaterOrEqual
+                default: cmpOp = .lessThan
+                }
+                instructions.append(.binary(op: cmpOp, lhs: compareResult, rhs: zeroExpr, result: result))
+                return result
+            default:
+                break
+            }
+        }
         if let runtimeCallee = driver.callSupportLowerer.builtinBinaryRuntimeCallee(for: op, interner: interner) {
             instructions.append(
                 .call(

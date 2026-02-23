@@ -84,6 +84,12 @@ public enum RuntimeABIExterns {
         returnType: "void *"
     )
 
+    public static let kk_string_compareTo = ExternDecl(
+        name: "kk_string_compareTo",
+        parameterTypes: ["void * _Nullable", "void * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - Println
 
     public static let kk_println_any = ExternDecl(
@@ -411,6 +417,7 @@ public enum RuntimeABIExterns {
         // String
         kk_string_from_utf8,
         kk_string_concat,
+        kk_string_compareTo,
         // Println
         kk_println_any,
         // GC
