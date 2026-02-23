@@ -17,6 +17,7 @@ final class LoweringPassCoverageTests: XCTestCase {
         XCTAssertTrue(callees.contains("next"))
         XCTAssertFalse(callees.contains("kk_for_lowered"))
         // kk_when_select removed; select is now control flow (jumpIfEqual + copy + jump + label)
+        XCTAssertFalse(callees.contains("kk_when_select"))
         XCTAssertTrue(callees.contains("kk_property_access"))
         XCTAssertTrue(callees.contains("kk_lambda_invoke"))
         XCTAssertFalse(callees.contains("inlineTarget"))
@@ -1754,7 +1755,6 @@ final class LoweringPassCoverageTests: XCTestCase {
                 .call(symbol: nil, callee: interner.intern("kk_for_lowered"), arguments: [v3], result: v1, canThrow: false, thrownResult: nil),
                 .constValue(result: vFalse, value: .boolLiteral(false)),
                 .jumpIfEqual(lhs: v0, rhs: vFalse, target: 800),
-                .copy(from: v1, to: v1),
                 .jump(801),
                 .label(800),
                 .copy(from: v2, to: v1),
