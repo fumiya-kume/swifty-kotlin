@@ -485,6 +485,7 @@ extension LLVMBackend {
             "  (void)continuation;",
             "  KKChannel* ch = (KKChannel*)(void*)handle;",
             "  if (!ch || ch->closed) return 0;",
+            "  if (ch->tail - ch->head >= ch->cap) return 0;",
             "  ch->buf[ch->tail % ch->cap] = value;",
             "  ch->tail++;",
             "  return value;",
