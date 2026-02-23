@@ -127,7 +127,8 @@ public final class LLVMBackend {
         errorCode: String,
         errorContext: String
     ) throws {
-        let runtimeStub = cachedRuntimeStubPath()
+        let isCompileOnly = extraArgs.contains("-c") || extraArgs.contains("-S") || extraArgs.contains("-emit-llvm")
+        let runtimeStub = isCompileOnly ? nil : cachedRuntimeStubPath()
         let source = emitCModule(module: module, interner: interner, useExternRuntime: runtimeStub != nil)
         let sourceURL = deterministicTempSourceURL(outputPath: outputPath)
         defer {
@@ -141,7 +142,7 @@ public final class LLVMBackend {
                 args.append("-g")
             }
             args.append(contentsOf: [sourceURL.path])
-            if let runtimeStub, extraArgs.contains("-c") == false {
+            if let runtimeStub {
                 args.append(runtimeStub)
             }
             args.append(contentsOf: ["-o", outputPath])
