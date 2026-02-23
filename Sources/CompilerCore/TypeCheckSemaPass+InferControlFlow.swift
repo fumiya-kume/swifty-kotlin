@@ -49,7 +49,7 @@ extension TypeCheckSemaPassPhase {
     ) -> TypeID {
         let ast = ctx.ast
         let sema = ctx.sema
-        let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+        let boolType = sema.types.booleanType
         let conditionType = inferExpr(conditionExpr, ctx: ctx, locals: &locals, expectedType: boolType)
         emitSubtypeConstraint(
             left: conditionType,
@@ -80,7 +80,7 @@ extension TypeCheckSemaPassPhase {
     ) -> TypeID {
         let ast = ctx.ast
         let sema = ctx.sema
-        let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+        let boolType = sema.types.booleanType
         var bodyLocals = locals
         _ = inferExpr(
             bodyExpr,
@@ -120,7 +120,7 @@ extension TypeCheckSemaPassPhase {
         let ast = ctx.ast
         let sema = ctx.sema
         let interner = ctx.interner
-        let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+        let boolType = sema.types.booleanType
         let conditionType = inferExpr(condition, ctx: ctx, locals: &locals)
         if conditionType != boolType {
             emitSubtypeConstraint(
@@ -227,46 +227,25 @@ extension TypeCheckSemaPassPhase {
         guard let typeName else {
             return sema.types.anyType
         }
-        switch interner.resolve(typeName) {
-        case "Int":
-            return sema.types.make(.primitive(.int, .nonNull))
-        case "Long":
-            return sema.types.make(.primitive(.long, .nonNull))
-        case "Float":
-            return sema.types.make(.primitive(.float, .nonNull))
-        case "Double":
-            return sema.types.make(.primitive(.double, .nonNull))
-        case "Boolean":
-            return sema.types.make(.primitive(.boolean, .nonNull))
-        case "Char":
-            return sema.types.make(.primitive(.char, .nonNull))
-        case "String":
-            return sema.types.make(.primitive(.string, .nonNull))
-        case "Any":
-            return sema.types.anyType
-        case "Unit":
-            return sema.types.unitType
-        case "Nothing":
-            return sema.types.nothingType
-        default:
-            let candidates = sema.symbols.lookupAll(fqName: [typeName])
-                .filter { symbolID in
-                    guard let symbol = sema.symbols.symbol(symbolID) else {
-                        return false
-                    }
-                    switch symbol.kind {
-                    case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
-                        return true
-                    default:
-                        return false
-                    }
-                }
-                .sorted { $0.rawValue < $1.rawValue }
-            guard let symbol = candidates.first else {
-                return sema.types.anyType
-            }
-            return sema.types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
+        let name = interner.resolve(typeName)
+        if let builtin = resolveBuiltinTypeName(name, types: sema.types) {
+            return builtin
         }
+        let candidates = sema.symbols.lookupAll(fqName: [typeName])
+            .filter { symbolID in
+                guard let symbol = sema.symbols.symbol(symbolID) else { return false }
+                switch symbol.kind {
+                case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
+                    return true
+                default:
+                    return false
+                }
+            }
+            .sorted { $0.rawValue < $1.rawValue }
+        guard let symbol = candidates.first else {
+            return sema.types.anyType
+        }
+        return sema.types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
     }
 
     func inferWhenExpr(
@@ -282,7 +261,7 @@ extension TypeCheckSemaPassPhase {
         let ast = ctx.ast
         let sema = ctx.sema
         let interner = ctx.interner
-        let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+        let boolType = sema.types.booleanType
 
         if let subjectID {
             let subjectType = inferExpr(subjectID, ctx: ctx, locals: &locals)
@@ -511,100 +490,4 @@ extension TypeCheckSemaPassPhase {
         }
     }
 
-    func inferLocalFunDeclExpr(
-        _ id: ExprID,
-        name: InternedString,
-        valueParams: [ValueParamDecl],
-        returnTypeRef: TypeRefID?,
-        body: FunctionBody,
-        range: SourceRange,
-        ctx: TypeInferenceContext,
-        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)]
-    ) -> TypeID {
-        let ast = ctx.ast
-        let sema = ctx.sema
-        let interner = ctx.interner
-
-        var parameterTypes: [TypeID] = []
-        var paramSymbols: [SymbolID] = []
-        for param in valueParams {
-            let paramType: TypeID
-            if let typeRefID = param.type {
-                paramType = resolveTypeRef(typeRefID, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
-            } else {
-                paramType = sema.types.anyType
-            }
-            parameterTypes.append(paramType)
-            let paramSymbol = sema.symbols.define(
-                kind: .valueParameter,
-                name: param.name,
-                fqName: [
-                    interner.intern("__localfun_\(id.rawValue)"),
-                    param.name
-                ],
-                declSite: range,
-                visibility: .private,
-                flags: []
-            )
-            sema.symbols.setPropertyType(paramType, for: paramSymbol)
-            paramSymbols.append(paramSymbol)
-        }
-
-        let resolvedReturnType: TypeID
-        if let returnTypeRef {
-            resolvedReturnType = resolveTypeRef(returnTypeRef, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
-        } else {
-            resolvedReturnType = sema.types.unitType
-        }
-
-        let funSymbol = sema.symbols.define(
-            kind: .function,
-            name: name,
-            fqName: [
-                interner.intern("__localfun_\(id.rawValue)"),
-                name
-            ],
-            declSite: range,
-            visibility: .private,
-            flags: []
-        )
-
-        let signature = FunctionSignature(
-            parameterTypes: parameterTypes,
-            returnType: resolvedReturnType,
-            valueParameterSymbols: paramSymbols,
-            valueParameterHasDefaultValues: valueParams.map { $0.hasDefaultValue },
-            valueParameterIsVararg: valueParams.map { $0.isVararg }
-        )
-        sema.symbols.setFunctionSignature(signature, for: funSymbol)
-
-        let funType = sema.types.make(.functionType(FunctionType(
-            params: parameterTypes,
-            returnType: resolvedReturnType,
-            isSuspend: false,
-            nullability: .nonNull
-        )))
-
-        var bodyLocals = locals
-        for (i, param) in valueParams.enumerated() {
-            bodyLocals[param.name] = (parameterTypes[i], paramSymbols[i], false, true)
-        }
-        bodyLocals[name] = (funType, funSymbol, false, true)
-        switch body {
-        case .block(let exprs, _):
-            for (index, expr) in exprs.enumerated() {
-                let isLast = index == exprs.count - 1
-                let expected = isLast ? resolvedReturnType : nil
-                _ = inferExpr(expr, ctx: ctx, locals: &bodyLocals, expectedType: expected)
-            }
-        case .expr(let exprID, _):
-            _ = inferExpr(exprID, ctx: ctx, locals: &bodyLocals, expectedType: resolvedReturnType)
-        case .unit:
-            break
-        }
-        locals[name] = (funType, funSymbol, false, true)
-        sema.bindings.bindIdentifier(id, symbol: funSymbol)
-        sema.bindings.bindExprType(id, type: sema.types.unitType)
-        return sema.types.unitType
-    }
 }

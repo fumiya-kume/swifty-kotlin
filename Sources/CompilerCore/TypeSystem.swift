@@ -10,6 +10,13 @@ public final class TypeSystem {
     public let nothingType: TypeID
     public let anyType: TypeID
     public let nullableAnyType: TypeID
+    public let booleanType: TypeID
+    public let charType: TypeID
+    public let intType: TypeID
+    public let longType: TypeID
+    public let floatType: TypeID
+    public let doubleType: TypeID
+    public let stringType: TypeID
 
     public init() {
         self.errorType = TypeID(rawValue: 0)
@@ -17,21 +24,72 @@ public final class TypeSystem {
         self.nothingType = TypeID(rawValue: 2)
         self.anyType = TypeID(rawValue: 3)
         self.nullableAnyType = TypeID(rawValue: 4)
+        self.booleanType = TypeID(rawValue: 5)
+        self.charType = TypeID(rawValue: 6)
+        self.intType = TypeID(rawValue: 7)
+        self.longType = TypeID(rawValue: 8)
+        self.floatType = TypeID(rawValue: 9)
+        self.doubleType = TypeID(rawValue: 10)
+        self.stringType = TypeID(rawValue: 11)
 
         idToKind = [
             .error,
             .unit,
             .nothing,
             .any(.nonNull),
-            .any(.nullable)
+            .any(.nullable),
+            .primitive(.boolean, .nonNull),
+            .primitive(.char, .nonNull),
+            .primitive(.int, .nonNull),
+            .primitive(.long, .nonNull),
+            .primitive(.float, .nonNull),
+            .primitive(.double, .nonNull),
+            .primitive(.string, .nonNull),
         ]
         kindToID = [
             .error: errorType,
             .unit: unitType,
             .nothing: nothingType,
             .any(.nonNull): anyType,
-            .any(.nullable): nullableAnyType
+            .any(.nullable): nullableAnyType,
+            .primitive(.boolean, .nonNull): booleanType,
+            .primitive(.char, .nonNull): charType,
+            .primitive(.int, .nonNull): intType,
+            .primitive(.long, .nonNull): longType,
+            .primitive(.float, .nonNull): floatType,
+            .primitive(.double, .nonNull): doubleType,
+            .primitive(.string, .nonNull): stringType,
         ]
+    }
+
+    public func withNullability(_ nullability: Nullability, for type: TypeID) -> TypeID {
+        switch kind(of: type) {
+        case .error, .unit, .nothing, .intersection:
+            return type
+        case .any(let existing):
+            if existing == nullability { return type }
+            return nullability == .nullable ? nullableAnyType : anyType
+        case .primitive(let prim, let existing):
+            if existing == nullability { return type }
+            return make(.primitive(prim, nullability))
+        case .classType(let ct):
+            if ct.nullability == nullability { return type }
+            return make(.classType(ClassType(classSymbol: ct.classSymbol, args: ct.args, nullability: nullability)))
+        case .typeParam(let tp):
+            if tp.nullability == nullability { return type }
+            return make(.typeParam(TypeParamType(symbol: tp.symbol, nullability: nullability)))
+        case .functionType(let ft):
+            if ft.nullability == nullability { return type }
+            return make(.functionType(FunctionType(receiver: ft.receiver, params: ft.params, returnType: ft.returnType, isSuspend: ft.isSuspend, nullability: nullability)))
+        }
+    }
+
+    public func makeNullable(_ type: TypeID) -> TypeID {
+        withNullability(.nullable, for: type)
+    }
+
+    public func makeNonNullable(_ type: TypeID) -> TypeID {
+        withNullability(.nonNull, for: type)
     }
 
     public func make(_ kind: TypeKind) -> TypeID {

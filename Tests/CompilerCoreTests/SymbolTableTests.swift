@@ -115,6 +115,8 @@ final class SymbolTableTests: XCTestCase {
         let id1 = symbols.define(kind: .function, name: interner.intern("fn"), fqName: fqName, declSite: nil, visibility: .public)
         let id2 = symbols.define(kind: .function, name: interner.intern("fn"), fqName: fqName, declSite: nil, visibility: .public)
         XCTAssertNotEqual(id1, id2)
+        XCTAssertEqual(symbols.lookupAll(fqName: fqName), [id1, id2])
+        XCTAssertEqual(symbols.lookup(fqName: fqName), id1)
     }
 
     func testConstructorsCanCoexistAsOverloads() {

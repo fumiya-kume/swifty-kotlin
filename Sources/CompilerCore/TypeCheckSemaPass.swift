@@ -1,225 +1,5 @@
 import Foundation
 
-struct VisibilityChecker {
-    let symbols: SymbolTable
-
-    func isAccessible(
-        _ symbol: SemanticSymbol,
-        fromFile accessFileID: FileID,
-        enclosingClass: SymbolID?
-    ) -> Bool {
-        switch symbol.visibility {
-        case .public, .internal:
-            return true
-        case .private:
-            if isLocalOrParameter(symbol.kind) {
-                return true
-            }
-            if let parent = symbols.parentSymbol(for: symbol.id) {
-                return enclosingClass == parent || isEnclosedBy(enclosingClass, ancestor: parent)
-            }
-            guard let declSite = symbol.declSite else {
-                return true
-            }
-            return declSite.start.file == accessFileID
-        case .protected:
-            guard let ownerClass = symbols.parentSymbol(for: symbol.id) else {
-                return false
-            }
-            guard let enclosingClass else {
-                return false
-            }
-            if enclosingClass == ownerClass {
-                return true
-            }
-            return isSubclass(enclosingClass, of: ownerClass)
-        }
-    }
-
-    private func isLocalOrParameter(_ kind: SymbolKind) -> Bool {
-        kind == .local || kind == .valueParameter || kind == .label || kind == .typeParameter
-    }
-
-    private func isSubclass(_ candidate: SymbolID, of ancestor: SymbolID) -> Bool {
-        var visited: Set<Int32> = []
-        var queue = symbols.directSupertypes(for: candidate)
-        while !queue.isEmpty {
-            let current = queue.removeFirst()
-            if current == ancestor { return true }
-            if visited.contains(current.rawValue) { continue }
-            visited.insert(current.rawValue)
-            queue.append(contentsOf: symbols.directSupertypes(for: current))
-        }
-        return false
-    }
-
-    private func isEnclosedBy(_ candidate: SymbolID?, ancestor: SymbolID) -> Bool {
-        var current = candidate
-        while let c = current {
-            if c == ancestor { return true }
-            current = symbols.parentSymbol(for: c)
-        }
-        return false
-    }
-}
-
-// Internal visibility is required for cross-file extension decomposition.
-struct TypeInferenceContext {
-    let ast: ASTModule
-    let sema: SemaModule
-    let semaCtx: SemaModule
-    let resolver: OverloadResolver
-    let dataFlow: DataFlowAnalyzer
-    let interner: StringInterner
-    let scope: Scope
-    let implicitReceiverType: TypeID?
-    let loopDepth: Int
-    let flowState: DataFlowState
-    let currentFileID: FileID
-    let enclosingClassSymbol: SymbolID?
-    let visibilityChecker: VisibilityChecker
-    let outerReceiverTypes: [(label: InternedString, type: TypeID)]
-
-    func with(scope: Scope) -> TypeInferenceContext {
-        TypeInferenceContext(
-            ast: ast,
-            sema: sema,
-            semaCtx: semaCtx,
-            resolver: resolver,
-            dataFlow: dataFlow,
-            interner: interner,
-            scope: scope,
-            implicitReceiverType: implicitReceiverType,
-            loopDepth: loopDepth,
-            flowState: flowState,
-            currentFileID: currentFileID,
-            enclosingClassSymbol: enclosingClassSymbol,
-            visibilityChecker: visibilityChecker,
-            outerReceiverTypes: outerReceiverTypes
-        )
-    }
-
-    func with(implicitReceiverType: TypeID?) -> TypeInferenceContext {
-        TypeInferenceContext(
-            ast: ast,
-            sema: sema,
-            semaCtx: semaCtx,
-            resolver: resolver,
-            dataFlow: dataFlow,
-            interner: interner,
-            scope: scope,
-            implicitReceiverType: implicitReceiverType,
-            loopDepth: loopDepth,
-            flowState: flowState,
-            currentFileID: currentFileID,
-            enclosingClassSymbol: enclosingClassSymbol,
-            visibilityChecker: visibilityChecker,
-            outerReceiverTypes: outerReceiverTypes
-        )
-    }
-
-    func with(loopDepth: Int) -> TypeInferenceContext {
-        TypeInferenceContext(
-            ast: ast,
-            sema: sema,
-            semaCtx: semaCtx,
-            resolver: resolver,
-            dataFlow: dataFlow,
-            interner: interner,
-            scope: scope,
-            implicitReceiverType: implicitReceiverType,
-            loopDepth: loopDepth,
-            flowState: flowState,
-            currentFileID: currentFileID,
-            enclosingClassSymbol: enclosingClassSymbol,
-            visibilityChecker: visibilityChecker,
-            outerReceiverTypes: outerReceiverTypes
-        )
-    }
-
-    func with(flowState: DataFlowState) -> TypeInferenceContext {
-        TypeInferenceContext(
-            ast: ast,
-            sema: sema,
-            semaCtx: semaCtx,
-            resolver: resolver,
-            dataFlow: dataFlow,
-            interner: interner,
-            scope: scope,
-            implicitReceiverType: implicitReceiverType,
-            loopDepth: loopDepth,
-            flowState: flowState,
-            currentFileID: currentFileID,
-            enclosingClassSymbol: enclosingClassSymbol,
-            visibilityChecker: visibilityChecker,
-            outerReceiverTypes: outerReceiverTypes
-        )
-    }
-
-    func with(enclosingClassSymbol: SymbolID?) -> TypeInferenceContext {
-        TypeInferenceContext(
-            ast: ast,
-            sema: sema,
-            semaCtx: semaCtx,
-            resolver: resolver,
-            dataFlow: dataFlow,
-            interner: interner,
-            scope: scope,
-            implicitReceiverType: implicitReceiverType,
-            loopDepth: loopDepth,
-            flowState: flowState,
-            currentFileID: currentFileID,
-            enclosingClassSymbol: enclosingClassSymbol,
-            visibilityChecker: visibilityChecker,
-            outerReceiverTypes: outerReceiverTypes
-        )
-    }
-
-    func withOuterReceiver(label: InternedString, type: TypeID) -> TypeInferenceContext {
-        var newOuters = outerReceiverTypes
-        newOuters.append((label: label, type: type))
-        return TypeInferenceContext(
-            ast: ast,
-            sema: sema,
-            semaCtx: semaCtx,
-            resolver: resolver,
-            dataFlow: dataFlow,
-            interner: interner,
-            scope: scope,
-            implicitReceiverType: implicitReceiverType,
-            loopDepth: loopDepth,
-            flowState: flowState,
-            currentFileID: currentFileID,
-            enclosingClassSymbol: enclosingClassSymbol,
-            visibilityChecker: visibilityChecker,
-            outerReceiverTypes: newOuters
-        )
-    }
-
-    func resolveQualifiedThis(label: InternedString) -> TypeID? {
-        for entry in outerReceiverTypes.reversed() {
-            if entry.label == label {
-                return entry.type
-            }
-        }
-        return nil
-    }
-
-    func filterByVisibility(_ candidates: [SymbolID]) -> (visible: [SymbolID], invisible: [SemanticSymbol]) {
-        var visible: [SymbolID] = []
-        var invisible: [SemanticSymbol] = []
-        for candidate in candidates {
-            guard let symbol = sema.symbols.symbol(candidate) else { continue }
-            if visibilityChecker.isAccessible(symbol, fromFile: currentFileID, enclosingClass: enclosingClassSymbol) {
-                visible.append(candidate)
-            } else {
-                invisible.append(symbol)
-            }
-        }
-        return (visible, invisible)
-    }
-}
-
 public final class TypeCheckSemaPassPhase: CompilerPhase {
     public static let name = "TypeCheckSemaPass"
 
@@ -277,8 +57,7 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
                 flowState: DataFlowState(),
                 currentFileID: file.fileID,
                 enclosingClassSymbol: nil,
-                visibilityChecker: checker,
-                outerReceiverTypes: []
+                visibilityChecker: checker
             )
             for declID in file.topLevelDecls {
                 guard let decl = ast.arena.decl(declID),
@@ -465,19 +244,12 @@ extension TypeCheckSemaPassPhase {
             nestedObjects: classDecl.nestedObjects,
             ctx: ctx
         )
-        let classLabel = sema.symbols.symbol(symbol)?.name ?? ctx.interner.intern("")
         let classCtx = ctx
-            .withOuterReceiver(label: classLabel, type: classType)
             .with(scope: classScope)
             .with(implicitReceiverType: classType)
 
         typeCheckInitBlocks(classDecl.initBlocks, ctx: classCtx)
-        typeCheckSecondaryConstructors(
-            classDecl.secondaryConstructors,
-            ctx: classCtx,
-            ownerSymbol: symbol,
-            hasPrimaryConstructor: classDecl.hasPrimaryConstructorSyntax
-        )
+        typeCheckSecondaryConstructors(classDecl.secondaryConstructors, ctx: classCtx)
         typeCheckClassLikeMembers(
             memberFunctions: classDecl.memberFunctions,
             memberProperties: classDecl.memberProperties,
@@ -507,9 +279,7 @@ extension TypeCheckSemaPassPhase {
             nestedObjects: objectDecl.nestedObjects,
             ctx: ctx
         )
-        let objectLabel = sema.symbols.symbol(symbol)?.name ?? ctx.interner.intern("")
         let objectCtx = ctx
-            .withOuterReceiver(label: objectLabel, type: objectType)
             .with(scope: objectScope)
             .with(implicitReceiverType: objectType)
 
