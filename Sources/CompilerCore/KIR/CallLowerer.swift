@@ -613,9 +613,27 @@ final class CallLowerer {
             instructions: &instructions
         )
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
+        // Detect whether this is a compareTo-desugared comparison operator.
+        // If so, the call binding targets compareTo (returns Int) and we must
+        // wrap the result with a comparison against 0 to produce Bool.
+        let isCompareToDesugaring: Bool
+        switch op {
+        case .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
+            isCompareToDesugaring = sema.bindings.callBindings[exprID] != nil
+        default:
+            isCompareToDesugaring = false
+        }
         if let callBinding = sema.bindings.callBindings[exprID],
            let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee),
            signature.receiverType != nil {
+            // For compareTo desugaring, the call result is Int, not Bool.
+            // We allocate a separate temporary for the compareTo call result.
+            let callResult: KIRExprID
+            if isCompareToDesugaring {
+                callResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+            } else {
+                callResult = result
+            }
             let normalizedResult = driver.callSupportLowerer.normalizedCallArguments(
                 providedArguments: [rhsID],
                 callBinding: callBinding,
@@ -655,7 +673,7 @@ final class CallLowerer {
                     symbol: stubSym,
                     callee: stubName,
                     arguments: finalArguments,
-                    result: result,
+                    result: callResult,
                     canThrow: false,
                     thrownResult: nil
                 ))
@@ -673,10 +691,24 @@ final class CallLowerer {
                     symbol: callBinding.chosenCallee,
                     callee: loweredCalleeName,
                     arguments: finalArguments,
-                    result: result,
+                    result: callResult,
                     canThrow: false,
                     thrownResult: nil
                 ))
+            }
+            // compareTo desugaring: emit `compareTo(a,b) <op> 0` to produce Bool
+            if isCompareToDesugaring {
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                let cmpOp: KIRBinaryOp
+                switch op {
+                case .lessThan:     cmpOp = .lessThan
+                case .lessOrEqual:  cmpOp = .lessOrEqual
+                case .greaterThan:  cmpOp = .greaterThan
+                case .greaterOrEqual: cmpOp = .greaterOrEqual
+                default: cmpOp = .lessThan // unreachable due to isCompareToDesugaring guard
+                }
+                instructions.append(.binary(op: cmpOp, lhs: callResult, rhs: zeroExpr, result: result))
             }
             return result
         }

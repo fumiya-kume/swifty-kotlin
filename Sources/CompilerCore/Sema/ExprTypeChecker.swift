@@ -387,8 +387,18 @@ final class ExprTypeChecker {
                 return sema.types.errorType
             }
             let returnType = driver.callChecker.bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
-            sema.bindings.bindExprType(id, type: returnType)
-            return returnType
+            // compareTo desugaring: comparison operators (<, <=, >, >=) that resolve
+            // to a compareTo method should produce Bool, not the compareTo return type (Int).
+            // The KIR lowerer will emit: compareTo(a, b) <op> 0
+            let effectiveType: TypeID
+            switch op {
+            case .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
+                effectiveType = boolType
+            default:
+                effectiveType = returnType
+            }
+            sema.bindings.bindExprType(id, type: effectiveType)
+            return effectiveType
         }
         let type: TypeID
         switch op {
