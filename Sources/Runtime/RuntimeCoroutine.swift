@@ -365,12 +365,14 @@ public func kk_with_context(_ dispatcher: Int, _ blockFnPtr: Int, _ continuation
 
 // MARK: - Channel Runtime Stubs (P5-134)
 
-/// Minimal unbuffered channel: sender blocks until receiver arrives and vice versa.
+/// Channel with rendezvous (capacity 0) and buffered (capacity > 0) semantics.
 internal final class RuntimeChannelHandle {
     private let lock = NSLock()
     private var buffer: [Int] = []
     private let capacity: Int
     private var closed = false
+    private var waitingReceivers = 0
+    private var waitingSenders = 0
     private let sendSemaphore = DispatchSemaphore(value: 0)
     private let receiveSemaphore = DispatchSemaphore(value: 0)
 
@@ -384,7 +386,12 @@ internal final class RuntimeChannelHandle {
             lock.unlock()
             return
         }
+        // For buffered channels, drop when full; for rendezvous, allow exactly one item
         if capacity > 0 && buffer.count >= capacity {
+            lock.unlock()
+            return
+        }
+        if capacity == 0 && !buffer.isEmpty {
             lock.unlock()
             return
         }
@@ -392,7 +399,13 @@ internal final class RuntimeChannelHandle {
         lock.unlock()
         receiveSemaphore.signal()
         if capacity == 0 {
+            lock.lock()
+            waitingSenders += 1
+            lock.unlock()
             sendSemaphore.wait()
+            lock.lock()
+            waitingSenders -= 1
+            lock.unlock()
         }
     }
 
@@ -402,10 +415,17 @@ internal final class RuntimeChannelHandle {
             lock.unlock()
             return 0
         }
+        waitingReceivers += 1
         lock.unlock()
         receiveSemaphore.wait()
         lock.lock()
-        let value = buffer.isEmpty ? 0 : buffer.removeFirst()
+        waitingReceivers -= 1
+        // After waking, check if closed with empty buffer (close() woke us)
+        if buffer.isEmpty {
+            lock.unlock()
+            return 0
+        }
+        let value = buffer.removeFirst()
         lock.unlock()
         if capacity == 0 {
             sendSemaphore.signal()
@@ -416,8 +436,16 @@ internal final class RuntimeChannelHandle {
     func close() {
         lock.lock()
         closed = true
+        let receiversToWake = waitingReceivers
+        let sendersToWake = waitingSenders
         lock.unlock()
-        receiveSemaphore.signal()
+        // Wake all blocked receivers and senders
+        for _ in 0..<receiversToWake {
+            receiveSemaphore.signal()
+        }
+        for _ in 0..<sendersToWake {
+            sendSemaphore.signal()
+        }
     }
 }
 
