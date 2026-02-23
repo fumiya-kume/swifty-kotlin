@@ -4,9 +4,10 @@ import XCTest
 final class DiffKotlincRegressionCasesTests: XCTestCase {
     func testDiffKotlincRegressionCasesAreTracked() throws {
         let root = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
+            .deletingLastPathComponent() // Integration/
+            .deletingLastPathComponent() // CompilerCoreTests/
+            .deletingLastPathComponent() // Tests/
+            .deletingLastPathComponent() // repo root
         let casesDir = root.appendingPathComponent("Scripts/diff_cases", isDirectory: true)
         let readmePath = casesDir.appendingPathComponent("README.md").path
 
