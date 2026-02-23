@@ -10,19 +10,18 @@ extension TypeCheckSemaPassPhase {
         let ast = ctx.ast
         let sema = ctx.sema
         let interner = ctx.interner
-        let scope = ctx.scope
 
         guard let expr = ast.arena.expr(id) else {
             return sema.types.errorType
         }
 
-        let boolType = sema.types.make(.primitive(.boolean, .nonNull))
-        let intType = sema.types.make(.primitive(.int, .nonNull))
-        let longType = sema.types.make(.primitive(.long, .nonNull))
-        let floatType = sema.types.make(.primitive(.float, .nonNull))
-        let doubleType = sema.types.make(.primitive(.double, .nonNull))
-        let charType = sema.types.make(.primitive(.char, .nonNull))
-        let stringType = sema.types.make(.primitive(.string, .nonNull))
+        let boolType = sema.types.booleanType
+        let intType = sema.types.intType
+        let longType = sema.types.longType
+        let floatType = sema.types.floatType
+        let doubleType = sema.types.doubleType
+        let charType = sema.types.charType
+        let stringType = sema.types.stringType
 
         switch expr {
         case .intLiteral:
@@ -63,63 +62,7 @@ extension TypeCheckSemaPassPhase {
             return stringType
 
         case .nameRef(let name, let nameRange):
-            if interner.resolve(name) == "null" {
-                sema.bindings.bindExprType(id, type: sema.types.nullableAnyType)
-                return sema.types.nullableAnyType
-            }
-            if interner.resolve(name) == "this",
-               let receiverType = ctx.implicitReceiverType {
-                sema.bindings.bindExprType(id, type: receiverType)
-                return receiverType
-            }
-            if let local = locals[name] {
-                if !local.isInitialized {
-                    ctx.semaCtx.diagnostics.error(
-                        "KSWIFTK-SEMA-0031",
-                        "Variable '\(interner.resolve(name))' must be initialized before use.",
-                        range: nameRange
-                    )
-                }
-                sema.bindings.bindIdentifier(id, symbol: local.symbol)
-                sema.bindings.bindExprType(id, type: local.type)
-                return local.type
-            }
-            let allCandidateIDs = scope.lookup(name)
-            let (visibleIDs, invisibleSyms) = ctx.filterByVisibility(allCandidateIDs)
-            let candidates = visibleIDs.compactMap { sema.symbols.symbol($0) }
-            if candidates.isEmpty {
-                if let firstInvisible = invisibleSyms.first {
-                    let visLabel = firstInvisible.visibility == .protected ? "protected" : "private"
-                    let code = firstInvisible.visibility == .protected ? "KSWIFTK-SEMA-0041" : "KSWIFTK-SEMA-0040"
-                    ctx.semaCtx.diagnostics.error(
-                        code,
-                        "Cannot access '\(interner.resolve(name))': it is \(visLabel).",
-                        range: nameRange
-                    )
-                } else {
-                    ctx.semaCtx.diagnostics.error(
-                        "KSWIFTK-SEMA-0022",
-                        "Unresolved reference '\(interner.resolve(name))'.",
-                        range: nameRange
-                    )
-                }
-                sema.bindings.bindExprType(id, type: sema.types.errorType)
-                return sema.types.errorType
-            }
-            if let first = candidates.first {
-                sema.bindings.bindIdentifier(id, symbol: first.id)
-            }
-            let resolvedType = candidates.first.flatMap { symbol in
-                if let signature = sema.symbols.functionSignature(for: symbol.id) {
-                    return signature.returnType
-                }
-                if symbol.kind == .property || symbol.kind == .field {
-                    return sema.symbols.propertyType(for: symbol.id)
-                }
-                return nil
-            } ?? sema.types.anyType
-            sema.bindings.bindExprType(id, type: resolvedType)
-            return resolvedType
+            return inferNameRefExpr(id, name: name, nameRange: nameRange, ctx: ctx, locals: &locals)
 
         case .forExpr(let loopVariable, let iterableExpr, let bodyExpr, let range):
             return inferForExpr(id, loopVariable: loopVariable, iterableExpr: iterableExpr, bodyExpr: bodyExpr, range: range, ctx: ctx, locals: &locals)
@@ -221,7 +164,7 @@ extension TypeCheckSemaPassPhase {
             let targetType = resolveTypeRef(typeRefID, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
             let type: TypeID
             if isSafe {
-                type = makeNullable(targetType, types: sema.types)
+                type = sema.types.makeNullable(targetType)
             } else {
                 type = targetType
             }
@@ -230,7 +173,7 @@ extension TypeCheckSemaPassPhase {
 
         case .nullAssert(let exprID, _):
             let operandType = inferExpr(exprID, ctx: ctx, locals: &locals)
-            let type = makeNonNullable(operandType, types: sema.types)
+            let type = sema.types.makeNonNullable(operandType)
             sema.bindings.bindExprType(id, type: type)
             return type
 
@@ -250,68 +193,7 @@ extension TypeCheckSemaPassPhase {
             return sema.types.nothingType
 
         case .lambdaLiteral(let params, let body, _):
-            let expectedFunctionType: FunctionType?
-            if let expectedType,
-               case .functionType(let functionType) = sema.types.kind(of: expectedType) {
-                expectedFunctionType = functionType
-            } else {
-                expectedFunctionType = nil
-            }
-
-            var lambdaLocals = locals
-            let outerSymbols = Set(locals.values.map { $0.symbol })
-            let parameterTypes: [TypeID]
-            if let expectedFunctionType, expectedFunctionType.params.count == params.count {
-                parameterTypes = expectedFunctionType.params
-            } else {
-                parameterTypes = Array(repeating: sema.types.anyType, count: params.count)
-            }
-            for (offset, param) in params.enumerated() {
-                let syntheticSymbol = SymbolID(rawValue: Int32(clamping: Int64(-1_000_000) - Int64(id.rawValue) * 256 - Int64(offset)))
-                let parameterType = offset < parameterTypes.count ? parameterTypes[offset] : sema.types.anyType
-                lambdaLocals[param] = (
-                    type: parameterType,
-                    symbol: syntheticSymbol,
-                    isMutable: false,
-                    isInitialized: true
-                )
-            }
-
-            let inferredBodyType = inferExpr(
-                body,
-                ctx: ctx,
-                locals: &lambdaLocals,
-                expectedType: expectedFunctionType?.returnType
-            )
-            let captures = collectCapturedOuterSymbols(
-                in: body,
-                ast: ast,
-                sema: sema,
-                outerSymbols: outerSymbols
-            )
-            sema.bindings.bindCaptureSymbols(id, symbols: captures)
-
-            if let expectedType, let expectedFunctionType {
-                emitSubtypeConstraint(
-                    left: inferredBodyType,
-                    right: expectedFunctionType.returnType,
-                    range: ast.arena.exprRange(body),
-                    solver: ConstraintSolver(),
-                    sema: sema,
-                    diagnostics: ctx.semaCtx.diagnostics
-                )
-                sema.bindings.bindExprType(id, type: expectedType)
-                return expectedType
-            }
-
-            let inferredFunctionType = sema.types.make(.functionType(FunctionType(
-                params: parameterTypes,
-                returnType: inferredBodyType,
-                isSuspend: false,
-                nullability: .nonNull
-            )))
-            sema.bindings.bindExprType(id, type: inferredFunctionType)
-            return inferredFunctionType
+            return inferLambdaLiteralExpr(id, params: params, body: body, ctx: ctx, locals: &locals, expectedType: expectedType)
 
         case .objectLiteral(let superTypes, _):
             let objectType = superTypes.first.map {
@@ -321,113 +203,7 @@ extension TypeCheckSemaPassPhase {
             return objectType
 
         case .callableRef(let receiver, let member, let range):
-            let outerSymbols = Set(locals.values.map { $0.symbol })
-
-            let receiverType: TypeID?
-            if let receiver {
-                receiverType = inferExpr(receiver, ctx: ctx, locals: &locals, expectedType: nil)
-            } else {
-                receiverType = nil
-            }
-
-            var candidates: [SymbolID] = []
-            if let receiverType {
-                let nonNullReceiver = makeNonNullable(receiverType, types: sema.types)
-                let memberCandidates = collectMemberFunctionCandidates(
-                    named: member,
-                    receiverType: nonNullReceiver,
-                    sema: sema
-                )
-                if !memberCandidates.isEmpty {
-                    candidates = memberCandidates
-                } else {
-                    candidates = scope.lookup(member).filter { symbolID in
-                        guard let symbol = sema.symbols.symbol(symbolID),
-                              symbol.kind == .function,
-                              let signature = sema.symbols.functionSignature(for: symbolID),
-                              let declaredReceiver = signature.receiverType else {
-                            return false
-                        }
-                        return sema.types.isSubtype(nonNullReceiver, declaredReceiver)
-                    }
-                }
-            } else {
-                candidates = scope.lookup(member).filter { symbolID in
-                    guard let symbol = sema.symbols.symbol(symbolID) else {
-                        return false
-                    }
-                    return symbol.kind == .function || symbol.kind == .constructor
-                }
-                if candidates.isEmpty,
-                   let local = locals[member],
-                   let localSymbol = sema.symbols.symbol(local.symbol),
-                   localSymbol.kind == .function {
-                    candidates = [local.symbol]
-                }
-            }
-
-            let chosen = chooseCallableReferenceTarget(
-                from: candidates,
-                expectedType: expectedType,
-                bindReceiver: receiver != nil,
-                sema: sema
-            )
-
-            if let chosen,
-               let signature = sema.symbols.functionSignature(for: chosen) {
-                let inferredType = callableFunctionType(
-                    for: signature,
-                    bindReceiver: receiver != nil,
-                    sema: sema
-                )
-                let resultType: TypeID
-                if let expectedType,
-                   case .functionType = sema.types.kind(of: expectedType) {
-                    emitSubtypeConstraint(
-                        left: inferredType,
-                        right: expectedType,
-                        range: range,
-                        solver: ConstraintSolver(),
-                        sema: sema,
-                        diagnostics: ctx.semaCtx.diagnostics
-                    )
-                    resultType = expectedType
-                } else {
-                    resultType = inferredType
-                }
-                sema.bindings.bindIdentifier(id, symbol: chosen)
-                sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
-                let captures = receiver.map { recv in
-                    collectCapturedOuterSymbols(
-                        in: recv,
-                        ast: ast,
-                        sema: sema,
-                        outerSymbols: outerSymbols
-                    )
-                } ?? []
-                sema.bindings.bindCaptureSymbols(id, symbols: captures)
-                sema.bindings.bindExprType(id, type: resultType)
-                return resultType
-            }
-
-            let fallbackType: TypeID
-            if let expectedType,
-               case .functionType = sema.types.kind(of: expectedType) {
-                fallbackType = expectedType
-            } else {
-                fallbackType = sema.types.anyType
-            }
-            let fallbackCaptures = receiver.map { recv in
-                collectCapturedOuterSymbols(
-                    in: recv,
-                    ast: ast,
-                    sema: sema,
-                    outerSymbols: outerSymbols
-                )
-            } ?? []
-            sema.bindings.bindCaptureSymbols(id, symbols: fallbackCaptures)
-            sema.bindings.bindExprType(id, type: fallbackType)
-            return fallbackType
+            return inferCallableRefExpr(id, receiver: receiver, member: member, range: range, ctx: ctx, locals: &locals, expectedType: expectedType)
 
         case .blockExpr(let statements, let trailingExpr, _):
             var blockLocals = locals
@@ -459,61 +235,10 @@ extension TypeCheckSemaPassPhase {
             return inferLocalFunDeclExpr(id, name: name, valueParams: valueParams, returnTypeRef: returnTypeRef, body: body, range: range, ctx: ctx, locals: &locals)
 
         case .superRef(let range):
-            guard let receiverType = ctx.implicitReceiverType else {
-                ctx.semaCtx.diagnostics.error(
-                    "KSWIFTK-SEMA-0050",
-                    "'super' is not allowed outside of a class body.",
-                    range: range
-                )
-                sema.bindings.bindExprType(id, type: sema.types.errorType)
-                return sema.types.errorType
-            }
-            if let classSymbol = nominalSymbol(of: receiverType, types: sema.types) {
-                let supertypes = sema.symbols.directSupertypes(for: classSymbol)
-                let classSupertypes = supertypes.filter {
-                    let kind = sema.symbols.symbol($0)?.kind
-                    return kind == .class || kind == .enumClass
-                }
-                if let superclass = classSupertypes.first {
-                    let superType = sema.types.make(.classType(ClassType(classSymbol: superclass)))
-                    sema.bindings.bindExprType(id, type: superType)
-                    return superType
-                }
-            }
-            ctx.semaCtx.diagnostics.error(
-                "KSWIFTK-SEMA-0052",
-                "Class has no superclass.",
-                range: range
-            )
-            sema.bindings.bindExprType(id, type: sema.types.errorType)
-            return sema.types.errorType
+            return inferSuperRefExpr(id, range: range, ctx: ctx)
 
         case .thisRef(let label, let range):
-            guard let receiverType = ctx.implicitReceiverType else {
-                ctx.semaCtx.diagnostics.error(
-                    "KSWIFTK-SEMA-0051",
-                    "'this' is not allowed in this context.",
-                    range: range
-                )
-                sema.bindings.bindExprType(id, type: sema.types.errorType)
-                return sema.types.errorType
-            }
-            if let label {
-                if let qualifiedType = ctx.resolveQualifiedThis(label: label) {
-                    sema.bindings.bindExprType(id, type: qualifiedType)
-                    return qualifiedType
-                }
-                let labelStr = interner.resolve(label)
-                ctx.semaCtx.diagnostics.error(
-                    "KSWIFTK-SEMA-0053",
-                    "Unresolved label '\(labelStr)' for qualified 'this'.",
-                    range: range
-                )
-                sema.bindings.bindExprType(id, type: sema.types.errorType)
-                return sema.types.errorType
-            }
-            sema.bindings.bindExprType(id, type: receiverType)
-            return receiverType
+            return inferThisRefExpr(id, label: label, range: range, ctx: ctx)
         }
     }
 
@@ -530,5 +255,207 @@ extension TypeCheckSemaPassPhase {
             }
             locals[name] = (narrowed, local.symbol, local.isMutable, local.isInitialized)
         }
+    }
+
+    func inferBinaryExpr(
+        _ id: ExprID,
+        op: BinaryOp,
+        lhsID: ExprID,
+        rhsID: ExprID,
+        range: SourceRange,
+        ctx: TypeInferenceContext,
+        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
+        expectedType: TypeID?
+    ) -> TypeID {
+        let ast = ctx.ast
+        let sema = ctx.sema
+        let interner = ctx.interner
+        let scope = ctx.scope
+
+        let boolType = sema.types.booleanType
+        let intType = sema.types.intType
+        let longType = sema.types.longType
+        let floatType = sema.types.floatType
+        let doubleType = sema.types.doubleType
+        let stringType = sema.types.stringType
+
+        let lhs = inferExpr(lhsID, ctx: ctx, locals: &locals)
+        let rhs = inferExpr(rhsID, ctx: ctx, locals: &locals)
+        let lhsIsPrimitive: Bool
+        if case .primitive = sema.types.kind(of: lhs) { lhsIsPrimitive = true } else { lhsIsPrimitive = false }
+        let operatorName = binaryOperatorFunctionName(for: op, interner: interner)
+        let memberOperatorCandidates = lhsIsPrimitive ? [] : collectMemberFunctionCandidates(
+            named: operatorName,
+            receiverType: lhs,
+            sema: sema
+        )
+        let operatorCandidates: [SymbolID]
+        if !memberOperatorCandidates.isEmpty {
+            operatorCandidates = memberOperatorCandidates
+        } else if !lhsIsPrimitive {
+            operatorCandidates = scope.lookup(operatorName).filter { candidate in
+                guard let symbol = sema.symbols.symbol(candidate),
+                      symbol.kind == .function,
+                      let signature = sema.symbols.functionSignature(for: candidate) else {
+                    return false
+                }
+                return signature.receiverType != nil
+            }
+        } else {
+            operatorCandidates = []
+        }
+        let lhsIsAny = lhs == sema.types.anyType || lhs == sema.types.nullableAnyType
+        let rhsIsAny = rhs == sema.types.anyType || rhs == sema.types.nullableAnyType
+        if !lhsIsPrimitive && !lhsIsAny && !rhsIsAny && operatorCandidates.isEmpty && lhs != sema.types.errorType && rhs != sema.types.errorType {
+            switch op {
+            case .add, .subtract, .multiply, .divide, .modulo:
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0002",
+                    "No viable overload found for operator '\(interner.resolve(operatorName))'.",
+                    range: range
+                )
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            default:
+                break
+            }
+        }
+        if !operatorCandidates.isEmpty {
+            let resolved = ctx.resolver.resolveCall(
+                candidates: operatorCandidates,
+                call: CallExpr(
+                    range: range,
+                    calleeName: operatorName,
+                    args: [CallArg(type: rhs)]
+                ),
+                expectedType: expectedType,
+                implicitReceiverType: lhs,
+                ctx: ctx.semaCtx
+            )
+            if let diagnostic = resolved.diagnostic {
+                if lhs != sema.types.errorType && rhs != sema.types.errorType {
+                    ctx.semaCtx.diagnostics.emit(diagnostic)
+                }
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
+            guard let chosen = resolved.chosenCallee else {
+                if lhs != sema.types.errorType && rhs != sema.types.errorType {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0002",
+                        "No viable overload found for operator '\(interner.resolve(operatorName))'.",
+                        range: range
+                    )
+                }
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
+            let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
+            sema.bindings.bindExprType(id, type: returnType)
+            return returnType
+        }
+        let type: TypeID
+        switch op {
+        case .add:
+            if lhs == stringType || rhs == stringType {
+                type = stringType
+            } else if lhs == doubleType || rhs == doubleType {
+                type = doubleType
+            } else if lhs == floatType || rhs == floatType {
+                type = floatType
+            } else if lhs == longType || rhs == longType {
+                type = longType
+            } else {
+                type = intType
+            }
+        case .subtract, .multiply, .divide, .modulo:
+            if lhs == doubleType || rhs == doubleType {
+                type = doubleType
+            } else if lhs == floatType || rhs == floatType {
+                type = floatType
+            } else if lhs == longType || rhs == longType {
+                type = longType
+            } else {
+                type = intType
+            }
+        case .equal, .notEqual, .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
+            type = boolType
+        case .logicalAnd, .logicalOr:
+            emitSubtypeConstraint(
+                left: lhs, right: boolType,
+                range: ast.arena.exprRange(lhsID) ?? range,
+                solver: ConstraintSolver(), sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+            emitSubtypeConstraint(
+                left: rhs, right: boolType,
+                range: ast.arena.exprRange(rhsID) ?? range,
+                solver: ConstraintSolver(), sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+            type = boolType
+        case .elvis:
+            let nonNullLhs = sema.types.makeNonNullable(lhs)
+            type = sema.types.lub([nonNullLhs, rhs])
+        case .rangeTo:
+            type = sema.types.anyType
+        }
+        sema.bindings.bindExprType(id, type: type)
+        return type
+    }
+
+    func inferCompoundAssignExpr(
+        _ id: ExprID,
+        op: CompoundAssignOp,
+        name: InternedString,
+        valueExpr: ExprID,
+        range: SourceRange,
+        ctx: TypeInferenceContext,
+        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)]
+    ) -> TypeID {
+        let sema = ctx.sema
+        let interner = ctx.interner
+
+        let intType = sema.types.intType
+        let stringType = sema.types.stringType
+
+        let valueType = inferExpr(valueExpr, ctx: ctx, locals: &locals, expectedType: nil)
+        guard let local = locals[name] else {
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-0013",
+                "Unresolved local variable '\(interner.resolve(name))'.",
+                range: range
+            )
+            sema.bindings.bindExprType(id, type: sema.types.errorType)
+            return sema.types.errorType
+        }
+        sema.bindings.bindIdentifier(id, symbol: local.symbol)
+        if !local.isInitialized {
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-0031",
+                "Variable '\(interner.resolve(name))' must be initialized before use.",
+                range: range
+            )
+        }
+        if !local.isMutable {
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-0014",
+                "Val cannot be reassigned.",
+                range: range
+            )
+        }
+        let underlyingOp = compoundAssignToBinaryOp(op)
+        let resultType: TypeID
+        switch underlyingOp {
+        case .add:
+            resultType = (local.type == stringType || valueType == stringType) ? stringType : intType
+        case .subtract, .multiply, .divide, .modulo:
+            resultType = intType
+        default:
+            resultType = local.type
+        }
+        locals[name] = (resultType, local.symbol, local.isMutable, local.isInitialized)
+        sema.bindings.bindExprType(id, type: sema.types.unitType)
+        return sema.types.unitType
     }
 }

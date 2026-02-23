@@ -212,3 +212,47 @@ func extractThrowFlags(
         partial[interner.resolve(callee), default: []].append(canThrow)
     }
 }
+
+// MARK: - AST Helpers
+
+func firstExprID(
+    in ast: ASTModule,
+    where predicate: (ExprID, Expr) -> Bool
+) -> ExprID? {
+    for index in ast.arena.exprs.indices {
+        let exprID = ExprID(rawValue: Int32(index))
+        guard let expr = ast.arena.expr(exprID) else { continue }
+        if predicate(exprID, expr) { return exprID }
+    }
+    return nil
+}
+
+// MARK: - Source Context Helpers
+
+func makeContextFromSource(_ source: String) throws -> CompilationContext {
+    let fakePath = FileManager.default.temporaryDirectory
+        .appendingPathComponent(UUID().uuidString + ".kt").path
+    let ctx = makeCompilationContext(inputs: [fakePath])
+    ctx.sourceManager.addFile(path: fakePath, contents: Data(source.utf8))
+    return ctx
+}
+
+func makeContextFromSources(_ sources: [String]) throws -> CompilationContext {
+    let tempDir = FileManager.default.temporaryDirectory
+        .appendingPathComponent(UUID().uuidString)
+    let fakePaths = sources.enumerated().map { index, _ in
+        tempDir.appendingPathComponent("input\(index).kt").path
+    }
+    let ctx = makeCompilationContext(inputs: fakePaths)
+    for (path, source) in zip(fakePaths, sources) {
+        ctx.sourceManager.addFile(path: path, contents: Data(source.utf8))
+    }
+    return ctx
+}
+
+// MARK: - LLVM Helpers
+
+func llvmCapiBindingsAvailable() -> Bool {
+    guard let bindings = LLVMCAPIBindings.load() else { return false }
+    return bindings.smokeTestContextLifecycle()
+}
