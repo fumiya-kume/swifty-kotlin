@@ -80,7 +80,14 @@ struct TypeInferenceContext {
     let visibilityChecker: VisibilityChecker
     let outerReceiverTypes: [(label: InternedString, type: TypeID)]
 
-    func with(scope: Scope) -> TypeInferenceContext {
+    func copying(
+        scope: Scope? = nil,
+        implicitReceiverType: TypeID?? = nil,
+        loopDepth: Int? = nil,
+        flowState: DataFlowState? = nil,
+        enclosingClassSymbol: SymbolID?? = nil,
+        outerReceiverTypes: [(label: InternedString, type: TypeID)]? = nil
+    ) -> TypeInferenceContext {
         TypeInferenceContext(
             ast: ast,
             sema: sema,
@@ -88,112 +95,21 @@ struct TypeInferenceContext {
             resolver: resolver,
             dataFlow: dataFlow,
             interner: interner,
-            scope: scope,
-            implicitReceiverType: implicitReceiverType,
-            loopDepth: loopDepth,
-            flowState: flowState,
+            scope: scope ?? self.scope,
+            implicitReceiverType: implicitReceiverType ?? self.implicitReceiverType,
+            loopDepth: loopDepth ?? self.loopDepth,
+            flowState: flowState ?? self.flowState,
             currentFileID: currentFileID,
-            enclosingClassSymbol: enclosingClassSymbol,
+            enclosingClassSymbol: enclosingClassSymbol ?? self.enclosingClassSymbol,
             visibilityChecker: visibilityChecker,
-            outerReceiverTypes: outerReceiverTypes
-        )
-    }
-
-    func with(implicitReceiverType: TypeID?) -> TypeInferenceContext {
-        TypeInferenceContext(
-            ast: ast,
-            sema: sema,
-            semaCtx: semaCtx,
-            resolver: resolver,
-            dataFlow: dataFlow,
-            interner: interner,
-            scope: scope,
-            implicitReceiverType: implicitReceiverType,
-            loopDepth: loopDepth,
-            flowState: flowState,
-            currentFileID: currentFileID,
-            enclosingClassSymbol: enclosingClassSymbol,
-            visibilityChecker: visibilityChecker,
-            outerReceiverTypes: outerReceiverTypes
-        )
-    }
-
-    func with(loopDepth: Int) -> TypeInferenceContext {
-        TypeInferenceContext(
-            ast: ast,
-            sema: sema,
-            semaCtx: semaCtx,
-            resolver: resolver,
-            dataFlow: dataFlow,
-            interner: interner,
-            scope: scope,
-            implicitReceiverType: implicitReceiverType,
-            loopDepth: loopDepth,
-            flowState: flowState,
-            currentFileID: currentFileID,
-            enclosingClassSymbol: enclosingClassSymbol,
-            visibilityChecker: visibilityChecker,
-            outerReceiverTypes: outerReceiverTypes
-        )
-    }
-
-    func with(flowState: DataFlowState) -> TypeInferenceContext {
-        TypeInferenceContext(
-            ast: ast,
-            sema: sema,
-            semaCtx: semaCtx,
-            resolver: resolver,
-            dataFlow: dataFlow,
-            interner: interner,
-            scope: scope,
-            implicitReceiverType: implicitReceiverType,
-            loopDepth: loopDepth,
-            flowState: flowState,
-            currentFileID: currentFileID,
-            enclosingClassSymbol: enclosingClassSymbol,
-            visibilityChecker: visibilityChecker,
-            outerReceiverTypes: outerReceiverTypes
-        )
-    }
-
-    func with(enclosingClassSymbol: SymbolID?) -> TypeInferenceContext {
-        TypeInferenceContext(
-            ast: ast,
-            sema: sema,
-            semaCtx: semaCtx,
-            resolver: resolver,
-            dataFlow: dataFlow,
-            interner: interner,
-            scope: scope,
-            implicitReceiverType: implicitReceiverType,
-            loopDepth: loopDepth,
-            flowState: flowState,
-            currentFileID: currentFileID,
-            enclosingClassSymbol: enclosingClassSymbol,
-            visibilityChecker: visibilityChecker,
-            outerReceiverTypes: outerReceiverTypes
+            outerReceiverTypes: outerReceiverTypes ?? self.outerReceiverTypes
         )
     }
 
     func withOuterReceiver(label: InternedString, type: TypeID) -> TypeInferenceContext {
         var newOuters = outerReceiverTypes
         newOuters.append((label: label, type: type))
-        return TypeInferenceContext(
-            ast: ast,
-            sema: sema,
-            semaCtx: semaCtx,
-            resolver: resolver,
-            dataFlow: dataFlow,
-            interner: interner,
-            scope: scope,
-            implicitReceiverType: implicitReceiverType,
-            loopDepth: loopDepth,
-            flowState: flowState,
-            currentFileID: currentFileID,
-            enclosingClassSymbol: enclosingClassSymbol,
-            visibilityChecker: visibilityChecker,
-            outerReceiverTypes: newOuters
-        )
+        return copying(outerReceiverTypes: newOuters)
     }
 
     func resolveQualifiedThis(label: InternedString) -> TypeID? {
@@ -391,7 +307,7 @@ extension TypeCheckSemaPassPhase {
             locals[param.name] = (type, paramSymbol, false, true)
         }
 
-        let functionCtx = ctx.with(implicitReceiverType: signature.receiverType)
+        let functionCtx = ctx.copying(implicitReceiverType: signature.receiverType)
         let bodyType = inferFunctionBodyType(
             function.body,
             ctx: functionCtx,
@@ -468,8 +384,7 @@ extension TypeCheckSemaPassPhase {
         let classLabel = sema.symbols.symbol(symbol)?.name ?? ctx.interner.intern("")
         let classCtx = ctx
             .withOuterReceiver(label: classLabel, type: classType)
-            .with(scope: classScope)
-            .with(implicitReceiverType: classType)
+            .copying(scope: classScope, implicitReceiverType: classType)
 
         typeCheckInitBlocks(classDecl.initBlocks, ctx: classCtx)
         typeCheckSecondaryConstructors(
@@ -510,8 +425,7 @@ extension TypeCheckSemaPassPhase {
         let objectLabel = sema.symbols.symbol(symbol)?.name ?? ctx.interner.intern("")
         let objectCtx = ctx
             .withOuterReceiver(label: objectLabel, type: objectType)
-            .with(scope: objectScope)
-            .with(implicitReceiverType: objectType)
+            .copying(scope: objectScope, implicitReceiverType: objectType)
 
         typeCheckInitBlocks(objectDecl.initBlocks, ctx: objectCtx)
         typeCheckClassLikeMembers(

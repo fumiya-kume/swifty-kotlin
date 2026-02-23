@@ -31,7 +31,7 @@ extension TypeCheckSemaPassPhase {
         }
         _ = inferExpr(
             bodyExpr,
-            ctx: ctx.with(loopDepth: ctx.loopDepth + 1),
+            ctx: ctx.copying(loopDepth: ctx.loopDepth + 1),
             locals: &bodyLocals,
             expectedType: nil
         )
@@ -62,7 +62,7 @@ extension TypeCheckSemaPassPhase {
         var bodyLocals = locals
         _ = inferExpr(
             bodyExpr,
-            ctx: ctx.with(loopDepth: ctx.loopDepth + 1),
+            ctx: ctx.copying(loopDepth: ctx.loopDepth + 1),
             locals: &bodyLocals,
             expectedType: nil
         )
@@ -84,7 +84,7 @@ extension TypeCheckSemaPassPhase {
         var bodyLocals = locals
         _ = inferExpr(
             bodyExpr,
-            ctx: ctx.with(loopDepth: ctx.loopDepth + 1),
+            ctx: ctx.copying(loopDepth: ctx.loopDepth + 1),
             locals: &bodyLocals,
             expectedType: nil
         )
@@ -138,13 +138,13 @@ extension TypeCheckSemaPassPhase {
         )
         var thenLocals = locals
         applyFlowStateToLocals(branch.trueState, locals: &thenLocals, sema: sema)
-        let thenCtx = ctx.with(flowState: branch.trueState)
+        let thenCtx = ctx.copying(flowState: branch.trueState)
         let thenType = inferExpr(thenExpr, ctx: thenCtx, locals: &thenLocals, expectedType: expectedType)
         let resolvedType: TypeID
         if let elseExpr {
             var elseLocals = locals
             applyFlowStateToLocals(branch.falseState, locals: &elseLocals, sema: sema)
-            let elseCtx = ctx.with(flowState: branch.falseState)
+            let elseCtx = ctx.copying(flowState: branch.falseState)
             let elseType = inferExpr(elseExpr, ctx: elseCtx, locals: &elseLocals, expectedType: expectedType)
             resolvedType = sema.types.lub([thenType, elseType])
             for (name, local) in locals {
@@ -347,7 +347,7 @@ extension TypeCheckSemaPassPhase {
                             base: ctx.flowState,
                             ast: ast, sema: sema, interner: interner
                         )
-                        branchCtx = ctx.with(flowState: branchFlowState)
+                        branchCtx = ctx.copying(flowState: branchFlowState)
                         if let narrowedType = ctx.dataFlow.resolvedTypeFromFlowState(
                             branchFlowState, symbol: subjectLocalBinding.symbol
                         ) {
@@ -360,7 +360,7 @@ extension TypeCheckSemaPassPhase {
                                 subjectType: subjectLocalBinding.type,
                                 base: ctx.flowState, sema: sema
                             )
-                            branchCtx = ctx.with(flowState: nonNullState)
+                            branchCtx = ctx.copying(flowState: nonNullState)
                             applyFlowStateToLocals(nonNullState, locals: &branchLocals, sema: sema)
                         }
                     }
@@ -381,7 +381,7 @@ extension TypeCheckSemaPassPhase {
                         hasExplicitNullBranch: hasExplicitNullBranch,
                         base: ctx.flowState, sema: sema
                     )
-                    elseCtx = ctx.with(flowState: elseFlowState)
+                    elseCtx = ctx.copying(flowState: elseFlowState)
                     applyFlowStateToLocals(elseFlowState, locals: &elseLocals, sema: sema)
                 }
                 branchTypes.append(
@@ -430,7 +430,7 @@ extension TypeCheckSemaPassPhase {
             var cumulativeFalseState = ctx.flowState
             for branch in branches {
                 var branchLocals = locals
-                let condCtx = ctx.with(flowState: cumulativeFalseState)
+                let condCtx = ctx.copying(flowState: cumulativeFalseState)
                 applyFlowStateToLocals(cumulativeFalseState, locals: &branchLocals, sema: sema)
                 var branchCtx = condCtx
                 if let cond = branch.condition {
@@ -446,7 +446,7 @@ extension TypeCheckSemaPassPhase {
                         cond, base: cumulativeFalseState, locals: branchLocals,
                         ast: ast, sema: sema, interner: interner
                     )
-                    branchCtx = ctx.with(flowState: condBranch.trueState)
+                    branchCtx = ctx.copying(flowState: condBranch.trueState)
                     applyFlowStateToLocals(condBranch.trueState, locals: &branchLocals, sema: sema)
                     cumulativeFalseState = condBranch.falseState
                     if let condExpr = ast.arena.expr(cond) {
@@ -468,7 +468,7 @@ extension TypeCheckSemaPassPhase {
 
             if let elseExpr {
                 var elseLocals = locals
-                let elseCtx = ctx.with(flowState: cumulativeFalseState)
+                let elseCtx = ctx.copying(flowState: cumulativeFalseState)
                 applyFlowStateToLocals(cumulativeFalseState, locals: &elseLocals, sema: sema)
                 branchTypes.append(
                     inferExpr(elseExpr, ctx: elseCtx, locals: &elseLocals, expectedType: expectedType)
