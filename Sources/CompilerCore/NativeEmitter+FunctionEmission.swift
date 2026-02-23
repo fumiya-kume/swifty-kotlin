@@ -8,12 +8,35 @@ extension NativeEmitter {
         context: LLVMCAPIBindings.LLVMContextRef,
         int64Type: LLVMCAPIBindings.LLVMTypeRef,
         outThrownPointerType: LLVMCAPIBindings.LLVMTypeRef,
-        internalFunctions: [SymbolID: LLVMFunction]
+        internalFunctions: [SymbolID: LLVMFunction],
+        diContext: DebugInfoContext? = nil
     ) throws {
         guard let builder = bindings.createBuilder(context: context) else {
             throw LLVMCAPIBackendError.nativeEmissionFailed("LLVMCreateBuilderInContext returned null")
         }
-        defer { bindings.disposeBuilder(builder) }
+        defer {
+            // Clear debug location before disposing the builder.
+            if diContext != nil {
+                bindings.clearCurrentDebugLocation(builder)
+            }
+            bindings.disposeBuilder(builder)
+        }
+
+        // When debug info is active and the function has a subprogram,
+        // set a dummy debug location (line 0) so the LLVM verifier accepts
+        // all instructions emitted under this builder.
+        if let diContext,
+           let subprogram = diContext.subprograms[function.symbol],
+           bindings.debugLocationAvailable {
+            if let loc = bindings.createDebugLocation(
+                context: context,
+                line: 0,
+                column: 0,
+                scope: subprogram
+            ) {
+                bindings.setCurrentDebugLocation(builder, location: loc)
+            }
+        }
 
         guard let entryBlock = bindings.appendBasicBlock(context: context, function: llvmFunction.value, name: "entry") else {
             throw LLVMCAPIBackendError.nativeEmissionFailed("failed to create entry block")
