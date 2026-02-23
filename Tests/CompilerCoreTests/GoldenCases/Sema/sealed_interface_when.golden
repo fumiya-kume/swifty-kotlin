@@ -1,0 +1,26 @@
+symbol s0 kind=package fq=_root_ vis=public flags=_
+symbol s1 kind=interface fq=Expr vis=public flags=sealedType
+symbol s2 kind=class fq=Literal vis=public flags=_
+symbol s3 kind=constructor fq=Literal.<init> vis=public flags=_ sig=recv=Class#2 params=[] ret=Class#2 suspend=0 defaults=[] vararg=[]
+symbol s4 kind=class fq=Add vis=public flags=_
+symbol s5 kind=constructor fq=Add.<init> vis=public flags=_ sig=recv=Class#4 params=[] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s6 kind=class fq=Multiply vis=public flags=_
+symbol s7 kind=constructor fq=Multiply.<init> vis=public flags=_ sig=recv=Class#6 params=[] ret=Class#6 suspend=0 defaults=[] vararg=[]
+symbol s8 kind=function fq=eval vis=public flags=_ sig=recv=_ params=[Class#1] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s9 kind=valueParameter fq=eval.$8.e vis=private flags=_
+file f0 package=_
+  decl d0 interface Expr sym=s1
+  decl d1 class Literal sym=s2
+  decl d2 class Add sym=s4
+  decl d3 class Multiply sym=s6
+  decl d4 fun eval suspend=0 inline=0 sym=s8
+expr e0 name(e) type=Class#1 ref=s9
+expr e1 name(is) type=<error>
+expr e2 name(Literal) type=Any ref=s2
+expr e3 string(literal) type=_
+expr e4 isCheck expr=e3 type=t5 type=_
+expr e5 string(add) type=_
+expr e6 isCheck expr=e5 type=t6 type=_
+expr e7 string(multiply) type=String
+expr e8 when subject=e0 branches=[e1->e2] else=e7 type=Any?
+expr e9 return value=e8 type=Any?

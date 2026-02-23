@@ -602,6 +602,35 @@ public final class DataFlowAnalyzer {
         }
     }
 
+    /// P5-78: Returns the set of missing sealed subtype InternedString names for diagnostic purposes.
+    /// Returns nil if the type is not a sealed type or if all branches are covered.
+    public func missingSealedBranches(
+        subjectType: TypeID,
+        branches: WhenBranchSummary,
+        sema: SemaModule
+    ) -> [InternedString]? {
+        if branches.hasElse {
+            return nil
+        }
+        let kind = sema.types.kind(of: subjectType)
+        guard case .classType(let classType) = kind else {
+            return nil
+        }
+        guard let classSymbol = sema.symbols.symbol(classType.classSymbol),
+              classSymbol.flags.contains(.sealedType) else {
+            return nil
+        }
+        let subtypeNames = sealedSubtypeNames(for: classSymbol, sema: sema)
+        guard !subtypeNames.isEmpty else {
+            return nil
+        }
+        let missing = subtypeNames.filter { !branches.coveredSymbols.contains($0) }
+        guard !missing.isEmpty else {
+            return nil
+        }
+        return missing.sorted(by: { $0.rawValue < $1.rawValue })
+    }
+
     private func isClassWhenExhaustive(
         classType: ClassType,
         branches: WhenBranchSummary,
@@ -625,9 +654,7 @@ public final class DataFlowAnalyzer {
 
         default:
             if classSymbol.flags.contains(.sealedType) {
-                let subtypeNames = Set(sema.symbols.directSubtypes(of: classSymbol.id).compactMap { subtype in
-                    sema.symbols.symbol(subtype)?.name
-                })
+                let subtypeNames = sealedSubtypeNames(for: classSymbol, sema: sema)
                 guard !subtypeNames.isEmpty else {
                     return false
                 }
@@ -639,6 +666,27 @@ public final class DataFlowAnalyzer {
             }
             return false
         }
+    }
+
+    /// P5-78: Get sealed subtype names, using sealedSubclasses metadata for cross-module support,
+    /// falling back to directSubtypes for same-module sealed types.
+    private func sealedSubtypeNames(for classSymbol: SemanticSymbol, sema: SemaModule) -> Set<InternedString> {
+        // First try sealedSubclasses (populated from metadata for cross-module)
+        if let sealedSubs = sema.symbols.sealedSubclasses(for: classSymbol.id) {
+            return Set(sealedSubs.compactMap { sema.symbols.symbol($0)?.name })
+        }
+        // Fall back to directSubtypes (same-module)
+        return Set(sema.symbols.directSubtypes(of: classSymbol.id).compactMap { subtype in
+            sema.symbols.symbol(subtype)?.name
+        })
+    }
+
+    /// P5-78: Get sealed subtype SymbolIDs.
+    private func sealedSubtypeSymbolIDs(for classSymbol: SemanticSymbol, sema: SemaModule) -> [SymbolID] {
+        if let sealedSubs = sema.symbols.sealedSubclasses(for: classSymbol.id) {
+            return sealedSubs
+        }
+        return sema.symbols.directSubtypes(of: classSymbol.id)
     }
 
     private func enumEntryNames(for enumSymbol: SemanticSymbol, sema: SemaModule) -> Set<InternedString> {

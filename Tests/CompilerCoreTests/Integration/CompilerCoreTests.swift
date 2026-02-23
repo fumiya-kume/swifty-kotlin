@@ -108,6 +108,7 @@ final class CompilerCoreTests: XCTestCase {
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
+        assertNoDiagnostic("KSWIFTK-SEMA-0021", in: ctx)
     }
 
     func testWhenExhaustivenessDiagnosticForSealedMissingSubtype() throws {
@@ -124,7 +125,8 @@ final class CompilerCoreTests: XCTestCase {
         let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
-        assertHasDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
+        // P5-78: sealed missing-branch diagnostic now uses KSWIFTK-SEMA-0021
+        assertHasDiagnostic("KSWIFTK-SEMA-0021", in: ctx)
     }
 
     func testWhenNullBranchSmartCastsLocalToNonNullInOtherBranches() throws {

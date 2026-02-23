@@ -197,4 +197,63 @@ extension DataFlowSemaPassPhase {
             return false
         }
     }
+
+    // P5-78: Validate that direct subclasses of sealed types are in the same package.
+    func validateSealedHierarchy(
+        ast: ASTModule,
+        symbols: SymbolTable,
+        bindings: BindingTable,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner
+    ) {
+        for file in ast.sortedFiles {
+            for declID in file.topLevelDecls {
+                guard let symbol = bindings.declSymbols[declID],
+                      let decl = ast.arena.decl(declID),
+                      let symbolInfo = symbols.symbol(symbol) else {
+                    continue
+                }
+                // Only check class and interface declarations that have supertypes
+                let hasSuperTypes: Bool
+                switch decl {
+                case .classDecl(let classDecl):
+                    hasSuperTypes = !classDecl.superTypes.isEmpty
+                case .interfaceDecl(let interfaceDecl):
+                    hasSuperTypes = !interfaceDecl.superTypes.isEmpty
+                case .objectDecl(let objectDecl):
+                    hasSuperTypes = !objectDecl.superTypes.isEmpty
+                default:
+                    continue
+                }
+                guard hasSuperTypes else { continue }
+
+                let supertypes = symbols.directSupertypes(for: symbol)
+                for supertypeID in supertypes {
+                    guard let supertypeSymbol = symbols.symbol(supertypeID),
+                          supertypeSymbol.flags.contains(.sealedType) else {
+                        continue
+                    }
+                    // Check same-package: compare package prefixes
+                    let subtypePackage = Array(symbolInfo.fqName.dropLast())
+                    let supertypePackage = Array(supertypeSymbol.fqName.dropLast())
+                    if subtypePackage != supertypePackage {
+                        let subtypeName = symbolInfo.fqName.map { interner.resolve($0) }.joined(separator: ".")
+                        let supertypeName = supertypeSymbol.fqName.map { interner.resolve($0) }.joined(separator: ".")
+                        diagnostics.error(
+                            "KSWIFTK-SEMA-0020",
+                            "'\(subtypeName)' cannot inherit from sealed type '\(supertypeName)': sealed subclasses must be in the same package.",
+                            range: ast.arena.decl(declID).flatMap { d -> SourceRange? in
+                                switch d {
+                                case .classDecl(let cd): return cd.range
+                                case .interfaceDecl(let id): return id.range
+                                case .objectDecl(let od): return od.range
+                                default: return nil
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
