@@ -1,6 +1,14 @@
 import Foundation
 
-extension BuildKIRPhase {
+/// Delegate class for KIR lowering: MemberLowerer.
+/// Holds an unowned reference to the driver for mutual recursion.
+final class MemberLowerer {
+    unowned let driver: KIRLoweringDriver
+
+    init(driver: KIRLoweringDriver) {
+        self.driver = driver
+    }
+
     func lowerMemberDecls(
         memberFunctions: [DeclID],
         memberProperties: [DeclID],
@@ -21,21 +29,21 @@ extension BuildKIRPhase {
                   let symbol = sema.bindings.declSymbols[declID] else {
                 continue
             }
-            localValuesBySymbol.removeAll(keepingCapacity: true)
-            currentImplicitReceiverExprID = nil
-            currentImplicitReceiverSymbol = nil
-            loopControlStack.removeAll(keepingCapacity: true)
-            nextLoopLabel = 10_000
-            beginCallableLoweringScope()
+            driver.ctx.localValuesBySymbol.removeAll(keepingCapacity: true)
+            driver.ctx.currentImplicitReceiverExprID = nil
+            driver.ctx.currentImplicitReceiverSymbol = nil
+            driver.ctx.loopControlStack.removeAll(keepingCapacity: true)
+            driver.ctx.nextLoopLabel = 10_000
+            driver.ctx.beginCallableLoweringScope()
 
             let signature = sema.symbols.functionSignature(for: symbol)
             var params: [KIRParameter] = []
             if let signature {
                 if let receiverType = signature.receiverType {
-                    let receiverSymbol = syntheticReceiverParameterSymbol(functionSymbol: symbol)
+                    let receiverSymbol = driver.callSupportLowerer.syntheticReceiverParameterSymbol(functionSymbol: symbol)
                     params.append(KIRParameter(symbol: receiverSymbol, type: receiverType))
-                    currentImplicitReceiverSymbol = receiverSymbol
-                    currentImplicitReceiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: receiverType)
+                    driver.ctx.currentImplicitReceiverSymbol = receiverSymbol
+                    driver.ctx.currentImplicitReceiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: receiverType)
                 }
                 params.append(contentsOf: zip(signature.valueParameterSymbols, signature.parameterTypes).map { pair in
                     KIRParameter(symbol: pair.0, type: pair.1)
@@ -53,8 +61,8 @@ extension BuildKIRPhase {
             }
             let returnType = signature?.returnType ?? sema.types.unitType
             var body: [KIRInstruction] = [.beginBlock]
-            if let receiverExpr = currentImplicitReceiverExprID,
-               let receiverSymbol = currentImplicitReceiverSymbol {
+            if let receiverExpr = driver.ctx.currentImplicitReceiverExprID,
+               let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol {
                 body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSymbol)))
             }
             switch function.body {
@@ -65,7 +73,7 @@ extension BuildKIRPhase {
                     if let expr = ast.arena.expr(exprID),
                        case .returnExpr(let value, _) = expr {
                         if let value {
-                            let lowered = lowerExpr(
+                            let lowered = driver.lowerExpr(
                                 value,
                                 ast: ast,
                                 sema: sema,
@@ -81,7 +89,7 @@ extension BuildKIRPhase {
                         terminatedByReturn = true
                         break
                     }
-                    lastValue = lowerExpr(
+                    lastValue = driver.lowerExpr(
                         exprID,
                         ast: ast,
                         sema: sema,
@@ -99,7 +107,7 @@ extension BuildKIRPhase {
                     }
                 }
             case .expr(let exprID, _):
-                let value = lowerExpr(
+                let value = driver.lowerExpr(
                     exprID,
                     ast: ast,
                     sema: sema,
@@ -128,9 +136,9 @@ extension BuildKIRPhase {
             )
             directMembers.append(kirID)
             allDecls.append(kirID)
-            if let defaults = functionDefaultArgumentsBySymbol[symbol],
+            if let defaults = driver.ctx.functionDefaultArgumentsBySymbol[symbol],
                let sig = signature {
-                let stubID = generateDefaultStubFunction(
+                let stubID = driver.callSupportLowerer.generateDefaultStubFunction(
                     originalSymbol: symbol,
                     originalName: function.name,
                     signature: sig,
@@ -143,9 +151,9 @@ extension BuildKIRPhase {
                 )
                 allDecls.append(stubID)
             }
-            allDecls.append(contentsOf: drainGeneratedCallableDecls())
-            currentImplicitReceiverExprID = nil
-            currentImplicitReceiverSymbol = nil
+            allDecls.append(contentsOf: driver.ctx.drainGeneratedCallableDecls())
+            driver.ctx.currentImplicitReceiverExprID = nil
+            driver.ctx.currentImplicitReceiverSymbol = nil
         }
 
         for declID in memberProperties {
@@ -309,12 +317,12 @@ extension BuildKIRPhase {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         allDecls: inout [KIRDeclID]
     ) {
-        localValuesBySymbol.removeAll(keepingCapacity: true)
-        currentImplicitReceiverExprID = nil
-        currentImplicitReceiverSymbol = nil
-        loopControlStack.removeAll(keepingCapacity: true)
-        nextLoopLabel = 10_000
-        beginCallableLoweringScope()
+        driver.ctx.localValuesBySymbol.removeAll(keepingCapacity: true)
+        driver.ctx.currentImplicitReceiverExprID = nil
+        driver.ctx.currentImplicitReceiverSymbol = nil
+        driver.ctx.loopControlStack.removeAll(keepingCapacity: true)
+        driver.ctx.nextLoopLabel = 10_000
+        driver.ctx.beginCallableLoweringScope()
 
         let ownerSymbol = sema.symbols.parentSymbol(for: propertySymbol)
         var params: [KIRParameter] = []
@@ -325,10 +333,10 @@ extension BuildKIRPhase {
             let ownerType = sema.types.make(
                 .classType(ClassType(classSymbol: ownerSym.id, args: [], nullability: .nonNull))
             )
-            let receiverSymbol = syntheticReceiverParameterSymbol(functionSymbol: propertySymbol)
+            let receiverSymbol = driver.callSupportLowerer.syntheticReceiverParameterSymbol(functionSymbol: propertySymbol)
             params.append(KIRParameter(symbol: receiverSymbol, type: ownerType))
-            currentImplicitReceiverSymbol = receiverSymbol
-            currentImplicitReceiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: ownerType)
+            driver.ctx.currentImplicitReceiverSymbol = receiverSymbol
+            driver.ctx.currentImplicitReceiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: ownerType)
         }
 
         let returnType: TypeID
@@ -341,7 +349,7 @@ extension BuildKIRPhase {
             // resolve to a backing field access expression.
             if let backingFieldSym = sema.symbols.backingFieldSymbol(for: propertySymbol) {
                 let bfExprID = arena.appendExpr(.symbolRef(backingFieldSym), type: propertyType)
-                localValuesBySymbol[backingFieldSym] = bfExprID
+                driver.ctx.localValuesBySymbol[backingFieldSym] = bfExprID
             }
         case .setter:
             returnType = sema.types.unitType
@@ -349,23 +357,23 @@ extension BuildKIRPhase {
             let valueParamSymbol = SymbolID(rawValue: -(propertySymbol.rawValue + 30_000))
             params.append(KIRParameter(symbol: valueParamSymbol, type: propertyType))
             let valueExprID = arena.appendExpr(.symbolRef(valueParamSymbol), type: propertyType)
-            localValuesBySymbol[valueParamSymbol] = valueExprID
+            driver.ctx.localValuesBySymbol[valueParamSymbol] = valueExprID
             // Sema binds the setter parameter name to a synthetic setter-value
             // symbol (offset -40_000) distinct from both the property symbol
             // and the backing field symbol.
             let semaSetterValueSymbol = SymbolID(rawValue: -(propertySymbol.rawValue + 40_000))
-            localValuesBySymbol[semaSetterValueSymbol] = valueExprID
+            driver.ctx.localValuesBySymbol[semaSetterValueSymbol] = valueExprID
             // Map the backing field symbol so `field` references in the setter
             // resolve to backing field storage, not the value parameter.
             if let backingFieldSym = sema.symbols.backingFieldSymbol(for: propertySymbol) {
                 let bfExprID = arena.appendExpr(.symbolRef(backingFieldSym), type: propertyType)
-                localValuesBySymbol[backingFieldSym] = bfExprID
+                driver.ctx.localValuesBySymbol[backingFieldSym] = bfExprID
             }
         }
 
         var body: [KIRInstruction] = [.beginBlock]
-        if let receiverExpr = currentImplicitReceiverExprID,
-           let receiverSym = currentImplicitReceiverSymbol {
+        if let receiverExpr = driver.ctx.currentImplicitReceiverExprID,
+           let receiverSym = driver.ctx.currentImplicitReceiverSymbol {
             body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
         }
 
@@ -377,7 +385,7 @@ extension BuildKIRPhase {
                 if let expr = ast.arena.expr(exprID),
                    case .returnExpr(let value, _) = expr {
                     if let value {
-                        let lowered = lowerExpr(
+                        let lowered = driver.lowerExpr(
                             value,
                             ast: ast,
                             sema: sema,
@@ -393,7 +401,7 @@ extension BuildKIRPhase {
                     terminatedByReturn = true
                     break
                 }
-                lastValue = lowerExpr(
+                lastValue = driver.lowerExpr(
                     exprID,
                     ast: ast,
                     sema: sema,
@@ -411,7 +419,7 @@ extension BuildKIRPhase {
                 }
             }
         case .expr(let exprID, _):
-            let value = lowerExpr(
+            let value = driver.lowerExpr(
                 exprID,
                 ast: ast,
                 sema: sema,
@@ -450,8 +458,8 @@ extension BuildKIRPhase {
             )
         )
         allDecls.append(kirID)
-        allDecls.append(contentsOf: drainGeneratedCallableDecls())
-        currentImplicitReceiverExprID = nil
-        currentImplicitReceiverSymbol = nil
+        allDecls.append(contentsOf: driver.ctx.drainGeneratedCallableDecls())
+        driver.ctx.currentImplicitReceiverExprID = nil
+        driver.ctx.currentImplicitReceiverSymbol = nil
     }
 }

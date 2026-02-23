@@ -1,6 +1,14 @@
 import Foundation
 
-extension BuildKIRPhase {
+/// Delegate class for KIR lowering: CallLowerer.
+/// Holds an unowned reference to the driver for mutual recursion.
+final class CallLowerer {
+    unowned let driver: KIRLoweringDriver
+
+    init(driver: KIRLoweringDriver) {
+        self.driver = driver
+    }
+
     func lowerCallExpr(
         _ exprID: ExprID,
         calleeExpr: ExprID,
@@ -13,7 +21,7 @@ extension BuildKIRPhase {
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
         let boundType = sema.bindings.exprTypes[exprID]
-        let loweredCalleeExprID = lowerExpr(
+        let loweredCalleeExprID = driver.lowerExpr(
             calleeExpr,
             ast: ast,
             sema: sema,
@@ -22,7 +30,7 @@ extension BuildKIRPhase {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
-        let loweredCallable = callableValueInfoByExprID[loweredCalleeExprID]
+        let loweredCallable = driver.ctx.callableValueInfoByExprID[loweredCalleeExprID]
         let sourceCalleeName: InternedString
         if let callee = ast.arena.expr(calleeExpr), case .nameRef(let name, _) = callee {
             sourceCalleeName = name
@@ -32,7 +40,7 @@ extension BuildKIRPhase {
             sourceCalleeName = interner.intern("<unknown>")
         }
         let loweredArgIDs = args.map { argument in
-            lowerExpr(
+            driver.lowerExpr(
                 argument.expr,
                 ast: ast,
                 sema: sema,
@@ -48,7 +56,7 @@ extension BuildKIRPhase {
         let chosen = callBinding?.chosenCallee
         let callNormalized: NormalizedCallResult
         if callBinding != nil {
-            callNormalized = normalizedCallArguments(
+            callNormalized = driver.callSupportLowerer.normalizedCallArguments(
                 providedArguments: loweredArgIDs,
                 callBinding: callBinding,
                 chosenCallee: chosen,
@@ -101,7 +109,7 @@ extension BuildKIRPhase {
         } else if let chosen,
            let signature = sema.symbols.functionSignature(for: chosen),
            signature.receiverType != nil,
-           let implicitReceiver = currentImplicitReceiverExprID {
+           let implicitReceiver = driver.ctx.currentImplicitReceiverExprID {
             finalArgIDs.insert(implicitReceiver, at: 0)
         }
 
@@ -122,7 +130,7 @@ extension BuildKIRPhase {
                 || resolvedSourceCallee == "launch"
                 || resolvedSourceCallee == "async",
                let firstArg = finalArgIDs.first,
-               let callableInfo = callableValueInfoByExprID[firstArg],
+               let callableInfo = driver.ctx.callableValueInfoByExprID[firstArg],
                !callableInfo.captureArguments.isEmpty {
                 finalArgIDs.insert(contentsOf: callableInfo.captureArguments, at: 1)
             }
@@ -148,7 +156,7 @@ extension BuildKIRPhase {
             instructions.append(.constValue(result: maskExpr, value: .intLiteral(Int64(callNormalized.defaultMask))))
             finalArgIDs.append(maskExpr)
             let stubName = interner.intern(interner.resolve(sourceCalleeName) + "$default")
-            let stubSym = defaultStubSymbol(for: chosen)
+            let stubSym = driver.callSupportLowerer.defaultStubSymbol(for: chosen)
             instructions.append(.call(
                 symbol: stubSym,
                 callee: stubName,
@@ -182,7 +190,7 @@ extension BuildKIRPhase {
             } else if let loweredCallable {
                 loweredCalleeName = loweredCallable.callee
             } else if chosen == nil {
-                loweredCalleeName = loweredRuntimeBuiltinCallee(
+                loweredCalleeName = driver.callSupportLowerer.loweredRuntimeBuiltinCallee(
                     for: sourceCalleeName,
                     argumentCount: finalArgIDs.count,
                     interner: interner
@@ -215,7 +223,7 @@ extension BuildKIRPhase {
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
         let boundType = sema.bindings.exprTypes[exprID]
-        let loweredReceiverID = lowerExpr(
+        let loweredReceiverID = driver.lowerExpr(
             receiverExpr,
             ast: ast,
             sema: sema,
@@ -225,7 +233,7 @@ extension BuildKIRPhase {
             instructions: &instructions
         )
         let loweredArgIDs = args.map { argument in
-            lowerExpr(
+            driver.lowerExpr(
                 argument.expr,
                 ast: ast,
                 sema: sema,
@@ -239,7 +247,7 @@ extension BuildKIRPhase {
         let isSuperCall = sema.bindings.isSuperCallExpr(exprID)
         let callBinding = sema.bindings.callBindings[exprID]
         let chosen = callBinding?.chosenCallee
-        let memberNormalized = normalizedCallArguments(
+        let memberNormalized = driver.callSupportLowerer.normalizedCallArguments(
             providedArguments: loweredArgIDs,
             callBinding: callBinding,
             chosenCallee: chosen,
@@ -278,7 +286,7 @@ extension BuildKIRPhase {
             instructions.append(.constValue(result: maskExpr, value: .intLiteral(Int64(memberNormalized.defaultMask))))
             finalArguments.append(maskExpr)
             let stubName = interner.intern(interner.resolve(calleeName) + "$default")
-            let stubSym = defaultStubSymbol(for: chosen)
+            let stubSym = driver.callSupportLowerer.defaultStubSymbol(for: chosen)
             instructions.append(.call(
                 symbol: stubSym,
                 callee: stubName,
@@ -363,7 +371,7 @@ extension BuildKIRPhase {
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
         let boundType = sema.bindings.exprTypes[exprID]
-        let loweredReceiverID = lowerExpr(
+        let loweredReceiverID = driver.lowerExpr(
             receiverExpr,
             ast: ast,
             sema: sema,
@@ -373,7 +381,7 @@ extension BuildKIRPhase {
             instructions: &instructions
         )
         let loweredArgIDs = args.map { argument in
-            lowerExpr(
+            driver.lowerExpr(
                 argument.expr,
                 ast: ast,
                 sema: sema,
@@ -387,7 +395,7 @@ extension BuildKIRPhase {
         let isSuperCall = sema.bindings.isSuperCallExpr(exprID)
         let callBinding = sema.bindings.callBindings[exprID]
         let chosen = callBinding?.chosenCallee
-        let safeNormalized = normalizedCallArguments(
+        let safeNormalized = driver.callSupportLowerer.normalizedCallArguments(
             providedArguments: loweredArgIDs,
             callBinding: callBinding,
             chosenCallee: chosen,
@@ -426,7 +434,7 @@ extension BuildKIRPhase {
             instructions.append(.constValue(result: maskExpr, value: .intLiteral(Int64(safeNormalized.defaultMask))))
             finalArguments.append(maskExpr)
             let stubName = interner.intern(interner.resolve(calleeName) + "$default")
-            let stubSym = defaultStubSymbol(for: chosen)
+            let stubSym = driver.callSupportLowerer.defaultStubSymbol(for: chosen)
             instructions.append(.call(
                 symbol: stubSym,
                 callee: stubName,
@@ -568,5 +576,293 @@ extension BuildKIRPhase {
             return providedArguments
         }
         return reordered
+    }
+
+    // MARK: - Binary Operations
+
+    func lowerBinaryExpr(
+        _ exprID: ExprID,
+        op: BinaryOp,
+        lhs: ExprID,
+        rhs: ExprID,
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        let boundType = sema.bindings.exprTypes[exprID]
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+        let stringType = sema.types.make(.primitive(.string, .nonNull))
+        let lhsID = driver.lowerExpr(
+            lhs,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+        let rhsID = driver.lowerExpr(
+            rhs,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+        let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
+        if let callBinding = sema.bindings.callBindings[exprID],
+           let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee),
+           signature.receiverType != nil {
+            let normalizedResult = driver.callSupportLowerer.normalizedCallArguments(
+                providedArguments: [rhsID],
+                callBinding: callBinding,
+                chosenCallee: callBinding.chosenCallee,
+                spreadFlags: [false],
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            var finalArguments = normalizedResult.arguments
+            finalArguments.insert(lhsID, at: 0)
+            if !signature.reifiedTypeParameterIndices.isEmpty {
+                for index in signature.reifiedTypeParameterIndices.sorted() {
+                    let concreteType = index < callBinding.substitutedTypeArguments.count
+                        ? callBinding.substitutedTypeArguments[index]
+                        : sema.types.anyType
+                    let tokenExpr = arena.appendExpr(
+                        .intLiteral(Int64(concreteType.rawValue)),
+                        type: intType
+                    )
+                    instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(concreteType.rawValue))))
+                    finalArguments.append(tokenExpr)
+                }
+            }
+            if normalizedResult.defaultMask != 0 {
+                let maskExpr = arena.appendExpr(.intLiteral(Int64(normalizedResult.defaultMask)), type: intType)
+                instructions.append(.constValue(result: maskExpr, value: .intLiteral(Int64(normalizedResult.defaultMask))))
+                finalArguments.append(maskExpr)
+                let stubName = interner.intern(
+                    (sema.symbols.symbol(callBinding.chosenCallee).map { interner.resolve($0.name) } ?? "unknown") + "$default"
+                )
+                let stubSym = driver.callSupportLowerer.defaultStubSymbol(for: callBinding.chosenCallee)
+                instructions.append(.call(
+                    symbol: stubSym,
+                    callee: stubName,
+                    arguments: finalArguments,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            } else {
+                let loweredCalleeName: InternedString
+                if let externalLinkName = sema.symbols.externalLinkName(for: callBinding.chosenCallee),
+                   !externalLinkName.isEmpty {
+                    loweredCalleeName = interner.intern(externalLinkName)
+                } else if let symbol = sema.symbols.symbol(callBinding.chosenCallee) {
+                    loweredCalleeName = symbol.name
+                } else {
+                    loweredCalleeName = driver.callSupportLowerer.binaryOperatorFunctionName(for: op, interner: interner)
+                }
+                instructions.append(.call(
+                    symbol: callBinding.chosenCallee,
+                    callee: loweredCalleeName,
+                    arguments: finalArguments,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            }
+            return result
+        }
+        if case .add = op, sema.bindings.exprTypes[exprID] == stringType {
+            instructions.append(
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_concat"),
+                    arguments: [lhsID, rhsID],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                )
+            )
+            return result
+        }
+        if let runtimeCallee = driver.callSupportLowerer.builtinBinaryRuntimeCallee(for: op, interner: interner) {
+            instructions.append(
+                .call(
+                    symbol: nil,
+                    callee: runtimeCallee,
+                    arguments: [lhsID, rhsID],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                )
+            )
+            return result
+        }
+        let kirOp: KIRBinaryOp
+        switch op {
+        case .add:
+            kirOp = .add
+        case .subtract:
+            kirOp = .subtract
+        case .multiply:
+            kirOp = .multiply
+        case .divide:
+            kirOp = .divide
+        case .modulo:
+            kirOp = .modulo
+        case .equal:
+            kirOp = .equal
+        case .notEqual:
+            kirOp = .notEqual
+        case .lessThan:
+            kirOp = .lessThan
+        case .lessOrEqual:
+            kirOp = .lessOrEqual
+        case .greaterThan:
+            kirOp = .greaterThan
+        case .greaterOrEqual:
+            kirOp = .greaterOrEqual
+        case .logicalAnd:
+            kirOp = .logicalAnd
+        case .logicalOr:
+            kirOp = .logicalOr
+        case .elvis:
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_op_elvis"),
+                arguments: [lhsID, rhsID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        case .rangeTo:
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_op_rangeTo"),
+                arguments: [lhsID, rhsID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        case .rangeUntil:
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_op_rangeUntil"),
+                arguments: [lhsID, rhsID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        }
+        instructions.append(.binary(op: kirOp, lhs: lhsID, rhs: rhsID, result: result))
+        return result
+    }
+
+    // MARK: - Array Operations
+
+    func lowerArrayAccessExpr(
+        _ exprID: ExprID,
+        arrayExpr: ExprID,
+        indexExpr: ExprID,
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        let boundType = sema.bindings.exprTypes[exprID]
+        let arrayID = driver.lowerExpr(
+            arrayExpr,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+        let indexID = driver.lowerExpr(
+            indexExpr,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+        let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_array_get"),
+            arguments: [arrayID, indexID],
+            result: result,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        return result
+    }
+
+    func lowerArrayAssignExpr(
+        _ exprID: ExprID,
+        arrayExpr: ExprID,
+        indexExpr: ExprID,
+        valueExpr: ExprID,
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        let arrayID = driver.lowerExpr(
+            arrayExpr,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+        let indexID = driver.lowerExpr(
+            indexExpr,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+        let valueID = driver.lowerExpr(
+            valueExpr,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_array_set"),
+            arguments: [arrayID, indexID, valueID],
+            result: nil,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+        instructions.append(.constValue(result: unit, value: .unit))
+        return unit
     }
 }

@@ -1,6 +1,14 @@
 import Foundation
 
-extension BuildKIRPhase {
+/// Delegate class for KIR lowering: ControlFlowLowerer.
+/// Holds an unowned reference to the driver for mutual recursion.
+final class ControlFlowLowerer {
+    unowned let driver: KIRLoweringDriver
+
+    init(driver: KIRLoweringDriver) {
+        self.driver = driver
+    }
+
     /// Check if a lowered expression is a terminator (return/throw/Nothing type).
     /// When true, no instructions should follow in the same linear block.
     func isTerminatedExpr(_ exprID: KIRExprID, arena: KIRArena, sema: SemaModule) -> Bool {
@@ -18,7 +26,7 @@ extension BuildKIRPhase {
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
         let boolType = sema.types.make(.primitive(.boolean, .nonNull))
-        let iterableID = lowerExpr(
+        let iterableID = driver.lowerExpr(
             iterableExpr,
             ast: ast,
             sema: sema,
@@ -37,8 +45,8 @@ extension BuildKIRPhase {
             thrownResult: nil
         ))
 
-        let continueLabel = makeLoopLabel()
-        let breakLabel = makeLoopLabel()
+        let continueLabel = driver.ctx.makeLoopLabel()
+        let breakLabel = driver.ctx.makeLoopLabel()
         instructions.append(.label(continueLabel))
 
         let hasNextID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
@@ -55,7 +63,7 @@ extension BuildKIRPhase {
         instructions.append(.jumpIfEqual(lhs: hasNextID, rhs: falseID, target: breakLabel))
 
         let loopVariableSymbol = sema.bindings.identifierSymbols[exprID]
-        let previousLoopValue = loopVariableSymbol.flatMap { localValuesBySymbol[$0] }
+        let previousLoopValue = loopVariableSymbol.flatMap { driver.ctx.localValuesBySymbol[$0] }
         let nextValueID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
         instructions.append(.call(
             symbol: nil,
@@ -66,11 +74,11 @@ extension BuildKIRPhase {
             thrownResult: nil
         ))
         if let loopVariableSymbol {
-            localValuesBySymbol[loopVariableSymbol] = nextValueID
+            driver.ctx.localValuesBySymbol[loopVariableSymbol] = nextValueID
         }
 
-        loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel))
-        _ = lowerExpr(
+        driver.ctx.loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel))
+        _ = driver.lowerExpr(
             bodyExpr,
             ast: ast,
             sema: sema,
@@ -79,15 +87,15 @@ extension BuildKIRPhase {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
-        _ = loopControlStack.popLast()
+        _ = driver.ctx.loopControlStack.popLast()
         instructions.append(.jump(continueLabel))
         instructions.append(.label(breakLabel))
 
         if let loopVariableSymbol {
             if let previousLoopValue {
-                localValuesBySymbol[loopVariableSymbol] = previousLoopValue
+                driver.ctx.localValuesBySymbol[loopVariableSymbol] = previousLoopValue
             } else {
-                localValuesBySymbol.removeValue(forKey: loopVariableSymbol)
+                driver.ctx.localValuesBySymbol.removeValue(forKey: loopVariableSymbol)
             }
         }
 
@@ -108,11 +116,11 @@ extension BuildKIRPhase {
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
         let boolType = sema.types.make(.primitive(.boolean, .nonNull))
-        let continueLabel = makeLoopLabel()
-        let breakLabel = makeLoopLabel()
+        let continueLabel = driver.ctx.makeLoopLabel()
+        let breakLabel = driver.ctx.makeLoopLabel()
         instructions.append(.label(continueLabel))
 
-        let conditionID = lowerExpr(
+        let conditionID = driver.lowerExpr(
             conditionExpr,
             ast: ast,
             sema: sema,
@@ -125,8 +133,8 @@ extension BuildKIRPhase {
         instructions.append(.constValue(result: falseID, value: .boolLiteral(false)))
         instructions.append(.jumpIfEqual(lhs: conditionID, rhs: falseID, target: breakLabel))
 
-        loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel))
-        _ = lowerExpr(
+        driver.ctx.loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel))
+        _ = driver.lowerExpr(
             bodyExpr,
             ast: ast,
             sema: sema,
@@ -135,7 +143,7 @@ extension BuildKIRPhase {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
-        _ = loopControlStack.popLast()
+        _ = driver.ctx.loopControlStack.popLast()
         instructions.append(.jump(continueLabel))
         instructions.append(.label(breakLabel))
 
@@ -156,13 +164,13 @@ extension BuildKIRPhase {
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
         let boolType = sema.types.make(.primitive(.boolean, .nonNull))
-        let bodyLabel = makeLoopLabel()
-        let continueLabel = makeLoopLabel()
-        let breakLabel = makeLoopLabel()
+        let bodyLabel = driver.ctx.makeLoopLabel()
+        let continueLabel = driver.ctx.makeLoopLabel()
+        let breakLabel = driver.ctx.makeLoopLabel()
         instructions.append(.label(bodyLabel))
 
-        loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel))
-        _ = lowerExpr(
+        driver.ctx.loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel))
+        _ = driver.lowerExpr(
             bodyExpr,
             ast: ast,
             sema: sema,
@@ -171,10 +179,10 @@ extension BuildKIRPhase {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
-        _ = loopControlStack.popLast()
+        _ = driver.ctx.loopControlStack.popLast()
 
         instructions.append(.label(continueLabel))
-        let conditionID = lowerExpr(
+        let conditionID = driver.lowerExpr(
             conditionExpr,
             ast: ast,
             sema: sema,
@@ -208,7 +216,7 @@ extension BuildKIRPhase {
     ) -> KIRExprID {
         let boundType = sema.bindings.exprTypes[exprID]
         let boolType = sema.types.make(.primitive(.boolean, .nonNull))
-        let conditionID = lowerExpr(
+        let conditionID = driver.lowerExpr(
             condition,
             ast: ast,
             sema: sema,
@@ -217,13 +225,13 @@ extension BuildKIRPhase {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
-        let elseLabel = makeLoopLabel()
-        let endLabel = makeLoopLabel()
+        let elseLabel = driver.ctx.makeLoopLabel()
+        let endLabel = driver.ctx.makeLoopLabel()
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.errorType)
         let falseVal = arena.appendExpr(.boolLiteral(false), type: boolType)
         instructions.append(.constValue(result: falseVal, value: .boolLiteral(false)))
         instructions.append(.jumpIfEqual(lhs: conditionID, rhs: falseVal, target: elseLabel))
-        let thenID = lowerExpr(
+        let thenID = driver.lowerExpr(
             thenExpr,
             ast: ast,
             sema: sema,
@@ -240,7 +248,7 @@ extension BuildKIRPhase {
         instructions.append(.label(elseLabel))
         var elseTerminated = false
         if let elseExpr {
-            let elseID = lowerExpr(
+            let elseID = driver.lowerExpr(
                 elseExpr,
                 ast: ast,
                 sema: sema,
@@ -292,18 +300,18 @@ extension BuildKIRPhase {
 
         let tryResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
 
-        let catchDispatchLabel = makeLoopLabel()
-        let finallyLabel = makeLoopLabel()
-        let rethrowLabel = makeLoopLabel()
-        let endLabel = makeLoopLabel()
+        let catchDispatchLabel = driver.ctx.makeLoopLabel()
+        let finallyLabel = driver.ctx.makeLoopLabel()
+        let rethrowLabel = driver.ctx.makeLoopLabel()
+        let endLabel = driver.ctx.makeLoopLabel()
 
         let catchBindings = catchClauses.map { resolveCatchClauseBinding($0, sema: sema, interner: interner) }
-        let catchCheckLabels = catchClauses.map { _ in makeLoopLabel() }
-        let catchBodyLabels = catchClauses.map { _ in makeLoopLabel() }
-        let unmatchedCatchLabel = makeLoopLabel()
+        let catchCheckLabels = catchClauses.map { _ in driver.ctx.makeLoopLabel() }
+        let catchBodyLabels = catchClauses.map { _ in driver.ctx.makeLoopLabel() }
+        let unmatchedCatchLabel = driver.ctx.makeLoopLabel()
 
         var bodyInstructions: [KIRInstruction] = []
-        let bodyResultID = lowerExpr(
+        let bodyResultID = driver.lowerExpr(
             bodyExpr,
             ast: ast,
             sema: sema,
@@ -364,12 +372,12 @@ extension BuildKIRPhase {
                 if clause.paramName != nil, binding.parameterSymbol != .invalid {
                     let paramID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: binding.parameterType)
                     instructions.append(.copy(from: exceptionSlot, to: paramID))
-                    previousCatchParamValue = localValuesBySymbol[binding.parameterSymbol]
-                    localValuesBySymbol[binding.parameterSymbol] = paramID
+                    previousCatchParamValue = driver.ctx.localValuesBySymbol[binding.parameterSymbol]
+                    driver.ctx.localValuesBySymbol[binding.parameterSymbol] = paramID
                 }
 
                 var catchBodyInstructions: [KIRInstruction] = []
-                let catchBodyResult = lowerExpr(
+                let catchBodyResult = driver.lowerExpr(
                     clause.body,
                     ast: ast,
                     sema: sema,
@@ -390,9 +398,9 @@ extension BuildKIRPhase {
 
                 if clause.paramName != nil, binding.parameterSymbol != .invalid {
                     if let previousCatchParamValue {
-                        localValuesBySymbol[binding.parameterSymbol] = previousCatchParamValue
+                        driver.ctx.localValuesBySymbol[binding.parameterSymbol] = previousCatchParamValue
                     } else {
-                        localValuesBySymbol.removeValue(forKey: binding.parameterSymbol)
+                        driver.ctx.localValuesBySymbol.removeValue(forKey: binding.parameterSymbol)
                     }
                 }
 
@@ -412,7 +420,7 @@ extension BuildKIRPhase {
         instructions.append(.label(finallyLabel))
         if let finallyExpr {
             var finallyInstructions: [KIRInstruction] = []
-            _ = lowerExpr(
+            _ = driver.lowerExpr(
                 finallyExpr,
                 ast: ast,
                 sema: sema,
@@ -584,7 +592,7 @@ extension BuildKIRPhase {
         let boolType = sema.types.make(.primitive(.boolean, .nonNull))
         var subjectID: KIRExprID?
         if let subject {
-            subjectID = lowerExpr(
+            subjectID = driver.lowerExpr(
                 subject,
                 ast: ast,
                 sema: sema,
@@ -594,12 +602,12 @@ extension BuildKIRPhase {
                 instructions: &instructions
             )
         }
-        let endLabel = makeLoopLabel()
+        let endLabel = driver.ctx.makeLoopLabel()
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.errorType)
 
         var nextBranchLabels: [Int32] = []
         for _ in branches {
-            nextBranchLabels.append(makeLoopLabel())
+            nextBranchLabels.append(driver.ctx.makeLoopLabel())
         }
 
         let falseID = arena.appendExpr(.boolLiteral(false), type: boolType)
@@ -609,7 +617,7 @@ extension BuildKIRPhase {
         var allBranchesTerminated = true
         for (index, branch) in branches.enumerated() {
             if let conditionExprID = branch.condition {
-                let conditionValueID = lowerExpr(
+                let conditionValueID = driver.lowerExpr(
                     conditionExprID,
                     ast: ast,
                     sema: sema,
@@ -633,7 +641,7 @@ extension BuildKIRPhase {
                 instructions.append(.jumpIfEqual(lhs: matchesID, rhs: falseID, target: nextBranchLabels[index]))
             }
 
-            let bodyID = lowerExpr(
+            let bodyID = driver.lowerExpr(
                 branch.body,
                 ast: ast,
                 sema: sema,
@@ -653,7 +661,7 @@ extension BuildKIRPhase {
 
         var elseTerminated = false
         if let elseExpr {
-            let fallbackID = lowerExpr(
+            let fallbackID = driver.lowerExpr(
                 elseExpr,
                 ast: ast,
                 sema: sema,

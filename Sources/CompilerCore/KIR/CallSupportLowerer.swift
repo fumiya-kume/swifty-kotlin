@@ -6,7 +6,15 @@ struct NormalizedCallResult {
     let calleeHasDefaults: Bool
 }
 
-extension BuildKIRPhase {
+/// Delegate class for KIR lowering: CallSupportLowerer.
+/// Holds an unowned reference to the driver for mutual recursion.
+final class CallSupportLowerer {
+    unowned let driver: KIRLoweringDriver
+
+    init(driver: KIRLoweringDriver) {
+        self.driver = driver
+    }
+
     func collectFunctionDefaultArgumentExpressions(
         ast: ASTModule,
         sema: SemaModule
@@ -107,24 +115,24 @@ extension BuildKIRPhase {
         let intType = sema.types.make(.primitive(.int, .nonNull))
         let paramCount = signature.parameterTypes.count
 
-        let savedLocalValues = localValuesBySymbol
-        let savedReceiverExprID = currentImplicitReceiverExprID
-        let savedReceiverSymbol = currentImplicitReceiverSymbol
-        let savedLoopStack = loopControlStack
-        let savedNextLabel = nextLoopLabel
-        localValuesBySymbol.removeAll(keepingCapacity: true)
-        currentImplicitReceiverExprID = nil
-        currentImplicitReceiverSymbol = nil
-        loopControlStack.removeAll(keepingCapacity: true)
-        nextLoopLabel = 10_000
+        let savedLocalValues = driver.ctx.localValuesBySymbol
+        let savedReceiverExprID = driver.ctx.currentImplicitReceiverExprID
+        let savedReceiverSymbol = driver.ctx.currentImplicitReceiverSymbol
+        let savedLoopStack = driver.ctx.loopControlStack
+        let savedNextLabel = driver.ctx.nextLoopLabel
+        driver.ctx.localValuesBySymbol.removeAll(keepingCapacity: true)
+        driver.ctx.currentImplicitReceiverExprID = nil
+        driver.ctx.currentImplicitReceiverSymbol = nil
+        driver.ctx.loopControlStack.removeAll(keepingCapacity: true)
+        driver.ctx.nextLoopLabel = 10_000
 
         var params: [KIRParameter] = []
         if let receiverType = signature.receiverType {
             let receiverSym = syntheticReceiverParameterSymbol(functionSymbol: originalSymbol)
             params.append(KIRParameter(symbol: receiverSym, type: receiverType))
             let receiverExpr = arena.appendExpr(.symbolRef(receiverSym), type: receiverType)
-            currentImplicitReceiverSymbol = receiverSym
-            currentImplicitReceiverExprID = receiverExpr
+            driver.ctx.currentImplicitReceiverSymbol = receiverSym
+            driver.ctx.currentImplicitReceiverExprID = receiverExpr
         }
         for (paramSymbol, paramType) in zip(signature.valueParameterSymbols, signature.parameterTypes) {
             params.append(KIRParameter(symbol: paramSymbol, type: paramType))
@@ -144,8 +152,8 @@ extension BuildKIRPhase {
 
         var body: [KIRInstruction] = [.beginBlock]
 
-        if let receiverExpr = currentImplicitReceiverExprID,
-           let receiverSym = currentImplicitReceiverSymbol {
+        if let receiverExpr = driver.ctx.currentImplicitReceiverExprID,
+           let receiverSym = driver.ctx.currentImplicitReceiverSymbol {
             body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
         }
 
@@ -172,12 +180,12 @@ extension BuildKIRPhase {
                 let zeroExpr = arena.appendExpr(.intLiteral(0), type: intType)
                 body.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
 
-                let skipLabel = makeLoopLabel()
-                let afterLabel = makeLoopLabel()
+                let skipLabel = driver.ctx.makeLoopLabel()
+                let afterLabel = driver.ctx.makeLoopLabel()
                 body.append(.jumpIfEqual(lhs: bitExpr, rhs: zeroExpr, target: skipLabel))
 
-                localValuesBySymbol[paramSymbol] = paramExpr
-                let defaultVal = lowerExpr(
+                driver.ctx.localValuesBySymbol[paramSymbol] = paramExpr
+                let defaultVal = driver.lowerExpr(
                     defaultExprID,
                     ast: ast,
                     sema: sema,
@@ -194,16 +202,16 @@ extension BuildKIRPhase {
                 body.append(.copy(from: paramExpr, to: resolvedExpr))
 
                 body.append(.label(afterLabel))
-                localValuesBySymbol[paramSymbol] = resolvedExpr
+                driver.ctx.localValuesBySymbol[paramSymbol] = resolvedExpr
                 resolvedParamExprs.append(resolvedExpr)
             } else {
-                localValuesBySymbol[paramSymbol] = paramExpr
+                driver.ctx.localValuesBySymbol[paramSymbol] = paramExpr
                 resolvedParamExprs.append(paramExpr)
             }
         }
 
         var callArgs: [KIRExprID] = []
-        if let receiverExpr = currentImplicitReceiverExprID {
+        if let receiverExpr = driver.ctx.currentImplicitReceiverExprID {
             callArgs.append(receiverExpr)
         }
         callArgs.append(contentsOf: resolvedParamExprs)
@@ -238,11 +246,11 @@ extension BuildKIRPhase {
             isInline: false
         )))
 
-        localValuesBySymbol = savedLocalValues
-        currentImplicitReceiverExprID = savedReceiverExprID
-        currentImplicitReceiverSymbol = savedReceiverSymbol
-        loopControlStack = savedLoopStack
-        nextLoopLabel = savedNextLabel
+        driver.ctx.localValuesBySymbol = savedLocalValues
+        driver.ctx.currentImplicitReceiverExprID = savedReceiverExprID
+        driver.ctx.currentImplicitReceiverSymbol = savedReceiverSymbol
+        driver.ctx.loopControlStack = savedLoopStack
+        driver.ctx.nextLoopLabel = savedNextLabel
 
         return declID
     }
@@ -270,7 +278,7 @@ extension BuildKIRPhase {
             return NormalizedCallResult(arguments: providedArguments, defaultMask: 0, calleeHasDefaults: false)
         }
 
-        let hasAnyDefaults = functionDefaultArgumentsBySymbol[chosenCallee] != nil
+        let hasAnyDefaults = driver.ctx.functionDefaultArgumentsBySymbol[chosenCallee] != nil
 
         let isVararg = normalizeVarargFlags(signature.valueParameterIsVararg, count: parameterCount)
 
@@ -299,7 +307,7 @@ extension BuildKIRPhase {
             }
         }
 
-        let defaultExpressions = functionDefaultArgumentsBySymbol[chosenCallee] ?? []
+        let defaultExpressions = driver.ctx.functionDefaultArgumentsBySymbol[chosenCallee] ?? []
         var normalized: [KIRExprID] = []
         normalized.reserveCapacity(parameterCount)
         let intType = sema.types.make(.primitive(.int, .nonNull))
@@ -544,9 +552,4 @@ extension BuildKIRPhase {
         }
     }
 
-    func makeLoopLabel() -> Int32 {
-        let label = nextLoopLabel
-        nextLoopLabel += 1
-        return label
-    }
 }

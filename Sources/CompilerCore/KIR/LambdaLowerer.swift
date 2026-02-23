@@ -6,37 +6,13 @@ struct KIRCallableValueInfo {
     let captureArguments: [KIRExprID]
 }
 
-extension BuildKIRPhase {
-    func initializeSyntheticLambdaSymbolAllocator(sema: SemaModule) {
-        let base = max(Int64(1), Int64(sema.symbols.count))
-        if base > Int64(Int32.max) {
-            nextSyntheticLambdaSymbolRawValue = Int32.max
-        } else {
-            nextSyntheticLambdaSymbolRawValue = Int32(base)
-        }
-    }
+/// Delegate class for KIR lowering: LambdaLowerer.
+/// Holds an unowned reference to the driver for mutual recursion.
+final class LambdaLowerer {
+    unowned let driver: KIRLoweringDriver
 
-    func beginCallableLoweringScope() {
-        pendingGeneratedCallableDeclIDs.removeAll(keepingCapacity: true)
-    }
-
-    func drainGeneratedCallableDecls() -> [KIRDeclID] {
-        let generated = pendingGeneratedCallableDeclIDs
-        pendingGeneratedCallableDeclIDs.removeAll(keepingCapacity: true)
-        return generated
-    }
-
-    func registerCallableValue(
-        _ exprID: KIRExprID,
-        symbol: SymbolID,
-        callee: InternedString,
-        captureArguments: [KIRExprID]
-    ) {
-        callableValueInfoByExprID[exprID] = KIRCallableValueInfo(
-            symbol: symbol,
-            callee: callee,
-            captureArguments: captureArguments
-        )
+    init(driver: KIRLoweringDriver) {
+        self.driver = driver
     }
 
     func lowerLambdaLiteralExpr(
@@ -58,7 +34,7 @@ extension BuildKIRPhase {
             return functionType
         }
 
-        let lambdaSymbol = syntheticLambdaSymbol(for: exprID)
+        let lambdaSymbol = driver.ctx.syntheticLambdaSymbol(for: exprID)
         let lambdaName = syntheticLambdaName(for: exprID, interner: interner)
 
         let lambdaParameterTypes: [TypeID] = params.enumerated().map { index, _ in
@@ -110,42 +86,42 @@ extension BuildKIRPhase {
             )
         }
 
-        let savedLocalValues = localValuesBySymbol
-        let savedReceiverExprID = currentImplicitReceiverExprID
-        let savedReceiverSymbol = currentImplicitReceiverSymbol
-        let savedLoopStack = loopControlStack
-        let savedNextLabel = nextLoopLabel
+        let savedLocalValues = driver.ctx.localValuesBySymbol
+        let savedReceiverExprID = driver.ctx.currentImplicitReceiverExprID
+        let savedReceiverSymbol = driver.ctx.currentImplicitReceiverSymbol
+        let savedLoopStack = driver.ctx.loopControlStack
+        let savedNextLabel = driver.ctx.nextLoopLabel
         defer {
-            localValuesBySymbol = savedLocalValues
-            currentImplicitReceiverExprID = savedReceiverExprID
-            currentImplicitReceiverSymbol = savedReceiverSymbol
-            loopControlStack = savedLoopStack
-            nextLoopLabel = savedNextLabel
+            driver.ctx.localValuesBySymbol = savedLocalValues
+            driver.ctx.currentImplicitReceiverExprID = savedReceiverExprID
+            driver.ctx.currentImplicitReceiverSymbol = savedReceiverSymbol
+            driver.ctx.loopControlStack = savedLoopStack
+            driver.ctx.nextLoopLabel = savedNextLabel
         }
 
-        localValuesBySymbol.removeAll(keepingCapacity: true)
-        currentImplicitReceiverExprID = nil
-        currentImplicitReceiverSymbol = nil
-        loopControlStack.removeAll(keepingCapacity: true)
-        nextLoopLabel = 10_000
+        driver.ctx.localValuesBySymbol.removeAll(keepingCapacity: true)
+        driver.ctx.currentImplicitReceiverExprID = nil
+        driver.ctx.currentImplicitReceiverSymbol = nil
+        driver.ctx.loopControlStack.removeAll(keepingCapacity: true)
+        driver.ctx.nextLoopLabel = 10_000
 
         var lambdaBody: [KIRInstruction] = [.beginBlock]
         for capture in captureBindings {
             let captureExpr = arena.appendExpr(.symbolRef(capture.param.symbol), type: capture.param.type)
             lambdaBody.append(.constValue(result: captureExpr, value: .symbolRef(capture.param.symbol)))
-            localValuesBySymbol[capture.capturedSymbol] = captureExpr
+            driver.ctx.localValuesBySymbol[capture.capturedSymbol] = captureExpr
             if capture.capturedSymbol == savedReceiverSymbol {
-                currentImplicitReceiverExprID = captureExpr
-                currentImplicitReceiverSymbol = capture.param.symbol
+                driver.ctx.currentImplicitReceiverExprID = captureExpr
+                driver.ctx.currentImplicitReceiverSymbol = capture.param.symbol
             }
         }
         for lambdaParam in lambdaParameters {
             let paramExpr = arena.appendExpr(.symbolRef(lambdaParam.symbol), type: lambdaParam.type)
             lambdaBody.append(.constValue(result: paramExpr, value: .symbolRef(lambdaParam.symbol)))
-            localValuesBySymbol[lambdaParam.symbol] = paramExpr
+            driver.ctx.localValuesBySymbol[lambdaParam.symbol] = paramExpr
         }
 
-        let loweredBody = lowerExpr(
+        let loweredBody = driver.lowerExpr(
             bodyExpr,
             ast: ast,
             sema: sema,
@@ -170,7 +146,7 @@ extension BuildKIRPhase {
                 )
             )
         )
-        pendingGeneratedCallableDeclIDs.append(lambdaDecl)
+        driver.ctx.pendingGeneratedCallableDeclIDs.append(lambdaDecl)
 
         let lambdaValueType = boundType
             ?? sema.types.make(
@@ -185,7 +161,7 @@ extension BuildKIRPhase {
             )
         let lambdaValueExpr = arena.appendExpr(.symbolRef(lambdaSymbol), type: lambdaValueType)
         instructions.append(.constValue(result: lambdaValueExpr, value: .symbolRef(lambdaSymbol)))
-        registerCallableValue(
+        driver.ctx.registerCallableValue(
             lambdaValueExpr,
             symbol: lambdaSymbol,
             callee: lambdaName,
@@ -208,7 +184,7 @@ extension BuildKIRPhase {
         let boundType = sema.bindings.exprTypes[exprID]
         var captureArguments: [KIRExprID] = []
         if let receiverExpr {
-            let loweredReceiver = lowerExpr(
+            let loweredReceiver = driver.lowerExpr(
                 receiverExpr,
                 ast: ast,
                 sema: sema,
@@ -233,7 +209,7 @@ extension BuildKIRPhase {
             callableSymbol = targetSymbol
             callableName = callableTargetName(for: targetSymbol, sema: sema, interner: interner)
         } else {
-            callableSymbol = syntheticLambdaSymbol(for: exprID)
+            callableSymbol = driver.ctx.syntheticLambdaSymbol(for: exprID)
             callableName = syntheticLambdaName(for: exprID, interner: interner)
             let fallbackFunctionType = boundType.flatMap { typeID -> FunctionType? in
                 guard case .functionType(let functionType) = sema.types.kind(of: typeID) else {
@@ -280,32 +256,19 @@ extension BuildKIRPhase {
                     )
                 )
             )
-            pendingGeneratedCallableDeclIDs.append(fallbackDecl)
+            driver.ctx.pendingGeneratedCallableDeclIDs.append(fallbackDecl)
         }
 
         let callableType = boundType ?? typeForSymbolReference(callableSymbol, sema: sema)
         let callableExpr = arena.appendExpr(.symbolRef(callableSymbol), type: callableType)
         instructions.append(.constValue(result: callableExpr, value: .symbolRef(callableSymbol)))
-        registerCallableValue(
+        driver.ctx.registerCallableValue(
             callableExpr,
             symbol: callableSymbol,
             callee: callableName,
             captureArguments: captureArguments
         )
         return callableExpr
-    }
-
-    func syntheticLambdaSymbol(for exprID: ExprID) -> SymbolID {
-        if let existing = syntheticLambdaSymbolsByExprID[exprID] {
-            return existing
-        }
-        let symbol = allocateSyntheticGeneratedSymbol()
-        syntheticLambdaSymbolsByExprID[exprID] = symbol
-        return symbol
-    }
-
-    func allocateSyntheticGeneratedSymbol() -> SymbolID {
-        SymbolID(rawValue: nextSyntheticLambdaSymbolRawID())
     }
 
     func syntheticLambdaName(for exprID: ExprID, interner: StringInterner) -> InternedString {
@@ -326,16 +289,6 @@ extension BuildKIRPhase {
                 - Int64(lambdaExprID.rawValue) * 256
                 - Int64(captureIndex)
         )
-    }
-
-    private func nextSyntheticLambdaSymbolRawID() -> Int32 {
-        precondition(
-            nextSyntheticLambdaSymbolRawValue < Int32.max,
-            "Exhausted synthetic symbol IDs for lambda lowering."
-        )
-        let allocated = nextSyntheticLambdaSymbolRawValue
-        nextSyntheticLambdaSymbolRawValue += 1
-        return allocated
     }
 
     private func boundedNegativeSyntheticSymbol(_ rawValue: Int64) -> SymbolID {
@@ -485,7 +438,7 @@ extension BuildKIRPhase {
                     sema: sema
                 )
             }
-            if let receiverSymbol = currentImplicitReceiverSymbol,
+            if let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol,
                containsImplicitReceiverReference(in: lambdaBodyExprID, ast: ast),
                canCaptureSymbolForLambda(
                 receiverSymbol,
@@ -531,7 +484,7 @@ extension BuildKIRPhase {
                 sema: sema
             )
         }
-        if let receiverSymbol = currentImplicitReceiverSymbol,
+        if let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol,
            containsImplicitReceiverReference(in: lambdaBodyExprID, ast: ast),
            canCaptureSymbolForLambda(
             receiverSymbol,
@@ -556,11 +509,11 @@ extension BuildKIRPhase {
         }) {
             return false
         }
-        if localValuesBySymbol[symbol] != nil {
+        if driver.ctx.localValuesBySymbol[symbol] != nil {
             return true
         }
-        if symbol == currentImplicitReceiverSymbol,
-           currentImplicitReceiverExprID != nil {
+        if symbol == driver.ctx.currentImplicitReceiverSymbol,
+           driver.ctx.currentImplicitReceiverExprID != nil {
             return true
         }
         guard let semanticSymbol = sema.symbols.symbol(symbol) else {
@@ -575,12 +528,12 @@ extension BuildKIRPhase {
         arena: KIRArena,
         instructions: inout [KIRInstruction]
     ) -> KIRExprID? {
-        if let localValue = localValuesBySymbol[symbol] {
+        if let localValue = driver.ctx.localValuesBySymbol[symbol] {
             return localValue
         }
-        if symbol == currentImplicitReceiverSymbol,
-           let currentImplicitReceiverExprID {
-            return currentImplicitReceiverExprID
+        if symbol == driver.ctx.currentImplicitReceiverSymbol,
+           let receiverExprID = driver.ctx.currentImplicitReceiverExprID {
+            return receiverExprID
         }
         guard let semanticSymbol = sema.symbols.symbol(symbol),
               semanticSymbol.kind == .valueParameter else {
