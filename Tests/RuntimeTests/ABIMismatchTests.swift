@@ -1,5 +1,6 @@
 import XCTest
 @testable import Runtime
+import CompilerCore
 
 final class ABIMismatchTests: XCTestCase {
 
@@ -14,6 +15,14 @@ final class ABIMismatchTests: XCTestCase {
 
     func testSpecVersionIsNonEmpty() {
         XCTAssertFalse(RuntimeABISpec.specVersion.isEmpty)
+    }
+
+    func testSpecVersionMatchesCompilerExterns() {
+        XCTAssertEqual(
+            RuntimeABISpec.specVersion,
+            RuntimeABIExterns.specVersion,
+            "Runtime spec version must match CompilerCore extern spec version"
+        )
     }
 
     func testAllFunctionNamesAreUnique() {
@@ -80,9 +89,27 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(RuntimeABISpec.printlnFunctions.count, 1)
     }
 
+    func testGCFunctionCount() {
+        // kk_register_global_root, kk_unregister_global_root,
+        // kk_register_frame_map, kk_push_frame, kk_pop_frame,
+        // kk_register_coroutine_root, kk_unregister_coroutine_root,
+        // kk_runtime_heap_object_count, kk_runtime_force_reset
+        XCTAssertEqual(RuntimeABISpec.gcFunctions.count, 9)
+    }
+
     func testCoroutineFunctionCount() {
-        // kk_coroutine_suspended
-        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 1)
+        // kk_coroutine_suspended + 18 coroutine functions
+        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 19)
+    }
+
+    func testBoxingFunctionCount() {
+        // kk_box_int, kk_box_bool, kk_unbox_int, kk_unbox_bool
+        XCTAssertEqual(RuntimeABISpec.boxingFunctions.count, 4)
+    }
+
+    func testArrayFunctionCount() {
+        // kk_array_new, kk_array_get, kk_array_set, kk_vararg_spread_concat
+        XCTAssertEqual(RuntimeABISpec.arrayFunctions.count, 4)
     }
 
     func testTotalFunctionCount() {
@@ -90,11 +117,14 @@ final class ABIMismatchTests: XCTestCase {
             + RuntimeABISpec.exceptionFunctions.count
             + RuntimeABISpec.stringFunctions.count
             + RuntimeABISpec.printlnFunctions.count
+            + RuntimeABISpec.gcFunctions.count
             + RuntimeABISpec.coroutineFunctions.count
+            + RuntimeABISpec.boxingFunctions.count
+            + RuntimeABISpec.arrayFunctions.count
         XCTAssertEqual(RuntimeABISpec.allFunctions.count, expected)
     }
 
-    // MARK: - J16.1 Signature Verification
+    // MARK: - J16.1 Signature Verification (spec-fixed)
 
     func testKKAllocSignature() throws {
         let spec = try requireSpec("kk_alloc")
@@ -103,7 +133,8 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(spec.parameters[0].name, "size")
         XCTAssertEqual(spec.parameters[0].type, .uint32)
         XCTAssertEqual(spec.parameters[1].name, "typeInfo")
-        XCTAssertEqual(spec.parameters[1].type, .opaquePointer)
+        XCTAssertEqual(spec.parameters[1].type, .constTypeInfoPointer,
+                       "kk_alloc typeInfo must be const KTypeInfo * per J16.1")
     }
 
     func testKKGcCollectSignature() throws {
@@ -169,7 +200,7 @@ final class ABIMismatchTests: XCTestCase {
         let spec = try requireSpec("kk_alloc")
         XCTAssertEqual(
             spec.cDeclaration,
-            "void * kk_alloc(uint32_t size, void * typeInfo);"
+            "void * kk_alloc(uint32_t size, const KTypeInfo * typeInfo);"
         )
     }
 
@@ -229,6 +260,103 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertTrue(header.contains("Exception"))
         XCTAssertTrue(header.contains("String"))
         XCTAssertTrue(header.contains("Println"))
+        XCTAssertTrue(header.contains("GC"))
         XCTAssertTrue(header.contains("Coroutine"))
+        XCTAssertTrue(header.contains("Boxing"))
+        XCTAssertTrue(header.contains("Array"))
+    }
+
+    // MARK: - Cross-Module ABI Reconciliation (Runtime <-> CompilerCore)
+
+    /// Verify that RuntimeABISpec and RuntimeABIExterns have the same function count.
+    func testExternCountMatchesSpec() {
+        let specNames = RuntimeABISpec.allFunctions.map(\.name)
+        let externNames = RuntimeABIExterns.allExterns.map(\.name)
+        XCTAssertEqual(
+            specNames.count,
+            externNames.count,
+            "RuntimeABISpec has \(specNames.count) functions but RuntimeABIExterns has \(externNames.count)"
+        )
+    }
+
+    /// Verify that every RuntimeABISpec function has a matching RuntimeABIExterns entry.
+    func testEverySpecFunctionHasMatchingExtern() {
+        for spec in RuntimeABISpec.allFunctions {
+            let externDecl = RuntimeABIExterns.externDecl(named: spec.name)
+            XCTAssertNotNil(
+                externDecl,
+                "RuntimeABISpec function '\(spec.name)' has no matching entry in RuntimeABIExterns"
+            )
+        }
+    }
+
+    /// Verify that every RuntimeABIExterns entry has a matching RuntimeABISpec function.
+    func testEveryExternHasMatchingSpecFunction() {
+        for externDecl in RuntimeABIExterns.allExterns {
+            let spec = RuntimeABISpec.allFunctions.first { $0.name == externDecl.name }
+            XCTAssertNotNil(
+                spec,
+                "RuntimeABIExterns entry '\(externDecl.name)' has no matching entry in RuntimeABISpec"
+            )
+        }
+    }
+
+    /// Verify that function names appear in the same order in both lists.
+    func testFunctionOrderMatches() {
+        let specNames = RuntimeABISpec.allFunctions.map(\.name)
+        let externNames = RuntimeABIExterns.allExterns.map(\.name)
+        XCTAssertEqual(
+            specNames,
+            externNames,
+            "Function order in RuntimeABISpec and RuntimeABIExterns must match"
+        )
+    }
+
+    /// The core ABI mismatch detection: verify return types match.
+    func testReturnTypesMatch() {
+        for spec in RuntimeABISpec.allFunctions {
+            guard let externDecl = RuntimeABIExterns.externDecl(named: spec.name) else {
+                continue
+            }
+            XCTAssertEqual(
+                spec.returnTypeString,
+                externDecl.returnType,
+                "Return type mismatch for '\(spec.name)': " +
+                "RuntimeABISpec says '\(spec.returnTypeString)' but " +
+                "RuntimeABIExterns says '\(externDecl.returnType)'"
+            )
+        }
+    }
+
+    /// The core ABI mismatch detection: verify parameter types match.
+    func testParameterTypesMatch() {
+        for spec in RuntimeABISpec.allFunctions {
+            guard let externDecl = RuntimeABIExterns.externDecl(named: spec.name) else {
+                continue
+            }
+            XCTAssertEqual(
+                spec.parameterTypeStrings,
+                externDecl.parameterTypes,
+                "Parameter type mismatch for '\(spec.name)': " +
+                "RuntimeABISpec says \(spec.parameterTypeStrings) but " +
+                "RuntimeABIExterns says \(externDecl.parameterTypes)"
+            )
+        }
+    }
+
+    /// Verify parameter count match for each function.
+    func testParameterCountsMatch() {
+        for spec in RuntimeABISpec.allFunctions {
+            guard let externDecl = RuntimeABIExterns.externDecl(named: spec.name) else {
+                continue
+            }
+            XCTAssertEqual(
+                spec.parameters.count,
+                externDecl.parameterTypes.count,
+                "Parameter count mismatch for '\(spec.name)': " +
+                "RuntimeABISpec has \(spec.parameters.count) but " +
+                "RuntimeABIExterns has \(externDecl.parameterTypes.count)"
+            )
+        }
     }
 }

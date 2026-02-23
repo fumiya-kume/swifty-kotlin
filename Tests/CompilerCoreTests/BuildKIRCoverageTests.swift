@@ -39,7 +39,6 @@ final class BuildKIRCoverageTests: XCTestCase {
                 "NormalizeBlocks",
                 "OperatorLowering",
                 "ForLowering",
-                "WhenLowering",
                 "PropertyLowering",
                 "DataEnumSealedSynthesis",
                 "LambdaClosureConversion",
@@ -1467,12 +1466,7 @@ final class BuildKIRCoverageTests: XCTestCase {
             let module = try XCTUnwrap(ctx.kir)
             let body = try findKIRFunctionBody(named: "pick", in: module, interner: ctx.interner)
 
-            let hasSelect = body.contains { instruction in
-                if case .select = instruction { return true }
-                return false
-            }
-            XCTAssertFalse(hasSelect, "ifExpr should not emit .select; expected control-flow jumps")
-
+            // .select was removed from KIRInstruction; verify control-flow is used
             let labelCount = body.filter { if case .label = $0 { return true }; return false }.count
             XCTAssertGreaterThanOrEqual(labelCount, 2, "ifExpr needs at least elseLabel + endLabel")
 
@@ -1496,12 +1490,7 @@ final class BuildKIRCoverageTests: XCTestCase {
             let module = try XCTUnwrap(ctx.kir)
             let body = try findKIRFunctionBody(named: "pick", in: module, interner: ctx.interner)
 
-            let hasSelect = body.contains { instruction in
-                if case .select = instruction { return true }
-                return false
-            }
-            XCTAssertFalse(hasSelect, "whenExpr should not emit .select; expected control-flow jumps")
-
+            // .select was removed from KIRInstruction; verify control-flow is used
             let labelCount = body.filter { if case .label = $0 { return true }; return false }.count
             XCTAssertGreaterThanOrEqual(labelCount, 3, "whenExpr with 2 branches + else needs at least 3 labels")
         }
@@ -1522,12 +1511,7 @@ final class BuildKIRCoverageTests: XCTestCase {
             let module = try XCTUnwrap(ctx.kir)
             let body = try findKIRFunctionBody(named: "test", in: module, interner: ctx.interner)
 
-            let hasSelect = body.contains { instruction in
-                if case .select = instruction { return true }
-                return false
-            }
-            XCTAssertFalse(hasSelect, "Side-effect branches must use control flow, not select")
-
+            // .select was removed; verify control flow guards side-effect branches
             let sideEffectCalls = body.filter { instruction in
                 guard case .call(_, let callee, _, _, _, _) = instruction else { return false }
                 return ctx.interner.resolve(callee) == "sideEffect"
@@ -1553,11 +1537,12 @@ final class BuildKIRCoverageTests: XCTestCase {
             let module = try XCTUnwrap(ctx.kir)
             let body = try findKIRFunctionBody(named: "earlyReturn", in: module, interner: ctx.interner)
 
-            let hasSelect = body.contains { instruction in
-                if case .select = instruction { return true }
-                return false
-            }
-            XCTAssertFalse(hasSelect, "return-in-branch must use control flow, not select")
+            // .select was removed; return-in-branch uses control flow with labels/jumps
+            let labelCount = body.filter { if case .label = $0 { return true }; return false }.count
+            XCTAssertGreaterThanOrEqual(labelCount, 2, "return-in-branch needs labels for control flow")
+
+            let hasReturnValue = body.contains { if case .returnValue = $0 { return true }; return false }
+            XCTAssertTrue(hasReturnValue, "Branch with return 42 should emit returnValue")
         }
     }
 
@@ -1573,12 +1558,7 @@ final class BuildKIRCoverageTests: XCTestCase {
             let module = try XCTUnwrap(ctx.kir)
             let body = try findKIRFunctionBody(named: "test", in: module, interner: ctx.interner)
 
-            let hasSelect = body.contains { instruction in
-                if case .select = instruction { return true }
-                return false
-            }
-            XCTAssertFalse(hasSelect, "when branches with side effects must use control flow, not select")
-
+            // .select was removed; verify control flow guards side-effect branches
             let effectCalls = body.filter { instruction in
                 guard case .call(_, let callee, _, _, _, _) = instruction else { return false }
                 return ctx.interner.resolve(callee) == "effect"
@@ -2101,6 +2081,201 @@ final class BuildKIRCoverageTests: XCTestCase {
                 XCTFail("Expected second argument to be call-site argument.")
                 return
             }
+        }
+    }
+
+    // MARK: - P5-39: vararg call lowering / ABI regression tests
+
+    func testVarargNamedArgSkipsToVarargParameter() throws {
+        let source = """
+        fun tagged(tag: String, vararg values: Int): Int = 0
+        fun main() = tagged(tag = "x", 1, 2)
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            XCTAssertFalse(ctx.diagnostics.hasError, "Expected vararg with named arg to compile without errors.")
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+            XCTAssertTrue(callNames.contains("kk_array_new"), "Expected kk_array_new for vararg packing with named arg, got: \(callNames)")
+            XCTAssertTrue(callNames.contains("kk_array_set"), "Expected kk_array_set for vararg packing with named arg, got: \(callNames)")
+        }
+    }
+
+    func testVarargSpreadFlagIsParsedInCallArgument() throws {
+        // Verify that the spread operator (*) is parsed at the AST level.
+        // Full end-to-end spread lowering requires IntArray type inference
+        // improvements (tracked separately).
+        let source = """
+        fun collect(vararg items: Int): Int = 0
+        fun main() {
+            val arr = IntArray(2)
+            collect(*arr)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try LoadSourcesPhase().run(ctx)
+            try LexPhase().run(ctx)
+            try ParsePhase().run(ctx)
+            try BuildASTPhase().run(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            // Check that at least one CallArgument has isSpread == true
+            var foundSpread = false
+            for index in ast.arena.exprs.indices {
+                let exprID = ExprID(rawValue: Int32(index))
+                guard let expr = ast.arena.expr(exprID) else { continue }
+                if case .call(_, _, let args, _) = expr {
+                    for arg in args {
+                        if arg.isSpread {
+                            foundSpread = true
+                        }
+                    }
+                }
+            }
+            XCTAssertTrue(foundSpread, "Expected parser to set isSpread flag for *arr argument.")
+        }
+    }
+
+    func testVarargWithDefaultAndNamedArgsCombined() throws {
+        let source = """
+        fun format(prefix: String = ">>", vararg nums: Int, suffix: String = "<<"): Int = 0
+        fun main() = format(prefix = "!", 10, 20, 30)
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            XCTAssertFalse(ctx.diagnostics.hasError, "Expected vararg+default+named combination to compile without errors.")
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+            XCTAssertTrue(callNames.contains("kk_array_new"), "Expected kk_array_new for vararg packing in combined scenario, got: \(callNames)")
+        }
+    }
+
+    func testVarargMemberCallPacksArgsCorrectly() throws {
+        let source = """
+        class Acc {
+            fun add(vararg vals: Int): Int = 0
+        }
+        fun main(a: Acc) = a.add(1, 2, 3)
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            XCTAssertFalse(ctx.diagnostics.hasError, "Expected vararg member call to compile without errors.")
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+            XCTAssertTrue(callNames.contains("kk_array_new"), "Expected kk_array_new for vararg member call, got: \(callNames)")
+            XCTAssertTrue(callNames.contains("kk_array_set"), "Expected kk_array_set for vararg member call, got: \(callNames)")
+        }
+    }
+
+    func testABILoweringSkipsBoxingForVarargPackedArrayArgument() throws {
+        let source = """
+        fun sum(vararg items: Int): Int = 0
+        fun main() = sum(1, 2, 3)
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+
+            // After ABI lowering, the vararg-packed array should NOT be boxed.
+            // If boxing were incorrectly applied, we would see kk_box_int
+            // targeting the array argument passed to `sum`.
+            let sumCalls = body.filter { instruction in
+                guard case .call(_, let callee, _, _, _, _) = instruction else { return false }
+                return ctx.interner.resolve(callee) == "sum"
+            }
+            XCTAssertFalse(sumCalls.isEmpty, "Expected a call to sum after ABI lowering.")
+
+            // Verify that arguments to sum are not individually boxed—the
+            // array_new/array_set calls produce the packed array argument.
+            for call in sumCalls {
+                guard case .call(_, _, let arguments, _, _, _) = call else { continue }
+                for arg in arguments {
+                    guard let argKind = module.arena.expr(arg) else { continue }
+                    // The argument to sum should be a temporary holding the
+                    // array reference produced by kk_array_new, NOT a raw
+                    // kk_box_int result.  An intLiteral here would mean the
+                    // vararg array was never constructed—flag it.
+                    if case .intLiteral = argKind {
+                        XCTFail("Unexpected intLiteral as direct argument to sum; expected a packed array reference.")
+                    }
+                }
+            }
+
+            // The real check: kk_box_int should NOT appear before the call to sum
+            // for the purpose of boxing vararg elements into the packed argument.
+            // The array_set calls handle packing, not boxing.
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+            let sumIndex = callNames.firstIndex(of: "sum")
+            let boxIntIndices = callNames.indices.filter { callNames[$0] == "kk_box_int" }
+            // Any kk_box_int calls that appear should be for array_set element boxing,
+            // not for the final argument to sum itself.
+            if let sumIdx = sumIndex {
+                let boxCallsAfterArrayPacking = boxIntIndices.filter { $0 > sumIdx }
+                XCTAssertTrue(boxCallsAfterArrayPacking.isEmpty, "Unexpected kk_box_int after sum call; vararg array argument should not be boxed.")
+            }
+        }
+    }
+
+    func testVarargDefaultNamedRegressionCompilesToKIRWithoutErrors() throws {
+        let source = """
+        fun log(level: Int = 0, vararg msgs: Int): Int = 0
+        fun main() {
+            log(1, 2, 3)
+            log(level = 5, 10, 20)
+            log()
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            XCTAssertFalse(ctx.diagnostics.hasError, "Expected vararg+default+named regression cases to compile without errors.")
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+
+            // All three call sites should produce array packing
+            let arrayNewCount = callNames.filter { $0 == "kk_array_new" }.count
+            XCTAssertGreaterThanOrEqual(arrayNewCount, 2, "Expected at least 2 kk_array_new calls for vararg packing across call sites, got: \(arrayNewCount)")
+        }
+    }
+
+    func testVarargPositionalAfterNamedArgPacksCorrectly() throws {
+        // Verify that positional vararg arguments following a named argument
+        // are correctly packed into an array (overload resolver fix).
+        let source = """
+        fun report(label: String, vararg values: Int): Int = 0
+        fun main() = report(label = "test", 10, 20, 30)
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            XCTAssertFalse(ctx.diagnostics.hasError, "Expected positional vararg after named arg to compile without errors.")
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+            XCTAssertTrue(callNames.contains("kk_array_new"), "Expected kk_array_new for positional vararg after named arg, got: \(callNames)")
+            XCTAssertTrue(callNames.contains("kk_array_set"), "Expected kk_array_set for positional vararg after named arg, got: \(callNames)")
         }
     }
 

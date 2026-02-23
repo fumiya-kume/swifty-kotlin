@@ -15,4 +15,10 @@ fun main() {
     val m = 1.0L
     val n = 1e
     val o = 1e_5
+    val p = 0x
+    val q = 0b
+    val r = 1_.0
+    val s = 1e5_
+    val t = 1_L
+    val u = 1_f
 }

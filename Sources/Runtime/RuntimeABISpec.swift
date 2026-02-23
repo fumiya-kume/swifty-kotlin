@@ -9,6 +9,11 @@ public enum RuntimeABICType: String, Equatable {
     case constCCharPointer = "const char *"
     case fieldAddrPointer = "void **"
     case constTypeInfoPointer = "const KTypeInfo *"
+    case nullableRawPointerPointer = "void ** _Nullable"
+    case int64 = "int64_t"
+    case constRawPointer = "const void *"
+    case nullableConstRawPointer = "const void * _Nullable"
+    case nullableIntptrPointer = "intptr_t * _Nullable"
     case noreturn = "_Noreturn void"
 }
 
@@ -49,6 +54,16 @@ public struct RuntimeABIFunctionSpec: Equatable {
         }
         return "\(returnType.rawValue) \(name)(\(params));"
     }
+
+    /// Parameter types only (no names), for ABI reconciliation with CompilerCore's RuntimeABIExterns.
+    public var parameterTypeStrings: [String] {
+        parameters.map { $0.type.rawValue }
+    }
+
+    /// Return type as a raw C string, for ABI reconciliation.
+    public var returnTypeString: String {
+        returnType.rawValue
+    }
 }
 
 public enum RuntimeABISpec {
@@ -59,7 +74,7 @@ public enum RuntimeABISpec {
             name: "kk_alloc",
             parameters: [
                 RuntimeABIParameter(name: "size", type: .uint32),
-                RuntimeABIParameter(name: "typeInfo", type: .opaquePointer)
+                RuntimeABIParameter(name: "typeInfo", type: .constTypeInfoPointer)
             ],
             returnType: .opaquePointer,
             section: "Memory"
@@ -132,12 +147,320 @@ public enum RuntimeABISpec {
         )
     ]
 
+    public static let gcFunctions: [RuntimeABIFunctionSpec] = [
+        RuntimeABIFunctionSpec(
+            name: "kk_register_global_root",
+            parameters: [
+                RuntimeABIParameter(name: "slot", type: .nullableRawPointerPointer)
+            ],
+            returnType: .void,
+            section: "GC"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_unregister_global_root",
+            parameters: [
+                RuntimeABIParameter(name: "slot", type: .nullableRawPointerPointer)
+            ],
+            returnType: .void,
+            section: "GC"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_register_frame_map",
+            parameters: [
+                RuntimeABIParameter(name: "functionID", type: .uint32),
+                RuntimeABIParameter(name: "mapPtr", type: .nullableConstRawPointer)
+            ],
+            returnType: .void,
+            section: "GC"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_push_frame",
+            parameters: [
+                RuntimeABIParameter(name: "functionID", type: .uint32),
+                RuntimeABIParameter(name: "frameBase", type: .nullableOpaquePointer)
+            ],
+            returnType: .void,
+            section: "GC"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_pop_frame",
+            parameters: [],
+            returnType: .void,
+            section: "GC"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_register_coroutine_root",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .nullableOpaquePointer)
+            ],
+            returnType: .void,
+            section: "GC"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_unregister_coroutine_root",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .nullableOpaquePointer)
+            ],
+            returnType: .void,
+            section: "GC"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_runtime_heap_object_count",
+            parameters: [],
+            returnType: .uint32,
+            section: "GC"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_runtime_force_reset",
+            parameters: [],
+            returnType: .void,
+            section: "GC"
+        )
+    ]
+
     public static let coroutineFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
             name: "kk_coroutine_suspended",
             parameters: [],
             returnType: .opaquePointer,
             section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_continuation_new",
+            parameters: [
+                RuntimeABIParameter(name: "functionID", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_state_enter",
+            parameters: [
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+                RuntimeABIParameter(name: "functionID", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_state_set_label",
+            parameters: [
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+                RuntimeABIParameter(name: "label", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_state_exit",
+            parameters: [
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+                RuntimeABIParameter(name: "value", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_state_set_spill",
+            parameters: [
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+                RuntimeABIParameter(name: "slot", type: .intptr),
+                RuntimeABIParameter(name: "value", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_state_get_spill",
+            parameters: [
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+                RuntimeABIParameter(name: "slot", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_state_set_completion",
+            parameters: [
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+                RuntimeABIParameter(name: "value", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_state_get_completion",
+            parameters: [
+                RuntimeABIParameter(name: "continuation", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kxmini_run_blocking",
+            parameters: [
+                RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
+                RuntimeABIParameter(name: "functionID", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kxmini_launch",
+            parameters: [
+                RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
+                RuntimeABIParameter(name: "functionID", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kxmini_async",
+            parameters: [
+                RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
+                RuntimeABIParameter(name: "functionID", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kxmini_async_await",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kxmini_delay",
+            parameters: [
+                RuntimeABIParameter(name: "milliseconds", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_launcher_arg_set",
+            parameters: [
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+                RuntimeABIParameter(name: "index", type: .int64),
+                RuntimeABIParameter(name: "value", type: .int64)
+            ],
+            returnType: .int64,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_launcher_arg_get",
+            parameters: [
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+                RuntimeABIParameter(name: "index", type: .int64)
+            ],
+            returnType: .int64,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kxmini_run_blocking_with_cont",
+            parameters: [
+                RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kxmini_launch_with_cont",
+            parameters: [
+                RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kxmini_async_with_cont",
+            parameters: [
+                RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        )
+    ]
+
+    public static let boxingFunctions: [RuntimeABIFunctionSpec] = [
+        RuntimeABIFunctionSpec(
+            name: "kk_box_int",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Boxing"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_box_bool",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Boxing"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_unbox_int",
+            parameters: [
+                RuntimeABIParameter(name: "obj", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Boxing"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_unbox_bool",
+            parameters: [
+                RuntimeABIParameter(name: "obj", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Boxing"
+        )
+    ]
+
+    public static let arrayFunctions: [RuntimeABIFunctionSpec] = [
+        RuntimeABIFunctionSpec(
+            name: "kk_array_new",
+            parameters: [
+                RuntimeABIParameter(name: "length", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Array"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_array_get",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+                RuntimeABIParameter(name: "index", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)
+            ],
+            returnType: .intptr,
+            section: "Array"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_array_set",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+                RuntimeABIParameter(name: "index", type: .intptr),
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)
+            ],
+            returnType: .intptr,
+            section: "Array"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_vararg_spread_concat",
+            parameters: [
+                RuntimeABIParameter(name: "pairsArrayRaw", type: .intptr),
+                RuntimeABIParameter(name: "pairCount", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Array"
         )
     ]
 
@@ -146,7 +469,10 @@ public enum RuntimeABISpec {
         + exceptionFunctions
         + stringFunctions
         + printlnFunctions
+        + gcFunctions
         + coroutineFunctions
+        + boxingFunctions
+        + arrayFunctions
 
     public static func generateCHeader() -> String {
         var lines: [String] = []
