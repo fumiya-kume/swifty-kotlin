@@ -47,7 +47,7 @@ extension BuildASTPhase {
         guard !exprTokens.isEmpty else {
             return nil
         }
-        let parser = ExpressionParser(tokens: Array(exprTokens), interner: interner, astArena: astArena)
+        let parser = ExpressionParser(tokens: exprTokens[...], interner: interner, astArena: astArena)
         return parser.parse()
     }
 
@@ -179,7 +179,7 @@ extension BuildASTPhase {
         guard !exprTokens.isEmpty else {
             return .unit
         }
-        let parser = ExpressionParser(tokens: Array(exprTokens), interner: interner, astArena: astArena)
+        let parser = ExpressionParser(tokens: ArraySlice(exprTokens), interner: interner, astArena: astArena)
         guard let exprID = parser.parse(),
               let range = astArena.exprRange(exprID) else {
             return .unit

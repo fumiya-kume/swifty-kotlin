@@ -91,7 +91,7 @@ extension BuildASTPhase {
             guard !initializerTokens.isEmpty else {
                 return nil
             }
-            let parser = ExpressionParser(tokens: Array(initializerTokens), interner: interner, astArena: astArena)
+            let parser = ExpressionParser(tokens: initializerTokens[...], interner: interner, astArena: astArena)
             guard let parsedInitializer = parser.parse() else {
                 return nil
             }
@@ -157,11 +157,11 @@ extension BuildASTPhase {
             return nil
         }
 
-        let lhsParser = ExpressionParser(tokens: Array(lhsTokens), interner: interner, astArena: astArena)
+        let lhsParser = ExpressionParser(tokens: lhsTokens[...], interner: interner, astArena: astArena)
         guard let lhsExpr = lhsParser.parse() else {
             return nil
         }
-        let parser = ExpressionParser(tokens: Array(valueTokens), interner: interner, astArena: astArena)
+        let parser = ExpressionParser(tokens: valueTokens[...], interner: interner, astArena: astArena)
         guard let valueExpr = parser.parse() else {
             return nil
         }
@@ -226,7 +226,7 @@ extension BuildASTPhase {
         let valueTokens = statementTokens[(assignIndex + 1)...].filter { $0.kind != .symbol(.semicolon) }
         guard !valueTokens.isEmpty else { return nil }
 
-        let lhsParser = ExpressionParser(tokens: Array(lhsTokens), interner: interner, astArena: astArena)
+        let lhsParser = ExpressionParser(tokens: lhsTokens[...], interner: interner, astArena: astArena)
         guard let lhsExpr = lhsParser.parse(),
               let lhs = astArena.expr(lhsExpr),
               case .nameRef(let name, _) = lhs,
@@ -234,7 +234,7 @@ extension BuildASTPhase {
             return nil
         }
 
-        let parser = ExpressionParser(tokens: Array(valueTokens), interner: interner, astArena: astArena)
+        let parser = ExpressionParser(tokens: valueTokens[...], interner: interner, astArena: astArena)
         guard let valueExpr = parser.parse() else { return nil }
 
         let end = astArena.exprRange(valueExpr)?.end ?? statementTokens.last?.range.end ?? lhsRange.end
