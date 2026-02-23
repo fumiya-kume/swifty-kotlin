@@ -220,7 +220,7 @@ final class LambdaLowerer {
             }
             var body: [KIRInstruction] = [.beginBlock]
             switch sema.types.kind(of: fallbackReturnType) {
-            case .unit, .nothing:
+            case .unit, .nothing(.nonNull), .nothing(.nullable):
                 body.append(.returnUnit)
             default:
                 let zero = arena.appendExpr(.intLiteral(0), type: fallbackReturnType)

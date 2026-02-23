@@ -83,7 +83,7 @@ public struct FunctionType: Hashable {
 public enum TypeKind: Hashable {
     case error
     case unit
-    case nothing
+    case nothing(Nullability)
     case any(Nullability)
 
     case primitive(PrimitiveType, Nullability)

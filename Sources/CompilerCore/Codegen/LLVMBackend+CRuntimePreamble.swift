@@ -92,6 +92,8 @@ extension LLVMBackend {
             "extern intptr_t kk_await_all(intptr_t handlesArray, intptr_t count);",
             "extern KKVTableEntry kk_vtable_lookup(intptr_t receiver, intptr_t slot);",
             "extern KKVTableEntry kk_itable_lookup(intptr_t receiver, intptr_t ifaceSlot, intptr_t methodSlot);",
+            "extern intptr_t kk_op_notnull(intptr_t value, intptr_t* outThrown);",
+            "extern intptr_t kk_op_elvis(intptr_t lhs, intptr_t rhs);",
             ""
         ]
     }
@@ -693,6 +695,19 @@ extension LLVMBackend {
             "__attribute__((weak)) intptr_t kk_await_all(intptr_t handlesArray, intptr_t count) {",
             "  (void)handlesArray; (void)count;",
             "  return 0;",
+            "}",
+            "/* --- Nullable operator helpers (P5-65) --- */",
+            "__attribute__((weak)) intptr_t kk_op_notnull(intptr_t value, intptr_t* outThrown) {",
+            "  if (outThrown) { *outThrown = 0; }",
+            "  if (value == KK_NULL_SENTINEL) {",
+            "    if (outThrown) { *outThrown = 1; }",
+            "    return 0;",
+            "  }",
+            "  return value;",
+            "}",
+            "__attribute__((weak)) intptr_t kk_op_elvis(intptr_t lhs, intptr_t rhs) {",
+            "  if (lhs != KK_NULL_SENTINEL) return lhs;",
+            "  return rhs;",
             "}",
             "/* vtable/itable dispatch helpers */",
             "typedef intptr_t (*KKVTableEntry)();",

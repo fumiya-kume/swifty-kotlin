@@ -7,8 +7,27 @@ extension TypeSystem {
         let lhs = kind(of: subtype)
         let rhs = kind(of: supertype)
 
-        if case .nothing = lhs {
+        if case .nothing(.nonNull) = lhs {
             return true
+        }
+        if case .nothing(.nullable) = lhs {
+            // Nothing? is subtype of all nullable types, Any?, and Nothing? itself
+            switch rhs {
+            case .any(.nullable):
+                return true
+            case .nothing(.nullable):
+                return true
+            case .primitive(_, .nullable):
+                return true
+            case .classType(let ct) where ct.nullability == .nullable:
+                return true
+            case .typeParam(let tp) where tp.nullability == .nullable:
+                return true
+            case .functionType(let ft) where ft.nullability == .nullable:
+                return true
+            default:
+                return false
+            }
         }
         if case .error = lhs {
             return true
@@ -21,7 +40,7 @@ extension TypeSystem {
         }
         if case .any(.nonNull) = rhs {
             switch lhs {
-            case .any(.nonNull), .unit, .nothing:
+            case .any(.nonNull), .unit, .nothing(.nonNull):
                 return true
             case .primitive(_, let nullability):
                 return nullability == .nonNull
@@ -121,9 +140,11 @@ extension TypeSystem {
     }
 
     public func lub(_ types: [TypeID]) -> TypeID {
-        let filtered = types.filter { kind(of: $0) != .error && kind(of: $0) != .nothing }
+        let filtered = types.filter { kind(of: $0) != .error && kind(of: $0) != .nothing(.nonNull) && kind(of: $0) != .nothing(.nullable) }
         guard let first = filtered.first else {
-            let hasNothing = types.contains { kind(of: $0) == .nothing }
+            let hasNullableNothing = types.contains { kind(of: $0) == .nothing(.nullable) }
+            let hasNothing = types.contains { kind(of: $0) == .nothing(.nonNull) || kind(of: $0) == .nothing(.nullable) }
+            if hasNullableNothing { return nullableNothingType }
             return hasNothing ? nothingType : errorType
         }
         if filtered.dropFirst().allSatisfy({ $0 == first }) {
@@ -142,7 +163,7 @@ extension TypeSystem {
         if types.dropFirst().allSatisfy({ $0 == first }) {
             return first
         }
-        if types.contains(where: { kind(of: $0) == .nothing }) {
+        if types.contains(where: { if case .nothing = kind(of: $0) { return true }; return false }) {
             return nothingType
         }
         return make(.intersection(types))
