@@ -48,7 +48,7 @@ extension LLVMBackend {
             "  if (cnt > 0 && desc->rootOffsets) {",
             "    offs = (int32_t*)malloc(cnt * sizeof(int32_t));",
             "    if (!offs) { cnt = 0; } else memcpy(offs, desc->rootOffsets, cnt * sizeof(int32_t));",
-            "  }",
+            "  } else { cnt = 0; }",
             "  for (uint32_t i = 0; i < kk_rt_fmap_cnt; i++) {",
             "    if (kk_rt_fmaps[i].functionID == functionID) {",
             "      free(kk_rt_fmaps[i].rootOffsets);",
