@@ -90,11 +90,17 @@ public final class PhaseTimer {
 
     // MARK: - Summary output
 
+    /// Pad or truncate `text` to exactly `width` characters (left-aligned).
+    private func pad(_ text: String, to width: Int) -> String {
+        if text.count >= width { return String(text.prefix(width)) }
+        return text + String(repeating: " ", count: width - text.count)
+    }
+
     /// Print a human-readable timing summary to stderr.
     public func printSummary() {
         let total = totalMs
         FileHandle.standardError.write(Data("===== Phase Timing Summary =====\n".utf8))
-        let header = String(format: "%-24s %10s %8s\n", "Phase", "Time (ms)", "%")
+        let header = "\(pad("Phase", to: 24)) \(pad("Time (ms)", to: 10)) \(pad("%", to: 8))\n"
         FileHandle.standardError.write(Data(header.utf8))
         let separator = String(repeating: "-", count: 46) + "\n"
         FileHandle.standardError.write(Data(separator.utf8))
@@ -102,18 +108,18 @@ public final class PhaseTimer {
         for record in records {
             let ms = record.durationMs
             let pct = total > 0 ? (ms / total) * 100.0 : 0.0
-            let line = String(format: "%-24s %10.2f %7.1f%%\n", record.name, ms, pct)
+            let line = "\(pad(record.name, to: 24)) \(String(format: "%10.2f", ms)) \(String(format: "%7.1f%%", pct))\n"
             FileHandle.standardError.write(Data(line.utf8))
             for sub in record.subRecords {
                 let subMs = sub.durationMs
                 let subPct = total > 0 ? (subMs / total) * 100.0 : 0.0
-                let subLine = String(format: "  %-22s %10.2f %7.1f%%\n", sub.name, subMs, subPct)
+                let subLine = "  \(pad(sub.name, to: 22)) \(String(format: "%10.2f", subMs)) \(String(format: "%7.1f%%", subPct))\n"
                 FileHandle.standardError.write(Data(subLine.utf8))
             }
         }
 
         FileHandle.standardError.write(Data(separator.utf8))
-        let totalLine = String(format: "%-24s %10.2f %7.1f%%\n", "TOTAL", total, 100.0)
+        let totalLine = "\(pad("TOTAL", to: 24)) \(String(format: "%10.2f", total)) \(String(format: "%7.1f%%", 100.0))\n"
         FileHandle.standardError.write(Data(totalLine.utf8))
     }
 
