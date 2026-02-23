@@ -62,14 +62,23 @@ public final class LibraryMetadataCache {
         metadataCache[key] = records
     }
 
-    // MARK: - Type signature memoization (signature string key)
+    // MARK: - Type signature memoization (signature string + TypeSystem identity)
 
+    /// TypeID values are indices into a specific TypeSystem's internal storage,
+    /// so we must scope the signature cache per TypeSystem instance to avoid
+    /// returning stale IDs that reference the wrong type table.
+    private var currentTypeSystemID: ObjectIdentifier?
     private var signatureCache: [String: TypeID?] = [:]
 
     /// Returns a cached type ID for the given encoded signature string, or `nil` on miss.
+    /// The cache is automatically invalidated when a different `TypeSystem` is passed.
     /// Note: the cached value itself may be `Optional<TypeID>.some(nil)` when the previous
-    /// parse returned nil (malformed signature). Use `hasCachedSignature` to distinguish.
-    func cachedSignature(_ signature: String) -> TypeID?? {
+    /// parse returned nil (malformed signature).
+    func cachedSignature(_ signature: String, types: TypeSystem) -> TypeID?? {
+        let tsID = ObjectIdentifier(types)
+        if currentTypeSystemID != tsID {
+            return nil  // different TypeSystem — treat as miss
+        }
         guard let entry = signatureCache[signature] else {
             return nil  // cache miss — outer optional is nil
         }
@@ -77,7 +86,13 @@ public final class LibraryMetadataCache {
     }
 
     /// Stores a type signature parse result (including `nil` for failures).
-    func cacheSignature(_ result: TypeID?, for signature: String) {
+    /// Automatically clears the cache when a different `TypeSystem` is encountered.
+    func cacheSignature(_ result: TypeID?, for signature: String, types: TypeSystem) {
+        let tsID = ObjectIdentifier(types)
+        if currentTypeSystemID != tsID {
+            signatureCache.removeAll()
+            currentTypeSystemID = tsID
+        }
         signatureCache[signature] = result
     }
 
