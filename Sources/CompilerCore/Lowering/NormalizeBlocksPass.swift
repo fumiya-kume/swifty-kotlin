@@ -2,6 +2,22 @@ import Foundation
 
 final class NormalizeBlocksPass: LoweringPass {
     static let name = "NormalizeBlocks"
+
+    func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool {
+        for decl in module.arena.declarations {
+            guard case .function(let function) = decl else { continue }
+            for instruction in function.body {
+                switch instruction {
+                case .beginBlock, .endBlock:
+                    return true
+                default:
+                    break
+                }
+            }
+        }
+        return false
+    }
+
     func run(module: KIRModule, ctx: KIRContext) throws {
         module.arena.transformFunctions { function in
             var updated = function

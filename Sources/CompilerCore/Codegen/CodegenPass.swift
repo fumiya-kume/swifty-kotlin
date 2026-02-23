@@ -148,6 +148,9 @@ public final class CodegenPhase: CompilerPhase {
         }
 
         guard let requestedBackend else {
+            if LLVMCAPIBindings.load()?.smokeTestContextLifecycle() == true {
+                return BackendSelection(kind: .llvmCAPI, isStrictMode: false)
+            }
             return BackendSelection(kind: .syntheticC, isStrictMode: false)
         }
 

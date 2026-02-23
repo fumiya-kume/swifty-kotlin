@@ -2,6 +2,22 @@ import Foundation
 
 final class OperatorLoweringPass: LoweringPass {
     static let name = "OperatorLowering"
+
+    func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool {
+        for decl in module.arena.declarations {
+            guard case .function(let function) = decl else { continue }
+            for instruction in function.body {
+                switch instruction {
+                case .binary, .unary, .nullAssert:
+                    return true
+                default:
+                    break
+                }
+            }
+        }
+        return false
+    }
+
     func run(module: KIRModule, ctx: KIRContext) throws {
         let types = ctx.sema?.types
         let printlnCallee = ctx.interner.intern("println")

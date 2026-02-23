@@ -1,6 +1,83 @@
 import Foundation
 
 extension LLVMBackend {
+    /// Minimal C declarations sufficient for compiling user code when the full
+    /// runtime preamble has already been compiled into a cached stub object.
+    /// Includes type definitions, macros, and extern declarations for all
+    /// runtime functions that user code may reference.
+    func cRuntimeExternDeclarations() -> [String] {
+        [
+            "#define _DEFAULT_SOURCE",
+            "#include <stdint.h>",
+            "#include <stddef.h>",
+            "#include <stdlib.h>",
+            "#include <stdio.h>",
+            "#include <string.h>",
+            "#include <unistd.h>",
+            "#include <math.h>",
+            "#define KK_NULL_SENTINEL ((intptr_t)INTPTR_MIN)",
+            "",
+            "/* Type definitions shared with runtime stub */",
+            "typedef struct { int32_t len; uint8_t* bytes; } KKString;",
+            "typedef struct { uint32_t rootCount; const int32_t* rootOffsets; } KKFrameMapDescriptor;",
+            "typedef intptr_t (*KKVTableEntry)();",
+            "",
+            "/* Extern declarations for runtime functions in cached stub */",
+            "extern void kk_register_frame_map(uint32_t functionID, const void* mapPtr);",
+            "extern void kk_push_frame(uint32_t functionID, void* frameBase);",
+            "extern void kk_pop_frame(void);",
+            "extern void kk_register_global_root(void** slot);",
+            "extern void kk_unregister_global_root(void** slot);",
+            "extern void kk_register_coroutine_root(void* value);",
+            "extern void kk_unregister_coroutine_root(void* value);",
+            "extern void* kk_string_from_utf8(const uint8_t* ptr, int32_t len);",
+            "extern void* kk_any_to_string(intptr_t value, int32_t tag);",
+            "extern void* kk_string_concat(void* a, void* b);",
+            "extern intptr_t kk_array_new(intptr_t length);",
+            "extern intptr_t kk_array_get(intptr_t arrayRaw, intptr_t index, intptr_t* outThrown);",
+            "extern intptr_t kk_array_set(intptr_t arrayRaw, intptr_t index, intptr_t value, intptr_t* outThrown);",
+            "extern intptr_t kk_vararg_spread_concat(intptr_t pairsArrayRaw, intptr_t pairCount);",
+            "extern intptr_t kk_box_int(intptr_t value);",
+            "extern intptr_t kk_box_bool(intptr_t value);",
+            "extern intptr_t kk_unbox_int(intptr_t obj);",
+            "extern intptr_t kk_unbox_bool(intptr_t obj);",
+            "extern intptr_t kk_box_long(intptr_t value);",
+            "extern intptr_t kk_unbox_long(intptr_t obj);",
+            "extern intptr_t kk_box_float(intptr_t value);",
+            "extern intptr_t kk_unbox_float(intptr_t obj);",
+            "extern intptr_t kk_box_double(intptr_t value);",
+            "extern intptr_t kk_unbox_double(intptr_t obj);",
+            "extern intptr_t kk_box_char(intptr_t value);",
+            "extern intptr_t kk_unbox_char(intptr_t obj);",
+            "extern intptr_t kk_int_to_float_bits(intptr_t value);",
+            "extern intptr_t kk_int_to_double_bits(intptr_t value);",
+            "extern intptr_t kk_float_to_double_bits(intptr_t value);",
+            "extern void println(intptr_t value, intptr_t* outThrown);",
+            "extern void kk_println_any(void* value);",
+            "extern void kk_println_long(intptr_t value, intptr_t* outThrown);",
+            "extern void kk_println_float(intptr_t value, intptr_t* outThrown);",
+            "extern void kk_println_double(intptr_t value, intptr_t* outThrown);",
+            "extern void kk_println_char(intptr_t value, intptr_t* outThrown);",
+            "extern intptr_t kk_coroutine_suspended(void);",
+            "extern intptr_t kk_coroutine_continuation_new(intptr_t functionPtr);",
+            "extern intptr_t kk_coroutine_state_enter(intptr_t continuation, intptr_t spillCount);",
+            "extern intptr_t kk_coroutine_state_set_label(intptr_t state, intptr_t label);",
+            "extern intptr_t kk_coroutine_state_exit(intptr_t state, intptr_t result);",
+            "extern intptr_t kk_coroutine_state_set_spill(intptr_t state, intptr_t slot, intptr_t value);",
+            "extern intptr_t kk_coroutine_state_get_spill(intptr_t state, intptr_t slot);",
+            "extern intptr_t kk_coroutine_state_set_completion(intptr_t state, intptr_t value);",
+            "extern intptr_t kk_coroutine_state_get_completion(intptr_t state);",
+            "extern intptr_t kk_kxmini_run_blocking(intptr_t scope, intptr_t func);",
+            "extern intptr_t kk_kxmini_launch(intptr_t scope, intptr_t func);",
+            "extern intptr_t kk_kxmini_async(intptr_t scope, intptr_t func);",
+            "extern intptr_t kk_kxmini_async_await(intptr_t deferred);",
+            "extern intptr_t kk_kxmini_delay(intptr_t millis, intptr_t cont);",
+            "extern KKVTableEntry kk_vtable_lookup(intptr_t receiver, intptr_t slot);",
+            "extern KKVTableEntry kk_itable_lookup(intptr_t receiver, intptr_t ifaceSlot, intptr_t methodSlot);",
+            ""
+        ]
+    }
+
     func cRuntimePreamble() -> [String] {
         [
             "#define _DEFAULT_SOURCE",

@@ -1,6 +1,14 @@
 import Foundation
 
-protocol LoweringPass: KIRPass {}
+protocol LoweringPass: KIRPass {
+    /// Returns `false` when the module contains no instructions that this
+    /// pass would rewrite, allowing the driver to skip `run` entirely.
+    func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool
+}
+
+extension LoweringPass {
+    func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool { true }
+}
 
 public final class LoweringPhase: CompilerPhase {
     public static let name = "Lowerings"
@@ -31,7 +39,11 @@ public final class LoweringPhase: CompilerPhase {
             sema: ctx.sema
         )
         for pass in passes {
-            try pass.run(module: module, ctx: kirCtx)
+            if pass.shouldRun(module: module, ctx: kirCtx) {
+                try pass.run(module: module, ctx: kirCtx)
+            } else {
+                module.recordLowering(type(of: pass).name)
+            }
         }
     }
 }

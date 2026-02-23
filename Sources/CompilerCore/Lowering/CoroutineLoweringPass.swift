@@ -9,6 +9,15 @@ final class CoroutineLoweringPass: LoweringPass {
         let arity: Int
     }
 
+    func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool {
+        for decl in module.arena.declarations {
+            if case .function(let function) = decl, function.isSuspend {
+                return true
+            }
+        }
+        return false
+    }
+
     func run(module: KIRModule, ctx: KIRContext) throws {
         let anyType = ctx.sema?.types.nullableAnyType ?? ctx.sema?.types.anyType
         let intType = ctx.sema?.types.make(.primitive(.int, .nonNull))
