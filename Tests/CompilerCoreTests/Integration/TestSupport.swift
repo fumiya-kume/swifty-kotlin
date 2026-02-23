@@ -233,7 +233,7 @@ func makeContextFromSource(_ source: String) throws -> CompilationContext {
     let fakePath = FileManager.default.temporaryDirectory
         .appendingPathComponent(UUID().uuidString + ".kt").path
     let ctx = makeCompilationContext(inputs: [fakePath])
-    ctx.sourceManager.addFile(path: fakePath, contents: Data(source.utf8))
+    _ = ctx.sourceManager.addFile(path: fakePath, contents: Data(source.utf8))
     return ctx
 }
 
@@ -245,7 +245,7 @@ func makeContextFromSources(_ sources: [String]) throws -> CompilationContext {
     }
     let ctx = makeCompilationContext(inputs: fakePaths)
     for (path, source) in zip(fakePaths, sources) {
-        ctx.sourceManager.addFile(path: path, contents: Data(source.utf8))
+        _ = ctx.sourceManager.addFile(path: path, contents: Data(source.utf8))
     }
     return ctx
 }

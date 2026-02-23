@@ -1878,7 +1878,6 @@ final class LoweringPassCoverageTests: XCTestCase {
 
     func testABILoweringBoxesAllPrimitiveTypesForAnyParameter() throws {
         let interner = StringInterner()
-        let arena = KIRArena()
         let types = TypeSystem()
         let symbols = SymbolTable()
 
