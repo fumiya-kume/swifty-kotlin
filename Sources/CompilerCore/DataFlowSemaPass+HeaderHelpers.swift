@@ -1,6 +1,10 @@
 import Foundation
 
 extension DataFlowSemaPassPhase {
+    /// Base value for synthetic type parameter symbol IDs used in metadata encoding.
+    /// Shared between MetadataTypeSignatureParser (encoding) and collectSyntheticTypeParameters (decoding).
+    static var syntheticTypeParameterBase: Int32 { -1_000_000 }
+
     func definePackageSymbol(for file: ASTFile, symbols: SymbolTable, interner: StringInterner) -> SymbolID {
         let package = file.packageFQName.isEmpty ? [interner.intern("_root_")] : file.packageFQName
         let name = package.last ?? interner.intern("_root_")

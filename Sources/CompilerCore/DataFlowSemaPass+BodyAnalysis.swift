@@ -346,13 +346,14 @@ extension DataFlowSemaPassPhase {
         case .typeParam(let tp):
             if let replacement = argSubstitution[tp.symbol] {
                 // In non-arg positions, extract the TypeID from the TypeArg.
-                // For .star, leave the type parameter unsubstituted.
+                // For .star, expand to the wildcard upper bound (Any?) since
+                // leaving the type parameter unsubstituted would create dangling references.
                 let replacementType: TypeID
                 switch replacement {
                 case .invariant(let inner), .out(let inner), .in(let inner):
                     replacementType = inner
                 case .star:
-                    return typeID
+                    replacementType = types.nullableAnyType
                 }
                 if tp.nullability == .nullable {
                     return applyNullability(replacementType, types: types)

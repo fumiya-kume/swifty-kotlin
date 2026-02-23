@@ -272,7 +272,7 @@ extension DataFlowSemaPassPhase {
         private let diagnostics: DiagnosticEngine
         private let metadataPath: String
         private let ownerFQName: [InternedString]
-        private let syntheticTypeParameterBase: Int32 = -1_000_000
+        private let syntheticTypeParameterBase: Int32 = DataFlowSemaPassPhase.syntheticTypeParameterBase
 
         init(
             source: String,

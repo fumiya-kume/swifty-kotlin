@@ -255,9 +255,8 @@ extension DataFlowSemaPassPhase {
     /// (those with rawValue <= syntheticTypeParameterBase). Returns them sorted
     /// by index order (T0, T1, T2, ...) matching the original generic parameter list.
     private func collectSyntheticTypeParameters(_ typeID: TypeID, types: TypeSystem) -> [SymbolID] {
-        let syntheticTypeParameterBase: Int32 = -1_000_000
         var collected: Set<SymbolID> = []
-        collectSyntheticTypeParamsRecursive(typeID, types: types, base: syntheticTypeParameterBase, into: &collected)
+        collectSyntheticTypeParamsRecursive(typeID, types: types, base: Self.syntheticTypeParameterBase, into: &collected)
         return collected.sorted { $0.rawValue > $1.rawValue }
     }
 
