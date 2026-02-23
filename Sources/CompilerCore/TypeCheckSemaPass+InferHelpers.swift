@@ -229,6 +229,18 @@ extension TypeCheckSemaPassPhase {
         }
     }
 
+    /// Check if an expression is a terminating expression (return/throw) for elvis guard narrowing.
+    func isTerminatingExpr(_ expr: Expr) -> Bool {
+        switch expr {
+        case .returnExpr:
+            return true
+        case .throwExpr:
+            return true
+        default:
+            return false
+        }
+    }
+
     func compoundAssignToBinaryOp(_ op: CompoundAssignOp) -> BinaryOp {
         switch op {
         case .plusAssign: return .add

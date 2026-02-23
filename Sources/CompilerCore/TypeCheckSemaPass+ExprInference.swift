@@ -168,12 +168,27 @@ extension TypeCheckSemaPassPhase {
             } else {
                 type = targetType
             }
+            // Smart cast: after `x as T`, narrow x to T in flow state (P5-100)
+            if !isSafe,
+               let castSubjectExpr = ast.arena.expr(exprID),
+               case .nameRef(let castVarName, _) = castSubjectExpr,
+               let castLocal = locals[castVarName],
+               isStableLocalSymbol(castLocal.symbol, sema: sema) {
+                locals[castVarName] = (targetType, castLocal.symbol, castLocal.isMutable, castLocal.isInitialized)
+            }
             sema.bindings.bindExprType(id, type: type)
             return type
 
         case .nullAssert(let exprID, _):
             let operandType = inferExpr(exprID, ctx: ctx, locals: &locals)
             let type = sema.types.makeNonNullable(operandType)
+            // Smart cast: after `x!!`, narrow x to non-null in subsequent code (P5-66)
+            if let assertSubjectExpr = ast.arena.expr(exprID),
+               case .nameRef(let assertVarName, _) = assertSubjectExpr,
+               let assertLocal = locals[assertVarName],
+               isStableLocalSymbol(assertLocal.symbol, sema: sema) {
+                locals[assertVarName] = (type, assertLocal.symbol, assertLocal.isMutable, assertLocal.isInitialized)
+            }
             sema.bindings.bindExprType(id, type: type)
             return type
 
@@ -397,6 +412,17 @@ extension TypeCheckSemaPassPhase {
         case .elvis:
             let nonNullLhs = sema.types.makeNonNullable(lhs)
             type = sema.types.lub([nonNullLhs, rhs])
+            // Smart cast: `x ?: return` / `x ?: throw` narrows x to non-null (P5-66)
+            if let rhsExpr = ast.arena.expr(rhsID),
+               isTerminatingExpr(rhsExpr) {
+                if let lhsExpr = ast.arena.expr(lhsID),
+                   case .nameRef(let elvisVarName, _) = lhsExpr,
+                   let elvisLocal = locals[elvisVarName],
+                   isStableLocalSymbol(elvisLocal.symbol, sema: sema) {
+                    let nonNullType = sema.types.makeNonNullable(elvisLocal.type)
+                    locals[elvisVarName] = (nonNullType, elvisLocal.symbol, elvisLocal.isMutable, elvisLocal.isInitialized)
+                }
+            }
         case .rangeTo:
             type = sema.types.anyType
         }
