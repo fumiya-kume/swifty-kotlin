@@ -144,20 +144,26 @@ extension TypeSystem {
     }
 
     public func lub(_ types: [TypeID]) -> TypeID {
+        let hasNullableNothing = types.contains { kind(of: $0) == .nothing(.nullable) }
         let filtered = types.filter { kind(of: $0) != .error && kind(of: $0) != .nothing(.nonNull) && kind(of: $0) != .nothing(.nullable) }
         guard let first = filtered.first else {
-            let hasNullableNothing = types.contains { kind(of: $0) == .nothing(.nullable) }
             let hasNothing = types.contains { kind(of: $0) == .nothing(.nonNull) || kind(of: $0) == .nothing(.nullable) }
             if hasNullableNothing { return nullableNothingType }
             return hasNothing ? nothingType : errorType
         }
+        let result: TypeID
         if filtered.dropFirst().allSatisfy({ $0 == first }) {
-            return first
+            result = first
+        } else if filtered.allSatisfy({ isSubtype($0, nullableAnyType) }) {
+            result = nullableAnyType
+        } else {
+            result = anyType
         }
-        if filtered.allSatisfy({ isSubtype($0, nullableAnyType) }) {
-            return nullableAnyType
+        // If any input was Nothing? (null literal), the result must be nullable
+        if hasNullableNothing {
+            return makeNullable(result)
         }
-        return anyType
+        return result
     }
 
     public func glb(_ types: [TypeID]) -> TypeID {
