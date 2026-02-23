@@ -40,7 +40,7 @@ COVERAGE_THRESHOLD=97 Scripts/check_coverage.sh  # CI enforces 97% line coverage
 
 ## Architecture
 
-The compiler follows a sequential multi-phase pipeline defined in `Sources/CompilerCore/Driver.swift`:
+The compiler follows a sequential multi-phase pipeline defined in `Sources/CompilerCore/Driver/Driver.swift`:
 
 ```
 LoadSources → Lex → Parse → BuildAST → SemaPasses → BuildKIR → Lowering → Codegen → Link
@@ -53,26 +53,28 @@ LoadSources → Lex → Parse → BuildAST → SemaPasses → BuildKIR → Lower
 - **Runtime** (`Sources/Runtime/`): GC, coroutine continuations, async tasks, boxing helpers
 - **CLLVM** (`Sources/CLLVM/`): System module bridging LLVM C API
 
-### Compiler Pipeline Details
+### CompilerCore Directory Layout
 
-| Phase | Key Files | Purpose |
-|-------|-----------|---------|
-| Lexer | `KotlinLexer*.swift`, `TokenModel.swift` | Tokenization |
-| Parser | `KotlinParser.swift`, `SyntaxArena.swift` | CST construction |
-| AST | `BuildASTPhase+*.swift`, `ASTModels.swift` | AST from CST |
-| Sema | `TypeCheckSemaPass*.swift`, `DataFlowSemaPass*.swift`, `OverloadResolver.swift`, `ConstraintSolver.swift` | Type checking, data flow, overload resolution |
-| KIR | `BuildKIRPass.swift`, `KIRModels.swift` | Typed intermediate representation |
-| Lowering | `LoweringPass+*.swift` | Desugaring (for, when, property, inline, coroutine, ABI, etc.) |
-| Codegen | `LLVMCAPIBackend.swift`, `CodegenPass.swift` | LLVM IR generation |
-| Link | `LinkPass.swift` | Final executable linking |
+Source files are grouped into subdirectories that mirror the compiler pipeline:
+
+| Directory | Key Files | Purpose |
+|-----------|-----------|---------|
+| `Lexer/` | `KotlinLexer*.swift`, `TokenModel.swift`, `TokenStream.swift` | Tokenization |
+| `Parser/` | `KotlinParser*.swift`, `SyntaxArena.swift` | CST construction |
+| `AST/` | `BuildASTPhase+*.swift`, `AST*Models.swift`, `ASTArena.swift` | AST from CST |
+| `Sema/` | `TypeCheckSemaPass*.swift`, `DataFlowSemaPass*.swift`, `OverloadResolver.swift`, `ConstraintSolver.swift`, `TypeSystem*.swift`, `TypeModels.swift` | Type checking, data flow, overload resolution |
+| `KIR/` | `BuildKIRPass*.swift`, `KIRModels.swift` | Typed intermediate representation |
+| `Lowering/` | `LoweringPhase.swift`, `*LoweringPass.swift`, `*SynthesisPass.swift` | Desugaring (for, when, property, inline, coroutine, ABI, etc.) |
+| `Codegen/` | `LLVMCAPIBackend.swift`, `LLVMBackend*.swift`, `CodegenPass.swift`, `NativeEmitter*.swift`, `LinkPass.swift`, `NameMangler.swift` | LLVM IR generation & linking |
+| `Driver/` | `Driver.swift`, `CompilationContext.swift`, `Diagnostics.swift`, `Phases.swift`, `FrontendPhases.swift`, `SourceManager.swift`, `SourceLocation.swift`, `CommandRunner.swift` | Pipeline orchestration & cross-cutting infrastructure |
 
 ### Cross-cutting Infrastructure
 
-- **Diagnostics** (`Diagnostics.swift`): Error/warning reporting with `KSWIFTK-*` codes and source ranges
-- **SourceManager** (`SourceManager.swift`): Source file management, line/column tracking
-- **StringInterner** (in `CompilationContext.swift`): All identifiers/names use interned integer IDs
-- **TypeSystem** (`TypeSystem.swift`): Nullability, generics with variance, type inference
-- **NameMangler** (`NameMangler.swift`): ABI-stable mangled names including type signatures
+- **Diagnostics** (`Driver/Diagnostics.swift`): Error/warning reporting with `KSWIFTK-*` codes and source ranges
+- **SourceManager** (`Driver/SourceManager.swift`): Source file management, line/column tracking
+- **StringInterner** (in `Driver/CompilationContext.swift`): All identifiers/names use interned integer IDs
+- **TypeSystem** (`Sema/TypeSystem.swift`): Nullability, generics with variance, type inference
+- **NameMangler** (`Codegen/NameMangler.swift`): ABI-stable mangled names including type signatures
 
 ### Design Principles
 
@@ -84,9 +86,23 @@ LoadSources → Lex → Parse → BuildAST → SemaPasses → BuildKIR → Lower
 ## Test Structure
 
 - **XCTest** framework, test files in `Tests/CompilerCoreTests/` and `Tests/RuntimeTests/`
+- Test files are grouped into subdirectories mirroring the source layout:
+
+| Directory | Key Test Files | Covers |
+|-----------|---------------|--------|
+| `Lexer/` | `TokenModelTests`, `TokenStreamTests`, `LexerParserCoverageTests` | Tokenization |
+| `Parser/` | `SyntaxArenaTests` | CST construction |
+| `AST/` | `ASTModelsTests`, `BuildASTCoverageTests`, `BlockExpressionTests` | AST building |
+| `Sema/` | `ConstraintSolverTests`, `OverloadResolverTests`, `DataFlowAnalyzerTests`, `TypeSystemTests`, `SymbolTableTests`, etc. | Semantic analysis |
+| `KIR/` | `BuildKIRCoverageTests`, `KIRModelsCoverageTests`, `SuperCallAndQualifiedThisTests` | KIR construction |
+| `Lowering/` | `LoweringPassCoverageTests`, `VirtualDispatchTests` | Desugaring passes |
+| `Codegen/` | `CodegenAndBackendCoverageTests`, `LinkPhaseCoverageTests`, `NameManglerTests` | Code generation & linking |
+| `Driver/` | `DriverTests`, `DiagnosticEngineTests`, `SourceLocationTests`, `SourceManagerTests` | Driver & infrastructure |
+| `Integration/` | `SmokeTests`, `CompilerCoreTests`, `GoldenHarnessTests`, `DeepPhaseCoverageTests`, `TestSupport` | End-to-end & cross-cutting |
+
 - **Golden tests**: `.kt` input files in `Tests/CompilerCoreTests/GoldenCases/{Lexer,Parser,Sema}/`
 - **kotlinc regression tests**: Kotlin files in `Scripts/diff_cases/` compared against official `kotlinc` output
-- Test helper utilities are in `TestSupport.swift`; the driver exposes `runForTesting()` for diagnostic inspection
+- Test helper utilities are in `Integration/TestSupport.swift`; the driver exposes `runForTesting()` for diagnostic inspection
 
 ## Coding Conventions
 

@@ -146,7 +146,8 @@ final class GoldenHarnessTests: XCTestCase {
 
     private var goldenRootURL: URL {
         URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
+            .deletingLastPathComponent() // Integration/
+            .deletingLastPathComponent() // CompilerCoreTests/
             .appendingPathComponent("GoldenCases", isDirectory: true)
     }
 
