@@ -477,6 +477,7 @@ extension LLVMBackend {
             "  if (!ch) return 0;",
             "  ch->cap = capacity > 0 ? capacity : 1;",
             "  ch->buf = (intptr_t*)calloc((size_t)ch->cap, sizeof(intptr_t));",
+            "  if (!ch->buf) { free(ch); return 0; }",
             "  ch->head = 0; ch->tail = 0; ch->closed = 0;",
             "  return (intptr_t)ch;",
             "}",

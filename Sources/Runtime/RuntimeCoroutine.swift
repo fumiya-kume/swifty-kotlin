@@ -380,6 +380,10 @@ internal final class RuntimeChannelHandle {
 
     func send(_ value: Int) {
         lock.lock()
+        if closed {
+            lock.unlock()
+            return
+        }
         buffer.append(value)
         lock.unlock()
         receiveSemaphore.signal()
