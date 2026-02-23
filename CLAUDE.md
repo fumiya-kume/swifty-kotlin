@@ -86,9 +86,23 @@ Source files are grouped into subdirectories that mirror the compiler pipeline:
 ## Test Structure
 
 - **XCTest** framework, test files in `Tests/CompilerCoreTests/` and `Tests/RuntimeTests/`
+- Test files are grouped into subdirectories mirroring the source layout:
+
+| Directory | Key Test Files | Covers |
+|-----------|---------------|--------|
+| `Lexer/` | `TokenModelTests`, `TokenStreamTests`, `LexerParserCoverageTests` | Tokenization |
+| `Parser/` | `SyntaxArenaTests` | CST construction |
+| `AST/` | `ASTModelsTests`, `BuildASTCoverageTests`, `BlockExpressionTests` | AST building |
+| `Sema/` | `ConstraintSolverTests`, `OverloadResolverTests`, `DataFlowAnalyzerTests`, `TypeSystemTests`, `SymbolTableTests`, etc. | Semantic analysis |
+| `KIR/` | `BuildKIRCoverageTests`, `KIRModelsCoverageTests`, `SuperCallAndQualifiedThisTests` | KIR construction |
+| `Lowering/` | `LoweringPassCoverageTests`, `VirtualDispatchTests` | Desugaring passes |
+| `Codegen/` | `CodegenAndBackendCoverageTests`, `LinkPhaseCoverageTests`, `NameManglerTests` | Code generation & linking |
+| `Driver/` | `DriverTests`, `DiagnosticEngineTests`, `SourceLocationTests`, `SourceManagerTests` | Driver & infrastructure |
+| `Integration/` | `SmokeTests`, `CompilerCoreTests`, `GoldenHarnessTests`, `DeepPhaseCoverageTests`, `TestSupport` | End-to-end & cross-cutting |
+
 - **Golden tests**: `.kt` input files in `Tests/CompilerCoreTests/GoldenCases/{Lexer,Parser,Sema}/`
 - **kotlinc regression tests**: Kotlin files in `Scripts/diff_cases/` compared against official `kotlinc` output
-- Test helper utilities are in `TestSupport.swift`; the driver exposes `runForTesting()` for diagnostic inspection
+- Test helper utilities are in `Integration/TestSupport.swift`; the driver exposes `runForTesting()` for diagnostic inspection
 
 ## Coding Conventions
 
