@@ -51,9 +51,10 @@ public struct FileFingerprint: Equatable, Codable {
 
     private static func sha256Hex(_ data: Data) -> String {
         var hash = [UInt8](repeating: 0, count: 32)
-        data.withUnsafeBytes { buffer in
-            guard let ptr = buffer.baseAddress else { return }
-            sha256(ptr, data.count, &hash)
+        let bytes: [UInt8] = Array(data)
+        bytes.withUnsafeBufferPointer { buffer in
+            let ptr = buffer.baseAddress ?? UnsafePointer<UInt8>(bitPattern: 1)!
+            sha256(UnsafeRawPointer(ptr), data.count, &hash)
         }
         return hash.map { String(format: "%02x", $0) }.joined()
     }
