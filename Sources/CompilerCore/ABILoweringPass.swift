@@ -135,8 +135,12 @@ final class ABILoweringPass: LoweringPass {
                         }
                         if let vcSignature {
                             let parameterTypes = vcSignature.parameterTypes
+                            let varargFlags = vcSignature.valueParameterIsVararg
                             for argIndex in vcArguments.indices {
                                 guard argIndex < parameterTypes.count else {
+                                    continue
+                                }
+                                if argIndex < varargFlags.count && varargFlags[argIndex] {
                                     continue
                                 }
                                 let paramType = parameterTypes[argIndex]
