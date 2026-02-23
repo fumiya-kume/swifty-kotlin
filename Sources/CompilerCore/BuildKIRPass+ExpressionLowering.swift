@@ -390,6 +390,9 @@ extension BuildKIRPhase {
                         for argExpr in outerCallableInfo.captureArguments {
                             if let bodyArgExpr = outerExprToBodyExpr[argExpr] {
                                 remappedArgs.append(bodyArgExpr)
+                            } else if case .symbolRef(let argSym) = arena.expr(argExpr),
+                                      let bodyArgExpr = localValuesBySymbol[argSym] {
+                                remappedArgs.append(bodyArgExpr)
                             } else {
                                 assertionFailure("BuildKIRPhase: failed to remap capture argument for local function body")
                                 mappingFailed = true
