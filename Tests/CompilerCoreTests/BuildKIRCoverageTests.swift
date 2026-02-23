@@ -2083,6 +2083,28 @@ final class BuildKIRCoverageTests: XCTestCase {
         }
     }
 
+    func testNestedLocalFunctionCaptureFromParentScope() throws {
+        let source = """
+        fun outer(): Int {
+            fun middle(): Int {
+                val x = 5
+                fun inner(): Int = x + 1
+                return inner()
+            }
+            return middle()
+        }
+        fun main() = outer()
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Nested local function capture should be handled: \(ctx.diagnostics.diagnostics.map(\.message))")
+            let module = try XCTUnwrap(ctx.kir)
+            // outer, middle, inner, main => at least 4 functions with capture analysis performed correctly
+            XCTAssertGreaterThanOrEqual(module.functionCount, 4)
+        }
+    }
+
     func testLocalFunctionScopeDoesNotLeakBetweenTopLevelFunctions() throws {
         let source = """
         fun first(): Int {
