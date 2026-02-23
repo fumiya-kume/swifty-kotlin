@@ -380,20 +380,20 @@ internal final class RuntimeChannelHandle {
         self.capacity = max(0, capacity)
     }
 
-    func send(_ value: Int) {
+    func send(_ value: Int) -> Int {
         lock.lock()
         if closed {
             lock.unlock()
-            return
+            return 0
         }
         // For buffered channels, drop when full; for rendezvous, allow exactly one item
         if capacity > 0 && buffer.count >= capacity {
             lock.unlock()
-            return
+            return 0
         }
         if capacity == 0 && !buffer.isEmpty {
             lock.unlock()
-            return
+            return 0
         }
         buffer.append(value)
         if capacity == 0 {
@@ -407,6 +407,7 @@ internal final class RuntimeChannelHandle {
             waitingSenders -= 1
             lock.unlock()
         }
+        return value
     }
 
     func receive() -> Int {
@@ -465,8 +466,7 @@ public func kk_channel_send(_ handle: Int, _ value: Int, _ continuation: Int) ->
         return 0
     }
     let channel = Unmanaged<RuntimeChannelHandle>.fromOpaque(ptr).takeUnretainedValue()
-    channel.send(value)
-    return value
+    return channel.send(value)
 }
 
 @_cdecl("kk_channel_receive")
