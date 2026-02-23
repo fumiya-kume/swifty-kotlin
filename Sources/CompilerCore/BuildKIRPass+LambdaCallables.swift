@@ -469,7 +469,7 @@ extension BuildKIRPhase {
         return classType.classSymbol
     }
 
-    func computeCaptureSymbolsForLambda(
+    private func computeCaptureSymbolsForLambda(
         lambdaExprID: ExprID,
         lambdaParamCount: Int,
         lambdaBodyExprID: ExprID,
@@ -507,7 +507,7 @@ extension BuildKIRPhase {
         )
     }
 
-    func lexicalCaptureSymbolsForLambda(
+    private func lexicalCaptureSymbolsForLambda(
         lambdaExprID: ExprID,
         lambdaParamCount: Int,
         lambdaBodyExprID: ExprID,
@@ -545,7 +545,7 @@ extension BuildKIRPhase {
         return captures
     }
 
-    func canCaptureSymbolForLambda(
+    private func canCaptureSymbolForLambda(
         _ symbol: SymbolID,
         lambdaExprID: ExprID,
         lambdaParamCount: Int,
@@ -593,7 +593,7 @@ extension BuildKIRPhase {
         return symbolExpr
     }
 
-    func uniqueSymbolsPreservingOrder(_ symbols: [SymbolID]) -> [SymbolID] {
+    private func uniqueSymbolsPreservingOrder(_ symbols: [SymbolID]) -> [SymbolID] {
         var seen: Set<SymbolID> = []
         var ordered: [SymbolID] = []
         ordered.reserveCapacity(symbols.count)
