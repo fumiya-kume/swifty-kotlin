@@ -2105,6 +2105,26 @@ final class BuildKIRCoverageTests: XCTestCase {
         }
     }
 
+    func testLocalFunctionCapturesMultipleOuterVals() throws {
+        let source = """
+        fun compute(): Int {
+            val a = 10
+            val b = 20
+            fun sum(): Int = a + b
+            return sum()
+        }
+        fun main() = compute()
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Local function capturing multiple outer vals should compile: \(ctx.diagnostics.diagnostics.map(\.message))")
+            let module = try XCTUnwrap(ctx.kir)
+            // compute, sum, main => at least 3 functions
+            XCTAssertGreaterThanOrEqual(module.functionCount, 3)
+        }
+    }
+
     func testLocalFunctionScopeDoesNotLeakBetweenTopLevelFunctions() throws {
         let source = """
         fun first(): Int {

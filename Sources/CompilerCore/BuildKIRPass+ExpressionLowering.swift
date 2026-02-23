@@ -243,7 +243,7 @@ extension BuildKIRPhase {
                     )
                 }
                 let localFunParamSymbols = Set(localFunValueParamList.map { $0.symbol })
-                let captureSymbols = referencedSymbols.filter { sym in
+                var captureSymbols = referencedSymbols.filter { sym in
                     if localFunParamSymbols.contains(sym) { return false }
                     if sym == symbol { return false }
                     if localValuesBySymbol[sym] != nil { return true }
@@ -251,6 +251,20 @@ extension BuildKIRPhase {
                        currentImplicitReceiverExprID != nil { return true }
                     guard let semanticSymbol = sema.symbols.symbol(sym) else { return false }
                     return semanticSymbol.kind == .valueParameter
+                }
+
+                // Implicit receiver (this/super) is not collected by
+                // collectBoundIdentifierSymbols, so check separately —
+                // mirrors the post-filter in lexicalCaptureSymbolsForLambda.
+                if let receiverSymbol = currentImplicitReceiverSymbol,
+                   currentImplicitReceiverExprID != nil,
+                   !captureSymbols.contains(receiverSymbol) {
+                    let needsReceiver = captureBodyExprIDs.contains { bodyExprID in
+                        containsImplicitReceiverReference(in: bodyExprID, ast: ast)
+                    }
+                    if needsReceiver {
+                        captureSymbols.append(receiverSymbol)
+                    }
                 }
 
                 var captureBindings: [(capturedSymbol: SymbolID, param: KIRParameter, valueExpr: KIRExprID)] = []
