@@ -44,8 +44,13 @@ public final class CompilationContext: @unchecked Sendable {
     public var generatedLLVMIRPath: String? = nil
 
     /// Per-file intermediate representations keyed by FileID.
-    /// Populated by frontend phases when file-parallel mode is active.
+    /// Populated unconditionally by LexPhase, ParsePhase, and BuildASTPhase
+    /// to track per-file tokens, CST, and AST results.
     public var fileIRs: [FileID: FileIR] = [:]
+
+    /// Path to a pre-compiled runtime stub `.o` that should be linked alongside
+    /// the user module object when producing an executable.
+    public var runtimeStubObjectPath: String? = nil
 
     /// Incremental compilation cache (non-nil when incremental mode is active).
     public var incrementalCache: IncrementalCompilationCache? = nil
@@ -53,6 +58,10 @@ public final class CompilationContext: @unchecked Sendable {
     /// Set of file paths that need recompilation in incremental mode.
     /// `nil` means full build (all files).
     public var incrementalRecompileSet: Set<String>? = nil
+
+    /// Phase timer for recording per-phase wall-clock durations.
+    /// Non-nil when the `time-phases` frontend flag is active.
+    public var phaseTimer: PhaseTimer? = nil
 
     public init(
         options: CompilerOptions,

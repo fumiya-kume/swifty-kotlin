@@ -30,6 +30,13 @@ public final class ASTArena: @unchecked Sendable {
         return decls
     }
 
+    /// The number of declarations in the arena (thread-safe).
+    public var declCount: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return decls.count
+    }
+
     public func appendExpr(_ expr: Expr) -> ExprID {
         lock.lock()
         defer { lock.unlock() }

@@ -43,6 +43,7 @@ public final class CodegenPhase: CompilerPhase {
                 let path = outputPath(base: ctx.options.outputPath, defaultExtension: "o")
                 try backend.emitObject(module: kir, runtime: runtime, outputObjectPath: path, interner: ctx.interner)
                 ctx.generatedObjectPath = path
+                ctx.runtimeStubObjectPath = runtimeStubObjectPath(backend: backend, ctx: ctx)
 
             case .library:
                 try emitLibrary(module: kir, backend: backend, runtime: runtime, ctx: ctx)
@@ -50,6 +51,28 @@ public final class CodegenPhase: CompilerPhase {
         } catch {
             throw CompilerPipelineError.outputUnavailable
         }
+    }
+
+    /// Returns the path to a pre-compiled runtime stub `.o` that provides
+    /// weak definitions for all runtime helper functions.  Both the synthetic-C
+    /// backend (`LLVMBackend`) and the native LLVM-C-API backend
+    /// (`LLVMCAPIBackend`) emit code that references these helpers as external
+    /// symbols, so the stub must be linked regardless of which backend produced
+    /// the user-code object file.
+    private func runtimeStubObjectPath(backend: any CodegenBackend, ctx: CompilationContext) -> String? {
+        if let llvmBackend = backend as? LLVMBackend {
+            return llvmBackend.runtimeStubPath()
+        }
+        // For non-synthetic backends (e.g. LLVMCAPIBackend) we still need the
+        // runtime stub at link time.  Create a lightweight LLVMBackend solely
+        // to compile / retrieve the cached stub object.
+        let stubProvider = LLVMBackend(
+            target: ctx.options.target,
+            optLevel: ctx.options.optLevel,
+            debugInfo: ctx.options.debugInfo,
+            diagnostics: ctx.diagnostics
+        )
+        return stubProvider.runtimeStubPath()
     }
 
     private func outputPath(base: String, defaultExtension: String) -> String {
@@ -148,6 +171,9 @@ public final class CodegenPhase: CompilerPhase {
         }
 
         guard let requestedBackend else {
+            if LLVMCAPIBindings.load()?.smokeTestContextLifecycle() == true {
+                return BackendSelection(kind: .llvmCAPI, isStrictMode: isStrictMode)
+            }
             return BackendSelection(kind: .syntheticC, isStrictMode: false)
         }
 

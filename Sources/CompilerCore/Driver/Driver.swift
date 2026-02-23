@@ -55,6 +55,12 @@ public final class CompilerDriver {
             interner: interner
         )
 
+        // Set up phase timer when time-phases flag is present.
+        let timePhasesEnabled = options.frontendFlags.contains("time-phases")
+        if timePhasesEnabled {
+            ctx.phaseTimer = PhaseTimer()
+        }
+
         // Set up incremental compilation if enabled.
         let incrementalEnabled = isIncrementalEnabled(options: options)
         if incrementalEnabled {
@@ -78,6 +84,10 @@ public final class CompilerDriver {
 
         do {
             for phase in phases {
+                let phaseName = type(of: phase).name
+                ctx.phaseTimer?.beginPhase(phaseName)
+                defer { ctx.phaseTimer?.endPhase() }
+
                 // After loading sources, compute fingerprints and determine
                 // which files need recompilation.
                 if phase is LoadSourcesPhase {
@@ -112,6 +122,11 @@ public final class CompilerDriver {
 
         if printDiagnostics {
             ctx.diagnostics.printDiagnostics(from: sourceManager)
+        }
+
+        // Print phase timing summary when requested.
+        if timePhasesEnabled, let timer = ctx.phaseTimer {
+            timer.printSummary()
         }
 
         return (ctx.diagnostics.hasError ? 1 : 0, ctx.diagnostics.diagnostics)

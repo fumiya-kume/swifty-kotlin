@@ -3,6 +3,20 @@ import Foundation
 final class LambdaClosureConversionPass: LoweringPass {
     static let name = "LambdaClosureConversion"
 
+    func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool {
+        let marker = ctx.interner.intern("<lambda>")
+        for decl in module.arena.declarations {
+            guard case .function(let function) = decl else { continue }
+            for instruction in function.body {
+                if case .call(_, let callee, _, _, _, _, _) = instruction,
+                   callee == marker {
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
     func run(module: KIRModule, ctx: KIRContext) throws {
         let markerCallee = ctx.interner.intern("<lambda>")
         let loweredCallee = ctx.interner.intern("kk_lambda_invoke")
