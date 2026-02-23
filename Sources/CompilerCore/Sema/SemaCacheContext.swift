@@ -23,8 +23,10 @@ public final class SemaCacheContext {
     public func lookupInScope(_ name: InternedString, scope: Scope) -> [SymbolID] {
         let scopeKey = ObjectIdentifier(scope)
         if let nameCache = scopeCache[scopeKey], let cached = nameCache[name] {
+            recordScopeHit()
             return cached
         }
+        recordScopeMiss()
         let result = scope.lookup(name)
         scopeCache[scopeKey, default: [:]][name] = result
         return result
@@ -82,7 +84,12 @@ public final class SemaCacheContext {
     }
 
     /// Stores a resolution result in the cache.
+    /// Results that contain a diagnostic are **not** cached because the diagnostic
+    /// embeds source ranges from the specific call site.  Caching them would
+    /// cause later call sites with the same key to receive diagnostics pointing
+    /// at the wrong source location.
     func cacheCallResolution(_ result: ResolvedCall, for key: CallResolutionKey) {
+        guard result.diagnostic == nil else { return }
         callResolutionCache[key] = result
     }
 
