@@ -49,6 +49,12 @@ extension DataFlowSemaPassPhase {
                 if record.isInline && record.kind == .function {
                     flags.insert(.inlineFunction)
                 }
+                if record.isDataClass {
+                    flags.insert(.dataType)
+                }
+                if record.isSealedClass {
+                    flags.insert(.sealedType)
+                }
                 let symbol = symbols.define(
                     kind: record.kind,
                     name: name,
@@ -72,6 +78,10 @@ extension DataFlowSemaPassPhase {
 
             if let linkName = record.externalLinkName, !linkName.isEmpty {
                 symbols.setExternalLinkName(linkName, for: symbol)
+            }
+
+            if !record.annotations.isEmpty {
+                symbols.setAnnotations(record.annotations, for: symbol)
             }
 
             if record.kind == .function {
@@ -238,6 +248,9 @@ extension DataFlowSemaPassPhase {
         let fieldOffsets: [ImportedFieldOffsetEntry]
         let vtableSlots: [ImportedVTableSlotEntry]
         let itableSlots: [ImportedITableSlotEntry]
+        let isDataClass: Bool
+        let isSealedClass: Bool
+        let annotations: [MetadataAnnotationRecord]
     }
 
     struct ImportedLibraryBinding {
