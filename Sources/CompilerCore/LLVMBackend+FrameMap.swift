@@ -76,6 +76,17 @@ extension LLVMBackend {
                 if let thrownResult {
                     ids.insert(thrownResult)
                 }
+            case .virtualCall(_, _, let receiver, let arguments, let result, _, let thrownResult, _):
+                ids.insert(receiver)
+                for arg in arguments {
+                    ids.insert(arg)
+                }
+                if let result {
+                    ids.insert(result)
+                }
+                if let thrownResult {
+                    ids.insert(thrownResult)
+                }
             case .jumpIfNotNull(let value, _):
                 ids.insert(value)
             case .copy(let from, let to):
