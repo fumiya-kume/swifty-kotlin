@@ -175,7 +175,12 @@ extension TypeCheckSemaPassPhase {
         let sema = ctx.sema
         let interner = ctx.interner
         var branchTypes: [TypeID] = []
-        branchTypes.append(inferExpr(body, ctx: ctx, locals: &locals, expectedType: expectedType))
+        // Use a separate copy for the try body so that initialization state
+        // from inside the try block doesn't leak into catch clauses. The try
+        // body may throw before reaching an initialization, so catch clauses
+        // must see the pre-try state of locals.
+        var tryBodyLocals = locals
+        branchTypes.append(inferExpr(body, ctx: ctx, locals: &tryBodyLocals, expectedType: expectedType))
         for (index, clause) in catchClauses.enumerated() {
             var catchLocals = locals
             let catchParamType = resolveCatchClauseParameterType(

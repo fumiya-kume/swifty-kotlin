@@ -1269,6 +1269,26 @@ final class DataFlowAndSemaCoverageTests: XCTestCase {
         }
     }
 
+    // MARK: - Try-catch: init inside try body does NOT suppress use-before-init in catch
+
+    func testTryCatchDoesNotLeakInitFromTryBody() throws {
+        let source = """
+        fun main() {
+            var x: Int
+            try {
+                x = 5
+            } catch (e: Exception) {
+                println(x)
+            }
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertHasDiagnostic("KSWIFTK-SEMA-0031", in: ctx)
+        }
+    }
+
     private func firstExprID(
         in ast: ASTModule,
         where predicate: (ExprID, Expr) -> Bool
