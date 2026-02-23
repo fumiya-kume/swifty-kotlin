@@ -265,8 +265,9 @@ final class RuntimeStubImplementationTests: XCTestCase {
     // MARK: - Synthetic C Backend Integration Tests
 
     func testSyntheticCBackendEmitsFrameMapRegistrationInFunctionBody() throws {
-        guard FileManager.default.fileExists(atPath: "/usr/bin/clang") else {
-            throw XCTSkip("clang is not available at /usr/bin/clang in this environment.")
+        let clangPath = CommandRunner.resolveExecutable("clang", fallback: "/usr/bin/clang")
+        guard FileManager.default.fileExists(atPath: clangPath) else {
+            throw XCTSkip("clang is not available in this environment.")
         }
         let interner = StringInterner()
         let module = makeSimpleModule(interner: interner)
@@ -290,8 +291,9 @@ final class RuntimeStubImplementationTests: XCTestCase {
     }
 
     func testSyntheticCBackendCompilesWithRuntimeStubs() throws {
-        guard FileManager.default.fileExists(atPath: "/usr/bin/clang") else {
-            throw XCTSkip("clang is not available at /usr/bin/clang in this environment.")
+        let clangPath = CommandRunner.resolveExecutable("clang", fallback: "/usr/bin/clang")
+        guard FileManager.default.fileExists(atPath: clangPath) else {
+            throw XCTSkip("clang is not available in this environment.")
         }
         let interner = StringInterner()
         let module = makeSimpleModule(interner: interner)
@@ -311,8 +313,9 @@ final class RuntimeStubImplementationTests: XCTestCase {
     }
 
     func testSyntheticCBackendEmitsFrameMapDescriptorSymbols() throws {
-        guard FileManager.default.fileExists(atPath: "/usr/bin/clang") else {
-            throw XCTSkip("clang is not available at /usr/bin/clang in this environment.")
+        let clangPath = CommandRunner.resolveExecutable("clang", fallback: "/usr/bin/clang")
+        guard FileManager.default.fileExists(atPath: clangPath) else {
+            throw XCTSkip("clang is not available in this environment.")
         }
         let interner = StringInterner()
         let module = makeSimpleModule(interner: interner)

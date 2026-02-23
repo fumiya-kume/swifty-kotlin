@@ -72,7 +72,8 @@ public final class LinkPhase: CompilerPhase {
             for library in ctx.options.linkLibraries {
                 args.append("-l\(library)")
             }
-            _ = try CommandRunner.run(executable: "/usr/bin/clang", arguments: args)
+            let clangPath = CommandRunner.resolveExecutable("clang", fallback: "/usr/bin/clang")
+            _ = try CommandRunner.run(executable: clangPath, arguments: args)
         } catch let error as CommandRunnerError {
             let message: String
             switch error {

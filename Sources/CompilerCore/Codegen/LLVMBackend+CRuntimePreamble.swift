@@ -3,6 +3,7 @@ import Foundation
 extension LLVMBackend {
     func cRuntimePreamble() -> [String] {
         [
+            "#define _DEFAULT_SOURCE",
             "#include <stdint.h>",
             "#include <stddef.h>",
             "#include <stdlib.h>",

@@ -686,8 +686,44 @@ final class CodegenAndBackendCoverageTests: XCTestCase {
                 first = stripPathDependentLines(first)
                 second = stripPathDependentLines(second)
             }
+            if emit == .object {
+                first = stripPathDependentBytes(first, outputPath: artifactBase1)
+                second = stripPathDependentBytes(second, outputPath: artifactBase2)
+            }
             XCTAssertEqual(first, second)
         }
+    }
+
+    private func stripPathDependentBytes(_ data: Data, outputPath: String) -> Data {
+        // The synthetic C backend writes the generated C source to a temp path derived from
+        // the output path.  clang then embeds that source filename inside the object file
+        // (e.g. in the ELF .strtab or Mach-O STABS).  When we compile twice with different
+        // output paths the embedded filenames differ, making the raw bytes non-equal even
+        // though the code is identical.  Replacing every occurrence of the path-dependent
+        // prefix with a fixed placeholder normalises the two objects so they can be compared.
+        let prefix = "kswiftk_codegen_"
+        guard let prefixData = prefix.data(using: .utf8) else { return data }
+        var result = data
+        // Find all occurrences of the prefix and zero-out the hex hash that follows until '.c'
+        var searchStart = result.startIndex
+        while let range = result.range(of: prefixData, in: searchStart..<result.endIndex) {
+            let hashStart = range.upperBound
+            // Find the end of the hash (look for '.c' or null byte)
+            var hashEnd = hashStart
+            while hashEnd < result.endIndex {
+                let byte = result[hashEnd]
+                if byte == 0x2E || byte == 0x00 { // '.' or null
+                    break
+                }
+                hashEnd = result.index(after: hashEnd)
+            }
+            // Replace hash bytes with zeros
+            for i in hashStart..<hashEnd {
+                result[i] = 0x30 // '0'
+            }
+            searchStart = hashEnd
+        }
+        return result
     }
 
     private func stripPathDependentLines(_ data: Data) -> Data {
