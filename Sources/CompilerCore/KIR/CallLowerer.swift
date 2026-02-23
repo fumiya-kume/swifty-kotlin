@@ -771,10 +771,10 @@ final class CallLowerer {
 
     // MARK: - Array Operations
 
-    func lowerArrayAccessExpr(
+    func lowerIndexedAccessExpr(
         _ exprID: ExprID,
-        arrayExpr: ExprID,
-        indexExpr: ExprID,
+        receiverExpr: ExprID,
+        indices: [ExprID],
         ast: ASTModule,
         sema: SemaModule,
         arena: KIRArena,
@@ -783,8 +783,8 @@ final class CallLowerer {
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
         let boundType = sema.bindings.exprTypes[exprID]
-        let arrayID = driver.lowerExpr(
-            arrayExpr,
+        let receiverID = driver.lowerExpr(
+            receiverExpr,
             ast: ast,
             sema: sema,
             arena: arena,
@@ -792,20 +792,24 @@ final class CallLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
-        let indexID = driver.lowerExpr(
-            indexExpr,
-            ast: ast,
-            sema: sema,
-            arena: arena,
-            interner: interner,
-            propertyConstantInitializers: propertyConstantInitializers,
-            instructions: &instructions
-        )
+        var indexIDs: [KIRExprID] = []
+        for indexExpr in indices {
+            let indexID = driver.lowerExpr(
+                indexExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            indexIDs.append(indexID)
+        }
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
         instructions.append(.call(
             symbol: nil,
             callee: interner.intern("kk_array_get"),
-            arguments: [arrayID, indexID],
+            arguments: [receiverID] + indexIDs,
             result: result,
             canThrow: false,
             thrownResult: nil
@@ -813,10 +817,10 @@ final class CallLowerer {
         return result
     }
 
-    func lowerArrayAssignExpr(
+    func lowerIndexedAssignExpr(
         _ exprID: ExprID,
-        arrayExpr: ExprID,
-        indexExpr: ExprID,
+        receiverExpr: ExprID,
+        indices: [ExprID],
         valueExpr: ExprID,
         ast: ASTModule,
         sema: SemaModule,
@@ -825,8 +829,8 @@ final class CallLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
-        let arrayID = driver.lowerExpr(
-            arrayExpr,
+        let receiverID = driver.lowerExpr(
+            receiverExpr,
             ast: ast,
             sema: sema,
             arena: arena,
@@ -834,15 +838,19 @@ final class CallLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
-        let indexID = driver.lowerExpr(
-            indexExpr,
-            ast: ast,
-            sema: sema,
-            arena: arena,
-            interner: interner,
-            propertyConstantInitializers: propertyConstantInitializers,
-            instructions: &instructions
-        )
+        var indexIDs: [KIRExprID] = []
+        for indexExpr in indices {
+            let indexID = driver.lowerExpr(
+                indexExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            indexIDs.append(indexID)
+        }
         let valueID = driver.lowerExpr(
             valueExpr,
             ast: ast,
@@ -855,7 +863,100 @@ final class CallLowerer {
         instructions.append(.call(
             symbol: nil,
             callee: interner.intern("kk_array_set"),
-            arguments: [arrayID, indexID, valueID],
+            arguments: [receiverID] + indexIDs + [valueID],
+            result: nil,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+        instructions.append(.constValue(result: unit, value: .unit))
+        return unit
+    }
+
+    func lowerIndexedCompoundAssignExpr(
+        _ exprID: ExprID,
+        receiverExpr: ExprID,
+        indices: [ExprID],
+        valueExpr: ExprID,
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        // Desugar: a[i] += v -> a.set(i, a.get(i).plus(v))
+        let receiverID = driver.lowerExpr(
+            receiverExpr,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+        var indexIDs: [KIRExprID] = []
+        for indexExpr in indices {
+            let indexID = driver.lowerExpr(
+                indexExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            indexIDs.append(indexID)
+        }
+        let valueID = driver.lowerExpr(
+            valueExpr,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+        // Step 1: get current value: a.get(i)
+        let getResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_array_get"),
+            arguments: [receiverID] + indexIDs,
+            result: getResult,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        // Step 2: apply binary op: current.plus(v)
+        let opResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+        // Determine the operator name from the AST
+        guard let expr = ast.arena.expr(exprID),
+              case .indexedCompoundAssign(let op, _, _, _, _) = expr else {
+            let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+            instructions.append(.constValue(result: unit, value: .unit))
+            return unit
+        }
+        let opName: String
+        switch op {
+        case .plusAssign: opName = "kk_op_plus"
+        case .minusAssign: opName = "kk_op_minus"
+        case .timesAssign: opName = "kk_op_times"
+        case .divAssign: opName = "kk_op_div"
+        case .modAssign: opName = "kk_op_rem"
+        }
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern(opName),
+            arguments: [getResult, valueID],
+            result: opResult,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        // Step 3: set: a.set(i, result)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_array_set"),
+            arguments: [receiverID] + indexIDs + [opResult],
             result: nil,
             canThrow: false,
             thrownResult: nil

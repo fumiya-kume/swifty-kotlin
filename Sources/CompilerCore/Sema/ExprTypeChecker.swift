@@ -111,11 +111,11 @@ final class ExprTypeChecker {
         case .localAssign(let name, let value, let range):
             return driver.localDeclChecker.inferLocalAssignExpr(id, name: name, value: value, range: range, ctx: ctx, locals: &locals)
 
-        case .arrayAccess(let arrayExpr, let indexExpr, let range):
-            return driver.localDeclChecker.inferArrayAccessExpr(id, arrayExpr: arrayExpr, indexExpr: indexExpr, range: range, ctx: ctx, locals: &locals)
+        case .indexedAccess(let receiverExpr, let indices, let range):
+            return driver.localDeclChecker.inferIndexedAccessExpr(id, receiverExpr: receiverExpr, indices: indices, range: range, ctx: ctx, locals: &locals)
 
-        case .arrayAssign(let arrayExpr, let indexExpr, let valueExpr, let range):
-            return driver.localDeclChecker.inferArrayAssignExpr(id, arrayExpr: arrayExpr, indexExpr: indexExpr, valueExpr: valueExpr, range: range, ctx: ctx, locals: &locals)
+        case .indexedAssign(let receiverExpr, let indices, let valueExpr, let range):
+            return driver.localDeclChecker.inferIndexedAssignExpr(id, receiverExpr: receiverExpr, indices: indices, valueExpr: valueExpr, range: range, ctx: ctx, locals: &locals)
 
         case .returnExpr(let value, _):
             let resolved: TypeID
@@ -208,6 +208,9 @@ final class ExprTypeChecker {
 
         case .compoundAssign(let op, let name, let valueExpr, let range):
             return inferCompoundAssignExpr(id, op: op, name: name, valueExpr: valueExpr, range: range, ctx: ctx, locals: &locals)
+
+        case .indexedCompoundAssign(let op, let receiverExpr, let indices, let valueExpr, let range):
+            return driver.localDeclChecker.inferIndexedCompoundAssignExpr(id, op: op, receiverExpr: receiverExpr, indices: indices, valueExpr: valueExpr, range: range, ctx: ctx, locals: &locals)
 
         case .whenExpr(let subjectID, let branches, let elseExpr, let range):
             return driver.controlFlowChecker.inferWhenExpr(id, subjectID: subjectID, branches: branches, elseExpr: elseExpr, range: range, ctx: ctx, locals: &locals, expectedType: expectedType)

@@ -65,9 +65,9 @@ struct CaptureAnalyzer {
             case .localAssign(_, let value, _):
                 visit(value)
 
-            case .arrayAssign(let array, let index, let value, _):
-                visit(array)
-                visit(index)
+            case .indexedAssign(let receiver, let indices, let value, _):
+                visit(receiver)
+                for idx in indices { visit(idx) }
                 visit(value)
 
             case .call(let callee, _, let args, _):
@@ -82,9 +82,9 @@ struct CaptureAnalyzer {
                     visit(arg.expr)
                 }
 
-            case .arrayAccess(let array, let index, _):
-                visit(array)
-                visit(index)
+            case .indexedAccess(let receiver, let indices, _):
+                visit(receiver)
+                for idx in indices { visit(idx) }
 
             case .binary(_, let lhs, let rhs, _):
                 visit(lhs)
@@ -144,6 +144,11 @@ struct CaptureAnalyzer {
                 }
 
             case .compoundAssign(_, _, let value, _):
+                visit(value)
+
+            case .indexedCompoundAssign(_, let receiver, let indices, let value, _):
+                visit(receiver)
+                for idx in indices { visit(idx) }
                 visit(value)
 
             case .throwExpr(let value, _):

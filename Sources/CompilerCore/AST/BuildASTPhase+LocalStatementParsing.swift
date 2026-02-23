@@ -180,8 +180,8 @@ extension BuildASTPhase {
             }
             return astArena.appendExpr(.localAssign(name: name, value: valueExpr, range: range))
 
-        case .arrayAccess(let array, let index, _):
-            return astArena.appendExpr(.arrayAssign(array: array, index: index, value: valueExpr, range: range))
+        case .indexedAccess(let receiver, let indices, _):
+            return astArena.appendExpr(.indexedAssign(receiver: receiver, indices: indices, value: valueExpr, range: range))
 
         default:
             return nil
@@ -229,7 +229,6 @@ extension BuildASTPhase {
         let lhsParser = ExpressionParser(tokens: lhsTokens[...], interner: interner, astArena: astArena)
         guard let lhsExpr = lhsParser.parse(),
               let lhs = astArena.expr(lhsExpr),
-              case .nameRef(let name, _) = lhs,
               let lhsRange = astArena.exprRange(lhsExpr) else {
             return nil
         }
@@ -239,6 +238,13 @@ extension BuildASTPhase {
 
         let end = astArena.exprRange(valueExpr)?.end ?? statementTokens.last?.range.end ?? lhsRange.end
         let range = SourceRange(start: lhsRange.start, end: end)
-        return astArena.appendExpr(.compoundAssign(op: op, name: name, value: valueExpr, range: range))
+        switch lhs {
+        case .nameRef(let name, _):
+            return astArena.appendExpr(.compoundAssign(op: op, name: name, value: valueExpr, range: range))
+        case .indexedAccess(let receiver, let indices, _):
+            return astArena.appendExpr(.indexedCompoundAssign(op: op, receiver: receiver, indices: indices, value: valueExpr, range: range))
+        default:
+            return nil
+        }
     }
 }

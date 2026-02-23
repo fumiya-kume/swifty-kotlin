@@ -109,10 +109,10 @@ final class LocalDeclTypeChecker {
         return sema.types.unitType
     }
 
-    func inferArrayAccessExpr(
+    func inferIndexedAccessExpr(
         _ id: ExprID,
-        arrayExpr: ExprID,
-        indexExpr: ExprID,
+        receiverExpr: ExprID,
+        indices: [ExprID],
         range: SourceRange,
         ctx: TypeInferenceContext,
         locals: inout LocalBindings
@@ -122,25 +122,64 @@ final class LocalDeclTypeChecker {
         let interner = ctx.interner
         let intType = sema.types.make(.primitive(.int, .nonNull))
 
-        let arrayType = driver.inferExpr(arrayExpr, ctx: ctx, locals: &locals, expectedType: nil)
-        let indexType = driver.inferExpr(indexExpr, ctx: ctx, locals: &locals, expectedType: intType)
-        driver.emitSubtypeConstraint(
-            left: indexType,
-            right: intType,
-            range: ast.arena.exprRange(indexExpr) ?? range,
-            solver: ConstraintSolver(),
-            sema: sema,
-            diagnostics: ctx.semaCtx.diagnostics
+        let receiverType = driver.inferExpr(receiverExpr, ctx: ctx, locals: &locals, expectedType: nil)
+
+        // Try to resolve operator fun get on the receiver type
+        let getName = interner.intern("get")
+        let getCandidates = driver.helpers.collectMemberFunctionCandidates(
+            named: getName,
+            receiverType: receiverType,
+            sema: sema
         )
-        let elementType = driver.helpers.arrayElementType(for: arrayType, sema: sema, interner: interner) ?? sema.types.anyType
+
+        // Infer all index expressions
+        var indexTypes: [TypeID] = []
+        for indexExpr in indices {
+            let indexType = driver.inferExpr(indexExpr, ctx: ctx, locals: &locals, expectedType: intType)
+            indexTypes.append(indexType)
+        }
+
+        if !getCandidates.isEmpty {
+            // Resolve via operator fun get
+            let callArgs = indexTypes.enumerated().map { (_, type) in CallArg(type: type) }
+            let resolved = ctx.resolver.resolveCall(
+                candidates: getCandidates,
+                call: CallExpr(
+                    range: range,
+                    calleeName: getName,
+                    args: callArgs
+                ),
+                expectedType: nil,
+                implicitReceiverType: receiverType,
+                ctx: ctx.semaCtx
+            )
+            if let chosen = resolved.chosenCallee,
+               let signature = sema.symbols.functionSignature(for: chosen) {
+                sema.bindings.bindExprType(id, type: signature.returnType)
+                return signature.returnType
+            }
+        }
+
+        // Fallback: built-in array access (single Int index)
+        for indexExpr in indices {
+            driver.emitSubtypeConstraint(
+                left: driver.inferExpr(indexExpr, ctx: ctx, locals: &locals, expectedType: intType),
+                right: intType,
+                range: ast.arena.exprRange(indexExpr) ?? range,
+                solver: ConstraintSolver(),
+                sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+        }
+        let elementType = driver.helpers.arrayElementType(for: receiverType, sema: sema, interner: interner) ?? sema.types.anyType
         sema.bindings.bindExprType(id, type: elementType)
         return elementType
     }
 
-    func inferArrayAssignExpr(
+    func inferIndexedAssignExpr(
         _ id: ExprID,
-        arrayExpr: ExprID,
-        indexExpr: ExprID,
+        receiverExpr: ExprID,
+        indices: [ExprID],
         valueExpr: ExprID,
         range: SourceRange,
         ctx: TypeInferenceContext,
@@ -151,18 +190,57 @@ final class LocalDeclTypeChecker {
         let interner = ctx.interner
         let intType = sema.types.make(.primitive(.int, .nonNull))
 
-        let arrayType = driver.inferExpr(arrayExpr, ctx: ctx, locals: &locals, expectedType: nil)
-        let indexType = driver.inferExpr(indexExpr, ctx: ctx, locals: &locals, expectedType: intType)
-        driver.emitSubtypeConstraint(
-            left: indexType,
-            right: intType,
-            range: ast.arena.exprRange(indexExpr) ?? range,
-            solver: ConstraintSolver(),
-            sema: sema,
-            diagnostics: ctx.semaCtx.diagnostics
+        let receiverType = driver.inferExpr(receiverExpr, ctx: ctx, locals: &locals, expectedType: nil)
+
+        // Try to resolve operator fun set on the receiver type
+        let setName = interner.intern("set")
+        let setCandidates = driver.helpers.collectMemberFunctionCandidates(
+            named: setName,
+            receiverType: receiverType,
+            sema: sema
         )
-        let elementExpectedType = driver.helpers.arrayElementType(for: arrayType, sema: sema, interner: interner)
-        let valueType = driver.inferExpr(valueExpr, ctx: ctx, locals: &locals, expectedType: elementExpectedType)
+
+        // Infer all index expressions
+        var indexTypes: [TypeID] = []
+        for indexExpr in indices {
+            let indexType = driver.inferExpr(indexExpr, ctx: ctx, locals: &locals, expectedType: intType)
+            indexTypes.append(indexType)
+        }
+
+        let valueType = driver.inferExpr(valueExpr, ctx: ctx, locals: &locals, expectedType: nil)
+
+        if !setCandidates.isEmpty {
+            // Resolve via operator fun set
+            var callArgTypes = indexTypes
+            callArgTypes.append(valueType)
+            let callArgs = callArgTypes.map { CallArg(type: $0) }
+            let _ = ctx.resolver.resolveCall(
+                candidates: setCandidates,
+                call: CallExpr(
+                    range: range,
+                    calleeName: setName,
+                    args: callArgs
+                ),
+                expectedType: nil,
+                implicitReceiverType: receiverType,
+                ctx: ctx.semaCtx
+            )
+            sema.bindings.bindExprType(id, type: sema.types.unitType)
+            return sema.types.unitType
+        }
+
+        // Fallback: built-in array assign (single Int index)
+        for indexExpr in indices {
+            driver.emitSubtypeConstraint(
+                left: driver.inferExpr(indexExpr, ctx: ctx, locals: &locals, expectedType: intType),
+                right: intType,
+                range: ast.arena.exprRange(indexExpr) ?? range,
+                solver: ConstraintSolver(),
+                sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+        }
+        let elementExpectedType = driver.helpers.arrayElementType(for: receiverType, sema: sema, interner: interner)
         if let elementExpectedType {
             driver.emitSubtypeConstraint(
                 left: valueType,
@@ -173,6 +251,55 @@ final class LocalDeclTypeChecker {
                 diagnostics: ctx.semaCtx.diagnostics
             )
         }
+        sema.bindings.bindExprType(id, type: sema.types.unitType)
+        return sema.types.unitType
+    }
+
+    func inferIndexedCompoundAssignExpr(
+        _ id: ExprID,
+        op: CompoundAssignOp,
+        receiverExpr: ExprID,
+        indices: [ExprID],
+        valueExpr: ExprID,
+        range: SourceRange,
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> TypeID {
+        let sema = ctx.sema
+        let interner = ctx.interner
+        let intType = sema.types.intType
+
+        let receiverType = driver.inferExpr(receiverExpr, ctx: ctx, locals: &locals, expectedType: nil)
+
+        // Infer index types
+        for indexExpr in indices {
+            _ = driver.inferExpr(indexExpr, ctx: ctx, locals: &locals, expectedType: intType)
+        }
+
+        // Infer value type
+        let valueType = driver.inferExpr(valueExpr, ctx: ctx, locals: &locals, expectedType: nil)
+
+        // Resolve get to determine element type
+        let getName = interner.intern("get")
+        let getCandidates = driver.helpers.collectMemberFunctionCandidates(
+            named: getName,
+            receiverType: receiverType,
+            sema: sema
+        )
+        var elementType: TypeID = driver.helpers.arrayElementType(for: receiverType, sema: sema, interner: interner) ?? sema.types.anyType
+        if !getCandidates.isEmpty {
+            if let chosen = getCandidates.first,
+               let signature = sema.symbols.functionSignature(for: chosen) {
+                elementType = signature.returnType
+            }
+        }
+
+        // The compound operation produces the element type
+        let underlyingOp = driver.helpers.compoundAssignToBinaryOp(op)
+        let _ = underlyingOp
+        let _ = valueType
+        let _ = elementType
+
         sema.bindings.bindExprType(id, type: sema.types.unitType)
         return sema.types.unitType
     }
