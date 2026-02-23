@@ -539,6 +539,12 @@ extension BuildKIRPhase {
             return interner.intern("elvis")
         case .rangeTo:
             return interner.intern("rangeTo")
+        case .rangeUntil:
+            return interner.intern("rangeUntil")
+        case .inCheck:
+            return interner.intern("contains")
+        case .notInCheck:
+            return interner.intern("contains")
         }
     }
 

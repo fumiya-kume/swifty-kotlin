@@ -141,8 +141,10 @@ extension TypeCheckSemaPassPhase {
         case .elvis:
             let nonNullLhs = makeNonNullable(lhs, types: sema.types)
             type = sema.types.lub([nonNullLhs, rhs])
-        case .rangeTo:
+        case .rangeTo, .rangeUntil:
             type = sema.types.anyType
+        case .inCheck, .notInCheck:
+            type = boolType
         }
         sema.bindings.bindExprType(id, type: type)
         return type

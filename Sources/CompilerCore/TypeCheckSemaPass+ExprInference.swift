@@ -514,6 +514,18 @@ extension TypeCheckSemaPassPhase {
             }
             sema.bindings.bindExprType(id, type: receiverType)
             return receiverType
+
+        case .inExpr(let lhsID, let rhsID, _):
+            _ = inferExpr(lhsID, ctx: ctx, locals: &locals)
+            _ = inferExpr(rhsID, ctx: ctx, locals: &locals)
+            sema.bindings.bindExprType(id, type: boolType)
+            return boolType
+
+        case .notInExpr(let lhsID, let rhsID, _):
+            _ = inferExpr(lhsID, ctx: ctx, locals: &locals)
+            _ = inferExpr(rhsID, ctx: ctx, locals: &locals)
+            sema.bindings.bindExprType(id, type: boolType)
+            return boolType
         }
     }
 

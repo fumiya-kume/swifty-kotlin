@@ -482,6 +482,48 @@ extension BuildKIRPhase {
             let unit = arena.appendExpr(.unit, type: boundType ?? sema.types.errorType)
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
+
+        case .inExpr(let lhsExpr, let rhsExpr, _):
+            let lhsID = lowerExpr(
+                lhsExpr, ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions
+            )
+            let rhsID = lowerExpr(
+                rhsExpr, ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions
+            )
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? boolType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_op_contains"),
+                arguments: [rhsID, lhsID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+
+        case .notInExpr(let lhsExpr, let rhsExpr, _):
+            let lhsID = lowerExpr(
+                lhsExpr, ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions
+            )
+            let rhsID = lowerExpr(
+                rhsExpr, ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions
+            )
+            let containsResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_op_contains"),
+                arguments: [rhsID, lhsID],
+                result: containsResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? boolType)
+            instructions.append(.unary(op: .not, operand: containsResult, result: result))
+            return result
         }
     }
 }

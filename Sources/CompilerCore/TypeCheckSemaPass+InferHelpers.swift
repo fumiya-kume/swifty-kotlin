@@ -142,6 +142,12 @@ extension TypeCheckSemaPassPhase {
             return interner.intern("elvis")
         case .rangeTo:
             return interner.intern("rangeTo")
+        case .rangeUntil:
+            return interner.intern("rangeUntil")
+        case .inCheck:
+            return interner.intern("contains")
+        case .notInCheck:
+            return interner.intern("contains")
         }
     }
 
@@ -702,6 +708,11 @@ extension TypeCheckSemaPassPhase {
                         visit(expr)
                     }
                 }
+
+            case .inExpr(let lhs, let rhs, _),
+                 .notInExpr(let lhs, let rhs, _):
+                visit(lhs)
+                visit(rhs)
 
             case .intLiteral, .longLiteral, .floatLiteral, .doubleLiteral,
                  .charLiteral, .boolLiteral, .stringLiteral, .breakExpr,

@@ -26,6 +26,9 @@ public enum BinaryOp: Equatable {
     case logicalOr
     case elvis
     case rangeTo
+    case rangeUntil
+    case inCheck
+    case notInCheck
 }
 
 public enum UnaryOp: Equatable {
@@ -125,4 +128,6 @@ public enum Expr: Equatable {
     case blockExpr(statements: [ExprID], trailingExpr: ExprID?, range: SourceRange)
     case superRef(SourceRange)
     case thisRef(label: InternedString?, SourceRange)
+    case inExpr(lhs: ExprID, rhs: ExprID, range: SourceRange)
+    case notInExpr(lhs: ExprID, rhs: ExprID, range: SourceRange)
 }
