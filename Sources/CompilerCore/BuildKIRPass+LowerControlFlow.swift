@@ -326,8 +326,8 @@ extension BuildKIRPhase {
         let bodyTerminated = isTerminatedExpr(bodyResultID, arena: arena, sema: sema)
         if !bodyTerminated {
             instructions.append(.copy(from: bodyResultID, to: tryResult))
+            instructions.append(.jump(finallyLabel))
         }
-        instructions.append(.jump(finallyLabel))
 
         instructions.append(.label(catchDispatchLabel))
         if catchClauses.isEmpty {
