@@ -45,7 +45,7 @@ extension BuildASTPhase {
 
                 if headerTokens.count > 1 {
                     let parser = ExpressionParser(
-                        tokens: Array(headerTokens.dropFirst()),
+                        tokens: headerTokens.dropFirst(),
                         interner: interner,
                         astArena: astArena
                     )

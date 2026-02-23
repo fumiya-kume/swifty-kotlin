@@ -127,6 +127,10 @@ public final class ParsePhase: CompilerPhase {
 public final class BuildASTPhase: CompilerPhase {
     public static let name = "BuildAST"
 
+    /// Per-arena cache for `collectTokens(from:in:)`.  Cleared between files
+    /// because different `SyntaxArena`s reuse the same `NodeID` space.
+    internal var tokenCache: [NodeID: [Token]] = [:]
+
     public init() {}
 
     public func run(_ ctx: CompilationContext) throws {
@@ -152,6 +156,7 @@ public final class BuildASTPhase: CompilerPhase {
         var scriptExprsByFile: [Int32: [ExprID]] = [:]
 
         for (fileID, cst, root) in ctx.syntaxTrees {
+            tokenCache.removeAll(keepingCapacity: true)
             let isScript = cst.node(root).kind == .script
             let fileRawID = fileID.rawValue
 

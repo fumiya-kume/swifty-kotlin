@@ -40,15 +40,15 @@ extension BuildASTPhase.ExpressionParser {
         }
 
         let paramTokens = Array(bodyTokens[..<arrowIndex])
-        let lambdaBodyTokens = Array(bodyTokens[(arrowIndex + 1)...])
+        let lambdaBodySlice = bodyTokens[(arrowIndex + 1)...]
         let params = parseLambdaParamNames(from: paramTokens)
 
         let bodyExpr: ExprID
-        if let parsedBody = BuildASTPhase.ExpressionParser(tokens: lambdaBodyTokens, interner: interner, astArena: astArena).parse() {
+        if let parsedBody = BuildASTPhase.ExpressionParser(tokens: lambdaBodySlice, interner: interner, astArena: astArena).parse() {
             bodyExpr = parsedBody
         } else {
             let bodyRange: SourceRange
-            if let first = lambdaBodyTokens.first, let last = lambdaBodyTokens.last {
+            if let first = lambdaBodySlice.first, let last = lambdaBodySlice.last {
                 bodyRange = SourceRange(start: first.range.start, end: last.range.end)
             } else {
                 bodyRange = SourceRange(start: openBrace.range.end, end: openBrace.range.end)
