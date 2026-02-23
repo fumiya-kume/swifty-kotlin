@@ -20,6 +20,7 @@ public enum SymbolKind: Equatable {
     case constructor
     case property
     case field
+    case backingField
     case typeParameter
     case valueParameter
     case local
@@ -217,14 +218,17 @@ public final class BlockScope: BaseScope {}
 public final class SymbolTable {
     private var symbolsStorage: [SemanticSymbol] = []
     private var byFQName: [[InternedString]: [SymbolID]] = [:]
+    private var byShortName: [InternedString: [SymbolID]] = [:]
     private var functionSignatures: [SymbolID: FunctionSignature] = [:]
     private var propertyTypes: [SymbolID: TypeID] = [:]
     private var directSupertypes: [SymbolID: [SymbolID]] = [:]
+    private var supertypeTypeArgsMap: [SymbolID: [SymbolID: [TypeArg]]] = [:]
     private var nominalLayouts: [SymbolID: NominalLayout] = [:]
     private var nominalLayoutHints: [SymbolID: NominalLayoutHint] = [:]
     private var externalLinkNames: [SymbolID: String] = [:]
     private var typeAliasUnderlyingTypes: [SymbolID: TypeID] = [:]
     private var parentSymbols: [SymbolID: SymbolID] = [:]
+    private var backingFieldSymbols: [SymbolID: SymbolID] = [:]
     private var typeParameterUpperBoundsMap: [SymbolID: TypeID] = [:]
     private var sourceFileIDs: [SymbolID: FileID] = [:]
 
@@ -252,6 +256,10 @@ public final class SymbolTable {
 
     public func lookupAll(fqName: [InternedString]) -> [SymbolID] {
         byFQName[fqName] ?? []
+    }
+
+    public func lookupByShortName(_ name: InternedString) -> [SymbolID] {
+        byShortName[name] ?? []
     }
 
     public func define(
@@ -306,14 +314,22 @@ public final class SymbolTable {
         )
         symbolsStorage.append(symbol)
         byFQName[fqName, default: []].append(id)
+        byShortName[name, default: []].append(id)
         return id
     }
 
     private func canCoexistAsOverload(kind: SymbolKind, existingKinds: [SymbolKind]) -> Bool {
+        if kind == .package {
+            return true
+        }
+        let existingNonPackageKinds = existingKinds.filter { $0 != .package }
+        if existingNonPackageKinds.isEmpty {
+            return true
+        }
         guard isOverloadable(kind) else {
             return false
         }
-        return existingKinds.allSatisfy { isOverloadable($0) }
+        return existingNonPackageKinds.allSatisfy { isOverloadable($0) }
     }
 
     private func isOverloadable(_ kind: SymbolKind) -> Bool {
@@ -342,6 +358,14 @@ public final class SymbolTable {
 
     public func directSupertypes(for symbol: SymbolID) -> [SymbolID] {
         directSupertypes[symbol] ?? []
+    }
+
+    public func setSupertypeTypeArgs(_ args: [TypeArg], for child: SymbolID, supertype parent: SymbolID) {
+        supertypeTypeArgsMap[child, default: [:]][parent] = args
+    }
+
+    public func supertypeTypeArgs(for child: SymbolID, supertype parent: SymbolID) -> [TypeArg] {
+        supertypeTypeArgsMap[child]?[parent] ?? []
     }
 
     public func directSubtypes(of symbol: SymbolID) -> [SymbolID] {
@@ -392,6 +416,14 @@ public final class SymbolTable {
 
     public func parentSymbol(for child: SymbolID) -> SymbolID? {
         parentSymbols[child]
+    }
+
+    public func setBackingFieldSymbol(_ backingField: SymbolID, for property: SymbolID) {
+        backingFieldSymbols[property] = backingField
+    }
+
+    public func backingFieldSymbol(for property: SymbolID) -> SymbolID? {
+        backingFieldSymbols[property]
     }
 
     public func setTypeParameterUpperBound(_ bound: TypeID, for symbol: SymbolID) {

@@ -149,7 +149,7 @@ extension BuildASTPhase {
             while index < tokens.count {
                 let t = tokens[index]
                 if innerDepth.isAtTopLevel {
-                    if t.kind == .symbol(.comma) || t.kind == .symbol(.lBrace) || t.kind == .symbol(.semicolon) {
+                    if t.kind == .symbol(.comma) || t.kind == .symbol(.lBrace) || t.kind == .symbol(.semicolon) || t.kind == .symbol(.assign) {
                         break
                     }
                 }

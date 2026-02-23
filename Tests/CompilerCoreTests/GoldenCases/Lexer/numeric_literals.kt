@@ -14,6 +14,12 @@ fun main() {
     val binUpper = 0B1100
     val binUnderscore = 0b1010_0101
 
+    val decConsecUnder = 1__2__3
+    val hexConsecUnder = 0xFF__FF
+    val binConsecUnder = 0b10__01
+    val dblConsecUnder = 1.0__5
+    val expConsecUnder = 1e1__0
+
     val longDec = 42L
     val longHex = 0xFFL
     val longBin = 0b1010L

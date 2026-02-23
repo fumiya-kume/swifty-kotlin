@@ -48,6 +48,22 @@ extension TypeCheckSemaPassPhase {
         } else {
             operatorCandidates = []
         }
+        let lhsIsAny = lhs == sema.types.anyType || lhs == sema.types.nullableAnyType
+        let rhsIsAny = rhs == sema.types.anyType || rhs == sema.types.nullableAnyType
+        if !lhsIsPrimitive && !lhsIsAny && !rhsIsAny && operatorCandidates.isEmpty && lhs != sema.types.errorType && rhs != sema.types.errorType {
+            switch op {
+            case .add, .subtract, .multiply, .divide, .modulo:
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0002",
+                    "No viable overload found for operator '\(interner.resolve(operatorName))'.",
+                    range: range
+                )
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            default:
+                break
+            }
+        }
         if !operatorCandidates.isEmpty {
             let resolved = ctx.resolver.resolveCall(
                 candidates: operatorCandidates,
@@ -61,11 +77,20 @@ extension TypeCheckSemaPassPhase {
                 ctx: ctx.semaCtx
             )
             if let diagnostic = resolved.diagnostic {
-                ctx.semaCtx.diagnostics.emit(diagnostic)
+                if lhs != sema.types.errorType && rhs != sema.types.errorType {
+                    ctx.semaCtx.diagnostics.emit(diagnostic)
+                }
                 sema.bindings.bindExprType(id, type: sema.types.errorType)
                 return sema.types.errorType
             }
             guard let chosen = resolved.chosenCallee else {
+                if lhs != sema.types.errorType && rhs != sema.types.errorType {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0002",
+                        "No viable overload found for operator '\(interner.resolve(operatorName))'.",
+                        range: range
+                    )
+                }
                 sema.bindings.bindExprType(id, type: sema.types.errorType)
                 return sema.types.errorType
             }
@@ -130,7 +155,8 @@ extension TypeCheckSemaPassPhase {
         range: SourceRange,
         ctx: TypeInferenceContext,
         locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
-        expectedType: TypeID?
+        expectedType: TypeID?,
+        explicitTypeArgs: [TypeID] = []
     ) -> TypeID {
         let ast = ctx.ast
         let sema = ctx.sema
@@ -176,7 +202,8 @@ extension TypeCheckSemaPassPhase {
                 call: CallExpr(
                     range: range,
                     calleeName: calleeName ?? InternedString(),
-                    args: resolvedArgs
+                    args: resolvedArgs,
+                    explicitTypeArgs: explicitTypeArgs
                 ),
                 expectedType: expectedType,
                 implicitReceiverType: ctx.implicitReceiverType,
@@ -188,6 +215,12 @@ extension TypeCheckSemaPassPhase {
                 return sema.types.errorType
             }
             guard let chosen = resolved.chosenCallee else {
+                let nameStr = calleeName.map { interner.resolve($0) } ?? "<unknown>"
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0023",
+                    "Unresolved function '\(nameStr)'.",
+                    range: range
+                )
                 sema.bindings.bindExprType(id, type: sema.types.errorType)
                 return sema.types.errorType
             }
@@ -327,7 +360,8 @@ extension TypeCheckSemaPassPhase {
         range: SourceRange,
         ctx: TypeInferenceContext,
         locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
-        expectedType: TypeID?
+        expectedType: TypeID?,
+        explicitTypeArgs: [TypeID] = []
     ) -> TypeID {
         let ast = ctx.ast
         let sema = ctx.sema
@@ -387,6 +421,10 @@ extension TypeCheckSemaPassPhase {
         let (memberVisible, memberInvisible) = ctx.filterByVisibility(allMemberCandidates)
         let candidates = memberVisible
         if candidates.isEmpty {
+            if receiverType == sema.types.errorType {
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
             if let firstInvisible = memberInvisible.first {
                 let visLabel = firstInvisible.visibility == .protected ? "protected" : "private"
                 let code = firstInvisible.visibility == .protected ? "KSWIFTK-SEMA-0041" : "KSWIFTK-SEMA-0040"
@@ -414,7 +452,8 @@ extension TypeCheckSemaPassPhase {
             call: CallExpr(
                 range: range,
                 calleeName: calleeName,
-                args: resolvedArgs
+                args: resolvedArgs,
+                explicitTypeArgs: explicitTypeArgs
             ),
             expectedType: expectedType,
             implicitReceiverType: receiverType,
@@ -426,6 +465,11 @@ extension TypeCheckSemaPassPhase {
             return sema.types.errorType
         }
         guard let chosen = resolved.chosenCallee else {
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-0024",
+                "Unresolved member function '\(interner.resolve(calleeName))'.",
+                range: range
+            )
             sema.bindings.bindExprType(id, type: sema.types.errorType)
             return sema.types.errorType
         }
@@ -445,7 +489,8 @@ extension TypeCheckSemaPassPhase {
         range: SourceRange,
         ctx: TypeInferenceContext,
         locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
-        expectedType: TypeID?
+        expectedType: TypeID?,
+        explicitTypeArgs: [TypeID] = []
     ) -> TypeID {
         let sema = ctx.sema
         let interner = ctx.interner
@@ -477,6 +522,10 @@ extension TypeCheckSemaPassPhase {
         let (safeMemberVisible, safeMemberInvisible) = ctx.filterByVisibility(allSafeMemberCandidates)
         let candidates = safeMemberVisible
         if candidates.isEmpty {
+            if nonNullReceiver == sema.types.errorType {
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
             if let firstInvisible = safeMemberInvisible.first {
                 let visLabel = firstInvisible.visibility == .protected ? "protected" : "private"
                 let code = firstInvisible.visibility == .protected ? "KSWIFTK-SEMA-0041" : "KSWIFTK-SEMA-0040"
@@ -500,7 +549,8 @@ extension TypeCheckSemaPassPhase {
             call: CallExpr(
                 range: range,
                 calleeName: calleeName,
-                args: resolvedArgs
+                args: resolvedArgs,
+                explicitTypeArgs: explicitTypeArgs
             ),
             expectedType: expectedType,
             implicitReceiverType: nonNullReceiver,
@@ -512,6 +562,11 @@ extension TypeCheckSemaPassPhase {
             return sema.types.errorType
         }
         guard let chosen = resolved.chosenCallee else {
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-0024",
+                "Unresolved member function '\(interner.resolve(calleeName))'.",
+                range: range
+            )
             sema.bindings.bindExprType(id, type: sema.types.errorType)
             return sema.types.errorType
         }

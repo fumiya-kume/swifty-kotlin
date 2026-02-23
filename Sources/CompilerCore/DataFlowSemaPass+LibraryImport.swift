@@ -161,11 +161,7 @@ extension DataFlowSemaPassPhase {
             let alreadyHasPackage = existing.contains { id in
                 symbols.symbol(id)?.kind == .package
             }
-            let hasNonPackageSymbol = existing.contains { id in
-                guard let kind = symbols.symbol(id)?.kind else { return false }
-                return kind != .package
-            }
-            if !alreadyHasPackage && !hasNonPackageSymbol {
+            if !alreadyHasPackage {
                 let name = packagePath.last ?? interner.intern("_")
                 _ = symbols.define(
                     kind: .package,
