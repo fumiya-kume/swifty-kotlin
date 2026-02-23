@@ -271,11 +271,6 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         interner: StringInterner
     ) {
         let intType = sema.types.make(.primitive(.int, .nonNull))
-        let ownerType = sema.types.make(.classType(ClassType(
-            classSymbol: owner.id,
-            args: [],
-            nullability: .nonNull
-        )))
 
         // values() returns an Int (count) which codegen interprets as the
         // number of entries in the enum. Each entry's ordinal/name can be
@@ -295,7 +290,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         let calleeName = interner.intern("kk_enum_values")
         let resultExpr = module.arena.appendExpr(
             .temporary(Int32(module.arena.expressions.count)),
-            type: ownerType
+            type: intType
         )
         body.append(.call(
             symbol: nil,
