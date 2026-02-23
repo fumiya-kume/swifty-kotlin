@@ -334,14 +334,23 @@ public final class LLVMBackend {
                 continue
             }
             for instruction in function.body {
-                guard case .call(let symbol, let callee, _, _, _, _, _) = instruction else {
+                let calleeInfo: (symbol: SymbolID?, callee: InternedString)?
+                switch instruction {
+                case .call(let symbol, let callee, _, _, _, _, _):
+                    calleeInfo = (symbol, callee)
+                case .virtualCall(let symbol, let callee, _, _, _, _, _, _):
+                    calleeInfo = (symbol, callee)
+                default:
+                    calleeInfo = nil
+                }
+                guard let calleeInfo else {
                     continue
                 }
-                if let symbol, functionSymbols[symbol] != nil {
+                if let symbol = calleeInfo.symbol, functionSymbols[symbol] != nil {
                     continue
                 }
 
-                let calleeName = interner.resolve(callee)
+                let calleeName = interner.resolve(calleeInfo.callee)
                 guard !calleeName.isEmpty else {
                     continue
                 }

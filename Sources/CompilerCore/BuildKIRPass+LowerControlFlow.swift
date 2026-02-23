@@ -468,6 +468,22 @@ extension BuildKIRPhase {
                 instructions.append(.constValue(result: unknownTypeToken, value: .intLiteral(0)))
                 instructions.append(.copy(from: unknownTypeToken, to: exceptionTypeSlot))
                 instructions.append(.jumpIfNotNull(value: exceptionSlot, target: thrownTarget))
+            case .virtualCall(let symbol, let callee, let receiver, let arguments, let result, _, let thrownResult, let dispatch)
+                where thrownResult == nil:
+                instructions.append(.virtualCall(
+                    symbol: symbol,
+                    callee: callee,
+                    receiver: receiver,
+                    arguments: arguments,
+                    result: result,
+                    canThrow: true,
+                    thrownResult: exceptionSlot,
+                    dispatch: dispatch
+                ))
+                let unknownTypeToken = arena.appendExpr(.intLiteral(0), type: intType)
+                instructions.append(.constValue(result: unknownTypeToken, value: .intLiteral(0)))
+                instructions.append(.copy(from: unknownTypeToken, to: exceptionTypeSlot))
+                instructions.append(.jumpIfNotNull(value: exceptionSlot, target: thrownTarget))
             case .rethrow(let value):
                 instructions.append(.copy(from: value, to: exceptionSlot))
                 let tokenValue = Int64((arena.exprType(value) ?? sema.types.anyType).rawValue)
