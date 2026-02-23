@@ -2311,7 +2311,7 @@ final class OverloadResolverTests: XCTestCase {
             for: fn
         )
 
-        // listOf(1, "a") → T = Any (LUB of Int, String)
+        // listOf(1, "a") → T = Any? (LUB of Int, String)
         let call = CallExpr(
             range: makeRange(start: 5040, end: 5050),
             calleeName: interner.intern("listOf"),

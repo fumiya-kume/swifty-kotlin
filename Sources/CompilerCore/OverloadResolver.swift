@@ -561,6 +561,10 @@ public final class OverloadResolver {
                 }
             }
         case .functionType(let functionType):
+            if let receiver = functionType.receiver,
+               containsTypeVariable(receiver, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem) {
+                return true
+            }
             if containsTypeVariable(functionType.returnType, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem) {
                 return true
             }
@@ -611,7 +615,8 @@ public final class OverloadResolver {
             let subtypeKind = typeSystem.kind(of: subtype)
             if case .classType(let subClass) = subtypeKind,
                subClass.classSymbol == superClass.classSymbol,
-               subClass.args.count == superClass.args.count {
+               subClass.args.count == superClass.args.count,
+               subClass.nullability == superClass.nullability || superClass.nullability == .nullable {
                 var result: [VariableConstraint] = []
                 for (subArg, superArg) in zip(subClass.args, superClass.args) {
                     let decomposed = decomposeTypeArgConstraint(
@@ -634,7 +639,10 @@ public final class OverloadResolver {
            containsTypeVariable(supertype, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem) {
             let subtypeKind = typeSystem.kind(of: subtype)
             if case .functionType(let subFunc) = subtypeKind,
-               subFunc.params.count == superFunc.params.count {
+               subFunc.params.count == superFunc.params.count,
+               subFunc.isSuspend == superFunc.isSuspend,
+               subFunc.nullability == superFunc.nullability || superFunc.nullability == .nullable,
+               subFunc.receiver == superFunc.receiver {
                 var result: [VariableConstraint] = []
                 // Function types are contravariant in parameter types.
                 for (subParam, superParam) in zip(subFunc.params, superFunc.params) {
@@ -675,7 +683,8 @@ public final class OverloadResolver {
            containsTypeVariable(subtype, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem) {
             if case .classType(let superClass) = supertypeKind,
                subClass.classSymbol == superClass.classSymbol,
-               subClass.args.count == superClass.args.count {
+               subClass.args.count == superClass.args.count,
+               subClass.nullability == superClass.nullability || superClass.nullability == .nullable {
                 var result: [VariableConstraint] = []
                 for (subArg, superArg) in zip(subClass.args, superClass.args) {
                     let decomposed = decomposeTypeArgConstraint(
@@ -703,6 +712,10 @@ public final class OverloadResolver {
     /// Decomposes a pair of type arguments into constraints respecting variance.
     /// Invariant args produce equality constraints, `out` produces subtype,
     /// `in` produces supertype (reversed direction).
+    ///
+    /// NOTE: Variance is currently derived from the `TypeArg` enum cases (use-site
+    /// projection). A future enhancement could incorporate declaration-site variance
+    /// from the enclosing class's type parameter definitions.
     private func decomposeTypeArgConstraint(
         subArg: TypeArg,
         superArg: TypeArg,
@@ -748,8 +761,29 @@ public final class OverloadResolver {
             return []
 
         default:
-            // Incompatible variance combinations – fall back to no constraint.
-            return []
+            // Incompatible variance combinations (e.g. .out vs .in) – conservatively
+            // treat as invariant so the original subtype relation is still enforced.
+            let subInner: TypeID
+            let superInner: TypeID
+            switch subArg {
+            case .invariant(let t), .out(let t), .in(let t): subInner = t
+            case .star: return []
+            }
+            switch superArg {
+            case .invariant(let t), .out(let t), .in(let t): superInner = t
+            case .star: return []
+            }
+            var fallback = decomposeSubtypeConstraint(
+                subtype: subInner, supertype: superInner,
+                typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
+                blameRange: blameRange
+            )
+            fallback.append(contentsOf: decomposeSubtypeConstraint(
+                subtype: superInner, supertype: subInner,
+                typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
+                blameRange: blameRange
+            ))
+            return fallback
         }
     }
 

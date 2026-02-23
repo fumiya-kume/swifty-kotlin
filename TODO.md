@@ -653,10 +653,10 @@
 
 - [x] P5-85: コレクション型の型引数推論（`listOf(1, 2)` → `List<Int>`）を overload resolver に統合する（spec.md J8/J9）
   - [x] `TypeInferenceEngine` で generic stub 関数への型引数推論を vararg element 型から行う
-  - [x] 混在型（`listOf(1, "a")`）の LUB 型推論（`List<Any>`）を実装する
+  - [x] 混在型（`listOf(1, "a")`）の LUB 型推論（要素 LUB が `Any?` となる `List<Any?>`）を実装する
   - [x] explicit 型引数（`listOf<Number>(1, 2.0)`）と推論結果を統合する
-  - [x] 型引数推論の diff/golden ケース（unifrom/mixed element type）を追加する
-  - **完了条件**: `listOf(1, 2, 3)` の型が `List<Int>` と推論され、混在型が `List<Any>` となる
+  - [x] 型引数推論の diff/golden ケース（uniform/mixed element type）を追加する
+  - **完了条件**: `listOf(1, 2, 3)` の型が `List<Int>` と推論され、混在型が `List<Any?>`（`nullableAnyType`）となる
 
 ---
 
