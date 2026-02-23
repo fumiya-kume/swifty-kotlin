@@ -366,7 +366,7 @@ final class CodegenAndBackendCoverageTests: XCTestCase {
         let throwingResult = arena.appendExpr(.temporary(7))
         let whenCondition = arena.appendExpr(.boolLiteral(true))
         let whenResult = arena.appendExpr(.temporary(8))
-        let selectResult = arena.appendExpr(.temporary(9))
+        let falseConst = arena.appendExpr(.boolLiteral(false))
         let continuationResult = arena.appendExpr(.temporary(10))
         let stateExitResult = arena.appendExpr(.temporary(11))
 
@@ -422,16 +422,15 @@ final class CodegenAndBackendCoverageTests: XCTestCase {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .call(
-                    symbol: nil,
-                    callee: interner.intern("kk_when_select"),
-                    arguments: [whenCondition, concatResult, completionLoaded],
-                    result: whenResult,
-                    canThrow: false,
-                    thrownResult: nil
-                ),
-                .select(condition: whenCondition, thenValue: whenResult, elseValue: concatResult, result: selectResult),
-                .call(symbol: nil, callee: interner.intern("println"), arguments: [selectResult], result: nil, canThrow: false, thrownResult: nil),
+                // Control flow for if/when: branch on condition == false
+                .constValue(result: falseConst, value: .boolLiteral(false)),
+                .jumpIfEqual(lhs: whenCondition, rhs: falseConst, target: 900),
+                .copy(from: concatResult, to: whenResult),
+                .jump(901),
+                .label(900),
+                .copy(from: completionLoaded, to: whenResult),
+                .label(901),
+                .call(symbol: nil, callee: interner.intern("println"), arguments: [whenResult], result: nil, canThrow: false, thrownResult: nil),
                 .call(
                     symbol: nil,
                     callee: interner.intern("kk_coroutine_continuation_new"),
@@ -490,7 +489,9 @@ final class CodegenAndBackendCoverageTests: XCTestCase {
         XCTAssertTrue(ir.contains("@kk_unregister_coroutine_root"))
         XCTAssertTrue(ir.contains("coroutine_root_register"))
         XCTAssertTrue(ir.contains("coroutine_root_unregister"))
-        XCTAssertTrue(ir.contains("select i1"))
+        // select i1 no longer emitted; control flow uses conditional branches instead
+        let hasConditionalBranch = ir.contains("br i1") || ir.contains("icmp eq")
+        XCTAssertTrue(hasConditionalBranch)
         XCTAssertTrue(ir.contains("thrown_slot_"))
         XCTAssertTrue(ir.contains("@external_throwing"))
     }
@@ -736,6 +737,7 @@ final class CodegenAndBackendCoverageTests: XCTestCase {
         let e7 = arena.appendExpr(.temporary(7))
         let e8 = arena.appendExpr(.temporary(8))
         let e9 = arena.appendExpr(.unit)
+        let eFalse = arena.appendExpr(.boolLiteral(false))
 
         let callee = KIRFunction(
             symbol: calleeSym,
@@ -774,7 +776,13 @@ final class CodegenAndBackendCoverageTests: XCTestCase {
                 .call(symbol: nil, callee: interner.intern("kk_op_mul"), arguments: [e0, e1], result: e7, canThrow: false, thrownResult: nil),
                 .call(symbol: nil, callee: interner.intern("kk_op_div"), arguments: [e0, e1], result: e8, canThrow: false, thrownResult: nil),
                 .call(symbol: nil, callee: interner.intern("kk_op_eq"), arguments: [e0, e1], result: e5, canThrow: false, thrownResult: nil),
-                .call(symbol: nil, callee: interner.intern("kk_when_select"), arguments: [e2, e0, e1], result: e5, canThrow: false, thrownResult: nil),
+                .constValue(result: eFalse, value: .boolLiteral(false)),
+                .jumpIfEqual(lhs: e2, rhs: eFalse, target: 800),
+                .copy(from: e0, to: e5),
+                .jump(801),
+                .label(800),
+                .copy(from: e1, to: e5),
+                .label(801),
                 .call(symbol: calleeSym, callee: interner.intern("ignored"), arguments: [], result: e5, canThrow: false, thrownResult: nil),
                 .returnValue(e5),
                 .endBlock

@@ -347,24 +347,6 @@ extension NativeEmitter {
             case .constValue(let result, let value):
                 values[result.rawValue] = valueForConstant(value, expressionRawID: result.rawValue)
 
-            case .select(let condition, let thenValue, let elseValue, let result):
-                let conditionValue = resolveValue(condition)
-                guard let loweredCondition = buildBoolCondition(
-                    from: conditionValue,
-                    name: "select_cond_\(instructionIndex)"
-                ) else {
-                    storeResult(result, resolveValue(thenValue))
-                    continue
-                }
-                let selected = bindings.buildSelect(
-                    builder,
-                    condition: loweredCondition,
-                    thenValue: resolveValue(thenValue),
-                    elseValue: resolveValue(elseValue),
-                    name: "select_\(instructionIndex)"
-                )
-                storeResult(result, selected ?? resolveValue(thenValue))
-
             case .binary(let op, let lhs, let rhs, let result):
                 let lhsValue = resolveValue(lhs)
                 let rhsValue = resolveValue(rhs)
@@ -433,28 +415,6 @@ extension NativeEmitter {
                         )
                     }
                     storeResult(result, zeroValue)
-                    continue
-                }
-
-                if calleeName == "kk_when_select" {
-                    let conditionValue = argumentValues.count > 0 ? argumentValues[0] : zeroValue
-                    let thenValue = argumentValues.count > 1 ? argumentValues[1] : zeroValue
-                    let elseValue = argumentValues.count > 2 ? argumentValues[2] : zeroValue
-                    if let loweredCondition = buildBoolCondition(
-                        from: conditionValue,
-                        name: "when_cond_\(instructionIndex)"
-                    ) {
-                        let selected = bindings.buildSelect(
-                            builder,
-                            condition: loweredCondition,
-                            thenValue: thenValue,
-                            elseValue: elseValue,
-                            name: "when_select_\(instructionIndex)"
-                        )
-                        storeResult(result, selected ?? thenValue)
-                    } else {
-                        storeResult(result, thenValue)
-                    }
                     continue
                 }
 
