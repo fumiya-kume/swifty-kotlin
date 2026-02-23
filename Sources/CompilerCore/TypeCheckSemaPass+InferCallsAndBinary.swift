@@ -537,13 +537,9 @@ extension TypeCheckSemaPassPhase {
                 sema.bindings.bindExprType(id, type: sema.types.errorType)
                 return sema.types.errorType
             }
-            ctx.semaCtx.diagnostics.error(
-                "KSWIFTK-SEMA-0024",
-                "Unresolved member function '\(interner.resolve(calleeName))'.",
-                range: range
-            )
-            sema.bindings.bindExprType(id, type: sema.types.errorType)
-            return sema.types.errorType
+            let resultType = makeNullable(sema.types.anyType, types: sema.types)
+            sema.bindings.bindExprType(id, type: resultType)
+            return resultType
         }
         let resolvedArgs: [CallArg] = zip(args, argTypes).map { argument, type in
             CallArg(label: argument.label, isSpread: argument.isSpread, type: type)
