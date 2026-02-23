@@ -15,6 +15,10 @@ public final class CompilationContext: @unchecked Sendable {
     public var generatedObjectPath: String? = nil
     public var generatedLLVMIRPath: String? = nil
 
+    /// Path to a pre-compiled runtime stub `.o` that should be linked alongside
+    /// the user module object when producing an executable.
+    public var runtimeStubObjectPath: String? = nil
+
     /// Incremental compilation cache (non-nil when incremental mode is active).
     public var incrementalCache: IncrementalCompilationCache? = nil
 

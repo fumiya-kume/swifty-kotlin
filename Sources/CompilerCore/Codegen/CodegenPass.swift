@@ -43,6 +43,9 @@ public final class CodegenPhase: CompilerPhase {
                 let path = outputPath(base: ctx.options.outputPath, defaultExtension: "o")
                 try backend.emitObject(module: kir, runtime: runtime, outputObjectPath: path, interner: ctx.interner)
                 ctx.generatedObjectPath = path
+                if let llvmBackend = backend as? LLVMBackend {
+                    ctx.runtimeStubObjectPath = llvmBackend.runtimeStubPath()
+                }
 
             case .library:
                 try emitLibrary(module: kir, backend: backend, runtime: runtime, ctx: ctx)

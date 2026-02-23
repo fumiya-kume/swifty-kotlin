@@ -65,6 +65,12 @@ public final class LLVMBackend {
         )
     }
 
+    /// Returns the path to the cached runtime stub `.o` if available,
+    /// for use by the link phase as an additional link input.
+    public func runtimeStubPath() -> String? {
+        return cachedRuntimeStubPath()
+    }
+
     public func emitLLVMIR(
         module: KIRModule,
         runtime: RuntimeLinkInfo,
@@ -127,8 +133,8 @@ public final class LLVMBackend {
         errorCode: String,
         errorContext: String
     ) throws {
-        let isCompileOnly = extraArgs.contains("-c") || extraArgs.contains("-S") || extraArgs.contains("-emit-llvm")
-        let runtimeStub = isCompileOnly ? nil : cachedRuntimeStubPath()
+        let isIRDump = extraArgs.contains("-S") || extraArgs.contains("-emit-llvm")
+        let runtimeStub = isIRDump ? nil : cachedRuntimeStubPath()
         let source = emitCModule(module: module, interner: interner, useExternRuntime: runtimeStub != nil)
         let sourceURL = deterministicTempSourceURL(outputPath: outputPath)
         defer {
@@ -142,9 +148,6 @@ public final class LLVMBackend {
                 args.append("-g")
             }
             args.append(contentsOf: [sourceURL.path])
-            if let runtimeStub {
-                args.append(runtimeStub)
-            }
             args.append(contentsOf: ["-o", outputPath])
             args.append(contentsOf: clangTargetArgs())
             let clangPath = CommandRunner.resolveExecutable("clang", fallback: "/usr/bin/clang")
