@@ -13,6 +13,8 @@ extension TypeSystem {
         if case .nothing(.nullable) = lhs {
             // Nothing? is subtype of all nullable types, Any?, and Nothing? itself
             switch rhs {
+            case .error:
+                return true
             case .any(.nullable):
                 return true
             case .nothing(.nullable):
@@ -25,6 +27,8 @@ extension TypeSystem {
                 return true
             case .functionType(let ft) where ft.nullability == .nullable:
                 return true
+            case .intersection(let parts):
+                return parts.contains { isSubtype(subtype, $0) }
             default:
                 return false
             }
