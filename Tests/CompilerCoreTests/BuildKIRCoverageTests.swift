@@ -2145,6 +2145,28 @@ final class BuildKIRCoverageTests: XCTestCase {
         }
     }
 
+    func testNestedLocalFunctionCallForwardsCaptureArguments() throws {
+        // Regression test: h() captures g(), and g() captures x.
+        // When h's body calls g(), the capture arguments for g (i.e. x)
+        // must be forwarded correctly via transitive capture.
+        let source = """
+        fun main(): Int {
+            val x = 10
+            fun g(): Int = x
+            fun h(): Int = g()
+            return h()
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Nested local function call with capture forwarding should compile: \(ctx.diagnostics.diagnostics.map(\.message))")
+            let module = try XCTUnwrap(ctx.kir)
+            // main, g, h => at least 3 functions
+            XCTAssertGreaterThanOrEqual(module.functionCount, 3, "Expected at least 3 functions (main + g + h)")
+        }
+    }
+
     func testRecursiveLocalFunctionWithCaptureResolvesCorrectly() throws {
         let source = """
         fun main() {

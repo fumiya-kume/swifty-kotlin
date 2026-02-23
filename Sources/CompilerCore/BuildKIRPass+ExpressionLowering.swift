@@ -267,6 +267,33 @@ extension BuildKIRPhase {
                     }
                 }
 
+                // Transitive capture: if a captured symbol is a callable with
+                // its own captures, also capture those dependencies so call
+                // sites inside the body can forward correct capture arguments.
+                var transitiveChanged = true
+                while transitiveChanged {
+                    transitiveChanged = false
+                    for sym in captureSymbols {
+                        guard let outerExpr = localValuesBySymbol[sym],
+                              let callableInfo = callableValueInfoByExprID[outerExpr] else {
+                            continue
+                        }
+                        for captureArg in callableInfo.captureArguments {
+                            if let transitiveSym = localValuesBySymbol.first(where: { $0.value == captureArg })?.key,
+                               !captureSymbols.contains(transitiveSym) {
+                                captureSymbols.append(transitiveSym)
+                                transitiveChanged = true
+                            }
+                            if captureArg == currentImplicitReceiverExprID,
+                               let receiverSym = currentImplicitReceiverSymbol,
+                               !captureSymbols.contains(receiverSym) {
+                                captureSymbols.append(receiverSym)
+                                transitiveChanged = true
+                            }
+                        }
+                    }
+                }
+
                 var captureBindings: [(capturedSymbol: SymbolID, param: KIRParameter, valueExpr: KIRExprID)] = []
                 captureBindings.reserveCapacity(captureSymbols.count)
                 for (index, capturedSymbol) in captureSymbols.enumerated() {
@@ -334,6 +361,30 @@ extension BuildKIRPhase {
                     let paramExpr = arena.appendExpr(.symbolRef(param.symbol), type: param.type)
                     localFunBodyInstructions.append(.constValue(result: paramExpr, value: .symbolRef(param.symbol)))
                     localValuesBySymbol[param.symbol] = paramExpr
+                }
+
+                // Propagate callable value info for captured callables so that
+                // calls inside the body find correct capture arguments.
+                // Build outer→body expression mapping from capture bindings.
+                var outerToBodyExpr: [KIRExprID: KIRExprID] = [:]
+                for capture in captureBindings {
+                    if let bodyExpr = localValuesBySymbol[capture.capturedSymbol] {
+                        outerToBodyExpr[capture.valueExpr] = bodyExpr
+                    }
+                }
+                for capture in captureBindings {
+                    if let outerCallableInfo = callableValueInfoByExprID[capture.valueExpr],
+                       let bodyCallableExpr = localValuesBySymbol[capture.capturedSymbol] {
+                        let remappedArgs = outerCallableInfo.captureArguments.compactMap { outerToBodyExpr[$0] }
+                        if remappedArgs.count == outerCallableInfo.captureArguments.count {
+                            registerCallableValue(
+                                bodyCallableExpr,
+                                symbol: outerCallableInfo.symbol,
+                                callee: outerCallableInfo.callee,
+                                captureArguments: remappedArgs
+                            )
+                        }
+                    }
                 }
 
                 // Re-register the local function symbol inside its own body
