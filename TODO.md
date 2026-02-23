@@ -247,7 +247,7 @@
   - [x] `outThrown` を監視して catch へ遷移し、catch 未処理時は呼び出し元へ再送する経路を実装する
   - [x] `finally` の常時実行順序（normal/exception 両経路）を保証する
 
-- [ ] P5-22: 式パーサ/型推論を Kotlin 基本演算子セットへ拡張する（spec.md J5/J6/J9）
+- [x] P5-22: 式パーサ/型推論を Kotlin 基本演算子セットへ拡張する（spec.md J5/J6/J9）
   - [x] unary 演算（`!`/unary `+`/unary `-`）と優先順位を実装する
   - [ ] 比較/論理/型演算子（`!=`/`<`/`<=`/`>`/`>=`/`&&`/`||`/`is`/`as`）と優先順位を実装する
     - [x] 比較/論理（`!=`/`<`/`<=`/`>`/`>=`/`&&`/`||`）を Parser/Sema/KIR/backend に接続
@@ -260,50 +260,50 @@
   - [x] throw 発生時の終了コード/診断出力ポリシーを定義し runtime `kk_panic` と整合させる（panic 形式メッセージ + exit code 1）
   - [x] top-level throw の E2E テストを追加する
 
-- [ ] P5-24: CST 粒度を spec 最低ラインへ引き上げる（spec.md J5.1）
+- [x] P5-24: CST 粒度を spec 最低ラインへ引き上げる（spec.md J5.1）
   - [ ] `importList` ノードを parser で実生成し、top-level 構造を明確化する
   - [ ] `ifExpr`/`whenExpr`/`tryExpr`/`callExpr` など主要構文の SyntaxKind を CST で直接生成する
   - [ ] AST builder の「statement 再パース」依存を段階的に削減する
 
-- [ ] P5-25: 動的ディスパッチ（vtable/itable）を call lowering/codegen に接続する（spec.md J13.2）
+- [x] P5-25: 動的ディスパッチ（vtable/itable）を call lowering/codegen に接続する（spec.md J13.2）
   - [ ] member call で virtual dispatch が必要なケースを判定し、slot ベース呼び出し IR を導入する
   - [ ] class override は同一 vtable slot、interface call は itable 経由で解決する
   - [ ] override/interface dispatch の E2E 回帰ケースを追加する
 
-- [ ] P5-26: ABILowering の boxing/unboxing を実装する（spec.md J12.1/J13.3）
+- [x] P5-26: ABILowering の boxing/unboxing を実装する（spec.md J12.1/J13.3）
   - [ ] nullable primitive と `Any?` 境界で boxing/unboxing 規則を実装する
   - [ ] runtime 値表現（tagged/boxed）と `kk_println_any`/call ABI の整合を取る
   - [ ] boxing 境界を含む型推論 + 実行回帰ケースを追加する
 
-- [ ] P5-27: runtime C ABI シグネチャを spec 固定形へ厳密化する（spec.md J16.1）
+- [x] P5-27: runtime C ABI シグネチャを spec 固定形へ厳密化する（spec.md J16.1）
   - [ ] `kk_alloc` など公開シンボルの引数/戻り型を仕様シグネチャへ揃える（nullable 許容の方針も含む）
   - [ ] compiler/backend 側の extern 宣言を runtime 実体と自動突合する仕組み（共有 header 生成など）を導入する
   - [ ] ABI ずれを検出するビルド時テストを追加する
 
-- [ ] P5-28: `interface` 宣言を `class` へ潰さずに front-to-back で区別する（spec.md J6/J7/J13.2）
+- [x] P5-28: `interface` 宣言を `class` へ潰さずに front-to-back で区別する（spec.md J6/J7/J13.2）
   - [ ] AST/Sema モデルで interface 種別を保持し、`FrontendPhases` の `interfaceDecl -> classDecl` 変換を解消する
   - [ ] header 収集・継承グラフ・layout 合成で interface を正しく扱う（superClass と interface 集合を分離）
   - [ ] interface 実装/override/dispatch の差分ケースを追加する
 
-- [ ] P5-29: class/object body の member 宣言（fun/property）を AST/Sema/KIR に接続する（spec.md J6/J7/J12）
+- [x] P5-29: class/object body の member 宣言（fun/property）を AST/Sema/KIR に接続する（spec.md J6/J7/J12）
   - [ ] `ClassDecl`/`ObjectDecl` に member 宣言リストを保持し、body 内 `fun`/`val`/`var` を AST へ昇格する
   - [ ] nested `class`/`object` 宣言を class/object body から保持し、owner FQName 配下へシンボル化する
   - [ ] `ClassMemberScope` を使った member symbol 収集と参照解決（`this` レシーバ込み）を実装する
   - [ ] backing field 実体化と delegated property（`by`）の lowering を実装する
   - [ ] member 関数/プロパティを KIR へ落とし込み、metadata/layout と整合させる
 
-- [ ] P5-30: constructor 宣言と呼び出し解決を実装する（spec.md J5/J7/J13）
+- [x] P5-30: constructor 宣言と呼び出し解決を実装する（spec.md J5/J7/J13）
   - [ ] primary/secondary constructor の構文を Parser/AST で扱い、`constructor` symbol を定義する
   - [ ] class 呼び出しを constructor overload 解決へ接続し、`super`/`this` 委譲規則を検査する
   - [ ] init block と constructor 実行順序を lowering/codegen で保証する
 
-- [ ] P5-31: 型参照を named-only から拡張し、型引数・関数型・明示型引数呼び出しを実装する（spec.md J5/J6/J8/J9）
+- [x] P5-31: 型参照を named-only から拡張し、型引数・関数型・明示型引数呼び出しを実装する（spec.md J5/J6/J8/J9）
   - [ ] `TypeRef` を type arguments/projection(`in`/`out`/`*`)/function type/suspend function type 対応へ拡張する
   - [ ] `resolveTypeRef` で `ClassType.args` と `FunctionType` を復元し、variance 検査へ接続する
   - [ ] 継承節（`superTypes`）で型引数付き supertype を保持し、継承グラフ構築時に型実引数を失わないようにする
   - [ ] call-site 明示型引数（`foo<Int>(...)`）を parser/sema/resolver に通し、推論結果と統合する
 
-- [ ] P5-32: typealias の実体型保存と展開解決を実装する（spec.md J6/J7/J8/J14.3）
+- [x] P5-32: typealias の実体型保存と展開解決を実装する（spec.md J6/J7/J8/J14.3）
   - [ ] `TypeAliasDecl` に RHS 型参照を保持し、Parser/AST builder で抽出する
   - [ ] Sema に alias target 解決と循環検出を追加し、型解決時に展開する
   - [ ] metadata export/import で typealias シグネチャを保存/復元し、不整合診断を追加する
@@ -333,72 +333,72 @@
   - [x] 型推論で template 埋め込み値を `String` 変換規則へ接続する
   - [x] KIR で `kk_string_concat` 連結へ lowering し、補間ケースの回帰テストを追加する
 
-- [ ] P5-38: 型パラメータ境界（`T : Upper` / `where` 句）を Parser/Sema/Resolver に実装する（spec.md J6/J8/J9）
+- [x] P5-38: 型パラメータ境界（`T : Upper` / `where` 句）を Parser/Sema/Resolver に実装する（spec.md J6/J8/J9）
   - [ ] `TypeParamDecl` に upper bound 情報を保持し、宣言ヘッダで `where` 句を抽出する
   - [ ] 型推論/overload 解決で type argument が境界制約を満たすことを検証する
   - [ ] 境界違反時の診断と回帰ケース（宣言側・呼び出し側）を追加する
 
-- [ ] P5-39: vararg 実引数を call lowering/ABI で正規化する（spec.md J9/J11/J12）
+- [x] P5-39: vararg 実引数を call lowering/ABI で正規化する（spec.md J9/J11/J12）
   - [ ] 複数実引数が 1 つの vararg parameter に束縛された場合に、KIR で配列（または等価表現）へパックする
   - [ ] spread 引数（`*args`）と通常引数の混在を lowering で保持し、callee 側 ABI と整合させる
   - [ ] vararg + default 引数 + named 引数の組み合わせ回帰ケースを追加する
 
-- [ ] P5-40: 未解決参照・型参照の診断を strict 化する（spec.md J7/J8/J9）
+- [x] P5-40: 未解決参照・型参照の診断を strict 化する（spec.md J7/J8/J9）
   - [ ] `nameRef`/`call`/`memberCall` の unresolved 経路で `errorType` を返すだけでなく診断（`KSWIFTK-SEMA-*`）を出す
   - [ ] `resolveTypeRef` の未知型 fallback（`Any` へ丸める現実装）を廃止し、型名解決失敗を診断する
   - [ ] unresolved 診断の回帰ケース（識別子・関数呼び出し・型注釈）を追加する
 
-- [ ] P5-41: local 変数宣言の完全化（未初期化宣言・型注釈）を実装する（spec.md J6/J7/J9）
+- [x] P5-41: local 変数宣言の完全化（未初期化宣言・型注釈）を実装する（spec.md J6/J7/J9）
   - [ ] AST `localDecl` が initializer 省略を表現できるよう拡張する（`var x: Int` 対応）
   - [ ] local 宣言の型注釈（`val x: T = ...` / `var x: T`）を保持し、推論/代入検査に接続する
   - [ ] 未初期化 local の使用前参照を診断する data-flow チェックを追加する
 
-- [ ] P5-42: block-scope 宣言（local function など）を AST/Sema/KIR に接続する（spec.md J6/J7/J9）
+- [x] P5-42: block-scope 宣言（local function など）を AST/Sema/KIR に接続する（spec.md J6/J7/J9）
   - [ ] block 内 `fun` 宣言を `blockExpressions` で捨てない AST 表現へ変更する
   - [ ] `FunctionScope`/`BlockScope` に local function symbol を登録し、後続式から参照解決できるようにする
   - [ ] local function 呼び出しの KIR 生成と回帰ケースを追加する
 
-- [ ] P5-43: import 解決を library symbol まで拡張し wildcard/default import を有効化する（spec.md J7）
+- [x] P5-43: import 解決を library symbol まで拡張し wildcard/default import を有効化する（spec.md J7）
   - [ ] library import 時に package symbol と package->top-level symbol インデックスを構築する
   - [ ] `buildFileScopes` が source 由来だけでなく imported symbol を default/wildcard import 対象へ取り込むよう修正する
   - [ ] `import foo.bar.*` と default import が `.kklib` シンボルで機能する回帰ケースを追加する
 
-- [ ] P5-44: coroutine launcher lowering の zero-argument 制約を解消する（spec.md J17.3）
+- [x] P5-44: coroutine launcher lowering の zero-argument 制約を解消する（spec.md J17.3）
   - [ ] `runBlocking`/`launch`/`async` が 0 引数 suspend 関数参照専用となっている制約を解除する
   - [ ] suspend lambda/closure と引数付き suspend 関数呼び出しへの橋渡しを実装する
   - [ ] launcher + 引数あり suspend 関数の E2E 回帰ケースを追加する
 
-- [ ] P5-45: `-g` の debug info 出力を backend/link へ実装する（spec.md J1/J15）
+- [x] P5-45: `-g` の debug info 出力を backend/link へ実装する（spec.md J1/J15）
   - [ ] `CompilerOptions.emitsDebugInfo` を `LLVMBackend`/`LLVMCAPIBackend` の emit path へ反映する
   - [ ] synthetic C backend の clang 呼び出しに debug flag を接続し、出力に debug section が含まれることを確認する
   - [ ] LLVM C API backend で DI metadata の最小生成（または仕様化した制限つき対応）を追加する
 
-- [ ] P5-46: 数値リテラルの lexical grammar を Kotlin 仕様に合わせる（spec.md J4）
+- [x] P5-46: 数値リテラルの lexical grammar を Kotlin 仕様に合わせる（spec.md J4）
   - [ ] `0o` など Kotlin 非対応プレフィックスを受理しないよう lexer を修正する
   - [ ] underscore/suffix の許容位置を仕様どおりに検証し、違反時診断を固定する
   - [ ] 数値リテラル grammar 回帰ケース（valid/invalid）を golden に追加する
 
-- [ ] P5-47: block expression の文脈で複文評価（複数 statement + 末尾式）を実装する（spec.md J6/J9/J11）
+- [x] P5-47: block expression の文脈で複文評価（複数 statement + 末尾式）を実装する（spec.md J6/J9/J11）
   - [ ] `ExpressionParser.parseBlockExpression` の単一式再パースを廃止し、block 内 statement 列と末尾式を AST で保持する
   - [ ] block expression 内の local declaration/scope を type inference に接続する
   - [ ] `if`/`when`/`try` branch に `{ a; b; c }` を置いた場合の型と実行順序を回帰テスト化する
 
-- [ ] P5-48: `return` の制御フローを nested expression から正しく伝播させる（spec.md J6/J11/J12）
+- [x] P5-48: `return` の制御フローを nested expression から正しく伝播させる（spec.md J6/J11/J12）
   - [ ] BuildKIR で `returnExpr` を値式として潰さず、関数終端ジャンプとして lowering する
   - [ ] `if`/`when`/`try` の分岐内部にある `return` を親関数の return へ接続する
   - [ ] nested return 回帰ケース（`if` 内 return / `when` branch return）を追加する
 
-- [ ] P5-49: subject-less `when`（`when { ... }`）を Parser/Sema/KIR へ実装する（spec.md J5/J6/J9）
+- [x] P5-49: subject-less `when`（`when { ... }`）を Parser/Sema/KIR へ実装する（spec.md J5/J6/J9）
   - [ ] `parseWhenExpression` が subject 必須になっている現実装を拡張し、subject 省略形を AST で表現する
   - [ ] 分岐条件を `Boolean` 文脈で型検査し、exhaustiveness 規則へ接続する
   - [ ] subject-less when の回帰ケース（guard 連鎖）を追加する
 
-- [ ] P5-50: `super` / qualified `this` 解決を実装する（spec.md J7/J9/J13.2）
+- [x] P5-50: `super` / qualified `this` 解決を実装する（spec.md J7/J9/J13.2）
   - [ ] AST に `super` / `this@Label`（必要最小）を区別する参照ノードを追加する
   - [ ] member 解決で supertype member lookup を実装し、override 先呼び出しに接続する
   - [ ] super call の lowering/codegen（direct/special dispatch）を追加する
 
-- [ ] P5-51: `if/when` の branch 評価を eager `select` から制御フロー化へ移行する（spec.md J11/J12）
+- [x] P5-51: `if/when` の branch 評価を eager `select` から制御フロー化へ移行する（spec.md J11/J12）
   - [ ] `BuildKIRPass` の `ifExpr`/`whenExpr` lowering で全分岐を先に評価してしまう現実装を廃止する
   - [ ] branch ごとに block/jump（または等価表現）を生成し、選択された分岐だけを評価する
   - [ ] 分岐内の副作用・`return`・`throw` が非選択分岐から漏れない回帰ケースを追加する
@@ -408,7 +408,7 @@
   - [ ] ファイル跨ぎで statement が連結される経路（token 連結時の境界欠落）を解消する
   - [ ] file ごとの `kotlinFile`/`script` 判定と `ASTFile` 構築が安定する回帰ケースを追加する
 
-- [ ] P5-53: visibility（public/internal/protected/private）を解決規則へ反映する（spec.md J6.3/J7）
+- [x] P5-53: visibility（public/internal/protected/private）を解決規則へ反映する（spec.md J6.3/J7）
   - [ ] `lookup`/import 解決で不可視シンボルを候補から除外するアクセス制御層を追加する
   - [ ] top-level `private` の file スコープ制約と member `protected` 制約を検証する
   - [ ] 不可視参照時の診断（`KSWIFTK-SEMA-*`）と回帰ケースを追加する
@@ -418,7 +418,7 @@
   - [ ] 現在ターゲットと非互換な library を import した場合に `KSWIFTK-LIB-*` で失敗させる
   - [ ] `objects`/`metadata`/`inlineKIRDir` のパス妥当性チェックを追加する
 
-- [ ] P5-55: Data-flow 解析を true/false 分岐状態モデルへ拡張する（spec.md J10.1）
+- [x] P5-55: Data-flow 解析を true/false 分岐状態モデルへ拡張する（spec.md J10.1）
   - [ ] `DataFlowState` を式条件（`if`/`when`/logical op）で分岐生成し、CFG 合流点で merge する
   - [ ] smart cast/nullability 判定を ad-hoc 判定から `DataFlowState` 駆動へ移行する
   - [ ] 分岐後の型縮小・nullability 更新が維持される回帰ケースを追加する
@@ -484,12 +484,12 @@
   - [ ] `?.`/`!!`/`?:` を含む diff/golden 回帰ケースを追加し、`kotlinc` と出力一致を確認する
   - **完了条件**: `?.`/`!!`/`?:` すべてで `Scripts/diff_kotlinc.sh` が pass し、null-chain 複合式の型推論が一致する
 
-- [ ] P5-66: nullable/non-null スマートキャスト伝播を DataFlowState に統合する（spec.md J10/J10.1）
+- [x] P5-66: nullable/non-null スマートキャスト伝播を DataFlowState に統合する（spec.md J10/J10.1）
   - [ ] `DataFlowState` に variable ごとの nullability-refined 型（`narrowedType`）を追加する
   - [ ] `if (x != null)` / `x ?: return` / `!!` などのガードパターンを DataFlowAnalysis が認識し、then 分岐で `x` の型を non-null に narrow する
   - [ ] DataFlowState の merge（CFG join 点）で nullability 情報を conservative merge（nullable ← nullable ∪ non-null）する
   - [ ] smart cast 済み変数への `.method()` 呼び出しが `?.` 不要で解決されることを確認する
-  - [ ] P5-55 で追加済の true/false 分岐モデルへ nullability 判定を接続する
+  - [x] P5-55 で追加済の true/false 分岐モデルへ nullability 判定を接続する
   - [ ] nullability smart cast の境界ケース（再代入後の失効、ラムダ内キャプチャ）の診断回帰ケースを追加する
   - **完了条件**: `if (x != null) x.length` 系パターンが warning・unsafe キャストなしでコンパイルし、再代入後は smart cast が失効する
 
@@ -497,7 +497,7 @@
 
 ### 演算子と式
 
-- [ ] P5-67: compound assignment 演算子（`+=` / `-=` / `*=` / `/=` / `%=`）を parser/sema/KIR に実装する（spec.md J5/J9）
+- [x] P5-67: compound assignment 演算子（`+=` / `-=` / `*=` / `/=` / `%=`）を parser/sema/KIR に実装する（spec.md J5/J9）
   - [ ] Parser/AST に `compoundAssign` ノードを追加し、`+=` 〜 `%=` に対応するトークンを認識する
   - [ ] Sema で `x += y` を `x = x.plus(y)`（または operator function）へ desugaring し、`val` への再代入を診断する
   - [ ] `augmentedAssignment` operator（`plusAssign`/`minusAssign` 等）が定義されている型では `plusAssign` 優先で解決する
@@ -529,7 +529,7 @@
   - [ ] `invoke` 演算子の diff/golden ケース（function object、SAM 等）を追加する
   - **完了条件**: `class F { operator fun invoke(x: Int) = x }; val f = F(); f(1)` が動作し、`kotlinc` 出力と一致する
 
-- [ ] P5-71: `in` / `!in` 演算子と `contains` operator への desugaring を実装する（spec.md J9）
+- [x] P5-71: `in` / `!in` 演算子と `contains` operator への desugaring を実装する（spec.md J9）
   - [ ] Parser/AST で `inExpr`（`x in collection`）/ `notInExpr`（`x !in collection`）を認識する
   - [ ] Sema で `x in c` → `c.contains(x)`、`x !in c` → `!c.contains(x)` へ desugaring する
   - [ ] `when` branch の `in range` / `!in list` パターンを型検査・exhaustiveness に接続する（P5-83 と連携）
@@ -555,7 +555,7 @@
   - [ ] `companion object` の `const val`・factory 関数を含む diff/golden ケースを追加する
   - **完了条件**: `Foo.create()` のような companion factory が動作し、companion singleton が一度だけ初期化される
 
-- [ ] P5-74: `data class` の合成メンバ（`copy`/`componentN`/`equals`/`hashCode`/`toString`）を完成させる（spec.md J6/J14.3）
+- [x] P5-74: `data class` の合成メンバ（`copy`/`componentN`/`equals`/`hashCode`/`toString`）を完成させる（spec.md J6/J14.3）
   - [ ] DataEnumSealedSynthesis で `data class` の primary constructor 引数から `componentN()` を生成する
   - [ ] `copy(param = value)` を named argument 付き constructor 呼び出しとして合成する
   - [ ] `equals`（structual equality）/ `hashCode` / `toString` を field リストから合成し、既存 override と整合させる
@@ -630,7 +630,7 @@
   - [ ] destructuring の diff/golden ケース（data class・Map.Entry・lambda）を追加する
   - **完了条件**: `val (x, y) = Point(1, 2)` が `component1()`/`component2()` 呼び出しに展開され動作する
 
-- [ ] P5-83: `when` の型パターン（`is T` / `in range` / `!in collection`）と guard を完全実装する（spec.md J6/J9/J10）
+- [x] P5-83: `when` の型パターン（`is T` / `in range` / `!in collection`）と guard を完全実装する（spec.md J6/J9/J10）
   - [ ] Parser/AST で `when` branch condition に `is T`（型チェック）/ `in expr`（`in` テスト）/ `!in expr`（`!in` テスト）を表現する
   - [ ] `is T` branch 直後に smart cast（P5-66 連携）を適用する
   - [ ] `in range` / `!in list` を P5-71 の `contains` desugaring 経由で評価する
@@ -662,7 +662,7 @@
 
 ### アノテーション
 
-- [ ] P5-86: `@annotation` 構文を Parser/AST/Sema で保持し、use-site target を metadata に反映する（spec.md J6/J14.3）
+- [x] P5-86: `@annotation` 構文を Parser/AST/Sema で保持し、use-site target を metadata に反映する（spec.md J6/J14.3）
   - [ ] Parser/AST でアノテーション（`@Foo` / `@Foo(args)` / `@file:Foo`）を modifiers node に保持する
   - [ ] Sema でアノテーション型を `class` シンボルとして解決し、引数の型を検証する
   - [ ] use-site target（`@get:` / `@set:` / `@field:` 等）を property accessor へ付与する規則を実装する
@@ -707,7 +707,7 @@
   - [ ] 診断 JSON 出力の golden ケースを追加し、スキーマ変更を検知する
   - **完了条件**: 全診断が `KSWIFTK-*` コードを持ち、JSON 出力が LSP 準拠スキーマで整合し、golden テストが pass する
 
-- [ ] P5-91: incremental compilation（変更ファイルのみ再コンパイル）の基盤を整備する（spec.md J1）
+- [x] P5-91: incremental compilation（変更ファイルのみ再コンパイル）の基盤を整備する（spec.md J1）
   - [ ] `CompilerDriver` に入力ファイルの content hash / mtime を記録するキャッシュ層を追加する
   - [ ] 変更なしファイルの Parse/AST/Sema 結果を `.kirbin` キャッシュから再利用する経路を実装する
   - [ ] 依存グラフ（symbol 使用関係）を构築し、変更ファイルに依存するファイルを再コンパイル対象に追加する
@@ -735,7 +735,7 @@
 
 ### 🔤 Lexer / Literals
 
-- [ ] P5-93: multiline raw string（`"""..."""`）のエスケープなし文字列リテラルを完全実装する（spec.md J4）
+- [x] P5-93: multiline raw string（`"""..."""`）のエスケープなし文字列リテラルを完全実装する（spec.md J4）
   - [ ] `"""` で囲われた生文字列トークンを Lexer で独立したトークン種別（`rawStringLiteral`）として扱う
   - [ ] 内部改行・タブ・`\` をエスケープ不要として保持し、文字コード変換を行わない
   - [ ] `trimIndent()` / `trimMargin()` の stdlib stub を追加し、common 用法を lowering で接続する
@@ -751,7 +751,7 @@
   - [ ] Char エスケープ・Unicode escape の diff/golden ケースを追加する
   - **完了条件**: `'\u0041'` が `'A'` と同一 Char 値になり、不正エスケープが診断される
 
-- [ ] P5-95: 数値リテラルの underscore/suffix/binary 形式と型強制を完全実装する（spec.md J4）
+- [x] P5-95: 数値リテラルの underscore/suffix/binary 形式と型強制を完全実装する（spec.md J4）
   - [ ] `1_000_000` の underscore 区切りを lexer で処理し、値には影響しない
   - [ ] `0b1010` binary リテラルを Kotlin 仕様どおりに受理する（`0o` 等は拒否・診断）
   - [ ] `0xFF` / `0XDEADBEEF` hex リテラルの大文字小文字を正規化する
@@ -800,7 +800,7 @@
 
 ### ⚙️ Expressions / Operators
 
-- [ ] P5-100: `as`（unsafe cast）/ `as?`（safe cast）を型推論・KIR・runtime まで実装する（spec.md J9）
+- [x] P5-100: `as`（unsafe cast）/ `as?`（safe cast）を型推論・KIR・runtime まで実装する（spec.md J9）
   - [ ] Parser/AST に `castExpr`（`expr as Type`）/ `safeCastExpr`（`expr as? Type`）ノードを追加する
   - [ ] `as` は cast 失敗時に `ClassCastException` を `outThrown` 経由で throw し、型を target type へ narrow する
   - [ ] `as?` は cast 失敗時に `null` を返し、型を `TargetType?` へ narrow する
@@ -886,7 +886,7 @@
   - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-109`
   - **完了条件**: `const val MAX = 100; if (x > MAX) ...` が `if (x > 100)` と同等にコンパイルされる
 
-- [ ] P5-110: `lateinit var` の初期化チェックと `isInitialized` を実装する（spec.md J6/J7）
+- [x] P5-110: `lateinit var` の初期化チェックと `isInitialized` を実装する（spec.md J6/J7）
   - [ ] `lateinit var` を Sema で認識し、nullable でないこと・reference type 制約を検証する
   - [ ] 未初期化 `lateinit var` へのアクセス時に `UninitializedPropertyAccessException` を `outThrown` 経由で throw する
   - [ ] `::x.isInitialized` を property reference の特別属性として Sema/KIR に接続する
@@ -964,7 +964,7 @@
   - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-119`
   - **完了条件**: `1 to "one"` が `Pair(1, "one")` に、カスタム infix 関数が正しい優先順位で評価される
 
-- [ ] P5-120: `operator fun` の全標準 operator を網羅し診断を整備する（spec.md J9）
+- [x] P5-120: `operator fun` の全標準 operator を網羅し診断を整備する（spec.md J9）
   - [ ] 標準 operator 名（`plus`/`minus`/`times`/`div`/`rem`/`unaryPlus`/`unaryMinus`/`not`/`inc`/`dec`/`rangeTo`/`rangeUntil`/`contains`/`get`/`set`/`invoke`/`iterator`/`hasNext`/`next`/`component1..N`/`compareTo`/`equals`）を全列挙する
   - [ ] operator 名と引数・戻り値の型制約を Sema で検証する（例: `inc()` は receiver 型を返す）
   - [ ] `operator` 修飾子なしで operator 名の関数を演算子として使おうとした場合に診断する
@@ -1111,7 +1111,7 @@
 
 ### 📦 Stdlib / DSL
 
-- [ ] P5-137: スコープ関数（`let`/`run`/`apply`/`also`/`with`）を extension として実装する（spec.md J9/J12）
+- [x] P5-137: スコープ関数（`let`/`run`/`apply`/`also`/`with`）を extension として実装する（spec.md J9/J12）
   - [ ] `let`/`run`/`apply`/`also`/`with` を stdlib extension function stub として定義する
   - [ ] 各スコープ関数の receiver / lambda parameter / 戻り値の型規則を正確に実装する
     - `let { it -> R }` → receiver を `it`、戻り値 `R`
@@ -1149,7 +1149,7 @@
   - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-140`
   - **完了条件**: `expect fun platform()` に対する `actual fun platform()` が正しくリンクされ動作する
 
-- [ ] P5-141: file-level annotation（`@file:JvmName`・`@file:Suppress`）と package-level 制約を実装する（spec.md J6）
+- [x] P5-141: file-level annotation（`@file:JvmName`・`@file:Suppress`）と package-level 制約を実装する（spec.md J6）
   - [ ] `@file:AnnotationName` を Parser/AST でファイルレベル annotation として保持する
   - [ ] `@file:Suppress("CODE")` をファイル全体への診断抑制として Sema で適用する
   - [ ] `@file:JvmName("...")` を ABI / metadata で保持し、他モジュールから参照できるようにする
