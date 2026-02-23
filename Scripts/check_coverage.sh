@@ -4,14 +4,14 @@ set -euo pipefail
 threshold="${COVERAGE_THRESHOLD:-97}"
 
 readonly targets=(
-  "Sources/CompilerCore/TokenStream.swift"
-  "Sources/CompilerCore/SourceManager.swift"
-  "Sources/CompilerCore/ConstraintSolver.swift"
-  "Sources/CompilerCore/OverloadResolver.swift"
-  "Sources/CompilerCore/SyntaxArena.swift"
-  "Sources/CompilerCore/CompilerTypes.swift"
-  "Sources/CompilerCore/TokenModel.swift"
-  "Sources/CompilerCore/ASTModels.swift"
+  "Sources/CompilerCore/Lexer/TokenStream.swift"
+  "Sources/CompilerCore/Driver/SourceManager.swift"
+  "Sources/CompilerCore/Sema/ConstraintSolver.swift"
+  "Sources/CompilerCore/Sema/OverloadResolver.swift"
+  "Sources/CompilerCore/Parser/SyntaxArena.swift"
+  "Sources/CompilerCore/Sema/CompilerTypes.swift"
+  "Sources/CompilerCore/Lexer/TokenModel.swift"
+  "Sources/CompilerCore/AST/ASTModels.swift"
 )
 
 bash Scripts/swift_test.sh --enable-code-coverage

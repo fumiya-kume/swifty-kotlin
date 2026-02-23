@@ -1132,14 +1132,14 @@ bash Scripts/check_coverage.sh
 ## J19.3 判定ルール
 
 * 対象:
-  * `Sources/CompilerCore/TokenStream.swift`
-  * `Sources/CompilerCore/SourceManager.swift`
-  * `Sources/CompilerCore/ConstraintSolver.swift`
-  * `Sources/CompilerCore/OverloadResolver.swift`
-  * `Sources/CompilerCore/SyntaxArena.swift`
-  * `Sources/CompilerCore/CompilerTypes.swift`
-  * `Sources/CompilerCore/TokenModel.swift`
-  * `Sources/CompilerCore/ASTModels.swift`
+  * `Sources/CompilerCore/Lexer/TokenStream.swift`
+  * `Sources/CompilerCore/Driver/SourceManager.swift`
+  * `Sources/CompilerCore/Sema/ConstraintSolver.swift`
+  * `Sources/CompilerCore/Sema/OverloadResolver.swift`
+  * `Sources/CompilerCore/Parser/SyntaxArena.swift`
+  * `Sources/CompilerCore/Sema/CompilerTypes.swift`
+  * `Sources/CompilerCore/Lexer/TokenModel.swift`
+  * `Sources/CompilerCore/AST/ASTModels.swift`
 * しきい値: 95%（`COVERAGE_THRESHOLD` で上書き可）
 * いずれか1ファイルでも未達なら `exit 1`
 aa
