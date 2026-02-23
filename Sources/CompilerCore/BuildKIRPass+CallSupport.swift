@@ -35,6 +35,8 @@ extension BuildKIRPhase {
                 mapping[symbol] = defaults
             }
         case .classDecl(let classDecl):
+            // Collect default arguments for primary constructor parameters.
+            collectConstructorDefaults(classDecl, ast: ast, sema: sema, mapping: &mapping)
             for memberDeclID in classDecl.memberFunctions {
                 collectFunctionDefaults(memberDeclID, ast: ast, sema: sema, mapping: &mapping)
             }
@@ -50,6 +52,36 @@ extension BuildKIRPhase {
             }
         default:
             break
+        }
+    }
+
+    func collectConstructorDefaults(
+        _ classDecl: ClassDecl,
+        ast: ASTModule,
+        sema: SemaModule,
+        mapping: inout [SymbolID: [ExprID?]]
+    ) {
+        // Primary constructor default arguments.
+        let primaryDefaults = classDecl.primaryConstructorParams.map(\.defaultValue)
+        if primaryDefaults.contains(where: { $0 != nil }) {
+            let ctorSymbols = sema.symbols.allSymbols().filter {
+                $0.kind == .constructor && $0.declSite == classDecl.range
+            }
+            if let primaryCtorSymbol = ctorSymbols.first {
+                mapping[primaryCtorSymbol.id] = primaryDefaults
+            }
+        }
+        // Secondary constructor default arguments.
+        for secondaryCtor in classDecl.secondaryConstructors {
+            let secDefaults = secondaryCtor.valueParams.map(\.defaultValue)
+            if secDefaults.contains(where: { $0 != nil }) {
+                let secCtorSymbols = sema.symbols.allSymbols().filter {
+                    $0.kind == .constructor && $0.declSite == secondaryCtor.range
+                }
+                if let secCtorSymbol = secCtorSymbols.first {
+                    mapping[secCtorSymbol.id] = secDefaults
+                }
+            }
         }
     }
 

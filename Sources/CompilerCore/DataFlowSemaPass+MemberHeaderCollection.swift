@@ -26,14 +26,13 @@ extension DataFlowSemaPassPhase {
                 continue
             }
             let memberFQName = ownerFQName + [funDecl.name]
-            let existingFunSymbols = symbols.lookupAll(fqName: memberFQName).compactMap { symbols.symbol($0) }
-            if hasDeclarationConflict(newKind: .function, existing: existingFunSymbols) {
-                diagnostics.error(
-                    "KSWIFTK-SEMA-0001",
-                    "Duplicate declaration in the same package scope.",
-                    range: funDecl.range
-                )
-            }
+            checkAndReportDuplicateDeclaration(
+                newKind: .function,
+                fqName: memberFQName,
+                range: funDecl.range,
+                symbols: symbols,
+                diagnostics: diagnostics
+            )
             let memberFlags = flags(from: funDecl.modifiers)
             let memberSymbol = symbols.define(
                 kind: .function,
@@ -48,79 +47,25 @@ extension DataFlowSemaPassPhase {
             scope.insert(memberSymbol)
 
             let localNamespaceFQName = memberFQName + [interner.intern("$\(memberSymbol.rawValue)")]
-            var paramTypes: [TypeID] = []
-            var paramSymbols: [SymbolID] = []
-            var paramHasDefaultValues: [Bool] = []
-            var paramIsVararg: [Bool] = []
-            var typeParameterSymbols: [SymbolID] = []
-            var localTypeParameters: [InternedString: SymbolID] = [:]
-            var reifiedIndices: Set<Int> = []
+            let typeParamResult = collectFunctionTypeParameters(
+                funDecl.typeParams,
+                localNamespaceFQName: localNamespaceFQName,
+                declSite: funDecl.range,
+                ast: ast, symbols: symbols, types: types,
+                interner: interner, isInline: funDecl.isInline,
+                diagnostics: diagnostics
+            )
 
-            for (index, typeParam) in funDecl.typeParams.enumerated() {
-                let typeParamFQName = localNamespaceFQName + [typeParam.name]
-                let typeParamFlags: SymbolFlags = typeParam.isReified ? [.reifiedTypeParameter] : []
-                let typeParamSymbol = symbols.define(
-                    kind: .typeParameter,
-                    name: typeParam.name,
-                    fqName: typeParamFQName,
-                    declSite: funDecl.range,
-                    visibility: .private,
-                    flags: typeParamFlags
-                )
-                typeParameterSymbols.append(typeParamSymbol)
-                localTypeParameters[typeParam.name] = typeParamSymbol
-                if typeParam.isReified {
-                    reifiedIndices.insert(index)
-                }
-            }
-            for typeParam in funDecl.typeParams {
-                if let boundRef = typeParam.upperBound,
-                   let typeParamSym = localTypeParameters[typeParam.name] {
-                    if let boundType = resolveTypeRef(
-                        boundRef,
-                        ast: ast,
-                        symbols: symbols,
-                        types: types,
-                        interner: interner,
-                        localTypeParameters: localTypeParameters
-                    ) {
-                        symbols.setTypeParameterUpperBound(boundType, for: typeParamSym)
-                    }
-                }
-            }
-
-            if !reifiedIndices.isEmpty && !funDecl.isInline {
-                diagnostics.error(
-                    "KSWIFTK-SEMA-0020",
-                    "Only type parameters of inline functions can be reified",
-                    range: funDecl.range
-                )
-            }
-
-            for valueParam in funDecl.valueParams {
-                let paramFQName = localNamespaceFQName + [valueParam.name]
-                let paramSymbol = symbols.define(
-                    kind: .valueParameter,
-                    name: valueParam.name,
-                    fqName: paramFQName,
-                    declSite: funDecl.range,
-                    visibility: .private,
-                    flags: []
-                )
-                let resolvedType = resolveTypeRef(
-                    valueParam.type,
-                    ast: ast,
-                    symbols: symbols,
-                    types: types,
-                    interner: interner,
-                    localTypeParameters: localTypeParameters,
-                    diagnostics: diagnostics
-                ) ?? anyType
-                paramTypes.append(resolvedType)
-                paramSymbols.append(paramSymbol)
-                paramHasDefaultValues.append(valueParam.hasDefaultValue)
-                paramIsVararg.append(valueParam.isVararg)
-            }
+            let params = collectValueParameters(
+                funDecl.valueParams,
+                localNamespaceFQName: localNamespaceFQName,
+                declSite: funDecl.range,
+                ast: ast, symbols: symbols, types: types,
+                interner: interner,
+                localTypeParameters: typeParamResult.localTypeParameters,
+                diagnostics: diagnostics,
+                fallbackType: anyType
+            )
 
             let returnType: TypeID
             if let explicit = resolveTypeRef(
@@ -129,7 +74,7 @@ extension DataFlowSemaPassPhase {
                 symbols: symbols,
                 types: types,
                 interner: interner,
-                localTypeParameters: localTypeParameters,
+                localTypeParameters: typeParamResult.localTypeParameters,
                 diagnostics: diagnostics
             ) {
                 returnType = explicit
@@ -142,18 +87,18 @@ extension DataFlowSemaPassPhase {
                 }
             }
 
-            let memberUpperBounds: [TypeID?] = typeParameterSymbols.map { symbols.typeParameterUpperBound(for: $0) }
+            let memberUpperBounds: [TypeID?] = typeParamResult.typeParameterSymbols.map { symbols.typeParameterUpperBound(for: $0) }
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: ownerType,
-                    parameterTypes: paramTypes,
+                    parameterTypes: params.paramTypes,
                     returnType: returnType,
                     isSuspend: funDecl.isSuspend,
-                    valueParameterSymbols: paramSymbols,
-                    valueParameterHasDefaultValues: paramHasDefaultValues,
-                    valueParameterIsVararg: paramIsVararg,
-                    typeParameterSymbols: typeParameterSymbols,
-                    reifiedTypeParameterIndices: reifiedIndices,
+                    valueParameterSymbols: params.paramSymbols,
+                    valueParameterHasDefaultValues: params.paramHasDefaultValues,
+                    valueParameterIsVararg: params.paramIsVararg,
+                    typeParameterSymbols: typeParamResult.typeParameterSymbols,
+                    reifiedTypeParameterIndices: typeParamResult.reifiedIndices,
                     typeParameterUpperBounds: memberUpperBounds
                 ),
                 for: memberSymbol
@@ -166,14 +111,13 @@ extension DataFlowSemaPassPhase {
                 continue
             }
             let memberFQName = ownerFQName + [propertyDecl.name]
-            let existingPropSymbols = symbols.lookupAll(fqName: memberFQName).compactMap { symbols.symbol($0) }
-            if hasDeclarationConflict(newKind: .property, existing: existingPropSymbols) {
-                diagnostics.error(
-                    "KSWIFTK-SEMA-0001",
-                    "Duplicate declaration in the same package scope.",
-                    range: propertyDecl.range
-                )
-            }
+            checkAndReportDuplicateDeclaration(
+                newKind: .property,
+                fqName: memberFQName,
+                range: propertyDecl.range,
+                symbols: symbols,
+                diagnostics: diagnostics
+            )
             var propertyFlags = flags(from: propertyDecl.modifiers)
             if propertyDecl.isVar {
                 propertyFlags.insert(.mutable)
@@ -199,6 +143,28 @@ extension DataFlowSemaPassPhase {
                 diagnostics: diagnostics
             ) ?? types.nullableAnyType
             symbols.setPropertyType(resolvedType, for: memberSymbol)
+
+            // Materialize a backing field symbol for properties with custom accessors
+            // (Kotlin `field` identifier in getter/setter bodies).
+            // Simple properties with only an initializer don't need a separate
+            // backing field — the property symbol IS the storage.
+            let needsBackingField = propertyDecl.getter != nil
+                || propertyDecl.setter != nil
+            if needsBackingField && propertyDecl.delegateExpression == nil {
+                let fieldName = interner.intern("$backing_\(interner.resolve(propertyDecl.name))")
+                let fieldFQName = ownerFQName + [fieldName]
+                let backingFieldSymbol = symbols.define(
+                    kind: .backingField,
+                    name: fieldName,
+                    fqName: fieldFQName,
+                    declSite: propertyDecl.range,
+                    visibility: .private,
+                    flags: propertyDecl.isVar ? [.mutable] : []
+                )
+                symbols.setParentSymbol(ownerSymbol, for: backingFieldSymbol)
+                symbols.setPropertyType(resolvedType, for: backingFieldSymbol)
+                symbols.setBackingFieldSymbol(backingFieldSymbol, for: memberSymbol)
+            }
         }
 
         for declID in nestedClasses {
@@ -209,14 +175,13 @@ extension DataFlowSemaPassPhase {
             case .classDecl(let nestedClass):
                 let nestedFQName = ownerFQName + [nestedClass.name]
                 let nestedClassKind = classSymbolKind(for: nestedClass)
-                let existingClassSymbols = symbols.lookupAll(fqName: nestedFQName).compactMap { symbols.symbol($0) }
-                if hasDeclarationConflict(newKind: nestedClassKind, existing: existingClassSymbols) {
-                    diagnostics.error(
-                        "KSWIFTK-SEMA-0001",
-                        "Duplicate declaration in the same package scope.",
-                        range: nestedClass.range
-                    )
-                }
+                checkAndReportDuplicateDeclaration(
+                    newKind: nestedClassKind,
+                    fqName: nestedFQName,
+                    range: nestedClass.range,
+                    symbols: symbols,
+                    diagnostics: diagnostics
+                )
                 let nestedSymbol = symbols.define(
                     kind: nestedClassKind,
                     name: nestedClass.name,
@@ -242,17 +207,91 @@ extension DataFlowSemaPassPhase {
                         for: nestedSymbol
                     )
                 }
+                // Create constructor symbols for nested class (primary + secondary).
+                // Kotlin rule: only define a primary constructor symbol when either
+                // (a) the class header has explicit constructor parentheses, or
+                // (b) there are no secondary constructors (implicit default ctor).
+                let ctorName = interner.intern("<init>")
+                let nestedCtorFQName = nestedFQName + [ctorName]
+                let nestedHasPrimaryCtorSyntax = nestedClass.hasPrimaryConstructorSyntax
+                let nestedHasSecondaryCtors = !nestedClass.secondaryConstructors.isEmpty
+                if nestedHasPrimaryCtorSyntax || !nestedHasSecondaryCtors {
+                    let nestedPrimaryCtorSymbol = symbols.define(
+                        kind: .constructor,
+                        name: nestedClass.name,
+                        fqName: nestedCtorFQName,
+                        declSite: nestedClass.range,
+                        visibility: visibility(from: nestedClass.modifiers),
+                        flags: []
+                    )
+                    nestedScope.insert(nestedPrimaryCtorSymbol)
+                    symbols.setParentSymbol(nestedSymbol, for: nestedPrimaryCtorSymbol)
+                    do {
+                        let localNamespaceFQName = nestedCtorFQName + [interner.intern("$\(nestedPrimaryCtorSymbol.rawValue)")]
+                        let params = collectValueParameters(
+                            nestedClass.primaryConstructorParams,
+                            localNamespaceFQName: localNamespaceFQName,
+                            declSite: nestedClass.range,
+                            ast: ast, symbols: symbols, types: types,
+                            interner: interner, diagnostics: diagnostics,
+                            fallbackType: anyType
+                        )
+                        symbols.setFunctionSignature(
+                            FunctionSignature(
+                                receiverType: nestedType,
+                                parameterTypes: params.paramTypes,
+                                returnType: nestedType,
+                                valueParameterSymbols: params.paramSymbols,
+                                valueParameterHasDefaultValues: params.paramHasDefaultValues,
+                                valueParameterIsVararg: params.paramIsVararg
+                            ),
+                            for: nestedPrimaryCtorSymbol
+                        )
+                    }
+                }
+                for (ctorIndex, secondaryCtor) in nestedClass.secondaryConstructors.enumerated() {
+                    let secCtorSymbol = symbols.define(
+                        kind: .constructor,
+                        name: nestedClass.name,
+                        fqName: nestedCtorFQName,
+                        declSite: secondaryCtor.range,
+                        visibility: visibility(from: secondaryCtor.modifiers),
+                        flags: []
+                    )
+                    nestedScope.insert(secCtorSymbol)
+                    symbols.setParentSymbol(nestedSymbol, for: secCtorSymbol)
+                    let localNamespaceFQName = nestedCtorFQName + [interner.intern("$sec\(ctorIndex)_\(secCtorSymbol.rawValue)")]
+                    let params = collectValueParameters(
+                        secondaryCtor.valueParams,
+                        localNamespaceFQName: localNamespaceFQName,
+                        declSite: secondaryCtor.range,
+                        ast: ast, symbols: symbols, types: types,
+                        interner: interner, diagnostics: diagnostics,
+                        fallbackType: anyType
+                    )
+                    symbols.setFunctionSignature(
+                        FunctionSignature(
+                            receiverType: nestedType,
+                            parameterTypes: params.paramTypes,
+                            returnType: nestedType,
+                            valueParameterSymbols: params.paramSymbols,
+                            valueParameterHasDefaultValues: params.paramHasDefaultValues,
+                            valueParameterIsVararg: params.paramIsVararg
+                        ),
+                        for: secCtorSymbol
+                    )
+                }
+
                 if classSymbolKind(for: nestedClass) == .enumClass {
                     for entry in nestedClass.enumEntries {
                         let entryFQName = nestedFQName + [entry.name]
-                        let existingEntrySymbols = symbols.lookupAll(fqName: entryFQName).compactMap { symbols.symbol($0) }
-                        if hasDeclarationConflict(newKind: .field, existing: existingEntrySymbols) {
-                            diagnostics.error(
-                                "KSWIFTK-SEMA-0001",
-                                "Duplicate declaration in the same package scope.",
-                                range: entry.range
-                            )
-                        }
+                        checkAndReportDuplicateDeclaration(
+                            newKind: .field,
+                            fqName: entryFQName,
+                            range: entry.range,
+                            symbols: symbols,
+                            diagnostics: diagnostics
+                        )
                         let entrySymbol = symbols.define(
                             kind: .field,
                             name: entry.name,
@@ -291,14 +330,13 @@ extension DataFlowSemaPassPhase {
                 )
             case .interfaceDecl(let nestedInterface):
                 let nestedFQName = ownerFQName + [nestedInterface.name]
-                let existingInterfaceSymbols = symbols.lookupAll(fqName: nestedFQName).compactMap { symbols.symbol($0) }
-                if hasDeclarationConflict(newKind: .interface, existing: existingInterfaceSymbols) {
-                    diagnostics.error(
-                        "KSWIFTK-SEMA-0001",
-                        "Duplicate declaration in the same package scope.",
-                        range: nestedInterface.range
-                    )
-                }
+                checkAndReportDuplicateDeclaration(
+                    newKind: .interface,
+                    fqName: nestedFQName,
+                    range: nestedInterface.range,
+                    symbols: symbols,
+                    diagnostics: diagnostics
+                )
                 let nestedSymbol = symbols.define(
                     kind: .interface,
                     name: nestedInterface.name,
@@ -360,14 +398,13 @@ extension DataFlowSemaPassPhase {
                 continue
             }
             let nestedFQName = ownerFQName + [nestedObject.name]
-            let existingObjSymbols = symbols.lookupAll(fqName: nestedFQName).compactMap { symbols.symbol($0) }
-            if hasDeclarationConflict(newKind: .object, existing: existingObjSymbols) {
-                diagnostics.error(
-                    "KSWIFTK-SEMA-0001",
-                    "Duplicate declaration in the same package scope.",
-                    range: nestedObject.range
-                )
-            }
+            checkAndReportDuplicateDeclaration(
+                newKind: .object,
+                fqName: nestedFQName,
+                range: nestedObject.range,
+                symbols: symbols,
+                diagnostics: diagnostics
+            )
             let nestedSymbol = symbols.define(
                 kind: .object,
                 name: nestedObject.name,
@@ -426,14 +463,13 @@ extension DataFlowSemaPassPhase {
     ) {
         for alias in aliases {
             let aliasFQName = ownerFQName + [alias.name]
-            let existingSymbols = symbols.lookupAll(fqName: aliasFQName).compactMap { symbols.symbol($0) }
-            if hasDeclarationConflict(newKind: .typeAlias, existing: existingSymbols) {
-                diagnostics.error(
-                    "KSWIFTK-SEMA-0001",
-                    "Duplicate declaration in the same package scope.",
-                    range: alias.range
-                )
-            }
+            checkAndReportDuplicateDeclaration(
+                newKind: .typeAlias,
+                fqName: aliasFQName,
+                range: alias.range,
+                symbols: symbols,
+                diagnostics: diagnostics
+            )
             let aliasSymbol = symbols.define(
                 kind: .typeAlias,
                 name: alias.name,
@@ -442,12 +478,27 @@ extension DataFlowSemaPassPhase {
                 visibility: visibility(from: alias.modifiers),
                 flags: flags(from: alias.modifiers)
             )
-            if let resolvedUnderlying = resolveTypeRef(
+            let localTypeParameters = registerTypeAliasTypeParameters(
+                alias.typeParams,
+                aliasSymbol: aliasSymbol,
+                parentFQName: aliasFQName,
+                declSite: alias.range,
+                symbols: symbols,
+                interner: interner
+            )
+            if alias.underlyingType == nil {
+                diagnostics.error(
+                    "KSWIFTK-SEMA-0061",
+                    "Type alias '\(interner.resolve(alias.name))' must have a right-hand side type.",
+                    range: alias.range
+                )
+            } else if let resolvedUnderlying = resolveTypeRef(
                 alias.underlyingType,
                 ast: ast,
                 symbols: symbols,
                 types: types,
                 interner: interner,
+                localTypeParameters: localTypeParameters,
                 diagnostics: diagnostics
             ) {
                 symbols.setTypeAliasUnderlyingType(resolvedUnderlying, for: aliasSymbol)

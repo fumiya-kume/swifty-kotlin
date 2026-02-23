@@ -1,6 +1,10 @@
 import Foundation
 
 extension DataFlowSemaPassPhase {
+    /// Base value for synthetic type parameter symbol IDs used in metadata encoding.
+    /// Shared between MetadataTypeSignatureParser (encoding) and collectSyntheticTypeParameters (decoding).
+    static var syntheticTypeParameterBase: Int32 { -1_000_000 }
+
     func definePackageSymbol(for file: ASTFile, symbols: SymbolTable, interner: StringInterner) -> SymbolID {
         let package = file.packageFQName.isEmpty ? [interner.intern("_root_")] : file.packageFQName
         let name = package.last ?? interner.intern("_root_")
@@ -68,6 +72,158 @@ extension DataFlowSemaPassPhase {
 
     func isOverloadableSymbol(_ kind: SymbolKind) -> Bool {
         kind == .function || kind == .constructor
+    }
+
+    /// Checks for a duplicate declaration conflict at the given fully-qualified name and
+    /// emits the standard KSWIFTK-SEMA-0001 diagnostic when a conflict is detected.
+    func checkAndReportDuplicateDeclaration(
+        newKind: SymbolKind,
+        fqName: [InternedString],
+        range: SourceRange?,
+        symbols: SymbolTable,
+        diagnostics: DiagnosticEngine
+    ) {
+        let existing = symbols.lookupAll(fqName: fqName).compactMap { symbols.symbol($0) }
+        if hasDeclarationConflict(newKind: newKind, existing: existing) {
+            diagnostics.error(
+                "KSWIFTK-SEMA-0001",
+                "Duplicate declaration in the same package scope.",
+                range: range
+            )
+        }
+    }
+
+    /// Collects value parameters into parallel arrays of types, symbols, default-value flags,
+    /// and vararg flags.  Shared by constructor and function header collection.
+    func collectValueParameters(
+        _ valueParams: [ValueParamDecl],
+        localNamespaceFQName: [InternedString],
+        declSite: SourceRange?,
+        ast: ASTModule,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        localTypeParameters: [InternedString: SymbolID] = [:],
+        diagnostics: DiagnosticEngine? = nil,
+        fallbackType: TypeID
+    ) -> (paramTypes: [TypeID], paramSymbols: [SymbolID], paramHasDefaultValues: [Bool], paramIsVararg: [Bool]) {
+        var paramTypes: [TypeID] = []
+        var paramSymbols: [SymbolID] = []
+        var paramHasDefaultValues: [Bool] = []
+        var paramIsVararg: [Bool] = []
+        for valueParam in valueParams {
+            let paramFQName = localNamespaceFQName + [valueParam.name]
+            let paramSymbol = symbols.define(
+                kind: .valueParameter,
+                name: valueParam.name,
+                fqName: paramFQName,
+                declSite: declSite,
+                visibility: .private,
+                flags: []
+            )
+            let resolvedType = resolveTypeRef(
+                valueParam.type,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                localTypeParameters: localTypeParameters,
+                diagnostics: diagnostics
+            ) ?? fallbackType
+            paramTypes.append(resolvedType)
+            paramSymbols.append(paramSymbol)
+            paramHasDefaultValues.append(valueParam.hasDefaultValue)
+            paramIsVararg.append(valueParam.isVararg)
+        }
+        return (paramTypes, paramSymbols, paramHasDefaultValues, paramIsVararg)
+    }
+
+    /// Collects type parameters from a function declaration, defining symbols and resolving
+    /// upper bounds.  Returns the parallel arrays and maps needed by callers.
+    func collectFunctionTypeParameters(
+        _ typeParams: [TypeParamDecl],
+        localNamespaceFQName: [InternedString],
+        declSite: SourceRange?,
+        ast: ASTModule,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        isInline: Bool,
+        diagnostics: DiagnosticEngine
+    ) -> (typeParameterSymbols: [SymbolID], localTypeParameters: [InternedString: SymbolID], reifiedIndices: Set<Int>) {
+        var typeParameterSymbols: [SymbolID] = []
+        var localTypeParameters: [InternedString: SymbolID] = [:]
+        var reifiedIndices: Set<Int> = []
+        for (index, typeParam) in typeParams.enumerated() {
+            let typeParamFQName = localNamespaceFQName + [typeParam.name]
+            let typeParamFlags: SymbolFlags = typeParam.isReified ? [.reifiedTypeParameter] : []
+            let typeParamSymbol = symbols.define(
+                kind: .typeParameter,
+                name: typeParam.name,
+                fqName: typeParamFQName,
+                declSite: declSite,
+                visibility: .private,
+                flags: typeParamFlags
+            )
+            typeParameterSymbols.append(typeParamSymbol)
+            localTypeParameters[typeParam.name] = typeParamSymbol
+            if typeParam.isReified {
+                reifiedIndices.insert(index)
+            }
+        }
+        for typeParam in typeParams {
+            if let boundRef = typeParam.upperBound,
+               let typeParamSym = localTypeParameters[typeParam.name] {
+                if let boundType = resolveTypeRef(
+                    boundRef,
+                    ast: ast,
+                    symbols: symbols,
+                    types: types,
+                    interner: interner,
+                    localTypeParameters: localTypeParameters
+                ) {
+                    symbols.setTypeParameterUpperBound(boundType, for: typeParamSym)
+                }
+            }
+        }
+        if !reifiedIndices.isEmpty && !isInline {
+            diagnostics.error(
+                "KSWIFTK-SEMA-0020",
+                "Only type parameters of inline functions can be reified",
+                range: declSite
+            )
+        }
+        return (typeParameterSymbols, localTypeParameters, reifiedIndices)
+    }
+
+    func registerTypeAliasTypeParameters(
+        _ typeParams: [TypeParamDecl],
+        aliasSymbol: SymbolID,
+        parentFQName: [InternedString],
+        declSite: SourceRange?,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> [InternedString: SymbolID] {
+        var localTypeParameters: [InternedString: SymbolID] = [:]
+        var typeParameterSymbols: [SymbolID] = []
+        let localNamespaceFQName = parentFQName + [interner.intern("$\(aliasSymbol.rawValue)")]
+        for typeParam in typeParams {
+            let typeParamFQName = localNamespaceFQName + [typeParam.name]
+            let typeParamSymbol = symbols.define(
+                kind: .typeParameter,
+                name: typeParam.name,
+                fqName: typeParamFQName,
+                declSite: declSite,
+                visibility: .private,
+                flags: []
+            )
+            typeParameterSymbols.append(typeParamSymbol)
+            localTypeParameters[typeParam.name] = typeParamSymbol
+        }
+        if !typeParameterSymbols.isEmpty {
+            symbols.setTypeAliasTypeParameters(typeParameterSymbols, for: aliasSymbol)
+        }
+        return localTypeParameters
     }
 
     func validateConstructorDelegation(

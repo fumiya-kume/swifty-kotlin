@@ -83,14 +83,13 @@ extension DataFlowSemaPassPhase {
 
         guard let declaration else { return }
         let fqName = package + [declaration.name]
-        let existingSymbols = symbols.lookupAll(fqName: fqName).compactMap { symbols.symbol($0) }
-        if hasDeclarationConflict(newKind: declaration.kind, existing: existingSymbols) {
-            diagnostics.error(
-                "KSWIFTK-SEMA-0001",
-                "Duplicate declaration in the same package scope.",
-                range: declaration.range
-            )
-        }
+        checkAndReportDuplicateDeclaration(
+            newKind: declaration.kind,
+            fqName: fqName,
+            range: declaration.range,
+            symbols: symbols,
+            diagnostics: diagnostics
+        )
         let symbol = symbols.define(
             kind: declaration.kind,
             name: declaration.name,
@@ -129,54 +128,48 @@ extension DataFlowSemaPassPhase {
 
             let ctorName = interner.intern("<init>")
             let primaryCtorFQName = fqName + [ctorName]
-            let primaryCtorSymbol = symbols.define(
-                kind: .constructor,
-                name: declaration.name,
-                fqName: primaryCtorFQName,
-                declSite: classDecl.range,
-                visibility: declaration.visibility,
-                flags: []
-            )
-            scope.insert(primaryCtorSymbol)
-            do {
-                var paramTypes: [TypeID] = []
-                var paramSymbols: [SymbolID] = []
-                var paramHasDefaultValues: [Bool] = []
-                var paramIsVararg: [Bool] = []
-                let localNamespaceFQName = primaryCtorFQName + [interner.intern("$\(primaryCtorSymbol.rawValue)")]
-                for valueParam in classDecl.primaryConstructorParams {
-                    let paramFQName = localNamespaceFQName + [valueParam.name]
-                    let paramSymbol = symbols.define(
-                        kind: .valueParameter,
-                        name: valueParam.name,
-                        fqName: paramFQName,
-                        declSite: classDecl.range,
-                        visibility: .private,
-                        flags: []
-                    )
-                    let resolvedType = resolveTypeRef(
-                        valueParam.type,
-                        ast: ast,
-                        symbols: symbols,
-                        types: types,
-                        interner: interner,
-                        diagnostics: diagnostics
-                    ) ?? anyType
-                    paramTypes.append(resolvedType)
-                    paramSymbols.append(paramSymbol)
-                    paramHasDefaultValues.append(valueParam.hasDefaultValue)
-                    paramIsVararg.append(valueParam.isVararg)
-                }
-                symbols.setFunctionSignature(
-                    FunctionSignature(
-                        parameterTypes: paramTypes,
-                        returnType: classType,
-                        valueParameterSymbols: paramSymbols,
-                        valueParameterHasDefaultValues: paramHasDefaultValues,
-                        valueParameterIsVararg: paramIsVararg
-                    ),
-                    for: primaryCtorSymbol
+
+            // Kotlin rule: only define a primary constructor symbol when either
+            // (a) the class header has explicit constructor parentheses
+            //     (`class Foo()` or `class Foo(x: Int)`), or
+            // (b) there are no secondary constructors (implicit default ctor).
+            // A class like `class Foo { constructor(x: Int) : ... }` has NO
+            // primary constructor and should not get a synthetic no-arg ctor.
+            let hasPrimaryCtorSyntax = classDecl.hasPrimaryConstructorSyntax
+            let hasSecondaryCtors = !classDecl.secondaryConstructors.isEmpty
+            if hasPrimaryCtorSyntax || !hasSecondaryCtors {
+                let primaryCtorSymbol = symbols.define(
+                    kind: .constructor,
+                    name: declaration.name,
+                    fqName: primaryCtorFQName,
+                    declSite: classDecl.range,
+                    visibility: declaration.visibility,
+                    flags: []
                 )
+                scope.insert(primaryCtorSymbol)
+                symbols.setParentSymbol(symbol, for: primaryCtorSymbol)
+                do {
+                    let localNamespaceFQName = primaryCtorFQName + [interner.intern("$\(primaryCtorSymbol.rawValue)")]
+                    let params = collectValueParameters(
+                        classDecl.primaryConstructorParams,
+                        localNamespaceFQName: localNamespaceFQName,
+                        declSite: classDecl.range,
+                        ast: ast, symbols: symbols, types: types,
+                        interner: interner, diagnostics: diagnostics,
+                        fallbackType: anyType
+                    )
+                    symbols.setFunctionSignature(
+                        FunctionSignature(
+                            receiverType: classType,
+                            parameterTypes: params.paramTypes,
+                            returnType: classType,
+                            valueParameterSymbols: params.paramSymbols,
+                            valueParameterHasDefaultValues: params.paramHasDefaultValues,
+                            valueParameterIsVararg: params.paramIsVararg
+                        ),
+                        for: primaryCtorSymbol
+                    )
+                }
             }
 
             for (ctorIndex, secondaryCtor) in classDecl.secondaryConstructors.enumerated() {
@@ -189,41 +182,24 @@ extension DataFlowSemaPassPhase {
                     flags: []
                 )
                 scope.insert(secCtorSymbol)
-                var paramTypes: [TypeID] = []
-                var paramSymbols: [SymbolID] = []
-                var paramHasDefaultValues: [Bool] = []
-                var paramIsVararg: [Bool] = []
+                symbols.setParentSymbol(symbol, for: secCtorSymbol)
                 let localNamespaceFQName = primaryCtorFQName + [interner.intern("$sec\(ctorIndex)_\(secCtorSymbol.rawValue)")]
-                for valueParam in secondaryCtor.valueParams {
-                    let paramFQName = localNamespaceFQName + [valueParam.name]
-                    let paramSymbol = symbols.define(
-                        kind: .valueParameter,
-                        name: valueParam.name,
-                        fqName: paramFQName,
-                        declSite: secondaryCtor.range,
-                        visibility: .private,
-                        flags: []
-                    )
-                    let resolvedType = resolveTypeRef(
-                        valueParam.type,
-                        ast: ast,
-                        symbols: symbols,
-                        types: types,
-                        interner: interner,
-                        diagnostics: diagnostics
-                    ) ?? anyType
-                    paramTypes.append(resolvedType)
-                    paramSymbols.append(paramSymbol)
-                    paramHasDefaultValues.append(valueParam.hasDefaultValue)
-                    paramIsVararg.append(valueParam.isVararg)
-                }
+                let params = collectValueParameters(
+                    secondaryCtor.valueParams,
+                    localNamespaceFQName: localNamespaceFQName,
+                    declSite: secondaryCtor.range,
+                    ast: ast, symbols: symbols, types: types,
+                    interner: interner, diagnostics: diagnostics,
+                    fallbackType: anyType
+                )
                 symbols.setFunctionSignature(
                     FunctionSignature(
-                        parameterTypes: paramTypes,
+                        receiverType: classType,
+                        parameterTypes: params.paramTypes,
                         returnType: classType,
-                        valueParameterSymbols: paramSymbols,
-                        valueParameterHasDefaultValues: paramHasDefaultValues,
-                        valueParameterIsVararg: paramIsVararg
+                        valueParameterSymbols: params.paramSymbols,
+                        valueParameterHasDefaultValues: params.paramHasDefaultValues,
+                        valueParameterIsVararg: params.paramIsVararg
                     ),
                     for: secCtorSymbol
                 )
@@ -233,14 +209,13 @@ extension DataFlowSemaPassPhase {
             if declaration.kind == .enumClass {
                 for entry in classDecl.enumEntries {
                     let entryFQName = fqName + [entry.name]
-                    let existingEntrySymbols = symbols.lookupAll(fqName: entryFQName).compactMap { symbols.symbol($0) }
-                    if hasDeclarationConflict(newKind: .field, existing: existingEntrySymbols) {
-                        diagnostics.error(
-                            "KSWIFTK-SEMA-0001",
-                            "Duplicate declaration in the same package scope.",
-                            range: entry.range
-                        )
-                    }
+                    checkAndReportDuplicateDeclaration(
+                        newKind: .field,
+                        fqName: entryFQName,
+                        range: entry.range,
+                        symbols: symbols,
+                        diagnostics: diagnostics
+                    )
                     let entrySymbol = symbols.define(
                         kind: .field,
                         name: entry.name,
@@ -345,86 +320,34 @@ extension DataFlowSemaPassPhase {
             )
 
         case .funDecl(let funDecl):
-            var paramTypes: [TypeID] = []
-            var paramSymbols: [SymbolID] = []
-            var paramHasDefaultValues: [Bool] = []
-            var paramIsVararg: [Bool] = []
-            var typeParameterSymbols: [SymbolID] = []
-            var localTypeParameters: [InternedString: SymbolID] = [:]
-            var reifiedIndices: Set<Int> = []
             let localNamespaceFQName = fqName + [interner.intern("$\(symbol.rawValue)")]
-            for (index, typeParam) in funDecl.typeParams.enumerated() {
-                let typeParamFQName = localNamespaceFQName + [typeParam.name]
-                let typeParamFlags: SymbolFlags = typeParam.isReified ? [.reifiedTypeParameter] : []
-                let typeParamSymbol = symbols.define(
-                    kind: .typeParameter,
-                    name: typeParam.name,
-                    fqName: typeParamFQName,
-                    declSite: funDecl.range,
-                    visibility: .private,
-                    flags: typeParamFlags
-                )
-                typeParameterSymbols.append(typeParamSymbol)
-                localTypeParameters[typeParam.name] = typeParamSymbol
-                if typeParam.isReified {
-                    reifiedIndices.insert(index)
-                }
-            }
-            for typeParam in funDecl.typeParams {
-                if let boundRef = typeParam.upperBound,
-                   let typeParamSym = localTypeParameters[typeParam.name] {
-                    if let boundType = resolveTypeRef(
-                        boundRef,
-                        ast: ast,
-                        symbols: symbols,
-                        types: types,
-                        interner: interner,
-                        localTypeParameters: localTypeParameters
-                    ) {
-                        symbols.setTypeParameterUpperBound(boundType, for: typeParamSym)
-                    }
-                }
-            }
-            if !reifiedIndices.isEmpty && !funDecl.isInline {
-                diagnostics.error(
-                    "KSWIFTK-SEMA-0020",
-                    "Only type parameters of inline functions can be reified",
-                    range: funDecl.range
-                )
-            }
+            let typeParamResult = collectFunctionTypeParameters(
+                funDecl.typeParams,
+                localNamespaceFQName: localNamespaceFQName,
+                declSite: funDecl.range,
+                ast: ast, symbols: symbols, types: types,
+                interner: interner, isInline: funDecl.isInline,
+                diagnostics: diagnostics
+            )
             let receiverType = resolveTypeRef(
                 funDecl.receiverType,
                 ast: ast,
                 symbols: symbols,
                 types: types,
                 interner: interner,
-                localTypeParameters: localTypeParameters,
+                localTypeParameters: typeParamResult.localTypeParameters,
                 diagnostics: diagnostics
             )
-            for valueParam in funDecl.valueParams {
-                let paramFQName = localNamespaceFQName + [valueParam.name]
-                let paramSymbol = symbols.define(
-                    kind: .valueParameter,
-                    name: valueParam.name,
-                    fqName: paramFQName,
-                    declSite: funDecl.range,
-                    visibility: .private,
-                    flags: []
-                )
-                let resolvedType = resolveTypeRef(
-                    valueParam.type,
-                    ast: ast,
-                    symbols: symbols,
-                    types: types,
-                    interner: interner,
-                    localTypeParameters: localTypeParameters,
-                    diagnostics: diagnostics
-                ) ?? anyType
-                paramTypes.append(resolvedType)
-                paramSymbols.append(paramSymbol)
-                paramHasDefaultValues.append(valueParam.hasDefaultValue)
-                paramIsVararg.append(valueParam.isVararg)
-            }
+            let params = collectValueParameters(
+                funDecl.valueParams,
+                localNamespaceFQName: localNamespaceFQName,
+                declSite: funDecl.range,
+                ast: ast, symbols: symbols, types: types,
+                interner: interner,
+                localTypeParameters: typeParamResult.localTypeParameters,
+                diagnostics: diagnostics,
+                fallbackType: anyType
+            )
             let returnType: TypeID
             if let explicit = resolveTypeRef(
                 funDecl.returnType,
@@ -432,7 +355,7 @@ extension DataFlowSemaPassPhase {
                 symbols: symbols,
                 types: types,
                 interner: interner,
-                localTypeParameters: localTypeParameters,
+                localTypeParameters: typeParamResult.localTypeParameters,
                 diagnostics: diagnostics
             ) {
                 returnType = explicit
@@ -444,18 +367,18 @@ extension DataFlowSemaPassPhase {
                     returnType = anyType
                 }
             }
-            let upperBounds: [TypeID?] = typeParameterSymbols.map { symbols.typeParameterUpperBound(for: $0) }
+            let upperBounds: [TypeID?] = typeParamResult.typeParameterSymbols.map { symbols.typeParameterUpperBound(for: $0) }
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: receiverType,
-                    parameterTypes: paramTypes,
+                    parameterTypes: params.paramTypes,
                     returnType: returnType,
                     isSuspend: funDecl.isSuspend,
-                    valueParameterSymbols: paramSymbols,
-                    valueParameterHasDefaultValues: paramHasDefaultValues,
-                    valueParameterIsVararg: paramIsVararg,
-                    typeParameterSymbols: typeParameterSymbols,
-                    reifiedTypeParameterIndices: reifiedIndices,
+                    valueParameterSymbols: params.paramSymbols,
+                    valueParameterHasDefaultValues: params.paramHasDefaultValues,
+                    valueParameterIsVararg: params.paramIsVararg,
+                    typeParameterSymbols: typeParamResult.typeParameterSymbols,
+                    reifiedTypeParameterIndices: typeParamResult.reifiedIndices,
                     typeParameterUpperBounds: upperBounds
                 ),
                 for: symbol
@@ -473,12 +396,27 @@ extension DataFlowSemaPassPhase {
             symbols.setPropertyType(resolvedType, for: symbol)
 
         case .typeAliasDecl(let typeAliasDecl):
-            if let resolvedUnderlying = resolveTypeRef(
+            let localTypeParameters = registerTypeAliasTypeParameters(
+                typeAliasDecl.typeParams,
+                aliasSymbol: symbol,
+                parentFQName: fqName,
+                declSite: typeAliasDecl.range,
+                symbols: symbols,
+                interner: interner
+            )
+            if typeAliasDecl.underlyingType == nil {
+                diagnostics.error(
+                    "KSWIFTK-SEMA-0061",
+                    "Type alias '\(interner.resolve(typeAliasDecl.name))' must have a right-hand side type.",
+                    range: typeAliasDecl.range
+                )
+            } else if let resolvedUnderlying = resolveTypeRef(
                 typeAliasDecl.underlyingType,
                 ast: ast,
                 symbols: symbols,
                 types: types,
                 interner: interner,
+                localTypeParameters: localTypeParameters,
                 diagnostics: diagnostics
             ) {
                 symbols.setTypeAliasUnderlyingType(resolvedUnderlying, for: symbol)

@@ -14,7 +14,7 @@ final class ForLoweringPass: LoweringPass {
             var didRewrite = false
 
             for instruction in function.body {
-                guard case .call(let symbol, let callee, let arguments, let result, _, _) = instruction,
+                guard case .call(let symbol, let callee, let arguments, let result, _, _, _) = instruction,
                       callee == marker,
                       let iteratorValue = arguments.first else {
                     rewrittenBody.append(instruction)

@@ -31,7 +31,7 @@ extension TypeCheckSemaPassPhase {
         }
         _ = inferExpr(
             bodyExpr,
-            ctx: ctx.with(loopDepth: ctx.loopDepth + 1),
+            ctx: ctx.copying(loopDepth: ctx.loopDepth + 1),
             locals: &bodyLocals,
             expectedType: nil
         )
@@ -49,7 +49,7 @@ extension TypeCheckSemaPassPhase {
     ) -> TypeID {
         let ast = ctx.ast
         let sema = ctx.sema
-        let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+        let boolType = sema.types.booleanType
         let conditionType = inferExpr(conditionExpr, ctx: ctx, locals: &locals, expectedType: boolType)
         emitSubtypeConstraint(
             left: conditionType,
@@ -62,7 +62,7 @@ extension TypeCheckSemaPassPhase {
         var bodyLocals = locals
         _ = inferExpr(
             bodyExpr,
-            ctx: ctx.with(loopDepth: ctx.loopDepth + 1),
+            ctx: ctx.copying(loopDepth: ctx.loopDepth + 1),
             locals: &bodyLocals,
             expectedType: nil
         )
@@ -80,11 +80,11 @@ extension TypeCheckSemaPassPhase {
     ) -> TypeID {
         let ast = ctx.ast
         let sema = ctx.sema
-        let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+        let boolType = sema.types.booleanType
         var bodyLocals = locals
         _ = inferExpr(
             bodyExpr,
-            ctx: ctx.with(loopDepth: ctx.loopDepth + 1),
+            ctx: ctx.copying(loopDepth: ctx.loopDepth + 1),
             locals: &bodyLocals,
             expectedType: nil
         )
@@ -120,7 +120,7 @@ extension TypeCheckSemaPassPhase {
         let ast = ctx.ast
         let sema = ctx.sema
         let interner = ctx.interner
-        let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+        let boolType = sema.types.booleanType
         let conditionType = inferExpr(condition, ctx: ctx, locals: &locals)
         if conditionType != boolType {
             emitSubtypeConstraint(
@@ -138,13 +138,13 @@ extension TypeCheckSemaPassPhase {
         )
         var thenLocals = locals
         applyFlowStateToLocals(branch.trueState, locals: &thenLocals, sema: sema)
-        let thenCtx = ctx.with(flowState: branch.trueState)
+        let thenCtx = ctx.copying(flowState: branch.trueState)
         let thenType = inferExpr(thenExpr, ctx: thenCtx, locals: &thenLocals, expectedType: expectedType)
         let resolvedType: TypeID
         if let elseExpr {
             var elseLocals = locals
             applyFlowStateToLocals(branch.falseState, locals: &elseLocals, sema: sema)
-            let elseCtx = ctx.with(flowState: branch.falseState)
+            let elseCtx = ctx.copying(flowState: branch.falseState)
             let elseType = inferExpr(elseExpr, ctx: elseCtx, locals: &elseLocals, expectedType: expectedType)
             resolvedType = sema.types.lub([thenType, elseType])
             for (name, local) in locals {
@@ -175,7 +175,12 @@ extension TypeCheckSemaPassPhase {
         let sema = ctx.sema
         let interner = ctx.interner
         var branchTypes: [TypeID] = []
-        branchTypes.append(inferExpr(body, ctx: ctx, locals: &locals, expectedType: expectedType))
+        // Use a separate copy for the try body so that initialization state
+        // from inside the try block doesn't leak into catch clauses. The try
+        // body may throw before reaching an initialization, so catch clauses
+        // must see the pre-try state of locals.
+        var tryBodyLocals = locals
+        branchTypes.append(inferExpr(body, ctx: ctx, locals: &tryBodyLocals, expectedType: expectedType))
         for (index, clause) in catchClauses.enumerated() {
             var catchLocals = locals
             let catchParamType = resolveCatchClauseParameterType(
@@ -222,46 +227,25 @@ extension TypeCheckSemaPassPhase {
         guard let typeName else {
             return sema.types.anyType
         }
-        switch interner.resolve(typeName) {
-        case "Int":
-            return sema.types.make(.primitive(.int, .nonNull))
-        case "Long":
-            return sema.types.make(.primitive(.long, .nonNull))
-        case "Float":
-            return sema.types.make(.primitive(.float, .nonNull))
-        case "Double":
-            return sema.types.make(.primitive(.double, .nonNull))
-        case "Boolean":
-            return sema.types.make(.primitive(.boolean, .nonNull))
-        case "Char":
-            return sema.types.make(.primitive(.char, .nonNull))
-        case "String":
-            return sema.types.make(.primitive(.string, .nonNull))
-        case "Any":
-            return sema.types.anyType
-        case "Unit":
-            return sema.types.unitType
-        case "Nothing":
-            return sema.types.nothingType
-        default:
-            let candidates = sema.symbols.lookupAll(fqName: [typeName])
-                .filter { symbolID in
-                    guard let symbol = sema.symbols.symbol(symbolID) else {
-                        return false
-                    }
-                    switch symbol.kind {
-                    case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
-                        return true
-                    default:
-                        return false
-                    }
-                }
-                .sorted { $0.rawValue < $1.rawValue }
-            guard let symbol = candidates.first else {
-                return sema.types.anyType
-            }
-            return sema.types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
+        let name = interner.resolve(typeName)
+        if let builtin = resolveBuiltinTypeName(name, types: sema.types) {
+            return builtin
         }
+        let candidates = sema.symbols.lookupAll(fqName: [typeName])
+            .filter { symbolID in
+                guard let symbol = sema.symbols.symbol(symbolID) else { return false }
+                switch symbol.kind {
+                case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
+                    return true
+                default:
+                    return false
+                }
+            }
+            .sorted { $0.rawValue < $1.rawValue }
+        guard let symbol = candidates.first else {
+            return sema.types.anyType
+        }
+        return sema.types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
     }
 
     func inferWhenExpr(
@@ -277,7 +261,7 @@ extension TypeCheckSemaPassPhase {
         let ast = ctx.ast
         let sema = ctx.sema
         let interner = ctx.interner
-        let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+        let boolType = sema.types.booleanType
 
         if let subjectID {
             let subjectType = inferExpr(subjectID, ctx: ctx, locals: &locals)
@@ -306,6 +290,7 @@ extension TypeCheckSemaPassPhase {
             var hasNullCase = false
             var hasTrueCase = false
             var hasFalseCase = false
+            var allBranchLocals: [[InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)]] = []
             for branch in branches {
                 var isNullBranch = false
                 if let cond = branch.condition {
@@ -341,7 +326,7 @@ extension TypeCheckSemaPassPhase {
                             base: ctx.flowState,
                             ast: ast, sema: sema, interner: interner
                         )
-                        branchCtx = ctx.with(flowState: branchFlowState)
+                        branchCtx = ctx.copying(flowState: branchFlowState)
                         if let narrowedType = ctx.dataFlow.resolvedTypeFromFlowState(
                             branchFlowState, symbol: subjectLocalBinding.symbol
                         ) {
@@ -354,7 +339,7 @@ extension TypeCheckSemaPassPhase {
                                 subjectType: subjectLocalBinding.type,
                                 base: ctx.flowState, sema: sema
                             )
-                            branchCtx = ctx.with(flowState: nonNullState)
+                            branchCtx = ctx.copying(flowState: nonNullState)
                             applyFlowStateToLocals(nonNullState, locals: &branchLocals, sema: sema)
                         }
                     }
@@ -362,6 +347,7 @@ extension TypeCheckSemaPassPhase {
                 branchTypes.append(
                     inferExpr(branch.body, ctx: branchCtx, locals: &branchLocals, expectedType: expectedType)
                 )
+                allBranchLocals.append(branchLocals)
             }
 
             if let elseExpr {
@@ -374,12 +360,13 @@ extension TypeCheckSemaPassPhase {
                         hasExplicitNullBranch: hasExplicitNullBranch,
                         base: ctx.flowState, sema: sema
                     )
-                    elseCtx = ctx.with(flowState: elseFlowState)
+                    elseCtx = ctx.copying(flowState: elseFlowState)
                     applyFlowStateToLocals(elseFlowState, locals: &elseLocals, sema: sema)
                 }
                 branchTypes.append(
                     inferExpr(elseExpr, ctx: elseCtx, locals: &elseLocals, expectedType: expectedType)
                 )
+                allBranchLocals.append(elseLocals)
             }
 
             let summary = WhenBranchSummary(
@@ -387,12 +374,28 @@ extension TypeCheckSemaPassPhase {
                 hasNullCase: hasNullCase, hasTrueCase: hasTrueCase,
                 hasFalseCase: hasFalseCase
             )
-            if !ctx.dataFlow.isWhenExhaustive(subjectType: subjectType, branches: summary, sema: sema) {
+            let isExhaustive = ctx.dataFlow.isWhenExhaustive(subjectType: subjectType, branches: summary, sema: sema)
+            if !isExhaustive {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0004",
                     "Non-exhaustive when expression.",
                     range: range
                 )
+            }
+
+            // Propagate definite initialization across exhaustive when branches.
+            if isExhaustive && !allBranchLocals.isEmpty {
+                for (name, local) in locals {
+                    if !local.isInitialized {
+                        let allInit = allBranchLocals.allSatisfy { branchLocal in
+                            guard let bl = branchLocal[name] else { return false }
+                            return bl.isInitialized && bl.symbol == local.symbol
+                        }
+                        if allInit {
+                            locals[name] = (local.type, local.symbol, local.isMutable, true)
+                        }
+                    }
+                }
             }
 
             let type = sema.types.lub(branchTypes)
@@ -400,9 +403,17 @@ extension TypeCheckSemaPassPhase {
             return type
         } else {
             var branchTypes: [TypeID] = []
+            var allBranchLocals: [[InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)]] = []
+            var hasTrueCase = false
+            var hasFalseCase = false
+            var cumulativeFalseState = ctx.flowState
             for branch in branches {
+                var branchLocals = locals
+                let condCtx = ctx.copying(flowState: cumulativeFalseState)
+                applyFlowStateToLocals(cumulativeFalseState, locals: &branchLocals, sema: sema)
+                var branchCtx = condCtx
                 if let cond = branch.condition {
-                    let condType = inferExpr(cond, ctx: ctx, locals: &locals)
+                    let condType = inferExpr(cond, ctx: condCtx, locals: &branchLocals)
                     if condType != boolType && condType != sema.types.errorType {
                         ctx.semaCtx.diagnostics.error(
                             "KSWIFTK-SEMA-0032",
@@ -410,31 +421,67 @@ extension TypeCheckSemaPassPhase {
                             range: branch.range
                         )
                     }
+                    let condBranch = ctx.dataFlow.branchOnCondition(
+                        cond, base: cumulativeFalseState, locals: branchLocals,
+                        ast: ast, sema: sema, interner: interner
+                    )
+                    branchCtx = ctx.copying(flowState: condBranch.trueState)
+                    applyFlowStateToLocals(condBranch.trueState, locals: &branchLocals, sema: sema)
+                    cumulativeFalseState = condBranch.falseState
+                    if let condExpr = ast.arena.expr(cond) {
+                        switch condExpr {
+                        case .boolLiteral(true, _):
+                            hasTrueCase = true
+                        case .boolLiteral(false, _):
+                            hasFalseCase = true
+                        default:
+                            break
+                        }
+                    }
                 }
-                var branchLocals = locals
                 branchTypes.append(
-                    inferExpr(branch.body, ctx: ctx, locals: &branchLocals, expectedType: expectedType)
+                    inferExpr(branch.body, ctx: branchCtx, locals: &branchLocals, expectedType: expectedType)
                 )
+                allBranchLocals.append(branchLocals)
             }
 
             if let elseExpr {
                 var elseLocals = locals
+                let elseCtx = ctx.copying(flowState: cumulativeFalseState)
+                applyFlowStateToLocals(cumulativeFalseState, locals: &elseLocals, sema: sema)
                 branchTypes.append(
-                    inferExpr(elseExpr, ctx: ctx, locals: &elseLocals, expectedType: expectedType)
+                    inferExpr(elseExpr, ctx: elseCtx, locals: &elseLocals, expectedType: expectedType)
                 )
+                allBranchLocals.append(elseLocals)
             }
 
             let summary = WhenBranchSummary(
                 coveredSymbols: [], hasElse: elseExpr != nil,
-                hasNullCase: false, hasTrueCase: false,
-                hasFalseCase: false
+                hasNullCase: false, hasTrueCase: hasTrueCase,
+                hasFalseCase: hasFalseCase
             )
-            if !ctx.dataFlow.isWhenExhaustive(subjectType: boolType, branches: summary, sema: sema) {
+            let isExhaustive = ctx.dataFlow.isWhenExhaustive(subjectType: boolType, branches: summary, sema: sema)
+            if !isExhaustive {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0004",
                     "Non-exhaustive when expression.",
                     range: range
                 )
+            }
+
+            // Propagate definite initialization across exhaustive when branches.
+            if isExhaustive && !allBranchLocals.isEmpty {
+                for (name, local) in locals {
+                    if !local.isInitialized {
+                        let allInit = allBranchLocals.allSatisfy { branchLocal in
+                            guard let bl = branchLocal[name] else { return false }
+                            return bl.isInitialized && bl.symbol == local.symbol
+                        }
+                        if allInit {
+                            locals[name] = (local.type, local.symbol, local.isMutable, true)
+                        }
+                    }
+                }
             }
 
             let type = sema.types.lub(branchTypes)
@@ -443,100 +490,4 @@ extension TypeCheckSemaPassPhase {
         }
     }
 
-    func inferLocalFunDeclExpr(
-        _ id: ExprID,
-        name: InternedString,
-        valueParams: [ValueParamDecl],
-        returnTypeRef: TypeRefID?,
-        body: FunctionBody,
-        range: SourceRange,
-        ctx: TypeInferenceContext,
-        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)]
-    ) -> TypeID {
-        let ast = ctx.ast
-        let sema = ctx.sema
-        let interner = ctx.interner
-
-        var parameterTypes: [TypeID] = []
-        var paramSymbols: [SymbolID] = []
-        for param in valueParams {
-            let paramType: TypeID
-            if let typeRefID = param.type {
-                paramType = resolveTypeRef(typeRefID, ast: ast, sema: sema, interner: interner)
-            } else {
-                paramType = sema.types.anyType
-            }
-            parameterTypes.append(paramType)
-            let paramSymbol = sema.symbols.define(
-                kind: .valueParameter,
-                name: param.name,
-                fqName: [
-                    interner.intern("__localfun_\(id.rawValue)"),
-                    param.name
-                ],
-                declSite: range,
-                visibility: .private,
-                flags: []
-            )
-            sema.symbols.setPropertyType(paramType, for: paramSymbol)
-            paramSymbols.append(paramSymbol)
-        }
-
-        let resolvedReturnType: TypeID
-        if let returnTypeRef {
-            resolvedReturnType = resolveTypeRef(returnTypeRef, ast: ast, sema: sema, interner: interner)
-        } else {
-            resolvedReturnType = sema.types.unitType
-        }
-
-        let funSymbol = sema.symbols.define(
-            kind: .function,
-            name: name,
-            fqName: [
-                interner.intern("__localfun_\(id.rawValue)"),
-                name
-            ],
-            declSite: range,
-            visibility: .private,
-            flags: []
-        )
-
-        let signature = FunctionSignature(
-            parameterTypes: parameterTypes,
-            returnType: resolvedReturnType,
-            valueParameterSymbols: paramSymbols,
-            valueParameterHasDefaultValues: valueParams.map { $0.hasDefaultValue },
-            valueParameterIsVararg: valueParams.map { $0.isVararg }
-        )
-        sema.symbols.setFunctionSignature(signature, for: funSymbol)
-
-        let funType = sema.types.make(.functionType(FunctionType(
-            params: parameterTypes,
-            returnType: resolvedReturnType,
-            isSuspend: false,
-            nullability: .nonNull
-        )))
-
-        var bodyLocals = locals
-        for (i, param) in valueParams.enumerated() {
-            bodyLocals[param.name] = (parameterTypes[i], paramSymbols[i], false, true)
-        }
-        bodyLocals[name] = (funType, funSymbol, false, true)
-        switch body {
-        case .block(let exprs, _):
-            for (index, expr) in exprs.enumerated() {
-                let isLast = index == exprs.count - 1
-                let expected = isLast ? resolvedReturnType : nil
-                _ = inferExpr(expr, ctx: ctx, locals: &bodyLocals, expectedType: expected)
-            }
-        case .expr(let exprID, _):
-            _ = inferExpr(exprID, ctx: ctx, locals: &bodyLocals, expectedType: resolvedReturnType)
-        case .unit:
-            break
-        }
-        locals[name] = (funType, funSymbol, false, true)
-        sema.bindings.bindIdentifier(id, symbol: funSymbol)
-        sema.bindings.bindExprType(id, type: sema.types.unitType)
-        return sema.types.unitType
-    }
 }

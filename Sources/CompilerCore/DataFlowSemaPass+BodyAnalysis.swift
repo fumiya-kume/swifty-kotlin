@@ -94,22 +94,16 @@ extension DataFlowSemaPassPhase {
                 break
             }
 
-            if let resolved = symbols.lookupAll(fqName: path)
-                .compactMap({ symbols.symbol($0) })
-                .first(where: { isNominalTypeSymbol($0.kind) }) {
-                if resolved.kind == .typeAlias {
-                    if let underlying = resolveTypeAliasUnderlying(
-                        resolved.id,
-                        symbols: symbols,
-                        types: types,
-                        visited: []
-                    ) {
-                        if nullability == .nullable {
-                            return applyNullability(underlying, types: types)
-                        }
-                        return underlying
-                    }
-                }
+            let candidates: [SemanticSymbol]
+            let fqCandidates = symbols.lookupAll(fqName: path).compactMap { symbols.symbol($0) }
+            if !fqCandidates.isEmpty {
+                candidates = fqCandidates
+            } else if path.count == 1 {
+                candidates = symbols.lookupByShortName(shortName).compactMap { symbols.symbol($0) }
+            } else {
+                candidates = []
+            }
+            if let resolved = candidates.first(where: { isNominalTypeSymbol($0.kind) }) {
                 let resolvedArgs = resolveTypeArgRefs(
                     argRefs,
                     ast: ast,
@@ -119,6 +113,24 @@ extension DataFlowSemaPassPhase {
                     localTypeParameters: localTypeParameters,
                     diagnostics: diagnostics
                 )
+                if resolved.kind == .typeAlias {
+                    if let underlying = resolveTypeAliasUnderlying(
+                        resolved.id,
+                        symbols: symbols,
+                        types: types,
+                        typeArgs: resolvedArgs,
+                        visited: [],
+                        diagnostics: diagnostics
+                    ) {
+                        if nullability == .nullable {
+                            return applyNullability(underlying, types: types)
+                        }
+                        return underlying
+                    }
+                    // Fall through to class-type path for error recovery when
+                    // underlying type is not yet available (e.g. unresolved RHS,
+                    // imported alias without signature metadata).
+                }
                 return types.make(.classType(ClassType(classSymbol: resolved.id, args: resolvedArgs, nullability: nullability)))
             }
             diagnostics?.error(
@@ -237,24 +249,42 @@ extension DataFlowSemaPassPhase {
         _ symbolID: SymbolID,
         symbols: SymbolTable,
         types: TypeSystem,
-        visited: Set<SymbolID>
+        typeArgs: [TypeArg] = [],
+        visited: Set<SymbolID>,
+        diagnostics: DiagnosticEngine? = nil
     ) -> TypeID? {
         guard !visited.contains(symbolID) else {
+            diagnostics?.error(
+                "KSWIFTK-SEMA-0060",
+                "Cyclic typealias definition detected.",
+                range: symbols.symbol(symbolID)?.declSite
+            )
             return nil
         }
         guard let underlying = symbols.typeAliasUnderlyingType(for: symbolID) else {
             return nil
         }
-        if case .classType(let classType) = types.kind(of: underlying),
+        let expanded = substituteTypeAliasParams(
+            underlying,
+            aliasSymbol: symbolID,
+            typeArgs: typeArgs,
+            symbols: symbols,
+            types: types,
+            diagnostics: diagnostics
+        )
+        if case .classType(let classType) = types.kind(of: expanded),
            let targetSymbol = symbols.symbol(classType.classSymbol),
            targetSymbol.kind == .typeAlias {
             var newVisited = visited
             newVisited.insert(symbolID)
+            let chainArgs = classType.args
             if let resolved = resolveTypeAliasUnderlying(
                 classType.classSymbol,
                 symbols: symbols,
                 types: types,
-                visited: newVisited
+                typeArgs: chainArgs,
+                visited: newVisited,
+                diagnostics: diagnostics
             ) {
                 if classType.nullability == .nullable {
                     return applyNullability(resolved, types: types)
@@ -263,6 +293,159 @@ extension DataFlowSemaPassPhase {
             }
             return nil
         }
-        return underlying
+        return expanded
+    }
+
+    private func substituteTypeAliasParams(
+        _ typeID: TypeID,
+        aliasSymbol: SymbolID,
+        typeArgs: [TypeArg],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        diagnostics: DiagnosticEngine? = nil
+    ) -> TypeID {
+        let typeParamSymbols = symbols.typeAliasTypeParameters(for: aliasSymbol)
+        // If the alias is not generic, report any provided type arguments as a mismatch and return.
+        if typeParamSymbols.isEmpty {
+            if !typeArgs.isEmpty {
+                diagnostics?.error(
+                    "KSWIFTK-SEMA-0062",
+                    "Type argument count mismatch: expected 0 but got \(typeArgs.count).",
+                    range: nil
+                )
+            }
+            return typeID
+        }
+        // Alias is generic. Emit a diagnostic whenever the argument count does not match,
+        // even if we end up not performing any substitution.
+        if typeArgs.count != typeParamSymbols.count {
+            diagnostics?.error(
+                "KSWIFTK-SEMA-0062",
+                "Type argument count mismatch: expected \(typeParamSymbols.count) but got \(typeArgs.count).",
+                range: nil
+            )
+        }
+        var argSubstitution: [SymbolID: TypeArg] = [:]
+        for (index, paramSymbol) in typeParamSymbols.enumerated() {
+            guard index < typeArgs.count else { break }
+            argSubstitution[paramSymbol] = typeArgs[index]
+        }
+        guard !argSubstitution.isEmpty else {
+            return typeID
+        }
+        return applySubstitution(typeID, argSubstitution: argSubstitution, types: types, symbols: symbols)
+    }
+
+    private func applySubstitution(
+        _ typeID: TypeID,
+        argSubstitution: [SymbolID: TypeArg],
+        types: TypeSystem,
+        symbols: SymbolTable
+    ) -> TypeID {
+        switch types.kind(of: typeID) {
+        case .typeParam(let tp):
+            if let replacement = argSubstitution[tp.symbol] {
+                // In non-arg positions, extract the TypeID from the TypeArg.
+                // For .star, expand to the wildcard upper bound (Any?) since
+                // leaving the type parameter unsubstituted would create dangling references.
+                let replacementType: TypeID
+                switch replacement {
+                case .invariant(let inner), .out(let inner), .in(let inner):
+                    replacementType = inner
+                case .star:
+                    replacementType = types.nullableAnyType
+                }
+                if tp.nullability == .nullable {
+                    return applyNullability(replacementType, types: types)
+                }
+                return replacementType
+            }
+            return typeID
+        case .classType(let ct):
+            let newArgs = ct.args.map { arg -> TypeArg in
+                substituteArg(arg, argSubstitution: argSubstitution, types: types, symbols: symbols)
+            }
+            return types.make(.classType(ClassType(classSymbol: ct.classSymbol, args: newArgs, nullability: ct.nullability)))
+        case .functionType(let ft):
+            let newReceiver = ft.receiver.map { applySubstitution($0, argSubstitution: argSubstitution, types: types, symbols: symbols) }
+            let newParams = ft.params.map { applySubstitution($0, argSubstitution: argSubstitution, types: types, symbols: symbols) }
+            let newReturn = applySubstitution(ft.returnType, argSubstitution: argSubstitution, types: types, symbols: symbols)
+            return types.make(.functionType(FunctionType(receiver: newReceiver, params: newParams, returnType: newReturn, isSuspend: ft.isSuspend, nullability: ft.nullability)))
+        case .primitive, .any, .unit, .nothing, .error:
+            return typeID
+        case .intersection(let parts):
+            let newParts = parts.map { applySubstitution($0, argSubstitution: argSubstitution, types: types, symbols: symbols) }
+            return types.make(.intersection(newParts))
+        }
+    }
+
+    /// Substitute a type argument, preserving use-site projections through expansion.
+    /// - `.invariant(T)` in the RHS: replace with the full `TypeArg` from the use-site
+    ///   (e.g., `Foo<out String>` expands `Box<T>` to `Box<out String>`)
+    /// - `.out(T)` / `.in(T)` in the RHS: keep the declaration-site projection,
+    ///   substitute inner type; `.star` substitution yields `.star`
+    /// - `.star`: preserved as-is
+    private func substituteArg(
+        _ arg: TypeArg,
+        argSubstitution: [SymbolID: TypeArg],
+        types: TypeSystem,
+        symbols: SymbolTable
+    ) -> TypeArg {
+        switch arg {
+        case .invariant(let inner):
+            // If the inner type is a bare type parameter with a substitution,
+            // replace the entire arg with the use-site TypeArg (preserving projection).
+            if case .typeParam(let tp) = types.kind(of: inner),
+               let replacement = argSubstitution[tp.symbol] {
+                if tp.nullability == .nullable {
+                    return applyNullabilityToArg(replacement, types: types)
+                }
+                return replacement
+            }
+            return .invariant(applySubstitution(inner, argSubstitution: argSubstitution, types: types, symbols: symbols))
+        case .out(let inner):
+            if case .typeParam(let tp) = types.kind(of: inner),
+               let replacement = argSubstitution[tp.symbol] {
+                // Declaration-site has `.out`; if use-site is `.star`, star wins.
+                if case .star = replacement { return .star }
+                let innerType = typeArgInnerType(replacement)
+                let resolved = tp.nullability == .nullable ? applyNullability(innerType, types: types) : innerType
+                return .out(resolved)
+            }
+            return .out(applySubstitution(inner, argSubstitution: argSubstitution, types: types, symbols: symbols))
+        case .in(let inner):
+            if case .typeParam(let tp) = types.kind(of: inner),
+               let replacement = argSubstitution[tp.symbol] {
+                if case .star = replacement { return .star }
+                let innerType = typeArgInnerType(replacement)
+                let resolved = tp.nullability == .nullable ? applyNullability(innerType, types: types) : innerType
+                return .in(resolved)
+            }
+            return .in(applySubstitution(inner, argSubstitution: argSubstitution, types: types, symbols: symbols))
+        case .star:
+            return .star
+        }
+    }
+
+    private func applyNullabilityToArg(_ arg: TypeArg, types: TypeSystem) -> TypeArg {
+        switch arg {
+        case .invariant(let inner):
+            return .invariant(applyNullability(inner, types: types))
+        case .out(let inner):
+            return .out(applyNullability(inner, types: types))
+        case .in(let inner):
+            return .in(applyNullability(inner, types: types))
+        case .star:
+            return .star
+        }
+    }
+
+    private func typeArgInnerType(_ arg: TypeArg) -> TypeID {
+        switch arg {
+        case .invariant(let inner), .out(let inner), .in(let inner):
+            return inner
+        case .star:
+            fatalError("typeArgInnerType called on .star")
+        }
     }
 }

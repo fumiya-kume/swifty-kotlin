@@ -1133,19 +1133,4 @@ final class DataFlowAndSemaCoverageTests: XCTestCase {
         }
     }
 
-    private func firstExprID(
-        in ast: ASTModule,
-        where predicate: (ExprID, Expr) -> Bool
-    ) -> ExprID? {
-        for index in ast.arena.exprs.indices {
-            let exprID = ExprID(rawValue: Int32(index))
-            guard let expr = ast.arena.expr(exprID) else {
-                continue
-            }
-            if predicate(exprID, expr) {
-                return exprID
-            }
-        }
-        return nil
-    }
 }

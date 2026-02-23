@@ -9,7 +9,7 @@ public final class LoweringPhase: CompilerPhase {
         NormalizeBlocksPass(),
         OperatorLoweringPass(),
         ForLoweringPass(),
-        WhenLoweringPass(),
+
         PropertyLoweringPass(),
         DataEnumSealedSynthesisPass(),
         LambdaClosureConversionPass(),

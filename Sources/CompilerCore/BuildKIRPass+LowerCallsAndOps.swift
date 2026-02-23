@@ -75,10 +75,57 @@ extension BuildKIRPhase {
         if let loweredCallable {
             finalArgIDs.insert(contentsOf: loweredCallable.captureArguments, at: 0)
         } else if let chosen,
+                  sema.symbols.symbol(chosen)?.kind == .constructor {
+            // Constructor calls need an allocated object as the implicit receiver (p0).
+            // Allocate via kk_array_new(slotCount) and prepend it to the argument list.
+            // Derive slot count from NominalLayout.instanceSizeWords of the owning class.
+            let allocType = boundType ?? sema.types.anyType
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            var slotCount: Int64 = 1
+            if let parentClassID = sema.symbols.parentSymbol(for: chosen),
+               let layout = sema.symbols.nominalLayout(for: parentClassID) {
+                slotCount = Int64(max(layout.instanceSizeWords, 1))
+            }
+            let slotCountExpr = arena.appendExpr(.intLiteral(slotCount), type: intType)
+            instructions.append(.constValue(result: slotCountExpr, value: .intLiteral(slotCount)))
+            let allocatedObj = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: allocType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_array_new"),
+                arguments: [slotCountExpr],
+                result: allocatedObj,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            finalArgIDs.insert(allocatedObj, at: 0)
+        } else if let chosen,
            let signature = sema.symbols.functionSignature(for: chosen),
            signature.receiverType != nil,
            let implicitReceiver = currentImplicitReceiverExprID {
             finalArgIDs.insert(implicitReceiver, at: 0)
+        }
+
+        // Inject callable value captures for coroutine launcher arguments.
+        // When a suspend lambda/closure with captures is passed to a launcher
+        // (runBlocking/launch/async), the capture values must be included in
+        // the call arguments so the CoroutineLoweringPass can store them in
+        // the continuation via launcherArgs and forward them through the thunk.
+        // Guard on chosen == nil && loweredCallable == nil to avoid misfiring
+        // on user-defined functions that happen to share a launcher name.
+        // Only expand captures for the first argument (the launcher entry
+        // function reference); subsequent arguments are value args for the
+        // referenced suspend function and should not be expanded.
+        if chosen == nil,
+           loweredCallable == nil {
+            let resolvedSourceCallee = interner.resolve(sourceCalleeName)
+            if resolvedSourceCallee == "runBlocking"
+                || resolvedSourceCallee == "launch"
+                || resolvedSourceCallee == "async",
+               let firstArg = finalArgIDs.first,
+               let callableInfo = callableValueInfoByExprID[firstArg],
+               !callableInfo.captureArguments.isEmpty {
+                finalArgIDs.insert(contentsOf: callableInfo.captureArguments, at: 1)
+            }
         }
         if callNormalized.defaultMask != 0, let chosen {
             let intType = sema.types.make(.primitive(.int, .nonNull))
@@ -189,6 +236,7 @@ extension BuildKIRPhase {
             )
         }
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+        let isSuperCall = sema.bindings.isSuperCallExpr(exprID)
         let callBinding = sema.bindings.callBindings[exprID]
         let chosen = callBinding?.chosenCallee
         let memberNormalized = normalizedCallArguments(
@@ -237,7 +285,8 @@ extension BuildKIRPhase {
                 arguments: finalArguments,
                 result: result,
                 canThrow: false,
-                thrownResult: nil
+                thrownResult: nil,
+                isSuperCall: isSuperCall
             ))
         } else {
             if let callBinding, let chosen,
@@ -264,14 +313,39 @@ extension BuildKIRPhase {
             } else {
                 loweredMemberCalleeName = calleeName
             }
-            instructions.append(.call(
-                symbol: chosen,
-                callee: loweredMemberCalleeName,
-                arguments: finalArguments,
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
+            if !isSuperCall,
+               let chosen,
+               let dispatchKind = resolveVirtualDispatch(callee: chosen, sema: sema) {
+                // For virtualCall, the receiver is a separate field, so remove it
+                // from finalArguments (it was inserted at index 0 above).
+                var vcArguments = finalArguments
+                if let chosen2 = Optional(chosen),
+                   let signature = sema.symbols.functionSignature(for: chosen2),
+                   signature.receiverType != nil,
+                   !vcArguments.isEmpty {
+                    vcArguments.removeFirst()
+                }
+                instructions.append(.virtualCall(
+                    symbol: chosen,
+                    callee: loweredMemberCalleeName,
+                    receiver: loweredReceiverID,
+                    arguments: vcArguments,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil,
+                    dispatch: dispatchKind
+                ))
+            } else {
+                instructions.append(.call(
+                    symbol: chosen,
+                    callee: loweredMemberCalleeName,
+                    arguments: finalArguments,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil,
+                    isSuperCall: isSuperCall
+                ))
+            }
         }
         return result
     }
@@ -310,6 +384,7 @@ extension BuildKIRPhase {
             )
         }
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+        let isSuperCall = sema.bindings.isSuperCallExpr(exprID)
         let callBinding = sema.bindings.callBindings[exprID]
         let chosen = callBinding?.chosenCallee
         let safeNormalized = normalizedCallArguments(
@@ -358,7 +433,8 @@ extension BuildKIRPhase {
                 arguments: finalArguments,
                 result: result,
                 canThrow: false,
-                thrownResult: nil
+                thrownResult: nil,
+                isSuperCall: isSuperCall
             ))
         } else {
             if let callBinding, let chosen,
@@ -385,16 +461,79 @@ extension BuildKIRPhase {
             } else {
                 loweredMemberCalleeName = calleeName
             }
-            instructions.append(.call(
-                symbol: chosen,
-                callee: loweredMemberCalleeName,
-                arguments: finalArguments,
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
+            if !isSuperCall,
+               let chosen,
+               let dispatchKind = resolveVirtualDispatch(callee: chosen, sema: sema) {
+                // For virtualCall, the receiver is a separate field, so remove it
+                // from finalArguments (it was inserted at index 0 above).
+                var vcArguments = finalArguments
+                if let chosen2 = Optional(chosen),
+                   let signature = sema.symbols.functionSignature(for: chosen2),
+                   signature.receiverType != nil,
+                   !vcArguments.isEmpty {
+                    vcArguments.removeFirst()
+                }
+                instructions.append(.virtualCall(
+                    symbol: chosen,
+                    callee: loweredMemberCalleeName,
+                    receiver: loweredReceiverID,
+                    arguments: vcArguments,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil,
+                    dispatch: dispatchKind
+                ))
+            } else {
+                instructions.append(.call(
+                    symbol: chosen,
+                    callee: loweredMemberCalleeName,
+                    arguments: finalArguments,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil,
+                    isSuperCall: isSuperCall
+                ))
+            }
         }
         return result
+    }
+
+    /// Determine if a callee method requires virtual dispatch.
+    /// Returns `.vtable(slot:)` for class methods or `.itable(slot:)` for interface methods,
+    /// or `nil` if the call should use direct (static) dispatch.
+    private func resolveVirtualDispatch(callee: SymbolID, sema: SemaModule) -> KIRDispatchKind? {
+        guard let calleeSymbol = sema.symbols.symbol(callee),
+              calleeSymbol.kind == .function else {
+            return nil
+        }
+        guard let parentID = sema.symbols.parentSymbol(for: callee),
+              let parentSymbol = sema.symbols.symbol(parentID) else {
+            return nil
+        }
+        guard let layout = sema.symbols.nominalLayout(for: parentID) else {
+            return nil
+        }
+        if parentSymbol.kind == .interface {
+            let interfaceSlot = layout.itableSlots[parentID] ?? 0
+            if let methodSlot = layout.vtableSlots[callee] {
+                return .itable(interfaceSlot: interfaceSlot, methodSlot: methodSlot)
+            }
+            return nil
+        }
+        if parentSymbol.kind == .class {
+            // Only use virtual dispatch if the class actually has subtypes.
+            // In Kotlin, classes are final by default; virtual dispatch is only
+            // needed when the class is open/abstract (has known subtypes).
+            let subtypes = sema.symbols.directSubtypes(of: parentID)
+            guard !subtypes.isEmpty else {
+                return nil
+            }
+            if let vtableSlot = layout.vtableSlots[callee] {
+                return .vtable(slot: vtableSlot)
+            }
+            return nil
+        }
+        return nil
     }
 
     private func normalizedCallableValueArguments(

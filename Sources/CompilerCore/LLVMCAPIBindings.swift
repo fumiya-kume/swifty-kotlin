@@ -153,6 +153,10 @@ final class LLVMCAPIBindings {
     ) -> Void
     internal typealias LLVMValueAsMetadataFn = @convention(c) (LLVMValueRef?) -> LLVMMetadataRef?
     internal typealias LLVMInt32TypeInContextFn = @convention(c) (LLVMContextRef?) -> LLVMTypeRef?
+    internal typealias LLVMSetCurrentDebugLocation2Fn = @convention(c) (LLVMBuilderRef?, LLVMMetadataRef?) -> Void
+    internal typealias LLVMDIBuilderCreateDebugLocationFn = @convention(c) (
+        LLVMContextRef?, UInt32, UInt32, LLVMMetadataRef?, LLVMMetadataRef?
+    ) -> LLVMMetadataRef?
 
     private let handle: UnsafeMutableRawPointer
     internal let contextCreateFn: LLVMContextCreateFn
@@ -224,6 +228,8 @@ final class LLVMCAPIBindings {
     internal let addModuleFlagFn: LLVMAddModuleFlagFn?
     internal let valueAsMetadataFn: LLVMValueAsMetadataFn?
     internal let int32TypeFn: LLVMInt32TypeInContextFn?
+    internal let setCurrentDebugLocation2Fn: LLVMSetCurrentDebugLocation2Fn?
+    internal let diBuilderCreateDebugLocationFn: LLVMDIBuilderCreateDebugLocationFn?
 
     internal init(
         handle: UnsafeMutableRawPointer,
@@ -295,7 +301,9 @@ final class LLVMCAPIBindings {
         setSubprogramFn: LLVMSetSubprogramFn?,
         addModuleFlagFn: LLVMAddModuleFlagFn?,
         valueAsMetadataFn: LLVMValueAsMetadataFn?,
-        int32TypeFn: LLVMInt32TypeInContextFn?
+        int32TypeFn: LLVMInt32TypeInContextFn?,
+        setCurrentDebugLocation2Fn: LLVMSetCurrentDebugLocation2Fn? = nil,
+        diBuilderCreateDebugLocationFn: LLVMDIBuilderCreateDebugLocationFn? = nil
     ) {
         self.handle = handle
         self.contextCreateFn = contextCreateFn
@@ -367,6 +375,8 @@ final class LLVMCAPIBindings {
         self.addModuleFlagFn = addModuleFlagFn
         self.valueAsMetadataFn = valueAsMetadataFn
         self.int32TypeFn = int32TypeFn
+        self.setCurrentDebugLocation2Fn = setCurrentDebugLocation2Fn
+        self.diBuilderCreateDebugLocationFn = diBuilderCreateDebugLocationFn
     }
 
     deinit {

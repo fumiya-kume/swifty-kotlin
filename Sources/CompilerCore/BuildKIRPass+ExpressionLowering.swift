@@ -752,7 +752,7 @@ extension BuildKIRPhase {
 
         case .blockExpr(let statements, let trailingExpr, _):
             for stmt in statements {
-                _ = lowerExpr(
+                let loweredStmt = lowerExpr(
                     stmt,
                     ast: ast,
                     sema: sema,
@@ -761,6 +761,10 @@ extension BuildKIRPhase {
                     propertyConstantInitializers: propertyConstantInitializers,
                     instructions: &instructions
                 )
+                // If the statement is a terminator (return/throw), stop lowering
+                if isTerminatedExpr(loweredStmt, arena: arena, sema: sema) {
+                    return loweredStmt
+                }
             }
             if let trailingExpr {
                 return lowerExpr(

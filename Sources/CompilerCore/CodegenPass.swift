@@ -242,19 +242,31 @@ public final class CodegenPhase: CompilerPhase {
             return "returnValue value=\(value.rawValue)"
         case .returnIfEqual(let lhs, let rhs):
             return "returnIfEqual lhs=\(lhs.rawValue) rhs=\(rhs.rawValue)"
-        case .select(let condition, let thenValue, let elseValue, let result):
-            return "select condition=\(condition.rawValue) then=\(thenValue.rawValue) else=\(elseValue.rawValue) result=\(result.rawValue)"
         case .unary(let op, let operand, let result):
             return "unary op=\(op) operand=\(operand.rawValue) result=\(result.rawValue)"
         case .nullAssert(let operand, let result):
             return "nullAssert operand=\(operand.rawValue) result=\(result.rawValue)"
-        case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult):
+        case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult, let isSuperCall):
             let args = arguments.map { String($0.rawValue) }.joined(separator: ",")
             let symbolValue = symbol.map { String($0.rawValue) } ?? "_"
             let resultValue = result.map { String($0.rawValue) } ?? "_"
             let thrownResultValue = thrownResult.map { String($0.rawValue) } ?? "_"
             let calleeName = base64Encode(interner.resolve(callee))
-            return "call symbol=\(symbolValue) calleeB64=\(calleeName) args=[\(args)] result=\(resultValue) canThrow=\(canThrow ? 1 : 0) thrownResult=\(thrownResultValue)"
+            return "call symbol=\(symbolValue) calleeB64=\(calleeName) args=[\(args)] result=\(resultValue) canThrow=\(canThrow ? 1 : 0) thrownResult=\(thrownResultValue) isSuperCall=\(isSuperCall ? 1 : 0)"
+        case .virtualCall(let symbol, let callee, let receiver, let arguments, let result, let canThrow, let thrownResult, let dispatch):
+            let args = arguments.map { String($0.rawValue) }.joined(separator: ",")
+            let symbolValue = symbol.map { String($0.rawValue) } ?? "_"
+            let resultValue = result.map { String($0.rawValue) } ?? "_"
+            let thrownResultValue = thrownResult.map { String($0.rawValue) } ?? "_"
+            let calleeName = base64Encode(interner.resolve(callee))
+            let dispatchStr: String
+            switch dispatch {
+            case .vtable(let slot):
+                dispatchStr = "vtable:\(slot)"
+            case .itable(let interfaceSlot, let methodSlot):
+                dispatchStr = "itable:\(interfaceSlot):\(methodSlot)"
+            }
+            return "virtualCall symbol=\(symbolValue) calleeB64=\(calleeName) receiver=\(receiver.rawValue) args=[\(args)] result=\(resultValue) canThrow=\(canThrow ? 1 : 0) thrownResult=\(thrownResultValue) dispatch=\(dispatchStr)"
         case .jumpIfNotNull(let value, let target):
             return "jumpIfNotNull value=\(value.rawValue) target=\(target)"
         case .copy(let from, let to):

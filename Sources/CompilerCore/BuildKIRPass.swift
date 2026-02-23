@@ -107,6 +107,29 @@ public final class BuildKIRPhase: CompilerPhase {
                         let isSecondary = sema.symbols.symbol(ctorSymbol)?.declSite != classDecl.range
 
                         if !isSecondary {
+                            // Emit member property initializers as field stores.
+                            for propDeclID in classDecl.memberProperties {
+                                guard let propDecl = ast.arena.decl(propDeclID),
+                                      case .propertyDecl(let prop) = propDecl,
+                                      let propSymbol = sema.bindings.declSymbols[propDeclID],
+                                      let initExpr = prop.initializer else {
+                                    continue
+                                }
+                                let targetSymbol = sema.symbols.backingFieldSymbol(for: propSymbol) ?? propSymbol
+                                let propType = sema.symbols.propertyType(for: propSymbol) ?? sema.types.anyType
+                                let initValue = lowerExpr(
+                                    initExpr,
+                                    ast: ast,
+                                    sema: sema,
+                                    arena: arena,
+                                    interner: ctx.interner,
+                                    propertyConstantInitializers: propertyConstantInitializers,
+                                    instructions: &body
+                                )
+                                let fieldRef = arena.appendExpr(.symbolRef(targetSymbol), type: propType)
+                                body.append(.copy(from: initValue, to: fieldRef))
+                            }
+
                             for initBlock in classDecl.initBlocks {
                                 switch initBlock {
                                 case .block(let exprIDs, _):
@@ -238,6 +261,21 @@ public final class BuildKIRPhase: CompilerPhase {
                             )
                         )
                         declIDs.append(ctorKirID)
+                        // Generate default argument stub for constructors with defaults.
+                        if let defaults = functionDefaultArgumentsBySymbol[ctorSymbol] {
+                            let stubID = generateDefaultStubFunction(
+                                originalSymbol: ctorSymbol,
+                                originalName: classDecl.name,
+                                signature: signature,
+                                defaultExpressions: defaults,
+                                ast: ast,
+                                sema: sema,
+                                arena: arena,
+                                interner: ctx.interner,
+                                propertyConstantInitializers: propertyConstantInitializers
+                            )
+                            declIDs.append(stubID)
+                        }
                         declIDs.append(contentsOf: drainGeneratedCallableDecls())
                     }
 
@@ -357,6 +395,11 @@ public final class BuildKIRPhase: CompilerPhase {
                                 propertyConstantInitializers: propertyConstantInitializers,
                                 instructions: &body
                             )
+                            // Detect nested termination (e.g., if/when/try with return in all branches)
+                            if let lastValue, isTerminatedExpr(lastValue, arena: arena, sema: sema) {
+                                terminatedByReturn = true
+                                break
+                            }
                         }
                         if !terminatedByReturn {
                             if let lastValue {

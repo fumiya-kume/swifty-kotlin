@@ -35,14 +35,6 @@ extension BuildASTPhase.ExpressionParser {
             let range = SourceRange(start: openBrace.range.start, end: end)
             return astArena.appendExpr(.blockExpr(statements: [], trailingExpr: nil, range: range))
         }
-        if statementGroups.count == 1 {
-            let tokens = statementGroups[0]
-            if !isLocalDeclarationTokens(tokens) && !isLocalAssignmentTokens(tokens) {
-                if let nestedExpr = BuildASTPhase.ExpressionParser(tokens: tokens, interner: interner, astArena: astArena).parse() {
-                    return nestedExpr
-                }
-            }
-        }
 
         var statements: [ExprID] = []
         for group in statementGroups {
@@ -59,7 +51,7 @@ extension BuildASTPhase.ExpressionParser {
         var trailingExpr: ExprID?
         if let lastID = statements.last, let lastExpr = astArena.expr(lastID) {
             switch lastExpr {
-            case .localDecl, .localAssign, .compoundAssign, .localFunDecl:
+            case .localDecl, .localAssign, .arrayAssign, .compoundAssign, .localFunDecl:
                 break
             default:
                 trailingExpr = statements.removeLast()
@@ -159,9 +151,14 @@ extension BuildASTPhase.ExpressionParser {
 
     internal func isLocalAssignmentTokens(_ tokens: [Token]) -> Bool {
         guard tokens.count >= 3 else { return false }
+        let assignOps: [TokenKind] = [
+            .symbol(.assign),
+            .symbol(.plusAssign), .symbol(.minusAssign),
+            .symbol(.starAssign), .symbol(.slashAssign), .symbol(.percentAssign),
+        ]
         var depth = BuildASTPhase.BracketDepth()
         for token in tokens {
-            if token.kind == .symbol(.assign) && depth.isAtTopLevel {
+            if assignOps.contains(token.kind) && depth.isAtTopLevel {
                 return true
             }
             depth.track(token.kind)
@@ -204,6 +201,46 @@ extension BuildASTPhase.ExpressionParser {
             return nil
         }
 
+        // Find the index of the name token within the tokens array.
+        let nameIndex = tokens.firstIndex(where: { $0.range.start == nameToken.range.start }) ?? (startIndex + 1)
+
+        // Parse type annotation if a colon follows the name.
+        var typeAnnotation: TypeRefID?
+        var colonIndex: Int?
+        for i in (nameIndex + 1)..<tokens.count {
+            let token = tokens[i]
+            if token.kind == .symbol(.colon) {
+                colonIndex = i
+                break
+            }
+            if token.kind == .symbol(.assign) || token.kind == .symbol(.semicolon) {
+                break
+            }
+        }
+        if let colonIndex {
+            var typeTokens: [Token] = []
+            var typeDepth = BuildASTPhase.BracketDepth()
+            var idx = colonIndex + 1
+            while idx < tokens.count {
+                let token = tokens[idx]
+                if typeDepth.isAtTopLevel {
+                    if token.kind == .symbol(.assign) || token.kind == .symbol(.semicolon) {
+                        break
+                    }
+                }
+                typeDepth.track(token.kind)
+                typeTokens.append(token)
+                idx += 1
+            }
+            if !typeTokens.isEmpty {
+                let typeParser = BuildASTPhase.ExpressionParser(
+                    tokens: typeTokens, interner: interner, astArena: astArena
+                )
+                let fallbackRange = typeTokens[0].range
+                typeAnnotation = typeParser.parseTypeReference(fallbackRange)
+            }
+        }
+
         var assignIndex: Int?
         var depth = BuildASTPhase.BracketDepth()
         for (index, token) in tokens.enumerated() {
@@ -213,17 +250,32 @@ extension BuildASTPhase.ExpressionParser {
             }
             depth.track(token.kind)
         }
-        guard let assignIndex else { return nil }
-        let initializerTokens = Array(tokens[(assignIndex + 1)...])
-        guard !initializerTokens.isEmpty else { return nil }
-        let parser = BuildASTPhase.ExpressionParser(tokens: initializerTokens, interner: interner, astArena: astArena)
-        guard let initializerExpr = parser.parse() else { return nil }
-        let rangeEnd = astArena.exprRange(initializerExpr)?.end ?? tokens.last?.range.end ?? head.range.end
+
+        var initializerExpr: ExprID?
+        if let assignIndex {
+            let initializerTokens = Array(tokens[(assignIndex + 1)...])
+            if !initializerTokens.isEmpty {
+                let parser = BuildASTPhase.ExpressionParser(tokens: initializerTokens, interner: interner, astArena: astArena)
+                initializerExpr = parser.parse()
+            }
+        }
+
+        // Require at least a type annotation or an initializer.
+        if typeAnnotation == nil && initializerExpr == nil {
+            return nil
+        }
+
+        let rangeEnd: SourceLocation
+        if let initializerExpr {
+            rangeEnd = astArena.exprRange(initializerExpr)?.end ?? tokens.last?.range.end ?? head.range.end
+        } else {
+            rangeEnd = tokens.last?.range.end ?? head.range.end
+        }
         let range = SourceRange(start: tokens[0].range.start, end: rangeEnd)
         return astArena.appendExpr(.localDecl(
             name: name,
             isMutable: isMutable,
-            typeAnnotation: nil,
+            typeAnnotation: typeAnnotation,
             initializer: initializerExpr,
             range: range
         ))
@@ -231,6 +283,49 @@ extension BuildASTPhase.ExpressionParser {
 
     internal func parseLocalAssignFromTokens(_ tokens: [Token]) -> ExprID? {
         guard tokens.count >= 3 else { return nil }
+
+        // Try compound assignment first (+=, -=, *=, /=, %=)
+        let compoundOps: [(TokenKind, CompoundAssignOp)] = [
+            (.symbol(.plusAssign), .plusAssign),
+            (.symbol(.minusAssign), .minusAssign),
+            (.symbol(.starAssign), .timesAssign),
+            (.symbol(.slashAssign), .divAssign),
+            (.symbol(.percentAssign), .modAssign),
+        ]
+        var compoundIndex: Int?
+        var compoundOp: CompoundAssignOp?
+        var compoundDepth = BuildASTPhase.BracketDepth()
+        for (index, token) in tokens.enumerated() {
+            for (kind, op) in compoundOps {
+                if token.kind == kind && compoundDepth.isAtTopLevel {
+                    compoundIndex = index
+                    compoundOp = op
+                    break
+                }
+            }
+            if compoundIndex != nil { break }
+            compoundDepth.track(token.kind)
+        }
+        if let compoundIndex, let op = compoundOp, compoundIndex > 0 {
+            let lhsTokens = Array(tokens[..<compoundIndex])
+            guard !lhsTokens.isEmpty else { return nil }
+            let lhsParser = BuildASTPhase.ExpressionParser(tokens: lhsTokens, interner: interner, astArena: astArena)
+            guard let lhsExpr = lhsParser.parse(),
+                  let lhs = astArena.expr(lhsExpr),
+                  case .nameRef(let name, _) = lhs,
+                  let lhsRange = astArena.exprRange(lhsExpr) else {
+                return nil
+            }
+            let valueTokens = Array(tokens[(compoundIndex + 1)...])
+            guard !valueTokens.isEmpty else { return nil }
+            let parser = BuildASTPhase.ExpressionParser(tokens: valueTokens, interner: interner, astArena: astArena)
+            guard let valueExpr = parser.parse() else { return nil }
+            let rangeEnd = astArena.exprRange(valueExpr)?.end ?? tokens.last?.range.end ?? lhsRange.end
+            let range = SourceRange(start: tokens[0].range.start, end: rangeEnd)
+            return astArena.appendExpr(.compoundAssign(op: op, name: name, value: valueExpr, range: range))
+        }
+
+        // Simple assignment (name = value or array[index] = value)
         var assignIndex: Int?
         var depth = BuildASTPhase.BracketDepth()
         for (index, token) in tokens.enumerated() {
@@ -242,16 +337,27 @@ extension BuildASTPhase.ExpressionParser {
         }
         guard let assignIndex, assignIndex > 0 else { return nil }
         let lhsTokens = Array(tokens[..<assignIndex])
-        guard lhsTokens.count == 1, let name = tokenText(lhsTokens[0]) else {
-            return nil
-        }
+        guard !lhsTokens.isEmpty else { return nil }
         let valueTokens = Array(tokens[(assignIndex + 1)...])
         guard !valueTokens.isEmpty else { return nil }
-        let parser = BuildASTPhase.ExpressionParser(tokens: Array(valueTokens), interner: interner, astArena: astArena)
+        let lhsParser = BuildASTPhase.ExpressionParser(tokens: lhsTokens, interner: interner, astArena: astArena)
+        guard let lhsExpr = lhsParser.parse() else { return nil }
+        let parser = BuildASTPhase.ExpressionParser(tokens: valueTokens, interner: interner, astArena: astArena)
         guard let valueExpr = parser.parse() else { return nil }
-        let rangeEnd = astArena.exprRange(valueExpr)?.end ?? tokens.last?.range.end ?? lhsTokens[0].range.end
-        let range = SourceRange(start: tokens[0].range.start, end: rangeEnd)
-        return astArena.appendExpr(.localAssign(name: name, value: valueExpr, range: range))
+        guard let lhs = astArena.expr(lhsExpr),
+              let lhsRange = astArena.exprRange(lhsExpr) else {
+            return nil
+        }
+        let rangeEnd = astArena.exprRange(valueExpr)?.end ?? tokens.last?.range.end ?? lhsRange.end
+        let range = SourceRange(start: lhsRange.start, end: rangeEnd)
+        switch lhs {
+        case .nameRef(let name, _):
+            return astArena.appendExpr(.localAssign(name: name, value: valueExpr, range: range))
+        case .arrayAccess(let array, let index, _):
+            return astArena.appendExpr(.arrayAssign(array: array, index: index, value: valueExpr, range: range))
+        default:
+            return nil
+        }
     }
 
     internal func skipBalancedParenthesisIfNeeded() {

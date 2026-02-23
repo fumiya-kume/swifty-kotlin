@@ -1,128 +1,6 @@
 import Foundation
 
 extension TypeCheckSemaPassPhase {
-    func inferBinaryExpr(
-        _ id: ExprID,
-        op: BinaryOp,
-        lhsID: ExprID,
-        rhsID: ExprID,
-        range: SourceRange,
-        ctx: TypeInferenceContext,
-        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
-        expectedType: TypeID?
-    ) -> TypeID {
-        let ast = ctx.ast
-        let sema = ctx.sema
-        let interner = ctx.interner
-        let scope = ctx.scope
-
-        let boolType = sema.types.make(.primitive(.boolean, .nonNull))
-        let intType = sema.types.make(.primitive(.int, .nonNull))
-        let longType = sema.types.make(.primitive(.long, .nonNull))
-        let floatType = sema.types.make(.primitive(.float, .nonNull))
-        let doubleType = sema.types.make(.primitive(.double, .nonNull))
-        let stringType = sema.types.make(.primitive(.string, .nonNull))
-
-        let lhs = inferExpr(lhsID, ctx: ctx, locals: &locals)
-        let rhs = inferExpr(rhsID, ctx: ctx, locals: &locals)
-        let lhsIsPrimitive: Bool
-        if case .primitive = sema.types.kind(of: lhs) { lhsIsPrimitive = true } else { lhsIsPrimitive = false }
-        let operatorName = binaryOperatorFunctionName(for: op, interner: interner)
-        let memberOperatorCandidates = lhsIsPrimitive ? [] : collectMemberFunctionCandidates(
-            named: operatorName,
-            receiverType: lhs,
-            sema: sema
-        )
-        let operatorCandidates: [SymbolID]
-        if !memberOperatorCandidates.isEmpty {
-            operatorCandidates = memberOperatorCandidates
-        } else if !lhsIsPrimitive {
-            operatorCandidates = scope.lookup(operatorName).filter { candidate in
-                guard let symbol = sema.symbols.symbol(candidate),
-                      symbol.kind == .function,
-                      let signature = sema.symbols.functionSignature(for: candidate) else {
-                    return false
-                }
-                return signature.receiverType != nil
-            }
-        } else {
-            operatorCandidates = []
-        }
-        if !operatorCandidates.isEmpty {
-            let resolved = ctx.resolver.resolveCall(
-                candidates: operatorCandidates,
-                call: CallExpr(
-                    range: range,
-                    calleeName: operatorName,
-                    args: [CallArg(type: rhs)]
-                ),
-                expectedType: expectedType,
-                implicitReceiverType: lhs,
-                ctx: ctx.semaCtx
-            )
-            if let diagnostic = resolved.diagnostic {
-                ctx.semaCtx.diagnostics.emit(diagnostic)
-                sema.bindings.bindExprType(id, type: sema.types.errorType)
-                return sema.types.errorType
-            }
-            guard let chosen = resolved.chosenCallee else {
-                sema.bindings.bindExprType(id, type: sema.types.errorType)
-                return sema.types.errorType
-            }
-            let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
-            sema.bindings.bindExprType(id, type: returnType)
-            return returnType
-        }
-        let type: TypeID
-        switch op {
-        case .add:
-            if lhs == stringType || rhs == stringType {
-                type = stringType
-            } else if lhs == doubleType || rhs == doubleType {
-                type = doubleType
-            } else if lhs == floatType || rhs == floatType {
-                type = floatType
-            } else if lhs == longType || rhs == longType {
-                type = longType
-            } else {
-                type = intType
-            }
-        case .subtract, .multiply, .divide, .modulo:
-            if lhs == doubleType || rhs == doubleType {
-                type = doubleType
-            } else if lhs == floatType || rhs == floatType {
-                type = floatType
-            } else if lhs == longType || rhs == longType {
-                type = longType
-            } else {
-                type = intType
-            }
-        case .equal, .notEqual, .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
-            type = boolType
-        case .logicalAnd, .logicalOr:
-            emitSubtypeConstraint(
-                left: lhs, right: boolType,
-                range: ast.arena.exprRange(lhsID) ?? range,
-                solver: ConstraintSolver(), sema: sema,
-                diagnostics: ctx.semaCtx.diagnostics
-            )
-            emitSubtypeConstraint(
-                left: rhs, right: boolType,
-                range: ast.arena.exprRange(rhsID) ?? range,
-                solver: ConstraintSolver(), sema: sema,
-                diagnostics: ctx.semaCtx.diagnostics
-            )
-            type = boolType
-        case .elvis:
-            let nonNullLhs = makeNonNullable(lhs, types: sema.types)
-            type = sema.types.lub([nonNullLhs, rhs])
-        case .rangeTo:
-            type = sema.types.anyType
-        }
-        sema.bindings.bindExprType(id, type: type)
-        return type
-    }
-
     func inferCallExpr(
         _ id: ExprID,
         calleeID: ExprID,
@@ -130,7 +8,8 @@ extension TypeCheckSemaPassPhase {
         range: SourceRange,
         ctx: TypeInferenceContext,
         locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
-        expectedType: TypeID?
+        expectedType: TypeID?,
+        explicitTypeArgs: [TypeID] = []
     ) -> TypeID {
         let ast = ctx.ast
         let sema = ctx.sema
@@ -164,6 +43,26 @@ extension TypeCheckSemaPassPhase {
                     candidates = [local.symbol]
                 }
             }
+            // Kotlin: `ClassName(args)` is a constructor call. If no function/constructor
+            // candidates were found, check if calleeName resolves to a class symbol and
+            // look up its constructors from the symbol table by FQ name.
+            if candidates.isEmpty {
+                let classSymbols = scope.lookup(calleeName).filter { candidate in
+                    guard let symbol = sema.symbols.symbol(candidate) else { return false }
+                    return symbol.kind == .class || symbol.kind == .enumClass || symbol.kind == .annotationClass
+                }
+                if let classSym = classSymbols.first,
+                   let classSymbol = sema.symbols.symbol(classSym) {
+                    let initName = interner.intern("<init>")
+                    let ctorFQName = classSymbol.fqName + [initName]
+                    let ctorSymbols = sema.symbols.lookupAll(fqName: ctorFQName)
+                    if !ctorSymbols.isEmpty {
+                        let (vis, invis) = ctx.filterByVisibility(ctorSymbols)
+                        candidates = vis
+                        callInvisible.append(contentsOf: invis)
+                    }
+                }
+            }
         } else {
             candidates = []
         }
@@ -176,7 +75,8 @@ extension TypeCheckSemaPassPhase {
                 call: CallExpr(
                     range: range,
                     calleeName: calleeName ?? InternedString(),
-                    args: resolvedArgs
+                    args: resolvedArgs,
+                    explicitTypeArgs: explicitTypeArgs
                 ),
                 expectedType: expectedType,
                 implicitReceiverType: ctx.implicitReceiverType,
@@ -188,6 +88,12 @@ extension TypeCheckSemaPassPhase {
                 return sema.types.errorType
             }
             guard let chosen = resolved.chosenCallee else {
+                let nameStr = calleeName.map { interner.resolve($0) } ?? "<unknown>"
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0023",
+                    "Unresolved function '\(nameStr)'.",
+                    range: range
+                )
                 sema.bindings.bindExprType(id, type: sema.types.errorType)
                 return sema.types.errorType
             }
@@ -231,57 +137,12 @@ extension TypeCheckSemaPassPhase {
             callableTarget = callableTargetForCalleeExpr(calleeID, sema: sema)
         }
 
-        if let callableCalleeType {
-            let nonNullCalleeType = makeNonNullable(callableCalleeType, types: sema.types)
-            if case .functionType(let functionType) = sema.types.kind(of: nonNullCalleeType) {
-                guard !args.contains(where: { $0.label != nil || $0.isSpread }),
-                      functionType.params.count == argTypes.count else {
-                    ctx.semaCtx.diagnostics.error(
-                        "KSWIFTK-SEMA-0002",
-                        "No viable overload found for call.",
-                        range: range
-                    )
-                    sema.bindings.bindExprType(id, type: sema.types.errorType)
-                    return sema.types.errorType
-                }
-
-                var parameterMapping: [Int: Int] = [:]
-                for index in argTypes.indices {
-                    parameterMapping[index] = index
-                    emitSubtypeConstraint(
-                        left: argTypes[index],
-                        right: functionType.params[index],
-                        range: ast.arena.exprRange(args[index].expr) ?? range,
-                        solver: ConstraintSolver(),
-                        sema: sema,
-                        diagnostics: ctx.semaCtx.diagnostics
-                    )
-                }
-                if let expectedType {
-                    emitSubtypeConstraint(
-                        left: functionType.returnType,
-                        right: expectedType,
-                        range: range,
-                        solver: ConstraintSolver(),
-                        sema: sema,
-                        diagnostics: ctx.semaCtx.diagnostics
-                    )
-                }
-
-                sema.bindings.bindCallableValueCall(
-                    id,
-                    binding: CallableValueCallBinding(
-                        target: callableTarget,
-                        functionType: nonNullCalleeType,
-                        parameterMapping: parameterMapping
-                    )
-                )
-                if let callableTarget {
-                    sema.bindings.bindCallableTarget(id, target: callableTarget)
-                }
-                sema.bindings.bindExprType(id, type: functionType.returnType)
-                return functionType.returnType
-            }
+        if let callableCalleeType,
+           let result = inferCallableValueInvocation(
+               id, calleeType: callableCalleeType, callableTarget: callableTarget,
+               args: args, argTypes: argTypes, range: range, ctx: ctx, expectedType: expectedType
+           ) {
+            return result
         }
 
         if let builtinType = kxMiniCoroutineBuiltinReturnType(
@@ -300,13 +161,7 @@ extension TypeCheckSemaPassPhase {
             return sema.types.unitType
         }
         if let firstInvisible = callInvisible.first, let calleeName {
-            let visLabel = firstInvisible.visibility == .protected ? "protected" : "private"
-            let code = firstInvisible.visibility == .protected ? "KSWIFTK-SEMA-0041" : "KSWIFTK-SEMA-0040"
-            ctx.semaCtx.diagnostics.error(
-                code,
-                "Cannot access '\(interner.resolve(calleeName))': it is \(visLabel).",
-                range: range
-            )
+            emitVisibilityError(for: firstInvisible, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
         } else {
             let nameStr = calleeName.map { interner.resolve($0) } ?? "<unknown>"
             ctx.semaCtx.diagnostics.error(
@@ -327,114 +182,10 @@ extension TypeCheckSemaPassPhase {
         range: SourceRange,
         ctx: TypeInferenceContext,
         locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
-        expectedType: TypeID?
+        expectedType: TypeID?,
+        explicitTypeArgs: [TypeID] = []
     ) -> TypeID {
-        let ast = ctx.ast
-        let sema = ctx.sema
-        let interner = ctx.interner
-        let scope = ctx.scope
-
-        let receiverType = inferExpr(receiverID, ctx: ctx, locals: &locals)
-        let argTypes = args.map { argument in
-            inferExpr(argument.expr, ctx: ctx, locals: &locals)
-        }
-
-        let isSuperCall = ast.arena.expr(receiverID).map { expr in
-            if case .superRef = expr { true } else { false }
-        } ?? false
-
-        var supertypeSymbols: Set<SymbolID> = []
-        if isSuperCall, let currentReceiverType = ctx.implicitReceiverType,
-           let classSymbol = nominalSymbol(of: currentReceiverType, types: sema.types) {
-            var queue = sema.symbols.directSupertypes(for: classSymbol)
-            var visited: Set<SymbolID> = [classSymbol]
-            while !queue.isEmpty {
-                let next = queue.removeFirst()
-                if visited.insert(next).inserted {
-                    supertypeSymbols.insert(next)
-                    queue.append(contentsOf: sema.symbols.directSupertypes(for: next))
-                }
-            }
-        }
-
-        let memberLookupReceiverType = (isSuperCall ? ctx.implicitReceiverType : nil) ?? receiverType
-        let memberCandidates = collectMemberFunctionCandidates(
-            named: calleeName,
-            receiverType: memberLookupReceiverType,
-            sema: sema,
-            allowedOwnerSymbols: isSuperCall && !supertypeSymbols.isEmpty ? supertypeSymbols : nil
-        )
-        let allMemberCandidates: [SymbolID]
-        if !memberCandidates.isEmpty {
-            allMemberCandidates = memberCandidates
-        } else {
-            allMemberCandidates = scope.lookup(calleeName).filter { candidate in
-                guard let symbol = sema.symbols.symbol(candidate),
-                      symbol.kind == .function,
-                      let signature = sema.symbols.functionSignature(for: candidate) else {
-                    return false
-                }
-                guard signature.receiverType != nil else { return false }
-                if isSuperCall, !supertypeSymbols.isEmpty {
-                    if let parent = sema.symbols.parentSymbol(for: candidate) {
-                        return supertypeSymbols.contains(parent)
-                    }
-                    return false
-                }
-                return true
-            }
-        }
-        let (memberVisible, memberInvisible) = ctx.filterByVisibility(allMemberCandidates)
-        let candidates = memberVisible
-        if candidates.isEmpty {
-            if let firstInvisible = memberInvisible.first {
-                let visLabel = firstInvisible.visibility == .protected ? "protected" : "private"
-                let code = firstInvisible.visibility == .protected ? "KSWIFTK-SEMA-0041" : "KSWIFTK-SEMA-0040"
-                ctx.semaCtx.diagnostics.error(
-                    code,
-                    "Cannot access '\(interner.resolve(calleeName))': it is \(visLabel).",
-                    range: range
-                )
-            } else {
-                ctx.semaCtx.diagnostics.error(
-                    "KSWIFTK-SEMA-0024",
-                    "Unresolved member function '\(interner.resolve(calleeName))'.",
-                    range: range
-                )
-            }
-            sema.bindings.bindExprType(id, type: sema.types.errorType)
-            return sema.types.errorType
-        }
-
-        let resolvedArgs: [CallArg] = zip(args, argTypes).map { argument, type in
-            CallArg(label: argument.label, isSpread: argument.isSpread, type: type)
-        }
-        let resolved = ctx.resolver.resolveCall(
-            candidates: candidates,
-            call: CallExpr(
-                range: range,
-                calleeName: calleeName,
-                args: resolvedArgs
-            ),
-            expectedType: expectedType,
-            implicitReceiverType: receiverType,
-            ctx: ctx.semaCtx
-        )
-        if let diagnostic = resolved.diagnostic {
-            ctx.semaCtx.diagnostics.emit(diagnostic)
-            sema.bindings.bindExprType(id, type: sema.types.errorType)
-            return sema.types.errorType
-        }
-        guard let chosen = resolved.chosenCallee else {
-            sema.bindings.bindExprType(id, type: sema.types.errorType)
-            return sema.types.errorType
-        }
-        let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
-        if isSuperCall {
-            sema.bindings.markSuperCall(id)
-        }
-        sema.bindings.bindExprType(id, type: returnType)
-        return returnType
+        inferMemberCallImpl(id, receiverID: receiverID, calleeName: calleeName, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType, explicitTypeArgs: explicitTypeArgs, safeCall: false)
     }
 
     func inferSafeMemberCallExpr(
@@ -445,83 +196,116 @@ extension TypeCheckSemaPassPhase {
         range: SourceRange,
         ctx: TypeInferenceContext,
         locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
-        expectedType: TypeID?
+        expectedType: TypeID?,
+        explicitTypeArgs: [TypeID] = []
     ) -> TypeID {
+        inferMemberCallImpl(id, receiverID: receiverID, calleeName: calleeName, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType, explicitTypeArgs: explicitTypeArgs, safeCall: true)
+    }
+
+    private func inferMemberCallImpl(
+        _ id: ExprID,
+        receiverID: ExprID,
+        calleeName: InternedString,
+        args: [CallArgument],
+        range: SourceRange,
+        ctx: TypeInferenceContext,
+        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
+        expectedType: TypeID?,
+        explicitTypeArgs: [TypeID],
+        safeCall: Bool
+    ) -> TypeID {
+        let ast = ctx.ast
         let sema = ctx.sema
         let interner = ctx.interner
         let scope = ctx.scope
 
         let receiverType = inferExpr(receiverID, ctx: ctx, locals: &locals)
-        let argTypes = args.map { argument in
-            inferExpr(argument.expr, ctx: ctx, locals: &locals)
+        let argTypes = args.map { inferExpr($0.expr, ctx: ctx, locals: &locals) }
+        let lookupReceiverType = safeCall ? sema.types.makeNonNullable(receiverType) : receiverType
+
+        var isSuperCall = false
+        var supertypeSymbols: Set<SymbolID> = []
+        if !safeCall {
+            isSuperCall = ast.arena.expr(receiverID).map { if case .superRef = $0 { true } else { false } } ?? false
+            if isSuperCall, let currentReceiverType = ctx.implicitReceiverType,
+               let classSymbol = nominalSymbol(of: currentReceiverType, types: sema.types) {
+                var queue = sema.symbols.directSupertypes(for: classSymbol)
+                var visited: Set<SymbolID> = [classSymbol]
+                while !queue.isEmpty {
+                    let next = queue.removeFirst()
+                    if visited.insert(next).inserted {
+                        supertypeSymbols.insert(next)
+                        queue.append(contentsOf: sema.symbols.directSupertypes(for: next))
+                    }
+                }
+            }
         }
-        let nonNullReceiver = makeNonNullable(receiverType, types: sema.types)
+
+        let memberLookupType = (isSuperCall ? ctx.implicitReceiverType : nil) ?? lookupReceiverType
         let memberCandidates = collectMemberFunctionCandidates(
             named: calleeName,
-            receiverType: nonNullReceiver,
-            sema: sema
+            receiverType: memberLookupType,
+            sema: sema,
+            allowedOwnerSymbols: isSuperCall && !supertypeSymbols.isEmpty ? supertypeSymbols : nil
         )
-        let allSafeMemberCandidates: [SymbolID]
+        let allCandidates: [SymbolID]
         if !memberCandidates.isEmpty {
-            allSafeMemberCandidates = memberCandidates
+            allCandidates = memberCandidates
         } else {
-            allSafeMemberCandidates = scope.lookup(calleeName).filter { candidate in
+            allCandidates = scope.lookup(calleeName).filter { candidate in
                 guard let symbol = sema.symbols.symbol(candidate),
                       symbol.kind == .function,
-                      let signature = sema.symbols.functionSignature(for: candidate) else {
-                    return false
+                      let signature = sema.symbols.functionSignature(for: candidate) else { return false }
+                guard signature.receiverType != nil else { return false }
+                if isSuperCall, !supertypeSymbols.isEmpty {
+                    return sema.symbols.parentSymbol(for: candidate).map { supertypeSymbols.contains($0) } ?? false
                 }
-                return signature.receiverType != nil
+                return true
             }
         }
-        let (safeMemberVisible, safeMemberInvisible) = ctx.filterByVisibility(allSafeMemberCandidates)
-        let candidates = safeMemberVisible
+        let (visible, invisible) = ctx.filterByVisibility(allCandidates)
+        let candidates = visible
         if candidates.isEmpty {
-            if let firstInvisible = safeMemberInvisible.first {
-                let visLabel = firstInvisible.visibility == .protected ? "protected" : "private"
-                let code = firstInvisible.visibility == .protected ? "KSWIFTK-SEMA-0041" : "KSWIFTK-SEMA-0040"
-                ctx.semaCtx.diagnostics.error(
-                    code,
-                    "Cannot access '\(interner.resolve(calleeName))': it is \(visLabel).",
-                    range: range
-                )
-                sema.bindings.bindExprType(id, type: sema.types.errorType)
-                return sema.types.errorType
+            if lookupReceiverType == sema.types.errorType {
+                return bindAndReturnErrorType(id, sema: sema)
             }
-            let resultType = makeNullable(sema.types.anyType, types: sema.types)
-            sema.bindings.bindExprType(id, type: resultType)
-            return resultType
+            if let firstInvisible = invisible.first {
+                emitVisibilityError(for: firstInvisible, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
+                return bindAndReturnErrorType(id, sema: sema)
+            }
+            if safeCall {
+                let resultType = sema.types.nullableAnyType
+                sema.bindings.bindExprType(id, type: resultType)
+                return resultType
+            }
+            ctx.semaCtx.diagnostics.error("KSWIFTK-SEMA-0024", "Unresolved member function '\(interner.resolve(calleeName))'.", range: range)
+            return bindAndReturnErrorType(id, sema: sema)
         }
-        let resolvedArgs: [CallArg] = zip(args, argTypes).map { argument, type in
-            CallArg(label: argument.label, isSpread: argument.isSpread, type: type)
-        }
+
+        let resolvedArgs = zip(args, argTypes).map { CallArg(label: $0.label, isSpread: $0.isSpread, type: $1) }
         let resolved = ctx.resolver.resolveCall(
             candidates: candidates,
-            call: CallExpr(
-                range: range,
-                calleeName: calleeName,
-                args: resolvedArgs
-            ),
+            call: CallExpr(range: range, calleeName: calleeName, args: resolvedArgs, explicitTypeArgs: explicitTypeArgs),
             expectedType: expectedType,
-            implicitReceiverType: nonNullReceiver,
+            implicitReceiverType: lookupReceiverType,
             ctx: ctx.semaCtx
         )
         if let diagnostic = resolved.diagnostic {
             ctx.semaCtx.diagnostics.emit(diagnostic)
-            sema.bindings.bindExprType(id, type: sema.types.errorType)
-            return sema.types.errorType
+            return bindAndReturnErrorType(id, sema: sema)
         }
         guard let chosen = resolved.chosenCallee else {
-            sema.bindings.bindExprType(id, type: sema.types.errorType)
-            return sema.types.errorType
+            ctx.semaCtx.diagnostics.error("KSWIFTK-SEMA-0024", "Unresolved member function '\(interner.resolve(calleeName))'.", range: range)
+            return bindAndReturnErrorType(id, sema: sema)
         }
         let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
-        let nullableReturn = makeNullable(returnType, types: sema.types)
-        sema.bindings.bindExprType(id, type: nullableReturn)
-        return nullableReturn
+        if isSuperCall { sema.bindings.markSuperCall(id) }
+        let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
+        sema.bindings.bindExprType(id, type: finalType)
+        return finalType
     }
 
-    private func bindCallAndResolveReturnType(
+    func bindCallAndResolveReturnType(
         _ id: ExprID,
         chosen: SymbolID,
         resolved: ResolvedCall,
@@ -549,58 +333,66 @@ extension TypeCheckSemaPassPhase {
         return sema.types.anyType
     }
 
-    func inferCompoundAssignExpr(
+    private func inferCallableValueInvocation(
         _ id: ExprID,
-        op: CompoundAssignOp,
-        name: InternedString,
-        valueExpr: ExprID,
+        calleeType: TypeID,
+        callableTarget: CallableTarget?,
+        args: [CallArgument],
+        argTypes: [TypeID],
         range: SourceRange,
         ctx: TypeInferenceContext,
-        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)]
-    ) -> TypeID {
+        expectedType: TypeID?
+    ) -> TypeID? {
+        let ast = ctx.ast
         let sema = ctx.sema
-        let interner = ctx.interner
-
-        let intType = sema.types.make(.primitive(.int, .nonNull))
-        let stringType = sema.types.make(.primitive(.string, .nonNull))
-
-        let valueType = inferExpr(valueExpr, ctx: ctx, locals: &locals, expectedType: nil)
-        guard let local = locals[name] else {
+        let nonNullCalleeType = sema.types.makeNonNullable(calleeType)
+        guard case .functionType(let functionType) = sema.types.kind(of: nonNullCalleeType) else {
+            return nil
+        }
+        guard !args.contains(where: { $0.label != nil || $0.isSpread }),
+              functionType.params.count == argTypes.count else {
             ctx.semaCtx.diagnostics.error(
-                "KSWIFTK-SEMA-0013",
-                "Unresolved local variable '\(interner.resolve(name))'.",
+                "KSWIFTK-SEMA-0002",
+                "No viable overload found for call.",
                 range: range
             )
             sema.bindings.bindExprType(id, type: sema.types.errorType)
             return sema.types.errorType
         }
-        sema.bindings.bindIdentifier(id, symbol: local.symbol)
-        if !local.isInitialized {
-            ctx.semaCtx.diagnostics.error(
-                "KSWIFTK-SEMA-0031",
-                "Variable '\(interner.resolve(name))' must be initialized before use.",
-                range: range
+        var parameterMapping: [Int: Int] = [:]
+        for index in argTypes.indices {
+            parameterMapping[index] = index
+            emitSubtypeConstraint(
+                left: argTypes[index],
+                right: functionType.params[index],
+                range: ast.arena.exprRange(args[index].expr) ?? range,
+                solver: ConstraintSolver(),
+                sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
             )
         }
-        if !local.isMutable {
-            ctx.semaCtx.diagnostics.error(
-                "KSWIFTK-SEMA-0014",
-                "Val cannot be reassigned.",
-                range: range
+        if let expectedType {
+            emitSubtypeConstraint(
+                left: functionType.returnType,
+                right: expectedType,
+                range: range,
+                solver: ConstraintSolver(),
+                sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
             )
         }
-        let underlyingOp = compoundAssignToBinaryOp(op)
-        let resultType: TypeID
-        switch underlyingOp {
-        case .add:
-            resultType = (local.type == stringType || valueType == stringType) ? stringType : intType
-        case .subtract, .multiply, .divide, .modulo:
-            resultType = intType
-        default:
-            resultType = local.type
+        sema.bindings.bindCallableValueCall(
+            id,
+            binding: CallableValueCallBinding(
+                target: callableTarget,
+                functionType: nonNullCalleeType,
+                parameterMapping: parameterMapping
+            )
+        )
+        if let callableTarget {
+            sema.bindings.bindCallableTarget(id, target: callableTarget)
         }
-        locals[name] = (resultType, local.symbol, local.isMutable, local.isInitialized)
-        sema.bindings.bindExprType(id, type: sema.types.unitType)
-        return sema.types.unitType
+        sema.bindings.bindExprType(id, type: functionType.returnType)
+        return functionType.returnType
     }
 }

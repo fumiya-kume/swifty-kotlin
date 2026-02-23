@@ -147,7 +147,9 @@ extension LLVMCAPIBindings {
                 setSubprogramFn: loadSymbol(handle: handle, name: "LLVMSetSubprogram", as: LLVMSetSubprogramFn.self),
                 addModuleFlagFn: loadSymbol(handle: handle, name: "LLVMAddModuleFlag", as: LLVMAddModuleFlagFn.self),
                 valueAsMetadataFn: loadSymbol(handle: handle, name: "LLVMValueAsMetadata", as: LLVMValueAsMetadataFn.self),
-                int32TypeFn: loadSymbol(handle: handle, name: "LLVMInt32TypeInContext", as: LLVMInt32TypeInContextFn.self)
+                int32TypeFn: loadSymbol(handle: handle, name: "LLVMInt32TypeInContext", as: LLVMInt32TypeInContextFn.self),
+                setCurrentDebugLocation2Fn: loadSymbol(handle: handle, name: "LLVMSetCurrentDebugLocation2", as: LLVMSetCurrentDebugLocation2Fn.self),
+                diBuilderCreateDebugLocationFn: loadSymbol(handle: handle, name: "LLVMDIBuilderCreateDebugLocation", as: LLVMDIBuilderCreateDebugLocationFn.self)
             )
         }
         return nil

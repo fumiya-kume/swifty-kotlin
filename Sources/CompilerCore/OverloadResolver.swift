@@ -14,11 +14,13 @@ public struct CallExpr {
     public let range: SourceRange
     public let calleeName: InternedString
     public let args: [CallArg]
+    public let explicitTypeArgs: [TypeID]
 
-    public init(range: SourceRange, calleeName: InternedString, args: [CallArg]) {
+    public init(range: SourceRange, calleeName: InternedString, args: [CallArg], explicitTypeArgs: [TypeID] = []) {
         self.range = range
         self.calleeName = calleeName
         self.args = args
+        self.explicitTypeArgs = explicitTypeArgs
     }
 }
 
@@ -96,14 +98,30 @@ public final class OverloadResolver {
 
         let typeVarBySymbol = ctx.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
 
-        guard var constraints = buildReceiverConstraints(
-            signature: signature,
-            implicitReceiverType: implicitReceiverType,
-            typeVarBySymbol: typeVarBySymbol,
-            range: call.range,
-            typeSystem: ctx.types
-        ) else {
-            return .rejected
+        // Apply explicit type argument constraints if provided
+        if !call.explicitTypeArgs.isEmpty {
+            guard call.explicitTypeArgs.count == signature.typeParameterSymbols.count else {
+                return .rejected
+            }
+        }
+
+        // Constructors synthesize their own receiver at the call site, so skip
+        // the receiver constraint check that would reject them when there is no
+        // implicit receiver in scope (e.g. `Dog()` called from a free function).
+        var constraints: [VariableConstraint]
+        if symbol.kind == .constructor {
+            constraints = []
+        } else {
+            guard let receiverConstraints = buildReceiverConstraints(
+                signature: signature,
+                implicitReceiverType: implicitReceiverType,
+                typeVarBySymbol: typeVarBySymbol,
+                range: call.range,
+                typeSystem: ctx.types
+            ) else {
+                return .rejected
+            }
+            constraints = receiverConstraints
         }
 
         guard let parameterMapping = buildParameterMapping(
@@ -123,6 +141,21 @@ public final class OverloadResolver {
             typeSystem: ctx.types
         ) else {
             return .rejected
+        }
+
+        // Add equality constraints for explicit type arguments
+        for (index, explicitArg) in call.explicitTypeArgs.enumerated() {
+            let typeParamSymbol = signature.typeParameterSymbols[index]
+            if let typeVar = typeVarBySymbol[typeParamSymbol] {
+                constraints.append(
+                    VariableConstraint(
+                        kind: .equal,
+                        left: .variable(typeVar),
+                        right: .type(explicitArg),
+                        blameRange: call.range
+                    )
+                )
+            }
         }
 
         if let expectedType {
@@ -400,7 +433,19 @@ public final class OverloadResolver {
             }
 
             if sawNamedArgument {
-                return nil
+                // In Kotlin, positional arguments after named arguments
+                // are allowed only when they bind to a vararg parameter.
+                // Advance the cursor past already-bound non-vararg params.
+                while positionalCursor < paramCount &&
+                        !isVararg[positionalCursor] &&
+                        boundNonVarargParams.contains(positionalCursor) {
+                    positionalCursor += 1
+                }
+                if positionalCursor >= paramCount || !isVararg[positionalCursor] {
+                    return nil
+                }
+                mapping[argIndex] = positionalCursor
+                continue
             }
 
             while positionalCursor < paramCount &&

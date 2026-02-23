@@ -26,7 +26,7 @@ final class CompilerCoreTests: XCTestCase {
         fun foo(a: Int) = a
         fun bar() = foo(1)
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         let sema = try XCTUnwrap(ctx.sema)
@@ -41,7 +41,7 @@ final class CompilerCoreTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
@@ -56,7 +56,7 @@ final class CompilerCoreTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
@@ -72,7 +72,7 @@ final class CompilerCoreTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
@@ -86,7 +86,7 @@ final class CompilerCoreTests: XCTestCase {
             Green -> 2
         }
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
@@ -104,7 +104,7 @@ final class CompilerCoreTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
@@ -121,7 +121,7 @@ final class CompilerCoreTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
@@ -137,7 +137,7 @@ final class CompilerCoreTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -156,7 +156,7 @@ final class CompilerCoreTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -173,7 +173,7 @@ final class CompilerCoreTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -183,7 +183,7 @@ final class CompilerCoreTests: XCTestCase {
         let source = """
         fun bad(): Int = "x"
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
@@ -195,7 +195,7 @@ final class CompilerCoreTests: XCTestCase {
         fun takesInt(x: Int) = x
         fun use() = takesInt(num)
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -205,7 +205,7 @@ final class CompilerCoreTests: XCTestCase {
         let source = """
         val bad: Int = "x"
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
@@ -217,7 +217,7 @@ final class CompilerCoreTests: XCTestCase {
             get() = "x"
         }
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
@@ -231,7 +231,7 @@ final class CompilerCoreTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0005", in: ctx)
@@ -246,7 +246,7 @@ final class CompilerCoreTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -257,7 +257,7 @@ final class CompilerCoreTests: XCTestCase {
         fun foo(a: Int) = a
         fun bar() = foo(true)
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -268,7 +268,7 @@ final class CompilerCoreTests: XCTestCase {
         fun pick(x: Int, flag: Boolean) = x
         fun use() = pick(1, flag = true)
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -279,7 +279,7 @@ final class CompilerCoreTests: XCTestCase {
         fun pick(x: Int, y: Int) = x
         fun use() = pick(y = 1, 2)
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -290,7 +290,7 @@ final class CompilerCoreTests: XCTestCase {
         fun sum(vararg items: Int, tail: Int) = tail
         fun use() = sum(1, 2, tail = 3)
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -301,7 +301,7 @@ final class CompilerCoreTests: XCTestCase {
         fun take(x: Int) = x
         fun use() = take(*1)
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -313,7 +313,7 @@ final class CompilerCoreTests: XCTestCase {
         fun pick(x: String) = x
         fun use() = pick(1)
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0001", in: ctx)
@@ -326,7 +326,7 @@ final class CompilerCoreTests: XCTestCase {
         fun takesInt(a: Int) = a
         fun bar() = takesInt(foo())
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -336,7 +336,7 @@ final class CompilerCoreTests: XCTestCase {
         let source = """
         fun String.echo(): String = this
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runFrontend(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -364,7 +364,7 @@ final class CompilerCoreTests: XCTestCase {
         let source = """
         class Box<out T, in U, V>
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runFrontend(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -386,7 +386,7 @@ final class CompilerCoreTests: XCTestCase {
         fun String.ext() = 1
         fun String.wrap() = ext()
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -398,7 +398,7 @@ final class CompilerCoreTests: XCTestCase {
         fun takesInt(a: Int) = a
         fun main() = takesInt(id(1))
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -409,7 +409,7 @@ final class CompilerCoreTests: XCTestCase {
         fun <T> id(x: T): T = x
         fun bad(): Boolean = id(1)
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
@@ -427,7 +427,7 @@ final class CompilerCoreTests: XCTestCase {
             fun use() = helper(1)
             """
         ]
-        let ctx = try makeContext(sources: sources)
+        let ctx = try makeContextFromSources(sources)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -445,7 +445,7 @@ final class CompilerCoreTests: XCTestCase {
             fun use() = helper(1)
             """
         ]
-        let ctx = try makeContext(sources: sources)
+        let ctx = try makeContextFromSources(sources)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -467,7 +467,7 @@ final class CompilerCoreTests: XCTestCase {
             fun use() = pick(1)
             """
         ]
-        let ctx = try makeContext(sources: sources)
+        let ctx = try makeContextFromSources(sources)
         try runSema(ctx)
 
         let sema = try XCTUnwrap(ctx.sema)
@@ -493,7 +493,7 @@ final class CompilerCoreTests: XCTestCase {
             fun use() = 1
             """
         ]
-        let ctx = try makeContext(sources: sources)
+        let ctx = try makeContextFromSources(sources)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0022", in: ctx)
@@ -513,7 +513,7 @@ final class CompilerCoreTests: XCTestCase {
             fun use() = 1
             """
         ]
-        let ctx = try makeContext(sources: sources)
+        let ctx = try makeContextFromSources(sources)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0023", in: ctx)
@@ -525,7 +525,7 @@ final class CompilerCoreTests: XCTestCase {
         import nonexistent.Thing as X
         fun use() = 1
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
@@ -543,7 +543,7 @@ final class CompilerCoreTests: XCTestCase {
             fun use() = h(1)
             """
         ]
-        let ctx = try makeContext(sources: sources)
+        let ctx = try makeContextFromSources(sources)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -561,7 +561,7 @@ final class CompilerCoreTests: XCTestCase {
             fun use(): Int = calc(5)
             """
         ]
-        let ctx = try makeContext(sources: sources)
+        let ctx = try makeContextFromSources(sources)
         try runSema(ctx)
 
         let sema = try XCTUnwrap(ctx.sema)
@@ -588,7 +588,7 @@ final class CompilerCoreTests: XCTestCase {
             fun use() = f(1) + b(2)
             """
         ]
-        let ctx = try makeContext(sources: sources)
+        let ctx = try makeContextFromSources(sources)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -609,7 +609,7 @@ final class CompilerCoreTests: XCTestCase {
             fun use() = f(1) + bar(2)
             """
         ]
-        let ctx = try makeContext(sources: sources)
+        let ctx = try makeContextFromSources(sources)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -621,7 +621,7 @@ final class CompilerCoreTests: XCTestCase {
         import kotlin.io.println as
         fun use() = 1
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         // Parser should insert missing token; alias with empty name is skipped
@@ -641,7 +641,7 @@ final class CompilerCoreTests: XCTestCase {
             fun use() = h(1)
             """
         ]
-        let ctx = try makeContext(sources: sources)
+        let ctx = try makeContextFromSources(sources)
         try runFrontend(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -667,7 +667,7 @@ final class CompilerCoreTests: XCTestCase {
             fun use() = helper(1)
             """
         ]
-        let ctx = try makeContext(sources: sources)
+        let ctx = try makeContextFromSources(sources)
         try runFrontend(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -686,7 +686,7 @@ final class CompilerCoreTests: XCTestCase {
             return add(1)
         }
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -728,7 +728,7 @@ final class CompilerCoreTests: XCTestCase {
             return ref(1)
         }
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -772,7 +772,7 @@ final class CompilerCoreTests: XCTestCase {
             return ref()
         }
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -810,7 +810,7 @@ final class CompilerCoreTests: XCTestCase {
             return ref(1)
         }
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -844,7 +844,7 @@ final class CompilerCoreTests: XCTestCase {
         fun target(x: Int): Int = x + 1
         fun use(): Int = (::target)(1)
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -885,7 +885,7 @@ final class CompilerCoreTests: XCTestCase {
         let source = """
         fun apply(f: (Int) -> Int, x: Int): Int = f(x)
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0023", in: ctx)
@@ -919,92 +919,77 @@ final class CompilerCoreTests: XCTestCase {
 
     func testEmitObjectProducesMachOFile() throws {
         let source = "fun main() {}"
-        let tempSource = try writeTempSource(source)
         let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".o")
-        addTeardownBlock {
-            try? FileManager.default.removeItem(at: outputURL)
-            try? FileManager.default.removeItem(at: tempSource)
+        defer { try? FileManager.default.removeItem(at: outputURL) }
+
+        try withTemporaryFile(contents: source) { tempSourcePath in
+            let options = CompilerOptions(
+                moduleName: "ObjTest",
+                inputs: [tempSourcePath],
+                outputPath: outputURL.path,
+                emit: .object,
+                target: defaultTargetTriple()
+            )
+            let driver = CompilerDriver(
+                version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
+                kotlinVersion: .v2_3_10
+            )
+
+            let exitCode = driver.run(options: options)
+            XCTAssertEqual(exitCode, 0)
+            let data = try Data(contentsOf: outputURL)
+            XCTAssertGreaterThanOrEqual(data.count, 4)
+            XCTAssertEqual(Array(data.prefix(4)), [0xCF, 0xFA, 0xED, 0xFE])
         }
-
-        let options = CompilerOptions(
-            moduleName: "ObjTest",
-            inputs: [tempSource.path],
-            outputPath: outputURL.path,
-            emit: .object,
-            target: defaultTargetTriple()
-        )
-        let driver = CompilerDriver(
-            version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
-            kotlinVersion: .v2_3_10
-        )
-
-        let exitCode = driver.run(options: options)
-        XCTAssertEqual(exitCode, 0)
-        let data = try Data(contentsOf: outputURL)
-        XCTAssertGreaterThanOrEqual(data.count, 4)
-        XCTAssertEqual(Array(data.prefix(4)), [0xCF, 0xFA, 0xED, 0xFE])
     }
 
     func testEmitExecutableFailsWithoutMainFunction() throws {
         let source = "fun notMain() {}"
-        let tempSource = try writeTempSource(source)
         let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
 
-        let options = CompilerOptions(
-            moduleName: "ExeTest",
-            inputs: [tempSource.path],
-            outputPath: outputURL.path,
-            emit: .executable,
-            target: defaultTargetTriple()
-        )
-        let driver = CompilerDriver(
-            version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
-            kotlinVersion: .v2_3_10
-        )
+        try withTemporaryFile(contents: source) { tempSourcePath in
+            let options = CompilerOptions(
+                moduleName: "ExeTest",
+                inputs: [tempSourcePath],
+                outputPath: outputURL.path,
+                emit: .executable,
+                target: defaultTargetTriple()
+            )
+            let driver = CompilerDriver(
+                version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
+                kotlinVersion: .v2_3_10
+            )
 
-        let exitCode = driver.run(options: options)
-        XCTAssertEqual(exitCode, 1)
-    }
-
-    func testDriverFallbackDiagnosticClassifiesPipelineErrors() {
-        let load = CompilerDriver.fallbackDiagnostic(for: CompilerPipelineError.loadError)
-        XCTAssertEqual(load?.code, "KSWIFTK-PIPELINE-0001")
-
-        let invalid = CompilerDriver.fallbackDiagnostic(for: CompilerPipelineError.invalidInput("missing AST"))
-        XCTAssertEqual(invalid?.code, "KSWIFTK-PIPELINE-0002")
-        XCTAssertTrue(invalid?.message.contains("missing AST") == true)
-
-        let output = CompilerDriver.fallbackDiagnostic(for: CompilerPipelineError.outputUnavailable)
-        XCTAssertEqual(output?.code, "KSWIFTK-PIPELINE-0003")
-
-        struct UnknownError: Error {}
-        XCTAssertNil(CompilerDriver.fallbackDiagnostic(for: UnknownError()))
+            let exitCode = driver.run(options: options)
+            XCTAssertEqual(exitCode, 1)
+        }
     }
 
     func testDriverReportsPipelineOutputUnavailableWithoutICE() throws {
         let source = "fun main() = 0"
-        let tempSource = try writeTempSource(source)
         let missingDir = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
             .appendingPathComponent("missing")
         let outputBase = missingDir.appendingPathComponent("result").path
 
-        let options = CompilerOptions(
-            moduleName: "PipelineFailure",
-            inputs: [tempSource.path],
-            outputPath: outputBase,
-            emit: .kirDump,
-            target: defaultTargetTriple()
-        )
-        let driver = CompilerDriver(
-            version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
-            kotlinVersion: .v2_3_10
-        )
+        try withTemporaryFile(contents: source) { tempSourcePath in
+            let options = CompilerOptions(
+                moduleName: "PipelineFailure",
+                inputs: [tempSourcePath],
+                outputPath: outputBase,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            )
+            let driver = CompilerDriver(
+                version: CompilerVersion(major: 0, minor: 1, patch: 0, gitHash: nil),
+                kotlinVersion: .v2_3_10
+            )
 
-        let result = driver.runForTesting(options: options)
-        XCTAssertEqual(result.exitCode, 1)
-        XCTAssertTrue(result.diagnostics.contains { $0.code == "KSWIFTK-PIPELINE-0003" })
-        XCTAssertFalse(result.diagnostics.contains { $0.code == "KSWIFTK-ICE-0001" })
+            let result = driver.runForTesting(options: options)
+            XCTAssertEqual(result.exitCode, 1)
+            XCTAssertTrue(result.diagnostics.contains { $0.code == "KSWIFTK-PIPELINE-0003" })
+            XCTAssertFalse(result.diagnostics.contains { $0.code == "KSWIFTK-ICE-0001" })
+        }
     }
 
     func testFunctionExpressionBodyWhenRemainsExpressionBody() throws {
@@ -1014,7 +999,7 @@ final class CompilerCoreTests: XCTestCase {
             else -> 20
         }
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runFrontend(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -1046,7 +1031,7 @@ final class CompilerCoreTests: XCTestCase {
             println(2)
         }
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runFrontend(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -1075,7 +1060,7 @@ final class CompilerCoreTests: XCTestCase {
         let source = """
         fun build() = { x: Int -> x + 1 }
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runFrontend(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -1100,7 +1085,7 @@ final class CompilerCoreTests: XCTestCase {
         interface I
         fun build() = object : I {}
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runFrontend(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -1128,7 +1113,7 @@ final class CompilerCoreTests: XCTestCase {
         fun unbound() = ::target
         fun bound(x: Int) = x::toString
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runFrontend(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -1169,7 +1154,7 @@ final class CompilerCoreTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runFrontend(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -1207,7 +1192,7 @@ final class CompilerCoreTests: XCTestCase {
             else -> 0
         }
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
@@ -1221,7 +1206,7 @@ final class CompilerCoreTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
@@ -1234,7 +1219,7 @@ final class CompilerCoreTests: XCTestCase {
             else -> "ok"
         }
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0032", in: ctx)
@@ -1244,7 +1229,7 @@ final class CompilerCoreTests: XCTestCase {
         let source = """
         fun test() = unknownVariable
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0022", in: ctx)
@@ -1254,7 +1239,7 @@ final class CompilerCoreTests: XCTestCase {
         let source = """
         fun test() = unknownFunction(1)
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0023", in: ctx)
@@ -1264,55 +1249,299 @@ final class CompilerCoreTests: XCTestCase {
         let source = """
         fun test(x: UnknownType) = x
         """
-        let ctx = try makeContext(source: source)
+        let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0025", in: ctx)
     }
 
-    private func makeContext(source: String) throws -> CompilationContext {
-        let tempURL = try writeTempSource(source)
+    // MARK: - P5-40 Regression: Strict unresolved reference / type diagnostics
 
-        let options = CompilerOptions(
-            moduleName: "TestModule",
-            inputs: [tempURL.path],
-            outputPath: tempURL.deletingPathExtension().appendingPathExtension("out").path,
-            emit: .kirDump,
-            target: defaultTargetTriple()
-        )
-        return CompilationContext(
-            options: options,
-            sourceManager: SourceManager(),
-            diagnostics: DiagnosticEngine(),
-            interner: StringInterner()
-        )
+    func testUnresolvedIdentifierInBlockEmitsDiagnostic() throws {
+        let source = """
+        fun test(): Int {
+            val x = missingIdent
+            return 0
+        }
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertHasDiagnostic("KSWIFTK-SEMA-0022", in: ctx)
     }
 
-    private func makeContext(sources: [String]) throws -> CompilationContext {
-        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
-        addTeardownBlock {
-            try? FileManager.default.removeItem(at: tempDir)
-        }
+    func testUnresolvedIdentifierInBinaryExprEmitsDiagnostic() throws {
+        let source = """
+        fun test(): Int = 1 + noSuchVar
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
 
-        let inputPaths = try sources.enumerated().map { index, source in
-            let fileURL = tempDir.appendingPathComponent("input\(index).kt")
-            try source.write(to: fileURL, atomically: true, encoding: .utf8)
-            return fileURL.path
+        assertHasDiagnostic("KSWIFTK-SEMA-0022", in: ctx)
+    }
+
+    func testUnresolvedFunctionCallWithMultipleArgsEmitsDiagnostic() throws {
+        let source = """
+        fun test() = missingFun(1, 2, 3)
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertHasDiagnostic("KSWIFTK-SEMA-0023", in: ctx)
+    }
+
+    func testUnresolvedFunctionCallInNestedExprEmitsDiagnostic() throws {
+        let source = """
+        fun known(x: Int): Int = x
+        fun test(): Int = known(unknownFn())
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertHasDiagnostic("KSWIFTK-SEMA-0023", in: ctx)
+    }
+
+    func testUnresolvedMemberCallEmitsDiagnostic() throws {
+        let source = """
+        class Foo
+        fun test(f: Foo) = f.missing()
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertHasDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+    }
+
+    func testUnresolvedSafeMemberCallFallsBackToAnyNullable() throws {
+        // Safe member calls with unknown methods fall back to Any? (not errorType)
+        // because the compiler may not enumerate all built-in methods (e.g. hashCode).
+        let source = """
+        class Foo
+        fun test(f: Foo?) = f?.missing()
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+    }
+
+    func testUnresolvedBinaryOperatorEmitsDiagnostic() throws {
+        let source = """
+        class Foo
+        fun test(f: Foo): Foo = f + f
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertHasDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
+    }
+
+    func testUnresolvedTypeAnnotationOnLocalVarEmitsDiagnostic() throws {
+        let source = """
+        fun test() {
+            val x: NoSuchType = 42
         }
-        let options = CompilerOptions(
-            moduleName: "TestModule",
-            inputs: inputPaths,
-            outputPath: tempDir.appendingPathComponent("out.kir").path,
-            emit: .kirDump,
-            target: defaultTargetTriple()
-        )
-        return CompilationContext(
-            options: options,
-            sourceManager: SourceManager(),
-            diagnostics: DiagnosticEngine(),
-            interner: StringInterner()
-        )
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertHasDiagnostic("KSWIFTK-SEMA-0025", in: ctx)
+    }
+
+    func testUnresolvedReturnTypeAnnotationEmitsDiagnostic() throws {
+        let source = """
+        fun test(): MissingReturn = 1
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertHasDiagnostic("KSWIFTK-SEMA-0025", in: ctx)
+    }
+
+    func testUnresolvedPropertyTypeAnnotationEmitsDiagnostic() throws {
+        let source = """
+        class Holder {
+            val x: GhostType = 0
+        }
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertHasDiagnostic("KSWIFTK-SEMA-0025", in: ctx)
+    }
+
+    func testResolvedIdentifierDoesNotEmitUnresolvedDiagnostic() throws {
+        let source = """
+        fun test(): Int {
+            val x = 10
+            return x
+        }
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0022", in: ctx)
+        assertNoDiagnostic("KSWIFTK-SEMA-0023", in: ctx)
+    }
+
+    func testResolvedFunctionCallDoesNotEmitUnresolvedDiagnostic() throws {
+        let source = """
+        fun helper(x: Int): Int = x
+        fun test(): Int = helper(42)
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0023", in: ctx)
+    }
+
+    func testResolvedTypeAnnotationDoesNotEmitUnresolvedDiagnostic() throws {
+        let source = """
+        fun test(x: Int): String = "ok"
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0025", in: ctx)
+    }
+
+    func testUnresolvedLocalFunParamTypeEmitsDiagnostic() throws {
+        let source = """
+        fun outer() {
+            fun inner(p: Phantom): Int = 0
+        }
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertHasDiagnostic("KSWIFTK-SEMA-0025", in: ctx)
+    }
+
+    func testUnresolvedLocalFunReturnTypeEmitsDiagnostic() throws {
+        let source = """
+        fun outer() {
+            fun inner(): Ghost = 0
+        }
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertHasDiagnostic("KSWIFTK-SEMA-0025", in: ctx)
+    }
+
+    // MARK: - P5-40 Cascading diagnostic suppression
+
+    func testCascadingBinaryAddOnUnresolvedIdentifierEmitsOnlyOneError() throws {
+        let source = """
+        fun test(): Int = noSuchVar + 1
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertDiagnosticCount("KSWIFTK-SEMA-0022", expected: 1, in: ctx)
+        assertDiagnosticCount("KSWIFTK-SEMA-0002", expected: 0, in: ctx)
+    }
+
+    func testCascadingMemberCallOnUnresolvedReceiverEmitsOnlyOneError() throws {
+        let source = """
+        fun test(): Int = unknownObj.method()
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertDiagnosticCount("KSWIFTK-SEMA-0022", expected: 1, in: ctx)
+        assertDiagnosticCount("KSWIFTK-SEMA-0024", expected: 0, in: ctx)
+    }
+
+    func testCascadingSafeMemberCallOnUnresolvedReceiverEmitsOnlyOneError() throws {
+        let source = """
+        fun test() = missingVar?.call()
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertDiagnosticCount("KSWIFTK-SEMA-0022", expected: 1, in: ctx)
+        assertDiagnosticCount("KSWIFTK-SEMA-0024", expected: 0, in: ctx)
+    }
+
+    func testCascadingBinarySubtractOnUnresolvedIdentifierEmitsOnlyOneError() throws {
+        let source = """
+        fun test(): Int = noSuchVar - 1
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertDiagnosticCount("KSWIFTK-SEMA-0022", expected: 1, in: ctx)
+        assertDiagnosticCount("KSWIFTK-SEMA-0002", expected: 0, in: ctx)
+    }
+
+    func testCascadingBinaryMultiplyOnUnresolvedIdentifierEmitsOnlyOneError() throws {
+        let source = """
+        fun test(): Int = noSuchVar * 2
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertDiagnosticCount("KSWIFTK-SEMA-0022", expected: 1, in: ctx)
+        assertDiagnosticCount("KSWIFTK-SEMA-0002", expected: 0, in: ctx)
+    }
+
+    // MARK: - P5-40 Resolved negative tests (no spurious diagnostics)
+
+    func testResolvedMemberCallDoesNotEmitUnresolvedDiagnostic() throws {
+        let source = """
+        class Foo {
+            fun bar(): Int = 42
+        }
+        fun test(f: Foo): Int = f.bar()
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+    }
+
+    func testResolvedSafeMemberCallDoesNotEmitUnresolvedDiagnostic() throws {
+        let source = """
+        class Foo {
+            fun bar(): Int = 42
+        }
+        fun test(f: Foo?): Int? = f?.bar()
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+    }
+
+    func testResolvedBinaryAddDoesNotEmitOperatorDiagnostic() throws {
+        let source = """
+        fun test(): Int = 1 + 2
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
+    }
+
+    func testResolvedBinaryComparisonDoesNotEmitOperatorDiagnostic() throws {
+        let source = """
+        fun test(): Boolean = 1 == 2
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
+    }
+
+    func testResolvedStringConcatDoesNotEmitOperatorDiagnostic() throws {
+        let source = """
+        fun test(): String = "a" + "b"
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
     }
 
     private func topLevelFunction(
@@ -1334,25 +1563,5 @@ final class CompilerCoreTests: XCTestCase {
         return nil
     }
 
-    private func firstExprID(
-        in ast: ASTModule,
-        where predicate: (ExprID, Expr) -> Bool
-    ) -> ExprID? {
-        for index in ast.arena.exprs.indices {
-            let exprID = ExprID(rawValue: Int32(index))
-            guard let expr = ast.arena.expr(exprID) else {
-                continue
-            }
-            if predicate(exprID, expr) {
-                return exprID
-            }
-        }
-        return nil
-    }
 
-    private func writeTempSource(_ source: String) throws -> URL {
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".kt")
-        try source.write(to: tempURL, atomically: true, encoding: .utf8)
-        return tempURL
-    }
 }

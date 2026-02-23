@@ -55,7 +55,10 @@ extension TypeCheckSemaPassPhase {
         if let getter = property.getter {
             var getterLocals: [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)] = [:]
             if let fieldType = inferredPropertyType {
-                getterLocals[interner.intern("field")] = (fieldType, symbol, true, true)
+                // Bind `field` to the backing field symbol when available so that
+                // KIR lowering can distinguish field access from property access.
+                let fieldSymbol = sema.symbols.backingFieldSymbol(for: symbol) ?? symbol
+                getterLocals[interner.intern("field")] = (fieldType, fieldSymbol, true, true)
             }
             let getterType = inferFunctionBodyType(
                 getter.body, ctx: ctx, locals: &getterLocals,
@@ -72,6 +75,18 @@ extension TypeCheckSemaPassPhase {
             }
         }
 
+        // Type-check delegated property expression (`by` clause).
+        if let delegateExpr = property.delegateExpression {
+            var delegateLocals: [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)] = [:]
+            let delegateType = inferExpr(
+                delegateExpr, ctx: ctx, locals: &delegateLocals,
+                expectedType: nil
+            )
+            // The delegate type is recorded; getValue/setValue lowering happens
+            // in PropertyLoweringPass.
+            _ = delegateType
+        }
+
         let finalPropertyType = inferredPropertyType ?? sema.types.nullableAnyType
         sema.symbols.setPropertyType(finalPropertyType, for: symbol)
 
@@ -84,9 +99,16 @@ extension TypeCheckSemaPassPhase {
                 )
             }
             var setterLocals: [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)] = [:]
-            setterLocals[interner.intern("field")] = (finalPropertyType, symbol, true, true)
+            // Bind `field` to the backing field symbol so KIR lowering can
+            // distinguish it from the setter value parameter.
+            let fieldSymbol = sema.symbols.backingFieldSymbol(for: symbol) ?? symbol
+            setterLocals[interner.intern("field")] = (finalPropertyType, fieldSymbol, true, true)
             let parameterName = setter.parameterName ?? interner.intern("value")
-            setterLocals[parameterName] = (finalPropertyType, symbol, true, true)
+            // Use a synthetic setter-value symbol distinct from both the property
+            // symbol and the backing field symbol so that references to the value
+            // parameter don't collide with field references in KIR lowering.
+            let setterValueSymbol = SymbolID(rawValue: -(symbol.rawValue + 40_000))
+            setterLocals[parameterName] = (finalPropertyType, setterValueSymbol, true, true)
             let setterType = inferFunctionBodyType(
                 setter.body, ctx: ctx, locals: &setterLocals,
                 expectedType: sema.types.unitType
@@ -111,12 +133,15 @@ extension TypeCheckSemaPassPhase {
 
     func typeCheckSecondaryConstructors(
         _ constructors: [ConstructorDecl],
-        ctx: TypeInferenceContext
+        ctx: TypeInferenceContext,
+        ownerSymbol: SymbolID? = nil,
+        hasPrimaryConstructor: Bool = true
     ) {
         let sema = ctx.sema
         for ctor in constructors {
             var locals: [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)] = [:]
             let ctorSymbols = sema.symbols.allSymbols().filter { $0.kind == .constructor && $0.declSite == ctor.range }
+            let currentCtorSymbolID = ctorSymbols.first?.id
             if let ctorSymbol = ctorSymbols.first,
                let signature = sema.symbols.functionSignature(for: ctorSymbol.id) {
                 for (index, paramSymbol) in signature.valueParameterSymbols.enumerated() {
@@ -125,9 +150,94 @@ extension TypeCheckSemaPassPhase {
                     locals[param.name] = (type, paramSymbol, false, true)
                 }
             }
+
+            // Validate delegation rule: secondary constructors must delegate when a
+            // primary constructor exists (Kotlin spec).
+            if ctor.delegationCall == nil && hasPrimaryConstructor {
+                sema.diagnostics.error(
+                    "KSWIFTK-SEMA-0054",
+                    "Secondary constructor must delegate to another constructor via this() or super().",
+                    range: ctor.range
+                )
+            }
+
             if let delegation = ctor.delegationCall {
+                // Type-check delegation arguments.
+                var argTypes: [CallArg] = []
                 for arg in delegation.args {
-                    _ = inferExpr(arg.expr, ctx: ctx, locals: &locals, expectedType: nil)
+                    let argType = inferExpr(arg.expr, ctx: ctx, locals: &locals, expectedType: nil)
+                    argTypes.append(CallArg(label: arg.label, isSpread: arg.isSpread, type: argType))
+                }
+
+                // Resolve delegation target via overload resolution.
+                let delegationTargetFQName: [InternedString]
+                switch delegation.kind {
+                case .this:
+                    if let owner = ownerSymbol,
+                       let ownerSym = sema.symbols.symbol(owner) {
+                        delegationTargetFQName = ownerSym.fqName + [ctx.interner.intern("<init>")]
+                    } else {
+                        delegationTargetFQName = []
+                    }
+                case .super_:
+                    if let owner = ownerSymbol {
+                        let supertypes = sema.symbols.directSupertypes(for: owner)
+                        let classSupertypes = supertypes.filter {
+                            let kind = sema.symbols.symbol($0)?.kind
+                            return kind == .class || kind == .enumClass
+                        }
+                        if let superclass = classSupertypes.first,
+                           let superSym = sema.symbols.symbol(superclass) {
+                            delegationTargetFQName = superSym.fqName + [ctx.interner.intern("<init>")]
+                        } else {
+                            delegationTargetFQName = []
+                        }
+                    } else {
+                        delegationTargetFQName = []
+                    }
+                }
+
+                if !delegationTargetFQName.isEmpty {
+                    let candidates = sema.symbols.lookupAll(fqName: delegationTargetFQName)
+                        .filter { candidate in
+                            guard let symbol = sema.symbols.symbol(candidate) else { return false }
+                            // Exclude the current constructor to prevent self-delegation
+                            // (which would cause infinite recursion at runtime).
+                            return symbol.kind == .constructor && candidate != currentCtorSymbolID
+                        }
+
+                    if candidates.isEmpty {
+                        let targetKind = delegation.kind == .this ? "this" : "super"
+                        sema.diagnostics.error(
+                            "KSWIFTK-SEMA-0055",
+                            "Unresolved \(targetKind)() delegation target: no matching constructor found.",
+                            range: delegation.range
+                        )
+                    } else {
+                        let callExpr = CallExpr(
+                            range: delegation.range,
+                            calleeName: ctx.interner.intern("<init>"),
+                            args: argTypes
+                        )
+                        let resolved = ctx.resolver.resolveCall(
+                            candidates: candidates,
+                            call: callExpr,
+                            expectedType: nil,
+                            ctx: sema
+                        )
+                        if let diagnostic = resolved.diagnostic {
+                            sema.diagnostics.emit(diagnostic)
+                        }
+                    }
+                } else if ownerSymbol != nil {
+                    // Owner exists but delegation target FQ name could not be
+                    // resolved (e.g. super() with no superclass).
+                    let targetKind = delegation.kind == .this ? "this" : "super"
+                    sema.diagnostics.error(
+                        "KSWIFTK-SEMA-0055",
+                        "Unresolved \(targetKind)() delegation target: no matching constructor found.",
+                        range: delegation.range
+                    )
                 }
             }
             _ = inferFunctionBodyType(ctor.body, ctx: ctx, locals: &locals, expectedType: nil)
