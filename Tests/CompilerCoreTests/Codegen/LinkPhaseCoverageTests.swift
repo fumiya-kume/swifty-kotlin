@@ -148,8 +148,9 @@ final class LinkPhaseCoverageTests: XCTestCase {
         try cSource.write(to: cSourceURL, atomically: true, encoding: .utf8)
 
         let objectURL = objectsDir.appendingPathComponent("native_plus.o")
+        let clangPath = CommandRunner.resolveExecutable("clang", fallback: "/usr/bin/clang")
         _ = try CommandRunner.run(
-            executable: "/usr/bin/clang",
+            executable: clangPath,
             arguments: ["-c", cSourceURL.path, "-o", objectURL.path]
         )
 

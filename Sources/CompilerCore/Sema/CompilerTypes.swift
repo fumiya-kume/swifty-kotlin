@@ -39,7 +39,11 @@ public struct TargetTriple: Equatable {
         #else
         let arch = "arm64"
         #endif
+        #if os(Linux)
+        return TargetTriple(arch: arch, vendor: "unknown", os: "linux-gnu", osVersion: nil)
+        #else
         return TargetTriple(arch: arch, vendor: "apple", os: "macosx", osVersion: nil)
+        #endif
     }
 }
 

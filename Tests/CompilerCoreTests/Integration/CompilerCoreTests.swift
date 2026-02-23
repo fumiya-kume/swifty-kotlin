@@ -939,7 +939,13 @@ final class CompilerCoreTests: XCTestCase {
             XCTAssertEqual(exitCode, 0)
             let data = try Data(contentsOf: outputURL)
             XCTAssertGreaterThanOrEqual(data.count, 4)
+            #if os(Linux)
+            // ELF magic number
+            XCTAssertEqual(Array(data.prefix(4)), [0x7F, 0x45, 0x4C, 0x46])
+            #else
+            // Mach-O magic number
             XCTAssertEqual(Array(data.prefix(4)), [0xCF, 0xFA, 0xED, 0xFE])
+            #endif
         }
     }
 

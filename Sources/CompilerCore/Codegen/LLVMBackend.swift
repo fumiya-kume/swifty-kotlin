@@ -97,7 +97,8 @@ public final class LLVMBackend {
             }
             args.append(contentsOf: [sourceURL.path, "-o", outputPath])
             args.append(contentsOf: clangTargetArgs())
-            _ = try CommandRunner.run(executable: "/usr/bin/clang", arguments: args)
+            let clangPath = CommandRunner.resolveExecutable("clang", fallback: "/usr/bin/clang")
+            _ = try CommandRunner.run(executable: clangPath, arguments: args)
         } catch let error as CommandRunnerError {
             reportBackendError(
                 code: errorCode,

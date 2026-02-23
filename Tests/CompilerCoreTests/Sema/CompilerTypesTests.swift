@@ -241,8 +241,13 @@ final class CompilerTypesTests: XCTestCase {
         #elseif arch(x86_64)
         XCTAssertEqual(host.arch, "x86_64")
         #endif
+        #if os(Linux)
+        XCTAssertEqual(host.vendor, "unknown")
+        XCTAssertEqual(host.os, "linux-gnu")
+        #else
         XCTAssertEqual(host.vendor, "apple")
         XCTAssertEqual(host.os, "macosx")
+        #endif
         XCTAssertNil(host.osVersion)
     }
 }

@@ -12,6 +12,21 @@ public enum CommandRunnerError: Error {
 }
 
 public enum CommandRunner {
+    /// Resolves the absolute path for an executable by searching the PATH environment variable.
+    /// Falls back to the provided default path if the executable is not found in PATH.
+    public static func resolveExecutable(_ name: String, fallback: String) -> String {
+        let fileManager = FileManager.default
+        if let pathEnv = ProcessInfo.processInfo.environment["PATH"] {
+            for directory in pathEnv.split(separator: ":") {
+                let candidate = String(directory) + "/" + name
+                if fileManager.isExecutableFile(atPath: candidate) {
+                    return candidate
+                }
+            }
+        }
+        return fallback
+    }
+
     public static func run(
         executable: String,
         arguments: [String],
