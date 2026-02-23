@@ -414,11 +414,17 @@ extension BuildKIRPhase {
                 let bodyFunRef = arena.appendExpr(.symbolRef(symbol), type: funType)
                 localFunBodyInstructions.append(.constValue(result: bodyFunRef, value: .symbolRef(symbol)))
                 localValuesBySymbol[symbol] = bodyFunRef
+                let recursiveCaptureArguments: [KIRExprID] = captureBindings.map { binding in
+                    guard let value = localValuesBySymbol[binding.capturedSymbol] else {
+                        preconditionFailure("BuildKIRPhase: missing capture binding for recursive local function '\(symbol)'")
+                    }
+                    return value
+                }
                 registerCallableValue(
                     bodyFunRef,
                     symbol: symbol,
                     callee: localFunCalleeName,
-                    captureArguments: captureBindings.compactMap { localValuesBySymbol[$0.capturedSymbol] }
+                    captureArguments: recursiveCaptureArguments
                 )
 
                 switch localFunBody {
