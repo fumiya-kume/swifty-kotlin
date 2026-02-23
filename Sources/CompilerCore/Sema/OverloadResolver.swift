@@ -44,6 +44,10 @@ public struct ResolvedCall {
 }
 
 public final class OverloadResolver {
+    /// Optional sema cache context.  When non-nil the resolver checks the
+    /// call-resolution cache before performing full candidate evaluation.
+    public var cacheContext: SemaCacheContext?
+
     public init() {}
 
     public func resolveCall(
@@ -51,6 +55,45 @@ public final class OverloadResolver {
         call: CallExpr,
         expectedType: TypeID?,
         implicitReceiverType: TypeID? = nil,
+        ctx: SemaModule
+    ) -> ResolvedCall {
+        // --- cache lookup ---
+        if let cache = cacheContext {
+            let key = SemaCacheContext.makeCallResolutionKey(
+                candidates: candidates,
+                call: call,
+                expectedType: expectedType,
+                implicitReceiverType: implicitReceiverType
+            )
+            if let cached = cache.cachedCallResolution(for: key) {
+                cache.recordCallResolutionHit()
+                return cached
+            }
+            cache.recordCallResolutionMiss()
+            let result = resolveCallUncached(
+                candidates: candidates,
+                call: call,
+                expectedType: expectedType,
+                implicitReceiverType: implicitReceiverType,
+                ctx: ctx
+            )
+            cache.cacheCallResolution(result, for: key)
+            return result
+        }
+        return resolveCallUncached(
+            candidates: candidates,
+            call: call,
+            expectedType: expectedType,
+            implicitReceiverType: implicitReceiverType,
+            ctx: ctx
+        )
+    }
+
+    private func resolveCallUncached(
+        candidates: [SymbolID],
+        call: CallExpr,
+        expectedType: TypeID?,
+        implicitReceiverType: TypeID?,
         ctx: SemaModule
     ) -> ResolvedCall {
         let solver = ConstraintSolver()
