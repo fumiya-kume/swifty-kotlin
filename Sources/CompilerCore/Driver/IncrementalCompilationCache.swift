@@ -93,6 +93,7 @@ public final class IncrementalCompilationCache {
     /// Files that are new (not in previous manifest) are also considered changed.
     public func changedFiles(allPaths: [String]) -> Set<String> {
         var changed = Set<String>()
+        let allPathsSet = Set(allPaths)
         for path in allPaths {
             guard let current = currentFingerprints[path] else {
                 // File could not be fingerprinted — treat as changed.
@@ -114,8 +115,11 @@ public final class IncrementalCompilationCache {
             }
         }
         // Files that were in the previous build but removed in this build
-        // also invalidate the cache (but they won't be in allPaths, so their
-        // dependents will be caught by the dependency graph).
+        // must be treated as changed so their provided symbols are invalidated
+        // and dependents are recompiled.
+        for previousPath in previousFingerprints.keys where !allPathsSet.contains(previousPath) {
+            changed.insert(previousPath)
+        }
         return changed
     }
 
