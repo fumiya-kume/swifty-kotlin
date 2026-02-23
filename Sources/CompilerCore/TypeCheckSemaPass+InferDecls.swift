@@ -171,4 +171,100 @@ extension TypeCheckSemaPassPhase {
         return sema.types.unitType
     }
 
+    func inferLocalFunDeclExpr(
+        _ id: ExprID,
+        name: InternedString,
+        valueParams: [ValueParamDecl],
+        returnTypeRef: TypeRefID?,
+        body: FunctionBody,
+        range: SourceRange,
+        ctx: TypeInferenceContext,
+        locals: inout [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)]
+    ) -> TypeID {
+        let ast = ctx.ast
+        let sema = ctx.sema
+        let interner = ctx.interner
+
+        var parameterTypes: [TypeID] = []
+        var paramSymbols: [SymbolID] = []
+        for param in valueParams {
+            let paramType: TypeID
+            if let typeRefID = param.type {
+                paramType = resolveTypeRef(typeRefID, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
+            } else {
+                paramType = sema.types.anyType
+            }
+            parameterTypes.append(paramType)
+            let paramSymbol = sema.symbols.define(
+                kind: .valueParameter,
+                name: param.name,
+                fqName: [
+                    interner.intern("__localfun_\(id.rawValue)"),
+                    param.name
+                ],
+                declSite: range,
+                visibility: .private,
+                flags: []
+            )
+            sema.symbols.setPropertyType(paramType, for: paramSymbol)
+            paramSymbols.append(paramSymbol)
+        }
+
+        let resolvedReturnType: TypeID
+        if let returnTypeRef {
+            resolvedReturnType = resolveTypeRef(returnTypeRef, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
+        } else {
+            resolvedReturnType = sema.types.unitType
+        }
+
+        let funSymbol = sema.symbols.define(
+            kind: .function,
+            name: name,
+            fqName: [
+                interner.intern("__localfun_\(id.rawValue)"),
+                name
+            ],
+            declSite: range,
+            visibility: .private,
+            flags: []
+        )
+
+        let signature = FunctionSignature(
+            parameterTypes: parameterTypes,
+            returnType: resolvedReturnType,
+            valueParameterSymbols: paramSymbols,
+            valueParameterHasDefaultValues: valueParams.map { $0.hasDefaultValue },
+            valueParameterIsVararg: valueParams.map { $0.isVararg }
+        )
+        sema.symbols.setFunctionSignature(signature, for: funSymbol)
+
+        let funType = sema.types.make(.functionType(FunctionType(
+            params: parameterTypes,
+            returnType: resolvedReturnType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        var bodyLocals = locals
+        for (i, param) in valueParams.enumerated() {
+            bodyLocals[param.name] = (parameterTypes[i], paramSymbols[i], false, true)
+        }
+        bodyLocals[name] = (funType, funSymbol, false, true)
+        switch body {
+        case .block(let exprs, _):
+            for (index, expr) in exprs.enumerated() {
+                let isLast = index == exprs.count - 1
+                let expected = isLast ? resolvedReturnType : nil
+                _ = inferExpr(expr, ctx: ctx, locals: &bodyLocals, expectedType: expected)
+            }
+        case .expr(let exprID, _):
+            _ = inferExpr(exprID, ctx: ctx, locals: &bodyLocals, expectedType: resolvedReturnType)
+        case .unit:
+            break
+        }
+        locals[name] = (funType, funSymbol, false, true)
+        sema.bindings.bindIdentifier(id, symbol: funSymbol)
+        sema.bindings.bindExprType(id, type: sema.types.unitType)
+        return sema.types.unitType
+    }
 }

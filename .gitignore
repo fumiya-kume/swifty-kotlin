@@ -5,3 +5,4 @@ a.out
 firebase-debug.log
 .DS_Store
 .build-codex-run/
+.claude/settings.local.json

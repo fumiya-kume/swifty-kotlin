@@ -643,6 +643,15 @@ final class ASTModelsTests: XCTestCase {
         XCTAssertFalse(intersection.contains(.data))
     }
 
+    func testModifiersSymmetricDifference() {
+        let a: Modifiers = [.public, .final]
+        let b: Modifiers = [.final, .open]
+        let diff = a.symmetricDifference(b)
+        XCTAssertTrue(diff.contains(.public))
+        XCTAssertTrue(diff.contains(.open))
+        XCTAssertFalse(diff.contains(.final))
+    }
+
     // MARK: - TypeRef variants
 
     func testTypeRefNamedVariant() {

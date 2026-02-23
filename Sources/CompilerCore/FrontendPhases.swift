@@ -16,6 +16,7 @@ public final class LoadSourcesPhase: CompilerPhase {
         }
 
         for path in ctx.options.inputs {
+            if ctx.sourceManager.containsFile(path: path) { continue }
             do {
                 _ = try ctx.sourceManager.addFile(path: path)
             } catch {

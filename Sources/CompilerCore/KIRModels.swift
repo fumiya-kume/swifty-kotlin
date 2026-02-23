@@ -76,6 +76,11 @@ public enum KIRExprKind: Equatable {
     case unit
 }
 
+public enum KIRDispatchKind: Equatable {
+    case vtable(slot: Int)
+    case itable(interfaceSlot: Int, methodSlot: Int)
+}
+
 public enum KIRInstruction: Equatable {
     case nop
     case beginBlock
@@ -88,6 +93,7 @@ public enum KIRInstruction: Equatable {
     case unary(op: KIRUnaryOp, operand: KIRExprID, result: KIRExprID)
     case nullAssert(operand: KIRExprID, result: KIRExprID)
     case call(symbol: SymbolID?, callee: InternedString, arguments: [KIRExprID], result: KIRExprID?, canThrow: Bool, thrownResult: KIRExprID?, isSuperCall: Bool = false)
+    case virtualCall(symbol: SymbolID?, callee: InternedString, receiver: KIRExprID, arguments: [KIRExprID], result: KIRExprID?, canThrow: Bool, thrownResult: KIRExprID?, dispatch: KIRDispatchKind)
     case jumpIfNotNull(value: KIRExprID, target: Int32)
     case copy(from: KIRExprID, to: KIRExprID)
     case rethrow(value: KIRExprID)
@@ -325,6 +331,25 @@ public final class KIRModule {
             let thrownRet = thrownResult.map { "r\($0.rawValue)" } ?? "_"
             let superTag = isSuperCall ? " super=1" : ""
             return "call \(calleeName) symbol=\(symbolLabel) args=[\(args)] ret=\(ret) thrown=\(canThrow) thrownResult=\(thrownRet)\(superTag)"
+        case .virtualCall(let symbol, let callee, let receiver, let arguments, let result, let canThrow, let thrownResult, let dispatch):
+            let calleeName = interner.resolve(callee)
+            let args = arguments.map { "r\($0.rawValue)" }.joined(separator: ", ")
+            let symbolLabel: String
+            if let symbol, let sym = symbols?.symbol(symbol) {
+                symbolLabel = interner.resolve(sym.name)
+            } else {
+                symbolLabel = "_"
+            }
+            let ret = result.map { "r\($0.rawValue)" } ?? "_"
+            let thrownRet = thrownResult.map { "r\($0.rawValue)" } ?? "_"
+            let dispatchLabel: String
+            switch dispatch {
+            case .vtable(let slot):
+                dispatchLabel = "vtable[\(slot)]"
+            case .itable(let interfaceSlot, let methodSlot):
+                dispatchLabel = "itable[\(interfaceSlot):\(methodSlot)]"
+            }
+            return "virtualCall \(calleeName) symbol=\(symbolLabel) receiver=r\(receiver.rawValue) args=[\(args)] ret=\(ret) thrown=\(canThrow) thrownResult=\(thrownRet) dispatch=\(dispatchLabel)"
         case .jumpIfNotNull(let value, let target):
             return "jumpIfNotNull r\(value.rawValue) -> L\(target)"
         case .copy(let from, let to):

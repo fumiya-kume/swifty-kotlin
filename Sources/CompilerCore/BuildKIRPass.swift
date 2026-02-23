@@ -395,6 +395,11 @@ public final class BuildKIRPhase: CompilerPhase {
                                 propertyConstantInitializers: propertyConstantInitializers,
                                 instructions: &body
                             )
+                            // Detect nested termination (e.g., if/when/try with return in all branches)
+                            if let lastValue, isTerminatedExpr(lastValue, arena: arena, sema: sema) {
+                                terminatedByReturn = true
+                                break
+                            }
                         }
                         if !terminatedByReturn {
                             if let lastValue {
