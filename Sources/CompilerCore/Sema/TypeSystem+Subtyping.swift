@@ -161,7 +161,12 @@ extension TypeSystem {
         }
         // If any input was Nothing? (null literal), the result must be nullable
         if hasNullableNothing {
-            return makeNullable(result)
+            let nullable = makeNullable(result)
+            // For types where makeNullable is a no-op (e.g. Unit), fall back to Any?
+            if nullable == result {
+                return nullableAnyType
+            }
+            return nullable
         }
         return result
     }
