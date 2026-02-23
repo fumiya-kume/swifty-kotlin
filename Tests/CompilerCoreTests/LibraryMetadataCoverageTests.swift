@@ -1475,6 +1475,30 @@ final class LibraryMetadataCoverageTests: XCTestCase {
         XCTAssertEqual(decoded[0].annotations[1].useSiteTarget, "get")
     }
 
+    func testMetadataEncoderDecoderRoundTripForDataAndSealedBothSet() {
+        let record = MetadataRecord(
+            kind: .class,
+            mangledName: "_kk_ext_Weird",
+            fqName: "ext.Weird",
+            declaredFieldCount: 0,
+            declaredInstanceSizeWords: 0,
+            isDataClass: true,
+            isSealedClass: true
+        )
+        let encoder = MetadataEncoder()
+        let serialized = encoder.serialize([record])
+        XCTAssertTrue(serialized.contains("dataClass=1"))
+        XCTAssertTrue(serialized.contains("sealedClass=1"))
+
+        let decoder = MetadataDecoder()
+        let decoded = decoder.decode(serialized)
+        XCTAssertEqual(decoded.count, 1)
+        XCTAssertEqual(decoded[0].kind, .class)
+        XCTAssertEqual(decoded[0].fqName, "ext.Weird")
+        XCTAssertTrue(decoded[0].isDataClass)
+        XCTAssertTrue(decoded[0].isSealedClass)
+    }
+
     func testMetadataDecoderHandlesLegacyFormatWithoutNewFields() {
         // Simulate old metadata without dataClass/sealedClass/annotations fields
         let legacy = """

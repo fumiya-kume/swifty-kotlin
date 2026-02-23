@@ -110,7 +110,6 @@ public final class MetadataEncoder {
         functionLinkNames: [SymbolID: String]
     ) -> [MetadataRecord] {
         let mangler = NameMangler()
-        let nominalKinds: Set<SymbolKind> = [.class, .interface, .object, .enumClass, .annotationClass]
         let exported = symbols.allSymbols()
             .filter { $0.visibility == Visibility.public && $0.kind != .package }
             .sorted { lhs, rhs in
@@ -184,7 +183,7 @@ public final class MetadataEncoder {
             var vtableSlotsStr: String?
             var itableSlotsStr: String?
 
-            if nominalKinds.contains(symbol.kind), let layout = symbols.nominalLayout(for: symbol.id) {
+            if Self.nominalKinds.contains(symbol.kind), let layout = symbols.nominalLayout(for: symbol.id) {
                 declaredInstanceSizeWords = layout.instanceSizeWords
                 declaredFieldCount = layout.instanceFieldCount
                 declaredVtableSize = layout.vtableSize
@@ -238,6 +237,9 @@ public final class MetadataEncoder {
         return records
     }
 
+    // Nominal kinds that carry layout information in metadata.
+    private static let nominalKinds: Set<SymbolKind> = [.class, .interface, .object, .enumClass, .annotationClass]
+
     /// Serialize records to the text-based metadata format.
     public func serialize(_ records: [MetadataRecord]) -> String {
         var lines: [String] = ["symbols=\(records.count)"]
@@ -268,8 +270,7 @@ public final class MetadataEncoder {
                     fields.append("sig=\(sig)")
                 }
             }
-            let nominalKinds: Set<SymbolKind> = [.class, .interface, .object, .enumClass, .annotationClass]
-            if nominalKinds.contains(record.kind) {
+            if Self.nominalKinds.contains(record.kind) {
                 if let layoutWords = record.declaredInstanceSizeWords {
                     fields.append("layoutWords=\(layoutWords)")
                 }
