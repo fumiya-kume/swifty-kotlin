@@ -232,6 +232,7 @@ public final class SymbolTable {
     private var backingFieldSymbols: [SymbolID: SymbolID] = [:]
     private var typeParameterUpperBoundsMap: [SymbolID: TypeID] = [:]
     private var sourceFileIDs: [SymbolID: FileID] = [:]
+    private var annotationsStorage: [SymbolID: [MetadataAnnotationRecord]] = [:]
 
     public init() {}
 
@@ -449,6 +450,14 @@ public final class SymbolTable {
 
     public func sourceFileID(for symbol: SymbolID) -> FileID? {
         sourceFileIDs[symbol]
+    }
+
+    public func setAnnotations(_ annotations: [MetadataAnnotationRecord], for symbol: SymbolID) {
+        annotationsStorage[symbol] = annotations
+    }
+
+    public func annotations(for symbol: SymbolID) -> [MetadataAnnotationRecord] {
+        annotationsStorage[symbol] ?? []
     }
 }
 

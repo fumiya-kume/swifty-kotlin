@@ -385,6 +385,111 @@ public enum RuntimeABISpec {
             ],
             returnType: .intptr,
             section: "Coroutine"
+        ),
+        // Flow (P5-88)
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_create",
+            parameters: [
+                RuntimeABIParameter(name: "emitterFnPtr", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_emit",
+            parameters: [
+                RuntimeABIParameter(name: "flowHandle", type: .intptr),
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_collect",
+            parameters: [
+                RuntimeABIParameter(name: "flowHandle", type: .intptr),
+                RuntimeABIParameter(name: "collectorFnPtr", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        // Dispatchers / withContext (P5-133)
+        RuntimeABIFunctionSpec(
+            name: "kk_dispatcher_default",
+            parameters: [],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_dispatcher_io",
+            parameters: [],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_dispatcher_main",
+            parameters: [],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_with_context",
+            parameters: [
+                RuntimeABIParameter(name: "dispatcher", type: .intptr),
+                RuntimeABIParameter(name: "blockFnPtr", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        // Channel (P5-134)
+        RuntimeABIFunctionSpec(
+            name: "kk_channel_create",
+            parameters: [
+                RuntimeABIParameter(name: "capacity", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_channel_send",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_channel_receive",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_channel_close",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        // Deferred / awaitAll (P5-135)
+        RuntimeABIFunctionSpec(
+            name: "kk_await_all",
+            parameters: [
+                RuntimeABIParameter(name: "handlesArray", type: .intptr),
+                RuntimeABIParameter(name: "count", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
         )
     ]
 
