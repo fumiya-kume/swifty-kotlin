@@ -227,10 +227,23 @@ if [[ -n "$BASELINE" && -f "$BASELINE" ]]; then
     echo "===== Regression Comparison (vs baseline) ====="
     echo ""
 
-    # Simple comparison: show total_ms deltas per configuration
-    # Requires python3 or jq for JSON parsing; fallback to basic approach
-    if command -v python3 &>/dev/null && [[ -f "$JSON_FILE" ]]; then
-        python3 - "$BASELINE" "$JSON_FILE" <<'PYEOF'
+    # Generate a temporary JSON for comparison when --format tsv was used.
+    local compare_json="$JSON_FILE"
+    if [[ ! -f "$compare_json" ]]; then
+        compare_json="${TMPDIR_BENCH}/compare_results.json"
+        {
+            echo "["
+            for i in "${!JSON_RECORDS[@]}"; do
+                if [[ $i -gt 0 ]]; then echo ","; fi
+                echo "  ${JSON_RECORDS[$i]}"
+            done
+            echo "]"
+        } > "$compare_json"
+    fi
+
+    # Requires python3 for JSON parsing
+    if command -v python3 &>/dev/null; then
+        python3 - "$BASELINE" "$compare_json" <<'PYEOF'
 import json, sys
 
 def load_results(path):
@@ -268,7 +281,6 @@ PYEOF
     else
         echo "(python3 not available; skipping detailed comparison)"
         echo "Baseline: $BASELINE"
-        echo "Current:  $JSON_FILE"
     fi
 fi
 
