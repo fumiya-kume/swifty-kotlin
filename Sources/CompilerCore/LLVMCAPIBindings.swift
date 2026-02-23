@@ -428,6 +428,11 @@ final class LLVMCAPIBindings {
         setLinkageFn(value, 12)
     }
 
+    func setWeakAnyLinkage(_ value: LLVMValueRef?) {
+        // LLVMLinkage enum value for LLVMWeakAnyLinkage.
+        setLinkageFn(value, 5)
+    }
+
     func setInternalLinkage(_ value: LLVMValueRef?) {
         // LLVMLinkage enum value for LLVMInternalLinkage.
         setLinkageFn(value, 8)

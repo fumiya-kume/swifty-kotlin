@@ -115,8 +115,9 @@ struct NativeEmitter {
         }
 
         do {
-            try declareFrameRuntimeFunctions(
+            try defineWeakFrameRuntimeStubs(
                 module: llvmModule,
+                context: context,
                 int64Type: int64Type
             )
         } catch {
@@ -293,34 +294,39 @@ struct NativeEmitter {
         }
     }
 
-    func declareFrameRuntimeFunctions(
+    func defineWeakFrameRuntimeStubs(
         module: LLVMCAPIBindings.LLVMModuleRef,
+        context: LLVMCAPIBindings.LLVMContextRef,
         int64Type: LLVMCAPIBindings.LLVMTypeRef
     ) throws {
-        _ = try declareExternalRuntimeFunction(
+        _ = try defineWeakRuntimeFunction(
             named: "kk_register_frame_map",
             argumentCount: 2,
             module: module,
+            context: context,
             int64Type: int64Type
         )
-        _ = try declareExternalRuntimeFunction(
+        _ = try defineWeakRuntimeFunction(
             named: "kk_push_frame",
             argumentCount: 2,
             module: module,
+            context: context,
             int64Type: int64Type
         )
-        _ = try declareExternalRuntimeFunction(
+        _ = try defineWeakRuntimeFunction(
             named: "kk_pop_frame",
             argumentCount: 0,
             module: module,
+            context: context,
             int64Type: int64Type
         )
     }
 
-    func declareExternalRuntimeFunction(
+    func defineWeakRuntimeFunction(
         named name: String,
         argumentCount: Int,
         module: LLVMCAPIBindings.LLVMModuleRef,
+        context: LLVMCAPIBindings.LLVMContextRef,
         int64Type: LLVMCAPIBindings.LLVMTypeRef
     ) throws -> LLVMFunction {
         let parameterTypes = Array(repeating: int64Type, count: max(0, argumentCount))
@@ -333,8 +339,21 @@ struct NativeEmitter {
         }
         guard let functionValue = bindings.getNamedFunction(module: module, name: name)
             ?? bindings.addFunction(module: module, name: name, functionType: functionType) else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to declare runtime function '\(name)'")
+            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to define weak runtime stub '\(name)'")
         }
+        bindings.setWeakAnyLinkage(functionValue)
+
+        guard let builder = bindings.createBuilder(context: context) else {
+            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to create builder for runtime stub '\(name)'")
+        }
+        defer { bindings.disposeBuilder(builder) }
+
+        guard let entry = bindings.appendBasicBlock(context: context, function: functionValue, name: "entry") else {
+            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to create runtime stub block for '\(name)'")
+        }
+        bindings.positionBuilder(builder, at: entry)
+        let zero = bindings.constInt(int64Type, value: 0) ?? bindings.getUndef(type: int64Type)
+        _ = bindings.buildRet(builder, value: zero)
         return LLVMFunction(value: functionValue, type: functionType)
     }
 

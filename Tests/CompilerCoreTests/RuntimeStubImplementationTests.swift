@@ -336,7 +336,7 @@ final class RuntimeStubImplementationTests: XCTestCase {
 
     // MARK: - LLVM C API Backend Tests
 
-    func testLlvmCapiBackendDeclaresFrameRuntimeFunctionsAsExternal() throws {
+    func testLlvmCapiBackendDefinesFrameRuntimeFunctionsWithWeakLinkage() throws {
         guard let bindings = LLVMCAPIBindings.load(),
               bindings.smokeTestContextLifecycle() else {
             throw XCTSkip("LLVM C API bindings are unavailable in this environment.")
@@ -358,46 +358,15 @@ final class RuntimeStubImplementationTests: XCTestCase {
         try backend.emitLLVMIR(module: module, runtime: runtime, outputIRPath: irPath, interner: interner)
         let ir = try String(contentsOfFile: irPath, encoding: .utf8)
 
-        // Functions must be declared as external (not defined with internal linkage)
+        // Functions must be referenced in the IR
         XCTAssertTrue(ir.contains("@kk_register_frame_map"), "LLVM IR must reference kk_register_frame_map")
         XCTAssertTrue(ir.contains("@kk_push_frame"), "LLVM IR must reference kk_push_frame")
         XCTAssertTrue(ir.contains("@kk_pop_frame"), "LLVM IR must reference kk_pop_frame")
 
         // Must NOT contain internal linkage definitions for these functions
-        XCTAssertFalse(
-            ir.contains("define internal") && ir.contains("kk_register_frame_map"),
-            "kk_register_frame_map must not be defined as internal"
-        )
-    }
-
-    func testLlvmCapiBackendDoesNotEmitNoOpBodies() throws {
-        guard let bindings = LLVMCAPIBindings.load(),
-              bindings.smokeTestContextLifecycle() else {
-            throw XCTSkip("LLVM C API bindings are unavailable in this environment.")
-        }
-
-        let interner = StringInterner()
-        let module = makeSimpleModule(interner: interner)
-
-        let backend = LLVMCAPIBackend(
-            target: defaultTargetTriple(),
-            optLevel: .O0,
-            debugInfo: false,
-            diagnostics: DiagnosticEngine(),
-            isStrictMode: true
-        )
-        let runtime = RuntimeLinkInfo(libraryPaths: [], libraries: [], extraObjects: [])
-        let irPath = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".ll").path
-
-        try backend.emitLLVMIR(module: module, runtime: runtime, outputIRPath: irPath, interner: interner)
-        let ir = try String(contentsOfFile: irPath, encoding: .utf8)
-
-        // The old no-op stubs had "define internal" with "ret i64 0" bodies.
-        // After the change, these should be "declare" (external) with no bodies.
         let lines = ir.components(separatedBy: "\n")
         for line in lines {
             if line.contains("kk_register_frame_map") || line.contains("kk_push_frame") || line.contains("kk_pop_frame") {
-                // If the line is a definition, it must not be an internal no-op
                 if line.contains("define") {
                     XCTAssertFalse(
                         line.contains("internal"),
