@@ -115,9 +115,8 @@ struct NativeEmitter {
         }
 
         do {
-            try defineFrameRuntimeStubs(
+            try declareFrameRuntimeFunctions(
                 module: llvmModule,
-                context: context,
                 int64Type: int64Type
             )
         } catch {
@@ -294,39 +293,34 @@ struct NativeEmitter {
         }
     }
 
-    func defineFrameRuntimeStubs(
+    func declareFrameRuntimeFunctions(
         module: LLVMCAPIBindings.LLVMModuleRef,
-        context: LLVMCAPIBindings.LLVMContextRef,
         int64Type: LLVMCAPIBindings.LLVMTypeRef
     ) throws {
-        _ = try defineNoOpRuntimeFunction(
+        _ = try declareExternalRuntimeFunction(
             named: "kk_register_frame_map",
             argumentCount: 2,
             module: module,
-            context: context,
             int64Type: int64Type
         )
-        _ = try defineNoOpRuntimeFunction(
+        _ = try declareExternalRuntimeFunction(
             named: "kk_push_frame",
             argumentCount: 2,
             module: module,
-            context: context,
             int64Type: int64Type
         )
-        _ = try defineNoOpRuntimeFunction(
+        _ = try declareExternalRuntimeFunction(
             named: "kk_pop_frame",
             argumentCount: 0,
             module: module,
-            context: context,
             int64Type: int64Type
         )
     }
 
-    func defineNoOpRuntimeFunction(
+    func declareExternalRuntimeFunction(
         named name: String,
         argumentCount: Int,
         module: LLVMCAPIBindings.LLVMModuleRef,
-        context: LLVMCAPIBindings.LLVMContextRef,
         int64Type: LLVMCAPIBindings.LLVMTypeRef
     ) throws -> LLVMFunction {
         let parameterTypes = Array(repeating: int64Type, count: max(0, argumentCount))
@@ -335,25 +329,12 @@ struct NativeEmitter {
             parameters: parameterTypes,
             isVarArg: false
         ) else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to create runtime stub type for '\(name)'")
+            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to create runtime function type for '\(name)'")
         }
         guard let functionValue = bindings.getNamedFunction(module: module, name: name)
             ?? bindings.addFunction(module: module, name: name, functionType: functionType) else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to define runtime stub '\(name)'")
+            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to declare runtime function '\(name)'")
         }
-        bindings.setInternalLinkage(functionValue)
-
-        guard let builder = bindings.createBuilder(context: context) else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to create builder for runtime stub '\(name)'")
-        }
-        defer { bindings.disposeBuilder(builder) }
-
-        guard let entry = bindings.appendBasicBlock(context: context, function: functionValue, name: "entry") else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to create runtime stub block for '\(name)'")
-        }
-        bindings.positionBuilder(builder, at: entry)
-        let zero = bindings.constInt(int64Type, value: 0) ?? bindings.getUndef(type: int64Type)
-        _ = bindings.buildRet(builder, value: zero)
         return LLVMFunction(value: functionValue, type: functionType)
     }
 
