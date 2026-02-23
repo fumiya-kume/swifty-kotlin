@@ -423,10 +423,10 @@
   - [x] smart cast/nullability 判定を ad-hoc 判定から `DataFlowState` 駆動へ移行する
   - [x] 分岐後の型縮小・nullability 更新が維持される回帰ケースを追加する
 
-- [ ] P5-56: default 引数の評価を callee 文脈セマンティクスへ合わせる（spec.md J9/J11/J12）
-  - [ ] omitted 引数の default 式を caller 側で直接 lowering する現実装を廃止する
-  - [ ] default 式が先行 parameter/receiver を参照できるよう callee 文脈で評価する
-  - [ ] default 引数の評価順序（左から右）と副作用順を固定する回帰ケースを追加する
+- [x] P5-56: default 引数の評価を callee 文脈セマンティクスへ合わせる（spec.md J9/J11/J12）
+  - [x] omitted 引数の default 式を caller 側で直接 lowering する現実装を廃止する
+  - [x] default 式が先行 parameter/receiver を参照できるよう callee 文脈で評価する
+  - [x] default 引数の評価順序（左から右）と副作用順を固定する回帰ケースを追加する
 
 - [ ] P5-57: コンパイル性能計測基盤を整備する
   - [ ] `CompilerDriver` で各 phase の開始/終了時刻を記録し、`-Xfrontend time-phases`（仮）で集計を出力する
