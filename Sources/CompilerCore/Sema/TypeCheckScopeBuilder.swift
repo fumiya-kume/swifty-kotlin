@@ -166,14 +166,14 @@ struct TypeCheckScopeBuilder {
     func collectLibraryTopLevelSymbolsByPackage(
         sema: SemaModule
     ) -> [[InternedString]: [SymbolID]] {
-        let allSymbols = sema.symbols.allSymbols()
-
         var knownPackages: Set<[InternedString]> = []
-        for symbol in allSymbols where symbol.kind == .package {
-            knownPackages.insert(symbol.fqName)
+        for packageID in sema.symbols.symbols(ofKind: .package) {
+            guard let packageSymbol = sema.symbols.symbol(packageID) else { continue }
+            knownPackages.insert(packageSymbol.fqName)
         }
 
         var mapping: [[InternedString]: [SymbolID]] = [:]
+        let allSymbols = sema.symbols.allSymbols()
         for symbol in allSymbols {
             guard symbol.flags.contains(.synthetic),
                   symbol.kind != .package,

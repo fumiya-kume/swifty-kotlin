@@ -144,7 +144,7 @@ final class DeclTypeChecker {
         let sema = ctx.sema
         for ctor in constructors {
             var locals: LocalBindings = [:]
-            let ctorSymbols = sema.symbols.allSymbols().filter { $0.kind == .constructor && $0.declSite == ctor.range }
+            let ctorSymbols = sema.symbols.symbols(atDeclSite: ctor.range).compactMap { sema.symbols.symbol($0) }.filter { $0.kind == .constructor }
             let currentCtorSymbolID = ctorSymbols.first?.id
             if let ctorSymbol = ctorSymbols.first,
                let signature = sema.symbols.functionSignature(for: ctorSymbol.id) {

@@ -72,8 +72,8 @@ final class CallSupportLowerer {
         // Primary constructor default arguments.
         let primaryDefaults = classDecl.primaryConstructorParams.map(\.defaultValue)
         if primaryDefaults.contains(where: { $0 != nil }) {
-            let ctorSymbols = sema.symbols.allSymbols().filter {
-                $0.kind == .constructor && $0.declSite == classDecl.range
+            let ctorSymbols = sema.symbols.symbols(atDeclSite: classDecl.range).compactMap { sema.symbols.symbol($0) }.filter {
+                $0.kind == .constructor
             }
             if let primaryCtorSymbol = ctorSymbols.first {
                 mapping[primaryCtorSymbol.id] = primaryDefaults
@@ -83,8 +83,8 @@ final class CallSupportLowerer {
         for secondaryCtor in classDecl.secondaryConstructors {
             let secDefaults = secondaryCtor.valueParams.map(\.defaultValue)
             if secDefaults.contains(where: { $0 != nil }) {
-                let secCtorSymbols = sema.symbols.allSymbols().filter {
-                    $0.kind == .constructor && $0.declSite == secondaryCtor.range
+                let secCtorSymbols = sema.symbols.symbols(atDeclSite: secondaryCtor.range).compactMap { sema.symbols.symbol($0) }.filter {
+                    $0.kind == .constructor
                 }
                 if let secCtorSymbol = secCtorSymbols.first {
                     mapping[secCtorSymbol.id] = secDefaults
