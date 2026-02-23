@@ -316,9 +316,9 @@ final class LocalDeclTypeChecker {
         let resultType: TypeID
         switch underlyingOp {
         case .add:
-            resultType = (elementType == stringType || valueType == stringType) ? stringType : intType
+            resultType = (elementType == stringType || valueType == stringType) ? stringType : elementType
         case .subtract, .multiply, .divide, .modulo:
-            resultType = intType
+            resultType = elementType
         default:
             resultType = elementType
         }
