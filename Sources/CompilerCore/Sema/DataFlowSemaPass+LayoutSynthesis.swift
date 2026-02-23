@@ -2,9 +2,8 @@ import Foundation
 
 extension DataFlowSemaPassPhase {
     func synthesizeNominalLayouts(symbols: SymbolTable) {
-        let nominalIDs = symbols.allSymbols()
-            .filter { isNominalLayoutTargetSymbol($0.kind) }
-            .map(\.id)
+        let nominalKinds: [SymbolKind] = [.class, .interface, .object, .enumClass, .annotationClass]
+        let nominalIDs = nominalKinds.flatMap { symbols.symbols(ofKind: $0) }
             .sorted(by: { $0.rawValue < $1.rawValue })
         guard !nominalIDs.isEmpty else {
             return
@@ -65,12 +64,10 @@ extension DataFlowSemaPassPhase {
             }
 
             var nextVtableSlot = max(inheritedVtableSize, (vtableSlots.values.max() ?? -1) + 1)
-            let ownMethods = symbols.allSymbols()
-                .filter { symbol in
-                    symbol.kind == .function &&
-                    isDirectMemberSymbol(symbol, of: nominalSymbol)
-                }
-                .sorted(by: { $0.id.rawValue < $1.id.rawValue })
+            let ownMethods = symbols.children(ofFQName: nominalSymbol.fqName)
+                .filter { id in symbols.symbol(id)?.kind == .function }
+                .sorted(by: { $0.rawValue < $1.rawValue })
+                .compactMap { symbols.symbol($0) }
             for method in ownMethods {
                 let key = methodDispatchKey(for: method, symbols: symbols)
                 if let inheritedSlot = vtableSlotByKey[key] {
@@ -101,10 +98,13 @@ extension DataFlowSemaPassPhase {
                 // Interfaces have no backing field storage; skip property fields.
                 ownFields = []
             } else {
-                ownFields = symbols.allSymbols().filter { symbol in
-                    (symbol.kind == .field || symbol.kind == .property) &&
-                    isDirectMemberSymbol(symbol, of: nominalSymbol)
-                }.sorted(by: { $0.id.rawValue < $1.id.rawValue })
+                ownFields = symbols.children(ofFQName: nominalSymbol.fqName)
+                    .filter { id in
+                        guard let kind = symbols.symbol(id)?.kind else { return false }
+                        return kind == .field || kind == .property
+                    }
+                    .sorted(by: { $0.rawValue < $1.rawValue })
+                    .compactMap { symbols.symbol($0) }
             }
             let ownFieldCount = ownFields.count
             let inheritedFieldCount = superClass.flatMap { symbols.nominalLayout(for: $0)?.instanceFieldCount } ?? 0

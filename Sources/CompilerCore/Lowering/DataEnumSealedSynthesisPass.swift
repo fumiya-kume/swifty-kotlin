@@ -82,15 +82,9 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
     }
 
     private func enumEntrySymbols(owner: SemanticSymbol, symbols: SymbolTable) -> [SemanticSymbol] {
-        let prefixLength = owner.fqName.count
-        return symbols
-            .allSymbols()
-            .filter { symbol in
-                guard symbol.kind == .field, symbol.fqName.count == prefixLength + 1 else {
-                    return false
-                }
-                return Array(symbol.fqName.prefix(prefixLength)) == owner.fqName
-            }
+        return symbols.children(ofFQName: owner.fqName)
+            .compactMap { symbols.symbol($0) }
+            .filter { $0.kind == .field }
             .sorted(by: { $0.id.rawValue < $1.id.rawValue })
     }
 

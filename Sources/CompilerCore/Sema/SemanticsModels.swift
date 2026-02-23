@@ -8,7 +8,7 @@ public struct SymbolID: Hashable {
     }
 }
 
-public enum SymbolKind: Equatable {
+public enum SymbolKind: Hashable {
     case package
     case `class`
     case `interface`
@@ -219,6 +219,9 @@ public final class SymbolTable {
     private var symbolsStorage: [SemanticSymbol] = []
     private var byFQName: [[InternedString]: [SymbolID]] = [:]
     private var byShortName: [InternedString: [SymbolID]] = [:]
+    private var byKind: [SymbolKind: [SymbolID]] = [:]
+    private var byParentFQName: [[InternedString]: [SymbolID]] = [:]
+    private var byDeclSite: [SourceRange: [SymbolID]] = [:]
     private var functionSignatures: [SymbolID: FunctionSignature] = [:]
     private var propertyTypes: [SymbolID: TypeID] = [:]
     private var directSupertypes: [SymbolID: [SymbolID]] = [:]
@@ -317,6 +320,14 @@ public final class SymbolTable {
         symbolsStorage.append(symbol)
         byFQName[fqName, default: []].append(id)
         byShortName[name, default: []].append(id)
+        byKind[kind, default: []].append(id)
+        if fqName.count >= 1 {
+            let parentFQ = Array(fqName.dropLast())
+            byParentFQName[parentFQ, default: []].append(id)
+        }
+        if let site = declSite {
+            byDeclSite[site, default: []].append(id)
+        }
         return id
     }
 
@@ -458,6 +469,23 @@ public final class SymbolTable {
 
     public func annotations(for symbol: SymbolID) -> [MetadataAnnotationRecord] {
         annotationsStorage[symbol] ?? []
+    }
+
+    // MARK: - Indexed queries
+
+    /// Returns all symbol IDs of a given kind.
+    public func symbols(ofKind kind: SymbolKind) -> [SymbolID] {
+        byKind[kind] ?? []
+    }
+
+    /// Returns all direct child symbol IDs whose fqName parent prefix matches `parentFQName`.
+    public func children(ofFQName parentFQName: [InternedString]) -> [SymbolID] {
+        byParentFQName[parentFQName] ?? []
+    }
+
+    /// Returns all symbol IDs declared at the given source range.
+    public func symbols(atDeclSite site: SourceRange) -> [SymbolID] {
+        byDeclSite[site] ?? []
     }
 }
 

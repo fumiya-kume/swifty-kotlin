@@ -31,15 +31,20 @@ extension BuildASTPhase {
     }
 
     final class ExpressionParser {
-        internal let tokens: [Token]
+        internal let tokens: ArraySlice<Token>
         internal let interner: StringInterner
         internal let astArena: ASTArena
-        internal var index: Int = 0
+        internal var index: Int
 
-        init(tokens: [Token], interner: StringInterner, astArena: ASTArena) {
+        init(tokens: ArraySlice<Token>, interner: StringInterner, astArena: ASTArena) {
             self.tokens = tokens
             self.interner = interner
             self.astArena = astArena
+            self.index = tokens.startIndex
+        }
+
+        convenience init(tokens: [Token], interner: StringInterner, astArena: ASTArena) {
+            self.init(tokens: tokens[...], interner: interner, astArena: astArena)
         }
 
         func parse() -> ExprID? {
@@ -153,8 +158,8 @@ extension BuildASTPhase {
         }
 
         private func isUnaryPrefix() -> Bool {
-            if index == 0 { return true }
-            guard index > 0, index - 1 < tokens.count else { return true }
+            if index == tokens.startIndex { return true }
+            guard index > tokens.startIndex, index - 1 >= tokens.startIndex else { return true }
             let prev = tokens[index - 1]
             switch prev.kind {
             case .intLiteral, .longLiteral, .floatLiteral, .doubleLiteral, .charLiteral,
@@ -280,7 +285,7 @@ extension BuildASTPhase {
 
         @discardableResult
         internal func current() -> Token? {
-            if index >= 0 && index < tokens.count {
+            if index >= tokens.startIndex && index < tokens.endIndex {
                 return tokens[index]
             }
             return nil
@@ -288,7 +293,7 @@ extension BuildASTPhase {
 
         internal func peek(_ offset: Int) -> Token? {
             let target = index + offset
-            if target >= 0 && target < tokens.count {
+            if target >= tokens.startIndex && target < tokens.endIndex {
                 return tokens[target]
             }
             return nil

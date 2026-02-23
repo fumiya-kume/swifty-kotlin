@@ -413,20 +413,20 @@
   - [x] top-level `private` の file スコープ制約と member `protected` 制約を検証する
   - [x] 不可視参照時の診断（`KSWIFTK-SEMA-*`）と回帰ケースを追加する
 
-- [ ] P5-54: `.kklib` manifest の固定スキーマ検証と互換性チェックを実装する（spec.md J14.2）
-  - [ ] `formatVersion`/`moduleName`/`kotlinLanguageVersion`/`target` を読み取り、欠落・不整合を診断する
-  - [ ] 現在ターゲットと非互換な library を import した場合に `KSWIFTK-LIB-*` で失敗させる
-  - [ ] `objects`/`metadata`/`inlineKIRDir` のパス妥当性チェックを追加する
+- [x] P5-54: `.kklib` manifest の固定スキーマ検証と互換性チェックを実装する（spec.md J14.2）
+  - [x] `formatVersion`/`moduleName`/`kotlinLanguageVersion`/`target` を読み取り、欠落・不整合を診断する
+  - [x] 現在ターゲットと非互換な library を import した場合に `KSWIFTK-LIB-*` で失敗させる
+  - [x] `objects`/`metadata`/`inlineKIRDir` のパス妥当性チェックを追加する
 
 - [x] P5-55: Data-flow 解析を true/false 分岐状態モデルへ拡張する（spec.md J10.1）
   - [x] `DataFlowState` を式条件（`if`/`when`/logical op）で分岐生成し、CFG 合流点で merge する
   - [x] smart cast/nullability 判定を ad-hoc 判定から `DataFlowState` 駆動へ移行する
   - [x] 分岐後の型縮小・nullability 更新が維持される回帰ケースを追加する
 
-- [ ] P5-56: default 引数の評価を callee 文脈セマンティクスへ合わせる（spec.md J9/J11/J12）
-  - [ ] omitted 引数の default 式を caller 側で直接 lowering する現実装を廃止する
-  - [ ] default 式が先行 parameter/receiver を参照できるよう callee 文脈で評価する
-  - [ ] default 引数の評価順序（左から右）と副作用順を固定する回帰ケースを追加する
+- [x] P5-56: default 引数の評価を callee 文脈セマンティクスへ合わせる（spec.md J9/J11/J12）
+  - [x] omitted 引数の default 式を caller 側で直接 lowering する現実装を廃止する
+  - [x] default 式が先行 parameter/receiver を参照できるよう callee 文脈で評価する
+  - [x] default 引数の評価順序（左から右）と副作用順を固定する回帰ケースを追加する
 
 - [ ] P5-57: コンパイル性能計測基盤を整備する
   - [ ] `CompilerDriver` で各 phase の開始/終了時刻を記録し、`-Xfrontend time-phases`（仮）で集計を出力する

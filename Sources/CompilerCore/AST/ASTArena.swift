@@ -119,20 +119,19 @@ public final class ASTModule {
     public let declarationCount: Int
     public let tokenCount: Int
 
+    /// Files pre-sorted by fileID for stable iteration order.
+    /// All callers that previously used `sortedFiles` now use this directly.
+    public let sortedFiles: [ASTFile]
+
     public init(files: [ASTFile], arena: ASTArena, declarationCount: Int, tokenCount: Int) {
         self.files = files
         self.arena = arena
         self.declarationCount = declarationCount
         self.tokenCount = tokenCount
+        self.sortedFiles = files.sorted(by: { $0.fileID.rawValue < $1.fileID.rawValue })
     }
 
     public convenience init(declarationCount: Int, tokenCount: Int) {
         self.init(files: [], arena: ASTArena(), declarationCount: declarationCount, tokenCount: tokenCount)
-    }
-}
-
-extension ASTModule {
-    var sortedFiles: [ASTFile] {
-        files.sorted(by: { $0.fileID.rawValue < $1.fileID.rawValue })
     }
 }

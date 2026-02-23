@@ -39,7 +39,7 @@ extension BuildASTPhase {
         if bodyStartIndex >= tokens.count {
             return .unit
         }
-        let exprTokens = Array(tokens[bodyStartIndex...])
+        let exprTokens = tokens[bodyStartIndex...]
         let parser = ExpressionParser(tokens: exprTokens, interner: interner, astArena: astArena)
         guard let exprID = parser.parse() else {
             return .unit
@@ -209,6 +209,9 @@ extension BuildASTPhase {
     }
 
     func collectTokens(from nodeID: NodeID, in arena: SyntaxArena) -> [Token] {
+        if let cached = tokenCache[nodeID] {
+            return cached
+        }
         var tokens: [Token] = []
         for child in arena.children(of: nodeID) {
             switch child {
@@ -220,6 +223,7 @@ extension BuildASTPhase {
                 tokens.append(contentsOf: collectTokens(from: childID, in: arena))
             }
         }
+        tokenCache[nodeID] = tokens
         return tokens
     }
 

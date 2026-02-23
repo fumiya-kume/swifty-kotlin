@@ -3,7 +3,6 @@ import Foundation
 struct NormalizedCallResult {
     let arguments: [KIRExprID]
     let defaultMask: Int64
-    let calleeHasDefaults: Bool
 }
 
 /// Delegate class for KIR lowering: CallSupportLowerer.
@@ -72,8 +71,8 @@ final class CallSupportLowerer {
         // Primary constructor default arguments.
         let primaryDefaults = classDecl.primaryConstructorParams.map(\.defaultValue)
         if primaryDefaults.contains(where: { $0 != nil }) {
-            let ctorSymbols = sema.symbols.allSymbols().filter {
-                $0.kind == .constructor && $0.declSite == classDecl.range
+            let ctorSymbols = sema.symbols.symbols(atDeclSite: classDecl.range).compactMap { sema.symbols.symbol($0) }.filter {
+                $0.kind == .constructor
             }
             if let primaryCtorSymbol = ctorSymbols.first {
                 mapping[primaryCtorSymbol.id] = primaryDefaults
@@ -83,8 +82,8 @@ final class CallSupportLowerer {
         for secondaryCtor in classDecl.secondaryConstructors {
             let secDefaults = secondaryCtor.valueParams.map(\.defaultValue)
             if secDefaults.contains(where: { $0 != nil }) {
-                let secCtorSymbols = sema.symbols.allSymbols().filter {
-                    $0.kind == .constructor && $0.declSite == secondaryCtor.range
+                let secCtorSymbols = sema.symbols.symbols(atDeclSite: secondaryCtor.range).compactMap { sema.symbols.symbol($0) }.filter {
+                    $0.kind == .constructor
                 }
                 if let secCtorSymbol = secCtorSymbols.first {
                     mapping[secCtorSymbol.id] = secDefaults
@@ -258,17 +257,16 @@ final class CallSupportLowerer {
         guard let callBinding,
               let chosenCallee,
               let signature = sema.symbols.functionSignature(for: chosenCallee) else {
-            return NormalizedCallResult(arguments: providedArguments, defaultMask: 0, calleeHasDefaults: false)
+            return NormalizedCallResult(arguments: providedArguments, defaultMask: 0)
         }
 
         let parameterCount = signature.parameterTypes.count
         guard parameterCount > 0 else {
-            return NormalizedCallResult(arguments: providedArguments, defaultMask: 0, calleeHasDefaults: false)
+            return NormalizedCallResult(arguments: providedArguments, defaultMask: 0)
         }
 
-        let hasAnyDefaults = driver.ctx.functionDefaultArgumentsBySymbol[chosenCallee] != nil
-
-        let isVararg = normalizeVarargFlags(signature.valueParameterIsVararg, count: parameterCount)
+        let isVararg = normalizeBoolFlags(signature.valueParameterIsVararg, count: parameterCount)
+        let hasDefaultValues = normalizeBoolFlags(signature.valueParameterHasDefaultValues, count: parameterCount)
 
         var argIndicesByParameter: [Int: [Int]] = [:]
         for (argIndex, paramIndex) in callBinding.parameterMapping {
@@ -284,18 +282,17 @@ final class CallSupportLowerer {
         let hasOutOfRangeMapping = argIndicesByParameter.keys.contains(where: { $0 < 0 || $0 >= parameterCount })
         let hasMergedParameterMapping = argIndicesByParameter.values.contains(where: { $0.count > 1 })
         if hasOutOfRangeMapping {
-            return NormalizedCallResult(arguments: providedArguments, defaultMask: 0, calleeHasDefaults: false)
+            return NormalizedCallResult(arguments: providedArguments, defaultMask: 0)
         }
         if hasMergedParameterMapping {
             let allMergedAreVararg = argIndicesByParameter.allSatisfy { paramIndex, argIndices in
                 argIndices.count <= 1 || isVararg[paramIndex]
             }
             if !allMergedAreVararg {
-                return NormalizedCallResult(arguments: providedArguments, defaultMask: 0, calleeHasDefaults: false)
+                return NormalizedCallResult(arguments: providedArguments, defaultMask: 0)
             }
         }
 
-        let defaultExpressions = driver.ctx.functionDefaultArgumentsBySymbol[chosenCallee] ?? []
         var normalized: [KIRExprID] = []
         normalized.reserveCapacity(parameterCount)
         let intType = sema.types.make(.primitive(.int, .nonNull))
@@ -332,19 +329,20 @@ final class CallSupportLowerer {
                 normalized.append(emptyArray)
                 continue
             }
-            guard paramIndex < defaultExpressions.count,
-                  defaultExpressions[paramIndex] != nil else {
-                return NormalizedCallResult(arguments: providedArguments, defaultMask: 0, calleeHasDefaults: false)
+            // Use semantic hasDefaultValues flag (callee context) instead of
+            // looking up AST default expressions at the caller site.
+            guard hasDefaultValues[paramIndex] else {
+                return NormalizedCallResult(arguments: providedArguments, defaultMask: 0)
             }
             mask |= Int64(1) << paramIndex
             let sentinel = arena.appendExpr(.intLiteral(0), type: signature.parameterTypes[paramIndex])
             instructions.append(.constValue(result: sentinel, value: .intLiteral(0)))
             normalized.append(sentinel)
         }
-        return NormalizedCallResult(arguments: normalized, defaultMask: mask, calleeHasDefaults: hasAnyDefaults)
+        return NormalizedCallResult(arguments: normalized, defaultMask: mask)
     }
 
-    private func normalizeVarargFlags(_ flags: [Bool], count: Int) -> [Bool] {
+    private func normalizeBoolFlags(_ flags: [Bool], count: Int) -> [Bool] {
         if flags.count == count { return flags }
         if flags.count > count { return Array(flags.prefix(count)) }
         return flags + Array(repeating: false, count: count - flags.count)

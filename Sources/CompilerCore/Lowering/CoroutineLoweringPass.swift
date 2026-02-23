@@ -50,7 +50,7 @@ final class CoroutineLoweringPass: LoweringPass {
         var suspendFunctionArityBySymbol: [SymbolID: Int] = [:]
         var loweredByNameBuckets: [InternedString: [(name: InternedString, symbol: SymbolID)]] = [:]
         var loweredByNameArityBuckets: [SuspendCallLookupKey: [(name: InternedString, symbol: SymbolID)]] = [:]
-        var existingSymbolFQNames: Set<[InternedString]> = Set(ctx.sema?.symbols.allSymbols().map(\.fqName) ?? [])
+        var existingSymbolFQNames: Set<[InternedString]> = Set(ctx.sema?.symbols.allSymbols().lazy.map(\.fqName) ?? [])
 
         for suspendFunction in suspendFunctions {
             suspendFunctionArityBySymbol[suspendFunction.symbol] = suspendFunction.params.count

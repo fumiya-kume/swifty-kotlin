@@ -111,7 +111,7 @@ public final class MetadataEncoder {
     ) -> [MetadataRecord] {
         let mangler = NameMangler()
         let exported = symbols.allSymbols()
-            .filter { $0.visibility == Visibility.public && $0.kind != .package }
+            .filter { $0.visibility == .public && $0.kind != .package }
             .sorted { lhs, rhs in
                 if lhs.fqName.count != rhs.fqName.count {
                     return lhs.fqName.count < rhs.fqName.count
