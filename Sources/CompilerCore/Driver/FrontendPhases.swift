@@ -41,19 +41,14 @@ public final class LexPhase: CompilerPhase {
         let interner = ctx.interner
         let diagnostics = ctx.diagnostics
         let sourceManager = ctx.sourceManager
-        let jobs = ctx.frontendJobs
 
         let semaphore = DispatchSemaphore(value: 0)
         nonisolated(unsafe) var tokensByFile: [(FileID, [Token])] = []
         Task {
             tokensByFile = await withTaskGroup(of: (FileID, [Token]).self) { group in
-                var activeCount = 0
-                var fileIndex = 0
-                var results: [(FileID, [Token])] = []
-
-                // Seed initial batch of tasks up to jobs limit.
-                while fileIndex < fileIDs.count && activeCount < jobs {
-                    let fileID = fileIDs[fileIndex]
+                // Submit all file tasks up front so the Swift concurrency
+                // runtime can schedule them freely (original pre-PR behaviour).
+                for fileID in fileIDs {
                     group.addTask {
                         let contents = sourceManager.contents(of: fileID)
                         let lexer = KotlinLexer(
@@ -64,31 +59,11 @@ public final class LexPhase: CompilerPhase {
                         )
                         return (fileID, lexer.lexAll())
                     }
-                    activeCount += 1
-                    fileIndex += 1
                 }
-
-                // As each task completes, add a new one if files remain.
+                var results: [(FileID, [Token])] = []
                 for await result in group {
                     results.append(result)
-                    activeCount -= 1
-                    if fileIndex < fileIDs.count {
-                        let fileID = fileIDs[fileIndex]
-                        group.addTask {
-                            let contents = sourceManager.contents(of: fileID)
-                            let lexer = KotlinLexer(
-                                file: fileID,
-                                source: contents,
-                                interner: interner,
-                                diagnostics: diagnostics
-                            )
-                            return (fileID, lexer.lexAll())
-                        }
-                        activeCount += 1
-                        fileIndex += 1
-                    }
                 }
-
                 return results.sorted(by: { $0.0.rawValue < $1.0.rawValue })
             }
             semaphore.signal()
@@ -122,18 +97,14 @@ public final class ParsePhase: CompilerPhase {
         let interner = ctx.interner
         let diagnostics = ctx.diagnostics
         let tokensByFile = ctx.tokensByFile
-        let jobs = ctx.frontendJobs
 
         let semaphore = DispatchSemaphore(value: 0)
         nonisolated(unsafe) var syntaxTrees: [(FileID, SyntaxArena, NodeID)] = []
         Task {
             syntaxTrees = await withTaskGroup(of: (FileID, SyntaxArena, NodeID).self) { group in
-                var activeCount = 0
-                var fileIndex = 0
-                var results: [(FileID, SyntaxArena, NodeID)] = []
-
-                while fileIndex < tokensByFile.count && activeCount < jobs {
-                    let (fileID, fileTokens) = tokensByFile[fileIndex]
+                // Submit all file tasks up front so the Swift concurrency
+                // runtime can schedule them freely (original pre-PR behaviour).
+                for (fileID, fileTokens) in tokensByFile {
                     group.addTask {
                         let parser = KotlinParser(
                             tokens: fileTokens,
@@ -143,29 +114,11 @@ public final class ParsePhase: CompilerPhase {
                         let parsed = parser.parseFile()
                         return (fileID, parsed.arena, parsed.root)
                     }
-                    activeCount += 1
-                    fileIndex += 1
                 }
-
+                var results: [(FileID, SyntaxArena, NodeID)] = []
                 for await result in group {
                     results.append(result)
-                    activeCount -= 1
-                    if fileIndex < tokensByFile.count {
-                        let (fileID, fileTokens) = tokensByFile[fileIndex]
-                        group.addTask {
-                            let parser = KotlinParser(
-                                tokens: fileTokens,
-                                interner: interner,
-                                diagnostics: diagnostics
-                            )
-                            let parsed = parser.parseFile()
-                            return (fileID, parsed.arena, parsed.root)
-                        }
-                        activeCount += 1
-                        fileIndex += 1
-                    }
                 }
-
                 return results.sorted(by: { $0.0.rawValue < $1.0.rawValue })
             }
             semaphore.signal()

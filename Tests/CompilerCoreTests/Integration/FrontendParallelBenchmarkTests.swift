@@ -220,21 +220,19 @@ final class FrontendParallelBenchmarkTests: XCTestCase {
             moduleName: "M", inputs: [], outputPath: "/tmp/out", emit: .kirDump,
             target: defaultTargetTriple(), frontendFlags: []
         )
-        XCTAssertEqual(opts2.frontendJobs, ProcessInfo.processInfo.activeProcessorCount,
-                       "Default should use active processor count")
+        XCTAssertEqual(opts2.frontendJobs, 1, "Default should be 1 (sequential)")
 
         let opts3 = CompilerOptions(
             moduleName: "M", inputs: [], outputPath: "/tmp/out", emit: .kirDump,
             target: defaultTargetTriple(), frontendFlags: ["jobs=0"]
         )
-        XCTAssertEqual(opts3.frontendJobs, ProcessInfo.processInfo.activeProcessorCount,
-                       "jobs=0 should fall back to processor count default")
+        XCTAssertEqual(opts3.frontendJobs, 1, "jobs=0 should fall back to 1")
 
         let opts5 = CompilerOptions(
             moduleName: "M", inputs: [], outputPath: "/tmp/out", emit: .kirDump,
             target: defaultTargetTriple(), frontendFlags: ["jobs=1"]
         )
-        XCTAssertEqual(opts5.frontendJobs, 1, "jobs=1 should explicitly serialize")
+        XCTAssertEqual(opts5.frontendJobs, 1, "jobs=1 should be sequential")
 
         let opts4 = CompilerOptions(
             moduleName: "M", inputs: [], outputPath: "/tmp/out", emit: .kirDump,
