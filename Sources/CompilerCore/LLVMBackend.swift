@@ -288,7 +288,7 @@ public final class LLVMBackend {
             "kk_string_concat",
             "kk_any_to_string",
             "kk_string_from_utf8",
-            "kk_when_select",
+
             "kk_coroutine_suspended",
             "kk_coroutine_continuation_new",
             "kk_coroutine_state_enter",

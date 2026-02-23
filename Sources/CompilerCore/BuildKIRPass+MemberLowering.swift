@@ -149,13 +149,77 @@ extension BuildKIRPhase {
         }
 
         for declID in memberProperties {
-            guard let symbol = sema.bindings.declSymbols[declID] else {
+            guard let decl = ast.arena.decl(declID),
+                  case .propertyDecl(let propertyDecl) = decl,
+                  let symbol = sema.bindings.declSymbols[declID] else {
                 continue
             }
             let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
             let kirID = arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: propType)))
             directMembers.append(kirID)
             allDecls.append(kirID)
+
+            // Emit backing field global for properties with custom accessors.
+            if let backingFieldSymbol = sema.symbols.backingFieldSymbol(for: symbol) {
+                let backingFieldType = sema.symbols.propertyType(for: backingFieldSymbol) ?? propType
+                let backingFieldKirID = arena.appendDecl(
+                    .global(KIRGlobal(symbol: backingFieldSymbol, type: backingFieldType))
+                )
+                allDecls.append(backingFieldKirID)
+            }
+
+            // Lower getter body as a KIR accessor function.
+            if let getter = propertyDecl.getter, getter.body != .unit {
+                lowerAccessorBody(
+                    accessorBody: getter.body,
+                    propertySymbol: symbol,
+                    propertyType: propType,
+                    accessorKind: .getter,
+                    setterParamName: nil,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    allDecls: &allDecls
+                )
+            }
+
+            // Lower setter body as a KIR accessor function.
+            if let setter = propertyDecl.setter, setter.body != .unit {
+                lowerAccessorBody(
+                    accessorBody: setter.body,
+                    propertySymbol: symbol,
+                    propertyType: propType,
+                    accessorKind: .setter,
+                    setterParamName: setter.parameterName,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    allDecls: &allDecls
+                )
+            }
+
+            // Lower delegated property storage as an additional global.
+            if propertyDecl.delegateExpression != nil {
+                let delegateStorageName = interner.intern("$delegate_\(interner.resolve(propertyDecl.name))")
+                let delegateStorageFQName = (sema.symbols.symbol(symbol)?.fqName.dropLast() ?? []) + [delegateStorageName]
+                let delegateStorageSymbol = sema.symbols.define(
+                    kind: .field,
+                    name: delegateStorageName,
+                    fqName: Array(delegateStorageFQName),
+                    declSite: propertyDecl.range,
+                    visibility: .private,
+                    flags: []
+                )
+                let delegateType = sema.types.anyType
+                let delegateKirID = arena.appendDecl(
+                    .global(KIRGlobal(symbol: delegateStorageSymbol, type: delegateType))
+                )
+                allDecls.append(delegateKirID)
+            }
         }
 
         for declID in nestedClasses {
@@ -180,10 +244,23 @@ extension BuildKIRPhase {
                 directMembers.append(kirID)
                 allDecls.append(kirID)
                 allDecls.append(contentsOf: nestedAll)
-            case .interfaceDecl:
-                let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol)))
+            case .interfaceDecl(let nestedInterface):
+                // Interface properties have no backing storage; pass empty list.
+                let (nestedDirect, nestedAll) = lowerMemberDecls(
+                    memberFunctions: nestedInterface.memberFunctions,
+                    memberProperties: [],
+                    nestedClasses: nestedInterface.nestedClasses,
+                    nestedObjects: nestedInterface.nestedObjects,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers
+                )
+                let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: nestedDirect)))
                 directMembers.append(kirID)
                 allDecls.append(kirID)
+                allDecls.append(contentsOf: nestedAll)
             default:
                 continue
             }
@@ -213,5 +290,168 @@ extension BuildKIRPhase {
         }
 
         return (directMembers, allDecls)
+    }
+
+    /// Lower a property getter or setter body as a synthetic KIR function.
+    ///
+    /// Getter signature: `(<receiver>) -> PropertyType`
+    /// Setter signature: `(<receiver>, value: PropertyType) -> Unit`
+    func lowerAccessorBody(
+        accessorBody: FunctionBody,
+        propertySymbol: SymbolID,
+        propertyType: TypeID,
+        accessorKind: PropertyAccessorKind,
+        setterParamName: InternedString?,
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        allDecls: inout [KIRDeclID]
+    ) {
+        localValuesBySymbol.removeAll(keepingCapacity: true)
+        currentImplicitReceiverExprID = nil
+        currentImplicitReceiverSymbol = nil
+        loopControlStack.removeAll(keepingCapacity: true)
+        nextLoopLabel = 10_000
+        beginCallableLoweringScope()
+
+        let ownerSymbol = sema.symbols.parentSymbol(for: propertySymbol)
+        var params: [KIRParameter] = []
+
+        // Add receiver parameter if property has an owner class/object.
+        if let ownerSymbol,
+           let ownerSym = sema.symbols.symbol(ownerSymbol) {
+            let ownerType = sema.types.make(
+                .classType(ClassType(classSymbol: ownerSym.id, args: [], nullability: .nonNull))
+            )
+            let receiverSymbol = syntheticReceiverParameterSymbol(functionSymbol: propertySymbol)
+            params.append(KIRParameter(symbol: receiverSymbol, type: ownerType))
+            currentImplicitReceiverSymbol = receiverSymbol
+            currentImplicitReceiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: ownerType)
+        }
+
+        let returnType: TypeID
+        let accessorName: InternedString
+        switch accessorKind {
+        case .getter:
+            returnType = propertyType
+            accessorName = interner.intern("get")
+            // Map the backing field symbol so `field` references in the getter
+            // resolve to a backing field access expression.
+            if let backingFieldSym = sema.symbols.backingFieldSymbol(for: propertySymbol) {
+                let bfExprID = arena.appendExpr(.symbolRef(backingFieldSym), type: propertyType)
+                localValuesBySymbol[backingFieldSym] = bfExprID
+            }
+        case .setter:
+            returnType = sema.types.unitType
+            accessorName = interner.intern("set")
+            let valueParamSymbol = SymbolID(rawValue: -(propertySymbol.rawValue + 30_000))
+            params.append(KIRParameter(symbol: valueParamSymbol, type: propertyType))
+            let valueExprID = arena.appendExpr(.symbolRef(valueParamSymbol), type: propertyType)
+            localValuesBySymbol[valueParamSymbol] = valueExprID
+            // Sema binds the setter parameter name to a synthetic setter-value
+            // symbol (offset -40_000) distinct from both the property symbol
+            // and the backing field symbol.
+            let semaSetterValueSymbol = SymbolID(rawValue: -(propertySymbol.rawValue + 40_000))
+            localValuesBySymbol[semaSetterValueSymbol] = valueExprID
+            // Map the backing field symbol so `field` references in the setter
+            // resolve to backing field storage, not the value parameter.
+            if let backingFieldSym = sema.symbols.backingFieldSymbol(for: propertySymbol) {
+                let bfExprID = arena.appendExpr(.symbolRef(backingFieldSym), type: propertyType)
+                localValuesBySymbol[backingFieldSym] = bfExprID
+            }
+        }
+
+        var body: [KIRInstruction] = [.beginBlock]
+        if let receiverExpr = currentImplicitReceiverExprID,
+           let receiverSym = currentImplicitReceiverSymbol {
+            body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
+        }
+
+        switch accessorBody {
+        case .block(let exprIDs, _):
+            var lastValue: KIRExprID?
+            var terminatedByReturn = false
+            for exprID in exprIDs {
+                if let expr = ast.arena.expr(exprID),
+                   case .returnExpr(let value, _) = expr {
+                    if let value {
+                        let lowered = lowerExpr(
+                            value,
+                            ast: ast,
+                            sema: sema,
+                            arena: arena,
+                            interner: interner,
+                            propertyConstantInitializers: propertyConstantInitializers,
+                            instructions: &body
+                        )
+                        body.append(.returnValue(lowered))
+                    } else {
+                        body.append(.returnUnit)
+                    }
+                    terminatedByReturn = true
+                    break
+                }
+                lastValue = lowerExpr(
+                    exprID,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &body
+                )
+            }
+            if !terminatedByReturn {
+                if accessorKind == .getter, let lastValue {
+                    body.append(.returnValue(lastValue))
+                } else {
+                    body.append(.returnUnit)
+                }
+            }
+        case .expr(let exprID, _):
+            let value = lowerExpr(
+                exprID,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &body
+            )
+            if accessorKind == .getter {
+                body.append(.returnValue(value))
+            } else {
+                body.append(.returnUnit)
+            }
+        case .unit:
+            body.append(.returnUnit)
+        }
+        body.append(.endBlock)
+
+        // Use a synthetic symbol derived from the property symbol for the accessor.
+        // Offsets -12_000 / -13_000 avoid collision with receiver parameter symbols
+        // which use -10_000 (see syntheticReceiverParameterSymbol).
+        let accessorSymbolOffset: Int32 = accessorKind == .getter ? -12_000 : -13_000
+        let syntheticAccessorSymbol = SymbolID(rawValue: accessorSymbolOffset - propertySymbol.rawValue)
+
+        let kirID = arena.appendDecl(
+            .function(
+                KIRFunction(
+                    symbol: syntheticAccessorSymbol,
+                    name: accessorName,
+                    params: params,
+                    returnType: returnType,
+                    body: body,
+                    isSuspend: false,
+                    isInline: false
+                )
+            )
+        )
+        allDecls.append(kirID)
+        allDecls.append(contentsOf: drainGeneratedCallableDecls())
+        currentImplicitReceiverExprID = nil
+        currentImplicitReceiverSymbol = nil
     }
 }

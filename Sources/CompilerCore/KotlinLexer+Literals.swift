@@ -20,23 +20,31 @@ extension KotlinLexer {
                         range: makeRange(start: cursor, end: min(cursor + 1, bytes.count))
                     )
                 }
+                var hexDigitCount = 0
                 while cursor < bytes.count {
                     let ch = bytes[cursor]
                     if isHexDigit(ch) {
+                        hexDigitCount += 1
                         cursor += 1
                         continue
                     }
-                    if ch == 0x5F && cursor + 1 < bytes.count && isHexDigit(bytes[cursor + 1]) {
+                    if ch == 0x5F {
                         cursor += 1
                         continue
                     }
                     break
                 }
-                if cursor == startDigits {
+                if hexDigitCount == 0 {
                     diagnostics.error(
                         "KSWIFTK-LEX-0003",
                         "Invalid number format in numeric literal.",
                         range: makeRange(start: start, end: min(cursor + 1, bytes.count))
+                    )
+                } else if cursor > startDigits && bytes[cursor - 1] == 0x5F {
+                    diagnostics.error(
+                        "KSWIFTK-LEX-0006",
+                        "Trailing underscore in numeric literal.",
+                        range: makeRange(start: cursor - 1, end: cursor)
                     )
                 }
             } else if marker == 0x62 || marker == 0x42 {
@@ -51,23 +59,31 @@ extension KotlinLexer {
                         range: makeRange(start: cursor, end: min(cursor + 1, bytes.count))
                     )
                 }
+                var binDigitCount = 0
                 while cursor < bytes.count {
                     let ch = bytes[cursor]
                     if isBinaryDigit(ch) {
+                        binDigitCount += 1
                         cursor += 1
                         continue
                     }
-                    if ch == 0x5F && cursor + 1 < bytes.count && isBinaryDigit(bytes[cursor + 1]) {
+                    if ch == 0x5F {
                         cursor += 1
                         continue
                     }
                     break
                 }
-                if cursor == startDigits {
+                if binDigitCount == 0 {
                     diagnostics.error(
                         "KSWIFTK-LEX-0003",
                         "Invalid number format in numeric literal.",
                         range: makeRange(start: start, end: min(cursor + 1, bytes.count))
+                    )
+                } else if cursor > startDigits && bytes[cursor - 1] == 0x5F {
+                    diagnostics.error(
+                        "KSWIFTK-LEX-0006",
+                        "Trailing underscore in numeric literal.",
+                        range: makeRange(start: cursor - 1, end: cursor)
                     )
                 }
             } else if marker == 0x6F || marker == 0x4F {
@@ -97,15 +113,6 @@ extension KotlinLexer {
                     continue
                 }
                 if ch == 0x5F {
-                    if cursor + 1 >= bytes.count || !isDigit(bytes[cursor + 1]) {
-                        diagnostics.error(
-                            "KSWIFTK-LEX-0006",
-                            "Invalid underscore placement in numeric literal.",
-                            range: makeRange(start: cursor, end: min(cursor + 1, bytes.count))
-                        )
-                        cursor += 1
-                        continue
-                    }
                     cursor += 1
                     continue
                 }
@@ -113,11 +120,25 @@ extension KotlinLexer {
                     if cursor + 1 >= bytes.count || !isDigit(bytes[cursor + 1]) {
                         break
                     }
+                    if cursor > start && bytes[cursor - 1] == 0x5F {
+                        diagnostics.error(
+                            "KSWIFTK-LEX-0006",
+                            "Trailing underscore in numeric literal.",
+                            range: makeRange(start: cursor - 1, end: cursor)
+                        )
+                    }
                     hasDot = true
                     cursor += 1
                     continue
                 }
                 break
+            }
+            if cursor > start && bytes[cursor - 1] == 0x5F {
+                diagnostics.error(
+                    "KSWIFTK-LEX-0006",
+                    "Trailing underscore in numeric literal.",
+                    range: makeRange(start: cursor - 1, end: cursor)
+                )
             }
         }
 
@@ -135,23 +156,31 @@ extension KotlinLexer {
                     range: makeRange(start: cursor, end: min(cursor + 1, bytes.count))
                 )
             }
+            var exponentDigitCount = 0
             while cursor < bytes.count {
                 let ch = bytes[cursor]
                 if isDigit(ch) {
+                    exponentDigitCount += 1
                     cursor += 1
                     continue
                 }
-                if ch == 0x5F && cursor + 1 < bytes.count && isDigit(bytes[cursor + 1]) {
+                if ch == 0x5F {
                     cursor += 1
                     continue
                 }
                 break
             }
-            if exponentStart == cursor {
+            if exponentDigitCount == 0 {
                 diagnostics.error(
                     "KSWIFTK-LEX-0003",
                     "Invalid number format in numeric literal.",
                     range: makeRange(start: start, end: min(cursor + 1, bytes.count))
+                )
+            } else if cursor > exponentStart && bytes[cursor - 1] == 0x5F {
+                diagnostics.error(
+                    "KSWIFTK-LEX-0006",
+                    "Trailing underscore in numeric literal.",
+                    range: makeRange(start: cursor - 1, end: cursor)
                 )
             }
         }

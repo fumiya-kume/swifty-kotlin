@@ -400,8 +400,6 @@ extension CoroutineLoweringPass {
             return Set([lhs, rhs])
         case .binary(_, let lhs, let rhs, _):
             return Set([lhs, rhs])
-        case .select(let condition, let thenValue, let elseValue, _):
-            return Set([condition, thenValue, elseValue])
         case .call(_, _, let arguments, _, _, _):
             return Set(arguments)
         case .virtualCall(_, _, let receiver, let arguments, _, _, _, _):
@@ -426,8 +424,6 @@ extension CoroutineLoweringPass {
         case .constValue(let result, _):
             return Set([result])
         case .binary(_, _, _, let result):
-            return Set([result])
-        case .select(_, _, _, let result):
             return Set([result])
         case .call(_, _, _, let result, _, let thrownResult):
             var ids = Set<KIRExprID>()

@@ -242,8 +242,6 @@ public final class CodegenPhase: CompilerPhase {
             return "returnValue value=\(value.rawValue)"
         case .returnIfEqual(let lhs, let rhs):
             return "returnIfEqual lhs=\(lhs.rawValue) rhs=\(rhs.rawValue)"
-        case .select(let condition, let thenValue, let elseValue, let result):
-            return "select condition=\(condition.rawValue) then=\(thenValue.rawValue) else=\(elseValue.rawValue) result=\(result.rawValue)"
         case .unary(let op, let operand, let result):
             return "unary op=\(op) operand=\(operand.rawValue) result=\(result.rawValue)"
         case .nullAssert(let operand, let result):

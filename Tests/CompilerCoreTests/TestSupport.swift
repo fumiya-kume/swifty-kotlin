@@ -142,6 +142,17 @@ func assertNoDiagnostic(
     XCTAssertFalse(found, "Unexpected diagnostic \(code), got: \(ctx.diagnostics.diagnostics.map(\.code))", file: file, line: line)
 }
 
+func assertDiagnosticCount(
+    _ code: String,
+    expected: Int,
+    in ctx: CompilationContext,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) {
+    let count = ctx.diagnostics.diagnostics.filter { $0.code == code }.count
+    XCTAssertEqual(count, expected, "Expected \(expected) diagnostic(s) with code \(code), got \(count). All diagnostics: \(ctx.diagnostics.diagnostics.map(\.code))", file: file, line: line)
+}
+
 // MARK: - Pipeline Helpers
 
 func runToLowering(_ ctx: CompilationContext) throws {

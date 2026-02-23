@@ -214,19 +214,6 @@ final class InlineLoweringPass: LoweringPass {
                         dispatch: dispatch
                     )
                 )
-
-            case .select(let condition, let thenValue, let elseValue, let result):
-                let loweredResult = cloneExpr(result, in: module.arena)
-                localExprMap[result] = loweredResult
-                lowered.append(
-                    .select(
-                        condition: resolveAlias(of: condition, aliases: localExprMap),
-                        thenValue: resolveAlias(of: thenValue, aliases: localExprMap),
-                        elseValue: resolveAlias(of: elseValue, aliases: localExprMap),
-                        result: loweredResult
-                    )
-                )
-
             case .returnIfEqual(let lhs, let rhs):
                 lowered.append(
                     .returnIfEqual(

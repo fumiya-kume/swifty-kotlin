@@ -107,6 +107,29 @@ public final class BuildKIRPhase: CompilerPhase {
                         let isSecondary = sema.symbols.symbol(ctorSymbol)?.declSite != classDecl.range
 
                         if !isSecondary {
+                            // Emit member property initializers as field stores.
+                            for propDeclID in classDecl.memberProperties {
+                                guard let propDecl = ast.arena.decl(propDeclID),
+                                      case .propertyDecl(let prop) = propDecl,
+                                      let propSymbol = sema.bindings.declSymbols[propDeclID],
+                                      let initExpr = prop.initializer else {
+                                    continue
+                                }
+                                let targetSymbol = sema.symbols.backingFieldSymbol(for: propSymbol) ?? propSymbol
+                                let propType = sema.symbols.propertyType(for: propSymbol) ?? sema.types.anyType
+                                let initValue = lowerExpr(
+                                    initExpr,
+                                    ast: ast,
+                                    sema: sema,
+                                    arena: arena,
+                                    interner: ctx.interner,
+                                    propertyConstantInitializers: propertyConstantInitializers,
+                                    instructions: &body
+                                )
+                                let fieldRef = arena.appendExpr(.symbolRef(targetSymbol), type: propType)
+                                body.append(.copy(from: initValue, to: fieldRef))
+                            }
+
                             for initBlock in classDecl.initBlocks {
                                 switch initBlock {
                                 case .block(let exprIDs, _):
@@ -241,9 +264,22 @@ public final class BuildKIRPhase: CompilerPhase {
                         declIDs.append(contentsOf: drainGeneratedCallableDecls())
                     }
 
-                case .interfaceDecl:
-                    let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol)))
+                case .interfaceDecl(let interfaceDecl):
+                    // Interface properties have no backing storage; pass empty list.
+                    let (directMembers, allDecls) = lowerMemberDecls(
+                        memberFunctions: interfaceDecl.memberFunctions,
+                        memberProperties: [],
+                        nestedClasses: interfaceDecl.nestedClasses,
+                        nestedObjects: interfaceDecl.nestedObjects,
+                        ast: ast,
+                        sema: sema,
+                        arena: arena,
+                        interner: ctx.interner,
+                        propertyConstantInitializers: propertyConstantInitializers
+                    )
+                    let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: directMembers)))
                     declIDs.append(kirID)
+                    declIDs.append(contentsOf: allDecls)
 
                 case .objectDecl(let objectDecl):
                     let (directMembers, allDecls) = lowerMemberDecls(

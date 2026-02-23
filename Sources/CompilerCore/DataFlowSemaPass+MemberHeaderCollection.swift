@@ -199,6 +199,28 @@ extension DataFlowSemaPassPhase {
                 diagnostics: diagnostics
             ) ?? types.nullableAnyType
             symbols.setPropertyType(resolvedType, for: memberSymbol)
+
+            // Materialize a backing field symbol for properties with custom accessors
+            // (Kotlin `field` identifier in getter/setter bodies).
+            // Simple properties with only an initializer don't need a separate
+            // backing field — the property symbol IS the storage.
+            let needsBackingField = propertyDecl.getter != nil
+                || propertyDecl.setter != nil
+            if needsBackingField && propertyDecl.delegateExpression == nil {
+                let fieldName = interner.intern("$backing_\(interner.resolve(propertyDecl.name))")
+                let fieldFQName = ownerFQName + [fieldName]
+                let backingFieldSymbol = symbols.define(
+                    kind: .backingField,
+                    name: fieldName,
+                    fqName: fieldFQName,
+                    declSite: propertyDecl.range,
+                    visibility: .private,
+                    flags: propertyDecl.isVar ? [.mutable] : []
+                )
+                symbols.setParentSymbol(ownerSymbol, for: backingFieldSymbol)
+                symbols.setPropertyType(resolvedType, for: backingFieldSymbol)
+                symbols.setBackingFieldSymbol(backingFieldSymbol, for: memberSymbol)
+            }
         }
 
         for declID in nestedClasses {
@@ -311,7 +333,13 @@ extension DataFlowSemaPassPhase {
                 symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)
                 scope.insert(nestedSymbol)
 
-                _ = types.make(.classType(ClassType(classSymbol: nestedSymbol, args: [], nullability: .nonNull)))
+                let nestedType = types.make(.classType(ClassType(classSymbol: nestedSymbol, args: [], nullability: .nonNull)))
+                let nestedScope = ClassMemberScope(
+                    parent: scope,
+                    symbols: symbols,
+                    ownerSymbol: nestedSymbol,
+                    thisType: nestedType
+                )
                 if !nestedInterface.typeParams.isEmpty {
                     types.setNominalTypeParameterVariances(
                         nestedInterface.typeParams.map(\.variance),
@@ -324,6 +352,22 @@ extension DataFlowSemaPassPhase {
                     ast: ast,
                     symbols: symbols,
                     types: types,
+                    diagnostics: diagnostics,
+                    interner: interner
+                )
+                collectMemberHeaders(
+                    memberFunctions: nestedInterface.memberFunctions,
+                    memberProperties: nestedInterface.memberProperties,
+                    nestedClasses: nestedInterface.nestedClasses,
+                    nestedObjects: nestedInterface.nestedObjects,
+                    ownerFQName: nestedFQName,
+                    ownerSymbol: nestedSymbol,
+                    ownerType: nestedType,
+                    ast: ast,
+                    symbols: symbols,
+                    types: types,
+                    bindings: bindings,
+                    scope: nestedScope,
                     diagnostics: diagnostics,
                     interner: interner
                 )
