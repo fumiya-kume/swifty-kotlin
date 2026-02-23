@@ -530,6 +530,8 @@ final class ABILoweringPass: LoweringPass {
     ) -> TypeKind {
         guard let symbols else { return kind }
         if case .classType(let ct) = kind {
+            // Do not resolve nullable value class types — they are boxed at the ABI level.
+            guard ct.nullability == .nonNull else { return kind }
             let sym = symbols.symbol(ct.classSymbol)
             if let sym, sym.flags.contains(.valueType),
                let underlyingType = symbols.valueClassUnderlyingType(for: ct.classSymbol) {
