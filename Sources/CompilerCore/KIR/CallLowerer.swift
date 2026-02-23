@@ -75,8 +75,7 @@ final class CallLowerer {
                     callableValueCallBinding: callableValueCallBinding,
                     sema: sema
                 ),
-                defaultMask: 0,
-                calleeHasDefaults: false
+                defaultMask: 0
             )
         }
         var finalArgIDs = callNormalized.arguments
