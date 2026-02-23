@@ -444,8 +444,8 @@ final class ExprTypeChecker {
                     locals[elvisVarName] = (nonNullType, elvisLocal.symbol, elvisLocal.isMutable, elvisLocal.isInitialized)
                 }
             }
-        case .rangeTo, .rangeUntil:
-            type = sema.types.anyType
+        case .rangeTo, .rangeUntil, .downTo, .step:
+            type = sema.types.intType
         }
         sema.bindings.bindExprType(id, type: type)
         return type

@@ -221,6 +221,11 @@ extension BuildASTPhase {
                 return .rangeTo
             case .symbol(.dotDotLt):
                 return .rangeUntil
+            case .identifier(let name):
+                let resolved = interner.resolve(name)
+                if resolved == "downTo" { return .downTo }
+                if resolved == "step" { return .step }
+                return nil
             default:
                 return nil
             }
@@ -239,6 +244,10 @@ extension BuildASTPhase {
                 return 110
                 case .rangeTo, .rangeUntil:
                     return 100
+                case .downTo:
+                    return 95
+                case .step:
+                    return 93
                 case .elvis:
                 return 90
             case .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:

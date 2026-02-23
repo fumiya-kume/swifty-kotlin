@@ -36,6 +36,10 @@ struct TypeCheckHelpers {
         sema: SemaModule,
         interner: StringInterner
     ) -> TypeID? {
+        // Range/progression types (Int) are iterable over Int elements
+        if arrayType == sema.types.intType {
+            return sema.types.intType
+        }
         guard case .classType(let classType) = sema.types.kind(of: arrayType),
               let symbol = sema.symbols.symbol(classType.classSymbol) else {
             return nil
@@ -114,11 +118,15 @@ struct TypeCheckHelpers {
             return interner.intern("or")
         case .elvis:
             return interner.intern("elvis")
-        case .rangeTo:
-            return interner.intern("rangeTo")
-        case .rangeUntil:
-            return interner.intern("rangeUntil")
-        }
+            case .rangeTo:
+                return interner.intern("rangeTo")
+            case .rangeUntil:
+                return interner.intern("rangeUntil")
+            case .downTo:
+                return interner.intern("downTo")
+            case .step:
+                return interner.intern("step")
+            }
     }
 
     func resolveBuiltinTypeName(_ name: String, nullability: Nullability = .nonNull, types: TypeSystem) -> TypeID? {
