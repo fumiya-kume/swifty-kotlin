@@ -129,54 +129,67 @@ extension DataFlowSemaPassPhase {
 
             let ctorName = interner.intern("<init>")
             let primaryCtorFQName = fqName + [ctorName]
-            let primaryCtorSymbol = symbols.define(
-                kind: .constructor,
-                name: declaration.name,
-                fqName: primaryCtorFQName,
-                declSite: classDecl.range,
-                visibility: declaration.visibility,
-                flags: []
-            )
-            scope.insert(primaryCtorSymbol)
-            do {
-                var paramTypes: [TypeID] = []
-                var paramSymbols: [SymbolID] = []
-                var paramHasDefaultValues: [Bool] = []
-                var paramIsVararg: [Bool] = []
-                let localNamespaceFQName = primaryCtorFQName + [interner.intern("$\(primaryCtorSymbol.rawValue)")]
-                for valueParam in classDecl.primaryConstructorParams {
-                    let paramFQName = localNamespaceFQName + [valueParam.name]
-                    let paramSymbol = symbols.define(
-                        kind: .valueParameter,
-                        name: valueParam.name,
-                        fqName: paramFQName,
-                        declSite: classDecl.range,
-                        visibility: .private,
-                        flags: []
-                    )
-                    let resolvedType = resolveTypeRef(
-                        valueParam.type,
-                        ast: ast,
-                        symbols: symbols,
-                        types: types,
-                        interner: interner,
-                        diagnostics: diagnostics
-                    ) ?? anyType
-                    paramTypes.append(resolvedType)
-                    paramSymbols.append(paramSymbol)
-                    paramHasDefaultValues.append(valueParam.hasDefaultValue)
-                    paramIsVararg.append(valueParam.isVararg)
-                }
-                symbols.setFunctionSignature(
-                    FunctionSignature(
-                        parameterTypes: paramTypes,
-                        returnType: classType,
-                        valueParameterSymbols: paramSymbols,
-                        valueParameterHasDefaultValues: paramHasDefaultValues,
-                        valueParameterIsVararg: paramIsVararg
-                    ),
-                    for: primaryCtorSymbol
+
+            // Kotlin rule: only define a primary constructor symbol when either
+            // (a) the class header has explicit constructor parentheses
+            //     (`class Foo()` or `class Foo(x: Int)`), or
+            // (b) there are no secondary constructors (implicit default ctor).
+            // A class like `class Foo { constructor(x: Int) : ... }` has NO
+            // primary constructor and should not get a synthetic no-arg ctor.
+            let hasPrimaryCtorSyntax = classDecl.hasPrimaryConstructorSyntax
+            let hasSecondaryCtors = !classDecl.secondaryConstructors.isEmpty
+            if hasPrimaryCtorSyntax || !hasSecondaryCtors {
+                let primaryCtorSymbol = symbols.define(
+                    kind: .constructor,
+                    name: declaration.name,
+                    fqName: primaryCtorFQName,
+                    declSite: classDecl.range,
+                    visibility: declaration.visibility,
+                    flags: []
                 )
+                scope.insert(primaryCtorSymbol)
+                symbols.setParentSymbol(symbol, for: primaryCtorSymbol)
+                do {
+                    var paramTypes: [TypeID] = []
+                    var paramSymbols: [SymbolID] = []
+                    var paramHasDefaultValues: [Bool] = []
+                    var paramIsVararg: [Bool] = []
+                    let localNamespaceFQName = primaryCtorFQName + [interner.intern("$\(primaryCtorSymbol.rawValue)")]
+                    for valueParam in classDecl.primaryConstructorParams {
+                        let paramFQName = localNamespaceFQName + [valueParam.name]
+                        let paramSymbol = symbols.define(
+                            kind: .valueParameter,
+                            name: valueParam.name,
+                            fqName: paramFQName,
+                            declSite: classDecl.range,
+                            visibility: .private,
+                            flags: []
+                        )
+                        let resolvedType = resolveTypeRef(
+                            valueParam.type,
+                            ast: ast,
+                            symbols: symbols,
+                            types: types,
+                            interner: interner,
+                            diagnostics: diagnostics
+                        ) ?? anyType
+                        paramTypes.append(resolvedType)
+                        paramSymbols.append(paramSymbol)
+                        paramHasDefaultValues.append(valueParam.hasDefaultValue)
+                        paramIsVararg.append(valueParam.isVararg)
+                    }
+                    symbols.setFunctionSignature(
+                        FunctionSignature(
+                            receiverType: classType,
+                            parameterTypes: paramTypes,
+                            returnType: classType,
+                            valueParameterSymbols: paramSymbols,
+                            valueParameterHasDefaultValues: paramHasDefaultValues,
+                            valueParameterIsVararg: paramIsVararg
+                        ),
+                        for: primaryCtorSymbol
+                    )
+                }
             }
 
             for (ctorIndex, secondaryCtor) in classDecl.secondaryConstructors.enumerated() {
@@ -189,6 +202,7 @@ extension DataFlowSemaPassPhase {
                     flags: []
                 )
                 scope.insert(secCtorSymbol)
+                symbols.setParentSymbol(symbol, for: secCtorSymbol)
                 var paramTypes: [TypeID] = []
                 var paramSymbols: [SymbolID] = []
                 var paramHasDefaultValues: [Bool] = []
@@ -219,6 +233,7 @@ extension DataFlowSemaPassPhase {
                 }
                 symbols.setFunctionSignature(
                     FunctionSignature(
+                        receiverType: classType,
                         parameterTypes: paramTypes,
                         returnType: classType,
                         valueParameterSymbols: paramSymbols,

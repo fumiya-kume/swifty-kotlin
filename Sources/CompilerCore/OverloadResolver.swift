@@ -105,14 +105,23 @@ public final class OverloadResolver {
             }
         }
 
-        guard var constraints = buildReceiverConstraints(
-            signature: signature,
-            implicitReceiverType: implicitReceiverType,
-            typeVarBySymbol: typeVarBySymbol,
-            range: call.range,
-            typeSystem: ctx.types
-        ) else {
-            return .rejected
+        // Constructors synthesize their own receiver at the call site, so skip
+        // the receiver constraint check that would reject them when there is no
+        // implicit receiver in scope (e.g. `Dog()` called from a free function).
+        var constraints: [VariableConstraint]
+        if symbol.kind == .constructor {
+            constraints = []
+        } else {
+            guard let receiverConstraints = buildReceiverConstraints(
+                signature: signature,
+                implicitReceiverType: implicitReceiverType,
+                typeVarBySymbol: typeVarBySymbol,
+                range: call.range,
+                typeSystem: ctx.types
+            ) else {
+                return .rejected
+            }
+            constraints = receiverConstraints
         }
 
         guard let parameterMapping = buildParameterMapping(

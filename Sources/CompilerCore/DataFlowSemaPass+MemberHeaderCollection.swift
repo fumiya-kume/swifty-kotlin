@@ -264,6 +264,119 @@ extension DataFlowSemaPassPhase {
                         for: nestedSymbol
                     )
                 }
+                // Create constructor symbols for nested class (primary + secondary).
+                // Kotlin rule: only define a primary constructor symbol when either
+                // (a) the class header has explicit constructor parentheses, or
+                // (b) there are no secondary constructors (implicit default ctor).
+                let ctorName = interner.intern("<init>")
+                let nestedCtorFQName = nestedFQName + [ctorName]
+                let nestedHasPrimaryCtorSyntax = nestedClass.hasPrimaryConstructorSyntax
+                let nestedHasSecondaryCtors = !nestedClass.secondaryConstructors.isEmpty
+                if nestedHasPrimaryCtorSyntax || !nestedHasSecondaryCtors {
+                    let nestedPrimaryCtorSymbol = symbols.define(
+                        kind: .constructor,
+                        name: nestedClass.name,
+                        fqName: nestedCtorFQName,
+                        declSite: nestedClass.range,
+                        visibility: visibility(from: nestedClass.modifiers),
+                        flags: []
+                    )
+                    nestedScope.insert(nestedPrimaryCtorSymbol)
+                    symbols.setParentSymbol(nestedSymbol, for: nestedPrimaryCtorSymbol)
+                    do {
+                        var paramTypes: [TypeID] = []
+                        var paramSymbols: [SymbolID] = []
+                        var paramHasDefaultValues: [Bool] = []
+                        var paramIsVararg: [Bool] = []
+                        let localNamespaceFQName = nestedCtorFQName + [interner.intern("$\(nestedPrimaryCtorSymbol.rawValue)")]
+                        for valueParam in nestedClass.primaryConstructorParams {
+                            let paramFQName = localNamespaceFQName + [valueParam.name]
+                            let paramSymbol = symbols.define(
+                                kind: .valueParameter,
+                                name: valueParam.name,
+                                fqName: paramFQName,
+                                declSite: nestedClass.range,
+                                visibility: .private,
+                                flags: []
+                            )
+                            let resolvedType = resolveTypeRef(
+                                valueParam.type,
+                                ast: ast,
+                                symbols: symbols,
+                                types: types,
+                                interner: interner,
+                                diagnostics: diagnostics
+                            ) ?? anyType
+                            paramTypes.append(resolvedType)
+                            paramSymbols.append(paramSymbol)
+                            paramHasDefaultValues.append(valueParam.hasDefaultValue)
+                            paramIsVararg.append(valueParam.isVararg)
+                        }
+                        symbols.setFunctionSignature(
+                            FunctionSignature(
+                                receiverType: nestedType,
+                                parameterTypes: paramTypes,
+                                returnType: nestedType,
+                                valueParameterSymbols: paramSymbols,
+                                valueParameterHasDefaultValues: paramHasDefaultValues,
+                                valueParameterIsVararg: paramIsVararg
+                            ),
+                            for: nestedPrimaryCtorSymbol
+                        )
+                    }
+                }
+                for (ctorIndex, secondaryCtor) in nestedClass.secondaryConstructors.enumerated() {
+                    let secCtorSymbol = symbols.define(
+                        kind: .constructor,
+                        name: nestedClass.name,
+                        fqName: nestedCtorFQName,
+                        declSite: secondaryCtor.range,
+                        visibility: visibility(from: secondaryCtor.modifiers),
+                        flags: []
+                    )
+                    nestedScope.insert(secCtorSymbol)
+                    symbols.setParentSymbol(nestedSymbol, for: secCtorSymbol)
+                    var paramTypes: [TypeID] = []
+                    var paramSymbols: [SymbolID] = []
+                    var paramHasDefaultValues: [Bool] = []
+                    var paramIsVararg: [Bool] = []
+                    let localNamespaceFQName = nestedCtorFQName + [interner.intern("$sec\(ctorIndex)_\(secCtorSymbol.rawValue)")]
+                    for valueParam in secondaryCtor.valueParams {
+                        let paramFQName = localNamespaceFQName + [valueParam.name]
+                        let paramSymbol = symbols.define(
+                            kind: .valueParameter,
+                            name: valueParam.name,
+                            fqName: paramFQName,
+                            declSite: secondaryCtor.range,
+                            visibility: .private,
+                            flags: []
+                        )
+                        let resolvedType = resolveTypeRef(
+                            valueParam.type,
+                            ast: ast,
+                            symbols: symbols,
+                            types: types,
+                            interner: interner,
+                            diagnostics: diagnostics
+                        ) ?? anyType
+                        paramTypes.append(resolvedType)
+                        paramSymbols.append(paramSymbol)
+                        paramHasDefaultValues.append(valueParam.hasDefaultValue)
+                        paramIsVararg.append(valueParam.isVararg)
+                    }
+                    symbols.setFunctionSignature(
+                        FunctionSignature(
+                            receiverType: nestedType,
+                            parameterTypes: paramTypes,
+                            returnType: nestedType,
+                            valueParameterSymbols: paramSymbols,
+                            valueParameterHasDefaultValues: paramHasDefaultValues,
+                            valueParameterIsVararg: paramIsVararg
+                        ),
+                        for: secCtorSymbol
+                    )
+                }
+
                 if classSymbolKind(for: nestedClass) == .enumClass {
                     for entry in nestedClass.enumEntries {
                         let entryFQName = nestedFQName + [entry.name]

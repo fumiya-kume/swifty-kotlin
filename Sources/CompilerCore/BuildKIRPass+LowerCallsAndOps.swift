@@ -75,6 +75,30 @@ extension BuildKIRPhase {
         if let loweredCallable {
             finalArgIDs.insert(contentsOf: loweredCallable.captureArguments, at: 0)
         } else if let chosen,
+                  sema.symbols.symbol(chosen)?.kind == .constructor {
+            // Constructor calls need an allocated object as the implicit receiver (p0).
+            // Allocate via kk_array_new(slotCount) and prepend it to the argument list.
+            // Derive slot count from NominalLayout.instanceSizeWords of the owning class.
+            let allocType = boundType ?? sema.types.anyType
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            var slotCount: Int64 = 1
+            if let parentClassID = sema.symbols.parentSymbol(for: chosen),
+               let layout = sema.symbols.nominalLayout(for: parentClassID) {
+                slotCount = Int64(max(layout.instanceSizeWords, 1))
+            }
+            let slotCountExpr = arena.appendExpr(.intLiteral(slotCount), type: intType)
+            instructions.append(.constValue(result: slotCountExpr, value: .intLiteral(slotCount)))
+            let allocatedObj = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: allocType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_array_new"),
+                arguments: [slotCountExpr],
+                result: allocatedObj,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            finalArgIDs.insert(allocatedObj, at: 0)
+        } else if let chosen,
            let signature = sema.symbols.functionSignature(for: chosen),
            signature.receiverType != nil,
            let implicitReceiver = currentImplicitReceiverExprID {
