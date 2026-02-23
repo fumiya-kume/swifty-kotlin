@@ -487,7 +487,7 @@ extension TypeCheckSemaPassPhase {
         for param in valueParams {
             let paramType: TypeID
             if let typeRefID = param.type {
-                paramType = resolveTypeRef(typeRefID, ast: ast, sema: sema, interner: interner)
+                paramType = resolveTypeRef(typeRefID, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
             } else {
                 paramType = sema.types.anyType
             }
@@ -509,7 +509,7 @@ extension TypeCheckSemaPassPhase {
 
         let resolvedReturnType: TypeID
         if let returnTypeRef {
-            resolvedReturnType = resolveTypeRef(returnTypeRef, ast: ast, sema: sema, interner: interner)
+            resolvedReturnType = resolveTypeRef(returnTypeRef, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
         } else {
             resolvedReturnType = sema.types.unitType
         }
