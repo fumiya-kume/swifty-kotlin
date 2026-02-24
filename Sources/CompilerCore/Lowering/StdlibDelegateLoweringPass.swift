@@ -71,10 +71,12 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                 return function // no mutation in this scan pass
             }
 
-            // Phase 2 fallback: scan sema call bindings keyed by ExprID,
+            // Phase 2: scan sema call bindings keyed by ExprID,
             // then match each factory call to its owning property's
             // $delegate_ field via the property's fqName.
-            if delegateKindByFieldName.isEmpty {
+            // Supplements Phase 1 to catch delegates where call→copy
+            // adjacency doesn't hold (e.g. interleaved instructions).
+            do {
                 for (_, binding) in sema.bindings.callBindings {
                     guard let calleeInfo = sema.symbols.symbol(binding.chosenCallee) else {
                         continue
@@ -101,9 +103,10 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                 }
             }
 
-            // Phase 3 fallback: scan identifier bindings for individual
+            // Phase 3: scan identifier bindings for individual
             // factory references and match to their enclosing property.
-            if delegateKindByFieldName.isEmpty {
+            // Supplements Phases 1 & 2 for remaining undetected delegates.
+            do {
                 for (_, sym) in sema.bindings.identifierSymbols {
                     guard let symInfo = sema.symbols.symbol(sym) else { continue }
                     let name = interner.resolve(symInfo.name)
