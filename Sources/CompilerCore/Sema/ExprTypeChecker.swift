@@ -131,6 +131,16 @@ final class ExprTypeChecker {
                         diagnostics: ctx.semaCtx.diagnostics
                     )
                 }
+            } else if let expectedType {
+                // Bare `return` is equivalent to `return Unit`; check Unit <: expectedType
+                driver.emitSubtypeConstraint(
+                    left: sema.types.unitType,
+                    right: expectedType,
+                    range: range,
+                    solver: ConstraintSolver(),
+                    sema: sema,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
             }
             sema.bindings.bindExprType(id, type: sema.types.nothingType)
             return sema.types.nothingType

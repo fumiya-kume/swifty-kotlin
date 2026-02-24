@@ -319,24 +319,17 @@ final class DeclTypeChecker {
             skipSignatureUpdate = true
         } else if bodyType == sema.types.nothingType {
             switch function.body {
-            case .block(let exprIDs, _):
-                // Check if the *first* Nothing expression (i.e. the one that made
-                // the block unreachable) is a control-flow statement. Using first
-                // instead of last avoids being confused by unreachable Nothing
-                // expressions that follow (e.g. `return; throw "err"`).
-                if let firstNothingID = exprIDs.first(where: { id in
-                    ctx.sema.bindings.exprTypes[id] == sema.types.nothingType
-                }), let expr = ctx.ast.arena.expr(firstNothingID) {
-                    switch expr {
-                    case .returnExpr, .breakExpr, .continueExpr:
-                        skipSignatureUpdate = true
-                    default:
-                        skipSignatureUpdate = false
-                    }
-                } else {
-                    skipSignatureUpdate = true
-                }
+            case .block:
+                // Block-body functions without explicit return type should not have
+                // their return type inferred as Nothing. In Kotlin, block-body
+                // functions default to Unit. Nothing can arise from control flow
+                // (return/break/continue), throw, compound expressions where all
+                // branches return, etc. Return value type checking is already
+                // handled at the returnExpr level, so skipping here is safe.
+                skipSignatureUpdate = true
             case .expr, .unit:
+                // Expression-body functions (e.g. `fun f() = throw ...`) should
+                // infer Nothing when the expression genuinely evaluates to Nothing.
                 skipSignatureUpdate = false
             }
         } else {
