@@ -478,21 +478,13 @@ extension KotlinParser {
                 break
             }
             if !inBlock, hasLeadingNewline(stream.peek()) {
-                // Don't break if previous token was a continuation operator (e.g. `=`)
-                // that expects an expression on the next line
-                if !shouldSplitStatementOnNewline(stream.peek().kind) {
+                // After `=`, continue consuming across newlines so that
+                // expression bodies like `= \n try { ... } catch { ... }` are
+                // captured in the same declaration node.
+                if case .symbol(.assign) = token.kind {
                     continue
                 }
-                let isContinuation: Bool
-                switch token.kind {
-                case .symbol(.assign):
-                    isContinuation = true
-                default:
-                    isContinuation = false
-                }
-                if !isContinuation {
-                    break
-                }
+                break
             }
         }
         if !progress, !shouldStopStatementBefore(stream.peek(), inBlock: inBlock) {
