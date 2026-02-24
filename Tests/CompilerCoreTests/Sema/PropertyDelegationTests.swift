@@ -580,7 +580,7 @@ final class ConstructorDelegateInitTests: XCTestCase {
 
 final class PropertyLoweringDelegateTests: XCTestCase {
 
-    func testPropertyLoweringRewritesGetValueToKKPropertyAccess() throws {
+    func testPropertyLoweringRewritesGetValueToDirectAccessorCall() throws {
         let source = """
         class MyDelegate {
             fun getValue(thisRef: Any?, property: Any?): Int = 42
@@ -598,21 +598,21 @@ final class PropertyLoweringDelegateTests: XCTestCase {
             let interner = ctx.interner
 
             // After lowering, getValue calls on delegate storage should be
-            // rewritten to kk_property_access.
+            // rewritten to direct accessor calls (get).
             let allFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
                 guard case .function(let fn) = decl else { return nil }
                 return fn
             }
 
-            // Check that no raw getValue calls remain on $delegate_ fields.
-            var foundKKPropertyAccess = false
+            // Check that getValue has been rewritten to a direct get accessor call.
+            var foundGetAccessor = false
             for fn in allFunctions {
                 let callees = extractCallees(from: fn.body, interner: interner)
-                if callees.contains("kk_property_access") {
-                    foundKKPropertyAccess = true
+                if callees.contains("get") {
+                    foundGetAccessor = true
                 }
             }
-            XCTAssertTrue(foundKKPropertyAccess, "Expected getValue to be rewritten to kk_property_access")
+            XCTAssertTrue(foundGetAccessor, "Expected getValue to be rewritten to direct get accessor call")
         }
     }
 
@@ -661,7 +661,7 @@ final class PropertyLoweringDelegateTests: XCTestCase {
         }
     }
 
-    func testPropertyLoweringRewritesSetValueToKKPropertyAccess() throws {
+    func testPropertyLoweringRewritesSetValueToDirectAccessorCall() throws {
         let source = """
         class MyDelegate {
             fun getValue(thisRef: Any?, property: Any?): Int = 42
@@ -684,14 +684,14 @@ final class PropertyLoweringDelegateTests: XCTestCase {
                 return fn
             }
 
-            var foundKKPropertyAccess = false
+            var foundSetAccessor = false
             for fn in allFunctions {
                 let callees = extractCallees(from: fn.body, interner: interner)
-                if callees.contains("kk_property_access") {
-                    foundKKPropertyAccess = true
+                if callees.contains("set") {
+                    foundSetAccessor = true
                 }
             }
-            XCTAssertTrue(foundKKPropertyAccess, "Expected setValue to be rewritten to kk_property_access")
+            XCTAssertTrue(foundSetAccessor, "Expected setValue to be rewritten to direct set accessor call")
         }
     }
 }
