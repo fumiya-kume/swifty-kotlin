@@ -284,7 +284,9 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                                     result: modeExpr,
                                     value: .intLiteral(lazyThreadSafetyModeValue)
                                 ))
-                                finalBody.append(instruction)
+                                // Original factory call (lazy(...)) is intentionally
+                                // NOT emitted — it references a synthetic stub with
+                                // no runtime implementation.
                                 let createResult = module.arena.appendExpr(
                                     .temporary(Int32(module.arena.expressions.count)),
                                     type: nil
@@ -304,7 +306,8 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                                 continue
                             case .observable:
                                 if let callResult {
-                                    finalBody.append(instruction)
+                                    // Original factory call (Delegates.observable(...))
+                                    // is intentionally NOT emitted — synthetic stub only.
                                     // kk_observable_create(initialValue, callbackFnPtr)
                                     // callArgs already contains the correct arguments.
                                     let createArgs = callArgs
@@ -328,7 +331,8 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                                 }
                             case .vetoable:
                                 if let callResult {
-                                    finalBody.append(instruction)
+                                    // Original factory call (Delegates.vetoable(...))
+                                    // is intentionally NOT emitted — synthetic stub only.
                                     // kk_vetoable_create(initialValue, callbackFnPtr)
                                     // callArgs already contains the correct arguments.
                                     let createArgs = callArgs
