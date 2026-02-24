@@ -236,6 +236,68 @@ final class CompilerTypesTests: XCTestCase {
         XCTAssertNotEqual(o1, o3)
     }
 
+    // MARK: - LazyDelegateThreadSafetyMode & lazyThreadSafetyMode (P5-80)
+
+    func testLazyDelegateThreadSafetyModeRawValues() {
+        XCTAssertEqual(LazyDelegateThreadSafetyMode.synchronized.rawValue, 1)
+        XCTAssertEqual(LazyDelegateThreadSafetyMode.none.rawValue, 0)
+    }
+
+    func testLazyDelegateThreadSafetyModeEquality() {
+        XCTAssertEqual(LazyDelegateThreadSafetyMode.synchronized, .synchronized)
+        XCTAssertEqual(LazyDelegateThreadSafetyMode.none, .none)
+        XCTAssertNotEqual(LazyDelegateThreadSafetyMode.synchronized, .none)
+    }
+
+    func testLazyThreadSafetyModeDefaultIsSynchronized() {
+        let target = TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+        let options = CompilerOptions(
+            moduleName: "M", inputs: ["a.kt"], outputPath: "out",
+            emit: .object, target: target
+        )
+        XCTAssertEqual(options.lazyThreadSafetyMode, .synchronized)
+    }
+
+    func testLazyThreadSafetyModeNone() {
+        let target = TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+        let options = CompilerOptions(
+            moduleName: "M", inputs: ["a.kt"], outputPath: "out",
+            emit: .object, target: target,
+            frontendFlags: ["lazy-thread-safety=NONE"]
+        )
+        XCTAssertEqual(options.lazyThreadSafetyMode, .none)
+    }
+
+    func testLazyThreadSafetyModeSynchronizedExplicit() {
+        let target = TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+        let options = CompilerOptions(
+            moduleName: "M", inputs: ["a.kt"], outputPath: "out",
+            emit: .object, target: target,
+            frontendFlags: ["lazy-thread-safety=SYNCHRONIZED"]
+        )
+        XCTAssertEqual(options.lazyThreadSafetyMode, .synchronized)
+    }
+
+    func testLazyThreadSafetyModeUnknownValueDefaultsToSynchronized() {
+        let target = TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+        let options = CompilerOptions(
+            moduleName: "M", inputs: ["a.kt"], outputPath: "out",
+            emit: .object, target: target,
+            frontendFlags: ["lazy-thread-safety=BOGUS"]
+        )
+        XCTAssertEqual(options.lazyThreadSafetyMode, .synchronized)
+    }
+
+    func testLazyThreadSafetyModeCaseInsensitive() {
+        let target = TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
+        let options = CompilerOptions(
+            moduleName: "M", inputs: ["a.kt"], outputPath: "out",
+            emit: .object, target: target,
+            frontendFlags: ["lazy-thread-safety=none"]
+        )
+        XCTAssertEqual(options.lazyThreadSafetyMode, .none)
+    }
+
     func testHostDefaultTargetTripleMatchesCompileArchitecture() {
         let host = TargetTriple.hostDefault()
         #if arch(arm64)
