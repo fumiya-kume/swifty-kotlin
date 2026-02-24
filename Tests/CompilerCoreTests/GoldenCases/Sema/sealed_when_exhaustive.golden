@@ -1,29 +1,33 @@
 symbol s0 kind=package fq=_root_ vis=public flags=_
 symbol s1 kind=package fq=kotlin vis=public flags=synthetic
-symbol s2 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s3 kind=package fq=kotlin.properties vis=public flags=synthetic
-symbol s4 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#4
-symbol s5 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s6 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s7 kind=class fq=Shape vis=public flags=sealedType
-symbol s8 kind=constructor fq=Shape.<init> vis=public flags=_ sig=recv=Class#7 params=[] ret=Class#7 suspend=0 defaults=[] vararg=[]
-symbol s9 kind=class fq=Circle vis=public flags=_
-symbol s10 kind=constructor fq=Circle.<init> vis=public flags=_ sig=recv=Class#9 params=[] ret=Class#9 suspend=0 defaults=[] vararg=[]
-symbol s11 kind=class fq=Rectangle vis=public flags=_
-symbol s12 kind=constructor fq=Rectangle.<init> vis=public flags=_ sig=recv=Class#11 params=[] ret=Class#11 suspend=0 defaults=[] vararg=[]
-symbol s13 kind=class fq=Triangle vis=public flags=_
-symbol s14 kind=constructor fq=Triangle.<init> vis=public flags=_ sig=recv=Class#13 params=[] ret=Class#13 suspend=0 defaults=[] vararg=[]
-symbol s15 kind=function fq=describeShape vis=public flags=_ sig=recv=_ params=[Class#7] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s16 kind=valueParameter fq=describeShape.$15.s vis=private flags=_
+symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
+symbol s4 kind=interface fq=kotlin.properties.ReadWriteProperty vis=public flags=synthetic
+symbol s5 kind=interface fq=kotlin.properties.ReadOnlyProperty vis=public flags=synthetic
+symbol s6 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=_ params=[Any,() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
+symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s11 kind=class fq=Shape vis=public flags=sealedType
+symbol s12 kind=constructor fq=Shape.<init> vis=public flags=_ sig=recv=Class#11 params=[] ret=Class#11 suspend=0 defaults=[] vararg=[]
+symbol s13 kind=class fq=Circle vis=public flags=_
+symbol s14 kind=constructor fq=Circle.<init> vis=public flags=_ sig=recv=Class#13 params=[] ret=Class#13 suspend=0 defaults=[] vararg=[]
+symbol s15 kind=class fq=Rectangle vis=public flags=_
+symbol s16 kind=constructor fq=Rectangle.<init> vis=public flags=_ sig=recv=Class#15 params=[] ret=Class#15 suspend=0 defaults=[] vararg=[]
+symbol s17 kind=class fq=Triangle vis=public flags=_
+symbol s18 kind=constructor fq=Triangle.<init> vis=public flags=_ sig=recv=Class#17 params=[] ret=Class#17 suspend=0 defaults=[] vararg=[]
+symbol s19 kind=function fq=describeShape vis=public flags=_ sig=recv=_ params=[Class#11] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s20 kind=valueParameter fq=describeShape.$19.s vis=private flags=_
 file f0 package=_
-  decl d0 class Shape sym=s7
-  decl d1 class Circle sym=s9
-  decl d2 class Rectangle sym=s11
-  decl d3 class Triangle sym=s13
-  decl d4 fun describeShape suspend=0 inline=0 sym=s15
-expr e0 name(s) type=Class#7 ref=s16
+  decl d0 class Shape sym=s11
+  decl d1 class Circle sym=s13
+  decl d2 class Rectangle sym=s15
+  decl d3 class Triangle sym=s17
+  decl d4 fun describeShape suspend=0 inline=0 sym=s19
+expr e0 name(s) type=Class#11 ref=s20
 expr e1 name(is) type=<error>
-expr e2 name(Circle) type=Any ref=s9
+expr e2 name(Circle) type=Any ref=s13
 expr e3 string(circle) type=_
 expr e4 isCheck expr=e3 type=t5 type=_
 expr e5 string(rectangle) type=_
