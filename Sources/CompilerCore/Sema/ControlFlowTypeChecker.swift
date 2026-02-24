@@ -440,7 +440,10 @@ final class ControlFlowTypeChecker {
                 let condCtx = ctx.copying(flowState: cumulativeFalseState)
                 driver.exprChecker.applyFlowStateToLocals(cumulativeFalseState, locals: &branchLocals, sema: sema)
                 var branchCtx = condCtx
-                // Subject-less when: each condition must be Boolean; multiple conditions = OR
+                // Subject-less when: each condition must be Boolean; multiple conditions = OR.
+                // Collect all true-states and merge them (join) for the body context,
+                // since the body executes when ANY condition is true.
+                var trueStates: [DataFlowState] = []
                 for cond in branch.conditions {
                     let condType = driver.inferExpr(cond, ctx: condCtx, locals: &branchLocals)
                     if condType != boolType && condType != sema.types.errorType {
@@ -454,8 +457,8 @@ final class ControlFlowTypeChecker {
                         cond, base: cumulativeFalseState, locals: branchLocals,
                         ast: ast, sema: sema, interner: interner
                     )
-                    branchCtx = ctx.copying(flowState: condBranch.trueState)
-                    driver.exprChecker.applyFlowStateToLocals(condBranch.trueState, locals: &branchLocals, sema: sema)
+                    trueStates.append(condBranch.trueState)
+                    // Chain false-state: branch is false only when ALL conditions are false
                     cumulativeFalseState = condBranch.falseState
                     if let condExpr = ast.arena.expr(cond) {
                         switch condExpr {
@@ -467,6 +470,16 @@ final class ControlFlowTypeChecker {
                             break
                         }
                     }
+                }
+                // Join all true-states: body sees the union (OR) of all conditions' narrowings
+                if let firstTrue = trueStates.first {
+                    var joinedState = firstTrue
+                    for state in trueStates.dropFirst() {
+                        joinedState = ctx.dataFlow.merge(joinedState, state)
+                    }
+                    branchCtx = ctx.copying(flowState: joinedState)
+                    branchLocals = locals
+                    driver.exprChecker.applyFlowStateToLocals(joinedState, locals: &branchLocals, sema: sema)
                 }
                 branchTypes.append(
                     driver.inferExpr(branch.body, ctx: branchCtx, locals: &branchLocals, expectedType: expectedType)
