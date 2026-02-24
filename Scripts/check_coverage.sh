@@ -2,7 +2,7 @@
 set -euo pipefail
 
 threshold="${COVERAGE_THRESHOLD:-97}"
-report_file="${COVERAGE_REPORT_MD:-}"
+readonly report_file="${COVERAGE_REPORT_MD:-}"
 
 readonly targets=(
   "Sources/CompilerCore/Lexer/TokenStream.swift"
@@ -55,6 +55,7 @@ done
 # Generate markdown report if requested
 if [[ -n "$report_file" ]]; then
   {
+    echo "<!-- coverage-gate-report -->"
     if (( ${#failed[@]} > 0 )); then
       echo "## :warning: Coverage Check Failed"
       echo ""
