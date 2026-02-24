@@ -148,8 +148,14 @@ extension DataFlowSemaPassPhase {
             // (Kotlin `field` identifier in getter/setter bodies).
             // Simple properties with only an initializer don't need a separate
             // backing field — the property symbol IS the storage.
-            let needsBackingField = propertyDecl.getter != nil
-                || propertyDecl.setter != nil
+            // Getter-only computed properties (`val x: Int get() = expr`) never
+            // need a backing field because they have no storage — the getter
+            // body is evaluated on every access.
+            let isGetterOnlyComputed = propertyDecl.getter != nil
+                && propertyDecl.setter == nil
+                && propertyDecl.initializer == nil
+            let needsBackingField = !isGetterOnlyComputed
+                && (propertyDecl.getter != nil || propertyDecl.setter != nil)
             if needsBackingField && propertyDecl.delegateExpression == nil {
                 let fieldName = interner.intern("$backing_\(interner.resolve(propertyDecl.name))")
                 let fieldFQName = ownerFQName + [fieldName]

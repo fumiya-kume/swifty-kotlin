@@ -1,0 +1,9 @@
+symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s1 kind=class fq=golden.sema.Widget vis=public flags=_
+symbol s2 kind=constructor fq=golden.sema.Widget.<init> vis=public flags=_ sig=recv=Class#1 params=[] ret=Class#1 suspend=0 defaults=[] vararg=[]
+symbol s3 kind=property fq=golden.sema.Widget.computed vis=public flags=_ type=<error>
+symbol s4 kind=property fq=golden.sema.Widget.backed vis=public flags=mutable type=Int
+file f0 package=golden.sema
+  decl d2 class Widget sym=s1
+expr e0 string(hello) type=<error> ref=s3
+expr e1 int(0) type=Int ref=s4

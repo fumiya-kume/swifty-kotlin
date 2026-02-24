@@ -18,7 +18,11 @@ final class LoweringPassCoverageTests: XCTestCase {
         XCTAssertFalse(callees.contains("kk_for_lowered"))
         // kk_when_select removed; select is now control flow (jumpIfEqual + copy + jump + label)
         XCTAssertFalse(callees.contains("kk_when_select"))
-        XCTAssertTrue(callees.contains("kk_property_access"))
+        // kk_property_access removed — PropertyLowering now emits direct accessor calls.
+        // The test fixture uses symbol-less get/set calls, so they remain unchanged.
+        XCTAssertFalse(callees.contains("kk_property_access"))
+        XCTAssertTrue(callees.contains("get"))
+        XCTAssertTrue(callees.contains("set"))
         XCTAssertTrue(callees.contains("kk_lambda_invoke"))
         XCTAssertFalse(callees.contains("inlineTarget"))
         XCTAssertTrue(callees.contains("kk_coroutine_continuation_new"))
@@ -1997,6 +2001,272 @@ final class LoweringPassCoverageTests: XCTestCase {
         let lowered = try findKIRFunction(named: "copyNullableBox", in: module, interner: interner)
         let callees = extractCallees(from: lowered.body, interner: interner)
         XCTAssertTrue(callees.contains("kk_box_int"), "Expected kk_box_int for copy Int -> Int?, got: \(callees)")
+    }
+
+    // MARK: - Property Lowering Tests
+
+    /// Verify that a get call with a property symbol is rewritten to a direct
+    /// accessor call using the synthetic getter symbol (-12_000 - propertySymbol).
+    func testPropertyLoweringRewritesGetterCallToDirectAccessorSymbol() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let types = TypeSystem()
+
+        let propertySym = SymbolID(rawValue: 50)
+        let callerSym = SymbolID(rawValue: 51)
+
+        let receiver = arena.appendExpr(.temporary(0), type: types.anyType)
+        let result = arena.appendExpr(.temporary(1), type: types.anyType)
+
+        let callerFn = KIRFunction(
+            symbol: callerSym,
+            name: interner.intern("caller"),
+            params: [],
+            returnType: types.unitType,
+            body: [
+                .call(
+                    symbol: propertySym,
+                    callee: interner.intern("get"),
+                    arguments: [receiver],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .returnUnit
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+
+        let fnID = arena.appendDecl(.function(callerFn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [fnID])], arena: arena)
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(moduleName: "PropGetter", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+            sourceManager: SourceManager(),
+            diagnostics: DiagnosticEngine(),
+            interner: interner
+        )
+        ctx.kir = module
+        try LoweringPhase().run(ctx)
+
+        guard case .function(let lowered)? = module.arena.decl(fnID) else {
+            XCTFail("expected function")
+            return
+        }
+
+        // The getter call should use the synthetic accessor symbol.
+        let expectedGetterSymbol = SymbolID(rawValue: -12_000 - propertySym.rawValue)
+        let callSymbols = lowered.body.compactMap { instruction -> SymbolID? in
+            guard case .call(let sym, _, _, _, _, _, _) = instruction else { return nil }
+            return sym
+        }
+        XCTAssertTrue(callSymbols.contains(expectedGetterSymbol),
+                       "Expected synthetic getter symbol \(expectedGetterSymbol), got: \(callSymbols)")
+
+        // kk_property_access must NOT appear.
+        let callees = extractCallees(from: lowered.body, interner: interner)
+        XCTAssertFalse(callees.contains("kk_property_access"))
+    }
+
+    /// Verify that a set call with a property symbol is rewritten to a direct
+    /// accessor call using the synthetic setter symbol (-13_000 - propertySymbol).
+    func testPropertyLoweringRewritesSetterCallToDirectAccessorSymbol() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let types = TypeSystem()
+
+        let propertySym = SymbolID(rawValue: 60)
+        let callerSym = SymbolID(rawValue: 61)
+
+        let receiver = arena.appendExpr(.temporary(0), type: types.anyType)
+        let value = arena.appendExpr(.temporary(1), type: types.anyType)
+        let result = arena.appendExpr(.temporary(2), type: types.unitType)
+
+        let callerFn = KIRFunction(
+            symbol: callerSym,
+            name: interner.intern("setter_caller"),
+            params: [],
+            returnType: types.unitType,
+            body: [
+                .call(
+                    symbol: propertySym,
+                    callee: interner.intern("set"),
+                    arguments: [receiver, value],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .returnUnit
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+
+        let fnID = arena.appendDecl(.function(callerFn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [fnID])], arena: arena)
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(moduleName: "PropSetter", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+            sourceManager: SourceManager(),
+            diagnostics: DiagnosticEngine(),
+            interner: interner
+        )
+        ctx.kir = module
+        try LoweringPhase().run(ctx)
+
+        guard case .function(let lowered)? = module.arena.decl(fnID) else {
+            XCTFail("expected function")
+            return
+        }
+
+        let expectedSetterSymbol = SymbolID(rawValue: -13_000 - propertySym.rawValue)
+        let callSymbols = lowered.body.compactMap { instruction -> SymbolID? in
+            guard case .call(let sym, _, _, _, _, _, _) = instruction else { return nil }
+            return sym
+        }
+        XCTAssertTrue(callSymbols.contains(expectedSetterSymbol),
+                       "Expected synthetic setter symbol \(expectedSetterSymbol), got: \(callSymbols)")
+
+        let callees = extractCallees(from: lowered.body, interner: interner)
+        XCTAssertFalse(callees.contains("kk_property_access"))
+    }
+
+    /// Verify that get/set calls without a property symbol are left unchanged.
+    func testPropertyLoweringPreservesGetSetCallsWithoutSymbol() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let types = TypeSystem()
+
+        let callerSym = SymbolID(rawValue: 70)
+        let receiver = arena.appendExpr(.temporary(0), type: types.anyType)
+        let result = arena.appendExpr(.temporary(1), type: types.anyType)
+
+        let callerFn = KIRFunction(
+            symbol: callerSym,
+            name: interner.intern("no_sym_caller"),
+            params: [],
+            returnType: types.unitType,
+            body: [
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("get"),
+                    arguments: [receiver],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .returnUnit
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+
+        let fnID = arena.appendDecl(.function(callerFn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [fnID])], arena: arena)
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(moduleName: "PropNoSym", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+            sourceManager: SourceManager(),
+            diagnostics: DiagnosticEngine(),
+            interner: interner
+        )
+        ctx.kir = module
+        try LoweringPhase().run(ctx)
+
+        guard case .function(let lowered)? = module.arena.decl(fnID) else {
+            XCTFail("expected function")
+            return
+        }
+
+        // The call should remain unchanged (no symbol to derive accessor from).
+        let callees = extractCallees(from: lowered.body, interner: interner)
+        XCTAssertTrue(callees.contains("get"))
+        XCTAssertFalse(callees.contains("kk_property_access"))
+    }
+
+    /// Verify that backing field copy is rewritten to a direct setter call.
+    func testPropertyLoweringRewritesBackingFieldCopyToDirectSetterCall() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let types = TypeSystem()
+        let symbols = SymbolTable()
+
+        // Create a property symbol and its backing field symbol.
+        let propertySym = symbols.define(
+            kind: .property,
+            name: interner.intern("myProp"),
+            fqName: [interner.intern("Foo"), interner.intern("myProp")],
+            declSite: nil,
+            visibility: .public,
+            flags: []
+        )
+        let backingFieldSym = symbols.define(
+            kind: .backingField,
+            name: interner.intern("$backing_myProp"),
+            fqName: [interner.intern("Foo"), interner.intern("$backing_myProp")],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        symbols.setBackingFieldSymbol(backingFieldSym, for: propertySym)
+
+        let callerSym = SymbolID(rawValue: 100)
+        let fromExpr = arena.appendExpr(.intLiteral(42), type: types.anyType)
+        let toExpr = arena.appendExpr(.symbolRef(backingFieldSym), type: types.anyType)
+
+        let callerFn = KIRFunction(
+            symbol: callerSym,
+            name: interner.intern("bf_setter"),
+            params: [],
+            returnType: types.unitType,
+            body: [
+                .copy(from: fromExpr, to: toExpr),
+                .returnUnit
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+
+        let fnID = arena.appendDecl(.function(callerFn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [fnID])], arena: arena)
+
+        let sema = SemaModule(symbols: symbols, types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
+        let ctx = CompilationContext(
+            options: CompilerOptions(moduleName: "BFSetter", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+            sourceManager: SourceManager(),
+            diagnostics: DiagnosticEngine(),
+            interner: interner
+        )
+        ctx.kir = module
+        ctx.sema = sema
+        try LoweringPhase().run(ctx)
+
+        guard case .function(let lowered)? = module.arena.decl(fnID) else {
+            XCTFail("expected function")
+            return
+        }
+
+        // The copy should be rewritten to a set call with the synthetic setter
+        // symbol derived from the property (not the backing field).
+        let expectedSetterSymbol = SymbolID(rawValue: -13_000 - propertySym.rawValue)
+        let callSymbols = lowered.body.compactMap { instruction -> SymbolID? in
+            guard case .call(let sym, _, _, _, _, _, _) = instruction else { return nil }
+            return sym
+        }
+        XCTAssertTrue(callSymbols.contains(expectedSetterSymbol),
+                       "Expected setter symbol \(expectedSetterSymbol) for backing field copy, got: \(callSymbols)")
+
+        let callees = extractCallees(from: lowered.body, interner: interner)
+        XCTAssertTrue(callees.contains("set"))
+        XCTAssertFalse(callees.contains("kk_property_access"))
+
+        // Verify no copy instruction remains for the backing field.
+        let hasCopy = lowered.body.contains { instruction in
+            if case .copy = instruction { return true }
+            return false
+        }
+        XCTAssertFalse(hasCopy, "Backing field copy should have been rewritten to a setter call")
     }
 
     // MARK: - Private Helpers
