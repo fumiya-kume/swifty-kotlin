@@ -17,7 +17,10 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("iterator"),
             ctx.interner.intern("hasNext"),
             ctx.interner.intern("next"),
-            // kk_property_access removed — PropertyLowering now emits direct accessor calls.
+            // kk_property_access removed — PropertyLowering now emits direct accessor
+            // calls using "get"/"set" callee names with synthetic symbols.
+            ctx.interner.intern("get"),
+            ctx.interner.intern("set"),
             ctx.interner.intern("kk_lambda_invoke"),
             ctx.interner.intern("kk_println_any"),
             ctx.interner.intern("kk_coroutine_suspended"),
