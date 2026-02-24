@@ -261,6 +261,54 @@ extension BuildASTPhase {
             return nil
         }
 
+        // Check for intersection type (T & U) at top level
+        let intersectionParts = splitIntersectionParts(tokens)
+        if intersectionParts.count > 1 {
+            var partRefs: [TypeRefID] = []
+            for part in intersectionParts {
+                guard let ref = parseSingleTypeRef(from: part, interner: interner, astArena: astArena) else {
+                    return nil
+                }
+                partRefs.append(ref)
+            }
+            return astArena.appendTypeRef(.intersection(parts: partRefs))
+        }
+
+        return parseSingleTypeRef(from: tokens, interner: interner, astArena: astArena)
+    }
+
+    /// Splits a token stream on top-level `&` tokens for intersection types.
+    private func splitIntersectionParts(_ tokens: [Token]) -> [[Token]] {
+        var parts: [[Token]] = []
+        var current: [Token] = []
+        var depth = BracketDepth()
+        for token in tokens {
+            depth.track(token.kind)
+            if token.kind == .symbol(.amp) && depth.isAtTopLevel {
+                if !current.isEmpty {
+                    parts.append(current)
+                    current = []
+                }
+                continue
+            }
+            current.append(token)
+        }
+        if !current.isEmpty {
+            parts.append(current)
+        }
+        return parts
+    }
+
+    /// Parses a single (non-intersection) type reference from tokens.
+    func parseSingleTypeRef(
+        from tokens: [Token],
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> TypeRefID? {
+        if tokens.isEmpty {
+            return nil
+        }
+
         if let funcTypeRef = parseFunctionTypeRef(from: tokens, interner: interner, astArena: astArena) {
             return funcTypeRef
         }

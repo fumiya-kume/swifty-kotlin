@@ -115,7 +115,9 @@ final class ConstraintSolverTests: XCTestCase {
         XCTAssertFalse(solution.isSuccess)
         let failure = try XCTUnwrap(solution.failure)
         XCTAssertEqual(failure.code, "KSWIFTK-TYPE-0001")
-        XCTAssertTrue(failure.message.contains("not satisfied"))
+        // With corrected intersection subtype rules (P5-97), the solver now detects
+        // the conflict at the bound-checking phase rather than post-substitution.
+        XCTAssertTrue(failure.message.contains("not satisfied") || failure.message.contains("not a subtype"))
     }
 
     func testSolveSupertypeConstraintKindSatisfaction() {

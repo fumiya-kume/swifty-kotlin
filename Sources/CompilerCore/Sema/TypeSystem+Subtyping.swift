@@ -33,6 +33,14 @@ extension TypeSystem {
                 return false
             }
         }
+        // Intersection as subtype: A & B <: C if any part <: C
+        if case .intersection(let parts) = lhs {
+            return parts.contains { isSubtype($0, supertype) }
+        }
+        // Subtype of intersection: C <: A & B if C <: all parts
+        if case .intersection(let parts) = rhs {
+            return parts.allSatisfy { isSubtype(subtype, $0) }
+        }
         if case .error = lhs {
             return true
         }
@@ -54,8 +62,8 @@ extension TypeSystem {
                 return functionType.nullability == .nonNull
             case .typeParam(let typeParam):
                 return typeParam.nullability == .nonNull
-            case .intersection(let parts):
-                return parts.allSatisfy { isSubtype($0, supertype) }
+            case .intersection:
+                return isSubtype(subtype, supertype)
             default:
                 return false
             }
@@ -128,12 +136,6 @@ extension TypeSystem {
                 }
             }
             return isSubtype(leftFunction.returnType, rightFunction.returnType)
-
-        case let (.intersection(parts), _):
-            return parts.allSatisfy { isSubtype($0, supertype) }
-
-        case let (_, .intersection(parts)):
-            return parts.contains { isSubtype(subtype, $0) }
 
         case (.any(let leftNullability), .any(let rightNullability)):
             return nullabilitySubtype(leftNullability, rightNullability)

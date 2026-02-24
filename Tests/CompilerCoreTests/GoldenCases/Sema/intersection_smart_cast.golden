@@ -1,0 +1,33 @@
+symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s1 kind=package fq=kotlin vis=public flags=synthetic
+symbol s2 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s3 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s4 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#4
+symbol s5 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s6 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s7 kind=interface fq=golden.sema.A vis=public flags=_
+symbol s8 kind=function fq=golden.sema.A.a vis=public flags=_ sig=recv=Class#7 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s9 kind=interface fq=golden.sema.B vis=public flags=_
+symbol s10 kind=function fq=golden.sema.B.b vis=public flags=_ sig=recv=Class#9 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s11 kind=function fq=golden.sema.intersect vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s12 kind=valueParameter fq=golden.sema.intersect.$11.x vis=private flags=_
+file f0 package=golden.sema
+  decl d1 interface A sym=s7
+  decl d3 interface B sym=s9
+  decl d4 fun intersect suspend=0 inline=0 sym=s11
+expr e0 name(x) type=Any ref=s12
+expr e1 isCheck expr=e0 type=t4 type=Boolean
+expr e2 name(x) type=Any ref=s12
+expr e3 isCheck expr=e2 type=t5 type=Boolean
+expr e4 binary(logicalAnd) lhs=e1 rhs=e3 type=Boolean
+expr e5 name(x) type=Class#7 & Class#9 ref=s12
+expr e6 memberCall recv=e5 callee=a args=[] type=String call=s8 map=[] targs=[]
+expr e7 name(x) type=Class#7 & Class#9 ref=s12
+expr e8 memberCall recv=e7 callee=b args=[] type=Int call=s10 map=[] targs=[]
+expr e9 memberCall recv=e8 callee=toString args=[] type=<error>
+expr e10 binary(add) lhs=e6 rhs=e9 type=String
+expr e11 return value=e10 type=String
+expr e12 blockExpr stmts=[] trailing=e11 type=String
+expr e13 if cond=e4 then=e12 else=_ type=Unit
+expr e14 string(unknown) type=String
+expr e15 return value=e14 type=String

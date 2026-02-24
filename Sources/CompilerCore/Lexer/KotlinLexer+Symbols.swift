@@ -4,6 +4,10 @@ extension KotlinLexer {
             offset += 2
             return .ampAmp
         }
+        if bytes[offset] == 0x26 {
+            offset += 1
+            return .amp
+        }
         if starts(with: "||") {
             offset += 2
             return .barBar

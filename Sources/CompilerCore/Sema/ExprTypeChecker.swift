@@ -178,13 +178,21 @@ final class ExprTypeChecker {
             } else {
                 type = targetType
             }
-            // Smart cast: after `x as T`, narrow x to T in flow state (P5-100)
+            // Smart cast: after `x as T`, narrow x to intersection of original & T (P5-97/P5-100)
             if !isSafe,
                let castSubjectExpr = ast.arena.expr(exprID),
                case .nameRef(let castVarName, _) = castSubjectExpr,
                let castLocal = locals[castVarName],
                driver.helpers.isStableLocalSymbol(castLocal.symbol, sema: sema) {
-                locals[castVarName] = (targetType, castLocal.symbol, castLocal.isMutable, castLocal.isInitialized)
+                let refinedType: TypeID
+                if sema.types.isSubtype(castLocal.0, targetType) {
+                    refinedType = castLocal.0  // already a subtype, no need for intersection
+                } else if sema.types.isSubtype(targetType, castLocal.0) {
+                    refinedType = targetType  // target is more specific
+                } else {
+                    refinedType = sema.types.make(.intersection([castLocal.0, targetType]))
+                }
+                locals[castVarName] = (refinedType, castLocal.symbol, castLocal.isMutable, castLocal.isInitialized)
             }
             sema.bindings.bindExprType(id, type: type)
             return type

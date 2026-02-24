@@ -172,6 +172,21 @@ extension DataFlowSemaPassPhase {
                 isSuspend: isSuspend,
                 nullability: nullability
             )))
+
+        case .intersection(let partRefs):
+            let partTypes = partRefs.compactMap {
+                resolveTypeRef(
+                    $0,
+                    ast: ast,
+                    symbols: symbols,
+                    types: types,
+                    interner: interner,
+                    localTypeParameters: localTypeParameters,
+                    diagnostics: diagnostics
+                )
+            }
+            guard partTypes.count == partRefs.count else { return nil }
+            return types.make(.intersection(partTypes))
         }
     }
 

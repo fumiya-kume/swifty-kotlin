@@ -212,7 +212,7 @@ public final class DataFlowAnalyzer {
               let firstName = path.first else {
             return ConditionBranch(trueState: base, falseState: base)
         }
-        let candidates = sema.symbols.lookupAll(fqName: [firstName]).filter { symbolID in
+        let candidates = sema.symbols.lookupByShortName(firstName).filter { symbolID in
             guard let sym = sema.symbols.symbol(symbolID) else { return false }
             switch sym.kind {
             case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
@@ -224,11 +224,21 @@ public final class DataFlowAnalyzer {
         guard let targetSymbolID = candidates.first else {
             return ConditionBranch(trueState: base, falseState: base)
         }
-        let narrowedType = sema.types.make(.classType(ClassType(
+        let targetType = sema.types.make(.classType(ClassType(
             classSymbol: targetSymbolID,
             args: [],
             nullability: nullable ? .nullable : .nonNull
         )))
+        // Use intersection with previous flow state type for chained is-checks (P5-97)
+        let narrowedType: TypeID
+        if let baseState = base.variables[symbol],
+           baseState.possibleTypes.count == 1,
+           let existingType = baseState.possibleTypes.first,
+           !sema.types.isSubtype(existingType, targetType) {
+            narrowedType = sema.types.make(.intersection([existingType, targetType]))
+        } else {
+            narrowedType = targetType
+        }
         var trueVars = base.variables
         trueVars[symbol] = VariableFlowState(
             possibleTypes: [narrowedType],
@@ -346,7 +356,7 @@ public final class DataFlowAnalyzer {
                   let firstName = path.first else {
                 return base
             }
-            let candidates = sema.symbols.lookupAll(fqName: [firstName]).filter { symbolID in
+            let candidates = sema.symbols.lookupByShortName(firstName).filter { symbolID in
                 guard let sym = sema.symbols.symbol(symbolID) else { return false }
                 switch sym.kind {
                 case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
