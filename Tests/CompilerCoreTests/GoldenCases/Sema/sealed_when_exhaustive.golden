@@ -1,0 +1,27 @@
+symbol s0 kind=package fq=_root_ vis=public flags=_
+symbol s1 kind=class fq=Shape vis=public flags=sealedType
+symbol s2 kind=constructor fq=Shape.<init> vis=public flags=_ sig=recv=Class#1 params=[] ret=Class#1 suspend=0 defaults=[] vararg=[]
+symbol s3 kind=class fq=Circle vis=public flags=_
+symbol s4 kind=constructor fq=Circle.<init> vis=public flags=_ sig=recv=Class#3 params=[] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s5 kind=class fq=Rectangle vis=public flags=_
+symbol s6 kind=constructor fq=Rectangle.<init> vis=public flags=_ sig=recv=Class#5 params=[] ret=Class#5 suspend=0 defaults=[] vararg=[]
+symbol s7 kind=class fq=Triangle vis=public flags=_
+symbol s8 kind=constructor fq=Triangle.<init> vis=public flags=_ sig=recv=Class#7 params=[] ret=Class#7 suspend=0 defaults=[] vararg=[]
+symbol s9 kind=function fq=describeShape vis=public flags=_ sig=recv=_ params=[Class#1] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s10 kind=valueParameter fq=describeShape.$9.s vis=private flags=_
+file f0 package=_
+  decl d0 class Shape sym=s1
+  decl d1 class Circle sym=s3
+  decl d2 class Rectangle sym=s5
+  decl d3 class Triangle sym=s7
+  decl d4 fun describeShape suspend=0 inline=0 sym=s9
+expr e0 name(s) type=Class#1 ref=s10
+expr e1 name(is) type=<error>
+expr e2 name(Circle) type=Any ref=s3
+expr e3 string(circle) type=_
+expr e4 isCheck expr=e3 type=t5 type=_
+expr e5 string(rectangle) type=_
+expr e6 isCheck expr=e5 type=t6 type=_
+expr e7 string(triangle) type=String
+expr e8 when subject=e0 branches=[e1->e2] else=e7 type=Any?
+expr e9 return value=e8 type=Any?

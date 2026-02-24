@@ -14,9 +14,9 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_string_concat"),
 
             ctx.interner.intern("kk_for_lowered"),
-            ctx.interner.intern("iterator"),
-            ctx.interner.intern("hasNext"),
-            ctx.interner.intern("next"),
+            ctx.interner.intern("kk_range_iterator"),
+            ctx.interner.intern("kk_range_hasNext"),
+            ctx.interner.intern("kk_range_next"),
             ctx.interner.intern("kk_property_access"),
             ctx.interner.intern("kk_lambda_invoke"),
             ctx.interner.intern("kk_println_any"),

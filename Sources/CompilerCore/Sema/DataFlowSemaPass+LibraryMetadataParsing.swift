@@ -66,6 +66,12 @@ extension DataFlowSemaPassPhase {
             } else {
                 itableSlots = []
             }
+            // P5-78: parse sealed subclass FQ names for cross-module exhaustiveness
+            let sealedSubclassFQNames: [[InternedString]] = metadataRecord.sealedSubclassFQNames.compactMap { fqStr in
+                let parsed = fqStr.split(separator: ".").map { interner.intern(String($0)) }
+                return parsed.isEmpty ? nil : parsed
+            }
+
             records.append(ImportedLibrarySymbolRecord(
                 kind: metadataRecord.kind,
                 mangledName: metadataRecord.mangledName,
@@ -87,7 +93,8 @@ extension DataFlowSemaPassPhase {
                 isSealedClass: metadataRecord.isSealedClass,
                 isValueClass: metadataRecord.isValueClass,
                 valueClassUnderlyingTypeSig: metadataRecord.valueClassUnderlyingTypeSig,
-                annotations: metadataRecord.annotations
+                annotations: metadataRecord.annotations,
+                sealedSubclassFQNames: sealedSubclassFQNames
             ))
         }
 

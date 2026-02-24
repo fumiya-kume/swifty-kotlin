@@ -37,6 +37,9 @@ public struct MetadataRecord {
     // P5-75: value class underlying type signature (e.g. "I" for Int)
     public let valueClassUnderlyingTypeSig: String?
 
+    // P5-78: sealed subclass FQ names for cross-module exhaustiveness
+    public let sealedSubclassFQNames: [String]
+
     public init(
         kind: SymbolKind,
         mangledName: String = "",
@@ -58,7 +61,8 @@ public struct MetadataRecord {
         isSealedClass: Bool = false,
         annotations: [MetadataAnnotationRecord] = [],
         isValueClass: Bool = false,
-        valueClassUnderlyingTypeSig: String? = nil
+        valueClassUnderlyingTypeSig: String? = nil,
+        sealedSubclassFQNames: [String] = []
     ) {
         self.kind = kind
         self.mangledName = mangledName
@@ -81,6 +85,7 @@ public struct MetadataRecord {
         self.annotations = annotations
         self.isValueClass = isValueClass
         self.valueClassUnderlyingTypeSig = valueClassUnderlyingTypeSig
+        self.sealedSubclassFQNames = sealedSubclassFQNames
     }
 }
 
@@ -246,6 +251,17 @@ public final class MetadataEncoder {
 
             let annotationEntries = symbols.annotations(for: symbol.id)
 
+            // P5-78: collect sealed subclass FQ names for cross-module exhaustiveness
+            var sealedSubclassFQNames: [String] = []
+            if isSealedClass {
+                let directSubs = symbols.sealedSubclasses(for: symbol.id) ?? symbols.directSubtypes(of: symbol.id)
+                sealedSubclassFQNames = directSubs.compactMap { subID in
+                    guard let subSymbol = symbols.symbol(subID) else { return nil }
+                    let subFQ = subSymbol.fqName.map { interner.resolve($0) }.joined(separator: ".")
+                    return subFQ.isEmpty ? nil : subFQ
+                }.sorted()
+            }
+
             records.append(MetadataRecord(
                 kind: symbol.kind,
                 mangledName: mangled,
@@ -267,7 +283,8 @@ public final class MetadataEncoder {
                 isSealedClass: isSealedClass,
                 annotations: annotationEntries,
                 isValueClass: isValueClass,
-                valueClassUnderlyingTypeSig: valueClassUnderlyingTypeSig
+                valueClassUnderlyingTypeSig: valueClassUnderlyingTypeSig,
+                sealedSubclassFQNames: sealedSubclassFQNames
             ))
         }
         return records
@@ -343,6 +360,9 @@ public final class MetadataEncoder {
                 if let vSig = record.valueClassUnderlyingTypeSig {
                     fields.append("valueUnderlying=\(vSig)")
                 }
+            }
+            if !record.sealedSubclassFQNames.isEmpty {
+                fields.append("sealedSubs=\(record.sealedSubclassFQNames.joined(separator: ","))")
             }
             if !record.annotations.isEmpty {
                 fields.append("annotations=\(encodeAnnotations(record.annotations))")
@@ -484,6 +504,7 @@ public final class MetadataDecoder {
             var isValueClass = false
             var valueClassUnderlyingTypeSig: String?
             var annotations: [MetadataAnnotationRecord] = []
+            var sealedSubclassFQNames: [String] = []
 
             for part in parts.dropFirst() {
                 guard let separatorIndex = part.firstIndex(of: "=") else {
@@ -528,6 +549,8 @@ public final class MetadataDecoder {
                     isValueClass = value == "1" || value == "true"
                 case "valueUnderlying":
                     valueClassUnderlyingTypeSig = value.isEmpty ? nil : value
+                case "sealedSubs":
+                    sealedSubclassFQNames = value.split(separator: ",").map(String.init).filter { !$0.isEmpty }
                 case "annotations":
                     annotations = decodeAnnotations(value)
                 default:
@@ -560,7 +583,8 @@ public final class MetadataDecoder {
                 isSealedClass: isSealedClass,
                 annotations: annotations,
                 isValueClass: isValueClass,
-                valueClassUnderlyingTypeSig: valueClassUnderlyingTypeSig
+                valueClassUnderlyingTypeSig: valueClassUnderlyingTypeSig,
+                sealedSubclassFQNames: sealedSubclassFQNames
             ))
         }
         return records

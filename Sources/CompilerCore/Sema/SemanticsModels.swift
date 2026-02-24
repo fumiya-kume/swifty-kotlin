@@ -239,6 +239,7 @@ public final class SymbolTable {
     private var sourceFileIDs: [SymbolID: FileID] = [:]
     private var annotationsStorage: [SymbolID: [MetadataAnnotationRecord]] = [:]
     private var valueClassUnderlyingTypes: [SymbolID: TypeID] = [:]
+    private var sealedSubclassesStorage: [SymbolID: [SymbolID]] = [:]
 
     public init() {}
 
@@ -480,6 +481,14 @@ public final class SymbolTable {
 
     public func valueClassUnderlyingType(for symbol: SymbolID) -> TypeID? {
         valueClassUnderlyingTypes[symbol]
+    }
+
+    public func setSealedSubclasses(_ subclasses: [SymbolID], for symbol: SymbolID) {
+        sealedSubclassesStorage[symbol] = subclasses
+    }
+
+    public func sealedSubclasses(for symbol: SymbolID) -> [SymbolID]? {
+        sealedSubclassesStorage[symbol]
     }
 
     // MARK: - Indexed queries
