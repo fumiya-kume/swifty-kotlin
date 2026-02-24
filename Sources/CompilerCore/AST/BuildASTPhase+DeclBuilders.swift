@@ -230,12 +230,18 @@ extension BuildASTPhase {
         astArena: ASTArena
     ) -> [ValueParamDecl] {
         let tokens = collectTokens(from: nodeID, in: arena)
+        // Only look for the opening `(` that occurs before any `{` (class body).
+        // This prevents picking up `(` from member function declarations like
+        // `class F { operator fun invoke(x: Int) }` as constructor parameters.
         guard let startIndex = tokens.firstIndex(where: { token in
             if case .symbol(.lParen) = token.kind {
                 return true
             }
+            if case .symbol(.lBrace) = token.kind {
+                return true
+            }
             return false
-        }) else {
+        }), case .symbol(.lParen) = tokens[startIndex].kind else {
             return []
         }
 
