@@ -365,6 +365,7 @@ public final class LLVMBackend {
             "println",
             "kk_println_any",
             "kk_string_concat",
+            "kk_string_compareTo",
             "kk_any_to_string",
             "kk_string_from_utf8",
 

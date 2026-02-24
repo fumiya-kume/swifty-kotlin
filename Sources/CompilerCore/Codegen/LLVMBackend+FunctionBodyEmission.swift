@@ -250,6 +250,18 @@ extension LLVMBackend {
                     continue
                 }
 
+                if calleeName == "kk_string_compareTo" {
+                    let lhs = argVars.count > 0 ? argVars[0] : "0"
+                    let rhs = argVars.count > 1 ? argVars[1] : "0"
+                    let expr = "kk_string_compareTo((void*)\(lhs), (void*)\(rhs))"
+                    if let result {
+                        lines.append("  \(varName(result)) = \(expr);")
+                    } else {
+                        lines.append("  (void)\(expr);")
+                    }
+                    continue
+                }
+
                 let target: String
                 let isInternalFunction: Bool
                 if let symbol, let resolved = functionSymbols[symbol] {
