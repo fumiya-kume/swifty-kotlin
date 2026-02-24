@@ -241,7 +241,9 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                                 thrownResult: nil
                             ))
                             // Each argument is a Pair (passed as an opaque value).
-                            // Store them as keys; values will be resolved at runtime.
+                            // Store into both keys and values arrays so map
+                            // operations work for iteration. Full Pair
+                            // decomposition is not yet implemented.
                             for (i, arg) in arguments.enumerated() {
                                 let idxExpr = module.arena.appendExpr(.intLiteral(Int64(i)), type: nil)
                                 loweredBody.append(.constValue(result: idxExpr, value: .intLiteral(Int64(i))))
@@ -253,6 +255,17 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                                     callee: kkArraySetName,
                                     arguments: [keysArrayExpr, idxExpr, arg],
                                     result: setResult,
+                                    canThrow: false,
+                                    thrownResult: nil
+                                ))
+                                let setResult2 = module.arena.appendExpr(
+                                    .temporary(Int32(module.arena.expressions.count)), type: nil
+                                )
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: kkArraySetName,
+                                    arguments: [valuesArrayExpr, idxExpr, arg],
+                                    result: setResult2,
                                     canThrow: false,
                                     thrownResult: nil
                                 ))
