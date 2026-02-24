@@ -636,7 +636,7 @@ final class LambdaLowerer {
                 collectBoundIdentifierSymbols(in: subjectExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
             }
             for branch in branches {
-                if let condition = branch.condition {
+                for condition in branch.conditions {
                     collectBoundIdentifierSymbols(in: condition, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
                 }
                 collectBoundIdentifierSymbols(in: branch.body, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
@@ -801,9 +801,10 @@ final class LambdaLowerer {
                 return true
             }
             for branch in branches {
-                if let condition = branch.condition,
-                   containsImplicitReceiverReference(in: condition, ast: ast) {
-                    return true
+                for condition in branch.conditions {
+                    if containsImplicitReceiverReference(in: condition, ast: ast) {
+                        return true
+                    }
                 }
                 if containsImplicitReceiverReference(in: branch.body, ast: ast) {
                     return true

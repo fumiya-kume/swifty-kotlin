@@ -616,29 +616,49 @@ final class ControlFlowLowerer {
         // Vacuously true when branches is empty (only else exists).
         var allBranchesTerminated = true
         for (index, branch) in branches.enumerated() {
-            if let conditionExprID = branch.condition {
-                let conditionValueID = driver.lowerExpr(
-                    conditionExprID,
-                    ast: ast,
-                    sema: sema,
-                    arena: arena,
-                    interner: interner,
-                    propertyConstantInitializers: propertyConstantInitializers,
-                    instructions: &instructions
-                )
-                let matchesID: KIRExprID
-                if let subjectID {
-                    matchesID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
-                    instructions.append(.binary(
-                        op: .equal,
-                        lhs: subjectID,
-                        rhs: conditionValueID,
-                        result: matchesID
-                    ))
-                } else {
-                    matchesID = conditionValueID
+            if !branch.conditions.isEmpty {
+                // Multiple conditions: emit OR-jump chain.
+                // If ANY condition matches, fall through to the body.
+                // Only if ALL conditions fail, jump to the next branch label.
+                let bodyLabel: Int32 = branch.conditions.count > 1
+                    ? driver.ctx.makeLoopLabel()
+                    : -1  // unused sentinel when single condition
+                for (condIdx, conditionExprID) in branch.conditions.enumerated() {
+                    let conditionValueID = driver.lowerExpr(
+                        conditionExprID,
+                        ast: ast,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        propertyConstantInitializers: propertyConstantInitializers,
+                        instructions: &instructions
+                    )
+                    let matchesID: KIRExprID
+                    if let subjectID {
+                        matchesID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
+                        instructions.append(.binary(
+                            op: .equal,
+                            lhs: subjectID,
+                            rhs: conditionValueID,
+                            result: matchesID
+                        ))
+                    } else {
+                        matchesID = conditionValueID
+                    }
+                    let isLastCondition = condIdx == branch.conditions.count - 1
+                    if isLastCondition {
+                        // Last (or only) condition: if false, jump to next branch
+                        instructions.append(.jumpIfEqual(lhs: matchesID, rhs: falseID, target: nextBranchLabels[index]))
+                    } else {
+                        // Not last condition: if true, jump to body (short-circuit OR)
+                        let trueID = arena.appendExpr(.boolLiteral(true), type: boolType)
+                        instructions.append(.constValue(result: trueID, value: .boolLiteral(true)))
+                        instructions.append(.jumpIfEqual(lhs: matchesID, rhs: trueID, target: bodyLabel))
+                    }
                 }
-                instructions.append(.jumpIfEqual(lhs: matchesID, rhs: falseID, target: nextBranchLabels[index]))
+                if branch.conditions.count > 1 {
+                    instructions.append(.label(bodyLabel))
+                }
             }
 
             let bodyID = driver.lowerExpr(

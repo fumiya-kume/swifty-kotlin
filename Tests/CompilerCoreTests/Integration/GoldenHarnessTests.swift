@@ -310,8 +310,13 @@ final class GoldenHarnessTests: XCTestCase {
             return "binary(\(op)) lhs=e\(lhs.rawValue) rhs=e\(rhs.rawValue)"
         case .whenExpr(let subject, let branches, let elseExpr, _):
             let renderedBranches = branches.map { branch in
-                let condition = branch.condition.map { "e\($0.rawValue)" } ?? "else"
-                return "\(condition)->e\(branch.body.rawValue)"
+                let conditions: String
+                if branch.conditions.isEmpty {
+                    conditions = "else"
+                } else {
+                    conditions = branch.conditions.map { "e\($0.rawValue)" }.joined(separator: ",")
+                }
+                return "\(conditions)->e\(branch.body.rawValue)"
             }.joined(separator: ",")
             let renderedElse = elseExpr.map { "e\($0.rawValue)" } ?? "_"
             let renderedSubject = subject.map { "e\($0.rawValue)" } ?? "_"

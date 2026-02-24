@@ -1,0 +1,23 @@
+symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s1 kind=package fq=kotlin vis=public flags=synthetic
+symbol s2 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s3 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s4 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#4
+symbol s5 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s6 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=golden.sema.classify vis=public flags=_ sig=recv=_ params=[Int] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s8 kind=valueParameter fq=golden.sema.classify.$7.x vis=private flags=_
+file f0 package=golden.sema
+  decl d0 fun classify suspend=0 inline=0 sym=s7
+expr e0 name(x) type=Int ref=s8
+expr e1 int(1) type=Int
+expr e2 int(2) type=Int
+expr e3 int(3) type=Int
+expr e4 string(few) type=String
+expr e5 int(4) type=Int
+expr e6 int(10) type=Int
+expr e7 binary(rangeTo) lhs=e5 rhs=e6 type=Int
+expr e8 inExpr lhs=e4 rhs=e7 type=Boolean
+expr e9 string(some) type=_
+expr e10 string(many) type=String
+expr e11 when subject=e0 branches=[e1,e2,e3->e8] else=e10 type=Any?

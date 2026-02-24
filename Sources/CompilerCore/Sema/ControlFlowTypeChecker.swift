@@ -290,12 +290,13 @@ final class ControlFlowTypeChecker {
                 )
             }()
             let hasExplicitNullBranch = branches.contains { branch in
-                guard let condition = branch.condition,
-                      let conditionExpr = ast.arena.expr(condition),
-                      case .nameRef(let name, _) = conditionExpr else {
-                    return false
+                branch.conditions.contains { cond in
+                    guard let conditionExpr = ast.arena.expr(cond),
+                          case .nameRef(let name, _) = conditionExpr else {
+                        return false
+                    }
+                    return interner.resolve(name) == "null"
                 }
-                return interner.resolve(name) == "null"
             }
             var branchTypes: [TypeID] = []
             var covered: Set<InternedString> = []
@@ -305,7 +306,8 @@ final class ControlFlowTypeChecker {
             var allBranchLocals: [LocalBindings] = []
             for branch in branches {
                 var isNullBranch = false
-                if let cond = branch.condition {
+                // Type-check and collect coverage for ALL conditions in this branch (OR semantics)
+                for cond in branch.conditions {
                     let condType = driver.inferExpr(cond, ctx: ctx, locals: &locals)
                     if let condExpr = ast.arena.expr(cond) {
                         switch condExpr {
@@ -330,6 +332,7 @@ final class ControlFlowTypeChecker {
                 var branchLocals = locals
                 var branchCtx = ctx
                 if let subjectLocalBinding, subjectLocalBinding.isStable {
+                    // Use the first condition for flow-state narrowing (best-effort)
                     if let cond = branch.condition {
                         let branchFlowState = ctx.dataFlow.branchOnWhenSubject(
                             subjectSymbol: subjectLocalBinding.symbol,
@@ -437,7 +440,8 @@ final class ControlFlowTypeChecker {
                 let condCtx = ctx.copying(flowState: cumulativeFalseState)
                 driver.exprChecker.applyFlowStateToLocals(cumulativeFalseState, locals: &branchLocals, sema: sema)
                 var branchCtx = condCtx
-                if let cond = branch.condition {
+                // Subject-less when: each condition must be Boolean; multiple conditions = OR
+                for cond in branch.conditions {
                     let condType = driver.inferExpr(cond, ctx: condCtx, locals: &branchLocals)
                     if condType != boolType && condType != sema.types.errorType {
                         ctx.semaCtx.diagnostics.error(
