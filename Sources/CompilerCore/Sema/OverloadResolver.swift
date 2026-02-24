@@ -677,8 +677,31 @@ public final class OverloadResolver {
                 }
                 return result
             }
-            // Different class symbols or mismatched arity – fall through to
-            // simple constraint.
+            // Different class symbols – check if subtype is a nominal subtype
+            // of the supertype and map type args through the inheritance chain.
+            if case .classType(let subClass) = subtypeKind,
+               subClass.classSymbol != superClass.classSymbol,
+               typeSystem.isNominalSubtypeSymbol(subClass.classSymbol, of: superClass.classSymbol) {
+                let inheritedArgs = typeSystem.nominalSupertypeTypeArgs(
+                    for: subClass.classSymbol, supertype: superClass.classSymbol
+                )
+                if inheritedArgs.count == superClass.args.count {
+                    var result: [VariableConstraint] = []
+                    for (subArg, superArg) in zip(inheritedArgs, superClass.args) {
+                        let decomposed = decomposeTypeArgConstraint(
+                            subArg: subArg,
+                            superArg: superArg,
+                            typeVarBySymbol: typeVarBySymbol,
+                            typeSystem: typeSystem,
+                            blameRange: blameRange
+                        )
+                        result.append(contentsOf: decomposed)
+                    }
+                    return result
+                }
+                // Inherited args not registered or arity mismatch – fall through
+                // to simple constraint which will use isSubtype.
+            }
         }
 
         // Case 3: supertype is a function type with type variables in params/return.

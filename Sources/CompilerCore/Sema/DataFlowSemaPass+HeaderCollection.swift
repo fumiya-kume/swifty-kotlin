@@ -359,7 +359,7 @@ extension DataFlowSemaPassPhase {
                     interfaceDecl.typeParams.map(\.variance),
                     for: symbol
                 )
-                let ifaceTypeParamNamespace = fqName + [interner.intern("$class\(symbol.rawValue)")]
+                let ifaceTypeParamNamespace = fqName + [interner.intern("$iface\(symbol.rawValue)")]
                 for typeParam in interfaceDecl.typeParams {
                     let typeParamFQName = ifaceTypeParamNamespace + [typeParam.name]
                     let typeParamSymbol = symbols.define(
