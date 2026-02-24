@@ -550,6 +550,10 @@ final class ExprTypeChecker {
                 )
             }
             sema.bindings.bindIdentifier(id, symbol: local.symbol)
+            // Propagate collection marks through variable references (P5-84).
+            if sema.bindings.isCollectionSymbol(local.symbol) {
+                sema.bindings.markCollectionExpr(id)
+            }
             sema.bindings.bindExprType(id, type: local.type)
             return local.type
         }

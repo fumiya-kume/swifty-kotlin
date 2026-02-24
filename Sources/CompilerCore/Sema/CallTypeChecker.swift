@@ -216,6 +216,7 @@ final class CallTypeChecker {
                  "mapOf", "mutableMapOf", "emptyMap",
                  "setOf", "mutableSetOf", "emptySet",
                  "listOfNotNull":
+                sema.bindings.markCollectionExpr(id)
                 sema.bindings.bindExprType(id, type: sema.types.anyType)
                 return sema.types.anyType
             default:
@@ -463,8 +464,8 @@ final class CallTypeChecker {
             // .contains, .containsKey, .isEmpty, .first, .last, .indexOf,
             // .keys, .values, .entries, .indices, .toList, .toMutableList,
             // .forEach, .map, .filter, .count, .reversed, .sorted, .joinToString,
-            // .toSet, .toMap, .toTypedArray on any receiver.
-            if !isClassNameReceiver {
+            // .toSet, .toMap, .toTypedArray on collection-typed receivers only.
+            if !isClassNameReceiver, sema.bindings.isCollectionExpr(receiverID) {
                 let memberName = interner.resolve(calleeName)
                 let collectionMembers: Set<String> = [
                     "size", "get", "contains", "containsKey",

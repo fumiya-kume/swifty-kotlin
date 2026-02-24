@@ -569,6 +569,8 @@ public final class BindingTable {
     public private(set) var declSymbols: [DeclID: SymbolID] = [:]
     public private(set) var superCallExprs: Set<ExprID> = []
     public private(set) var invokeOperatorCallExprs: Set<ExprID> = []
+    public private(set) var collectionExprIDs: Set<ExprID> = []
+    public private(set) var collectionSymbolIDs: Set<SymbolID> = []
 
     public init() {}
 
@@ -611,6 +613,22 @@ public final class BindingTable {
 
     public func markInvokeOperatorCall(_ expr: ExprID) {
         invokeOperatorCallExprs.insert(expr)
+    }
+
+    public func markCollectionExpr(_ expr: ExprID) {
+        collectionExprIDs.insert(expr)
+    }
+
+    public func isCollectionExpr(_ expr: ExprID) -> Bool {
+        collectionExprIDs.contains(expr)
+    }
+
+    public func markCollectionSymbol(_ symbol: SymbolID) {
+        collectionSymbolIDs.insert(symbol)
+    }
+
+    public func isCollectionSymbol(_ symbol: SymbolID) -> Bool {
+        collectionSymbolIDs.contains(symbol)
     }
 
     public func exprType(for expr: ExprID) -> TypeID? {
