@@ -1,0 +1,7 @@
+{
+  "threshold": 5,
+  "reporters": ["console"],
+  "ignore": [],
+  "absolute": false,
+  "gitignore": true
+}

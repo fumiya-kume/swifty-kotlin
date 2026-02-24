@@ -64,6 +64,20 @@ jobs:
           echo "kotlinc diff regression cases failed." >&2
           exit 1
 
+  jscpd-check:
+    name: Duplicate Code Detection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install jscpd
+        run: npm install -g jscpd
+      - name: Run jscpd
+        run: jscpd --threshold 5 Sources/
+
   test-and-coverage:
     name: Test and Coverage Gate
     runs-on: macos-15
