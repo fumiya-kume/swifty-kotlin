@@ -482,6 +482,12 @@ extension KotlinParser {
                 // expression bodies like `= \n try { ... } catch { ... }` are
                 // captured in the same declaration node.
                 if case .symbol(.assign) = token.kind {
+                    // But stop if the next line starts a new declaration
+                    // (visibility modifier like `private`, `public`, etc.)
+                    if case .keyword(let kw) = stream.peek().kind,
+                       Self.isDeclarationModifierKeyword(kw) {
+                        break
+                    }
                     continue
                 }
                 break
