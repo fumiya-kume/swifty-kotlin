@@ -1,14 +1,15 @@
 symbol s0 kind=package fq=golden.sema vis=public flags=_
 symbol s1 kind=class fq=golden.sema.Meter vis=public flags=valueType
-symbol s2 kind=constructor fq=golden.sema.Meter.<init> vis=public flags=_ sig=recv=Class#1 params=[] ret=Class#1 suspend=0 defaults=[] vararg=[]
-symbol s3 kind=function fq=golden.sema.measure vis=public flags=_ sig=recv=_ params=[Class#1] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s4 kind=valueParameter fq=golden.sema.measure.$3.m vis=private flags=_
-symbol s5 kind=function fq=golden.sema.toAny vis=public flags=_ sig=recv=_ params=[Class#1] ret=Any suspend=0 defaults=[0] vararg=[0]
-symbol s6 kind=valueParameter fq=golden.sema.toAny.$5.m vis=private flags=_
+symbol s2 kind=constructor fq=golden.sema.Meter.<init> vis=public flags=_ sig=recv=Class#1 params=[Int] ret=Class#1 suspend=0 defaults=[0] vararg=[0]
+symbol s3 kind=valueParameter fq=golden.sema.Meter.<init>.$2.amount vis=private flags=_
+symbol s4 kind=function fq=golden.sema.measure vis=public flags=_ sig=recv=_ params=[Class#1] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s5 kind=valueParameter fq=golden.sema.measure.$4.m vis=private flags=_
+symbol s6 kind=function fq=golden.sema.toAny vis=public flags=_ sig=recv=_ params=[Class#1] ret=Any suspend=0 defaults=[0] vararg=[0]
+symbol s7 kind=valueParameter fq=golden.sema.toAny.$6.m vis=private flags=_
 file f0 package=golden.sema
   decl d0 class Meter sym=s1
-  decl d1 fun measure suspend=0 inline=0 sym=s3
-  decl d2 fun toAny suspend=0 inline=0 sym=s5
-expr e0 name(m) type=Class#1 ref=s4
-expr e1 memberCall recv=e0 callee=value args=[] type=<error>
-expr e2 name(m) type=Class#1 ref=s6
+  decl d1 fun measure suspend=0 inline=0 sym=s4
+  decl d2 fun toAny suspend=0 inline=0 sym=s6
+expr e0 name(m) type=Class#1 ref=s5
+expr e1 memberCall recv=e0 callee=amount args=[] type=<error>
+expr e2 name(m) type=Class#1 ref=s7

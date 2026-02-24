@@ -127,18 +127,26 @@ extension DataFlowSemaPassPhase {
             }
 
             // P5-75: restore value class underlying type from metadata
-            if record.isValueClass, let vSig = record.valueClassUnderlyingTypeSig {
-                let underlyingType = importedValueClassUnderlyingType(
-                    signature: vSig,
-                    symbols: symbols,
-                    types: types,
-                    diagnostics: diagnostics,
-                    interner: interner,
-                    metadataPath: binding.metadataPath,
-                    ownerFQName: record.fqName
-                )
-                if let underlyingType {
-                    symbols.setValueClassUnderlyingType(underlyingType, for: symbol)
+            if record.isValueClass {
+                if let vSig = record.valueClassUnderlyingTypeSig {
+                    let underlyingType = importedValueClassUnderlyingType(
+                        signature: vSig,
+                        symbols: symbols,
+                        types: types,
+                        diagnostics: diagnostics,
+                        interner: interner,
+                        metadataPath: binding.metadataPath,
+                        ownerFQName: record.fqName
+                    )
+                    if let underlyingType {
+                        symbols.setValueClassUnderlyingType(underlyingType, for: symbol)
+                    }
+                } else {
+                    diagnostics.warning(
+                        "KSWIFTK-LIB-0007",
+                        "Value class '\(renderFQName(record.fqName, interner: interner))' has no underlying type signature in library metadata at '\(binding.metadataPath)'. Boxing elision will be skipped for this type.",
+                        range: nil
+                    )
                 }
             }
 

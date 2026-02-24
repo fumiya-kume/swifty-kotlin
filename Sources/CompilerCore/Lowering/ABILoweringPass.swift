@@ -557,7 +557,25 @@ final class ABILoweringPass: LoweringPass {
         let argKind = resolveValueClassKind(rawArgKind, types: types, symbols: symbols)
         let paramKind = types.kind(of: paramType)
 
-        guard isAnyOrNullableAny(paramKind) else {
+        // Treat Any/Any? and non-value-class reference types as boxing boundaries.
+        let isReferenceBoxingBoundary: Bool = {
+            if isAnyOrNullableAny(paramKind) {
+                return true
+            }
+            if case .classType(let ct) = paramKind {
+                // If we know this is a value class, do not treat it as a boxing boundary.
+                if let symbols,
+                   let sym = symbols.symbol(ct.classSymbol),
+                   sym.flags.contains(.valueType) {
+                    return false
+                }
+                // Otherwise, any non-value-class reference type is a boxing boundary.
+                return true
+            }
+            return false
+        }()
+
+        guard isReferenceBoxingBoundary else {
             if case .primitive(let paramPrimitive, .nullable) = paramKind,
                case .primitive(let argPrimitive, .nonNull) = argKind,
                paramPrimitive == argPrimitive {

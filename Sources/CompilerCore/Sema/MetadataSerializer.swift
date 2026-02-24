@@ -219,10 +219,10 @@ public final class MetadataEncoder {
 
             let isDataClass = symbol.flags.contains(.dataType)
             let isSealedClass = symbol.flags.contains(.sealedType)
-            let isValueClass = symbol.flags.contains(.valueType)
+            let rawIsValueClass = symbol.flags.contains(.valueType)
 
             var valueClassUnderlyingTypeSig: String?
-            if isValueClass,
+            if rawIsValueClass,
                let underlyingType = symbols.valueClassUnderlyingType(for: symbol.id) {
                 valueClassUnderlyingTypeSig = mangler.encodeType(
                     underlyingType,
@@ -230,6 +230,18 @@ public final class MetadataEncoder {
                     types: types,
                     nameResolver: { interner.resolve($0) }
                 )
+            }
+
+            // Only emit valueClass=1 when the underlying type is available;
+            // without it, importers cannot resolve/unbox the value class.
+            let isValueClass: Bool
+            if rawIsValueClass && valueClassUnderlyingTypeSig == nil {
+                assertionFailure(
+                    "Value class '\(fqName)' is missing underlying type; omitting valueClass flag from metadata."
+                )
+                isValueClass = false
+            } else {
+                isValueClass = rawIsValueClass
             }
 
             let annotationEntries = symbols.annotations(for: symbol.id)

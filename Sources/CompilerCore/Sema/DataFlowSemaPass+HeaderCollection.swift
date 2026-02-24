@@ -210,13 +210,13 @@ extension DataFlowSemaPassPhase {
 
             }
 
-            // Value class validation: must have exactly one val primary constructor parameter
+            // Value class validation: must have exactly one primary constructor parameter
             if classDecl.modifiers.contains(.value) {
                 let valParams = classDecl.primaryConstructorParams
                 if valParams.count != 1 {
                     diagnostics.error(
                         "KSWIFTK-SEMA-0070",
-                        "Value class must have exactly one primary constructor val parameter.",
+                        "Value class must have exactly one primary constructor parameter.",
                         range: classDecl.range
                     )
                 } else {

@@ -1,7 +1,7 @@
 package golden.sema
 
-value class Meter(val value: Int)
+value class Meter(val amount: Int)
 
-fun measure(m: Meter): Int = m.value
+fun measure(m: Meter): Int = m.amount
 
 fun toAny(m: Meter): Any = m
