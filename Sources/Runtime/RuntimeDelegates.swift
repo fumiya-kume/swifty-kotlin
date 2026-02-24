@@ -41,7 +41,7 @@ public func kk_lazy_get_value(_ handle: Int) -> Int {
 /// - Parameters:
 ///   - initialValue: The initial property value.
 ///   - callbackFnPtr: Function pointer to the observer callback
-///     `(oldValue: intptr_t, newValue: intptr_t) -> void`.
+///     `(property: intptr_t, oldValue: intptr_t, newValue: intptr_t) -> void`.
 /// - Returns: Opaque handle to the `RuntimeObservableBox`.
 @_cdecl("kk_observable_create")
 public func kk_observable_create(_ initialValue: Int, _ callbackFnPtr: Int) -> Int {
@@ -70,7 +70,7 @@ public func kk_observable_get_value(_ handle: Int) -> Int {
 
 /// Sets the value of an observable delegate.
 /// Invokes the callback **after** the value is changed (matching `kotlinc` semantics).
-/// Callback signature: `(oldValue: intptr_t, newValue: intptr_t) -> void`
+/// Callback signature: `(property: intptr_t, oldValue: intptr_t, newValue: intptr_t) -> void`
 @_cdecl("kk_observable_set_value")
 public func kk_observable_set_value(_ handle: Int, _ newValue: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
@@ -84,10 +84,11 @@ public func kk_observable_set_value(_ handle: Int, _ newValue: Int) -> Int {
     }
     let oldValue = box.currentValue
     box.currentValue = newValue
-    // Invoke callback: (oldValue, newValue) -> void
+    // Invoke callback: (property, oldValue, newValue) -> void
+    // property arg is 0 (KProperty stub) to match Kotlin's 3-param lambda signature.
     if box.callbackFnPtr != 0 {
-        let callback = unsafeBitCast(box.callbackFnPtr, to: (@convention(c) (Int, Int) -> Void).self)
-        callback(oldValue, newValue)
+        let callback = unsafeBitCast(box.callbackFnPtr, to: (@convention(c) (Int, Int, Int) -> Void).self)
+        callback(0, oldValue, newValue)
     }
     return newValue
 }
@@ -98,7 +99,7 @@ public func kk_observable_set_value(_ handle: Int, _ newValue: Int) -> Int {
 /// - Parameters:
 ///   - initialValue: The initial property value.
 ///   - callbackFnPtr: Function pointer to the veto callback
-///     `(oldValue: intptr_t, newValue: intptr_t) -> intptr_t`.
+///     `(property: intptr_t, oldValue: intptr_t, newValue: intptr_t) -> intptr_t`.
 ///     Returns non-zero to accept the change, zero to veto.
 /// - Returns: Opaque handle to the `RuntimeVetoableBox`.
 @_cdecl("kk_vetoable_create")
@@ -128,7 +129,7 @@ public func kk_vetoable_get_value(_ handle: Int) -> Int {
 
 /// Sets the value of a vetoable delegate.
 /// Invokes the callback **before** the value is changed (matching `kotlinc` semantics).
-/// Callback signature: `(oldValue: intptr_t, newValue: intptr_t) -> intptr_t`
+/// Callback signature: `(property: intptr_t, oldValue: intptr_t, newValue: intptr_t) -> intptr_t`
 /// Returns non-zero → accept; zero → veto (value unchanged).
 @_cdecl("kk_vetoable_set_value")
 public func kk_vetoable_set_value(_ handle: Int, _ newValue: Int) -> Int {
@@ -142,10 +143,11 @@ public func kk_vetoable_set_value(_ handle: Int, _ newValue: Int) -> Int {
         return 0
     }
     let oldValue = box.currentValue
-    // Invoke callback: (oldValue, newValue) -> intptr_t (boolean)
+    // Invoke callback: (property, oldValue, newValue) -> intptr_t (boolean)
+    // property arg is 0 (KProperty stub) to match Kotlin's 3-param lambda signature.
     if box.callbackFnPtr != 0 {
-        let callback = unsafeBitCast(box.callbackFnPtr, to: (@convention(c) (Int, Int) -> Int).self)
-        let accepted = callback(oldValue, newValue)
+        let callback = unsafeBitCast(box.callbackFnPtr, to: (@convention(c) (Int, Int, Int) -> Int).self)
+        let accepted = callback(0, oldValue, newValue)
         if accepted != 0 {
             box.currentValue = newValue
         }

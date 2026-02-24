@@ -19,18 +19,18 @@ private let lazyCountingInitCConv: @convention(c) () -> Int = { lazyCountingInit
 private let lazySimple42: @convention(c) () -> Int = { 42 }
 private let lazySimple77: @convention(c) () -> Int = { 77 }
 
-private let observableNoopCallback: @convention(c) (Int, Int) -> Void = { _, _ in }
-private let observableCaptureCallback: @convention(c) (Int, Int) -> Void = { old, new in
+private let observableNoopCallback: @convention(c) (Int, Int, Int) -> Void = { _, _, _ in }
+private let observableCaptureCallback: @convention(c) (Int, Int, Int) -> Void = { _, old, new in
     gObservableCapturedOld = old
     gObservableCapturedNew = new
 }
-private let observableOrderCallback: @convention(c) (Int, Int) -> Void = { _, _ in
+private let observableOrderCallback: @convention(c) (Int, Int, Int) -> Void = { _, _, _ in
     gObservableValueInsideCallback = kk_observable_get_value(gObservableHandle)
 }
 
-private let vetoableAcceptCallback: @convention(c) (Int, Int) -> Int = { _, _ in 1 }
-private let vetoableRejectCallback: @convention(c) (Int, Int) -> Int = { _, _ in 0 }
-private let vetoableOrderCallback: @convention(c) (Int, Int) -> Int = { _, _ in
+private let vetoableAcceptCallback: @convention(c) (Int, Int, Int) -> Int = { _, _, _ in 1 }
+private let vetoableRejectCallback: @convention(c) (Int, Int, Int) -> Int = { _, _, _ in 0 }
+private let vetoableOrderCallback: @convention(c) (Int, Int, Int) -> Int = { _, _, _ in
     gVetoableValueInsideCallback = kk_vetoable_get_value(gVetoableHandle)
     return 1
 }
