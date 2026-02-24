@@ -148,8 +148,14 @@ extension DataFlowSemaPassPhase {
             // (Kotlin `field` identifier in getter/setter bodies).
             // Simple properties with only an initializer don't need a separate
             // backing field — the property symbol IS the storage.
-            let needsBackingField = propertyDecl.getter != nil
-                || propertyDecl.setter != nil
+            // Getter-only computed properties (`val x: Int get() = expr`) never
+            // need a backing field because they have no storage — the getter
+            // body is evaluated on every access.
+            let isGetterOnlyComputed = propertyDecl.getter != nil
+                && propertyDecl.setter == nil
+                && propertyDecl.initializer == nil
+            let needsBackingField = !isGetterOnlyComputed
+                && (propertyDecl.getter != nil || propertyDecl.setter != nil)
             if needsBackingField && propertyDecl.delegateExpression == nil {
                 let fieldName = interner.intern("$backing_\(interner.resolve(propertyDecl.name))")
                 let fieldFQName = ownerFQName + [fieldName]
@@ -346,6 +352,20 @@ extension DataFlowSemaPassPhase {
                     diagnostics: diagnostics,
                     interner: interner
                 )
+                if let companionDeclID = nestedClass.companionObject {
+                    collectCompanionObjectHeader(
+                        companionDeclID: companionDeclID,
+                        ownerFQName: nestedFQName,
+                        ownerSymbol: nestedSymbol,
+                        ast: ast,
+                        symbols: symbols,
+                        types: types,
+                        bindings: bindings,
+                        scope: nestedScope,
+                        diagnostics: diagnostics,
+                        interner: interner
+                    )
+                }
             case .interfaceDecl(let nestedInterface):
                 let nestedFQName = ownerFQName + [nestedInterface.name]
                 checkAndReportDuplicateDeclaration(
@@ -405,6 +425,20 @@ extension DataFlowSemaPassPhase {
                     diagnostics: diagnostics,
                     interner: interner
                 )
+                if let companionDeclID = nestedInterface.companionObject {
+                    collectCompanionObjectHeader(
+                        companionDeclID: companionDeclID,
+                        ownerFQName: nestedFQName,
+                        ownerSymbol: nestedSymbol,
+                        ast: ast,
+                        symbols: symbols,
+                        types: types,
+                        bindings: bindings,
+                        scope: nestedScope,
+                        diagnostics: diagnostics,
+                        interner: interner
+                    )
+                }
             default:
                 continue
             }
@@ -468,6 +502,83 @@ extension DataFlowSemaPassPhase {
                 interner: interner
             )
         }
+    }
+
+    /// Collects companion object header: creates the companion symbol, links it to the owner class,
+    /// and registers companion members under the companion's fully qualified name. Resolution of
+    /// `ClassName.memberName` to companion members is handled separately by the call/type checker.
+    func collectCompanionObjectHeader(
+        companionDeclID: DeclID,
+        ownerFQName: [InternedString],
+        ownerSymbol: SymbolID,
+        ast: ASTModule,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        bindings: BindingTable,
+        scope: Scope,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner
+    ) {
+        guard let decl = ast.arena.decl(companionDeclID),
+              case .objectDecl(let companionObject) = decl else {
+            return
+        }
+
+        // Companion objects default to name "Companion" if the parsed name is empty or just "Companion"
+        let companionName: InternedString
+        let parsedName = interner.resolve(companionObject.name)
+        if parsedName.isEmpty {
+            companionName = interner.intern("Companion")
+        } else {
+            companionName = companionObject.name
+        }
+
+        let companionFQName = ownerFQName + [companionName]
+        let companionSymbol = symbols.define(
+            kind: .object,
+            name: companionName,
+            fqName: companionFQName,
+            declSite: companionObject.range,
+            visibility: visibility(from: companionObject.modifiers),
+            flags: flags(from: companionObject.modifiers)
+        )
+        bindings.bindDecl(companionDeclID, symbol: companionSymbol)
+        symbols.setParentSymbol(ownerSymbol, for: companionSymbol)
+        symbols.setCompanionObjectSymbol(companionSymbol, for: ownerSymbol)
+        scope.insert(companionSymbol)
+
+        let companionType = types.make(.classType(ClassType(classSymbol: companionSymbol, args: [], nullability: .nonNull)))
+        let companionScope = ClassMemberScope(
+            parent: scope,
+            symbols: symbols,
+            ownerSymbol: companionSymbol,
+            thisType: companionType
+        )
+        collectNestedTypeAliases(
+            companionObject.nestedTypeAliases,
+            ownerFQName: companionFQName,
+            ast: ast,
+            symbols: symbols,
+            types: types,
+            diagnostics: diagnostics,
+            interner: interner
+        )
+        collectMemberHeaders(
+            memberFunctions: companionObject.memberFunctions,
+            memberProperties: companionObject.memberProperties,
+            nestedClasses: companionObject.nestedClasses,
+            nestedObjects: companionObject.nestedObjects,
+            ownerFQName: companionFQName,
+            ownerSymbol: companionSymbol,
+            ownerType: companionType,
+            ast: ast,
+            symbols: symbols,
+            types: types,
+            bindings: bindings,
+            scope: companionScope,
+            diagnostics: diagnostics,
+            interner: interner
+        )
     }
 
     func collectNestedTypeAliases(

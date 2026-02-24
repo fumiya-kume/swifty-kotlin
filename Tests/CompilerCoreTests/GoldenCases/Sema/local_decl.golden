@@ -1,46 +1,52 @@
 symbol s0 kind=package fq=_root_ vis=public flags=_
-symbol s1 kind=function fq=typedLocal vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s2 kind=function fq=inferredLocal vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3 kind=function fq=mutableTyped vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s4 kind=function fq=deferredValInit vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s5 kind=function fq=useBeforeInit vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s6 kind=local fq=__local_1.x vis=private flags=_
-symbol s7 kind=local fq=__local_6.y vis=private flags=_
-symbol s8 kind=local fq=__local_11.z vis=private flags=mutable
-symbol s9 kind=local fq=__local_18.a vis=private flags=_
-symbol s10 kind=local fq=__local_25.b vis=private flags=mutable
+symbol s1 kind=package fq=kotlin vis=public flags=synthetic
+symbol s2 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s3 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s4 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#4
+symbol s5 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s6 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=typedLocal vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s8 kind=function fq=inferredLocal vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s9 kind=function fq=mutableTyped vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s10 kind=function fq=deferredValInit vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s11 kind=function fq=useBeforeInit vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s12 kind=local fq=__local_1.x vis=private flags=_
+symbol s13 kind=local fq=__local_6.y vis=private flags=_
+symbol s14 kind=local fq=__local_11.z vis=private flags=mutable
+symbol s15 kind=local fq=__local_18.a vis=private flags=_
+symbol s16 kind=local fq=__local_25.b vis=private flags=mutable
 file f0 package=_
-  decl d0 fun typedLocal suspend=0 inline=0 sym=s1
-  decl d1 fun inferredLocal suspend=0 inline=0 sym=s2
-  decl d2 fun mutableTyped suspend=0 inline=0 sym=s3
-  decl d3 fun deferredValInit suspend=0 inline=0 sym=s4
-  decl d4 fun useBeforeInit suspend=0 inline=0 sym=s5
+  decl d0 fun typedLocal suspend=0 inline=0 sym=s7
+  decl d1 fun inferredLocal suspend=0 inline=0 sym=s8
+  decl d2 fun mutableTyped suspend=0 inline=0 sym=s9
+  decl d3 fun deferredValInit suspend=0 inline=0 sym=s10
+  decl d4 fun useBeforeInit suspend=0 inline=0 sym=s11
 expr e0 int(10) type=Int
-expr e1 localDecl x mutable=0 type=t0 init=e0 type=Unit ref=s6
+expr e1 localDecl x mutable=0 type=t0 init=e0 type=Unit ref=s12
 expr e2 name(println) type=_
-expr e3 name(x) type=Int ref=s6
+expr e3 name(x) type=Int ref=s12
 expr e4 call callee=e2 args=[_:e3] type=Unit
 expr e5 int(20) type=Int
-expr e6 localDecl y mutable=0 type=_ init=e5 type=Unit ref=s7
+expr e6 localDecl y mutable=0 type=_ init=e5 type=Unit ref=s13
 expr e7 name(println) type=_
-expr e8 name(y) type=Int ref=s7
+expr e8 name(y) type=Int ref=s13
 expr e9 call callee=e7 args=[_:e8] type=Unit
 expr e10 int(30) type=Int
-expr e11 localDecl z mutable=1 type=t1 init=e10 type=Unit ref=s8
+expr e11 localDecl z mutable=1 type=t1 init=e10 type=Unit ref=s14
 expr e12 name(z) type=_
 expr e13 int(40) type=Int
-expr e14 localAssign z value=e13 type=Unit ref=s8
+expr e14 localAssign z value=e13 type=Unit ref=s14
 expr e15 name(println) type=_
-expr e16 name(z) type=Int ref=s8
+expr e16 name(z) type=Int ref=s14
 expr e17 call callee=e15 args=[_:e16] type=Unit
-expr e18 localDecl a mutable=0 type=t2 init=_ type=Unit ref=s9
+expr e18 localDecl a mutable=0 type=t2 init=_ type=Unit ref=s15
 expr e19 name(a) type=_
 expr e20 int(5) type=Int
-expr e21 localAssign a value=e20 type=Unit ref=s9
+expr e21 localAssign a value=e20 type=Unit ref=s15
 expr e22 name(println) type=_
-expr e23 name(a) type=Int ref=s9
+expr e23 name(a) type=Int ref=s15
 expr e24 call callee=e22 args=[_:e23] type=Unit
-expr e25 localDecl b mutable=1 type=t3 init=_ type=Unit ref=s10
+expr e25 localDecl b mutable=1 type=t3 init=_ type=Unit ref=s16
 expr e26 name(println) type=_
-expr e27 name(b) type=Int ref=s10
+expr e27 name(b) type=Int ref=s16
 expr e28 call callee=e26 args=[_:e27] type=Unit

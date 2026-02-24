@@ -1,23 +1,29 @@
 symbol s0 kind=package fq=_root_ vis=public flags=_
-symbol s1 kind=class fq=Animal vis=public flags=sealedType
-symbol s2 kind=constructor fq=Animal.<init> vis=public flags=_ sig=recv=Class#1 params=[] ret=Class#1 suspend=0 defaults=[] vararg=[]
-symbol s3 kind=class fq=Dog vis=public flags=_
-symbol s4 kind=constructor fq=Dog.<init> vis=public flags=_ sig=recv=Class#3 params=[] ret=Class#3 suspend=0 defaults=[] vararg=[]
-symbol s5 kind=class fq=Cat vis=public flags=_
-symbol s6 kind=constructor fq=Cat.<init> vis=public flags=_ sig=recv=Class#5 params=[] ret=Class#5 suspend=0 defaults=[] vararg=[]
-symbol s7 kind=class fq=Bird vis=public flags=_
-symbol s8 kind=constructor fq=Bird.<init> vis=public flags=_ sig=recv=Class#7 params=[] ret=Class#7 suspend=0 defaults=[] vararg=[]
-symbol s9 kind=function fq=describeAnimal vis=public flags=_ sig=recv=_ params=[Class#1] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s10 kind=valueParameter fq=describeAnimal.$9.a vis=private flags=_
+symbol s1 kind=package fq=kotlin vis=public flags=synthetic
+symbol s2 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s3 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s4 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#4
+symbol s5 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s6 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s7 kind=class fq=Animal vis=public flags=sealedType
+symbol s8 kind=constructor fq=Animal.<init> vis=public flags=_ sig=recv=Class#7 params=[] ret=Class#7 suspend=0 defaults=[] vararg=[]
+symbol s9 kind=class fq=Dog vis=public flags=_
+symbol s10 kind=constructor fq=Dog.<init> vis=public flags=_ sig=recv=Class#9 params=[] ret=Class#9 suspend=0 defaults=[] vararg=[]
+symbol s11 kind=class fq=Cat vis=public flags=_
+symbol s12 kind=constructor fq=Cat.<init> vis=public flags=_ sig=recv=Class#11 params=[] ret=Class#11 suspend=0 defaults=[] vararg=[]
+symbol s13 kind=class fq=Bird vis=public flags=_
+symbol s14 kind=constructor fq=Bird.<init> vis=public flags=_ sig=recv=Class#13 params=[] ret=Class#13 suspend=0 defaults=[] vararg=[]
+symbol s15 kind=function fq=describeAnimal vis=public flags=_ sig=recv=_ params=[Class#7] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s16 kind=valueParameter fq=describeAnimal.$15.a vis=private flags=_
 file f0 package=_
-  decl d0 class Animal sym=s1
-  decl d1 class Dog sym=s3
-  decl d2 class Cat sym=s5
-  decl d3 class Bird sym=s7
-  decl d4 fun describeAnimal suspend=0 inline=0 sym=s9
-expr e0 name(a) type=Class#1 ref=s10
+  decl d0 class Animal sym=s7
+  decl d1 class Dog sym=s9
+  decl d2 class Cat sym=s11
+  decl d3 class Bird sym=s13
+  decl d4 fun describeAnimal suspend=0 inline=0 sym=s15
+expr e0 name(a) type=Class#7 ref=s16
 expr e1 name(is) type=<error>
-expr e2 name(Dog) type=Any ref=s3
+expr e2 name(Dog) type=Any ref=s9
 expr e3 string(dog) type=_
 expr e4 isCheck expr=e3 type=t5 type=_
 expr e5 string(cat) type=String

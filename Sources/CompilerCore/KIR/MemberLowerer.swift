@@ -268,11 +268,15 @@ final class MemberLowerer {
             }
             switch decl {
             case .classDecl(let nested):
+                var nestedAllObjects = nested.nestedObjects
+                if let companionDeclID = nested.companionObject {
+                    nestedAllObjects.append(companionDeclID)
+                }
                 let (nestedDirect, nestedAll) = lowerMemberDecls(
                     memberFunctions: nested.memberFunctions,
                     memberProperties: nested.memberProperties,
                     nestedClasses: nested.nestedClasses,
-                    nestedObjects: nested.nestedObjects,
+                    nestedObjects: nestedAllObjects,
                     ast: ast,
                     sema: sema,
                     arena: arena,
@@ -285,11 +289,15 @@ final class MemberLowerer {
                 allDecls.append(contentsOf: nestedAll)
             case .interfaceDecl(let nestedInterface):
                 // Interface properties have no backing storage; pass empty list.
+                var nestedInterfaceAllObjects = nestedInterface.nestedObjects
+                if let companionDeclID = nestedInterface.companionObject {
+                    nestedInterfaceAllObjects.append(companionDeclID)
+                }
                 let (nestedDirect, nestedAll) = lowerMemberDecls(
                     memberFunctions: nestedInterface.memberFunctions,
                     memberProperties: [],
                     nestedClasses: nestedInterface.nestedClasses,
-                    nestedObjects: nestedInterface.nestedObjects,
+                    nestedObjects: nestedInterfaceAllObjects,
                     ast: ast,
                     sema: sema,
                     arena: arena,

@@ -64,6 +64,9 @@ public struct ClassDecl {
     public let memberProperties: [DeclID]
     public let nestedClasses: [DeclID]
     public let nestedObjects: [DeclID]
+    /// The companion object declared inside this class, if any.
+    /// A class may have at most one companion object.
+    public let companionObject: DeclID?
 
     public init(
         range: SourceRange,
@@ -81,7 +84,8 @@ public struct ClassDecl {
         memberFunctions: [DeclID] = [],
         memberProperties: [DeclID] = [],
         nestedClasses: [DeclID] = [],
-        nestedObjects: [DeclID] = []
+        nestedObjects: [DeclID] = [],
+        companionObject: DeclID? = nil
     ) {
         self.range = range
         self.name = name
@@ -99,6 +103,7 @@ public struct ClassDecl {
         self.memberProperties = memberProperties
         self.nestedClasses = nestedClasses
         self.nestedObjects = nestedObjects
+        self.companionObject = companionObject
     }
 }
 
@@ -113,6 +118,8 @@ public struct InterfaceDecl {
     public let memberProperties: [DeclID]
     public let nestedClasses: [DeclID]
     public let nestedObjects: [DeclID]
+    /// The companion object declared inside this interface, if any.
+    public let companionObject: DeclID?
 
     public init(
         range: SourceRange,
@@ -124,7 +131,8 @@ public struct InterfaceDecl {
         memberFunctions: [DeclID] = [],
         memberProperties: [DeclID] = [],
         nestedClasses: [DeclID] = [],
-        nestedObjects: [DeclID] = []
+        nestedObjects: [DeclID] = [],
+        companionObject: DeclID? = nil
     ) {
         self.range = range
         self.name = name
@@ -136,6 +144,7 @@ public struct InterfaceDecl {
         self.memberProperties = memberProperties
         self.nestedClasses = nestedClasses
         self.nestedObjects = nestedObjects
+        self.companionObject = companionObject
     }
 }
 
@@ -255,6 +264,10 @@ public struct PropertyDecl {
     public let getter: PropertyAccessorDecl?
     public let setter: PropertyAccessorDecl?
     public let delegateExpression: ExprID?
+    /// The trailing lambda body for delegate properties (e.g. `lazy { body }`,
+    /// `Delegates.observable(init) { body }`). Captured separately because
+    /// `propertyHeadTokens` excludes the block node from the delegate expression.
+    public let delegateBody: FunctionBody?
 
     public init(
         range: SourceRange,
@@ -265,7 +278,8 @@ public struct PropertyDecl {
         initializer: ExprID? = nil,
         getter: PropertyAccessorDecl? = nil,
         setter: PropertyAccessorDecl? = nil,
-        delegateExpression: ExprID? = nil
+        delegateExpression: ExprID? = nil,
+        delegateBody: FunctionBody? = nil
     ) {
         self.range = range
         self.name = name
@@ -276,6 +290,7 @@ public struct PropertyDecl {
         self.getter = getter
         self.setter = setter
         self.delegateExpression = delegateExpression
+        self.delegateBody = delegateBody
     }
 }
 

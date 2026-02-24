@@ -140,7 +140,7 @@ extension BuildASTPhase {
         in arena: SyntaxArena,
         interner: StringInterner,
         astArena: ASTArena
-    ) -> (functions: [DeclID], properties: [DeclID], nestedClasses: [DeclID], nestedObjects: [DeclID]) {
+    ) -> (functions: [DeclID], properties: [DeclID], nestedClasses: [DeclID], nestedObjects: [DeclID], companionObject: DeclID?) {
         guard let bodyBlockID = arena.children(of: nodeID).compactMap({ child -> NodeID? in
             guard case .node(let childID) = child,
                   arena.node(childID).kind == .block else {
@@ -148,13 +148,14 @@ extension BuildASTPhase {
             }
             return childID
         }).first else {
-            return ([], [], [], [])
+            return ([], [], [], [], nil)
         }
 
         var functions: [DeclID] = []
         var properties: [DeclID] = []
         var nestedClasses: [DeclID] = []
         var nestedObjects: [DeclID] = []
+        var companionObject: DeclID?
 
         for child in arena.children(of: bodyBlockID) {
             guard case .node(let childID) = child else {
@@ -181,13 +182,17 @@ extension BuildASTPhase {
             case .objectDecl:
                 let objectDecl = makeObjectDecl(from: childID, in: arena, interner: interner, astArena: astArena)
                 let declID = astArena.appendDecl(.objectDecl(objectDecl))
-                nestedObjects.append(declID)
+                if objectDecl.modifiers.contains(.companion) {
+                    companionObject = declID
+                } else {
+                    nestedObjects.append(declID)
+                }
             default:
                 continue
             }
         }
 
-        return (functions, properties, nestedClasses, nestedObjects)
+        return (functions, properties, nestedClasses, nestedObjects, companionObject)
     }
 
     func declarationDelegateExpression(

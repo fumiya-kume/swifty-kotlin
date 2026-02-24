@@ -85,6 +85,9 @@ public final class LexPhase: CompilerPhase {
         for (fileID, fileTokens) in tokensByFile {
             ctx.fileIRs[fileID] = FileIR(fileID: fileID, tokens: fileTokens)
         }
+
+        // Stabilize diagnostic order after parallel lexing.
+        ctx.diagnostics.sortBySourceLocation()
     }
 }
 
@@ -136,6 +139,9 @@ public final class ParsePhase: CompilerPhase {
             ctx.fileIRs[fileID, default: FileIR(fileID: fileID)].syntaxArena = cstArena
             ctx.fileIRs[fileID, default: FileIR(fileID: fileID)].syntaxRoot = root
         }
+
+        // Stabilize diagnostic order after parallel parsing.
+        ctx.diagnostics.sortBySourceLocation()
     }
 }
 

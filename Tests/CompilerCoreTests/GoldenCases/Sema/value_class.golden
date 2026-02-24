@@ -1,15 +1,21 @@
 symbol s0 kind=package fq=golden.sema vis=public flags=_
-symbol s1 kind=class fq=golden.sema.Meter vis=public flags=valueType
-symbol s2 kind=constructor fq=golden.sema.Meter.<init> vis=public flags=_ sig=recv=Class#1 params=[Int] ret=Class#1 suspend=0 defaults=[0] vararg=[0]
-symbol s3 kind=valueParameter fq=golden.sema.Meter.<init>.$2.amount vis=private flags=_
-symbol s4 kind=function fq=golden.sema.measure vis=public flags=_ sig=recv=_ params=[Class#1] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s5 kind=valueParameter fq=golden.sema.measure.$4.m vis=private flags=_
-symbol s6 kind=function fq=golden.sema.toAny vis=public flags=_ sig=recv=_ params=[Class#1] ret=Any suspend=0 defaults=[0] vararg=[0]
-symbol s7 kind=valueParameter fq=golden.sema.toAny.$6.m vis=private flags=_
+symbol s1 kind=package fq=kotlin vis=public flags=synthetic
+symbol s2 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s3 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s4 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#4
+symbol s5 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s6 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s7 kind=class fq=golden.sema.Meter vis=public flags=valueType
+symbol s8 kind=constructor fq=golden.sema.Meter.<init> vis=public flags=_ sig=recv=Class#7 params=[Int] ret=Class#7 suspend=0 defaults=[0] vararg=[0]
+symbol s9 kind=valueParameter fq=golden.sema.Meter.<init>.$8.amount vis=private flags=_
+symbol s10 kind=function fq=golden.sema.measure vis=public flags=_ sig=recv=_ params=[Class#7] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s11 kind=valueParameter fq=golden.sema.measure.$10.m vis=private flags=_
+symbol s12 kind=function fq=golden.sema.toAny vis=public flags=_ sig=recv=_ params=[Class#7] ret=Any suspend=0 defaults=[0] vararg=[0]
+symbol s13 kind=valueParameter fq=golden.sema.toAny.$12.m vis=private flags=_
 file f0 package=golden.sema
-  decl d0 class Meter sym=s1
-  decl d1 fun measure suspend=0 inline=0 sym=s4
-  decl d2 fun toAny suspend=0 inline=0 sym=s6
-expr e0 name(m) type=Class#1 ref=s5
+  decl d0 class Meter sym=s7
+  decl d1 fun measure suspend=0 inline=0 sym=s10
+  decl d2 fun toAny suspend=0 inline=0 sym=s12
+expr e0 name(m) type=Class#7 ref=s11
 expr e1 memberCall recv=e0 callee=amount args=[] type=<error>
-expr e2 name(m) type=Class#1 ref=s7
+expr e2 name(m) type=Class#7 ref=s13

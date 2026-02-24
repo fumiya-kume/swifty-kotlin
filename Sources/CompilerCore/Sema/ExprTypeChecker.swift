@@ -576,8 +576,21 @@ final class ExprTypeChecker {
             if let signature = sema.symbols.functionSignature(for: symbol.id) {
                 return signature.returnType
             }
-            if symbol.kind == .property || symbol.kind == .field {
+            if symbol.kind == .property || symbol.kind == .field || symbol.kind == .object {
                 return sema.symbols.propertyType(for: symbol.id)
+            }
+            // Objects are singletons – always resolve to their nominal type so
+            // that `ObjectName.member()` works.
+            if symbol.kind == .object {
+                return sema.types.make(.classType(ClassType(classSymbol: symbol.id, args: [], nullability: .nonNull)))
+            }
+            // For class/interface/enum symbols, only resolve to nominal type when
+            // they have a companion object so that `ClassName.companionMember()`
+            // can resolve.  Without a companion, keep the previous anyType
+            // fallback so that `ClassName.instanceMethod()` correctly errors.
+            if (symbol.kind == .class || symbol.kind == .interface || symbol.kind == .enumClass),
+               sema.symbols.companionObjectSymbol(for: symbol.id) != nil {
+                return sema.types.make(.classType(ClassType(classSymbol: symbol.id, args: [], nullability: .nonNull)))
             }
             return nil
         } ?? sema.types.anyType

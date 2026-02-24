@@ -421,7 +421,15 @@ public final class LLVMBackend {
             "kk_float_to_double_bits",
             "delay",
             "kk_op_notnull",
-            "kk_op_elvis"
+            "kk_op_elvis",
+            "kk_lazy_create",
+            "kk_lazy_get_value",
+            "kk_observable_create",
+            "kk_observable_get_value",
+            "kk_observable_set_value",
+            "kk_vetoable_create",
+            "kk_vetoable_get_value",
+            "kk_vetoable_set_value"
         ]
 
         for decl in module.arena.declarations {
