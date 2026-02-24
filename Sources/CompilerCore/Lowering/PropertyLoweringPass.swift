@@ -8,7 +8,6 @@ final class PropertyLoweringPass: LoweringPass {
         let setterName = ctx.interner.intern("set")
         let getValueName = ctx.interner.intern("getValue")
         let setValueName = ctx.interner.intern("setValue")
-        let provideDelegateName = ctx.interner.intern("provideDelegate")
         let loweredCallee = ctx.interner.intern("kk_property_access")
         let boolType = ctx.sema?.types.make(.primitive(.boolean, .nonNull))
         let interner = ctx.interner
@@ -57,7 +56,7 @@ final class PropertyLoweringPass: LoweringPass {
                 // Only rewrite calls whose symbol is a delegate storage field
                 // (name starts with $delegate_) to avoid rewriting user-defined
                 // getValue/setValue methods.
-                if (callee == getValueName || callee == setValueName || callee == provideDelegateName),
+                if (callee == getValueName || callee == setValueName),
                    let sema = ctx.sema,
                    let sym = symbol,
                    let symInfo = sema.symbols.symbol(sym),
