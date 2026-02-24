@@ -322,6 +322,7 @@ final class LocalDeclTypeChecker {
             sema: sema
         )
         var elementType: TypeID = driver.helpers.arrayElementType(for: receiverType, sema: sema, interner: interner) ?? sema.types.anyType
+        var operatorResolved = false
         if !getCandidates.isEmpty {
             let callArgs = indexTypes.map { CallArg(type: $0) }
             let resolved = ctx.resolver.resolveCall(
@@ -350,15 +351,20 @@ final class LocalDeclTypeChecker {
                 )
                 sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
                 elementType = signature.returnType
+                operatorResolved = true
             }
-        } else if indices.count != 1 {
-            // Multi-index with no get overload and no built-in array support
-            sema.bindings.bindExprType(id, type: sema.types.unitType)
-            return sema.types.unitType
+        }
+
+        // Fallback: built-in array (single Int index only)
+        if !operatorResolved {
+            guard indices.count == 1 else {
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
         }
 
         // Built-in array fallback: enforce Int index constraint (matching inferIndexedAccessExpr/inferIndexedAssignExpr)
-        if getCandidates.isEmpty {
+        if !operatorResolved {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             driver.emitSubtypeConstraint(
                 left: indexTypes[0],
