@@ -101,6 +101,12 @@ extension DataFlowSemaPassPhase {
             let allTypeParameterSymbols = classTypeParameterSymbols + typeParamResult.typeParameterSymbols
             let classUpperBounds: [TypeID?] = classTypeParameterSymbols.map { symbols.typeParameterUpperBound(for: $0) }
             let memberUpperBounds: [TypeID?] = classUpperBounds + typeParamResult.typeParameterSymbols.map { symbols.typeParameterUpperBound(for: $0) }
+            // Offset reified indices by the number of prepended class type params
+            // so they still point at the correct function-own type parameters.
+            let classTPCount = classTypeParameterSymbols.count
+            let offsetReifiedIndices: Set<Int> = classTPCount == 0
+                ? typeParamResult.reifiedIndices
+                : Set(typeParamResult.reifiedIndices.map { $0 + classTPCount })
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: ownerType,
@@ -111,8 +117,9 @@ extension DataFlowSemaPassPhase {
                     valueParameterHasDefaultValues: params.paramHasDefaultValues,
                     valueParameterIsVararg: params.paramIsVararg,
                     typeParameterSymbols: allTypeParameterSymbols,
-                    reifiedTypeParameterIndices: typeParamResult.reifiedIndices,
-                    typeParameterUpperBounds: memberUpperBounds
+                    reifiedTypeParameterIndices: offsetReifiedIndices,
+                    typeParameterUpperBounds: memberUpperBounds,
+                    classTypeParameterCount: classTPCount
                 ),
                 for: memberSymbol
             )

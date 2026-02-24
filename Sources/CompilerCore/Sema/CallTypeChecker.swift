@@ -490,14 +490,19 @@ final class CallTypeChecker {
                 let paramType = sema.types.renderType(signature.parameterTypes[violatingParamIndex])
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-VAR-OUT",
-                    "Type projection 'out' prevents calling '\(interner.resolve(calleeName))' because the type parameter appears in an 'in' position (parameter type '\(paramType)').",
+                    "A type projection on the receiver prevents calling '\(interner.resolve(calleeName))' because the type parameter appears in an 'in' position (parameter type '\(paramType)').",
                     range: range
                 )
                 return driver.helpers.bindAndReturnErrorType(id, sema: sema)
             }
 
-            // For projected types, use variance-aware return type substitution
+            // For projected types, merge the solver's substitution with the
+            // variance projection (projection overrides receiver type params).
             let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
+            let mergedSubstitution = resolved.substitutedTypeArguments.merging(
+                varianceResult.covariantSubstitution,
+                uniquingKeysWith: { _, projected in projected }
+            )
             sema.bindings.bindCall(
                 id,
                 binding: CallBinding(
@@ -511,7 +516,7 @@ final class CallTypeChecker {
             sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
             let projectedReturnType = sema.types.substituteTypeParameters(
                 in: signature.returnType,
-                substitution: varianceResult.covariantSubstitution,
+                substitution: mergedSubstitution,
                 typeVarBySymbol: typeVarBySymbol
             )
             if isSuperCall { sema.bindings.markSuperCall(id) }

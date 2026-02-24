@@ -68,6 +68,11 @@ public struct FunctionSignature: Hashable {
     public let typeParameterSymbols: [SymbolID]
     public let reifiedTypeParameterIndices: Set<Int>
     public let typeParameterUpperBounds: [TypeID?]
+    /// Number of leading entries in `typeParameterSymbols` that belong to the
+    /// enclosing class/interface (not the function itself).  The overload resolver
+    /// skips these when matching explicit type arguments and offsetting reified
+    /// indices.  Defaults to 0 for non-member or non-generic-class functions.
+    public let classTypeParameterCount: Int
 
     public init(
         receiverType: TypeID? = nil,
@@ -79,7 +84,8 @@ public struct FunctionSignature: Hashable {
         valueParameterIsVararg: [Bool] = [],
         typeParameterSymbols: [SymbolID] = [],
         reifiedTypeParameterIndices: Set<Int> = [],
-        typeParameterUpperBounds: [TypeID?] = []
+        typeParameterUpperBounds: [TypeID?] = [],
+        classTypeParameterCount: Int = 0
     ) {
         self.receiverType = receiverType
         self.parameterTypes = parameterTypes
@@ -91,6 +97,7 @@ public struct FunctionSignature: Hashable {
         self.typeParameterSymbols = typeParameterSymbols
         self.reifiedTypeParameterIndices = reifiedTypeParameterIndices
         self.typeParameterUpperBounds = typeParameterUpperBounds
+        self.classTypeParameterCount = classTypeParameterCount
     }
 }
 
