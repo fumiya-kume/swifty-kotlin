@@ -278,6 +278,8 @@ extension BuildASTPhase {
     }
 
     /// Splits a token stream on top-level `&` tokens for intersection types.
+    /// Returns a single-element array (no splitting) if any segment is empty
+    /// (e.g. leading/trailing/consecutive `&`).
     private func splitIntersectionParts(_ tokens: [Token]) -> [[Token]] {
         var parts: [[Token]] = []
         var current: [Token] = []
@@ -285,17 +287,21 @@ extension BuildASTPhase {
         for token in tokens {
             depth.track(token.kind)
             if token.kind == .symbol(.amp) && depth.isAtTopLevel {
-                if !current.isEmpty {
-                    parts.append(current)
-                    current = []
+                guard !current.isEmpty else {
+                    // Empty segment (leading or consecutive &) – treat as non-intersection
+                    return [tokens]
                 }
+                parts.append(current)
+                current = []
                 continue
             }
             current.append(token)
         }
-        if !current.isEmpty {
-            parts.append(current)
+        guard !current.isEmpty else {
+            // Trailing & – treat as non-intersection
+            return [tokens]
         }
+        parts.append(current)
         return parts
     }
 

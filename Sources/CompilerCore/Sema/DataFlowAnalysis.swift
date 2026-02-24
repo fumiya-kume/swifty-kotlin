@@ -233,9 +233,17 @@ public final class DataFlowAnalyzer {
         let narrowedType: TypeID
         if let baseState = base.variables[symbol],
            baseState.possibleTypes.count == 1,
-           let existingType = baseState.possibleTypes.first,
-           !sema.types.isSubtype(existingType, targetType) {
-            narrowedType = sema.types.make(.intersection([existingType, targetType]))
+           let existingType = baseState.possibleTypes.first {
+            if sema.types.isSubtype(existingType, targetType) {
+                // Existing flow type is already more specific; keep it.
+                narrowedType = existingType
+            } else if sema.types.isSubtype(targetType, existingType) {
+                // New target type is more specific; use it.
+                narrowedType = targetType
+            } else {
+                // Types are unrelated; intersect them for chained is-checks.
+                narrowedType = sema.types.make(.intersection([existingType, targetType]))
+            }
         } else {
             narrowedType = targetType
         }

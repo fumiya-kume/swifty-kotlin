@@ -5,8 +5,13 @@ extension BuildASTPhase.ExpressionParser {
         guard let firstRef = parseSingleTypeReference() else { return nil }
         // Check for intersection type (T & U)
         var parts: [TypeRefID] = [firstRef]
-        while consumeIf(.symbol(.amp)) != nil {
-            guard let nextRef = parseSingleTypeReference() else { break }
+        while true {
+            let savedIndex = index
+            guard consumeIf(.symbol(.amp)) != nil else { break }
+            guard let nextRef = parseSingleTypeReference() else {
+                index = savedIndex
+                break
+            }
             parts.append(nextRef)
         }
         if parts.count > 1 {
@@ -156,8 +161,13 @@ extension BuildASTPhase.ExpressionParser {
         guard let firstRef = parseSingleInlineTypeRef() else { return nil }
         // Check for intersection type (T & U) in inline context
         var parts: [TypeRefID] = [firstRef]
-        while consumeIf(.symbol(.amp)) != nil {
-            guard let nextRef = parseSingleInlineTypeRef() else { break }
+        while true {
+            let savedIndex = index
+            guard consumeIf(.symbol(.amp)) != nil else { break }
+            guard let nextRef = parseSingleInlineTypeRef() else {
+                index = savedIndex
+                break
+            }
             parts.append(nextRef)
         }
         if parts.count > 1 {

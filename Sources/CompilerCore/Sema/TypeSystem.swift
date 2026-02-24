@@ -72,8 +72,10 @@ public final class TypeSystem {
     /// bound is nullable, the intersection guarantees non-nullability.
     public func isDefinitelyNonNull(_ type: TypeID) -> Bool {
         switch kind(of: type) {
-        case .error, .unit:
+        case .error:
             return false
+        case .unit:
+            return true
         case .nothing(let n):
             return n == .nonNull
         case .any(let n):
