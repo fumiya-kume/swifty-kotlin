@@ -2416,6 +2416,25 @@ final class LoweringPassCoverageTests: XCTestCase {
         )
         // Deliberately do NOT set a backing field symbol for this property.
 
+        // Emit a getter accessor function so PropertyLoweringPass recognises
+        // this property as a computed property (it checks that the getter
+        // function actually exists in the KIR module).
+        let getterSymbol = SymbolID(rawValue: -12_000 - propertySym.rawValue)
+        let getterRetExpr = arena.appendExpr(.stringLiteral(interner.intern("hello")), type: types.anyType)
+        let getterFn = KIRFunction(
+            symbol: getterSymbol,
+            name: interner.intern("get"),
+            params: [],
+            returnType: types.anyType,
+            body: [
+                .constValue(result: getterRetExpr, value: .stringLiteral(interner.intern("hello"))),
+                .returnValue(getterRetExpr)
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let _ = arena.appendDecl(.function(getterFn))
+
         let callerSym = SymbolID(rawValue: 200)
         let propRef = arena.appendExpr(.symbolRef(propertySym), type: types.anyType)
 
