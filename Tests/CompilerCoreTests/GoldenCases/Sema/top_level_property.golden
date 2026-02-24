@@ -5,11 +5,17 @@ symbol s3 kind=package fq=kotlin.properties vis=public flags=synthetic
 symbol s4 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#4
 symbol s5 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
 symbol s6 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s7 kind=class fq=golden.sema.Widget vis=public flags=_
-symbol s8 kind=constructor fq=golden.sema.Widget.<init> vis=public flags=_ sig=recv=Class#7 params=[] ret=Class#7 suspend=0 defaults=[] vararg=[]
-symbol s9 kind=property fq=golden.sema.Widget.computed vis=public flags=_ type=<error>
-symbol s10 kind=property fq=golden.sema.Widget.backed vis=public flags=mutable type=Int
+symbol s7 kind=property fq=golden.sema.pi vis=public flags=_ type=<error>
+symbol s8 kind=property fq=golden.sema.counter vis=public flags=mutable type=Int
+symbol s9 kind=function fq=golden.sema.increment vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d2 class Widget sym=s7
-expr e0 string(hello) type=<error> ref=s9
-expr e1 int(0) type=Int ref=s10
+  decl d0 property pi var=0 sym=s7
+  decl d1 property counter var=1 sym=s8
+  decl d2 fun increment suspend=0 inline=0 sym=s9
+expr e0 double(3.14) type=<error> ref=s7
+expr e1 int(0) type=Int ref=s8
+expr e2 name(counter) type=_
+expr e3 name(counter) type=Int ref=s8
+expr e4 int(1) type=Int
+expr e5 binary(add) lhs=e3 rhs=e4 type=Int
+expr e6 localAssign counter value=e5 type=Unit ref=s8

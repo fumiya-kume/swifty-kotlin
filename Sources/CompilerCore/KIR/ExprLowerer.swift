@@ -548,7 +548,17 @@ final class ExprLowerer {
                 instructions: &instructions
             )
             if let symbol = sema.bindings.identifierSymbols[exprID] {
-                driver.ctx.localValuesBySymbol[symbol] = valueID
+                // Check if this is a top-level property assignment (not a local variable).
+                // Top-level properties need a copy to global storage rather than just
+                // updating localValuesBySymbol (which wouldn't persist across function calls).
+                if let symInfo = sema.symbols.symbol(symbol), symInfo.kind == .property {
+                    let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
+                    let globalRef = arena.appendExpr(.symbolRef(symbol), type: propType)
+                    instructions.append(.constValue(result: globalRef, value: .symbolRef(symbol)))
+                    instructions.append(.copy(from: valueID, to: globalRef))
+                } else {
+                    driver.ctx.localValuesBySymbol[symbol] = valueID
+                }
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))
@@ -691,7 +701,15 @@ final class ExprLowerer {
                 instructions: &instructions
             )
             if let symbol = sema.bindings.identifierSymbols[exprID] {
-                driver.ctx.localValuesBySymbol[symbol] = valueID
+                // Top-level property compound assignment needs a copy to global storage.
+                if let symInfo = sema.symbols.symbol(symbol), symInfo.kind == .property {
+                    let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
+                    let globalRef = arena.appendExpr(.symbolRef(symbol), type: propType)
+                    instructions.append(.constValue(result: globalRef, value: .symbolRef(symbol)))
+                    instructions.append(.copy(from: valueID, to: globalRef))
+                } else {
+                    driver.ctx.localValuesBySymbol[symbol] = valueID
+                }
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))
