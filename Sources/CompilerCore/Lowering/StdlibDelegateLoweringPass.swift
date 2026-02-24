@@ -268,15 +268,15 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                            let kind = delegateKindByFieldName[targetName] {
                             switch kind {
                             case .lazy:
-                                let modeExpr = module.arena.appendExpr(
-                                    .intLiteral(lazyThreadSafetyModeValue), type: nil
-                                )
-                                finalBody.append(.constValue(
-                                    result: modeExpr,
-                                    value: .intLiteral(lazyThreadSafetyModeValue)
-                                ))
-                                finalBody.append(instruction)
                                 if let callResult {
+                                    let modeExpr = module.arena.appendExpr(
+                                        .intLiteral(lazyThreadSafetyModeValue), type: nil
+                                    )
+                                    finalBody.append(.constValue(
+                                        result: modeExpr,
+                                        value: .intLiteral(lazyThreadSafetyModeValue)
+                                    ))
+                                    finalBody.append(instruction)
                                     let createResult = module.arena.appendExpr(
                                         .temporary(Int32(module.arena.expressions.count)),
                                         type: nil
