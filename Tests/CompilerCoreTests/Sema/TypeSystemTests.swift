@@ -10,8 +10,12 @@ final class TypeSystemTests: XCTestCase {
         XCTAssertEqual(ts.kind(of: ts.errorType), .error)
         XCTAssertEqual(ts.kind(of: ts.unitType), .unit)
         XCTAssertEqual(ts.kind(of: ts.nothingType), .nothing(.nonNull))
+        XCTAssertEqual(ts.kind(of: ts.nullableNothingType), .nothing(.nullable))
         XCTAssertEqual(ts.kind(of: ts.anyType), .any(.nonNull))
         XCTAssertEqual(ts.kind(of: ts.nullableAnyType), .any(.nullable))
+        // makeNullable / makeNonNullable round-trip for Nothing
+        XCTAssertEqual(ts.makeNullable(ts.nothingType), ts.nullableNothingType)
+        XCTAssertEqual(ts.makeNonNullable(ts.nullableNothingType), ts.nothingType)
     }
 
     func testBuiltInTypeIDsAreDistinct() {

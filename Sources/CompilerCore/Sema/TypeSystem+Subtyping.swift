@@ -28,7 +28,7 @@ extension TypeSystem {
             case .functionType(let ft) where ft.nullability == .nullable:
                 return true
             case .intersection(let parts):
-                return parts.contains { isSubtype(subtype, $0) }
+                return parts.allSatisfy { isSubtype(subtype, $0) }
             default:
                 return false
             }
