@@ -162,12 +162,17 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                 }
 
                 let isSetterExprID = arguments[0]
-                let isSetter: Bool
-                if let exprKind = module.arena.expr(isSetterExprID),
-                   case .boolLiteral(let v) = exprKind {
-                    isSetter = v
-                } else {
-                    isSetter = false
+                var isSetter = false
+                // The accessor-kind bool is stored in a .constValue instruction
+                // (not in the arena expression which is .temporary), so scan
+                // backward through already-lowered instructions to find it.
+                for prev in loweredBody.reversed() {
+                    if case .constValue(let result, let value) = prev,
+                       result == isSetterExprID,
+                       case .boolLiteral(let v) = value {
+                        isSetter = v
+                        break
+                    }
                 }
 
                 // Build a symbol ref for the delegate handle.
