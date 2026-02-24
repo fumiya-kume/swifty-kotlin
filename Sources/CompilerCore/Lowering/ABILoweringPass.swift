@@ -18,9 +18,7 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("hasNext"),
             ctx.interner.intern("next"),
             // kk_property_access removed — PropertyLowering now emits direct accessor
-            // calls using "get"/"set" callee names with synthetic symbols.
-            ctx.interner.intern("get"),
-            ctx.interner.intern("set"),
+            // calls with synthetic symbols; canThrow is handled via symbol check below.
             ctx.interner.intern("kk_lambda_invoke"),
             ctx.interner.intern("kk_println_any"),
             ctx.interner.intern("kk_coroutine_suspended"),
@@ -365,7 +363,13 @@ final class ABILoweringPass: LoweringPass {
                     continue
                 }
 
-                let canThrow = !nonThrowingCallees.contains(callee)
+                // Synthetic property accessor symbols (getter: -12_000 range,
+                // setter: -13_000 range) are always non-throwing.
+                let isSyntheticAccessor: Bool = {
+                    guard let s = callSymbol else { return false }
+                    return s.rawValue <= -12_000
+                }()
+                let canThrow = !isSyntheticAccessor && !nonThrowingCallees.contains(callee)
 
                 var boxedArguments = arguments
                 if let types {
