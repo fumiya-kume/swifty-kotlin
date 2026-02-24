@@ -90,7 +90,11 @@ public final class DiagnosticEngine: @unchecked Sendable {
             if lRange.start.offset != rRange.start.offset {
                 return lRange.start.offset < rRange.start.offset
             }
-            return lhs.code < rhs.code
+            let lSev = severityRank(for: lhs.severity)
+            let rSev = severityRank(for: rhs.severity)
+            if lSev != rSev { return lSev < rSev }
+            if lhs.code != rhs.code { return lhs.code < rhs.code }
+            return lhs.message < rhs.message
         }
     }
 
