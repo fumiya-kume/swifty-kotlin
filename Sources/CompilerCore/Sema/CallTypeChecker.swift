@@ -460,20 +460,15 @@ final class CallTypeChecker {
                 driver.helpers.emitVisibilityError(for: firstInvisible, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
                 return driver.helpers.bindAndReturnErrorType(id, sema: sema)
             }
-            // Collection member access fallback (P5-84): allow .size, .get,
-            // .contains, .containsKey, .isEmpty, .first, .last, .indexOf,
-            // .keys, .values, .entries, .indices, .toList, .toMutableList,
-            // .forEach, .map, .filter, .count, .reversed, .sorted, .joinToString,
-            // .toSet, .toMap, .toTypedArray on collection-typed receivers only.
+            // Collection member access fallback (P5-84): allow only members
+            // that have corresponding runtime implementations in
+            // CollectionLiteralLoweringPass and CallLowerer.
             if !isClassNameReceiver, sema.bindings.isCollectionExpr(receiverID) {
                 let memberName = interner.resolve(calleeName)
                 let collectionMembers: Set<String> = [
                     "size", "get", "contains", "containsKey",
                     "isEmpty", "first", "last", "indexOf",
-                    "keys", "values", "entries", "indices",
-                    "toList", "toMutableList", "forEach", "map",
-                    "filter", "count", "reversed", "sorted",
-                    "joinToString", "toSet", "toMap", "toTypedArray"
+                    "count", "iterator"
                 ]
                 if collectionMembers.contains(memberName) {
                     let resultType: TypeID
