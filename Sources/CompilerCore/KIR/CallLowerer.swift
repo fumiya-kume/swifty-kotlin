@@ -932,10 +932,29 @@ final class CallLowerer {
         // Determine the runtime op stub.
         // Use kk_string_concat for String += String (matching lowerBinaryExpr pattern),
         // otherwise use the appropriate numeric op stub.
+        // Note: exprID's bound type is always unitType for compound assign, so we
+        // derive the element type from the receiver's array type instead.
         let stringType = sema.types.make(.primitive(.string, .nonNull))
-        let exprBoundType = sema.bindings.exprTypes[exprID]
+        // Derive element type from the receiver's array type.
+        // Mirrors TypeCheckHelpers.arrayElementType logic but also checks
+        // the value expression type as a heuristic for non-IntArray receivers.
+        let receiverBoundType = sema.bindings.exprTypes[receiverExpr]
+        let isStringElement: Bool = {
+            // If the value being added is String, the concat is string-typed
+            if sema.bindings.exprTypes[valueExpr] == stringType {
+                return true
+            }
+            // Check receiver's class name for known array types
+            guard let recvType = receiverBoundType,
+                  case .classType(let classType) = sema.types.kind(of: recvType),
+                  let symbol = sema.symbols.symbol(classType.classSymbol) else {
+                return false
+            }
+            let name = interner.resolve(symbol.name)
+            return name == "StringArray" || name == "Array"
+        }()
         let opName: String
-        if op == .plusAssign, exprBoundType == stringType {
+        if op == .plusAssign, isStringElement {
             opName = "kk_string_concat"
         } else {
             switch op {
