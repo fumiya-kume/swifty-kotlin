@@ -466,6 +466,10 @@ extension KotlinParser {
             }
             if case .symbol(.lBrace) = token.kind {
                 children.append(.node(parseBlock()))
+                // Continue if next token is catch/finally (try expression continuation)
+                let nextAfterBlock = stream.peek()
+                if case .keyword(.catch) = nextAfterBlock.kind { progress = true; continue }
+                if case .keyword(.finally) = nextAfterBlock.kind { progress = true; continue }
                 break
             }
             _ = consumeToken(into: &children, range: &range)
@@ -474,7 +478,21 @@ extension KotlinParser {
                 break
             }
             if !inBlock, hasLeadingNewline(stream.peek()) {
-                break
+                // Don't break if previous token was a continuation operator (e.g. `=`)
+                // that expects an expression on the next line
+                if !shouldSplitStatementOnNewline(stream.peek().kind) {
+                    continue
+                }
+                let isContinuation: Bool
+                switch token.kind {
+                case .symbol(.assign):
+                    isContinuation = true
+                default:
+                    isContinuation = false
+                }
+                if !isContinuation {
+                    break
+                }
             }
         }
         if !progress, !shouldStopStatementBefore(stream.peek(), inBlock: inBlock) {
