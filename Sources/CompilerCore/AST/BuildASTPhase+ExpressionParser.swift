@@ -136,7 +136,7 @@ extension BuildASTPhase {
                    isInfixIdentifierToken(token),
                    let nextToken = peek(1),
                    canStartExpression(nextToken) {
-                    let calleeName = identifierFromToken(token)!
+                    guard let calleeName = identifierFromToken(token) else { break }
                     _ = consume()
                     guard let rhs = parseExpression(minPrecedence: infixPrecedence + 1) else { break }
                     let range = mergeRanges(astArena.exprRange(lhs), astArena.exprRange(rhs), fallback: token.range)
@@ -330,6 +330,9 @@ extension BuildASTPhase {
                 }
                 return true
             case .backtickedIdentifier:
+                // Note: backticked identifiers intentionally bypass the special BinaryOp handling.
+                // `downTo` and `step` written with backticks are treated as general infix function
+                // calls (desugared to memberCall), not as BinaryOp.downTo/step.
                 return true
             default:
                 return false
@@ -360,8 +363,6 @@ extension BuildASTPhase {
             case .stringQuote, .rawStringQuote:
                 return true
             case .softKeyword:
-                return true
-            case .keyword:  // other keywords that may act as identifiers in expression context
                 return true
             default:
                 return false
