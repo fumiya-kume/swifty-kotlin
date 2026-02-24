@@ -5,10 +5,10 @@ symbol s3 kind=property fq=golden.sema.LazyHolder.x vis=public flags=_ type=Int
 symbol s4 kind=field fq=golden.sema.LazyHolder.$delegate_x vis=private flags=_
 symbol s5 kind=class fq=golden.sema.CustomDelegate vis=public flags=_
 symbol s6 kind=constructor fq=golden.sema.CustomDelegate.<init> vis=public flags=_ sig=recv=Class#5 params=[] ret=Class#5 suspend=0 defaults=[] vararg=[]
-symbol s7 kind=function fq=golden.sema.CustomDelegate.getValue vis=public flags= sig=recv=Class#5 params=[Any?,Any?] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s7 kind=function fq=golden.sema.CustomDelegate.getValue vis=public flags=operatorFunction sig=recv=Class#5 params=[Any?,Any?] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
 symbol s8 kind=valueParameter fq=golden.sema.CustomDelegate.getValue.$7.thisRef vis=private flags=_
 symbol s9 kind=valueParameter fq=golden.sema.CustomDelegate.getValue.$7.property vis=private flags=_
-symbol s10 kind=function fq=golden.sema.CustomDelegate.setValue vis=public flags= sig=recv=Class#5 params=[Any?,Any?] ret=Unit suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s10 kind=function fq=golden.sema.CustomDelegate.setValue vis=public flags=operatorFunction sig=recv=Class#5 params=[Any?,Any?] ret=Unit suspend=0 defaults=[0,0] vararg=[0,0]
 symbol s11 kind=valueParameter fq=golden.sema.CustomDelegate.setValue.$10.thisRef vis=private flags=_
 symbol s12 kind=valueParameter fq=golden.sema.CustomDelegate.setValue.$10.property vis=private flags=_
 symbol s13 kind=class fq=golden.sema.Holder vis=public flags=_
