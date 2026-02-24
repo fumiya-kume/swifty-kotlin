@@ -106,7 +106,11 @@ final class LocalDeclTypeChecker {
         let allCandidateIDs = ctx.cachedScopeLookup(name)
         let (visibleIDs, _) = ctx.filterByVisibility(allCandidateIDs)
         let candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
-        if let propSymbol = candidates.first(where: { $0.kind == .property }) {
+        // Only match top-level properties (parent is a package), not class member properties.
+        if let propSymbol = candidates.first(where: { sym in
+            sym.kind == .property &&
+            sema.symbols.parentSymbol(for: sym.id).flatMap({ sema.symbols.symbol($0) }).map({ $0.kind == .package }) == true
+        }) {
             sema.bindings.bindIdentifier(id, symbol: propSymbol.id)
             let propType = sema.symbols.propertyType(for: propSymbol.id) ?? sema.types.anyType
             if !propSymbol.flags.contains(.mutable) {

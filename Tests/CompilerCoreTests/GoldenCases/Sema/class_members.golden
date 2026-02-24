@@ -8,7 +8,7 @@ symbol s6 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags
 symbol s7 kind=class fq=golden.sema.Counter vis=public flags=_
 symbol s8 kind=constructor fq=golden.sema.Counter.<init> vis=public flags=_ sig=recv=Class#7 params=[Int] ret=Class#7 suspend=0 defaults=[0] vararg=[0]
 symbol s9 kind=valueParameter fq=golden.sema.Counter.<init>.$8.initial vis=private flags=_
-symbol s10 kind=function fq=golden.sema.Counter.increment vis=public flags=_ sig=recv=Class#7 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s10 kind=function fq=golden.sema.Counter.increment vis=public flags=_ sig=recv=Class#7 params=[] ret=Any suspend=0 defaults=[] vararg=[]
 symbol s11 kind=function fq=golden.sema.Counter.get vis=public flags=_ sig=recv=Class#7 params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s12 kind=property fq=golden.sema.Counter.count vis=public flags=mutable type=Int
 symbol s13 kind=property fq=golden.sema.Counter.label vis=public flags=_ type=String
@@ -24,7 +24,7 @@ expr e2 name(count) type=_
 expr e3 name(count) type=Int ref=s12
 expr e4 int(1) type=Int
 expr e5 binary(add) lhs=e3 rhs=e4 type=String ref=s16
-expr e6 localAssign count value=e5 type=Unit ref=s12
+expr e6 localAssign count value=e5 type=<error>
 expr e7 name(count) type=Int ref=s12
 expr e8 string(singleton) type=String
 expr e9 string(hello) type=String

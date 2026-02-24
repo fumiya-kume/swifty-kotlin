@@ -551,7 +551,10 @@ final class ExprLowerer {
                 // Check if this is a top-level property assignment (not a local variable).
                 // Top-level properties need a copy to global storage rather than just
                 // updating localValuesBySymbol (which wouldn't persist across function calls).
-                if let symInfo = sema.symbols.symbol(symbol), symInfo.kind == .property {
+                // Only match top-level properties (parent is a package), not class member properties.
+                if let symInfo = sema.symbols.symbol(symbol), symInfo.kind == .property,
+                   let parentID = sema.symbols.parentSymbol(for: symbol),
+                   let parentSym = sema.symbols.symbol(parentID), parentSym.kind == .package {
                     let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
                     let globalRef = arena.appendExpr(.symbolRef(symbol), type: propType)
                     instructions.append(.constValue(result: globalRef, value: .symbolRef(symbol)))
@@ -702,7 +705,10 @@ final class ExprLowerer {
             )
             if let symbol = sema.bindings.identifierSymbols[exprID] {
                 // Top-level property compound assignment needs a copy to global storage.
-                if let symInfo = sema.symbols.symbol(symbol), symInfo.kind == .property {
+                // Only match top-level properties (parent is a package), not class member properties.
+                if let symInfo = sema.symbols.symbol(symbol), symInfo.kind == .property,
+                   let parentID = sema.symbols.parentSymbol(for: symbol),
+                   let parentSym = sema.symbols.symbol(parentID), parentSym.kind == .package {
                     let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
                     let globalRef = arena.appendExpr(.symbolRef(symbol), type: propType)
                     instructions.append(.constValue(result: globalRef, value: .symbolRef(symbol)))
