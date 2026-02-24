@@ -803,9 +803,39 @@ public final class OverloadResolver {
                 blameRange: blameRange
             )
 
-        case (_, .star), (.star, _):
-            // Star projection: no constraints.
+        case (_, .star):
+            // Supertype is star → wildcard accepts anything, no constraint needed.
             return []
+
+        case (.star, .invariant(let superInner)):
+            // Subtype is star (e.g. receiver `Box<*>` against signature `Box<T>`).
+            // Star projection is equivalent to `out Any?`, so constrain T = Any?
+            // to ensure the solver can infer the type variable.
+            return decomposeSubtypeConstraint(
+                subtype: typeSystem.nullableAnyType, supertype: superInner,
+                typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
+                blameRange: blameRange
+            ) + decomposeSubtypeConstraint(
+                subtype: superInner, supertype: typeSystem.nullableAnyType,
+                typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
+                blameRange: blameRange
+            )
+
+        case (.star, .out(let superInner)):
+            // Star sub with covariant super: T <: Any? (covariant direction).
+            return decomposeSubtypeConstraint(
+                subtype: typeSystem.nullableAnyType, supertype: superInner,
+                typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
+                blameRange: blameRange
+            )
+
+        case (.star, .in(let superInner)):
+            // Star sub with contravariant super: Any? <: T (contravariant direction).
+            return decomposeSubtypeConstraint(
+                subtype: superInner, supertype: typeSystem.nullableAnyType,
+                typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
+                blameRange: blameRange
+            )
 
         default:
             // Incompatible variance combinations (e.g. .out vs .in) – conservatively

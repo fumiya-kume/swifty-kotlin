@@ -23,15 +23,19 @@ symbol s21 kind=function fq=golden.sema.writeOnly vis=public flags=_ sig=recv=_ 
 symbol s22 kind=valueParameter fq=golden.sema.writeOnly.$21.box vis=private flags=_
 symbol s23 kind=function fq=golden.sema.starRead vis=public flags=_ sig=recv=_ params=[Class#11<*>] ret=Any? suspend=0 defaults=[0] vararg=[0]
 symbol s24 kind=valueParameter fq=golden.sema.starRead.$23.box vis=private flags=_
-symbol s25 kind=function fq=golden.sema.starWrite vis=public flags=_ sig=recv=_ params=[Class#11<*>] ret=Any suspend=0 defaults=[0] vararg=[0]
-symbol s26 kind=valueParameter fq=golden.sema.starWrite.$25.box vis=private flags=_
+symbol s25 kind=function fq=golden.sema.starReadInferred vis=public flags=_ sig=recv=_ params=[Class#11<*>] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s26 kind=valueParameter fq=golden.sema.starReadInferred.$25.box vis=private flags=_
+symbol s27 kind=function fq=golden.sema.starWrite vis=public flags=_ sig=recv=_ params=[Class#11<*>] ret=Any suspend=0 defaults=[0] vararg=[0]
+symbol s28 kind=valueParameter fq=golden.sema.starWrite.$27.box vis=private flags=_
+symbol s29 kind=local fq=__local_13.x vis=private flags=_
 file f0 package=golden.sema
   decl d2 class Box sym=s11
   decl d3 fun readOnly suspend=0 inline=0 sym=s17
   decl d4 fun writeBlocked suspend=0 inline=0 sym=s19
   decl d5 fun writeOnly suspend=0 inline=0 sym=s21
   decl d6 fun starRead suspend=0 inline=0 sym=s23
-  decl d7 fun starWrite suspend=0 inline=0 sym=s25
+  decl d7 fun starReadInferred suspend=0 inline=0 sym=s25
+  decl d8 fun starWrite suspend=0 inline=0 sym=s27
 expr e0 name(value) type=<error>
 expr e1 name(box) type=Class#11<out Any> ref=s18
 expr e2 memberCall recv=e1 callee=get args=[] type=Any call=s14 map=[] targs=[Any]
@@ -44,5 +48,8 @@ expr e8 memberCall recv=e6 callee=set args=[_:e7] type=Unit call=s15 map=[0->0] 
 expr e9 name(box) type=Class#11<*> ref=s24
 expr e10 memberCall recv=e9 callee=get args=[] type=Any? call=s14 map=[] targs=[Any?]
 expr e11 name(box) type=Class#11<*> ref=s26
-expr e12 int(42) type=Int
-expr e13 memberCall recv=e11 callee=set args=[_:e12] type=<error>
+expr e12 memberCall recv=e11 callee=get args=[] type=Any? call=s14 map=[] targs=[Any?]
+expr e13 localDecl x mutable=0 type=_ init=e12 type=Unit ref=s29
+expr e14 name(box) type=Class#11<*> ref=s28
+expr e15 int(42) type=Int
+expr e16 memberCall recv=e14 callee=set args=[_:e15] type=<error>

@@ -17,6 +17,10 @@ fun writeOnly(box: Box<in Int>) {
 
 fun starRead(box: Box<*>): Any? = box.get()
 
+fun starReadInferred(box: Box<*>) {
+    val x = box.get()
+}
+
 fun starWrite(box: Box<*>) {
     box.set(42)
 }
