@@ -276,33 +276,32 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                            let kind = delegateKindByFieldName[targetName] {
                             switch kind {
                             case .lazy:
-                                if let callResult {
-                                    let modeExpr = module.arena.appendExpr(
-                                        .intLiteral(lazyThreadSafetyModeValue), type: nil
+                                guard !callArgs.isEmpty else { break }
+                                let modeExpr = module.arena.appendExpr(
+                                    .intLiteral(lazyThreadSafetyModeValue), type: nil
+                                )
+                                finalBody.append(.constValue(
+                                    result: modeExpr,
+                                    value: .intLiteral(lazyThreadSafetyModeValue)
+                                ))
+                                finalBody.append(instruction)
+                                let createResult = module.arena.appendExpr(
+                                    .temporary(Int32(module.arena.expressions.count)),
+                                    type: nil
+                                )
+                                finalBody.append(
+                                    .call(
+                                        symbol: nil,
+                                        callee: lazyCreateName,
+                                        arguments: [callArgs[0], modeExpr],
+                                        result: createResult,
+                                        canThrow: false,
+                                        thrownResult: nil
                                     )
-                                    finalBody.append(.constValue(
-                                        result: modeExpr,
-                                        value: .intLiteral(lazyThreadSafetyModeValue)
-                                    ))
-                                    finalBody.append(instruction)
-                                    let createResult = module.arena.appendExpr(
-                                        .temporary(Int32(module.arena.expressions.count)),
-                                        type: nil
-                                    )
-                                    finalBody.append(
-                                        .call(
-                                            symbol: nil,
-                                            callee: lazyCreateName,
-                                            arguments: [callResult, modeExpr],
-                                            result: createResult,
-                                            canThrow: false,
-                                            thrownResult: nil
-                                        )
-                                    )
-                                    finalBody.append(.copy(from: createResult, to: to))
-                                    skipNext = true
-                                    continue
-                                }
+                                )
+                                finalBody.append(.copy(from: createResult, to: to))
+                                skipNext = true
+                                continue
                             case .observable:
                                 if let callResult {
                                     finalBody.append(instruction)
