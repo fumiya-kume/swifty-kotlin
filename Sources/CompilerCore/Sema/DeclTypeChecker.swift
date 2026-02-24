@@ -26,11 +26,26 @@ final class DeclTypeChecker {
 
         case .block(let exprIDs, _):
             var last = ctx.sema.types.unitType
+            var reachedNothing = false
             for (index, exprID) in exprIDs.enumerated() {
+                if reachedNothing {
+                    if let stmtRange = ctx.ast.arena.exprRange(exprID) {
+                        ctx.semaCtx.diagnostics.warning(
+                            "KSWIFTK-SEMA-0096",
+                            "Unreachable code.",
+                            range: stmtRange
+                        )
+                    }
+                    _ = driver.inferExpr(exprID, ctx: ctx, locals: &locals, expectedType: nil)
+                    continue
+                }
                 let expectedTypeForExpr = index == exprIDs.count - 1 ? expectedType : nil
                 last = driver.inferExpr(exprID, ctx: ctx, locals: &locals, expectedType: expectedTypeForExpr)
+                if last == ctx.sema.types.nothingType {
+                    reachedNothing = true
+                }
             }
-            return last
+            return reachedNothing ? ctx.sema.types.nothingType : last
         }
     }
 
@@ -281,7 +296,7 @@ final class DeclTypeChecker {
             diagnostics: diagnostics
         )
 
-        if function.returnType == nil && bodyType != sema.types.errorType {
+        if function.returnType == nil && bodyType != sema.types.errorType && bodyType != sema.types.nothingType {
             sema.symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: signature.receiverType,
