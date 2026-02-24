@@ -578,6 +578,46 @@ public enum RuntimeABISpec {
         )
     ]
 
+    // Range/Progression (P5-68)
+    public static let rangeFunctions: [RuntimeABIFunctionSpec] = [
+        RuntimeABIFunctionSpec(
+            name: "kk_op_rangeTo",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_op_rangeUntil",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_op_downTo",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_op_step",
+            parameters: [
+                RuntimeABIParameter(name: "rangeRaw", type: .intptr),
+                RuntimeABIParameter(name: "stepVal", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Range"
+        )
+    ]
+
     public static let allFunctions: [RuntimeABIFunctionSpec] =
         memoryFunctions
         + exceptionFunctions
@@ -587,6 +627,7 @@ public enum RuntimeABISpec {
         + coroutineFunctions
         + boxingFunctions
         + arrayFunctions
+        + rangeFunctions
 
     public static func generateCHeader() -> String {
         var lines: [String] = []

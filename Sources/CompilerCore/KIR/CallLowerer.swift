@@ -849,6 +849,26 @@ final class CallLowerer {
                 thrownResult: nil
             ))
             return result
+        case .downTo:
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_op_downTo"),
+                arguments: [lhsID, rhsID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        case .step:
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_op_step"),
+                arguments: [lhsID, rhsID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
         }
         instructions.append(.binary(op: kirOp, lhs: lhsID, rhs: rhsID, result: result))
         return result

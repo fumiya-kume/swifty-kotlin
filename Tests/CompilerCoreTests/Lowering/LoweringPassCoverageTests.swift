@@ -12,9 +12,9 @@ final class LoweringPassCoverageTests: XCTestCase {
         }
 
         let callees = extractCallees(from: loweredMain.body, interner: fixture.interner)
-        XCTAssertTrue(callees.contains("iterator"))
-        XCTAssertTrue(callees.contains("hasNext"))
-        XCTAssertTrue(callees.contains("next"))
+        XCTAssertTrue(callees.contains("kk_range_iterator"))
+        XCTAssertTrue(callees.contains("kk_range_hasNext"))
+        XCTAssertTrue(callees.contains("kk_range_next"))
         XCTAssertFalse(callees.contains("kk_for_lowered"))
         // kk_when_select removed; select is now control flow (jumpIfEqual + copy + jump + label)
         XCTAssertFalse(callees.contains("kk_when_select"))
@@ -2029,7 +2029,7 @@ final class LoweringPassCoverageTests: XCTestCase {
             params: [],
             returnType: TypeSystem().unitType,
             body: [
-                .call(symbol: nil, callee: interner.intern("iterator"), arguments: [v0], result: v3, canThrow: false, thrownResult: nil),
+                .call(symbol: nil, callee: interner.intern("kk_range_iterator"), arguments: [v0], result: v3, canThrow: false, thrownResult: nil),
                 .call(symbol: nil, callee: interner.intern("kk_for_lowered"), arguments: [v3], result: v1, canThrow: false, thrownResult: nil),
                 .constValue(result: vFalse, value: .boolLiteral(false)),
                 .jumpIfEqual(lhs: v0, rhs: vFalse, target: 800),
