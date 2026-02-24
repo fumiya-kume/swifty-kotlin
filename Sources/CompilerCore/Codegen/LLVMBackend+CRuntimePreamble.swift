@@ -5,8 +5,10 @@ extension LLVMBackend {
     /// runtime preamble has already been compiled into a cached stub object.
     /// Includes type definitions, macros, and extern declarations for all
     /// runtime functions that user code may reference.
-    func cRuntimeExternDeclarations() -> [String] {
-        [
+    ///
+    /// Stored as a static constant to avoid re-creating the array on every
+    /// compilation (P5-64).
+    static let fixedExternDeclarations: [String] = [
             "#define _DEFAULT_SOURCE",
             "#include <stdint.h>",
             "#include <stddef.h>",
@@ -94,11 +96,16 @@ extension LLVMBackend {
             "extern KKVTableEntry kk_vtable_lookup(intptr_t receiver, intptr_t slot);",
             "extern KKVTableEntry kk_itable_lookup(intptr_t receiver, intptr_t ifaceSlot, intptr_t methodSlot);",
             ""
-        ]
+    ]
+
+    func cRuntimeExternDeclarations() -> [String] {
+        Self.fixedExternDeclarations
     }
 
-    func cRuntimePreamble() -> [String] {
-        [
+    /// Full C runtime preamble including all function implementations.
+    /// Stored as a static constant to avoid re-creating ~620 lines of strings
+    /// on every compilation (P5-64).
+    static let fixedRuntimePreamble: [String] = [
             "#define _DEFAULT_SOURCE",
             "#include <stdint.h>",
             "#include <stddef.h>",
@@ -733,6 +740,9 @@ extension LLVMBackend {
             "  return itable[methodSlot];",
             "}",
             ""
-        ]
+    ]
+
+    func cRuntimePreamble() -> [String] {
+        Self.fixedRuntimePreamble
     }
 }
