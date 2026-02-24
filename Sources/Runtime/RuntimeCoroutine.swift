@@ -192,6 +192,11 @@ internal final class RuntimeCoroutineScope {
     }
 
     func registerChild(_ handle: Int) {
+        // Take an additional retain so the scope keeps the child alive
+        // even if user code calls takeRetainedValue (e.g. kk_kxmini_async_await)
+        if let ptr = UnsafeMutableRawPointer(bitPattern: handle) {
+            _ = Unmanaged<AnyObject>.fromOpaque(ptr).retain()
+        }
         lock.lock()
         children.append(handle)
         let cancelled = isCancelled
@@ -214,9 +219,14 @@ internal final class RuntimeCoroutineScope {
     func waitForChildren() {
         lock.lock()
         let currentChildren = children
+        children.removeAll()
         lock.unlock()
         for child in currentChildren {
             _ = runtimeJoinChild(child)
+            // Release the extra retain taken in registerChild
+            if let ptr = UnsafeMutableRawPointer(bitPattern: child) {
+                Unmanaged<AnyObject>.fromOpaque(ptr).release()
+            }
         }
     }
 }
