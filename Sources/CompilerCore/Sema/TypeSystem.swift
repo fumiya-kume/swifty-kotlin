@@ -8,6 +8,7 @@ public final class TypeSystem {
     public let errorType: TypeID
     public let unitType: TypeID
     public let nothingType: TypeID
+    public let nullableNothingType: TypeID
     public let anyType: TypeID
     public let nullableAnyType: TypeID
     public let booleanType: TypeID
@@ -22,20 +23,22 @@ public final class TypeSystem {
         self.errorType = TypeID(rawValue: 0)
         self.unitType = TypeID(rawValue: 1)
         self.nothingType = TypeID(rawValue: 2)
-        self.anyType = TypeID(rawValue: 3)
-        self.nullableAnyType = TypeID(rawValue: 4)
-        self.booleanType = TypeID(rawValue: 5)
-        self.charType = TypeID(rawValue: 6)
-        self.intType = TypeID(rawValue: 7)
-        self.longType = TypeID(rawValue: 8)
-        self.floatType = TypeID(rawValue: 9)
-        self.doubleType = TypeID(rawValue: 10)
-        self.stringType = TypeID(rawValue: 11)
+        self.nullableNothingType = TypeID(rawValue: 3)
+        self.anyType = TypeID(rawValue: 4)
+        self.nullableAnyType = TypeID(rawValue: 5)
+        self.booleanType = TypeID(rawValue: 6)
+        self.charType = TypeID(rawValue: 7)
+        self.intType = TypeID(rawValue: 8)
+        self.longType = TypeID(rawValue: 9)
+        self.floatType = TypeID(rawValue: 10)
+        self.doubleType = TypeID(rawValue: 11)
+        self.stringType = TypeID(rawValue: 12)
 
         idToKind = [
             .error,
             .unit,
-            .nothing,
+            .nothing(.nonNull),
+            .nothing(.nullable),
             .any(.nonNull),
             .any(.nullable),
             .primitive(.boolean, .nonNull),
@@ -49,7 +52,8 @@ public final class TypeSystem {
         kindToID = [
             .error: errorType,
             .unit: unitType,
-            .nothing: nothingType,
+            .nothing(.nonNull): nothingType,
+            .nothing(.nullable): nullableNothingType,
             .any(.nonNull): anyType,
             .any(.nullable): nullableAnyType,
             .primitive(.boolean, .nonNull): booleanType,
@@ -64,8 +68,11 @@ public final class TypeSystem {
 
     public func withNullability(_ nullability: Nullability, for type: TypeID) -> TypeID {
         switch kind(of: type) {
-        case .error, .unit, .nothing, .intersection:
+        case .error, .unit, .intersection:
             return type
+        case .nothing(let existing):
+            if existing == nullability { return type }
+            return nullability == .nullable ? nullableNothingType : nothingType
         case .any(let existing):
             if existing == nullability { return type }
             return nullability == .nullable ? nullableAnyType : anyType

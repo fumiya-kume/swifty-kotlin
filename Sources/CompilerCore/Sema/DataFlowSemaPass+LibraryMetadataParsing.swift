@@ -529,6 +529,8 @@ extension DataFlowSemaPassPhase {
                     isSuspend: functionType.isSuspend,
                     nullability: .nullable
                 )))
+            case .nothing:
+                return types.nullableNothingType
             default:
                 return types.nullableAnyType
             }

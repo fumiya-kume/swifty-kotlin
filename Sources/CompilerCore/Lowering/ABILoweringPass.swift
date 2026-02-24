@@ -82,7 +82,8 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_int_to_float_bits"),
             ctx.interner.intern("kk_int_to_double_bits"),
             ctx.interner.intern("kk_float_to_double_bits"),
-            ctx.interner.intern("kk_any_to_string")
+            ctx.interner.intern("kk_any_to_string"),
+            ctx.interner.intern("kk_op_elvis")
         ]
 
         let boxIntCallee = ctx.interner.intern("kk_box_int")

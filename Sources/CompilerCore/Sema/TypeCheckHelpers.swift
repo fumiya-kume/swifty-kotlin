@@ -154,7 +154,7 @@ struct TypeCheckHelpers {
         case "String":  return types.withNullability(nullability, for: types.stringType)
         case "Any":     return nullability == .nullable ? types.nullableAnyType : types.anyType
         case "Unit":    return types.unitType
-        case "Nothing": return types.nothingType
+        case "Nothing": return nullability == .nullable ? types.nullableNothingType : types.nothingType
         default:        return nil
         }
     }
