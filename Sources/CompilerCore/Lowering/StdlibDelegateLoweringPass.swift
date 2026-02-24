@@ -33,34 +33,93 @@ final class StdlibDelegateLoweringPass: LoweringPass {
         let lazyThreadSafetyModeValue = Int64(ctx.options.lazyThreadSafetyMode.rawValue)
 
         // Build a mapping from $delegate_ field name → delegate kind.
-        // We inspect call bindings and identifier bindings in sema for known
-        // stdlib delegate factory names, then tag all $delegate_ field symbols.
+        // We scan KIR function bodies for initialization patterns:
+        //   .call(_, callee, ...) followed by .copy(_, to: $delegate_X)
+        // This ensures each $delegate_ field is associated with the specific
+        // factory function (lazy/observable/vetoable) that initializes it.
         var delegateKindByFieldName: [String: StdlibDelegateKind] = [:]
         if let sema {
-            // Scan call bindings for known factory names.
-            for (_, binding) in sema.bindings.callBindings {
-                guard let calleeInfo = sema.symbols.symbol(binding.chosenCallee) else {
-                    continue
+            // Phase 1: scan KIR instructions to find call→copy patterns
+            // that write to $delegate_ fields, and infer the delegate kind
+            // from the callee or from sema call bindings on the call expr.
+            module.arena.transformFunctions { function in
+                let body = function.body
+                for (index, instruction) in body.enumerated() {
+                    guard case .call(_, let callee, _, _, _, _, _) = instruction else {
+                        continue
+                    }
+                    let nextIndex = index + 1
+                    guard nextIndex < body.count,
+                          case .copy(_, let to) = body[nextIndex],
+                          let toExpr = module.arena.expr(to),
+                          case .symbolRef(let targetSym) = toExpr,
+                          let targetSymInfo = sema.symbols.symbol(targetSym),
+                          targetSymInfo.kind == .field else {
+                        continue
+                    }
+                    let fieldName = interner.resolve(targetSymInfo.name)
+                    guard fieldName.hasPrefix("$delegate_"),
+                          delegateKindByFieldName[fieldName] == nil else {
+                        continue
+                    }
+                    // Try to determine kind from the callee name directly.
+                    let calleeName = interner.resolve(callee)
+                    if let kind = delegateFactoryKind(calleeName) {
+                        delegateKindByFieldName[fieldName] = kind
+                    }
                 }
-                let calleeName = interner.resolve(calleeInfo.name)
-                if let kind = delegateFactoryKind(calleeName) {
-                    markDelegateFields(
-                        kind: kind, sema: sema, interner: interner,
-                        into: &delegateKindByFieldName
-                    )
+                return function // no mutation in this scan pass
+            }
+
+            // Phase 2 fallback: scan sema call bindings keyed by ExprID,
+            // then match each factory call to its owning property's
+            // $delegate_ field via the property's fqName.
+            if delegateKindByFieldName.isEmpty {
+                for (_, binding) in sema.bindings.callBindings {
+                    guard let calleeInfo = sema.symbols.symbol(binding.chosenCallee) else {
+                        continue
+                    }
+                    let calleeName = interner.resolve(calleeInfo.name)
+                    guard let kind = delegateFactoryKind(calleeName) else { continue }
+
+                    // Walk the callee's fqName ancestors to find the owning
+                    // property, then derive the $delegate_ field name.
+                    let fqName = calleeInfo.fqName
+                    for ancestor in fqName.dropLast() {
+                        let ancestorName = interner.resolve(ancestor)
+                        let delegateFieldName = "$delegate_\(ancestorName)"
+                        if delegateKindByFieldName[delegateFieldName] == nil {
+                            // Verify this field actually exists in the symbol table.
+                            let fieldExists = sema.symbols.allSymbols().contains {
+                                $0.kind == .field && interner.resolve($0.name) == delegateFieldName
+                            }
+                            if fieldExists {
+                                delegateKindByFieldName[delegateFieldName] = kind
+                            }
+                        }
+                    }
                 }
             }
 
-            // Fallback: scan identifier bindings if no call bindings matched.
+            // Phase 3 fallback: scan identifier bindings for individual
+            // factory references and match to their enclosing property.
             if delegateKindByFieldName.isEmpty {
                 for (_, sym) in sema.bindings.identifierSymbols {
                     guard let symInfo = sema.symbols.symbol(sym) else { continue }
                     let name = interner.resolve(symInfo.name)
-                    if let kind = delegateFactoryKind(name) {
-                        markDelegateFields(
-                            kind: kind, sema: sema, interner: interner,
-                            into: &delegateKindByFieldName
-                        )
+                    guard let kind = delegateFactoryKind(name) else { continue }
+                    let fqName = symInfo.fqName
+                    for ancestor in fqName.dropLast() {
+                        let ancestorName = interner.resolve(ancestor)
+                        let delegateFieldName = "$delegate_\(ancestorName)"
+                        if delegateKindByFieldName[delegateFieldName] == nil {
+                            let fieldExists = sema.symbols.allSymbols().contains {
+                                $0.kind == .field && interner.resolve($0.name) == delegateFieldName
+                            }
+                            if fieldExists {
+                                delegateKindByFieldName[delegateFieldName] = kind
+                            }
+                        }
                     }
                 }
             }
@@ -265,20 +324,4 @@ final class StdlibDelegateLoweringPass: LoweringPass {
         }
     }
 
-    /// Tags all `$delegate_*` field symbols with the given delegate kind.
-    private func markDelegateFields(
-        kind: StdlibDelegateKind,
-        sema: SemaModule,
-        interner: StringInterner,
-        into map: inout [String: StdlibDelegateKind]
-    ) {
-        for sym in sema.symbols.allSymbols() {
-            guard sym.kind == .field else { continue }
-            let name = interner.resolve(sym.name)
-            guard name.hasPrefix("$delegate_") else { continue }
-            if map[name] == nil {
-                map[name] = kind
-            }
-        }
-    }
 }
