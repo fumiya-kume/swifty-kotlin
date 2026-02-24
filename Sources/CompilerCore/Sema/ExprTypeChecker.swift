@@ -498,6 +498,7 @@ final class ExprTypeChecker {
         let interner = ctx.interner
 
         let intType = sema.types.intType
+        let charType = sema.types.charType
         let stringType = sema.types.stringType
 
         let valueType = driver.inferExpr(valueExpr, ctx: ctx, locals: &locals, expectedType: nil)
@@ -529,8 +530,20 @@ final class ExprTypeChecker {
         let resultType: TypeID
         switch underlyingOp {
         case .add:
-            resultType = (local.type == stringType || valueType == stringType) ? stringType : intType
-        case .subtract, .multiply, .divide, .modulo:
+            if local.type == stringType || valueType == stringType {
+                resultType = stringType
+            } else if local.type == charType && valueType == intType {
+                resultType = charType
+            } else {
+                resultType = intType
+            }
+        case .subtract:
+            if local.type == charType && valueType == intType {
+                resultType = charType
+            } else {
+                resultType = intType
+            }
+        case .multiply, .divide, .modulo:
             resultType = intType
         default:
             resultType = local.type
