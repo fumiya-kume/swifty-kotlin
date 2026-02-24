@@ -184,10 +184,10 @@ extension DataFlowSemaPassPhase {
                     let constCollector = ConstantCollector()
                     if let constKind = constCollector.literalConstantExpr(initExpr, ast: ast) {
                         symbols.setConstValueExprKind(constKind, for: memberSymbol)
-                    } else if propertyDecl.type == nil {
+                    } else {
                         diagnostics.error(
-                            "KSWIFTK-SEMA-0082",
-                            "'const val' type must be a primitive type or String.",
+                            "KSWIFTK-SEMA-0083",
+                            "'const val' initializer must be a compile-time constant expression.",
                             range: propertyDecl.range
                         )
                     }
