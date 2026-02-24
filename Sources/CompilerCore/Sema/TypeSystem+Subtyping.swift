@@ -178,8 +178,9 @@ extension TypeSystem {
         if types.dropFirst().allSatisfy({ $0 == first }) {
             return first
         }
+        let hasNullableNothing = types.contains { kind(of: $0) == .nothing(.nullable) }
         if types.contains(where: { if case .nothing = kind(of: $0) { return true }; return false }) {
-            return nothingType
+            return hasNullableNothing ? nullableNothingType : nothingType
         }
         return make(.intersection(types))
     }
