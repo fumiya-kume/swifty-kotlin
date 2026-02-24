@@ -13,15 +13,8 @@ env:
 
 jobs:
   smoke-tests:
-    name: Smoke Tests (${{ matrix.arch }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - os: macos-15
-            arch: ARM64
-          - os: macos-13
-            arch: Intel
+    name: Smoke Tests
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - name: Install LLVM
@@ -37,15 +30,8 @@ jobs:
         run: bash Scripts/swift_test.sh --filter SmokeTests
 
   diff-regression:
-    name: kotlinc Diff Regression (${{ matrix.arch }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - os: macos-15
-            arch: ARM64
-          - os: macos-13
-            arch: Intel
+    name: kotlinc Diff Regression
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
@@ -79,15 +65,8 @@ jobs:
           exit 1
 
   test-and-coverage:
-    name: Test and Coverage Gate (${{ matrix.arch }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - os: macos-15
-            arch: ARM64
-          - os: macos-13
-            arch: Intel
+    name: Test and Coverage Gate
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - name: Install LLVM
