@@ -3051,7 +3051,7 @@ final class LibraryMetadataCoverageTests: XCTestCase {
             externalLinkName: nil, declaredFieldCount: nil, declaredInstanceSizeWords: nil,
             declaredVtableSize: nil, declaredItableSize: nil, superFQName: nil,
             fieldOffsets: [], vtableSlots: [], itableSlots: [], isDataClass: false,
-            isSealedClass: false, annotations: []
+            isSealedClass: false, sealedSubclassFQNames: [], annotations: []
         )
         cache.cacheMetadataRecords([record], metadataPath: metadataPath, interner: interner)
 
@@ -3074,7 +3074,7 @@ final class LibraryMetadataCoverageTests: XCTestCase {
             externalLinkName: nil, declaredFieldCount: nil, declaredInstanceSizeWords: nil,
             declaredVtableSize: nil, declaredItableSize: nil, superFQName: nil,
             fieldOffsets: [], vtableSlots: [], itableSlots: [], isDataClass: false,
-            isSealedClass: false, annotations: []
+            isSealedClass: false, sealedSubclassFQNames: [], annotations: []
         )
         cache.cacheMetadataRecords([record], metadataPath: metadataPath, interner: interner1)
 
@@ -3172,7 +3172,7 @@ final class LibraryMetadataCoverageTests: XCTestCase {
             externalLinkName: nil, declaredFieldCount: nil, declaredInstanceSizeWords: nil,
             declaredVtableSize: nil, declaredItableSize: nil, superFQName: nil,
             fieldOffsets: [], vtableSlots: [], itableSlots: [], isDataClass: false,
-            isSealedClass: false, annotations: []
+            isSealedClass: false, sealedSubclassFQNames: [], annotations: []
         )
         cache.cacheMetadataRecords([record], metadataPath: metadataPath, interner: interner1)
         XCTAssertEqual(cache.metadataCacheCount, 1)
@@ -3185,7 +3185,7 @@ final class LibraryMetadataCoverageTests: XCTestCase {
             externalLinkName: nil, declaredFieldCount: nil, declaredInstanceSizeWords: nil,
             declaredVtableSize: nil, declaredItableSize: nil, superFQName: nil,
             fieldOffsets: [], vtableSlots: [], itableSlots: [], isDataClass: false,
-            isSealedClass: false, annotations: []
+            isSealedClass: false, sealedSubclassFQNames: [], annotations: []
         )
         let otherPath = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".bin").path
         try "symbols=0".write(toFile: otherPath, atomically: true, encoding: .utf8)
