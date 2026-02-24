@@ -280,6 +280,11 @@ final class CallLowerer {
            let signature = sema.symbols.functionSignature(for: chosen),
            signature.receiverType != nil {
             finalArguments.insert(loweredReceiverID, at: 0)
+        } else if chosen == nil {
+            // Unresolved member call (e.g. collection stub methods like
+            // size, get, contains, isEmpty): always prepend receiver so that
+            // the CollectionLiteralLoweringPass can match it.
+            finalArguments.insert(loweredReceiverID, at: 0)
         }
         if memberNormalized.defaultMask != 0, let chosen {
             let intType = sema.types.make(.primitive(.int, .nonNull))

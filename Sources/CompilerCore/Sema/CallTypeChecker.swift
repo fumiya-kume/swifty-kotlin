@@ -207,6 +207,21 @@ final class CallTypeChecker {
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
         }
+        // Collection literal factory functions (P5-84).
+        if let calleeName {
+            let name = interner.resolve(calleeName)
+            switch name {
+            case "listOf", "mutableListOf", "emptyList",
+                 "arrayOf", "intArrayOf", "longArrayOf",
+                 "mapOf", "mutableMapOf", "emptyMap",
+                 "setOf", "mutableSetOf", "emptySet",
+                 "listOfNotNull":
+                sema.bindings.bindExprType(id, type: sema.types.anyType)
+                return sema.types.anyType
+            default:
+                break
+            }
+        }
         if let firstInvisible = callInvisible.first, let calleeName {
             driver.helpers.emitVisibilityError(for: firstInvisible, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
         } else {
@@ -443,6 +458,36 @@ final class CallTypeChecker {
             if let firstInvisible = invisible.first {
                 driver.helpers.emitVisibilityError(for: firstInvisible, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
                 return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+            }
+            // Collection member access fallback (P5-84): allow .size, .get,
+            // .contains, .containsKey, .isEmpty, .first, .last, .indexOf,
+            // .keys, .values, .entries, .indices, .toList, .toMutableList,
+            // .forEach, .map, .filter, .count, .reversed, .sorted, .joinToString,
+            // .toSet, .toMap, .toTypedArray on any receiver.
+            if !isClassNameReceiver {
+                let memberName = interner.resolve(calleeName)
+                let collectionMembers: Set<String> = [
+                    "size", "get", "contains", "containsKey",
+                    "isEmpty", "first", "last", "indexOf",
+                    "keys", "values", "entries", "indices",
+                    "toList", "toMutableList", "forEach", "map",
+                    "filter", "count", "reversed", "sorted",
+                    "joinToString", "toSet", "toMap", "toTypedArray"
+                ]
+                if collectionMembers.contains(memberName) {
+                    let resultType: TypeID
+                    switch memberName {
+                    case "size", "count", "indexOf":
+                        resultType = sema.types.make(.primitive(.int, .nonNull))
+                    case "isEmpty", "contains", "containsKey":
+                        resultType = sema.types.make(.primitive(.boolean, .nonNull))
+                    default:
+                        resultType = sema.types.anyType
+                    }
+                    let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
             }
             if safeCall {
                 let resultType = sema.types.nullableAnyType
