@@ -1,8 +1,11 @@
-fun printFirst(list: List<*>) {
-    println(list[0])
+open class Box<T>(val value: T) {
+    fun get(): T = value
+    fun set(v: T) {}
 }
 
+fun readStar(box: Box<*>): Any? = box.get()
+
 fun main() {
-    printFirst(listOf(1, 2, 3))
-    printFirst(listOf("a", "b"))
+    val box = Box(42)
+    println(readStar(box))
 }
