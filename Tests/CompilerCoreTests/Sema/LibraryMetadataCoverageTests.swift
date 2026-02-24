@@ -2947,15 +2947,16 @@ final class LibraryMetadataCoverageTests: XCTestCase {
         XCTAssertEqual(cache.metadataCacheCount, libraryCount, "Should have cached all \(libraryCount) metadata files")
         XCTAssertGreaterThan(cache.signatureCacheCount, 0, "Should have cached type signatures")
 
-        // Log timing results — the cached path should be no slower than uncached.
-        // We don't assert a hard speedup ratio since test environments vary,
-        // but the test ensures both paths produce correct results.
-        print("[P5-62 Bench] Libraries=\(libraryCount) Symbols/lib=\(symbolsPerLibrary)")
-        print("[P5-62 Bench] Avg Sema (no cache):   \(String(format: "%.4f", timeWithoutCache * 1000)) ms")
-        print("[P5-62 Bench] Avg Sema (with cache):  \(String(format: "%.4f", timeWithCache * 1000)) ms")
-        if timeWithoutCache > 0 {
-            let ratio = timeWithCache / timeWithoutCache
-            print("[P5-62 Bench] Ratio (cached/uncached): \(String(format: "%.2f", ratio))x")
+        // Log timing results only when P5_62_BENCH_LOG env var is set,
+        // keeping normal CI runs quiet and deterministic.
+        if ProcessInfo.processInfo.environment["P5_62_BENCH_LOG"] != nil {
+            print("[P5-62 Bench] Libraries=\(libraryCount) Symbols/lib=\(symbolsPerLibrary)")
+            print("[P5-62 Bench] Avg Sema (no cache):   \(String(format: "%.4f", timeWithoutCache * 1000)) ms")
+            print("[P5-62 Bench] Avg Sema (with cache):  \(String(format: "%.4f", timeWithCache * 1000)) ms")
+            if timeWithoutCache > 0 {
+                let ratio = timeWithCache / timeWithoutCache
+                print("[P5-62 Bench] Ratio (cached/uncached): \(String(format: "%.2f", ratio))x")
+            }
         }
     }
 
@@ -2977,10 +2978,11 @@ final class LibraryMetadataCoverageTests: XCTestCase {
 
         let cache = LibraryMetadataCache()
         let info = DataFlowSemaPassPhase.LibraryManifestInfo(metadataPath: libDir.appendingPathComponent("metadata.bin").path, inlineKIRDir: nil, isValid: true)
-        cache.cacheManifestInfo(info, libraryDir: libDir.path)
+        let target = TargetTriple.hostDefault()
+        cache.cacheManifestInfo(info, libraryDir: libDir.path, target: target)
 
-        let retrieved = cache.cachedManifestInfo(libraryDir: libDir.path)
-        XCTAssertNotNil(retrieved, "Should hit cache for same libraryDir + mtime")
+        let retrieved = cache.cachedManifestInfo(libraryDir: libDir.path, target: target)
+        XCTAssertNotNil(retrieved, "Should hit cache for same libraryDir + mtime + target")
         XCTAssertEqual(retrieved?.metadataPath, info.metadataPath)
         XCTAssertEqual(retrieved?.isValid, true)
     }
@@ -3000,9 +3002,10 @@ final class LibraryMetadataCoverageTests: XCTestCase {
 
         let cache = LibraryMetadataCache()
         let info = DataFlowSemaPassPhase.LibraryManifestInfo(metadataPath: "/some/path", inlineKIRDir: nil, isValid: true)
-        cache.cacheManifestInfo(info, libraryDir: libDir1.path)
+        let target = TargetTriple.hostDefault()
+        cache.cacheManifestInfo(info, libraryDir: libDir1.path, target: target)
 
-        let retrieved = cache.cachedManifestInfo(libraryDir: libDir2.path)
+        let retrieved = cache.cachedManifestInfo(libraryDir: libDir2.path, target: target)
         XCTAssertNil(retrieved, "Should miss cache for different libraryDir")
     }
 
@@ -3017,16 +3020,18 @@ final class LibraryMetadataCoverageTests: XCTestCase {
 
         let cache = LibraryMetadataCache()
         let info = DataFlowSemaPassPhase.LibraryManifestInfo(metadataPath: "/some/path", inlineKIRDir: nil, isValid: true)
-        cache.cacheManifestInfo(info, libraryDir: libDir.path)
+        let target = TargetTriple.hostDefault()
+        cache.cacheManifestInfo(info, libraryDir: libDir.path, target: target)
 
         // Verify hit before modification
-        XCTAssertNotNil(cache.cachedManifestInfo(libraryDir: libDir.path), "Should hit before modification")
+        XCTAssertNotNil(cache.cachedManifestInfo(libraryDir: libDir.path, target: target), "Should hit before modification")
 
-        // Modify the file to change mtime
-        Thread.sleep(forTimeInterval: 0.05)
-        try "{\"changed\": true}".write(to: manifestPath, atomically: true, encoding: .utf8)
+        // Explicitly set a different mtime to deterministically invalidate the cache
+        // (avoids relying on filesystem mtime granularity which can be 1s on some systems)
+        let futureDate = Date(timeIntervalSinceNow: 10)
+        try fm.setAttributes([.modificationDate: futureDate], ofItemAtPath: manifestPath.path)
 
-        let retrieved = cache.cachedManifestInfo(libraryDir: libDir.path)
+        let retrieved = cache.cachedManifestInfo(libraryDir: libDir.path, target: target)
         XCTAssertNil(retrieved, "Should miss cache after file modification changes mtime")
     }
 

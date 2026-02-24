@@ -208,7 +208,7 @@ extension DataFlowSemaPassPhase {
         return decoded
     }
 
-    func decodeImportedTypeSignature(
+    private func decodeImportedTypeSignature(
         token: String,
         symbols: SymbolTable,
         types: TypeSystem,

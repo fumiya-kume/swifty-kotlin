@@ -22,7 +22,7 @@ extension DataFlowSemaPassPhase {
 
         for libraryDir in libraryDirs {
             let manifestInfo: LibraryManifestInfo
-            if let cached = cache?.cachedManifestInfo(libraryDir: libraryDir) {
+            if let cached = cache?.cachedManifestInfo(libraryDir: libraryDir, target: options.target) {
                 manifestInfo = cached
             } else {
                 manifestInfo = resolveLibraryManifestInfo(
@@ -30,7 +30,7 @@ extension DataFlowSemaPassPhase {
                     currentTarget: options.target,
                     diagnostics: diagnostics
                 )
-                cache?.cacheManifestInfo(manifestInfo, libraryDir: libraryDir)
+                cache?.cacheManifestInfo(manifestInfo, libraryDir: libraryDir, target: options.target)
             }
             guard manifestInfo.isValid else {
                 continue
