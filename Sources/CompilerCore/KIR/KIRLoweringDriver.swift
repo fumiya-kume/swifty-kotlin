@@ -75,10 +75,9 @@ final class KIRLoweringDriver {
             sema: sema
         )
 
-        // Collect top-level property init instructions to inject into main (declaration order).
-        var topLevelPropertyInitInstructions: [KIRInstruction] = []
-        // Collect top-level delegate property init instructions to inject into main.
-        var delegateInitInstructions: [KIRInstruction] = []
+        // Collect all top-level property init instructions (regular + delegate) in declaration order.
+        // Using a single array ensures Kotlin's strict declaration-order initialization guarantee.
+        var allTopLevelInitInstructions: [KIRInstruction] = []
         // Maps property symbol → copy-target KIRExprID that holds the delegate handle.
         // The LLVM backend resolves copy targets via alloca/load, so we use the copy
         // target expr ID (not a symbolRef) as the argument in getValue calls.
@@ -622,7 +621,7 @@ final class KIRLoweringDriver {
                             let globalRef = arena.appendExpr(.symbolRef(symbol), type: propType)
                             initInstructions.append(.constValue(result: globalRef, value: .symbolRef(symbol)))
                             initInstructions.append(.copy(from: initValue, to: globalRef))
-                            topLevelPropertyInitInstructions.append(contentsOf: initInstructions)
+                            allTopLevelInitInstructions.append(contentsOf: initInstructions)
                             declIDs.append(contentsOf: ctx.drainGeneratedCallableDecls())
                         }
                     }
@@ -762,7 +761,7 @@ final class KIRLoweringDriver {
                             initInstructions.append(.copy(from: createResult, to: delegateHandleExpr))
                         }
 
-                        delegateInitInstructions.append(contentsOf: initInstructions)
+                        allTopLevelInitInstructions.append(contentsOf: initInstructions)
                         declIDs.append(contentsOf: ctx.drainGeneratedCallableDecls())
                     }
 
@@ -780,7 +779,7 @@ final class KIRLoweringDriver {
 
         // Post-process: inject top-level property init and delegate init instructions
         // at the start of main, and rewrite delegate property accesses to getValue calls.
-        if !topLevelPropertyInitInstructions.isEmpty || !delegateInitInstructions.isEmpty || !delegateHandleExprByPropertySymbol.isEmpty {
+        if !allTopLevelInitInstructions.isEmpty || !delegateHandleExprByPropertySymbol.isEmpty {
             let interner = compilationCtx.interner
             let mainName = interner.intern("main")
             let lazyGetValueName = interner.intern("kk_lazy_get_value")
@@ -807,18 +806,17 @@ final class KIRLoweringDriver {
 
             arena.transformFunctions { function in
                 var updated = function
-                // Inject top-level property init and delegate init at the beginning of main function.
-                // Property init comes first (declaration order), then delegate init.
-                let allInitInstructions = topLevelPropertyInitInstructions + delegateInitInstructions
-                if function.name == mainName, !allInitInstructions.isEmpty {
+                // Inject all top-level property init instructions at the beginning of main function.
+                // Instructions are already in declaration order (regular and delegate interleaved).
+                if function.name == mainName, !allTopLevelInitInstructions.isEmpty {
                     var newBody: [KIRInstruction] = []
                     // Keep .beginBlock at the front if present.
                     if let first = function.body.first, case .beginBlock = first {
                         newBody.append(first)
-                        newBody.append(contentsOf: allInitInstructions)
+                        newBody.append(contentsOf: allTopLevelInitInstructions)
                         newBody.append(contentsOf: function.body.dropFirst())
                     } else {
-                        newBody.append(contentsOf: allInitInstructions)
+                        newBody.append(contentsOf: allTopLevelInitInstructions)
                         newBody.append(contentsOf: function.body)
                     }
                     updated.body = newBody
