@@ -142,7 +142,8 @@ final class KIRLoweringDriver {
                                 // lower the delegate expression and store it in
                                 // the $delegate_ storage field.  If the delegate
                                 // type exposes a `provideDelegate` operator, wrap
-                                // the initial value in a provideDelegate call.
+                                // the initial value in a provideDelegate call;
+                                // otherwise store the delegate value directly.
                                 if let delegateExpr = prop.delegateExpression {
                                     let delegateStorageSym = sema.symbols.delegateStorageSymbol(for: propSymbol)
                                     let delegateValue = lowerExpr(
@@ -154,40 +155,71 @@ final class KIRLoweringDriver {
                                         propertyConstantInitializers: propertyConstantInitializers,
                                         instructions: &body
                                     )
-                                    // Try provideDelegate: emit a call that the
-                                    // runtime can optimise away if unavailable.
+
+                                    // Check whether the delegate type defines a
+                                    // provideDelegate operator.  Only emit the call
+                                    // when it is actually available; otherwise store
+                                    // the raw delegate value directly.
+                                    let delegateExprType = sema.bindings.exprType(for: delegateExpr)
                                     let provideDelegateName = compilationCtx.interner.intern("provideDelegate")
-                                    let propertyName = sema.symbols.symbol(propSymbol)?.name ?? compilationCtx.interner.intern("")
-                                    let thisRefExprID: KIRExprID
-                                    if let receiver = ctx.currentImplicitReceiverExprID {
-                                        thisRefExprID = receiver
-                                    } else {
-                                        thisRefExprID = arena.appendExpr(.null, type: sema.types.nullableAnyType)
-                                        body.append(.constValue(result: thisRefExprID, value: .null))
-                                    }
-                                    let kPropertyExprID = arena.appendExpr(
-                                        .stringLiteral(propertyName),
-                                        type: sema.types.make(.primitive(.string, .nonNull))
-                                    )
-                                    body.append(.constValue(result: kPropertyExprID, value: .stringLiteral(propertyName)))
-                                    let provideDelegateResult = arena.appendExpr(
-                                        .temporary(Int32(arena.expressions.count)),
-                                        type: sema.types.anyType
-                                    )
-                                    body.append(
-                                        .call(
-                                            symbol: nil,
-                                            callee: provideDelegateName,
-                                            arguments: [delegateValue, thisRefExprID, kPropertyExprID],
-                                            result: provideDelegateResult,
-                                            canThrow: false,
-                                            thrownResult: nil
+                                    let hasProvideDelegate: Bool = {
+                                        guard let delegateType = delegateExprType else { return false }
+                                        // Look up provideDelegate on the delegate's nominal type.
+                                        let typeKind = sema.types.kind(of: delegateType)
+                                        switch typeKind {
+                                        case .classType(let ct):
+                                            guard let sym = sema.symbols.symbol(ct.classSymbol) else { return false }
+                                            let memberSymbols = sema.symbols.children(ofFQName: sym.fqName)
+                                            return memberSymbols.contains { memberID in
+                                                guard let member = sema.symbols.symbol(memberID) else { return false }
+                                                return member.name == provideDelegateName
+                                                    && member.kind == .function
+                                            }
+                                        default:
+                                            return false
+                                        }
+                                    }()
+
+                                    let valueToStore: KIRExprID
+                                    if hasProvideDelegate {
+                                        let propertyName = sema.symbols.symbol(propSymbol)?.name ?? compilationCtx.interner.intern("")
+                                        let thisRefExprID: KIRExprID
+                                        if let receiver = ctx.currentImplicitReceiverExprID {
+                                            thisRefExprID = receiver
+                                        } else {
+                                            thisRefExprID = arena.appendExpr(.null, type: sema.types.nullableAnyType)
+                                            body.append(.constValue(result: thisRefExprID, value: .null))
+                                        }
+                                        let kPropertyExprID = arena.appendExpr(
+                                            .stringLiteral(propertyName),
+                                            type: sema.types.make(.primitive(.string, .nonNull))
                                         )
-                                    )
+                                        body.append(.constValue(result: kPropertyExprID, value: .stringLiteral(propertyName)))
+                                        let provideDelegateResult = arena.appendExpr(
+                                            .temporary(Int32(arena.expressions.count)),
+                                            type: sema.types.anyType
+                                        )
+                                        body.append(
+                                            .call(
+                                                symbol: nil,
+                                                callee: provideDelegateName,
+                                                arguments: [delegateValue, thisRefExprID, kPropertyExprID],
+                                                result: provideDelegateResult,
+                                                canThrow: false,
+                                                thrownResult: nil
+                                            )
+                                        )
+                                        valueToStore = provideDelegateResult
+                                    } else {
+                                        // No provideDelegate — store the delegate
+                                        // expression value directly.
+                                        valueToStore = delegateValue
+                                    }
+
                                     if let storageSym = delegateStorageSym {
                                         let delegateType = sema.types.anyType
                                         let fieldRef = arena.appendExpr(.symbolRef(storageSym), type: delegateType)
-                                        body.append(.copy(from: provideDelegateResult, to: fieldRef))
+                                        body.append(.copy(from: valueToStore, to: fieldRef))
                                     }
                                     continue
                                 }
