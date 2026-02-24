@@ -263,7 +263,7 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                     continue
                 }
 
-                if case .call(_, _, _, let callResult, _, _, _) = instruction {
+                if case .call(_, _, let callArgs, let callResult, _, _, _) = instruction {
                     let nextIndex = index + 1
                     if nextIndex < loweredBody.count,
                        case .copy(_, let to) = loweredBody[nextIndex],
@@ -306,6 +306,10 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                             case .observable:
                                 if let callResult {
                                     finalBody.append(instruction)
+                                    // kk_observable_create(initialValue, callbackFnPtr)
+                                    // Forward the original factory call's arguments.
+                                    var createArgs: [KIRExprID] = [callResult]
+                                    createArgs.append(contentsOf: callArgs)
                                     let createResult = module.arena.appendExpr(
                                         .temporary(Int32(module.arena.expressions.count)),
                                         type: nil
@@ -314,7 +318,7 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                                         .call(
                                             symbol: nil,
                                             callee: observableCreateName,
-                                            arguments: [callResult],
+                                            arguments: createArgs,
                                             result: createResult,
                                             canThrow: false,
                                             thrownResult: nil
@@ -327,6 +331,10 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                             case .vetoable:
                                 if let callResult {
                                     finalBody.append(instruction)
+                                    // kk_vetoable_create(initialValue, callbackFnPtr)
+                                    // Forward the original factory call's arguments.
+                                    var createArgs: [KIRExprID] = [callResult]
+                                    createArgs.append(contentsOf: callArgs)
                                     let createResult = module.arena.appendExpr(
                                         .temporary(Int32(module.arena.expressions.count)),
                                         type: nil
@@ -335,7 +343,7 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                                         .call(
                                             symbol: nil,
                                             callee: vetoableCreateName,
-                                            arguments: [callResult],
+                                            arguments: createArgs,
                                             result: createResult,
                                             canThrow: false,
                                             thrownResult: nil
