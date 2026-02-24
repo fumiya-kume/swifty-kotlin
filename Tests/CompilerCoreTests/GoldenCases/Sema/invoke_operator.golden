@@ -8,7 +8,7 @@ symbol s6 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags
 symbol s7 kind=class fq=golden.sema.Adder vis=public flags=_
 symbol s8 kind=constructor fq=golden.sema.Adder.<init> vis=public flags=_ sig=recv=Class#7 params=[Int] ret=Class#7 suspend=0 defaults=[0] vararg=[0]
 symbol s9 kind=valueParameter fq=golden.sema.Adder.<init>.$8.base vis=private flags=_
-symbol s10 kind=function fq=golden.sema.Adder.invoke vis=public flags= sig=recv=Class#7 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s10 kind=function fq=golden.sema.Adder.invoke vis=public flags=operatorFunction sig=recv=Class#7 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
 symbol s11 kind=valueParameter fq=golden.sema.Adder.invoke.$10.x vis=private flags=_
 symbol s12 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s13 kind=local fq=__local_6.adder vis=private flags=_
