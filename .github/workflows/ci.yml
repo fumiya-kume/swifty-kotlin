@@ -78,6 +78,70 @@ jobs:
           echo "kotlinc diff regression cases failed." >&2
           exit 1
 
+  smoke-tests-linux:
+    name: Smoke Tests (Linux x64)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Swift
+        uses: swift-actions/setup-swift@v2
+      - name: Install LLVM
+        run: sudo apt-get install -y llvm-dev
+      - name: Show toolchain versions
+        run: swift --version
+      - name: Run smoke tests
+        run: bash Scripts/swift_test.sh --filter SmokeTests
+
+  diff-regression-linux:
+    name: kotlinc Diff Regression (Linux x64)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Swift
+        uses: swift-actions/setup-swift@v2
+      - name: Install LLVM
+        run: sudo apt-get install -y llvm-dev
+      - name: Install Kotlin and Java
+        run: sudo apt-get install -y kotlin default-jdk
+      - name: Verify prerequisites
+        run: |
+          java -version
+          kotlinc -version
+      - name: Build compiler
+        run: swift build
+      - name: Run kotlinc diff regression cases
+        id: diff_kotlinc
+        continue-on-error: true
+        env:
+          DIFF_REPORT: ${{ runner.temp }}/diff_kotlinc_report.tsv
+        run: bash Scripts/diff_kotlinc.sh --report "$DIFF_REPORT" Scripts/diff_cases
+      - name: Summarize kotlinc diff artifacts
+        if: always()
+        env:
+          DIFF_REPORT: ${{ runner.temp }}/diff_kotlinc_report.tsv
+        run: bash Scripts/diff_kotlinc_ci_summary.sh --report "$DIFF_REPORT"
+      - name: Fail when kotlinc diff regression mismatches exist
+        if: steps.diff_kotlinc.outcome == 'failure'
+        run: |
+          echo "kotlinc diff regression cases failed." >&2
+          exit 1
+
+  test-and-coverage-linux:
+    name: Test and Coverage Gate (Linux x64)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Swift
+        uses: swift-actions/setup-swift@v2
+      - name: Install LLVM and jq
+        run: sudo apt-get install -y llvm-dev jq
+      - name: Verify prerequisites
+        run: jq --version
+      - name: Run tests with coverage threshold
+        env:
+          COVERAGE_THRESHOLD: "95"
+        run: bash Scripts/check_coverage.sh
+
   test-and-coverage:
     name: Test and Coverage Gate
     runs-on: macos-15

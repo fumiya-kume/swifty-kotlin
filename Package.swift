@@ -3,9 +3,6 @@ import PackageDescription
 
 let package = Package(
     name: "KSwiftK",
-    platforms: [
-        .macOS(.v12)
-    ],
     products: [
         .library(
             name: "CompilerCore",
