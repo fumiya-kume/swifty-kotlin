@@ -53,6 +53,8 @@ extension BuildASTPhase {
                     modifiers.insert(.value)
                 case .keyword(.enum):
                     modifiers.insert(.enumModifier)
+                case .keyword(.inner):
+                    modifiers.insert(.inner)
                 case .keyword(.companion):
                     modifiers.insert(.companion)
                 default:

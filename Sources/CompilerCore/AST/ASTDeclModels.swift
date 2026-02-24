@@ -49,6 +49,7 @@ public struct ClassDecl {
     public let range: SourceRange
     public let name: InternedString
     public let modifiers: Modifiers
+    public let isInner: Bool
     public let typeParams: [TypeParamDecl]
     public let primaryConstructorParams: [ValueParamDecl]
     /// `true` when the class header contains explicit constructor parentheses,
@@ -71,6 +72,7 @@ public struct ClassDecl {
         range: SourceRange,
         name: InternedString,
         modifiers: Modifiers,
+        isInner: Bool = false,
         typeParams: [TypeParamDecl] = [],
         primaryConstructorParams: [ValueParamDecl] = [],
         hasPrimaryConstructorSyntax: Bool = false,
@@ -88,6 +90,7 @@ public struct ClassDecl {
         self.range = range
         self.name = name
         self.modifiers = modifiers
+        self.isInner = isInner
         self.typeParams = typeParams
         self.primaryConstructorParams = primaryConstructorParams
         self.hasPrimaryConstructorSyntax = hasPrimaryConstructorSyntax

@@ -42,8 +42,9 @@ public struct SymbolFlags: OptionSet {
     public static let sealedType = SymbolFlags(rawValue: 1 << 5)
     public static let dataType = SymbolFlags(rawValue: 1 << 6)
     public static let reifiedTypeParameter = SymbolFlags(rawValue: 1 << 7)
-    public static let valueType = SymbolFlags(rawValue: 1 << 8)
-    public static let operatorFunction = SymbolFlags(rawValue: 1 << 9)
+    public static let innerClass = SymbolFlags(rawValue: 1 << 8)
+    public static let valueType = SymbolFlags(rawValue: 1 << 9)
+    public static let operatorFunction = SymbolFlags(rawValue: 1 << 10)
 }
 
 public struct SemanticSymbol {
