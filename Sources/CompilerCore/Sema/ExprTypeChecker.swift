@@ -315,6 +315,7 @@ final class ExprTypeChecker {
         let longType = sema.types.longType
         let floatType = sema.types.floatType
         let doubleType = sema.types.doubleType
+        let charType = sema.types.charType
         let stringType = sema.types.stringType
 
         let lhs = driver.inferExpr(lhsID, ctx: ctx, locals: &locals)
@@ -407,6 +408,9 @@ final class ExprTypeChecker {
         case .add:
             if lhs == stringType || rhs == stringType {
                 type = stringType
+            } else if lhs == charType && rhs == intType {
+                // Char + Int -> Char
+                type = charType
             } else if lhs == doubleType || rhs == doubleType {
                 type = doubleType
             } else if lhs == floatType || rhs == floatType {
@@ -416,7 +420,23 @@ final class ExprTypeChecker {
             } else {
                 type = intType
             }
-        case .subtract, .multiply, .divide, .modulo:
+        case .subtract:
+            if lhs == charType && rhs == charType {
+                // Char - Char -> Int
+                type = intType
+            } else if lhs == charType && rhs == intType {
+                // Char - Int -> Char
+                type = charType
+            } else if lhs == doubleType || rhs == doubleType {
+                type = doubleType
+            } else if lhs == floatType || rhs == floatType {
+                type = floatType
+            } else if lhs == longType || rhs == longType {
+                type = longType
+            } else {
+                type = intType
+            }
+        case .multiply, .divide, .modulo:
             if lhs == doubleType || rhs == doubleType {
                 type = doubleType
             } else if lhs == floatType || rhs == floatType {

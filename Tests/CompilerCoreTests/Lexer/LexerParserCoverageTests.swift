@@ -693,6 +693,89 @@ final class LexerParserCoverageTests: XCTestCase {
         }
     }
 
+    func testCharEscapeSequencesProduceCorrectScalarValues() {
+        let source = "'\\t' '\\n' '\\r' '\\\\' '\\'' '\\\"' '\\$'"
+        let result = lex(source)
+        let charValues = result.tokens.compactMap { token -> UInt32? in
+            if case .charLiteral(let value) = token.kind { return value }
+            return nil
+        }
+        XCTAssertEqual(charValues, [9, 10, 13, 92, 39, 34, 36])
+        XCTAssertFalse(result.diagnostics.hasError)
+    }
+
+    func testUnicodeEscapeInCharLiteralProducesCorrectScalar() {
+        let source = "'\\u0041' '\\u0000' '\\uFFFF' '\\u2764'"
+        let result = lex(source)
+        let charValues = result.tokens.compactMap { token -> UInt32? in
+            if case .charLiteral(let value) = token.kind { return value }
+            return nil
+        }
+        // \u0041 = 'A' = 65, \u0000 = 0, \uFFFF = 65535, \u2764 = 10084
+        XCTAssertEqual(charValues, [65, 0, 65535, 10084])
+        XCTAssertFalse(result.diagnostics.hasError)
+    }
+
+    func testUnicodeEscapeU0041EqualsCharA() {
+        let sourceA = "'A'"
+        let sourceUnicode = "'\\u0041'"
+        let resultA = lex(sourceA)
+        let resultUnicode = lex(sourceUnicode)
+        let valueA = resultA.tokens.compactMap { token -> UInt32? in
+            if case .charLiteral(let value) = token.kind { return value }
+            return nil
+        }.first
+        let valueUnicode = resultUnicode.tokens.compactMap { token -> UInt32? in
+            if case .charLiteral(let value) = token.kind { return value }
+            return nil
+        }.first
+        XCTAssertEqual(valueA, valueUnicode)
+        XCTAssertEqual(valueA, 65)
+    }
+
+    func testInvalidEscapeSequenceEmitsDiagnostic() {
+        let source = "'\\q'"
+        let result = lex(source)
+        let codes = Set(result.diagnostics.diagnostics.map(\.code))
+        XCTAssertTrue(codes.contains("KSWIFTK-LEX-0003"))
+    }
+
+    func testCharArithmeticTypeInference() throws {
+        let source = """
+        fun test() {
+            val a = 'a' + 1
+            val b = 'z' - 'a'
+            val c = 'z' - 1
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            // Find binary expressions and check their types
+            var binaryTypes: [String] = []
+            for index in ast.arena.exprs.indices {
+                let exprID = ExprID(rawValue: Int32(index))
+                guard let expr = ast.arena.expr(exprID),
+                      case .binary(let op, _, _, _) = expr,
+                      let exprType = sema.bindings.exprTypes[exprID] else {
+                    continue
+                }
+                let typeName = sema.types.renderType(exprType)
+                binaryTypes.append("\(op):\(typeName)")
+            }
+
+            // 'a' + 1 -> Char, 'z' - 'a' -> Int, 'z' - 1 -> Char
+            XCTAssertTrue(binaryTypes.contains("add:Char"), "Expected 'a' + 1 to produce Char, got: \(binaryTypes)")
+            XCTAssertTrue(binaryTypes.contains { $0 == "subtract:Int" }, "Expected 'z' - 'a' to produce Int, got: \(binaryTypes)")
+            XCTAssertTrue(binaryTypes.contains { $0 == "subtract:Char" }, "Expected 'z' - 1 to produce Char, got: \(binaryTypes)")
+            XCTAssertFalse(ctx.diagnostics.hasError)
+        }
+    }
+
     private func lex(_ source: String) -> (tokens: [Token], interner: StringInterner, diagnostics: DiagnosticEngine) {
         let diagnostics = DiagnosticEngine()
         let interner = StringInterner()
