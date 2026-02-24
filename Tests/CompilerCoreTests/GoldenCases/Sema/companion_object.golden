@@ -15,9 +15,9 @@ expr e0 int(100) type=_
 expr e1 name(Foo) type=_
 expr e2 int(0) type=_
 expr e3 call callee=e1 args=[_:e2] type=_
-expr e4 name(Foo) type=Class#1 ref=s1
+expr e4 name(Foo) type=Class#4 ref=s1
 expr e5 memberCall recv=e4 callee=create args=[] type=Class#1 call=s5 map=[] targs=[]
 expr e6 localDecl f mutable=0 type=t3 init=e5 type=Unit ref=s8
-expr e7 name(Foo) type=Class#1 ref=s1
+expr e7 name(Foo) type=Class#4 ref=s1
 expr e8 memberCall recv=e7 callee=MAX_COUNT args=[] type=Int ref=s6
 expr e9 localDecl m mutable=0 type=t4 init=e8 type=Unit ref=s9

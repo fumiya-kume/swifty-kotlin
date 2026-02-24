@@ -330,6 +330,9 @@ final class CallTypeChecker {
                     })
                     if let propSymbol = propertyCandidate,
                        let propType = sema.symbols.propertyType(for: propSymbol) {
+                        // Re-bind receiver to companion type for correct KIR lowering
+                        let compType = sema.types.make(.classType(ClassType(classSymbol: companionSymbol, args: [], nullability: .nonNull)))
+                        sema.bindings.bindExprType(receiverID, type: compType)
                         sema.bindings.bindIdentifier(id, symbol: propSymbol)
                         sema.bindings.bindExprType(id, type: propType)
                         return propType
@@ -350,6 +353,10 @@ final class CallTypeChecker {
                 }
                 if !companionCandidates.isEmpty {
                     companionReceiverType = sema.types.make(.classType(ClassType(classSymbol: companionSymbol, args: [], nullability: .nonNull)))
+                    // Re-bind receiver expression to companion type so KIR
+                    // lowering passes the companion singleton (not the owner
+                    // class) as the first argument to the companion function.
+                    sema.bindings.bindExprType(receiverID, type: companionReceiverType!)
                 }
                 allCandidates = companionCandidates
             } else {
