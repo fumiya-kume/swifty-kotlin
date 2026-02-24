@@ -1,0 +1,23 @@
+symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s1 kind=class fq=golden.sema.Adder vis=public flags=_
+symbol s2 kind=constructor fq=golden.sema.Adder.<init> vis=public flags=_ sig=recv=Class#1 params=[Int] ret=Class#1 suspend=0 defaults=[0] vararg=[0]
+symbol s3 kind=valueParameter fq=golden.sema.Adder.<init>.$2.base vis=private flags=_
+symbol s4 kind=function fq=golden.sema.Adder.invoke vis=public flags= sig=recv=Class#1 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s5 kind=valueParameter fq=golden.sema.Adder.invoke.$4.x vis=private flags=_
+symbol s6 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s7 kind=local fq=__local_6.adder vis=private flags=_
+symbol s8 kind=local fq=__local_10.result vis=private flags=_
+file f0 package=golden.sema
+  decl d1 class Adder sym=s1
+  decl d2 fun main suspend=0 inline=0 sym=s6
+expr e0 name(base) type=<error>
+expr e1 name(x) type=Int ref=s5
+expr e2 binary(add) lhs=e0 rhs=e1 type=Int
+expr e3 name(Adder) type=_
+expr e4 int(10) type=Int
+expr e5 call callee=e3 args=[_:e4] type=Class#1 call=s2 map=[0->0] targs=[]
+expr e6 localDecl adder mutable=0 type=_ init=e5 type=Unit ref=s7
+expr e7 name(adder) type=Class#1 ref=s7
+expr e8 int(5) type=Int
+expr e9 call callee=e7 args=[_:e8] type=Int call=s4 map=[0->0] targs=[]
+expr e10 localDecl result mutable=0 type=t3 init=e9 type=Unit ref=s8

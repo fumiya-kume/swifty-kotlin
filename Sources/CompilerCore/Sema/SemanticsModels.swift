@@ -42,6 +42,7 @@ public struct SymbolFlags: OptionSet {
     public static let sealedType = SymbolFlags(rawValue: 1 << 5)
     public static let dataType = SymbolFlags(rawValue: 1 << 6)
     public static let reifiedTypeParameter = SymbolFlags(rawValue: 1 << 7)
+    public static let operatorFunction = SymbolFlags(rawValue: 1 << 8)
 }
 
 public struct SemanticSymbol {
@@ -54,7 +55,7 @@ public struct SemanticSymbol {
     public let flags: SymbolFlags
 }
 
-public struct FunctionSignature {
+public struct FunctionSignature: Hashable {
     public let receiverType: TypeID?
     public let parameterTypes: [TypeID]
     public let returnType: TypeID
@@ -538,6 +539,7 @@ public final class BindingTable {
     public private(set) var captureSymbolsByExpr: [ExprID: [SymbolID]] = [:]
     public private(set) var declSymbols: [DeclID: SymbolID] = [:]
     public private(set) var superCallExprs: Set<ExprID> = []
+    public private(set) var invokeOperatorCallExprs: Set<ExprID> = []
 
     public init() {}
 
@@ -578,6 +580,10 @@ public final class BindingTable {
         superCallExprs.insert(expr)
     }
 
+    public func markInvokeOperatorCall(_ expr: ExprID) {
+        invokeOperatorCallExprs.insert(expr)
+    }
+
     public func exprType(for expr: ExprID) -> TypeID? {
         exprTypes[expr]
     }
@@ -612,6 +618,10 @@ public final class BindingTable {
 
     public func isSuperCallExpr(_ expr: ExprID) -> Bool {
         superCallExprs.contains(expr)
+    }
+
+    public func isInvokeOperatorCall(_ expr: ExprID) -> Bool {
+        invokeOperatorCallExprs.contains(expr)
     }
 }
 

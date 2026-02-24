@@ -44,6 +44,15 @@ public func kk_string_concat(_ a: UnsafeMutableRawPointer?, _ b: UnsafeMutableRa
     return opaque
 }
 
+@_cdecl("kk_string_compareTo")
+public func kk_string_compareTo(_ a: UnsafeMutableRawPointer?, _ b: UnsafeMutableRawPointer?) -> Int {
+    let lhs = extractString(from: normalizeNullableRuntimePointer(a)) ?? ""
+    let rhs = extractString(from: normalizeNullableRuntimePointer(b)) ?? ""
+    if lhs < rhs { return -1 }
+    if lhs > rhs { return 1 }
+    return 0
+}
+
 @_cdecl("kk_array_new")
 public func kk_array_new(_ length: Int) -> Int {
     let box = RuntimeArrayBox(length: length)
