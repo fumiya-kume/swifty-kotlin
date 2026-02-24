@@ -82,9 +82,13 @@ final class PropertyLoweringPass: LoweringPass {
                     // ($delegate_<propName> → <propName>). MemberLowerer creates
                     // accessor functions keyed off the property symbol, not the
                     // delegate storage field.
-                    let propSymbol = self.propertySymbolForDelegateField(
+                    guard let propSymbol = self.propertySymbolForDelegateField(
                         sym, symInfo: symInfo, sema: sema, interner: interner
-                    ) ?? sym
+                    ) else {
+                        // Cannot resolve property symbol — keep original call.
+                        loweredBody.append(instruction)
+                        continue
+                    }
                     let accessorSymbol = SymbolID(rawValue: accessorSymbolOffset - propSymbol.rawValue)
                     loweredBody.append(
                         .call(
