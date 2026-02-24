@@ -437,12 +437,14 @@ final class ControlFlowTypeChecker {
             var cumulativeFalseState = ctx.flowState
             for branch in branches {
                 var branchLocals = locals
-                let condCtx = ctx.copying(flowState: cumulativeFalseState)
+                var condCtx = ctx.copying(flowState: cumulativeFalseState)
                 driver.exprChecker.applyFlowStateToLocals(cumulativeFalseState, locals: &branchLocals, sema: sema)
                 var branchCtx = condCtx
                 // Subject-less when: each condition must be Boolean; multiple conditions = OR.
                 // Collect all true-states and merge them (join) for the body context,
                 // since the body executes when ANY condition is true.
+                // condCtx is updated after each condition so subsequent conditions see
+                // the narrowing from prior conditions being false (short-circuit OR semantics).
                 var trueStates: [DataFlowState] = []
                 for cond in branch.conditions {
                     let condType = driver.inferExpr(cond, ctx: condCtx, locals: &branchLocals)
@@ -460,6 +462,9 @@ final class ControlFlowTypeChecker {
                     trueStates.append(condBranch.trueState)
                     // Chain false-state: branch is false only when ALL conditions are false
                     cumulativeFalseState = condBranch.falseState
+                    // Update condCtx so subsequent conditions see prior conditions' false-state narrowing
+                    condCtx = ctx.copying(flowState: cumulativeFalseState)
+                    driver.exprChecker.applyFlowStateToLocals(cumulativeFalseState, locals: &branchLocals, sema: sema)
                     if let condExpr = ast.arena.expr(cond) {
                         switch condExpr {
                         case .boolLiteral(true, _):
