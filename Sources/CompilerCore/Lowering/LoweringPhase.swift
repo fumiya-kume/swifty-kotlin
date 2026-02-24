@@ -19,6 +19,7 @@ public final class LoweringPhase: CompilerPhase {
         ForLoweringPass(),
 
         PropertyLoweringPass(),
+        StdlibDelegateLoweringPass(),
         DataEnumSealedSynthesisPass(),
         LambdaClosureConversionPass(),
         InlineLoweringPass(),

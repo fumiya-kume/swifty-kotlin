@@ -578,6 +578,82 @@ public enum RuntimeABISpec {
         )
     ]
 
+    // Stdlib Delegate Functions (P5-80)
+    public static let delegateFunctions: [RuntimeABIFunctionSpec] = [
+        // Lazy
+        RuntimeABIFunctionSpec(
+            name: "kk_lazy_create",
+            parameters: [
+                RuntimeABIParameter(name: "initFnPtr", type: .intptr),
+                RuntimeABIParameter(name: "mode", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_lazy_get_value",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        // Observable
+        RuntimeABIFunctionSpec(
+            name: "kk_observable_create",
+            parameters: [
+                RuntimeABIParameter(name: "initialValue", type: .intptr),
+                RuntimeABIParameter(name: "callbackFnPtr", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_observable_get_value",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_observable_set_value",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "newValue", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        // Vetoable
+        RuntimeABIFunctionSpec(
+            name: "kk_vetoable_create",
+            parameters: [
+                RuntimeABIParameter(name: "initialValue", type: .intptr),
+                RuntimeABIParameter(name: "callbackFnPtr", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_vetoable_get_value",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_vetoable_set_value",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "newValue", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        )
+    ]
+
     public static let allFunctions: [RuntimeABIFunctionSpec] =
         memoryFunctions
         + exceptionFunctions
@@ -587,6 +663,7 @@ public enum RuntimeABISpec {
         + coroutineFunctions
         + boxingFunctions
         + arrayFunctions
+        + delegateFunctions
 
     public static func generateCHeader() -> String {
         var lines: [String] = []
