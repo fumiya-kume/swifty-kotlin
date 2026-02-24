@@ -13,6 +13,22 @@ final class PropertyLoweringPass: LoweringPass {
         let setValueName = ctx.interner.intern("setValue")
         let interner = ctx.interner
 
+        // Build a set of getter-only computed property symbols (property kind,
+        // no backing field) so that constValue(.symbolRef(propSym)) can be
+        // rewritten to a getter call in the main transform loop.
+        let computedPropertySymbols: Set<SymbolID> = {
+            guard let sema = ctx.sema else { return [] }
+            var result = Set<SymbolID>()
+            for sym in sema.symbols.allSymbols() {
+                guard sym.kind == .property,
+                      sema.symbols.backingFieldSymbol(for: sym.id) == nil else {
+                    continue
+                }
+                result.insert(sym.id)
+            }
+            return result
+        }()
+
         module.arena.transformFunctions { function in
             var updated = function
             var loweredBody: [KIRInstruction] = []
@@ -20,6 +36,30 @@ final class PropertyLoweringPass: LoweringPass {
 
             for instruction in function.body {
                 guard case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult, let isSuperCall) = instruction else {
+                    // Rewrite constValue(.symbolRef(propSym)) for getter-only
+                    // computed properties into a getter call so that each
+                    // access invokes the getter body rather than loading a
+                    // non-existent global.
+                    if case .constValue(let cvResult, let value) = instruction,
+                       case .symbolRef(let sym) = value,
+                       computedPropertySymbols.contains(sym) {
+                        // Skip rewriting if we are inside the getter accessor
+                        // for this property to avoid infinite recursion.
+                        let getterSymbol = SymbolID(rawValue: -12_000 - sym.rawValue)
+                        if function.symbol != getterSymbol {
+                            loweredBody.append(
+                                .call(
+                                    symbol: getterSymbol,
+                                    callee: getterName,
+                                    arguments: [],
+                                    result: cvResult,
+                                    canThrow: false,
+                                    thrownResult: nil
+                                )
+                            )
+                            continue
+                        }
+                    }
                     // Rewrite backing field copy instructions to direct
                     // setter accessor calls when the target is a backing
                     // field symbol.

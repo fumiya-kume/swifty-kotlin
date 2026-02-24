@@ -159,9 +159,20 @@ final class MemberLowerer {
                 continue
             }
             let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
-            let kirID = arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: propType)))
-            directMembers.append(kirID)
-            allDecls.append(kirID)
+
+            // Getter-only computed properties (`val x: T get() = expr`) have no
+            // storage — skip emitting a KIRGlobal so no backing field is generated
+            // in codegen.  The getter accessor function alone is sufficient.
+            let isGetterOnlyComputed = propertyDecl.getter != nil
+                && propertyDecl.setter == nil
+                && propertyDecl.initializer == nil
+                && propertyDecl.delegateExpression == nil
+
+            if !isGetterOnlyComputed {
+                let kirID = arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: propType)))
+                directMembers.append(kirID)
+                allDecls.append(kirID)
+            }
 
             // Emit backing field global for properties with custom accessors.
             if let backingFieldSymbol = sema.symbols.backingFieldSymbol(for: symbol) {
