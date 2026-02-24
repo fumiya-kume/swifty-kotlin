@@ -106,10 +106,14 @@ final class LocalDeclTypeChecker {
         let allCandidateIDs = ctx.cachedScopeLookup(name)
         let (visibleIDs, _) = ctx.filterByVisibility(allCandidateIDs)
         let candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
-        // Only match top-level properties (parent is a package), not class member properties.
+        // Only match top-level properties, not class member properties.
+        // Top-level properties have no parentSymbol set (nil) or parent is a package.
+        // Class member properties always have parentSymbol set to a class/object/interface.
         if let propSymbol = candidates.first(where: { sym in
-            sym.kind == .property &&
-            sema.symbols.parentSymbol(for: sym.id).flatMap({ sema.symbols.symbol($0) }).map({ $0.kind == .package }) == true
+            guard sym.kind == .property else { return false }
+            guard let parentID = sema.symbols.parentSymbol(for: sym.id),
+                  let parentSym = sema.symbols.symbol(parentID) else { return true }
+            return parentSym.kind == .package
         }) {
             sema.bindings.bindIdentifier(id, symbol: propSymbol.id)
             let propType = sema.symbols.propertyType(for: propSymbol.id) ?? sema.types.anyType
