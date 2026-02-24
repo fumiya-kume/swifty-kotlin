@@ -411,7 +411,10 @@ final class CallTypeChecker {
         if candidates.isEmpty {
             // For zero-arg member calls, try member property/field lookup.
             // This handles `receiver.property` syntax (e.g. `this@Outer.x`).
-            if args.isEmpty,
+            // Skip this for class-name receivers — only companion members are
+            // accessible via `ClassName.member`, not instance properties.
+            if !isClassNameReceiver,
+               args.isEmpty,
                let propResult = driver.helpers.lookupMemberProperty(
                    named: calleeName,
                    receiverType: memberLookupType,
