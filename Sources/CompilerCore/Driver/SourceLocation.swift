@@ -1,4 +1,4 @@
-public struct TokenID: Hashable {
+public struct TokenID: Hashable, Sendable {
     public let rawValue: Int32
 
     public static let invalid = TokenID(rawValue: -1)
@@ -8,7 +8,7 @@ public struct TokenID: Hashable {
     }
 }
 
-public struct NodeID: Hashable {
+public struct NodeID: Hashable, Sendable {
     public let rawValue: Int32
 
     public static let invalid = NodeID(rawValue: -1)
@@ -18,7 +18,7 @@ public struct NodeID: Hashable {
     }
 }
 
-public struct DeclID: Hashable {
+public struct DeclID: Hashable, Sendable {
     public let rawValue: Int32
 
     public static let invalid = DeclID(rawValue: -1)
@@ -28,7 +28,7 @@ public struct DeclID: Hashable {
     }
 }
 
-public struct FileID: Hashable {
+public struct FileID: Hashable, Sendable {
     public let rawValue: Int32
 
     public static let invalid = FileID(rawValue: -1)
@@ -42,7 +42,7 @@ public struct FileID: Hashable {
     }
 }
 
-public struct SourceLocation: Hashable {
+public struct SourceLocation: Hashable, Sendable {
     public let file: FileID
     public let offset: Int
 
@@ -52,7 +52,7 @@ public struct SourceLocation: Hashable {
     }
 }
 
-public struct SourceRange: Hashable {
+public struct SourceRange: Hashable, Sendable {
     public let start: SourceLocation
     public let end: SourceLocation
 
@@ -62,7 +62,7 @@ public struct SourceRange: Hashable {
     }
 }
 
-public struct LineColumn: Equatable {
+public struct LineColumn: Equatable, Sendable {
     public let line: Int
     public let column: Int
 
