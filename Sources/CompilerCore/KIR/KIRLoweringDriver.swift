@@ -181,7 +181,13 @@ final class KIRLoweringDriver {
                                     }()
 
                                     let valueToStore: KIRExprID
-                                    if hasProvideDelegate {
+                                    if hasProvideDelegate, let storageSym = delegateStorageSym {
+                                        // First, store the raw delegate value so we
+                                        // have a receiver for the method call.
+                                        let delegateType = sema.types.anyType
+                                        let tempFieldRef = arena.appendExpr(.symbolRef(storageSym), type: delegateType)
+                                        body.append(.copy(from: delegateValue, to: tempFieldRef))
+
                                         let propertyName = sema.symbols.symbol(propSymbol)?.name ?? compilationCtx.interner.intern("")
                                         let thisRefExprID: KIRExprID
                                         if let receiver = ctx.currentImplicitReceiverExprID {
@@ -199,11 +205,14 @@ final class KIRLoweringDriver {
                                             .temporary(Int32(arena.expressions.count)),
                                             type: sema.types.anyType
                                         )
+                                        // Emit as method call on the delegate storage
+                                        // (2 args: thisRef, kProperty) matching Kotlin's
+                                        // delegate.provideDelegate(thisRef, property).
                                         body.append(
                                             .call(
-                                                symbol: nil,
+                                                symbol: storageSym,
                                                 callee: provideDelegateName,
-                                                arguments: [delegateValue, thisRefExprID, kPropertyExprID],
+                                                arguments: [thisRefExprID, kPropertyExprID],
                                                 result: provideDelegateResult,
                                                 canThrow: false,
                                                 thrownResult: nil
