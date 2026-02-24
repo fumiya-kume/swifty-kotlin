@@ -134,8 +134,65 @@ final class KIRLoweringDriver {
                             for propDeclID in classDecl.memberProperties {
                                 guard let propDecl = ast.arena.decl(propDeclID),
                                       case .propertyDecl(let prop) = propDecl,
-                                      let propSymbol = sema.bindings.declSymbols[propDeclID],
-                                      let initExpr = prop.initializer else {
+                                      let propSymbol = sema.bindings.declSymbols[propDeclID] else {
+                                    continue
+                                }
+
+                                // Handle delegated property initialisation:
+                                // lower the delegate expression and store it in
+                                // the $delegate_ storage field.  If the delegate
+                                // type exposes a `provideDelegate` operator, wrap
+                                // the initial value in a provideDelegate call.
+                                if let delegateExpr = prop.delegateExpression {
+                                    let delegateStorageSym = sema.symbols.delegateStorageSymbol(for: propSymbol)
+                                    let delegateValue = lowerExpr(
+                                        delegateExpr,
+                                        ast: ast,
+                                        sema: sema,
+                                        arena: arena,
+                                        interner: compilationCtx.interner,
+                                        propertyConstantInitializers: propertyConstantInitializers,
+                                        instructions: &body
+                                    )
+                                    // Try provideDelegate: emit a call that the
+                                    // runtime can optimise away if unavailable.
+                                    let provideDelegateName = compilationCtx.interner.intern("provideDelegate")
+                                    let propertyName = sema.symbols.symbol(propSymbol)?.name ?? compilationCtx.interner.intern("")
+                                    let thisRefExprID: KIRExprID
+                                    if let receiver = ctx.currentImplicitReceiverExprID {
+                                        thisRefExprID = receiver
+                                    } else {
+                                        thisRefExprID = arena.appendExpr(.null, type: sema.types.nullableAnyType)
+                                        body.append(.constValue(result: thisRefExprID, value: .null))
+                                    }
+                                    let kPropertyExprID = arena.appendExpr(
+                                        .stringLiteral(propertyName),
+                                        type: sema.types.make(.primitive(.string, .nonNull))
+                                    )
+                                    body.append(.constValue(result: kPropertyExprID, value: .stringLiteral(propertyName)))
+                                    let provideDelegateResult = arena.appendExpr(
+                                        .temporary(Int32(arena.expressions.count)),
+                                        type: sema.types.anyType
+                                    )
+                                    body.append(
+                                        .call(
+                                            symbol: nil,
+                                            callee: provideDelegateName,
+                                            arguments: [delegateValue, thisRefExprID, kPropertyExprID],
+                                            result: provideDelegateResult,
+                                            canThrow: false,
+                                            thrownResult: nil
+                                        )
+                                    )
+                                    if let storageSym = delegateStorageSym {
+                                        let delegateType = sema.types.anyType
+                                        let fieldRef = arena.appendExpr(.symbolRef(storageSym), type: delegateType)
+                                        body.append(.copy(from: provideDelegateResult, to: fieldRef))
+                                    }
+                                    continue
+                                }
+
+                                guard let initExpr = prop.initializer else {
                                     continue
                                 }
                                 let targetSymbol = sema.symbols.backingFieldSymbol(for: propSymbol) ?? propSymbol
