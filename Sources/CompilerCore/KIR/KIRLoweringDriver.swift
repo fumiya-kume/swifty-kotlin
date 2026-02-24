@@ -467,7 +467,8 @@ final class KIRLoweringDriver {
                                 returnType: returnType,
                                 body: body,
                                 isSuspend: function.isSuspend,
-                                isInline: function.isInline
+                                isInline: function.isInline,
+                                sourceRange: function.range
                             )
                         )
                     )

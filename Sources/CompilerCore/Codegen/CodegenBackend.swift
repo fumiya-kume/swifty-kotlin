@@ -5,14 +5,16 @@ protocol CodegenBackend {
         module: KIRModule,
         runtime: RuntimeLinkInfo,
         outputObjectPath: String,
-        interner: StringInterner
+        interner: StringInterner,
+        sourceManager: SourceManager?
     ) throws
 
     func emitLLVMIR(
         module: KIRModule,
         runtime: RuntimeLinkInfo,
         outputIRPath: String,
-        interner: StringInterner
+        interner: StringInterner,
+        sourceManager: SourceManager?
     ) throws
 }
 

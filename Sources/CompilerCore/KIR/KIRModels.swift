@@ -110,6 +110,11 @@ public struct KIRFunction {
     public var body: [KIRInstruction]
     public let isSuspend: Bool
     public let isInline: Bool
+    /// Source range of the function declaration in the original source file.
+    public let sourceRange: SourceRange?
+    /// Per-instruction source locations, parallel to ``body``.
+    /// `nil` entries mean "same as function-level location".
+    public var instructionLocations: [SourceRange?]
 
     public init(
         symbol: SymbolID,
@@ -118,7 +123,9 @@ public struct KIRFunction {
         returnType: TypeID,
         body: [KIRInstruction],
         isSuspend: Bool,
-        isInline: Bool
+        isInline: Bool,
+        sourceRange: SourceRange? = nil,
+        instructionLocations: [SourceRange?] = []
     ) {
         self.symbol = symbol
         self.name = name
@@ -127,6 +134,8 @@ public struct KIRFunction {
         self.body = body
         self.isSuspend = isSuspend
         self.isInline = isInline
+        self.sourceRange = sourceRange
+        self.instructionLocations = instructionLocations
     }
 }
 

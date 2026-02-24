@@ -153,4 +153,73 @@ extension LLVMCAPIBindings {
     func clearCurrentDebugLocation(_ builder: LLVMBuilderRef?) {
         setCurrentDebugLocation2Fn?(builder, nil)
     }
+
+    var localVariableAvailable: Bool {
+        diBuilderCreateBasicTypeFn != nil &&
+        diBuilderCreateParameterVariableFn != nil &&
+        diBuilderInsertDeclareBeforeFn != nil &&
+        diBuilderCreateExpressionFn != nil
+    }
+
+    func diBuilderCreateBasicType(
+        _ builder: LLVMDIBuilderRef?,
+        name: String,
+        sizeInBits: UInt64,
+        encoding: UInt32
+    ) -> LLVMMetadataRef? {
+        guard let diBuilderCreateBasicTypeFn else { return nil }
+        return name.withCString { n in
+            diBuilderCreateBasicTypeFn(builder, n, name.utf8.count, sizeInBits, encoding, 0)
+        }
+    }
+
+    func diBuilderCreateParameterVariable(
+        _ builder: LLVMDIBuilderRef?,
+        scope: LLVMMetadataRef?,
+        name: String,
+        argNo: UInt32,
+        file: LLVMMetadataRef?,
+        lineNo: UInt32,
+        type: LLVMMetadataRef?
+    ) -> LLVMMetadataRef? {
+        guard let diBuilderCreateParameterVariableFn else { return nil }
+        return name.withCString { n in
+            diBuilderCreateParameterVariableFn(
+                builder, scope, n, name.utf8.count, argNo, file, lineNo, type, 0, 0  // AlwaysPreserve=0, Flags=0
+            )
+        }
+    }
+
+    func diBuilderCreateAutoVariable(
+        _ builder: LLVMDIBuilderRef?,
+        scope: LLVMMetadataRef?,
+        name: String,
+        file: LLVMMetadataRef?,
+        lineNo: UInt32,
+        type: LLVMMetadataRef?
+    ) -> LLVMMetadataRef? {
+        guard let diBuilderCreateAutoVariableFn else { return nil }
+        return name.withCString { n in
+            diBuilderCreateAutoVariableFn(
+                builder, scope, n, name.utf8.count, file, lineNo, type, 0, 0, 0
+            )
+        }
+    }
+
+    func diBuilderInsertDeclareAtEnd(
+        _ builder: LLVMDIBuilderRef?,
+        storage: LLVMValueRef?,
+        varInfo: LLVMMetadataRef?,
+        expr: LLVMMetadataRef?,
+        debugLoc: LLVMMetadataRef?,
+        block: LLVMBasicBlockRef?
+    ) -> LLVMValueRef? {
+        diBuilderInsertDeclareBeforeFn?(builder, storage, varInfo, expr, debugLoc, block)
+    }
+
+    func diBuilderCreateExpression(
+        _ builder: LLVMDIBuilderRef?
+    ) -> LLVMMetadataRef? {
+        diBuilderCreateExpressionFn?(builder, nil, 0)
+    }
 }
