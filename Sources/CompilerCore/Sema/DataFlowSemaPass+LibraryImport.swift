@@ -13,28 +13,42 @@ extension DataFlowSemaPassPhase {
         types: TypeSystem,
         diagnostics: DiagnosticEngine,
         interner: StringInterner,
-        importedInlineFunctions: inout [SymbolID: KIRFunction]
+        importedInlineFunctions: inout [SymbolID: KIRFunction],
+        cache: LibraryMetadataCache? = nil
     ) {
         let libraryDirs = discoverLibraryDirectories(searchPaths: options.searchPaths)
         var pendingSupertypeEdges: [(subtype: SymbolID, superFQName: [InternedString])] = []
         var importedBindings: [ImportedLibraryBinding] = []
 
         for libraryDir in libraryDirs {
-            let manifestInfo = resolveLibraryManifestInfo(
-                libraryDir: libraryDir,
-                currentTarget: options.target,
-                diagnostics: diagnostics
-            )
+            let manifestInfo: LibraryManifestInfo
+            if let cached = cache?.cachedManifestInfo(libraryDir: libraryDir, target: options.target) {
+                manifestInfo = cached
+            } else {
+                manifestInfo = resolveLibraryManifestInfo(
+                    libraryDir: libraryDir,
+                    currentTarget: options.target,
+                    diagnostics: diagnostics
+                )
+                cache?.cacheManifestInfo(manifestInfo, libraryDir: libraryDir, target: options.target)
+            }
             guard manifestInfo.isValid else {
                 continue
             }
             let metadataPath = manifestInfo.metadataPath
-            guard let records = parseLibraryMetadata(
-                path: metadataPath,
-                diagnostics: diagnostics,
-                interner: interner
-            ) else {
-                continue
+            let records: [ImportedLibrarySymbolRecord]
+            if let cached = cache?.cachedMetadataRecords(metadataPath: metadataPath, interner: interner) {
+                records = cached
+            } else {
+                guard let parsed = parseLibraryMetadata(
+                    path: metadataPath,
+                    diagnostics: diagnostics,
+                    interner: interner
+                ) else {
+                    continue
+                }
+                records = parsed
+                cache?.cacheMetadataRecords(records, metadataPath: metadataPath, interner: interner)
             }
 
             for record in records {
@@ -91,7 +105,8 @@ extension DataFlowSemaPassPhase {
                     types: types,
                     diagnostics: diagnostics,
                     interner: interner,
-                    metadataPath: binding.metadataPath
+                    metadataPath: binding.metadataPath,
+                    cache: cache
                 )
                 symbols.setFunctionSignature(signature, for: symbol)
                 if record.isInline,
@@ -118,7 +133,8 @@ extension DataFlowSemaPassPhase {
                     types: types,
                     diagnostics: diagnostics,
                     interner: interner,
-                    metadataPath: binding.metadataPath
+                    metadataPath: binding.metadataPath,
+                    cache: cache
                 )
                 symbols.setPropertyType(propertyType, for: symbol)
             } else if record.kind == .typeAlias {
@@ -128,7 +144,8 @@ extension DataFlowSemaPassPhase {
                     types: types,
                     diagnostics: diagnostics,
                     interner: interner,
-                    metadataPath: binding.metadataPath
+                    metadataPath: binding.metadataPath,
+                    cache: cache
                 )
                 if let underlyingType {
                     symbols.setTypeAliasUnderlyingType(underlyingType, for: symbol)
