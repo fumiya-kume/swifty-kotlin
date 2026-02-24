@@ -2,6 +2,7 @@
 set -euo pipefail
 
 threshold="${COVERAGE_THRESHOLD:-97}"
+report_file="${COVERAGE_REPORT_MD:-}"
 
 readonly targets=(
   "Sources/CompilerCore/Lexer/TokenStream.swift"
@@ -25,6 +26,7 @@ xcrun llvm-cov export "$tests_binary" -instr-profile "$profile" > "$json_output"
 echo "Coverage threshold: ${threshold}%"
 
 declare -a failed=()
+declare -a report_lines=()
 for target in "${targets[@]}"; do
   percent="$(jq -r --arg target "$target" '
     .data[0].files[]
@@ -34,6 +36,7 @@ for target in "${targets[@]}"; do
 
   if [[ -z "$percent" || "$percent" == "null" ]]; then
     failed+=("$target (missing)")
+    report_lines+=("| \`$target\` | - | ${threshold}% | :warning: missing |")
     printf "%-52s %s\n" "$target" "missing"
     continue
   fi
@@ -43,8 +46,36 @@ for target in "${targets[@]}"; do
 
   if ! awk -v value="$percent" -v min="$threshold" 'BEGIN { exit (value + 0 >= min + 0 ? 0 : 1) }'; then
     failed+=("$target (${formatted}%)")
+    report_lines+=("| \`$target\` | ${formatted}% | ${threshold}% | :x: |")
+  else
+    report_lines+=("| \`$target\` | ${formatted}% | ${threshold}% | :white_check_mark: |")
   fi
 done
+
+# Generate markdown report if requested
+if [[ -n "$report_file" ]]; then
+  {
+    if (( ${#failed[@]} > 0 )); then
+      echo "## :warning: Coverage Check Failed"
+      echo ""
+      echo "The following files are below the **${threshold}%** line coverage threshold."
+    else
+      echo "## :white_check_mark: Coverage Check Passed"
+      echo ""
+      echo "All tracked files meet the **${threshold}%** line coverage threshold."
+    fi
+    echo ""
+    echo "| File | Coverage | Threshold | Status |"
+    echo "|------|----------|-----------|--------|"
+    for line in "${report_lines[@]}"; do
+      echo "$line"
+    done
+    if (( ${#failed[@]} > 0 )); then
+      echo ""
+      echo "Please add tests to improve coverage for the files marked with :x:."
+    fi
+  } > "$report_file"
+fi
 
 if (( ${#failed[@]} > 0 )); then
   echo
