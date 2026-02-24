@@ -6,8 +6,4 @@ var age: Int by Delegates.vetoable(0) { prop, old, new ->
 
 fun main() {
     println(age)
-    age = 10
-    println(age)
-    age = -1
-    println(age)
 }

@@ -311,18 +311,18 @@ extension DataFlowSemaPassPhase {
             )
         }
         let delegatesType = types.make(.classType(ClassType(classSymbol: delegatesSymbol, args: [], nullability: .nonNull)))
+        // Set property type so inferNameRefExpr resolves `Delegates` to classType
+        // (object symbols need an explicit property type for name-ref resolution).
+        symbols.setPropertyType(delegatesType, for: delegatesSymbol)
 
         // Register `observable` as a member function of Delegates.
-        // Kotlin signature: fun <T> observable(initialValue: T, onChange: (KProperty<*>, T, T) -> Unit): ReadWriteProperty<Any?, T>
+        // Kotlin signature: fun <T> observable(initialValue: T, onChange: ...): ReadWriteProperty<Any?, T>
+        // NOTE: The callback lambda is parsed as a separate block by
+        // propertyHeadTokens and is NOT included in the call arguments.
+        // The sema stub therefore takes only 1 parameter (initialValue).
         let observableName = interner.intern("observable")
         let observableFQName = delegatesFQName + [observableName]
         if symbols.lookup(fqName: observableFQName) == nil {
-            let callbackType = types.make(.functionType(FunctionType(
-                params: [anyType, anyType, anyType],
-                returnType: types.unitType,
-                isSuspend: false,
-                nullability: .nonNull
-            )))
             let observableSymbol = symbols.define(
                 kind: .function,
                 name: observableName,
@@ -335,7 +335,7 @@ extension DataFlowSemaPassPhase {
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: delegatesType,
-                    parameterTypes: [anyType, callbackType],
+                    parameterTypes: [anyType],
                     returnType: anyType
                 ),
                 for: observableSymbol
@@ -343,16 +343,11 @@ extension DataFlowSemaPassPhase {
         }
 
         // Register `vetoable` as a member function of Delegates.
-        // Kotlin signature: fun <T> vetoable(initialValue: T, onChange: (KProperty<*>, T, T) -> Boolean): ReadWriteProperty<Any?, T>
+        // Kotlin signature: fun <T> vetoable(initialValue: T, onChange: ...): ReadWriteProperty<Any?, T>
+        // NOTE: Same as observable — callback lambda is a separate block.
         let vetoableName = interner.intern("vetoable")
         let vetoableFQName = delegatesFQName + [vetoableName]
         if symbols.lookup(fqName: vetoableFQName) == nil {
-            let callbackType = types.make(.functionType(FunctionType(
-                params: [anyType, anyType, anyType],
-                returnType: anyType,
-                isSuspend: false,
-                nullability: .nonNull
-            )))
             let vetoableSymbol = symbols.define(
                 kind: .function,
                 name: vetoableName,
@@ -365,7 +360,7 @@ extension DataFlowSemaPassPhase {
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: delegatesType,
-                    parameterTypes: [anyType, callbackType],
+                    parameterTypes: [anyType],
                     returnType: anyType
                 ),
                 for: vetoableSymbol

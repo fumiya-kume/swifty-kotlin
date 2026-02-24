@@ -6,6 +6,4 @@ var name: String by Delegates.observable("initial") { prop, old, new ->
 
 fun main() {
     println(name)
-    name = "updated"
-    println(name)
 }

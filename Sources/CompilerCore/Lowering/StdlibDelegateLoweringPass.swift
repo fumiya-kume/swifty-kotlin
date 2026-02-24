@@ -71,61 +71,11 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                 return function // no mutation in this scan pass
             }
 
-            // Phase 2: scan sema call bindings keyed by ExprID,
-            // then match each factory call to its owning property's
-            // $delegate_ field via the property's fqName.
-            // Supplements Phase 1 to catch delegates where call→copy
-            // adjacency doesn't hold (e.g. interleaved instructions).
-            do {
-                for (_, binding) in sema.bindings.callBindings {
-                    guard let calleeInfo = sema.symbols.symbol(binding.chosenCallee) else {
-                        continue
-                    }
-                    let calleeName = interner.resolve(calleeInfo.name)
-                    guard let kind = delegateFactoryKind(calleeName) else { continue }
-
-                    // Walk the callee's fqName ancestors to find the owning
-                    // property, then derive the $delegate_ field name.
-                    let fqName = calleeInfo.fqName
-                    for ancestor in fqName.dropLast() {
-                        let ancestorName = interner.resolve(ancestor)
-                        let delegateFieldName = "$delegate_\(ancestorName)"
-                        if delegateKindByFieldName[delegateFieldName] == nil {
-                            // Verify this field actually exists in the symbol table.
-                            let fieldExists = sema.symbols.allSymbols().contains {
-                                $0.kind == .field && interner.resolve($0.name) == delegateFieldName
-                            }
-                            if fieldExists {
-                                delegateKindByFieldName[delegateFieldName] = kind
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Phase 3: scan identifier bindings for individual
-            // factory references and match to their enclosing property.
-            // Supplements Phases 1 & 2 for remaining undetected delegates.
-            do {
-                for (_, sym) in sema.bindings.identifierSymbols {
-                    guard let symInfo = sema.symbols.symbol(sym) else { continue }
-                    let name = interner.resolve(symInfo.name)
-                    guard let kind = delegateFactoryKind(name) else { continue }
-                    let fqName = symInfo.fqName
-                    for ancestor in fqName.dropLast() {
-                        let ancestorName = interner.resolve(ancestor)
-                        let delegateFieldName = "$delegate_\(ancestorName)"
-                        if delegateKindByFieldName[delegateFieldName] == nil {
-                            let fieldExists = sema.symbols.allSymbols().contains {
-                                $0.kind == .field && interner.resolve($0.name) == delegateFieldName
-                            }
-                            if fieldExists {
-                                delegateKindByFieldName[delegateFieldName] = kind
-                            }
-                        }
-                    }
-                }
-            }
+            // Note: Previous "Phase 2" and "Phase 3" heuristics attempted to
+            // derive $delegate_ field names from callee fqName components.
+            // This produced names like `$delegate_kotlin`/`$delegate_Delegates`,
+            // which do not match the actual `$delegate_<propertyName>` fields
+            // created by MemberLowerer, so those phases have been removed.
         }
 
         module.arena.transformFunctions { function in
@@ -309,8 +259,10 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                                     // Original factory call (Delegates.observable(...))
                                     // is intentionally NOT emitted — synthetic stub only.
                                     // kk_observable_create(initialValue, callbackFnPtr)
-                                    // callArgs already contains the correct arguments.
-                                    let createArgs = callArgs
+                                    // Strip the Delegates receiver (arg0) if present —
+                                    // member call lowering inserts the receiver when the
+                                    // callee has a receiverType.
+                                    let createArgs = callArgs.count > 1 ? Array(callArgs.dropFirst()) : callArgs
                                     let createResult = module.arena.appendExpr(
                                         .temporary(Int32(module.arena.expressions.count)),
                                         type: nil
@@ -334,8 +286,8 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                                     // Original factory call (Delegates.vetoable(...))
                                     // is intentionally NOT emitted — synthetic stub only.
                                     // kk_vetoable_create(initialValue, callbackFnPtr)
-                                    // callArgs already contains the correct arguments.
-                                    let createArgs = callArgs
+                                    // Strip the Delegates receiver (arg0) if present.
+                                    let createArgs = callArgs.count > 1 ? Array(callArgs.dropFirst()) : callArgs
                                     let createResult = module.arena.appendExpr(
                                         .temporary(Int32(module.arena.expressions.count)),
                                         type: nil

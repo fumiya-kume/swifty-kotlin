@@ -575,7 +575,7 @@ final class ExprTypeChecker {
             if let signature = sema.symbols.functionSignature(for: symbol.id) {
                 return signature.returnType
             }
-            if symbol.kind == .property || symbol.kind == .field {
+            if symbol.kind == .property || symbol.kind == .field || symbol.kind == .object {
                 return sema.symbols.propertyType(for: symbol.id)
             }
             return nil
