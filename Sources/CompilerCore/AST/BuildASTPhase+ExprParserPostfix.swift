@@ -36,15 +36,26 @@ extension BuildASTPhase.ExpressionParser {
 
             if matches(.symbol(.lBracket)) {
                 guard let open = consume() else { break }
-                let indexExpr = parseExpression(minPrecedence: 0)
+                var indices: [ExprID] = []
+                if !matches(.symbol(.rBracket)) {
+                    while true {
+                        guard let indexExpr = parseExpression(minPrecedence: 0) else { break }
+                        indices.append(indexExpr)
+                        if matches(.symbol(.comma)) {
+                            _ = consume()
+                            continue
+                        }
+                        break
+                    }
+                }
                 let close = consumeIf(.symbol(.rBracket))
-                guard let indexExpr else {
+                guard !indices.isEmpty else {
                     break
                 }
                 let fallbackEnd = close?.range.end ?? open.range.end
                 let fallbackRange = SourceRange(start: fallbackEnd, end: fallbackEnd)
                 let range = mergeRanges(astArena.exprRange(expr), close?.range ?? fallbackRange, fallback: open.range)
-                expr = astArena.appendExpr(.arrayAccess(array: expr, index: indexExpr, range: range))
+                expr = astArena.appendExpr(.indexedAccess(receiver: expr, indices: indices, range: range))
                 continue
             }
 
