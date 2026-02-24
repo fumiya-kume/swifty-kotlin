@@ -116,15 +116,41 @@ extension BuildASTPhase {
                     continue
                 }
 
-                guard let op = binaryOperator(at: current()), precedence(of: op) >= minPrecedence else {
-                    break
+                // Check for known binary operators (symbol-based and known infix identifiers)
+                if let op = binaryOperator(at: current()), precedence(of: op) >= minPrecedence {
+                    guard let opToken = consume() else { break }
+                    let assoc = associativity(of: op)
+                    let nextMin = assoc == .right ? precedence(of: op) : precedence(of: op) + 1
+                    guard let rhs = parseExpression(minPrecedence: nextMin) else { break }
+                    let range = mergeRanges(astArena.exprRange(lhs), astArena.exprRange(rhs), fallback: opToken.range)
+                    lhs = astArena.appendExpr(.binary(op: op, lhs: lhs, rhs: rhs, range: range))
+                    continue
                 }
-                guard let opToken = consume() else { break }
-                let assoc = associativity(of: op)
-                let nextMin = assoc == .right ? precedence(of: op) : precedence(of: op) + 1
-                guard let rhs = parseExpression(minPrecedence: nextMin) else { break }
-                let range = mergeRanges(astArena.exprRange(lhs), astArena.exprRange(rhs), fallback: opToken.range)
-                lhs = astArena.appendExpr(.binary(op: op, lhs: lhs, rhs: rhs, range: range))
+
+                // General infix function call: any identifier in infix position
+                // Kotlin grammar: infixFunctionCall = rangeExpression (simpleIdentifier rangeExpression)*
+                // All infix functions share precedence level 95 (left-associative)
+                let infixPrecedence = 95
+                if infixPrecedence >= minPrecedence,
+                   let token = current(),
+                   isInfixIdentifierToken(token),
+                   let nextToken = peek(1),
+                   canStartExpression(nextToken) {
+                    let calleeName = identifierFromToken(token)!
+                    _ = consume()
+                    guard let rhs = parseExpression(minPrecedence: infixPrecedence + 1) else { break }
+                    let range = mergeRanges(astArena.exprRange(lhs), astArena.exprRange(rhs), fallback: token.range)
+                    lhs = astArena.appendExpr(.memberCall(
+                        receiver: lhs,
+                        callee: calleeName,
+                        typeArgs: [],
+                        args: [CallArgument(expr: rhs)],
+                        range: range
+                    ))
+                    continue
+                }
+
+                break
             }
             return lhs
         }
@@ -247,7 +273,7 @@ extension BuildASTPhase {
             case .downTo:
                 return 95
             case .step:
-                return 93
+                return 95
             case .elvis:
                 return 90
             case .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
@@ -289,6 +315,56 @@ extension BuildASTPhase {
                 return name
             default:
                 return nil
+            }
+        }
+
+        /// Returns true if the token is an identifier that can serve as an infix function name.
+        /// Excludes identifiers already handled as known BinaryOp (downTo, step) by binaryOperator().
+        private func isInfixIdentifierToken(_ token: Token) -> Bool {
+            switch token.kind {
+            case .identifier(let name):
+                let resolved = interner.resolve(name)
+                // Exclude names already handled by binaryOperator()
+                if resolved == "downTo" || resolved == "step" {
+                    return false
+                }
+                return true
+            case .backtickedIdentifier:
+                return true
+            default:
+                return false
+            }
+        }
+
+        /// Returns true if a token can start an expression (used for infix call lookahead).
+        private func canStartExpression(_ token: Token) -> Bool {
+            switch token.kind {
+            case .identifier, .backtickedIdentifier:
+                return true
+            case .intLiteral, .longLiteral, .floatLiteral, .doubleLiteral, .charLiteral:
+                return true
+            case .keyword(.true), .keyword(.false), .keyword(.null):
+                return true
+            case .keyword(.if), .keyword(.when), .keyword(.try), .keyword(.throw), .keyword(.return):
+                return true
+            case .keyword(.for), .keyword(.while), .keyword(.do):
+                return true
+            case .keyword(.super), .keyword(.this), .keyword(.object):
+                return true
+            case .symbol(.lParen), .symbol(.lBrace), .symbol(.lBracket):
+                return true
+            case .symbol(.minus), .symbol(.plus), .symbol(.bang):
+                return true
+            case .symbol(.doubleColon):
+                return true
+            case .stringQuote, .rawStringQuote:
+                return true
+            case .softKeyword:
+                return true
+            case .keyword:  // other keywords that may act as identifiers in expression context
+                return true
+            default:
+                return false
             }
         }
 
