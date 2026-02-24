@@ -72,6 +72,7 @@ public final class CodegenPhase: CompilerPhase {
             debugInfo: ctx.options.debugInfo,
             diagnostics: ctx.diagnostics
         )
+        stubProvider.phaseTimer = ctx.phaseTimer
         return stubProvider.runtimeStubPath()
     }
 
@@ -133,12 +134,14 @@ public final class CodegenPhase: CompilerPhase {
         let selection = selectedBackend(irFlags: ctx.options.irFlags, diagnostics: ctx.diagnostics)
         switch selection.kind {
         case .syntheticC:
-            return LLVMBackend(
+            let backend = LLVMBackend(
                 target: ctx.options.target,
                 optLevel: ctx.options.optLevel,
                 debugInfo: ctx.options.debugInfo,
                 diagnostics: ctx.diagnostics
             )
+            backend.phaseTimer = ctx.phaseTimer
+            return backend
         case .llvmCAPI:
             return LLVMCAPIBackend(
                 target: ctx.options.target,

@@ -535,6 +535,10 @@ final class CallSupportLowerer {
             return interner.intern("rangeTo")
         case .rangeUntil:
             return interner.intern("rangeUntil")
+        case .downTo:
+            return interner.intern("downTo")
+        case .step:
+            return interner.intern("step")
         }
     }
 

@@ -13,28 +13,42 @@ extension DataFlowSemaPassPhase {
         types: TypeSystem,
         diagnostics: DiagnosticEngine,
         interner: StringInterner,
-        importedInlineFunctions: inout [SymbolID: KIRFunction]
+        importedInlineFunctions: inout [SymbolID: KIRFunction],
+        cache: LibraryMetadataCache? = nil
     ) {
         let libraryDirs = discoverLibraryDirectories(searchPaths: options.searchPaths)
         var pendingSupertypeEdges: [(subtype: SymbolID, superFQName: [InternedString])] = []
         var importedBindings: [ImportedLibraryBinding] = []
 
         for libraryDir in libraryDirs {
-            let manifestInfo = resolveLibraryManifestInfo(
-                libraryDir: libraryDir,
-                currentTarget: options.target,
-                diagnostics: diagnostics
-            )
+            let manifestInfo: LibraryManifestInfo
+            if let cached = cache?.cachedManifestInfo(libraryDir: libraryDir, target: options.target) {
+                manifestInfo = cached
+            } else {
+                manifestInfo = resolveLibraryManifestInfo(
+                    libraryDir: libraryDir,
+                    currentTarget: options.target,
+                    diagnostics: diagnostics
+                )
+                cache?.cacheManifestInfo(manifestInfo, libraryDir: libraryDir, target: options.target)
+            }
             guard manifestInfo.isValid else {
                 continue
             }
             let metadataPath = manifestInfo.metadataPath
-            guard let records = parseLibraryMetadata(
-                path: metadataPath,
-                diagnostics: diagnostics,
-                interner: interner
-            ) else {
-                continue
+            let records: [ImportedLibrarySymbolRecord]
+            if let cached = cache?.cachedMetadataRecords(metadataPath: metadataPath, interner: interner) {
+                records = cached
+            } else {
+                guard let parsed = parseLibraryMetadata(
+                    path: metadataPath,
+                    diagnostics: diagnostics,
+                    interner: interner
+                ) else {
+                    continue
+                }
+                records = parsed
+                cache?.cacheMetadataRecords(records, metadataPath: metadataPath, interner: interner)
             }
 
             for record in records {
@@ -54,6 +68,9 @@ extension DataFlowSemaPassPhase {
                 }
                 if record.isSealedClass {
                     flags.insert(.sealedType)
+                }
+                if record.isValueClass {
+                    flags.insert(.valueType)
                 }
                 let symbol = symbols.define(
                     kind: record.kind,
@@ -91,7 +108,8 @@ extension DataFlowSemaPassPhase {
                     types: types,
                     diagnostics: diagnostics,
                     interner: interner,
-                    metadataPath: binding.metadataPath
+                    metadataPath: binding.metadataPath,
+                    cache: cache
                 )
                 symbols.setFunctionSignature(signature, for: symbol)
                 if record.isInline,
@@ -118,17 +136,45 @@ extension DataFlowSemaPassPhase {
                     types: types,
                     diagnostics: diagnostics,
                     interner: interner,
-                    metadataPath: binding.metadataPath
+                    metadataPath: binding.metadataPath,
+                    cache: cache
                 )
                 symbols.setPropertyType(propertyType, for: symbol)
-            } else if record.kind == .typeAlias {
+            }
+
+            // P5-75: restore value class underlying type from metadata
+            if record.isValueClass {
+                if let vSig = record.valueClassUnderlyingTypeSig {
+                    let underlyingType = importedValueClassUnderlyingType(
+                        signature: vSig,
+                        symbols: symbols,
+                        types: types,
+                        diagnostics: diagnostics,
+                        interner: interner,
+                        metadataPath: binding.metadataPath,
+                        ownerFQName: record.fqName
+                    )
+                    if let underlyingType {
+                        symbols.setValueClassUnderlyingType(underlyingType, for: symbol)
+                    }
+                } else {
+                    diagnostics.warning(
+                        "KSWIFTK-LIB-0007",
+                        "Value class '\(renderFQName(record.fqName, interner: interner))' has no underlying type signature in library metadata at '\(binding.metadataPath)'. Boxing elision will be skipped for this type.",
+                        range: nil
+                    )
+                }
+            }
+
+            if record.kind == .typeAlias {
                 let underlyingType = importedTypeAliasUnderlyingType(
                     record: record,
                     symbols: symbols,
                     types: types,
                     diagnostics: diagnostics,
                     interner: interner,
-                    metadataPath: binding.metadataPath
+                    metadataPath: binding.metadataPath,
+                    cache: cache
                 )
                 if let underlyingType {
                     symbols.setTypeAliasUnderlyingType(underlyingType, for: symbol)
@@ -212,6 +258,24 @@ extension DataFlowSemaPassPhase {
                 metadataPath: binding.metadataPath
             )
         }
+
+        // P5-78: resolve sealed subclass FQ names to SymbolIDs for cross-module exhaustiveness
+        for binding in importedBindings where binding.record.isSealedClass && !binding.record.sealedSubclassFQNames.isEmpty {
+            let resolvedSubclasses: [SymbolID] = binding.record.sealedSubclassFQNames.compactMap { subFQName in
+                symbols.lookupAll(fqName: subFQName)
+                    .compactMap({ symbols.symbol($0) })
+                    .first(where: { isNominalLayoutTargetSymbol($0.kind) })?.id
+            }
+            // Only record concrete sealed subclasses when all declared subclass FQ names could be resolved.
+            // If any subclass fails to resolve, mark the sealed type as having unknown/incomplete subclasses
+            // by recording an empty sealed-subclass list as a sentinel, preventing the directSubtypes fallback
+            // from incorrectly treating an incomplete set as exhaustive.
+            if resolvedSubclasses.count == binding.record.sealedSubclassFQNames.count {
+                symbols.setSealedSubclasses(resolvedSubclasses, for: binding.symbol)
+            } else {
+                symbols.setSealedSubclasses([], for: binding.symbol)
+            }
+        }
     }
 
     struct ImportedFieldOffsetEntry {
@@ -250,7 +314,10 @@ extension DataFlowSemaPassPhase {
         let itableSlots: [ImportedITableSlotEntry]
         let isDataClass: Bool
         let isSealedClass: Bool
+        let isValueClass: Bool
+        let valueClassUnderlyingTypeSig: String?
         let annotations: [MetadataAnnotationRecord]
+        let sealedSubclassFQNames: [[InternedString]]
     }
 
     struct ImportedLibraryBinding {

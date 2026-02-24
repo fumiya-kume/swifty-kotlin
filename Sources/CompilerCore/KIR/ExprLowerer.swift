@@ -554,11 +554,11 @@ final class ExprLowerer {
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
-        case .arrayAccess(let arrayExpr, let indexExpr, _):
-            return driver.callLowerer.lowerArrayAccessExpr(exprID, arrayExpr: arrayExpr, indexExpr: indexExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+        case .indexedAccess(let receiverExpr, let indices, _):
+            return driver.callLowerer.lowerIndexedAccessExpr(exprID, receiverExpr: receiverExpr, indices: indices, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
-        case .arrayAssign(let arrayExpr, let indexExpr, let valueExpr, _):
-            return driver.callLowerer.lowerArrayAssignExpr(exprID, arrayExpr: arrayExpr, indexExpr: indexExpr, valueExpr: valueExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+        case .indexedAssign(let receiverExpr, let indices, let valueExpr, _):
+            return driver.callLowerer.lowerIndexedAssignExpr(exprID, receiverExpr: receiverExpr, indices: indices, valueExpr: valueExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
         case .returnExpr(let value, _):
             if let value {
@@ -696,6 +696,9 @@ final class ExprLowerer {
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
+
+        case .indexedCompoundAssign(_, let receiverExpr, let indices, let valueExpr, _):
+            return driver.callLowerer.lowerIndexedCompoundAssignExpr(exprID, receiverExpr: receiverExpr, indices: indices, valueExpr: valueExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
         case .throwExpr(let valueExpr, _):
             let thrownValue = lowerExpr(

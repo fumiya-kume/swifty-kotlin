@@ -5,8 +5,10 @@ extension LLVMBackend {
     /// runtime preamble has already been compiled into a cached stub object.
     /// Includes type definitions, macros, and extern declarations for all
     /// runtime functions that user code may reference.
-    func cRuntimeExternDeclarations() -> [String] {
-        [
+    ///
+    /// Stored as a static constant to avoid re-creating the array on every
+    /// compilation (P5-64).
+    static let fixedExternDeclarations: [String] = [
             "#define _DEFAULT_SOURCE",
             "#include <stdint.h>",
             "#include <stddef.h>",
@@ -93,12 +95,27 @@ extension LLVMBackend {
             "extern intptr_t kk_await_all(intptr_t handlesArray, intptr_t count);",
             "extern KKVTableEntry kk_vtable_lookup(intptr_t receiver, intptr_t slot);",
             "extern KKVTableEntry kk_itable_lookup(intptr_t receiver, intptr_t ifaceSlot, intptr_t methodSlot);",
+            "/* Range/progression runtime (P5-68) */",
+            "typedef struct { intptr_t first; intptr_t last; intptr_t step; } KKRange;",
+            "typedef struct { intptr_t current; intptr_t last; intptr_t step; } KKRangeIterator;",
+            "extern intptr_t kk_op_rangeTo(intptr_t a, intptr_t b);",
+            "extern intptr_t kk_op_rangeUntil(intptr_t a, intptr_t b);",
+            "extern intptr_t kk_op_downTo(intptr_t a, intptr_t b);",
+            "extern intptr_t kk_op_step(intptr_t rangeRaw, intptr_t stepVal);",
+            "extern intptr_t kk_range_iterator(intptr_t rangeRaw);",
+            "extern intptr_t kk_range_hasNext(intptr_t iterRaw);",
+            "extern intptr_t kk_range_next(intptr_t iterRaw);",
             ""
-        ]
+    ]
+
+    func cRuntimeExternDeclarations() -> [String] {
+        Self.fixedExternDeclarations
     }
 
-    func cRuntimePreamble() -> [String] {
-        [
+    /// Full C runtime preamble including all function implementations.
+    /// Stored as a static constant to avoid re-creating ~620 lines of strings
+    /// on every compilation (P5-64).
+    static let fixedRuntimePreamble: [String] = [
             "#define _DEFAULT_SOURCE",
             "#include <stdint.h>",
             "#include <stddef.h>",
@@ -711,6 +728,58 @@ extension LLVMBackend {
             "  (void)handlesArray; (void)count;",
             "  return 0;",
             "}",
+            "/* --- Range/progression runtime (P5-68) --- */",
+            "typedef struct { intptr_t first; intptr_t last; intptr_t step; } KKRange;",
+            "typedef struct { intptr_t current; intptr_t last; intptr_t step; } KKRangeIterator;",
+            "__attribute__((weak)) intptr_t kk_op_rangeTo(intptr_t a, intptr_t b) {",
+            "  KKRange* r = (KKRange*)malloc(sizeof(KKRange));",
+            "  if (!r) return 0;",
+            "  r->first = a; r->last = b; r->step = 1;",
+            "  return (intptr_t)r;",
+            "}",
+            "__attribute__((weak)) intptr_t kk_op_rangeUntil(intptr_t a, intptr_t b) {",
+            "  KKRange* r = (KKRange*)malloc(sizeof(KKRange));",
+            "  if (!r) return 0;",
+            "  r->first = a; r->last = b - 1; r->step = 1;",
+            "  return (intptr_t)r;",
+            "}",
+            "__attribute__((weak)) intptr_t kk_op_downTo(intptr_t a, intptr_t b) {",
+            "  KKRange* r = (KKRange*)malloc(sizeof(KKRange));",
+            "  if (!r) return 0;",
+            "  r->first = a; r->last = b; r->step = -1;",
+            "  return (intptr_t)r;",
+            "}",
+            "__attribute__((weak)) intptr_t kk_op_step(intptr_t rangeRaw, intptr_t stepVal) {",
+            "  KKRange* r = (KKRange*)(void*)rangeRaw;",
+            "  if (!r || stepVal <= 0) return rangeRaw;",
+            "  KKRange* nr = (KKRange*)malloc(sizeof(KKRange));",
+            "  if (!nr) return rangeRaw;",
+            "  nr->first = r->first; nr->last = r->last;",
+            "  if (r->step < 0) { nr->step = -stepVal; } else { nr->step = stepVal; }",
+            "  return (intptr_t)nr;",
+            "}",
+            "__attribute__((weak)) intptr_t kk_range_iterator(intptr_t rangeRaw) {",
+            "  KKRange* r = (KKRange*)(void*)rangeRaw;",
+            "  if (!r) return 0;",
+            "  KKRangeIterator* it = (KKRangeIterator*)malloc(sizeof(KKRangeIterator));",
+            "  if (!it) return 0;",
+            "  it->current = r->first; it->last = r->last; it->step = r->step;",
+            "  return (intptr_t)it;",
+            "}",
+            "__attribute__((weak)) intptr_t kk_range_hasNext(intptr_t iterRaw) {",
+            "  KKRangeIterator* it = (KKRangeIterator*)(void*)iterRaw;",
+            "  if (!it) return 0;",
+            "  if (it->step > 0) return it->current <= it->last ? 1 : 0;",
+            "  if (it->step < 0) return it->current >= it->last ? 1 : 0;",
+            "  return 0;",
+            "}",
+            "__attribute__((weak)) intptr_t kk_range_next(intptr_t iterRaw) {",
+            "  KKRangeIterator* it = (KKRangeIterator*)(void*)iterRaw;",
+            "  if (!it) return 0;",
+            "  intptr_t val = it->current;",
+            "  it->current += it->step;",
+            "  return val;",
+            "}",
             "/* vtable/itable dispatch helpers */",
             "typedef intptr_t (*KKVTableEntry)();",
             "__attribute__((weak)) KKVTableEntry kk_vtable_lookup(intptr_t receiver, intptr_t slot) {",
@@ -733,6 +802,9 @@ extension LLVMBackend {
             "  return itable[methodSlot];",
             "}",
             ""
-        ]
+    ]
+
+    func cRuntimePreamble() -> [String] {
+        Self.fixedRuntimePreamble
     }
 }

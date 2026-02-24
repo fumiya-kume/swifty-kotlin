@@ -20,15 +20,15 @@ file f0 package=_
 expr e0 name(x) type=Int ref=s8
 expr e1 int(1) type=Int
 expr e2 int(10) type=Int
-expr e3 binary(rangeTo) lhs=e1 rhs=e2 type=Any
+expr e3 binary(rangeTo) lhs=e1 rhs=e2 type=Int
 expr e4 inExpr lhs=e0 rhs=e3 type=Boolean
 expr e5 name(x) type=Int ref=s11
 expr e6 int(1) type=Int
 expr e7 int(10) type=Int
-expr e8 binary(rangeTo) lhs=e6 rhs=e7 type=Any
+expr e8 binary(rangeTo) lhs=e6 rhs=e7 type=Int
 expr e9 notInExpr lhs=e5 rhs=e8 type=Boolean
 expr e10 name(n) type=Int ref=s14
 expr e11 int(0) type=Int
 expr e12 int(10) type=Int
-expr e13 binary(rangeUntil) lhs=e11 rhs=e12 type=Any
+expr e13 binary(rangeUntil) lhs=e11 rhs=e12 type=Int
 expr e14 inExpr lhs=e10 rhs=e13 type=Boolean

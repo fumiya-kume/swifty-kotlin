@@ -578,6 +578,46 @@ public enum RuntimeABISpec {
         )
     ]
 
+    // Range/Progression (P5-68)
+    public static let rangeFunctions: [RuntimeABIFunctionSpec] = [
+        RuntimeABIFunctionSpec(
+            name: "kk_op_rangeTo",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_op_rangeUntil",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_op_downTo",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_op_step",
+            parameters: [
+                RuntimeABIParameter(name: "rangeRaw", type: .intptr),
+                RuntimeABIParameter(name: "stepVal", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Range"
+        )
+    ]
+
     // Stdlib Delegate Functions (P5-80)
     public static let delegateFunctions: [RuntimeABIFunctionSpec] = [
         // Lazy
@@ -653,7 +693,6 @@ public enum RuntimeABISpec {
             section: "Delegate"
         )
     ]
-
     public static let allFunctions: [RuntimeABIFunctionSpec] =
         memoryFunctions
         + exceptionFunctions
@@ -663,6 +702,7 @@ public enum RuntimeABISpec {
         + coroutineFunctions
         + boxingFunctions
         + arrayFunctions
+        + rangeFunctions
         + delegateFunctions
 
     public static func generateCHeader() -> String {

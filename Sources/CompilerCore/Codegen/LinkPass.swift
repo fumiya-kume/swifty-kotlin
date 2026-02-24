@@ -47,12 +47,11 @@ public final class LinkPhase: CompilerPhase {
           return (int)result;
         }
         """
-        let wrapperURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "_entry.c")
-        defer { try? FileManager.default.removeItem(at: wrapperURL) }
+        let wrapperURL = stableEntryWrapperURL(outputPath: ctx.options.outputPath)
         let autoLinkedObjects = discoverLibraryObjects(searchPaths: ctx.options.searchPaths)
 
         do {
-            try wrapperSource.write(to: wrapperURL, atomically: true, encoding: .utf8)
+            try writeIfChanged(content: wrapperSource, to: wrapperURL)
 
             var linkInputs: [String] = [objectPath, wrapperURL.path]
             if let stubPath = ctx.runtimeStubObjectPath,
@@ -77,7 +76,12 @@ public final class LinkPhase: CompilerPhase {
                 args.append("-l\(library)")
             }
             let clangPath = CommandRunner.resolveExecutable("clang", fallback: "/usr/bin/clang")
-            _ = try CommandRunner.run(executable: clangPath, arguments: args)
+            _ = try CommandRunner.run(
+                executable: clangPath,
+                arguments: args,
+                phaseTimer: ctx.phaseTimer,
+                subPhaseName: "Link/clang"
+            )
         } catch let error as CommandRunnerError {
             let message: String
             switch error {
@@ -150,6 +154,43 @@ public final class LinkPhase: CompilerPhase {
             }
         }
         return collected
+    }
+
+    /// Returns a deterministic URL for the entry wrapper C source file,
+    /// derived from the output path so the same compilation reuses the file.
+    /// Files are placed under a dedicated `kswiftk` subdirectory to avoid
+    /// collisions with unrelated entries in the shared temp directory.
+    private func stableEntryWrapperURL(outputPath: String) -> URL {
+        let key = LLVMBackend.stableFNV1a64Hex(outputPath)
+        let cacheDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("kswiftk", isDirectory: true)
+        do {
+            try FileManager.default.createDirectory(at: cacheDir, withIntermediateDirectories: true)
+        } catch {
+            FileHandle.standardError.write(
+                Data("warning: failed to create cache directory at \(cacheDir.path): \(error)\n".utf8)
+            )
+        }
+        return cacheDir.appendingPathComponent("entry_\(key).c")
+    }
+
+    /// Writes `content` to `url` only when the file does not already exist
+    /// or when the existing content differs, avoiding unnecessary I/O and
+    /// downstream rebuilds.
+    private func writeIfChanged(content: String, to url: URL) throws {
+        if FileManager.default.fileExists(atPath: url.path) {
+            do {
+                let existing = try String(contentsOf: url, encoding: .utf8)
+                if existing == content {
+                    return
+                }
+            } catch {
+                FileHandle.standardError.write(
+                    Data("warning: failed to read existing file at \(url.path); overwriting. Error: \(error)\n".utf8)
+                )
+            }
+        }
+        try content.write(to: url, atomically: true, encoding: .utf8)
     }
 
     private func objectPaths(from libraryDir: String) -> [String] {

@@ -66,6 +66,12 @@ extension DataFlowSemaPassPhase {
             } else {
                 itableSlots = []
             }
+            // P5-78: parse sealed subclass FQ names for cross-module exhaustiveness
+            let sealedSubclassFQNames: [[InternedString]] = metadataRecord.sealedSubclassFQNames.compactMap { fqStr in
+                let parsed = fqStr.split(separator: ".").map { interner.intern(String($0)) }
+                return parsed.isEmpty ? nil : parsed
+            }
+
             records.append(ImportedLibrarySymbolRecord(
                 kind: metadataRecord.kind,
                 mangledName: metadataRecord.mangledName,
@@ -85,7 +91,10 @@ extension DataFlowSemaPassPhase {
                 itableSlots: itableSlots,
                 isDataClass: metadataRecord.isDataClass,
                 isSealedClass: metadataRecord.isSealedClass,
-                annotations: metadataRecord.annotations
+                isValueClass: metadataRecord.isValueClass,
+                valueClassUnderlyingTypeSig: metadataRecord.valueClassUnderlyingTypeSig,
+                annotations: metadataRecord.annotations,
+                sealedSubclassFQNames: sealedSubclassFQNames
             ))
         }
 
@@ -98,7 +107,8 @@ extension DataFlowSemaPassPhase {
         types: TypeSystem,
         diagnostics: DiagnosticEngine,
         interner: StringInterner,
-        metadataPath: String
+        metadataPath: String,
+        cache: LibraryMetadataCache? = nil
     ) -> FunctionSignature {
         let fallback = FunctionSignature(
             parameterTypes: Array(repeating: types.anyType, count: max(0, record.arity)),
@@ -115,7 +125,8 @@ extension DataFlowSemaPassPhase {
             interner: interner,
             diagnostics: diagnostics,
             metadataPath: metadataPath,
-            ownerFQName: record.fqName
+            ownerFQName: record.fqName,
+            cache: cache
         ) else {
             return fallback
         }
@@ -148,7 +159,8 @@ extension DataFlowSemaPassPhase {
         types: TypeSystem,
         diagnostics: DiagnosticEngine,
         interner: StringInterner,
-        metadataPath: String
+        metadataPath: String,
+        cache: LibraryMetadataCache? = nil
     ) -> TypeID {
         guard let encodedSignature = record.typeSignature else {
             return types.anyType
@@ -160,7 +172,8 @@ extension DataFlowSemaPassPhase {
             interner: interner,
             diagnostics: diagnostics,
             metadataPath: metadataPath,
-            ownerFQName: record.fqName
+            ownerFQName: record.fqName,
+            cache: cache
         ) ?? types.anyType
     }
 
@@ -170,7 +183,8 @@ extension DataFlowSemaPassPhase {
         types: TypeSystem,
         diagnostics: DiagnosticEngine,
         interner: StringInterner,
-        metadataPath: String
+        metadataPath: String,
+        cache: LibraryMetadataCache? = nil
     ) -> TypeID? {
         guard let encodedSignature = record.typeSignature else {
             return nil
@@ -182,7 +196,8 @@ extension DataFlowSemaPassPhase {
             interner: interner,
             diagnostics: diagnostics,
             metadataPath: metadataPath,
-            ownerFQName: record.fqName
+            ownerFQName: record.fqName,
+            cache: cache
         ) else {
             diagnostics.warning(
                 "KSWIFTK-LIB-0003",
@@ -202,6 +217,34 @@ extension DataFlowSemaPassPhase {
         return decoded
     }
 
+    func importedValueClassUnderlyingType(
+        signature: String,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner,
+        metadataPath: String,
+        ownerFQName: [InternedString]
+    ) -> TypeID? {
+        guard let decoded = decodeImportedTypeSignature(
+            token: signature,
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            diagnostics: diagnostics,
+            metadataPath: metadataPath,
+            ownerFQName: ownerFQName
+        ) else {
+            diagnostics.warning(
+                "KSWIFTK-LIB-0003",
+                "Invalid value class underlying type in metadata at \(metadataPath): \(renderFQName(ownerFQName, interner: interner))",
+                range: nil
+            )
+            return nil
+        }
+        return decoded
+    }
+
     private func decodeImportedTypeSignature(
         token: String,
         symbols: SymbolTable,
@@ -209,8 +252,12 @@ extension DataFlowSemaPassPhase {
         interner: StringInterner,
         diagnostics: DiagnosticEngine,
         metadataPath: String,
-        ownerFQName: [InternedString]
+        ownerFQName: [InternedString],
+        cache: LibraryMetadataCache? = nil
     ) -> TypeID? {
+        if let cache = cache, let cached = cache.cachedSignature(token, types: types, symbols: symbols) {
+            return cached
+        }
         var parser = MetadataTypeSignatureParser(
             source: token,
             symbols: symbols,
@@ -220,7 +267,9 @@ extension DataFlowSemaPassPhase {
             metadataPath: metadataPath,
             ownerFQName: ownerFQName
         )
-        return parser.parse()
+        let result = parser.parse()
+        cache?.cacheSignature(result, for: token, types: types, symbols: symbols)
+        return result
     }
 
     private struct MetadataTypeSignatureParser {
