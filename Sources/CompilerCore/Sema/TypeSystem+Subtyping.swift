@@ -269,7 +269,8 @@ extension TypeSystem {
             case .invariant(let type):
                 return .in(type)
             case .in(let type):
-                return .in(type)
+                // in × in = out (double contravariance = covariance)
+                return .out(type)
             case .star:
                 return .star
             case .out:

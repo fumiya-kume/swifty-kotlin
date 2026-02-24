@@ -77,6 +77,176 @@ extension TypeSystem {
         return mapping
     }
 
+    /// Result of checking use-site variance projections on a member access.
+    public struct VarianceProjectionResult {
+        /// Substitution for covariant positions (return types).
+        /// For `out Number`: T → Number.  For `in Number`: T → Any?.  For `*`: T → Any?.
+        public let covariantSubstitution: [TypeVarID: TypeID]
+        /// Substitution for contravariant positions (parameter types).
+        /// For `out Number`: T → Nothing.  For `in Number`: T → Number.  For `*`: T → Nothing.
+        public let contravariantSubstitution: [TypeVarID: TypeID]
+        /// Type parameter symbols that are projected as `out` or `*` (write-forbidden).
+        public let writeForbiddenSymbols: Set<SymbolID>
+        /// Type parameter symbols that are projected as `in` (read returns upper bound).
+        public let readProjectedSymbols: Set<SymbolID>
+    }
+
+    /// Build variance-aware substitutions for a member access on a projected receiver type.
+    ///
+    /// Given a receiver like `MutableList<out Number>`, this builds:
+    /// - Covariant substitution: T → Number (for return types)
+    /// - Contravariant substitution: T → Nothing (for parameter types)
+    ///
+    /// Returns `nil` if the receiver has no projected type arguments (all invariant).
+    public func buildVarianceProjectionSubstitutions(
+        receiverType: TypeID,
+        signature: FunctionSignature,
+        symbols: SymbolTable
+    ) -> VarianceProjectionResult? {
+        guard case .classType(let classType) = kind(of: receiverType) else {
+            return nil
+        }
+        let classSymbol = classType.classSymbol
+        let typeParamSymbols = nominalTypeParameterSymbols(for: classSymbol)
+
+        guard !typeParamSymbols.isEmpty, !classType.args.isEmpty else {
+            return nil
+        }
+
+        // Check if any arg is projected (non-invariant with a concrete type or star)
+        let hasProjection = classType.args.contains { arg in
+            switch arg {
+            case .out, .in, .star: return true
+            case .invariant: return false
+            }
+        }
+        guard hasProjection else { return nil }
+
+        let typeVarBySymbol = makeTypeVarBySymbol(signature.typeParameterSymbols)
+        var covariantSub = typeVarBySymbol.isEmpty ? [:] : [TypeVarID: TypeID]()
+        var contravariantSub = typeVarBySymbol.isEmpty ? [:] : [TypeVarID: TypeID]()
+        var writeForbidden: Set<SymbolID> = []
+        var readProjected: Set<SymbolID> = []
+
+        for (index, arg) in classType.args.enumerated() {
+            guard index < typeParamSymbols.count else { break }
+            let tpSymbol = typeParamSymbols[index]
+            guard let typeVar = typeVarBySymbol[tpSymbol] else { continue }
+
+            switch arg {
+            case .invariant(let type):
+                covariantSub[typeVar] = type
+                contravariantSub[typeVar] = type
+            case .out(let type):
+                // Covariant: read as the bound type
+                covariantSub[typeVar] = type
+                // Contravariant: write forbidden (Nothing)
+                contravariantSub[typeVar] = nothingType
+                writeForbidden.insert(tpSymbol)
+            case .in(let type):
+                // Covariant: read returns upper bound (Any?)
+                let upperBound = symbols.typeParameterUpperBound(for: tpSymbol) ?? nullableAnyType
+                covariantSub[typeVar] = upperBound
+                // Contravariant: write with the projected type
+                contravariantSub[typeVar] = type
+                readProjected.insert(tpSymbol)
+            case .star:
+                // Star = out Any?: read returns upper bound, write forbidden
+                let upperBound = symbols.typeParameterUpperBound(for: tpSymbol) ?? nullableAnyType
+                covariantSub[typeVar] = upperBound
+                contravariantSub[typeVar] = nothingType
+                writeForbidden.insert(tpSymbol)
+            }
+        }
+
+        return VarianceProjectionResult(
+            covariantSubstitution: covariantSub,
+            contravariantSubstitution: contravariantSub,
+            writeForbiddenSymbols: writeForbidden,
+            readProjectedSymbols: readProjected
+        )
+    }
+
+    /// Check if a member function's parameters use any write-forbidden type parameters.
+    /// Returns the index of the first violating parameter, or nil if no violation.
+    public func checkVarianceViolationInParameters(
+        signature: FunctionSignature,
+        writeForbiddenSymbols: Set<SymbolID>
+    ) -> Int? {
+        guard !writeForbiddenSymbols.isEmpty else { return nil }
+        for (index, paramType) in signature.parameterTypes.enumerated() {
+            for symbol in writeForbiddenSymbols {
+                if typeContainsTypeParam(paramType, symbol: symbol) {
+                    return index
+                }
+            }
+        }
+        return nil
+    }
+
+    /// Apply use-site variance projection to a member property type.
+    ///
+    /// When accessing a property on a projected receiver (e.g. `Box<out Number>.value`),
+    /// type parameters in the property type are substituted according to the receiver's
+    /// variance projections:
+    /// - `out Number`: T → Number (covariant read)
+    /// - `in Number`: T → Any? (read returns upper bound)
+    /// - `*`: T → Any? (read returns upper bound)
+    ///
+    /// Returns the projected type, or `nil` if the receiver has no projections.
+    public func applyVarianceProjectionToPropertyType(
+        propertyType: TypeID,
+        receiverType: TypeID,
+        symbols: SymbolTable
+    ) -> TypeID? {
+        guard case .classType(let classType) = kind(of: receiverType) else {
+            return nil
+        }
+        let classSymbol = classType.classSymbol
+        let typeParamSymbols = nominalTypeParameterSymbols(for: classSymbol)
+
+        guard !typeParamSymbols.isEmpty, !classType.args.isEmpty else {
+            return nil
+        }
+
+        let hasProjection = classType.args.contains { arg in
+            switch arg {
+            case .out, .in, .star: return true
+            case .invariant: return false
+            }
+        }
+        guard hasProjection else { return nil }
+
+        // Build a direct symbol-to-type substitution map for covariant (read) positions
+        var substitution: [TypeVarID: TypeID] = [:]
+        let typeVarBySymbol = makeTypeVarBySymbol(typeParamSymbols)
+
+        for (index, arg) in classType.args.enumerated() {
+            guard index < typeParamSymbols.count else { break }
+            let tpSymbol = typeParamSymbols[index]
+            guard let typeVar = typeVarBySymbol[tpSymbol] else { continue }
+
+            switch arg {
+            case .invariant(let type):
+                substitution[typeVar] = type
+            case .out(let type):
+                substitution[typeVar] = type
+            case .in:
+                let upperBound = symbols.typeParameterUpperBound(for: tpSymbol) ?? nullableAnyType
+                substitution[typeVar] = upperBound
+            case .star:
+                let upperBound = symbols.typeParameterUpperBound(for: tpSymbol) ?? nullableAnyType
+                substitution[typeVar] = upperBound
+            }
+        }
+
+        return substituteTypeParameters(
+            in: propertyType,
+            substitution: substitution,
+            typeVarBySymbol: typeVarBySymbol
+        )
+    }
+
     public func substituteTypeParameters(
         in type: TypeID,
         substitution: [TypeVarID: TypeID],

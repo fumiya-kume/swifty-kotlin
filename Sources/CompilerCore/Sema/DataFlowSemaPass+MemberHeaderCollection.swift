@@ -15,7 +15,9 @@ extension DataFlowSemaPassPhase {
         bindings: BindingTable,
         scope: Scope,
         diagnostics: DiagnosticEngine,
-        interner: StringInterner
+        interner: StringInterner,
+        classTypeParameterSymbols: [SymbolID] = [],
+        classLocalTypeParameters: [InternedString: SymbolID] = [:]
     ) {
         let anyType = types.anyType
         let unitType = types.unitType
@@ -56,13 +58,20 @@ extension DataFlowSemaPassPhase {
                 diagnostics: diagnostics
             )
 
+            // Merge class type parameters with function's own type parameters.
+            // Function params shadow class params if names collide.
+            var mergedLocalTypeParameters = classLocalTypeParameters
+            for (key, value) in typeParamResult.localTypeParameters {
+                mergedLocalTypeParameters[key] = value
+            }
+
             let params = collectValueParameters(
                 funDecl.valueParams,
                 localNamespaceFQName: localNamespaceFQName,
                 declSite: funDecl.range,
                 ast: ast, symbols: symbols, types: types,
                 interner: interner,
-                localTypeParameters: typeParamResult.localTypeParameters,
+                localTypeParameters: mergedLocalTypeParameters,
                 diagnostics: diagnostics,
                 fallbackType: anyType
             )
@@ -74,7 +83,7 @@ extension DataFlowSemaPassPhase {
                 symbols: symbols,
                 types: types,
                 interner: interner,
-                localTypeParameters: typeParamResult.localTypeParameters,
+                localTypeParameters: mergedLocalTypeParameters,
                 diagnostics: diagnostics
             ) {
                 returnType = explicit
@@ -87,7 +96,11 @@ extension DataFlowSemaPassPhase {
                 }
             }
 
-            let memberUpperBounds: [TypeID?] = typeParamResult.typeParameterSymbols.map { symbols.typeParameterUpperBound(for: $0) }
+            // Include class type parameter symbols so the overload resolver can
+            // infer them from the receiver type arguments.
+            let allTypeParameterSymbols = classTypeParameterSymbols + typeParamResult.typeParameterSymbols
+            let classUpperBounds: [TypeID?] = classTypeParameterSymbols.map { symbols.typeParameterUpperBound(for: $0) }
+            let memberUpperBounds: [TypeID?] = classUpperBounds + typeParamResult.typeParameterSymbols.map { symbols.typeParameterUpperBound(for: $0) }
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: ownerType,
@@ -97,7 +110,7 @@ extension DataFlowSemaPassPhase {
                     valueParameterSymbols: params.paramSymbols,
                     valueParameterHasDefaultValues: params.paramHasDefaultValues,
                     valueParameterIsVararg: params.paramIsVararg,
-                    typeParameterSymbols: typeParamResult.typeParameterSymbols,
+                    typeParameterSymbols: allTypeParameterSymbols,
                     reifiedTypeParameterIndices: typeParamResult.reifiedIndices,
                     typeParameterUpperBounds: memberUpperBounds
                 ),
@@ -134,12 +147,14 @@ extension DataFlowSemaPassPhase {
             symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
             scope.insert(memberSymbol)
 
+            // Use class type parameters for resolving member property types
             let resolvedType = resolveTypeRef(
                 propertyDecl.type,
                 ast: ast,
                 symbols: symbols,
                 types: types,
                 interner: interner,
+                localTypeParameters: classLocalTypeParameters,
                 diagnostics: diagnostics
             ) ?? types.nullableAnyType
             symbols.setPropertyType(resolvedType, for: memberSymbol)

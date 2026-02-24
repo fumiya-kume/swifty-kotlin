@@ -288,17 +288,16 @@ public final class OverloadResolver {
         guard let implicitReceiverType else {
             return nil
         }
-        let rhsOperand = operand(
-            for: receiverType,
+        // Use decomposeSubtypeConstraint to properly extract type variables
+        // from generic receiver types (e.g. Class<T>) so the solver can
+        // infer type arguments from projected receivers (e.g. Class<out Any>).
+        return decomposeSubtypeConstraint(
+            subtype: implicitReceiverType,
+            supertype: receiverType,
             typeVarBySymbol: typeVarBySymbol,
-            typeSystem: typeSystem
-        )
-        return [VariableConstraint(
-            kind: .subtype,
-            left: .type(implicitReceiverType),
-            right: rhsOperand,
+            typeSystem: typeSystem,
             blameRange: range
-        )]
+        )
     }
 
     private func appendArgumentConstraints(

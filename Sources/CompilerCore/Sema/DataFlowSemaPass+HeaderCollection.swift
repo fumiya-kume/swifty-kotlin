@@ -107,13 +107,58 @@ extension DataFlowSemaPassPhase {
 
         switch decl {
         case .classDecl(let classDecl):
+            // Register class type parameters as symbols so member functions
+            // can reference them (e.g. `fun get(): T` inside `class Box<T>`).
+            var classTypeParamSymbols: [SymbolID] = []
+            var classLocalTypeParameters: [InternedString: SymbolID] = [:]
+
             if !classDecl.typeParams.isEmpty {
                 types.setNominalTypeParameterVariances(
                     classDecl.typeParams.map(\.variance),
                     for: symbol
                 )
+                let classTypeParamNamespace = fqName + [interner.intern("$class\(symbol.rawValue)")]
+                for typeParam in classDecl.typeParams {
+                    let typeParamFQName = classTypeParamNamespace + [typeParam.name]
+                    let typeParamSymbol = symbols.define(
+                        kind: .typeParameter,
+                        name: typeParam.name,
+                        fqName: typeParamFQName,
+                        declSite: classDecl.range,
+                        visibility: .private,
+                        flags: []
+                    )
+                    classTypeParamSymbols.append(typeParamSymbol)
+                    classLocalTypeParameters[typeParam.name] = typeParamSymbol
+                }
+                types.setNominalTypeParameterSymbols(
+                    classTypeParamSymbols,
+                    for: symbol
+                )
+                // Register upper bounds for class type parameters
+                for typeParam in classDecl.typeParams {
+                    if let boundRef = typeParam.upperBound,
+                       let typeParamSym = classLocalTypeParameters[typeParam.name] {
+                        if let boundType = resolveTypeRef(
+                            boundRef,
+                            ast: ast,
+                            symbols: symbols,
+                            types: types,
+                            interner: interner,
+                            localTypeParameters: classLocalTypeParameters,
+                            diagnostics: diagnostics
+                        ) {
+                            symbols.setTypeParameterUpperBound(boundType, for: typeParamSym)
+                        }
+                    }
+                }
             }
-            let classType = types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
+
+            // Create owner type with type parameter references as args
+            let typeParamArgs: [TypeArg] = classTypeParamSymbols.map { tpSymbol in
+                .invariant(types.make(.typeParam(TypeParamType(symbol: tpSymbol))))
+            }
+            let classType = types.make(.classType(ClassType(classSymbol: symbol, args: typeParamArgs, nullability: .nonNull)))
             let classScope = ClassMemberScope(
                 parent: scope,
                 symbols: symbols,
@@ -159,7 +204,9 @@ extension DataFlowSemaPassPhase {
                         localNamespaceFQName: localNamespaceFQName,
                         declSite: classDecl.range,
                         ast: ast, symbols: symbols, types: types,
-                        interner: interner, diagnostics: diagnostics,
+                        interner: interner,
+                        localTypeParameters: classLocalTypeParameters,
+                        diagnostics: diagnostics,
                         fallbackType: anyType
                     )
                     symbols.setFunctionSignature(
@@ -169,7 +216,8 @@ extension DataFlowSemaPassPhase {
                             returnType: classType,
                             valueParameterSymbols: params.paramSymbols,
                             valueParameterHasDefaultValues: params.paramHasDefaultValues,
-                            valueParameterIsVararg: params.paramIsVararg
+                            valueParameterIsVararg: params.paramIsVararg,
+                            typeParameterSymbols: classTypeParamSymbols
                         ),
                         for: primaryCtorSymbol
                     )
@@ -193,7 +241,9 @@ extension DataFlowSemaPassPhase {
                     localNamespaceFQName: localNamespaceFQName,
                     declSite: secondaryCtor.range,
                     ast: ast, symbols: symbols, types: types,
-                    interner: interner, diagnostics: diagnostics,
+                    interner: interner,
+                    localTypeParameters: classLocalTypeParameters,
+                    diagnostics: diagnostics,
                     fallbackType: anyType
                 )
                 symbols.setFunctionSignature(
@@ -203,7 +253,8 @@ extension DataFlowSemaPassPhase {
                         returnType: classType,
                         valueParameterSymbols: params.paramSymbols,
                         valueParameterHasDefaultValues: params.paramHasDefaultValues,
-                        valueParameterIsVararg: params.paramIsVararg
+                        valueParameterIsVararg: params.paramIsVararg,
+                        typeParameterSymbols: classTypeParamSymbols
                     ),
                     for: secCtorSymbol
                 )
@@ -228,6 +279,7 @@ extension DataFlowSemaPassPhase {
                         symbols: symbols,
                         types: types,
                         interner: interner,
+                        localTypeParameters: classLocalTypeParameters,
                         diagnostics: diagnostics
                     ) ?? anyType
                     symbols.setValueClassUnderlyingType(underlyingType, for: symbol)
@@ -277,7 +329,9 @@ extension DataFlowSemaPassPhase {
                 bindings: bindings,
                 scope: classScope,
                 diagnostics: diagnostics,
-                interner: interner
+                interner: interner,
+                classTypeParameterSymbols: classTypeParamSymbols,
+                classLocalTypeParameters: classLocalTypeParameters
             )
             // Process companion object: register as nested object and link to owner class
             if let companionDeclID = classDecl.companionObject {
@@ -296,13 +350,55 @@ extension DataFlowSemaPassPhase {
             }
 
         case .interfaceDecl(let interfaceDecl):
+            // Register interface type parameters as symbols
+            var ifaceTypeParamSymbols: [SymbolID] = []
+            var ifaceLocalTypeParameters: [InternedString: SymbolID] = [:]
+
             if !interfaceDecl.typeParams.isEmpty {
                 types.setNominalTypeParameterVariances(
                     interfaceDecl.typeParams.map(\.variance),
                     for: symbol
                 )
+                let ifaceTypeParamNamespace = fqName + [interner.intern("$class\(symbol.rawValue)")]
+                for typeParam in interfaceDecl.typeParams {
+                    let typeParamFQName = ifaceTypeParamNamespace + [typeParam.name]
+                    let typeParamSymbol = symbols.define(
+                        kind: .typeParameter,
+                        name: typeParam.name,
+                        fqName: typeParamFQName,
+                        declSite: interfaceDecl.range,
+                        visibility: .private,
+                        flags: []
+                    )
+                    ifaceTypeParamSymbols.append(typeParamSymbol)
+                    ifaceLocalTypeParameters[typeParam.name] = typeParamSymbol
+                }
+                types.setNominalTypeParameterSymbols(
+                    ifaceTypeParamSymbols,
+                    for: symbol
+                )
+                for typeParam in interfaceDecl.typeParams {
+                    if let boundRef = typeParam.upperBound,
+                       let typeParamSym = ifaceLocalTypeParameters[typeParam.name] {
+                        if let boundType = resolveTypeRef(
+                            boundRef,
+                            ast: ast,
+                            symbols: symbols,
+                            types: types,
+                            interner: interner,
+                            localTypeParameters: ifaceLocalTypeParameters,
+                            diagnostics: diagnostics
+                        ) {
+                            symbols.setTypeParameterUpperBound(boundType, for: typeParamSym)
+                        }
+                    }
+                }
             }
-            let interfaceType = types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
+
+            let ifaceTypeParamArgs: [TypeArg] = ifaceTypeParamSymbols.map { tpSymbol in
+                .invariant(types.make(.typeParam(TypeParamType(symbol: tpSymbol))))
+            }
+            let interfaceType = types.make(.classType(ClassType(classSymbol: symbol, args: ifaceTypeParamArgs, nullability: .nonNull)))
             let interfaceScope = ClassMemberScope(
                 parent: scope,
                 symbols: symbols,
@@ -332,7 +428,9 @@ extension DataFlowSemaPassPhase {
                 bindings: bindings,
                 scope: interfaceScope,
                 diagnostics: diagnostics,
-                interner: interner
+                interner: interner,
+                classTypeParameterSymbols: ifaceTypeParamSymbols,
+                classLocalTypeParameters: ifaceLocalTypeParameters
             )
             // Process companion object for interface
             if let companionDeclID = interfaceDecl.companionObject {
