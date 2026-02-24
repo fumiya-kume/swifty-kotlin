@@ -100,10 +100,10 @@ expr e52 call callee=e50 args=[_:e51] type=Any
 expr e53 localDecl arr mutable=1 type=_ init=e52 type=Unit ref=s31
 expr e54 name(arr) type=Any ref=s31
 expr e55 int(0) type=Int
-expr e56 arrayAccess array=e54 index=e55 type=_
+expr e56 indexedAccess receiver=e54 indices=[e55] type=_
 expr e57 int(42) type=Int
-expr e58 arrayAssign array=e54 index=e55 value=e57 type=Unit
+expr e58 indexedAssign receiver=e54 indices=[e55] value=e57 type=Unit
 expr e59 name(arr) type=Any ref=s31
 expr e60 int(0) type=Int
-expr e61 arrayAccess array=e59 index=e60 type=Any
+expr e61 indexedAccess receiver=e59 indices=[e60] type=Any
 expr e62 return value=e61 type=Any

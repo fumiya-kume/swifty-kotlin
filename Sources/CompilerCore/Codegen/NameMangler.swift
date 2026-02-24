@@ -150,7 +150,7 @@ public final class NameMangler {
         }
     }
 
-    private func encodeType(
+    func encodeType(
         _ type: TypeID,
         symbols: SymbolTable,
         types: TypeSystem,

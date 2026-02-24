@@ -288,8 +288,9 @@ final class GoldenHarnessTests: XCTestCase {
             return "localDecl \(interner.resolve(name)) mutable=\(isMutable ? 1 : 0) type=\(typeStr) init=\(initStr)"
         case .localAssign(let name, let value, _):
             return "localAssign \(interner.resolve(name)) value=e\(value.rawValue)"
-        case .arrayAssign(let array, let index, let value, _):
-            return "arrayAssign array=e\(array.rawValue) index=e\(index.rawValue) value=e\(value.rawValue)"
+        case .indexedAssign(let receiver, let indices, let value, _):
+            let idxStr = indices.map { "e\($0.rawValue)" }.joined(separator: ",")
+            return "indexedAssign receiver=e\(receiver.rawValue) indices=[\(idxStr)] value=e\(value.rawValue)"
         case .call(let callee, _, let args, _):
             let renderedArgs = args.map { arg in
                 let label = arg.label.map { interner.resolve($0) } ?? "_"
@@ -302,8 +303,9 @@ final class GoldenHarnessTests: XCTestCase {
                 return "\(label):e\(arg.expr.rawValue)"
             }.joined(separator: ",")
             return "memberCall recv=e\(receiver.rawValue) callee=\(interner.resolve(callee)) args=[\(renderedArgs)]"
-        case .arrayAccess(let array, let index, _):
-            return "arrayAccess array=e\(array.rawValue) index=e\(index.rawValue)"
+        case .indexedAccess(let receiver, let indices, _):
+            let idxStr = indices.map { "e\($0.rawValue)" }.joined(separator: ",")
+            return "indexedAccess receiver=e\(receiver.rawValue) indices=[\(idxStr)]"
         case .binary(let op, let lhs, let rhs, _):
             return "binary(\(op)) lhs=e\(lhs.rawValue) rhs=e\(rhs.rawValue)"
         case .whenExpr(let subject, let branches, let elseExpr, _):
@@ -340,6 +342,9 @@ final class GoldenHarnessTests: XCTestCase {
             return "safeMemberCall recv=e\(receiver.rawValue) callee=\(interner.resolve(callee)) args=[\(renderedArgs)]"
         case .compoundAssign(let op, let name, let value, _):
             return "compoundAssign(\(op)) name=\(interner.resolve(name)) value=e\(value.rawValue)"
+        case .indexedCompoundAssign(let op, let receiver, let indices, let value, _):
+            let idxStr = indices.map { "e\($0.rawValue)" }.joined(separator: ",")
+            return "indexedCompoundAssign(\(op)) receiver=e\(receiver.rawValue) indices=[\(idxStr)] value=e\(value.rawValue)"
         case .stringTemplate(let parts, _):
             let rendered = parts.map { part -> String in
                 switch part {
@@ -420,6 +425,7 @@ final class GoldenHarnessTests: XCTestCase {
         if flags.contains(.static) { names.append("static") }
         if flags.contains(.sealedType) { names.append("sealedType") }
         if flags.contains(.dataType) { names.append("dataType") }
+        if flags.contains(.valueType) { names.append("valueType") }
         return names.joined(separator: "|")
     }
 

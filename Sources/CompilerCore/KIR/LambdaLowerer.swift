@@ -605,9 +605,9 @@ final class LambdaLowerer {
         case .localAssign(_, let valueExpr, _):
             collectBoundIdentifierSymbols(in: valueExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
 
-        case .arrayAssign(let arrayExpr, let indexExpr, let valueExpr, _):
-            collectBoundIdentifierSymbols(in: arrayExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
-            collectBoundIdentifierSymbols(in: indexExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
+        case .indexedAssign(let receiverExpr, let indices, let valueExpr, _):
+            collectBoundIdentifierSymbols(in: receiverExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
+            for idx in indices { collectBoundIdentifierSymbols(in: idx, ast: ast, sema: sema, referenced: &referenced, seen: &seen) }
             collectBoundIdentifierSymbols(in: valueExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
 
         case .call(let calleeExpr, _, let args, _):
@@ -623,9 +623,9 @@ final class LambdaLowerer {
                 collectBoundIdentifierSymbols(in: argument.expr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
             }
 
-        case .arrayAccess(let arrayExpr, let indexExpr, _):
-            collectBoundIdentifierSymbols(in: arrayExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
-            collectBoundIdentifierSymbols(in: indexExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
+        case .indexedAccess(let receiverExpr, let indices, _):
+            collectBoundIdentifierSymbols(in: receiverExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
+            for idx in indices { collectBoundIdentifierSymbols(in: idx, ast: ast, sema: sema, referenced: &referenced, seen: &seen) }
 
         case .binary(_, let lhs, let rhs, _):
             collectBoundIdentifierSymbols(in: lhs, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
@@ -674,6 +674,11 @@ final class LambdaLowerer {
             collectBoundIdentifierSymbols(in: operandExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
 
         case .compoundAssign(_, _, let valueExpr, _):
+            collectBoundIdentifierSymbols(in: valueExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
+
+        case .indexedCompoundAssign(_, let receiverExpr, let indices, let valueExpr, _):
+            collectBoundIdentifierSymbols(in: receiverExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
+            for idx in indices { collectBoundIdentifierSymbols(in: idx, ast: ast, sema: sema, referenced: &referenced, seen: &seen) }
             collectBoundIdentifierSymbols(in: valueExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
 
         case .lambdaLiteral(_, let bodyExpr, _):
@@ -764,10 +769,10 @@ final class LambdaLowerer {
         case .localAssign(_, let valueExpr, _):
             return containsImplicitReceiverReference(in: valueExpr, ast: ast)
 
-        case .arrayAssign(let arrayExpr, let indexExpr, let valueExpr, _):
-            return containsImplicitReceiverReference(in: arrayExpr, ast: ast)
-                || containsImplicitReceiverReference(in: indexExpr, ast: ast)
-                || containsImplicitReceiverReference(in: valueExpr, ast: ast)
+        case .indexedAssign(let receiverExpr, let indices, let valueExpr, _):
+            if containsImplicitReceiverReference(in: receiverExpr, ast: ast) { return true }
+            for idx in indices { if containsImplicitReceiverReference(in: idx, ast: ast) { return true } }
+            return containsImplicitReceiverReference(in: valueExpr, ast: ast)
 
         case .call(let calleeExpr, _, let args, _):
             if containsImplicitReceiverReference(in: calleeExpr, ast: ast) {
@@ -782,9 +787,9 @@ final class LambdaLowerer {
             }
             return args.contains { containsImplicitReceiverReference(in: $0.expr, ast: ast) }
 
-        case .arrayAccess(let arrayExpr, let indexExpr, _):
-            return containsImplicitReceiverReference(in: arrayExpr, ast: ast)
-                || containsImplicitReceiverReference(in: indexExpr, ast: ast)
+        case .indexedAccess(let receiverExpr, let indices, _):
+            if containsImplicitReceiverReference(in: receiverExpr, ast: ast) { return true }
+            return indices.contains { containsImplicitReceiverReference(in: $0, ast: ast) }
 
         case .binary(_, let lhsExpr, let rhsExpr, _):
             return containsImplicitReceiverReference(in: lhsExpr, ast: ast)
@@ -845,6 +850,11 @@ final class LambdaLowerer {
              .compoundAssign(_, _, let operandExpr, _),
              .throwExpr(let operandExpr, _):
             return containsImplicitReceiverReference(in: operandExpr, ast: ast)
+
+        case .indexedCompoundAssign(_, let receiverExpr, let indices, let valueExpr, _):
+            if containsImplicitReceiverReference(in: receiverExpr, ast: ast) { return true }
+            for idx in indices { if containsImplicitReceiverReference(in: idx, ast: ast) { return true } }
+            return containsImplicitReceiverReference(in: valueExpr, ast: ast)
 
         case .lambdaLiteral(_, let bodyExpr, _):
             return containsImplicitReceiverReference(in: bodyExpr, ast: ast)

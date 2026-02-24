@@ -38,7 +38,7 @@ final class ControlFlowLowerer {
         let iteratorID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
         instructions.append(.call(
             symbol: nil,
-            callee: interner.intern("iterator"),
+            callee: interner.intern("kk_range_iterator"),
             arguments: [iterableID],
             result: iteratorID,
             canThrow: false,
@@ -52,7 +52,7 @@ final class ControlFlowLowerer {
         let hasNextID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
         instructions.append(.call(
             symbol: nil,
-            callee: interner.intern("hasNext"),
+            callee: interner.intern("kk_range_hasNext"),
             arguments: [iteratorID],
             result: hasNextID,
             canThrow: false,
@@ -67,7 +67,7 @@ final class ControlFlowLowerer {
         let nextValueID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
         instructions.append(.call(
             symbol: nil,
-            callee: interner.intern("next"),
+            callee: interner.intern("kk_range_next"),
             arguments: [iteratorID],
             result: nextValueID,
             canThrow: false,
