@@ -39,6 +39,11 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
             interner: ctx.interner,
             importedInlineFunctions: &importedInlineFunctions
         )
+        registerSyntheticDelegateStubs(
+            symbols: symbols,
+            types: types,
+            interner: ctx.interner
+        )
         sema.importedInlineFunctions = importedInlineFunctions
 
         // Pass A: collect declaration headers and signatures.

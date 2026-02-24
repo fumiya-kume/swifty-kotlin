@@ -1,34 +1,40 @@
 symbol s0 kind=package fq=_root_ vis=public flags=_
-symbol s1 kind=function fq=printLong vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s2 kind=function fq=printFloat vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s3 kind=function fq=printDouble vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s4 kind=function fq=printChar vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s5 kind=local fq=__local_1.x vis=private flags=_
-symbol s6 kind=local fq=__local_6.y vis=private flags=_
-symbol s7 kind=local fq=__local_11.z vis=private flags=_
-symbol s8 kind=local fq=__local_16.c vis=private flags=_
+symbol s1 kind=package fq=kotlin vis=public flags=synthetic
+symbol s2 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s3 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s4 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic
+symbol s5 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#4 params=[Any,(Any, Any, Any) -> Unit] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s6 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#4 params=[Any,(Any, Any, Any) -> Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=printLong vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s8 kind=function fq=printFloat vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s9 kind=function fq=printDouble vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s10 kind=function fq=printChar vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s11 kind=local fq=__local_1.x vis=private flags=_
+symbol s12 kind=local fq=__local_6.y vis=private flags=_
+symbol s13 kind=local fq=__local_11.z vis=private flags=_
+symbol s14 kind=local fq=__local_16.c vis=private flags=_
 file f0 package=_
-  decl d0 fun printLong suspend=0 inline=0 sym=s1
-  decl d1 fun printFloat suspend=0 inline=0 sym=s2
-  decl d2 fun printDouble suspend=0 inline=0 sym=s3
-  decl d3 fun printChar suspend=0 inline=0 sym=s4
+  decl d0 fun printLong suspend=0 inline=0 sym=s7
+  decl d1 fun printFloat suspend=0 inline=0 sym=s8
+  decl d2 fun printDouble suspend=0 inline=0 sym=s9
+  decl d3 fun printChar suspend=0 inline=0 sym=s10
 expr e0 long(42) type=Long
-expr e1 localDecl x mutable=0 type=t0 init=e0 type=Unit ref=s5
+expr e1 localDecl x mutable=0 type=t0 init=e0 type=Unit ref=s11
 expr e2 name(println) type=_
-expr e3 name(x) type=Long ref=s5
+expr e3 name(x) type=Long ref=s11
 expr e4 call callee=e2 args=[_:e3] type=Unit
 expr e5 float(3.14) type=Float
-expr e6 localDecl y mutable=0 type=t1 init=e5 type=Unit ref=s6
+expr e6 localDecl y mutable=0 type=t1 init=e5 type=Unit ref=s12
 expr e7 name(println) type=_
-expr e8 name(y) type=Float ref=s6
+expr e8 name(y) type=Float ref=s12
 expr e9 call callee=e7 args=[_:e8] type=Unit
 expr e10 double(2.718) type=Double
-expr e11 localDecl z mutable=0 type=t2 init=e10 type=Unit ref=s7
+expr e11 localDecl z mutable=0 type=t2 init=e10 type=Unit ref=s13
 expr e12 name(println) type=_
-expr e13 name(z) type=Double ref=s7
+expr e13 name(z) type=Double ref=s13
 expr e14 call callee=e12 args=[_:e13] type=Unit
 expr e15 char(65) type=Char
-expr e16 localDecl c mutable=0 type=t3 init=e15 type=Unit ref=s8
+expr e16 localDecl c mutable=0 type=t3 init=e15 type=Unit ref=s14
 expr e17 name(println) type=_
-expr e18 name(c) type=Char ref=s8
+expr e18 name(c) type=Char ref=s14
 expr e19 call callee=e17 args=[_:e18] type=Unit

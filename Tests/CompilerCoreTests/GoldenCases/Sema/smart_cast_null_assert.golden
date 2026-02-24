@@ -1,9 +1,15 @@
 symbol s0 kind=package fq=_root_ vis=public flags=_
-symbol s1 kind=function fq=nullAssertNarrows vis=public flags=_ sig=recv=_ params=[Int?] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s2 kind=valueParameter fq=nullAssertNarrows.$1.x vis=private flags=_
+symbol s1 kind=package fq=kotlin vis=public flags=synthetic
+symbol s2 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s3 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s4 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic
+symbol s5 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#4 params=[Any,(Any, Any, Any) -> Unit] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s6 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#4 params=[Any,(Any, Any, Any) -> Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=nullAssertNarrows vis=public flags=_ sig=recv=_ params=[Int?] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s8 kind=valueParameter fq=nullAssertNarrows.$7.x vis=private flags=_
 file f0 package=_
-  decl d0 fun nullAssertNarrows suspend=0 inline=0 sym=s1
-expr e0 name(x) type=Int? ref=s2
+  decl d0 fun nullAssertNarrows suspend=0 inline=0 sym=s7
+expr e0 name(x) type=Int? ref=s8
 expr e1 nullAssert expr=e0 type=Int
-expr e2 name(x) type=Int ref=s2
+expr e2 name(x) type=Int ref=s8
 expr e3 return value=e2 type=Int

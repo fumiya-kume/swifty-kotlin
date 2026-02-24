@@ -1,25 +1,31 @@
 symbol s0 kind=package fq=_root_ vis=public flags=_
-symbol s1 kind=function fq=multiGuard vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=String suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s2 kind=valueParameter fq=multiGuard.$1.a vis=private flags=_
-symbol s3 kind=valueParameter fq=multiGuard.$1.b vis=private flags=_
-symbol s4 kind=valueParameter fq=multiGuard.$1.c vis=private flags=_
-symbol s5 kind=function fq=noElseGuard vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s6 kind=valueParameter fq=noElseGuard.$5.x vis=private flags=_
-symbol s7 kind=function fq=boolExhaustive vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s8 kind=local fq=__local_16.result vis=private flags=_
+symbol s1 kind=package fq=kotlin vis=public flags=synthetic
+symbol s2 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s3 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s4 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic
+symbol s5 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#4 params=[Any,(Any, Any, Any) -> Unit] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s6 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#4 params=[Any,(Any, Any, Any) -> Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=multiGuard vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=String suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s8 kind=valueParameter fq=multiGuard.$7.a vis=private flags=_
+symbol s9 kind=valueParameter fq=multiGuard.$7.b vis=private flags=_
+symbol s10 kind=valueParameter fq=multiGuard.$7.c vis=private flags=_
+symbol s11 kind=function fq=noElseGuard vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s12 kind=valueParameter fq=noElseGuard.$11.x vis=private flags=_
+symbol s13 kind=function fq=boolExhaustive vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s14 kind=local fq=__local_16.result vis=private flags=_
 file f0 package=_
-  decl d0 fun multiGuard suspend=0 inline=0 sym=s1
-  decl d1 fun noElseGuard suspend=0 inline=0 sym=s5
-  decl d2 fun boolExhaustive suspend=0 inline=0 sym=s7
-expr e0 name(a) type=Int ref=s2
+  decl d0 fun multiGuard suspend=0 inline=0 sym=s7
+  decl d1 fun noElseGuard suspend=0 inline=0 sym=s11
+  decl d2 fun boolExhaustive suspend=0 inline=0 sym=s13
+expr e0 name(a) type=Int ref=s8
 expr e1 int(0) type=Int
 expr e2 binary(greaterThan) lhs=e0 rhs=e1 type=Boolean
 expr e3 string(positive_a) type=String
-expr e4 name(b) type=Int ref=s3
+expr e4 name(b) type=Int ref=s9
 expr e5 int(0) type=Int
 expr e6 binary(greaterThan) lhs=e4 rhs=e5 type=Boolean
 expr e7 string(positive_b) type=String
-expr e8 name(c) type=Int ref=s4
+expr e8 name(c) type=Int ref=s10
 expr e9 int(0) type=Int
 expr e10 binary(greaterThan) lhs=e8 rhs=e9 type=Boolean
 expr e11 string(positive_c) type=String
@@ -27,17 +33,17 @@ expr e12 string(all_non_positive) type=String
 expr e13 when subject=_ branches=[e2->e3,e6->e7,e10->e11] else=e12 type=String
 expr e14 return value=e13 type=String
 expr e15 int(0) type=Int
-expr e16 localDecl result mutable=0 type=_ init=e15 type=Unit ref=s8
-expr e17 name(x) type=Int ref=s6
+expr e16 localDecl result mutable=0 type=_ init=e15 type=Unit ref=s14
+expr e17 name(x) type=Int ref=s12
 expr e18 int(10) type=Int
 expr e19 binary(greaterThan) lhs=e17 rhs=e18 type=Boolean
-expr e20 name(result) type=Int ref=s8
-expr e21 name(x) type=Int ref=s6
+expr e20 name(result) type=Int ref=s14
+expr e21 name(x) type=Int ref=s12
 expr e22 int(0) type=Int
 expr e23 binary(greaterThan) lhs=e21 rhs=e22 type=Boolean
-expr e24 name(result) type=Int ref=s8
+expr e24 name(result) type=Int ref=s14
 expr e25 when subject=_ branches=[e19->e20,e23->e24] else=_ type=Int
-expr e26 name(result) type=Int ref=s8
+expr e26 name(result) type=Int ref=s14
 expr e27 return value=e26 type=Int
 expr e28 bool(true) type=Boolean
 expr e29 int(1) type=Int

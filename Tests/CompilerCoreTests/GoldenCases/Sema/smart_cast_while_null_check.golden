@@ -1,17 +1,23 @@
 symbol s0 kind=package fq=_root_ vis=public flags=_
-symbol s1 kind=function fq=whileNullCheck vis=public flags=_ sig=recv=_ params=[Int?] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s2 kind=valueParameter fq=whileNullCheck.$1.x vis=private flags=_
-symbol s3 kind=local fq=__local_1.y vis=private flags=_
+symbol s1 kind=package fq=kotlin vis=public flags=synthetic
+symbol s2 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s3 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s4 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic
+symbol s5 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#4 params=[Any,(Any, Any, Any) -> Unit] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s6 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#4 params=[Any,(Any, Any, Any) -> Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=whileNullCheck vis=public flags=_ sig=recv=_ params=[Int?] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s8 kind=valueParameter fq=whileNullCheck.$7.x vis=private flags=_
+symbol s9 kind=local fq=__local_1.y vis=private flags=_
 file f0 package=_
-  decl d0 fun whileNullCheck suspend=0 inline=0 sym=s1
+  decl d0 fun whileNullCheck suspend=0 inline=0 sym=s7
 expr e0 int(0) type=Int
-expr e1 localDecl y mutable=0 type=t2 init=e0 type=Unit ref=s3
-expr e2 name(x) type=Int? ref=s2
+expr e1 localDecl y mutable=0 type=t2 init=e0 type=Unit ref=s9
+expr e2 name(x) type=Int? ref=s8
 expr e3 name(null) type=Any?
 expr e4 binary(notEqual) lhs=e2 rhs=e3 type=Boolean
-expr e5 name(x) type=Int ref=s2
+expr e5 name(x) type=Int ref=s8
 expr e6 return value=e5 type=Int
 expr e7 blockExpr stmts=[] trailing=e6 type=Int
 expr e8 while cond=e4 body=e7 type=Unit
-expr e9 name(y) type=Int ref=s3
+expr e9 name(y) type=Int ref=s9
 expr e10 return value=e9 type=Int
