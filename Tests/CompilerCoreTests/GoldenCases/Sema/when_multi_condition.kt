@@ -2,6 +2,6 @@ package golden.sema
 
 fun classify(x: Int): String = when (x) {
     1, 2, 3 -> "few"
-    in 4..10 -> "some"
+    4, 5 -> "some"
     else -> "many"
 }

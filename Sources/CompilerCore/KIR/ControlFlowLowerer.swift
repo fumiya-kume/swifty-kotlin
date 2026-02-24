@@ -623,6 +623,13 @@ final class ControlFlowLowerer {
                 let bodyLabel: Int32 = branch.conditions.count > 1
                     ? driver.ctx.makeLoopLabel()
                     : -1  // unused sentinel when single condition
+                // Hoist the true constant outside the loop so it's reused for all non-last conditions.
+                var hoistedTrueID: KIRExprID?
+                if branch.conditions.count > 1 {
+                    let tid = arena.appendExpr(.boolLiteral(true), type: boolType)
+                    instructions.append(.constValue(result: tid, value: .boolLiteral(true)))
+                    hoistedTrueID = tid
+                }
                 for (condIdx, conditionExprID) in branch.conditions.enumerated() {
                     let conditionValueID = driver.lowerExpr(
                         conditionExprID,
@@ -651,9 +658,7 @@ final class ControlFlowLowerer {
                         instructions.append(.jumpIfEqual(lhs: matchesID, rhs: falseID, target: nextBranchLabels[index]))
                     } else {
                         // Not last condition: if true, jump to body (short-circuit OR)
-                        let trueID = arena.appendExpr(.boolLiteral(true), type: boolType)
-                        instructions.append(.constValue(result: trueID, value: .boolLiteral(true)))
-                        instructions.append(.jumpIfEqual(lhs: matchesID, rhs: trueID, target: bodyLabel))
+                        instructions.append(.jumpIfEqual(lhs: matchesID, rhs: hoistedTrueID!, target: bodyLabel))
                     }
                 }
                 if branch.conditions.count > 1 {

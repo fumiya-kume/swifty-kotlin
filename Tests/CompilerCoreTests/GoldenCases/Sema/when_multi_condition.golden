@@ -15,9 +15,7 @@ expr e2 int(2) type=Int
 expr e3 int(3) type=Int
 expr e4 string(few) type=String
 expr e5 int(4) type=Int
-expr e6 int(10) type=Int
-expr e7 binary(rangeTo) lhs=e5 rhs=e6 type=Int
-expr e8 inExpr lhs=e4 rhs=e7 type=Boolean
-expr e9 string(some) type=_
-expr e10 string(many) type=String
-expr e11 when subject=e0 branches=[e1,e2,e3->e8] else=e10 type=Any?
+expr e6 int(5) type=Int
+expr e7 string(some) type=String
+expr e8 string(many) type=String
+expr e9 when subject=e0 branches=[e1,e2,e3->e4,e5,e6->e7] else=e8 type=String
