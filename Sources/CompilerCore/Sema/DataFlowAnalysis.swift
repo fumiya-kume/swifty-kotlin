@@ -220,7 +220,7 @@ public final class DataFlowAnalyzer {
             default:
                 return false
             }
-        }
+        }.sorted(by: { $0.rawValue < $1.rawValue })
         guard let targetSymbolID = candidates.first else {
             return ConditionBranch(trueState: base, falseState: base)
         }
@@ -355,9 +355,7 @@ public final class DataFlowAnalyzer {
                     return false
                 }
             }
-            // Known limitation: when multiple symbols share the same simple name across packages,
-            // candidates.first is non-deterministic. This matches branchOnIsCheck behavior.
-            guard let targetSymbolID = candidates.first else {
+            guard let targetSymbolID = candidates.sorted(by: { $0.rawValue < $1.rawValue }).first else {
                 return base
             }
             let narrowed = sema.types.make(.classType(ClassType(
