@@ -240,8 +240,12 @@ extension DataFlowSemaPassPhase {
             return types.make(.functionType(FunctionType(receiver: ft.receiver, params: ft.params, returnType: ft.returnType, isSuspend: ft.isSuspend, nullability: .nullable)))
         case .any, .unit, .nothing:
             let nullable = types.makeNullable(typeID)
-            // If makeNullable is a no-op (e.g. Unit), fall back to Any?
-            return nullable == typeID ? types.nullableAnyType : nullable
+            // If makeNullable is a no-op: either the type is already nullable (keep it)
+            // or makeNullable genuinely can't apply (e.g. Unit) — fall back to Any?
+            if nullable == typeID {
+                return types.isSubtype(types.nullableNothingType, typeID) ? typeID : types.nullableAnyType
+            }
+            return nullable
         default:
             return types.nullableAnyType
         }
