@@ -856,7 +856,14 @@ final class ExprLowerer {
                 }
                 let componentIndex = index + 1
                 let componentName = interner.intern("component\(componentIndex)")
-                let componentType = boundType ?? sema.types.anyType
+
+                // Look up the symbol defined by Sema for this variable first,
+                // so we can use its per-component type (not the expression-level Unit type)
+                let candidates = sema.symbols.lookupAll(fqName: [
+                    interner.intern("__destructuring_\(exprID.rawValue)"),
+                    name
+                ])
+                let componentType = candidates.first.flatMap { sema.symbols.propertyType(for: $0) } ?? sema.types.anyType
                 let componentResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: componentType)
                 instructions.append(.call(
                     symbol: nil,
@@ -868,11 +875,6 @@ final class ExprLowerer {
                 ))
 
                 // Bind the destructured variable to the component result
-                // Look up the symbol defined by Sema for this variable
-                let candidates = sema.symbols.lookupAll(fqName: [
-                    interner.intern("__destructuring_\(exprID.rawValue)"),
-                    name
-                ])
                 if let symbol = candidates.first {
                     driver.ctx.localValuesBySymbol[symbol] = componentResult
                 }
