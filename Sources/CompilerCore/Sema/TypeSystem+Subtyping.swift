@@ -162,8 +162,13 @@ extension TypeSystem {
         // If any input was Nothing? (null literal), the result must be nullable
         if hasNullableNothing {
             let nullable = makeNullable(result)
-            // For types where makeNullable is a no-op (e.g. Unit), fall back to Any?
+            // makeNullable returns the same ID for two reasons:
+            // (a) the type is already nullable (e.g. Int?) — keep it as-is
+            // (b) makeNullable is a genuine no-op (e.g. Unit) — fall back to Any?
             if nullable == result {
+                if isSubtype(nullableNothingType, result) {
+                    return result  // already nullable, Nothing? <: result
+                }
                 return nullableAnyType
             }
             return nullable
@@ -180,7 +185,12 @@ extension TypeSystem {
         }
         let hasNullableNothing = types.contains { kind(of: $0) == .nothing(.nullable) }
         if types.contains(where: { if case .nothing = kind(of: $0) { return true }; return false }) {
-            return hasNullableNothing ? nullableNothingType : nothingType
+            // Only return Nothing? if it is a valid lower bound (subtype of all inputs).
+            // glb([Nothing?, Int]) → Nothing (non-null), since Nothing? is NOT <: Int.
+            if hasNullableNothing && types.allSatisfy({ isSubtype(nullableNothingType, $0) }) {
+                return nullableNothingType
+            }
+            return nothingType
         }
         return make(.intersection(types))
     }
