@@ -63,6 +63,9 @@ extension DataFlowSemaPassPhase {
         if modifiers.contains(.operator) {
             value.insert(.operatorFunction)
         }
+        if modifiers.contains(.const) {
+            value.insert(.constValue)
+        }
         return value
     }
 

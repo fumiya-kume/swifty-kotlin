@@ -144,6 +144,46 @@ extension DataFlowSemaPassPhase {
             ) ?? types.nullableAnyType
             symbols.setPropertyType(resolvedType, for: memberSymbol)
 
+            // const val validation for member properties
+            if propertyDecl.modifiers.contains(.const) {
+                if propertyDecl.isVar {
+                    diagnostics.error(
+                        "KSWIFTK-SEMA-0080",
+                        "'const' modifier is not applicable to 'var'.",
+                        range: propertyDecl.range
+                    )
+                }
+                if propertyDecl.initializer == nil {
+                    diagnostics.error(
+                        "KSWIFTK-SEMA-0081",
+                        "'const val' must have an initializer.",
+                        range: propertyDecl.range
+                    )
+                }
+                if let typeRefID = propertyDecl.type {
+                    let isConstCompatible: Bool
+                    switch types.kind(of: resolvedType) {
+                    case .primitive:
+                        isConstCompatible = true
+                    default:
+                        isConstCompatible = false
+                    }
+                    if !isConstCompatible {
+                        diagnostics.error(
+                            "KSWIFTK-SEMA-0082",
+                            "'const val' type must be a primitive type or String.",
+                            range: propertyDecl.range
+                        )
+                    }
+                }
+                if let initExpr = propertyDecl.initializer {
+                    let constCollector = ConstantCollector()
+                    if let constKind = constCollector.literalConstantExpr(initExpr, ast: ast) {
+                        symbols.setConstValueExprKind(constKind, for: memberSymbol)
+                    }
+                }
+            }
+
             // Materialize a backing field symbol for properties with custom accessors
             // (Kotlin `field` identifier in getter/setter bodies).
             // Simple properties with only an initializer don't need a separate

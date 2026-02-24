@@ -460,6 +460,47 @@ extension DataFlowSemaPassPhase {
             ) ?? types.nullableAnyType
             symbols.setPropertyType(resolvedType, for: symbol)
 
+            // const val validation: must be immutable and have a primitive or String type
+            if propertyDecl.modifiers.contains(.const) {
+                if propertyDecl.isVar {
+                    diagnostics.error(
+                        "KSWIFTK-SEMA-0080",
+                        "'const' modifier is not applicable to 'var'.",
+                        range: propertyDecl.range
+                    )
+                }
+                if propertyDecl.initializer == nil {
+                    diagnostics.error(
+                        "KSWIFTK-SEMA-0081",
+                        "'const val' must have an initializer.",
+                        range: propertyDecl.range
+                    )
+                }
+                if let typeRefID = propertyDecl.type {
+                    let isConstCompatible: Bool
+                    switch types.kind(of: resolvedType) {
+                    case .primitive:
+                        isConstCompatible = true
+                    default:
+                        isConstCompatible = false
+                    }
+                    if !isConstCompatible {
+                        diagnostics.error(
+                            "KSWIFTK-SEMA-0082",
+                            "'const val' type must be a primitive type or String.",
+                            range: propertyDecl.range
+                        )
+                    }
+                }
+                // Record the compile-time constant value from the initializer
+                if let initExpr = propertyDecl.initializer {
+                    let constCollector = ConstantCollector()
+                    if let constKind = constCollector.literalConstantExpr(initExpr, ast: ast) {
+                        symbols.setConstValueExprKind(constKind, for: symbol)
+                    }
+                }
+            }
+
         case .typeAliasDecl(let typeAliasDecl):
             let localTypeParameters = registerTypeAliasTypeParameters(
                 typeAliasDecl.typeParams,

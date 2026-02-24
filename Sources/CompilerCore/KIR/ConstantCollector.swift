@@ -32,6 +32,22 @@ struct ConstantCollector {
         switch decl {
         case .propertyDecl(let property):
             guard let symbol = sema.bindings.declSymbols[declID] else { return }
+            // Prioritize const val values stored during sema (compile-time constants)
+            if let constKind = sema.symbols.constValueExprKind(for: symbol) {
+                mapping[symbol] = constKind
+                if let propertySymbol = sema.symbols.symbol(symbol) {
+                    let related = sema.symbols.lookupAll(fqName: propertySymbol.fqName)
+                    for relatedID in related {
+                        guard let relatedSymbol = sema.symbols.symbol(relatedID) else {
+                            continue
+                        }
+                        if relatedSymbol.kind == .property || relatedSymbol.kind == .field {
+                            mapping[relatedID] = constKind
+                        }
+                    }
+                }
+                return
+            }
             let constant =
                 literalConstantExpr(property: property, ast: ast) ??
                 inlineGetterConstantExpr(
