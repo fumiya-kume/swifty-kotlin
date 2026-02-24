@@ -4,7 +4,7 @@ symbol s2 kind=valueParameter fq=cumulativeNarrow.$1.x vis=private flags=_
 file f0 package=_
   decl d0 fun cumulativeNarrow suspend=0 inline=0 sym=s1
 expr e0 name(x) type=Int? ref=s2
-expr e1 name(null) type=Any?
+expr e1 name(null) type=Nothing?
 expr e2 binary(equal) lhs=e0 rhs=e1 type=Boolean
 expr e3 int(0) type=Int
 expr e4 name(x) type=Int ref=s2
