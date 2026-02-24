@@ -367,7 +367,9 @@ final class ABILoweringPass: LoweringPass {
                 // setter: -13_000 range) are always non-throwing.
                 let isSyntheticAccessor: Bool = {
                     guard let s = callSymbol else { return false }
-                    return s.rawValue <= -12_000
+                    // Getter symbols: -12_000 - propSym (range roughly -12_001 .. -12_999)
+                    // Setter symbols: -13_000 - propSym (range roughly -13_001 .. -13_999)
+                    return s.rawValue < -11_999 && s.rawValue > -14_000
                 }()
                 let canThrow = !isSyntheticAccessor && !nonThrowingCallees.contains(callee)
 
