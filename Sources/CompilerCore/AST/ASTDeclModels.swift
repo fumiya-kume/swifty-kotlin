@@ -255,6 +255,10 @@ public struct PropertyDecl {
     public let getter: PropertyAccessorDecl?
     public let setter: PropertyAccessorDecl?
     public let delegateExpression: ExprID?
+    /// The trailing lambda body for delegate properties (e.g. `lazy { body }`,
+    /// `Delegates.observable(init) { body }`). Captured separately because
+    /// `propertyHeadTokens` excludes the block node from the delegate expression.
+    public let delegateBody: FunctionBody?
 
     public init(
         range: SourceRange,
@@ -265,7 +269,8 @@ public struct PropertyDecl {
         initializer: ExprID? = nil,
         getter: PropertyAccessorDecl? = nil,
         setter: PropertyAccessorDecl? = nil,
-        delegateExpression: ExprID? = nil
+        delegateExpression: ExprID? = nil,
+        delegateBody: FunctionBody? = nil
     ) {
         self.range = range
         self.name = name
@@ -276,6 +281,7 @@ public struct PropertyDecl {
         self.getter = getter
         self.setter = setter
         self.delegateExpression = delegateExpression
+        self.delegateBody = delegateBody
     }
 }
 
