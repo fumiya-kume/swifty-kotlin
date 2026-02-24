@@ -425,7 +425,9 @@ final class GoldenHarnessTests: XCTestCase {
         if flags.contains(.static) { names.append("static") }
         if flags.contains(.sealedType) { names.append("sealedType") }
         if flags.contains(.dataType) { names.append("dataType") }
+        if flags.contains(.innerClass) { names.append("innerClass") }
         if flags.contains(.valueType) { names.append("valueType") }
+        if flags.contains(.operatorFunction) { names.append("operatorFunction") }
         return names.joined(separator: "|")
     }
 

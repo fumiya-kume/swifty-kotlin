@@ -397,6 +397,69 @@ struct TypeCheckHelpers {
         return candidates
     }
 
+    /// When `receiver.InnerClassName(...)` is called, look up the inner class
+    /// nested inside the receiver's nominal type and return its constructor(s).
+    func collectInnerClassConstructorCandidates(
+        named calleeName: InternedString,
+        receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> [SymbolID] {
+        guard let receiverNominal = nominalSymbol(of: receiverType, types: sema.types),
+              let receiverSymbol = sema.symbols.symbol(receiverNominal) else {
+            return []
+        }
+        // Look for a nested class with the given name whose symbol has the innerClass flag.
+        let nestedFQName = receiverSymbol.fqName + [calleeName]
+        for candidate in sema.symbols.lookupAll(fqName: nestedFQName) {
+            guard let sym = sema.symbols.symbol(candidate),
+                  sym.kind == .class,
+                  sym.flags.contains(.innerClass) else {
+                continue
+            }
+            // Found the inner class – collect its constructors.
+            let initName = interner.intern("<init>")
+            let ctorFQName = nestedFQName + [initName]
+            return sema.symbols.lookupAll(fqName: ctorFQName).filter { ctorID in
+                guard let ctorSym = sema.symbols.symbol(ctorID),
+                      ctorSym.kind == .constructor else { return false }
+                return true
+            }
+        }
+        return []
+    }
+
+    /// Look up a member property (or field) named `calleeName` on the receiver's
+    /// nominal type, walking the supertype chain. Returns the symbol and its type
+    /// if found, or `nil` otherwise.
+    func lookupMemberProperty(
+        named calleeName: InternedString,
+        receiverType: TypeID,
+        sema: SemaModule
+    ) -> (symbol: SymbolID, type: TypeID)? {
+        guard let receiverNominal = nominalSymbol(of: receiverType, types: sema.types) else {
+            return nil
+        }
+        var ownerQueue: [SymbolID] = [receiverNominal]
+        var visited: Set<SymbolID> = []
+        while !ownerQueue.isEmpty {
+            let owner = ownerQueue.removeFirst()
+            guard visited.insert(owner).inserted else { continue }
+            guard let ownerSymbol = sema.symbols.symbol(owner) else { continue }
+            let memberFQName = ownerSymbol.fqName + [calleeName]
+            for candidate in sema.symbols.lookupAll(fqName: memberFQName) {
+                guard let sym = sema.symbols.symbol(candidate),
+                      (sym.kind == .property || sym.kind == .field),
+                      let propType = sema.symbols.propertyType(for: candidate) else {
+                    continue
+                }
+                return (candidate, propType)
+            }
+            ownerQueue.append(contentsOf: sema.symbols.directSupertypes(for: owner))
+        }
+        return nil
+    }
+
     func enumOwnerSymbol(for entrySymbol: SemanticSymbol, symbols: SymbolTable) -> SymbolID? {
         guard entrySymbol.kind == .field,
               entrySymbol.fqName.count >= 2 else {
