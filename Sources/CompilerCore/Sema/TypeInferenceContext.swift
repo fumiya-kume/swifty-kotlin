@@ -16,6 +16,8 @@ struct TypeInferenceContext {
     var enclosingClassSymbol: SymbolID?
     let visibilityChecker: VisibilityChecker
     var outerReceiverTypes: [(label: InternedString, type: TypeID)]
+    /// Sema cache context for hot-path caching.  `nil` when caching is disabled.
+    let semaCacheContext: SemaCacheContext?
 
     func with(scope newScope: Scope) -> TypeInferenceContext {
         var copy = self; copy.scope = newScope; return copy
@@ -72,7 +74,7 @@ struct TypeInferenceContext {
         var visible: [SymbolID] = []
         var invisible: [SemanticSymbol] = []
         for candidate in candidates {
-            guard let symbol = sema.symbols.symbol(candidate) else { continue }
+            guard let symbol = cachedSymbol(candidate) else { continue }
             if visibilityChecker.isAccessible(symbol, fromFile: currentFileID, enclosingClass: enclosingClassSymbol) {
                 visible.append(candidate)
             } else {
@@ -80,5 +82,23 @@ struct TypeInferenceContext {
             }
         }
         return (visible, invisible)
+    }
+
+    // MARK: - Cached helpers
+
+    /// Looks up a symbol, using the sema cache when available.
+    func cachedSymbol(_ id: SymbolID) -> SemanticSymbol? {
+        if let cache = semaCacheContext {
+            return cache.symbol(id, in: sema.symbols)
+        }
+        return sema.symbols.symbol(id)
+    }
+
+    /// Performs a scope lookup, using the sema cache when available.
+    func cachedScopeLookup(_ name: InternedString) -> [SymbolID] {
+        if let cache = semaCacheContext {
+            return cache.lookupInScope(name, scope: scope)
+        }
+        return scope.lookup(name)
     }
 }

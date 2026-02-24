@@ -21,8 +21,14 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
             throw CompilerPipelineError.invalidInput("AST is unavailable during type check.")
         }
 
+        let semaCacheEnabled = ctx.options.frontendFlags.contains("sema-cache")
+        let semaCacheContext: SemaCacheContext? = semaCacheEnabled ? SemaCacheContext() : nil
+
         let solver = ConstraintSolver()
         let resolver = OverloadResolver()
+        if let semaCacheContext {
+            resolver.cacheContext = semaCacheContext
+        }
         let dataFlow = DataFlowAnalyzer()
         let semaCtx = SemaModule(
             symbols: sema.symbols,
@@ -32,7 +38,7 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
         )
 
         // Run consistency checks: every declaration should have a symbol binding.
-        for decl in ast.arena.decls.indices {
+        for decl in 0..<ast.arena.declCount {
             let declID = DeclID(rawValue: Int32(decl))
             if sema.bindings.declSymbols[declID] == nil {
                 ctx.diagnostics.error(
@@ -51,7 +57,8 @@ public final class TypeCheckSemaPassPhase: CompilerPhase {
             resolver: resolver,
             dataFlow: dataFlow,
             interner: ctx.interner,
-            diagnostics: ctx.diagnostics
+            diagnostics: ctx.diagnostics,
+            semaCacheContext: semaCacheContext
         )
 
         let fileScopes = driver.scopeBuilder.buildFileScopes(

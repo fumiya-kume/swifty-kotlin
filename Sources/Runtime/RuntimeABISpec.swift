@@ -133,6 +133,15 @@ public enum RuntimeABISpec {
             ],
             returnType: .opaquePointer,
             section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_compareTo",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .nullableOpaquePointer),
+                RuntimeABIParameter(name: "b", type: .nullableOpaquePointer)
+            ],
+            returnType: .intptr,
+            section: "String"
         )
     ]
 

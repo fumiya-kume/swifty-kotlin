@@ -1,4 +1,4 @@
-public struct ASTNodeID: Hashable {
+public struct ASTNodeID: Hashable, Sendable {
     public let rawValue: Int32
 
     public static let invalid = ASTNodeID(rawValue: -1)
@@ -8,7 +8,7 @@ public struct ASTNodeID: Hashable {
     }
 }
 
-public struct ExprID: Hashable {
+public struct ExprID: Hashable, Sendable {
     public let rawValue: Int32
 
     public static let invalid = ExprID(rawValue: -1)
@@ -18,7 +18,7 @@ public struct ExprID: Hashable {
     }
 }
 
-public struct TypeRefID: Hashable {
+public struct TypeRefID: Hashable, Sendable {
     public let rawValue: Int32
 
     public static let invalid = TypeRefID(rawValue: -1)
@@ -35,7 +35,7 @@ public enum Visibility: Int {
     case `protected`
 }
 
-public struct Modifiers: OptionSet {
+public struct Modifiers: OptionSet, Sendable {
     public let rawValue: Int32
 
     public init(rawValue: Int32) { self.rawValue = rawValue }
