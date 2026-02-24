@@ -428,6 +428,55 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // MARK: - Delegate
+
+    public static let kk_lazy_create = ExternDecl(
+        name: "kk_lazy_create",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_lazy_get_value = ExternDecl(
+        name: "kk_lazy_get_value",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_observable_create = ExternDecl(
+        name: "kk_observable_create",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_observable_get_value = ExternDecl(
+        name: "kk_observable_get_value",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_observable_set_value = ExternDecl(
+        name: "kk_observable_set_value",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_vetoable_create = ExternDecl(
+        name: "kk_vetoable_create",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_vetoable_get_value = ExternDecl(
+        name: "kk_vetoable_get_value",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_vetoable_set_value = ExternDecl(
+        name: "kk_vetoable_set_value",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
     // MARK: - All Functions (canonical list)
 
     /// All runtime extern declarations, ordered by section.
@@ -507,6 +556,15 @@ public enum RuntimeABIExterns {
         kk_op_rangeUntil,
         kk_op_downTo,
         kk_op_step,
+        // Delegate
+        kk_lazy_create,
+        kk_lazy_get_value,
+        kk_observable_create,
+        kk_observable_get_value,
+        kk_observable_set_value,
+        kk_vetoable_create,
+        kk_vetoable_get_value,
+        kk_vetoable_set_value,
     ]
 
     /// Look up an extern declaration by symbol name.

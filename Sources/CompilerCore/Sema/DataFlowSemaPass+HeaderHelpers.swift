@@ -232,6 +232,145 @@ extension DataFlowSemaPassPhase {
         return localTypeParameters
     }
 
+    /// Register synthetic stdlib symbols for property delegate functions so that
+    /// sema can resolve `lazy { }`, `Delegates.observable(...)`, and `Delegates.vetoable(...)`.
+    /// These are minimal stubs: just enough for name resolution and type checking to succeed.
+    func registerSyntheticDelegateStubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let anyType = types.anyType
+
+        // Ensure the "kotlin" package exists.
+        let kotlinPkg: [InternedString] = [interner.intern("kotlin")]
+        if symbols.lookup(fqName: kotlinPkg) == nil {
+            _ = symbols.define(
+                kind: .package,
+                name: interner.intern("kotlin"),
+                fqName: kotlinPkg,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+
+        // Register `lazy` as a top-level function in the kotlin package.
+        // Kotlin signature: fun <T> lazy(initializer: () -> T): Lazy<T>
+        let lazyName = interner.intern("lazy")
+        let lazyFQName = kotlinPkg + [lazyName]
+        if symbols.lookup(fqName: lazyFQName) == nil {
+            let lazySymbol = symbols.define(
+                kind: .function,
+                name: lazyName,
+                fqName: lazyFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            // One parameter: the initializer lambda () -> T, returns Any (Lazy<T>)
+            let initializerType = types.make(.functionType(FunctionType(
+                params: [],
+                returnType: anyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    parameterTypes: [initializerType],
+                    returnType: anyType
+                ),
+                for: lazySymbol
+            )
+        }
+
+        // Ensure the "kotlin.properties" package exists.
+        let kotlinPropertiesPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("properties")]
+        if symbols.lookup(fqName: kotlinPropertiesPkg) == nil {
+            _ = symbols.define(
+                kind: .package,
+                name: interner.intern("properties"),
+                fqName: kotlinPropertiesPkg,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+
+        // Register `Delegates` as an object in kotlin.properties.
+        let delegatesName = interner.intern("Delegates")
+        let delegatesFQName = kotlinPropertiesPkg + [delegatesName]
+        let delegatesSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: delegatesFQName) {
+            delegatesSymbol = existing
+        } else {
+            delegatesSymbol = symbols.define(
+                kind: .object,
+                name: delegatesName,
+                fqName: delegatesFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        let delegatesType = types.make(.classType(ClassType(classSymbol: delegatesSymbol, args: [], nullability: .nonNull)))
+        // Set property type so inferNameRefExpr resolves `Delegates` to classType
+        // (object symbols need an explicit property type for name-ref resolution).
+        symbols.setPropertyType(delegatesType, for: delegatesSymbol)
+
+        // Register `observable` as a member function of Delegates.
+        // Kotlin signature: fun <T> observable(initialValue: T, onChange: ...): ReadWriteProperty<Any?, T>
+        // NOTE: The callback lambda is parsed as a separate block by
+        // propertyHeadTokens and is NOT included in the call arguments.
+        // The sema stub therefore takes only 1 parameter (initialValue).
+        let observableName = interner.intern("observable")
+        let observableFQName = delegatesFQName + [observableName]
+        if symbols.lookup(fqName: observableFQName) == nil {
+            let observableSymbol = symbols.define(
+                kind: .function,
+                name: observableName,
+                fqName: observableFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(delegatesSymbol, for: observableSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: delegatesType,
+                    parameterTypes: [anyType],
+                    returnType: anyType
+                ),
+                for: observableSymbol
+            )
+        }
+
+        // Register `vetoable` as a member function of Delegates.
+        // Kotlin signature: fun <T> vetoable(initialValue: T, onChange: ...): ReadWriteProperty<Any?, T>
+        // NOTE: Same as observable — callback lambda is a separate block.
+        let vetoableName = interner.intern("vetoable")
+        let vetoableFQName = delegatesFQName + [vetoableName]
+        if symbols.lookup(fqName: vetoableFQName) == nil {
+            let vetoableSymbol = symbols.define(
+                kind: .function,
+                name: vetoableName,
+                fqName: vetoableFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(delegatesSymbol, for: vetoableSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: delegatesType,
+                    parameterTypes: [anyType],
+                    returnType: anyType
+                ),
+                for: vetoableSymbol
+            )
+        }
+    }
+
     func validateConstructorDelegation(
         ast: ASTModule,
         symbols: SymbolTable,

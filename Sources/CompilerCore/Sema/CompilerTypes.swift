@@ -62,6 +62,14 @@ public enum EmitMode: String {
     case library
 }
 
+/// Thread-safety mode for `by lazy { }` delegates (P5-80).
+public enum LazyDelegateThreadSafetyMode: Int, Equatable {
+    /// `LazyThreadSafetyMode.SYNCHRONIZED` – uses a lock (default).
+    case synchronized = 1
+    /// `LazyThreadSafetyMode.NONE` – no synchronization.
+    case none = 0
+}
+
 public struct CompilerOptions: Equatable {
     public var moduleName: String
     public var inputs: [String]
@@ -128,6 +136,27 @@ public struct CompilerOptions: Equatable {
             }
         }
         return 1
+    }
+
+    /// Thread-safety mode for `by lazy { }` delegates, parsed from
+    /// `-Xfrontend lazy-thread-safety=SYNCHRONIZED|NONE`.
+    /// Defaults to `.synchronized` when the flag is absent.
+    public var lazyThreadSafetyMode: LazyDelegateThreadSafetyMode {
+        for flag in frontendFlags {
+            if flag.hasPrefix("lazy-thread-safety=") {
+                let value = String(flag.dropFirst("lazy-thread-safety=".count))
+                    .uppercased()
+                switch value {
+                case "NONE":
+                    return .none
+                case "SYNCHRONIZED":
+                    return .synchronized
+                default:
+                    return .synchronized
+                }
+            }
+        }
+        return .synchronized
     }
 
     @available(*, deprecated, message: "Use debugInfo instead.")

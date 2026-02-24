@@ -160,6 +160,23 @@ extension BuildASTPhase {
     func makePropertyDecl(from nodeID: NodeID, in arena: SyntaxArena, interner: StringInterner, astArena: ASTArena) -> PropertyDecl {
         let node = arena.node(nodeID)
         let accessors = declarationPropertyAccessors(from: nodeID, in: arena, interner: interner, astArena: astArena)
+        let delegateExpr = declarationDelegateExpression(from: nodeID, in: arena, interner: interner, astArena: astArena)
+
+        // When a delegate expression exists, the trailing lambda body (e.g. `lazy { body }`)
+        // is a block child of the property node that `propertyHeadTokens` excludes.
+        // Extract it here so KIR lowering can create the lambda function from it.
+        var delegateBody: FunctionBody?
+        if delegateExpr != nil {
+            // Find the block child node — this is the trailing lambda body.
+            for child in arena.children(of: nodeID) {
+                if case .node(let childID) = child, arena.node(childID).kind == .block {
+                    let exprs = blockExpressions(from: childID, in: arena, interner: interner, astArena: astArena)
+                    delegateBody = .block(exprs, arena.node(childID).range)
+                    break
+                }
+            }
+        }
+
         return PropertyDecl(
             range: node.range,
             name: declarationName(from: nodeID, in: arena, interner: interner),
@@ -169,7 +186,8 @@ extension BuildASTPhase {
             initializer: declarationPropertyInitializer(from: nodeID, in: arena, interner: interner, astArena: astArena),
             getter: accessors.getter,
             setter: accessors.setter,
-            delegateExpression: declarationDelegateExpression(from: nodeID, in: arena, interner: interner, astArena: astArena)
+            delegateExpression: delegateExpr,
+            delegateBody: delegateBody
         )
     }
 
