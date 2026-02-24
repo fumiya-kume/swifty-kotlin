@@ -7,29 +7,54 @@ on:
 permissions:
   contents: read
 
+env:
+  HOMEBREW_NO_AUTO_UPDATE: 1
+  HOMEBREW_NO_INSTALL_CLEANUP: 1
+
 jobs:
   smoke-tests:
     name: Smoke Tests (${{ matrix.arch }})
-    runs-on: [self-hosted, macOS, "${{ matrix.arch }}"]
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        arch: [ARM64, X64]
+        include:
+          - os: macos-15
+            arch: ARM64
+          - os: macos-13
+            arch: Intel
     steps:
       - uses: actions/checkout@v4
-      - name: Show toolchain versions
+      - name: Install LLVM
+        run: brew install llvm
+      - name: Configure LLVM paths
         run: |
-          swift --version
+          LLVM_PREFIX="$(brew --prefix llvm)"
+          echo "C_INCLUDE_PATH=${LLVM_PREFIX}/include" >> "$GITHUB_ENV"
+          echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
+      - name: Show toolchain versions
+        run: swift --version
       - name: Run smoke tests
         run: bash Scripts/swift_test.sh --filter SmokeTests
 
   diff-regression:
     name: kotlinc Diff Regression (${{ matrix.arch }})
-    runs-on: [self-hosted, macOS, "${{ matrix.arch }}"]
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        arch: [ARM64, X64]
+        include:
+          - os: macos-15
+            arch: ARM64
+          - os: macos-13
+            arch: Intel
     steps:
       - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: brew install llvm kotlin
+      - name: Configure LLVM paths
+        run: |
+          LLVM_PREFIX="$(brew --prefix llvm)"
+          echo "C_INCLUDE_PATH=${LLVM_PREFIX}/include" >> "$GITHUB_ENV"
+          echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
       - name: Verify prerequisites
         run: |
           java -version
@@ -55,12 +80,23 @@ jobs:
 
   test-and-coverage:
     name: Test and Coverage Gate (${{ matrix.arch }})
-    runs-on: [self-hosted, macOS, "${{ matrix.arch }}"]
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        arch: [ARM64, X64]
+        include:
+          - os: macos-15
+            arch: ARM64
+          - os: macos-13
+            arch: Intel
     steps:
       - uses: actions/checkout@v4
+      - name: Install LLVM
+        run: brew install llvm
+      - name: Configure LLVM paths
+        run: |
+          LLVM_PREFIX="$(brew --prefix llvm)"
+          echo "C_INCLUDE_PATH=${LLVM_PREFIX}/include" >> "$GITHUB_ENV"
+          echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
       - name: Verify prerequisites
         run: jq --version
       - name: Run tests with coverage threshold
