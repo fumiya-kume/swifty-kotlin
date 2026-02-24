@@ -407,6 +407,37 @@ struct TypeCheckHelpers {
         return []
     }
 
+    /// Look up a member property (or field) named `calleeName` on the receiver's
+    /// nominal type, walking the supertype chain. Returns the symbol and its type
+    /// if found, or `nil` otherwise.
+    func lookupMemberProperty(
+        named calleeName: InternedString,
+        receiverType: TypeID,
+        sema: SemaModule
+    ) -> (symbol: SymbolID, type: TypeID)? {
+        guard let receiverNominal = nominalSymbol(of: receiverType, types: sema.types) else {
+            return nil
+        }
+        var ownerQueue: [SymbolID] = [receiverNominal]
+        var visited: Set<SymbolID> = []
+        while !ownerQueue.isEmpty {
+            let owner = ownerQueue.removeFirst()
+            guard visited.insert(owner).inserted else { continue }
+            guard let ownerSymbol = sema.symbols.symbol(owner) else { continue }
+            let memberFQName = ownerSymbol.fqName + [calleeName]
+            for candidate in sema.symbols.lookupAll(fqName: memberFQName) {
+                guard let sym = sema.symbols.symbol(candidate),
+                      (sym.kind == .property || sym.kind == .field),
+                      let propType = sema.symbols.propertyType(for: candidate) else {
+                    continue
+                }
+                return (candidate, propType)
+            }
+            ownerQueue.append(contentsOf: sema.symbols.directSupertypes(for: owner))
+        }
+        return nil
+    }
+
     func enumOwnerSymbol(for entrySymbol: SemanticSymbol, symbols: SymbolTable) -> SymbolID? {
         guard entrySymbol.kind == .field,
               entrySymbol.fqName.count >= 2 else {

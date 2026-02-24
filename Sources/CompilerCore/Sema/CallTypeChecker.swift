@@ -282,6 +282,19 @@ final class CallTypeChecker {
         let (visible, invisible) = ctx.filterByVisibility(allCandidates)
         let candidates = visible
         if candidates.isEmpty {
+            // For zero-arg member calls, try member property/field lookup.
+            // This handles `receiver.property` syntax (e.g. `this@Outer.x`).
+            if args.isEmpty,
+               let propResult = driver.helpers.lookupMemberProperty(
+                   named: calleeName,
+                   receiverType: memberLookupType,
+                   sema: sema
+               ) {
+                sema.bindings.bindIdentifier(id, symbol: propResult.symbol)
+                let finalType = safeCall ? sema.types.makeNullable(propResult.type) : propResult.type
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            }
             if lookupReceiverType == sema.types.errorType {
                 return driver.helpers.bindAndReturnErrorType(id, sema: sema)
             }
