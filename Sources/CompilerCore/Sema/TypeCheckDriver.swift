@@ -18,6 +18,8 @@ final class TypeCheckDriver {
     let dataFlow: DataFlowAnalyzer
     let interner: StringInterner
     let diagnostics: DiagnosticEngine
+    /// Sema cache context for hot-path caching.  `nil` when caching is disabled.
+    let semaCacheContext: SemaCacheContext?
 
     // Delegates (lazy to break initialization ordering; each holds unowned back-reference)
     private(set) lazy var exprChecker = ExprTypeChecker(driver: self)
@@ -39,7 +41,8 @@ final class TypeCheckDriver {
         resolver: OverloadResolver,
         dataFlow: DataFlowAnalyzer,
         interner: StringInterner,
-        diagnostics: DiagnosticEngine
+        diagnostics: DiagnosticEngine,
+        semaCacheContext: SemaCacheContext? = nil
     ) {
         self.ast = ast
         self.sema = sema
@@ -49,6 +52,7 @@ final class TypeCheckDriver {
         self.dataFlow = dataFlow
         self.interner = interner
         self.diagnostics = diagnostics
+        self.semaCacheContext = semaCacheContext
     }
 
     // MARK: - Main Recursive Dispatch Entry Point
@@ -81,7 +85,8 @@ final class TypeCheckDriver {
                 currentFileID: file.fileID,
                 enclosingClassSymbol: nil,
                 visibilityChecker: checker,
-                outerReceiverTypes: []
+                outerReceiverTypes: [],
+                semaCacheContext: semaCacheContext
             )
             for declID in file.topLevelDecls {
                 guard let decl = ast.arena.decl(declID),
