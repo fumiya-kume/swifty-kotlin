@@ -117,9 +117,20 @@ final class ExprTypeChecker {
         case .indexedAssign(let receiverExpr, let indices, let valueExpr, let range):
             return driver.localDeclChecker.inferIndexedAssignExpr(id, receiverExpr: receiverExpr, indices: indices, valueExpr: valueExpr, range: range, ctx: ctx, locals: &locals)
 
-        case .returnExpr(let value, _):
+        case .returnExpr(let value, let range):
             if let value {
-                _ = driver.inferExpr(value, ctx: ctx, locals: &locals, expectedType: expectedType)
+                let resolved = driver.inferExpr(value, ctx: ctx, locals: &locals, expectedType: expectedType)
+                // Emit subtype constraint: return value must conform to expected (function) return type
+                if let expectedType {
+                    driver.emitSubtypeConstraint(
+                        left: resolved,
+                        right: expectedType,
+                        range: range,
+                        solver: ConstraintSolver(),
+                        sema: sema,
+                        diagnostics: ctx.semaCtx.diagnostics
+                    )
+                }
             }
             sema.bindings.bindExprType(id, type: sema.types.nothingType)
             return sema.types.nothingType

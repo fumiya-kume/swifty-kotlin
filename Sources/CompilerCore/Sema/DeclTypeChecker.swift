@@ -39,8 +39,9 @@ final class DeclTypeChecker {
                     _ = driver.inferExpr(exprID, ctx: ctx, locals: &locals, expectedType: nil)
                     continue
                 }
-                let expectedTypeForExpr = index == exprIDs.count - 1 ? expectedType : nil
-                last = driver.inferExpr(exprID, ctx: ctx, locals: &locals, expectedType: expectedTypeForExpr)
+                // Pass expectedType to every expression so that return statements
+                // anywhere in the block can check their value against the function return type.
+                last = driver.inferExpr(exprID, ctx: ctx, locals: &locals, expectedType: expectedType)
                 if last == ctx.sema.types.nothingType {
                     reachedNothing = true
                 }
