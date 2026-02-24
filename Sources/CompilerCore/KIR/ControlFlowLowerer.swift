@@ -644,7 +644,14 @@ final class ControlFlowLowerer {
             }
             let componentIndex = index + 1
             let componentName = interner.intern("component\(componentIndex)")
-            let componentResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+
+            // Look up the symbol first so we can use the per-component type
+            let candidates = sema.symbols.lookupAll(fqName: [
+                interner.intern("__for_destructuring_\(exprID.rawValue)"),
+                name
+            ])
+            let componentType = candidates.first.flatMap { sema.symbols.propertyType(for: $0) } ?? sema.types.anyType
+            let componentResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: componentType)
             instructions.append(.call(
                 symbol: nil,
                 callee: componentName,
@@ -654,10 +661,6 @@ final class ControlFlowLowerer {
                 thrownResult: nil
             ))
 
-            let candidates = sema.symbols.lookupAll(fqName: [
-                interner.intern("__for_destructuring_\(exprID.rawValue)"),
-                name
-            ])
             if let symbol = candidates.first {
                 previousValues.append((symbol, driver.ctx.localValuesBySymbol[symbol]))
                 driver.ctx.localValuesBySymbol[symbol] = componentResult
