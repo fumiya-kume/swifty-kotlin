@@ -321,6 +321,19 @@ final class LocalDeclTypeChecker {
             return sema.types.unitType
         }
 
+        // Built-in array fallback: enforce Int index constraint (matching inferIndexedAccessExpr/inferIndexedAssignExpr)
+        if getCandidates.isEmpty {
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            driver.emitSubtypeConstraint(
+                left: indexTypes[0],
+                right: intType,
+                range: ctx.ast.arena.exprRange(indices[0]) ?? range,
+                solver: ConstraintSolver(),
+                sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+        }
+
         // Determine the result type of the compound binary operation
         let underlyingOp = driver.helpers.compoundAssignToBinaryOp(op)
         let resultType: TypeID
