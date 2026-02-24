@@ -458,6 +458,12 @@ final class ExprTypeChecker {
             }
         case .rangeTo, .rangeUntil, .downTo, .step:
             type = sema.types.intType
+        case .bitwiseAnd, .bitwiseOr, .bitwiseXor, .shl, .shr, .ushr:
+            if lhs == longType || rhs == longType {
+                type = longType
+            } else {
+                type = intType
+            }
         }
         sema.bindings.bindExprType(id, type: type)
         return type

@@ -92,7 +92,15 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_observable_set_value"),
             ctx.interner.intern("kk_vetoable_create"),
             ctx.interner.intern("kk_vetoable_get_value"),
-            ctx.interner.intern("kk_vetoable_set_value")
+            ctx.interner.intern("kk_vetoable_set_value"),
+            // Bitwise/shift (P5-103)
+            ctx.interner.intern("kk_bitwise_and"),
+            ctx.interner.intern("kk_bitwise_or"),
+            ctx.interner.intern("kk_bitwise_xor"),
+            ctx.interner.intern("kk_op_inv"),
+            ctx.interner.intern("kk_op_shl"),
+            ctx.interner.intern("kk_op_shr"),
+            ctx.interner.intern("kk_op_ushr")
         ]
 
         let boxIntCallee = ctx.interner.intern("kk_box_int")

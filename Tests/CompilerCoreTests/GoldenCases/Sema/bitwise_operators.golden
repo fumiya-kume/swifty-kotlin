@@ -1,0 +1,55 @@
+symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s1 kind=package fq=kotlin vis=public flags=synthetic
+symbol s2 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s3 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s4 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#4
+symbol s5 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s6 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=golden.sema.bitwiseAnd vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s8 kind=valueParameter fq=golden.sema.bitwiseAnd.$7.a vis=private flags=_
+symbol s9 kind=valueParameter fq=golden.sema.bitwiseAnd.$7.b vis=private flags=_
+symbol s10 kind=function fq=golden.sema.bitwiseOr vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s11 kind=valueParameter fq=golden.sema.bitwiseOr.$10.a vis=private flags=_
+symbol s12 kind=valueParameter fq=golden.sema.bitwiseOr.$10.b vis=private flags=_
+symbol s13 kind=function fq=golden.sema.bitwiseXor vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s14 kind=valueParameter fq=golden.sema.bitwiseXor.$13.a vis=private flags=_
+symbol s15 kind=valueParameter fq=golden.sema.bitwiseXor.$13.b vis=private flags=_
+symbol s16 kind=function fq=golden.sema.bitwiseInv vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s17 kind=valueParameter fq=golden.sema.bitwiseInv.$16.a vis=private flags=_
+symbol s18 kind=function fq=golden.sema.shiftLeft vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s19 kind=valueParameter fq=golden.sema.shiftLeft.$18.a vis=private flags=_
+symbol s20 kind=valueParameter fq=golden.sema.shiftLeft.$18.n vis=private flags=_
+symbol s21 kind=function fq=golden.sema.shiftRight vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s22 kind=valueParameter fq=golden.sema.shiftRight.$21.a vis=private flags=_
+symbol s23 kind=valueParameter fq=golden.sema.shiftRight.$21.n vis=private flags=_
+symbol s24 kind=function fq=golden.sema.unsignedShiftRight vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s25 kind=valueParameter fq=golden.sema.unsignedShiftRight.$24.a vis=private flags=_
+symbol s26 kind=valueParameter fq=golden.sema.unsignedShiftRight.$24.n vis=private flags=_
+file f0 package=golden.sema
+  decl d0 fun bitwiseAnd suspend=0 inline=0 sym=s7
+  decl d1 fun bitwiseOr suspend=0 inline=0 sym=s10
+  decl d2 fun bitwiseXor suspend=0 inline=0 sym=s13
+  decl d3 fun bitwiseInv suspend=0 inline=0 sym=s16
+  decl d4 fun shiftLeft suspend=0 inline=0 sym=s18
+  decl d5 fun shiftRight suspend=0 inline=0 sym=s21
+  decl d6 fun unsignedShiftRight suspend=0 inline=0 sym=s24
+expr e0 name(a) type=Int ref=s8
+expr e1 name(b) type=Int ref=s9
+expr e2 binary(bitwiseAnd) lhs=e0 rhs=e1 type=Int
+expr e3 name(a) type=Int ref=s11
+expr e4 name(b) type=Int ref=s12
+expr e5 binary(bitwiseOr) lhs=e3 rhs=e4 type=Int
+expr e6 name(a) type=Int ref=s14
+expr e7 name(b) type=Int ref=s15
+expr e8 binary(bitwiseXor) lhs=e6 rhs=e7 type=Int
+expr e9 name(a) type=Int ref=s17
+expr e10 memberCall recv=e9 callee=inv args=[] type=Int
+expr e11 name(a) type=Int ref=s19
+expr e12 name(n) type=Int ref=s20
+expr e13 binary(shl) lhs=e11 rhs=e12 type=Int
+expr e14 name(a) type=Int ref=s22
+expr e15 name(n) type=Int ref=s23
+expr e16 binary(shr) lhs=e14 rhs=e15 type=Int
+expr e17 name(a) type=Int ref=s25
+expr e18 name(n) type=Int ref=s26
+expr e19 binary(ushr) lhs=e17 rhs=e18 type=Int

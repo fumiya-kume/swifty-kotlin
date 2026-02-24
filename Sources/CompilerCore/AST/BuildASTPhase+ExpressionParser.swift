@@ -225,6 +225,12 @@ extension BuildASTPhase {
                 let resolved = interner.resolve(name)
                 if resolved == "downTo" { return .downTo }
                 if resolved == "step" { return .step }
+                if resolved == "and" { return .bitwiseAnd }
+                if resolved == "or" { return .bitwiseOr }
+                if resolved == "xor" { return .bitwiseXor }
+                if resolved == "shl" { return .shl }
+                if resolved == "shr" { return .shr }
+                if resolved == "ushr" { return .ushr }
                 return nil
             default:
                 return nil
@@ -248,6 +254,14 @@ extension BuildASTPhase {
                 return 95
             case .step:
                 return 93
+            case .shl, .shr, .ushr:
+                return 94
+            case .bitwiseAnd:
+                return 93
+            case .bitwiseXor:
+                return 92
+            case .bitwiseOr:
+                return 91
             case .elvis:
                 return 90
             case .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:

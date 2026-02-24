@@ -29,6 +29,12 @@ public enum BinaryOp: Equatable {
     case rangeUntil
     case downTo
     case step
+    case bitwiseAnd
+    case bitwiseOr
+    case bitwiseXor
+    case shl
+    case shr
+    case ushr
 }
 
 public enum UnaryOp: Equatable {

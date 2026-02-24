@@ -212,7 +212,18 @@ public final class LLVMBackend {
         "kk_op_gt": ">",
         "kk_op_ge": ">=",
         "kk_op_and": "&&",
-        "kk_op_or": "||"
+        "kk_op_or": "||",
+        // Bitwise/shift (P5-103)
+        "kk_bitwise_and": "&",
+        "kk_bitwise_or": "|",
+        "kk_bitwise_xor": "^",
+        "kk_op_shl": "<<",
+        "kk_op_shr": ">>",
+    ]
+
+    /// Unary builtin ops: function name → C prefix operator (P5-103)
+    static let unaryBuiltinOps: [String: String] = [
+        "kk_op_inv": "~",
     ]
 
     static let floatBuiltinOps: Set<String> = [
@@ -429,7 +440,15 @@ public final class LLVMBackend {
             "kk_observable_set_value",
             "kk_vetoable_create",
             "kk_vetoable_get_value",
-            "kk_vetoable_set_value"
+            "kk_vetoable_set_value",
+            // Bitwise/shift (P5-103)
+            "kk_bitwise_and",
+            "kk_bitwise_or",
+            "kk_bitwise_xor",
+            "kk_op_inv",
+            "kk_op_shl",
+            "kk_op_shr",
+            "kk_op_ushr"
         ]
 
         for decl in module.arena.declarations {
@@ -458,6 +477,9 @@ public final class LLVMBackend {
                     continue
                 }
                 if LLVMBackend.builtinOps[calleeName] != nil {
+                    continue
+                }
+                if LLVMBackend.unaryBuiltinOps[calleeName] != nil || calleeName == "kk_op_ushr" {
                     continue
                 }
                 if LLVMBackend.floatBuiltinOps.contains(calleeName) || LLVMBackend.doubleBuiltinOps.contains(calleeName) {

@@ -477,6 +477,51 @@ public enum RuntimeABIExterns {
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
+
+    // MARK: - Bitwise/Shift (P5-103)
+
+    public static let kk_bitwise_and = ExternDecl(
+        name: "kk_bitwise_and",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_bitwise_or = ExternDecl(
+        name: "kk_bitwise_or",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_bitwise_xor = ExternDecl(
+        name: "kk_bitwise_xor",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_op_inv = ExternDecl(
+        name: "kk_op_inv",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_op_shl = ExternDecl(
+        name: "kk_op_shl",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_op_shr = ExternDecl(
+        name: "kk_op_shr",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_op_ushr = ExternDecl(
+        name: "kk_op_ushr",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - All Functions (canonical list)
 
     /// All runtime extern declarations, ordered by section.
@@ -565,6 +610,14 @@ public enum RuntimeABIExterns {
         kk_vetoable_create,
         kk_vetoable_get_value,
         kk_vetoable_set_value,
+        // Bitwise/Shift (P5-103)
+        kk_bitwise_and,
+        kk_bitwise_or,
+        kk_bitwise_xor,
+        kk_op_inv,
+        kk_op_shl,
+        kk_op_shr,
+        kk_op_ushr,
     ]
 
     /// Look up an extern declaration by symbol name.
