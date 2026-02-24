@@ -27,7 +27,7 @@ final class DeclTypeChecker {
         case .block(let exprIDs, _):
             var last = ctx.sema.types.unitType
             var reachedNothing = false
-            for (index, exprID) in exprIDs.enumerated() {
+            for exprID in exprIDs {
                 if reachedNothing {
                     if let stmtRange = ctx.ast.arena.exprRange(exprID) {
                         ctx.semaCtx.diagnostics.warning(
@@ -39,9 +39,18 @@ final class DeclTypeChecker {
                     _ = driver.inferExpr(exprID, ctx: ctx, locals: &locals, expectedType: nil)
                     continue
                 }
-                // Pass expectedType to every expression so that return statements
-                // anywhere in the block can check their value against the function return type.
-                last = driver.inferExpr(exprID, ctx: ctx, locals: &locals, expectedType: expectedType)
+                // Pass expectedType to return expressions (so the return value is
+                // checked against the function return type) and to the last expression
+                // (which determines the block's result type for expression-body inference).
+                let exprExpectedType: TypeID?
+                if let expr = ctx.ast.arena.expr(exprID), case .returnExpr = expr {
+                    exprExpectedType = expectedType
+                } else if exprID == exprIDs.last {
+                    exprExpectedType = expectedType
+                } else {
+                    exprExpectedType = nil
+                }
+                last = driver.inferExpr(exprID, ctx: ctx, locals: &locals, expectedType: exprExpectedType)
                 if last == ctx.sema.types.nothingType {
                     reachedNothing = true
                 }
@@ -297,7 +306,41 @@ final class DeclTypeChecker {
             diagnostics: diagnostics
         )
 
-        if function.returnType == nil && bodyType != sema.types.errorType && bodyType != sema.types.nothingType {
+        // When inferring return type for functions without explicit annotation:
+        // - Skip if bodyType is error (broken code)
+        // - Skip if bodyType is Nothing AND the body is a block ending with a
+        //   control-flow statement (return/break/continue), because Nothing here
+        //   reflects control flow, not the function's logical return type.
+        // - Allow Nothing for .expr bodies (e.g. `fun f() = throw ...`) and for
+        //   .block bodies ending with throw or a Nothing-returning call, since
+        //   these genuinely diverge.
+        let skipSignatureUpdate: Bool
+        if bodyType == sema.types.errorType {
+            skipSignatureUpdate = true
+        } else if bodyType == sema.types.nothingType {
+            switch function.body {
+            case .block(let exprIDs, _):
+                // Check if the Nothing came from a control-flow expression
+                if let lastNothingID = exprIDs.last(where: { id in
+                    ctx.sema.bindings.exprTypes[id] == sema.types.nothingType
+                }), let expr = ctx.ast.arena.expr(lastNothingID) {
+                    switch expr {
+                    case .returnExpr, .breakExpr, .continueExpr:
+                        skipSignatureUpdate = true
+                    default:
+                        skipSignatureUpdate = false
+                    }
+                } else {
+                    skipSignatureUpdate = true
+                }
+            case .expr, .unit:
+                skipSignatureUpdate = false
+            }
+        } else {
+            skipSignatureUpdate = false
+        }
+
+        if function.returnType == nil && !skipSignatureUpdate {
             sema.symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: signature.receiverType,
