@@ -132,15 +132,15 @@ struct TypeCheckHelpers {
             return interner.intern("or")
         case .elvis:
             return interner.intern("elvis")
-            case .rangeTo:
-                return interner.intern("rangeTo")
-            case .rangeUntil:
-                return interner.intern("rangeUntil")
-            case .downTo:
-                return interner.intern("downTo")
-            case .step:
-                return interner.intern("step")
-            }
+        case .rangeTo:
+            return interner.intern("rangeTo")
+        case .rangeUntil:
+            return interner.intern("rangeUntil")
+        case .downTo:
+            return interner.intern("downTo")
+        case .step:
+            return interner.intern("step")
+        }
     }
 
     func resolveBuiltinTypeName(_ name: String, nullability: Nullability = .nonNull, types: TypeSystem) -> TypeID? {

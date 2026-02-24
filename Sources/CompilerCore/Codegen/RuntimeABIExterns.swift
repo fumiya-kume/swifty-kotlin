@@ -396,6 +396,32 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // MARK: - Range/Progression (P5-68)
+
+    public static let kk_op_rangeTo = ExternDecl(
+        name: "kk_op_rangeTo",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_op_rangeUntil = ExternDecl(
+        name: "kk_op_rangeUntil",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_op_downTo = ExternDecl(
+        name: "kk_op_downTo",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_op_step = ExternDecl(
+        name: "kk_op_step",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - All Functions (canonical list)
 
     /// All runtime extern declarations, ordered by section.
@@ -469,6 +495,11 @@ public enum RuntimeABIExterns {
         kk_array_get,
         kk_array_set,
         kk_vararg_spread_concat,
+        // Range/Progression
+        kk_op_rangeTo,
+        kk_op_rangeUntil,
+        kk_op_downTo,
+        kk_op_step,
     ]
 
     /// Look up an extern declaration by symbol name.

@@ -121,6 +121,7 @@ final class ABIMismatchTests: XCTestCase {
             + RuntimeABISpec.coroutineFunctions.count
             + RuntimeABISpec.boxingFunctions.count
             + RuntimeABISpec.arrayFunctions.count
+            + RuntimeABISpec.rangeFunctions.count
         XCTAssertEqual(RuntimeABISpec.allFunctions.count, expected)
     }
 
