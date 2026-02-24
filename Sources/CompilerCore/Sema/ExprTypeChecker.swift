@@ -74,20 +74,27 @@ final class ExprTypeChecker {
         case .nameRef(let name, let nameRange):
             return inferNameRefExpr(id, name: name, nameRange: nameRange, ctx: ctx, locals: &locals)
 
-        case .forExpr(let loopVariable, let iterableExpr, let bodyExpr, _, let range):
-            return driver.controlFlowChecker.inferForExpr(id, loopVariable: loopVariable, iterableExpr: iterableExpr, bodyExpr: bodyExpr, range: range, ctx: ctx, locals: &locals)
+        case .forExpr(let loopVariable, let iterableExpr, let bodyExpr, let label, let range):
+            return driver.controlFlowChecker.inferForExpr(id, loopVariable: loopVariable, iterableExpr: iterableExpr, bodyExpr: bodyExpr, label: label, range: range, ctx: ctx, locals: &locals)
 
-        case .whileExpr(let conditionExpr, let bodyExpr, _, let range):
-            return driver.controlFlowChecker.inferWhileExpr(id, conditionExpr: conditionExpr, bodyExpr: bodyExpr, range: range, ctx: ctx, locals: &locals)
+        case .whileExpr(let conditionExpr, let bodyExpr, let label, let range):
+            return driver.controlFlowChecker.inferWhileExpr(id, conditionExpr: conditionExpr, bodyExpr: bodyExpr, label: label, range: range, ctx: ctx, locals: &locals)
 
-        case .doWhileExpr(let bodyExpr, let conditionExpr, _, let range):
-            return driver.controlFlowChecker.inferDoWhileExpr(id, bodyExpr: bodyExpr, conditionExpr: conditionExpr, range: range, ctx: ctx, locals: &locals)
+        case .doWhileExpr(let bodyExpr, let conditionExpr, let label, let range):
+            return driver.controlFlowChecker.inferDoWhileExpr(id, bodyExpr: bodyExpr, conditionExpr: conditionExpr, label: label, range: range, ctx: ctx, locals: &locals)
 
         case .breakExpr(let label, let range):
             if ctx.loopDepth == 0 {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0018",
                     "'break' is only allowed inside loop bodies.",
+                    range: range
+                )
+            } else if let label, !ctx.loopLabelStack.contains(label) {
+                let labelName = interner.resolve(label)
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0040",
+                    "Unresolved label '@\(labelName)'. No enclosing loop is labeled '\(labelName)'.",
                     range: range
                 )
             }
@@ -99,6 +106,13 @@ final class ExprTypeChecker {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0019",
                     "'continue' is only allowed inside loop bodies.",
+                    range: range
+                )
+            } else if let label, !ctx.loopLabelStack.contains(label) {
+                let labelName = interner.resolve(label)
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0041",
+                    "Unresolved label '@\(labelName)'. No enclosing loop is labeled '\(labelName)'.",
                     range: range
                 )
             }
@@ -117,7 +131,15 @@ final class ExprTypeChecker {
         case .indexedAssign(let receiverExpr, let indices, let valueExpr, let range):
             return driver.localDeclChecker.inferIndexedAssignExpr(id, receiverExpr: receiverExpr, indices: indices, valueExpr: valueExpr, range: range, ctx: ctx, locals: &locals)
 
-        case .returnExpr(let value, _, _):
+        case .returnExpr(let value, let label, _):
+            if let label {
+                let labelName = interner.resolve(label)
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0042",
+                    "Labeled return 'return@\(labelName)' is not yet supported.",
+                    range: ast.arena.exprRange(id)
+                )
+            }
             let resolved: TypeID
             if let value {
                 resolved = driver.inferExpr(value, ctx: ctx, locals: &locals, expectedType: expectedType)
