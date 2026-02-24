@@ -563,10 +563,12 @@ final class ABILoweringPass: LoweringPass {
                 return true
             }
             if case .classType(let ct) = paramKind {
-                // If we know this is a value class, do not treat it as a boxing boundary.
+                // If we know this is a non-null value class, do not treat it as a boxing boundary.
+                // Nullable value class types (e.g. Meter?) are boxed at ABI level and ARE boundaries.
                 if let symbols,
                    let sym = symbols.symbol(ct.classSymbol),
-                   sym.flags.contains(.valueType) {
+                   sym.flags.contains(.valueType),
+                   ct.nullability == .nonNull {
                     return false
                 }
                 // Otherwise, any non-value-class reference type is a boxing boundary.
@@ -694,11 +696,13 @@ final class ABILoweringPass: LoweringPass {
 
     /// Returns true if the type kind is a non-value-class reference type (interface, regular class).
     /// Value class arguments need boxing when passed to such types.
+    /// Nullable value class types (e.g. Meter?) ARE boxing boundaries since they are boxed at ABI level.
     private func isNonValueClassReference(_ kind: TypeKind, symbols: SymbolTable?) -> Bool {
         if case .classType(let ct) = kind {
             if let symbols,
                let sym = symbols.symbol(ct.classSymbol),
-               sym.flags.contains(.valueType) {
+               sym.flags.contains(.valueType),
+               ct.nullability == .nonNull {
                 return false
             }
             return true
