@@ -196,7 +196,7 @@ final class ABILoweringPass: LoweringPass {
                             let resultType = module.arena.exprType(vcResult)
                             if let resultType {
                                 let resultKind = resolveValueClassKind(types.kind(of: resultType), types: types, symbols: symbols)
-                                if needsUnboxing(sourceKind: returnKind, targetKind: resultKind) {
+                                if needsUnboxing(sourceKind: returnKind, targetKind: resultKind, symbols: symbols) {
                                     vcUnboxCallee = unboxingCallee(
                                         sourceKind: returnKind,
                                         targetKind: resultKind,
@@ -334,8 +334,8 @@ final class ABILoweringPass: LoweringPass {
                                 continue
                             }
                         }
-                        // Unbox: Any/Any? or nullable primitive → nonNull primitive
-                        if needsUnboxing(sourceKind: fromKind, targetKind: toKind) {
+                        // Unbox: Any/Any?, non-value-class reference, or nullable primitive → nonNull primitive
+                        if needsUnboxing(sourceKind: fromKind, targetKind: toKind, symbols: symbols) {
                             if let unboxCallee = unboxingCallee(
                                 sourceKind: fromKind,
                                 targetKind: toKind,
@@ -451,7 +451,7 @@ final class ABILoweringPass: LoweringPass {
                         let resultType = module.arena.exprType(result)
                         if let resultType {
                             let resultKind = resolveValueClassKind(types.kind(of: resultType), types: types, symbols: symbols)
-                            if needsUnboxing(sourceKind: returnKind, targetKind: resultKind) {
+                            if needsUnboxing(sourceKind: returnKind, targetKind: resultKind, symbols: symbols) {
                                 resolvedUnboxCallee = unboxingCallee(
                                     sourceKind: returnKind,
                                     targetKind: resultKind,
@@ -637,7 +637,7 @@ final class ABILoweringPass: LoweringPass {
         } else {
             resolvedTargetKind = targetKind
         }
-        guard needsUnboxing(sourceKind: sourceKind, targetKind: resolvedTargetKind) else {
+        guard needsUnboxing(sourceKind: sourceKind, targetKind: resolvedTargetKind, symbols: symbols) else {
             return nil
         }
 
@@ -713,9 +713,21 @@ final class ABILoweringPass: LoweringPass {
     /// Determines whether unboxing is needed when converting from sourceKind to targetKind.
     /// Unboxing is required when:
     /// - Source is Any or Any? and target is a primitive (existing behavior)
+    /// - Source is a non-value-class reference type and target is a primitive (interface → value class)
     /// - Source is a nullable primitive and target is a non-null primitive of the same kind
-    private func needsUnboxing(sourceKind: TypeKind, targetKind: TypeKind) -> Bool {
+    private func needsUnboxing(
+        sourceKind: TypeKind,
+        targetKind: TypeKind,
+        symbols: SymbolTable? = nil
+    ) -> Bool {
         if isAnyOrNullableAny(sourceKind) {
+            if case .primitive(_, .nonNull) = targetKind {
+                return true
+            }
+            return false
+        }
+        // Non-value-class reference type → primitive: unbox (e.g. interface → value class)
+        if isNonValueClassReference(sourceKind, symbols: symbols) {
             if case .primitive(_, .nonNull) = targetKind {
                 return true
             }
