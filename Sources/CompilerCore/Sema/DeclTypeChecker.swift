@@ -320,10 +320,13 @@ final class DeclTypeChecker {
         } else if bodyType == sema.types.nothingType {
             switch function.body {
             case .block(let exprIDs, _):
-                // Check if the Nothing came from a control-flow expression
-                if let lastNothingID = exprIDs.last(where: { id in
+                // Check if the *first* Nothing expression (i.e. the one that made
+                // the block unreachable) is a control-flow statement. Using first
+                // instead of last avoids being confused by unreachable Nothing
+                // expressions that follow (e.g. `return; throw "err"`).
+                if let firstNothingID = exprIDs.first(where: { id in
                     ctx.sema.bindings.exprTypes[id] == sema.types.nothingType
-                }), let expr = ctx.ast.arena.expr(lastNothingID) {
+                }), let expr = ctx.ast.arena.expr(firstNothingID) {
                     switch expr {
                     case .returnExpr, .breakExpr, .continueExpr:
                         skipSignatureUpdate = true
