@@ -20,6 +20,23 @@ final class CallLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
+        // Invoke operator calls are lowered as member calls: the callee expr
+        // becomes the receiver and the invoke method is the callee.
+        if sema.bindings.isInvokeOperatorCall(exprID) {
+            let invokeName = interner.intern("invoke")
+            return lowerMemberCallExpr(
+                exprID,
+                receiverExpr: calleeExpr,
+                calleeName: invokeName,
+                args: args,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+        }
         let boundType = sema.bindings.exprTypes[exprID]
         let loweredCalleeExprID = driver.lowerExpr(
             calleeExpr,

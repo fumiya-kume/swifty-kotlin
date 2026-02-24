@@ -150,6 +150,49 @@ final class CallTypeChecker {
             return result
         }
 
+        // Invoke operator fallback: if callee is not a function type, check if
+        // its type has an `operator fun invoke(...)` member and resolve through
+        // the overload resolver as a member call.
+        if let callableCalleeType {
+            let invokeName = interner.intern("invoke")
+            let invokeCandidates = driver.helpers.collectMemberFunctionCandidates(
+                named: invokeName,
+                receiverType: callableCalleeType,
+                sema: sema
+            ).filter { candidateID in
+                guard let sym = sema.symbols.symbol(candidateID) else { return false }
+                return sym.flags.contains(.operatorFunction)
+            }
+            if !invokeCandidates.isEmpty {
+                let resolvedArgs = zip(args, argTypes).map { argument, type in
+                    CallArg(label: argument.label, isSpread: argument.isSpread, type: type)
+                }
+                let resolved = ctx.resolver.resolveCall(
+                    candidates: invokeCandidates,
+                    call: CallExpr(
+                        range: range,
+                        calleeName: invokeName,
+                        args: resolvedArgs,
+                        explicitTypeArgs: explicitTypeArgs
+                    ),
+                    expectedType: expectedType,
+                    implicitReceiverType: callableCalleeType,
+                    ctx: ctx.semaCtx
+                )
+                if let diagnostic = resolved.diagnostic {
+                    ctx.semaCtx.diagnostics.emit(diagnostic)
+                    sema.bindings.bindExprType(id, type: sema.types.errorType)
+                    return sema.types.errorType
+                }
+                if let chosen = resolved.chosenCallee {
+                    let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
+                    sema.bindings.markInvokeOperatorCall(id)
+                    sema.bindings.bindExprType(id, type: returnType)
+                    return returnType
+                }
+            }
+        }
+
         if let builtinType = driver.helpers.kxMiniCoroutineBuiltinReturnType(
             calleeName: calleeName,
             argumentCount: args.count,
