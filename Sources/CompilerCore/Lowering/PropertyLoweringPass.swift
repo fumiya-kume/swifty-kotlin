@@ -41,6 +41,13 @@ final class PropertyLoweringPass: LoweringPass {
                             let setterSymbol = SymbolID(
                                 rawValue: -13_000 - baseSymbol.rawValue
                             )
+                            // If the current function IS the setter accessor
+                            // for this property, keep the original copy to
+                            // avoid infinite recursion (setter calling itself).
+                            if function.symbol == setterSymbol {
+                                loweredBody.append(instruction)
+                                continue
+                            }
                             loweredBody.append(
                                 .call(
                                     symbol: setterSymbol,
