@@ -120,9 +120,9 @@ public final class TypeSystem {
         case .intersection(let parts):
             // For intersection types, apply nullability to each part
             if nullability == .nonNull {
-                // Making non-null: ensure at least one part is Any (non-null)
-                if parts.contains(where: { kind(of: $0) == .any(.nonNull) }) {
-                    return type  // already definitely non-null
+                // If intersection is already definitely non-null, return as-is
+                if parts.contains(where: { isDefinitelyNonNull($0) }) {
+                    return type
                 }
                 // Add Any to make it definitely non-null
                 return make(.intersection(parts + [anyType]))
