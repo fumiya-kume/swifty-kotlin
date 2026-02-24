@@ -170,6 +170,8 @@ internal final class RuntimeJobHandle {
         }
         lock.unlock()
         completionSemaphore.wait()
+        // Re-signal so other concurrent join() callers also wake up
+        completionSemaphore.signal()
         lock.lock()
         let value = result
         lock.unlock()
@@ -763,10 +765,25 @@ public func kk_coroutine_scope_register_child(_ scopeHandle: Int, _ childHandle:
     return childHandle
 }
 
-/// Joins (waits for) a job or deferred handle to complete.
+/// Joins (waits for) a job handle to complete and releases it.
+/// This consumes the handle (balances the passRetained from launch).
 @_cdecl("kk_job_join")
 public func kk_job_join(_ jobHandle: Int) -> Int {
-    runtimeJoinChild(jobHandle)
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: jobHandle) else {
+        return 0
+    }
+    let obj = Unmanaged<AnyObject>.fromOpaque(ptr).takeUnretainedValue()
+    let result: Int
+    if let job = obj as? RuntimeJobHandle {
+        result = job.join()
+    } else if let task = obj as? RuntimeAsyncTask {
+        result = task.awaitResult()
+    } else {
+        result = 0
+    }
+    // Release the original passRetained from launch
+    Unmanaged<AnyObject>.fromOpaque(ptr).release()
+    return result
 }
 
 /// Convenience: creates a scope, runs the block synchronously, waits for all children.
