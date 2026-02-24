@@ -20,4 +20,4 @@ expr e6 binary(notEqual) lhs=e4 rhs=e5 type=Boolean
 expr e7 name(y) type=Int ref=s9
 expr e8 int(0) type=Int
 expr e9 when subject=_ branches=[e2->e3,e6->e7] else=e8 type=Int
-expr e10 return value=e9 type=Int
+expr e10 return value=e9 type=Nothing

@@ -19,4 +19,4 @@ expr e6 binary(greaterThan) lhs=e4 rhs=e5 type=Boolean
 expr e7 name(x) type=Int ref=s8
 expr e8 name(x) type=Int ref=s8
 expr e9 when subject=_ branches=[e2->e3,e6->e7] else=e8 type=Int
-expr e10 return value=e9 type=Int
+expr e10 return value=e9 type=Nothing

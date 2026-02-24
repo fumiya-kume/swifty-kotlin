@@ -16,8 +16,8 @@ expr e2 name(x) type=Int? ref=s8
 expr e3 name(null) type=Nothing?
 expr e4 binary(notEqual) lhs=e2 rhs=e3 type=Boolean
 expr e5 name(x) type=Int ref=s8
-expr e6 return value=e5 type=Int
-expr e7 blockExpr stmts=[] trailing=e6 type=Int
+expr e6 return value=e5 type=Nothing
+expr e7 blockExpr stmts=[] trailing=e6 type=Nothing
 expr e8 while cond=e4 body=e7 type=Unit
 expr e9 name(y) type=Int ref=s9
-expr e10 return value=e9 type=Int
+expr e10 return value=e9 type=Nothing

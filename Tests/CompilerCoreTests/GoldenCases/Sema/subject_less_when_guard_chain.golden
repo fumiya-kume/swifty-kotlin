@@ -31,7 +31,7 @@ expr e10 binary(greaterThan) lhs=e8 rhs=e9 type=Boolean
 expr e11 string(positive_c) type=String
 expr e12 string(all_non_positive) type=String
 expr e13 when subject=_ branches=[e2->e3,e6->e7,e10->e11] else=e12 type=String
-expr e14 return value=e13 type=String
+expr e14 return value=e13 type=Nothing
 expr e15 int(0) type=Int
 expr e16 localDecl result mutable=0 type=_ init=e15 type=Unit ref=s14
 expr e17 name(x) type=Int ref=s12
@@ -44,10 +44,10 @@ expr e23 binary(greaterThan) lhs=e21 rhs=e22 type=Boolean
 expr e24 name(result) type=Int ref=s14
 expr e25 when subject=_ branches=[e19->e20,e23->e24] else=_ type=Int
 expr e26 name(result) type=Int ref=s14
-expr e27 return value=e26 type=Int
+expr e27 return value=e26 type=Nothing
 expr e28 bool(true) type=Boolean
 expr e29 int(1) type=Int
 expr e30 bool(false) type=Boolean
 expr e31 int(0) type=Int
 expr e32 when subject=_ branches=[e28->e29,e30->e31] else=_ type=Int
-expr e33 return value=e32 type=Int
+expr e33 return value=e32 type=Nothing

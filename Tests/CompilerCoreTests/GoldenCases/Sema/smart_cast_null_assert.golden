@@ -12,4 +12,4 @@ file f0 package=_
 expr e0 name(x) type=Int? ref=s8
 expr e1 nullAssert expr=e0 type=Int
 expr e2 name(x) type=Int ref=s8
-expr e3 return value=e2 type=Int
+expr e3 return value=e2 type=Nothing
