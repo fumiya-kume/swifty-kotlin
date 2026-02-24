@@ -1,0 +1,23 @@
+symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s1 kind=class fq=golden.sema.Foo vis=public flags=_
+symbol s2 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#1 params=[Int] ret=Class#1 suspend=0 defaults=[0] vararg=[0]
+symbol s3 kind=valueParameter fq=golden.sema.Foo.<init>.$2.x vis=private flags=_
+symbol s4 kind=object fq=golden.sema.Foo.Companion vis=public flags=_
+symbol s5 kind=function fq=golden.sema.Foo.Companion.create vis=public flags=_ sig=recv=Class#4 params=[] ret=Class#1 suspend=0 defaults=[] vararg=[]
+symbol s6 kind=property fq=golden.sema.Foo.Companion.MAX_COUNT vis=public flags=_ type=Int
+symbol s7 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s8 kind=local fq=__local_6.f vis=private flags=_
+symbol s9 kind=local fq=__local_9.m vis=private flags=_
+file f0 package=golden.sema
+  decl d3 class Foo sym=s1
+  decl d4 fun main suspend=0 inline=0 sym=s7
+expr e0 int(100) type=_
+expr e1 name(Foo) type=_
+expr e2 int(0) type=_
+expr e3 call callee=e1 args=[_:e2] type=_
+expr e4 name(Foo) type=Class#4 ref=s1
+expr e5 memberCall recv=e4 callee=create args=[] type=Class#1 call=s5 map=[] targs=[]
+expr e6 localDecl f mutable=0 type=t3 init=e5 type=Unit ref=s8
+expr e7 name(Foo) type=Class#4 ref=s1
+expr e8 memberCall recv=e7 callee=MAX_COUNT args=[] type=Int ref=s6
+expr e9 localDecl m mutable=0 type=t4 init=e8 type=Unit ref=s9
