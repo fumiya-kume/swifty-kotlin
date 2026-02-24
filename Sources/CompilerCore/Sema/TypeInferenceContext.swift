@@ -11,6 +11,7 @@ struct TypeInferenceContext {
     var scope: Scope
     var implicitReceiverType: TypeID?
     var loopDepth: Int
+    var loopLabelStack: [InternedString]
     var flowState: DataFlowState
     let currentFileID: FileID
     var enclosingClassSymbol: SymbolID?
@@ -29,6 +30,16 @@ struct TypeInferenceContext {
 
     func with(loopDepth newDepth: Int) -> TypeInferenceContext {
         var copy = self; copy.loopDepth = newDepth; return copy
+    }
+
+    func withLoopLabel(_ label: InternedString) -> TypeInferenceContext {
+        var copy = self
+        copy.loopLabelStack = self.loopLabelStack + [label]
+        return copy
+    }
+
+    func hasLoopLabel(_ label: InternedString) -> Bool {
+        loopLabelStack.contains(label)
     }
 
     func with(flowState newState: DataFlowState) -> TypeInferenceContext {

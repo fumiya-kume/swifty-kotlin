@@ -83,22 +83,34 @@ final class ExprTypeChecker {
         case .doWhileExpr(let bodyExpr, let conditionExpr, let range):
             return driver.controlFlowChecker.inferDoWhileExpr(id, bodyExpr: bodyExpr, conditionExpr: conditionExpr, range: range, ctx: ctx, locals: &locals)
 
-        case .breakExpr(_, let range):
+        case .breakExpr(let label, let range):
             if ctx.loopDepth == 0 {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0018",
                     "'break' is only allowed inside loop bodies.",
                     range: range
                 )
+            } else if let label, !ctx.hasLoopLabel(label) {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0020",
+                    "'break' with label '@\(ctx.interner.resolve(label))' does not reference a valid enclosing loop.",
+                    range: range
+                )
             }
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
 
-        case .continueExpr(_, let range):
+        case .continueExpr(let label, let range):
             if ctx.loopDepth == 0 {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0019",
                     "'continue' is only allowed inside loop bodies.",
+                    range: range
+                )
+            } else if let label, !ctx.hasLoopLabel(label) {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0021",
+                    "'continue' with label '@\(ctx.interner.resolve(label))' does not reference a valid enclosing loop.",
                     range: range
                 )
             }

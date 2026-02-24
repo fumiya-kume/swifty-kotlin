@@ -38,9 +38,13 @@ final class ControlFlowTypeChecker {
             bodyLocals[loopVariable] = (elementType, loopVariableSymbol, false, true)
             sema.bindings.bindIdentifier(id, symbol: loopVariableSymbol)
         }
+        var loopCtx = ctx.copying(loopDepth: ctx.loopDepth + 1)
+        if let userLabel = ctx.ast.arena.loopLabel(for: id) {
+            loopCtx = loopCtx.withLoopLabel(userLabel)
+        }
         _ = driver.inferExpr(
             bodyExpr,
-            ctx: ctx.copying(loopDepth: ctx.loopDepth + 1),
+            ctx: loopCtx,
             locals: &bodyLocals,
             expectedType: nil
         )
@@ -76,7 +80,10 @@ final class ControlFlowTypeChecker {
         )
         var bodyLocals = locals
         driver.exprChecker.applyFlowStateToLocals(branch.trueState, locals: &bodyLocals, sema: sema)
-        let bodyCtx = ctx.copying(loopDepth: ctx.loopDepth + 1, flowState: branch.trueState)
+        var bodyCtx = ctx.copying(loopDepth: ctx.loopDepth + 1, flowState: branch.trueState)
+        if let userLabel = ctx.ast.arena.loopLabel(for: id) {
+            bodyCtx = bodyCtx.withLoopLabel(userLabel)
+        }
         _ = driver.inferExpr(
             bodyExpr,
             ctx: bodyCtx,
@@ -99,9 +106,13 @@ final class ControlFlowTypeChecker {
         let sema = ctx.sema
         let boolType = sema.types.booleanType
         var bodyLocals = locals
+        var loopCtx = ctx.copying(loopDepth: ctx.loopDepth + 1)
+        if let userLabel = ctx.ast.arena.loopLabel(for: id) {
+            loopCtx = loopCtx.withLoopLabel(userLabel)
+        }
         _ = driver.inferExpr(
             bodyExpr,
-            ctx: ctx.copying(loopDepth: ctx.loopDepth + 1),
+            ctx: loopCtx,
             locals: &bodyLocals,
             expectedType: nil
         )
