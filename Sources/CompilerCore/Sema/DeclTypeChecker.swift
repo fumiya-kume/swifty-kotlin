@@ -453,10 +453,18 @@ final class DeclTypeChecker {
             }
             switch decl {
             case .classDecl(let classDecl):
+                // Inner classes inherit outer receiver context (can use this@Outer).
+                // Non-inner nested classes are effectively static: clear outer receivers.
+                let nestedCtx: TypeInferenceContext
+                if classDecl.isInner {
+                    nestedCtx = ctx
+                } else {
+                    nestedCtx = ctx.copying(outerReceiverTypes: [])
+                }
                 typeCheckClassDecl(
                     classDecl,
                     symbol: symbol,
-                    ctx: ctx,
+                    ctx: nestedCtx,
                     solver: solver,
                     diagnostics: diagnostics
                 )

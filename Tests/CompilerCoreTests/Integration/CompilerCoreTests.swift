@@ -108,6 +108,7 @@ final class CompilerCoreTests: XCTestCase {
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
+        assertNoDiagnostic("KSWIFTK-SEMA-0071", in: ctx)
     }
 
     func testWhenExhaustivenessDiagnosticForSealedMissingSubtype() throws {
@@ -124,7 +125,41 @@ final class CompilerCoreTests: XCTestCase {
         let ctx = try makeContextFromSource(source)
         try runSema(ctx)
 
-        assertHasDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
+        // P5-78: sealed missing-branch diagnostic now uses KSWIFTK-SEMA-0071
+        assertHasDiagnostic("KSWIFTK-SEMA-0071", in: ctx)
+
+        // Also assert that the diagnostic text mentions missing branches and the missing subtype.
+        let sealedDiag = ctx.diagnostics.diagnostics.first { $0.code == "KSWIFTK-SEMA-0071" }
+        XCTAssertNotNil(sealedDiag)
+        XCTAssertTrue(
+            sealedDiag?.message.contains("Missing branches") == true,
+            "Expected diagnostic message to mention missing branches"
+        )
+        XCTAssertTrue(
+            sealedDiag?.message.contains("B") == true,
+            "Expected diagnostic message to mention missing subtype 'B'"
+        )
+    }
+
+    // P5-78: sealed interface when exhaustiveness accepts all branches
+    func testSealedInterfaceWhenExhaustivenessAcceptsAllBranches() throws {
+        let source = """
+        sealed interface Expr
+        class Literal : Expr
+        class Add : Expr
+
+        fun eval(e: Expr): String {
+            when (e) {
+                is Literal -> "lit"
+                is Add -> "add"
+            }
+        }
+        """
+        let ctx = try makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
+        assertNoDiagnostic("KSWIFTK-SEMA-0071", in: ctx)
     }
 
     func testWhenNullBranchSmartCastsLocalToNonNullInOtherBranches() throws {

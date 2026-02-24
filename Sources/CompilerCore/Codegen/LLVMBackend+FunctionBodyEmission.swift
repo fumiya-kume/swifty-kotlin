@@ -127,7 +127,15 @@ extension LLVMBackend {
             case .nullAssert(let operand, let result):
                 ensureDeclared(result, declared: &declared, lines: &lines)
                 ensureDeclared(operand, declared: &declared, lines: &lines)
-                lines.append("  \(varName(result)) = \(varName(operand));")
+                let thrSlot = "thrown_\(callIndex)"
+                callIndex += 1
+                lines.append("  intptr_t \(thrSlot) = 0;")
+                lines.append("  \(varName(result)) = kk_op_notnull(\(varName(operand)), &\(thrSlot));")
+                lines.append("  if (\(thrSlot) != 0) {")
+                lines.append("    if (outThrown) { *outThrown = \(thrSlot); }")
+                lines.append("    kk_pop_frame();")
+                lines.append("    return 0;")
+                lines.append("  }")
                 syncRoot(result)
 
             case .call(let symbol, let callee, let arguments, let result, let usesThrownChannel, let thrownResult, let isSuperCall):

@@ -1,0 +1,10 @@
+symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s1 kind=enumClass fq=golden.sema.Color vis=public flags=_
+symbol s2 kind=constructor fq=golden.sema.Color.<init> vis=public flags=_ sig=recv=Class#1 params=[] ret=Class#1 suspend=0 defaults=[] vararg=[]
+symbol s3 kind=field fq=golden.sema.Color.RED vis=public flags=_ type=Class#1
+symbol s4 kind=enumClass fq=golden.sema.Direction vis=public flags=_
+symbol s5 kind=constructor fq=golden.sema.Direction.<init> vis=public flags=_ sig=recv=Class#4 params=[] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s6 kind=field fq=golden.sema.Direction.NORTH vis=public flags=_ type=Class#4
+file f0 package=golden.sema
+  decl d0 class Color sym=s1
+  decl d1 class Direction sym=s4

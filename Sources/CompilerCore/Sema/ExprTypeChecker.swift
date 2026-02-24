@@ -111,11 +111,11 @@ final class ExprTypeChecker {
         case .localAssign(let name, let value, let range):
             return driver.localDeclChecker.inferLocalAssignExpr(id, name: name, value: value, range: range, ctx: ctx, locals: &locals)
 
-        case .arrayAccess(let arrayExpr, let indexExpr, let range):
-            return driver.localDeclChecker.inferArrayAccessExpr(id, arrayExpr: arrayExpr, indexExpr: indexExpr, range: range, ctx: ctx, locals: &locals)
+        case .indexedAccess(let receiverExpr, let indices, let range):
+            return driver.localDeclChecker.inferIndexedAccessExpr(id, receiverExpr: receiverExpr, indices: indices, range: range, ctx: ctx, locals: &locals)
 
-        case .arrayAssign(let arrayExpr, let indexExpr, let valueExpr, let range):
-            return driver.localDeclChecker.inferArrayAssignExpr(id, arrayExpr: arrayExpr, indexExpr: indexExpr, valueExpr: valueExpr, range: range, ctx: ctx, locals: &locals)
+        case .indexedAssign(let receiverExpr, let indices, let valueExpr, let range):
+            return driver.localDeclChecker.inferIndexedAssignExpr(id, receiverExpr: receiverExpr, indices: indices, valueExpr: valueExpr, range: range, ctx: ctx, locals: &locals)
 
         case .returnExpr(let value, _):
             let resolved: TypeID
@@ -208,6 +208,9 @@ final class ExprTypeChecker {
 
         case .compoundAssign(let op, let name, let valueExpr, let range):
             return inferCompoundAssignExpr(id, op: op, name: name, valueExpr: valueExpr, range: range, ctx: ctx, locals: &locals)
+
+        case .indexedCompoundAssign(let op, let receiverExpr, let indices, let valueExpr, let range):
+            return driver.localDeclChecker.inferIndexedCompoundAssignExpr(id, op: op, receiverExpr: receiverExpr, indices: indices, valueExpr: valueExpr, range: range, ctx: ctx, locals: &locals)
 
         case .whenExpr(let subjectID, let branches, let elseExpr, let range):
             return driver.controlFlowChecker.inferWhenExpr(id, subjectID: subjectID, branches: branches, elseExpr: elseExpr, range: range, ctx: ctx, locals: &locals, expectedType: expectedType)
@@ -306,7 +309,6 @@ final class ExprTypeChecker {
         let ast = ctx.ast
         let sema = ctx.sema
         let interner = ctx.interner
-        let scope = ctx.scope
 
         let boolType = sema.types.booleanType
         let intType = sema.types.intType
@@ -329,8 +331,8 @@ final class ExprTypeChecker {
         if !memberOperatorCandidates.isEmpty {
             operatorCandidates = memberOperatorCandidates
         } else if !lhsIsPrimitive {
-            operatorCandidates = scope.lookup(operatorName).filter { candidate in
-                guard let symbol = sema.symbols.symbol(candidate),
+            operatorCandidates = ctx.cachedScopeLookup(operatorName).filter { candidate in
+                guard let symbol = ctx.cachedSymbol(candidate),
                       symbol.kind == .function,
                       let signature = sema.symbols.functionSignature(for: candidate) else {
                     return false
@@ -454,8 +456,8 @@ final class ExprTypeChecker {
                     locals[elvisVarName] = (nonNullType, elvisLocal.symbol, elvisLocal.isMutable, elvisLocal.isInitialized)
                 }
             }
-        case .rangeTo, .rangeUntil:
-            type = sema.types.anyType
+        case .rangeTo, .rangeUntil, .downTo, .step:
+            type = sema.types.intType
         }
         sema.bindings.bindExprType(id, type: type)
         return type
@@ -529,11 +531,10 @@ final class ExprTypeChecker {
     ) -> TypeID {
         let sema = ctx.sema
         let interner = ctx.interner
-        let scope = ctx.scope
 
         if interner.resolve(name) == "null" {
-            sema.bindings.bindExprType(id, type: sema.types.nullableAnyType)
-            return sema.types.nullableAnyType
+            sema.bindings.bindExprType(id, type: sema.types.nullableNothingType)
+            return sema.types.nullableNothingType
         }
         if interner.resolve(name) == "this",
            let receiverType = ctx.implicitReceiverType {
@@ -552,9 +553,9 @@ final class ExprTypeChecker {
             sema.bindings.bindExprType(id, type: local.type)
             return local.type
         }
-        let allCandidateIDs = scope.lookup(name)
+        let allCandidateIDs = ctx.cachedScopeLookup(name)
         let (visibleIDs, invisibleSyms) = ctx.filterByVisibility(allCandidateIDs)
-        let candidates = visibleIDs.compactMap { sema.symbols.symbol($0) }
+        let candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
         if candidates.isEmpty {
             if let firstInvisible = invisibleSyms.first {
                 driver.helpers.emitVisibilityError(for: firstInvisible, name: interner.resolve(name), range: nameRange, diagnostics: ctx.semaCtx.diagnostics)
@@ -670,7 +671,6 @@ final class ExprTypeChecker {
     ) -> TypeID {
         let ast = ctx.ast
         let sema = ctx.sema
-        let scope = ctx.scope
         let outerSymbols = Set(locals.values.map { $0.symbol })
 
         let receiverType: TypeID?
@@ -691,8 +691,8 @@ final class ExprTypeChecker {
             if !memberCandidates.isEmpty {
                 candidates = memberCandidates
             } else {
-                candidates = scope.lookup(member).filter { symbolID in
-                    guard let symbol = sema.symbols.symbol(symbolID),
+                candidates = ctx.cachedScopeLookup(member).filter { symbolID in
+                    guard let symbol = ctx.cachedSymbol(symbolID),
                           symbol.kind == .function,
                           let signature = sema.symbols.functionSignature(for: symbolID),
                           let declaredReceiver = signature.receiverType else {
@@ -702,15 +702,15 @@ final class ExprTypeChecker {
                 }
             }
         } else {
-            candidates = scope.lookup(member).filter { symbolID in
-                guard let symbol = sema.symbols.symbol(symbolID) else {
+            candidates = ctx.cachedScopeLookup(member).filter { symbolID in
+                guard let symbol = ctx.cachedSymbol(symbolID) else {
                     return false
                 }
                 return symbol.kind == .function || symbol.kind == .constructor
             }
             if candidates.isEmpty,
                let local = locals[member],
-               let localSymbol = sema.symbols.symbol(local.symbol),
+               let localSymbol = ctx.cachedSymbol(local.symbol),
                localSymbol.kind == .function {
                 candidates = [local.symbol]
             }
@@ -798,7 +798,7 @@ final class ExprTypeChecker {
         if let classSymbol = driver.helpers.nominalSymbol(of: receiverType, types: sema.types) {
             let supertypes = sema.symbols.directSupertypes(for: classSymbol)
             let classSupertypes = supertypes.filter {
-                let kind = sema.symbols.symbol($0)?.kind
+                let kind = ctx.cachedSymbol($0)?.kind
                 return kind == .class || kind == .enumClass
             }
             if let superclass = classSupertypes.first {

@@ -5,8 +5,8 @@ extension TypeSystem {
             return "<error>"
         case .unit:
             return "Unit"
-        case .nothing:
-            return "Nothing"
+        case .nothing(let nullability):
+            return nullability == .nullable ? "Nothing?" : "Nothing"
         case .any(let nullability):
             return nullability == .nullable ? "Any?" : "Any"
         case .primitive(let primitive, let nullability):

@@ -31,6 +31,24 @@ struct TypeCheckHelpers {
         }
     }
 
+    /// Returns the element type for iterating over the given type in a for-loop.
+    /// Handles both array types and range/progression types (Int representing IntRange).
+    /// - Parameter isRangeExpr: true when the iterable expression is a range operator
+    ///   (rangeTo, rangeUntil, downTo, step), allowing Int to be treated as iterable.
+    func iterableElementType(
+        for iterableType: TypeID,
+        isRangeExpr: Bool,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID? {
+        // Range/progression types (Int) are iterable over Int elements,
+        // but only when the expression is actually a range operator.
+        if isRangeExpr && iterableType == sema.types.intType {
+            return sema.types.intType
+        }
+        return arrayElementType(for: iterableType, sema: sema, interner: interner)
+    }
+
     func arrayElementType(
         for arrayType: TypeID,
         sema: SemaModule,
@@ -118,6 +136,10 @@ struct TypeCheckHelpers {
             return interner.intern("rangeTo")
         case .rangeUntil:
             return interner.intern("rangeUntil")
+        case .downTo:
+            return interner.intern("downTo")
+        case .step:
+            return interner.intern("step")
         }
     }
 
@@ -132,7 +154,7 @@ struct TypeCheckHelpers {
         case "String":  return types.withNullability(nullability, for: types.stringType)
         case "Any":     return nullability == .nullable ? types.nullableAnyType : types.anyType
         case "Unit":    return types.unitType
-        case "Nothing": return types.nothingType
+        case "Nothing": return nullability == .nullable ? types.nullableNothingType : types.nothingType
         default:        return nil
         }
     }
@@ -373,6 +395,69 @@ struct TypeCheckHelpers {
             }
         }
         return candidates
+    }
+
+    /// When `receiver.InnerClassName(...)` is called, look up the inner class
+    /// nested inside the receiver's nominal type and return its constructor(s).
+    func collectInnerClassConstructorCandidates(
+        named calleeName: InternedString,
+        receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> [SymbolID] {
+        guard let receiverNominal = nominalSymbol(of: receiverType, types: sema.types),
+              let receiverSymbol = sema.symbols.symbol(receiverNominal) else {
+            return []
+        }
+        // Look for a nested class with the given name whose symbol has the innerClass flag.
+        let nestedFQName = receiverSymbol.fqName + [calleeName]
+        for candidate in sema.symbols.lookupAll(fqName: nestedFQName) {
+            guard let sym = sema.symbols.symbol(candidate),
+                  sym.kind == .class,
+                  sym.flags.contains(.innerClass) else {
+                continue
+            }
+            // Found the inner class – collect its constructors.
+            let initName = interner.intern("<init>")
+            let ctorFQName = nestedFQName + [initName]
+            return sema.symbols.lookupAll(fqName: ctorFQName).filter { ctorID in
+                guard let ctorSym = sema.symbols.symbol(ctorID),
+                      ctorSym.kind == .constructor else { return false }
+                return true
+            }
+        }
+        return []
+    }
+
+    /// Look up a member property (or field) named `calleeName` on the receiver's
+    /// nominal type, walking the supertype chain. Returns the symbol and its type
+    /// if found, or `nil` otherwise.
+    func lookupMemberProperty(
+        named calleeName: InternedString,
+        receiverType: TypeID,
+        sema: SemaModule
+    ) -> (symbol: SymbolID, type: TypeID)? {
+        guard let receiverNominal = nominalSymbol(of: receiverType, types: sema.types) else {
+            return nil
+        }
+        var ownerQueue: [SymbolID] = [receiverNominal]
+        var visited: Set<SymbolID> = []
+        while !ownerQueue.isEmpty {
+            let owner = ownerQueue.removeFirst()
+            guard visited.insert(owner).inserted else { continue }
+            guard let ownerSymbol = sema.symbols.symbol(owner) else { continue }
+            let memberFQName = ownerSymbol.fqName + [calleeName]
+            for candidate in sema.symbols.lookupAll(fqName: memberFQName) {
+                guard let sym = sema.symbols.symbol(candidate),
+                      (sym.kind == .property || sym.kind == .field),
+                      let propType = sema.symbols.propertyType(for: candidate) else {
+                    continue
+                }
+                return (candidate, propType)
+            }
+            ownerQueue.append(contentsOf: sema.symbols.directSupertypes(for: owner))
+        }
+        return nil
     }
 
     func enumOwnerSymbol(for entrySymbol: SemanticSymbol, symbols: SymbolTable) -> SymbolID? {

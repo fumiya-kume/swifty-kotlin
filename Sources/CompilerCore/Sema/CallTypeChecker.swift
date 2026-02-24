@@ -22,7 +22,6 @@ final class CallTypeChecker {
         let ast = ctx.ast
         let sema = ctx.sema
         let interner = ctx.interner
-        let scope = ctx.scope
 
         let argTypes = args.map { argument in
             driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
@@ -39,25 +38,25 @@ final class CallTypeChecker {
         var candidates: [SymbolID]
         var callInvisible: [SemanticSymbol] = []
         if let calleeName {
-            let allCallCandidates = scope.lookup(calleeName).filter { candidate in
-                guard let symbol = sema.symbols.symbol(candidate) else { return false }
+            let allCallCandidates = ctx.cachedScopeLookup(calleeName).filter { candidate in
+                guard let symbol = ctx.cachedSymbol(candidate) else { return false }
                 return symbol.kind == .function || symbol.kind == .constructor
             }
             let (vis, invis) = ctx.filterByVisibility(allCallCandidates)
             candidates = vis
             callInvisible = invis
             if candidates.isEmpty, let local = locals[calleeName] {
-                if let sym = sema.symbols.symbol(local.symbol), sym.kind == .function {
+                if let sym = ctx.cachedSymbol(local.symbol), sym.kind == .function {
                     candidates = [local.symbol]
                 }
             }
             if candidates.isEmpty {
-                let classSymbols = scope.lookup(calleeName).filter { candidate in
-                    guard let symbol = sema.symbols.symbol(candidate) else { return false }
+                let classSymbols = ctx.cachedScopeLookup(calleeName).filter { candidate in
+                    guard let symbol = ctx.cachedSymbol(candidate) else { return false }
                     return symbol.kind == .class || symbol.kind == .enumClass || symbol.kind == .annotationClass
                 }
                 if let classSym = classSymbols.first,
-                   let classSymbol = sema.symbols.symbol(classSym) {
+                   let classSymbol = ctx.cachedSymbol(classSym) {
                     let initName = interner.intern("<init>")
                     let ctorFQName = classSymbol.fqName + [initName]
                     let ctorSymbols = sema.symbols.lookupAll(fqName: ctorFQName)
@@ -120,7 +119,7 @@ final class CallTypeChecker {
             }
             sema.bindings.bindIdentifier(calleeID, symbol: local.symbol)
             sema.bindings.bindExprType(calleeID, type: local.type)
-            let localSymbolKind = sema.symbols.symbol(local.symbol)?.kind
+            let localSymbolKind = ctx.cachedSymbol(local.symbol)?.kind
             if localSymbolKind != .function {
                 callableTarget = .localValue(local.symbol)
                 callableCalleeType = local.type
@@ -265,7 +264,6 @@ final class CallTypeChecker {
         let ast = ctx.ast
         let sema = ctx.sema
         let interner = ctx.interner
-        let scope = ctx.scope
 
         let receiverType = driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
         let argTypes = args.map { driver.inferExpr($0.expr, ctx: ctx, locals: &locals) }
@@ -300,20 +298,50 @@ final class CallTypeChecker {
         if !memberCandidates.isEmpty {
             allCandidates = memberCandidates
         } else {
-            allCandidates = scope.lookup(calleeName).filter { candidate in
-                guard let symbol = sema.symbols.symbol(candidate),
-                      symbol.kind == .function,
-                      let signature = sema.symbols.functionSignature(for: candidate) else { return false }
-                guard signature.receiverType != nil else { return false }
-                if isSuperCall, !supertypeSymbols.isEmpty {
-                    return sema.symbols.parentSymbol(for: candidate).map { supertypeSymbols.contains($0) } ?? false
+            // Try inner class constructor resolution: outer.Inner() → Inner's <init>
+            let innerCtorCandidates = driver.helpers.collectInnerClassConstructorCandidates(
+                named: calleeName,
+                receiverType: memberLookupType,
+                sema: sema,
+                interner: interner
+            )
+            if !innerCtorCandidates.isEmpty {
+                allCandidates = innerCtorCandidates
+            } else {
+                allCandidates = ctx.cachedScopeLookup(calleeName).filter { candidate in
+                    guard let symbol = ctx.cachedSymbol(candidate),
+                          symbol.kind == .function,
+                          let signature = sema.symbols.functionSignature(for: candidate) else { return false }
+                    guard signature.receiverType != nil else { return false }
+                    if isSuperCall, !supertypeSymbols.isEmpty {
+                        return sema.symbols.parentSymbol(for: candidate).map { supertypeSymbols.contains($0) } ?? false
+                    }
+                    return true
                 }
-                return true
             }
         }
         let (visible, invisible) = ctx.filterByVisibility(allCandidates)
         let candidates = visible
         if candidates.isEmpty {
+            // For zero-arg member calls, try member property/field lookup.
+            // This handles `receiver.property` syntax (e.g. `this@Outer.x`).
+            if args.isEmpty,
+               let propResult = driver.helpers.lookupMemberProperty(
+                   named: calleeName,
+                   receiverType: memberLookupType,
+                   sema: sema
+               ) {
+                // Check visibility before returning the property.
+                if let propSymbol = sema.symbols.symbol(propResult.symbol),
+                   !ctx.visibilityChecker.isAccessible(propSymbol, fromFile: ctx.currentFileID, enclosingClass: ctx.enclosingClassSymbol) {
+                    driver.helpers.emitVisibilityError(for: propSymbol, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
+                sema.bindings.bindIdentifier(id, symbol: propResult.symbol)
+                let finalType = safeCall ? sema.types.makeNullable(propResult.type) : propResult.type
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            }
             if lookupReceiverType == sema.types.errorType {
                 return driver.helpers.bindAndReturnErrorType(id, sema: sema)
             }

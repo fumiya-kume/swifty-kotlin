@@ -5,11 +5,11 @@ symbol s3 kind=valueParameter fq=nullGuard.$1.y vis=private flags=_
 file f0 package=_
   decl d0 fun nullGuard suspend=0 inline=0 sym=s1
 expr e0 name(x) type=Int? ref=s2
-expr e1 name(null) type=Any?
+expr e1 name(null) type=Nothing?
 expr e2 binary(notEqual) lhs=e0 rhs=e1 type=Boolean
 expr e3 name(x) type=Int ref=s2
 expr e4 name(y) type=Int? ref=s3
-expr e5 name(null) type=Any?
+expr e5 name(null) type=Nothing?
 expr e6 binary(notEqual) lhs=e4 rhs=e5 type=Boolean
 expr e7 name(y) type=Int ref=s3
 expr e8 int(0) type=Int

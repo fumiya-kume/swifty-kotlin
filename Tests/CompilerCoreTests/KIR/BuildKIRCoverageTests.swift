@@ -758,9 +758,9 @@ final class BuildKIRCoverageTests: XCTestCase {
             XCTAssertGreaterThanOrEqual(jumpCount, 4)
 
             let callees = extractCallees(from: body, interner: ctx.interner)
-            XCTAssertTrue(callees.contains("iterator"))
-            XCTAssertTrue(callees.contains("hasNext"))
-            XCTAssertTrue(callees.contains("next"))
+            XCTAssertTrue(callees.contains("kk_range_iterator"))
+            XCTAssertTrue(callees.contains("kk_range_hasNext"))
+            XCTAssertTrue(callees.contains("kk_range_next"))
         }
     }
 
