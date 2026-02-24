@@ -23,10 +23,10 @@ final class StdlibDelegateLoweringPass: LoweringPass {
         let propertyAccessName = interner.intern("kk_property_access")
         let lazyCreateName = interner.intern("kk_lazy_create")
         let lazyGetValueName = interner.intern("kk_lazy_get_value")
-        _ = interner.intern("kk_observable_create")
+        let observableCreateName = interner.intern("kk_observable_create")
         let observableGetValueName = interner.intern("kk_observable_get_value")
         let observableSetValueName = interner.intern("kk_observable_set_value")
-        _ = interner.intern("kk_vetoable_create")
+        let vetoableCreateName = interner.intern("kk_vetoable_create")
         let vetoableGetValueName = interner.intern("kk_vetoable_get_value")
         let vetoableSetValueName = interner.intern("kk_vetoable_set_value")
 
@@ -304,10 +304,47 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                                     continue
                                 }
                             case .observable:
-                                // observable/vetoable creation calls pass through.
-                                break
+                                if let callResult {
+                                    finalBody.append(instruction)
+                                    let createResult = module.arena.appendExpr(
+                                        .temporary(Int32(module.arena.expressions.count)),
+                                        type: nil
+                                    )
+                                    finalBody.append(
+                                        .call(
+                                            symbol: nil,
+                                            callee: observableCreateName,
+                                            arguments: [callResult],
+                                            result: createResult,
+                                            canThrow: false,
+                                            thrownResult: nil
+                                        )
+                                    )
+                                    finalBody.append(.copy(from: createResult, to: to))
+                                    skipNext = true
+                                    continue
+                                }
                             case .vetoable:
-                                break
+                                if let callResult {
+                                    finalBody.append(instruction)
+                                    let createResult = module.arena.appendExpr(
+                                        .temporary(Int32(module.arena.expressions.count)),
+                                        type: nil
+                                    )
+                                    finalBody.append(
+                                        .call(
+                                            symbol: nil,
+                                            callee: vetoableCreateName,
+                                            arguments: [callResult],
+                                            result: createResult,
+                                            canThrow: false,
+                                            thrownResult: nil
+                                        )
+                                    )
+                                    finalBody.append(.copy(from: createResult, to: to))
+                                    skipNext = true
+                                    continue
+                                }
                             }
                         }
                     }
