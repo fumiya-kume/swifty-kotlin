@@ -533,8 +533,8 @@ final class ExprTypeChecker {
         let interner = ctx.interner
 
         if interner.resolve(name) == "null" {
-            sema.bindings.bindExprType(id, type: sema.types.nullableAnyType)
-            return sema.types.nullableAnyType
+            sema.bindings.bindExprType(id, type: sema.types.nullableNothingType)
+            return sema.types.nullableNothingType
         }
         if interner.resolve(name) == "this",
            let receiverType = ctx.implicitReceiverType {
