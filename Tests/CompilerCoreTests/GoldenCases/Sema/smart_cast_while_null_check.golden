@@ -7,7 +7,7 @@ file f0 package=_
 expr e0 int(0) type=Int
 expr e1 localDecl y mutable=0 type=t2 init=e0 type=Unit ref=s3
 expr e2 name(x) type=Int? ref=s2
-expr e3 name(null) type=Any?
+expr e3 name(null) type=Nothing?
 expr e4 binary(notEqual) lhs=e2 rhs=e3 type=Boolean
 expr e5 name(x) type=Int ref=s2
 expr e6 return value=e5 type=Int

@@ -7,8 +7,31 @@ extension TypeSystem {
         let lhs = kind(of: subtype)
         let rhs = kind(of: supertype)
 
-        if case .nothing = lhs {
+        if case .nothing(.nonNull) = lhs {
             return true
+        }
+        if case .nothing(.nullable) = lhs {
+            // Nothing? is subtype of all nullable types, Any?, and Nothing? itself
+            switch rhs {
+            case .error:
+                return true
+            case .any(.nullable):
+                return true
+            case .nothing(.nullable):
+                return true
+            case .primitive(_, .nullable):
+                return true
+            case .classType(let ct) where ct.nullability == .nullable:
+                return true
+            case .typeParam(let tp) where tp.nullability == .nullable:
+                return true
+            case .functionType(let ft) where ft.nullability == .nullable:
+                return true
+            case .intersection(let parts):
+                return parts.allSatisfy { isSubtype(subtype, $0) }
+            default:
+                return false
+            }
         }
         if case .error = lhs {
             return true
@@ -21,7 +44,7 @@ extension TypeSystem {
         }
         if case .any(.nonNull) = rhs {
             switch lhs {
-            case .any(.nonNull), .unit, .nothing:
+            case .any(.nonNull), .unit, .nothing(.nonNull):
                 return true
             case .primitive(_, let nullability):
                 return nullability == .nonNull
@@ -121,18 +144,36 @@ extension TypeSystem {
     }
 
     public func lub(_ types: [TypeID]) -> TypeID {
-        let filtered = types.filter { kind(of: $0) != .error && kind(of: $0) != .nothing }
+        let hasNullableNothing = types.contains { kind(of: $0) == .nothing(.nullable) }
+        let filtered = types.filter { kind(of: $0) != .error && kind(of: $0) != .nothing(.nonNull) && kind(of: $0) != .nothing(.nullable) }
         guard let first = filtered.first else {
-            let hasNothing = types.contains { kind(of: $0) == .nothing }
+            let hasNothing = types.contains { kind(of: $0) == .nothing(.nonNull) || kind(of: $0) == .nothing(.nullable) }
+            if hasNullableNothing { return nullableNothingType }
             return hasNothing ? nothingType : errorType
         }
+        let result: TypeID
         if filtered.dropFirst().allSatisfy({ $0 == first }) {
-            return first
+            result = first
+        } else if filtered.allSatisfy({ isSubtype($0, nullableAnyType) }) {
+            result = nullableAnyType
+        } else {
+            result = anyType
         }
-        if filtered.allSatisfy({ isSubtype($0, nullableAnyType) }) {
-            return nullableAnyType
+        // If any input was Nothing? (null literal), the result must be nullable
+        if hasNullableNothing {
+            let nullable = makeNullable(result)
+            // makeNullable returns the same ID for two reasons:
+            // (a) the type is already nullable (e.g. Int?) — keep it as-is
+            // (b) makeNullable is a genuine no-op (e.g. Unit) — fall back to Any?
+            if nullable == result {
+                if isSubtype(nullableNothingType, result) {
+                    return result  // already nullable, Nothing? <: result
+                }
+                return nullableAnyType
+            }
+            return nullable
         }
-        return anyType
+        return result
     }
 
     public func glb(_ types: [TypeID]) -> TypeID {
@@ -142,7 +183,13 @@ extension TypeSystem {
         if types.dropFirst().allSatisfy({ $0 == first }) {
             return first
         }
-        if types.contains(where: { kind(of: $0) == .nothing }) {
+        let hasNullableNothing = types.contains { kind(of: $0) == .nothing(.nullable) }
+        if types.contains(where: { if case .nothing = kind(of: $0) { return true }; return false }) {
+            // Only return Nothing? if it is a valid lower bound (subtype of all inputs).
+            // glb([Nothing?, Int]) → Nothing (non-null), since Nothing? is NOT <: Int.
+            if hasNullableNothing && types.allSatisfy({ isSubtype(nullableNothingType, $0) }) {
+                return nullableNothingType
+            }
             return nothingType
         }
         return make(.intersection(types))

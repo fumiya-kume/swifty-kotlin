@@ -389,7 +389,66 @@ extension NativeEmitter {
                 storeResult(result, resolveValue(operand))
 
             case .nullAssert(let operand, let result):
-                storeResult(result, resolveValue(operand))
+                let operandValue = resolveValue(operand)
+                if let notNullFunc = declareExternalFunction(
+                    named: "kk_op_notnull",
+                    argumentCount: 1,
+                    appendThrownChannel: true
+                ) {
+                    let thrownSlot = bindings.buildAlloca(
+                        builder,
+                        type: int64Type,
+                        name: "notnull_thrown_\(instructionIndex)"
+                    )
+                    if let thrownSlot {
+                        _ = bindings.buildStore(builder, value: zeroValue, pointer: thrownSlot)
+                        let callValue = bindings.buildCall(
+                            builder,
+                            functionType: notNullFunc.type,
+                            callee: notNullFunc.value,
+                            arguments: [operandValue, thrownSlot],
+                            name: "notnull_\(instructionIndex)"
+                        )
+                        storeResult(result, callValue)
+                        if let thrownValue = bindings.buildLoad(
+                            builder,
+                            type: int64Type,
+                            pointer: thrownSlot,
+                            name: "notnull_thrown_val_\(instructionIndex)"
+                        ),
+                        let hasThrown = buildBoolCondition(
+                            from: thrownValue,
+                            name: "notnull_has_thrown_\(instructionIndex)"
+                        ),
+                        let thrownBlock = bindings.appendBasicBlock(
+                            context: context,
+                            function: llvmFunction.value,
+                            name: "notnull_thrown_\(instructionIndex)"
+                        ),
+                        let continueBlock = bindings.appendBasicBlock(
+                            context: context,
+                            function: llvmFunction.value,
+                            name: "notnull_cont_\(instructionIndex)"
+                        ) {
+                            _ = bindings.buildCondBr(
+                                builder,
+                                condition: hasThrown,
+                                thenBlock: thrownBlock,
+                                elseBlock: continueBlock
+                            )
+                            bindings.positionBuilder(builder, at: thrownBlock)
+                            storeOutThrownIfNonNull(thrownValue, suffix: "notnull_throw_\(instructionIndex)")
+                            emitFramePop("notnull_throw_\(instructionIndex)")
+                            _ = bindings.buildRet(builder, value: zeroValue)
+                            currentBlock = continueBlock
+                            bindings.positionBuilder(builder, at: continueBlock)
+                        }
+                    } else {
+                        storeResult(result, operandValue)
+                    }
+                } else {
+                    storeResult(result, operandValue)
+                }
 
             case .call(let symbol, let callee, let arguments, let result, let usesThrownChannel, let thrownResult, let isSuperCall):
                 // super calls always use direct dispatch – when virtual dispatch

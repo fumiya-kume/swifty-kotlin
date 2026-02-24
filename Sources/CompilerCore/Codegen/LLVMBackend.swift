@@ -419,7 +419,9 @@ public final class LLVMBackend {
             "kk_int_to_float_bits",
             "kk_int_to_double_bits",
             "kk_float_to_double_bits",
-            "delay"
+            "delay",
+            "kk_op_notnull",
+            "kk_op_elvis"
         ]
 
         for decl in module.arena.declarations {
