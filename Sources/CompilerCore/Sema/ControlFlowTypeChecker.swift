@@ -388,11 +388,24 @@ final class ControlFlowTypeChecker {
             )
             let isExhaustive = ctx.dataFlow.isWhenExhaustive(subjectType: subjectType, branches: summary, sema: sema)
             if !isExhaustive {
-                ctx.semaCtx.diagnostics.error(
-                    "KSWIFTK-SEMA-0004",
-                    "Non-exhaustive when expression.",
-                    range: range
-                )
+                // P5-78: enhanced diagnostic for sealed types listing missing branches
+                if let missingBranches = ctx.dataFlow.missingSealedBranches(
+                    subjectType: subjectType, branches: summary, sema: sema
+                ) {
+                    let missingNames = missingBranches.map { interner.resolve($0) }.sorted()
+                    let missingList = missingNames.joined(separator: ", ")
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0071",
+                        "Non-exhaustive when expression on sealed type. Missing branches: \(missingList).",
+                        range: range
+                    )
+                } else {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0004",
+                        "Non-exhaustive when expression.",
+                        range: range
+                    )
+                }
             }
 
             // Propagate definite initialization across exhaustive when branches.

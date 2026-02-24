@@ -212,6 +212,24 @@ extension DataFlowSemaPassPhase {
                 metadataPath: binding.metadataPath
             )
         }
+
+        // P5-78: resolve sealed subclass FQ names to SymbolIDs for cross-module exhaustiveness
+        for binding in importedBindings where binding.record.isSealedClass && !binding.record.sealedSubclassFQNames.isEmpty {
+            let resolvedSubclasses: [SymbolID] = binding.record.sealedSubclassFQNames.compactMap { subFQName in
+                symbols.lookupAll(fqName: subFQName)
+                    .compactMap({ symbols.symbol($0) })
+                    .first(where: { isNominalLayoutTargetSymbol($0.kind) })?.id
+            }
+            // Only record concrete sealed subclasses when all declared subclass FQ names could be resolved.
+            // If any subclass fails to resolve, mark the sealed type as having unknown/incomplete subclasses
+            // by recording an empty sealed-subclass list as a sentinel, preventing the directSubtypes fallback
+            // from incorrectly treating an incomplete set as exhaustive.
+            if resolvedSubclasses.count == binding.record.sealedSubclassFQNames.count {
+                symbols.setSealedSubclasses(resolvedSubclasses, for: binding.symbol)
+            } else {
+                symbols.setSealedSubclasses([], for: binding.symbol)
+            }
+        }
     }
 
     struct ImportedFieldOffsetEntry {
@@ -251,6 +269,7 @@ extension DataFlowSemaPassPhase {
         let isDataClass: Bool
         let isSealedClass: Bool
         let annotations: [MetadataAnnotationRecord]
+        let sealedSubclassFQNames: [[InternedString]]
     }
 
     struct ImportedLibraryBinding {
