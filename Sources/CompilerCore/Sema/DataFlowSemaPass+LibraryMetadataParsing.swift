@@ -91,6 +91,8 @@ extension DataFlowSemaPassPhase {
                 itableSlots: itableSlots,
                 isDataClass: metadataRecord.isDataClass,
                 isSealedClass: metadataRecord.isSealedClass,
+                isValueClass: metadataRecord.isValueClass,
+                valueClassUnderlyingTypeSig: metadataRecord.valueClassUnderlyingTypeSig,
                 annotations: metadataRecord.annotations,
                 sealedSubclassFQNames: sealedSubclassFQNames
             ))
@@ -211,6 +213,34 @@ extension DataFlowSemaPassPhase {
                 range: nil
             )
             return decoded
+        }
+        return decoded
+    }
+
+    func importedValueClassUnderlyingType(
+        signature: String,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner,
+        metadataPath: String,
+        ownerFQName: [InternedString]
+    ) -> TypeID? {
+        guard let decoded = decodeImportedTypeSignature(
+            token: signature,
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            diagnostics: diagnostics,
+            metadataPath: metadataPath,
+            ownerFQName: ownerFQName
+        ) else {
+            diagnostics.warning(
+                "KSWIFTK-LIB-0003",
+                "Invalid value class underlying type in metadata at \(metadataPath): \(renderFQName(ownerFQName, interner: interner))",
+                range: nil
+            )
+            return nil
         }
         return decoded
     }

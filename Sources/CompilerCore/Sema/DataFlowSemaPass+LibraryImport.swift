@@ -69,6 +69,9 @@ extension DataFlowSemaPassPhase {
                 if record.isSealedClass {
                     flags.insert(.sealedType)
                 }
+                if record.isValueClass {
+                    flags.insert(.valueType)
+                }
                 let symbol = symbols.define(
                     kind: record.kind,
                     name: name,
@@ -137,7 +140,33 @@ extension DataFlowSemaPassPhase {
                     cache: cache
                 )
                 symbols.setPropertyType(propertyType, for: symbol)
-            } else if record.kind == .typeAlias {
+            }
+
+            // P5-75: restore value class underlying type from metadata
+            if record.isValueClass {
+                if let vSig = record.valueClassUnderlyingTypeSig {
+                    let underlyingType = importedValueClassUnderlyingType(
+                        signature: vSig,
+                        symbols: symbols,
+                        types: types,
+                        diagnostics: diagnostics,
+                        interner: interner,
+                        metadataPath: binding.metadataPath,
+                        ownerFQName: record.fqName
+                    )
+                    if let underlyingType {
+                        symbols.setValueClassUnderlyingType(underlyingType, for: symbol)
+                    }
+                } else {
+                    diagnostics.warning(
+                        "KSWIFTK-LIB-0007",
+                        "Value class '\(renderFQName(record.fqName, interner: interner))' has no underlying type signature in library metadata at '\(binding.metadataPath)'. Boxing elision will be skipped for this type.",
+                        range: nil
+                    )
+                }
+            }
+
+            if record.kind == .typeAlias {
                 let underlyingType = importedTypeAliasUnderlyingType(
                     record: record,
                     symbols: symbols,
@@ -285,6 +314,8 @@ extension DataFlowSemaPassPhase {
         let itableSlots: [ImportedITableSlotEntry]
         let isDataClass: Bool
         let isSealedClass: Bool
+        let isValueClass: Bool
+        let valueClassUnderlyingTypeSig: String?
         let annotations: [MetadataAnnotationRecord]
         let sealedSubclassFQNames: [[InternedString]]
     }

@@ -42,7 +42,8 @@ public struct SymbolFlags: OptionSet {
     public static let sealedType = SymbolFlags(rawValue: 1 << 5)
     public static let dataType = SymbolFlags(rawValue: 1 << 6)
     public static let reifiedTypeParameter = SymbolFlags(rawValue: 1 << 7)
-    public static let operatorFunction = SymbolFlags(rawValue: 1 << 8)
+    public static let valueType = SymbolFlags(rawValue: 1 << 8)
+    public static let operatorFunction = SymbolFlags(rawValue: 1 << 9)
 }
 
 public struct SemanticSymbol {
@@ -237,6 +238,7 @@ public final class SymbolTable {
     private var typeParameterUpperBoundsMap: [SymbolID: TypeID] = [:]
     private var sourceFileIDs: [SymbolID: FileID] = [:]
     private var annotationsStorage: [SymbolID: [MetadataAnnotationRecord]] = [:]
+    private var valueClassUnderlyingTypes: [SymbolID: TypeID] = [:]
     private var sealedSubclassesStorage: [SymbolID: [SymbolID]] = [:]
 
     public init() {}
@@ -471,6 +473,14 @@ public final class SymbolTable {
 
     public func annotations(for symbol: SymbolID) -> [MetadataAnnotationRecord] {
         annotationsStorage[symbol] ?? []
+    }
+
+    public func setValueClassUnderlyingType(_ type: TypeID, for symbol: SymbolID) {
+        valueClassUnderlyingTypes[symbol] = type
+    }
+
+    public func valueClassUnderlyingType(for symbol: SymbolID) -> TypeID? {
+        valueClassUnderlyingTypes[symbol]
     }
 
     public func setSealedSubclasses(_ subclasses: [SymbolID], for symbol: SymbolID) {
