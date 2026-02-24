@@ -100,13 +100,13 @@ jobs:
               body = '## :warning: Coverage Check Failed\n\nCoverage report was not generated. Check the CI logs for details.';
             }
 
-            const { data: comments } = await github.rest.issues.listComments({
+            const comments = await github.paginate(github.rest.issues.listComments, {
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
             const marker = '## :warning: Coverage Check Failed';
-            const existing = comments.find(c => c.body.includes(marker));
+            const existing = comments.find(c => c.body?.includes(marker));
 
             if (existing) {
               await github.rest.issues.updateComment({
