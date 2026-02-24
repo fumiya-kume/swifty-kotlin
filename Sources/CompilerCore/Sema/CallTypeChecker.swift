@@ -330,6 +330,12 @@ final class CallTypeChecker {
                     })
                     if let propSymbol = propertyCandidate,
                        let propType = sema.symbols.propertyType(for: propSymbol) {
+                        // Check visibility before returning the property.
+                        if let propSym = sema.symbols.symbol(propSymbol),
+                           !ctx.visibilityChecker.isAccessible(propSym, fromFile: ctx.currentFileID, enclosingClass: ctx.enclosingClassSymbol) {
+                            driver.helpers.emitVisibilityError(for: propSym, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
+                            return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                        }
                         // Re-bind receiver to companion type for correct KIR lowering
                         let compType = sema.types.make(.classType(ClassType(classSymbol: companionSymbol, args: [], nullability: .nonNull)))
                         sema.bindings.bindExprType(receiverID, type: compType)
