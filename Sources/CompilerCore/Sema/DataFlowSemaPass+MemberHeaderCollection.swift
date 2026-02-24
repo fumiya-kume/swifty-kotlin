@@ -160,7 +160,7 @@ extension DataFlowSemaPassPhase {
                         range: propertyDecl.range
                     )
                 }
-                if let typeRefID = propertyDecl.type {
+                if propertyDecl.type != nil {
                     let isConstCompatible: Bool
                     switch types.kind(of: resolvedType) {
                     case .primitive:
@@ -176,10 +176,20 @@ extension DataFlowSemaPassPhase {
                         )
                     }
                 }
+                // Record the compile-time constant value from the initializer.
+                // When no explicit type annotation is present, also validate that
+                // the initializer is a compile-time constant literal; if not,
+                // reject the declaration since const val requires a constant.
                 if let initExpr = propertyDecl.initializer {
                     let constCollector = ConstantCollector()
                     if let constKind = constCollector.literalConstantExpr(initExpr, ast: ast) {
                         symbols.setConstValueExprKind(constKind, for: memberSymbol)
+                    } else if propertyDecl.type == nil {
+                        diagnostics.error(
+                            "KSWIFTK-SEMA-0082",
+                            "'const val' type must be a primitive type or String.",
+                            range: propertyDecl.range
+                        )
                     }
                 }
             }
