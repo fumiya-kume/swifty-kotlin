@@ -18,6 +18,7 @@ final class ControlFlowLowerer {
         _ exprID: ExprID,
         iterableExpr: ExprID,
         bodyExpr: ExprID,
+        label: InternedString? = nil,
         ast: ASTModule,
         sema: SemaModule,
         arena: KIRArena,
@@ -77,7 +78,7 @@ final class ControlFlowLowerer {
             driver.ctx.localValuesBySymbol[loopVariableSymbol] = nextValueID
         }
 
-        driver.ctx.loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel))
+        driver.ctx.loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel, name: label))
         _ = driver.lowerExpr(
             bodyExpr,
             ast: ast,
@@ -108,6 +109,7 @@ final class ControlFlowLowerer {
         _ exprID: ExprID,
         conditionExpr: ExprID,
         bodyExpr: ExprID,
+        label: InternedString? = nil,
         ast: ASTModule,
         sema: SemaModule,
         arena: KIRArena,
@@ -133,7 +135,7 @@ final class ControlFlowLowerer {
         instructions.append(.constValue(result: falseID, value: .boolLiteral(false)))
         instructions.append(.jumpIfEqual(lhs: conditionID, rhs: falseID, target: breakLabel))
 
-        driver.ctx.loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel))
+        driver.ctx.loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel, name: label))
         _ = driver.lowerExpr(
             bodyExpr,
             ast: ast,
@@ -156,6 +158,7 @@ final class ControlFlowLowerer {
         _ exprID: ExprID,
         bodyExpr: ExprID,
         conditionExpr: ExprID,
+        label: InternedString? = nil,
         ast: ASTModule,
         sema: SemaModule,
         arena: KIRArena,
@@ -169,7 +172,7 @@ final class ControlFlowLowerer {
         let breakLabel = driver.ctx.makeLoopLabel()
         instructions.append(.label(bodyLabel))
 
-        driver.ctx.loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel))
+        driver.ctx.loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel, name: label))
         _ = driver.lowerExpr(
             bodyExpr,
             ast: ast,

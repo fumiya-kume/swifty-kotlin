@@ -74,16 +74,16 @@ final class ExprTypeChecker {
         case .nameRef(let name, let nameRange):
             return inferNameRefExpr(id, name: name, nameRange: nameRange, ctx: ctx, locals: &locals)
 
-        case .forExpr(let loopVariable, let iterableExpr, let bodyExpr, let range):
+        case .forExpr(let loopVariable, let iterableExpr, let bodyExpr, _, let range):
             return driver.controlFlowChecker.inferForExpr(id, loopVariable: loopVariable, iterableExpr: iterableExpr, bodyExpr: bodyExpr, range: range, ctx: ctx, locals: &locals)
 
-        case .whileExpr(let conditionExpr, let bodyExpr, let range):
+        case .whileExpr(let conditionExpr, let bodyExpr, _, let range):
             return driver.controlFlowChecker.inferWhileExpr(id, conditionExpr: conditionExpr, bodyExpr: bodyExpr, range: range, ctx: ctx, locals: &locals)
 
-        case .doWhileExpr(let bodyExpr, let conditionExpr, let range):
+        case .doWhileExpr(let bodyExpr, let conditionExpr, _, let range):
             return driver.controlFlowChecker.inferDoWhileExpr(id, bodyExpr: bodyExpr, conditionExpr: conditionExpr, range: range, ctx: ctx, locals: &locals)
 
-        case .breakExpr(let range):
+        case .breakExpr(let label, let range):
             if ctx.loopDepth == 0 {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0018",
@@ -94,7 +94,7 @@ final class ExprTypeChecker {
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
 
-        case .continueExpr(let range):
+        case .continueExpr(let label, let range):
             if ctx.loopDepth == 0 {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0019",
@@ -117,7 +117,7 @@ final class ExprTypeChecker {
         case .indexedAssign(let receiverExpr, let indices, let valueExpr, let range):
             return driver.localDeclChecker.inferIndexedAssignExpr(id, receiverExpr: receiverExpr, indices: indices, valueExpr: valueExpr, range: range, ctx: ctx, locals: &locals)
 
-        case .returnExpr(let value, _):
+        case .returnExpr(let value, _, _):
             let resolved: TypeID
             if let value {
                 resolved = driver.inferExpr(value, ctx: ctx, locals: &locals, expectedType: expectedType)
@@ -220,7 +220,7 @@ final class ExprTypeChecker {
             sema.bindings.bindExprType(id, type: sema.types.nothingType)
             return sema.types.nothingType
 
-        case .lambdaLiteral(let params, let body, _):
+        case .lambdaLiteral(let params, let body, _, _):
             return inferLambdaLiteralExpr(id, params: params, body: body, ctx: ctx, locals: &locals, expectedType: expectedType)
 
         case .objectLiteral(let superTypes, _):

@@ -1,7 +1,7 @@
 import Foundation
 
 extension BuildASTPhase.ExpressionParser {
-    internal func parseLambdaLiteral() -> ExprID? {
+    internal func parseLambdaLiteral(label: InternedString? = nil, start: SourceLocation? = nil) -> ExprID? {
         guard matches(.symbol(.lBrace)) else {
             return nil
         }
@@ -56,8 +56,8 @@ extension BuildASTPhase.ExpressionParser {
             bodyExpr = astArena.appendExpr(.blockExpr(statements: [], trailingExpr: nil, range: bodyRange))
         }
 
-        let range = SourceRange(start: openBrace.range.start, end: end)
-        return astArena.appendExpr(.lambdaLiteral(params: params, body: bodyExpr, range: range))
+        let range = SourceRange(start: start ?? openBrace.range.start, end: end)
+        return astArena.appendExpr(.lambdaLiteral(params: params, body: bodyExpr, label: label, range: range))
     }
 
     internal func parseObjectLiteral() -> ExprID? {

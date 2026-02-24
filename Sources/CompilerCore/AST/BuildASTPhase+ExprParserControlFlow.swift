@@ -60,10 +60,24 @@ extension BuildASTPhase.ExpressionParser {
         guard let returnToken = consume() else {
             return nil
         }
+
+        var label: InternedString?
+        var end = returnToken.range.end
+        if let atToken = current(), atToken.kind == .symbol(.at),
+           let labelToken = peek(1),
+           let labelName = identifierFromToken(labelToken) {
+            _ = consume()
+            _ = consume()
+            label = labelName
+            end = labelToken.range.end
+        }
+
         let value = parseExpression(minPrecedence: 0)
-        let end = value.flatMap { astArena.exprRange($0)?.end } ?? returnToken.range.end
+        if let value, let valueEnd = astArena.exprRange(value)?.end {
+            end = valueEnd
+        }
         let range = SourceRange(start: returnToken.range.start, end: end)
-        return astArena.appendExpr(.returnExpr(value: value, range: range))
+        return astArena.appendExpr(.returnExpr(value: value, label: label, range: range))
     }
 
     internal func parseThrowExpression() -> ExprID? {
@@ -78,7 +92,7 @@ extension BuildASTPhase.ExpressionParser {
         return astArena.appendExpr(.throwExpr(value: value, range: range))
     }
 
-    internal func parseForExpression() -> ExprID? {
+    internal func parseForExpression(label: InternedString? = nil, start: SourceLocation? = nil) -> ExprID? {
         guard let forToken = consume() else {
             return nil
         }
@@ -110,11 +124,11 @@ extension BuildASTPhase.ExpressionParser {
             return nil
         }
         let end = astArena.exprRange(body)?.end ?? forToken.range.end
-        let range = SourceRange(start: forToken.range.start, end: end)
-        return astArena.appendExpr(.forExpr(loopVariable: loopVariable, iterable: iterable, body: body, range: range))
+        let range = SourceRange(start: start ?? forToken.range.start, end: end)
+        return astArena.appendExpr(.forExpr(loopVariable: loopVariable, iterable: iterable, body: body, label: label, range: range))
     }
 
-    internal func parseWhileExpression() -> ExprID? {
+    internal func parseWhileExpression(label: InternedString? = nil, start: SourceLocation? = nil) -> ExprID? {
         guard let whileToken = consume() else {
             return nil
         }
@@ -129,11 +143,11 @@ extension BuildASTPhase.ExpressionParser {
             return nil
         }
         let end = astArena.exprRange(body)?.end ?? whileToken.range.end
-        let range = SourceRange(start: whileToken.range.start, end: end)
-        return astArena.appendExpr(.whileExpr(condition: condition, body: body, range: range))
+        let range = SourceRange(start: start ?? whileToken.range.start, end: end)
+        return astArena.appendExpr(.whileExpr(condition: condition, body: body, label: label, range: range))
     }
 
-    internal func parseDoWhileExpression() -> ExprID? {
+    internal func parseDoWhileExpression(label: InternedString? = nil, start: SourceLocation? = nil) -> ExprID? {
         guard let doToken = consume() else {
             return nil
         }
@@ -148,8 +162,8 @@ extension BuildASTPhase.ExpressionParser {
         }
         _ = consumeIf(.symbol(.rParen))
         let end = astArena.exprRange(condition)?.end ?? astArena.exprRange(body)?.end ?? doToken.range.end
-        let range = SourceRange(start: doToken.range.start, end: end)
-        return astArena.appendExpr(.doWhileExpr(body: body, condition: condition, range: range))
+        let range = SourceRange(start: start ?? doToken.range.start, end: end)
+        return astArena.appendExpr(.doWhileExpr(body: body, condition: condition, label: label, range: range))
     }
 
     internal func parseIfExpression() -> ExprID? {

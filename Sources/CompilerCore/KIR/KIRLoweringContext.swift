@@ -12,7 +12,7 @@ final class KIRLoweringContext {
     var localValuesBySymbol: [SymbolID: KIRExprID] = [:]
     var currentImplicitReceiverExprID: KIRExprID?
     var currentImplicitReceiverSymbol: SymbolID?
-    var loopControlStack: [(continueLabel: Int32, breakLabel: Int32)] = []
+    var loopControlStack: [(continueLabel: Int32, breakLabel: Int32, name: InternedString?)] = []
     var nextLoopLabel: Int32 = 10_000
 
     // MARK: - Module-Level State (accumulated across entire pass)
@@ -31,7 +31,7 @@ final class KIRLoweringContext {
         let localValuesBySymbol: [SymbolID: KIRExprID]
         let currentImplicitReceiverExprID: KIRExprID?
         let currentImplicitReceiverSymbol: SymbolID?
-        let loopControlStack: [(continueLabel: Int32, breakLabel: Int32)]
+        let loopControlStack: [(continueLabel: Int32, breakLabel: Int32, name: InternedString?)]
         let nextLoopLabel: Int32
     }
 
