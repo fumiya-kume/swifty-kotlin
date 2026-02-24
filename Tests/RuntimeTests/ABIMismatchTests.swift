@@ -80,8 +80,8 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testStringFunctionCount() {
-        // kk_string_from_utf8, kk_string_concat
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 2)
+        // kk_string_from_utf8, kk_string_concat, kk_string_compareTo
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 3)
     }
 
     func testPrintlnFunctionCount() {
@@ -121,6 +121,7 @@ final class ABIMismatchTests: XCTestCase {
             + RuntimeABISpec.coroutineFunctions.count
             + RuntimeABISpec.boxingFunctions.count
             + RuntimeABISpec.arrayFunctions.count
+            + RuntimeABISpec.rangeFunctions.count
         XCTAssertEqual(RuntimeABISpec.allFunctions.count, expected)
     }
 

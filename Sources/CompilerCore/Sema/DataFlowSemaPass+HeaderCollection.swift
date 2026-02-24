@@ -20,12 +20,16 @@ extension DataFlowSemaPassPhase {
         let declaration: (kind: SymbolKind, name: InternedString, range: SourceRange?, visibility: Visibility, flags: SymbolFlags)?
         switch decl {
         case .classDecl(let classDecl):
+            var classFlags = flags(from: classDecl.modifiers)
+            if classDecl.modifiers.contains(.value) {
+                classFlags.insert(.valueType)
+            }
             declaration = (
                 kind: classSymbolKind(for: classDecl),
                 name: classDecl.name,
                 range: classDecl.range,
                 visibility: visibility(from: classDecl.modifiers),
-                flags: flags(from: classDecl.modifiers)
+                flags: classFlags
             )
         case .interfaceDecl(let interfaceDecl):
             declaration = (
@@ -204,6 +208,37 @@ extension DataFlowSemaPassPhase {
                     for: secCtorSymbol
                 )
 
+            }
+
+            // Value class validation: must have exactly one primary constructor parameter
+            if classDecl.modifiers.contains(.value) {
+                let valParams = classDecl.primaryConstructorParams
+                if valParams.count != 1 {
+                    diagnostics.error(
+                        "KSWIFTK-SEMA-0070",
+                        "Value class must have exactly one primary constructor parameter.",
+                        range: classDecl.range
+                    )
+                } else {
+                    // Record the underlying type of the value class
+                    let singleParam = valParams[0]
+                    let underlyingType = resolveTypeRef(
+                        singleParam.type,
+                        ast: ast,
+                        symbols: symbols,
+                        types: types,
+                        interner: interner,
+                        diagnostics: diagnostics
+                    ) ?? anyType
+                    symbols.setValueClassUnderlyingType(underlyingType, for: symbol)
+                }
+                if !classDecl.secondaryConstructors.isEmpty {
+                    diagnostics.error(
+                        "KSWIFTK-SEMA-0071",
+                        "Value class cannot have secondary constructors.",
+                        range: classDecl.range
+                    )
+                }
             }
 
             if declaration.kind == .enumClass {
