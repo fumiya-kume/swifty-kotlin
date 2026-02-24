@@ -75,6 +75,13 @@ final class KIRLoweringDriver {
             sema: sema
         )
 
+        // Collect top-level delegate property init instructions to inject into main.
+        var delegateInitInstructions: [KIRInstruction] = []
+        // Maps property symbol → copy-target KIRExprID that holds the delegate handle.
+        // The LLVM backend resolves copy targets via alloca/load, so we use the copy
+        // target expr ID (not a symbolRef) as the argument in getValue calls.
+        var delegateHandleExprByPropertySymbol: [SymbolID: KIRExprID] = [:]
+
         for file in ast.sortedFiles {
             var declIDs: [KIRDeclID] = []
             for declID in file.topLevelDecls {
@@ -85,11 +92,16 @@ final class KIRLoweringDriver {
 
                 switch decl {
                 case .classDecl(let classDecl):
+                    // Collect nested objects including the companion object
+                    var allNestedObjects = classDecl.nestedObjects
+                    if let companionDeclID = classDecl.companionObject {
+                        allNestedObjects.append(companionDeclID)
+                    }
                     let (directMembers, allDecls) = memberLowerer.lowerMemberDecls(
                         memberFunctions: classDecl.memberFunctions,
                         memberProperties: classDecl.memberProperties,
                         nestedClasses: classDecl.nestedClasses,
-                        nestedObjects: classDecl.nestedObjects,
+                        nestedObjects: allNestedObjects,
                         ast: ast,
                         sema: sema,
                         arena: arena,
@@ -304,11 +316,15 @@ final class KIRLoweringDriver {
 
                 case .interfaceDecl(let interfaceDecl):
                     // Interface properties have no backing storage; pass empty list.
+                    var ifaceNestedObjects = interfaceDecl.nestedObjects
+                    if let companionDeclID = interfaceDecl.companionObject {
+                        ifaceNestedObjects.append(companionDeclID)
+                    }
                     let (directMembers, allDecls) = memberLowerer.lowerMemberDecls(
                         memberFunctions: interfaceDecl.memberFunctions,
                         memberProperties: [],
                         nestedClasses: interfaceDecl.nestedClasses,
-                        nestedObjects: interfaceDecl.nestedObjects,
+                        nestedObjects: ifaceNestedObjects,
                         ast: ast,
                         sema: sema,
                         arena: arena,
@@ -475,9 +491,148 @@ final class KIRLoweringDriver {
                     ctx.currentImplicitReceiverExprID = nil
                     ctx.currentImplicitReceiverSymbol = nil
 
-                case .propertyDecl:
+                case .propertyDecl(let propertyDecl):
                     let kirID = arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: sema.types.anyType)))
                     declIDs.append(kirID)
+
+                    // Create delegate initialization and track the copy-target expr ID.
+                    if propertyDecl.delegateExpression != nil {
+                        let interner = compilationCtx.interner
+                        let delegateType = sema.types.anyType
+                        // Pre-allocate the copy-target expr ID that will hold the delegate handle.
+                        // This expr ID will be the target of a `copy` instruction, which the LLVM
+                        // backend maps to an alloca. We use this same expr ID as the argument in
+                        // getValue calls so the backend loads from the alloca correctly.
+                        let delegateHandleExpr = arena.appendExpr(.temporary(0), type: delegateType)
+                        delegateHandleExprByPropertySymbol[symbol] = delegateHandleExpr
+
+                        // Determine delegate kind and emit kk_*_create call.
+                        let delegateKind = detectDelegateKind(
+                            delegateExpr: propertyDecl.delegateExpression,
+                            ast: ast,
+                            interner: interner
+                        )
+
+                        ctx.resetScopeForFunction()
+                        ctx.beginCallableLoweringScope()
+                        var initInstructions: [KIRInstruction] = []
+
+                        switch delegateKind {
+                        case .lazy:
+                            // Create lambda function from delegate body.
+                            let lambdaFnPtr = lowerDelegateLambdaBody(
+                                delegateBody: propertyDecl.delegateBody,
+                                propertySymbol: symbol,
+                                paramCount: 0,
+                                ast: ast,
+                                sema: sema,
+                                arena: arena,
+                                interner: interner,
+                                propertyConstantInitializers: propertyConstantInitializers,
+                                instructions: &initInstructions
+                            )
+                            // Emit thread safety mode constant.
+                            let modeValue = Int64(compilationCtx.options.lazyThreadSafetyMode.rawValue)
+                            let modeExpr = arena.appendExpr(.intLiteral(modeValue), type: sema.types.anyType)
+                            initInstructions.append(.constValue(result: modeExpr, value: .intLiteral(modeValue)))
+                            // Emit kk_lazy_create(lambdaFnPtr, mode).
+                            let createResult = arena.appendExpr(
+                                .temporary(Int32(arena.expressions.count)), type: delegateType
+                            )
+                            let lazyCreateName = interner.intern("kk_lazy_create")
+                            initInstructions.append(.call(
+                                symbol: nil,
+                                callee: lazyCreateName,
+                                arguments: [lambdaFnPtr, modeExpr],
+                                result: createResult,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            // Copy into delegateHandleExpr — the LLVM backend creates an alloca for copy targets.
+                            initInstructions.append(.copy(from: createResult, to: delegateHandleExpr))
+
+                        case .observable:
+                            // Lower the initial value argument from the delegate expression.
+                            let initialValueExpr = lowerDelegateInitialValue(
+                                delegateExpr: propertyDecl.delegateExpression,
+                                ast: ast,
+                                sema: sema,
+                                arena: arena,
+                                interner: interner,
+                                propertyConstantInitializers: propertyConstantInitializers,
+                                instructions: &initInstructions
+                            )
+                            // Create callback lambda from delegate body (3 params: prop, old, new).
+                            let callbackFnPtr = lowerDelegateLambdaBody(
+                                delegateBody: propertyDecl.delegateBody,
+                                propertySymbol: symbol,
+                                paramCount: 3,
+                                ast: ast,
+                                sema: sema,
+                                arena: arena,
+                                interner: interner,
+                                propertyConstantInitializers: propertyConstantInitializers,
+                                instructions: &initInstructions
+                            )
+                            // Emit kk_observable_create(initialValue, callbackFnPtr).
+                            let createResult = arena.appendExpr(
+                                .temporary(Int32(arena.expressions.count)), type: delegateType
+                            )
+                            let observableCreateName = interner.intern("kk_observable_create")
+                            initInstructions.append(.call(
+                                symbol: nil,
+                                callee: observableCreateName,
+                                arguments: [initialValueExpr, callbackFnPtr],
+                                result: createResult,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            // Copy into delegateHandleExpr — the LLVM backend creates an alloca for copy targets.
+                            initInstructions.append(.copy(from: createResult, to: delegateHandleExpr))
+
+                        case .vetoable:
+                            // Lower the initial value argument from the delegate expression.
+                            let initialValueExpr = lowerDelegateInitialValue(
+                                delegateExpr: propertyDecl.delegateExpression,
+                                ast: ast,
+                                sema: sema,
+                                arena: arena,
+                                interner: interner,
+                                propertyConstantInitializers: propertyConstantInitializers,
+                                instructions: &initInstructions
+                            )
+                            // Create callback lambda from delegate body (3 params: prop, old, new).
+                            let callbackFnPtr = lowerDelegateLambdaBody(
+                                delegateBody: propertyDecl.delegateBody,
+                                propertySymbol: symbol,
+                                paramCount: 3,
+                                ast: ast,
+                                sema: sema,
+                                arena: arena,
+                                interner: interner,
+                                propertyConstantInitializers: propertyConstantInitializers,
+                                instructions: &initInstructions
+                            )
+                            // Emit kk_vetoable_create(initialValue, callbackFnPtr).
+                            let createResult = arena.appendExpr(
+                                .temporary(Int32(arena.expressions.count)), type: delegateType
+                            )
+                            let vetoableCreateName = interner.intern("kk_vetoable_create")
+                            initInstructions.append(.call(
+                                symbol: nil,
+                                callee: vetoableCreateName,
+                                arguments: [initialValueExpr, callbackFnPtr],
+                                result: createResult,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            // Copy into delegateHandleExpr — the LLVM backend creates an alloca for copy targets.
+                            initInstructions.append(.copy(from: createResult, to: delegateHandleExpr))
+                        }
+
+                        delegateInitInstructions.append(contentsOf: initInstructions)
+                        declIDs.append(contentsOf: ctx.drainGeneratedCallableDecls())
+                    }
 
                 case .typeAliasDecl:
                     let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol)))
@@ -491,6 +646,313 @@ final class KIRLoweringDriver {
             files.append(KIRFile(fileID: file.fileID, decls: declIDs))
         }
 
+        // Post-process: inject delegate init instructions at the start of main,
+        // and rewrite delegate property accesses to getValue calls.
+        if !delegateInitInstructions.isEmpty || !delegateHandleExprByPropertySymbol.isEmpty {
+            let interner = compilationCtx.interner
+            let mainName = interner.intern("main")
+            let lazyGetValueName = interner.intern("kk_lazy_get_value")
+            let observableGetValueName = interner.intern("kk_observable_get_value")
+            let vetoableGetValueName = interner.intern("kk_vetoable_get_value")
+
+            // Build a reverse lookup: property symbol → delegate kind for getValue rewriting.
+            var delegateKindByPropertySymbol: [SymbolID: StdlibDelegateKind] = [:]
+            for file in ast.sortedFiles {
+                for declID in file.topLevelDecls {
+                    guard let decl = ast.arena.decl(declID),
+                          case .propertyDecl(let prop) = decl,
+                          let sym = sema.bindings.declSymbols[declID],
+                          prop.delegateExpression != nil else {
+                        continue
+                    }
+                    delegateKindByPropertySymbol[sym] = detectDelegateKind(
+                        delegateExpr: prop.delegateExpression,
+                        ast: ast,
+                        interner: interner
+                    )
+                }
+            }
+
+            arena.transformFunctions { function in
+                var updated = function
+                // Inject delegate init at the beginning of main function.
+                if function.name == mainName, !delegateInitInstructions.isEmpty {
+                    var newBody: [KIRInstruction] = []
+                    // Keep .beginBlock at the front if present.
+                    if let first = function.body.first, case .beginBlock = first {
+                        newBody.append(first)
+                        newBody.append(contentsOf: delegateInitInstructions)
+                        newBody.append(contentsOf: function.body.dropFirst())
+                    } else {
+                        newBody.append(contentsOf: delegateInitInstructions)
+                        newBody.append(contentsOf: function.body)
+                    }
+                    updated.body = newBody
+                }
+
+                // Rewrite symbolRef accesses to delegate properties → getValue calls.
+                // Instead of using symbolRef (which the LLVM C API backend can't resolve
+                // for non-function/non-parameter symbols), we pass the copy-target expr ID
+                // directly. The backend resolves copy targets via alloca/load.
+                if !delegateHandleExprByPropertySymbol.isEmpty {
+                    var rewrittenBody: [KIRInstruction] = []
+                    rewrittenBody.reserveCapacity(updated.body.count)
+                    for instruction in updated.body {
+                        if case .constValue(let result, let value) = instruction,
+                           case .symbolRef(let sym) = value,
+                           let handleExpr = delegateHandleExprByPropertySymbol[sym] {
+                            // Replace raw symbolRef with a getValue call, passing the
+                            // copy-target (alloca) that holds the delegate handle.
+                            let getValueName: InternedString
+                            switch delegateKindByPropertySymbol[sym] {
+                            case .lazy:
+                                getValueName = lazyGetValueName
+                            case .observable:
+                                getValueName = observableGetValueName
+                            case .vetoable:
+                                getValueName = vetoableGetValueName
+                            case nil:
+                                getValueName = lazyGetValueName
+                            }
+                            rewrittenBody.append(
+                                .call(
+                                    symbol: nil,
+                                    callee: getValueName,
+                                    arguments: [handleExpr],
+                                    result: result,
+                                    canThrow: false,
+                                    thrownResult: nil
+                                )
+                            )
+                            continue
+                        }
+                        rewrittenBody.append(instruction)
+                    }
+                    updated.body = rewrittenBody
+                }
+
+                return updated
+            }
+        }
+
         return KIRModule(files: files, arena: arena)
+    }
+
+    // MARK: - Delegate Lowering Helpers
+
+    /// Detects the delegate kind from the delegate expression AST node.
+    private func detectDelegateKind(
+        delegateExpr: ExprID?,
+        ast: ASTModule,
+        interner: StringInterner
+    ) -> StdlibDelegateKind {
+        guard let exprID = delegateExpr,
+              let expr = ast.arena.expr(exprID) else {
+            return .lazy
+        }
+        switch expr {
+        case .nameRef(let name, _):
+            let resolved = interner.resolve(name)
+            if resolved == "lazy" { return .lazy }
+            return .lazy
+        case .call(let callee, _, _, _):
+            // call(callee: memberCall(...) or nameRef(...))
+            if let calleeExpr = ast.arena.expr(callee) {
+                switch calleeExpr {
+                case .nameRef(let name, _):
+                    let resolved = interner.resolve(name)
+                    if resolved == "observable" { return .observable }
+                    if resolved == "vetoable" { return .vetoable }
+                    if resolved == "lazy" { return .lazy }
+                default:
+                    break
+                }
+            }
+            // Check memberCall pattern: Delegates.observable(...)
+            return detectDelegateKindFromCallExpr(callee: callee, ast: ast, interner: interner)
+        case .memberCall(_, let callee, _, _, _):
+            let resolved = interner.resolve(callee)
+            if resolved == "observable" { return .observable }
+            if resolved == "vetoable" { return .vetoable }
+            return .lazy
+        default:
+            return .lazy
+        }
+    }
+
+    private func detectDelegateKindFromCallExpr(
+        callee: ExprID,
+        ast: ASTModule,
+        interner: StringInterner
+    ) -> StdlibDelegateKind {
+        guard let expr = ast.arena.expr(callee) else { return .lazy }
+        // memberAccess: Delegates.observable → memberCall with receiver
+        // In the expression parser, `Delegates.observable("initial")` may be parsed as
+        // call(callee: memberAccess(...), args: [...])
+        // We need to check if the callee resolves to "observable" or "vetoable".
+        switch expr {
+        case .memberCall(_, let name, _, _, _):
+            let resolved = interner.resolve(name)
+            if resolved == "observable" { return .observable }
+            if resolved == "vetoable" { return .vetoable }
+        case .nameRef(let name, _):
+            let resolved = interner.resolve(name)
+            if resolved == "observable" { return .observable }
+            if resolved == "vetoable" { return .vetoable }
+        default:
+            break
+        }
+        return .lazy
+    }
+
+    /// Creates a lambda function from the delegate body and returns a KIR expression
+    /// referencing the lambda's symbol (function pointer).
+    private func lowerDelegateLambdaBody(
+        delegateBody: FunctionBody?,
+        propertySymbol: SymbolID,
+        paramCount: Int,
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        let lambdaSymbol = ctx.allocateSyntheticGeneratedSymbol()
+        let lambdaName = interner.intern("kk_delegate_lambda_\(propertySymbol.rawValue)")
+
+        // Create parameters for the lambda.
+        var params: [KIRParameter] = []
+        for i in 0..<paramCount {
+            let paramSymbol = SymbolID(rawValue: -(propertySymbol.rawValue + Int32(i + 1) * 1000 + 50_000))
+            params.append(KIRParameter(symbol: paramSymbol, type: sema.types.anyType))
+        }
+
+        var lambdaBody: [KIRInstruction] = [.beginBlock]
+        // Bind parameter symbols so they're accessible in the body.
+        for param in params {
+            let paramExpr = arena.appendExpr(.symbolRef(param.symbol), type: param.type)
+            lambdaBody.append(.constValue(result: paramExpr, value: .symbolRef(param.symbol)))
+            ctx.localValuesBySymbol[param.symbol] = paramExpr
+        }
+
+        // Lower the delegate body expressions.
+        switch delegateBody {
+        case .block(let exprIDs, _):
+            var lastValue: KIRExprID?
+            for exprID in exprIDs {
+                lastValue = lowerExpr(
+                    exprID,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &lambdaBody
+                )
+            }
+            if let lastValue {
+                lambdaBody.append(.returnValue(lastValue))
+            } else {
+                lambdaBody.append(.returnUnit)
+            }
+        case .expr(let exprID, _):
+            let value = lowerExpr(
+                exprID,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &lambdaBody
+            )
+            lambdaBody.append(.returnValue(value))
+        case .unit, nil:
+            lambdaBody.append(.returnUnit)
+        }
+        lambdaBody.append(.endBlock)
+
+        let returnType = sema.types.anyType
+        let lambdaDecl = arena.appendDecl(
+            .function(
+                KIRFunction(
+                    symbol: lambdaSymbol,
+                    name: lambdaName,
+                    params: params,
+                    returnType: returnType,
+                    body: lambdaBody,
+                    isSuspend: false,
+                    isInline: false
+                )
+            )
+        )
+        ctx.pendingGeneratedCallableDeclIDs.append(lambdaDecl)
+
+        // Return a symbolRef expression pointing to the lambda function.
+        let lambdaRefExpr = arena.appendExpr(.symbolRef(lambdaSymbol), type: sema.types.anyType)
+        instructions.append(.constValue(result: lambdaRefExpr, value: .symbolRef(lambdaSymbol)))
+        return lambdaRefExpr
+    }
+
+    /// Lowers the initial value argument from a delegate expression
+    /// (e.g., the `"initial"` in `Delegates.observable("initial")`).
+    private func lowerDelegateInitialValue(
+        delegateExpr: ExprID?,
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        guard let exprID = delegateExpr,
+              let expr = ast.arena.expr(exprID) else {
+            // Fallback: return 0.
+            let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.anyType)
+            instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            return zeroExpr
+        }
+
+        // For call expressions like `Delegates.observable("initial")` or `observable("initial")`,
+        // extract and lower the first argument.
+        switch expr {
+        case .call(_, _, let args, _):
+            if let firstArg = args.first {
+                return lowerExpr(
+                    firstArg.expr,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+            }
+        case .memberCall(_, _, _, let args, _):
+            if let firstArg = args.first {
+                return lowerExpr(
+                    firstArg.expr,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+            }
+        default:
+            break
+        }
+
+        // Fallback: lower the entire delegate expression as the initial value.
+        return lowerExpr(
+            exprID,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
     }
 }

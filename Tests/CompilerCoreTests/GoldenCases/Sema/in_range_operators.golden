@@ -1,27 +1,33 @@
 symbol s0 kind=package fq=_root_ vis=public flags=_
-symbol s1 kind=function fq=checkIn vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s2 kind=valueParameter fq=checkIn.$1.x vis=private flags=_
-symbol s3 kind=valueParameter fq=checkIn.$1.y vis=private flags=_
-symbol s4 kind=function fq=checkNotIn vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s5 kind=valueParameter fq=checkNotIn.$4.x vis=private flags=_
-symbol s6 kind=valueParameter fq=checkNotIn.$4.y vis=private flags=_
-symbol s7 kind=function fq=rangeUntilExpr vis=public flags=_ sig=recv=_ params=[Int] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s8 kind=valueParameter fq=rangeUntilExpr.$7.n vis=private flags=_
+symbol s1 kind=package fq=kotlin vis=public flags=synthetic
+symbol s2 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s3 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s4 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#4
+symbol s5 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s6 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=checkIn vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s8 kind=valueParameter fq=checkIn.$7.x vis=private flags=_
+symbol s9 kind=valueParameter fq=checkIn.$7.y vis=private flags=_
+symbol s10 kind=function fq=checkNotIn vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s11 kind=valueParameter fq=checkNotIn.$10.x vis=private flags=_
+symbol s12 kind=valueParameter fq=checkNotIn.$10.y vis=private flags=_
+symbol s13 kind=function fq=rangeUntilExpr vis=public flags=_ sig=recv=_ params=[Int] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s14 kind=valueParameter fq=rangeUntilExpr.$13.n vis=private flags=_
 file f0 package=_
-  decl d0 fun checkIn suspend=0 inline=0 sym=s1
-  decl d1 fun checkNotIn suspend=0 inline=0 sym=s4
-  decl d2 fun rangeUntilExpr suspend=0 inline=0 sym=s7
-expr e0 name(x) type=Int ref=s2
+  decl d0 fun checkIn suspend=0 inline=0 sym=s7
+  decl d1 fun checkNotIn suspend=0 inline=0 sym=s10
+  decl d2 fun rangeUntilExpr suspend=0 inline=0 sym=s13
+expr e0 name(x) type=Int ref=s8
 expr e1 int(1) type=Int
 expr e2 int(10) type=Int
 expr e3 binary(rangeTo) lhs=e1 rhs=e2 type=Int
 expr e4 inExpr lhs=e0 rhs=e3 type=Boolean
-expr e5 name(x) type=Int ref=s5
+expr e5 name(x) type=Int ref=s11
 expr e6 int(1) type=Int
 expr e7 int(10) type=Int
 expr e8 binary(rangeTo) lhs=e6 rhs=e7 type=Int
 expr e9 notInExpr lhs=e5 rhs=e8 type=Boolean
-expr e10 name(n) type=Int ref=s8
+expr e10 name(n) type=Int ref=s14
 expr e11 int(0) type=Int
 expr e12 int(10) type=Int
 expr e13 binary(rangeUntil) lhs=e11 rhs=e12 type=Int

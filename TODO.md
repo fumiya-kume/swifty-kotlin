@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-02-22
+最終更新: 2026-02-24
 
 ## P0 (Core Correctness)
 
@@ -403,10 +403,10 @@
   - [x] branch ごとに block/jump（または等価表現）を生成し、選択された分岐だけを評価する
   - [x] 分岐内の副作用・`return`・`throw` が非選択分岐から漏れない回帰ケースを追加する
 
-- [ ] P5-52: マルチファイル時の parse 境界を file 単位に固定する（spec.md J1/J5/J6）
-  - [ ] `LexPhase` でファイルごとの EOF 境界情報を保持し、`ParsePhase` を file 単位で実行する
-  - [ ] ファイル跨ぎで statement が連結される経路（token 連結時の境界欠落）を解消する
-  - [ ] file ごとの `kotlinFile`/`script` 判定と `ASTFile` 構築が安定する回帰ケースを追加する
+- [x] P5-52: マルチファイル時の parse 境界を file 単位に固定する（spec.md J1/J5/J6）
+  - [x] `LexPhase` でファイルごとの EOF 境界情報を保持し、`ParsePhase` を file 単位で実行する
+  - [x] ファイル跨ぎで statement が連結される経路（token 連結時の境界欠落）を解消する
+  - [x] file ごとの `kotlinFile`/`script` 判定と `ASTFile` 構築が安定する回帰ケースを追加する
 
 - [x] P5-53: visibility（public/internal/protected/private）を解決規則へ反映する（spec.md J6.3/J7）
   - [x] `lookup`/import 解決で不可視シンボルを候補から除外するアクセス制御層を追加する
@@ -428,60 +428,60 @@
   - [x] default 式が先行 parameter/receiver を参照できるよう callee 文脈で評価する
   - [x] default 引数の評価順序（左から右）と副作用順を固定する回帰ケースを追加する
 
-- [ ] P5-57: コンパイル性能計測基盤を整備する
-  - [ ] `CompilerDriver` で各 phase の開始/終了時刻を記録し、`-Xfrontend time-phases`（仮）で集計を出力する
-  - [ ] `Scripts/bench_compile.sh`（仮）を追加し、`--emit kir/object/executable` × backend（synthetic-c / llvm-c-api）を同条件で計測する
-  - [ ] 単一ファイル/複数ファイル（`Scripts/diff_cases`）の基準値を保存し、回帰時に比較できるフォーマット（TSV/JSON）で出力する
+- [x] P5-57: コンパイル性能計測基盤を整備する
+  - [x] `CompilerDriver` で各 phase の開始/終了時刻を記録し、`-Xfrontend time-phases`（仮）で集計を出力する
+  - [x] `Scripts/bench_compile.sh`（仮）を追加し、`--emit kir/object/executable` × backend（synthetic-c / llvm-c-api）を同条件で計測する
+  - [x] 単一ファイル/複数ファイル（`Scripts/diff_cases`）の基準値を保存し、回帰時に比較できるフォーマット（TSV/JSON）で出力する
 
-- [ ] P5-58: BuildAST のトークン再走査と再パースを削減する
-  - [ ] `collectTokens(from:in:)` の再帰収集結果を node 単位でキャッシュし、同一 node の重複走査を避ける
-  - [ ] `ExpressionParser` 呼び出し前の `Array(...)` 断片コピーを削減し、token slice ベースで処理できる API に置換する
-  - [ ] `parseBlockExpression` の再帰再パース（`ExpressionParser(tokens: trimmed, ...)`）を block statement 直列処理に置換する
-  - [ ] AST 同値性（decl/expr 数と source range）を回帰テストで固定する
+- [x] P5-58: BuildAST のトークン再走査と再パースを削減する
+  - [x] `collectTokens(from:in:)` の再帰収集結果を node 単位でキャッシュし、同一 node の重複走査を避ける
+  - [x] `ExpressionParser` 呼び出し前の `Array(...)` 断片コピーを削減し、token slice ベースで処理できる API に置換する
+  - [x] `parseBlockExpression` の再帰再パース（`ExpressionParser(tokens: trimmed, ...)`）を block statement 直列処理に置換する
+  - [x] AST 同値性（decl/expr 数と source range）を回帰テストで固定する
 
-- [ ] P5-59: Sema/DataFlow の全シンボル走査をインデックス化する
-  - [ ] `SymbolTable.allSymbols()` 依存箇所向けに owner/package/kind 別インデックスを導入する
-  - [ ] `DataFlowSemaPass+LayoutSynthesis` の ownMethods/ownFields 抽出をインデックス参照へ置換し、N^2 走査を回避する
-  - [ ] `DataFlowAnalysis.enumEntryNames` を enum owner -> entry 名キャッシュへ置換する
-  - [ ] `ASTModule.sortedFiles` の都度ソートを廃止し、構築時に安定順を保持する
+- [x] P5-59: Sema/DataFlow の全シンボル走査をインデックス化する
+  - [x] `SymbolTable.allSymbols()` 依存箇所向けに owner/package/kind 別インデックスを導入する
+  - [x] `DataFlowSemaPass+LayoutSynthesis` の ownMethods/ownFields 抽出をインデックス参照へ置換し、N^2 走査を回避する
+  - [x] `DataFlowAnalysis.enumEntryNames` を enum owner -> entry 名キャッシュへ置換する
+  - [x] `ASTModule.sortedFiles` の都度ソートを廃止し、構築時に安定順を保持する
 
-- [ ] P5-60: Lowering/Codegen のスループットを改善する
-  - [ ] Lowering pass に precondition を導入し、対象命令が存在しない pass の `transformFunctions` 実行を skip する
-  - [ ] `KIRArena.transformFunctions` に unchanged fast-path を追加し、未変更関数の body 再割当を抑制する
-  - [ ] object/executable のデフォルト backend を `llvm-c-api` に切り替える可否を性能/互換テストで検証する
-  - [ ] synthetic C backend 継続時は runtime stub を共有 object 化し、clang 入力量と起動回数のオーバーヘッドを削減する
+- [x] P5-60: Lowering/Codegen のスループットを改善する
+  - [x] Lowering pass に precondition を導入し、対象命令が存在しない pass の `transformFunctions` 実行を skip する
+  - [x] `KIRArena.transformFunctions` に unchanged fast-path を追加し、未変更関数の body 再割当を抑制する
+  - [x] object/executable のデフォルト backend を `llvm-c-api` に切り替える可否を性能/互換テストで検証する
+  - [x] synthetic C backend 継続時は runtime stub を共有 object 化し、clang 入力量と起動回数のオーバーヘッドを削減する
 
-- [ ] P5-61: フロントエンドを file 単位で並列実行可能にする
-  - [ ] `LexPhase`/`ParsePhase`/`BuildASTPhase` の中間表現を file 単位で保持し、全ファイル連結前提を段階的に解消する
-  - [ ] `-Xfrontend jobs=N`（仮）で file 並列実行を有効化し、出力順序は fileID 順で決定的に固定する
-  - [ ] multi-file compile ベンチ（10/50/100 file）を追加し、単スレッド比の speedup と診断順序の安定性を検証する
+- [x] P5-61: フロントエンドを file 単位で並列実行可能にする
+  - [x] `LexPhase`/`ParsePhase`/`BuildASTPhase` の中間表現を file 単位で保持し、全ファイル連結前提を段階的に解消する
+  - [x] `-Xfrontend jobs=N`（仮）で file 並列実行を有効化し、出力順序は fileID 順で決定的に固定する
+  - [x] multi-file compile ベンチ（10/50/100 file）を追加し、単スレッド比の speedup と診断順序の安定性を検証する
 
-- [ ] P5-62: library import / metadata 復元のキャッシュを導入する
-  - [ ] `DataFlowSemaPass+LibraryImport` の manifest/metadata 読み込み結果を path + mtime キーで再利用する
-  - [ ] `MetadataTypeSignatureParser` の parse 結果を signature 文字列キーで memoize し、重複復元を削減する
-  - [ ] import が多いケース（複数 `.kklib`）の compile ベンチを追加し、Sema 時間の改善率を計測する
+- [x] P5-62: library import / metadata 復元のキャッシュを導入する
+  - [x] `DataFlowSemaPass+LibraryImport` の manifest/metadata 読み込み結果を path + mtime キーで再利用する
+  - [x] `MetadataTypeSignatureParser` の parse 結果を signature 文字列キーで memoize し、重複復元を削減する
+  - [x] import が多いケース（複数 `.kklib`）の compile ベンチを追加し、Sema 時間の改善率を計測する
 
-- [ ] P5-63: 型推論と呼び出し解決のホットパスをキャッシュする
-  - [ ] `OverloadResolver.resolveCall` の結果を callee/arg type/expected type/receiver type キーでキャッシュする
-  - [ ] `TypeCheckSemaPass` の `scope.lookup` / `symbols.symbol` の反復参照をローカルキャッシュ化する
-  - [ ] キャッシュ有効/無効を切り替える debug flag（`-Xfrontend sema-cache=...` 仮）を追加し、差分検証テストを用意する
+- [x] P5-63: 型推論と呼び出し解決のホットパスをキャッシュする
+  - [x] `OverloadResolver.resolveCall` の結果を callee/arg type/expected type/receiver type キーでキャッシュする
+  - [x] `TypeCheckSemaPass` の `scope.lookup` / `symbols.symbol` の反復参照をローカルキャッシュ化する
+  - [x] キャッシュ有効/無効を切り替える debug flag（`-Xfrontend sema-cache=...` 仮）を追加し、差分検証テストを用意する
 
-- [ ] P5-64: external toolchain 呼び出しのオーバーヘッドを削減する
-  - [ ] `LinkPhase` の entry wrapper 生成を UUID 一時ファイル依存から安定パス + 内容差分更新へ置換する
-  - [ ] synthetic C backend の巨大 runtime stub 文字列を固定オブジェクト化し、毎回の C 生成量を削減する
-  - [ ] codegen/link の subprocess 実行時間を個別に計測し、`time-phases` 出力へ統合する
+- [x] P5-64: external toolchain 呼び出しのオーバーヘッドを削減する
+  - [x] `LinkPhase` の entry wrapper 生成を UUID 一時ファイル依存から安定パス + 内容差分更新へ置換する
+  - [x] synthetic C backend の巨大 runtime stub 文字列を固定オブジェクト化し、毎回の C 生成量を削減する
+  - [x] codegen/link の subprocess 実行時間を個別に計測し、`time-phases` 出力へ統合する
 
 ## P5 (Spec Gap Backlog) — Kotlin 構文完全対応拡張
 
 ### Null Safety
 
-- [ ] P5-65: `?.` / `!!` / `?:` を型推論・KIR lowering・runtime まで front-to-back で実装する（spec.md J8/J9/J10）
-  - [ ] Parser/AST に `safeCall`（`?.`）/ `notNullAssert`（`!!`）/ `elvisExpr`（`?:`）ノードを導入する
-  - [ ] `resolveTypeRef`/`inferExpr` で null-safe call の結果型を `T?` に推論し、`!!` を `T?` → `T`（失敗時 `NullPointerException` throw）として扱う
-  - [ ] KIR に `safeCall` 専用 IR ノードを導入し、null チェック分岐と非 null 分岐を明示的に生成する
-  - [ ] `?:` の RHS を lazy eval（LHS が non-null の場合は RHS を評価しない）として lowering する
-  - [ ] runtime `kk_null_check`（`!!` 用）を `outThrown` チャネル経由で NPE を送出する形で実装する
-  - [ ] `?.`/`!!`/`?:` を含む diff/golden 回帰ケースを追加し、`kotlinc` と出力一致を確認する
+- [x] P5-65: `?.` / `!!` / `?:` を型推論・KIR lowering・runtime まで front-to-back で実装する（spec.md J8/J9/J10）
+  - [x] Parser/AST に `safeCall`（`?.`）/ `notNullAssert`（`!!`）/ `elvisExpr`（`?:`）ノードを導入する
+  - [x] `resolveTypeRef`/`inferExpr` で null-safe call の結果型を `T?` に推論し、`!!` を `T?` → `T`（失敗時 `NullPointerException` throw）として扱う
+  - [x] KIR に `safeCall` 専用 IR ノードを導入し、null チェック分岐と非 null 分岐を明示的に生成する
+  - [x] `?:` の RHS を lazy eval（LHS が non-null の場合は RHS を評価しない）として lowering する
+  - [x] runtime `kk_null_check`（`!!` 用）を `outThrown` チャネル経由で NPE を送出する形で実装する
+  - [x] `?.`/`!!`/`?:` を含む diff/golden 回帰ケースを追加し、`kotlinc` と出力一致を確認する
   - **完了条件**: `?.`/`!!`/`?:` すべてで `Scripts/diff_kotlinc.sh` が pass し、null-chain 複合式の型推論が一致する
 
 - [x] P5-66: nullable/non-null スマートキャスト伝播を DataFlowState に統合する（spec.md J10/J10.1）
@@ -506,20 +506,20 @@
   - [x] `+=` / `-=` を含む diff/golden 回帰ケースを追加する（primitive・コレクション・演算子オーバーロード）
   - **完了条件**: `a += b` が `a.plusAssign(b)` または `a = a.plus(b)` に正しく desugaring され、`kotlinc` 出力と一致する
 
-- [ ] P5-68: range/progression 演算子（`..` / `..<` / `downTo` / `step`）を構文・型推論・for 展開へ接続する（spec.md J5/J9）
-  - [ ] Parser/AST に `rangeExpr`（`a..b`）と `rangeUntilExpr`（`a..<b`）を追加する
-  - [ ] Sema で `..` を `rangeTo`（`IntRange` 等）operator へ desugaring し、型引数を推論する
-  - [ ] `downTo`/`step` を infix 関数呼び出しとして overload 解決に通す
-  - [ ] ForLowering で `IntRange`/`LongRange` の `iterator`/`hasNext`/`next` を定数畳み込み可能な形で展開する
-  - [ ] `for (i in 0..10)` / `for (i in 10 downTo 0 step 2)` の diff/golden ケースを追加する
+- [x] P5-68: range/progression 演算子（`..` / `..<` / `downTo` / `step`）を構文・型推論・for 展開へ接続する（spec.md J5/J9）
+  - [x] Parser/AST に `rangeExpr`（`a..b`）と `rangeUntilExpr`（`a..<b`）を追加する
+  - [x] Sema で `..` を `rangeTo`（`IntRange` 等）operator へ desugaring し、型引数を推論する
+  - [x] `downTo`/`step` を infix 関数呼び出しとして overload 解決に通す
+  - [x] ForLowering で `IntRange`/`LongRange` の `iterator`/`hasNext`/`next` を定数畳み込み可能な形で展開する
+  - [x] `for (i in 0..10)` / `for (i in 10 downTo 0 step 2)` の diff/golden ケースを追加する
   - **完了条件**: `for (i in 1..5)` / `for (i in 5 downTo 1 step 2)` が `kotlinc` と同一出力で動作する
 
-- [ ] P5-69: index アクセス演算子（`a[i]` / `a[i] = v`）を `get`/`set` operator call へ desugaring する（spec.md J9）
-  - [ ] Parser/AST に `indexedAccessExpr`（`a[i, ...]`）を追加する
-  - [ ] Sema で読み取り文脈の `a[i]` を `a.get(i)`、代入文脈の `a[i] = v` を `a.set(i, v)` へ desugaring する
-  - [ ] compound assign と組み合わせた `a[i] += 1` → `a.set(i, a.get(i).plus(1))` の展開を実装する
-  - [ ] 多次元インデックス（`a[i, j]`）を複数クオーティング引数として解決する
-  - [ ] 配列・文字列・カスタム演算子それぞれの diff/golden ケースを追加する
+- [x] P5-69: index アクセス演算子（`a[i]` / `a[i] = v`）を `get`/`set` operator call へ desugaring する（spec.md J9）
+  - [x] Parser/AST に `indexedAccessExpr`（`a[i, ...]`）を追加する
+  - [x] Sema で読み取り文脈の `a[i]` を `a.get(i)`、代入文脈の `a[i] = v` を `a.set(i, v)` へ desugaring する
+  - [x] compound assign と組み合わせた `a[i] += 1` → `a.set(i, a.get(i).plus(1))` の展開を実装する
+  - [x] 多次元インデックス（`a[i, j]`）を複数クオーティング引数として解決する
+  - [x] 配列・文字列・カスタム演算子それぞれの diff/golden ケースを追加する
   - **完了条件**: `Array<Int>` / カスタム `operator fun get` で `a[i]` が正しく呼び出され、bounds check と組み合わせて動作する
 
 - [ ] P5-70: `invoke` 演算子を関数呼び出し解決に統合する（spec.md J9）
@@ -536,11 +536,11 @@
   - [x] `in` を使った `for` ループ・`when`・条件式の diff/golden ケースを追加する
   - **完了条件**: `x in 1..10`、`when` branch の `in list` 形式が `kotlinc` と同一結果で動作する
 
-- [ ] P5-72: 比較演算子を `compareTo` へ desugaring し `Comparable<T>` 連携を実装する（spec.md J9）
-  - [ ] Sema で `a < b` / `a <= b` / `a > b` / `a >= b` を `a.compareTo(b) < 0` 等へ desugaring する
-  - [ ] `Comparable<T>` を実装した型の比較に overload resolver を通す
-  - [ ] プリミティブ型（`Int`/`Long`/`Double` 等）は直接比較 IR に最適化する
-  - [ ] `compareTo` desugaring を含む diff/golden ケース（String 比較・カスタム Comparable）を追加する
+- [x] P5-72: 比較演算子を `compareTo` へ desugaring し `Comparable<T>` 連携を実装する（spec.md J9）
+  - [x] Sema で `a < b` / `a <= b` / `a > b` / `a >= b` を `a.compareTo(b) < 0` 等へ desugaring する
+  - [x] `Comparable<T>` を実装した型の比較に overload resolver を通す
+  - [x] プリミティブ型（`Int`/`Long`/`Double` 等）は直接比較 IR に最適化する
+  - [x] `compareTo` desugaring を含む diff/golden ケース（String 比較・カスタム Comparable）を追加する
   - **完了条件**: `String` / カスタム `Comparable` 実装型の `<`/`>=` が `kotlinc` 出力と一致する
 
 ---
@@ -563,36 +563,36 @@
   - [x] metadata export で合成メンバのシグネチャが保存され、import 先から呼び出せることを確認する
   - **完了条件**: `data class Point(val x: Int, val y: Int)` の全合成メンバが `kotlinc` と同一動作をする
 
-- [ ] P5-75: `value class` / `@JvmInline` の boxing 省略と ABI 整合を実装する（spec.md J6/J8/J13）
-  - [ ] Parser/AST/Sema で `value class` キーワードを認識し、single-property 制約を検証する
-  - [ ] Sema で value class をラッパー除去（unboxed）または boxed の 2 種として型システムに統合する
-  - [ ] ABILowering で value class のラップ/アンラップ境界（inline/non-inline 境界）に boxing/unboxing を挿入する
-  - [ ] value class を `Any`/インターフェース型として扱う文脈で boxing が発生することを確認する
-  - [ ] value class の diff/golden ケース（unboxed 演算・interface 境界 boxing）を追加する
+- [x] P5-75: `value class` / `@JvmInline` の boxing 省略と ABI 整合を実装する（spec.md J6/J8/J13）
+  - [x] Parser/AST/Sema で `value class` キーワードを認識し、single-property 制約を検証する
+  - [x] Sema で value class をラッパー除去（unboxed）または boxed の 2 種として型システムに統合する
+  - [x] ABILowering で value class のラップ/アンラップ境界（inline/non-inline 境界）に boxing/unboxing を挿入する
+  - [x] value class を `Any`/インターフェース型として扱う文脈で boxing が発生することを確認する
+  - [x] value class の diff/golden ケース（unboxed 演算・interface 境界 boxing）を追加する
   - **完了条件**: `value class Meter(val value: Int)` が unboxed で渡され、boxing 境界のみで `kk_alloc` が呼ばれる
 
-- [ ] P5-76: `enum class` の `values()`/`valueOf()`/`ordinal`/`name` 合成を front-to-back で完成させる（spec.md J6/J9）
-  - [ ] DataEnumSealedSynthesis で `values()` 配列・`valueOf(String)` 検索を合成し、KIR/codegen に接続する
-  - [ ] 各 enum entry に `ordinal`（宣言順 Int）と `name`（文字列）フィールドを合成し getter を生成する
-  - [ ] enum entry の body（メンバ定義・abstract override）を解析し、entry 固有実装を dispatch する
-  - [ ] `when` exhaustiveness に合成 entry set を利用する（P5-83 と連携）
-  - [ ] `values()`/`valueOf()`/`ordinal`/`name` を含む diff/golden ケースを追加する
+- [x] P5-76: `enum class` の `values()`/`valueOf()`/`ordinal`/`name` 合成を front-to-back で完成させる（spec.md J6/J9）
+  - [x] DataEnumSealedSynthesis で `values()` 配列・`valueOf(String)` 検索を合成し、KIR/codegen に接続する
+  - [x] 各 enum entry に `ordinal`（宣言順 Int）と `name`（文字列）フィールドを合成し getter を生成する
+  - [x] enum entry の body（メンバ定義・abstract override）を解析し、entry 固有実装を dispatch する
+  - [x] `when` exhaustiveness に合成 entry set を利用する（P5-83 と連携）
+  - [x] `values()`/`valueOf()`/`ordinal`/`name` を含む diff/golden ケースを追加する
   - **完了条件**: `enum class Color { RED, GREEN, BLUE }; Color.values().map { it.name }` が `kotlinc` と同一出力になる
 
-- [ ] P5-77: inner class / nested class の解決と `this@Outer` 参照を実装する（spec.md J6/J7）
-  - [ ] Parser/AST で `inner class` キーワードを認識し、`ClassDecl` に `isInner` フラグを保持する
-  - [ ] Sema で inner class のインスタンス化（`outer.Inner()`）を `Outer` インスタンス参照つきで解決する
-  - [ ] inner class body で `this@Outer` を outer インスタンスとして束縛し、outer メンバを参照解決する
-  - [ ] nested class（`inner` なし）からは outer メンバを参照できないことを診断する
-  - [ ] inner class のインスタンス化・outer メンバ参照・`this@Outer` の diff/golden ケースを追加する
+- [x] P5-77: inner class / nested class の解決と `this@Outer` 参照を実装する（spec.md J6/J7）
+  - [x] Parser/AST で `inner class` キーワードを認識し、`ClassDecl` に `isInner` フラグを保持する
+  - [x] Sema で inner class のインスタンス化（`outer.Inner()`）を `Outer` インスタンス参照つきで解決する
+  - [x] inner class body で `this@Outer` を outer インスタンスとして束縛し、outer メンバを参照解決する
+  - [x] nested class（`inner` なし）からは outer メンバを参照できないことを診断する
+  - [x] inner class のインスタンス化・outer メンバ参照・`this@Outer` の diff/golden ケースを追加する
   - **完了条件**: `outer.Inner().foo()` で outer の field にアクセスでき、non-inner nested class から outer へのアクセスが診断される
 
-- [ ] P5-78: `sealed class`/`sealed interface` の sealed hierarchy 検証と exhaustiveness を強化する（spec.md J6/J10）
-  - [ ] Sema で sealed hierarchy 直接 subclass がコンパイル対象の同一パッケージ内に限定されることを検証する
-  - [ ] `when` exhaustiveness チェックで sealed の直接サブクラス集合を metadata から復元し、欠落 branch を診断する
-  - [ ] cross-module sealed（library の sealed を consumer が `when`）でも exhaustiveness チェックが動作するよう metadata を拡張する
-  - [ ] sealed interface（`sealed interface`）と sealed class の両方で exhaustiveness が機能することを確認する
-  - [ ] outside-package subclass の診断・cross-module exhaustiveness の diff/golden ケースを追加する
+- [x] P5-78: `sealed class`/`sealed interface` の sealed hierarchy 検証と exhaustiveness を強化する（spec.md J6/J10）
+  - [x] Sema で sealed hierarchy 直接 subclass がコンパイル対象の同一パッケージ内に限定されることを検証する
+  - [x] `when` exhaustiveness チェックで sealed の直接サブクラス集合を metadata から復元し、欠落 branch を診断する
+  - [x] cross-module sealed（library の sealed を consumer が `when`）でも exhaustiveness チェックが動作するよう metadata を拡張する
+  - [x] sealed interface（`sealed interface`）と sealed class の両方で exhaustiveness が機能することを確認する
+  - [x] outside-package subclass の診断・cross-module exhaustiveness の diff/golden ケースを追加する
   - **完了条件**: 全 branch を列挙した sealed `when` は else 不要、一つでも欠けると `KSWIFTK-SEMA-*` 診断が出る
 
 ---

@@ -1,5 +1,11 @@
 symbol s0 kind=package fq=golden.sema vis=public flags=_
-symbol s1 kind=interface fq=golden.sema.Greeter vis=public flags=_
-symbol s2 kind=function fq=golden.sema.Greeter.greet vis=public flags=_ sig=recv=Class#1 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s1 kind=package fq=kotlin vis=public flags=synthetic
+symbol s2 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s3 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s4 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#4
+symbol s5 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s6 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s7 kind=interface fq=golden.sema.Greeter vis=public flags=_
+symbol s8 kind=function fq=golden.sema.Greeter.greet vis=public flags=_ sig=recv=Class#7 params=[] ret=String suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d1 interface Greeter sym=s1
+  decl d1 interface Greeter sym=s7

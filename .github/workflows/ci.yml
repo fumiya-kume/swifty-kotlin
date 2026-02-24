@@ -12,6 +12,20 @@ env:
   HOMEBREW_NO_INSTALL_CLEANUP: 1
 
 jobs:
+  jscpd-check:
+    name: Duplicate Code Detection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install jscpd
+        run: npm install -g jscpd@4.0.8
+      - name: Run jscpd
+        run: jscpd --threshold 5 --format swift Sources/
+
   smoke-tests:
     name: Smoke Tests
     runs-on: macos-15
@@ -64,23 +78,12 @@ jobs:
           echo "kotlinc diff regression cases failed." >&2
           exit 1
 
-  jscpd-check:
-    name: Duplicate Code Detection
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-      - name: Install jscpd
-        run: npm install -g jscpd
-      - name: Run jscpd
-        run: jscpd --threshold 5 Sources/
-
   test-and-coverage:
     name: Test and Coverage Gate
     runs-on: macos-15
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       - name: Install LLVM
@@ -93,6 +96,68 @@ jobs:
       - name: Verify prerequisites
         run: jq --version
       - name: Run tests with coverage threshold
+        id: coverage
+        continue-on-error: true
         env:
           COVERAGE_THRESHOLD: "95"
+          COVERAGE_REPORT_MD: ${{ runner.temp }}/coverage_report.md
         run: bash Scripts/check_coverage.sh
+      - name: Post or update coverage comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v8
+        env:
+          COVERAGE_REPORT_MD: ${{ runner.temp }}/coverage_report.md
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- coverage-gate-report -->';
+            const outcome = '${{ steps.coverage.outcome }}';
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body?.includes(marker));
+
+            if (outcome === 'success') {
+              // Coverage passed — remove stale failure comment if present
+              if (existing) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existing.id,
+                });
+              }
+              return;
+            }
+
+            // Coverage failed — post or update the comment
+            const reportPath = process.env.COVERAGE_REPORT_MD;
+            let body = '';
+            if (reportPath && fs.existsSync(reportPath)) {
+              body = fs.readFileSync(reportPath, 'utf8');
+            } else {
+              body = `${marker}\n## :warning: Coverage Check Failed\n\nCoverage report was not generated. Check the CI logs for details.`;
+            }
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+      - name: Fail if coverage is below threshold
+        if: steps.coverage.outcome == 'failure'
+        run: |
+          echo "Coverage check failed. See the PR comment for details." >&2
+          exit 1

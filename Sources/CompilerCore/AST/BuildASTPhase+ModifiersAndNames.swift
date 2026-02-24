@@ -55,6 +55,8 @@ extension BuildASTPhase {
                     modifiers.insert(.enumModifier)
                 case .keyword(.inner):
                     modifiers.insert(.inner)
+                case .keyword(.companion):
+                    modifiers.insert(.companion)
                 default:
                     continue
                 }

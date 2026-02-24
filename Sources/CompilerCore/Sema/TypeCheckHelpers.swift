@@ -188,7 +188,7 @@ struct TypeCheckHelpers {
                     default:
                         return false
                     }
-                }
+                }.sorted(by: { $0.rawValue < $1.rawValue })
                 if let symbolID = candidates.first {
                     let resolvedArgs = resolveTypeArgRefsForTypeCheck(
                         argRefs, ast: ast, sema: sema, interner: interner,

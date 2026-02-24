@@ -40,6 +40,7 @@ final class BuildKIRCoverageTests: XCTestCase {
                 "OperatorLowering",
                 "ForLowering",
                 "PropertyLowering",
+                "StdlibDelegateLowering",
                 "DataEnumSealedSynthesis",
                 "LambdaClosureConversion",
                 "InlineLowering",

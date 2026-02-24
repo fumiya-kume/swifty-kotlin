@@ -112,7 +112,7 @@ final class FrontendParallelBenchmarkTests: XCTestCase {
             let ast = try XCTUnwrap(ctx.ast, "AST should be non-nil (iteration \(iteration))")
 
             // Collect all declaration names in file order.
-            let declNames: [String] = ast.files.flatMap { file in
+            let declNames: [String] = ast.sortedFiles.flatMap { file in
                 file.topLevelDecls.compactMap { declID -> String? in
                     guard let decl = ast.arena.decl(declID) else { return nil }
                     switch decl {
@@ -172,7 +172,7 @@ final class FrontendParallelBenchmarkTests: XCTestCase {
 
         let seqAST = try XCTUnwrap(seqCtx.ast)
         let parAST = try XCTUnwrap(parCtx.ast)
-        XCTAssertEqual(seqAST.files.count, parAST.files.count, "File count must match")
+        XCTAssertEqual(seqAST.sortedFiles.count, parAST.sortedFiles.count, "File count must match")
         XCTAssertEqual(seqAST.declarationCount, parAST.declarationCount, "Declaration count must match")
 
         let speedup = seqTime / max(parTime, 0.000001)
@@ -186,7 +186,7 @@ final class FrontendParallelBenchmarkTests: XCTestCase {
 
         let seqAST = try XCTUnwrap(seqCtx.ast)
         let parAST = try XCTUnwrap(parCtx.ast)
-        XCTAssertEqual(seqAST.files.count, parAST.files.count)
+        XCTAssertEqual(seqAST.sortedFiles.count, parAST.sortedFiles.count)
         XCTAssertEqual(seqAST.declarationCount, parAST.declarationCount)
 
         let speedup = seqTime / max(parTime, 0.000001)
@@ -200,7 +200,7 @@ final class FrontendParallelBenchmarkTests: XCTestCase {
 
         let seqAST = try XCTUnwrap(seqCtx.ast)
         let parAST = try XCTUnwrap(parCtx.ast)
-        XCTAssertEqual(seqAST.files.count, parAST.files.count)
+        XCTAssertEqual(seqAST.sortedFiles.count, parAST.sortedFiles.count)
         XCTAssertEqual(seqAST.declarationCount, parAST.declarationCount)
 
         let speedup = seqTime / max(parTime, 0.000001)
@@ -252,11 +252,11 @@ final class FrontendParallelBenchmarkTests: XCTestCase {
         let seqAST = try XCTUnwrap(seqCtx.ast)
         let parAST = try XCTUnwrap(parCtx.ast)
 
-        XCTAssertEqual(seqAST.files.count, parAST.files.count)
+        XCTAssertEqual(seqAST.sortedFiles.count, parAST.sortedFiles.count)
         XCTAssertEqual(seqAST.declarationCount, parAST.declarationCount)
 
         // Verify file order matches.
-        for (seqFile, parFile) in zip(seqAST.files, parAST.files) {
+        for (seqFile, parFile) in zip(seqAST.sortedFiles, parAST.sortedFiles) {
             XCTAssertEqual(seqFile.fileID, parFile.fileID, "File order must be deterministic")
             XCTAssertEqual(seqFile.topLevelDecls.count, parFile.topLevelDecls.count,
                            "Declaration count must match for file \(seqFile.fileID.rawValue)")

@@ -71,6 +71,33 @@ public final class DiagnosticEngine: @unchecked Sendable {
         diagnostics.contains(where: { $0.severity == .error })
     }
 
+    /// Sort the diagnostics array in-place by source location for deterministic
+    /// ordering after parallel phases where lock-acquisition order is arbitrary.
+    public func sortBySourceLocation() {
+        lock.lock()
+        defer { lock.unlock() }
+        diagnostics.sort { lhs, rhs in
+            guard let lRange = lhs.primaryRange else {
+                guard rhs.primaryRange != nil else { return lhs.code < rhs.code }
+                return false
+            }
+            guard let rRange = rhs.primaryRange else {
+                return true
+            }
+            if lRange.start.file.rawValue != rRange.start.file.rawValue {
+                return lRange.start.file.rawValue < rRange.start.file.rawValue
+            }
+            if lRange.start.offset != rRange.start.offset {
+                return lRange.start.offset < rRange.start.offset
+            }
+            let lSev = severityRank(for: lhs.severity)
+            let rSev = severityRank(for: rhs.severity)
+            if lSev != rSev { return lSev < rSev }
+            if lhs.code != rhs.code { return lhs.code < rhs.code }
+            return lhs.message < rhs.message
+        }
+    }
+
     public func render(_ sourceManager: SourceManager) -> String {
         let ordered = diagnostics.sorted { lhs, rhs in
             let lhsKey = renderSortKey(for: lhs, sourceManager: sourceManager)
