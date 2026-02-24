@@ -218,6 +218,27 @@ extension BuildASTPhase.ExpressionParser {
         return astArena.appendExpr(.tryExpr(body: bodyExpr, catchClauses: catchClauses, finallyExpr: finallyExpr, range: range))
     }
 
+    /// Parse a labeled loop: the label name and `@` have already been consumed.
+    /// Current token should be `do`, `while`, or `for`.
+    internal func parseLabeledLoop(label: InternedString) -> ExprID? {
+        guard let token = current() else { return nil }
+        let loopExpr: ExprID?
+        switch token.kind {
+        case .keyword(.do):
+            loopExpr = parseDoWhileExpression()
+        case .keyword(.while):
+            loopExpr = parseWhileExpression()
+        case .keyword(.for):
+            loopExpr = parseForExpression()
+        default:
+            return nil
+        }
+        if let loopExpr {
+            astArena.setLoopLabel(label, for: loopExpr)
+        }
+        return loopExpr
+    }
+
     internal func parseCatchParameter() -> (paramName: InternedString?, paramTypeName: InternedString?) {
         guard matches(.symbol(.lParen)) else {
             return (nil, nil)

@@ -77,7 +77,8 @@ final class ControlFlowLowerer {
             driver.ctx.localValuesBySymbol[loopVariableSymbol] = nextValueID
         }
 
-        driver.ctx.loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel))
+        let userLabel = ast.arena.loopLabel(for: exprID)
+        driver.ctx.loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel, userLabel: userLabel))
         _ = driver.lowerExpr(
             bodyExpr,
             ast: ast,
@@ -133,7 +134,8 @@ final class ControlFlowLowerer {
         instructions.append(.constValue(result: falseID, value: .boolLiteral(false)))
         instructions.append(.jumpIfEqual(lhs: conditionID, rhs: falseID, target: breakLabel))
 
-        driver.ctx.loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel))
+        let userLabel = ast.arena.loopLabel(for: exprID)
+        driver.ctx.loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel, userLabel: userLabel))
         _ = driver.lowerExpr(
             bodyExpr,
             ast: ast,
@@ -169,7 +171,8 @@ final class ControlFlowLowerer {
         let breakLabel = driver.ctx.makeLoopLabel()
         instructions.append(.label(bodyLabel))
 
-        driver.ctx.loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel))
+        let userLabel = ast.arena.loopLabel(for: exprID)
+        driver.ctx.loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel, userLabel: userLabel))
         _ = driver.lowerExpr(
             bodyExpr,
             ast: ast,

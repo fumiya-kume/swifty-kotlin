@@ -171,17 +171,31 @@ final class ExprLowerer {
         case .doWhileExpr(let bodyExpr, let conditionExpr, _):
             return driver.controlFlowLowerer.lowerDoWhileExpr(exprID, bodyExpr: bodyExpr, conditionExpr: conditionExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
-        case .breakExpr:
-            if let breakLabel = driver.ctx.loopControlStack.last?.breakLabel {
-                instructions.append(.jump(breakLabel))
+        case .breakExpr(let targetLabel, _):
+            let breakTarget: Int32?
+            if let targetLabel {
+                // Labeled break: find the matching loop in the control stack
+                breakTarget = driver.ctx.loopControlStack.last(where: { $0.userLabel == targetLabel })?.breakLabel
+            } else {
+                breakTarget = driver.ctx.loopControlStack.last?.breakLabel
+            }
+            if let breakTarget {
+                instructions.append(.jump(breakTarget))
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
-        case .continueExpr:
-            if let continueLabel = driver.ctx.loopControlStack.last?.continueLabel {
-                instructions.append(.jump(continueLabel))
+        case .continueExpr(let targetLabel, _):
+            let continueTarget: Int32?
+            if let targetLabel {
+                // Labeled continue: find the matching loop in the control stack
+                continueTarget = driver.ctx.loopControlStack.last(where: { $0.userLabel == targetLabel })?.continueLabel
+            } else {
+                continueTarget = driver.ctx.loopControlStack.last?.continueLabel
+            }
+            if let continueTarget {
+                instructions.append(.jump(continueTarget))
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))

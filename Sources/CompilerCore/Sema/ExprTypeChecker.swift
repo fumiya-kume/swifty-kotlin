@@ -83,7 +83,7 @@ final class ExprTypeChecker {
         case .doWhileExpr(let bodyExpr, let conditionExpr, let range):
             return driver.controlFlowChecker.inferDoWhileExpr(id, bodyExpr: bodyExpr, conditionExpr: conditionExpr, range: range, ctx: ctx, locals: &locals)
 
-        case .breakExpr(let range):
+        case .breakExpr(_, let range):
             if ctx.loopDepth == 0 {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0018",
@@ -94,7 +94,7 @@ final class ExprTypeChecker {
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
 
-        case .continueExpr(let range):
+        case .continueExpr(_, let range):
             if ctx.loopDepth == 0 {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0019",
