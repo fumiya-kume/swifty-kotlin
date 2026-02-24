@@ -220,7 +220,8 @@ extension DataFlowSemaPassPhase {
                     .compactMap({ symbols.symbol($0) })
                     .first(where: { isNominalLayoutTargetSymbol($0.kind) })?.id
             }
-            if !resolvedSubclasses.isEmpty {
+            // Only record sealed subclasses when all declared subclass FQ names could be resolved.
+            if resolvedSubclasses.count == binding.record.sealedSubclassFQNames.count {
                 symbols.setSealedSubclasses(resolvedSubclasses, for: binding.symbol)
             }
         }

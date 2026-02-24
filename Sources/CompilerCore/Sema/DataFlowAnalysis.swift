@@ -628,7 +628,7 @@ public final class DataFlowAnalyzer {
         guard !missing.isEmpty else {
             return nil
         }
-        return missing.sorted(by: { $0.rawValue < $1.rawValue })
+        return Array(missing)
     }
 
     private func isClassWhenExhaustive(
@@ -679,14 +679,6 @@ public final class DataFlowAnalyzer {
         return Set(sema.symbols.directSubtypes(of: classSymbol.id).compactMap { subtype in
             sema.symbols.symbol(subtype)?.name
         })
-    }
-
-    /// P5-78: Get sealed subtype SymbolIDs.
-    private func sealedSubtypeSymbolIDs(for classSymbol: SemanticSymbol, sema: SemaModule) -> [SymbolID] {
-        if let sealedSubs = sema.symbols.sealedSubclasses(for: classSymbol.id) {
-            return sealedSubs
-        }
-        return sema.symbols.directSubtypes(of: classSymbol.id)
     }
 
     private func enumEntryNames(for enumSymbol: SemanticSymbol, sema: SemaModule) -> Set<InternedString> {

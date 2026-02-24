@@ -240,7 +240,7 @@ extension DataFlowSemaPassPhase {
                         let subtypeName = symbolInfo.fqName.map { interner.resolve($0) }.joined(separator: ".")
                         let supertypeName = supertypeSymbol.fqName.map { interner.resolve($0) }.joined(separator: ".")
                         diagnostics.error(
-                            "KSWIFTK-SEMA-0020",
+                            "KSWIFTK-SEMA-0070",
                             "'\(subtypeName)' cannot inherit from sealed type '\(supertypeName)': sealed subclasses must be in the same package.",
                             range: ast.arena.decl(declID).flatMap { d -> SourceRange? in
                                 switch d {

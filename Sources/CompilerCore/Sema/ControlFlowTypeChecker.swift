@@ -391,10 +391,10 @@ final class ControlFlowTypeChecker {
                 if let missingBranches = ctx.dataFlow.missingSealedBranches(
                     subjectType: subjectType, branches: summary, sema: sema
                 ) {
-                    let missingNames = missingBranches.map { interner.resolve($0) }
+                    let missingNames = missingBranches.map { interner.resolve($0) }.sorted()
                     let missingList = missingNames.joined(separator: ", ")
                     ctx.semaCtx.diagnostics.error(
-                        "KSWIFTK-SEMA-0021",
+                        "KSWIFTK-SEMA-0071",
                         "Non-exhaustive when expression on sealed type. Missing branches: \(missingList).",
                         range: range
                     )
