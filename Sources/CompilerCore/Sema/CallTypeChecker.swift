@@ -333,6 +333,12 @@ final class CallTypeChecker {
                    receiverType: memberLookupType,
                    sema: sema
                ) {
+                // Check visibility before returning the property.
+                if let propSymbol = sema.symbols.symbol(propResult.symbol),
+                   !ctx.visibilityChecker.isAccessible(propSymbol, fromFile: ctx.currentFileID, enclosingClass: ctx.enclosingClassSymbol) {
+                    driver.helpers.emitVisibilityError(for: propSymbol, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
                 sema.bindings.bindIdentifier(id, symbol: propResult.symbol)
                 let finalType = safeCall ? sema.types.makeNullable(propResult.type) : propResult.type
                 sema.bindings.bindExprType(id, type: finalType)
