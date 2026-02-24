@@ -174,7 +174,43 @@ struct ConstantCollector {
             return .boolLiteral(value)
         case .stringLiteral(let value, _):
             return .stringLiteral(value)
+        case .unaryExpr(let op, let operand, _):
+            return literalConstantUnaryExpr(op: op, operand: operand, ast: ast)
         default:
+            return nil
+        }
+    }
+
+    /// Handle unary prefix expressions applied to literal operands, e.g. `-100` or `+42`.
+    private func literalConstantUnaryExpr(op: UnaryOp, operand: ExprID, ast: ASTModule) -> KIRExprKind? {
+        guard let inner = literalConstantExpr(operand, ast: ast) else {
+            return nil
+        }
+        switch op {
+        case .unaryMinus:
+            switch inner {
+            case .intLiteral(let v):
+                return .intLiteral(-v)
+            case .longLiteral(let v):
+                return .longLiteral(-v)
+            case .floatLiteral(let v):
+                return .floatLiteral(-v)
+            case .doubleLiteral(let v):
+                return .doubleLiteral(-v)
+            default:
+                return nil
+            }
+        case .unaryPlus:
+            switch inner {
+            case .intLiteral, .longLiteral, .floatLiteral, .doubleLiteral:
+                return inner
+            default:
+                return nil
+            }
+        case .not:
+            if case .boolLiteral(let v) = inner {
+                return .boolLiteral(!v)
+            }
             return nil
         }
     }
