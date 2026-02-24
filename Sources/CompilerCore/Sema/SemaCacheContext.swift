@@ -2,12 +2,17 @@
 ///
 /// When the `-Xfrontend sema-cache` flag is active, ``TypeCheckSemaPassPhase``
 /// creates a non-nil ``SemaCacheContext`` and threads it through the type-checking
-/// pipeline.  The two primary caches are:
+/// pipeline.  This context currently provides:
 ///
 /// 1. **Scope lookup cache** – avoids repeated walks up the scope chain for the
-///    same name in the same scope object.
+///    same name in the same scope object.  All results of ``Scope.lookup(_:)``
+///    are cached until the enclosing scope is invalidated.
 /// 2. **Symbol lookup cache** – avoids repeated bounds-checked array accesses
-///    for ``SymbolTable.symbol(_:)`` with the same ``SymbolID``.
+///    for ``SymbolTable.symbol(_:)`` with the same ``SymbolID``.  Both successful
+///    lookups and known misses (invalid / out-of-bounds IDs) are cached.
+/// 3. **Overload-resolution cache** – memoizes successful overload-resolution
+///    results so that identical resolution requests do not need to be recomputed.
+///    Only successful resolutions are cached; failing calls are never recorded.
 ///
 /// When caching is disabled (the default), all call-sites receive `nil` and fall
 /// back to the original uncached paths.
@@ -17,7 +22,14 @@ public final class SemaCacheContext {
 
     /// Keyed by the identity of the ``Scope`` object (via ``ObjectIdentifier``)
     /// and the interned name being looked up.
+    ///
+    /// The scope objects themselves are retained in ``scopeRetainer`` to prevent
+    /// `ObjectIdentifier` reuse after deallocation.
     private var scopeCache: [ObjectIdentifier: [InternedString: [SymbolID]]] = [:]
+
+    /// Retains scope objects whose identities are used as cache keys, preventing
+    /// `ObjectIdentifier` reuse after a scope is deallocated.
+    private var scopeRetainer: [ObjectIdentifier: Scope] = [:]
 
     /// Cached wrapper around ``Scope.lookup(_:)``.
     public func lookupInScope(_ name: InternedString, scope: Scope) -> [SymbolID] {
@@ -28,13 +40,16 @@ public final class SemaCacheContext {
         }
         recordScopeMiss()
         let result = scope.lookup(name)
+        scopeRetainer[scopeKey] = scope
         scopeCache[scopeKey, default: [:]][name] = result
         return result
     }
 
     /// Invalidates all cached entries for a specific scope (e.g. after an insert).
     public func invalidateScope(_ scope: Scope) {
-        scopeCache.removeValue(forKey: ObjectIdentifier(scope))
+        let key = ObjectIdentifier(scope)
+        scopeCache.removeValue(forKey: key)
+        scopeRetainer.removeValue(forKey: key)
     }
 
     // MARK: - Symbol lookup cache

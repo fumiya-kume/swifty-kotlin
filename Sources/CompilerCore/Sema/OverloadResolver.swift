@@ -46,7 +46,7 @@ public struct ResolvedCall {
 public final class OverloadResolver {
     /// Optional sema cache context.  When non-nil the resolver checks the
     /// call-resolution cache before performing full candidate evaluation.
-    public var cacheContext: SemaCacheContext?
+    var cacheContext: SemaCacheContext?
 
     public init() {}
 

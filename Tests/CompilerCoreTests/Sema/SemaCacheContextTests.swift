@@ -158,8 +158,8 @@ final class SemaCacheContextTests: XCTestCase {
         )
 
         // Resolve without cache
-        let resolverNoCachce = OverloadResolver()
-        let uncached = resolverNoCachce.resolveCall(
+        let resolverNoCache = OverloadResolver()
+        let uncached = resolverNoCache.resolveCall(
             candidates: [fn], call: call, expectedType: intType, ctx: setup.ctx
         )
 
