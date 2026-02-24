@@ -40,6 +40,12 @@ jobs:
       - name: Install LLVM (Linux)
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y llvm-dev
+      - name: Configure LLVM paths (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          LLVM_PREFIX="$(llvm-config --prefix)"
+          echo "C_INCLUDE_PATH=${LLVM_PREFIX}/include" >> "$GITHUB_ENV"
+          echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
       - name: Install LLVM (macOS)
         if: runner.os == 'macOS'
         run: brew install llvm
@@ -68,6 +74,12 @@ jobs:
       - name: Install LLVM (Linux)
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y llvm-dev
+      - name: Configure LLVM paths (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          LLVM_PREFIX="$(llvm-config --prefix)"
+          echo "C_INCLUDE_PATH=${LLVM_PREFIX}/include" >> "$GITHUB_ENV"
+          echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
       - name: Install Kotlin and Java (Linux)
         if: runner.os == 'Linux'
         run: sudo apt-get install -y kotlin default-jdk
@@ -120,6 +132,12 @@ jobs:
       - name: Install LLVM and jq (Linux)
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y llvm-dev jq
+      - name: Configure LLVM paths (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          LLVM_PREFIX="$(llvm-config --prefix)"
+          echo "C_INCLUDE_PATH=${LLVM_PREFIX}/include" >> "$GITHUB_ENV"
+          echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
       - name: Install LLVM (macOS)
         if: runner.os == 'macOS'
         run: brew install llvm
