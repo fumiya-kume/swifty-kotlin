@@ -328,6 +328,20 @@ extension DataFlowSemaPassPhase {
                     diagnostics: diagnostics,
                     interner: interner
                 )
+                if let companionDeclID = nestedClass.companionObject {
+                    collectCompanionObjectHeader(
+                        companionDeclID: companionDeclID,
+                        ownerFQName: nestedFQName,
+                        ownerSymbol: nestedSymbol,
+                        ast: ast,
+                        symbols: symbols,
+                        types: types,
+                        bindings: bindings,
+                        scope: nestedScope,
+                        diagnostics: diagnostics,
+                        interner: interner
+                    )
+                }
             case .interfaceDecl(let nestedInterface):
                 let nestedFQName = ownerFQName + [nestedInterface.name]
                 checkAndReportDuplicateDeclaration(
@@ -387,6 +401,20 @@ extension DataFlowSemaPassPhase {
                     diagnostics: diagnostics,
                     interner: interner
                 )
+                if let companionDeclID = nestedInterface.companionObject {
+                    collectCompanionObjectHeader(
+                        companionDeclID: companionDeclID,
+                        ownerFQName: nestedFQName,
+                        ownerSymbol: nestedSymbol,
+                        ast: ast,
+                        symbols: symbols,
+                        types: types,
+                        bindings: bindings,
+                        scope: nestedScope,
+                        diagnostics: diagnostics,
+                        interner: interner
+                    )
+                }
             default:
                 continue
             }
