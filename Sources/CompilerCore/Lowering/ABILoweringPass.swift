@@ -371,10 +371,10 @@ final class ABILoweringPass: LoweringPass {
                 let isSyntheticAccessor: Bool = {
                     guard let s = callSymbol else { return false }
                     let raw = s.rawValue
+                    // Accepted range: (-20_000, -12_000].
+                    // Bounded below by the -20_000 reified type parameter range.
                     guard raw <= -12_000 && raw > -20_000 else { return false }
-                    let getterProp = -12_000 - raw   // >= 0 when raw <= -12_000
-                    let setterProp = -13_000 - raw   // >= 0 when raw <= -13_000
-                    return getterProp >= 0 || setterProp >= 0
+                    return true
                 }()
                 let canThrow = !isSyntheticAccessor && !nonThrowingCallees.contains(callee)
 

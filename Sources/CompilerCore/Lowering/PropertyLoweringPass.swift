@@ -3,6 +3,9 @@ import Foundation
 final class PropertyLoweringPass: LoweringPass {
     static let name = "PropertyLowering"
 
+    /// Lazily built reverse map from backing field symbol to its owning property symbol.
+    private var backingFieldToPropertyMap: [SymbolID: SymbolID]?
+
     func run(module: KIRModule, ctx: KIRContext) throws {
         let getterName = ctx.interner.intern("get")
         let setterName = ctx.interner.intern("set")
@@ -68,7 +71,14 @@ final class PropertyLoweringPass: LoweringPass {
                    interner.resolve(symInfo.name).hasPrefix("$delegate_") {
                     let isSetter = callee == setValueName
                     let accessorSymbolOffset: Int32 = isSetter ? -13_000 : -12_000
-                    let accessorSymbol = SymbolID(rawValue: accessorSymbolOffset - sym.rawValue)
+                    // Derive the property symbol from the delegate field name
+                    // ($delegate_<propName> → <propName>). MemberLowerer creates
+                    // accessor functions keyed off the property symbol, not the
+                    // delegate storage field.
+                    let propSymbol = self.propertySymbolForDelegateField(
+                        sym, symInfo: symInfo, sema: sema, interner: interner
+                    ) ?? sym
+                    let accessorSymbol = SymbolID(rawValue: accessorSymbolOffset - propSymbol.rawValue)
                     loweredBody.append(
                         .call(
                             symbol: accessorSymbol,
@@ -120,15 +130,40 @@ final class PropertyLoweringPass: LoweringPass {
     }
 
     /// Given a backing field symbol, find the property symbol it belongs to.
+    /// Uses a lazily built reverse map for O(1) lookups after the first call.
     private func propertySymbolForBackingField(
         _ backingFieldSymbol: SymbolID,
         sema: SemaModule
     ) -> SymbolID? {
-        for sym in sema.symbols.allSymbols() {
-            if sema.symbols.backingFieldSymbol(for: sym.id) == backingFieldSymbol {
-                return sym.id
+        if backingFieldToPropertyMap == nil {
+            var map: [SymbolID: SymbolID] = [:]
+            for sym in sema.symbols.allSymbols() {
+                if let backing = sema.symbols.backingFieldSymbol(for: sym.id) {
+                    map[backing] = sym.id
+                }
             }
+            backingFieldToPropertyMap = map
         }
-        return nil
+        return backingFieldToPropertyMap?[backingFieldSymbol]
+    }
+
+    /// Given a delegate storage field symbol ($delegate_<name>), find the
+    /// property symbol it belongs to by stripping the prefix and looking
+    /// up a sibling symbol with the property name.
+    private func propertySymbolForDelegateField(
+        _ delegateFieldSymbol: SymbolID,
+        symInfo: SemanticSymbol,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> SymbolID? {
+        let delegateName = interner.resolve(symInfo.name)
+        guard delegateName.hasPrefix("$delegate_") else { return nil }
+        let propertyName = String(delegateName.dropFirst("$delegate_".count))
+        let internedPropName = interner.intern(propertyName)
+        // Look up a sibling with the matching property name in the
+        // same parent scope (same fqName prefix).
+        let parentFQ = symInfo.fqName.dropLast()
+        let propFQ = Array(parentFQ) + [internedPropName]
+        return sema.symbols.lookup(fqName: propFQ)
     }
 }
