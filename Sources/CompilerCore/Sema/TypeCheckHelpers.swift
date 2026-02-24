@@ -205,7 +205,7 @@ struct TypeCheckHelpers {
                             diagnostics: diagnostics
                         ) {
                             if nullability == .nullable {
-                                return sema.types.makeNullable(expanded)
+                                return applyNullabilityForTypeCheck(expanded, types: sema.types)
                             }
                             return expanded
                         }
@@ -324,7 +324,7 @@ struct TypeCheckHelpers {
                 diagnostics: diagnostics
             ) {
                 if classType.nullability == .nullable {
-                    return sema.types.makeNullable(resolved)
+                    return applyNullabilityForTypeCheck(resolved, types: sema.types)
                 }
                 return resolved
             }
@@ -388,7 +388,7 @@ struct TypeCheckHelpers {
                     replacementType = types.nullableAnyType
                 }
                 if tp.nullability == .nullable {
-                    return types.makeNullable(replacementType)
+                    return applyNullabilityForTypeCheck(replacementType, types: types)
                 }
                 return replacementType
             }
@@ -450,7 +450,7 @@ struct TypeCheckHelpers {
                let replacement = argSubstitution[tp.symbol] {
                 if case .star = replacement { return .star }
                 let innerType = typeArgInnerTypeForCheck(replacement)
-                let resolved = tp.nullability == .nullable ? sema.types.makeNullable(innerType) : innerType
+                let resolved = tp.nullability == .nullable ? applyNullabilityForTypeCheck(innerType, types: sema.types) : innerType
                 return .out(resolved)
             }
             return .out(applyAliasSubstitution(inner, argSubstitution: argSubstitution, sema: sema))
@@ -459,7 +459,7 @@ struct TypeCheckHelpers {
                let replacement = argSubstitution[tp.symbol] {
                 if case .star = replacement { return .star }
                 let innerType = typeArgInnerTypeForCheck(replacement)
-                let resolved = tp.nullability == .nullable ? sema.types.makeNullable(innerType) : innerType
+                let resolved = tp.nullability == .nullable ? applyNullabilityForTypeCheck(innerType, types: sema.types) : innerType
                 return .in(resolved)
             }
             return .in(applyAliasSubstitution(inner, argSubstitution: argSubstitution, sema: sema))
@@ -468,14 +468,38 @@ struct TypeCheckHelpers {
         }
     }
 
+    /// Apply nullability to a type, handling function types, primitives, and special types
+    /// that `TypeSystem.makeNullable` may not wrap correctly.
+    /// Mirrors `DataFlowSemaPassPhase.applyNullability`.
+    private func applyNullabilityForTypeCheck(_ typeID: TypeID, types: TypeSystem) -> TypeID {
+        switch types.kind(of: typeID) {
+        case .primitive(let p, _):
+            return types.make(.primitive(p, .nullable))
+        case .classType(let ct):
+            return types.make(.classType(ClassType(classSymbol: ct.classSymbol, args: ct.args, nullability: .nullable)))
+        case .typeParam(let tp):
+            return types.make(.typeParam(TypeParamType(symbol: tp.symbol, nullability: .nullable)))
+        case .functionType(let ft):
+            return types.make(.functionType(FunctionType(receiver: ft.receiver, params: ft.params, returnType: ft.returnType, isSuspend: ft.isSuspend, nullability: .nullable)))
+        case .any, .unit, .nothing:
+            let nullable = types.makeNullable(typeID)
+            if nullable == typeID {
+                return types.isSubtype(types.nullableNothingType, typeID) ? typeID : types.nullableAnyType
+            }
+            return nullable
+        default:
+            return types.nullableAnyType
+        }
+    }
+
     private func applyNullabilityToTypeArg(_ arg: TypeArg, types: TypeSystem) -> TypeArg {
         switch arg {
         case .invariant(let inner):
-            return .invariant(types.makeNullable(inner))
+            return .invariant(applyNullabilityForTypeCheck(inner, types: types))
         case .out(let inner):
-            return .out(types.makeNullable(inner))
+            return .out(applyNullabilityForTypeCheck(inner, types: types))
         case .in(let inner):
-            return .in(types.makeNullable(inner))
+            return .in(applyNullabilityForTypeCheck(inner, types: types))
         case .star:
             return .star
         }
