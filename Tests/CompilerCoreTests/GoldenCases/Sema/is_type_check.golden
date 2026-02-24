@@ -1,0 +1,46 @@
+symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s1 kind=package fq=kotlin vis=public flags=synthetic
+symbol s2 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s3 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s4 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#4
+symbol s5 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s6 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=golden.sema.basicIs vis=public flags=_ sig=recv=_ params=[Any] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s8 kind=valueParameter fq=golden.sema.basicIs.$7.v vis=private flags=_
+symbol s9 kind=function fq=golden.sema.negatedIs vis=public flags=_ sig=recv=_ params=[Any] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s10 kind=valueParameter fq=golden.sema.negatedIs.$9.v vis=private flags=_
+symbol s11 kind=function fq=golden.sema.smartCastAfterIs vis=public flags=_ sig=recv=_ params=[Any] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s12 kind=valueParameter fq=golden.sema.smartCastAfterIs.$11.v vis=private flags=_
+symbol s13 kind=function fq=golden.sema.combinedCondition vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s14 kind=valueParameter fq=golden.sema.combinedCondition.$13.v vis=private flags=_
+file f0 package=golden.sema
+  decl d0 fun basicIs suspend=0 inline=0 sym=s7
+  decl d1 fun negatedIs suspend=0 inline=0 sym=s9
+  decl d2 fun smartCastAfterIs suspend=0 inline=0 sym=s11
+  decl d3 fun combinedCondition suspend=0 inline=0 sym=s13
+expr e0 name(v) type=Any ref=s8
+expr e1 isCheck expr=e0 type=t2 type=Boolean
+expr e2 name(v) type=Any ref=s10
+expr e3 isCheck! expr=e2 type=t5 type=Boolean
+expr e4 name(v) type=Any ref=s12
+expr e5 isCheck expr=e4 type=t8 type=Boolean
+expr e6 name(v) type=String ref=s12
+expr e7 memberCall recv=e6 callee=length args=[] type=<error>
+expr e8 return value=e7 type=<error>
+expr e9 blockExpr stmts=[] trailing=e8 type=<error>
+expr e10 if cond=e5 then=e9 else=_ type=Unit
+expr e11 int(0) type=Int
+expr e12 return value=e11 type=Int
+expr e13 name(v) type=Any ref=s14
+expr e14 isCheck expr=e13 type=t11 type=Boolean
+expr e15 name(v) type=Any ref=s14
+expr e16 memberCall recv=e15 callee=length args=[] type=<error>
+expr e17 int(3) type=Int
+expr e18 binary(greaterThan) lhs=e16 rhs=e17 type=Boolean
+expr e19 binary(logicalAnd) lhs=e14 rhs=e18 type=Boolean
+expr e20 name(v) type=String ref=s14
+expr e21 return value=e20 type=String
+expr e22 blockExpr stmts=[] trailing=e21 type=String
+expr e23 if cond=e19 then=e22 else=_ type=Unit
+expr e24 string() type=String
+expr e25 return value=e24 type=String

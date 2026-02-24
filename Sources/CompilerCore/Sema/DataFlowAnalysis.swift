@@ -208,27 +208,78 @@ public final class DataFlowAnalyzer {
             return ConditionBranch(trueState: base, falseState: base)
         }
         guard let typeRef = ast.arena.typeRef(typeRefID),
-              case .named(let path, _, let nullable) = typeRef,
+              case .named(let path, let argRefs, let nullable) = typeRef,
               let firstName = path.first else {
             return ConditionBranch(trueState: base, falseState: base)
         }
-        let candidates = sema.symbols.lookupAll(fqName: [firstName]).filter { symbolID in
-            guard let sym = sema.symbols.symbol(symbolID) else { return false }
-            switch sym.kind {
-            case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
-                return true
-            default:
-                return false
+        let targetName = interner.resolve(firstName)
+        // P5-101: Handle primitive types (String, Int, Boolean, etc.) in is-checks
+        let narrowedType: TypeID
+        if let primitiveType = resolveBuiltinTypeName(targetName, types: sema.types) {
+            if nullable {
+                narrowedType = sema.types.makeNullable(primitiveType)
+            } else {
+                narrowedType = primitiveType
             }
-        }.sorted(by: { $0.rawValue < $1.rawValue })
-        guard let targetSymbolID = candidates.first else {
-            return ConditionBranch(trueState: base, falseState: base)
+        } else {
+            let candidates = sema.symbols.lookupAll(fqName: [firstName]).filter { symbolID in
+                guard let sym = sema.symbols.symbol(symbolID) else { return false }
+                switch sym.kind {
+                case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
+                    return true
+                default:
+                    return false
+                }
+            }.sorted(by: { $0.rawValue < $1.rawValue })
+            guard let targetSymbolID = candidates.first else {
+                return ConditionBranch(trueState: base, falseState: base)
+            }
+            // Resolve type arguments for the narrowed type (P5-101: generics support)
+            let resolvedArgs: [TypeArg] = argRefs.map { argRef in
+                switch argRef {
+                case .invariant(let innerRef):
+                    guard let inner = ast.arena.typeRef(innerRef),
+                          case .named(let innerPath, _, _) = inner,
+                          let innerFirst = innerPath.first else {
+                        return .star
+                    }
+                    let innerName = interner.resolve(innerFirst)
+                    if let builtin = resolveBuiltinTypeName(innerName, types: sema.types) {
+                        return .invariant(builtin)
+                    }
+                    return .star
+                case .out(let innerRef):
+                    guard let inner = ast.arena.typeRef(innerRef),
+                          case .named(let innerPath, _, _) = inner,
+                          let innerFirst = innerPath.first else {
+                        return .star
+                    }
+                    let innerName = interner.resolve(innerFirst)
+                    if let builtin = resolveBuiltinTypeName(innerName, types: sema.types) {
+                        return .out(builtin)
+                    }
+                    return .star
+                case .in(let innerRef):
+                    guard let inner = ast.arena.typeRef(innerRef),
+                          case .named(let innerPath, _, _) = inner,
+                          let innerFirst = innerPath.first else {
+                        return .star
+                    }
+                    let innerName = interner.resolve(innerFirst)
+                    if let builtin = resolveBuiltinTypeName(innerName, types: sema.types) {
+                        return .in(builtin)
+                    }
+                    return .star
+                case .star:
+                    return .star
+                }
+            }
+            narrowedType = sema.types.make(.classType(ClassType(
+                classSymbol: targetSymbolID,
+                args: resolvedArgs,
+                nullability: nullable ? .nullable : .nonNull
+            )))
         }
-        let narrowedType = sema.types.make(.classType(ClassType(
-            classSymbol: targetSymbolID,
-            args: [],
-            nullability: nullable ? .nullable : .nonNull
-        )))
         var trueVars = base.variables
         trueVars[symbol] = VariableFlowState(
             possibleTypes: [narrowedType],
@@ -346,23 +397,34 @@ public final class DataFlowAnalyzer {
                   let firstName = path.first else {
                 return base
             }
-            let candidates = sema.symbols.lookupAll(fqName: [firstName]).filter { symbolID in
-                guard let sym = sema.symbols.symbol(symbolID) else { return false }
-                switch sym.kind {
-                case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
-                    return true
-                default:
-                    return false
+            // P5-101: Handle primitive types in when-subject is-checks
+            let targetName = interner.resolve(firstName)
+            let narrowed: TypeID
+            if let primitiveType = resolveBuiltinTypeName(targetName, types: sema.types) {
+                if nullable {
+                    narrowed = sema.types.makeNullable(primitiveType)
+                } else {
+                    narrowed = primitiveType
                 }
+            } else {
+                let candidates = sema.symbols.lookupAll(fqName: [firstName]).filter { symbolID in
+                    guard let sym = sema.symbols.symbol(symbolID) else { return false }
+                    switch sym.kind {
+                    case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
+                        return true
+                    default:
+                        return false
+                    }
+                }
+                guard let targetSymbolID = candidates.sorted(by: { $0.rawValue < $1.rawValue }).first else {
+                    return base
+                }
+                narrowed = sema.types.make(.classType(ClassType(
+                    classSymbol: targetSymbolID,
+                    args: [],
+                    nullability: nullable ? .nullable : .nonNull
+                )))
             }
-            guard let targetSymbolID = candidates.sorted(by: { $0.rawValue < $1.rawValue }).first else {
-                return base
-            }
-            let narrowed = sema.types.make(.classType(ClassType(
-                classSymbol: targetSymbolID,
-                args: [],
-                nullability: nullable ? .nullable : .nonNull
-            )))
             var vars = base.variables
             vars[subjectSymbol] = VariableFlowState(
                 possibleTypes: [narrowed],
@@ -677,6 +739,22 @@ public final class DataFlowAnalyzer {
         return Set(sema.symbols.directSubtypes(of: classSymbol.id).compactMap { subtype in
             sema.symbols.symbol(subtype)?.name
         })
+    }
+
+    private func resolveBuiltinTypeName(_ name: String, types: TypeSystem) -> TypeID? {
+        switch name {
+        case "Int":     return types.intType
+        case "Long":    return types.longType
+        case "Float":   return types.floatType
+        case "Double":  return types.doubleType
+        case "Boolean": return types.booleanType
+        case "Char":    return types.charType
+        case "String":  return types.stringType
+        case "Any":     return types.anyType
+        case "Unit":    return types.unitType
+        case "Nothing": return types.nothingType
+        default:        return nil
+        }
     }
 
     private func enumEntryNames(for enumSymbol: SemanticSymbol, sema: SemaModule) -> Set<InternedString> {
