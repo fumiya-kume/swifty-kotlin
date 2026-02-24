@@ -235,45 +235,7 @@ public final class DataFlowAnalyzer {
                 return ConditionBranch(trueState: base, falseState: base)
             }
             // Resolve type arguments for the narrowed type (P5-101: generics support)
-            let resolvedArgs: [TypeArg] = argRefs.map { argRef in
-                switch argRef {
-                case .invariant(let innerRef):
-                    guard let inner = ast.arena.typeRef(innerRef),
-                          case .named(let innerPath, _, _) = inner,
-                          let innerFirst = innerPath.first else {
-                        return .star
-                    }
-                    let innerName = interner.resolve(innerFirst)
-                    if let builtin = resolveBuiltinTypeName(innerName, types: sema.types) {
-                        return .invariant(builtin)
-                    }
-                    return .star
-                case .out(let innerRef):
-                    guard let inner = ast.arena.typeRef(innerRef),
-                          case .named(let innerPath, _, _) = inner,
-                          let innerFirst = innerPath.first else {
-                        return .star
-                    }
-                    let innerName = interner.resolve(innerFirst)
-                    if let builtin = resolveBuiltinTypeName(innerName, types: sema.types) {
-                        return .out(builtin)
-                    }
-                    return .star
-                case .in(let innerRef):
-                    guard let inner = ast.arena.typeRef(innerRef),
-                          case .named(let innerPath, _, _) = inner,
-                          let innerFirst = innerPath.first else {
-                        return .star
-                    }
-                    let innerName = interner.resolve(innerFirst)
-                    if let builtin = resolveBuiltinTypeName(innerName, types: sema.types) {
-                        return .in(builtin)
-                    }
-                    return .star
-                case .star:
-                    return .star
-                }
-            }
+            let resolvedArgs: [TypeArg] = resolveTypeArgRefs(argRefs, ast: ast, interner: interner, types: sema.types)
             narrowedType = sema.types.make(.classType(ClassType(
                 classSymbol: targetSymbolID,
                 args: resolvedArgs,
@@ -393,7 +355,7 @@ public final class DataFlowAnalyzer {
                 return base
             }
             guard let typeRef = ast.arena.typeRef(typeRefID),
-                  case .named(let path, _, let nullable) = typeRef,
+                  case .named(let path, let argRefs, let nullable) = typeRef,
                   let firstName = path.first else {
                 return base
             }
@@ -419,9 +381,11 @@ public final class DataFlowAnalyzer {
                 guard let targetSymbolID = candidates.sorted(by: { $0.rawValue < $1.rawValue }).first else {
                     return base
                 }
+                // Resolve type arguments for consistency with branchOnIsCheck (P5-101)
+                let resolvedArgs: [TypeArg] = resolveTypeArgRefs(argRefs, ast: ast, interner: interner, types: sema.types)
                 narrowed = sema.types.make(.classType(ClassType(
                     classSymbol: targetSymbolID,
-                    args: [],
+                    args: resolvedArgs,
                     nullability: nullable ? .nullable : .nonNull
                 )))
             }
@@ -739,6 +703,55 @@ public final class DataFlowAnalyzer {
         return Set(sema.symbols.directSubtypes(of: classSymbol.id).compactMap { subtype in
             sema.symbols.symbol(subtype)?.name
         })
+    }
+
+    /// Resolve TypeArgRef array into TypeArg array, mapping builtin type names to their TypeIDs.
+    /// Shared by branchOnIsCheck and branchOnWhenSubject for consistent generic type arg resolution (P5-101).
+    private func resolveTypeArgRefs(
+        _ argRefs: [TypeArgRef],
+        ast: ASTModule,
+        interner: StringInterner,
+        types: TypeSystem
+    ) -> [TypeArg] {
+        argRefs.map { argRef in
+            switch argRef {
+            case .invariant(let innerRef):
+                guard let inner = ast.arena.typeRef(innerRef),
+                      case .named(let innerPath, _, _) = inner,
+                      let innerFirst = innerPath.first else {
+                    return .star
+                }
+                let innerName = interner.resolve(innerFirst)
+                if let builtin = resolveBuiltinTypeName(innerName, types: types) {
+                    return .invariant(builtin)
+                }
+                return .star
+            case .out(let innerRef):
+                guard let inner = ast.arena.typeRef(innerRef),
+                      case .named(let innerPath, _, _) = inner,
+                      let innerFirst = innerPath.first else {
+                    return .star
+                }
+                let innerName = interner.resolve(innerFirst)
+                if let builtin = resolveBuiltinTypeName(innerName, types: types) {
+                    return .out(builtin)
+                }
+                return .star
+            case .in(let innerRef):
+                guard let inner = ast.arena.typeRef(innerRef),
+                      case .named(let innerPath, _, _) = inner,
+                      let innerFirst = innerPath.first else {
+                    return .star
+                }
+                let innerName = interner.resolve(innerFirst)
+                if let builtin = resolveBuiltinTypeName(innerName, types: types) {
+                    return .in(builtin)
+                }
+                return .star
+            case .star:
+                return .star
+            }
+        }
     }
 
     private func resolveBuiltinTypeName(_ name: String, types: TypeSystem) -> TypeID? {
