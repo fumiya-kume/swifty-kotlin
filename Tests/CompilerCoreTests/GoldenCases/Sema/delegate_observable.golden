@@ -28,7 +28,7 @@ expr e10 name(name) type=String ref=s11
 expr e11 call callee=e9 args=[_:e10] type=Unit
 expr e12 name(name) type=_
 expr e13 string(updated) type=String
-expr e14 localAssign name value=e13 type=<error>
+expr e14 localAssign name value=e13 type=Unit ref=s11
 expr e15 name(println) type=_
 expr e16 name(name) type=String ref=s11
 expr e17 call callee=e15 args=[_:e16] type=Unit
