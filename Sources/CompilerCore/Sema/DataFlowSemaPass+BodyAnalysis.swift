@@ -251,18 +251,32 @@ extension DataFlowSemaPassPhase {
         }
     }
 
+    /// Maximum depth for recursive typealias expansion to prevent infinite loops.
+    private static let maxAliasExpansionDepth = 32
+
     private func resolveTypeAliasUnderlying(
         _ symbolID: SymbolID,
         symbols: SymbolTable,
         types: TypeSystem,
         typeArgs: [TypeArg] = [],
         visited: Set<SymbolID>,
+        depth: Int = 0,
         diagnostics: DiagnosticEngine? = nil
     ) -> TypeID? {
+        // Cycle detection
         guard !visited.contains(symbolID) else {
             diagnostics?.error(
-                "KSWIFTK-SEMA-0060",
+                "KSWIFTK-SEMA-ALIAS-CYCLE",
                 "Cyclic typealias definition detected.",
+                range: symbols.symbol(symbolID)?.declSite
+            )
+            return nil
+        }
+        // Depth limit
+        guard depth < DataFlowSemaPassPhase.maxAliasExpansionDepth else {
+            diagnostics?.error(
+                "KSWIFTK-SEMA-ALIAS-DEPTH",
+                "Typealias expansion exceeded maximum depth of \(DataFlowSemaPassPhase.maxAliasExpansionDepth).",
                 range: symbols.symbol(symbolID)?.declSite
             )
             return nil
@@ -290,6 +304,7 @@ extension DataFlowSemaPassPhase {
                 types: types,
                 typeArgs: chainArgs,
                 visited: newVisited,
+                depth: depth + 1,
                 diagnostics: diagnostics
             ) {
                 if classType.nullability == .nullable {
