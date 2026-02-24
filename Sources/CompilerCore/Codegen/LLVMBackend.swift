@@ -95,7 +95,7 @@ public final class LLVMBackend {
     func cachedRuntimeStubPath() -> String? {
         let triple = targetTripleString()
         let source = cRuntimePreamble().joined(separator: "\n")
-        let cacheKey = stableFNV1a64Hex(triple + "_" + stableFNV1a64Hex(source))
+        let cacheKey = Self.stableFNV1a64Hex(triple + "_" + Self.stableFNV1a64Hex(source))
 
         Self.runtimeStubLock.lock()
         defer { Self.runtimeStubLock.unlock() }
@@ -184,13 +184,13 @@ public final class LLVMBackend {
     }
 
     private func deterministicTempSourceURL(outputPath: String) -> URL {
-        let key = stableFNV1a64Hex(outputPath)
+        let key = Self.stableFNV1a64Hex(outputPath)
         return FileManager.default.temporaryDirectory
             .appendingPathComponent("kswiftk_codegen_\(key)")
             .appendingPathExtension("c")
     }
 
-    private func stableFNV1a64Hex(_ value: String) -> String {
+    static func stableFNV1a64Hex(_ value: String) -> String {
         var hash: UInt64 = 0xcbf29ce484222325
         for byte in value.utf8 {
             hash ^= UInt64(byte)

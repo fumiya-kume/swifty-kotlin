@@ -161,15 +161,16 @@ public final class LinkPhase: CompilerPhase {
     /// Files are placed under a dedicated `kswiftk` subdirectory to avoid
     /// collisions with unrelated entries in the shared temp directory.
     private func stableEntryWrapperURL(outputPath: String) -> URL {
-        var hash: UInt64 = 0xcbf29ce484222325
-        for byte in outputPath.utf8 {
-            hash ^= UInt64(byte)
-            hash &*= 0x100000001b3
-        }
-        let key = String(hash, radix: 16)
+        let key = LLVMBackend.stableFNV1a64Hex(outputPath)
         let cacheDir = FileManager.default.temporaryDirectory
             .appendingPathComponent("kswiftk", isDirectory: true)
-        try? FileManager.default.createDirectory(at: cacheDir, withIntermediateDirectories: true)
+        do {
+            try FileManager.default.createDirectory(at: cacheDir, withIntermediateDirectories: true)
+        } catch {
+            FileHandle.standardError.write(
+                Data("warning: failed to create cache directory at \(cacheDir.path): \(error)\n".utf8)
+            )
+        }
         return cacheDir.appendingPathComponent("entry_\(key).c")
     }
 
@@ -177,10 +178,17 @@ public final class LinkPhase: CompilerPhase {
     /// or when the existing content differs, avoiding unnecessary I/O and
     /// downstream rebuilds.
     private func writeIfChanged(content: String, to url: URL) throws {
-        if FileManager.default.fileExists(atPath: url.path),
-           let existing = try? String(contentsOf: url, encoding: .utf8),
-           existing == content {
-            return
+        if FileManager.default.fileExists(atPath: url.path) {
+            do {
+                let existing = try String(contentsOf: url, encoding: .utf8)
+                if existing == content {
+                    return
+                }
+            } catch {
+                FileHandle.standardError.write(
+                    Data("warning: failed to read existing file at \(url.path); overwriting. Error: \(error)\n".utf8)
+                )
+            }
         }
         try content.write(to: url, atomically: true, encoding: .utf8)
     }
