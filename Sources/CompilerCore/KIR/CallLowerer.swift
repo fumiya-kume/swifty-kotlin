@@ -792,24 +792,21 @@ final class CallLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
-        var indexIDs: [KIRExprID] = []
-        for indexExpr in indices {
-            let indexID = driver.lowerExpr(
-                indexExpr,
-                ast: ast,
-                sema: sema,
-                arena: arena,
-                interner: interner,
-                propertyConstantInitializers: propertyConstantInitializers,
-                instructions: &instructions
-            )
-            indexIDs.append(indexID)
-        }
+        // Built-in array get only supports a single Int index
+        let indexID = driver.lowerExpr(
+            indices[0],
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
         instructions.append(.call(
             symbol: nil,
             callee: interner.intern("kk_array_get"),
-            arguments: [receiverID] + indexIDs,
+            arguments: [receiverID, indexID],
             result: result,
             canThrow: false,
             thrownResult: nil
@@ -838,19 +835,16 @@ final class CallLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
-        var indexIDs: [KIRExprID] = []
-        for indexExpr in indices {
-            let indexID = driver.lowerExpr(
-                indexExpr,
-                ast: ast,
-                sema: sema,
-                arena: arena,
-                interner: interner,
-                propertyConstantInitializers: propertyConstantInitializers,
-                instructions: &instructions
-            )
-            indexIDs.append(indexID)
-        }
+        // Built-in array set only supports a single Int index
+        let indexID = driver.lowerExpr(
+            indices[0],
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
         let valueID = driver.lowerExpr(
             valueExpr,
             ast: ast,
@@ -863,7 +857,7 @@ final class CallLowerer {
         instructions.append(.call(
             symbol: nil,
             callee: interner.intern("kk_array_set"),
-            arguments: [receiverID] + indexIDs + [valueID],
+            arguments: [receiverID, indexID, valueID],
             result: nil,
             canThrow: false,
             thrownResult: nil
@@ -885,7 +879,10 @@ final class CallLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
-        // Desugar: a[i] += v -> a.set(i, a.get(i).plus(v))
+        // Conceptual desugaring: a[i] += v
+        //   1) t = kk_array_get(a, i)
+        //   2) t' = kk_op_*(t, v)      // appropriate kk_op_* for the compound operator
+        //   3) kk_array_set(a, i, t')
         let receiverID = driver.lowerExpr(
             receiverExpr,
             ast: ast,
@@ -895,19 +892,16 @@ final class CallLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
-        var indexIDs: [KIRExprID] = []
-        for indexExpr in indices {
-            let indexID = driver.lowerExpr(
-                indexExpr,
-                ast: ast,
-                sema: sema,
-                arena: arena,
-                interner: interner,
-                propertyConstantInitializers: propertyConstantInitializers,
-                instructions: &instructions
-            )
-            indexIDs.append(indexID)
-        }
+        // Built-in array compound assign only supports a single Int index
+        let indexID = driver.lowerExpr(
+            indices[0],
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
         let valueID = driver.lowerExpr(
             valueExpr,
             ast: ast,
@@ -917,32 +911,40 @@ final class CallLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
-        // Step 1: get current value: a.get(i)
+        // Step 1: get current value
         let getResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
         instructions.append(.call(
             symbol: nil,
             callee: interner.intern("kk_array_get"),
-            arguments: [receiverID] + indexIDs,
+            arguments: [receiverID, indexID],
             result: getResult,
             canThrow: false,
             thrownResult: nil
         ))
-        // Step 2: apply binary op: current.plus(v)
+        // Step 2: apply binary op
         let opResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
-        // Determine the operator name from the AST
         guard let expr = ast.arena.expr(exprID),
               case .indexedCompoundAssign(let op, _, _, _, _) = expr else {
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
         }
+        // Determine the runtime op stub.
+        // Use kk_string_concat for String += String (matching lowerBinaryExpr pattern),
+        // otherwise use the appropriate numeric op stub.
+        let stringType = sema.types.make(.primitive(.string, .nonNull))
+        let exprBoundType = sema.bindings.exprTypes[exprID]
         let opName: String
-        switch op {
-        case .plusAssign: opName = "kk_op_add"
-        case .minusAssign: opName = "kk_op_sub"
-        case .timesAssign: opName = "kk_op_mul"
-        case .divAssign: opName = "kk_op_div"
-        case .modAssign: opName = "kk_op_mod"
+        if op == .plusAssign, exprBoundType == stringType {
+            opName = "kk_string_concat"
+        } else {
+            switch op {
+            case .plusAssign: opName = "kk_op_add"
+            case .minusAssign: opName = "kk_op_sub"
+            case .timesAssign: opName = "kk_op_mul"
+            case .divAssign: opName = "kk_op_div"
+            case .modAssign: opName = "kk_op_mod"
+            }
         }
         instructions.append(.call(
             symbol: nil,
@@ -952,11 +954,11 @@ final class CallLowerer {
             canThrow: false,
             thrownResult: nil
         ))
-        // Step 3: set: a.set(i, result)
+        // Step 3: set new value
         instructions.append(.call(
             symbol: nil,
             callee: interner.intern("kk_array_set"),
-            arguments: [receiverID] + indexIDs + [opResult],
+            arguments: [receiverID, indexID, opResult],
             result: nil,
             canThrow: false,
             thrownResult: nil

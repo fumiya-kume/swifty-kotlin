@@ -132,16 +132,17 @@ final class LocalDeclTypeChecker {
             sema: sema
         )
 
-        // Infer all index expressions
+        // Infer all index expressions without forcing Int.
+        // Int constraint is only applied in the built-in array fallback.
         var indexTypes: [TypeID] = []
         for indexExpr in indices {
-            let indexType = driver.inferExpr(indexExpr, ctx: ctx, locals: &locals, expectedType: intType)
+            let indexType = driver.inferExpr(indexExpr, ctx: ctx, locals: &locals, expectedType: nil)
             indexTypes.append(indexType)
         }
 
         if !getCandidates.isEmpty {
             // Resolve via operator fun get
-            let callArgs = indexTypes.enumerated().map { (_, type) in CallArg(type: type) }
+            let callArgs = indexTypes.map { CallArg(type: $0) }
             let resolved = ctx.resolver.resolveCall(
                 candidates: getCandidates,
                 call: CallExpr(
@@ -160,17 +161,19 @@ final class LocalDeclTypeChecker {
             }
         }
 
-        // Fallback: built-in array access (single Int index)
-        for (i, indexExpr) in indices.enumerated() {
-            driver.emitSubtypeConstraint(
-                left: indexTypes[i],
-                right: intType,
-                range: ast.arena.exprRange(indexExpr) ?? range,
-                solver: ConstraintSolver(),
-                sema: sema,
-                diagnostics: ctx.semaCtx.diagnostics
-            )
+        // Fallback: built-in array access (single Int index only)
+        guard indices.count == 1 else {
+            sema.bindings.bindExprType(id, type: sema.types.errorType)
+            return sema.types.errorType
         }
+        driver.emitSubtypeConstraint(
+            left: indexTypes[0],
+            right: intType,
+            range: ast.arena.exprRange(indices[0]) ?? range,
+            solver: ConstraintSolver(),
+            sema: sema,
+            diagnostics: ctx.semaCtx.diagnostics
+        )
         let elementType = driver.helpers.arrayElementType(for: receiverType, sema: sema, interner: interner) ?? sema.types.anyType
         sema.bindings.bindExprType(id, type: elementType)
         return elementType
@@ -200,10 +203,11 @@ final class LocalDeclTypeChecker {
             sema: sema
         )
 
-        // Infer all index expressions
+        // Infer all index expressions without forcing Int.
+        // Int constraint is only applied in the built-in array fallback.
         var indexTypes: [TypeID] = []
         for indexExpr in indices {
-            let indexType = driver.inferExpr(indexExpr, ctx: ctx, locals: &locals, expectedType: intType)
+            let indexType = driver.inferExpr(indexExpr, ctx: ctx, locals: &locals, expectedType: nil)
             indexTypes.append(indexType)
         }
 
@@ -231,17 +235,19 @@ final class LocalDeclTypeChecker {
             }
         }
 
-        // Fallback: built-in array assign (single Int index)
-        for (i, indexExpr) in indices.enumerated() {
-            driver.emitSubtypeConstraint(
-                left: indexTypes[i],
-                right: intType,
-                range: ast.arena.exprRange(indexExpr) ?? range,
-                solver: ConstraintSolver(),
-                sema: sema,
-                diagnostics: ctx.semaCtx.diagnostics
-            )
+        // Fallback: built-in array assign (single Int index only)
+        guard indices.count == 1 else {
+            sema.bindings.bindExprType(id, type: sema.types.errorType)
+            return sema.types.errorType
         }
+        driver.emitSubtypeConstraint(
+            left: indexTypes[0],
+            right: intType,
+            range: ast.arena.exprRange(indices[0]) ?? range,
+            solver: ConstraintSolver(),
+            sema: sema,
+            diagnostics: ctx.semaCtx.diagnostics
+        )
         let elementExpectedType = driver.helpers.arrayElementType(for: receiverType, sema: sema, interner: interner)
         if let elementExpectedType {
             driver.emitSubtypeConstraint(
@@ -269,15 +275,15 @@ final class LocalDeclTypeChecker {
     ) -> TypeID {
         let sema = ctx.sema
         let interner = ctx.interner
-        let intType = sema.types.intType
         let stringType = sema.types.stringType
 
         let receiverType = driver.inferExpr(receiverExpr, ctx: ctx, locals: &locals, expectedType: nil)
 
-        // Infer index types
+        // Infer index types without forcing Int.
+        // Int constraint is only applied in the built-in array fallback.
         var indexTypes: [TypeID] = []
         for indexExpr in indices {
-            let indexType = driver.inferExpr(indexExpr, ctx: ctx, locals: &locals, expectedType: intType)
+            let indexType = driver.inferExpr(indexExpr, ctx: ctx, locals: &locals, expectedType: nil)
             indexTypes.append(indexType)
         }
 
@@ -309,6 +315,10 @@ final class LocalDeclTypeChecker {
                let signature = sema.symbols.functionSignature(for: chosen) {
                 elementType = signature.returnType
             }
+        } else if indices.count != 1 {
+            // Multi-index with no get overload and no built-in array support
+            sema.bindings.bindExprType(id, type: sema.types.unitType)
+            return sema.types.unitType
         }
 
         // Determine the result type of the compound binary operation
