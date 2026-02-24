@@ -453,8 +453,8 @@ extension DataFlowSemaPassPhase {
     }
 
     /// Collects companion object header: creates the companion symbol, links it to the owner class,
-    /// and registers companion members under BOTH the companion FQ name AND the owner class FQ name
-    /// so that `ClassName.memberName` resolves to companion members.
+    /// and registers companion members under the companion's fully qualified name. Resolution of
+    /// `ClassName.memberName` to companion members is handled separately by the call/type checker.
     func collectCompanionObjectHeader(
         companionDeclID: DeclID,
         ownerFQName: [InternedString],

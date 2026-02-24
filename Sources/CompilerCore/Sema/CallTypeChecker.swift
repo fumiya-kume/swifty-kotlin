@@ -274,20 +274,25 @@ final class CallTypeChecker {
                let companionSym = sema.symbols.symbol(companionSymbol) {
                 let companionMemberFQName = companionSym.fqName + [calleeName]
 
-                // Try companion property access first (e.g. Foo.MAX_COUNT)
-                let propertyCandidate = sema.symbols.lookupAll(fqName: companionMemberFQName).first(where: { cid in
-                    guard let sym = sema.symbols.symbol(cid),
-                          sym.kind == .property,
-                          sema.symbols.parentSymbol(for: cid) == companionSymbol else {
-                        return false
+                // Try companion property access when no arguments are provided
+                // (e.g. Foo.MAX_COUNT).  When args are present this is a function
+                // call, so skip the property short-circuit to avoid shadowing a
+                // companion function of the same name.
+                if args.isEmpty {
+                    let propertyCandidate = sema.symbols.lookupAll(fqName: companionMemberFQName).first(where: { cid in
+                        guard let sym = sema.symbols.symbol(cid),
+                              sym.kind == .property,
+                              sema.symbols.parentSymbol(for: cid) == companionSymbol else {
+                            return false
+                        }
+                        return true
+                    })
+                    if let propSymbol = propertyCandidate,
+                       let propType = sema.symbols.propertyType(for: propSymbol) {
+                        sema.bindings.bindIdentifier(id, symbol: propSymbol)
+                        sema.bindings.bindExprType(id, type: propType)
+                        return propType
                     }
-                    return true
-                })
-                if let propSymbol = propertyCandidate,
-                   let propType = sema.symbols.propertyType(for: propSymbol) {
-                    sema.bindings.bindIdentifier(id, symbol: propSymbol)
-                    sema.bindings.bindExprType(id, type: propType)
-                    return propType
                 }
 
                 // Then try companion function candidates
