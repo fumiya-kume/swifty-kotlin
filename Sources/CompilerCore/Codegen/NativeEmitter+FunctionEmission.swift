@@ -70,6 +70,10 @@ extension NativeEmitter {
             parameterValues[parameter.symbol] = value
         }
 
+        // Position builder at the entry block before emitting parameter debug
+        // info (alloca/store require a valid insert point).
+        bindings.positionBuilder(builder, at: entryBlock)
+
         // Emit DILocalVariable + dbg.declare for each parameter when debug
         // info is active and the required bindings are available.
         if let diContext,
