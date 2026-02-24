@@ -274,6 +274,12 @@ final class ExprTypeChecker {
             _ = driver.inferExpr(rhsID, ctx: ctx, locals: &locals)
             sema.bindings.bindExprType(id, type: boolType)
             return boolType
+
+        case .destructuringDecl(let names, let isMutable, let initializer, let range):
+            return driver.controlFlowChecker.inferDestructuringDeclExpr(id, names: names, isMutable: isMutable, initializer: initializer, range: range, ctx: ctx, locals: &locals)
+
+        case .forDestructuringExpr(let names, let iterableExpr, let bodyExpr, let range):
+            return driver.controlFlowChecker.inferForDestructuringExpr(id, names: names, iterableExpr: iterableExpr, bodyExpr: bodyExpr, range: range, ctx: ctx, locals: &locals)
         }
     }
 

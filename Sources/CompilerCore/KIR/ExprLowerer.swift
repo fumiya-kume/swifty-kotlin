@@ -842,6 +842,60 @@ final class ExprLowerer {
             let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? boolType)
             instructions.append(.unary(op: .not, operand: containsResult, result: result))
             return result
+
+        case .destructuringDecl(let names, _, let initializer, _):
+            // Lower: val (a, b) = expr  →  tmp = expr; a = tmp.component1(); b = tmp.component2()
+            let rhsID = lowerExpr(
+                initializer, ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions
+            )
+            for (index, name) in names.enumerated() {
+                guard let name else {
+                    // Underscore — skip
+                    continue
+                }
+                let componentIndex = index + 1
+                let componentName = interner.intern("component\(componentIndex)")
+                let componentType = boundType ?? sema.types.anyType
+                let componentResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: componentType)
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: componentName,
+                    arguments: [rhsID],
+                    result: componentResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+
+                // Bind the destructured variable to the component result
+                // Look up the symbol defined by Sema for this variable
+                let candidates = sema.symbols.lookupAll(fqName: [
+                    interner.intern("__destructuring_\(exprID.rawValue)"),
+                    name
+                ])
+                if let symbol = candidates.first {
+                    driver.ctx.localValuesBySymbol[symbol] = componentResult
+                }
+            }
+            let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+            instructions.append(.constValue(result: unit, value: .unit))
+            return unit
+
+        case .forDestructuringExpr(let names, let iterableExpr, let bodyExpr, _):
+            // Lower as a regular for-loop, but inside the body, destructure the element
+            // Delegate to control flow lowerer for loop structure
+            return driver.controlFlowLowerer.lowerForDestructuringExpr(
+                exprID,
+                names: names,
+                iterableExpr: iterableExpr,
+                bodyExpr: bodyExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
         }
     }
 }

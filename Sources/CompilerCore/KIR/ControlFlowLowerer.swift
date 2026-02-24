@@ -576,6 +576,122 @@ final class ControlFlowLowerer {
         type == sema.types.anyType || type == sema.types.nullableAnyType
     }
 
+    func lowerForDestructuringExpr(
+        _ exprID: ExprID,
+        names: [InternedString?],
+        iterableExpr: ExprID,
+        bodyExpr: ExprID,
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+        let iterableID = driver.lowerExpr(
+            iterableExpr,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+        let iteratorID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_range_iterator"),
+            arguments: [iterableID],
+            result: iteratorID,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        let continueLabel = driver.ctx.makeLoopLabel()
+        let breakLabel = driver.ctx.makeLoopLabel()
+        instructions.append(.label(continueLabel))
+
+        let hasNextID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_range_hasNext"),
+            arguments: [iteratorID],
+            result: hasNextID,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        let falseID = arena.appendExpr(.boolLiteral(false), type: boolType)
+        instructions.append(.constValue(result: falseID, value: .boolLiteral(false)))
+        instructions.append(.jumpIfEqual(lhs: hasNextID, rhs: falseID, target: breakLabel))
+
+        // Get next element
+        let nextValueID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_range_next"),
+            arguments: [iteratorID],
+            result: nextValueID,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        // Destructure: call componentN on the element
+        var previousValues: [(SymbolID, KIRExprID?)] = []
+        for (index, name) in names.enumerated() {
+            guard let name else {
+                continue
+            }
+            let componentIndex = index + 1
+            let componentName = interner.intern("component\(componentIndex)")
+            let componentResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: componentName,
+                arguments: [nextValueID],
+                result: componentResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+
+            let candidates = sema.symbols.lookupAll(fqName: [
+                interner.intern("__for_destructuring_\(exprID.rawValue)"),
+                name
+            ])
+            if let symbol = candidates.first {
+                previousValues.append((symbol, driver.ctx.localValuesBySymbol[symbol]))
+                driver.ctx.localValuesBySymbol[symbol] = componentResult
+            }
+        }
+
+        driver.ctx.loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel))
+        _ = driver.lowerExpr(
+            bodyExpr,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+        _ = driver.ctx.loopControlStack.popLast()
+        instructions.append(.jump(continueLabel))
+        instructions.append(.label(breakLabel))
+
+        // Restore previous values
+        for (symbol, previous) in previousValues {
+            if let previous {
+                driver.ctx.localValuesBySymbol[symbol] = previous
+            } else {
+                driver.ctx.localValuesBySymbol.removeValue(forKey: symbol)
+            }
+        }
+
+        let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+        instructions.append(.constValue(result: unit, value: .unit))
+        return unit
+    }
+
     func lowerWhenExpr(
         _ exprID: ExprID,
         subject: ExprID?,
