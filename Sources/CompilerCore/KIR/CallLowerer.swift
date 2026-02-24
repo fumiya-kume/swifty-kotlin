@@ -793,6 +793,7 @@ final class CallLowerer {
             instructions: &instructions
         )
         // Built-in array get only supports a single Int index
+        assert(!indices.isEmpty, "indices must not be empty for indexed access")
         let indexID = driver.lowerExpr(
             indices[0],
             ast: ast,
@@ -836,6 +837,7 @@ final class CallLowerer {
             instructions: &instructions
         )
         // Built-in array set only supports a single Int index
+        assert(!indices.isEmpty, "indices must not be empty for indexed assign")
         let indexID = driver.lowerExpr(
             indices[0],
             ast: ast,
@@ -893,6 +895,7 @@ final class CallLowerer {
             instructions: &instructions
         )
         // Built-in array compound assign only supports a single Int index
+        assert(!indices.isEmpty, "indices must not be empty for indexed compound assign")
         let indexID = driver.lowerExpr(
             indices[0],
             ast: ast,
@@ -940,18 +943,27 @@ final class CallLowerer {
         // the value expression type as a heuristic for non-IntArray receivers.
         let receiverBoundType = sema.bindings.exprTypes[receiverExpr]
         let isStringElement: Bool = {
-            // If the value being added is String, the concat is string-typed
-            if sema.bindings.exprTypes[valueExpr] == stringType {
-                return true
-            }
-            // Check receiver's class name for known array types
             guard let recvType = receiverBoundType,
-                  case .classType(let classType) = sema.types.kind(of: recvType),
-                  let symbol = sema.symbols.symbol(classType.classSymbol) else {
+                  case .classType(let classType) = sema.types.kind(of: recvType) else {
                 return false
             }
-            let name = interner.resolve(symbol.name)
-            return name == "StringArray" || name == "Array"
+            // Prefer the explicit element type from type arguments, if present.
+            if let firstArg = classType.args.first {
+                let elementType: TypeID?
+                switch firstArg {
+                case .invariant(let t), .out(let t), .in(let t): elementType = t
+                case .star: elementType = nil
+                }
+                if let elementType {
+                    return elementType == stringType
+                }
+            }
+            // Fallback: support legacy non-generic StringArray by name only.
+            if let symbol = sema.symbols.symbol(classType.classSymbol) {
+                let name = interner.resolve(symbol.name)
+                return name == "StringArray"
+            }
+            return false
         }()
         let opName: String
         if op == .plusAssign, isStringElement {

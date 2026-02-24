@@ -156,6 +156,18 @@ final class LocalDeclTypeChecker {
             )
             if let chosen = resolved.chosenCallee,
                let signature = sema.symbols.functionSignature(for: chosen) {
+                // Record the resolved call so KIR lowering can dispatch correctly
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: chosen,
+                        substitutedTypeArguments: resolved.substitutedTypeArguments
+                            .sorted(by: { $0.key.rawValue < $1.key.rawValue })
+                            .map(\.value),
+                        parameterMapping: resolved.parameterMapping
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
                 sema.bindings.bindExprType(id, type: signature.returnType)
                 return signature.returnType
             }
@@ -229,7 +241,19 @@ final class LocalDeclTypeChecker {
                 implicitReceiverType: receiverType,
                 ctx: ctx.semaCtx
             )
-            if resolved.chosenCallee != nil {
+            if let chosen = resolved.chosenCallee {
+                // Record the resolved call so KIR lowering can dispatch correctly
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: chosen,
+                        substitutedTypeArguments: resolved.substitutedTypeArguments
+                            .sorted(by: { $0.key.rawValue < $1.key.rawValue })
+                            .map(\.value),
+                        parameterMapping: resolved.parameterMapping
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
                 sema.bindings.bindExprType(id, type: sema.types.unitType)
                 return sema.types.unitType
             }
@@ -313,6 +337,18 @@ final class LocalDeclTypeChecker {
             )
             if let chosen = resolved.chosenCallee,
                let signature = sema.symbols.functionSignature(for: chosen) {
+                // Record the resolved get call so KIR lowering can dispatch correctly
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: chosen,
+                        substitutedTypeArguments: resolved.substitutedTypeArguments
+                            .sorted(by: { $0.key.rawValue < $1.key.rawValue })
+                            .map(\.value),
+                        parameterMapping: resolved.parameterMapping
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
                 elementType = signature.returnType
             }
         } else if indices.count != 1 {
