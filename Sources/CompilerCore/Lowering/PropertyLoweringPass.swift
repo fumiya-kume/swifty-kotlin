@@ -30,7 +30,11 @@ final class PropertyLoweringPass: LoweringPass {
                             let propSym = self.propertySymbolForBackingField(
                                 targetSym, sema: sema
                             )
-                            let baseSymbol = propSym ?? targetSym
+                            guard let baseSymbol = propSym else {
+                                // Cannot find owning property — keep original copy.
+                                loweredBody.append(instruction)
+                                continue
+                            }
                             let setterSymbol = SymbolID(
                                 rawValue: -13_000 - baseSymbol.rawValue
                             )
