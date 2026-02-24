@@ -1,29 +1,33 @@
 symbol s0 kind=package fq=golden.sema vis=public flags=_
 symbol s1 kind=package fq=kotlin vis=public flags=synthetic
-symbol s2 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s3 kind=package fq=kotlin.properties vis=public flags=synthetic
-symbol s4 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#4
-symbol s5 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s6 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s7 kind=class fq=golden.sema.Adder vis=public flags=_
-symbol s8 kind=constructor fq=golden.sema.Adder.<init> vis=public flags=_ sig=recv=Class#7 params=[Int] ret=Class#7 suspend=0 defaults=[0] vararg=[0]
-symbol s9 kind=valueParameter fq=golden.sema.Adder.<init>.$8.base vis=private flags=_
-symbol s10 kind=function fq=golden.sema.Adder.invoke vis=public flags=operatorFunction sig=recv=Class#7 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s11 kind=valueParameter fq=golden.sema.Adder.invoke.$10.x vis=private flags=_
-symbol s12 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s13 kind=local fq=__local_6.adder vis=private flags=_
-symbol s14 kind=local fq=__local_10.result vis=private flags=_
+symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
+symbol s4 kind=interface fq=kotlin.properties.ReadWriteProperty vis=public flags=synthetic
+symbol s5 kind=interface fq=kotlin.properties.ReadOnlyProperty vis=public flags=synthetic
+symbol s6 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=_ params=[Any,() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
+symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s11 kind=class fq=golden.sema.Adder vis=public flags=_
+symbol s12 kind=constructor fq=golden.sema.Adder.<init> vis=public flags=_ sig=recv=Class#11 params=[Int] ret=Class#11 suspend=0 defaults=[0] vararg=[0]
+symbol s13 kind=valueParameter fq=golden.sema.Adder.<init>.$12.base vis=private flags=_
+symbol s14 kind=function fq=golden.sema.Adder.invoke vis=public flags=operatorFunction sig=recv=Class#11 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s15 kind=valueParameter fq=golden.sema.Adder.invoke.$14.x vis=private flags=_
+symbol s16 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s17 kind=local fq=__local_6.adder vis=private flags=_
+symbol s18 kind=local fq=__local_10.result vis=private flags=_
 file f0 package=golden.sema
-  decl d1 class Adder sym=s7
-  decl d2 fun main suspend=0 inline=0 sym=s12
+  decl d1 class Adder sym=s11
+  decl d2 fun main suspend=0 inline=0 sym=s16
 expr e0 name(base) type=<error>
-expr e1 name(x) type=Int ref=s11
+expr e1 name(x) type=Int ref=s15
 expr e2 binary(add) lhs=e0 rhs=e1 type=Int
 expr e3 name(Adder) type=_
 expr e4 int(10) type=Int
-expr e5 call callee=e3 args=[_:e4] type=Class#7 call=s8 map=[0->0] targs=[]
-expr e6 localDecl adder mutable=0 type=_ init=e5 type=Unit ref=s13
-expr e7 name(adder) type=Class#7 ref=s13
+expr e5 call callee=e3 args=[_:e4] type=Class#11 call=s12 map=[0->0] targs=[]
+expr e6 localDecl adder mutable=0 type=_ init=e5 type=Unit ref=s17
+expr e7 name(adder) type=Class#11 ref=s17
 expr e8 int(5) type=Int
-expr e9 call callee=e7 args=[_:e8] type=Int call=s10 map=[0->0] targs=[]
-expr e10 localDecl result mutable=0 type=t3 init=e9 type=Unit ref=s14
+expr e9 call callee=e7 args=[_:e8] type=Int call=s14 map=[0->0] targs=[]
+expr e10 localDecl result mutable=0 type=t3 init=e9 type=Unit ref=s18
