@@ -776,6 +776,65 @@ final class LexerParserCoverageTests: XCTestCase {
         }
     }
 
+    func testCharCompoundAssignmentPreservesCharType() throws {
+        let source = """
+        fun test() {
+            var a: Char = 'a'
+            a += 1
+            var b: Char = 'z'
+            b -= 1
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            // Compound assignment on Char should not produce errors
+            // (would fail if type corrupted to Int, causing subsequent mismatches)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Char compound assignment should not produce errors, got: \(ctx.diagnostics.diagnostics.map { "\($0.code): \($0.message)" })")
+        }
+    }
+
+    func testNumericBinaryOpsNotBrokenByCharChanges() throws {
+        let source = """
+        fun test() {
+            val a = 1 + 2
+            val b = 1.0 + 2
+            val c = 10L - 3
+            val d = "hello" + 1
+            val e = 1.0f * 2
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            var binaryTypes: [String] = []
+            for index in ast.arena.exprs.indices {
+                let exprID = ExprID(rawValue: Int32(index))
+                guard let expr = ast.arena.expr(exprID),
+                      case .binary(let op, _, _, _) = expr,
+                      let exprType = sema.bindings.exprTypes[exprID] else {
+                    continue
+                }
+                let typeName = sema.types.renderType(exprType)
+                binaryTypes.append("\(op):\(typeName)")
+            }
+
+            // Int + Int -> Int, Double + Int -> Double, Long - Int -> Long,
+            // String + Int -> String, Float * Int -> Float
+            XCTAssertTrue(binaryTypes.contains("add:Int"), "Expected Int + Int -> Int, got: \(binaryTypes)")
+            XCTAssertTrue(binaryTypes.contains("add:Double"), "Expected Double + Int -> Double, got: \(binaryTypes)")
+            XCTAssertTrue(binaryTypes.contains("subtract:Long"), "Expected Long - Int -> Long, got: \(binaryTypes)")
+            XCTAssertTrue(binaryTypes.contains("add:String"), "Expected String + Int -> String, got: \(binaryTypes)")
+            XCTAssertTrue(binaryTypes.contains("multiply:Float"), "Expected Float * Int -> Float, got: \(binaryTypes)")
+            XCTAssertFalse(ctx.diagnostics.hasError)
+        }
+    }
+
     private func lex(_ source: String) -> (tokens: [Token], interner: StringInterner, diagnostics: DiagnosticEngine) {
         let diagnostics = DiagnosticEngine()
         let interner = StringInterner()
