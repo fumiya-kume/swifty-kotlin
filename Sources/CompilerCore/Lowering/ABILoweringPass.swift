@@ -264,7 +264,7 @@ final class ABILoweringPass: LoweringPass {
 
                 // Handle returnValue: box primitive if function returns Any/Any?
                 if case .returnValue(let value) = instruction, let types {
-                    if let functionReturnKind, isAnyOrNullableAny(functionReturnKind) {
+                    if let functionReturnKind, isAnyOrNullableAny(functionReturnKind) || isNonValueClassReference(functionReturnKind, symbols: symbols) {
                         let valueType = intrinsicArgType(value, arena: module.arena, types: types)
                         if let valueType {
                                 let resolvedValueKind = resolveValueClassKind(
@@ -311,8 +311,8 @@ final class ABILoweringPass: LoweringPass {
                         let fromKind = resolveValueClassKind(rawFromKind, types: types, symbols: symbols)
                         let rawToKind = types.kind(of: toType)
                         let toKind = resolveValueClassKind(rawToKind, types: types, symbols: symbols)
-                        // Box: primitive → Any/Any? or nonNull primitive → nullable primitive
-                        if isAnyOrNullableAny(toKind) || needsBoxingForCopy(sourceKind: fromKind, targetKind: toKind) {
+                        // Box: primitive → Any/Any?, nonNull primitive → nullable primitive, or primitive → non-value-class reference
+                        if isAnyOrNullableAny(toKind) || needsBoxingForCopy(sourceKind: fromKind, targetKind: toKind) || isNonValueClassReference(rawToKind, symbols: symbols) {
                             if let boxCallee = boxCalleeForPrimitive(
                                 fromKind,
                                 boxIntCallee: boxIntCallee,
@@ -687,6 +687,20 @@ final class ABILoweringPass: LoweringPass {
 
     private func isAnyOrNullableAny(_ kind: TypeKind) -> Bool {
         if case .any = kind {
+            return true
+        }
+        return false
+    }
+
+    /// Returns true if the type kind is a non-value-class reference type (interface, regular class).
+    /// Value class arguments need boxing when passed to such types.
+    private func isNonValueClassReference(_ kind: TypeKind, symbols: SymbolTable?) -> Bool {
+        if case .classType(let ct) = kind {
+            if let symbols,
+               let sym = symbols.symbol(ct.classSymbol),
+               sym.flags.contains(.valueType) {
+                return false
+            }
             return true
         }
         return false
