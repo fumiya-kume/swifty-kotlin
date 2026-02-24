@@ -110,7 +110,8 @@ public final class LibraryMetadataCache {
 
     /// Returns a cached type ID for the given encoded signature string.
     ///
-    /// The cache is automatically invalidated when a different `TypeSystem` is passed.
+    /// The cache is automatically invalidated when a different `TypeSystem` or
+    /// `SymbolTable` is passed.
     ///
     /// The return type is a *double optional*:
     /// - `nil` (outer optional) means there is no cached entry for this signature

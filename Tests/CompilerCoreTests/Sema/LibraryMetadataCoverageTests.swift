@@ -2742,10 +2742,12 @@ final class LibraryMetadataCoverageTests: XCTestCase {
                 cache: cache
             )
 
-            // Cache counts should remain the same — reused, not re-added
+            // Manifest and metadata cache counts should remain the same (reused on second load).
+            // The signature cache is cleared when using a different TypeSystem/SymbolTable, but its
+            // entry count should return to the same value after being repopulated.
             XCTAssertEqual(cache.manifestCacheCount, manifestCountAfterFirst, "Manifest cache should be reused on second load")
             XCTAssertEqual(cache.metadataCacheCount, metadataCountAfterFirst, "Metadata cache should be reused on second load")
-            XCTAssertEqual(cache.signatureCacheCount, signatureCountAfterFirst, "Signature cache should be reused on second load")
+            XCTAssertEqual(cache.signatureCacheCount, signatureCountAfterFirst, "Signature cache should have the same number of entries after second load")
 
             let addSymbol = symbols2.allSymbols().first { symbol in
                 sharedInterner.resolve(symbol.name) == "add" && symbol.kind == .function
