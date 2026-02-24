@@ -87,8 +87,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
                     entries: entries,
                     module: module,
                     sema: sema,
-                    existingFunctionSymbols: existingFunctionSymbols,
-                    interner: ctx.interner
+                    existingFunctionSymbols: existingFunctionSymbols
                 )
 
                 // Synthesize valueOf(String)
@@ -267,8 +266,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         entries: [SemanticSymbol],
         module: KIRModule,
         sema: SemaModule,
-        existingFunctionSymbols: Set<SymbolID>,
-        interner: StringInterner
+        existingFunctionSymbols: Set<SymbolID>
     ) {
         let intType = sema.types.make(.primitive(.int, .nonNull))
 
@@ -286,21 +284,9 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         )
         body.append(.constValue(result: countExpr, value: .intLiteral(Int64(entries.count))))
 
-        // Call kk_enum_values with count – this runtime helper builds the array
-        let calleeName = interner.intern("kk_enum_values")
-        let resultExpr = module.arena.appendExpr(
-            .temporary(Int32(module.arena.expressions.count)),
-            type: intType
-        )
-        body.append(.call(
-            symbol: nil,
-            callee: calleeName,
-            arguments: [countExpr],
-            result: resultExpr,
-            canThrow: false,
-            thrownResult: nil
-        ))
-        body.append(.returnValue(resultExpr))
+        // Directly return the count; the runtime helper for building an
+        // Array<T> will be introduced when the full array return type is wired.
+        body.append(.returnValue(countExpr))
 
         appendSyntheticFunctionIfNeeded(
             name: name,
