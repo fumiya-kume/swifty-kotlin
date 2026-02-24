@@ -27,6 +27,8 @@ public enum BinaryOp: Equatable {
     case elvis
     case rangeTo
     case rangeUntil
+    case downTo
+    case step
 }
 
 public enum UnaryOp: Equatable {
@@ -103,10 +105,10 @@ public enum Expr: Equatable {
     case continueExpr(range: SourceRange)
     case localDecl(name: InternedString, isMutable: Bool, typeAnnotation: TypeRefID?, initializer: ExprID?, range: SourceRange)
     case localAssign(name: InternedString, value: ExprID, range: SourceRange)
-    case arrayAssign(array: ExprID, index: ExprID, value: ExprID, range: SourceRange)
+    case indexedAssign(receiver: ExprID, indices: [ExprID], value: ExprID, range: SourceRange)
     case call(callee: ExprID, typeArgs: [TypeRefID], args: [CallArgument], range: SourceRange)
     case memberCall(receiver: ExprID, callee: InternedString, typeArgs: [TypeRefID], args: [CallArgument], range: SourceRange)
-    case arrayAccess(array: ExprID, index: ExprID, range: SourceRange)
+    case indexedAccess(receiver: ExprID, indices: [ExprID], range: SourceRange)
     case binary(op: BinaryOp, lhs: ExprID, rhs: ExprID, range: SourceRange)
     case whenExpr(subject: ExprID?, branches: [WhenBranch], elseExpr: ExprID?, range: SourceRange)
     case returnExpr(value: ExprID?, range: SourceRange)
@@ -118,6 +120,7 @@ public enum Expr: Equatable {
     case nullAssert(expr: ExprID, range: SourceRange)
     case safeMemberCall(receiver: ExprID, callee: InternedString, typeArgs: [TypeRefID], args: [CallArgument], range: SourceRange)
     case compoundAssign(op: CompoundAssignOp, name: InternedString, value: ExprID, range: SourceRange)
+    case indexedCompoundAssign(op: CompoundAssignOp, receiver: ExprID, indices: [ExprID], value: ExprID, range: SourceRange)
     case throwExpr(value: ExprID, range: SourceRange)
     case lambdaLiteral(params: [InternedString], body: ExprID, range: SourceRange)
     case objectLiteral(superTypes: [TypeRefID], range: SourceRange)

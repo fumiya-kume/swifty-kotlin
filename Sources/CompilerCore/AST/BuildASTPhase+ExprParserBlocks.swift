@@ -53,7 +53,7 @@ extension BuildASTPhase.ExpressionParser {
         var trailingExpr: ExprID?
         if let lastID = statements.last, let lastExpr = astArena.expr(lastID) {
             switch lastExpr {
-            case .localDecl, .localAssign, .arrayAssign, .compoundAssign, .localFunDecl:
+            case .localDecl, .localAssign, .indexedAssign, .compoundAssign, .indexedCompoundAssign, .localFunDecl:
                 break
             default:
                 trailingExpr = statements.removeLast()
@@ -332,7 +332,6 @@ extension BuildASTPhase.ExpressionParser {
             let lhsParser = BuildASTPhase.ExpressionParser(tokens: lhsSlice, interner: interner, astArena: astArena)
             guard let lhsExpr = lhsParser.parse(),
                   let lhs = astArena.expr(lhsExpr),
-                  case .nameRef(let name, _) = lhs,
                   let lhsRange = astArena.exprRange(lhsExpr) else {
                 return nil
             }
@@ -342,7 +341,14 @@ extension BuildASTPhase.ExpressionParser {
             guard let valueExpr = parser.parse() else { return nil }
             let rangeEnd = astArena.exprRange(valueExpr)?.end ?? tokens.last?.range.end ?? lhsRange.end
             let range = SourceRange(start: tokens[tokens.startIndex].range.start, end: rangeEnd)
-            return astArena.appendExpr(.compoundAssign(op: op, name: name, value: valueExpr, range: range))
+            switch lhs {
+            case .nameRef(let name, _):
+                return astArena.appendExpr(.compoundAssign(op: op, name: name, value: valueExpr, range: range))
+            case .indexedAccess(let receiver, let indices, _):
+                return astArena.appendExpr(.indexedCompoundAssign(op: op, receiver: receiver, indices: indices, value: valueExpr, range: range))
+            default:
+                return nil
+            }
         }
 
         var assignIndex: Int?
@@ -373,8 +379,8 @@ extension BuildASTPhase.ExpressionParser {
         switch lhs {
         case .nameRef(let name, _):
             return astArena.appendExpr(.localAssign(name: name, value: valueExpr, range: range))
-        case .arrayAccess(let array, let index, _):
-            return astArena.appendExpr(.arrayAssign(array: array, index: index, value: valueExpr, range: range))
+        case .indexedAccess(let receiver, let indices, _):
+            return astArena.appendExpr(.indexedAssign(receiver: receiver, indices: indices, value: valueExpr, range: range))
         default:
             return nil
         }
