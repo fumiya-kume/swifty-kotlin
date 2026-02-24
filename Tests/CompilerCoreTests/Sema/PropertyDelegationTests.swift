@@ -580,7 +580,7 @@ final class ConstructorDelegateInitTests: XCTestCase {
 
 final class PropertyLoweringDelegateTests: XCTestCase {
 
-    func testPropertyLoweringRewritesGetValueToDirectAccessorCall() throws {
+    func testPropertyLoweringPreservesGetValueInsideAccessorToAvoidRecursion() throws {
         let source = """
         class MyDelegate {
             fun getValue(thisRef: Any?, property: Any?): Int = 42
@@ -597,22 +597,27 @@ final class PropertyLoweringDelegateTests: XCTestCase {
             let module = try XCTUnwrap(ctx.kir)
             let interner = ctx.interner
 
-            // After lowering, getValue calls on delegate storage should be
-            // rewritten to direct accessor calls (get).
+            // After lowering, the synthesized getter's body should still
+            // contain a getValue call (not rewritten to a self-call via
+            // "get") to avoid infinite recursion.
             let allFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
                 guard case .function(let fn) = decl else { return nil }
                 return fn
             }
 
-            // Check that getValue has been rewritten to a direct get accessor call.
-            var foundGetAccessor = false
+            // The accessor function (named "get") should retain getValue in its body.
+            var getterRetainsGetValue = false
             for fn in allFunctions {
-                let callees = extractCallees(from: fn.body, interner: interner)
-                if callees.contains("get") {
-                    foundGetAccessor = true
+                let fnName = interner.resolve(fn.name)
+                if fnName == "get" {
+                    let callees = extractCallees(from: fn.body, interner: interner)
+                    if callees.contains("getValue") {
+                        getterRetainsGetValue = true
+                    }
                 }
             }
-            XCTAssertTrue(foundGetAccessor, "Expected getValue to be rewritten to direct get accessor call")
+            XCTAssertTrue(getterRetainsGetValue,
+                          "Synthesized getter should retain getValue call (not rewrite to self-call)")
         }
     }
 
@@ -661,7 +666,7 @@ final class PropertyLoweringDelegateTests: XCTestCase {
         }
     }
 
-    func testPropertyLoweringRewritesSetValueToDirectAccessorCall() throws {
+    func testPropertyLoweringPreservesSetValueInsideAccessorToAvoidRecursion() throws {
         let source = """
         class MyDelegate {
             fun getValue(thisRef: Any?, property: Any?): Int = 42
@@ -684,14 +689,19 @@ final class PropertyLoweringDelegateTests: XCTestCase {
                 return fn
             }
 
-            var foundSetAccessor = false
+            // The accessor function (named "set") should retain setValue in its body.
+            var setterRetainsSetValue = false
             for fn in allFunctions {
-                let callees = extractCallees(from: fn.body, interner: interner)
-                if callees.contains("set") {
-                    foundSetAccessor = true
+                let fnName = interner.resolve(fn.name)
+                if fnName == "set" {
+                    let callees = extractCallees(from: fn.body, interner: interner)
+                    if callees.contains("setValue") {
+                        setterRetainsSetValue = true
+                    }
                 }
             }
-            XCTAssertTrue(foundSetAccessor, "Expected setValue to be rewritten to direct set accessor call")
+            XCTAssertTrue(setterRetainsSetValue,
+                          "Synthesized setter should retain setValue call (not rewrite to self-call)")
         }
     }
 }
