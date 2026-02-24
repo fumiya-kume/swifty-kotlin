@@ -12,6 +12,20 @@ env:
   HOMEBREW_NO_INSTALL_CLEANUP: 1
 
 jobs:
+  jscpd-check:
+    name: Duplicate Code Detection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install jscpd
+        run: npm install -g jscpd
+      - name: Run jscpd
+        run: jscpd --threshold 5 Sources/
+
   smoke-tests:
     name: Smoke Tests
     runs-on: macos-15
