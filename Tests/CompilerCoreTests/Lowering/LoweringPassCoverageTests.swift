@@ -12,9 +12,9 @@ final class LoweringPassCoverageTests: XCTestCase {
         }
 
         let callees = extractCallees(from: loweredMain.body, interner: fixture.interner)
-        XCTAssertTrue(callees.contains("iterator"))
-        XCTAssertTrue(callees.contains("hasNext"))
-        XCTAssertTrue(callees.contains("next"))
+        XCTAssertTrue(callees.contains("kk_range_iterator"))
+        XCTAssertTrue(callees.contains("kk_range_hasNext"))
+        XCTAssertTrue(callees.contains("kk_range_next"))
         XCTAssertFalse(callees.contains("kk_for_lowered"))
         // kk_when_select removed; select is now control flow (jumpIfEqual + copy + jump + label)
         XCTAssertFalse(callees.contains("kk_when_select"))
@@ -793,6 +793,134 @@ final class LoweringPassCoverageTests: XCTestCase {
 
         let copyFunction = try findKIRFunction(named: "Point$copy", in: module, interner: interner)
         XCTAssertEqual(copyFunction.params.count, 1)
+    }
+
+    func testDataEnumSealedSynthesisAddsOrdinalNameValuesValueOf() throws {
+        let interner = StringInterner()
+        let diagnostics = DiagnosticEngine()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+        let bindings = BindingTable()
+        let sema = SemaModule(symbols: symbols, types: types, bindings: bindings, diagnostics: diagnostics)
+
+        let packageName = interner.intern("demo")
+        let packagePath = [packageName]
+
+        let colorName = interner.intern("Color")
+        let colorSymbol = symbols.define(
+            kind: .enumClass,
+            name: colorName,
+            fqName: packagePath + [colorName],
+            declSite: nil,
+            visibility: .public
+        )
+        _ = symbols.define(
+            kind: .field,
+            name: interner.intern("RED"),
+            fqName: packagePath + [colorName, interner.intern("RED")],
+            declSite: nil,
+            visibility: .public
+        )
+        _ = symbols.define(
+            kind: .field,
+            name: interner.intern("GREEN"),
+            fqName: packagePath + [colorName, interner.intern("GREEN")],
+            declSite: nil,
+            visibility: .public
+        )
+        _ = symbols.define(
+            kind: .field,
+            name: interner.intern("BLUE"),
+            fqName: packagePath + [colorName, interner.intern("BLUE")],
+            declSite: nil,
+            visibility: .public
+        )
+
+        let arena = KIRArena()
+        let colorDecl = arena.appendDecl(.nominalType(KIRNominalType(symbol: colorSymbol)))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [colorDecl])], arena: arena)
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(
+                moduleName: "EnumSynthesis",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            sourceManager: SourceManager(),
+            diagnostics: diagnostics,
+            interner: interner
+        )
+        ctx.sema = sema
+        ctx.kir = module
+
+        try LoweringPhase().run(ctx)
+
+        let functionNames = module.arena.declarations.compactMap { decl -> String? in
+            guard case .function(let function) = decl else {
+                return nil
+            }
+            return interner.resolve(function.name)
+        }
+
+        // Verify count helper still exists
+        XCTAssertTrue(functionNames.contains("Color$enumValuesCount"), "Missing Color$enumValuesCount, got: \(functionNames)")
+
+        // Verify per-entry ordinal helpers
+        XCTAssertTrue(functionNames.contains("RED$enumOrdinal"), "Missing RED$enumOrdinal, got: \(functionNames)")
+        XCTAssertTrue(functionNames.contains("GREEN$enumOrdinal"), "Missing GREEN$enumOrdinal, got: \(functionNames)")
+        XCTAssertTrue(functionNames.contains("BLUE$enumOrdinal"), "Missing BLUE$enumOrdinal, got: \(functionNames)")
+
+        // Verify per-entry name helpers
+        XCTAssertTrue(functionNames.contains("RED$enumName"), "Missing RED$enumName, got: \(functionNames)")
+        XCTAssertTrue(functionNames.contains("GREEN$enumName"), "Missing GREEN$enumName, got: \(functionNames)")
+        XCTAssertTrue(functionNames.contains("BLUE$enumName"), "Missing BLUE$enumName, got: \(functionNames)")
+
+        // Verify values() and valueOf() companion functions
+        XCTAssertTrue(functionNames.contains("values"), "Missing values, got: \(functionNames)")
+        XCTAssertTrue(functionNames.contains("valueOf"), "Missing valueOf, got: \(functionNames)")
+
+        // Verify ordinal values are correct (0-based)
+        let redOrdinal = try findKIRFunction(named: "RED$enumOrdinal", in: module, interner: interner)
+        let greenOrdinal = try findKIRFunction(named: "GREEN$enumOrdinal", in: module, interner: interner)
+        let blueOrdinal = try findKIRFunction(named: "BLUE$enumOrdinal", in: module, interner: interner)
+
+        // Each ordinal function should have a constValue instruction with the correct ordinal
+        let redConst = redOrdinal.body.compactMap { inst -> Int64? in
+            guard case .constValue(_, let value) = inst, case .intLiteral(let v) = value else { return nil }
+            return v
+        }
+        XCTAssertTrue(redConst.contains(0), "RED ordinal should be 0, got consts: \(redConst)")
+
+        let greenConst = greenOrdinal.body.compactMap { inst -> Int64? in
+            guard case .constValue(_, let value) = inst, case .intLiteral(let v) = value else { return nil }
+            return v
+        }
+        XCTAssertTrue(greenConst.contains(1), "GREEN ordinal should be 1, got consts: \(greenConst)")
+
+        let blueConst = blueOrdinal.body.compactMap { inst -> Int64? in
+            guard case .constValue(_, let value) = inst, case .intLiteral(let v) = value else { return nil }
+            return v
+        }
+        XCTAssertTrue(blueConst.contains(2), "BLUE ordinal should be 2, got consts: \(blueConst)")
+
+        // Verify name functions return correct string literals
+        let redName = try findKIRFunction(named: "RED$enumName", in: module, interner: interner)
+        let redNameConsts = redName.body.compactMap { inst -> InternedString? in
+            guard case .constValue(_, let value) = inst, case .stringLiteral(let s) = value else { return nil }
+            return s
+        }
+        XCTAssertTrue(redNameConsts.contains(interner.intern("RED")), "RED name function should return \"RED\"")
+
+        // Verify valueOf has parameter
+        let valueOfFn = try findKIRFunction(named: "valueOf", in: module, interner: interner)
+        XCTAssertEqual(valueOfFn.params.count, 1, "valueOf should have 1 parameter")
+
+        // Verify valueOf body contains string comparison calls
+        let valueOfCallees = extractCallees(from: valueOfFn.body, interner: interner)
+        XCTAssertTrue(valueOfCallees.contains("kk_string_equals"), "valueOf should call kk_string_equals")
+        XCTAssertTrue(valueOfCallees.contains("kk_enum_valueOf_throw"), "valueOf should call kk_enum_valueOf_throw for no-match case")
     }
 
     func testInlineLoweringMapsReifiedTypeTokenSymbolRefToHiddenArgument() throws {
@@ -2299,7 +2427,7 @@ final class LoweringPassCoverageTests: XCTestCase {
             params: [],
             returnType: TypeSystem().unitType,
             body: [
-                .call(symbol: nil, callee: interner.intern("iterator"), arguments: [v0], result: v3, canThrow: false, thrownResult: nil),
+                .call(symbol: nil, callee: interner.intern("kk_range_iterator"), arguments: [v0], result: v3, canThrow: false, thrownResult: nil),
                 .call(symbol: nil, callee: interner.intern("kk_for_lowered"), arguments: [v3], result: v1, canThrow: false, thrownResult: nil),
                 .constValue(result: vFalse, value: .boolLiteral(false)),
                 .jumpIfEqual(lhs: v0, rhs: vFalse, target: 800),

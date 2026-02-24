@@ -64,6 +64,13 @@ public final class DataFlowSemaPassPhase: CompilerPhase {
             bindings: bindings,
             types: types
         )
+        validateSealedHierarchy(
+            ast: ast,
+            symbols: symbols,
+            bindings: bindings,
+            diagnostics: ctx.diagnostics,
+            interner: ctx.interner
+        )
         validateConstructorDelegation(
             ast: ast,
             symbols: symbols,

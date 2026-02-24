@@ -18,6 +18,9 @@ public final class LLVMBackend {
     let debugInfo: Bool
     let diagnostics: DiagnosticEngine
 
+    /// Optional phase timer for recording subprocess wall-clock durations.
+    var phaseTimer: PhaseTimer?
+
     /// Process-wide cache for the pre-compiled runtime stub object.
     /// Key: target triple string, Value: path to the cached .o file.
     private static var runtimeStubCache: [String: String] = [:]
@@ -92,7 +95,7 @@ public final class LLVMBackend {
     func cachedRuntimeStubPath() -> String? {
         let triple = targetTripleString()
         let source = cRuntimePreamble().joined(separator: "\n")
-        let cacheKey = stableFNV1a64Hex(triple + "_" + stableFNV1a64Hex(source))
+        let cacheKey = Self.stableFNV1a64Hex(triple + "_" + Self.stableFNV1a64Hex(source))
 
         Self.runtimeStubLock.lock()
         defer { Self.runtimeStubLock.unlock() }
@@ -118,7 +121,12 @@ public final class LLVMBackend {
             let clangPath = CommandRunner.resolveExecutable("clang", fallback: "/usr/bin/clang")
             var args = ["-x", "c", "-std=c11", "-c", stubSource.path, "-o", stubObject.path]
             args.append(contentsOf: clangTargetArgs())
-            _ = try CommandRunner.run(executable: clangPath, arguments: args)
+            _ = try CommandRunner.run(
+                executable: clangPath,
+                arguments: args,
+                phaseTimer: phaseTimer,
+                subPhaseName: "Codegen/clang-stub"
+            )
             Self.runtimeStubCache[triple] = stubObject.path
             return stubObject.path
         } catch {
@@ -152,7 +160,12 @@ public final class LLVMBackend {
             args.append(contentsOf: ["-o", outputPath])
             args.append(contentsOf: clangTargetArgs())
             let clangPath = CommandRunner.resolveExecutable("clang", fallback: "/usr/bin/clang")
-            _ = try CommandRunner.run(executable: clangPath, arguments: args)
+            _ = try CommandRunner.run(
+                executable: clangPath,
+                arguments: args,
+                phaseTimer: phaseTimer,
+                subPhaseName: "Codegen/clang"
+            )
         } catch let error as CommandRunnerError {
             reportBackendError(
                 code: errorCode,
@@ -171,13 +184,13 @@ public final class LLVMBackend {
     }
 
     private func deterministicTempSourceURL(outputPath: String) -> URL {
-        let key = stableFNV1a64Hex(outputPath)
+        let key = Self.stableFNV1a64Hex(outputPath)
         return FileManager.default.temporaryDirectory
             .appendingPathComponent("kswiftk_codegen_\(key)")
             .appendingPathExtension("c")
     }
 
-    private func stableFNV1a64Hex(_ value: String) -> String {
+    static func stableFNV1a64Hex(_ value: String) -> String {
         var hash: UInt64 = 0xcbf29ce484222325
         for byte in value.utf8 {
             hash ^= UInt64(byte)
@@ -406,7 +419,9 @@ public final class LLVMBackend {
             "kk_int_to_float_bits",
             "kk_int_to_double_bits",
             "kk_float_to_double_bits",
-            "delay"
+            "delay",
+            "kk_op_notnull",
+            "kk_op_elvis"
         ]
 
         for decl in module.arena.declarations {

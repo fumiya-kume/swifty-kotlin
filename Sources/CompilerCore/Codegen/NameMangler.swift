@@ -150,7 +150,7 @@ public final class NameMangler {
         }
     }
 
-    private func encodeType(
+    func encodeType(
         _ type: TypeID,
         symbols: SymbolTable,
         types: TypeSystem,
@@ -163,8 +163,8 @@ public final class NameMangler {
         case .unit:
             return "U"
 
-        case .nothing:
-            return "N"
+        case .nothing(let nullability):
+            return applyNullability("N", nullability: nullability)
 
         case .any(let nullability):
             return applyNullability("A", nullability: nullability)

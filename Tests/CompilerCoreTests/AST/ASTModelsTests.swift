@@ -169,10 +169,10 @@ final class ASTModelsTests: XCTestCase {
             .continueExpr(range: r),
             .localDecl(name: name, isMutable: false, typeAnnotation: nil, initializer: dummyExprID, range: r),
             .localAssign(name: name, value: dummyExprID, range: r),
-            .arrayAssign(array: dummyExprID, index: dummyExprID, value: dummyExprID, range: r),
+            .indexedAssign(receiver: dummyExprID, indices: [dummyExprID], value: dummyExprID, range: r),
             .call(callee: dummyExprID, typeArgs: [], args: [], range: r),
             .memberCall(receiver: dummyExprID, callee: name, typeArgs: [], args: [], range: r),
-            .arrayAccess(array: dummyExprID, index: dummyExprID, range: r),
+            .indexedAccess(receiver: dummyExprID, indices: [dummyExprID], range: r),
             .binary(op: .add, lhs: dummyExprID, rhs: dummyExprID, range: r),
             .whenExpr(subject: dummyExprID, branches: [], elseExpr: nil, range: r),
             .returnExpr(value: nil, range: r),
@@ -913,12 +913,12 @@ final class ASTModelsTests: XCTestCase {
 
         let arrExprID = arena.appendExpr(.intLiteral(0, r))
         let idxExprID = arena.appendExpr(.intLiteral(1, r))
-        let arrayAssign = Expr.arrayAssign(array: arrExprID, index: idxExprID, value: initID, range: r)
-        if case .arrayAssign(let a, let i, let v, _) = arrayAssign {
+        let indexedAssign = Expr.indexedAssign(receiver: arrExprID, indices: [idxExprID], value: initID, range: r)
+        if case .indexedAssign(let a, let indices, let v, _) = indexedAssign {
             XCTAssertEqual(a, arrExprID)
-            XCTAssertEqual(i, idxExprID)
+            XCTAssertEqual(indices, [idxExprID])
             XCTAssertEqual(v, initID)
-        } else { XCTFail("Expected .arrayAssign") }
+        } else { XCTFail("Expected .indexedAssign") }
     }
 
     func testExprCallAndMemberCall() {
@@ -953,16 +953,16 @@ final class ASTModelsTests: XCTestCase {
         } else { XCTFail("Expected .safeMemberCall") }
     }
 
-    func testExprArrayAccess() {
+    func testExprIndexedAccess() {
         let r = makeRange(start: 0, end: 5)
         let arena = ASTArena()
         let arrID = arena.appendExpr(.intLiteral(0, r))
         let idxID = arena.appendExpr(.intLiteral(1, r))
-        let expr = Expr.arrayAccess(array: arrID, index: idxID, range: r)
-        if case .arrayAccess(let a, let i, _) = expr {
+        let expr = Expr.indexedAccess(receiver: arrID, indices: [idxID], range: r)
+        if case .indexedAccess(let a, let indices, _) = expr {
             XCTAssertEqual(a, arrID)
-            XCTAssertEqual(i, idxID)
-        } else { XCTFail("Expected .arrayAccess") }
+            XCTAssertEqual(indices, [idxID])
+        } else { XCTFail("Expected .indexedAccess") }
     }
 
     func testExprBinaryAllOps() {

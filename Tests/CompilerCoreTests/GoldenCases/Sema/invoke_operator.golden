@@ -2,7 +2,7 @@ symbol s0 kind=package fq=golden.sema vis=public flags=_
 symbol s1 kind=class fq=golden.sema.Adder vis=public flags=_
 symbol s2 kind=constructor fq=golden.sema.Adder.<init> vis=public flags=_ sig=recv=Class#1 params=[Int] ret=Class#1 suspend=0 defaults=[0] vararg=[0]
 symbol s3 kind=valueParameter fq=golden.sema.Adder.<init>.$2.base vis=private flags=_
-symbol s4 kind=function fq=golden.sema.Adder.invoke vis=public flags= sig=recv=Class#1 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s4 kind=function fq=golden.sema.Adder.invoke vis=public flags=operatorFunction sig=recv=Class#1 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
 symbol s5 kind=valueParameter fq=golden.sema.Adder.invoke.$4.x vis=private flags=_
 symbol s6 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s7 kind=local fq=__local_6.adder vis=private flags=_
