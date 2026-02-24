@@ -96,6 +96,14 @@ extension NativeEmitter {
             } else {
                 lowered = nil
             }
+        case "kk_op_elvis":
+            // Elvis operator: return lhs if non-null (not KK_NULL_SENTINEL), otherwise rhs.
+            let sentinel = bindings.constInt(state.int64Type, value: UInt64(bitPattern: Int64.min), signExtend: true) ?? state.zeroValue
+            if let isNull = bindings.buildICmpEqual(state.builder, lhs: lhs, rhs: sentinel, name: "elvis_isnull_\(instructionIndex)") {
+                lowered = bindings.buildSelect(state.builder, condition: isNull, thenValue: rhs, elseValue: lhs, name: "elvis_\(instructionIndex)")
+            } else {
+                lowered = nil
+            }
         default:
             return (false, nil)
         }

@@ -163,8 +163,8 @@ public final class NameMangler {
         case .unit:
             return "U"
 
-        case .nothing:
-            return "N"
+        case .nothing(let nullability):
+            return applyNullability("N", nullability: nullability)
 
         case .any(let nullability):
             return applyNullability("A", nullability: nullability)
