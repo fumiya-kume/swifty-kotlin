@@ -14,7 +14,7 @@ symbol s12 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=rec
 symbol s13 kind=valueParameter fq=golden.sema.Foo.<init>.$12.x vis=private flags=_
 symbol s14 kind=object fq=golden.sema.Foo.Companion vis=public flags=_
 symbol s15 kind=function fq=golden.sema.Foo.Companion.create vis=public flags=_ sig=recv=Class#14 params=[] ret=Class#11 suspend=0 defaults=[] vararg=[]
-symbol s16 kind=property fq=golden.sema.Foo.Companion.MAX_COUNT vis=public flags=_ type=Int
+symbol s16 kind=property fq=golden.sema.Foo.Companion.MAX_COUNT vis=public flags=constValue type=Int
 symbol s17 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s18 kind=local fq=__local_6.f vis=private flags=_
 symbol s19 kind=local fq=__local_9.m vis=private flags=_
