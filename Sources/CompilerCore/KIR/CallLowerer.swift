@@ -466,9 +466,9 @@ final class CallLowerer {
             let callBinding = sema.bindings.callBindings[exprID]
             if let chosen = callBinding?.chosenCallee,
                let constant = propertyConstantInitializers[chosen] {
-                let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
-                let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
-                if receiverType == nonNullReceiverType {
+                let receiverType = sema.bindings.exprTypes[receiverExpr]
+                if let receiverType,
+                   receiverType == sema.types.makeNonNullable(receiverType) {
                     let id = arena.appendExpr(constant, type: boundType ?? sema.types.anyType)
                     instructions.append(.constValue(result: id, value: constant))
                     return id
