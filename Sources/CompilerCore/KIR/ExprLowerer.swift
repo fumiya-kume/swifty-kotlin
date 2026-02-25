@@ -149,7 +149,11 @@ final class ExprLowerer {
                 if let localValue = driver.ctx.localValuesBySymbol[symbol] {
                     return localValue
                 }
-                if let constant = propertyConstantInitializers[symbol] {
+                // Inline constant initializers only for immutable (val) properties.
+                // Mutable (var) properties must always load from global store at runtime.
+                if let constant = propertyConstantInitializers[symbol],
+                   let symInfo = sema.symbols.symbol(symbol),
+                   !symInfo.flags.contains(.mutable) {
                     let id = arena.appendExpr(constant, type: boundType)
                     instructions.append(.constValue(result: id, value: constant))
                     return id

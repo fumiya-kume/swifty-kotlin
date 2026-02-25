@@ -639,65 +639,6 @@ final class KIRLoweringDriver {
                         )
                     }
 
-                    // Generate default getter/setter for simple top-level properties
-                    // (no custom accessors, no delegate) so the PropertyLoweringPass
-                    // can rewrite accesses to direct accessor calls.
-                    if propertyDecl.getter == nil && propertyDecl.delegateExpression == nil {
-                        let interner = compilationCtx.interner
-
-                        // Default getter: () -> PropertyType { return <global> }
-                        let getterSymbol = SymbolID(rawValue: -12_000 - symbol.rawValue)
-                        let getterBody: [KIRInstruction] = {
-                            var body: [KIRInstruction] = [.beginBlock]
-                            let globalRef = arena.appendExpr(.symbolRef(symbol), type: propType)
-                            body.append(.constValue(result: globalRef, value: .symbolRef(symbol)))
-                            body.append(.returnValue(globalRef))
-                            body.append(.endBlock)
-                            return body
-                        }()
-                        let getterDeclID = arena.appendDecl(
-                            .function(KIRFunction(
-                                symbol: getterSymbol,
-                                name: interner.intern("get"),
-                                params: [],
-                                returnType: propType,
-                                body: getterBody,
-                                isSuspend: false,
-                                isInline: false
-                            ))
-                        )
-                        declIDs.append(getterDeclID)
-
-                        // Default setter (only for var): (value: PropertyType) -> Unit { <global> = value }
-                        if propertyDecl.isVar {
-                            let setterSymbol = SymbolID(rawValue: -13_000 - symbol.rawValue)
-                            let valueParamSymbol = SymbolID(rawValue: -(symbol.rawValue + 30_000))
-                            let setterBody: [KIRInstruction] = {
-                                var body: [KIRInstruction] = [.beginBlock]
-                                let valueRef = arena.appendExpr(.symbolRef(valueParamSymbol), type: propType)
-                                body.append(.constValue(result: valueRef, value: .symbolRef(valueParamSymbol)))
-                                let globalRef = arena.appendExpr(.symbolRef(symbol), type: propType)
-                                body.append(.constValue(result: globalRef, value: .symbolRef(symbol)))
-                                body.append(.copy(from: valueRef, to: globalRef))
-                                body.append(.returnUnit)
-                                body.append(.endBlock)
-                                return body
-                            }()
-                            let setterDeclID = arena.appendDecl(
-                                .function(KIRFunction(
-                                    symbol: setterSymbol,
-                                    name: interner.intern("set"),
-                                    params: [KIRParameter(symbol: valueParamSymbol, type: propType)],
-                                    returnType: sema.types.unitType,
-                                    body: setterBody,
-                                    isSuspend: false,
-                                    isInline: false
-                                ))
-                            )
-                            declIDs.append(setterDeclID)
-                        }
-                    }
-
                     // Collect top-level property initialization instructions
                     // (declaration order is preserved since we iterate topLevelDecls in order).
                     if let initializer = propertyDecl.initializer,

@@ -116,6 +116,7 @@ extension NativeEmitter {
         state: EmissionBuilderState,
         parameterValues: [SymbolID: LLVMCAPIBindings.LLVMValueRef],
         internalFunctions: [SymbolID: LLVMFunction],
+        globalVariables: [SymbolID: LLVMCAPIBindings.LLVMValueRef] = [:],
         generatedStringLiteralCount: inout Int32,
         declareExternalFunction: (String, Int, Bool) -> LLVMFunction?
     ) -> LLVMCAPIBindings.LLVMValueRef {
@@ -189,6 +190,15 @@ extension NativeEmitter {
                 name: "fn_ptr_\(symbol.rawValue)"
                ) {
                 return functionPointer
+            }
+            // Load from LLVM global variable if this symbol refers to a global.
+            if let globalPtr = globalVariables[symbol] {
+                return bindings.buildLoad(
+                    state.builder,
+                    type: state.int64Type,
+                    pointer: globalPtr,
+                    name: "global_load_\(symbol.rawValue)"
+                ) ?? state.zeroValue
             }
             return state.zeroValue
         case .temporary(let raw):
