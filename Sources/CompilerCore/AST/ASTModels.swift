@@ -65,6 +65,7 @@ public struct Modifiers: OptionSet, Sendable {
     public static let inner = Modifiers(rawValue: Int32(1) << 23)
     public static let companion = Modifiers(rawValue: Int32(1) << 24)
     public static let const = Modifiers(rawValue: Int32(1) << 25)
+    public static let `override` = Modifiers(rawValue: Int32(1) << 26)
 }
 
 public enum Decl {
