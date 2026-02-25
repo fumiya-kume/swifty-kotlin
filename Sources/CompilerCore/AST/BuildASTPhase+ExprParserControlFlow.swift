@@ -168,7 +168,7 @@ extension BuildASTPhase.ExpressionParser {
                     return parseForExpressionFallback(forToken: forToken, label: label, start: start)
                 }
                 let end = astArena.exprRange(body)?.end ?? forToken.range.end
-                let range = SourceRange(start: forToken.range.start, end: end)
+                let range = SourceRange(start: start ?? forToken.range.start, end: end)
                 let exprID = astArena.appendExpr(.forDestructuringExpr(
                     names: destructuringNames,
                     iterable: iterable,
