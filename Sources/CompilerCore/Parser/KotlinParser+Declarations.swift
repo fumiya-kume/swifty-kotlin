@@ -201,6 +201,12 @@ extension KotlinParser {
         } else {
             insertMissingToken(expected: .identifier(.invalid), into: &children, range: &range, code: "KSWIFTK-PARSE-0002", message: "Expected typealias name.")
         }
+        if canStartTypeArgumentsInternal(after: lastConsumedToken) {
+            children.append(.node(parseTypeArguments()))
+            if let last = children.last {
+                range.append(childRange(last))
+            }
+        }
         parseTail(inBlock: false, into: &children, range: &range)
 
         return arena.appendNode(

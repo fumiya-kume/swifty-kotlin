@@ -1,0 +1,39 @@
+symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s1 kind=package fq=kotlin vis=public flags=synthetic
+symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
+symbol s4 kind=interface fq=kotlin.properties.ReadWriteProperty vis=public flags=synthetic
+symbol s5 kind=interface fq=kotlin.properties.ReadOnlyProperty vis=public flags=synthetic
+symbol s6 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=_ params=[Any,() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
+symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s11 kind=function fq=golden.sema.throwOrValue vis=public flags=_ sig=recv=_ params=[Boolean] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s12 kind=valueParameter fq=golden.sema.throwOrValue.$11.flag vis=private flags=_
+symbol s13 kind=function fq=golden.sema.returnOrValue vis=public flags=_ sig=recv=_ params=[Boolean] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s14 kind=valueParameter fq=golden.sema.returnOrValue.$13.flag vis=private flags=_
+symbol s15 kind=local fq=__local_7.x vis=private flags=_
+symbol s16 kind=local fq=__local_16.y vis=private flags=_
+file f0 package=golden.sema
+  decl d0 fun throwOrValue suspend=0 inline=0 sym=s11
+  decl d1 fun returnOrValue suspend=0 inline=0 sym=s13
+expr e0 name(flag) type=Boolean ref=s12
+expr e1 string(ok) type=String
+expr e2 name(IllegalArgumentException) type=_
+expr e3 string(fail) type=String
+expr e4 call callee=e2 args=[_:e3] type=<error>
+expr e5 throw value=e4 type=Nothing
+expr e6 if cond=e0 then=e1 else=e5 type=String
+expr e7 localDecl x mutable=0 type=t2 init=e6 type=Unit ref=s15
+expr e8 name(x) type=String ref=s15
+expr e9 return value=e8 type=Nothing
+expr e10 name(flag) type=Boolean ref=s14
+expr e11 int(42) type=Int
+expr e12 int(1) type=Int
+expr e13 unary(unaryMinus) operand=e12 type=Int
+expr e14 return value=e13 type=Nothing
+expr e15 if cond=e10 then=e11 else=e14 type=Int
+expr e16 localDecl y mutable=0 type=t5 init=e15 type=Unit ref=s16
+expr e17 name(y) type=Int ref=s16
+expr e18 return value=e17 type=Nothing

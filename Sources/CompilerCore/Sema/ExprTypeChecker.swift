@@ -91,8 +91,8 @@ final class ExprTypeChecker {
                     range: range
                 )
             }
-            sema.bindings.bindExprType(id, type: sema.types.unitType)
-            return sema.types.unitType
+            sema.bindings.bindExprType(id, type: sema.types.nothingType)
+            return sema.types.nothingType
 
         case .continueExpr(let range):
             if ctx.loopDepth == 0 {
@@ -102,8 +102,8 @@ final class ExprTypeChecker {
                     range: range
                 )
             }
-            sema.bindings.bindExprType(id, type: sema.types.unitType)
-            return sema.types.unitType
+            sema.bindings.bindExprType(id, type: sema.types.nothingType)
+            return sema.types.nothingType
 
         case .localDecl(let name, let isMutable, let typeAnnotation, let initializer, let range):
             return driver.localDeclChecker.inferLocalDeclExpr(id, name: name, isMutable: isMutable, typeAnnotation: typeAnnotation, initializer: initializer, range: range, ctx: ctx, locals: &locals)
@@ -117,15 +117,33 @@ final class ExprTypeChecker {
         case .indexedAssign(let receiverExpr, let indices, let valueExpr, let range):
             return driver.localDeclChecker.inferIndexedAssignExpr(id, receiverExpr: receiverExpr, indices: indices, valueExpr: valueExpr, range: range, ctx: ctx, locals: &locals)
 
-        case .returnExpr(let value, _):
-            let resolved: TypeID
+        case .returnExpr(let value, let range):
             if let value {
-                resolved = driver.inferExpr(value, ctx: ctx, locals: &locals, expectedType: expectedType)
-            } else {
-                resolved = sema.types.unitType
+                let resolved = driver.inferExpr(value, ctx: ctx, locals: &locals, expectedType: expectedType)
+                // Emit subtype constraint: return value must conform to expected (function) return type
+                if let expectedType {
+                    driver.emitSubtypeConstraint(
+                        left: resolved,
+                        right: expectedType,
+                        range: range,
+                        solver: ConstraintSolver(),
+                        sema: sema,
+                        diagnostics: ctx.semaCtx.diagnostics
+                    )
+                }
+            } else if let expectedType {
+                // Bare `return` is equivalent to `return Unit`; check Unit <: expectedType
+                driver.emitSubtypeConstraint(
+                    left: sema.types.unitType,
+                    right: expectedType,
+                    range: range,
+                    solver: ConstraintSolver(),
+                    sema: sema,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
             }
-            sema.bindings.bindExprType(id, type: resolved)
-            return resolved
+            sema.bindings.bindExprType(id, type: sema.types.nothingType)
+            return sema.types.nothingType
 
         case .ifExpr(let condition, let thenExpr, let elseExpr, _):
             return driver.controlFlowChecker.inferIfExpr(id, condition: condition, thenExpr: thenExpr, elseExpr: elseExpr, ctx: ctx, locals: &locals, expectedType: expectedType)
@@ -235,11 +253,40 @@ final class ExprTypeChecker {
 
         case .blockExpr(let statements, let trailingExpr, _):
             var blockLocals = locals
+            var reachedNothing = false
             for stmt in statements {
-                _ = driver.inferExpr(stmt, ctx: ctx, locals: &blockLocals, expectedType: nil)
+                if reachedNothing {
+                    // Emit unreachable code diagnostic for statements after Nothing-typed expression
+                    if let stmtRange = ast.arena.exprRange(stmt) {
+                        ctx.semaCtx.diagnostics.warning(
+                            "KSWIFTK-SEMA-0096",
+                            "Unreachable code.",
+                            range: stmtRange
+                        )
+                    }
+                    // Still type-check for completeness but skip further unreachable warnings
+                    _ = driver.inferExpr(stmt, ctx: ctx, locals: &blockLocals, expectedType: nil)
+                    continue
+                }
+                let stmtType = driver.inferExpr(stmt, ctx: ctx, locals: &blockLocals, expectedType: nil)
+                if stmtType == sema.types.nothingType {
+                    reachedNothing = true
+                }
             }
             let resultType: TypeID
-            if let trailingExpr {
+            if reachedNothing {
+                if let trailingExpr {
+                    if let trailingRange = ast.arena.exprRange(trailingExpr) {
+                        ctx.semaCtx.diagnostics.warning(
+                            "KSWIFTK-SEMA-0096",
+                            "Unreachable code.",
+                            range: trailingRange
+                        )
+                    }
+                    _ = driver.inferExpr(trailingExpr, ctx: ctx, locals: &blockLocals, expectedType: expectedType)
+                }
+                resultType = sema.types.nothingType
+            } else if let trailingExpr {
                 resultType = driver.inferExpr(trailingExpr, ctx: ctx, locals: &blockLocals, expectedType: expectedType)
             } else {
                 resultType = sema.types.unitType
@@ -321,6 +368,7 @@ final class ExprTypeChecker {
         let longType = sema.types.longType
         let floatType = sema.types.floatType
         let doubleType = sema.types.doubleType
+        let charType = sema.types.charType
         let stringType = sema.types.stringType
 
         let lhs = driver.inferExpr(lhsID, ctx: ctx, locals: &locals)
@@ -413,6 +461,9 @@ final class ExprTypeChecker {
         case .add:
             if lhs == stringType || rhs == stringType {
                 type = stringType
+            } else if lhs == charType && rhs == intType {
+                // Char + Int -> Char
+                type = charType
             } else if lhs == doubleType || rhs == doubleType {
                 type = doubleType
             } else if lhs == floatType || rhs == floatType {
@@ -422,7 +473,23 @@ final class ExprTypeChecker {
             } else {
                 type = intType
             }
-        case .subtract, .multiply, .divide, .modulo:
+        case .subtract:
+            if lhs == charType && rhs == charType {
+                // Char - Char -> Int
+                type = intType
+            } else if lhs == charType && rhs == intType {
+                // Char - Int -> Char
+                type = charType
+            } else if lhs == doubleType || rhs == doubleType {
+                type = doubleType
+            } else if lhs == floatType || rhs == floatType {
+                type = floatType
+            } else if lhs == longType || rhs == longType {
+                type = longType
+            } else {
+                type = intType
+            }
+        case .multiply, .divide, .modulo:
             if lhs == doubleType || rhs == doubleType {
                 type = doubleType
             } else if lhs == floatType || rhs == floatType {
@@ -484,6 +551,7 @@ final class ExprTypeChecker {
         let interner = ctx.interner
 
         let intType = sema.types.intType
+        let charType = sema.types.charType
         let stringType = sema.types.stringType
 
         let valueType = driver.inferExpr(valueExpr, ctx: ctx, locals: &locals, expectedType: nil)
@@ -515,8 +583,20 @@ final class ExprTypeChecker {
         let resultType: TypeID
         switch underlyingOp {
         case .add:
-            resultType = (local.type == stringType || valueType == stringType) ? stringType : intType
-        case .subtract, .multiply, .divide, .modulo:
+            if local.type == stringType || valueType == stringType {
+                resultType = stringType
+            } else if local.type == charType && valueType == intType {
+                resultType = charType
+            } else {
+                resultType = intType
+            }
+        case .subtract:
+            if local.type == charType && valueType == intType {
+                resultType = charType
+            } else {
+                resultType = intType
+            }
+        case .multiply, .divide, .modulo:
             resultType = intType
         default:
             resultType = local.type
@@ -556,6 +636,10 @@ final class ExprTypeChecker {
                 )
             }
             sema.bindings.bindIdentifier(id, symbol: local.symbol)
+            // Propagate collection marks through variable references (P5-84).
+            if sema.bindings.isCollectionSymbol(local.symbol) {
+                sema.bindings.markCollectionExpr(id)
+            }
             sema.bindings.bindExprType(id, type: local.type)
             return local.type
         }

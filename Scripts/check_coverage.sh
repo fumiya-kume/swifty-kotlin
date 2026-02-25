@@ -18,10 +18,18 @@ readonly targets=(
 bash Scripts/swift_test.sh --enable-code-coverage
 
 readonly profile=".build/debug/codecov/default.profdata"
-readonly tests_binary=".build/debug/KSwiftKPackageTests.xctest/Contents/MacOS/KSwiftKPackageTests"
+if [[ "$(uname)" == "Linux" ]]; then
+  readonly tests_binary=".build/debug/KSwiftKPackageTests.xctest"
+else
+  readonly tests_binary=".build/debug/KSwiftKPackageTests.xctest/Contents/MacOS/KSwiftKPackageTests"
+fi
 readonly json_output=".build/debug/codecov/KSwiftK.json"
 
-xcrun llvm-cov export "$tests_binary" -instr-profile "$profile" > "$json_output"
+if [[ "$(uname)" == "Linux" ]]; then
+  llvm-cov export "$tests_binary" -instr-profile "$profile" > "$json_output"
+else
+  xcrun llvm-cov export "$tests_binary" -instr-profile "$profile" > "$json_output"
+fi
 
 echo "Coverage threshold: ${threshold}%"
 
