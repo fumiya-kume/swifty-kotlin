@@ -8,6 +8,8 @@ JAVA_BIN="${JAVA_BIN:-java}"
 KEEP_TEMP=0
 REPORT_PATH=""
 LAST_ARTIFACT_DIR=""
+COMPILE_TIMEOUT="${DIFF_COMPILE_TIMEOUT:-120}"
+RUN_TIMEOUT="${DIFF_RUN_TIMEOUT:-30}"
 
 usage() {
   cat <<USAGE
@@ -17,6 +19,10 @@ Options:
   --kswiftc <path>   Path to kswiftc binary (default: .build/debug/kswiftc)
   --kotlinc <path>   Path to kotlinc command (default: kotlinc)
   --java <path>      Path to java command (default: java)
+  --compile-timeout <seconds>
+                     Per-compiler timeout (default: \$DIFF_COMPILE_TIMEOUT or 120)
+  --run-timeout <seconds>
+                     Per-program timeout (default: \$DIFF_RUN_TIMEOUT or 30)
   --keep-temp        Keep per-test temporary directories
   --report <path>    Write TSV report (case, status, artifact_dir)
   -h, --help         Show this help
@@ -47,6 +53,14 @@ while [[ $# -gt 0 ]]; do
       shift
       JAVA_BIN="$1"
       ;;
+    --compile-timeout)
+      shift
+      COMPILE_TIMEOUT="$1"
+      ;;
+    --run-timeout)
+      shift
+      RUN_TIMEOUT="$1"
+      ;;
     --keep-temp)
       KEEP_TEMP=1
       ;;
@@ -76,6 +90,16 @@ done
 
 if [[ -z "$TARGET" ]]; then
   usage
+  exit 1
+fi
+
+if ! [[ "$COMPILE_TIMEOUT" =~ ^[1-9][0-9]*$ ]]; then
+  echo "compile timeout must be a positive integer: $COMPILE_TIMEOUT" >&2
+  exit 1
+fi
+
+if ! [[ "$RUN_TIMEOUT" =~ ^[1-9][0-9]*$ ]]; then
+  echo "run timeout must be a positive integer: $RUN_TIMEOUT" >&2
   exit 1
 fi
 
@@ -156,22 +180,22 @@ run_case() {
     local kts_tmp="$tmp_dir/${basename%.kt}.kts"
     cp "$kt_file" "$kts_tmp"
     local script_exit=0
-    "$KOTLINC" -script "$kts_tmp" >"$ref_run_stdout" 2>"$ref_run_stderr" || script_exit=$?
+    timeout "$RUN_TIMEOUT" "$KOTLINC" -script "$kts_tmp" >"$ref_run_stdout" 2>"$ref_run_stderr" || script_exit=$?
     if [[ $script_exit -ne 0 ]] && [[ ! -s "$ref_run_stdout" ]]; then
       ref_compile_exit=$script_exit
     else
       ref_run_exit=$script_exit
     fi
   else
-    "$KOTLINC" "$kt_file" -include-runtime -d "$ref_jar" >"$ref_compile_stdout" 2>"$ref_compile_stderr" || ref_compile_exit=$?
+    timeout "$COMPILE_TIMEOUT" "$KOTLINC" "$kt_file" -include-runtime -d "$ref_jar" >"$ref_compile_stdout" 2>"$ref_compile_stderr" || ref_compile_exit=$?
     if [[ $ref_compile_exit -eq 0 ]]; then
-      "$JAVA_BIN" -jar "$ref_jar" >"$ref_run_stdout" 2>"$ref_run_stderr" || ref_run_exit=$?
+      timeout "$RUN_TIMEOUT" "$JAVA_BIN" -jar "$ref_jar" >"$ref_run_stdout" 2>"$ref_run_stderr" || ref_run_exit=$?
     fi
   fi
 
-  "$KSWIFTC" "$kt_file" -o "$cand_bin" >"$cand_compile_stdout" 2>"$cand_compile_stderr" || cand_compile_exit=$?
+  timeout "$COMPILE_TIMEOUT" "$KSWIFTC" "$kt_file" -o "$cand_bin" >"$cand_compile_stdout" 2>"$cand_compile_stderr" || cand_compile_exit=$?
   if [[ $cand_compile_exit -eq 0 ]]; then
-    "$cand_bin" >"$cand_run_stdout" 2>"$cand_run_stderr" || cand_run_exit=$?
+    timeout "$RUN_TIMEOUT" "$cand_bin" >"$cand_run_stdout" 2>"$cand_run_stderr" || cand_run_exit=$?
   fi
 
   normalize_text <"$ref_compile_stderr" >"$tmp_dir/ref_compile_stderr.norm"
@@ -185,11 +209,27 @@ run_case() {
     ok=0
     echo "  compile exit mismatch: ref=$ref_compile_exit candidate=$cand_compile_exit"
   fi
+  if [[ $ref_compile_exit -eq 124 ]]; then
+    ok=0
+    echo "  ref compile timed out after ${COMPILE_TIMEOUT}s"
+  fi
+  if [[ $cand_compile_exit -eq 124 ]]; then
+    ok=0
+    echo "  candidate compile timed out after ${COMPILE_TIMEOUT}s"
+  fi
 
   if [[ $ref_compile_exit -eq 0 && $cand_compile_exit -eq 0 ]]; then
     if [[ $ref_run_exit -ne $cand_run_exit ]]; then
       ok=0
       echo "  run exit mismatch: ref=$ref_run_exit candidate=$cand_run_exit"
+    fi
+    if [[ $ref_run_exit -eq 124 ]]; then
+      ok=0
+      echo "  ref run timed out after ${RUN_TIMEOUT}s"
+    fi
+    if [[ $cand_run_exit -eq 124 ]]; then
+      ok=0
+      echo "  candidate run timed out after ${RUN_TIMEOUT}s"
     fi
     if ! diff -u "$tmp_dir/ref_run_stdout.norm" "$tmp_dir/cand_run_stdout.norm" >/dev/null; then
       ok=0
@@ -229,6 +269,7 @@ FAILED=0
 while IFS= read -r test_case; do
   [[ -z "$test_case" ]] && continue
   TOTAL=$((TOTAL + 1))
+  echo "CASE $TOTAL: $test_case"
   status="PASS"
   if ! run_case "$test_case"; then
     FAILED=$((FAILED + 1))

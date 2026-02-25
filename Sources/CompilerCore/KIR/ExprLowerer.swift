@@ -588,7 +588,13 @@ final class ExprLowerer {
                     instructions.append(.constValue(result: globalRef, value: .symbolRef(symbol)))
                     instructions.append(.copy(from: valueID, to: globalRef))
                 } else {
-                    driver.ctx.localValuesBySymbol[symbol] = valueID
+                    if let storageID = driver.ctx.localValuesBySymbol[symbol] {
+                        // Mutable local already has storage: emit a copy so the C variable
+                        // is updated in place, preserving the value across loop iterations.
+                        instructions.append(.copy(from: valueID, to: storageID))
+                    } else {
+                        driver.ctx.localValuesBySymbol[symbol] = valueID
+                    }
                 }
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
@@ -721,8 +727,8 @@ final class ExprLowerer {
         case .safeMemberCall(let receiverExpr, let calleeName, _, let args, _):
             return driver.callLowerer.lowerSafeMemberCallExpr(exprID, receiverExpr: receiverExpr, calleeName: calleeName, args: args, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
-        case .compoundAssign(_, _, let valueExpr, _):
-            let valueID = lowerExpr(
+        case .compoundAssign(let op, _, let valueExpr, _):
+            let rhsID = lowerExpr(
                 valueExpr,
                 ast: ast,
                 sema: sema,
@@ -731,6 +737,14 @@ final class ExprLowerer {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
+            let kirOp: KIRBinaryOp
+            switch op {
+            case .plusAssign: kirOp = .add
+            case .minusAssign: kirOp = .subtract
+            case .timesAssign: kirOp = .multiply
+            case .divAssign: kirOp = .divide
+            case .modAssign: kirOp = .modulo
+            }
             if let symbol = sema.bindings.identifierSymbols[exprID] {
                 // Top-level property compound assignment needs a copy to global storage.
                 // Top-level properties have no parentSymbol (nil) or parent is a package.
@@ -743,9 +757,20 @@ final class ExprLowerer {
                     let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
                     let globalRef = arena.appendExpr(.symbolRef(symbol), type: propType)
                     instructions.append(.constValue(result: globalRef, value: .symbolRef(symbol)))
-                    instructions.append(.copy(from: valueID, to: globalRef))
+                    let resultID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: propType)
+                    instructions.append(.binary(op: kirOp, lhs: globalRef, rhs: rhsID, result: resultID))
+                    instructions.append(.copy(from: resultID, to: globalRef))
                 } else {
-                    driver.ctx.localValuesBySymbol[symbol] = valueID
+                    if let storageID = driver.ctx.localValuesBySymbol[symbol] {
+                        // Compute lhs op rhs and update storage in place so the value
+                        // persists across loop iterations.
+                        let resultType = arena.exprType(storageID) ?? sema.types.intType
+                        let resultID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+                        instructions.append(.binary(op: kirOp, lhs: storageID, rhs: rhsID, result: resultID))
+                        instructions.append(.copy(from: resultID, to: storageID))
+                    } else {
+                        driver.ctx.localValuesBySymbol[symbol] = rhsID
+                    }
                 }
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
