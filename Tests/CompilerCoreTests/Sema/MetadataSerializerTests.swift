@@ -3,6 +3,30 @@ import XCTest
 
 final class MetadataSerializerTests: XCTestCase {
 
+    // MARK: - Helpers
+
+    /// Parse the serialized record line (after the header) into space-separated tokens,
+    /// then extract key=value pairs for precise field assertions.
+    private func parseRecordLine(_ output: String) -> (kind: String, mangledName: String, fields: [String: String]) {
+        // The serialized format is: "symbols=N\nkind mangledName key=val key=val...\n"
+        let lines = output.split(separator: "\n", omittingEmptySubsequences: true)
+        guard lines.count >= 2 else { return ("", "", [:]) }
+        let recordLine = String(lines[1])
+        let tokens = recordLine.split(separator: " ", omittingEmptySubsequences: true).map(String.init)
+        guard tokens.count >= 2 else { return ("", "", [:]) }
+        let kind = tokens[0]
+        let mangledName = tokens[1]
+        var fields: [String: String] = [:]
+        for token in tokens.dropFirst(2) {
+            if let eqIdx = token.firstIndex(of: "=") {
+                let key = String(token[token.startIndex..<eqIdx])
+                let value = String(token[token.index(after: eqIdx)...])
+                fields[key] = value
+            }
+        }
+        return (kind, mangledName, fields)
+    }
+
     // MARK: - MetadataRecord init
 
     func testMetadataRecordDefaults() {
@@ -120,12 +144,13 @@ final class MetadataSerializerTests: XCTestCase {
         )
         let output = encoder.serialize([record])
         XCTAssertTrue(output.hasPrefix("symbols=1\n"))
-        XCTAssertTrue(output.contains("function"))
-        XCTAssertTrue(output.contains("fq=test.add"))
-        XCTAssertTrue(output.contains("arity=2"))
-        XCTAssertTrue(output.contains("suspend=0"))
-        XCTAssertTrue(output.contains("inline=0"))
-        XCTAssertTrue(output.contains("sig=F2<I,I,I>"))
+        let parsed = parseRecordLine(output)
+        XCTAssertEqual(parsed.kind, "function")
+        XCTAssertEqual(parsed.fields["fq"], "test.add")
+        XCTAssertEqual(parsed.fields["arity"], "2")
+        XCTAssertEqual(parsed.fields["suspend"], "0")
+        XCTAssertEqual(parsed.fields["inline"], "0")
+        XCTAssertEqual(parsed.fields["sig"], "F2<I,I,I>")
     }
 
     func testSerializeSuspendFunction() {
@@ -140,8 +165,9 @@ final class MetadataSerializerTests: XCTestCase {
             typeSignature: "SF1<I,U>"
         )
         let output = encoder.serialize([record])
-        XCTAssertTrue(output.contains("suspend=1"))
-        XCTAssertTrue(output.contains("inline=1"))
+        let parsed = parseRecordLine(output)
+        XCTAssertEqual(parsed.fields["suspend"], "1")
+        XCTAssertEqual(parsed.fields["inline"], "1")
     }
 
     func testSerializeClassWithLayout() {
@@ -160,14 +186,16 @@ final class MetadataSerializerTests: XCTestCase {
             itableSlots: "test.IFoo.baz@0"
         )
         let output = encoder.serialize([record])
-        XCTAssertTrue(output.contains("layoutWords=5"))
-        XCTAssertTrue(output.contains("fields=3"))
-        XCTAssertTrue(output.contains("vtable=2"))
-        XCTAssertTrue(output.contains("itable=1"))
-        XCTAssertTrue(output.contains("superFq=test.Base"))
-        XCTAssertTrue(output.contains("fieldOffsets=test.Foo.x@0,test.Foo.y@1"))
-        XCTAssertTrue(output.contains("vtableSlots=test.Foo.bar#0#0@0"))
-        XCTAssertTrue(output.contains("itableSlots=test.IFoo.baz@0"))
+        let parsed = parseRecordLine(output)
+        XCTAssertEqual(parsed.kind, "class")
+        XCTAssertEqual(parsed.fields["layoutWords"], "5")
+        XCTAssertEqual(parsed.fields["fields"], "3")
+        XCTAssertEqual(parsed.fields["vtable"], "2")
+        XCTAssertEqual(parsed.fields["itable"], "1")
+        XCTAssertEqual(parsed.fields["superFq"], "test.Base")
+        XCTAssertEqual(parsed.fields["fieldOffsets"], "test.Foo.x@0,test.Foo.y@1")
+        XCTAssertEqual(parsed.fields["vtableSlots"], "test.Foo.bar#0#0@0")
+        XCTAssertEqual(parsed.fields["itableSlots"], "test.IFoo.baz@0")
     }
 
     func testSerializeDataClassFlag() {
@@ -179,7 +207,8 @@ final class MetadataSerializerTests: XCTestCase {
             isDataClass: true
         )
         let output = encoder.serialize([record])
-        XCTAssertTrue(output.contains("dataClass=1"))
+        let parsed = parseRecordLine(output)
+        XCTAssertEqual(parsed.fields["dataClass"], "1")
     }
 
     func testSerializeSealedClassFlag() {
@@ -192,8 +221,9 @@ final class MetadataSerializerTests: XCTestCase {
             sealedSubclassFQNames: ["test.SubA", "test.SubB"]
         )
         let output = encoder.serialize([record])
-        XCTAssertTrue(output.contains("sealedClass=1"))
-        XCTAssertTrue(output.contains("sealedSubs=test.SubA,test.SubB"))
+        let parsed = parseRecordLine(output)
+        XCTAssertEqual(parsed.fields["sealedClass"], "1")
+        XCTAssertEqual(parsed.fields["sealedSubs"], "test.SubA,test.SubB")
     }
 
     func testSerializeValueClassFlag() {
@@ -206,8 +236,9 @@ final class MetadataSerializerTests: XCTestCase {
             valueClassUnderlyingTypeSig: "I"
         )
         let output = encoder.serialize([record])
-        XCTAssertTrue(output.contains("valueClass=1"))
-        XCTAssertTrue(output.contains("valueUnderlying=I"))
+        let parsed = parseRecordLine(output)
+        XCTAssertEqual(parsed.fields["valueClass"], "1")
+        XCTAssertEqual(parsed.fields["valueUnderlying"], "I")
     }
 
     func testSerializePropertyWithSignature() {
@@ -219,8 +250,9 @@ final class MetadataSerializerTests: XCTestCase {
             typeSignature: "I"
         )
         let output = encoder.serialize([record])
-        XCTAssertTrue(output.contains("property"))
-        XCTAssertTrue(output.contains("sig=I"))
+        let parsed = parseRecordLine(output)
+        XCTAssertEqual(parsed.kind, "property")
+        XCTAssertEqual(parsed.fields["sig"], "I")
     }
 
     func testSerializeTypeAliasWithSignature() {
@@ -232,8 +264,9 @@ final class MetadataSerializerTests: XCTestCase {
             typeSignature: "I"
         )
         let output = encoder.serialize([record])
-        XCTAssertTrue(output.contains("typeAlias"))
-        XCTAssertTrue(output.contains("sig=I"))
+        let parsed = parseRecordLine(output)
+        XCTAssertEqual(parsed.kind, "typeAlias")
+        XCTAssertEqual(parsed.fields["sig"], "I")
     }
 
     func testSerializeConstructorRecord() {
@@ -247,9 +280,10 @@ final class MetadataSerializerTests: XCTestCase {
             externalLinkName: "Foo_init"
         )
         let output = encoder.serialize([record])
-        XCTAssertTrue(output.contains("constructor"))
-        XCTAssertTrue(output.contains("arity=1"))
-        XCTAssertTrue(output.contains("link=Foo_init"))
+        let parsed = parseRecordLine(output)
+        XCTAssertEqual(parsed.kind, "constructor")
+        XCTAssertEqual(parsed.fields["arity"], "1")
+        XCTAssertEqual(parsed.fields["link"], "Foo_init")
     }
 
     func testSerializeAnnotations() {

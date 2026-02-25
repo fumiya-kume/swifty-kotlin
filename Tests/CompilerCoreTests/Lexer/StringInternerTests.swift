@@ -92,14 +92,21 @@ final class StringInternerTests: XCTestCase {
         }
     }
 
-    func testInternIDsAreSequential() {
+    func testInternIDsAreMonotonicallyIncreasing() {
         let interner = StringInterner()
         let id0 = interner.intern("a")
         let id1 = interner.intern("b")
         let id2 = interner.intern("c")
-        XCTAssertEqual(id0.rawValue, 0)
-        XCTAssertEqual(id1.rawValue, 1)
-        XCTAssertEqual(id2.rawValue, 2)
+        // IDs should be distinct and increase monotonically,
+        // but exact raw values are an implementation detail.
+        XCTAssertNotEqual(id0, InternedString.invalid)
+        XCTAssertNotEqual(id1, InternedString.invalid)
+        XCTAssertNotEqual(id2, InternedString.invalid)
+        XCTAssertNotEqual(id0, id1)
+        XCTAssertNotEqual(id1, id2)
+        XCTAssertNotEqual(id0, id2)
+        XCTAssertLessThan(id0.rawValue, id1.rawValue)
+        XCTAssertLessThan(id1.rawValue, id2.rawValue)
     }
 
     func testInternUnicodeStrings() {
@@ -126,23 +133,31 @@ final class StringInternerTests: XCTestCase {
         let expectation = XCTestExpectation(description: "Concurrent intern")
         expectation.expectedFulfillmentCount = 10
 
+        // Capture IDs returned during concurrent phase so we verify
+        // the actual values produced under contention, not re-interned ones.
+        let lock = NSLock()
+        var capturedIDs: [(String, InternedString)] = []
+
         for i in 0..<10 {
             DispatchQueue.global().async {
+                var localIDs: [(String, InternedString)] = []
                 for j in 0..<100 {
-                    let _ = interner.intern("string_\(i)_\(j)")
+                    let str = "string_\(i)_\(j)"
+                    let id = interner.intern(str)
+                    localIDs.append((str, id))
                 }
+                lock.lock()
+                capturedIDs.append(contentsOf: localIDs)
+                lock.unlock()
                 expectation.fulfill()
             }
         }
 
         wait(for: [expectation], timeout: 10.0)
 
-        // Verify all strings can be resolved
-        for i in 0..<10 {
-            for j in 0..<100 {
-                let id = interner.intern("string_\(i)_\(j)")
-                XCTAssertEqual(interner.resolve(id), "string_\(i)_\(j)")
-            }
+        // Verify IDs captured during the concurrent phase resolve correctly
+        for (str, id) in capturedIDs {
+            XCTAssertEqual(interner.resolve(id), str)
         }
     }
 
