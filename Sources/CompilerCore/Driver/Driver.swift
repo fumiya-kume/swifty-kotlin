@@ -346,6 +346,10 @@ public final class CompilerDriver {
                 collectTypeRefDependencies(typeRefID: paramType, ast: ast, interner: interner, depended: &depended)
             }
             collectTypeRefDependencies(typeRefID: returnType, ast: ast, interner: interner, depended: &depended)
+        case .intersection(let parts):
+            for part in parts {
+                collectTypeRefDependencies(typeRefID: part, ast: ast, interner: interner, depended: &depended)
+            }
         }
     }
 }

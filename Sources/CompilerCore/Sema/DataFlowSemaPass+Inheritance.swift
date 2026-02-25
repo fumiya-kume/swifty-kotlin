@@ -69,7 +69,7 @@ extension DataFlowSemaPassPhase {
         case .named(let refPath, let refs, _):
             path = refPath
             argRefs = refs
-        case .functionType:
+        case .functionType, .intersection:
             return nil
         }
         guard !path.isEmpty else {
@@ -186,6 +186,10 @@ extension DataFlowSemaPassPhase {
                 isSuspend: isSuspend,
                 nullability: nullability
             )))
+        case .intersection(let partRefs):
+            let partTypes = partRefs.compactMap { resolveTypeRefForInheritance($0, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types) }
+            guard partTypes.count == partRefs.count else { return nil }
+            return types.make(.intersection(partTypes))
         }
     }
 
