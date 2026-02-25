@@ -389,9 +389,10 @@ final class CallLowerer {
             } else {
                 loweredMemberCalleeName = calleeName
             }
+            let receiverTypeForDispatch = sema.bindings.exprTypes[receiverExpr]
             if !isSuperCall,
                let chosen,
-               let dispatchKind = resolveVirtualDispatch(callee: chosen, sema: sema) {
+               let dispatchKind = resolveVirtualDispatch(callee: chosen, receiverTypeID: receiverTypeForDispatch, sema: sema) {
                 // For virtualCall, the receiver is a separate field, so remove it
                 // from finalArguments (it was inserted at index 0 above).
                 var vcArguments = finalArguments
@@ -584,9 +585,10 @@ final class CallLowerer {
             } else {
                 loweredMemberCalleeName = calleeName
             }
+            let receiverTypeForDispatch = sema.bindings.exprTypes[receiverExpr]
             if !isSuperCall,
                let chosen,
-               let dispatchKind = resolveVirtualDispatch(callee: chosen, sema: sema) {
+               let dispatchKind = resolveVirtualDispatch(callee: chosen, receiverTypeID: receiverTypeForDispatch, sema: sema) {
                 // For virtualCall, the receiver is a separate field, so remove it
                 // from finalArguments (it was inserted at index 0 above).
                 var vcArguments = finalArguments
@@ -624,7 +626,7 @@ final class CallLowerer {
     /// Determine if a callee method requires virtual dispatch.
     /// Returns `.vtable(slot:)` for class methods or `.itable(slot:)` for interface methods,
     /// or `nil` if the call should use direct (static) dispatch.
-    private func resolveVirtualDispatch(callee: SymbolID, sema: SemaModule) -> KIRDispatchKind? {
+    private func resolveVirtualDispatch(callee: SymbolID, receiverTypeID: TypeID?, sema: SemaModule) -> KIRDispatchKind? {
         guard let calleeSymbol = sema.symbols.symbol(callee),
               calleeSymbol.kind == .function else {
             return nil
@@ -637,6 +639,20 @@ final class CallLowerer {
             return nil
         }
         if parentSymbol.kind == .interface {
+            // If the receiver is a concrete class with no subtypes, use direct
+            // dispatch.  Kotlin classes are final by default, so this is safe and
+            // avoids the itable path which requires runtime typeInfo support.
+            if let receiverTypeID,
+               case .classType(let classType) = sema.types.kind(of: receiverTypeID) {
+                let receiverClassSymID = classType.classSymbol
+                if let receiverClassSym = sema.symbols.symbol(receiverClassSymID),
+                   receiverClassSym.kind == .class {
+                    let subtypes = sema.symbols.directSubtypes(of: receiverClassSymID)
+                    if subtypes.isEmpty {
+                        return nil
+                    }
+                }
+            }
             let interfaceSlot = layout.itableSlots[parentID] ?? 0
             if let methodSlot = layout.vtableSlots[callee] {
                 return .itable(interfaceSlot: interfaceSlot, methodSlot: methodSlot)
