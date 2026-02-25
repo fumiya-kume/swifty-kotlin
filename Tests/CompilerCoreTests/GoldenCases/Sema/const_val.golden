@@ -14,29 +14,23 @@ symbol s12 kind=property fq=golden.sema.NAME vis=public flags=constValue type=St
 symbol s13 kind=property fq=golden.sema.FLAG vis=public flags=constValue type=Boolean
 symbol s14 kind=property fq=golden.sema.RATE vis=public flags=constValue type=Double
 symbol s15 kind=property fq=golden.sema.NEG vis=public flags=constValue type=Int
-symbol s16 kind=object fq=golden.sema.Constants vis=public flags=_
-symbol s17 kind=property fq=golden.sema.Constants.LIMIT vis=public flags=constValue type=Int
-symbol s18 kind=property fq=golden.sema.Constants.LABEL vis=public flags=constValue type=String
-symbol s19 kind=function fq=golden.sema.useConst vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s20 kind=function fq=golden.sema.useNegConst vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s16 kind=function fq=golden.sema.useConst vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s17 kind=function fq=golden.sema.useNegConst vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
   decl d0 property MAX var=0 sym=s11
   decl d1 property NAME var=0 sym=s12
   decl d2 property FLAG var=0 sym=s13
   decl d3 property RATE var=0 sym=s14
   decl d4 property NEG var=0 sym=s15
-  decl d7 object Constants sym=s16
-  decl d8 fun useConst suspend=0 inline=0 sym=s19
-  decl d9 fun useNegConst suspend=0 inline=0 sym=s20
+  decl d5 fun useConst suspend=0 inline=0 sym=s16
+  decl d6 fun useNegConst suspend=0 inline=0 sym=s17
 expr e0 int(100) type=Int ref=s11
 expr e1 string(hello) type=String ref=s12
 expr e2 bool(true) type=Boolean ref=s13
 expr e3 double(3.14) type=Double ref=s14
 expr e4 int(42) type=Int ref=s15
-expr e5 unary(unaryMinus) operand=e4 type=Int ref=s17
-expr e6 int(200) type=String ref=s18
-expr e7 string(world) type=String
-expr e8 name(MAX) type=Int ref=s11
-expr e9 int(50) type=Int
-expr e10 binary(greaterThan) lhs=e8 rhs=e9 type=Boolean
-expr e11 name(NEG) type=Int ref=s15
+expr e5 unary(unaryMinus) operand=e4 type=Int
+expr e6 name(MAX) type=Int ref=s11
+expr e7 int(50) type=Int
+expr e8 binary(greaterThan) lhs=e6 rhs=e7 type=Boolean
+expr e9 name(NEG) type=Int ref=s15
