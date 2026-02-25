@@ -86,6 +86,74 @@ extension BuildASTPhase.ExpressionParser {
             return nil
         }
 
+        // Check for destructuring: for ((a, b) in iterable)
+        if matches(.symbol(.lParen)) {
+            let savedIndex = index
+            _ = consume() // consume inner `(`
+
+            // Collect names inside parens
+            var destructuringNames: [InternedString?] = []
+            var foundCloseParen = false
+            while let token = current() {
+                if token.kind == .symbol(.rParen) {
+                    _ = consume()
+                    foundCloseParen = true
+                    break
+                }
+                if token.kind == .symbol(.comma) {
+                    _ = consume()
+                    continue
+                }
+                if let name = tokenText(token) {
+                    let nameStr = interner.resolve(name)
+                    if nameStr == "_" {
+                        destructuringNames.append(nil)
+                    } else {
+                        destructuringNames.append(name)
+                    }
+                    _ = consume()
+                    // Skip optional type annotation
+                    if matches(.symbol(.colon)) {
+                        _ = consume()
+                        while let t = current(),
+                              t.kind != .symbol(.comma),
+                              t.kind != .symbol(.rParen) {
+                            _ = consume()
+                        }
+                    }
+                } else {
+                    _ = consume()
+                }
+            }
+
+            if foundCloseParen && !destructuringNames.isEmpty {
+                _ = consumeIf(.keyword(.in))
+                guard let iterable = parseExpression(minPrecedence: 0) else {
+                    index = savedIndex
+                    return parseForExpressionFallback(forToken: forToken)
+                }
+                _ = consumeIf(.symbol(.rParen))
+                guard let body = parseExpression(minPrecedence: 0) else {
+                    index = savedIndex
+                    return parseForExpressionFallback(forToken: forToken)
+                }
+                let end = astArena.exprRange(body)?.end ?? forToken.range.end
+                let range = SourceRange(start: forToken.range.start, end: end)
+                return astArena.appendExpr(.forDestructuringExpr(
+                    names: destructuringNames,
+                    iterable: iterable,
+                    body: body,
+                    range: range
+                ))
+            } else {
+                index = savedIndex
+            }
+        }
+
+        return parseForExpressionFallback(forToken: forToken)
+    }
+
+    private func parseForExpressionFallback(forToken: Token) -> ExprID? {
         var loopVariable: InternedString?
         if let token = current(),
            token.kind != .keyword(.in),

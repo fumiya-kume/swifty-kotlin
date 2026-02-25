@@ -11,9 +11,9 @@ symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public fla
 symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
 symbol s11 kind=class fq=golden.sema.Widget vis=public flags=_
 symbol s12 kind=constructor fq=golden.sema.Widget.<init> vis=public flags=_ sig=recv=Class#11 params=[] ret=Class#11 suspend=0 defaults=[] vararg=[]
-symbol s13 kind=property fq=golden.sema.Widget.computed vis=public flags=_ type=<error>
+symbol s13 kind=property fq=golden.sema.Widget.computed vis=public flags=_ type=String
 symbol s14 kind=property fq=golden.sema.Widget.backed vis=public flags=mutable type=Int
 file f0 package=golden.sema
   decl d2 class Widget sym=s11
-expr e0 string(hello) type=<error> ref=s13
+expr e0 string(hello) type=String ref=s13
 expr e1 int(0) type=Int ref=s14

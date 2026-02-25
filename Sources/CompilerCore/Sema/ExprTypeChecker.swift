@@ -91,8 +91,8 @@ final class ExprTypeChecker {
                     range: range
                 )
             }
-            sema.bindings.bindExprType(id, type: sema.types.unitType)
-            return sema.types.unitType
+            sema.bindings.bindExprType(id, type: sema.types.nothingType)
+            return sema.types.nothingType
 
         case .continueExpr(let range):
             if ctx.loopDepth == 0 {
@@ -102,8 +102,8 @@ final class ExprTypeChecker {
                     range: range
                 )
             }
-            sema.bindings.bindExprType(id, type: sema.types.unitType)
-            return sema.types.unitType
+            sema.bindings.bindExprType(id, type: sema.types.nothingType)
+            return sema.types.nothingType
 
         case .localDecl(let name, let isMutable, let typeAnnotation, let initializer, let range):
             return driver.localDeclChecker.inferLocalDeclExpr(id, name: name, isMutable: isMutable, typeAnnotation: typeAnnotation, initializer: initializer, range: range, ctx: ctx, locals: &locals)
@@ -117,15 +117,33 @@ final class ExprTypeChecker {
         case .indexedAssign(let receiverExpr, let indices, let valueExpr, let range):
             return driver.localDeclChecker.inferIndexedAssignExpr(id, receiverExpr: receiverExpr, indices: indices, valueExpr: valueExpr, range: range, ctx: ctx, locals: &locals)
 
-        case .returnExpr(let value, _):
-            let resolved: TypeID
+        case .returnExpr(let value, let range):
             if let value {
-                resolved = driver.inferExpr(value, ctx: ctx, locals: &locals, expectedType: expectedType)
-            } else {
-                resolved = sema.types.unitType
+                let resolved = driver.inferExpr(value, ctx: ctx, locals: &locals, expectedType: expectedType)
+                // Emit subtype constraint: return value must conform to expected (function) return type
+                if let expectedType {
+                    driver.emitSubtypeConstraint(
+                        left: resolved,
+                        right: expectedType,
+                        range: range,
+                        solver: ConstraintSolver(),
+                        sema: sema,
+                        diagnostics: ctx.semaCtx.diagnostics
+                    )
+                }
+            } else if let expectedType {
+                // Bare `return` is equivalent to `return Unit`; check Unit <: expectedType
+                driver.emitSubtypeConstraint(
+                    left: sema.types.unitType,
+                    right: expectedType,
+                    range: range,
+                    solver: ConstraintSolver(),
+                    sema: sema,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
             }
-            sema.bindings.bindExprType(id, type: resolved)
-            return resolved
+            sema.bindings.bindExprType(id, type: sema.types.nothingType)
+            return sema.types.nothingType
 
         case .ifExpr(let condition, let thenExpr, let elseExpr, _):
             return driver.controlFlowChecker.inferIfExpr(id, condition: condition, thenExpr: thenExpr, elseExpr: elseExpr, ctx: ctx, locals: &locals, expectedType: expectedType)
@@ -235,11 +253,40 @@ final class ExprTypeChecker {
 
         case .blockExpr(let statements, let trailingExpr, _):
             var blockLocals = locals
+            var reachedNothing = false
             for stmt in statements {
-                _ = driver.inferExpr(stmt, ctx: ctx, locals: &blockLocals, expectedType: nil)
+                if reachedNothing {
+                    // Emit unreachable code diagnostic for statements after Nothing-typed expression
+                    if let stmtRange = ast.arena.exprRange(stmt) {
+                        ctx.semaCtx.diagnostics.warning(
+                            "KSWIFTK-SEMA-0096",
+                            "Unreachable code.",
+                            range: stmtRange
+                        )
+                    }
+                    // Still type-check for completeness but skip further unreachable warnings
+                    _ = driver.inferExpr(stmt, ctx: ctx, locals: &blockLocals, expectedType: nil)
+                    continue
+                }
+                let stmtType = driver.inferExpr(stmt, ctx: ctx, locals: &blockLocals, expectedType: nil)
+                if stmtType == sema.types.nothingType {
+                    reachedNothing = true
+                }
             }
             let resultType: TypeID
-            if let trailingExpr {
+            if reachedNothing {
+                if let trailingExpr {
+                    if let trailingRange = ast.arena.exprRange(trailingExpr) {
+                        ctx.semaCtx.diagnostics.warning(
+                            "KSWIFTK-SEMA-0096",
+                            "Unreachable code.",
+                            range: trailingRange
+                        )
+                    }
+                    _ = driver.inferExpr(trailingExpr, ctx: ctx, locals: &blockLocals, expectedType: expectedType)
+                }
+                resultType = sema.types.nothingType
+            } else if let trailingExpr {
                 resultType = driver.inferExpr(trailingExpr, ctx: ctx, locals: &blockLocals, expectedType: expectedType)
             } else {
                 resultType = sema.types.unitType
@@ -274,6 +321,12 @@ final class ExprTypeChecker {
             _ = driver.inferExpr(rhsID, ctx: ctx, locals: &locals)
             sema.bindings.bindExprType(id, type: boolType)
             return boolType
+
+        case .destructuringDecl(let names, let isMutable, let initializer, let range):
+            return driver.controlFlowChecker.inferDestructuringDeclExpr(id, names: names, isMutable: isMutable, initializer: initializer, range: range, ctx: ctx, locals: &locals)
+
+        case .forDestructuringExpr(let names, let iterableExpr, let bodyExpr, let range):
+            return driver.controlFlowChecker.inferForDestructuringExpr(id, names: names, iterableExpr: iterableExpr, bodyExpr: bodyExpr, range: range, ctx: ctx, locals: &locals)
         }
     }
 
@@ -583,6 +636,10 @@ final class ExprTypeChecker {
                 )
             }
             sema.bindings.bindIdentifier(id, symbol: local.symbol)
+            // Propagate collection marks through variable references (P5-84).
+            if sema.bindings.isCollectionSymbol(local.symbol) {
+                sema.bindings.markCollectionExpr(id)
+            }
             sema.bindings.bindExprType(id, type: local.type)
             return local.type
         }
