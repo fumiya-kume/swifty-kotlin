@@ -149,7 +149,11 @@ final class ExprLowerer {
                 if let localValue = driver.ctx.localValuesBySymbol[symbol] {
                     return localValue
                 }
-                if let constant = propertyConstantInitializers[symbol] {
+                // Inline constant initializers only for immutable (val) properties.
+                // Mutable (var) properties must always load from global store at runtime.
+                if let constant = propertyConstantInitializers[symbol],
+                   let symInfo = sema.symbols.symbol(symbol),
+                   !symInfo.flags.contains(.mutable) {
                     let id = arena.appendExpr(constant, type: boundType)
                     instructions.append(.constValue(result: id, value: constant))
                     return id
@@ -562,7 +566,23 @@ final class ExprLowerer {
                 instructions: &instructions
             )
             if let symbol = sema.bindings.identifierSymbols[exprID] {
-                driver.ctx.localValuesBySymbol[symbol] = valueID
+                // Check if this is a top-level property assignment (not a local variable).
+                // Top-level properties need a copy to global storage rather than just
+                // updating localValuesBySymbol (which wouldn't persist across function calls).
+                // Top-level properties have no parentSymbol (nil) or parent is a package.
+                // Class member properties always have parentSymbol set to a class/object.
+                if let symInfo = sema.symbols.symbol(symbol), symInfo.kind == .property, {
+                    let p = sema.symbols.parentSymbol(for: symbol)
+                    let pk = p.flatMap({ sema.symbols.symbol($0) })?.kind
+                    return pk == nil || pk == .package
+                }() {
+                    let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
+                    let globalRef = arena.appendExpr(.symbolRef(symbol), type: propType)
+                    instructions.append(.constValue(result: globalRef, value: .symbolRef(symbol)))
+                    instructions.append(.copy(from: valueID, to: globalRef))
+                } else {
+                    driver.ctx.localValuesBySymbol[symbol] = valueID
+                }
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))
@@ -705,7 +725,21 @@ final class ExprLowerer {
                 instructions: &instructions
             )
             if let symbol = sema.bindings.identifierSymbols[exprID] {
-                driver.ctx.localValuesBySymbol[symbol] = valueID
+                // Top-level property compound assignment needs a copy to global storage.
+                // Top-level properties have no parentSymbol (nil) or parent is a package.
+                // Class member properties always have parentSymbol set to a class/object.
+                if let symInfo = sema.symbols.symbol(symbol), symInfo.kind == .property, {
+                    let p = sema.symbols.parentSymbol(for: symbol)
+                    let pk = p.flatMap({ sema.symbols.symbol($0) })?.kind
+                    return pk == nil || pk == .package
+                }() {
+                    let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
+                    let globalRef = arena.appendExpr(.symbolRef(symbol), type: propType)
+                    instructions.append(.constValue(result: globalRef, value: .symbolRef(symbol)))
+                    instructions.append(.copy(from: valueID, to: globalRef))
+                } else {
+                    driver.ctx.localValuesBySymbol[symbol] = valueID
+                }
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))

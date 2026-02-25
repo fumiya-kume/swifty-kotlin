@@ -9,26 +9,17 @@ symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=
 symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
 symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
 symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
-symbol s11 kind=property fq=golden.sema.name vis=public flags=mutable type=String
-symbol s12 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s11 kind=function fq=golden.sema.classify vis=public flags=_ sig=recv=_ params=[Int] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s12 kind=valueParameter fq=golden.sema.classify.$11.x vis=private flags=_
 file f0 package=golden.sema
-  decl d0 property name var=1 sym=s11
-  decl d1 fun main suspend=0 inline=0 sym=s12
-expr e0 name(Delegates) type=String ref=s11
-expr e1 string(initial) type=String
-expr e2 memberCall recv=e0 callee=observable args=[_:e1] type=Class#4 call=s9 map=[0->0] targs=[]
-expr e3 name(prop) type=_
-expr e4 name(println) type=_
-expr e5 name(old) type=_
-expr e6 name(new) type=_
-expr e7 stringTemplate[lit(changed from ),expr(e5),lit( to ),expr(e6)] type=_
-expr e8 call callee=e4 args=[_:e7] type=_
-expr e9 name(println) type=_
-expr e10 name(name) type=String ref=s11
-expr e11 call callee=e9 args=[_:e10] type=Unit
-expr e12 name(name) type=_
-expr e13 string(updated) type=String
-expr e14 localAssign name value=e13 type=Unit ref=s11
-expr e15 name(println) type=_
-expr e16 name(name) type=String ref=s11
-expr e17 call callee=e15 args=[_:e16] type=Unit
+  decl d0 fun classify suspend=0 inline=0 sym=s11
+expr e0 name(x) type=Int ref=s12
+expr e1 int(1) type=Int
+expr e2 int(2) type=Int
+expr e3 int(3) type=Int
+expr e4 string(few) type=String
+expr e5 int(4) type=Int
+expr e6 int(5) type=Int
+expr e7 string(some) type=String
+expr e8 string(many) type=String
+expr e9 when subject=e0 branches=[e1,e2,e3->e4,e5,e6->e7] else=e8 type=String

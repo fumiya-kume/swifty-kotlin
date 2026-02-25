@@ -112,6 +112,12 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(RuntimeABISpec.arrayFunctions.count, 4)
     }
 
+    func testBitwiseFunctionCount() {
+        // kk_bitwise_and, kk_bitwise_or, kk_bitwise_xor, kk_op_inv,
+        // kk_op_shl, kk_op_shr, kk_op_ushr
+        XCTAssertEqual(RuntimeABISpec.bitwiseFunctions.count, 7)
+    }
+
     func testTotalFunctionCount() {
         let expected = RuntimeABISpec.memoryFunctions.count
             + RuntimeABISpec.exceptionFunctions.count
@@ -123,6 +129,7 @@ final class ABIMismatchTests: XCTestCase {
             + RuntimeABISpec.arrayFunctions.count
             + RuntimeABISpec.rangeFunctions.count
             + RuntimeABISpec.delegateFunctions.count
+            + RuntimeABISpec.bitwiseFunctions.count
         XCTAssertEqual(RuntimeABISpec.allFunctions.count, expected)
     }
 
@@ -266,6 +273,7 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertTrue(header.contains("Coroutine"))
         XCTAssertTrue(header.contains("Boxing"))
         XCTAssertTrue(header.contains("Array"))
+        XCTAssertTrue(header.contains("Bitwise"))
     }
 
     // MARK: - Cross-Module ABI Reconciliation (Runtime <-> CompilerCore)

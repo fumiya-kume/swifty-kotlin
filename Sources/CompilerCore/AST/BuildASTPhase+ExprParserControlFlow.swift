@@ -27,11 +27,27 @@ extension BuildASTPhase.ExpressionParser {
             }
 
             let branchStart = token.range.start
-            var condition: ExprID?
+            var conditions: [ExprID] = []
             if token.kind == .keyword(.else) {
                 _ = consume()
             } else {
-                condition = parseExpression(minPrecedence: 0)
+                // Parse first condition
+                if let firstCond = parseExpression(minPrecedence: 0) {
+                    conditions.append(firstCond)
+                }
+                // Parse additional comma-separated conditions (before ->)
+                while matches(.symbol(.comma)) {
+                    _ = consume() // consume comma
+                    // If we see '->' after comma, it was a trailing comma; stop
+                    if matches(.symbol(.arrow)) {
+                        break
+                    }
+                    if let nextCond = parseExpression(minPrecedence: 0) {
+                        conditions.append(nextCond)
+                    } else {
+                        break
+                    }
+                }
             }
 
             _ = consumeIf(.symbol(.arrow))
@@ -42,8 +58,8 @@ extension BuildASTPhase.ExpressionParser {
 
             if let body {
                 let branchRange = SourceRange(start: branchStart, end: astArena.exprRange(body)?.end ?? branchStart)
-                let branch = WhenBranch(condition: condition, body: body, range: branchRange)
-                if condition == nil {
+                let branch = WhenBranch(conditions: conditions, body: body, range: branchRange)
+                if conditions.isEmpty {
                     elseExpr = body
                 } else {
                     branches.append(branch)

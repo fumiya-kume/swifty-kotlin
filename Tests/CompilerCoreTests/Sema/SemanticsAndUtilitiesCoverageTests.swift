@@ -65,7 +65,9 @@ final class SemanticsAndUtilitiesCoverageTests: XCTestCase {
         XCTAssertTrue(types.isSubtype(fnNN, types.anyType))
         XCTAssertFalse(types.isSubtype(fnNullable, types.anyType))
         XCTAssertTrue(types.isSubtype(intersectionAllNonNull, types.anyType))
-        XCTAssertFalse(types.isSubtype(intersectionWithNullable, types.anyType))
+        // With corrected intersection subtype rules (P5-97): A & B <: C if ANY part <: C.
+        // intersection([Int, Int?]) <: Any is true because Int <: Any.
+        XCTAssertTrue(types.isSubtype(intersectionWithNullable, types.anyType))
         XCTAssertFalse(types.isSubtype(types.nullableAnyType, types.anyType))
 
         let fnWithReceiver = types.make(.functionType(FunctionType(

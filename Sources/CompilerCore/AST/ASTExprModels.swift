@@ -8,6 +8,7 @@ public enum TypeArgRef: Equatable {
 public enum TypeRef: Equatable {
     case named(path: [InternedString], args: [TypeArgRef], nullable: Bool)
     case functionType(params: [TypeRefID], returnType: TypeRefID, isSuspend: Bool, nullable: Bool)
+    case intersection(parts: [TypeRefID])
 }
 
 public enum BinaryOp: Equatable {
@@ -29,6 +30,12 @@ public enum BinaryOp: Equatable {
     case rangeUntil
     case downTo
     case step
+    case bitwiseAnd
+    case bitwiseOr
+    case bitwiseXor
+    case shl
+    case shr
+    case ushr
 }
 
 public enum UnaryOp: Equatable {
@@ -46,14 +53,26 @@ public enum CompoundAssignOp: Equatable {
 }
 
 public struct WhenBranch: Equatable {
-    public let condition: ExprID?
+    public let conditions: [ExprID]
     public let body: ExprID
     public let range: SourceRange
 
-    public init(condition: ExprID?, body: ExprID, range: SourceRange) {
-        self.condition = condition
+    public init(conditions: [ExprID], body: ExprID, range: SourceRange) {
+        self.conditions = conditions
         self.body = body
         self.range = range
+    }
+
+    /// Convenience: single-condition branch (backward compat helper).
+    public init(condition: ExprID?, body: ExprID, range: SourceRange) {
+        self.conditions = condition.map { [$0] } ?? []
+        self.body = body
+        self.range = range
+    }
+
+    /// Backward-compat accessor: returns the first condition, or nil for else branches.
+    public var condition: ExprID? {
+        conditions.first
     }
 }
 

@@ -301,12 +301,13 @@ final class ControlFlowTypeChecker {
                 )
             }()
             let hasExplicitNullBranch = branches.contains { branch in
-                guard let condition = branch.condition,
-                      let conditionExpr = ast.arena.expr(condition),
-                      case .nameRef(let name, _) = conditionExpr else {
-                    return false
+                branch.conditions.contains { cond in
+                    guard let conditionExpr = ast.arena.expr(cond),
+                          case .nameRef(let name, _) = conditionExpr else {
+                        return false
+                    }
+                    return interner.resolve(name) == "null"
                 }
-                return interner.resolve(name) == "null"
             }
             var branchTypes: [TypeID] = []
             var covered: Set<InternedString> = []
@@ -316,7 +317,8 @@ final class ControlFlowTypeChecker {
             var allBranchLocals: [LocalBindings] = []
             for branch in branches {
                 var isNullBranch = false
-                if let cond = branch.condition {
+                // Type-check and collect coverage for ALL conditions in this branch (OR semantics)
+                for cond in branch.conditions {
                     let condType = driver.inferExpr(cond, ctx: ctx, locals: &locals)
                     if let condExpr = ast.arena.expr(cond) {
                         switch condExpr {
@@ -341,6 +343,8 @@ final class ControlFlowTypeChecker {
                 var branchLocals = locals
                 var branchCtx = ctx
                 if let subjectLocalBinding, subjectLocalBinding.isStable {
+                    // FIXME: Currently only the first condition contributes to flow-state narrowing for subject-ful `when` branches.
+                    //        Extend this to support all conditions in the branch (OR semantics) for more precise narrowing.
                     if let cond = branch.condition {
                         let branchFlowState = ctx.dataFlow.branchOnWhenSubject(
                             subjectSymbol: subjectLocalBinding.symbol,
@@ -445,10 +449,16 @@ final class ControlFlowTypeChecker {
             var cumulativeFalseState = ctx.flowState
             for branch in branches {
                 var branchLocals = locals
-                let condCtx = ctx.copying(flowState: cumulativeFalseState)
+                var condCtx = ctx.copying(flowState: cumulativeFalseState)
                 driver.exprChecker.applyFlowStateToLocals(cumulativeFalseState, locals: &branchLocals, sema: sema)
                 var branchCtx = condCtx
-                if let cond = branch.condition {
+                // Subject-less when: each condition must be Boolean; multiple conditions = OR.
+                // Collect all true-states and merge them (join) for the body context,
+                // since the body executes when ANY condition is true.
+                // condCtx is updated after each condition so subsequent conditions see
+                // the narrowing from prior conditions being false (short-circuit OR semantics).
+                var trueStates: [DataFlowState] = []
+                for cond in branch.conditions {
                     let condType = driver.inferExpr(cond, ctx: condCtx, locals: &branchLocals)
                     if condType != boolType && condType != sema.types.errorType {
                         ctx.semaCtx.diagnostics.error(
@@ -461,9 +471,12 @@ final class ControlFlowTypeChecker {
                         cond, base: cumulativeFalseState, locals: branchLocals,
                         ast: ast, sema: sema, interner: interner
                     )
-                    branchCtx = ctx.copying(flowState: condBranch.trueState)
-                    driver.exprChecker.applyFlowStateToLocals(condBranch.trueState, locals: &branchLocals, sema: sema)
+                    trueStates.append(condBranch.trueState)
+                    // Chain false-state: branch is false only when ALL conditions are false
                     cumulativeFalseState = condBranch.falseState
+                    // Update condCtx so subsequent conditions see prior conditions' false-state narrowing
+                    condCtx = ctx.copying(flowState: cumulativeFalseState)
+                    driver.exprChecker.applyFlowStateToLocals(cumulativeFalseState, locals: &branchLocals, sema: sema)
                     if let condExpr = ast.arena.expr(cond) {
                         switch condExpr {
                         case .boolLiteral(true, _):
@@ -474,6 +487,16 @@ final class ControlFlowTypeChecker {
                             break
                         }
                     }
+                }
+                // Join all true-states: body sees the union (OR) of all conditions' narrowings
+                if let firstTrue = trueStates.first {
+                    var joinedState = firstTrue
+                    for state in trueStates.dropFirst() {
+                        joinedState = ctx.dataFlow.merge(joinedState, state)
+                    }
+                    branchCtx = ctx.copying(flowState: joinedState)
+                    branchLocals = locals
+                    driver.exprChecker.applyFlowStateToLocals(joinedState, locals: &branchLocals, sema: sema)
                 }
                 branchTypes.append(
                     driver.inferExpr(branch.body, ctx: branchCtx, locals: &branchLocals, expectedType: expectedType)

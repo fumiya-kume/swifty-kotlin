@@ -140,6 +140,18 @@ struct TypeCheckHelpers {
             return interner.intern("downTo")
         case .step:
             return interner.intern("step")
+        case .bitwiseAnd:
+            return interner.intern("and")
+        case .bitwiseOr:
+            return interner.intern("or")
+        case .bitwiseXor:
+            return interner.intern("xor")
+        case .shl:
+            return interner.intern("shl")
+        case .shr:
+            return interner.intern("shr")
+        case .ushr:
+            return interner.intern("ushr")
         }
     }
 
@@ -252,6 +264,10 @@ struct TypeCheckHelpers {
                 isSuspend: isSuspend,
                 nullability: nullability
             )))
+
+        case .intersection(let partRefs):
+            let partTypes = partRefs.map { resolveTypeRef($0, ast: ast, sema: sema, interner: interner, diagnostics: diagnostics) }
+            return sema.types.make(.intersection(partTypes))
         }
     }
 
@@ -665,10 +681,32 @@ struct TypeCheckHelpers {
     }
 
     func nominalSymbol(of type: TypeID, types: TypeSystem) -> SymbolID? {
-        if case .classType(let classType) = types.kind(of: type) {
+        switch types.kind(of: type) {
+        case .classType(let classType):
             return classType.classSymbol
+        case .intersection(let parts):
+            // For intersection types, return the first nominal part
+            for part in parts {
+                if let symbol = nominalSymbol(of: part, types: types) {
+                    return symbol
+                }
+            }
+            return nil
+        default:
+            return nil
         }
-        return nil
+    }
+
+    /// Collects all nominal symbols from a type, including all parts of an intersection.
+    func allNominalSymbols(of type: TypeID, types: TypeSystem) -> [SymbolID] {
+        switch types.kind(of: type) {
+        case .classType(let classType):
+            return [classType.classSymbol]
+        case .intersection(let parts):
+            return parts.flatMap { allNominalSymbols(of: $0, types: types) }
+        default:
+            return []
+        }
     }
 
     func collectMemberFunctionCandidates(
@@ -677,11 +715,12 @@ struct TypeCheckHelpers {
         sema: SemaModule,
         allowedOwnerSymbols: Set<SymbolID>? = nil
     ) -> [SymbolID] {
-        guard let receiverNominal = nominalSymbol(of: receiverType, types: sema.types) else {
+        let nominalRoots = allNominalSymbols(of: receiverType, types: sema.types)
+        guard !nominalRoots.isEmpty else {
             return []
         }
 
-        var ownerQueue: [SymbolID] = [receiverNominal]
+        var ownerQueue: [SymbolID] = nominalRoots
         var visitedOwners: Set<SymbolID> = []
         var ownersInLookupOrder: [SymbolID] = []
         while !ownerQueue.isEmpty {
@@ -765,10 +804,11 @@ struct TypeCheckHelpers {
         receiverType: TypeID,
         sema: SemaModule
     ) -> (symbol: SymbolID, type: TypeID)? {
-        guard let receiverNominal = nominalSymbol(of: receiverType, types: sema.types) else {
+        let nominalRoots = allNominalSymbols(of: receiverType, types: sema.types)
+        guard !nominalRoots.isEmpty else {
             return nil
         }
-        var ownerQueue: [SymbolID] = [receiverNominal]
+        var ownerQueue: [SymbolID] = nominalRoots
         var visited: Set<SymbolID> = []
         while !ownerQueue.isEmpty {
             let owner = ownerQueue.removeFirst()

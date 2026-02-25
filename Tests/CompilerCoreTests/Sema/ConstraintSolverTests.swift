@@ -115,7 +115,9 @@ final class ConstraintSolverTests: XCTestCase {
         XCTAssertFalse(solution.isSuccess)
         let failure = try XCTUnwrap(solution.failure)
         XCTAssertEqual(failure.code, "KSWIFTK-TYPE-0001")
-        XCTAssertTrue(failure.message.contains("not satisfied"))
+        // With corrected intersection subtype rules (P5-97), the solver now detects
+        // the conflict at the bound-checking phase rather than post-substitution.
+        XCTAssertTrue(failure.message.contains("not satisfied") || failure.message.contains("not a subtype"))
     }
 
     func testSolveSupertypeConstraintKindSatisfaction() {
@@ -959,6 +961,42 @@ final class ConstraintSolverTests: XCTestCase {
         XCTAssertTrue(solution.isSuccess)
         XCTAssertEqual(solution.substitution[t0], intType)
         XCTAssertEqual(solution.substitution[t1], intType)
+    }
+
+    // MARK: - Coverage: relationOperator (private helper exposed as internal for testability)
+
+    func testRelationOperatorReturnsCorrectSymbols() {
+        let solver = ConstraintSolver()
+        XCTAssertEqual(solver.relationOperator(for: .subtype), "<:")
+        XCTAssertEqual(solver.relationOperator(for: .equal), "==")
+        XCTAssertEqual(solver.relationOperator(for: .supertype), ":>")
+    }
+
+    // MARK: - Coverage: firstRelevantBlameRange returns nil
+
+    func testSolveBlameRangeIsNilWhenVariableOnlyOnRightOfVarVarConstraint() throws {
+        // When a variable only appears on the RIGHT side of a variable-to-variable
+        // constraint, the firstRelevantBlameRange helper cannot find it because
+        // the first switch case (.variable(let lhs), _) matches but lhs != target.
+        // This exercises the `return nil` path in firstRelevantBlameRange.
+        let (solver, types) = makeDeps()
+        let t0 = TypeVarID(rawValue: 400)
+        let t1 = TypeVarID(rawValue: 401)
+
+        // errorType propagates from t0 → t1 through var-var relation.
+        // t1 is processed first (listed first in vars), so firstRelevantBlameRange
+        // searches for t1 but only finds t0 on the left of the var-var constraint.
+        let constraints: [VariableConstraint] = [
+            VariableConstraint(kind: .subtype, left: .type(types.errorType), right: .variable(t0)),
+            VariableConstraint(kind: .subtype, left: .variable(t0), right: .variable(t1))
+        ]
+        let solution = solver.solve(vars: [t1, t0], constraints: constraints, typeSystem: types)
+
+        XCTAssertFalse(solution.isSuccess)
+        let failure = try XCTUnwrap(solution.failure)
+        XCTAssertTrue(failure.message.contains("Failed to infer"))
+        // blameRange should be nil since firstRelevantBlameRange couldn't find t1
+        XCTAssertNil(failure.primaryRange)
     }
 
     func testSolveDiamondWithConflictingLeafBoundsFails() throws {

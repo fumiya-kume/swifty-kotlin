@@ -46,6 +46,14 @@ final class LLVMCAPIBindings {
     internal typealias LLVMBuildSubFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     internal typealias LLVMBuildMulFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     internal typealias LLVMBuildSDivFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    // Bitwise/shift builder function types (P5-103)
+    internal typealias LLVMBuildAndFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    internal typealias LLVMBuildOrFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    internal typealias LLVMBuildXorFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    internal typealias LLVMBuildShlFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    internal typealias LLVMBuildAShrFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    internal typealias LLVMBuildLShrFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    internal typealias LLVMBuildNotFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     internal typealias LLVMBuildICmpFn = @convention(c) (LLVMBuilderRef?, UInt32, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     internal typealias LLVMBuildZExtFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMTypeRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     internal typealias LLVMBuildAllocaFn = @convention(c) (LLVMBuilderRef?, LLVMTypeRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
@@ -109,6 +117,9 @@ final class LLVMCAPIBindings {
 
     typealias LLVMDIBuilderRef = OpaquePointer
     typealias LLVMMetadataRef = OpaquePointer
+
+    internal typealias LLVMAddGlobalFn = @convention(c) (LLVMModuleRef?, LLVMTypeRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    internal typealias LLVMSetInitializerFn = @convention(c) (LLVMValueRef?, LLVMValueRef?) -> Void
 
     internal typealias LLVMCreateDIBuilderFn = @convention(c) (LLVMModuleRef?) -> LLVMDIBuilderRef?
     internal typealias LLVMDisposeDIBuilderFn = @convention(c) (LLVMDIBuilderRef?) -> Void
@@ -230,6 +241,14 @@ final class LLVMCAPIBindings {
     internal let buildSubFn: LLVMBuildSubFn
     internal let buildMulFn: LLVMBuildMulFn
     internal let buildSDivFn: LLVMBuildSDivFn
+    // Bitwise/shift builder stored properties (P5-103)
+    internal let buildAndFn: LLVMBuildAndFn?
+    internal let buildOrFn: LLVMBuildOrFn?
+    internal let buildXorFn: LLVMBuildXorFn?
+    internal let buildShlFn: LLVMBuildShlFn?
+    internal let buildAShrFn: LLVMBuildAShrFn?
+    internal let buildLShrFn: LLVMBuildLShrFn?
+    internal let buildNotFn: LLVMBuildNotFn?
     internal let buildICmpFn: LLVMBuildICmpFn
     internal let buildZExtFn: LLVMBuildZExtFn?
     internal let buildAllocaFn: LLVMBuildAllocaFn?
@@ -259,6 +278,8 @@ final class LLVMCAPIBindings {
     internal let initializeAArch64TargetFn: LLVMInitializeAArch64TargetFn?
     internal let initializeAArch64TargetMCFn: LLVMInitializeAArch64TargetMCFn?
     internal let initializeAArch64AsmPrinterFn: LLVMInitializeAArch64AsmPrinterFn?
+    internal let addGlobalFn: LLVMAddGlobalFn?
+    internal let setInitializerFn: LLVMSetInitializerFn?
     internal let createDIBuilderFn: LLVMCreateDIBuilderFn?
     internal let disposeDIBuilderFn: LLVMDisposeDIBuilderFn?
     internal let diBuilderFinalizeFn: LLVMDIBuilderFinalizeFn?
@@ -309,6 +330,14 @@ final class LLVMCAPIBindings {
         buildSubFn: @escaping LLVMBuildSubFn,
         buildMulFn: @escaping LLVMBuildMulFn,
         buildSDivFn: @escaping LLVMBuildSDivFn,
+        // Bitwise/shift builder init params (P5-103)
+        buildAndFn: LLVMBuildAndFn?,
+        buildOrFn: LLVMBuildOrFn?,
+        buildXorFn: LLVMBuildXorFn?,
+        buildShlFn: LLVMBuildShlFn?,
+        buildAShrFn: LLVMBuildAShrFn?,
+        buildLShrFn: LLVMBuildLShrFn?,
+        buildNotFn: LLVMBuildNotFn?,
         buildICmpFn: @escaping LLVMBuildICmpFn,
         buildZExtFn: LLVMBuildZExtFn?,
         buildAllocaFn: LLVMBuildAllocaFn?,
@@ -338,6 +367,8 @@ final class LLVMCAPIBindings {
         initializeAArch64TargetFn: LLVMInitializeAArch64TargetFn?,
         initializeAArch64TargetMCFn: LLVMInitializeAArch64TargetMCFn?,
         initializeAArch64AsmPrinterFn: LLVMInitializeAArch64AsmPrinterFn?,
+        addGlobalFn: LLVMAddGlobalFn? = nil,
+        setInitializerFn: LLVMSetInitializerFn? = nil,
         createDIBuilderFn: LLVMCreateDIBuilderFn?,
         disposeDIBuilderFn: LLVMDisposeDIBuilderFn?,
         diBuilderFinalizeFn: LLVMDIBuilderFinalizeFn?,
@@ -387,6 +418,14 @@ final class LLVMCAPIBindings {
         self.buildSubFn = buildSubFn
         self.buildMulFn = buildMulFn
         self.buildSDivFn = buildSDivFn
+        // Bitwise/shift builder assignments (P5-103)
+        self.buildAndFn = buildAndFn
+        self.buildOrFn = buildOrFn
+        self.buildXorFn = buildXorFn
+        self.buildShlFn = buildShlFn
+        self.buildAShrFn = buildAShrFn
+        self.buildLShrFn = buildLShrFn
+        self.buildNotFn = buildNotFn
         self.buildICmpFn = buildICmpFn
         self.buildZExtFn = buildZExtFn
         self.buildAllocaFn = buildAllocaFn
@@ -416,6 +455,8 @@ final class LLVMCAPIBindings {
         self.initializeAArch64TargetFn = initializeAArch64TargetFn
         self.initializeAArch64TargetMCFn = initializeAArch64TargetMCFn
         self.initializeAArch64AsmPrinterFn = initializeAArch64AsmPrinterFn
+        self.addGlobalFn = addGlobalFn
+        self.setInitializerFn = setInitializerFn
         self.createDIBuilderFn = createDIBuilderFn
         self.disposeDIBuilderFn = disposeDIBuilderFn
         self.diBuilderFinalizeFn = diBuilderFinalizeFn
@@ -542,5 +583,14 @@ final class LLVMCAPIBindings {
 
     func hasTerminator(_ block: LLVMBasicBlockRef?) -> Bool {
         getBasicBlockTerminatorFn(block) != nil
+    }
+
+    func addGlobal(module: LLVMModuleRef?, type: LLVMTypeRef?, name: String) -> LLVMValueRef? {
+        guard let fn = addGlobalFn else { return nil }
+        return name.withCString { fn(module, type, $0) }
+    }
+
+    func setInitializer(_ global: LLVMValueRef?, value: LLVMValueRef?) {
+        setInitializerFn?(global, value)
     }
 }

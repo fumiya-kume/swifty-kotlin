@@ -260,6 +260,25 @@ final class CallLowerer {
             )
         }
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+
+        // Primitive member function: Int/Long.inv() → kk_op_inv (P5-103)
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+        let longType = sema.types.make(.primitive(.long, .nonNull))
+        let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+        if interner.resolve(calleeName) == "inv",
+           args.isEmpty,
+           (receiverType == intType || receiverType == longType) {
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_op_inv"),
+                arguments: [loweredReceiverID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        }
+
         let isSuperCall = sema.bindings.isSuperCallExpr(exprID)
         let callBinding = sema.bindings.callBindings[exprID]
         let chosen = callBinding?.chosenCallee
@@ -423,6 +442,27 @@ final class CallLowerer {
             )
         }
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+
+        // Primitive member function: Int/Long.inv() → kk_op_inv (P5-103)
+        if interner.resolve(calleeName) == "inv",
+           args.isEmpty {
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let longType = sema.types.make(.primitive(.long, .nonNull))
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if nonNullReceiverType == intType || nonNullReceiverType == longType {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_op_inv"),
+                    arguments: [loweredReceiverID],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
         let isSuperCall = sema.bindings.isSuperCallExpr(exprID)
         let callBinding = sema.bindings.callBindings[exprID]
         let chosen = callBinding?.chosenCallee
@@ -878,6 +918,66 @@ final class CallLowerer {
             instructions.append(.call(
                 symbol: nil,
                 callee: interner.intern("kk_op_step"),
+                arguments: [lhsID, rhsID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        case .bitwiseAnd:
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_bitwise_and"),
+                arguments: [lhsID, rhsID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        case .bitwiseOr:
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_bitwise_or"),
+                arguments: [lhsID, rhsID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        case .bitwiseXor:
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_bitwise_xor"),
+                arguments: [lhsID, rhsID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        case .shl:
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_op_shl"),
+                arguments: [lhsID, rhsID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        case .shr:
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_op_shr"),
+                arguments: [lhsID, rhsID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        case .ushr:
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_op_ushr"),
                 arguments: [lhsID, rhsID],
                 result: result,
                 canThrow: false,

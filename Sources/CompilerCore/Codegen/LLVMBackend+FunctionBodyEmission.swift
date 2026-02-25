@@ -188,6 +188,33 @@ extension LLVMBackend {
                     continue
                 }
 
+                // Unsigned shift right: (intptr_t)((uintptr_t)a >> b) (P5-103)
+                if calleeName == "kk_op_ushr" {
+                    let lhs = argVars.count > 0 ? argVars[0] : "0"
+                    let rhs = argVars.count > 1 ? argVars[1] : "0"
+                    let expr = "(intptr_t)((uintptr_t)\(lhs) >> \(rhs))"
+                    if let result {
+                        lines.append("  \(varName(result)) = \(expr);")
+                        syncRoot(result)
+                    } else {
+                        lines.append("  (void)\(expr);")
+                    }
+                    continue
+                }
+
+                // Unary builtin ops (e.g. bitwise NOT) (P5-103)
+                if let cOp = LLVMBackend.unaryBuiltinOps[calleeName] {
+                    let operand = argVars.count > 0 ? argVars[0] : "0"
+                    let expr = "(\(cOp)\(operand))"
+                    if let result {
+                        lines.append("  \(varName(result)) = \(expr);")
+                        syncRoot(result)
+                    } else {
+                        lines.append("  (void)\(expr);")
+                    }
+                    continue
+                }
+
                 if LLVMBackend.floatBuiltinOps.contains(calleeName) {
                     let lhs = argVars.count > 0 ? argVars[0] : "0"
                     let rhs = argVars.count > 1 ? argVars[1] : "0"
@@ -394,8 +421,16 @@ extension LLVMBackend {
 
             case .copy(let from, let to):
                 ensureDeclared(from, declared: &declared, lines: &lines)
-                ensureDeclared(to, declared: &declared, lines: &lines)
-                lines.append("  \(varName(to)) = \(varName(from));")
+                // If the copy target is a global symbolRef, write to the global slot
+                // instead of the local register so the store persists.
+                if let targetExpr = arena.expr(to),
+                   case .symbolRef(let targetSymbol) = targetExpr,
+                   let globalSlot = globalValueSymbols[targetSymbol] {
+                    lines.append("  \(globalSlot) = \(varName(from));")
+                } else {
+                    ensureDeclared(to, declared: &declared, lines: &lines)
+                    lines.append("  \(varName(to)) = \(varName(from));")
+                }
 
             case .rethrow(let value):
                 ensureDeclared(value, declared: &declared, lines: &lines)
