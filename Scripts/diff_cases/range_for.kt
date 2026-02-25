@@ -3,7 +3,7 @@ fun main() {
         println(i)
     }
     val n = 5
-    for (i in 1..<n) {
+    for (i in 1 until n) {
         println(i)
     }
     for (i in 5 downTo 1 step 2) {
