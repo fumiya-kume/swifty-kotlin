@@ -45,6 +45,7 @@ public struct SymbolFlags: OptionSet {
     public static let innerClass = SymbolFlags(rawValue: 1 << 8)
     public static let valueType = SymbolFlags(rawValue: 1 << 9)
     public static let operatorFunction = SymbolFlags(rawValue: 1 << 10)
+    public static let constValue = SymbolFlags(rawValue: 1 << 11)
 }
 
 public struct SemanticSymbol {
@@ -243,12 +244,14 @@ public final class SymbolTable {
     private var typeAliasTypeParameters: [SymbolID: [SymbolID]] = [:]
     private var parentSymbols: [SymbolID: SymbolID] = [:]
     private var backingFieldSymbols: [SymbolID: SymbolID] = [:]
+    private var delegateStorageSymbols: [SymbolID: SymbolID] = [:]
     private var typeParameterUpperBoundsMap: [SymbolID: TypeID] = [:]
     private var sourceFileIDs: [SymbolID: FileID] = [:]
     private var annotationsStorage: [SymbolID: [MetadataAnnotationRecord]] = [:]
     private var companionObjectSymbols: [SymbolID: SymbolID] = [:]
     private var valueClassUnderlyingTypes: [SymbolID: TypeID] = [:]
     private var sealedSubclassesStorage: [SymbolID: [SymbolID]] = [:]
+    private var constValueExprKinds: [SymbolID: KIRExprKind] = [:]
 
     public init() {}
 
@@ -460,6 +463,14 @@ public final class SymbolTable {
         backingFieldSymbols[property]
     }
 
+    public func setDelegateStorageSymbol(_ storage: SymbolID, for property: SymbolID) {
+        delegateStorageSymbols[property] = storage
+    }
+
+    public func delegateStorageSymbol(for property: SymbolID) -> SymbolID? {
+        delegateStorageSymbols[property]
+    }
+
     public func setTypeParameterUpperBound(_ bound: TypeID, for symbol: SymbolID) {
         typeParameterUpperBoundsMap[symbol] = bound
     }
@@ -502,6 +513,14 @@ public final class SymbolTable {
 
     public func setSealedSubclasses(_ subclasses: [SymbolID], for symbol: SymbolID) {
         sealedSubclassesStorage[symbol] = subclasses
+    }
+
+    public func setConstValueExprKind(_ kind: KIRExprKind, for symbol: SymbolID) {
+        constValueExprKinds[symbol] = kind
+    }
+
+    public func constValueExprKind(for symbol: SymbolID) -> KIRExprKind? {
+        constValueExprKinds[symbol]
     }
 
     public func sealedSubclasses(for symbol: SymbolID) -> [SymbolID]? {
@@ -576,6 +595,8 @@ public final class BindingTable {
     public private(set) var declSymbols: [DeclID: SymbolID] = [:]
     public private(set) var superCallExprs: Set<ExprID> = []
     public private(set) var invokeOperatorCallExprs: Set<ExprID> = []
+    public private(set) var collectionExprIDs: Set<ExprID> = []
+    public private(set) var collectionSymbolIDs: Set<SymbolID> = []
 
     public init() {}
 
@@ -618,6 +639,22 @@ public final class BindingTable {
 
     public func markInvokeOperatorCall(_ expr: ExprID) {
         invokeOperatorCallExprs.insert(expr)
+    }
+
+    public func markCollectionExpr(_ expr: ExprID) {
+        collectionExprIDs.insert(expr)
+    }
+
+    public func isCollectionExpr(_ expr: ExprID) -> Bool {
+        collectionExprIDs.contains(expr)
+    }
+
+    public func markCollectionSymbol(_ symbol: SymbolID) {
+        collectionSymbolIDs.insert(symbol)
+    }
+
+    public func isCollectionSymbol(_ symbol: SymbolID) -> Bool {
+        collectionSymbolIDs.contains(symbol)
     }
 
     public func exprType(for expr: ExprID) -> TypeID? {

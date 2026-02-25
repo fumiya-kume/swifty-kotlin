@@ -72,5 +72,5 @@ For PRs:
 - Keep changes limited and explain any intentional exclusions.
 
 ## Security & Configuration Notes
-- This project is currently macOS-oriented (`Package.swift` target and CI environment).
+- This project supports both macOS and Linux (`Package.swift` has no platform restriction; CI runs on both).
 - Keep local tooling explicit when needed (`export KSWIFTC=...`, `export KOTLINC=...`, `export JAVA_BIN=...`).
