@@ -122,8 +122,14 @@ final class TypeCheckDriver {
                         diagnostics: diagnostics
                     )
 
-                case .interfaceDecl:
-                    break
+                case .interfaceDecl(let interfaceDecl):
+                    declChecker.typeCheckInterfaceDecl(
+                        interfaceDecl,
+                        symbol: declSymbol,
+                        ctx: inferCtx,
+                        solver: solver,
+                        diagnostics: diagnostics
+                    )
 
                 case .objectDecl(let objectDecl):
                     declChecker.typeCheckObjectDecl(
