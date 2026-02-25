@@ -187,7 +187,7 @@ final class LLVMCAPIBindings {
         LLVMMetadataRef?,
         Int32, UInt32, UInt32
     ) -> LLVMMetadataRef?
-    internal typealias LLVMDIBuilderInsertDeclareBeforeFn = @convention(c) (
+    internal typealias LLVMDIBuilderInsertDeclareAtEndFn = @convention(c) (
         LLVMDIBuilderRef?,
         LLVMValueRef?,
         LLVMMetadataRef?,
@@ -275,7 +275,7 @@ final class LLVMCAPIBindings {
     internal let diBuilderCreateBasicTypeFn: LLVMDIBuilderCreateBasicTypeFn?
     internal let diBuilderCreateParameterVariableFn: LLVMDIBuilderCreateParameterVariableFn?
     internal let diBuilderCreateAutoVariableFn: LLVMDIBuilderCreateAutoVariableFn?
-    internal let diBuilderInsertDeclareBeforeFn: LLVMDIBuilderInsertDeclareBeforeFn?
+    internal let diBuilderInsertDeclareAtEndFn: LLVMDIBuilderInsertDeclareAtEndFn?
     internal let diBuilderCreateExpressionFn: LLVMDIBuilderCreateExpressionFn?
 
     internal init(
@@ -354,7 +354,7 @@ final class LLVMCAPIBindings {
         diBuilderCreateBasicTypeFn: LLVMDIBuilderCreateBasicTypeFn? = nil,
         diBuilderCreateParameterVariableFn: LLVMDIBuilderCreateParameterVariableFn? = nil,
         diBuilderCreateAutoVariableFn: LLVMDIBuilderCreateAutoVariableFn? = nil,
-        diBuilderInsertDeclareBeforeFn: LLVMDIBuilderInsertDeclareBeforeFn? = nil,
+        diBuilderInsertDeclareAtEndFn: LLVMDIBuilderInsertDeclareAtEndFn? = nil,
         diBuilderCreateExpressionFn: LLVMDIBuilderCreateExpressionFn? = nil
     ) {
         self.handle = handle
@@ -432,7 +432,7 @@ final class LLVMCAPIBindings {
         self.diBuilderCreateBasicTypeFn = diBuilderCreateBasicTypeFn
         self.diBuilderCreateParameterVariableFn = diBuilderCreateParameterVariableFn
         self.diBuilderCreateAutoVariableFn = diBuilderCreateAutoVariableFn
-        self.diBuilderInsertDeclareBeforeFn = diBuilderInsertDeclareBeforeFn
+        self.diBuilderInsertDeclareAtEndFn = diBuilderInsertDeclareAtEndFn
         self.diBuilderCreateExpressionFn = diBuilderCreateExpressionFn
     }
 

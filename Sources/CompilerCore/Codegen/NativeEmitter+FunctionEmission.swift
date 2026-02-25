@@ -87,7 +87,7 @@ extension NativeEmitter {
             }
             let funcDIFile: LLVMCAPIBindings.LLVMMetadataRef? = {
                 if let sourceRange = function.sourceRange {
-                    return diContext.diFiles[sourceRange.start.file.rawValue]
+                    return diContext.diFiles[sourceRange.start.file] ?? diContext.file
                 }
                 return diContext.file
             }()

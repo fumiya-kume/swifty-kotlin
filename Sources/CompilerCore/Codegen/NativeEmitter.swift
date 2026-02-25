@@ -1,6 +1,12 @@
 import Foundation
 
 struct NativeEmitter {
+    // DWARF constants used across the emitter.
+    /// DW_LANG_C99 – used as the compile-unit language tag.
+    static let dwarfLangC99: UInt32 = 11
+    /// DW_ATE_signed – DWARF attribute encoding for signed integers.
+    static let dwarfATESigned: UInt32 = 5
+
     struct LLVMFunction {
         let value: LLVMCAPIBindings.LLVMValueRef
         let type: LLVMCAPIBindings.LLVMTypeRef
@@ -13,7 +19,7 @@ struct NativeEmitter {
         let subroutineType: LLVMCAPIBindings.LLVMMetadataRef?
         let subprograms: [SymbolID: LLVMCAPIBindings.LLVMMetadataRef]
         /// Per-file DI file metadata keyed by FileID.
-        let diFiles: [Int32: LLVMCAPIBindings.LLVMMetadataRef]
+        let diFiles: [FileID: LLVMCAPIBindings.LLVMMetadataRef]
         /// DI basic type for i64 (used for parameter/variable debug info).
         let int64DIType: LLVMCAPIBindings.LLVMMetadataRef?
     }
@@ -223,7 +229,8 @@ struct NativeEmitter {
             let fullPath = sourceManager.path(of: firstFileID)
             let url = URL(fileURLWithPath: fullPath)
             primaryFilename = url.lastPathComponent
-            primaryDirectory = url.deletingLastPathComponent().path
+            let directoryPath = url.deletingLastPathComponent().path
+            primaryDirectory = directoryPath.isEmpty ? "." : directoryPath
         } else {
             primaryFilename = "kswiftk_module.kt"
             primaryDirectory = "."
@@ -241,7 +248,7 @@ struct NativeEmitter {
         let isOptimized = optLevel != .O0
         guard let compileUnit = bindings.diBuilderCreateCompileUnit(
             diBuilder,
-            lang: 11,
+            lang: Self.dwarfLangC99,
             file: diFile,
             producer: "kswiftk",
             isOptimized: isOptimized
@@ -258,7 +265,7 @@ struct NativeEmitter {
 
         // Build per-file DI metadata so that functions can reference their
         // actual source file.
-        var diFiles: [Int32: LLVMCAPIBindings.LLVMMetadataRef] = [:]
+        var diFiles: [FileID: LLVMCAPIBindings.LLVMMetadataRef] = [:]
         if let sourceManager {
             for fileID in sourceManager.fileIDs() {
                 let fullPath = sourceManager.path(of: fileID)
@@ -266,15 +273,14 @@ struct NativeEmitter {
                 let fname = url.lastPathComponent
                 let dir = url.deletingLastPathComponent().path
                 if let f = bindings.diBuilderCreateFile(diBuilder, filename: fname, directory: dir) {
-                    diFiles[fileID.rawValue] = f
+                    diFiles[fileID] = f
                 }
             }
         }
 
         // Create a DI basic type for i64 (used for parameter debug info).
-        // DW_ATE_signed = 5
         let int64DIType = bindings.diBuilderCreateBasicType(
-            diBuilder, name: "Int", sizeInBits: 64, encoding: 5
+            diBuilder, name: "Int", sizeInBits: 64, encoding: Self.dwarfATESigned
         )
 
         var subprograms: [SymbolID: LLVMCAPIBindings.LLVMMetadataRef] = [:]
@@ -292,7 +298,7 @@ struct NativeEmitter {
             if let sourceRange = function.sourceRange, let sourceManager {
                 let lc = sourceManager.lineColumn(of: sourceRange.start)
                 lineNo = UInt32(lc.line)
-                if let perFileDI = diFiles[sourceRange.start.file.rawValue] {
+                if let perFileDI = diFiles[sourceRange.start.file] {
                     funcDIFile = perFileDI
                 }
             }

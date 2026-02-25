@@ -157,7 +157,7 @@ extension LLVMCAPIBindings {
     var localVariableAvailable: Bool {
         diBuilderCreateBasicTypeFn != nil &&
         diBuilderCreateParameterVariableFn != nil &&
-        diBuilderInsertDeclareBeforeFn != nil &&
+        diBuilderInsertDeclareAtEndFn != nil &&
         diBuilderCreateExpressionFn != nil
     }
 
@@ -214,7 +214,7 @@ extension LLVMCAPIBindings {
         debugLoc: LLVMMetadataRef?,
         block: LLVMBasicBlockRef?
     ) -> LLVMValueRef? {
-        diBuilderInsertDeclareBeforeFn?(builder, storage, varInfo, expr, debugLoc, block)
+        diBuilderInsertDeclareAtEndFn?(builder, storage, varInfo, expr, debugLoc, block)
     }
 
     func diBuilderCreateExpression(
