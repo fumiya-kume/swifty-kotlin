@@ -1,5 +1,5 @@
-node kotlinFile f0:0..39
-  node funDecl f0:0..39
+node kotlinFile f0:0..294
+  node funDecl f0:0..294
     tok keyword(fun) f0:0..3
     tok identifier(precedence) f0:4..14
     node statement f0:14..30
