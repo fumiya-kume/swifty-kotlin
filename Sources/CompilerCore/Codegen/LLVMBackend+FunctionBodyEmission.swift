@@ -445,12 +445,6 @@ extension LLVMBackend {
                 }
                 syncRoot(result)
 
-            case .storeGlobal(let symbol, let value):
-                ensureDeclared(value, declared: &declared, lines: &lines)
-                if let globalName = globalValueSymbols[symbol] {
-                    lines.append("  \(globalName) = \(varName(value));")
-                }
-
             case .rethrow(let value):
                 ensureDeclared(value, declared: &declared, lines: &lines)
                 lines.append("  if (outThrown) { *outThrown = \(varName(value)); }")

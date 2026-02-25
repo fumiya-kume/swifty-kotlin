@@ -356,12 +356,6 @@ final class InlineLoweringPass: LoweringPass {
                 to: resolveAlias(of: to, aliases: aliases)
             )
 
-        case .storeGlobal(let symbol, let value):
-            return .storeGlobal(
-                symbol: symbol,
-                value: resolveAlias(of: value, aliases: aliases)
-            )
-
         case .rethrow(let value):
             return .rethrow(value: resolveAlias(of: value, aliases: aliases))
 

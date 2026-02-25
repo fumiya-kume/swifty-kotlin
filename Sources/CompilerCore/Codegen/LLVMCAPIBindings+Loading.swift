@@ -145,6 +145,7 @@ extension LLVMCAPIBindings {
                 initializeAArch64TargetMCFn: loadSymbol(handle: handle, name: "LLVMInitializeAArch64TargetMC", as: LLVMInitializeAArch64TargetMCFn.self),
                 initializeAArch64AsmPrinterFn: loadSymbol(handle: handle, name: "LLVMInitializeAArch64AsmPrinter", as: LLVMInitializeAArch64AsmPrinterFn.self),
                 addGlobalFn: loadSymbol(handle: handle, name: "LLVMAddGlobal", as: LLVMAddGlobalFn.self),
+                getNamedGlobalFn: loadSymbol(handle: handle, name: "LLVMGetNamedGlobal", as: LLVMGetNamedGlobalFn.self),
                 setInitializerFn: loadSymbol(handle: handle, name: "LLVMSetInitializer", as: LLVMSetInitializerFn.self),
                 createDIBuilderFn: loadSymbol(handle: handle, name: "LLVMCreateDIBuilder", as: LLVMCreateDIBuilderFn.self),
                 disposeDIBuilderFn: loadSymbol(handle: handle, name: "LLVMDisposeDIBuilder", as: LLVMDisposeDIBuilderFn.self),
@@ -163,11 +164,7 @@ extension LLVMCAPIBindings {
                 diBuilderCreateParameterVariableFn: loadSymbol(handle: handle, name: "LLVMDIBuilderCreateParameterVariable", as: LLVMDIBuilderCreateParameterVariableFn.self),
                 diBuilderCreateAutoVariableFn: loadSymbol(handle: handle, name: "LLVMDIBuilderCreateAutoVariable", as: LLVMDIBuilderCreateAutoVariableFn.self),
                 diBuilderInsertDeclareAtEndFn: loadSymbol(handle: handle, name: "LLVMDIBuilderInsertDeclareAtEnd", as: LLVMDIBuilderInsertDeclareAtEndFn.self),
-                diBuilderCreateExpressionFn: loadSymbol(handle: handle, name: "LLVMDIBuilderCreateExpression", as: LLVMDIBuilderCreateExpressionFn.self),
-                // P5-111: Global variable support
-                addGlobalFn: loadSymbol(handle: handle, name: "LLVMAddGlobal", as: LLVMAddGlobalFn.self),
-                getNamedGlobalFn: loadSymbol(handle: handle, name: "LLVMGetNamedGlobal", as: LLVMGetNamedGlobalFn.self),
-                setInitializerFn: loadSymbol(handle: handle, name: "LLVMSetInitializer", as: LLVMSetInitializerFn.self)
+                diBuilderCreateExpressionFn: loadSymbol(handle: handle, name: "LLVMDIBuilderCreateExpression", as: LLVMDIBuilderCreateExpressionFn.self)
             )
         }
         return nil

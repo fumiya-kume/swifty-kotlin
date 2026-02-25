@@ -63,10 +63,6 @@ final class LLVMCAPIBindings {
     internal typealias LLVMBuildSelectFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     internal typealias LLVMBuildGlobalStringPtrFn = @convention(c) (LLVMBuilderRef?, UnsafePointer<CChar>?, UnsafePointer<CChar>?) -> LLVMValueRef?
     internal typealias LLVMBuildPtrToIntFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMTypeRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
-    // P5-111: Global variable support for object singleton member properties.
-    internal typealias LLVMAddGlobalFn = @convention(c) (LLVMModuleRef?, LLVMTypeRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
-    internal typealias LLVMGetNamedGlobalFn = @convention(c) (LLVMModuleRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
-    internal typealias LLVMSetInitializerFn = @convention(c) (LLVMValueRef?, LLVMValueRef?) -> Void
     internal typealias LLVMBuildCall2Fn = @convention(c) (
         LLVMBuilderRef?,
         LLVMTypeRef?,
@@ -83,6 +79,7 @@ final class LLVMCAPIBindings {
         UnsafePointer<CChar>?
     ) -> LLVMValueRef?
     internal typealias LLVMAddGlobalFn = @convention(c) (LLVMModuleRef?, LLVMTypeRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    internal typealias LLVMGetNamedGlobalFn = @convention(c) (LLVMModuleRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     internal typealias LLVMSetInitializerFn = @convention(c) (LLVMValueRef?, LLVMValueRef?) -> Void
     internal typealias LLVMConstIntFn = @convention(c) (LLVMTypeRef?, UInt64, LLVMBool) -> LLVMValueRef?
     internal typealias LLVMConstPointerNullFn = @convention(c) (LLVMTypeRef?) -> LLVMValueRef?
@@ -282,6 +279,7 @@ final class LLVMCAPIBindings {
     internal let initializeAArch64TargetMCFn: LLVMInitializeAArch64TargetMCFn?
     internal let initializeAArch64AsmPrinterFn: LLVMInitializeAArch64AsmPrinterFn?
     internal let addGlobalFn: LLVMAddGlobalFn?
+    internal let getNamedGlobalFn: LLVMGetNamedGlobalFn?
     internal let setInitializerFn: LLVMSetInitializerFn?
     internal let createDIBuilderFn: LLVMCreateDIBuilderFn?
     internal let disposeDIBuilderFn: LLVMDisposeDIBuilderFn?
@@ -301,10 +299,6 @@ final class LLVMCAPIBindings {
     internal let diBuilderCreateAutoVariableFn: LLVMDIBuilderCreateAutoVariableFn?
     internal let diBuilderInsertDeclareAtEndFn: LLVMDIBuilderInsertDeclareAtEndFn?
     internal let diBuilderCreateExpressionFn: LLVMDIBuilderCreateExpressionFn?
-    // P5-111: Global variable support
-    internal let addGlobalFn: LLVMAddGlobalFn?
-    internal let getNamedGlobalFn: LLVMGetNamedGlobalFn?
-    internal let setInitializerFn: LLVMSetInitializerFn?
 
     internal init(
         handle: UnsafeMutableRawPointer,
@@ -375,6 +369,7 @@ final class LLVMCAPIBindings {
         initializeAArch64TargetMCFn: LLVMInitializeAArch64TargetMCFn?,
         initializeAArch64AsmPrinterFn: LLVMInitializeAArch64AsmPrinterFn?,
         addGlobalFn: LLVMAddGlobalFn? = nil,
+        getNamedGlobalFn: LLVMGetNamedGlobalFn? = nil,
         setInitializerFn: LLVMSetInitializerFn? = nil,
         createDIBuilderFn: LLVMCreateDIBuilderFn?,
         disposeDIBuilderFn: LLVMDisposeDIBuilderFn?,
@@ -393,11 +388,7 @@ final class LLVMCAPIBindings {
         diBuilderCreateParameterVariableFn: LLVMDIBuilderCreateParameterVariableFn? = nil,
         diBuilderCreateAutoVariableFn: LLVMDIBuilderCreateAutoVariableFn? = nil,
         diBuilderInsertDeclareAtEndFn: LLVMDIBuilderInsertDeclareAtEndFn? = nil,
-        diBuilderCreateExpressionFn: LLVMDIBuilderCreateExpressionFn? = nil,
-        // P5-111: Global variable support
-        addGlobalFn: LLVMAddGlobalFn? = nil,
-        getNamedGlobalFn: LLVMGetNamedGlobalFn? = nil,
-        setInitializerFn: LLVMSetInitializerFn? = nil
+        diBuilderCreateExpressionFn: LLVMDIBuilderCreateExpressionFn? = nil
     ) {
         self.handle = handle
         self.contextCreateFn = contextCreateFn
@@ -467,6 +458,7 @@ final class LLVMCAPIBindings {
         self.initializeAArch64TargetMCFn = initializeAArch64TargetMCFn
         self.initializeAArch64AsmPrinterFn = initializeAArch64AsmPrinterFn
         self.addGlobalFn = addGlobalFn
+        self.getNamedGlobalFn = getNamedGlobalFn
         self.setInitializerFn = setInitializerFn
         self.createDIBuilderFn = createDIBuilderFn
         self.disposeDIBuilderFn = disposeDIBuilderFn
@@ -486,10 +478,6 @@ final class LLVMCAPIBindings {
         self.diBuilderCreateAutoVariableFn = diBuilderCreateAutoVariableFn
         self.diBuilderInsertDeclareAtEndFn = diBuilderInsertDeclareAtEndFn
         self.diBuilderCreateExpressionFn = diBuilderCreateExpressionFn
-        // P5-111: Global variable support
-        self.addGlobalFn = addGlobalFn
-        self.getNamedGlobalFn = getNamedGlobalFn
-        self.setInitializerFn = setInitializerFn
     }
 
     deinit {
