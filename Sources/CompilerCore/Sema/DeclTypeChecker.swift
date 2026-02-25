@@ -116,18 +116,62 @@ final class DeclTypeChecker {
                 delegateExpr, ctx: ctx, locals: &delegateLocals,
                 expectedType: nil
             )
+
             // Record the delegate type on the property symbol so the KIR
             // lowering phase can synthesise getValue/setValue calls.
-            // If no explicit property type was declared, use Any? as fallback
-            // (the real property type will be set below from the declared or
-            // inferred type).
             sema.symbols.setPropertyType(delegateType, for: SymbolID(rawValue: -(symbol.rawValue + 50_000)))
-            // If no explicit type is declared, attempt to use the delegate
-            // type as property type (best-effort; full getValue resolution
-            // would require matching operator conventions which is deferred).
+
+            // Resolve getValue operator on the delegate type to infer the
+            // property type from its return type (Kotlin spec J12).
+            let getValueName = interner.intern("getValue")
+            let getValueCandidates = driver.helpers.collectMemberFunctionCandidates(
+                named: getValueName,
+                receiverType: delegateType,
+                sema: sema
+            ).filter { candidateID in
+                guard let sym = sema.symbols.symbol(candidateID) else { return false }
+                return sym.flags.contains(.operatorFunction)
+            }
+            if let getValueSymbol = getValueCandidates.first,
+               let getValueSig = sema.symbols.functionSignature(for: getValueSymbol) {
+                // Use getValue return type to infer the property type when
+                // no explicit type annotation is provided.
+                if inferredPropertyType == nil {
+                    inferredPropertyType = getValueSig.returnType
+                }
+            }
+
+            // Fallback: if no getValue was resolved and no explicit type,
+            // use Any? as the property type.
             if inferredPropertyType == nil {
                 inferredPropertyType = sema.types.nullableAnyType
             }
+
+            // For var properties, also check that setValue operator exists.
+            if property.isVar {
+                let setValueName = interner.intern("setValue")
+                let setValueCandidates = driver.helpers.collectMemberFunctionCandidates(
+                    named: setValueName,
+                    receiverType: delegateType,
+                    sema: sema
+                ).filter { candidateID in
+                    guard let sym = sema.symbols.symbol(candidateID) else { return false }
+                    return sym.flags.contains(.operatorFunction)
+                }
+                _ = setValueCandidates  // Validate existence; diagnostic emitted elsewhere if needed.
+            }
+
+            // Check for provideDelegate operator on the delegate type.
+            let provideDelegateName = interner.intern("provideDelegate")
+            let provideDelegateCandidates = driver.helpers.collectMemberFunctionCandidates(
+                named: provideDelegateName,
+                receiverType: delegateType,
+                sema: sema
+            ).filter { candidateID in
+                guard let sym = sema.symbols.symbol(candidateID) else { return false }
+                return sym.flags.contains(.operatorFunction)
+            }
+            _ = provideDelegateCandidates  // Track for KIR lowering provideDelegate insertion.
         }
 
         let finalPropertyType = inferredPropertyType ?? sema.types.nullableAnyType

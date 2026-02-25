@@ -180,10 +180,27 @@ final class ExprTypeChecker {
             sema.bindings.bindExprType(id, type: type)
             return type
 
-        case .isCheck(let exprID, _, let negated, let range):
+        case .isCheck(let exprID, let typeRefID, let negated, let range):
             _ = driver.inferExpr(exprID, ctx: ctx, locals: &locals)
+            // Resolve the target type and validate it (P5-101)
+            let targetType = driver.helpers.resolveTypeRef(typeRefID, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
+            // Emit erasure warning for generic type checks with non-star type arguments
+            if let typeRef = ast.arena.typeRef(typeRefID),
+               case .named(_, let argRefs, _) = typeRef, !argRefs.isEmpty {
+                let hasNonStarArg = argRefs.contains { arg in
+                    if case .star = arg { return false }
+                    return true
+                }
+                if hasNonStarArg {
+                    ctx.semaCtx.diagnostics.warning(
+                        "KSWIFTK-SEMA-0080",
+                        "Cannot check for instance of erased type. Use '*' for type arguments in 'is' checks, e.g. 'is List<*>'.",
+                        range: range
+                    )
+                }
+            }
             let _ = negated
-            let _ = range
+            let _ = targetType
             sema.bindings.bindExprType(id, type: boolType)
             return boolType
 

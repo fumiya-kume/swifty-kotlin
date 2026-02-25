@@ -7,6 +7,12 @@ internal final class RuntimeContinuationState {
     var completion: Int64
     var spillSlots: [Int64: Int64]
     var launcherArgs: [Int64: Int64]
+    // The link from continuation state to job handle is weak on purpose:
+    // - to avoid retain cycles between RuntimeJobHandle and RuntimeContinuationState
+    // - because job handle lifetime is managed externally and cancellation is best-effort.
+    // If the jobHandle is deallocated before cancellation is observed, the continuation
+    // will simply not be woken by cancellation, which is an accepted behavior.
+    weak var jobHandle: RuntimeJobHandle?
     private let stateLock = NSLock()
     private let resumeSemaphore = DispatchSemaphore(value: 0)
     private var delayTimers: [ObjectIdentifier: DispatchSourceTimer]
@@ -53,6 +59,10 @@ internal final class RuntimeContinuationState {
         resumeSemaphore.wait()
     }
 
+    func signalResume() {
+        resumeSemaphore.signal()
+    }
+
     private func completeDelayTimer(timerID: ObjectIdentifier) {
         stateLock.lock()
         delayTimers.removeValue(forKey: timerID)
@@ -73,7 +83,24 @@ internal final class RuntimeAsyncTask {
     private let lock = NSLock()
     private let ready = DispatchSemaphore(value: 0)
     private var isCompleted = false
+    private(set) var isCancelled = false
     private var result: Int = 0
+    /// Set to true when user code consumes this handle's passRetained
+    /// (via kk_kxmini_async_await or kk_job_join). Checked by scope's waitForChildren
+    /// to avoid double-releasing the original passRetained.
+    private var isConsumedByUserCode = false
+
+    func markConsumedByUserCode() {
+        lock.lock()
+        isConsumedByUserCode = true
+        lock.unlock()
+    }
+
+    func consumedByUserCodeSnapshot() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return isConsumedByUserCode
+    }
 
     func complete(with result: Int) {
         lock.lock()
@@ -87,6 +114,19 @@ internal final class RuntimeAsyncTask {
         ready.signal()
     }
 
+    func cancel() {
+        lock.lock()
+        isCancelled = true
+        let wasCompleted = isCompleted
+        if !wasCompleted {
+            isCompleted = true
+        }
+        lock.unlock()
+        if !wasCompleted {
+            ready.signal()
+        }
+    }
+
     func awaitResult() -> Int {
         lock.lock()
         if isCompleted {
@@ -96,10 +136,167 @@ internal final class RuntimeAsyncTask {
         }
         lock.unlock()
         ready.wait()
+        // Re-signal so other concurrent awaitResult() callers also wake up
+        ready.signal()
         lock.lock()
         let value = result
         lock.unlock()
         return value
+    }
+}
+
+// MARK: - Structured Concurrency (P5-89)
+
+/// A job handle representing a launched coroutine. Supports join and cancellation.
+internal final class RuntimeJobHandle {
+    private let lock = NSLock()
+    private let completionSemaphore = DispatchSemaphore(value: 0)
+    private(set) var isCompleted = false
+    private(set) var isCancelled = false
+    private var result: Int = 0
+    weak var continuationState: RuntimeContinuationState?
+    /// Set to true when user code consumes this handle's passRetained
+    /// (via kk_job_join). Checked by scope's waitForChildren
+    /// to avoid double-releasing the original passRetained.
+    private var isConsumedByUserCode = false
+
+    func markConsumedByUserCode() {
+        lock.lock()
+        isConsumedByUserCode = true
+        lock.unlock()
+    }
+
+    func consumedByUserCodeSnapshot() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return isConsumedByUserCode
+    }
+
+    func complete(with value: Int) {
+        lock.lock()
+        guard !isCompleted else {
+            lock.unlock()
+            return
+        }
+        result = value
+        isCompleted = true
+        lock.unlock()
+        completionSemaphore.signal()
+    }
+
+    func cancel() {
+        lock.lock()
+        isCancelled = true
+        let wasCompleted = isCompleted
+        if !wasCompleted {
+            isCompleted = true
+        }
+        let state = continuationState
+        lock.unlock()
+        if !wasCompleted {
+            completionSemaphore.signal()
+        }
+        // Wake the coroutine from any delay/suspension so it can observe cancellation
+        state?.signalResume()
+    }
+
+    func join() -> Int {
+        lock.lock()
+        if isCompleted {
+            let value = result
+            lock.unlock()
+            return value
+        }
+        lock.unlock()
+        completionSemaphore.wait()
+        // Re-signal so other concurrent join() callers also wake up
+        completionSemaphore.signal()
+        lock.lock()
+        let value = result
+        lock.unlock()
+        return value
+    }
+
+    /// Thread-safe snapshot of the cancellation flag.
+    func cancellationSnapshot() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return isCancelled
+    }
+}
+
+/// A coroutine scope that tracks child jobs and supports structured cancellation.
+internal final class RuntimeCoroutineScope {
+    private let lock = NSLock()
+    private var children: [Int] = []  // opaque handles (RuntimeJobHandle or RuntimeAsyncTask)
+    private(set) var isCancelled = false
+    fileprivate var parent: RuntimeCoroutineScope?
+
+    private static let currentScopeKey = "kk_coroutine_scope_current"
+
+    static var current: RuntimeCoroutineScope? {
+        get { Thread.current.threadDictionary[currentScopeKey] as? RuntimeCoroutineScope }
+        set { Thread.current.threadDictionary[currentScopeKey] = newValue }
+    }
+
+    func registerChild(_ handle: Int) {
+        // Take an additional retain so the scope keeps the child alive
+        // even if user code calls takeRetainedValue (e.g. kk_kxmini_async_await)
+        if let ptr = UnsafeMutableRawPointer(bitPattern: handle) {
+            _ = Unmanaged<AnyObject>.fromOpaque(ptr).retain()
+        }
+        lock.lock()
+        children.append(handle)
+        let cancelled = isCancelled
+        lock.unlock()
+        if cancelled {
+            runtimeCancelChild(handle)
+        }
+    }
+
+    func cancel() {
+        lock.lock()
+        isCancelled = true
+        let currentChildren = children
+        lock.unlock()
+        for child in currentChildren {
+            runtimeCancelChild(child)
+        }
+    }
+
+    func waitForChildren() {
+        lock.lock()
+        let currentChildren = children
+        children.removeAll()
+        lock.unlock()
+        for child in currentChildren {
+            _ = runtimeJoinChild(child)
+            if let ptr = UnsafeMutableRawPointer(bitPattern: child) {
+                // Check the per-handle flag to see if user code already consumed the passRetained.
+                // This is scope-independent: the flag lives on the handle object itself,
+                // so it works correctly even with nested scopes or cross-thread joins.
+                let consumed: Bool
+                let obj = Unmanaged<AnyObject>.fromOpaque(ptr).takeUnretainedValue()
+                if let job = obj as? RuntimeJobHandle {
+                    consumed = job.consumedByUserCodeSnapshot()
+                } else if let task = obj as? RuntimeAsyncTask {
+                    consumed = task.consumedByUserCodeSnapshot()
+                } else {
+                    consumed = false
+                }
+                // Release the extra retain taken in registerChild
+                Unmanaged<AnyObject>.fromOpaque(ptr).release()
+                // Release the original passRetained only if user code hasn't already consumed it
+                // (via kk_job_join or kk_kxmini_async_await)
+                if !consumed {
+                    Unmanaged<AnyObject>.fromOpaque(ptr).release()
+                    // Clean up from RuntimeStorage
+                    RuntimeStorage.lock.lock()
+                    RuntimeStorage.objectPointers.remove(UInt(bitPattern: ptr))
+                    RuntimeStorage.lock.unlock()
+                }
+            }
+        }
     }
 }
 
@@ -204,16 +401,34 @@ public func kk_kxmini_run_blocking(_ entryPointRaw: Int, _ functionID: Int) -> I
 
 @_cdecl("kk_kxmini_launch")
 public func kk_kxmini_launch(_ entryPointRaw: Int, _ functionID: Int) -> Int {
-    KxMiniRuntime.launch {
-        _ = runSuspendEntryLoop(entryPointRaw: entryPointRaw, functionID: functionID)
+    let job = RuntimeJobHandle()
+    let jobPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(job).toOpaque())
+    RuntimeStorage.lock.lock()
+    RuntimeStorage.objectPointers.insert(UInt(bitPattern: jobPtr))
+    RuntimeStorage.lock.unlock()
+
+    // Register with current scope if any
+    if let scope = RuntimeCoroutineScope.current {
+        scope.registerChild(Int(bitPattern: jobPtr))
     }
-    return 0
+
+    KxMiniRuntime.launch {
+        let result = runSuspendEntryLoop(entryPointRaw: entryPointRaw, functionID: functionID, jobHandle: job)
+        job.complete(with: result)
+    }
+    return Int(bitPattern: jobPtr)
 }
 
 @_cdecl("kk_kxmini_async")
 public func kk_kxmini_async(_ entryPointRaw: Int, _ functionID: Int) -> Int {
     let task = RuntimeAsyncTask()
     let taskPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(task).toOpaque())
+
+    // Register with current scope if any
+    if let scope = RuntimeCoroutineScope.current {
+        scope.registerChild(Int(bitPattern: taskPtr))
+    }
+
     KxMiniRuntime.launch {
         let result = runSuspendEntryLoop(entryPointRaw: entryPointRaw, functionID: functionID)
         task.complete(with: result)
@@ -245,16 +460,40 @@ public func kk_kxmini_run_blocking_with_cont(_ entryPointRaw: Int, _ continuatio
 
 @_cdecl("kk_kxmini_launch_with_cont")
 public func kk_kxmini_launch_with_cont(_ entryPointRaw: Int, _ continuation: Int) -> Int {
-    KxMiniRuntime.launch {
-        _ = runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
+    let job = RuntimeJobHandle()
+    let jobPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(job).toOpaque())
+    RuntimeStorage.lock.lock()
+    RuntimeStorage.objectPointers.insert(UInt(bitPattern: jobPtr))
+    RuntimeStorage.lock.unlock()
+
+    // Link job to continuation state
+    if let state = runtimeContinuationState(from: continuation) {
+        job.continuationState = state
+        state.jobHandle = job
     }
-    return 0
+
+    // Register with current scope if any
+    if let scope = RuntimeCoroutineScope.current {
+        scope.registerChild(Int(bitPattern: jobPtr))
+    }
+
+    KxMiniRuntime.launch {
+        let result = runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
+        job.complete(with: result)
+    }
+    return Int(bitPattern: jobPtr)
 }
 
 @_cdecl("kk_kxmini_async_with_cont")
 public func kk_kxmini_async_with_cont(_ entryPointRaw: Int, _ continuation: Int) -> Int {
     let task = RuntimeAsyncTask()
     let taskPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(task).toOpaque())
+
+    // Register with current scope if any
+    if let scope = RuntimeCoroutineScope.current {
+        scope.registerChild(Int(bitPattern: taskPtr))
+    }
+
     KxMiniRuntime.launch {
         let result = runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
         task.complete(with: result)
@@ -267,8 +506,13 @@ public func kk_kxmini_async_await(_ handle: Int) -> Int {
     guard let handlePtr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return 0
     }
-    let task = Unmanaged<RuntimeAsyncTask>.fromOpaque(handlePtr).takeRetainedValue()
-    return task.awaitResult()
+    // Mark on the handle object itself that user code is consuming the passRetained.
+    // This is checked by scope's waitForChildren to avoid double-release.
+    let task = Unmanaged<RuntimeAsyncTask>.fromOpaque(handlePtr).takeUnretainedValue()
+    task.markConsumedByUserCode()
+    // Now consume the passRetained
+    let consumed = Unmanaged<RuntimeAsyncTask>.fromOpaque(handlePtr).takeRetainedValue()
+    return consumed.awaitResult()
 }
 
 @_cdecl("kk_kxmini_delay")
@@ -533,13 +777,157 @@ private func runtimeReadArrayElement(arrayRaw: Int, index: Int) -> Int {
     return arrayBox.elements[index]
 }
 
+// MARK: - Structured Concurrency C ABI (P5-89)
+
+/// Creates a new coroutine scope and pushes it as the current scope on the thread-local stack.
+@_cdecl("kk_coroutine_scope_new")
+public func kk_coroutine_scope_new() -> Int {
+    let scope = RuntimeCoroutineScope()
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(scope).toOpaque())
+    RuntimeStorage.lock.lock()
+    RuntimeStorage.objectPointers.insert(UInt(bitPattern: ptr))
+    RuntimeStorage.lock.unlock()
+
+    // Push: save parent scope and set this as current
+    scope.parent = RuntimeCoroutineScope.current
+    RuntimeCoroutineScope.current = scope
+
+    return Int(bitPattern: ptr)
+}
+
+/// Cancels the given coroutine scope and all its children.
+@_cdecl("kk_coroutine_scope_cancel")
+public func kk_coroutine_scope_cancel(_ scopeHandle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: scopeHandle) else {
+        return 0
+    }
+    let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(ptr).takeUnretainedValue()
+    scope.cancel()
+    return 0
+}
+
+/// Waits for all children in the scope to complete, then pops/releases the scope.
+@_cdecl("kk_coroutine_scope_wait")
+public func kk_coroutine_scope_wait(_ scopeHandle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: scopeHandle) else {
+        return 0
+    }
+    let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(ptr).takeUnretainedValue()
+    scope.waitForChildren()
+
+    // Pop: restore parent scope
+    RuntimeCoroutineScope.current = scope.parent
+
+    // Release the scope
+    RuntimeStorage.lock.lock()
+    RuntimeStorage.objectPointers.remove(UInt(bitPattern: ptr))
+    RuntimeStorage.lock.unlock()
+    Unmanaged<RuntimeCoroutineScope>.fromOpaque(ptr).release()
+    return 0
+}
+
+/// Registers a child job/deferred handle with the given scope.
+@_cdecl("kk_coroutine_scope_register_child")
+public func kk_coroutine_scope_register_child(_ scopeHandle: Int, _ childHandle: Int) -> Int {
+    guard let scopePtr = UnsafeMutableRawPointer(bitPattern: scopeHandle) else {
+        return childHandle
+    }
+    let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(scopePtr).takeUnretainedValue()
+    scope.registerChild(childHandle)
+    return childHandle
+}
+
+/// Joins (waits for) a job handle to complete and releases it.
+/// This consumes the handle (balances the passRetained from launch).
+@_cdecl("kk_job_join")
+public func kk_job_join(_ jobHandle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: jobHandle) else {
+        return 0
+    }
+    // Mark on the handle object itself that user code is consuming the passRetained.
+    // This is checked by scope's waitForChildren to avoid double-release.
+    let obj = Unmanaged<AnyObject>.fromOpaque(ptr).takeUnretainedValue()
+    if let job = obj as? RuntimeJobHandle {
+        job.markConsumedByUserCode()
+    } else if let task = obj as? RuntimeAsyncTask {
+        task.markConsumedByUserCode()
+    }
+    let result: Int
+    if let job = obj as? RuntimeJobHandle {
+        result = job.join()
+    } else if let task = obj as? RuntimeAsyncTask {
+        result = task.awaitResult()
+    } else {
+        result = 0
+    }
+    // Release the original passRetained from launch
+    Unmanaged<AnyObject>.fromOpaque(ptr).release()
+    // Clean up from RuntimeStorage
+    RuntimeStorage.lock.lock()
+    RuntimeStorage.objectPointers.remove(UInt(bitPattern: ptr))
+    RuntimeStorage.lock.unlock()
+    return result
+}
+
+/// Convenience: creates a scope, runs the block synchronously, waits for all children.
+/// Used as the lowering target for `coroutineScope { }` blocks.
+@_cdecl("kk_coroutine_scope_run")
+public func kk_coroutine_scope_run(_ entryPointRaw: Int, _ functionID: Int) -> Int {
+    let scopeHandle = kk_coroutine_scope_new()
+    let result = runSuspendEntryLoop(entryPointRaw: entryPointRaw, functionID: functionID)
+    _ = kk_coroutine_scope_wait(scopeHandle)
+    return result
+}
+
+/// Convenience with pre-built continuation.
+@_cdecl("kk_coroutine_scope_run_with_cont")
+public func kk_coroutine_scope_run_with_cont(_ entryPointRaw: Int, _ continuation: Int) -> Int {
+    let scopeHandle = kk_coroutine_scope_new()
+    let result = runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
+    _ = kk_coroutine_scope_wait(scopeHandle)
+    return result
+}
+
+// MARK: - Child Cancel/Join Helpers (P5-89)
+
+/// Cancel a child handle (RuntimeJobHandle or RuntimeAsyncTask).
+internal func runtimeCancelChild(_ handle: Int) {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
+        return
+    }
+    let obj = Unmanaged<AnyObject>.fromOpaque(ptr).takeUnretainedValue()
+    if let job = obj as? RuntimeJobHandle {
+        job.cancel()
+    } else if let task = obj as? RuntimeAsyncTask {
+        task.cancel()
+    }
+}
+
+/// Join a child handle (RuntimeJobHandle or RuntimeAsyncTask). Returns the result.
+internal func runtimeJoinChild(_ handle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
+        return 0
+    }
+    let obj = Unmanaged<AnyObject>.fromOpaque(ptr).takeUnretainedValue()
+    if let job = obj as? RuntimeJobHandle {
+        return job.join()
+    } else if let task = obj as? RuntimeAsyncTask {
+        return task.awaitResult()
+    }
+    return 0
+}
+
 // MARK: - Suspend Entry Loop
 
-internal func runSuspendEntryLoop(entryPointRaw: Int, functionID: Int) -> Int {
+internal func runSuspendEntryLoop(entryPointRaw: Int, functionID: Int, jobHandle: RuntimeJobHandle? = nil) -> Int {
     guard suspendEntryPoint(from: entryPointRaw) != nil else {
         return 0
     }
     let continuation = kk_coroutine_continuation_new(functionID)
+    if let jobHandle, let state = runtimeContinuationState(from: continuation) {
+        jobHandle.continuationState = state
+        state.jobHandle = jobHandle
+    }
     return runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
 }
 
@@ -553,6 +941,13 @@ internal func runSuspendEntryLoopWithContinuation(entryPointRaw: Int, continuati
     var outThrown: Int = 0
 
     while true {
+        // Check cancellation before each resume (cooperative cancellation)
+        if let state = runtimeContinuationState(from: continuation),
+           let job = state.jobHandle, job.cancellationSnapshot() {
+            _ = kk_coroutine_state_exit(continuation, 0)
+            return 0
+        }
+
         outThrown = 0
         let result = entryPoint(continuation, &outThrown)
         if outThrown != 0 {
