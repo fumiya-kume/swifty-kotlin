@@ -483,9 +483,13 @@ extension KotlinParser {
                 // captured in the same declaration node.
                 if case .symbol(.assign) = token.kind {
                     // But stop if the next line starts a new declaration
-                    // (visibility modifier like `private`, `public`, etc.)
-                    if case .keyword(let kw) = stream.peek().kind,
+                    // (modifier keyword, declaration keyword, or annotation).
+                    let nextToken = stream.peek()
+                    if case .keyword(let kw) = nextToken.kind,
                        Self.isDeclarationModifierKeyword(kw) {
+                        break
+                    }
+                    if isDeclarationStart(nextToken.kind) {
                         break
                     }
                     continue

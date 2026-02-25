@@ -12,3 +12,11 @@ fun tryMultiCatch(): String =
 fun tryFinally(): String =
     try { "result" }
     finally { }
+
+val propTryCatch: String =
+    try { "ok" }
+    catch (e: Exception) { "err" }
+
+val propTryFinally: String =
+    try { "result" }
+    finally { }
