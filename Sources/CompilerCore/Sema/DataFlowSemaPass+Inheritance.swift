@@ -202,6 +202,210 @@ extension DataFlowSemaPassPhase {
         }
     }
 
+    // P5-112: Validate that concrete subclasses of abstract classes override all abstract members.
+    func validateAbstractOverrides(
+        ast: ASTModule,
+        symbols: SymbolTable,
+        bindings: BindingTable,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner
+    ) {
+        for file in ast.sortedFiles {
+            for declID in file.topLevelDecls {
+                validateAbstractOverridesForDecl(
+                    declID: declID,
+                    ast: ast,
+                    symbols: symbols,
+                    bindings: bindings,
+                    diagnostics: diagnostics,
+                    interner: interner
+                )
+            }
+        }
+    }
+
+    private func validateAbstractOverridesForDecl(
+        declID: DeclID,
+        ast: ASTModule,
+        symbols: SymbolTable,
+        bindings: BindingTable,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner
+    ) {
+        guard let symbol = bindings.declSymbols[declID],
+              let decl = ast.arena.decl(declID),
+              let symbolInfo = symbols.symbol(symbol) else {
+            return
+        }
+
+        // Recursively validate nested classes
+        switch decl {
+        case .classDecl(let classDecl):
+            for nestedDeclID in classDecl.nestedClasses {
+                validateAbstractOverridesForDecl(
+                    declID: nestedDeclID,
+                    ast: ast,
+                    symbols: symbols,
+                    bindings: bindings,
+                    diagnostics: diagnostics,
+                    interner: interner
+                )
+            }
+        case .interfaceDecl(let interfaceDecl):
+            for nestedDeclID in interfaceDecl.nestedClasses {
+                validateAbstractOverridesForDecl(
+                    declID: nestedDeclID,
+                    ast: ast,
+                    symbols: symbols,
+                    bindings: bindings,
+                    diagnostics: diagnostics,
+                    interner: interner
+                )
+            }
+        case .objectDecl(let objectDecl):
+            for nestedDeclID in objectDecl.nestedClasses {
+                validateAbstractOverridesForDecl(
+                    declID: nestedDeclID,
+                    ast: ast,
+                    symbols: symbols,
+                    bindings: bindings,
+                    diagnostics: diagnostics,
+                    interner: interner
+                )
+            }
+        default:
+            return
+        }
+
+        // Only check concrete class declarations (not abstract, not interface, not object)
+        guard symbolInfo.kind == .class,
+              !symbolInfo.flags.contains(.abstractType) else {
+            return
+        }
+
+        // Collect all abstract members from the entire supertype chain
+        let abstractMembers = collectInheritedAbstractMembers(
+            for: symbol,
+            symbols: symbols
+        )
+        guard !abstractMembers.isEmpty else { return }
+
+        // Collect the names of members that this class provides overrides for
+        let overriddenNames = collectOverriddenMemberNames(
+            for: symbol,
+            decl: decl,
+            ast: ast,
+            symbols: symbols
+        )
+
+        // Check that every abstract member name is overridden
+        for abstractMember in abstractMembers {
+            guard let abstractSym = symbols.symbol(abstractMember) else { continue }
+            let memberName = interner.resolve(abstractSym.name)
+            if !overriddenNames.contains(abstractSym.name) {
+                let className = symbolInfo.fqName.map { interner.resolve($0) }.joined(separator: ".")
+                let declRange: SourceRange? = {
+                    switch decl {
+                    case .classDecl(let cd): return cd.range
+                    default: return nil
+                    }
+                }()
+                diagnostics.error(
+                    "KSWIFTK-SEMA-ABSTRACT",
+                    "Class '\(className)' must override abstract member '\(memberName)' or be declared abstract.",
+                    range: declRange
+                )
+            }
+        }
+    }
+
+    /// Collects all abstract member symbol IDs from the entire supertype chain of a class.
+    private func collectInheritedAbstractMembers(
+        for classSymbol: SymbolID,
+        symbols: SymbolTable
+    ) -> [SymbolID] {
+        var abstractMembers: [SymbolID] = []
+        var visited: Set<SymbolID> = [classSymbol]
+        var queue = symbols.directSupertypes(for: classSymbol)
+
+        while !queue.isEmpty {
+            let current = queue.removeFirst()
+            guard visited.insert(current).inserted else { continue }
+            guard let currentSym = symbols.symbol(current) else { continue }
+
+            // Collect abstract members from this supertype
+            let children = symbols.children(ofFQName: currentSym.fqName)
+            for childID in children {
+                guard let childSym = symbols.symbol(childID) else { continue }
+                if (childSym.kind == .function || childSym.kind == .property)
+                    && childSym.flags.contains(.abstractType) {
+                    abstractMembers.append(childID)
+                }
+            }
+
+            // Also collect abstract members from interfaces (all interface
+            // members without a body are implicitly abstract).
+            if currentSym.kind == .interface {
+                for childID in children {
+                    guard let childSym = symbols.symbol(childID) else { continue }
+                    if childSym.kind == .function,
+                       !childSym.flags.contains(.abstractType) {
+                        // Interface functions without a default body are abstract.
+                        // We rely on the abstractType flag set by the parser/sema
+                        // for explicit `abstract` keyword; interface members without
+                        // a body are not marked with abstractType flag in this compiler,
+                        // so we skip implicit interface abstract enforcement here.
+                        // (Only explicit `abstract` members from abstract classes
+                        //  require override enforcement via KSWIFTK-SEMA-ABSTRACT.)
+                    }
+                }
+            }
+
+            // Continue walking supertypes
+            queue.append(contentsOf: symbols.directSupertypes(for: current))
+        }
+
+        return abstractMembers
+    }
+
+    /// Collects the set of member names that this class provides via `override`.
+    private func collectOverriddenMemberNames(
+        for classSymbol: SymbolID,
+        decl: Decl,
+        ast: ASTModule,
+        symbols: SymbolTable
+    ) -> Set<InternedString> {
+        var overriddenNames: Set<InternedString> = []
+
+        let memberFunctions: [DeclID]
+        let memberProperties: [DeclID]
+        switch decl {
+        case .classDecl(let classDecl):
+            memberFunctions = classDecl.memberFunctions
+            memberProperties = classDecl.memberProperties
+        default:
+            return overriddenNames
+        }
+
+        for memberDeclID in memberFunctions {
+            guard let memberDecl = ast.arena.decl(memberDeclID),
+                  case .funDecl(let funDecl) = memberDecl else { continue }
+            if funDecl.modifiers.contains(.override) {
+                overriddenNames.insert(funDecl.name)
+            }
+        }
+
+        for memberDeclID in memberProperties {
+            guard let memberDecl = ast.arena.decl(memberDeclID),
+                  case .propertyDecl(let propertyDecl) = memberDecl else { continue }
+            if propertyDecl.modifiers.contains(.override) {
+                overriddenNames.insert(propertyDecl.name)
+            }
+        }
+
+        return overriddenNames
+    }
+
     // P5-78: Validate that direct subclasses of sealed types are in the same package.
     func validateSealedHierarchy(
         ast: ASTModule,

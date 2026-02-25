@@ -57,6 +57,17 @@ final class CallTypeChecker {
                 }
                 if let classSym = classSymbols.first,
                    let classSymbol = ctx.cachedSymbol(classSym) {
+                    // P5-112: Prohibit direct instantiation of abstract classes.
+                    if classSymbol.flags.contains(.abstractType) {
+                        let className = classSymbol.fqName.map { interner.resolve($0) }.joined(separator: ".")
+                        ctx.semaCtx.diagnostics.error(
+                            "KSWIFTK-SEMA-ABSTRACT",
+                            "Cannot create an instance of abstract class '\(className)'.",
+                            range: range
+                        )
+                        sema.bindings.bindExprType(id, type: sema.types.errorType)
+                        return sema.types.errorType
+                    }
                     let initName = interner.intern("<init>")
                     let ctorFQName = classSymbol.fqName + [initName]
                     let ctorSymbols = sema.symbols.lookupAll(fqName: ctorFQName)
@@ -577,6 +588,20 @@ final class CallTypeChecker {
             let finalType = safeCall ? sema.types.makeNullable(projectedReturnType) : projectedReturnType
             sema.bindings.bindExprType(id, type: finalType)
             return finalType
+        }
+
+        // P5-112: Prohibit super.foo() calls to abstract members.
+        if isSuperCall,
+           let chosenSym = sema.symbols.symbol(chosen),
+           chosenSym.flags.contains(.abstractType),
+           (chosenSym.kind == .function || chosenSym.kind == .property) {
+            let memberName = interner.resolve(calleeName)
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-ABSTRACT",
+                "Cannot call abstract member '\(memberName)' via super.",
+                range: range
+            )
+            return driver.helpers.bindAndReturnErrorType(id, sema: sema)
         }
 
         let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
