@@ -179,6 +179,13 @@ internal final class RuntimeJobHandle {
         lock.unlock()
         return value
     }
+
+    /// Thread-safe snapshot of the cancellation flag.
+    func cancellationSnapshot() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return isCancelled
+    }
 }
 
 /// A coroutine scope that tracks child jobs and supports structured cancellation.
@@ -227,8 +234,10 @@ internal final class RuntimeCoroutineScope {
         lock.unlock()
         for child in currentChildren {
             _ = runtimeJoinChild(child)
-            // Release the extra retain taken in registerChild
             if let ptr = UnsafeMutableRawPointer(bitPattern: child) {
+                // Release the extra retain taken in registerChild
+                Unmanaged<AnyObject>.fromOpaque(ptr).release()
+                // Release the original passRetained from kk_kxmini_launch/async
                 Unmanaged<AnyObject>.fromOpaque(ptr).release()
             }
         }
@@ -862,7 +871,7 @@ internal func runSuspendEntryLoopWithContinuation(entryPointRaw: Int, continuati
     while true {
         // Check cancellation before each resume (cooperative cancellation)
         if let state = runtimeContinuationState(from: continuation),
-           let job = state.jobHandle, job.isCancelled {
+           let job = state.jobHandle, job.cancellationSnapshot() {
             _ = kk_coroutine_state_exit(continuation, 0)
             return 0
         }

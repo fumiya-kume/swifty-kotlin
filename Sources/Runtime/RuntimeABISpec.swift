@@ -67,7 +67,7 @@ public struct RuntimeABIFunctionSpec: Equatable {
 }
 
 public enum RuntimeABISpec {
-    public static let specVersion = "J16.1"
+    public static let specVersion = "J17"
 
     public static let memoryFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(

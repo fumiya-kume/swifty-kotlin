@@ -269,10 +269,11 @@ final class RuntimeCoroutineStateTests: XCTestCase {
         // Temporarily pop the scope to prevent auto-registration
         let savedScope = RuntimeCoroutineScope.current
         RuntimeCoroutineScope.current = nil
+        defer { RuntimeCoroutineScope.current = savedScope }
 
         let asyncHandle = kk_kxmini_async(entryRaw, runtimeKxMiniAsyncFunctionID)
 
-        // Restore scope and manually register
+        // Restore scope before manual registration
         RuntimeCoroutineScope.current = savedScope
         _ = kk_coroutine_scope_register_child(scopeHandle, asyncHandle)
 
