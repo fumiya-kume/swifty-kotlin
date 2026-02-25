@@ -585,15 +585,15 @@ final class LambdaLowerer {
                 )
             }
 
-        case .forExpr(_, let iterableExpr, let bodyExpr, _):
+        case .forExpr(_, let iterableExpr, let bodyExpr, _, _):
             collectBoundIdentifierSymbols(in: iterableExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
             collectBoundIdentifierSymbols(in: bodyExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
 
-        case .whileExpr(let conditionExpr, let bodyExpr, _):
+        case .whileExpr(let conditionExpr, let bodyExpr, _, _):
             collectBoundIdentifierSymbols(in: conditionExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
             collectBoundIdentifierSymbols(in: bodyExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
 
-        case .doWhileExpr(let bodyExpr, let conditionExpr, _):
+        case .doWhileExpr(let bodyExpr, let conditionExpr, _, _):
             collectBoundIdentifierSymbols(in: bodyExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
             collectBoundIdentifierSymbols(in: conditionExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
 
@@ -645,7 +645,7 @@ final class LambdaLowerer {
                 collectBoundIdentifierSymbols(in: elseExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
             }
 
-        case .returnExpr(let value, _):
+        case .returnExpr(let value, _, _):
             if let value {
                 collectBoundIdentifierSymbols(in: value, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
             }
@@ -681,7 +681,7 @@ final class LambdaLowerer {
             for idx in indices { collectBoundIdentifierSymbols(in: idx, ast: ast, sema: sema, referenced: &referenced, seen: &seen) }
             collectBoundIdentifierSymbols(in: valueExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
 
-        case .lambdaLiteral(_, let bodyExpr, _):
+        case .lambdaLiteral(_, let bodyExpr, _, _):
             collectBoundIdentifierSymbols(in: bodyExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
 
         case .callableRef(let receiverExpr, _, _):
@@ -755,15 +755,15 @@ final class LambdaLowerer {
             }
             return false
 
-        case .forExpr(_, let iterableExpr, let bodyExpr, _):
+        case .forExpr(_, let iterableExpr, let bodyExpr, _, _):
             return containsImplicitReceiverReference(in: iterableExpr, ast: ast)
                 || containsImplicitReceiverReference(in: bodyExpr, ast: ast)
 
-        case .whileExpr(let conditionExpr, let bodyExpr, _):
+        case .whileExpr(let conditionExpr, let bodyExpr, _, _):
             return containsImplicitReceiverReference(in: conditionExpr, ast: ast)
                 || containsImplicitReceiverReference(in: bodyExpr, ast: ast)
 
-        case .doWhileExpr(let bodyExpr, let conditionExpr, _):
+        case .doWhileExpr(let bodyExpr, let conditionExpr, _, _):
             return containsImplicitReceiverReference(in: bodyExpr, ast: ast)
                 || containsImplicitReceiverReference(in: conditionExpr, ast: ast)
 
@@ -823,7 +823,7 @@ final class LambdaLowerer {
             }
             return false
 
-        case .returnExpr(let value, _):
+        case .returnExpr(let value, _, _):
             guard let value else {
                 return false
             }
@@ -864,7 +864,7 @@ final class LambdaLowerer {
             for idx in indices { if containsImplicitReceiverReference(in: idx, ast: ast) { return true } }
             return containsImplicitReceiverReference(in: valueExpr, ast: ast)
 
-        case .lambdaLiteral(_, let bodyExpr, _):
+        case .lambdaLiteral(_, let bodyExpr, _, _):
             return containsImplicitReceiverReference(in: bodyExpr, ast: ast)
 
         case .callableRef(let receiverExpr, _, _):

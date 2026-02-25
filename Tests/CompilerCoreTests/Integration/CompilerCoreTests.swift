@@ -1108,7 +1108,7 @@ final class CompilerCoreTests: XCTestCase {
         let function = try XCTUnwrap(topLevelFunction(named: "build", in: ast, interner: ctx.interner))
         guard case .expr(let exprID, _) = function.body,
               let expr = ast.arena.expr(exprID),
-              case .lambdaLiteral(let params, let bodyExprID, _) = expr else {
+              case .lambdaLiteral(let params, let bodyExprID, _, _) = expr else {
             XCTFail("Expected lambda literal expression body.")
             return
         }
@@ -1210,7 +1210,7 @@ final class CompilerCoreTests: XCTestCase {
         case .block(let stmts, _):
             guard let returnExprID = stmts.first,
                   let returnExpr = ast.arena.expr(returnExprID),
-                  case .returnExpr(let whenID, _) = returnExpr,
+                  case .returnExpr(let whenID, _, _) = returnExpr,
                   let whenID,
                   let whenExpr = ast.arena.expr(whenID),
                   case .whenExpr(let subject, let branches, let elseExpr, _) = whenExpr else {

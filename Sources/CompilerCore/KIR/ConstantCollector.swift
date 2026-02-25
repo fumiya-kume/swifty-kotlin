@@ -148,7 +148,7 @@ struct ConstantCollector {
                   let lastExpr = ast.arena.expr(lastExprID) else {
                 return nil
             }
-            if case .returnExpr(let valueExprID, _) = lastExpr,
+            if case .returnExpr(let valueExprID, _, _) = lastExpr,
                let valueExprID {
                 return literalConstantExpr(valueExprID, ast: ast)
             }

@@ -862,29 +862,29 @@ final class ASTModelsTests: XCTestCase {
         let loopVar = interner.intern("i")
 
         let forExpr = Expr.forExpr(loopVariable: loopVar, iterable: bodyID, body: bodyID, range: r)
-        if case .forExpr(let lv, _, _, _) = forExpr {
+        if case .forExpr(let lv, _, _, _, _) = forExpr {
             XCTAssertEqual(lv, loopVar)
         } else { XCTFail("Expected .forExpr") }
 
         let whileExpr = Expr.whileExpr(condition: condID, body: bodyID, range: r)
-        if case .whileExpr(let c, let b, _) = whileExpr {
+        if case .whileExpr(let c, let b, _, _) = whileExpr {
             XCTAssertEqual(c, condID)
             XCTAssertEqual(b, bodyID)
         } else { XCTFail("Expected .whileExpr") }
 
         let doWhileExpr = Expr.doWhileExpr(body: bodyID, condition: condID, range: r)
-        if case .doWhileExpr(let b, let c, _) = doWhileExpr {
+        if case .doWhileExpr(let b, let c, _, _) = doWhileExpr {
             XCTAssertEqual(b, bodyID)
             XCTAssertEqual(c, condID)
         } else { XCTFail("Expected .doWhileExpr") }
 
         let breakExpr = Expr.breakExpr(range: r)
-        if case .breakExpr(let range) = breakExpr {
+        if case .breakExpr(_, let range) = breakExpr {
             XCTAssertEqual(range, r)
         } else { XCTFail("Expected .breakExpr") }
 
         let continueExpr = Expr.continueExpr(range: r)
-        if case .continueExpr(let range) = continueExpr {
+        if case .continueExpr(_, let range) = continueExpr {
             XCTAssertEqual(range, r)
         } else { XCTFail("Expected .continueExpr") }
     }
@@ -1034,12 +1034,12 @@ final class ASTModelsTests: XCTestCase {
         let valID = arena.appendExpr(.intLiteral(1, r))
 
         let returnWithValue = Expr.returnExpr(value: valID, range: r)
-        if case .returnExpr(let v, _) = returnWithValue {
+        if case .returnExpr(let v, _, _) = returnWithValue {
             XCTAssertEqual(v, valID)
         } else { XCTFail("Expected .returnExpr") }
 
         let returnVoid = Expr.returnExpr(value: nil, range: r)
-        if case .returnExpr(let v, _) = returnVoid {
+        if case .returnExpr(let v, _, _) = returnVoid {
             XCTAssertNil(v)
         } else { XCTFail("Expected .returnExpr") }
 
@@ -1130,7 +1130,7 @@ final class ASTModelsTests: XCTestCase {
         let bodyID = arena.appendExpr(.intLiteral(1, r))
         let params = [interner.intern("x"), interner.intern("y")]
         let lambda = Expr.lambdaLiteral(params: params, body: bodyID, range: r)
-        if case .lambdaLiteral(let p, let b, _) = lambda {
+        if case .lambdaLiteral(let p, let b, _, _) = lambda {
             XCTAssertEqual(p.count, 2)
             XCTAssertEqual(b, bodyID)
         } else { XCTFail("Expected .lambdaLiteral") }
