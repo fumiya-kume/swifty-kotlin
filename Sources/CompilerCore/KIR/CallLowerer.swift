@@ -187,13 +187,10 @@ final class CallLowerer {
                 arguments: &finalArgIDs
             )
             let loweredCalleeName: InternedString
-            if let chosen {
-                loweredCalleeName = loweredCalleeNameForSymbol(
-                    chosenCallee: chosen,
-                    fallback: sourceCalleeName,
-                    sema: sema,
-                    interner: interner
-                )
+            if let chosen,
+               let externalLinkName = sema.symbols.externalLinkName(for: chosen),
+               !externalLinkName.isEmpty {
+                loweredCalleeName = interner.intern(externalLinkName)
             } else if let loweredCallable {
                 loweredCalleeName = loweredCallable.callee
             } else if chosen == nil {
@@ -254,22 +251,9 @@ final class CallLowerer {
         arguments: inout [KIRExprID]
     ) {
         let intType = sema.types.make(.primitive(.int, .nonNull))
-        let maskExpr = arena.appendExpr(.intLiteral(defaultMask), type: intType)
-        instructions.append(.constValue(result: maskExpr, value: .intLiteral(defaultMask)))
+        let maskExpr = arena.appendExpr(.intLiteral(Int64(defaultMask)), type: intType)
+        instructions.append(.constValue(result: maskExpr, value: .intLiteral(Int64(defaultMask))))
         arguments.append(maskExpr)
-    }
-
-    private func loweredCalleeNameForSymbol(
-        chosenCallee: SymbolID,
-        fallback: InternedString,
-        sema: SemaModule,
-        interner: StringInterner
-    ) -> InternedString {
-        guard let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
-              !externalLinkName.isEmpty else {
-            return fallback
-        }
-        return interner.intern(externalLinkName)
     }
 
     private func normalizedCallableValueArguments(

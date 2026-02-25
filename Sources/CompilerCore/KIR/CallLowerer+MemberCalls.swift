@@ -171,8 +171,7 @@ extension CallLowerer {
                 // For virtualCall, the receiver is a separate field, so remove it
                 // from finalArguments (it was inserted at index 0 above).
                 var vcArguments = finalArguments
-                if let chosen2 = Optional(chosen),
-                   let signature = sema.symbols.functionSignature(for: chosen2),
+                if let signature = sema.symbols.functionSignature(for: chosen),
                    signature.receiverType != nil,
                    !vcArguments.isEmpty {
                     vcArguments.removeFirst()
@@ -367,8 +366,7 @@ extension CallLowerer {
                 // For virtualCall, the receiver is a separate field, so remove it
                 // from finalArguments (it was inserted at index 0 above).
                 var vcArguments = finalArguments
-                if let chosen2 = Optional(chosen),
-                   let signature = sema.symbols.functionSignature(for: chosen2),
+                if let signature = sema.symbols.functionSignature(for: chosen),
                    signature.receiverType != nil,
                    !vcArguments.isEmpty {
                     vcArguments.removeFirst()
