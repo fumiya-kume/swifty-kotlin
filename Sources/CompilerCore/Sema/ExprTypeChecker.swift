@@ -92,7 +92,7 @@ final class ExprTypeChecker {
                 )
             } else if let label, !ctx.hasLoopLabel(label) {
                 ctx.semaCtx.diagnostics.error(
-                    "KSWIFTK-SEMA-0020",
+                    "KSWIFTK-SEMA-0097",
                     "'break' with label '@\(ctx.interner.resolve(label))' does not reference a valid enclosing loop.",
                     range: range
                 )
@@ -109,7 +109,7 @@ final class ExprTypeChecker {
                 )
             } else if let label, !ctx.hasLoopLabel(label) {
                 ctx.semaCtx.diagnostics.error(
-                    "KSWIFTK-SEMA-0021",
+                    "KSWIFTK-SEMA-0098",
                     "'continue' with label '@\(ctx.interner.resolve(label))' does not reference a valid enclosing loop.",
                     range: range
                 )
