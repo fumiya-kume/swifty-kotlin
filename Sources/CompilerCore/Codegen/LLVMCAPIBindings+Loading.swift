@@ -162,7 +162,11 @@ extension LLVMCAPIBindings {
                 diBuilderCreateParameterVariableFn: loadSymbol(handle: handle, name: "LLVMDIBuilderCreateParameterVariable", as: LLVMDIBuilderCreateParameterVariableFn.self),
                 diBuilderCreateAutoVariableFn: loadSymbol(handle: handle, name: "LLVMDIBuilderCreateAutoVariable", as: LLVMDIBuilderCreateAutoVariableFn.self),
                 diBuilderInsertDeclareAtEndFn: loadSymbol(handle: handle, name: "LLVMDIBuilderInsertDeclareAtEnd", as: LLVMDIBuilderInsertDeclareAtEndFn.self),
-                diBuilderCreateExpressionFn: loadSymbol(handle: handle, name: "LLVMDIBuilderCreateExpression", as: LLVMDIBuilderCreateExpressionFn.self)
+                diBuilderCreateExpressionFn: loadSymbol(handle: handle, name: "LLVMDIBuilderCreateExpression", as: LLVMDIBuilderCreateExpressionFn.self),
+                // P5-111: Global variable support
+                addGlobalFn: loadSymbol(handle: handle, name: "LLVMAddGlobal", as: LLVMAddGlobalFn.self),
+                getNamedGlobalFn: loadSymbol(handle: handle, name: "LLVMGetNamedGlobal", as: LLVMGetNamedGlobalFn.self),
+                setInitializerFn: loadSymbol(handle: handle, name: "LLVMSetInitializer", as: LLVMSetInitializerFn.self)
             )
         }
         return nil

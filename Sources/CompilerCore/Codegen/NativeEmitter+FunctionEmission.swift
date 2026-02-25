@@ -9,6 +9,7 @@ extension NativeEmitter {
         int64Type: LLVMCAPIBindings.LLVMTypeRef,
         outThrownPointerType: LLVMCAPIBindings.LLVMTypeRef,
         internalFunctions: [SymbolID: LLVMFunction],
+        llvmGlobals: [SymbolID: LLVMCAPIBindings.LLVMValueRef] = [:],
         diContext: DebugInfoContext? = nil
     ) throws {
         guard let builder = bindings.createBuilder(context: context) else {
@@ -193,6 +194,7 @@ extension NativeEmitter {
                 state: builderState,
                 parameterValues: parameterValues,
                 internalFunctions: internalFunctions,
+                llvmGlobals: llvmGlobals,
                 generatedStringLiteralCount: &generatedStringLiteralCount,
                 declareExternalFunction: { name, argCount, appendThrown in
                     declareExternalFunction(named: name, argumentCount: argCount, appendThrownChannel: appendThrown)
@@ -833,6 +835,13 @@ extension NativeEmitter {
                     _ = bindings.buildStore(builder, value: copySource, pointer: alloca)
                 } else {
                     storeResult(to, copySource)
+                }
+
+            case .storeGlobal(let symbol, let value):
+                // P5-111: Store to LLVM global variable for object member properties.
+                if let globalVar = llvmGlobals[symbol] {
+                    let resolved = resolveValue(value)
+                    _ = bindings.buildStore(builder, value: resolved, pointer: globalVar)
                 }
 
             case .rethrow(let value):

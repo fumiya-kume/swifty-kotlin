@@ -141,6 +141,24 @@ struct NativeEmitter {
 
         var internalFunctions: [SymbolID: LLVMFunction] = [:]
 
+        // P5-111: Create LLVM global variables for KIRGlobal declarations.
+        var llvmGlobals: [SymbolID: LLVMCAPIBindings.LLVMValueRef] = [:]
+        if bindings.globalsAvailable {
+            let globals: [KIRGlobal] = module.arena.declarations.compactMap { decl in
+                guard case .global(let global) = decl else { return nil }
+                return global
+            }
+            for global in globals {
+                let globalName = LLVMBackend.globalSlotSymbol(for: global.symbol)
+                if let globalVar = bindings.addGlobal(module: llvmModule, type: int64Type, name: globalName) {
+                    let zero = bindings.constInt(int64Type, value: 0)
+                    bindings.setInitializer(globalVar, value: zero)
+                    bindings.setInternalLinkage(globalVar)
+                    llvmGlobals[global.symbol] = globalVar
+                }
+            }
+        }
+
         for declaration in module.arena.declarations {
             guard case .function(let function) = declaration else {
                 continue
@@ -182,6 +200,7 @@ struct NativeEmitter {
                     int64Type: int64Type,
                     outThrownPointerType: outThrownPointerType,
                     internalFunctions: internalFunctions,
+                    llvmGlobals: llvmGlobals,
                     diContext: diContext
                 )
             } catch {

@@ -63,6 +63,10 @@ final class LLVMCAPIBindings {
     internal typealias LLVMBuildSelectFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     internal typealias LLVMBuildGlobalStringPtrFn = @convention(c) (LLVMBuilderRef?, UnsafePointer<CChar>?, UnsafePointer<CChar>?) -> LLVMValueRef?
     internal typealias LLVMBuildPtrToIntFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMTypeRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    // P5-111: Global variable support for object singleton member properties.
+    internal typealias LLVMAddGlobalFn = @convention(c) (LLVMModuleRef?, LLVMTypeRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    internal typealias LLVMGetNamedGlobalFn = @convention(c) (LLVMModuleRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    internal typealias LLVMSetInitializerFn = @convention(c) (LLVMValueRef?, LLVMValueRef?) -> Void
     internal typealias LLVMBuildCall2Fn = @convention(c) (
         LLVMBuilderRef?,
         LLVMTypeRef?,
@@ -293,6 +297,10 @@ final class LLVMCAPIBindings {
     internal let diBuilderCreateAutoVariableFn: LLVMDIBuilderCreateAutoVariableFn?
     internal let diBuilderInsertDeclareAtEndFn: LLVMDIBuilderInsertDeclareAtEndFn?
     internal let diBuilderCreateExpressionFn: LLVMDIBuilderCreateExpressionFn?
+    // P5-111: Global variable support
+    internal let addGlobalFn: LLVMAddGlobalFn?
+    internal let getNamedGlobalFn: LLVMGetNamedGlobalFn?
+    internal let setInitializerFn: LLVMSetInitializerFn?
 
     internal init(
         handle: UnsafeMutableRawPointer,
@@ -379,7 +387,11 @@ final class LLVMCAPIBindings {
         diBuilderCreateParameterVariableFn: LLVMDIBuilderCreateParameterVariableFn? = nil,
         diBuilderCreateAutoVariableFn: LLVMDIBuilderCreateAutoVariableFn? = nil,
         diBuilderInsertDeclareAtEndFn: LLVMDIBuilderInsertDeclareAtEndFn? = nil,
-        diBuilderCreateExpressionFn: LLVMDIBuilderCreateExpressionFn? = nil
+        diBuilderCreateExpressionFn: LLVMDIBuilderCreateExpressionFn? = nil,
+        // P5-111: Global variable support
+        addGlobalFn: LLVMAddGlobalFn? = nil,
+        getNamedGlobalFn: LLVMGetNamedGlobalFn? = nil,
+        setInitializerFn: LLVMSetInitializerFn? = nil
     ) {
         self.handle = handle
         self.contextCreateFn = contextCreateFn
@@ -466,6 +478,10 @@ final class LLVMCAPIBindings {
         self.diBuilderCreateAutoVariableFn = diBuilderCreateAutoVariableFn
         self.diBuilderInsertDeclareAtEndFn = diBuilderInsertDeclareAtEndFn
         self.diBuilderCreateExpressionFn = diBuilderCreateExpressionFn
+        // P5-111: Global variable support
+        self.addGlobalFn = addGlobalFn
+        self.getNamedGlobalFn = getNamedGlobalFn
+        self.setInitializerFn = setInitializerFn
     }
 
     deinit {
@@ -574,5 +590,22 @@ final class LLVMCAPIBindings {
 
     func hasTerminator(_ block: LLVMBasicBlockRef?) -> Bool {
         getBasicBlockTerminatorFn(block) != nil
+    }
+
+    // P5-111: Global variable convenience methods
+    func addGlobal(module: LLVMModuleRef?, type: LLVMTypeRef?, name: String) -> LLVMValueRef? {
+        name.withCString { addGlobalFn?(module, type, $0) }
+    }
+
+    func getNamedGlobal(module: LLVMModuleRef?, name: String) -> LLVMValueRef? {
+        name.withCString { getNamedGlobalFn?(module, $0) }
+    }
+
+    func setInitializer(_ global: LLVMValueRef?, value: LLVMValueRef?) {
+        setInitializerFn?(global, value)
+    }
+
+    var globalsAvailable: Bool {
+        addGlobalFn != nil && getNamedGlobalFn != nil && setInitializerFn != nil
     }
 }

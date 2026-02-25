@@ -92,6 +92,8 @@ extension LLVMBackend {
             case .copy(let from, let to):
                 ids.insert(from)
                 ids.insert(to)
+            case .storeGlobal(_, let value):
+                ids.insert(value)
             case .rethrow(let value):
                 ids.insert(value)
             case .returnIfEqual(let lhs, let rhs):

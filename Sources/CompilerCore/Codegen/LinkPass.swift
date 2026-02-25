@@ -66,6 +66,11 @@ public final class LinkPhase: CompilerPhase {
             if ctx.options.debugInfo {
                 args.append("-g")
             }
+            // P5-111: Use -no-pie so that LLVM global variables (used for
+            // object singleton member properties) link correctly with ld.gold.
+            #if os(Linux)
+            args.append("-no-pie")
+            #endif
             args.append("-o")
             args.append(ctx.options.outputPath)
             args.append(contentsOf: clangTargetArgs(ctx.options.target))

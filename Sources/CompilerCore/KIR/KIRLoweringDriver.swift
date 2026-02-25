@@ -82,6 +82,11 @@ final class KIRLoweringDriver {
         // target expr ID (not a symbolRef) as the argument in getValue calls.
         var delegateHandleExprByPropertySymbol: [SymbolID: KIRExprID] = [:]
 
+        // P5-111: Maps object symbol → synthetic <clinit> function symbol
+        // for lazy singleton initialization rewriting.
+        var objectClinitSymbolByObjectSymbol: [SymbolID: SymbolID] = [:]
+        var objectClinitNameByObjectSymbol: [SymbolID: InternedString] = [:]
+
         for file in ast.sortedFiles {
             var declIDs: [KIRDeclID] = []
             for declID in file.topLevelDecls {
@@ -448,6 +453,141 @@ final class KIRLoweringDriver {
                     let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: directMembers)))
                     declIDs.append(kirID)
                     declIDs.append(contentsOf: allDecls)
+
+                    // P5-111: Generate singleton global slot and lazy <clinit> accessor.
+                    let singletonGlobalSymbol = SymbolID(rawValue: -200_000 - symbol.rawValue)
+                    let singletonGlobalKirID = arena.appendDecl(
+                        .global(KIRGlobal(symbol: singletonGlobalSymbol, type: sema.types.anyType))
+                    )
+                    declIDs.append(singletonGlobalKirID)
+
+                    // Build the synthetic <clinit> function body.
+                    let clinitSymbol = SymbolID(rawValue: -300_000 - symbol.rawValue)
+                    let clinitName = compilationCtx.interner.intern("<clinit>_\(compilationCtx.interner.resolve(objectDecl.name))")
+                    objectClinitSymbolByObjectSymbol[symbol] = clinitSymbol
+                    objectClinitNameByObjectSymbol[symbol] = clinitName
+
+                    ctx.resetScopeForFunction()
+                    ctx.beginCallableLoweringScope()
+
+                    var clinitBody: [KIRInstruction] = [.beginBlock]
+
+                    // Load singleton global; if already initialized, jump to done.
+                    let guardExpr = arena.appendExpr(.symbolRef(singletonGlobalSymbol), type: sema.types.anyType)
+                    clinitBody.append(.constValue(result: guardExpr, value: .symbolRef(singletonGlobalSymbol)))
+                    let doneLabel = ctx.makeLoopLabel()
+                    clinitBody.append(.jumpIfNotNull(value: guardExpr, target: doneLabel))
+
+                    // Allocate the object instance via kk_array_new(slotCount).
+                    let intType = sema.types.make(.primitive(.int, .nonNull))
+                    var slotCount: Int64 = 1
+                    if let layout = sema.symbols.nominalLayout(for: symbol) {
+                        slotCount = Int64(max(layout.instanceSizeWords, 1))
+                    } else {
+                        slotCount = Int64(max(objectDecl.memberProperties.count, 1))
+                    }
+                    let slotCountExpr = arena.appendExpr(.intLiteral(slotCount), type: intType)
+                    clinitBody.append(.constValue(result: slotCountExpr, value: .intLiteral(slotCount)))
+                    let allocResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+                    clinitBody.append(.call(
+                        symbol: nil,
+                        callee: compilationCtx.interner.intern("kk_array_new"),
+                        arguments: [slotCountExpr],
+                        result: allocResult,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+
+                    // Store allocated instance in global slot immediately (for circular refs).
+                    let globalRef = arena.appendExpr(.symbolRef(singletonGlobalSymbol), type: sema.types.anyType)
+                    clinitBody.append(.copy(from: allocResult, to: globalRef))
+
+                    // Set up implicit receiver for property initializers and init blocks.
+                    let receiverSymbol = callSupportLowerer.syntheticReceiverParameterSymbol(functionSymbol: clinitSymbol)
+                    let receiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: sema.types.anyType)
+                    clinitBody.append(.constValue(result: receiverExprID, value: .symbolRef(singletonGlobalSymbol)))
+                    ctx.currentImplicitReceiverSymbol = receiverSymbol
+                    ctx.currentImplicitReceiverExprID = receiverExprID
+
+                    // Emit property initializers (property initializer → init block order).
+                    for propDeclID in objectDecl.memberProperties {
+                        guard let propDecl = ast.arena.decl(propDeclID),
+                              case .propertyDecl(let prop) = propDecl,
+                              let propSymbol = sema.bindings.declSymbols[propDeclID] else {
+                            continue
+                        }
+                        guard let initExpr = prop.initializer else {
+                            continue
+                        }
+                        let targetSymbol = sema.symbols.backingFieldSymbol(for: propSymbol) ?? propSymbol
+                        let propType = sema.symbols.propertyType(for: propSymbol) ?? sema.types.anyType
+                        let initValue = lowerExpr(
+                            initExpr,
+                            ast: ast,
+                            sema: sema,
+                            arena: arena,
+                            interner: compilationCtx.interner,
+                            propertyConstantInitializers: propertyConstantInitializers,
+                            instructions: &clinitBody
+                        )
+                        let fieldRef = arena.appendExpr(.symbolRef(targetSymbol), type: propType)
+                        clinitBody.append(.copy(from: initValue, to: fieldRef))
+                    }
+
+                    // Emit init blocks in declaration order.
+                    for initBlock in objectDecl.initBlocks {
+                        switch initBlock {
+                        case .block(let exprIDs, _):
+                            for exprID in exprIDs {
+                                _ = lowerExpr(
+                                    exprID,
+                                    ast: ast,
+                                    sema: sema,
+                                    arena: arena,
+                                    interner: compilationCtx.interner,
+                                    propertyConstantInitializers: propertyConstantInitializers,
+                                    instructions: &clinitBody
+                                )
+                            }
+                        case .expr(let exprID, _):
+                            _ = lowerExpr(
+                                exprID,
+                                ast: ast,
+                                sema: sema,
+                                arena: arena,
+                                interner: compilationCtx.interner,
+                                propertyConstantInitializers: propertyConstantInitializers,
+                                instructions: &clinitBody
+                            )
+                        case .unit:
+                            break
+                        }
+                    }
+
+                    // Done label: load and return the singleton.
+                    clinitBody.append(.label(doneLabel))
+                    let returnExpr = arena.appendExpr(.symbolRef(singletonGlobalSymbol), type: sema.types.anyType)
+                    clinitBody.append(.constValue(result: returnExpr, value: .symbolRef(singletonGlobalSymbol)))
+                    clinitBody.append(.returnValue(returnExpr))
+                    clinitBody.append(.endBlock)
+
+                    let clinitKirID = arena.appendDecl(
+                        .function(
+                            KIRFunction(
+                                symbol: clinitSymbol,
+                                name: clinitName,
+                                params: [],
+                                returnType: sema.types.anyType,
+                                body: clinitBody,
+                                isSuspend: false,
+                                isInline: false
+                            )
+                        )
+                    )
+                    declIDs.append(clinitKirID)
+                    declIDs.append(contentsOf: ctx.drainGeneratedCallableDecls())
+                    ctx.currentImplicitReceiverExprID = nil
+                    ctx.currentImplicitReceiverSymbol = nil
 
                 case .funDecl(let function):
                     ctx.resetScopeForFunction()
@@ -863,6 +1003,43 @@ final class KIRLoweringDriver {
                     updated.body = rewrittenBody
                 }
 
+                return updated
+            }
+        }
+
+        // P5-111: Post-process to rewrite object symbol references into <clinit> accessor calls.
+        // When an object name (e.g., Counter) is referenced, replace the raw symbolRef
+        // with a call to the lazy singleton accessor that ensures one-time initialization.
+        if !objectClinitSymbolByObjectSymbol.isEmpty {
+            arena.transformFunctions { function in
+                var updated = function
+                var rewrittenBody: [KIRInstruction] = []
+                rewrittenBody.reserveCapacity(updated.body.count)
+                var didRewrite = false
+                for instruction in updated.body {
+                    if case .constValue(let result, let value) = instruction,
+                       case .symbolRef(let sym) = value,
+                       let clinitSym = objectClinitSymbolByObjectSymbol[sym],
+                       let clinitNm = objectClinitNameByObjectSymbol[sym] {
+                        // Replace symbolRef(objectSymbol) with call to <clinit> accessor.
+                        rewrittenBody.append(
+                            .call(
+                                symbol: clinitSym,
+                                callee: clinitNm,
+                                arguments: [],
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            )
+                        )
+                        didRewrite = true
+                        continue
+                    }
+                    rewrittenBody.append(instruction)
+                }
+                if didRewrite {
+                    updated.body = rewrittenBody
+                }
                 return updated
             }
         }

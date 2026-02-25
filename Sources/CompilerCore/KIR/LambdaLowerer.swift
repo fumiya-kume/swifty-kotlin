@@ -605,6 +605,10 @@ final class LambdaLowerer {
         case .localAssign(_, let valueExpr, _):
             collectBoundIdentifierSymbols(in: valueExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
 
+        case .memberAssign(let receiverExpr, _, let valueExpr, _):
+            collectBoundIdentifierSymbols(in: receiverExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
+            collectBoundIdentifierSymbols(in: valueExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
+
         case .indexedAssign(let receiverExpr, let indices, let valueExpr, _):
             collectBoundIdentifierSymbols(in: receiverExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
             for idx in indices { collectBoundIdentifierSymbols(in: idx, ast: ast, sema: sema, referenced: &referenced, seen: &seen) }
@@ -774,6 +778,10 @@ final class LambdaLowerer {
             return containsImplicitReceiverReference(in: initializer, ast: ast)
 
         case .localAssign(_, let valueExpr, _):
+            return containsImplicitReceiverReference(in: valueExpr, ast: ast)
+
+        case .memberAssign(let receiverExpr, _, let valueExpr, _):
+            if containsImplicitReceiverReference(in: receiverExpr, ast: ast) { return true }
             return containsImplicitReceiverReference(in: valueExpr, ast: ast)
 
         case .indexedAssign(let receiverExpr, let indices, let valueExpr, _):

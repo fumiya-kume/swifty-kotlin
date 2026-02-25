@@ -73,6 +73,7 @@ public final class ASTArena: @unchecked Sendable {
              .continueExpr(let range),
              .localDecl(_, _, _, _, let range),
              .localAssign(_, _, let range),
+             .memberAssign(_, _, _, let range),
              .indexedAssign(_, _, _, let range),
              .call(_, _, _, let range),
              .memberCall(_, _, _, _, let range),

@@ -65,6 +65,10 @@ struct CaptureAnalyzer {
             case .localAssign(_, let value, _):
                 visit(value)
 
+            case .memberAssign(let receiver, _, let value, _):
+                visit(receiver)
+                visit(value)
+
             case .indexedAssign(let receiver, let indices, let value, _):
                 visit(receiver)
                 for idx in indices { visit(idx) }

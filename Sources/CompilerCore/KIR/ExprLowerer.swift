@@ -554,6 +554,36 @@ final class ExprLowerer {
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
+        case .memberAssign(let receiverExpr, _, let valueExpr, _):
+            // P5-111: Lower member property assignment (e.g. Counter.n = 3).
+            // Lower receiver (triggers singleton <clinit> for objects).
+            _ = lowerExpr(
+                receiverExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            // Lower the value expression.
+            let valueID = lowerExpr(
+                valueExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            // Emit a storeGlobal into the property's global slot.
+            if let propSymbol = sema.bindings.identifierSymbols[exprID] {
+                instructions.append(.storeGlobal(symbol: propSymbol, value: valueID))
+            }
+            let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+            instructions.append(.constValue(result: unit, value: .unit))
+            return unit
+
         case .indexedAccess(let receiverExpr, let indices, _):
             return driver.callLowerer.lowerIndexedAccessExpr(exprID, receiverExpr: receiverExpr, indices: indices, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 

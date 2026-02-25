@@ -251,6 +251,14 @@ final class InlineLoweringPass: LoweringPass {
                     )
                 )
 
+            case .storeGlobal(let symbol, let value):
+                lowered.append(
+                    .storeGlobal(
+                        symbol: symbol,
+                        value: resolveAlias(of: value, aliases: localExprMap)
+                    )
+                )
+
             case .rethrow(let value):
                 lowered.append(
                     .rethrow(value: resolveAlias(of: value, aliases: localExprMap))
@@ -341,6 +349,12 @@ final class InlineLoweringPass: LoweringPass {
             return .copy(
                 from: resolveAlias(of: from, aliases: aliases),
                 to: resolveAlias(of: to, aliases: aliases)
+            )
+
+        case .storeGlobal(let symbol, let value):
+            return .storeGlobal(
+                symbol: symbol,
+                value: resolveAlias(of: value, aliases: aliases)
             )
 
         case .rethrow(let value):

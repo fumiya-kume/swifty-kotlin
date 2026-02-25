@@ -111,6 +111,35 @@ final class ExprTypeChecker {
         case .localAssign(let name, let value, let range):
             return driver.localDeclChecker.inferLocalAssignExpr(id, name: name, value: value, range: range, ctx: ctx, locals: &locals)
 
+        case .memberAssign(let receiverExpr, let member, let valueExpr, let range):
+            // P5-111: Type-check member property assignment (e.g. Counter.n = 3).
+            let receiverType = driver.inferExpr(receiverExpr, ctx: ctx, locals: &locals, expectedType: nil)
+            let valueType = driver.inferExpr(valueExpr, ctx: ctx, locals: &locals, expectedType: nil)
+            // Resolve the member property on the receiver type.
+            if let propResult = driver.helpers.lookupMemberProperty(
+                named: member,
+                receiverType: receiverType,
+                sema: sema
+            ) {
+                sema.bindings.bindIdentifier(id, symbol: propResult.symbol)
+                driver.emitSubtypeConstraint(
+                    left: valueType,
+                    right: propResult.type,
+                    range: range,
+                    solver: ConstraintSolver(),
+                    sema: sema,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+            } else {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0024",
+                    "Unresolved member property '\(ctx.interner.resolve(member))'.",
+                    range: range
+                )
+            }
+            sema.bindings.bindExprType(id, type: sema.types.unitType)
+            return sema.types.unitType
+
         case .indexedAccess(let receiverExpr, let indices, let range):
             return driver.localDeclChecker.inferIndexedAccessExpr(id, receiverExpr: receiverExpr, indices: indices, range: range, ctx: ctx, locals: &locals)
 
@@ -701,11 +730,11 @@ final class ExprTypeChecker {
             if let signature = sema.symbols.functionSignature(for: symbol.id) {
                 return signature.returnType
             }
-            if symbol.kind == .property || symbol.kind == .field || symbol.kind == .object {
+            if symbol.kind == .property || symbol.kind == .field {
                 return sema.symbols.propertyType(for: symbol.id)
             }
             // Objects are singletons – always resolve to their nominal type so
-            // that `ObjectName.member()` works.
+            // that `ObjectName.member()` works (P5-111).
             if symbol.kind == .object {
                 return sema.types.make(.classType(ClassType(classSymbol: symbol.id, args: [], nullability: .nonNull)))
             }

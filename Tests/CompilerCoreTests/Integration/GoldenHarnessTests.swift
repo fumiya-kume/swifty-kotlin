@@ -405,6 +405,8 @@ final class GoldenHarnessTests: XCTestCase {
         case .forDestructuringExpr(let names, let iterable, let body, _):
             let renderedNames = names.map { $0.map { interner.resolve($0) } ?? "_" }.joined(separator: ",")
             return "forDestructuring names=[\(renderedNames)] iterable=e\(iterable.rawValue) body=e\(body.rawValue)"
+        case .memberAssign(let receiver, let member, let value, _):
+            return "memberAssign recv=e\(receiver.rawValue) member=\(interner.resolve(member)) value=e\(value.rawValue)"
         }
     }
 

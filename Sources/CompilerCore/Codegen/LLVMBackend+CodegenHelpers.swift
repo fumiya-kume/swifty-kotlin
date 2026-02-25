@@ -58,6 +58,10 @@ extension LLVMBackend {
     }
 
     func globalSlotSymbol(for symbol: SymbolID) -> String {
+        Self.globalSlotSymbol(for: symbol)
+    }
+
+    static func globalSlotSymbol(for symbol: SymbolID) -> String {
         "kk_global_root_slot_\(max(0, Int(symbol.rawValue)))"
     }
 

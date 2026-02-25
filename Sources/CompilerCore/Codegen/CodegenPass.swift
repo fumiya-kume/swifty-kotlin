@@ -300,6 +300,8 @@ public final class CodegenPhase: CompilerPhase {
             return "jumpIfNotNull value=\(value.rawValue) target=\(target)"
         case .copy(let from, let to):
             return "copy from=\(from.rawValue) to=\(to.rawValue)"
+        case .storeGlobal(let symbol, let value):
+            return "storeGlobal symbol=\(symbol.rawValue) value=\(value.rawValue)"
         case .rethrow(let value):
             return "rethrow value=\(value.rawValue)"
         }
