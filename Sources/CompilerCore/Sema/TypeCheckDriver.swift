@@ -81,6 +81,7 @@ final class TypeCheckDriver {
                 interner: interner, scope: fileScope,
                 implicitReceiverType: nil,
                 loopDepth: 0,
+                loopLabelStack: [],
                 flowState: DataFlowState(),
                 currentFileID: file.fileID,
                 enclosingClassSymbol: nil,

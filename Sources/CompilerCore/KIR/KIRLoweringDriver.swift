@@ -489,7 +489,7 @@ final class KIRLoweringDriver {
                         var terminatedByReturn = false
                         for exprID in exprIDs {
                             if let expr = ast.arena.expr(exprID),
-                               case .returnExpr(let value, _) = expr {
+                               case .returnExpr(let value, _, _) = expr {
                                 if let value {
                                     let lowered = lowerExpr(
                                         value,
