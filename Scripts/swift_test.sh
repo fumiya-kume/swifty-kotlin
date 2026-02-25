@@ -7,7 +7,15 @@ workers_override="${SWIFT_TEST_WORKERS:-}"
 detect_workers() {
     local detected
 
-    # Use logical cores by default to maximize XCTest worker concurrency.
+    # Linux: use nproc if available.
+    if detected="$(nproc 2>/dev/null)" \
+        && [[ "$detected" =~ ^[0-9]+$ ]] \
+        && (( detected > 0 )); then
+        printf "%s" "$detected"
+        return
+    fi
+
+    # macOS: use logical cores by default to maximize XCTest worker concurrency.
     if detected="$(sysctl -n hw.logicalcpu 2>/dev/null)" \
         && [[ "$detected" =~ ^[0-9]+$ ]] \
         && (( detected > 0 )); then
