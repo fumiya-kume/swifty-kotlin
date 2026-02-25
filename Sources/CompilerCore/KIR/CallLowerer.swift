@@ -242,10 +242,14 @@ final class CallLowerer {
 
         // const val member property folding (P5-109): check before lowering
         // receiver so no dead instructions are emitted.
+        // Only fold immutable (val) properties; mutable (var) properties
+        // must always load from global store at runtime.
         if args.isEmpty {
             let callBinding = sema.bindings.callBindings[exprID]
             if let chosen = callBinding?.chosenCallee,
-               let constant = propertyConstantInitializers[chosen] {
+               let constant = propertyConstantInitializers[chosen],
+               let symInfo = sema.symbols.symbol(chosen),
+               !symInfo.flags.contains(.mutable) {
                 let id = arena.appendExpr(constant, type: boundType ?? sema.types.anyType)
                 instructions.append(.constValue(result: id, value: constant))
                 return id
@@ -437,6 +441,8 @@ final class CallLowerer {
 
         // const val member property folding (P5-109): check before lowering
         // receiver so no dead instructions are emitted.
+        // Only fold immutable (val) properties; mutable (var) properties
+        // must always load from global store at runtime.
         // Only fold when the receiver is statically non-nullable.
         // For nullable receivers, safe-call semantics (`receiver?.const`)
         // require the result to be null if the receiver is null, so we
@@ -444,7 +450,9 @@ final class CallLowerer {
         if args.isEmpty {
             let callBinding = sema.bindings.callBindings[exprID]
             if let chosen = callBinding?.chosenCallee,
-               let constant = propertyConstantInitializers[chosen] {
+               let constant = propertyConstantInitializers[chosen],
+               let symInfo = sema.symbols.symbol(chosen),
+               !symInfo.flags.contains(.mutable) {
                 let receiverType = sema.bindings.exprTypes[receiverExpr]
                 if let receiverType,
                    receiverType == sema.types.makeNonNullable(receiverType) {
