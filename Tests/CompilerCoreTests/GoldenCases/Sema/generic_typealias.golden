@@ -1,0 +1,36 @@
+symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s1 kind=package fq=kotlin vis=public flags=synthetic
+symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
+symbol s4 kind=interface fq=kotlin.properties.ReadWriteProperty vis=public flags=synthetic
+symbol s5 kind=interface fq=kotlin.properties.ReadOnlyProperty vis=public flags=synthetic
+symbol s6 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=_ params=[Any,() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
+symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s11 kind=typeAlias fq=golden.sema.Predicate vis=public flags=_
+symbol s12 kind=typeParameter fq=golden.sema.Predicate.$11.T vis=private flags=_
+symbol s13 kind=typeAlias fq=golden.sema.Func vis=public flags=_
+symbol s14 kind=typeParameter fq=golden.sema.Func.$13.T vis=private flags=_
+symbol s15 kind=typeAlias fq=golden.sema.StringAlias vis=public flags=_
+symbol s16 kind=function fq=golden.sema.usePredicate vis=public flags=_ sig=recv=_ params=[(Int) -> Boolean] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s17 kind=valueParameter fq=golden.sema.usePredicate.$16.p vis=private flags=_
+symbol s18 kind=function fq=golden.sema.useFunc vis=public flags=_ sig=recv=_ params=[(String) -> String] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s19 kind=valueParameter fq=golden.sema.useFunc.$18.f vis=private flags=_
+symbol s20 kind=function fq=golden.sema.useAlias vis=public flags=_ sig=recv=_ params=[String] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s21 kind=valueParameter fq=golden.sema.useAlias.$20.s vis=private flags=_
+file f0 package=golden.sema
+  decl d0 typealias Predicate sym=s11
+  decl d1 typealias Func sym=s13
+  decl d2 typealias StringAlias sym=s15
+  decl d3 fun usePredicate suspend=0 inline=0 sym=s16
+  decl d4 fun useFunc suspend=0 inline=0 sym=s18
+  decl d5 fun useAlias suspend=0 inline=0 sym=s20
+expr e0 name(p) type=(Int) -> Boolean ref=s17
+expr e1 int(42) type=Int
+expr e2 call callee=e0 args=[_:e1] type=Boolean
+expr e3 name(f) type=(String) -> String ref=s19
+expr e4 string(hello) type=String
+expr e5 call callee=e3 args=[_:e4] type=String
+expr e6 name(s) type=String ref=s21
