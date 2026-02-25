@@ -458,13 +458,21 @@ final class CallLowerer {
 
         // const val member property folding (P5-109): fold safe member access
         // to a const val property into its constant value.
+        // Only fold when the receiver is statically non-nullable.
+        // For nullable receivers, safe-call semantics (`receiver?.const`)
+        // require the result to be null if the receiver is null, so we
+        // must not replace the whole expression with the constant value.
         if args.isEmpty {
             let callBinding = sema.bindings.callBindings[exprID]
             if let chosen = callBinding?.chosenCallee,
                let constant = propertyConstantInitializers[chosen] {
-                let id = arena.appendExpr(constant, type: boundType ?? sema.types.anyType)
-                instructions.append(.constValue(result: id, value: constant))
-                return id
+                let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+                let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+                if receiverType == nonNullReceiverType {
+                    let id = arena.appendExpr(constant, type: boundType ?? sema.types.anyType)
+                    instructions.append(.constValue(result: id, value: constant))
+                    return id
+                }
             }
         }
 
