@@ -251,6 +251,19 @@ final class InlineLoweringPass: LoweringPass {
                     )
                 )
 
+            case .storeGlobal(let value, let symbol):
+                lowered.append(
+                    .storeGlobal(
+                        value: resolveAlias(of: value, aliases: localExprMap),
+                        symbol: symbol
+                    )
+                )
+
+            case .loadGlobal(let result, let symbol):
+                let loweredResult = cloneExpr(result, in: module.arena)
+                localExprMap[result] = loweredResult
+                lowered.append(.loadGlobal(result: loweredResult, symbol: symbol))
+
             case .rethrow(let value):
                 lowered.append(
                     .rethrow(value: resolveAlias(of: value, aliases: localExprMap))

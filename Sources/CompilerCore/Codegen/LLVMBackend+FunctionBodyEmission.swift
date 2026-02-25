@@ -424,6 +424,18 @@ extension LLVMBackend {
                 ensureDeclared(to, declared: &declared, lines: &lines)
                 lines.append("  \(varName(to)) = \(varName(from));")
 
+            case .storeGlobal(let value, let symbol):
+                ensureDeclared(value, declared: &declared, lines: &lines)
+                if let globalName = globalValueSymbols[symbol] {
+                    lines.append("  \(globalName) = \(varName(value));")
+                }
+
+            case .loadGlobal(let result, let symbol):
+                ensureDeclared(result, declared: &declared, lines: &lines)
+                if let globalName = globalValueSymbols[symbol] {
+                    lines.append("  \(varName(result)) = \(globalName);")
+                }
+
             case .rethrow(let value):
                 ensureDeclared(value, declared: &declared, lines: &lines)
                 lines.append("  if (outThrown) { *outThrown = \(varName(value)); }")

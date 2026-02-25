@@ -75,6 +75,9 @@ final class KIRLoweringDriver {
             sema: sema
         )
 
+        // Collect top-level property init instructions to inject into main
+        // in declaration order (front-to-back).
+        var topLevelPropertyInitInstructions: [KIRInstruction] = []
         // Collect top-level delegate property init instructions to inject into main.
         var delegateInitInstructions: [KIRInstruction] = []
         // Maps property symbol → copy-target KIRExprID that holds the delegate handle.
@@ -591,8 +594,81 @@ final class KIRLoweringDriver {
                     ctx.currentImplicitReceiverSymbol = nil
 
                 case .propertyDecl(let propertyDecl):
-                    let kirID = arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: sema.types.anyType)))
-                    declIDs.append(kirID)
+                    let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
+
+                    // Getter-only computed properties have no storage.
+                    let isGetterOnlyComputed = propertyDecl.getter != nil
+                        && propertyDecl.setter == nil
+                        && propertyDecl.initializer == nil
+                        && propertyDecl.delegateExpression == nil
+
+                    if !isGetterOnlyComputed {
+                        let kirID = arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: propType)))
+                        declIDs.append(kirID)
+                    }
+
+                    // Emit backing field global for properties with custom accessors.
+                    if let backingFieldSymbol = sema.symbols.backingFieldSymbol(for: symbol) {
+                        let backingFieldType = sema.symbols.propertyType(for: backingFieldSymbol) ?? propType
+                        let backingFieldKirID = arena.appendDecl(
+                            .global(KIRGlobal(symbol: backingFieldSymbol, type: backingFieldType))
+                        )
+                        declIDs.append(backingFieldKirID)
+                    }
+
+                    // Lower getter body as a KIR accessor function.
+                    if let getter = propertyDecl.getter, getter.body != .unit {
+                        memberLowerer.lowerAccessorBody(
+                            accessorBody: getter.body,
+                            propertySymbol: symbol,
+                            propertyType: propType,
+                            accessorKind: .getter,
+                            setterParamName: nil,
+                            ast: ast,
+                            sema: sema,
+                            arena: arena,
+                            interner: compilationCtx.interner,
+                            propertyConstantInitializers: propertyConstantInitializers,
+                            allDecls: &declIDs
+                        )
+                    }
+
+                    // Lower setter body as a KIR accessor function.
+                    if let setter = propertyDecl.setter, setter.body != .unit {
+                        memberLowerer.lowerAccessorBody(
+                            accessorBody: setter.body,
+                            propertySymbol: symbol,
+                            propertyType: propType,
+                            accessorKind: .setter,
+                            setterParamName: setter.parameterName,
+                            ast: ast,
+                            sema: sema,
+                            arena: arena,
+                            interner: compilationCtx.interner,
+                            propertyConstantInitializers: propertyConstantInitializers,
+                            allDecls: &declIDs
+                        )
+                    }
+
+                    // Collect initializer expression for injection into main
+                    // (front-to-back declaration order).
+                    if let initializer = propertyDecl.initializer,
+                       propertyDecl.delegateExpression == nil {
+                        ctx.resetScopeForFunction()
+                        ctx.beginCallableLoweringScope()
+                        var initInstructions: [KIRInstruction] = []
+                        let initValue = lowerExpr(
+                            initializer,
+                            ast: ast,
+                            sema: sema,
+                            arena: arena,
+                            interner: compilationCtx.interner,
+                            propertyConstantInitializers: propertyConstantInitializers,
+                            instructions: &initInstructions
+                        )
+                        initInstructions.append(.storeGlobal(value: initValue, symbol: symbol))
+                        topLevelPropertyInitInstructions.append(contentsOf: initInstructions)
+                    }
 
                     // Create delegate initialization and track the copy-target expr ID.
                     if propertyDecl.delegateExpression != nil {
@@ -775,9 +851,9 @@ final class KIRLoweringDriver {
             files.append(KIRFile(fileID: file.fileID, decls: declIDs))
         }
 
-        // Post-process: inject delegate init instructions at the start of main,
-        // and rewrite delegate property accesses to getValue calls.
-        if !delegateInitInstructions.isEmpty || !delegateHandleExprByPropertySymbol.isEmpty {
+        // Post-process: inject top-level property and delegate init instructions
+        // at the start of main, and rewrite delegate property accesses to getValue calls.
+        if !topLevelPropertyInitInstructions.isEmpty || !delegateInitInstructions.isEmpty || !delegateHandleExprByPropertySymbol.isEmpty {
             let interner = compilationCtx.interner
             let mainName = interner.intern("main")
             let lazyGetValueName = interner.intern("kk_lazy_get_value")
@@ -805,16 +881,17 @@ final class KIRLoweringDriver {
 
             arena.transformFunctions { function in
                 var updated = function
-                // Inject delegate init at the beginning of main function.
-                if function.name == mainName, !delegateInitInstructions.isEmpty {
+                // Inject top-level property init + delegate init at the beginning of main function.
+                let allInitInstructions = topLevelPropertyInitInstructions + delegateInitInstructions
+                if function.name == mainName, !allInitInstructions.isEmpty {
                     var newBody: [KIRInstruction] = []
                     // Keep .beginBlock at the front if present.
                     if let first = function.body.first, case .beginBlock = first {
                         newBody.append(first)
-                        newBody.append(contentsOf: delegateInitInstructions)
+                        newBody.append(contentsOf: allInitInstructions)
                         newBody.append(contentsOf: function.body.dropFirst())
                     } else {
-                        newBody.append(contentsOf: delegateInitInstructions)
+                        newBody.append(contentsOf: allInitInstructions)
                         newBody.append(contentsOf: function.body)
                     }
                     updated.body = newBody
@@ -828,6 +905,34 @@ final class KIRLoweringDriver {
                     var rewrittenBody: [KIRInstruction] = []
                     rewrittenBody.reserveCapacity(updated.body.count)
                     for instruction in updated.body {
+                        // Rewrite loadGlobal for delegate properties → getValue calls.
+                        if case .loadGlobal(let result, let sym) = instruction,
+                           let handleExpr = delegateHandleExprByPropertySymbol[sym] {
+                            let getValueName: InternedString
+                            switch delegateKindByPropertySymbol[sym] {
+                            case .lazy:
+                                getValueName = lazyGetValueName
+                            case .observable:
+                                getValueName = observableGetValueName
+                            case .vetoable:
+                                getValueName = vetoableGetValueName
+                            case .custom:
+                                getValueName = customGetValueName
+                            case nil:
+                                getValueName = customGetValueName
+                            }
+                            rewrittenBody.append(
+                                .call(
+                                    symbol: nil,
+                                    callee: getValueName,
+                                    arguments: [handleExpr],
+                                    result: result,
+                                    canThrow: false,
+                                    thrownResult: nil
+                                )
+                            )
+                            continue
+                        }
                         if case .constValue(let result, let value) = instruction,
                            case .symbolRef(let sym) = value,
                            let handleExpr = delegateHandleExprByPropertySymbol[sym] {

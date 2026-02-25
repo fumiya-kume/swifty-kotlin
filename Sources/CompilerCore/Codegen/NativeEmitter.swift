@@ -139,6 +139,27 @@ struct NativeEmitter {
             throw error
         }
 
+        // Create LLVM global variables for KIR globals so that
+        // storeGlobal / loadGlobal instructions can reference them.
+        var llvmGlobals: [SymbolID: LLVMCAPIBindings.LLVMValueRef] = [:]
+        for declaration in module.arena.declarations {
+            guard case .global(let global) = declaration else {
+                continue
+            }
+            let globalName = "kk_global_\(max(0, Int(global.symbol.rawValue)))"
+            if let globalVar = bindings.addGlobal(
+                module: llvmModule,
+                type: int64Type,
+                name: globalName
+            ) {
+                // Initialize to zero.
+                if let zeroInit = bindings.constInt(int64Type, value: 0) {
+                    bindings.setInitializer(globalVar, value: zeroInit)
+                }
+                llvmGlobals[global.symbol] = globalVar
+            }
+        }
+
         var internalFunctions: [SymbolID: LLVMFunction] = [:]
 
         for declaration in module.arena.declarations {
@@ -182,6 +203,7 @@ struct NativeEmitter {
                     int64Type: int64Type,
                     outThrownPointerType: outThrownPointerType,
                     internalFunctions: internalFunctions,
+                    llvmGlobals: llvmGlobals,
                     diContext: diContext
                 )
             } catch {

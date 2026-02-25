@@ -9,6 +9,7 @@ extension NativeEmitter {
         int64Type: LLVMCAPIBindings.LLVMTypeRef,
         outThrownPointerType: LLVMCAPIBindings.LLVMTypeRef,
         internalFunctions: [SymbolID: LLVMFunction],
+        llvmGlobals: [SymbolID: LLVMCAPIBindings.LLVMValueRef] = [:],
         diContext: DebugInfoContext? = nil
     ) throws {
         guard let builder = bindings.createBuilder(context: context) else {
@@ -833,6 +834,30 @@ extension NativeEmitter {
                     _ = bindings.buildStore(builder, value: copySource, pointer: alloca)
                 } else {
                     storeResult(to, copySource)
+                }
+
+            case .storeGlobal(let value, let symbol):
+                guard !bindings.hasTerminator(currentBlock) else {
+                    continue
+                }
+                let resolved = resolveValue(value)
+                if let globalPtr = llvmGlobals[symbol] {
+                    _ = bindings.buildStore(builder, value: resolved, pointer: globalPtr)
+                }
+
+            case .loadGlobal(let result, let symbol):
+                guard !bindings.hasTerminator(currentBlock) else {
+                    continue
+                }
+                if let globalPtr = llvmGlobals[symbol] {
+                    if let loaded = bindings.buildLoad(
+                        builder, type: int64Type, pointer: globalPtr,
+                        name: "load_global_\(symbol.rawValue)"
+                    ) {
+                        storeResult(result, loaded)
+                    }
+                } else {
+                    storeResult(result, zeroValue)
                 }
 
             case .rethrow(let value):

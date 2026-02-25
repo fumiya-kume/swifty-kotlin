@@ -78,6 +78,8 @@ final class LLVMCAPIBindings {
         UInt32,
         UnsafePointer<CChar>?
     ) -> LLVMValueRef?
+    internal typealias LLVMAddGlobalFn = @convention(c) (LLVMModuleRef?, LLVMTypeRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    internal typealias LLVMSetInitializerFn = @convention(c) (LLVMValueRef?, LLVMValueRef?) -> Void
     internal typealias LLVMConstIntFn = @convention(c) (LLVMTypeRef?, UInt64, LLVMBool) -> LLVMValueRef?
     internal typealias LLVMConstPointerNullFn = @convention(c) (LLVMTypeRef?) -> LLVMValueRef?
     internal typealias LLVMGetDefaultTargetTripleFn = @convention(c) () -> UnsafeMutablePointer<CChar>?
@@ -292,6 +294,8 @@ final class LLVMCAPIBindings {
     internal let diBuilderCreateParameterVariableFn: LLVMDIBuilderCreateParameterVariableFn?
     internal let diBuilderCreateAutoVariableFn: LLVMDIBuilderCreateAutoVariableFn?
     internal let diBuilderInsertDeclareAtEndFn: LLVMDIBuilderInsertDeclareAtEndFn?
+    internal let addGlobalFn: LLVMAddGlobalFn?
+    internal let setInitializerFn: LLVMSetInitializerFn?
     internal let diBuilderCreateExpressionFn: LLVMDIBuilderCreateExpressionFn?
 
     internal init(
@@ -379,6 +383,8 @@ final class LLVMCAPIBindings {
         diBuilderCreateParameterVariableFn: LLVMDIBuilderCreateParameterVariableFn? = nil,
         diBuilderCreateAutoVariableFn: LLVMDIBuilderCreateAutoVariableFn? = nil,
         diBuilderInsertDeclareAtEndFn: LLVMDIBuilderInsertDeclareAtEndFn? = nil,
+        addGlobalFn: LLVMAddGlobalFn? = nil,
+        setInitializerFn: LLVMSetInitializerFn? = nil,
         diBuilderCreateExpressionFn: LLVMDIBuilderCreateExpressionFn? = nil
     ) {
         self.handle = handle
@@ -465,6 +471,8 @@ final class LLVMCAPIBindings {
         self.diBuilderCreateParameterVariableFn = diBuilderCreateParameterVariableFn
         self.diBuilderCreateAutoVariableFn = diBuilderCreateAutoVariableFn
         self.diBuilderInsertDeclareAtEndFn = diBuilderInsertDeclareAtEndFn
+        self.addGlobalFn = addGlobalFn
+        self.setInitializerFn = setInitializerFn
         self.diBuilderCreateExpressionFn = diBuilderCreateExpressionFn
     }
 
@@ -574,5 +582,14 @@ final class LLVMCAPIBindings {
 
     func hasTerminator(_ block: LLVMBasicBlockRef?) -> Bool {
         getBasicBlockTerminatorFn(block) != nil
+    }
+
+    func addGlobal(module: LLVMModuleRef?, type: LLVMTypeRef?, name: String) -> LLVMValueRef? {
+        guard let addGlobalFn else { return nil }
+        return name.withCString { addGlobalFn(module, type, $0) }
+    }
+
+    func setInitializer(_ global: LLVMValueRef?, value: LLVMValueRef?) {
+        setInitializerFn?(global, value)
     }
 }
