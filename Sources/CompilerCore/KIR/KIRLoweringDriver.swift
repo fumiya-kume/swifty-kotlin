@@ -78,10 +78,11 @@ final class KIRLoweringDriver {
         // Collect all top-level property init instructions (regular + delegate) in declaration order.
         // Using a single array ensures Kotlin's strict declaration-order initialization guarantee.
         var allTopLevelInitInstructions: [KIRInstruction] = []
-        // Maps property symbol → copy-target KIRExprID that holds the delegate handle.
-        // The LLVM backend resolves copy targets via alloca/load, so we use the copy
-        // target expr ID (not a symbolRef) as the argument in getValue calls.
-        var delegateHandleExprByPropertySymbol: [SymbolID: KIRExprID] = [:]
+
+        // Maps delegated property symbol → delegate storage symbol (e.g. `$delegate_`).
+        // We store the delegate handle into this storage symbol in main, and load it
+        // at use-sites when rewriting getValue calls.
+        var delegateStorageSymbolByPropertySymbol: [SymbolID: SymbolID] = [:]
 
         for file in ast.sortedFiles {
             var declIDs: [KIRDeclID] = []
@@ -670,16 +671,35 @@ final class KIRLoweringDriver {
                         }
                     }
 
-                    // Create delegate initialization and track the copy-target expr ID.
+                    // Create delegate initialization.
                     if propertyDecl.delegateExpression != nil {
                         let interner = compilationCtx.interner
                         let delegateType = sema.types.anyType
-                        // Pre-allocate the copy-target expr ID that will hold the delegate handle.
-                        // This expr ID will be the target of a `copy` instruction, which the LLVM
-                        // backend maps to an alloca. We use this same expr ID as the argument in
-                        // getValue calls so the backend loads from the alloca correctly.
-                        let delegateHandleExpr = arena.appendExpr(.temporary(0), type: delegateType)
-                        delegateHandleExprByPropertySymbol[symbol] = delegateHandleExpr
+
+                        let delegateStorageSymbol: SymbolID
+                        if let existingStorage = sema.symbols.delegateStorageSymbol(for: symbol) {
+                            delegateStorageSymbol = existingStorage
+                        } else {
+                            let delegateStorageName = interner.intern("$delegate_\(interner.resolve(propertyDecl.name))")
+                            let delegateStorageFQName = (sema.symbols.symbol(symbol)?.fqName.dropLast() ?? []) + [delegateStorageName]
+                            delegateStorageSymbol = sema.symbols.define(
+                                kind: .field,
+                                name: delegateStorageName,
+                                fqName: Array(delegateStorageFQName),
+                                declSite: propertyDecl.range,
+                                visibility: .private,
+                                flags: []
+                            )
+                            sema.symbols.setDelegateStorageSymbol(delegateStorageSymbol, for: symbol)
+                        }
+
+                        // Declare delegate storage global.
+                        let delegateKirID = arena.appendDecl(
+                            .global(KIRGlobal(symbol: delegateStorageSymbol, type: delegateType))
+                        )
+                        declIDs.append(delegateKirID)
+
+                        delegateStorageSymbolByPropertySymbol[symbol] = delegateStorageSymbol
 
                         // Determine delegate kind and emit kk_*_create call.
                         let delegateKind = detectDelegateKind(
@@ -723,8 +743,8 @@ final class KIRLoweringDriver {
                                 canThrow: false,
                                 thrownResult: nil
                             ))
-                            // Copy into delegateHandleExpr — the LLVM backend creates an alloca for copy targets.
-                            initInstructions.append(.copy(from: createResult, to: delegateHandleExpr))
+                            // Store delegate handle in the backing field global.
+                            initInstructions.append(.storeGlobal(value: createResult, symbol: delegateStorageSymbol))
 
                         case .observable:
                             // Lower the initial value argument from the delegate expression.
@@ -762,8 +782,8 @@ final class KIRLoweringDriver {
                                 canThrow: false,
                                 thrownResult: nil
                             ))
-                            // Copy into delegateHandleExpr — the LLVM backend creates an alloca for copy targets.
-                            initInstructions.append(.copy(from: createResult, to: delegateHandleExpr))
+                            // Store delegate handle in the backing field global.
+                            initInstructions.append(.storeGlobal(value: createResult, symbol: delegateStorageSymbol))
 
                         case .vetoable:
                             // Lower the initial value argument from the delegate expression.
@@ -801,8 +821,8 @@ final class KIRLoweringDriver {
                                 canThrow: false,
                                 thrownResult: nil
                             ))
-                            // Copy into delegateHandleExpr — the LLVM backend creates an alloca for copy targets.
-                            initInstructions.append(.copy(from: createResult, to: delegateHandleExpr))
+                            // Store delegate handle in the backing field global.
+                            initInstructions.append(.storeGlobal(value: createResult, symbol: delegateStorageSymbol))
 
                         case .custom:
                             // Custom delegate: lower the full delegate expression as the
@@ -832,7 +852,8 @@ final class KIRLoweringDriver {
                                 canThrow: false,
                                 thrownResult: nil
                             ))
-                            initInstructions.append(.copy(from: createResult, to: delegateHandleExpr))
+                            // Store delegate handle in the backing field global.
+                            initInstructions.append(.storeGlobal(value: createResult, symbol: delegateStorageSymbol))
                         }
 
                         allTopLevelInitInstructions.append(contentsOf: initInstructions)
@@ -853,7 +874,7 @@ final class KIRLoweringDriver {
 
         // Post-process: inject top-level property init and delegate init instructions
         // at the start of main, and rewrite delegate property accesses to getValue calls.
-        if !allTopLevelInitInstructions.isEmpty || !delegateHandleExprByPropertySymbol.isEmpty {
+        if !allTopLevelInitInstructions.isEmpty || !delegateStorageSymbolByPropertySymbol.isEmpty {
             let interner = compilationCtx.interner
             let mainName = interner.intern("main")
             let lazyGetValueName = interner.intern("kk_lazy_get_value")
@@ -897,17 +918,22 @@ final class KIRLoweringDriver {
                     updated.body = newBody
                 }
 
-                // Rewrite symbolRef accesses to delegate properties → getValue calls.
-                // Instead of using symbolRef (which the LLVM C API backend can't resolve
-                // for non-function/non-parameter symbols), we pass the copy-target expr ID
-                // directly. The backend resolves copy targets via alloca/load.
-                if !delegateHandleExprByPropertySymbol.isEmpty {
+                // Rewrite delegate property accesses to getValue calls.
+                // We load the delegate handle from the backing-field global symbol and pass it to
+                // the runtime getValue helpers.
+                if !delegateStorageSymbolByPropertySymbol.isEmpty {
                     var rewrittenBody: [KIRInstruction] = []
                     rewrittenBody.reserveCapacity(updated.body.count)
                     for instruction in updated.body {
-                        // Rewrite loadGlobal for delegate properties → getValue calls.
+                        // Rewrite loadGlobal for delegated properties → getValue calls.
                         if case .loadGlobal(let result, let sym) = instruction,
-                           let handleExpr = delegateHandleExprByPropertySymbol[sym] {
+                           let delegateStorageSymbol = delegateStorageSymbolByPropertySymbol[sym] {
+                            let handleExpr = arena.appendExpr(
+                                .temporary(Int32(arena.expressions.count)),
+                                type: sema.types.anyType
+                            )
+                            rewrittenBody.append(.loadGlobal(result: handleExpr, symbol: delegateStorageSymbol))
+
                             let getValueName: InternedString
                             switch delegateKindByPropertySymbol[sym] {
                             case .lazy:
@@ -916,9 +942,7 @@ final class KIRLoweringDriver {
                                 getValueName = observableGetValueName
                             case .vetoable:
                                 getValueName = vetoableGetValueName
-                            case .custom:
-                                getValueName = customGetValueName
-                            case nil:
+                            case .custom, nil:
                                 getValueName = customGetValueName
                             }
                             rewrittenBody.append(
@@ -933,11 +957,16 @@ final class KIRLoweringDriver {
                             )
                             continue
                         }
+
                         if case .constValue(let result, let value) = instruction,
                            case .symbolRef(let sym) = value,
-                           let handleExpr = delegateHandleExprByPropertySymbol[sym] {
-                            // Replace raw symbolRef with a getValue call, passing the
-                            // copy-target (alloca) that holds the delegate handle.
+                           let delegateStorageSymbol = delegateStorageSymbolByPropertySymbol[sym] {
+                            let handleExpr = arena.appendExpr(
+                                .temporary(Int32(arena.expressions.count)),
+                                type: sema.types.anyType
+                            )
+                            rewrittenBody.append(.loadGlobal(result: handleExpr, symbol: delegateStorageSymbol))
+
                             let getValueName: InternedString
                             switch delegateKindByPropertySymbol[sym] {
                             case .lazy:
@@ -946,9 +975,7 @@ final class KIRLoweringDriver {
                                 getValueName = observableGetValueName
                             case .vetoable:
                                 getValueName = vetoableGetValueName
-                            case .custom:
-                                getValueName = customGetValueName
-                            case nil:
+                            case .custom, nil:
                                 getValueName = customGetValueName
                             }
                             rewrittenBody.append(
@@ -963,6 +990,7 @@ final class KIRLoweringDriver {
                             )
                             continue
                         }
+
                         rewrittenBody.append(instruction)
                     }
                     updated.body = rewrittenBody

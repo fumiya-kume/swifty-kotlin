@@ -443,6 +443,7 @@ extension LLVMBackend {
                 if let globalName = globalValueSymbols[symbol] {
                     lines.append("  \(varName(result)) = \(globalName);")
                 }
+                syncRoot(result)
 
             case .rethrow(let value):
                 ensureDeclared(value, declared: &declared, lines: &lines)
