@@ -4,7 +4,7 @@ node kotlinFile f0:0..76
     tok identifier(golden) f0:8..14
     tok symbol(.) f0:14..15
     tok identifier(parser) f0:15..21
-  node propertyDecl f0:23..50
+  node propertyDecl f0:23..66
     tok keyword(val) f0:23..26
     tok identifier(lazyVal) f0:27..34
     tok symbol(:) f0:34..35

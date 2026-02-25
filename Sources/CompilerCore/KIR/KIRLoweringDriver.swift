@@ -75,8 +75,9 @@ final class KIRLoweringDriver {
             sema: sema
         )
 
-        // Collect top-level delegate property init instructions to inject into main.
-        var delegateInitInstructions: [KIRInstruction] = []
+        // Collect all top-level property init instructions (regular + delegate) in declaration order.
+        // Using a single array ensures Kotlin's strict declaration-order initialization guarantee.
+        var allTopLevelInitInstructions: [KIRInstruction] = []
         // Maps property symbol → copy-target KIRExprID that holds the delegate handle.
         // The LLVM backend resolves copy targets via alloca/load, so we use the copy
         // target expr ID (not a symbolRef) as the argument in getValue calls.
@@ -591,8 +592,83 @@ final class KIRLoweringDriver {
                     ctx.currentImplicitReceiverSymbol = nil
 
                 case .propertyDecl(let propertyDecl):
-                    let kirID = arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: sema.types.anyType)))
+                    let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
+                    let kirID = arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: propType)))
                     declIDs.append(kirID)
+
+                    // Emit backing field global for properties with custom accessors.
+                    if let backingFieldSymbol = sema.symbols.backingFieldSymbol(for: symbol) {
+                        let backingFieldType = sema.symbols.propertyType(for: backingFieldSymbol) ?? propType
+                        let backingFieldKirID = arena.appendDecl(
+                            .global(KIRGlobal(symbol: backingFieldSymbol, type: backingFieldType))
+                        )
+                        declIDs.append(backingFieldKirID)
+                    }
+
+                    // Lower getter body as a KIR accessor function (top-level property).
+                    if let getter = propertyDecl.getter, getter.body != .unit {
+                        memberLowerer.lowerAccessorBody(
+                            accessorBody: getter.body,
+                            propertySymbol: symbol,
+                            propertyType: propType,
+                            accessorKind: .getter,
+                            setterParamName: nil,
+                            ast: ast,
+                            sema: sema,
+                            arena: arena,
+                            interner: compilationCtx.interner,
+                            propertyConstantInitializers: propertyConstantInitializers,
+                            allDecls: &declIDs
+                        )
+                    }
+
+                    // Lower setter body as a KIR accessor function (top-level property).
+                    if let setter = propertyDecl.setter, setter.body != .unit {
+                        memberLowerer.lowerAccessorBody(
+                            accessorBody: setter.body,
+                            propertySymbol: symbol,
+                            propertyType: propType,
+                            accessorKind: .setter,
+                            setterParamName: setter.parameterName,
+                            ast: ast,
+                            sema: sema,
+                            arena: arena,
+                            interner: compilationCtx.interner,
+                            propertyConstantInitializers: propertyConstantInitializers,
+                            allDecls: &declIDs
+                        )
+                    }
+
+                    // Collect top-level property initialization instructions
+                    // (declaration order is preserved since we iterate topLevelDecls in order).
+                    if let initializer = propertyDecl.initializer,
+                       propertyDecl.delegateExpression == nil {
+                        // Emit runtime init when the property is NOT a compile-time
+                        // constant, OR when it is mutable (var).  Mutable properties
+                        // are never constant-folded at use-sites (ExprLowerer skips
+                        // inlining for .mutable), so their globals must be initialised
+                        // to the declared value at program start.
+                        if propertyConstantInitializers[symbol] == nil
+                            || (sema.symbols.symbol(symbol)?.flags.contains(.mutable) == true) {
+                            ctx.resetScopeForFunction()
+                            ctx.beginCallableLoweringScope()
+                            var initInstructions: [KIRInstruction] = []
+                            let initValue = lowerExpr(
+                                initializer,
+                                ast: ast,
+                                sema: sema,
+                                arena: arena,
+                                interner: compilationCtx.interner,
+                                propertyConstantInitializers: propertyConstantInitializers,
+                                instructions: &initInstructions
+                            )
+                            let globalRef = arena.appendExpr(.symbolRef(symbol), type: propType)
+                            initInstructions.append(.constValue(result: globalRef, value: .symbolRef(symbol)))
+                            initInstructions.append(.copy(from: initValue, to: globalRef))
+                            allTopLevelInitInstructions.append(contentsOf: initInstructions)
+                            declIDs.append(contentsOf: ctx.drainGeneratedCallableDecls())
+                        }
+                    }
 
                     // Create delegate initialization and track the copy-target expr ID.
                     if propertyDecl.delegateExpression != nil {
@@ -759,7 +835,7 @@ final class KIRLoweringDriver {
                             initInstructions.append(.copy(from: createResult, to: delegateHandleExpr))
                         }
 
-                        delegateInitInstructions.append(contentsOf: initInstructions)
+                        allTopLevelInitInstructions.append(contentsOf: initInstructions)
                         declIDs.append(contentsOf: ctx.drainGeneratedCallableDecls())
                     }
 
@@ -775,9 +851,9 @@ final class KIRLoweringDriver {
             files.append(KIRFile(fileID: file.fileID, decls: declIDs))
         }
 
-        // Post-process: inject delegate init instructions at the start of main,
-        // and rewrite delegate property accesses to getValue calls.
-        if !delegateInitInstructions.isEmpty || !delegateHandleExprByPropertySymbol.isEmpty {
+        // Post-process: inject top-level property init and delegate init instructions
+        // at the start of main, and rewrite delegate property accesses to getValue calls.
+        if !allTopLevelInitInstructions.isEmpty || !delegateHandleExprByPropertySymbol.isEmpty {
             let interner = compilationCtx.interner
             let mainName = interner.intern("main")
             let lazyGetValueName = interner.intern("kk_lazy_get_value")
@@ -805,16 +881,17 @@ final class KIRLoweringDriver {
 
             arena.transformFunctions { function in
                 var updated = function
-                // Inject delegate init at the beginning of main function.
-                if function.name == mainName, !delegateInitInstructions.isEmpty {
+                // Inject all top-level property init instructions at the beginning of main function.
+                // Instructions are already in declaration order (regular and delegate interleaved).
+                if function.name == mainName, !allTopLevelInitInstructions.isEmpty {
                     var newBody: [KIRInstruction] = []
                     // Keep .beginBlock at the front if present.
                     if let first = function.body.first, case .beginBlock = first {
                         newBody.append(first)
-                        newBody.append(contentsOf: delegateInitInstructions)
+                        newBody.append(contentsOf: allTopLevelInitInstructions)
                         newBody.append(contentsOf: function.body.dropFirst())
                     } else {
-                        newBody.append(contentsOf: delegateInitInstructions)
+                        newBody.append(contentsOf: allTopLevelInitInstructions)
                         newBody.append(contentsOf: function.body)
                     }
                     updated.body = newBody
