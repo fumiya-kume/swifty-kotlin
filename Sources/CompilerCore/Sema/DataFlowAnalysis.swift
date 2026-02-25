@@ -222,7 +222,7 @@ public final class DataFlowAnalyzer {
                 narrowedType = primitiveType
             }
         } else {
-            let candidates = sema.symbols.lookupAll(fqName: [firstName]).filter { symbolID in
+            let fqCandidates = sema.symbols.lookupAll(fqName: [firstName]).filter { symbolID in
                 guard let sym = sema.symbols.symbol(symbolID) else { return false }
                 switch sym.kind {
                 case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
@@ -231,6 +231,21 @@ public final class DataFlowAnalyzer {
                     return false
                 }
             }.sorted(by: { $0.rawValue < $1.rawValue })
+            // Fall back to short-name lookup so that packaged types resolve by simple name (P5-101)
+            let candidates: [SymbolID]
+            if !fqCandidates.isEmpty {
+                candidates = fqCandidates
+            } else {
+                candidates = sema.symbols.lookupByShortName(firstName).filter { symbolID in
+                    guard let sym = sema.symbols.symbol(symbolID) else { return false }
+                    switch sym.kind {
+                    case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
+                        return true
+                    default:
+                        return false
+                    }
+                }.sorted(by: { $0.rawValue < $1.rawValue })
+            }
             guard let targetSymbolID = candidates.first else {
                 return ConditionBranch(trueState: base, falseState: base)
             }
@@ -369,7 +384,7 @@ public final class DataFlowAnalyzer {
                     narrowed = primitiveType
                 }
             } else {
-                let candidates = sema.symbols.lookupAll(fqName: [firstName]).filter { symbolID in
+                let fqCandidates = sema.symbols.lookupAll(fqName: [firstName]).filter { symbolID in
                     guard let sym = sema.symbols.symbol(symbolID) else { return false }
                     switch sym.kind {
                     case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
@@ -377,8 +392,23 @@ public final class DataFlowAnalyzer {
                     default:
                         return false
                     }
+                }.sorted(by: { $0.rawValue < $1.rawValue })
+                // Fall back to short-name lookup for packaged types (P5-101)
+                let candidates: [SymbolID]
+                if !fqCandidates.isEmpty {
+                    candidates = fqCandidates
+                } else {
+                    candidates = sema.symbols.lookupByShortName(firstName).filter { symbolID in
+                        guard let sym = sema.symbols.symbol(symbolID) else { return false }
+                        switch sym.kind {
+                        case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
+                            return true
+                        default:
+                            return false
+                        }
+                    }.sorted(by: { $0.rawValue < $1.rawValue })
                 }
-                guard let targetSymbolID = candidates.sorted(by: { $0.rawValue < $1.rawValue }).first else {
+                guard let targetSymbolID = candidates.first else {
                     return base
                 }
                 // Resolve type arguments for consistency with branchOnIsCheck (P5-101)
@@ -717,35 +747,38 @@ public final class DataFlowAnalyzer {
             switch argRef {
             case .invariant(let innerRef):
                 guard let inner = ast.arena.typeRef(innerRef),
-                      case .named(let innerPath, _, _) = inner,
+                      case .named(let innerPath, _, let innerNullable) = inner,
                       let innerFirst = innerPath.first else {
                     return .star
                 }
                 let innerName = interner.resolve(innerFirst)
                 if let builtin = resolveBuiltinTypeName(innerName, types: types) {
-                    return .invariant(builtin)
+                    let resolved = innerNullable ? types.makeNullable(builtin) : builtin
+                    return .invariant(resolved)
                 }
                 return .star
             case .out(let innerRef):
                 guard let inner = ast.arena.typeRef(innerRef),
-                      case .named(let innerPath, _, _) = inner,
+                      case .named(let innerPath, _, let innerNullable) = inner,
                       let innerFirst = innerPath.first else {
                     return .star
                 }
                 let innerName = interner.resolve(innerFirst)
                 if let builtin = resolveBuiltinTypeName(innerName, types: types) {
-                    return .out(builtin)
+                    let resolved = innerNullable ? types.makeNullable(builtin) : builtin
+                    return .out(resolved)
                 }
                 return .star
             case .in(let innerRef):
                 guard let inner = ast.arena.typeRef(innerRef),
-                      case .named(let innerPath, _, _) = inner,
+                      case .named(let innerPath, _, let innerNullable) = inner,
                       let innerFirst = innerPath.first else {
                     return .star
                 }
                 let innerName = interner.resolve(innerFirst)
                 if let builtin = resolveBuiltinTypeName(innerName, types: types) {
-                    return .in(builtin)
+                    let resolved = innerNullable ? types.makeNullable(builtin) : builtin
+                    return .in(resolved)
                 }
                 return .star
             case .star:
