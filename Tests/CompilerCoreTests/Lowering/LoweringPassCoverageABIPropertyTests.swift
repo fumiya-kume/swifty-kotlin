@@ -976,18 +976,24 @@ final class LoweringPassCoverageABIPropertyTests: XCTestCase {
         XCTAssertFalse(backedSymbols.isEmpty,
                         "Var property with backing field should have a KIRGlobal")
 
-        // Verify that accessor functions were generated for the computed property.
-        var accessorCallees: [String] = []
-        for decl in module.arena.declarations {
-            if case .function(let fn) = decl {
-                let name = interner.resolve(fn.name)
-                if name == "get" || name == "set" {
-                    accessorCallees.append(name)
-                }
+        let sema = try XCTUnwrap(ctx.sema, "Sema module not available")
+        let computedPropertySymbol = try XCTUnwrap(
+            sema.symbols.allSymbols().first(where: { symbol in
+                symbol.kind == .property && symbol.name == computedName
+            }),
+            "computed property symbol not found in sema"
+        )
+
+        let expectedGetterSymbol = SymbolID(rawValue: -12_000 - computedPropertySymbol.id.rawValue)
+        let getterSymbols = module.arena.declarations.compactMap { decl -> SymbolID? in
+            guard case .function(let fn) = decl,
+                  interner.resolve(fn.name) == "get" else {
+                return nil
             }
+            return fn.symbol
         }
-        XCTAssertTrue(accessorCallees.contains("get"),
-                       "Getter accessor function should be emitted for computed property")
+        XCTAssertTrue(getterSymbols.contains(expectedGetterSymbol),
+                       "Getter accessor symbol for computed property should be emitted. expected=\(expectedGetterSymbol), actual=\(getterSymbols)")
     }
 
 
