@@ -539,6 +539,18 @@ final class CallSupportLowerer {
             return interner.intern("downTo")
         case .step:
             return interner.intern("step")
+        case .bitwiseAnd:
+            return interner.intern("and")
+        case .bitwiseOr:
+            return interner.intern("or")
+        case .bitwiseXor:
+            return interner.intern("xor")
+        case .shl:
+            return interner.intern("shl")
+        case .shr:
+            return interner.intern("shr")
+        case .ushr:
+            return interner.intern("ushr")
         }
     }
 

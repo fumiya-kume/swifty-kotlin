@@ -95,7 +95,7 @@ struct CaptureAnalyzer {
                     visit(subject)
                 }
                 for branch in branches {
-                    if let condition = branch.condition {
+                    for condition in branch.conditions {
                         visit(condition)
                     }
                     visit(branch.body)

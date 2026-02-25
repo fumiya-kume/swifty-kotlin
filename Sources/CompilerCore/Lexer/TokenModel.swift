@@ -132,6 +132,7 @@ public enum Symbol: String {
     case percent = "%"
     case plusPlus = "++"
     case minusMinus = "--"
+    case amp = "&"
     case ampAmp = "&&"
     case barBar = "||"
     case bang = "!"

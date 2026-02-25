@@ -318,7 +318,7 @@ public final class ConstraintSolver {
         return Solution(substitution: substitution, isSuccess: false, failure: diagnostic)
     }
 
-    private func relationOperator(for kind: ConstraintKind) -> String {
+    func relationOperator(for kind: ConstraintKind) -> String {
         switch kind {
         case .subtype:
             return "<:"

@@ -132,6 +132,42 @@ extension LLVMCAPIBindings {
         name.withCString { buildSDivFn(builder, lhs, rhs, $0) }
     }
 
+    // Bitwise/shift builder convenience methods (P5-103)
+    func buildAnd(_ builder: LLVMBuilderRef?, lhs: LLVMValueRef?, rhs: LLVMValueRef?, name: String) -> LLVMValueRef? {
+        guard let buildAndFn else { return nil }
+        return name.withCString { buildAndFn(builder, lhs, rhs, $0) }
+    }
+
+    func buildOr(_ builder: LLVMBuilderRef?, lhs: LLVMValueRef?, rhs: LLVMValueRef?, name: String) -> LLVMValueRef? {
+        guard let buildOrFn else { return nil }
+        return name.withCString { buildOrFn(builder, lhs, rhs, $0) }
+    }
+
+    func buildXor(_ builder: LLVMBuilderRef?, lhs: LLVMValueRef?, rhs: LLVMValueRef?, name: String) -> LLVMValueRef? {
+        guard let buildXorFn else { return nil }
+        return name.withCString { buildXorFn(builder, lhs, rhs, $0) }
+    }
+
+    func buildShl(_ builder: LLVMBuilderRef?, lhs: LLVMValueRef?, rhs: LLVMValueRef?, name: String) -> LLVMValueRef? {
+        guard let buildShlFn else { return nil }
+        return name.withCString { buildShlFn(builder, lhs, rhs, $0) }
+    }
+
+    func buildAShr(_ builder: LLVMBuilderRef?, lhs: LLVMValueRef?, rhs: LLVMValueRef?, name: String) -> LLVMValueRef? {
+        guard let buildAShrFn else { return nil }
+        return name.withCString { buildAShrFn(builder, lhs, rhs, $0) }
+    }
+
+    func buildLShr(_ builder: LLVMBuilderRef?, lhs: LLVMValueRef?, rhs: LLVMValueRef?, name: String) -> LLVMValueRef? {
+        guard let buildLShrFn else { return nil }
+        return name.withCString { buildLShrFn(builder, lhs, rhs, $0) }
+    }
+
+    func buildNot(_ builder: LLVMBuilderRef?, value: LLVMValueRef?, name: String) -> LLVMValueRef? {
+        guard let buildNotFn else { return nil }
+        return name.withCString { buildNotFn(builder, value, $0) }
+    }
+
     func buildCall(
         _ builder: LLVMBuilderRef?,
         functionType: LLVMTypeRef?,

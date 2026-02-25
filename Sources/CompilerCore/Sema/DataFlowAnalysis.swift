@@ -214,12 +214,12 @@ public final class DataFlowAnalyzer {
         }
         let targetName = interner.resolve(firstName)
         // P5-101: Handle primitive types (String, Int, Boolean, etc.) in is-checks
-        let narrowedType: TypeID
+        let targetType: TypeID
         if let primitiveType = resolveBuiltinTypeName(targetName, types: sema.types) {
             if nullable {
-                narrowedType = sema.types.makeNullable(primitiveType)
+                targetType = sema.types.makeNullable(primitiveType)
             } else {
-                narrowedType = primitiveType
+                targetType = primitiveType
             }
         } else {
             let fqCandidates = sema.symbols.lookupAll(fqName: [firstName]).filter { symbolID in
@@ -251,11 +251,29 @@ public final class DataFlowAnalyzer {
             }
             // Resolve type arguments for the narrowed type (P5-101: generics support)
             let resolvedArgs: [TypeArg] = resolveTypeArgRefs(argRefs, ast: ast, interner: interner, types: sema.types)
-            narrowedType = sema.types.make(.classType(ClassType(
+            targetType = sema.types.make(.classType(ClassType(
                 classSymbol: targetSymbolID,
                 args: resolvedArgs,
                 nullability: nullable ? .nullable : .nonNull
             )))
+        }
+        // Use intersection with previous flow state type for chained is-checks (P5-97)
+        let narrowedType: TypeID
+        if let baseState = base.variables[symbol],
+           baseState.possibleTypes.count == 1,
+           let existingType = baseState.possibleTypes.first {
+            if sema.types.isSubtype(existingType, targetType) {
+                // Existing flow type is already more specific; keep it.
+                narrowedType = existingType
+            } else if sema.types.isSubtype(targetType, existingType) {
+                // New target type is more specific; use it.
+                narrowedType = targetType
+            } else {
+                // Types are unrelated; intersect them for chained is-checks.
+                narrowedType = sema.types.make(.intersection([existingType, targetType]))
+            }
+        } else {
+            narrowedType = targetType
         }
         var trueVars = base.variables
         trueVars[symbol] = VariableFlowState(
