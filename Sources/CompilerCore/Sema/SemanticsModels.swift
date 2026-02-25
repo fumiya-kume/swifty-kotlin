@@ -45,6 +45,7 @@ public struct SymbolFlags: OptionSet {
     public static let innerClass = SymbolFlags(rawValue: 1 << 8)
     public static let valueType = SymbolFlags(rawValue: 1 << 9)
     public static let operatorFunction = SymbolFlags(rawValue: 1 << 10)
+    public static let constValue = SymbolFlags(rawValue: 1 << 11)
 }
 
 public struct SemanticSymbol {
@@ -243,6 +244,7 @@ public final class SymbolTable {
     private var companionObjectSymbols: [SymbolID: SymbolID] = [:]
     private var valueClassUnderlyingTypes: [SymbolID: TypeID] = [:]
     private var sealedSubclassesStorage: [SymbolID: [SymbolID]] = [:]
+    private var constValueExprKinds: [SymbolID: KIRExprKind] = [:]
 
     public init() {}
 
@@ -504,6 +506,14 @@ public final class SymbolTable {
 
     public func setSealedSubclasses(_ subclasses: [SymbolID], for symbol: SymbolID) {
         sealedSubclassesStorage[symbol] = subclasses
+    }
+
+    public func setConstValueExprKind(_ kind: KIRExprKind, for symbol: SymbolID) {
+        constValueExprKinds[symbol] = kind
+    }
+
+    public func constValueExprKind(for symbol: SymbolID) -> KIRExprKind? {
+        constValueExprKinds[symbol]
     }
 
     public func sealedSubclasses(for symbol: SymbolID) -> [SymbolID]? {
