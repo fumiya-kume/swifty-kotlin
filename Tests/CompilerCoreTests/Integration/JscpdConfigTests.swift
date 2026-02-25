@@ -3,9 +3,9 @@ import XCTest
 
 final class JscpdConfigTests: XCTestCase {
 
+    /// Walks up from the test source file to locate the project root (the
+    /// directory containing Package.swift).
     private func projectRootURL() -> URL {
-        // Tests run from the package directory; walk up from the test file location
-        // to find the project root by locating Package.swift.
         var url = URL(fileURLWithPath: #filePath)
         while url.path != "/" {
             url = url.deletingLastPathComponent()
@@ -81,30 +81,13 @@ final class JscpdConfigTests: XCTestCase {
     // MARK: - CI workflow validation
 
     func testCIWorkflowContainsJscpdCheckJob() throws {
-        let ciURL = projectRootURL()
-            .appendingPathComponent(".github")
-            .appendingPathComponent("workflows")
-            .appendingPathComponent("ci.yml")
-        let contents = try String(contentsOf: ciURL, encoding: .utf8)
+        let contents = try loadCIWorkflowContents()
         XCTAssertTrue(contents.contains("jscpd-check:"), "ci.yml should contain a jscpd-check job")
     }
 
     func testCIWorkflowJscpdJobRunsOnUbuntu() throws {
-        let ciURL = projectRootURL()
-            .appendingPathComponent(".github")
-            .appendingPathComponent("workflows")
-            .appendingPathComponent("ci.yml")
-        let contents = try String(contentsOf: ciURL, encoding: .utf8)
-
-        // Find the jscpd-check section and verify it uses ubuntu-latest
-        guard let jscpdRange = contents.range(of: "jscpd-check:") else {
-            XCTFail("ci.yml should contain jscpd-check job")
-            return
-        }
-        let afterJscpd = String(contents[jscpdRange.upperBound...])
-        // Look within the next few lines for runs-on
-        let lines = afterJscpd.components(separatedBy: "\n").prefix(10)
-        let runsOnLine = lines.first { $0.contains("runs-on:") }
+        let jobBlock = try extractJscpdJobBlock()
+        let runsOnLine = jobBlock.components(separatedBy: "\n").first { $0.contains("runs-on:") }
         XCTAssertNotNil(runsOnLine, "jscpd-check job should have a runs-on key")
         XCTAssertTrue(
             runsOnLine?.contains("ubuntu-latest") == true,
@@ -112,43 +95,31 @@ final class JscpdConfigTests: XCTestCase {
         )
     }
 
-    func testCIWorkflowJscpdJobInstallsJscpd() throws {
-        let ciURL = projectRootURL()
-            .appendingPathComponent(".github")
-            .appendingPathComponent("workflows")
-            .appendingPathComponent("ci.yml")
-        let contents = try String(contentsOf: ciURL, encoding: .utf8)
+    func testCIWorkflowJscpdJobInstallsPinnedVersion() throws {
+        let jobBlock = try extractJscpdJobBlock()
         XCTAssertTrue(
-            contents.contains("npm install -g jscpd"),
-            "ci.yml should install jscpd via npm"
+            jobBlock.contains("npm install -g jscpd@"),
+            "ci.yml should install a pinned version of jscpd via npm"
         )
     }
 
     func testCIWorkflowJscpdJobUsesThresholdFlag() throws {
-        let ciURL = projectRootURL()
-            .appendingPathComponent(".github")
-            .appendingPathComponent("workflows")
-            .appendingPathComponent("ci.yml")
-        let contents = try String(contentsOf: ciURL, encoding: .utf8)
+        let jobBlock = try extractJscpdJobBlock()
         XCTAssertTrue(
-            contents.contains("--threshold 5"),
+            jobBlock.contains("--threshold 5"),
             "ci.yml jscpd invocation should include --threshold 5"
         )
     }
 
     func testCIWorkflowJscpdJobTargetsSources() throws {
-        let ciURL = projectRootURL()
-            .appendingPathComponent(".github")
-            .appendingPathComponent("workflows")
-            .appendingPathComponent("ci.yml")
-        let contents = try String(contentsOf: ciURL, encoding: .utf8)
+        let jobBlock = try extractJscpdJobBlock()
 
-        // Find jscpd run command line
-        guard let runRange = contents.range(of: "run: jscpd") else {
-            XCTFail("ci.yml should contain a 'run: jscpd' step")
+        // Find the jscpd run command within the job block
+        guard let runRange = jobBlock.range(of: "run: jscpd") else {
+            XCTFail("jscpd-check job should contain a 'run: jscpd' step")
             return
         }
-        let line = String(contents[runRange.lowerBound...])
+        let line = String(jobBlock[runRange.lowerBound...])
             .components(separatedBy: "\n")
             .first ?? ""
         XCTAssertTrue(
@@ -159,10 +130,47 @@ final class JscpdConfigTests: XCTestCase {
 
     // MARK: - Helpers
 
+    /// Loads and parses the `.jscpd.json` configuration as a dictionary.
     private func loadJscpdConfig() throws -> [String: Any] {
         let configURL = projectRootURL().appendingPathComponent(".jscpd.json")
         let data = try Data(contentsOf: configURL)
         let json = try JSONSerialization.jsonObject(with: data)
         return try XCTUnwrap(json as? [String: Any])
+    }
+
+    /// Reads the CI workflow YAML file contents.
+    private func loadCIWorkflowContents() throws -> String {
+        let ciURL = projectRootURL()
+            .appendingPathComponent(".github")
+            .appendingPathComponent("workflows")
+            .appendingPathComponent("ci.yml")
+        return try String(contentsOf: ciURL, encoding: .utf8)
+    }
+
+    /// Extracts the `jscpd-check` job block from the CI workflow.
+    /// The block spans from the `jscpd-check:` key to the next top-level
+    /// job key (a line with two-space indent followed by a key) or EOF.
+    private func extractJscpdJobBlock() throws -> String {
+        let contents = try loadCIWorkflowContents()
+        guard let startRange = contents.range(of: "jscpd-check:") else {
+            XCTFail("ci.yml should contain jscpd-check job")
+            return ""
+        }
+        let afterStart = String(contents[startRange.upperBound...])
+        let lines = afterStart.components(separatedBy: "\n")
+
+        // Collect lines until we hit the next top-level job header
+        // (a non-empty line with exactly 2-space indent ending with a colon)
+        var blockLines: [String] = []
+        for line in lines {
+            if !line.isEmpty,
+               line.hasPrefix("  "),
+               !line.hasPrefix("    "),
+               line.trimmingCharacters(in: .whitespaces).hasSuffix(":") {
+                break
+            }
+            blockLines.append(line)
+        }
+        return blockLines.joined(separator: "\n")
     }
 }
