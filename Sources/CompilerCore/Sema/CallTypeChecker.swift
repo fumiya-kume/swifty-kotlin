@@ -538,6 +538,20 @@ final class CallTypeChecker {
             ctx.semaCtx.diagnostics.error("KSWIFTK-SEMA-0024", "Unresolved member function '\(interner.resolve(calleeName))'.", range: range)
             return driver.helpers.bindAndReturnErrorType(id, sema: sema)
         }
+        // P5-112: Prohibit super.foo() calls to abstract members.
+        if isSuperCall,
+           let chosenSym = sema.symbols.symbol(chosen),
+           chosenSym.flags.contains(.abstractType),
+           (chosenSym.kind == .function || chosenSym.kind == .property) {
+            let memberName = interner.resolve(calleeName)
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-ABSTRACT",
+                "Cannot call abstract member '\(memberName)' via super.",
+                range: range
+            )
+            return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+        }
+
         // --- Use-site variance projection check ---
         // When the receiver has projected type arguments (e.g. MutableList<out Number>),
         // check that the member access respects variance constraints.
@@ -588,20 +602,6 @@ final class CallTypeChecker {
             let finalType = safeCall ? sema.types.makeNullable(projectedReturnType) : projectedReturnType
             sema.bindings.bindExprType(id, type: finalType)
             return finalType
-        }
-
-        // P5-112: Prohibit super.foo() calls to abstract members.
-        if isSuperCall,
-           let chosenSym = sema.symbols.symbol(chosen),
-           chosenSym.flags.contains(.abstractType),
-           (chosenSym.kind == .function || chosenSym.kind == .property) {
-            let memberName = interner.resolve(calleeName)
-            ctx.semaCtx.diagnostics.error(
-                "KSWIFTK-SEMA-ABSTRACT",
-                "Cannot call abstract member '\(memberName)' via super.",
-                range: range
-            )
-            return driver.helpers.bindAndReturnErrorType(id, sema: sema)
         }
 
         let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)

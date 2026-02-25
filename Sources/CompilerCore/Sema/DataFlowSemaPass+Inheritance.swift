@@ -319,12 +319,14 @@ extension DataFlowSemaPassPhase {
         }
     }
 
-    /// Collects all abstract member symbol IDs from the entire supertype chain of a class.
+    /// Collects all abstract member symbol IDs from the entire supertype chain of a class,
+    /// filtering out those that have been concretely overridden by intermediate classes.
     private func collectInheritedAbstractMembers(
         for classSymbol: SymbolID,
         symbols: SymbolTable
     ) -> [SymbolID] {
-        var abstractMembers: [SymbolID] = []
+        var abstractMembersByName: [InternedString: SymbolID] = [:]
+        var concreteOverrideNames: Set<InternedString> = []
         var visited: Set<SymbolID> = [classSymbol]
         var queue = symbols.directSupertypes(for: classSymbol)
 
@@ -333,30 +335,21 @@ extension DataFlowSemaPassPhase {
             guard visited.insert(current).inserted else { continue }
             guard let currentSym = symbols.symbol(current) else { continue }
 
-            // Collect abstract members from this supertype
             let children = symbols.children(ofFQName: currentSym.fqName)
             for childID in children {
                 guard let childSym = symbols.symbol(childID) else { continue }
-                if (childSym.kind == .function || childSym.kind == .property)
-                    && childSym.flags.contains(.abstractType) {
-                    abstractMembers.append(childID)
-                }
-            }
-
-            // Also collect abstract members from interfaces (all interface
-            // members without a body are implicitly abstract).
-            if currentSym.kind == .interface {
-                for childID in children {
-                    guard let childSym = symbols.symbol(childID) else { continue }
-                    if childSym.kind == .function,
-                       !childSym.flags.contains(.abstractType) {
-                        // Interface functions without a default body are abstract.
-                        // We rely on the abstractType flag set by the parser/sema
-                        // for explicit `abstract` keyword; interface members without
-                        // a body are not marked with abstractType flag in this compiler,
-                        // so we skip implicit interface abstract enforcement here.
-                        // (Only explicit `abstract` members from abstract classes
-                        //  require override enforcement via KSWIFTK-SEMA-ABSTRACT.)
+                if childSym.kind == .function || childSym.kind == .property {
+                    if childSym.flags.contains(.abstractType) {
+                        // Only record the abstract member if we haven't seen
+                        // a concrete override for this name yet.
+                        if !concreteOverrideNames.contains(childSym.name) {
+                            abstractMembersByName[childSym.name] = childID
+                        }
+                    } else {
+                        // This is a concrete member — it satisfies any abstract
+                        // member of the same name from a higher supertype.
+                        concreteOverrideNames.insert(childSym.name)
+                        abstractMembersByName.removeValue(forKey: childSym.name)
                     }
                 }
             }
@@ -365,7 +358,7 @@ extension DataFlowSemaPassPhase {
             queue.append(contentsOf: symbols.directSupertypes(for: current))
         }
 
-        return abstractMembers
+        return Array(abstractMembersByName.values)
     }
 
     /// Collects the set of member names that this class provides via `override`.
