@@ -1,7 +1,7 @@
 import Foundation
 
 extension BuildASTPhase.ExpressionParser {
-    internal func parseWhenExpression() -> ExprID? {
+    func parseWhenExpression() -> ExprID? {
         guard let whenToken = consume() else {
             return nil
         }
@@ -72,7 +72,7 @@ extension BuildASTPhase.ExpressionParser {
         return astArena.appendExpr(.whenExpr(subject: subject, branches: branches, elseExpr: elseExpr, range: range))
     }
 
-    internal func parseReturnExpression() -> ExprID? {
+    func parseReturnExpression() -> ExprID? {
         guard let returnToken = consume() else {
             return nil
         }
@@ -82,7 +82,7 @@ extension BuildASTPhase.ExpressionParser {
         return astArena.appendExpr(.returnExpr(value: value, range: range))
     }
 
-    internal func parseThrowExpression() -> ExprID? {
+    func parseThrowExpression() -> ExprID? {
         guard let throwToken = consume() else {
             return nil
         }
@@ -94,7 +94,7 @@ extension BuildASTPhase.ExpressionParser {
         return astArena.appendExpr(.throwExpr(value: value, range: range))
     }
 
-    internal func parseForExpression() -> ExprID? {
+    func parseForExpression() -> ExprID? {
         guard let forToken = consume() else {
             return nil
         }
@@ -198,7 +198,7 @@ extension BuildASTPhase.ExpressionParser {
         return astArena.appendExpr(.forExpr(loopVariable: loopVariable, iterable: iterable, body: body, range: range))
     }
 
-    internal func parseWhileExpression() -> ExprID? {
+    func parseWhileExpression() -> ExprID? {
         guard let whileToken = consume() else {
             return nil
         }
@@ -217,7 +217,7 @@ extension BuildASTPhase.ExpressionParser {
         return astArena.appendExpr(.whileExpr(condition: condition, body: body, range: range))
     }
 
-    internal func parseDoWhileExpression() -> ExprID? {
+    func parseDoWhileExpression() -> ExprID? {
         guard let doToken = consume() else {
             return nil
         }
@@ -236,7 +236,7 @@ extension BuildASTPhase.ExpressionParser {
         return astArena.appendExpr(.doWhileExpr(body: body, condition: condition, range: range))
     }
 
-    internal func parseIfExpression() -> ExprID? {
+    func parseIfExpression() -> ExprID? {
         guard let ifToken = consume() else {
             return nil
         }
@@ -266,7 +266,7 @@ extension BuildASTPhase.ExpressionParser {
         return astArena.appendExpr(.ifExpr(condition: condition, thenExpr: thenExpr, elseExpr: elseExpr, range: range))
     }
 
-    internal func parseTryExpression() -> ExprID? {
+    func parseTryExpression() -> ExprID? {
         guard let tryToken = consume() else {
             return nil
         }
@@ -302,7 +302,7 @@ extension BuildASTPhase.ExpressionParser {
         return astArena.appendExpr(.tryExpr(body: bodyExpr, catchClauses: catchClauses, finallyExpr: finallyExpr, range: range))
     }
 
-    internal func parseCatchParameter() -> (paramName: InternedString?, paramTypeName: InternedString?) {
+    func parseCatchParameter() -> (paramName: InternedString?, paramTypeName: InternedString?) {
         guard matches(.symbol(.lParen)) else {
             return (nil, nil)
         }

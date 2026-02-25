@@ -347,14 +347,12 @@ extension BuildASTPhase {
             if depth.angle > 0 {
                 continue
             }
-            if angleStartIndex != nil && token.kind == .symbol(.greaterThan) {
-                if let startIdx = angleStartIndex {
-                    typeArgs = parseTypeArgRefs(
-                        from: Array(tokens[(startIdx + 1)..<index]),
-                        interner: interner,
-                        astArena: astArena
-                    )
-                }
+            if let startIdx = angleStartIndex, token.kind == .symbol(.greaterThan) {
+                typeArgs = parseTypeArgRefs(
+                    from: Array(tokens[(startIdx + 1)..<index]),
+                    interner: interner,
+                    astArena: astArena
+                )
                 angleStartIndex = nil
                 continue
             }

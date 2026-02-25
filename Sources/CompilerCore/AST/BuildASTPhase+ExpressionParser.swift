@@ -31,10 +31,10 @@ extension BuildASTPhase {
     }
 
     final class ExpressionParser {
-        internal let tokens: ArraySlice<Token>
-        internal let interner: StringInterner
-        internal let astArena: ASTArena
-        internal var index: Int
+        let tokens: ArraySlice<Token>
+        let interner: StringInterner
+        let astArena: ASTArena
+        var index: Int
 
         init(tokens: ArraySlice<Token>, interner: StringInterner, astArena: ASTArena) {
             self.tokens = tokens
@@ -55,7 +55,7 @@ extension BuildASTPhase {
             parseExpression(minPrecedence: 0)
         }
 
-        internal func parseExpression(minPrecedence: Int) -> ExprID? {
+        func parseExpression(minPrecedence: Int) -> ExprID? {
             guard var lhs = parsePrefixUnary() else {
                 return nil
             }
@@ -199,7 +199,7 @@ extension BuildASTPhase {
             }
         }
 
-        internal func mergeRanges(_ lhs: SourceRange?, _ rhs: SourceRange?, fallback: SourceRange) -> SourceRange {
+        func mergeRanges(_ lhs: SourceRange?, _ rhs: SourceRange?, fallback: SourceRange) -> SourceRange {
             switch (lhs, rhs) {
             case let (lhs?, rhs?):
                 return SourceRange(start: lhs.start, end: rhs.end)
@@ -304,7 +304,7 @@ extension BuildASTPhase {
             }
         }
 
-        internal func tokenText(_ token: Token) -> InternedString? {
+        func tokenText(_ token: Token) -> InternedString? {
             switch token.kind {
             case .identifier(let name), .backtickedIdentifier(let name):
                 return name
@@ -317,7 +317,7 @@ extension BuildASTPhase {
             }
         }
 
-        internal func identifierFromToken(_ token: Token) -> InternedString? {
+        func identifierFromToken(_ token: Token) -> InternedString? {
             switch token.kind {
             case .identifier(let name), .backtickedIdentifier(let name):
                 return name
@@ -378,14 +378,14 @@ extension BuildASTPhase {
         }
 
         @discardableResult
-        internal func current() -> Token? {
+        func current() -> Token? {
             if index >= tokens.startIndex && index < tokens.endIndex {
                 return tokens[index]
             }
             return nil
         }
 
-        internal func peek(_ offset: Int) -> Token? {
+        func peek(_ offset: Int) -> Token? {
             let target = index + offset
             if target >= tokens.startIndex && target < tokens.endIndex {
                 return tokens[target]
@@ -394,7 +394,7 @@ extension BuildASTPhase {
         }
 
         @discardableResult
-        internal func consume() -> Token? {
+        func consume() -> Token? {
             guard let token = current() else {
                 return nil
             }
@@ -402,12 +402,12 @@ extension BuildASTPhase {
             return token
         }
 
-        internal func matches(_ kind: TokenKind) -> Bool {
+        func matches(_ kind: TokenKind) -> Bool {
             current()?.kind == kind
         }
 
         @discardableResult
-        internal func consumeIf(_ kind: TokenKind) -> Token? {
+        func consumeIf(_ kind: TokenKind) -> Token? {
             guard matches(kind) else {
                 return nil
             }

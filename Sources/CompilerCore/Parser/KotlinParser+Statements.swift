@@ -1,5 +1,5 @@
 extension KotlinParser {
-    internal func parseBlock() -> NodeID {
+    func parseBlock() -> NodeID {
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
         guard consumeIfSymbol(.lBrace, into: &children, range: &range) else {
@@ -36,7 +36,7 @@ extension KotlinParser {
         return arena.appendNode(kind: .block, range: range.value ?? invalidRange, children)
     }
 
-    internal func parseStatement(inBlock: Bool) -> NodeID {
+    func parseStatement(inBlock: Bool) -> NodeID {
         if isLoopStart(stream.peek().kind) {
             return parseLoopStatement(inBlock: inBlock)
         }
@@ -114,7 +114,7 @@ extension KotlinParser {
     // MARK: - Structured Control Flow Parsers
 
     /// Parse a structured `if` expression: `if (condition) then-branch [else else-branch]`
-    internal func parseIfStatement(inBlock: Bool) -> NodeID {
+    func parseIfStatement(inBlock: Bool) -> NodeID {
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
 
@@ -141,7 +141,7 @@ extension KotlinParser {
     }
 
     /// Parse a structured `when` expression: `when [(subject)] { branches }`
-    internal func parseWhenStatement(inBlock: Bool) -> NodeID {
+    func parseWhenStatement(inBlock: Bool) -> NodeID {
         _ = inBlock
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
@@ -167,7 +167,7 @@ extension KotlinParser {
     }
 
     /// Parse a structured `try` expression: `try body [catch (params) body]* [finally body]`
-    internal func parseTryStatement(inBlock: Bool) -> NodeID {
+    func parseTryStatement(inBlock: Bool) -> NodeID {
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
 
@@ -201,7 +201,7 @@ extension KotlinParser {
 
     /// Appends a branch body for if/else. Can be a block, a nested control flow,
     /// or a simple inline expression (stops before `else` if requested).
-    internal func appendBranchBody(
+    func appendBranchBody(
         inBlock: Bool,
         into children: inout [SyntaxChild],
         range: inout RangeAccumulator,
@@ -242,7 +242,7 @@ extension KotlinParser {
 
     /// Appends a try/catch/finally body. Can be a block, a nested control flow,
     /// or inline tokens (stops before `catch`/`finally`).
-    internal func appendTryBody(
+    func appendTryBody(
         inBlock: Bool,
         into children: inout [SyntaxChild],
         range: inout RangeAccumulator
@@ -282,7 +282,7 @@ extension KotlinParser {
 
     /// Consume inline tokens for a non-block body of a control flow construct.
     /// Stops at statement boundaries, and optionally before `else` or `catch`/`finally`.
-    internal func consumeInlineBody(
+    func consumeInlineBody(
         inBlock: Bool,
         into children: inout [SyntaxChild],
         range: inout RangeAccumulator,
@@ -333,7 +333,7 @@ extension KotlinParser {
 
     // MARK: - Statement Classification (for non-dispatched cases)
 
-    internal func classifyStatementLeadingToken(_ token: Token) -> SyntaxKind {
+    func classifyStatementLeadingToken(_ token: Token) -> SyntaxKind {
         switch token.kind {
         case .keyword(.if):
             return .ifExpr
@@ -350,7 +350,7 @@ extension KotlinParser {
         }
     }
 
-    internal func resolveStatementKind(_ candidate: SyntaxKind, children: [SyntaxChild]) -> SyntaxKind {
+    func resolveStatementKind(_ candidate: SyntaxKind, children: [SyntaxChild]) -> SyntaxKind {
         switch candidate {
         case .ifExpr, .whenExpr, .tryExpr:
             return candidate
@@ -374,7 +374,7 @@ extension KotlinParser {
 
     // MARK: - Loop Parsing
 
-    internal func parseLoopStatement(inBlock: Bool) -> NodeID {
+    func parseLoopStatement(inBlock: Bool) -> NodeID {
         _ = inBlock
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
@@ -408,7 +408,7 @@ extension KotlinParser {
         return arena.appendNode(kind: .loopStmt, range: range.value ?? invalidRange, children)
     }
 
-    internal func appendLoopBody(into children: inout [SyntaxChild], range: inout RangeAccumulator) {
+    func appendLoopBody(into children: inout [SyntaxChild], range: inout RangeAccumulator) {
         if case .symbol(.lBrace) = stream.peek().kind {
             let block = parseBlock()
             children.append(.node(block))
@@ -424,7 +424,7 @@ extension KotlinParser {
         }
     }
 
-    internal func shouldSplitStatementOnNewline(_ kind: TokenKind) -> Bool {
+    func shouldSplitStatementOnNewline(_ kind: TokenKind) -> Bool {
         switch kind {
         case .symbol(.dot), .symbol(.comma), .symbol(.questionDot), .symbol(.questionQuestion),
              .symbol(.plus), .symbol(.minus), .symbol(.star), .symbol(.slash),
@@ -436,12 +436,12 @@ extension KotlinParser {
         }
     }
 
-    internal enum StatementTailStatus {
+    enum StatementTailStatus {
         case noProgress
         case canContinue
     }
 
-    internal func parseStatementTail(inBlock: Bool) -> StatementTailStatus {
+    func parseStatementTail(inBlock: Bool) -> StatementTailStatus {
         let token = stream.peek()
         if shouldStopStatementBefore(token, inBlock: inBlock) {
             return .noProgress
@@ -452,7 +452,7 @@ extension KotlinParser {
         return .canContinue
     }
 
-    internal func parseTail(inBlock: Bool, into children: inout [SyntaxChild], range: inout RangeAccumulator) {
+    func parseTail(inBlock: Bool, into children: inout [SyntaxChild], range: inout RangeAccumulator) {
         var progress = false
         var sawTryKeyword = false
         while !stream.atEOF() {

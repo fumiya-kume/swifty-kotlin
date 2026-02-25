@@ -1,7 +1,5 @@
 import Foundation
 
-/// Delegate class for KIR lowering: ExprLowerer.
-/// Holds an unowned reference to the driver for mutual recursion.
 final class ExprLowerer {
     unowned let driver: KIRLoweringDriver
 
@@ -211,7 +209,6 @@ final class ExprLowerer {
 
                 let localFunCalleeName = driver.lambdaLowerer.callableTargetName(for: symbol, sema: sema, interner: interner)
 
-                // Emit the local function body as a KIRFunction declaration.
                 let localFunValueParamList: [KIRParameter]
                 let localFunReturnType: TypeID
                 if let sig {

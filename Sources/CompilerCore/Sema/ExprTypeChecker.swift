@@ -1,7 +1,6 @@
 import Foundation
 
 /// Handles expression type inference dispatch and specific expression cases.
-/// Derived from TypeCheckSemaPass+ExprInference.swift and TypeCheckSemaPass+ExprInferCases.swift.
 final class ExprTypeChecker {
     unowned let driver: TypeCheckDriver
 
@@ -9,7 +8,7 @@ final class ExprTypeChecker {
         self.driver = driver
     }
 
-    // MARK: - Main Dispatch (from +ExprInference.swift)
+    // MARK: - Main Dispatch
 
     func inferExpr(
         _ id: ExprID,
@@ -692,7 +691,7 @@ final class ExprTypeChecker {
         return sema.types.errorType
     }
 
-    // MARK: - Specific Expression Cases (from +ExprInferCases.swift)
+    // MARK: - Specific Expression Cases
 
     func inferNameRefExpr(
         _ id: ExprID,

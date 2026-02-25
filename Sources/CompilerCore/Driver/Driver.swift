@@ -55,13 +55,11 @@ public final class CompilerDriver {
             interner: interner
         )
 
-        // Set up phase timer when time-phases flag is present.
         let timePhasesEnabled = options.frontendFlags.contains("time-phases")
         if timePhasesEnabled {
             ctx.phaseTimer = PhaseTimer()
         }
 
-        // Set up incremental compilation if enabled.
         let incrementalEnabled = isIncrementalEnabled(options: options)
         if incrementalEnabled {
             let cachePath = resolveIncrementalCachePath(options: options)
@@ -114,7 +112,6 @@ public final class CompilerDriver {
             }
         }
 
-        // Save the incremental cache on successful compilation.
         if !ctx.diagnostics.hasError, let cache = ctx.incrementalCache {
             let depGraph = buildDependencyGraph(ctx: ctx)
             cache.saveState(dependencyGraph: depGraph)

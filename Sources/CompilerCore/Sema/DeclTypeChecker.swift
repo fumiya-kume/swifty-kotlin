@@ -1,7 +1,6 @@
 import Foundation
 
 /// Handles declaration-level type checking (functions, properties, classes, objects).
-/// Derived from TypeCheckSemaPass.swift (second extension) and TypeCheckSemaPass+DeclTypeCheck.swift.
 final class DeclTypeChecker {
     unowned let driver: TypeCheckDriver
 
@@ -9,7 +8,7 @@ final class DeclTypeChecker {
         self.driver = driver
     }
 
-    // MARK: - Function Body Type Inference (from +DeclTypeCheck.swift)
+    // MARK: - Function Body Type Inference
 
     func inferFunctionBodyType(
         _ body: FunctionBody,
@@ -59,7 +58,7 @@ final class DeclTypeChecker {
         }
     }
 
-    // MARK: - Property Type Checking (from +DeclTypeCheck.swift)
+    // MARK: - Property Type Checking
 
     func typeCheckPropertyDecl(
         _ property: PropertyDecl,
@@ -203,7 +202,7 @@ final class DeclTypeChecker {
         }
     }
 
-    // MARK: - Init Block & Secondary Constructor Type Checking (from +DeclTypeCheck.swift)
+    // MARK: - Init Block & Secondary Constructor Type Checking
 
     func typeCheckInitBlocks(
         _ blocks: [FunctionBody],
@@ -320,7 +319,7 @@ final class DeclTypeChecker {
         }
     }
 
-    // MARK: - Top-Level Decl Type Checking (from TypeCheckSemaPass.swift second extension)
+    // MARK: - Top-Level Decl Type Checking
 
     func typeCheckFunctionDecl(
         _ function: FunDecl,

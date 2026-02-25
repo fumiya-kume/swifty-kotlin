@@ -1,7 +1,5 @@
 import Foundation
 
-/// Delegate class for KIR lowering: CallLowerer.
-/// Holds an unowned reference to the driver for mutual recursion.
 final class CallLowerer {
     unowned let driver: KIRLoweringDriver
 

@@ -1,7 +1,7 @@
 import Foundation
 
 extension BuildASTPhase.ExpressionParser {
-    internal func parsePostfixOrPrimary() -> ExprID? {
+    func parsePostfixOrPrimary() -> ExprID? {
         guard var expr = parsePrimary() else {
             return nil
         }
@@ -127,7 +127,7 @@ extension BuildASTPhase.ExpressionParser {
         return expr
     }
 
-    internal func parseCallArguments() -> [CallArgument] {
+    func parseCallArguments() -> [CallArgument] {
         var args: [CallArgument] = []
         if !matches(.symbol(.rParen)) {
             while true {
@@ -144,7 +144,7 @@ extension BuildASTPhase.ExpressionParser {
         return args
     }
 
-    internal func parseCallArgument() -> CallArgument? {
+    func parseCallArgument() -> CallArgument? {
         var isSpread = false
         if matches(.symbol(.star)) {
             _ = consume()
@@ -167,7 +167,7 @@ extension BuildASTPhase.ExpressionParser {
         return CallArgument(label: label, isSpread: isSpread, expr: expr)
     }
 
-    internal func isArgumentLabelToken(_ kind: TokenKind) -> Bool {
+    func isArgumentLabelToken(_ kind: TokenKind) -> Bool {
         switch kind {
         case .identifier, .backtickedIdentifier, .keyword, .softKeyword:
             return true

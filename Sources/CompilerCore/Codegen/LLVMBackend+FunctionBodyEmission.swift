@@ -176,7 +176,7 @@ extension LLVMBackend {
                 }
 
                 if let cOp = LLVMBackend.builtinOps[calleeName] {
-                    let lhs = argVars.count > 0 ? argVars[0] : "0"
+                    let lhs = argVars.first ?? "0"
                     let rhs = argVars.count > 1 ? argVars[1] : "0"
                     let expr = "(\(lhs) \(cOp) \(rhs))"
                     if let result {
@@ -190,7 +190,7 @@ extension LLVMBackend {
 
                 // Unsigned shift right: (intptr_t)((uintptr_t)a >> b) (P5-103)
                 if calleeName == "kk_op_ushr" {
-                    let lhs = argVars.count > 0 ? argVars[0] : "0"
+                    let lhs = argVars.first ?? "0"
                     let rhs = argVars.count > 1 ? argVars[1] : "0"
                     let expr = "(intptr_t)((uintptr_t)\(lhs) >> \(rhs))"
                     if let result {
@@ -204,7 +204,7 @@ extension LLVMBackend {
 
                 // Unary builtin ops (e.g. bitwise NOT) (P5-103)
                 if let cOp = LLVMBackend.unaryBuiltinOps[calleeName] {
-                    let operand = argVars.count > 0 ? argVars[0] : "0"
+                    let operand = argVars.first ?? "0"
                     let expr = "(\(cOp)\(operand))"
                     if let result {
                         lines.append("  \(varName(result)) = \(expr);")
@@ -216,7 +216,7 @@ extension LLVMBackend {
                 }
 
                 if LLVMBackend.floatBuiltinOps.contains(calleeName) {
-                    let lhs = argVars.count > 0 ? argVars[0] : "0"
+                    let lhs = argVars.first ?? "0"
                     let rhs = argVars.count > 1 ? argVars[1] : "0"
                     let cOp = Self.fpOpSymbol(calleeName)
                     let isComparison = calleeName.hasSuffix("eq") || calleeName.hasSuffix("ne") || calleeName.hasSuffix("lt") || calleeName.hasSuffix("le") || calleeName.hasSuffix("gt") || calleeName.hasSuffix("ge")
@@ -238,7 +238,7 @@ extension LLVMBackend {
                 }
 
                 if LLVMBackend.doubleBuiltinOps.contains(calleeName) {
-                    let lhs = argVars.count > 0 ? argVars[0] : "0"
+                    let lhs = argVars.first ?? "0"
                     let rhs = argVars.count > 1 ? argVars[1] : "0"
                     let cOp = Self.fpOpSymbol(calleeName)
                     let isComparison = calleeName.hasSuffix("eq") || calleeName.hasSuffix("ne") || calleeName.hasSuffix("lt") || calleeName.hasSuffix("le") || calleeName.hasSuffix("gt") || calleeName.hasSuffix("ge")
@@ -260,7 +260,7 @@ extension LLVMBackend {
                 }
 
                 if calleeName == "kk_any_to_string" {
-                    let arg = argVars.count > 0 ? argVars[0] : "0"
+                    let arg = argVars.first ?? "0"
                     let tagArg = argVars.count > 1 ? argVars[1] : "0"
                     let expr = "(intptr_t)kk_any_to_string(\(arg), \(tagArg))"
                     if let result {
@@ -273,7 +273,7 @@ extension LLVMBackend {
                 }
 
                 if calleeName == "kk_string_concat" {
-                    let lhs = argVars.count > 0 ? argVars[0] : "0"
+                    let lhs = argVars.first ?? "0"
                     let rhs = argVars.count > 1 ? argVars[1] : "0"
                     let expr = "(intptr_t)kk_string_concat((void*)\(lhs), (void*)\(rhs))"
                     if let result {
@@ -286,7 +286,7 @@ extension LLVMBackend {
                 }
 
                 if calleeName == "kk_string_compareTo" {
-                    let lhs = argVars.count > 0 ? argVars[0] : "0"
+                    let lhs = argVars.first ?? "0"
                     let rhs = argVars.count > 1 ? argVars[1] : "0"
                     let expr = "kk_string_compareTo((void*)\(lhs), (void*)\(rhs))"
                     if let result {

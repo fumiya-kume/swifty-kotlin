@@ -1,7 +1,7 @@
 import Foundation
 import Dispatch
 
-internal final class RuntimeContinuationState {
+final class RuntimeContinuationState {
     var functionID: Int64
     var label: Int64
     var completion: Int64
@@ -79,7 +79,7 @@ internal final class RuntimeContinuationState {
     }
 }
 
-internal final class RuntimeAsyncTask {
+final class RuntimeAsyncTask {
     private let lock = NSLock()
     private let ready = DispatchSemaphore(value: 0)
     private var isCompleted = false
@@ -148,7 +148,7 @@ internal final class RuntimeAsyncTask {
 // MARK: - Structured Concurrency (P5-89)
 
 /// A job handle representing a launched coroutine. Supports join and cancellation.
-internal final class RuntimeJobHandle {
+final class RuntimeJobHandle {
     private let lock = NSLock()
     private let completionSemaphore = DispatchSemaphore(value: 0)
     private(set) var isCompleted = false
@@ -226,7 +226,7 @@ internal final class RuntimeJobHandle {
 }
 
 /// A coroutine scope that tracks child jobs and supports structured cancellation.
-internal final class RuntimeCoroutineScope {
+final class RuntimeCoroutineScope {
     private let lock = NSLock()
     private var children: [Int] = []  // opaque handles (RuntimeJobHandle or RuntimeAsyncTask)
     private(set) var isCancelled = false
@@ -527,7 +527,7 @@ public func kk_kxmini_delay(_ milliseconds: Int, _ continuation: Int) -> Int {
 // MARK: - Flow Runtime Stubs (P5-88)
 
 /// Opaque handle wrapping a flow emitter function pointer and its continuation.
-internal final class RuntimeFlowHandle {
+final class RuntimeFlowHandle {
     let emitterFnPtr: Int
     var collectedValues: [Int] = []
 
@@ -610,7 +610,7 @@ public func kk_with_context(_ dispatcher: Int, _ blockFnPtr: Int, _ continuation
 // MARK: - Channel Runtime Stubs (P5-134)
 
 /// Channel with rendezvous (capacity 0) and buffered (capacity > 0) semantics.
-internal final class RuntimeChannelHandle {
+final class RuntimeChannelHandle {
     private let lock = NSLock()
     private var buffer: [Int] = []
     private let capacity: Int
@@ -891,7 +891,7 @@ public func kk_coroutine_scope_run_with_cont(_ entryPointRaw: Int, _ continuatio
 // MARK: - Child Cancel/Join Helpers (P5-89)
 
 /// Cancel a child handle (RuntimeJobHandle or RuntimeAsyncTask).
-internal func runtimeCancelChild(_ handle: Int) {
+func runtimeCancelChild(_ handle: Int) {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return
     }
@@ -904,7 +904,7 @@ internal func runtimeCancelChild(_ handle: Int) {
 }
 
 /// Join a child handle (RuntimeJobHandle or RuntimeAsyncTask). Returns the result.
-internal func runtimeJoinChild(_ handle: Int) -> Int {
+func runtimeJoinChild(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return 0
     }
@@ -919,7 +919,7 @@ internal func runtimeJoinChild(_ handle: Int) -> Int {
 
 // MARK: - Suspend Entry Loop
 
-internal func runSuspendEntryLoop(entryPointRaw: Int, functionID: Int, jobHandle: RuntimeJobHandle? = nil) -> Int {
+func runSuspendEntryLoop(entryPointRaw: Int, functionID: Int, jobHandle: RuntimeJobHandle? = nil) -> Int {
     guard suspendEntryPoint(from: entryPointRaw) != nil else {
         return 0
     }
@@ -931,7 +931,7 @@ internal func runSuspendEntryLoop(entryPointRaw: Int, functionID: Int, jobHandle
     return runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
 }
 
-internal func runSuspendEntryLoopWithContinuation(entryPointRaw: Int, continuation: Int) -> Int {
+func runSuspendEntryLoopWithContinuation(entryPointRaw: Int, continuation: Int) -> Int {
     guard let entryPoint = suspendEntryPoint(from: entryPointRaw) else {
         _ = kk_coroutine_state_exit(continuation, 0)
         return 0

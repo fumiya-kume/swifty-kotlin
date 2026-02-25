@@ -31,7 +31,7 @@ public struct KTypeInfo {
     }
 }
 
-internal struct KKObjHeader {
+struct KKObjHeader {
     var typeInfo: UnsafePointer<KTypeInfo>?
     var flags: UInt32
     var size: UInt32
@@ -42,9 +42,9 @@ public protocol KKContinuation {
     func resumeWith(_ result: UnsafeMutableRawPointer?)
 }
 
-internal typealias KKSuspendEntryPoint = @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int
+typealias KKSuspendEntryPoint = @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int
 
-internal final class RuntimeStringBox {
+final class RuntimeStringBox {
     let value: String
 
     init(_ value: String) {
@@ -52,7 +52,7 @@ internal final class RuntimeStringBox {
     }
 }
 
-internal final class RuntimeThrowableBox {
+final class RuntimeThrowableBox {
     let message: String
 
     init(message: String) {
@@ -60,7 +60,7 @@ internal final class RuntimeThrowableBox {
     }
 }
 
-internal final class RuntimeArrayBox {
+final class RuntimeArrayBox {
     var elements: [Int]
 
     init(length: Int) {
@@ -68,7 +68,7 @@ internal final class RuntimeArrayBox {
     }
 }
 
-internal final class RuntimeIntBox {
+final class RuntimeIntBox {
     let value: Int
 
     init(_ value: Int) {
@@ -76,7 +76,7 @@ internal final class RuntimeIntBox {
     }
 }
 
-internal final class RuntimeBoolBox {
+final class RuntimeBoolBox {
     let value: Bool
 
     init(_ value: Bool) {
@@ -87,14 +87,14 @@ internal final class RuntimeBoolBox {
 // MARK: - Stdlib Delegate Types (P5-80)
 
 /// Thread-safety mode for `lazy` delegate.
-internal enum LazyThreadSafetyMode: Int {
+enum LazyThreadSafetyMode: Int {
     case synchronized = 1
     case none = 0
 }
 
 /// Runtime box for `kotlin.lazy {}` delegate.
 /// Holds an initializer function pointer and caches the computed value.
-internal final class RuntimeLazyBox {
+final class RuntimeLazyBox {
     private let initializerFnPtr: Int
     private var cachedValue: Int?
     private let mode: LazyThreadSafetyMode
@@ -140,7 +140,7 @@ internal final class RuntimeLazyBox {
 
 /// Runtime box for `Delegates.observable(initialValue) { ... }` delegate.
 /// Stores a mutable value and invokes a callback after each set.
-internal final class RuntimeObservableBox {
+final class RuntimeObservableBox {
     var currentValue: Int
     let callbackFnPtr: Int
 
@@ -153,7 +153,7 @@ internal final class RuntimeObservableBox {
 /// Runtime box for `Delegates.vetoable(initialValue) { ... }` delegate.
 /// Stores a mutable value and invokes a callback before each set;
 /// the callback returns non-zero to accept the change, zero to veto.
-internal final class RuntimeVetoableBox {
+final class RuntimeVetoableBox {
     var currentValue: Int
     let callbackFnPtr: Int
 

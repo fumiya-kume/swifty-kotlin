@@ -1,5 +1,5 @@
 extension KotlinParser {
-    internal func parseBalancedGroup(opening: Symbol, closing: Symbol) -> NodeID {
+    func parseBalancedGroup(opening: Symbol, closing: Symbol) -> NodeID {
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
 
@@ -34,7 +34,7 @@ extension KotlinParser {
         return arena.appendNode(kind: .statement, range: range.value ?? invalidRange, children)
     }
 
-    internal func parseQualifiedPath(into children: inout [SyntaxChild], range: inout RangeAccumulator, allowImportWildcard: Bool, stopAtAs: Bool = false) {
+    func parseQualifiedPath(into children: inout [SyntaxChild], range: inout RangeAccumulator, allowImportWildcard: Bool, stopAtAs: Bool = false) {
         var consumed = false
         while !stream.atEOF() {
             let token = stream.peek()
@@ -70,7 +70,7 @@ extension KotlinParser {
         }
     }
 
-    internal func consumeIf(expected: TokenKind, into children: inout [SyntaxChild], range: inout RangeAccumulator, code: String) {
+    func consumeIf(expected: TokenKind, into children: inout [SyntaxChild], range: inout RangeAccumulator, code: String) {
         if stream.peek().kind == expected {
             _ = consumeToken(into: &children, range: &range)
             return
@@ -78,7 +78,7 @@ extension KotlinParser {
         insertMissingToken(expected: expected, into: &children, range: &range, code: code, message: "Expected \(expected).")
     }
 
-    internal func consumeIfSymbol(_ symbol: Symbol, into children: inout [SyntaxChild], range: inout RangeAccumulator) -> Bool {
+    func consumeIfSymbol(_ symbol: Symbol, into children: inout [SyntaxChild], range: inout RangeAccumulator) -> Bool {
         if case .symbol(symbol) = stream.peek().kind {
             _ = consumeToken(into: &children, range: &range)
             return true
@@ -86,7 +86,7 @@ extension KotlinParser {
         return false
     }
 
-    internal func consumeToken(into children: inout [SyntaxChild], range: inout RangeAccumulator) -> Token {
+    func consumeToken(into children: inout [SyntaxChild], range: inout RangeAccumulator) -> Token {
         let token = stream.advance()
         let tokenID = arena.appendToken(token)
         let child: SyntaxChild = .token(tokenID)
@@ -98,7 +98,7 @@ extension KotlinParser {
         return token
     }
 
-    internal func childRange(_ child: SyntaxChild) -> SourceRange {
+    func childRange(_ child: SyntaxChild) -> SourceRange {
         switch child {
         case .token(let tokenID):
             guard let token = arena.token(tokenID) else { return invalidRange }
@@ -108,7 +108,7 @@ extension KotlinParser {
         }
     }
 
-    internal func shouldStopStatementBefore(_ token: Token, inBlock: Bool) -> Bool {
+    func shouldStopStatementBefore(_ token: Token, inBlock: Bool) -> Bool {
         if token.kind == .eof {
             return true
         }
@@ -135,7 +135,7 @@ extension KotlinParser {
         }
     }
 
-    internal func isDeclarationKeyword(_ keyword: Keyword) -> Bool {
+    func isDeclarationKeyword(_ keyword: Keyword) -> Bool {
         if Self.isDeclarationModifierKeyword(keyword) {
             return true
         }
@@ -147,14 +147,14 @@ extension KotlinParser {
         }
     }
 
-    internal func isDeclarationStart(_ kind: TokenKind) -> Bool {
+    func isDeclarationStart(_ kind: TokenKind) -> Bool {
         if case .keyword(let keyword) = kind, isDeclarationKeyword(keyword) {
             return true
         }
         return false
     }
 
-    internal func isIdentifierLike(_ kind: TokenKind) -> Bool {
+    func isIdentifierLike(_ kind: TokenKind) -> Bool {
         switch kind {
         case .identifier, .backtickedIdentifier, .keyword, .softKeyword:
             return true
@@ -163,7 +163,7 @@ extension KotlinParser {
         }
     }
 
-    internal func isLoopStart(_ kind: TokenKind) -> Bool {
+    func isLoopStart(_ kind: TokenKind) -> Bool {
         switch kind {
         case .keyword(.for), .keyword(.while), .keyword(.do):
             return true
@@ -172,22 +172,22 @@ extension KotlinParser {
         }
     }
 
-    internal func hasLeadingNewline(_ token: Token) -> Bool {
+    func hasLeadingNewline(_ token: Token) -> Bool {
         return token.leadingTrivia.contains(.newline)
     }
 
-    internal func appendOptionalTerminator(into children: inout [SyntaxChild], range: inout RangeAccumulator) {
+    func appendOptionalTerminator(into children: inout [SyntaxChild], range: inout RangeAccumulator) {
         if !stream.atEOF(), case .symbol(.semicolon) = stream.peek().kind {
             _ = consumeToken(into: &children, range: &range)
         }
     }
 
-    internal func zeroWidthRange(at token: Token) -> SourceRange {
+    func zeroWidthRange(at token: Token) -> SourceRange {
         let loc = token.range.start
         return SourceRange(start: loc, end: loc)
     }
 
-    internal func insertMissingToken(
+    func insertMissingToken(
         expected: TokenKind,
         into children: inout [SyntaxChild],
         range: inout RangeAccumulator,
@@ -202,7 +202,7 @@ extension KotlinParser {
         range.append(missingRange)
     }
 
-    internal func isSynchronizationPoint(_ token: Token, inBlock: Bool) -> Bool {
+    func isSynchronizationPoint(_ token: Token, inBlock: Bool) -> Bool {
         switch token.kind {
         case .eof:
             return true
@@ -230,7 +230,7 @@ extension KotlinParser {
         return false
     }
 
-    internal func skipToSynchronizationPoint(
+    func skipToSynchronizationPoint(
         inBlock: Bool,
         into children: inout [SyntaxChild],
         range: inout RangeAccumulator
@@ -254,7 +254,7 @@ extension KotlinParser {
         }
     }
 
-    internal func isLikelyTopLevelDeclarationStart(_ token: Token) -> Bool {
+    func isLikelyTopLevelDeclarationStart(_ token: Token) -> Bool {
         if isDeclarationStart(token.kind) {
             return true
         }
@@ -264,7 +264,7 @@ extension KotlinParser {
         return false
     }
 
-    internal var invalidRange: SourceRange {
+    var invalidRange: SourceRange {
         SourceRange(
             start: SourceLocation(file: FileID.invalid, offset: 0),
             end: SourceLocation(file: FileID.invalid, offset: 0)
@@ -272,13 +272,13 @@ extension KotlinParser {
     }
 }
 
-internal extension Token {
+extension Token {
     var rangeIfAvailable: SourceRange {
         return range
     }
 }
 
-internal struct RangeAccumulator {
+struct RangeAccumulator {
     var value: SourceRange?
 
     mutating func append(_ range: SourceRange) {

@@ -5,8 +5,6 @@ struct NormalizedCallResult {
     let defaultMask: Int64
 }
 
-/// Delegate class for KIR lowering: CallSupportLowerer.
-/// Holds an unowned reference to the driver for mutual recursion.
 final class CallSupportLowerer {
     unowned let driver: KIRLoweringDriver
 

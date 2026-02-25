@@ -1,7 +1,6 @@
 import Foundation
 
 /// Stateless utility for analyzing captured outer symbols in closures and local functions.
-/// Derived from TypeCheckSemaPass+CaptureAnalysis.swift.
 struct CaptureAnalyzer {
     func collectCapturedOuterSymbols(
         in exprID: ExprID,

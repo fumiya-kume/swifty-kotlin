@@ -13,7 +13,7 @@ extension NativeEmitter {
         state: EmissionBuilderState,
         instructionIndex: Int
     ) -> (handled: Bool, value: LLVMCAPIBindings.LLVMValueRef?) {
-        let lhs = argumentValues.count > 0 ? argumentValues[0] : state.zeroValue
+        let lhs = argumentValues.first ?? state.zeroValue
         let rhs = argumentValues.count > 1 ? argumentValues[1] : state.zeroValue
 
         func boolCondition(

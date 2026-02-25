@@ -1,7 +1,5 @@
 import Foundation
 
-/// Delegate class for KIR lowering: ObjectLiteralLowerer.
-/// Holds an unowned reference to the driver for mutual recursion.
 final class ObjectLiteralLowerer {
     unowned let driver: KIRLoweringDriver
 

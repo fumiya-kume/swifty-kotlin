@@ -1,9 +1,9 @@
 public final class KotlinParser {
-    internal let stream: TokenStream
-    internal let interner: StringInterner
-    internal let diagnostics: DiagnosticEngine
-    internal let arena: SyntaxArena
-    internal var lastConsumedToken: Token?
+    let stream: TokenStream
+    let interner: StringInterner
+    let diagnostics: DiagnosticEngine
+    let arena: SyntaxArena
+    var lastConsumedToken: Token?
 
     public init(tokens: [Token], interner: StringInterner, diagnostics: DiagnosticEngine) {
         self.stream = TokenStream(tokens)

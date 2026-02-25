@@ -1,7 +1,7 @@
 import Foundation
 
 extension BuildASTPhase {
-    internal func parseLocalDeclarationExpr(
+    func parseLocalDeclarationExpr(
         from statementTokens: [Token],
         interner: StringInterner,
         astArena: ASTArena
@@ -130,7 +130,7 @@ extension BuildASTPhase {
         ))
     }
 
-    internal func parseLocalAssignmentExpr(
+    func parseLocalAssignmentExpr(
         from statementTokens: [Token],
         interner: StringInterner,
         astArena: ASTArena
@@ -199,7 +199,7 @@ extension BuildASTPhase {
         }
     }
 
-    internal func parseCompoundAssignmentExpr(
+    func parseCompoundAssignmentExpr(
         from statementTokens: [Token],
         interner: StringInterner,
         astArena: ASTArena
@@ -261,7 +261,7 @@ extension BuildASTPhase {
 
     /// Parse destructuring declaration: `val (a, b, _) = expr`
     /// Returns nil if the tokens don't match the destructuring pattern.
-    internal func parseDestructuringDeclarationExpr(
+    func parseDestructuringDeclarationExpr(
         from statementTokens: [Token],
         startIndex: Int,
         isMutable: Bool,
@@ -361,7 +361,6 @@ extension BuildASTPhase {
             return nil
         }
 
-        // Parse the initializer expression
         let initializerTokens = statementTokens[(assignIndex + 1)...].filter { token in
             token.kind != .symbol(.semicolon)
         }

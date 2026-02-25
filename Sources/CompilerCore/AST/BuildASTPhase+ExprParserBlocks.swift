@@ -1,7 +1,7 @@
 import Foundation
 
 extension BuildASTPhase.ExpressionParser {
-    internal func parseBlockExpression() -> ExprID? {
+    func parseBlockExpression() -> ExprID? {
         guard let openBrace = consume() else {
             return nil
         }
@@ -65,7 +65,7 @@ extension BuildASTPhase.ExpressionParser {
     }
 
     /// Returns statement boundary ranges as `(startIndex, endIndex)` pairs into `tokens`.
-    internal func splitBlockTokensIntoStatementRanges(_ tokens: [Token]) -> [(Int, Int)] {
+    func splitBlockTokensIntoStatementRanges(_ tokens: [Token]) -> [(Int, Int)] {
         var ranges: [(Int, Int)] = []
         var groupStart = 0
         var lastTokenIndex = -1
@@ -122,7 +122,7 @@ extension BuildASTPhase.ExpressionParser {
         return ranges
     }
 
-    internal func isBinaryOperatorTokenKind(_ kind: TokenKind) -> Bool {
+    func isBinaryOperatorTokenKind(_ kind: TokenKind) -> Bool {
         switch kind {
         case .symbol(.plus), .symbol(.minus), .symbol(.star), .symbol(.slash), .symbol(.percent),
              .symbol(.ampAmp), .symbol(.barBar),
@@ -143,7 +143,7 @@ extension BuildASTPhase.ExpressionParser {
         }
     }
 
-    internal func isLocalDeclarationTokens(_ tokens: [Token]) -> Bool {
+    func isLocalDeclarationTokens(_ tokens: [Token]) -> Bool {
         guard !tokens.isEmpty else { return false }
         var i = 0
         while i < tokens.count {
@@ -163,7 +163,7 @@ extension BuildASTPhase.ExpressionParser {
         }
     }
 
-    internal func isLocalAssignmentTokens(_ tokens: [Token]) -> Bool {
+    func isLocalAssignmentTokens(_ tokens: [Token]) -> Bool {
         guard tokens.count >= 3 else { return false }
         let assignOps: [TokenKind] = [
             .symbol(.assign),
@@ -180,11 +180,11 @@ extension BuildASTPhase.ExpressionParser {
         return false
     }
 
-    internal func parseLocalDeclFromTokens(_ tokens: [Token]) -> ExprID? {
+    func parseLocalDeclFromTokens(_ tokens: [Token]) -> ExprID? {
         parseLocalDeclFromSlice(tokens[...])
     }
 
-    internal func parseLocalDeclFromSlice(_ tokens: ArraySlice<Token>) -> ExprID? {
+    func parseLocalDeclFromSlice(_ tokens: ArraySlice<Token>) -> ExprID? {
         guard !tokens.isEmpty else { return nil }
         var si = tokens.startIndex
         while si < tokens.endIndex {
@@ -297,11 +297,11 @@ extension BuildASTPhase.ExpressionParser {
         ))
     }
 
-    internal func parseLocalAssignFromTokens(_ tokens: [Token]) -> ExprID? {
+    func parseLocalAssignFromTokens(_ tokens: [Token]) -> ExprID? {
         parseLocalAssignFromSlice(tokens[...])
     }
 
-    internal func parseLocalAssignFromSlice(_ tokens: ArraySlice<Token>) -> ExprID? {
+    func parseLocalAssignFromSlice(_ tokens: ArraySlice<Token>) -> ExprID? {
         guard tokens.count >= 3 else { return nil }
 
         let compoundOps: [(TokenKind, CompoundAssignOp)] = [
@@ -386,7 +386,7 @@ extension BuildASTPhase.ExpressionParser {
         }
     }
 
-    internal func skipBalancedParenthesisIfNeeded() {
+    func skipBalancedParenthesisIfNeeded() {
         guard matches(.symbol(.lParen)) else {
             return
         }

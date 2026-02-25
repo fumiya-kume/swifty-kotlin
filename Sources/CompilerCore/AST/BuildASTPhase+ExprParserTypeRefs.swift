@@ -1,7 +1,7 @@
 import Foundation
 
 extension BuildASTPhase.ExpressionParser {
-    internal func parseTypeReference(_ fallbackRange: SourceRange) -> TypeRefID? {
+    func parseTypeReference(_ fallbackRange: SourceRange) -> TypeRefID? {
         guard let firstRef = parseSingleTypeReference() else { return nil }
         // Check for intersection type (T & U)
         var parts: [TypeRefID] = [firstRef]
@@ -49,7 +49,7 @@ extension BuildASTPhase.ExpressionParser {
         return astArena.appendTypeRef(.named(path: [name], args: typeArgs, nullable: isNullable))
     }
 
-    internal func tryParseExplicitTypeArgs() -> [TypeRefID]? {
+    func tryParseExplicitTypeArgs() -> [TypeRefID]? {
         guard matches(.symbol(.lessThan)) else { return nil }
         let savedIndex = index
         _ = consume()
@@ -81,7 +81,7 @@ extension BuildASTPhase.ExpressionParser {
         }
     }
 
-    internal func tryParseTypeArgRefs() -> [TypeArgRef]? {
+    func tryParseTypeArgRefs() -> [TypeArgRef]? {
         guard matches(.symbol(.lessThan)) else { return nil }
         let savedIndex = index
         _ = consume()
@@ -157,7 +157,7 @@ extension BuildASTPhase.ExpressionParser {
         }
     }
 
-    internal func parseInlineTypeRef() -> TypeRefID? {
+    func parseInlineTypeRef() -> TypeRefID? {
         guard let firstRef = parseSingleInlineTypeRef() else { return nil }
         // Check for intersection type (T & U) in inline context
         var parts: [TypeRefID] = [firstRef]

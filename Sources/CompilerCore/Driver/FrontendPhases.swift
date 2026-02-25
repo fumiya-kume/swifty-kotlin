@@ -150,7 +150,7 @@ public final class BuildASTPhase: CompilerPhase {
 
     /// Per-arena cache for `collectTokens(from:in:)`.  Cleared between files
     /// because different `SyntaxArena`s reuse the same `NodeID` space.
-    internal var tokenCache: [NodeID: [Token]] = [:]
+    var tokenCache: [NodeID: [Token]] = [:]
 
     public init() {}
 

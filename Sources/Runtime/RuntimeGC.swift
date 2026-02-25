@@ -1,21 +1,21 @@
 import Foundation
 
-internal struct HeapObjectRecord {
+struct HeapObjectRecord {
     let pointer: UnsafeMutableRawPointer
     let byteCount: Int
 }
 
-internal struct ActiveFrameRecord {
+struct ActiveFrameRecord {
     let functionID: UInt32
     let frameBase: UnsafeMutableRawPointer?
 }
 
-internal struct FrameMapDescriptorC {
+struct FrameMapDescriptorC {
     let rootCount: UInt32
     let rootOffsets: UnsafePointer<Int32>?
 }
 
-internal enum RuntimeStorage {
+enum RuntimeStorage {
     static let lock = NSLock()
     static var heapObjects: [UInt: HeapObjectRecord] = [:]
     static var objectPointers: Set<UInt> = []
@@ -26,7 +26,7 @@ internal enum RuntimeStorage {
     static let coroutineSuspendedBox = RuntimeStringBox("COROUTINE_SUSPENDED")
 }
 
-internal let kkObjMarkFlag: UInt32 = 1 << 0
+let kkObjMarkFlag: UInt32 = 1 << 0
 
 @_cdecl("kk_alloc")
 public func kk_alloc(_ size: UInt32, _ typeInfo: UnsafeRawPointer) -> UnsafeMutableRawPointer {
@@ -153,7 +153,7 @@ public func kk_runtime_force_reset() {
     RuntimeStorage.lock.unlock()
 }
 
-internal func performMarkAndSweepLocked() {
+func performMarkAndSweepLocked() {
     guard !RuntimeStorage.heapObjects.isEmpty else {
         return
     }
@@ -189,7 +189,7 @@ internal func performMarkAndSweepLocked() {
     RuntimeStorage.heapObjects = survivors
 }
 
-internal func collectRootPointersLocked(into worklist: inout [UnsafeMutableRawPointer]) {
+func collectRootPointersLocked(into worklist: inout [UnsafeMutableRawPointer]) {
     for slotAddress in RuntimeStorage.globalRootSlots {
         guard let slot = UnsafeMutablePointer<UnsafeMutableRawPointer?>(bitPattern: slotAddress),
               let value = slot.pointee else {
@@ -219,7 +219,7 @@ internal func collectRootPointersLocked(into worklist: inout [UnsafeMutableRawPo
     }
 }
 
-internal func appendObjectChildrenLocked(of object: HeapObjectRecord, into worklist: inout [UnsafeMutableRawPointer]) {
+func appendObjectChildrenLocked(of object: HeapObjectRecord, into worklist: inout [UnsafeMutableRawPointer]) {
     let header = object.pointer.assumingMemoryBound(to: KKObjHeader.self).pointee
     guard let typeInfo = header.typeInfo else {
         return
@@ -242,7 +242,7 @@ internal func appendObjectChildrenLocked(of object: HeapObjectRecord, into workl
     }
 }
 
-internal func resetRuntimeLocked() {
+func resetRuntimeLocked() {
     for (_, object) in RuntimeStorage.heapObjects {
         object.pointer.deallocate()
     }

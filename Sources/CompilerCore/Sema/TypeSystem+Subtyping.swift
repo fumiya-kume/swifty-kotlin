@@ -209,11 +209,11 @@ extension TypeSystem {
         glb(types)
     }
 
-    internal func nullabilitySubtype(_ lhs: Nullability, _ rhs: Nullability) -> Bool {
+    func nullabilitySubtype(_ lhs: Nullability, _ rhs: Nullability) -> Bool {
         lhs == rhs || (lhs == .nonNull && rhs == .nullable)
     }
 
-    internal func isNominalSubtypeSymbol(_ candidate: SymbolID, of base: SymbolID) -> Bool {
+    func isNominalSubtypeSymbol(_ candidate: SymbolID, of base: SymbolID) -> Bool {
         if candidate == base {
             return true
         }
@@ -231,7 +231,7 @@ extension TypeSystem {
         return false
     }
 
-    internal enum Projection {
+    enum Projection {
         case invariant(TypeID)
         case out(TypeID)
         case `in`(TypeID)
@@ -239,7 +239,7 @@ extension TypeSystem {
         case invalid
     }
 
-    internal func normalizedNominalVariances(for symbol: SymbolID, arity: Int) -> [TypeVariance] {
+    func normalizedNominalVariances(for symbol: SymbolID, arity: Int) -> [TypeVariance] {
         let stored = nominalTypeParameterVariances(for: symbol)
         if stored.count >= arity {
             return Array(stored.prefix(arity))
@@ -250,7 +250,7 @@ extension TypeSystem {
         return stored + Array(repeating: .invariant, count: arity - stored.count)
     }
 
-    internal func composedProjection(
+    func composedProjection(
         declarationVariance: TypeVariance,
         useSite: TypeArg
     ) -> Projection {
@@ -283,7 +283,7 @@ extension TypeSystem {
         }
     }
 
-    internal func projection(from arg: TypeArg) -> Projection {
+    func projection(from arg: TypeArg) -> Projection {
         switch arg {
         case .invariant(let type):
             return .invariant(type)
@@ -296,7 +296,7 @@ extension TypeSystem {
         }
     }
 
-    internal func isProjectionSubtype(_ lhs: Projection, _ rhs: Projection) -> Bool {
+    func isProjectionSubtype(_ lhs: Projection, _ rhs: Projection) -> Bool {
         if case .star = rhs { return true }
         if case .invalid = rhs { return false }
         if case .invalid = lhs { return false }

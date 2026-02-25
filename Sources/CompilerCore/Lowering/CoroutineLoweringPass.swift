@@ -164,7 +164,7 @@ final class CoroutineLoweringPass: LoweringPass {
         var launcherThunkByOriginalSymbol: [SymbolID: (name: InternedString, symbol: SymbolID)] = [:]
 
         let launcherArgGetCallee = ctx.interner.intern("kk_coroutine_launcher_arg_get")
-        for suspendFunction in suspendFunctions where suspendFunction.params.count > 0 {
+        for suspendFunction in suspendFunctions where !suspendFunction.params.isEmpty {
             guard let loweredTarget = loweredBySymbol[suspendFunction.symbol] else {
                 continue
             }

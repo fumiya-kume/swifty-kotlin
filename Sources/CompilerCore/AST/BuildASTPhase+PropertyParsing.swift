@@ -1,7 +1,7 @@
 import Foundation
 
 extension BuildASTPhase {
-    internal func declarationIsVar(from nodeID: NodeID, in arena: SyntaxArena) -> Bool {
+    func declarationIsVar(from nodeID: NodeID, in arena: SyntaxArena) -> Bool {
         for child in arena.children(of: nodeID) {
             if case .token(let tokenID) = child,
                let token = resolveToken(tokenID, in: arena),
@@ -12,7 +12,7 @@ extension BuildASTPhase {
         return false
     }
 
-    internal func declarationPropertyInitializer(
+    func declarationPropertyInitializer(
         from nodeID: NodeID,
         in arena: SyntaxArena,
         interner: StringInterner,
@@ -51,7 +51,7 @@ extension BuildASTPhase {
         return parser.parse()
     }
 
-    internal func declarationPropertyAccessors(
+    func declarationPropertyAccessors(
         from nodeID: NodeID,
         in arena: SyntaxArena,
         interner: StringInterner,
@@ -135,7 +135,7 @@ extension BuildASTPhase {
 
     /// Find the index where an inline `get`/`set` accessor keyword starts in
     /// a flat token list.  Returns `nil` when no accessor keyword is present.
-    internal func inlineAccessorStartIndex(in tokens: [Token]) -> Int? {
+    func inlineAccessorStartIndex(in tokens: [Token]) -> Int? {
         for (index, token) in tokens.enumerated() {
             let isAccessorKeyword: Bool
             switch token.kind {
@@ -272,7 +272,7 @@ extension BuildASTPhase {
         return (getter, setter)
     }
 
-    internal func setterParameterName(
+    func setterParameterName(
         from headerTokens: [Token],
         interner: StringInterner
     ) -> InternedString? {
@@ -291,7 +291,7 @@ extension BuildASTPhase {
         return nil
     }
 
-    internal func accessorBody(
+    func accessorBody(
         statementID: NodeID,
         headerTokens: [Token],
         in arena: SyntaxArena,

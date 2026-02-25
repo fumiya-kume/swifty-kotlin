@@ -313,8 +313,8 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                                 thrownResult: nil
                             ))
                         }
-                        if result != nil {
-                            loweredBody.append(.copy(from: arrayExpr, to: result!))
+                        if let result {
+                            loweredBody.append(.copy(from: arrayExpr, to: result))
                         }
                         continue
                     }

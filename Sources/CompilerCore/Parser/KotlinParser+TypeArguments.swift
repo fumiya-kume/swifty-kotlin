@@ -1,5 +1,5 @@
 extension KotlinParser {
-    internal func parseTypeArguments() -> NodeID {
+    func parseTypeArguments() -> NodeID {
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
         var depth = 1
@@ -48,7 +48,7 @@ extension KotlinParser {
         )
     }
 
-    internal func canStartTypeArgumentsInternal(after token: Token?) -> Bool {
+    func canStartTypeArgumentsInternal(after token: Token?) -> Bool {
         guard token != nil else { return false }
         guard case .symbol(.lessThan) = stream.peek().kind else { return false }
 
@@ -108,7 +108,7 @@ extension KotlinParser {
         return false
     }
 
-    internal func followsTypeArgs(_ token: Token) -> Bool {
+    func followsTypeArgs(_ token: Token) -> Bool {
         switch token.kind {
         case .symbol(.lParen), .symbol(.dot), .symbol(.questionDot), .symbol(.bangBang),
              .symbol(.doubleColon), .symbol(.lessThan), .symbol(.colon), .symbol(.comma),

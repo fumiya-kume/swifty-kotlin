@@ -1,7 +1,7 @@
 import Foundation
 
 extension BuildASTPhase.ExpressionParser {
-    internal func parseLambdaLiteral() -> ExprID? {
+    func parseLambdaLiteral() -> ExprID? {
         guard matches(.symbol(.lBrace)) else {
             return nil
         }
@@ -60,7 +60,7 @@ extension BuildASTPhase.ExpressionParser {
         return astArena.appendExpr(.lambdaLiteral(params: params, body: bodyExpr, range: range))
     }
 
-    internal func parseObjectLiteral() -> ExprID? {
+    func parseObjectLiteral() -> ExprID? {
         guard let objectToken = consume() else {
             return nil
         }
@@ -119,7 +119,7 @@ extension BuildASTPhase.ExpressionParser {
         return astArena.appendExpr(.objectLiteral(superTypes: superTypes, range: range))
     }
 
-    internal func parseCallableReferenceWithoutReceiver() -> ExprID? {
+    func parseCallableReferenceWithoutReceiver() -> ExprID? {
         let savedIndex = index
         guard let opToken = consume() else {
             return nil

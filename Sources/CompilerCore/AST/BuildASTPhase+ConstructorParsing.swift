@@ -1,7 +1,7 @@
 import Foundation
 
 extension BuildASTPhase {
-    internal func declarationInitBlocks(
+    func declarationInitBlocks(
         from nodeID: NodeID,
         in arena: SyntaxArena,
         interner: StringInterner,
@@ -61,7 +61,7 @@ extension BuildASTPhase {
         return result
     }
 
-    internal func declarationSecondaryConstructors(
+    func declarationSecondaryConstructors(
         from nodeID: NodeID,
         in arena: SyntaxArena,
         interner: StringInterner,
@@ -103,7 +103,7 @@ extension BuildASTPhase {
         return result
     }
 
-    internal func extractDelegationCall(
+    func extractDelegationCall(
         from nodeID: NodeID,
         in arena: SyntaxArena,
         interner: StringInterner,

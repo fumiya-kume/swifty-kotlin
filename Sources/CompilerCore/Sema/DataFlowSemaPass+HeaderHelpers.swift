@@ -273,10 +273,8 @@ extension DataFlowSemaPassPhase {
             )
         }
 
-        // ------------------------------------------------------------------
         // Register `kotlin.properties.Lazy<T>` interface stub.
         // Kotlin declaration: interface Lazy<out T> { val value: T; fun isInitialized(): Boolean }
-        // ------------------------------------------------------------------
         let lazyInterfaceName = interner.intern("Lazy")
         let lazyInterfaceFQName = kotlinPropertiesPkg + [lazyInterfaceName]
         let lazyInterfaceSymbol: SymbolID
@@ -296,13 +294,11 @@ extension DataFlowSemaPassPhase {
             classSymbol: lazyInterfaceSymbol, args: [], nullability: .nonNull
         )))
 
-        // ------------------------------------------------------------------
         // Register `kotlin.properties.ReadWriteProperty<T, V>` interface stub.
         // Kotlin declaration: interface ReadWriteProperty<in T, V> {
         //     operator fun getValue(...): V
         //     operator fun setValue(..., value: V)
         // }
-        // ------------------------------------------------------------------
         let rwPropertyName = interner.intern("ReadWriteProperty")
         let rwPropertyFQName = kotlinPropertiesPkg + [rwPropertyName]
         let rwPropertySymbol: SymbolID
@@ -322,12 +318,10 @@ extension DataFlowSemaPassPhase {
             classSymbol: rwPropertySymbol, args: [], nullability: .nonNull
         )))
 
-        // ------------------------------------------------------------------
         // Register `kotlin.properties.ReadOnlyProperty<in T, out V>` interface stub.
         // Kotlin declaration: interface ReadOnlyProperty<in T, out V> {
         //     operator fun getValue(...): V
         // }
-        // ------------------------------------------------------------------
         let roPropertyName = interner.intern("ReadOnlyProperty")
         let roPropertyFQName = kotlinPropertiesPkg + [roPropertyName]
         if symbols.lookup(fqName: roPropertyFQName) == nil {
@@ -341,10 +335,8 @@ extension DataFlowSemaPassPhase {
             )
         }
 
-        // ------------------------------------------------------------------
         // Register `lazy` as a top-level function in the kotlin package.
         // Kotlin signature: fun <T> lazy(initializer: () -> T): Lazy<T>
-        // ------------------------------------------------------------------
         let lazyName = interner.intern("lazy")
         let lazyFQName = kotlinPkg + [lazyName]
         if symbols.lookup(fqName: lazyFQName) == nil {
@@ -399,9 +391,7 @@ extension DataFlowSemaPassPhase {
             )
         }
 
-        // ------------------------------------------------------------------
         // Register `Delegates` as an object in kotlin.properties.
-        // ------------------------------------------------------------------
         let delegatesName = interner.intern("Delegates")
         let delegatesFQName = kotlinPropertiesPkg + [delegatesName]
         let delegatesSymbol: SymbolID
@@ -422,13 +412,11 @@ extension DataFlowSemaPassPhase {
         // (object symbols need an explicit property type for name-ref resolution).
         symbols.setPropertyType(delegatesType, for: delegatesSymbol)
 
-        // ------------------------------------------------------------------
         // Register `observable` as a member function of Delegates.
         // Kotlin signature: fun <T> observable(initialValue: T, onChange: ...): ReadWriteProperty<Any?, T>
         // NOTE: The callback lambda is parsed as a separate block by
         // propertyHeadTokens and is NOT included in the call arguments.
         // The sema stub therefore takes only 1 parameter (initialValue).
-        // ------------------------------------------------------------------
         let observableName = interner.intern("observable")
         let observableFQName = delegatesFQName + [observableName]
         if symbols.lookup(fqName: observableFQName) == nil {
@@ -451,11 +439,9 @@ extension DataFlowSemaPassPhase {
             )
         }
 
-        // ------------------------------------------------------------------
         // Register `vetoable` as a member function of Delegates.
         // Kotlin signature: fun <T> vetoable(initialValue: T, onChange: ...): ReadWriteProperty<Any?, T>
         // NOTE: Same as observable — callback lambda is a separate block.
-        // ------------------------------------------------------------------
         let vetoableName = interner.intern("vetoable")
         let vetoableFQName = delegatesFQName + [vetoableName]
         if symbols.lookup(fqName: vetoableFQName) == nil {

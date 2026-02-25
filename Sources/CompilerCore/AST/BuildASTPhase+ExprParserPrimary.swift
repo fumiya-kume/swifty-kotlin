@@ -1,7 +1,7 @@
 import Foundation
 
 extension BuildASTPhase.ExpressionParser {
-    internal func parsePrimary() -> ExprID? {
+    func parsePrimary() -> ExprID? {
         guard let token = current() else {
             return nil
         }
@@ -131,7 +131,7 @@ extension BuildASTPhase.ExpressionParser {
         }
     }
 
-    internal func parseStringLiteral() -> ExprID? {
+    func parseStringLiteral() -> ExprID? {
         guard let open = consume() else { return nil }
         var end = open.range.end
         let closingKind = open.kind

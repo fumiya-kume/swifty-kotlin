@@ -1,7 +1,7 @@
 import Foundation
 
 extension BuildASTPhase {
-    internal func parseLocalFunDeclExpr(
+    func parseLocalFunDeclExpr(
         from statementTokens: [Token],
         interner: StringInterner,
         astArena: ASTArena

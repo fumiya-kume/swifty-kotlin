@@ -170,7 +170,7 @@ extension LLVMCAPIBindings {
         return nil
     }
 
-    internal static func loadSymbol<T>(
+    static func loadSymbol<T>(
         handle: UnsafeMutableRawPointer,
         name: String,
         as type: T.Type
@@ -181,7 +181,7 @@ extension LLVMCAPIBindings {
         return unsafeBitCast(symbol, to: type)
     }
 
-    internal static func deduplicated(_ values: [String]) -> [String] {
+    static func deduplicated(_ values: [String]) -> [String] {
         var seen: Set<String> = []
         var ordered: [String] = []
         for value in values where seen.insert(value).inserted {
