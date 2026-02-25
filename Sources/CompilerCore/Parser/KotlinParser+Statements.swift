@@ -454,6 +454,7 @@ extension KotlinParser {
 
     internal func parseTail(inBlock: Bool, into children: inout [SyntaxChild], range: inout RangeAccumulator) {
         var progress = false
+        var sawTryKeyword = false
         while !stream.atEOF() {
             let token = stream.peek()
             if shouldStopStatementBefore(token, inBlock: inBlock) {
@@ -472,10 +473,15 @@ extension KotlinParser {
                 range.append(arena.node(blockID).range)
                 progress = true
                 // Continue if next token is catch/finally (try expression continuation)
-                let nextAfterBlock = stream.peek()
-                if case .keyword(.catch) = nextAfterBlock.kind { continue }
-                if case .keyword(.finally) = nextAfterBlock.kind { continue }
+                if sawTryKeyword {
+                    let nextAfterBlock = stream.peek()
+                    if case .keyword(.catch) = nextAfterBlock.kind { continue }
+                    if case .keyword(.finally) = nextAfterBlock.kind { continue }
+                }
                 break
+            }
+            if case .keyword(.try) = token.kind {
+                sawTryKeyword = true
             }
             _ = consumeToken(into: &children, range: &range)
             progress = true
