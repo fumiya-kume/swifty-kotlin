@@ -17,6 +17,10 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_range_iterator"),
             ctx.interner.intern("kk_range_hasNext"),
             ctx.interner.intern("kk_range_next"),
+            ctx.interner.intern("kk_op_rangeTo"),
+            ctx.interner.intern("kk_op_rangeUntil"),
+            ctx.interner.intern("kk_op_downTo"),
+            ctx.interner.intern("kk_op_step"),
             // kk_property_access removed — PropertyLowering now emits direct accessor
             // calls with synthetic symbols; canThrow is handled via symbol check below.
             ctx.interner.intern("kk_lambda_invoke"),
