@@ -1,42 +1,46 @@
 symbol s0 kind=package fq=golden.sema vis=public flags=_
 symbol s1 kind=package fq=kotlin vis=public flags=synthetic
-symbol s2 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s3 kind=package fq=kotlin.properties vis=public flags=synthetic
-symbol s4 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#4
-symbol s5 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s6 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s7 kind=function fq=golden.sema.tryCatchExpr vis=public flags=_ sig=recv=_ params=[Boolean] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s8 kind=valueParameter fq=golden.sema.tryCatchExpr.$7.flag vis=private flags=_
-symbol s9 kind=function fq=golden.sema.tryMultiCatch vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s10 kind=function fq=golden.sema.tryFinally vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s11 kind=property fq=golden.sema.propTryCatch vis=public flags=_ type=String
-symbol s12 kind=property fq=golden.sema.propTryFinally vis=public flags=_ type=String
-symbol s13 kind=local fq=__try_10_catch_0.e vis=internal flags=_ type=Any
-symbol s14 kind=local fq=__try_17_catch_0.e vis=internal flags=_ type=Any
-symbol s15 kind=local fq=__try_17_catch_1.e vis=internal flags=_ type=Any
+symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
+symbol s4 kind=interface fq=kotlin.properties.ReadWriteProperty vis=public flags=synthetic
+symbol s5 kind=interface fq=kotlin.properties.ReadOnlyProperty vis=public flags=synthetic
+symbol s6 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=_ params=[Any,() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
+symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s11 kind=function fq=golden.sema.tryCatchExpr vis=public flags=_ sig=recv=_ params=[Boolean] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s12 kind=valueParameter fq=golden.sema.tryCatchExpr.$11.flag vis=private flags=_
+symbol s13 kind=function fq=golden.sema.tryMultiCatch vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s14 kind=function fq=golden.sema.tryFinally vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s15 kind=property fq=golden.sema.propTryCatch vis=public flags=_ type=String
+symbol s16 kind=property fq=golden.sema.propTryFinally vis=public flags=_ type=String
+symbol s17 kind=local fq=__try_10_catch_0.e vis=internal flags=_ type=Any
+symbol s18 kind=local fq=__try_17_catch_0.e vis=internal flags=_ type=Any
+symbol s19 kind=local fq=__try_17_catch_1.e vis=internal flags=_ type=Any
 file f0 package=golden.sema
-  decl d0 fun tryCatchExpr suspend=0 inline=0 sym=s7
-  decl d1 fun tryMultiCatch suspend=0 inline=0 sym=s9
-  decl d2 fun tryFinally suspend=0 inline=0 sym=s10
-  decl d3 property propTryCatch var=0 sym=s11
-  decl d4 property propTryFinally var=0 sym=s12
-expr e0 name(flag) type=Boolean ref=s8
+  decl d0 fun tryCatchExpr suspend=0 inline=0 sym=s11
+  decl d1 fun tryMultiCatch suspend=0 inline=0 sym=s13
+  decl d2 fun tryFinally suspend=0 inline=0 sym=s14
+  decl d3 property propTryCatch var=0 sym=s15
+  decl d4 property propTryFinally var=0 sym=s16
+expr e0 name(flag) type=Boolean ref=s12
 expr e1 string(ok) type=String
 expr e2 name(Exception) type=String
-expr e3 string(fail) type=String ref=s11
-expr e4 call callee=e2 args=[_:e3] type=String ref=s12
+expr e3 string(fail) type=String ref=s15
+expr e4 call callee=e2 args=[_:e3] type=String ref=s16
 expr e5 throw value=e4 type=Nothing
 expr e6 if cond=e0 then=e1 else=e5 type=String
 expr e7 blockExpr stmts=[] trailing=e6 type=String
 expr e8 string(error) type=String
-expr e9 blockExpr stmts=[] trailing=e8 type=String ref=s13
+expr e9 blockExpr stmts=[] trailing=e8 type=String ref=s17
 expr e10 try body=e7 catches=[e9] finally=_ type=String
 expr e11 string(ok) type=String
 expr e12 blockExpr stmts=[] trailing=e11 type=String
 expr e13 string(arg) type=String
-expr e14 blockExpr stmts=[] trailing=e13 type=String ref=s14
+expr e14 blockExpr stmts=[] trailing=e13 type=String ref=s18
 expr e15 string(other) type=String
-expr e16 blockExpr stmts=[] trailing=e15 type=String ref=s15
+expr e16 blockExpr stmts=[] trailing=e15 type=String ref=s19
 expr e17 try body=e12 catches=[e14,e16] finally=_ type=String
 expr e18 string(result) type=String
 expr e19 blockExpr stmts=[] trailing=e18 type=String
