@@ -757,8 +757,10 @@ final class ExprLowerer {
                     let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
                     let globalRef = arena.appendExpr(.symbolRef(symbol), type: propType)
                     instructions.append(.constValue(result: globalRef, value: .symbolRef(symbol)))
+                    let loadedValue = arena.appendExpr(.symbolRef(symbol), type: propType)
+                    instructions.append(.loadGlobal(result: loadedValue, symbol: symbol))
                     let resultID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: propType)
-                    instructions.append(.binary(op: kirOp, lhs: globalRef, rhs: rhsID, result: resultID))
+                    instructions.append(.binary(op: kirOp, lhs: loadedValue, rhs: rhsID, result: resultID))
                     instructions.append(.copy(from: resultID, to: globalRef))
                 } else {
                     if let storageID = driver.ctx.localValuesBySymbol[symbol] {
