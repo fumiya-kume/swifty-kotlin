@@ -1,5 +1,5 @@
 fun describe(v: Any): String = when {
-    v is String -> "string(${v.length})"
+    v is String -> "string($v)"
     v is Int -> "int($v)"
     v !is Boolean -> "other"
     else -> "bool"
