@@ -33,13 +33,15 @@ extension TypeSystem {
                 return false
             }
         }
+        // Subtype of intersection: C <: A & B if C <: all parts
+        // (must come before LHS decomposition so that intersection-vs-intersection
+        //  decomposes the RHS first, allowing each part to then match via LHS rule)
+        if case .intersection(let parts) = rhs {
+            return parts.allSatisfy { isSubtype(subtype, $0) }
+        }
         // Intersection as subtype: A & B <: C if any part <: C
         if case .intersection(let parts) = lhs {
             return parts.contains { isSubtype($0, supertype) }
-        }
-        // Subtype of intersection: C <: A & B if C <: all parts
-        if case .intersection(let parts) = rhs {
-            return parts.allSatisfy { isSubtype(subtype, $0) }
         }
         if case .error = lhs {
             return true
