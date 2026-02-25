@@ -590,10 +590,6 @@ final class ExprTypeChecker {
         let stringType = sema.types.stringType
 
         let valueType = driver.inferExpr(valueExpr, ctx: ctx, locals: &locals, expectedType: nil)
-
-        // Resolve target: prefer locals, then fall back to top-level properties.
-        let targetType: TypeID
-        let targetIsMutable: Bool
         if let local = locals[name] {
             sema.bindings.bindIdentifier(id, symbol: local.symbol)
             if !local.isInitialized {
@@ -603,58 +599,97 @@ final class ExprTypeChecker {
                     range: range
                 )
             }
-            targetType = local.type
-            targetIsMutable = local.isMutable
-        } else {
-            let candidates = ctx.cachedScopeLookup(name).compactMap { ctx.cachedSymbol($0) }
-            if let propSymbol = candidates.first(where: { $0.kind == .property || $0.kind == .field }) {
-                sema.bindings.bindIdentifier(id, symbol: propSymbol.id)
-                targetType = sema.symbols.propertyType(for: propSymbol.id) ?? sema.types.anyType
-                targetIsMutable = propSymbol.flags.contains(.mutable)
-            } else {
+            if !local.isMutable {
                 ctx.semaCtx.diagnostics.error(
-                    "KSWIFTK-SEMA-0013",
-                    "Unresolved local variable '\(interner.resolve(name))'.",
+                    "KSWIFTK-SEMA-0014",
+                    "Val cannot be reassigned.",
                     range: range
                 )
-                sema.bindings.bindExprType(id, type: sema.types.errorType)
-                return sema.types.errorType
             }
-        }
-        if !targetIsMutable {
-            ctx.semaCtx.diagnostics.error(
-                "KSWIFTK-SEMA-0014",
-                "Val cannot be reassigned.",
-                range: range
-            )
-        }
-        let underlyingOp = driver.helpers.compoundAssignToBinaryOp(op)
-        let resultType: TypeID
-        switch underlyingOp {
-        case .add:
-            if targetType == stringType || valueType == stringType {
-                resultType = stringType
-            } else if targetType == charType && valueType == intType {
-                resultType = charType
-            } else {
+            let underlyingOp = driver.helpers.compoundAssignToBinaryOp(op)
+            let resultType: TypeID
+            switch underlyingOp {
+            case .add:
+                if local.type == stringType || valueType == stringType {
+                    resultType = stringType
+                } else if local.type == charType && valueType == intType {
+                    resultType = charType
+                } else {
+                    resultType = intType
+                }
+            case .subtract:
+                if local.type == charType && valueType == intType {
+                    resultType = charType
+                } else {
+                    resultType = intType
+                }
+            case .multiply, .divide, .modulo:
                 resultType = intType
+            default:
+                resultType = local.type
             }
-        case .subtract:
-            if targetType == charType && valueType == intType {
-                resultType = charType
-            } else {
-                resultType = intType
-            }
-        case .multiply, .divide, .modulo:
-            resultType = intType
-        default:
-            resultType = targetType
-        }
-        if let local = locals[name] {
             locals[name] = (resultType, local.symbol, local.isMutable, local.isInitialized)
+            sema.bindings.bindExprType(id, type: sema.types.unitType)
+            return sema.types.unitType
         }
-        sema.bindings.bindExprType(id, type: sema.types.unitType)
-        return sema.types.unitType
+
+        // Fall back to top-level property lookup for compound assignments like `counter += 1`
+        // where `counter` is a top-level var.
+        let allCandidateIDs = ctx.cachedScopeLookup(name)
+        let (visibleIDs, _) = ctx.filterByVisibility(allCandidateIDs)
+        let candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
+        // Only match top-level properties, not class member properties.
+        // Top-level properties have no parentSymbol set (nil) or parent is a package.
+        // Class member properties always have parentSymbol set to a class/object/interface.
+        if let propSymbol = candidates.first(where: { sym in
+            guard sym.kind == .property else { return false }
+            guard let parentID = sema.symbols.parentSymbol(for: sym.id),
+                  let parentSym = sema.symbols.symbol(parentID) else { return true }
+            return parentSym.kind == .package
+        }) {
+            sema.bindings.bindIdentifier(id, symbol: propSymbol.id)
+            let propType = sema.symbols.propertyType(for: propSymbol.id) ?? sema.types.anyType
+            if !propSymbol.flags.contains(.mutable) {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0014",
+                    "Val cannot be reassigned.",
+                    range: range
+                )
+            }
+            let underlyingOp = driver.helpers.compoundAssignToBinaryOp(op)
+            let resultType: TypeID
+            switch underlyingOp {
+            case .add:
+                if propType == stringType || valueType == stringType {
+                    resultType = stringType
+                } else if propType == charType && valueType == intType {
+                    resultType = charType
+                } else {
+                    resultType = intType
+                }
+            case .subtract:
+                if propType == charType && valueType == intType {
+                    resultType = charType
+                } else {
+                    resultType = intType
+                }
+            case .multiply, .divide, .modulo:
+                resultType = intType
+            default:
+                resultType = propType
+            }
+            _ = resultType  // top-level property type not updated in locals
+            sema.bindings.bindExprType(id, type: sema.types.unitType)
+            return sema.types.unitType
+        }
+
+        ctx.semaCtx.diagnostics.error(
+            "KSWIFTK-SEMA-0013",
+            "Unresolved local variable '\(interner.resolve(name))'.",
+            range: range
+        )
+        sema.bindings.bindExprType(id, type: sema.types.errorType)
+        return sema.types.errorType
     }
 
     // MARK: - Specific Expression Cases (from +ExprInferCases.swift)

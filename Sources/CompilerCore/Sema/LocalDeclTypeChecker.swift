@@ -108,13 +108,23 @@ final class LocalDeclTypeChecker {
             return sema.types.unitType
         }
 
-        // Fall back to scope lookup for top-level property assignment.
-        let candidates = ctx.cachedScopeLookup(name).compactMap { ctx.cachedSymbol($0) }
-        if let propSymbol = candidates.first(where: { $0.kind == .property || $0.kind == .field }) {
+        // Fall back to top-level property lookup for assignments like `counter = counter + 1`
+        // where `counter` is a top-level var, not a local variable.
+        let allCandidateIDs = ctx.cachedScopeLookup(name)
+        let (visibleIDs, _) = ctx.filterByVisibility(allCandidateIDs)
+        let candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
+        // Only match top-level properties, not class member properties.
+        // Top-level properties have no parentSymbol set (nil) or parent is a package.
+        // Class member properties always have parentSymbol set to a class/object/interface.
+        if let propSymbol = candidates.first(where: { sym in
+            guard sym.kind == .property else { return false }
+            guard let parentID = sema.symbols.parentSymbol(for: sym.id),
+                  let parentSym = sema.symbols.symbol(parentID) else { return true }
+            return parentSym.kind == .package
+        }) {
             sema.bindings.bindIdentifier(id, symbol: propSymbol.id)
             let propType = sema.symbols.propertyType(for: propSymbol.id) ?? sema.types.anyType
-            let isMutable = propSymbol.flags.contains(.mutable)
-            if !isMutable {
+            if !propSymbol.flags.contains(.mutable) {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0014",
                     "Val cannot be reassigned.",
