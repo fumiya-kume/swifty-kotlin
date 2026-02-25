@@ -144,12 +144,12 @@ extension BuildASTPhase.ExpressionParser {
                 _ = consumeIf(.keyword(.in))
                 guard let iterable = parseExpression(minPrecedence: 0) else {
                     index = savedIndex
-                    return parseForExpressionFallback(forToken: forToken)
+                    return parseForExpressionFallback(forToken: forToken, label: label, start: start)
                 }
                 _ = consumeIf(.symbol(.rParen))
                 guard let body = parseExpression(minPrecedence: 0) else {
                     index = savedIndex
-                    return parseForExpressionFallback(forToken: forToken)
+                    return parseForExpressionFallback(forToken: forToken, label: label, start: start)
                 }
                 let end = astArena.exprRange(body)?.end ?? forToken.range.end
                 let range = SourceRange(start: forToken.range.start, end: end)
@@ -164,10 +164,10 @@ extension BuildASTPhase.ExpressionParser {
             }
         }
 
-        return parseForExpressionFallback(forToken: forToken)
+        return parseForExpressionFallback(forToken: forToken, label: label, start: start)
     }
 
-    private func parseForExpressionFallback(forToken: Token) -> ExprID? {
+    private func parseForExpressionFallback(forToken: Token, label: InternedString? = nil, start: SourceLocation? = nil) -> ExprID? {
         var loopVariable: InternedString?
         if let token = current(),
            token.kind != .keyword(.in),

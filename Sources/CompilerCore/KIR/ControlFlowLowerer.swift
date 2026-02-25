@@ -670,7 +670,7 @@ final class ControlFlowLowerer {
             }
         }
 
-        driver.ctx.loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel))
+        driver.ctx.loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel, name: nil))
         _ = driver.lowerExpr(
             bodyExpr,
             ast: ast,
