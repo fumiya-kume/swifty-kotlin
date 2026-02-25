@@ -188,7 +188,10 @@ run_case() {
     cp "$kt_file" "$kts_tmp"
     local script_exit=0
     "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$KOTLINC" -script "$kts_tmp" >"$ref_run_stdout" 2>"$ref_run_stderr" || script_exit=$?
-    if [[ $script_exit -ne 0 ]] && [[ ! -s "$ref_run_stdout" ]]; then
+    if [[ $script_exit -eq 124 ]]; then
+      # Timeout in script mode is a runtime timeout, not a compile timeout
+      ref_run_exit=124
+    elif [[ $script_exit -ne 0 ]] && [[ ! -s "$ref_run_stdout" ]]; then
       ref_compile_exit=$script_exit
     else
       ref_run_exit=$script_exit
