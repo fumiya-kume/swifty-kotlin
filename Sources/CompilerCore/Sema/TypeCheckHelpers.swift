@@ -180,7 +180,7 @@ struct TypeCheckHelpers {
                 return builtin
             }
             do {
-                let candidates = sema.symbols.lookupAll(fqName: [firstName]).filter { symbolID in
+                let fqCandidates = sema.symbols.lookupAll(fqName: [firstName]).filter { symbolID in
                     guard let sym = sema.symbols.symbol(symbolID) else { return false }
                     switch sym.kind {
                     case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
@@ -189,6 +189,23 @@ struct TypeCheckHelpers {
                         return false
                     }
                 }.sorted(by: { $0.rawValue < $1.rawValue })
+                // Fall back to short-name lookup so that packaged types
+                // (e.g. `package test; class Foo`) resolve when referenced
+                // by simple name (`Foo`) during type checking.
+                let candidates: [SymbolID]
+                if !fqCandidates.isEmpty {
+                    candidates = fqCandidates
+                } else {
+                    candidates = sema.symbols.lookupByShortName(firstName).filter { symbolID in
+                        guard let sym = sema.symbols.symbol(symbolID) else { return false }
+                        switch sym.kind {
+                        case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
+                            return true
+                        default:
+                            return false
+                        }
+                    }.sorted(by: { $0.rawValue < $1.rawValue })
+                }
                 if let symbolID = candidates.first {
                     let resolvedArgs = resolveTypeArgRefsForTypeCheck(
                         argRefs, ast: ast, sema: sema, interner: interner,
