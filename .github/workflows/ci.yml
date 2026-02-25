@@ -7,10 +7,6 @@ on:
 permissions:
   contents: read
 
-env:
-  HOMEBREW_NO_AUTO_UPDATE: 1
-  HOMEBREW_NO_INSTALL_CLEANUP: 1
-
 jobs:
   jscpd-check:
     name: Duplicate Code Detection
@@ -28,14 +24,16 @@ jobs:
 
   smoke-tests:
     name: Smoke Tests
-    runs-on: macos-15
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install Swift
+        uses: swift-actions/setup-swift@v2
       - name: Install LLVM
-        run: brew install llvm
+        run: sudo apt-get update && sudo apt-get install -y llvm-dev
       - name: Configure LLVM paths
         run: |
-          LLVM_PREFIX="$(brew --prefix llvm)"
+          LLVM_PREFIX="$(llvm-config --prefix)"
           echo "C_INCLUDE_PATH=${LLVM_PREFIX}/include" >> "$GITHUB_ENV"
           echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
       - name: Show toolchain versions
@@ -45,16 +43,20 @@ jobs:
 
   diff-regression:
     name: kotlinc Diff Regression
-    runs-on: macos-15
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: brew install llvm kotlin
+      - name: Install Swift
+        uses: swift-actions/setup-swift@v2
+      - name: Install LLVM
+        run: sudo apt-get update && sudo apt-get install -y llvm-dev
       - name: Configure LLVM paths
         run: |
-          LLVM_PREFIX="$(brew --prefix llvm)"
+          LLVM_PREFIX="$(llvm-config --prefix)"
           echo "C_INCLUDE_PATH=${LLVM_PREFIX}/include" >> "$GITHUB_ENV"
           echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
+      - name: Install Kotlin and Java
+        run: sudo apt-get install -y kotlin default-jdk
       - name: Verify prerequisites
         run: |
           java -version
@@ -80,17 +82,19 @@ jobs:
 
   test-and-coverage:
     name: Test and Coverage Gate
-    runs-on: macos-15
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
-      - name: Install LLVM
-        run: brew install llvm
+      - name: Install Swift
+        uses: swift-actions/setup-swift@v2
+      - name: Install LLVM and jq
+        run: sudo apt-get update && sudo apt-get install -y llvm-dev jq
       - name: Configure LLVM paths
         run: |
-          LLVM_PREFIX="$(brew --prefix llvm)"
+          LLVM_PREFIX="$(llvm-config --prefix)"
           echo "C_INCLUDE_PATH=${LLVM_PREFIX}/include" >> "$GITHUB_ENV"
           echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
       - name: Verify prerequisites

@@ -1133,4 +1133,30 @@ final class DataFlowAndSemaCoverageTests: XCTestCase {
         }
     }
 
+    // MARK: - ExprInference: is check with erased generic type emits warning
+
+    func testIsCheckWithErasedGenericTypeEmitsWarning() throws {
+        let source = """
+        fun f(x: Any): Boolean = x is List<String>
+        fun main(): Int = 0
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertHasDiagnostic("KSWIFTK-SEMA-0080", in: ctx)
+        }
+    }
+
+    func testIsCheckWithStarProjectionDoesNotEmitErasureWarning() throws {
+        let source = """
+        fun f(x: Any): Boolean = x is List<*>
+        fun main(): Int = 0
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0080", in: ctx)
+        }
+    }
+
 }

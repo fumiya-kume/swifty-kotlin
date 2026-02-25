@@ -147,8 +147,106 @@ final class KIRLoweringDriver {
                             for propDeclID in classDecl.memberProperties {
                                 guard let propDecl = ast.arena.decl(propDeclID),
                                       case .propertyDecl(let prop) = propDecl,
-                                      let propSymbol = sema.bindings.declSymbols[propDeclID],
-                                      let initExpr = prop.initializer else {
+                                      let propSymbol = sema.bindings.declSymbols[propDeclID] else {
+                                    continue
+                                }
+
+                                // Handle delegated property initialisation:
+                                // lower the delegate expression and store it in
+                                // the $delegate_ storage field.  If the delegate
+                                // type exposes a `provideDelegate` operator, wrap
+                                // the initial value in a provideDelegate call;
+                                // otherwise store the delegate value directly.
+                                if let delegateExpr = prop.delegateExpression {
+                                    let delegateStorageSym = sema.symbols.delegateStorageSymbol(for: propSymbol)
+                                    let delegateValue = lowerExpr(
+                                        delegateExpr,
+                                        ast: ast,
+                                        sema: sema,
+                                        arena: arena,
+                                        interner: compilationCtx.interner,
+                                        propertyConstantInitializers: propertyConstantInitializers,
+                                        instructions: &body
+                                    )
+
+                                    // Check whether the delegate type defines a
+                                    // provideDelegate operator.  Only emit the call
+                                    // when it is actually available; otherwise store
+                                    // the raw delegate value directly.
+                                    let delegateExprType = sema.bindings.exprType(for: delegateExpr)
+                                    let provideDelegateName = compilationCtx.interner.intern("provideDelegate")
+                                    let hasProvideDelegate: Bool = {
+                                        guard let delegateType = delegateExprType else { return false }
+                                        // Look up provideDelegate on the delegate's nominal type.
+                                        let typeKind = sema.types.kind(of: delegateType)
+                                        switch typeKind {
+                                        case .classType(let ct):
+                                            guard let sym = sema.symbols.symbol(ct.classSymbol) else { return false }
+                                            let memberSymbols = sema.symbols.children(ofFQName: sym.fqName)
+                                            return memberSymbols.contains { memberID in
+                                                guard let member = sema.symbols.symbol(memberID) else { return false }
+                                                return member.name == provideDelegateName
+                                                    && member.kind == .function
+                                            }
+                                        default:
+                                            return false
+                                        }
+                                    }()
+
+                                    let valueToStore: KIRExprID
+                                    if hasProvideDelegate, let storageSym = delegateStorageSym {
+                                        // First, store the raw delegate value so we
+                                        // have a receiver for the method call.
+                                        let delegateType = sema.types.anyType
+                                        let tempFieldRef = arena.appendExpr(.symbolRef(storageSym), type: delegateType)
+                                        body.append(.copy(from: delegateValue, to: tempFieldRef))
+
+                                        let propertyName = sema.symbols.symbol(propSymbol)?.name ?? compilationCtx.interner.intern("")
+                                        let thisRefExprID: KIRExprID
+                                        if let receiver = ctx.currentImplicitReceiverExprID {
+                                            thisRefExprID = receiver
+                                        } else {
+                                            thisRefExprID = arena.appendExpr(.null, type: sema.types.nullableAnyType)
+                                            body.append(.constValue(result: thisRefExprID, value: .null))
+                                        }
+                                        let kPropertyExprID = arena.appendExpr(
+                                            .stringLiteral(propertyName),
+                                            type: sema.types.make(.primitive(.string, .nonNull))
+                                        )
+                                        body.append(.constValue(result: kPropertyExprID, value: .stringLiteral(propertyName)))
+                                        let provideDelegateResult = arena.appendExpr(
+                                            .temporary(Int32(arena.expressions.count)),
+                                            type: sema.types.anyType
+                                        )
+                                        // Emit as method call on the delegate storage
+                                        // (2 args: thisRef, kProperty) matching Kotlin's
+                                        // delegate.provideDelegate(thisRef, property).
+                                        body.append(
+                                            .call(
+                                                symbol: storageSym,
+                                                callee: provideDelegateName,
+                                                arguments: [thisRefExprID, kPropertyExprID],
+                                                result: provideDelegateResult,
+                                                canThrow: false,
+                                                thrownResult: nil
+                                            )
+                                        )
+                                        valueToStore = provideDelegateResult
+                                    } else {
+                                        // No provideDelegate — store the delegate
+                                        // expression value directly.
+                                        valueToStore = delegateValue
+                                    }
+
+                                    if let storageSym = delegateStorageSym {
+                                        let delegateType = sema.types.anyType
+                                        let fieldRef = arena.appendExpr(.symbolRef(storageSym), type: delegateType)
+                                        body.append(.copy(from: valueToStore, to: fieldRef))
+                                    }
+                                    continue
+                                }
+
+                                guard let initExpr = prop.initializer else {
                                     continue
                                 }
                                 let targetSymbol = sema.symbols.backingFieldSymbol(for: propSymbol) ?? propSymbol
@@ -468,7 +566,8 @@ final class KIRLoweringDriver {
                                 returnType: returnType,
                                 body: body,
                                 isSuspend: function.isSuspend,
-                                isInline: function.isInline
+                                isInline: function.isInline,
+                                sourceRange: function.range
                             )
                         )
                     )
@@ -759,6 +858,36 @@ final class KIRLoweringDriver {
                             ))
                             // Copy into delegateHandleExpr — the LLVM backend creates an alloca for copy targets.
                             initInstructions.append(.copy(from: createResult, to: delegateHandleExpr))
+
+                        case .custom:
+                            // Custom delegate: lower the full delegate expression as the
+                            // delegate object and store it directly. The runtime's
+                            // getValue/setValue will be called through
+                            // kk_property_access at use-sites.
+                            let delegateObjExpr = lowerExpr(
+                                propertyDecl.delegateExpression!,
+                                ast: ast,
+                                sema: sema,
+                                arena: arena,
+                                interner: interner,
+                                propertyConstantInitializers: propertyConstantInitializers,
+                                instructions: &initInstructions
+                            )
+                            // Emit kk_custom_delegate_create(delegateObj) to wrap the
+                            // delegate into the standard handle format.
+                            let createResult = arena.appendExpr(
+                                .temporary(Int32(arena.expressions.count)), type: delegateType
+                            )
+                            let customCreateName = interner.intern("kk_custom_delegate_create")
+                            initInstructions.append(.call(
+                                symbol: nil,
+                                callee: customCreateName,
+                                arguments: [delegateObjExpr],
+                                result: createResult,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            initInstructions.append(.copy(from: createResult, to: delegateHandleExpr))
                         }
 
                         allTopLevelInitInstructions.append(contentsOf: initInstructions)
@@ -785,6 +914,7 @@ final class KIRLoweringDriver {
             let lazyGetValueName = interner.intern("kk_lazy_get_value")
             let observableGetValueName = interner.intern("kk_observable_get_value")
             let vetoableGetValueName = interner.intern("kk_vetoable_get_value")
+            let customGetValueName = interner.intern("kk_custom_delegate_get_value")
 
             // Build a reverse lookup: property symbol → delegate kind for getValue rewriting.
             var delegateKindByPropertySymbol: [SymbolID: StdlibDelegateKind] = [:]
@@ -843,8 +973,10 @@ final class KIRLoweringDriver {
                                 getValueName = observableGetValueName
                             case .vetoable:
                                 getValueName = vetoableGetValueName
+                            case .custom:
+                                getValueName = customGetValueName
                             case nil:
-                                getValueName = lazyGetValueName
+                                getValueName = customGetValueName
                             }
                             rewrittenBody.append(
                                 .call(
@@ -880,13 +1012,13 @@ final class KIRLoweringDriver {
     ) -> StdlibDelegateKind {
         guard let exprID = delegateExpr,
               let expr = ast.arena.expr(exprID) else {
-            return .lazy
+            return .custom
         }
         switch expr {
         case .nameRef(let name, _):
             let resolved = interner.resolve(name)
             if resolved == "lazy" { return .lazy }
-            return .lazy
+            return .custom
         case .call(let callee, _, _, _):
             // call(callee: memberCall(...) or nameRef(...))
             if let calleeExpr = ast.arena.expr(callee) {
@@ -906,9 +1038,9 @@ final class KIRLoweringDriver {
             let resolved = interner.resolve(callee)
             if resolved == "observable" { return .observable }
             if resolved == "vetoable" { return .vetoable }
-            return .lazy
+            return .custom
         default:
-            return .lazy
+            return .custom
         }
     }
 
@@ -917,7 +1049,7 @@ final class KIRLoweringDriver {
         ast: ASTModule,
         interner: StringInterner
     ) -> StdlibDelegateKind {
-        guard let expr = ast.arena.expr(callee) else { return .lazy }
+        guard let expr = ast.arena.expr(callee) else { return .custom }
         // memberAccess: Delegates.observable → memberCall with receiver
         // In the expression parser, `Delegates.observable("initial")` may be parsed as
         // call(callee: memberAccess(...), args: [...])
@@ -934,7 +1066,7 @@ final class KIRLoweringDriver {
         default:
             break
         }
-        return .lazy
+        return .custom
     }
 
     /// Creates a lambda function from the delegate body and returns a KIR expression

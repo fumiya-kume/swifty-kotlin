@@ -73,35 +73,35 @@ expr e15 name(a) type=_
 expr e16 int(10) type=Int
 expr e17 compoundAssign(plusAssign) name=a value=e16 type=Unit ref=s36
 expr e18 name(a) type=Int ref=s36
-expr e19 return value=e18 type=Int
+expr e19 return value=e18 type=Nothing
 expr e20 name(x) type=Int ref=s26
 expr e21 localDecl b mutable=1 type=_ init=e20 type=Unit ref=s37
 expr e22 name(b) type=_
 expr e23 int(5) type=Int
 expr e24 compoundAssign(minusAssign) name=b value=e23 type=Unit ref=s37
 expr e25 name(b) type=Int ref=s37
-expr e26 return value=e25 type=Int
+expr e26 return value=e25 type=Nothing
 expr e27 name(x) type=Int ref=s28
 expr e28 localDecl c mutable=1 type=_ init=e27 type=Unit ref=s38
 expr e29 name(c) type=_
 expr e30 int(2) type=Int
 expr e31 compoundAssign(timesAssign) name=c value=e30 type=Unit ref=s38
 expr e32 name(c) type=Int ref=s38
-expr e33 return value=e32 type=Int
+expr e33 return value=e32 type=Nothing
 expr e34 name(x) type=Int ref=s30
 expr e35 localDecl d mutable=1 type=_ init=e34 type=Unit ref=s39
 expr e36 name(d) type=_
 expr e37 int(3) type=Int
 expr e38 compoundAssign(divAssign) name=d value=e37 type=Unit ref=s39
 expr e39 name(d) type=Int ref=s39
-expr e40 return value=e39 type=Int
+expr e40 return value=e39 type=Nothing
 expr e41 name(x) type=Int ref=s32
 expr e42 localDecl e mutable=1 type=_ init=e41 type=Unit ref=s40
 expr e43 name(e) type=_
 expr e44 int(4) type=Int
 expr e45 compoundAssign(modAssign) name=e value=e44 type=Unit ref=s40
 expr e46 name(e) type=Int ref=s40
-expr e47 return value=e46 type=Int
+expr e47 return value=e46 type=Nothing
 expr e48 name(s) type=String? ref=s34
 expr e49 safeMemberCall recv=e48 callee=hashCode args=[] type=Any?
 expr e50 name(IntArray) type=_
@@ -116,4 +116,4 @@ expr e58 indexedAssign receiver=e54 indices=[e55] value=e57 type=Unit
 expr e59 name(arr) type=Any ref=s41
 expr e60 int(0) type=Int
 expr e61 indexedAccess receiver=e59 indices=[e60] type=Any
-expr e62 return value=e61 type=Any
+expr e62 return value=e61 type=Nothing

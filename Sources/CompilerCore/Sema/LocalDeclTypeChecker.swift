@@ -62,6 +62,13 @@ final class LocalDeclTypeChecker {
         )
         locals[name] = (localType, localSymbol, isMutable, initializer != nil)
         sema.bindings.bindIdentifier(id, symbol: localSymbol)
+        // Propagate collection marks through local variable declarations
+        // so that `val list = listOf(1,2,3); list.size` still recognizes
+        // `list` as a collection receiver (P5-84).
+        if let initializer, sema.bindings.isCollectionExpr(initializer) {
+            sema.bindings.markCollectionExpr(id)
+            sema.bindings.markCollectionSymbol(localSymbol)
+        }
         sema.bindings.bindExprType(id, type: sema.types.unitType)
         return sema.types.unitType
     }
