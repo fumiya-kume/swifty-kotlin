@@ -165,6 +165,48 @@ final class LLVMCAPIBindings {
     internal typealias LLVMDIBuilderCreateDebugLocationFn = @convention(c) (
         LLVMContextRef?, UInt32, UInt32, LLVMMetadataRef?, LLVMMetadataRef?
     ) -> LLVMMetadataRef?
+    internal typealias LLVMDIBuilderCreateBasicTypeFn = @convention(c) (
+        LLVMDIBuilderRef?,
+        UnsafePointer<CChar>?, Int,
+        UInt64, UInt32, UInt32
+    ) -> LLVMMetadataRef?
+    // LLVMDIBuilderCreateParameterVariable(
+    //   Builder, Scope, Name, NameLen, ArgNo, File, LineNo, Ty,
+    //   AlwaysPreserve, Flags)
+    internal typealias LLVMDIBuilderCreateParameterVariableFn = @convention(c) (
+        LLVMDIBuilderRef?,
+        LLVMMetadataRef?,
+        UnsafePointer<CChar>?, Int,
+        UInt32,
+        LLVMMetadataRef?,
+        UInt32,
+        LLVMMetadataRef?,
+        Int32, UInt32
+    ) -> LLVMMetadataRef?
+    // LLVMDIBuilderCreateAutoVariable(
+    //   Builder, Scope, Name, NameLen, File, LineNo, Ty,
+    //   AlwaysPreserve, Flags, AlignInBits)
+    internal typealias LLVMDIBuilderCreateAutoVariableFn = @convention(c) (
+        LLVMDIBuilderRef?,
+        LLVMMetadataRef?,
+        UnsafePointer<CChar>?, Int,
+        LLVMMetadataRef?,
+        UInt32,
+        LLVMMetadataRef?,
+        Int32, UInt32, UInt32
+    ) -> LLVMMetadataRef?
+    internal typealias LLVMDIBuilderInsertDeclareAtEndFn = @convention(c) (
+        LLVMDIBuilderRef?,
+        LLVMValueRef?,
+        LLVMMetadataRef?,
+        LLVMMetadataRef?,
+        LLVMMetadataRef?,
+        LLVMBasicBlockRef?
+    ) -> LLVMValueRef?
+    internal typealias LLVMDIBuilderCreateExpressionFn = @convention(c) (
+        LLVMDIBuilderRef?,
+        UnsafeMutablePointer<UInt64>?, Int
+    ) -> LLVMMetadataRef?
 
     private let handle: UnsafeMutableRawPointer
     internal let contextCreateFn: LLVMContextCreateFn
@@ -246,6 +288,11 @@ final class LLVMCAPIBindings {
     internal let int32TypeFn: LLVMInt32TypeInContextFn?
     internal let setCurrentDebugLocation2Fn: LLVMSetCurrentDebugLocation2Fn?
     internal let diBuilderCreateDebugLocationFn: LLVMDIBuilderCreateDebugLocationFn?
+    internal let diBuilderCreateBasicTypeFn: LLVMDIBuilderCreateBasicTypeFn?
+    internal let diBuilderCreateParameterVariableFn: LLVMDIBuilderCreateParameterVariableFn?
+    internal let diBuilderCreateAutoVariableFn: LLVMDIBuilderCreateAutoVariableFn?
+    internal let diBuilderInsertDeclareAtEndFn: LLVMDIBuilderInsertDeclareAtEndFn?
+    internal let diBuilderCreateExpressionFn: LLVMDIBuilderCreateExpressionFn?
 
     internal init(
         handle: UnsafeMutableRawPointer,
@@ -327,7 +374,12 @@ final class LLVMCAPIBindings {
         valueAsMetadataFn: LLVMValueAsMetadataFn?,
         int32TypeFn: LLVMInt32TypeInContextFn?,
         setCurrentDebugLocation2Fn: LLVMSetCurrentDebugLocation2Fn? = nil,
-        diBuilderCreateDebugLocationFn: LLVMDIBuilderCreateDebugLocationFn? = nil
+        diBuilderCreateDebugLocationFn: LLVMDIBuilderCreateDebugLocationFn? = nil,
+        diBuilderCreateBasicTypeFn: LLVMDIBuilderCreateBasicTypeFn? = nil,
+        diBuilderCreateParameterVariableFn: LLVMDIBuilderCreateParameterVariableFn? = nil,
+        diBuilderCreateAutoVariableFn: LLVMDIBuilderCreateAutoVariableFn? = nil,
+        diBuilderInsertDeclareAtEndFn: LLVMDIBuilderInsertDeclareAtEndFn? = nil,
+        diBuilderCreateExpressionFn: LLVMDIBuilderCreateExpressionFn? = nil
     ) {
         self.handle = handle
         self.contextCreateFn = contextCreateFn
@@ -409,6 +461,11 @@ final class LLVMCAPIBindings {
         self.int32TypeFn = int32TypeFn
         self.setCurrentDebugLocation2Fn = setCurrentDebugLocation2Fn
         self.diBuilderCreateDebugLocationFn = diBuilderCreateDebugLocationFn
+        self.diBuilderCreateBasicTypeFn = diBuilderCreateBasicTypeFn
+        self.diBuilderCreateParameterVariableFn = diBuilderCreateParameterVariableFn
+        self.diBuilderCreateAutoVariableFn = diBuilderCreateAutoVariableFn
+        self.diBuilderInsertDeclareAtEndFn = diBuilderInsertDeclareAtEndFn
+        self.diBuilderCreateExpressionFn = diBuilderCreateExpressionFn
     }
 
     deinit {

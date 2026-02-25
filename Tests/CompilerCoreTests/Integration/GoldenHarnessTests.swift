@@ -394,6 +394,12 @@ final class GoldenHarnessTests: XCTestCase {
             return "inExpr lhs=e\(lhs.rawValue) rhs=e\(rhs.rawValue)"
         case .notInExpr(let lhs, let rhs, _):
             return "notInExpr lhs=e\(lhs.rawValue) rhs=e\(rhs.rawValue)"
+        case .destructuringDecl(let names, let isMutable, let initializer, _):
+            let renderedNames = names.map { $0.map { interner.resolve($0) } ?? "_" }.joined(separator: ",")
+            return "destructuringDecl names=[\(renderedNames)] mutable=\(isMutable ? 1 : 0) init=e\(initializer.rawValue)"
+        case .forDestructuringExpr(let names, let iterable, let body, _):
+            let renderedNames = names.map { $0.map { interner.resolve($0) } ?? "_" }.joined(separator: ",")
+            return "forDestructuring names=[\(renderedNames)] iterable=e\(iterable.rawValue) body=e\(body.rawValue)"
         }
     }
 
@@ -428,6 +434,7 @@ final class GoldenHarnessTests: XCTestCase {
         if flags.contains(.innerClass) { names.append("innerClass") }
         if flags.contains(.valueType) { names.append("valueType") }
         if flags.contains(.operatorFunction) { names.append("operatorFunction") }
+        if flags.contains(.constValue) { names.append("constValue") }
         return names.joined(separator: "|")
     }
 
