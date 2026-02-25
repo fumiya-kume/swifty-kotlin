@@ -44,7 +44,7 @@ expr e4 int(42) type=Int
 expr e5 memberCall recv=e3 callee=set args=[_:e4] type=<error>
 expr e6 name(box) type=Class#11<in Int> ref=s22
 expr e7 int(42) type=Int
-expr e8 memberCall recv=e6 callee=set args=[_:e7] type=Unit call=s15 map=[0->0] targs=[Int]
+expr e8 memberCall recv=e6 callee=set args=[_:e7] type=Unit call=s15 map=[0->0] targs=[Any?]
 expr e9 name(box) type=Class#11<*> ref=s24
 expr e10 memberCall recv=e9 callee=get args=[] type=Any? call=s14 map=[] targs=[Any?]
 expr e11 name(box) type=Class#11<*> ref=s26

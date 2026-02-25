@@ -90,7 +90,7 @@ extension TypeSystem {
     ///
     /// Given a receiver like `MutableList<out Number>`, this builds:
     /// - Covariant substitution: T → Number (for return types)
-    /// - Contravariant substitution: T → Nothing (for parameter types)
+    /// - A set of type parameter symbols that are write-forbidden (`out` or `*` projections)
     ///
     /// Returns `nil` if the receiver has no projected type arguments (all invariant).
     public func buildVarianceProjectionSubstitutions(

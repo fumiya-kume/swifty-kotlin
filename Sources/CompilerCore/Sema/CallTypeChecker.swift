@@ -548,7 +548,7 @@ final class CallTypeChecker {
                 id,
                 binding: CallBinding(
                     chosenCallee: chosen,
-                    substitutedTypeArguments: resolved.substitutedTypeArguments
+                    substitutedTypeArguments: mergedSubstitution
                         .sorted(by: { $0.key.rawValue < $1.key.rawValue })
                         .map(\.value),
                     parameterMapping: resolved.parameterMapping
