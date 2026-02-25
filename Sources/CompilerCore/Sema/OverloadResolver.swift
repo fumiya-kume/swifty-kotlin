@@ -950,11 +950,7 @@ public final class OverloadResolver {
     ) -> ViableCandidate? {
         let winners = candidates.filter { candidate in
             for other in candidates where other.symbol != candidate.symbol {
-                if !isMoreSpecific(
-                    candidate.instantiatedParameterTypes,
-                    than: other.instantiatedParameterTypes,
-                    typeSystem: typeSystem
-                ) {
+                if !isMoreSpecificCandidate(candidate, than: other, typeSystem: typeSystem) {
                     return false
                 }
             }
@@ -964,6 +960,34 @@ public final class OverloadResolver {
             return winners[0]
         }
         return nil
+    }
+
+    /// Returns true if `lhs` is at least as specific as `rhs`.
+    /// First compares parameter types; if they are equivalent, falls back to
+    /// receiver type: the more-derived receiver (override) wins over the base.
+    private func isMoreSpecificCandidate(
+        _ lhs: ViableCandidate,
+        than rhs: ViableCandidate,
+        typeSystem: TypeSystem
+    ) -> Bool {
+        if isMoreSpecific(lhs.instantiatedParameterTypes, than: rhs.instantiatedParameterTypes, typeSystem: typeSystem) {
+            return true
+        }
+        // If parameter types are not strictly more specific, check whether they
+        // are pairwise equivalent and the receiver type is a subtype (override
+        // wins over the base class/interface default method).
+        guard lhs.instantiatedParameterTypes.count == rhs.instantiatedParameterTypes.count else {
+            return false
+        }
+        let paramsEqual = zip(lhs.instantiatedParameterTypes, rhs.instantiatedParameterTypes).allSatisfy {
+            typeSystem.isSubtype($0, $1) && typeSystem.isSubtype($1, $0)
+        }
+        guard paramsEqual,
+              let lhsReceiver = lhs.signature.receiverType,
+              let rhsReceiver = rhs.signature.receiverType else {
+            return false
+        }
+        return typeSystem.isSubtype(lhsReceiver, rhsReceiver)
     }
 
     private func isMoreSpecific(

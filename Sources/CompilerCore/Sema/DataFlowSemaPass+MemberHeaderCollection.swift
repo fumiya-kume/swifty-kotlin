@@ -35,7 +35,11 @@ extension DataFlowSemaPassPhase {
                 symbols: symbols,
                 diagnostics: diagnostics
             )
-            let memberFlags = flags(from: funDecl.modifiers)
+            var memberFlags = flags(from: funDecl.modifiers)
+            // Kotlin: interface functions without a body are implicitly abstract.
+            if symbols.symbol(ownerSymbol)?.kind == .interface, funDecl.body == .unit {
+                memberFlags.insert(.abstractType)
+            }
             let memberSymbol = symbols.define(
                 kind: .function,
                 name: funDecl.name,
