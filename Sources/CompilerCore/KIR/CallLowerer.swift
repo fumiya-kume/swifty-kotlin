@@ -239,6 +239,19 @@ final class CallLowerer {
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
         let boundType = sema.bindings.exprTypes[exprID]
+
+        // const val member property folding (P5-109): check before lowering
+        // receiver so no dead instructions are emitted.
+        if args.isEmpty {
+            let callBinding = sema.bindings.callBindings[exprID]
+            if let chosen = callBinding?.chosenCallee,
+               let constant = propertyConstantInitializers[chosen] {
+                let id = arena.appendExpr(constant, type: boundType ?? sema.types.anyType)
+                instructions.append(.constValue(result: id, value: constant))
+                return id
+            }
+        }
+
         let loweredReceiverID = driver.lowerExpr(
             receiverExpr,
             ast: ast,
@@ -260,19 +273,6 @@ final class CallLowerer {
             )
         }
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
-
-        // const val member property folding (P5-109): if the resolved callee
-        // is a const val property, replace the member access with its constant
-        // value instead of emitting a getter call.
-        if args.isEmpty {
-            let callBinding = sema.bindings.callBindings[exprID]
-            if let chosen = callBinding?.chosenCallee,
-               let constant = propertyConstantInitializers[chosen] {
-                let id = arena.appendExpr(constant, type: boundType ?? sema.types.anyType)
-                instructions.append(.constValue(result: id, value: constant))
-                return id
-            }
-        }
 
         // Primitive member function: Int/Long.inv() → kk_op_inv (P5-103)
         let intType = sema.types.make(.primitive(.int, .nonNull))
@@ -434,6 +434,27 @@ final class CallLowerer {
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
         let boundType = sema.bindings.exprTypes[exprID]
+
+        // const val member property folding (P5-109): check before lowering
+        // receiver so no dead instructions are emitted.
+        // Only fold when the receiver is statically non-nullable.
+        // For nullable receivers, safe-call semantics (`receiver?.const`)
+        // require the result to be null if the receiver is null, so we
+        // must not replace the whole expression with the constant value.
+        if args.isEmpty {
+            let callBinding = sema.bindings.callBindings[exprID]
+            if let chosen = callBinding?.chosenCallee,
+               let constant = propertyConstantInitializers[chosen] {
+                let receiverType = sema.bindings.exprTypes[receiverExpr]
+                if let receiverType,
+                   receiverType == sema.types.makeNonNullable(receiverType) {
+                    let id = arena.appendExpr(constant, type: boundType ?? sema.types.anyType)
+                    instructions.append(.constValue(result: id, value: constant))
+                    return id
+                }
+            }
+        }
+
         let loweredReceiverID = driver.lowerExpr(
             receiverExpr,
             ast: ast,
@@ -455,26 +476,6 @@ final class CallLowerer {
             )
         }
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
-
-        // const val member property folding (P5-109): fold safe member access
-        // to a const val property into its constant value.
-        // Only fold when the receiver is statically non-nullable.
-        // For nullable receivers, safe-call semantics (`receiver?.const`)
-        // require the result to be null if the receiver is null, so we
-        // must not replace the whole expression with the constant value.
-        if args.isEmpty {
-            let callBinding = sema.bindings.callBindings[exprID]
-            if let chosen = callBinding?.chosenCallee,
-               let constant = propertyConstantInitializers[chosen] {
-                let receiverType = sema.bindings.exprTypes[receiverExpr]
-                if let receiverType,
-                   receiverType == sema.types.makeNonNullable(receiverType) {
-                    let id = arena.appendExpr(constant, type: boundType ?? sema.types.anyType)
-                    instructions.append(.constValue(result: id, value: constant))
-                    return id
-                }
-            }
-        }
 
         // Primitive member function: Int/Long.inv() → kk_op_inv (P5-103)
         if interner.resolve(calleeName) == "inv",
