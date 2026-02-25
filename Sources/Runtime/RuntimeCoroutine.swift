@@ -88,7 +88,19 @@ internal final class RuntimeAsyncTask {
     /// Set to true when user code consumes this handle's passRetained
     /// (via kk_kxmini_async_await or kk_job_join). Checked by scope's waitForChildren
     /// to avoid double-releasing the original passRetained.
-    var isConsumedByUserCode = false
+    private var isConsumedByUserCode = false
+
+    func markConsumedByUserCode() {
+        lock.lock()
+        isConsumedByUserCode = true
+        lock.unlock()
+    }
+
+    func consumedByUserCodeSnapshot() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return isConsumedByUserCode
+    }
 
     func complete(with result: Int) {
         lock.lock()
@@ -146,7 +158,19 @@ internal final class RuntimeJobHandle {
     /// Set to true when user code consumes this handle's passRetained
     /// (via kk_job_join). Checked by scope's waitForChildren
     /// to avoid double-releasing the original passRetained.
-    var isConsumedByUserCode = false
+    private var isConsumedByUserCode = false
+
+    func markConsumedByUserCode() {
+        lock.lock()
+        isConsumedByUserCode = true
+        lock.unlock()
+    }
+
+    func consumedByUserCodeSnapshot() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return isConsumedByUserCode
+    }
 
     func complete(with value: Int) {
         lock.lock()
@@ -254,9 +278,9 @@ internal final class RuntimeCoroutineScope {
                 let consumed: Bool
                 let obj = Unmanaged<AnyObject>.fromOpaque(ptr).takeUnretainedValue()
                 if let job = obj as? RuntimeJobHandle {
-                    consumed = job.isConsumedByUserCode
+                    consumed = job.consumedByUserCodeSnapshot()
                 } else if let task = obj as? RuntimeAsyncTask {
-                    consumed = task.isConsumedByUserCode
+                    consumed = task.consumedByUserCodeSnapshot()
                 } else {
                     consumed = false
                 }
@@ -485,7 +509,7 @@ public func kk_kxmini_async_await(_ handle: Int) -> Int {
     // Mark on the handle object itself that user code is consuming the passRetained.
     // This is checked by scope's waitForChildren to avoid double-release.
     let task = Unmanaged<RuntimeAsyncTask>.fromOpaque(handlePtr).takeUnretainedValue()
-    task.isConsumedByUserCode = true
+    task.markConsumedByUserCode()
     // Now consume the passRetained
     let consumed = Unmanaged<RuntimeAsyncTask>.fromOpaque(handlePtr).takeRetainedValue()
     return consumed.awaitResult()
@@ -824,9 +848,9 @@ public func kk_job_join(_ jobHandle: Int) -> Int {
     // This is checked by scope's waitForChildren to avoid double-release.
     let obj = Unmanaged<AnyObject>.fromOpaque(ptr).takeUnretainedValue()
     if let job = obj as? RuntimeJobHandle {
-        job.isConsumedByUserCode = true
+        job.markConsumedByUserCode()
     } else if let task = obj as? RuntimeAsyncTask {
-        task.isConsumedByUserCode = true
+        task.markConsumedByUserCode()
     }
     let result: Int
     if let job = obj as? RuntimeJobHandle {
