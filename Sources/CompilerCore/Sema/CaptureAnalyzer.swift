@@ -189,6 +189,13 @@ struct CaptureAnalyzer {
                 visit(lhs)
                 visit(rhs)
 
+            case .destructuringDecl(_, _, let initializer, _):
+                visit(initializer)
+
+            case .forDestructuringExpr(_, let iterable, let body, _):
+                visit(iterable)
+                visit(body)
+
             case .intLiteral, .longLiteral, .floatLiteral, .doubleLiteral,
                  .charLiteral, .boolLiteral, .stringLiteral, .breakExpr,
                  .continueExpr, .objectLiteral, .superRef, .thisRef:

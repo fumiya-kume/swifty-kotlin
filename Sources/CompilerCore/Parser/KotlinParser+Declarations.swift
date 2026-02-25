@@ -93,10 +93,22 @@ extension KotlinParser {
         var range = RangeAccumulator(value: leadingRange)
         let supportsTypeParameters = kind == .classDecl || kind == .interfaceDecl
 
+        // Detect companion object: leading modifiers contain the `companion` keyword
+        let isCompanionObject = kind == .objectDecl && leadingChildren.contains(where: { child in
+            if case .token(let tokenID) = child,
+               let token = arena.token(tokenID),
+               case .keyword(.companion) = token.kind {
+                return true
+            }
+            return false
+        })
+
         _ = consumeToken(into: &children, range: &range)
         if isIdentifierLike(stream.peek().kind) {
             _ = consumeToken(into: &children, range: &range)
-        } else {
+        } else if !isCompanionObject {
+            // Companion objects may omit the name (defaults to "Companion"),
+            // so only emit a diagnostic for non-companion declarations.
             insertMissingToken(expected: .identifier(.invalid), into: &children, range: &range, code: "KSWIFTK-PARSE-0002", message: "Expected declaration name.")
         }
         if supportsTypeParameters && canStartTypeArgumentsInternal(after: lastConsumedToken) {
@@ -188,6 +200,12 @@ extension KotlinParser {
             _ = consumeToken(into: &children, range: &range)
         } else {
             insertMissingToken(expected: .identifier(.invalid), into: &children, range: &range, code: "KSWIFTK-PARSE-0002", message: "Expected typealias name.")
+        }
+        if canStartTypeArgumentsInternal(after: lastConsumedToken) {
+            children.append(.node(parseTypeArguments()))
+            if let last = children.last {
+                range.append(childRange(last))
+            }
         }
         parseTail(inBlock: false, into: &children, range: &range)
 
