@@ -1,10 +1,12 @@
 import Foundation
 
-/// Stdlib delegate kinds recognized by the compiler (P5-80).
+/// Delegate kinds recognized by the compiler (P5-80, P5-79).
 enum StdlibDelegateKind: Equatable {
     case lazy
     case observable
     case vetoable
+    /// Custom user-defined delegate with getValue/setValue operators.
+    case custom
 }
 
 /// Rewrites delegate property accesses for known stdlib delegates
@@ -29,6 +31,9 @@ final class StdlibDelegateLoweringPass: LoweringPass {
         let vetoableCreateName = interner.intern("kk_vetoable_create")
         let vetoableGetValueName = interner.intern("kk_vetoable_get_value")
         let vetoableSetValueName = interner.intern("kk_vetoable_set_value")
+        let customDelegateCreateName = interner.intern("kk_custom_delegate_create")
+        let customGetValueName = interner.intern("kk_custom_delegate_get_value")
+        let customSetValueName = interner.intern("kk_custom_delegate_set_value")
 
         let lazyThreadSafetyModeValue = Int64(ctx.options.lazyThreadSafetyMode.rawValue)
 
@@ -66,6 +71,8 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                     let calleeName = interner.resolve(callee)
                     if let kind = delegateFactoryKind(calleeName) {
                         delegateKindByFieldName[fieldName] = kind
+                    } else if calleeName == "kk_custom_delegate_create" {
+                        delegateKindByFieldName[fieldName] = .custom
                     }
                 }
                 return function // no mutation in this scan pass
@@ -197,6 +204,33 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                             )
                         )
                     }
+
+                case .custom:
+                    if isSetter, arguments.count >= 2 {
+                        loweredBody.append(
+                            .call(
+                                symbol: sym,
+                                callee: customSetValueName,
+                                arguments: [delegateRef, arguments[1]],
+                                result: result,
+                                canThrow: canThrow,
+                                thrownResult: thrownResult,
+                                isSuperCall: isSuperCall
+                            )
+                        )
+                    } else {
+                        loweredBody.append(
+                            .call(
+                                symbol: sym,
+                                callee: customGetValueName,
+                                arguments: [delegateRef],
+                                result: result,
+                                canThrow: canThrow,
+                                thrownResult: thrownResult,
+                                isSuperCall: isSuperCall
+                            )
+                        )
+                    }
                 }
             }
 
@@ -306,6 +340,11 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                                     skipNext = true
                                     continue
                                 }
+                            case .custom:
+                                // Custom delegates: the kk_custom_delegate_create
+                                // call was already emitted by KIR lowering.
+                                // Pass through as-is.
+                                break
                             }
                         }
                     }
