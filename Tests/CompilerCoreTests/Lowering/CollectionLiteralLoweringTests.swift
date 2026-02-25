@@ -114,7 +114,7 @@ final class CollectionLiteralLoweringTests: XCTestCase {
     func testMapOfRewrittenToKkMapOf() throws {
         let interner = StringInterner()
         let arena = KIRArena()
-        // mapOf takes paired arguments: keys and values
+        // mapOf rewrites each argument as a Pair; argument count becomes the entry count
         let v0 = arena.appendExpr(.temporary(0))
         let v1 = arena.appendExpr(.temporary(1))
         let v2 = arena.appendExpr(.temporary(2))
@@ -184,8 +184,8 @@ final class CollectionLiteralLoweringTests: XCTestCase {
 
         let callees = calleesInDecl(declID, module: module, interner: interner)
         XCTAssertFalse(callees.contains("setOf"), "setOf should be rewritten")
-        XCTAssertTrue(callees.contains("kk_set_of") || callees.contains("kk_list_of"),
-                      "setOf should be rewritten to a runtime collection call, got: \(callees)")
+        XCTAssertTrue(callees.contains("kk_list_of"),
+                      "setOf should be rewritten to kk_list_of, got: \(callees)")
     }
 
     // MARK: - shouldRun always returns true (default implementation)

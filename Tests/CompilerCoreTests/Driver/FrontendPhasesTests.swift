@@ -64,8 +64,9 @@ final class FrontendPhasesTests: XCTestCase {
         let source = "val x = 1"
         let ctx = try makeContextFromSource(source)
         XCTAssertNoThrow(try LexPhase().run(ctx))
-        // The allTokens array (flattened) should end with EOF or at minimum be non-empty
         XCTAssertFalse(ctx.tokens.isEmpty)
+        let fileTokens = ctx.tokensByFile.first?.1
+        XCTAssertEqual(fileTokens?.last?.kind, .eof, "Last token in file should be EOF")
     }
 
     // MARK: - ParsePhase

@@ -105,8 +105,8 @@ final class OperatorAndForLoweringTests: XCTestCase {
         XCTAssertFalse(hasBinaryAdd, "Binary .add should be rewritten to runtime call")
 
         let callees = calleesInDecl(declID, module: module, interner: interner)
-        let hasAddCall = callees.contains { $0.contains("add") || $0.contains("kk_") }
-        XCTAssertTrue(hasAddCall, "Binary add should produce a runtime call, got callees: \(callees)")
+        let hasAddCall = callees.contains { $0 == "kk_op_add" }
+        XCTAssertTrue(hasAddCall, "Binary add should produce kk_op_add, got callees: \(callees)")
     }
 
     func testOperatorLoweringRewritesNullAssertToRuntimeCall() throws {
@@ -133,8 +133,8 @@ final class OperatorAndForLoweringTests: XCTestCase {
         }
         XCTAssertFalse(hasNullAssert, "nullAssert should be rewritten to runtime call")
         let callees = calleesInDecl(declID, module: module, interner: interner)
-        let hasNullCheckCall = callees.contains { $0.contains("null") || $0.contains("kk_") }
-        XCTAssertTrue(hasNullCheckCall, "nullAssert should produce a runtime call, got callees: \(callees)")
+        let hasNullCheckCall = callees.contains { $0 == "kk_op_notnull" }
+        XCTAssertTrue(hasNullCheckCall, "nullAssert should produce kk_op_notnull, got callees: \(callees)")
     }
 
     // MARK: - OperatorLoweringPass: shouldRun

@@ -40,8 +40,9 @@ final class RuntimeHelpersTests: XCTestCase {
     }
 
     func testNormalizeValidPointerReturnsItself() {
-        var value: Int = 42
-        let ptr = withUnsafeMutablePointer(to: &value) { UnsafeMutableRawPointer($0) }
+        let ptr = UnsafeMutableRawPointer.allocate(byteCount: MemoryLayout<Int>.size, alignment: MemoryLayout<Int>.alignment)
+        defer { ptr.deallocate() }
+        ptr.storeBytes(of: 42, as: Int.self)
         let result = normalizeNullableRuntimePointer(ptr)
         XCTAssertEqual(result, ptr)
     }
@@ -76,8 +77,9 @@ final class RuntimeHelpersTests: XCTestCase {
 
     func testTryCastSucceedsForMatchingType() {
         let box = RuntimeStringBox("test")
-        let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-        defer { Unmanaged.passRetained(box).release() }
+        let unmanaged = Unmanaged.passRetained(box)
+        let ptr = UnsafeMutableRawPointer(unmanaged.toOpaque())
+        defer { unmanaged.release() }
 
         let result = tryCast(ptr, to: RuntimeStringBox.self)
         XCTAssertNotNil(result)
@@ -86,8 +88,9 @@ final class RuntimeHelpersTests: XCTestCase {
 
     func testTryCastReturnsNilForWrongType() {
         let box = RuntimeIntBox(42)
-        let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-        defer { Unmanaged.passRetained(box).release() }
+        let unmanaged = Unmanaged.passRetained(box)
+        let ptr = UnsafeMutableRawPointer(unmanaged.toOpaque())
+        defer { unmanaged.release() }
 
         let result = tryCast(ptr, to: RuntimeStringBox.self)
         XCTAssertNil(result)
@@ -96,8 +99,9 @@ final class RuntimeHelpersTests: XCTestCase {
     // MARK: - KKDispatchContinuation
 
     func testDispatchContinuationStoresContext() {
-        var contextValue: Int = 99
-        let ptr = withUnsafeMutablePointer(to: &contextValue) { UnsafeMutableRawPointer($0) }
+        let ptr = UnsafeMutableRawPointer.allocate(byteCount: MemoryLayout<Int>.size, alignment: MemoryLayout<Int>.alignment)
+        defer { ptr.deallocate() }
+        ptr.storeBytes(of: 99, as: Int.self)
         let continuation = KKDispatchContinuation(context: ptr) { _ in }
         XCTAssertEqual(continuation.context, ptr)
     }
@@ -121,8 +125,9 @@ final class RuntimeHelpersTests: XCTestCase {
         let continuation = KKDispatchContinuation(context: nil) { result in
             receivedResult = result
         }
-        var value: Int = 7
-        let resultPtr = withUnsafeMutablePointer(to: &value) { UnsafeMutableRawPointer($0) }
+        let resultPtr = UnsafeMutableRawPointer.allocate(byteCount: MemoryLayout<Int>.size, alignment: MemoryLayout<Int>.alignment)
+        defer { resultPtr.deallocate() }
+        resultPtr.storeBytes(of: 7, as: Int.self)
         continuation.resumeWith(resultPtr)
         XCTAssertEqual(receivedResult, resultPtr)
     }

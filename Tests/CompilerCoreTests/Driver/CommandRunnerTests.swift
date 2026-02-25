@@ -80,13 +80,12 @@ final class CommandRunnerTests: XCTestCase {
     // MARK: - run: stderr capture
 
     func testRunCommandCapturesStderr() throws {
-        // /bin/sh -c "echo error >&2" writes to stderr
-        let result = try? CommandRunner.run(
+        // /bin/sh -c "echo errormsg >&2" writes to stderr
+        let result = try CommandRunner.run(
             executable: "/bin/sh",
             arguments: ["-c", "echo errormsg >&2"]
         )
-        let r = result ?? CommandResult(exitCode: 0, stdout: "", stderr: "errormsg\n")
-        XCTAssertTrue(r.stderr.contains("errormsg") || true,
+        XCTAssertTrue(result.stderr.contains("errormsg"),
                       "stderr should contain the error message")
     }
 
