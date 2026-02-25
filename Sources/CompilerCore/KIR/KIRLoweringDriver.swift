@@ -727,6 +727,36 @@ final class KIRLoweringDriver {
                             ))
                             // Copy into delegateHandleExpr — the LLVM backend creates an alloca for copy targets.
                             initInstructions.append(.copy(from: createResult, to: delegateHandleExpr))
+
+                        case .custom:
+                            // Custom delegate: lower the full delegate expression as the
+                            // delegate object and store it directly. The runtime's
+                            // getValue/setValue will be called through
+                            // kk_property_access at use-sites.
+                            let delegateObjExpr = lowerExpr(
+                                propertyDecl.delegateExpression!,
+                                ast: ast,
+                                sema: sema,
+                                arena: arena,
+                                interner: interner,
+                                propertyConstantInitializers: propertyConstantInitializers,
+                                instructions: &initInstructions
+                            )
+                            // Emit kk_custom_delegate_create(delegateObj) to wrap the
+                            // delegate into the standard handle format.
+                            let createResult = arena.appendExpr(
+                                .temporary(Int32(arena.expressions.count)), type: delegateType
+                            )
+                            let customCreateName = interner.intern("kk_custom_delegate_create")
+                            initInstructions.append(.call(
+                                symbol: nil,
+                                callee: customCreateName,
+                                arguments: [delegateObjExpr],
+                                result: createResult,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            initInstructions.append(.copy(from: createResult, to: delegateHandleExpr))
                         }
 
                         delegateInitInstructions.append(contentsOf: initInstructions)
@@ -753,6 +783,7 @@ final class KIRLoweringDriver {
             let lazyGetValueName = interner.intern("kk_lazy_get_value")
             let observableGetValueName = interner.intern("kk_observable_get_value")
             let vetoableGetValueName = interner.intern("kk_vetoable_get_value")
+            let customGetValueName = interner.intern("kk_custom_delegate_get_value")
 
             // Build a reverse lookup: property symbol → delegate kind for getValue rewriting.
             var delegateKindByPropertySymbol: [SymbolID: StdlibDelegateKind] = [:]
@@ -810,8 +841,10 @@ final class KIRLoweringDriver {
                                 getValueName = observableGetValueName
                             case .vetoable:
                                 getValueName = vetoableGetValueName
+                            case .custom:
+                                getValueName = customGetValueName
                             case nil:
-                                getValueName = lazyGetValueName
+                                getValueName = customGetValueName
                             }
                             rewrittenBody.append(
                                 .call(
@@ -847,13 +880,13 @@ final class KIRLoweringDriver {
     ) -> StdlibDelegateKind {
         guard let exprID = delegateExpr,
               let expr = ast.arena.expr(exprID) else {
-            return .lazy
+            return .custom
         }
         switch expr {
         case .nameRef(let name, _):
             let resolved = interner.resolve(name)
             if resolved == "lazy" { return .lazy }
-            return .lazy
+            return .custom
         case .call(let callee, _, _, _):
             // call(callee: memberCall(...) or nameRef(...))
             if let calleeExpr = ast.arena.expr(callee) {
@@ -873,9 +906,9 @@ final class KIRLoweringDriver {
             let resolved = interner.resolve(callee)
             if resolved == "observable" { return .observable }
             if resolved == "vetoable" { return .vetoable }
-            return .lazy
+            return .custom
         default:
-            return .lazy
+            return .custom
         }
     }
 
@@ -884,7 +917,7 @@ final class KIRLoweringDriver {
         ast: ASTModule,
         interner: StringInterner
     ) -> StdlibDelegateKind {
-        guard let expr = ast.arena.expr(callee) else { return .lazy }
+        guard let expr = ast.arena.expr(callee) else { return .custom }
         // memberAccess: Delegates.observable → memberCall with receiver
         // In the expression parser, `Delegates.observable("initial")` may be parsed as
         // call(callee: memberAccess(...), args: [...])
@@ -901,7 +934,7 @@ final class KIRLoweringDriver {
         default:
             break
         }
-        return .lazy
+        return .custom
     }
 
     /// Creates a lambda function from the delegate body and returns a KIR expression
