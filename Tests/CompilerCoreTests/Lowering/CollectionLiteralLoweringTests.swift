@@ -1,0 +1,227 @@
+import Foundation
+import XCTest
+@testable import CompilerCore
+
+final class CollectionLiteralLoweringTests: XCTestCase {
+
+    // MARK: - Helper
+
+    private func makeKIRContext(interner: StringInterner) -> KIRContext {
+        let options = CompilerOptions(
+            moduleName: "CollLiteralTest",
+            inputs: [],
+            outputPath: FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString).path,
+            emit: .kirDump,
+            target: defaultTargetTriple()
+        )
+        return KIRContext(
+            diagnostics: DiagnosticEngine(),
+            options: options,
+            interner: interner
+        )
+    }
+
+    private func makeModuleWithCall(callee: InternedString, interner: StringInterner, arena: KIRArena) -> (KIRModule, KIRDeclID) {
+        let v0 = arena.appendExpr(.temporary(0))
+        let v1 = arena.appendExpr(.temporary(1))
+        let fn = KIRFunction(
+            symbol: SymbolID(rawValue: 1),
+            name: interner.intern("main"),
+            params: [],
+            returnType: TypeSystem().unitType,
+            body: [
+                .call(symbol: nil, callee: callee, arguments: [v0], result: v1, canThrow: false, thrownResult: nil),
+                .returnUnit
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let declID = arena.appendDecl(.function(fn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
+        return (module, declID)
+    }
+
+    private func runPass(module: KIRModule, kirCtx: KIRContext) throws {
+        try CollectionLiteralLoweringPass().run(module: module, ctx: kirCtx)
+    }
+
+    private func calleesInDecl(_ declID: KIRDeclID, module: KIRModule, interner: StringInterner) -> [String] {
+        guard case .function(let fn) = module.arena.decl(declID) else { return [] }
+        return extractCallees(from: fn.body, interner: interner)
+    }
+
+    // MARK: - listOf rewriting
+
+    func testListOfRewrittenToKkListOf() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let callee = interner.intern("listOf")
+        let (module, declID) = makeModuleWithCall(callee: callee, interner: interner, arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("listOf"), "listOf should be rewritten")
+        XCTAssertTrue(callees.contains("kk_list_of"), "listOf should become kk_list_of")
+    }
+
+    func testMutableListOfRewrittenToKkListOf() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let callee = interner.intern("mutableListOf")
+        let (module, declID) = makeModuleWithCall(callee: callee, interner: interner, arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("mutableListOf"), "mutableListOf should be rewritten")
+        XCTAssertTrue(callees.contains("kk_list_of"), "mutableListOf should become kk_list_of")
+    }
+
+    func testEmptyListRewrittenToKkListOf() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let callee = interner.intern("emptyList")
+        let (module, declID) = makeModuleWithCall(callee: callee, interner: interner, arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("emptyList"), "emptyList should be rewritten")
+        XCTAssertTrue(callees.contains("kk_list_of"), "emptyList should become kk_list_of")
+    }
+
+    func testListOfNotNullRewrittenToKkListOf() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let callee = interner.intern("listOfNotNull")
+        let (module, declID) = makeModuleWithCall(callee: callee, interner: interner, arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("listOfNotNull"), "listOfNotNull should be rewritten")
+        XCTAssertTrue(callees.contains("kk_list_of"), "listOfNotNull should become kk_list_of")
+    }
+
+    // MARK: - mapOf rewriting
+
+    func testMapOfRewrittenToKkMapOf() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        // mapOf takes paired arguments: keys and values
+        let v0 = arena.appendExpr(.temporary(0))
+        let v1 = arena.appendExpr(.temporary(1))
+        let v2 = arena.appendExpr(.temporary(2))
+        let v3 = arena.appendExpr(.temporary(3))
+        let fn = KIRFunction(
+            symbol: SymbolID(rawValue: 1),
+            name: interner.intern("main"),
+            params: [],
+            returnType: TypeSystem().unitType,
+            body: [
+                .call(symbol: nil, callee: interner.intern("mapOf"), arguments: [v0, v1, v2, v3], result: v3, canThrow: false, thrownResult: nil),
+                .returnUnit
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let declID = arena.appendDecl(.function(fn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("mapOf"), "mapOf should be rewritten")
+        XCTAssertTrue(callees.contains("kk_map_of"), "mapOf should become kk_map_of")
+    }
+
+    func testEmptyMapRewrittenToKkMapOf() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let callee = interner.intern("emptyMap")
+        let (module, declID) = makeModuleWithCall(callee: callee, interner: interner, arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("emptyMap"), "emptyMap should be rewritten")
+        XCTAssertTrue(callees.contains("kk_map_of"), "emptyMap should become kk_map_of")
+    }
+
+    // MARK: - setOf rewriting
+
+    func testSetOfRewrittenToKkSetOf() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let v0 = arena.appendExpr(.temporary(0))
+        let v1 = arena.appendExpr(.temporary(1))
+        let v2 = arena.appendExpr(.temporary(2))
+        let fn = KIRFunction(
+            symbol: SymbolID(rawValue: 1),
+            name: interner.intern("main"),
+            params: [],
+            returnType: TypeSystem().unitType,
+            body: [
+                .call(symbol: nil, callee: interner.intern("setOf"), arguments: [v0, v1], result: v2, canThrow: false, thrownResult: nil),
+                .returnUnit
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let declID = arena.appendDecl(.function(fn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("setOf"), "setOf should be rewritten")
+        XCTAssertTrue(callees.contains("kk_set_of") || callees.contains("kk_list_of"),
+                      "setOf should be rewritten to a runtime collection call, got: \(callees)")
+    }
+
+    // MARK: - shouldRun always returns true (default implementation)
+
+    func testShouldRunAlwaysReturnsTrue() {
+        // CollectionLiteralLoweringPass uses the default shouldRun which always returns true.
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [])], arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        let shouldRun = CollectionLiteralLoweringPass().shouldRun(module: module, ctx: ctx)
+        XCTAssertTrue(shouldRun, "CollectionLiteralLoweringPass should always run (no shouldRun override)")
+    }
+
+    func testShouldRunReturnsTrueForListOfCall() {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let v0 = arena.appendExpr(.temporary(0))
+        let v1 = arena.appendExpr(.temporary(1))
+        let fn = KIRFunction(
+            symbol: SymbolID(rawValue: 1),
+            name: interner.intern("main"),
+            params: [],
+            returnType: TypeSystem().unitType,
+            body: [
+                .call(symbol: nil, callee: interner.intern("listOf"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil)
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let declID = arena.appendDecl(.function(fn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        let shouldRun = CollectionLiteralLoweringPass().shouldRun(module: module, ctx: ctx)
+        XCTAssertTrue(shouldRun, "shouldRun should return true when listOf call is present")
+    }
+}
