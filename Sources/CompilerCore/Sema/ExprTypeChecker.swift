@@ -642,8 +642,20 @@ final class ExprTypeChecker {
             let resultType: TypeID
             switch underlyingOp {
             case .add:
-                resultType = (propType == stringType || valueType == stringType) ? stringType : intType
-            case .subtract, .multiply, .divide, .modulo:
+                if propType == stringType || valueType == stringType {
+                    resultType = stringType
+                } else if propType == charType && valueType == intType {
+                    resultType = charType
+                } else {
+                    resultType = intType
+                }
+            case .subtract:
+                if propType == charType && valueType == intType {
+                    resultType = charType
+                } else {
+                    resultType = intType
+                }
+            case .multiply, .divide, .modulo:
                 resultType = intType
             default:
                 resultType = propType
