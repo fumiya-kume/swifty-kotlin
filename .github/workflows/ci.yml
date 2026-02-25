@@ -7,10 +7,6 @@ on:
 permissions:
   contents: read
 
-env:
-  HOMEBREW_NO_AUTO_UPDATE: 1
-  HOMEBREW_NO_INSTALL_CLEANUP: 1
-
 jobs:
   jscpd-check:
     name: Duplicate Code Detection
@@ -27,32 +23,17 @@ jobs:
         run: jscpd --threshold 5 --format swift Sources/
 
   smoke-tests:
-    name: Smoke Tests (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [macos-15, ubuntu-latest]
+    name: Smoke Tests
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Swift (Linux)
-        if: runner.os == 'Linux'
+      - name: Install Swift
         uses: swift-actions/setup-swift@v2
-      - name: Install LLVM (Linux)
-        if: runner.os == 'Linux'
+      - name: Install LLVM
         run: sudo apt-get update && sudo apt-get install -y llvm-dev
-      - name: Configure LLVM paths (Linux)
-        if: runner.os == 'Linux'
+      - name: Configure LLVM paths
         run: |
           LLVM_PREFIX="$(llvm-config --prefix)"
-          echo "C_INCLUDE_PATH=${LLVM_PREFIX}/include" >> "$GITHUB_ENV"
-          echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
-      - name: Install LLVM (macOS)
-        if: runner.os == 'macOS'
-        run: brew install llvm
-      - name: Configure LLVM paths (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          LLVM_PREFIX="$(brew --prefix llvm)"
           echo "C_INCLUDE_PATH=${LLVM_PREFIX}/include" >> "$GITHUB_ENV"
           echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
       - name: Show toolchain versions
@@ -61,37 +42,21 @@ jobs:
         run: bash Scripts/swift_test.sh --filter SmokeTests
 
   diff-regression:
-    name: kotlinc Diff Regression (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [macos-15, ubuntu-latest]
+    name: kotlinc Diff Regression
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Swift (Linux)
-        if: runner.os == 'Linux'
+      - name: Install Swift
         uses: swift-actions/setup-swift@v2
-      - name: Install LLVM (Linux)
-        if: runner.os == 'Linux'
+      - name: Install LLVM
         run: sudo apt-get update && sudo apt-get install -y llvm-dev
-      - name: Configure LLVM paths (Linux)
-        if: runner.os == 'Linux'
+      - name: Configure LLVM paths
         run: |
           LLVM_PREFIX="$(llvm-config --prefix)"
           echo "C_INCLUDE_PATH=${LLVM_PREFIX}/include" >> "$GITHUB_ENV"
           echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
-      - name: Install Kotlin and Java (Linux)
-        if: runner.os == 'Linux'
+      - name: Install Kotlin and Java
         run: sudo apt-get install -y kotlin default-jdk
-      - name: Install dependencies (macOS)
-        if: runner.os == 'macOS'
-        run: brew install llvm kotlin
-      - name: Configure LLVM paths (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          LLVM_PREFIX="$(brew --prefix llvm)"
-          echo "C_INCLUDE_PATH=${LLVM_PREFIX}/include" >> "$GITHUB_ENV"
-          echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
       - name: Verify prerequisites
         run: |
           java -version
@@ -116,35 +81,20 @@ jobs:
           exit 1
 
   test-and-coverage:
-    name: Test and Coverage Gate (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [macos-15, ubuntu-latest]
+    name: Test and Coverage Gate
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
-      - name: Install Swift (Linux)
-        if: runner.os == 'Linux'
+      - name: Install Swift
         uses: swift-actions/setup-swift@v2
-      - name: Install LLVM and jq (Linux)
-        if: runner.os == 'Linux'
+      - name: Install LLVM and jq
         run: sudo apt-get update && sudo apt-get install -y llvm-dev jq
-      - name: Configure LLVM paths (Linux)
-        if: runner.os == 'Linux'
+      - name: Configure LLVM paths
         run: |
           LLVM_PREFIX="$(llvm-config --prefix)"
-          echo "C_INCLUDE_PATH=${LLVM_PREFIX}/include" >> "$GITHUB_ENV"
-          echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
-      - name: Install LLVM (macOS)
-        if: runner.os == 'macOS'
-        run: brew install llvm
-      - name: Configure LLVM paths (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          LLVM_PREFIX="$(brew --prefix llvm)"
           echo "C_INCLUDE_PATH=${LLVM_PREFIX}/include" >> "$GITHUB_ENV"
           echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
       - name: Verify prerequisites
@@ -157,7 +107,7 @@ jobs:
           COVERAGE_REPORT_MD: ${{ runner.temp }}/coverage_report.md
         run: bash Scripts/check_coverage.sh
       - name: Post or update coverage comment on PR
-        if: github.event_name == 'pull_request' && runner.os == 'macOS'
+        if: github.event_name == 'pull_request'
         uses: actions/github-script@v8
         env:
           COVERAGE_REPORT_MD: ${{ runner.temp }}/coverage_report.md
