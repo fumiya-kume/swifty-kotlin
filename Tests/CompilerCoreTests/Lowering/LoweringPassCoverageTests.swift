@@ -124,6 +124,29 @@ final class LoweringPassCoverageTests: XCTestCase {
         }
     }
 
+    func testCoroutineLoweringRewritesCoroutineScopeToScopeRun() throws {
+        let source = """
+        suspend fun delayedValue(): Int {
+            delay(1)
+            return 42
+        }
+        fun main(): Any? = coroutineScope(delayedValue)
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "CoroutineScopeLowering", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+
+            let mainCalls = extractCallees(from: mainBody, interner: ctx.interner)
+            XCTAssertTrue(mainCalls.contains("kk_coroutine_scope_run"), "Expected coroutineScope to be rewritten to kk_coroutine_scope_run")
+            XCTAssertFalse(mainCalls.contains("coroutineScope"), "coroutineScope should have been rewritten")
+        }
+    }
+
     func testKxMiniRunBlockingDelayExecutableReturnsExpectedExitCode() throws {
         let source = """
         suspend fun delayedValue(): Int {
