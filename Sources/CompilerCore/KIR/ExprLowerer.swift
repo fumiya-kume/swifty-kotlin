@@ -156,6 +156,15 @@ final class ExprLowerer {
                     instructions.append(.constValue(result: id, value: constant))
                     return id
                 }
+                // For top-level property symbols, emit loadGlobal so the
+                // backend reads the current value from the global slot.
+                if let sym = sema.symbols.symbol(symbol),
+                   (sym.kind == .property || sym.kind == .field),
+                   sema.symbols.parentSymbol(for: symbol) == nil || sema.symbols.symbol(sema.symbols.parentSymbol(for: symbol)!)?.kind == .package {
+                    let id = arena.appendExpr(.symbolRef(symbol), type: boundType)
+                    instructions.append(.loadGlobal(result: id, symbol: symbol))
+                    return id
+                }
                 let id = arena.appendExpr(.symbolRef(symbol), type: boundType)
                 instructions.append(.constValue(result: id, value: .symbolRef(symbol)))
                 return id
