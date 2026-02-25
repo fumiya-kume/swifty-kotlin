@@ -4,5 +4,7 @@
   "format": ["swift"],
   "minLines": 5,
   "minTokens": 50,
-  "path": ["Sources/"]
+  "path": ["Sources/"],
+  "absolute": false,
+  "gitignore": true
 }

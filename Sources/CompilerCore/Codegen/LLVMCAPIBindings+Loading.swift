@@ -149,7 +149,12 @@ extension LLVMCAPIBindings {
                 valueAsMetadataFn: loadSymbol(handle: handle, name: "LLVMValueAsMetadata", as: LLVMValueAsMetadataFn.self),
                 int32TypeFn: loadSymbol(handle: handle, name: "LLVMInt32TypeInContext", as: LLVMInt32TypeInContextFn.self),
                 setCurrentDebugLocation2Fn: loadSymbol(handle: handle, name: "LLVMSetCurrentDebugLocation2", as: LLVMSetCurrentDebugLocation2Fn.self),
-                diBuilderCreateDebugLocationFn: loadSymbol(handle: handle, name: "LLVMDIBuilderCreateDebugLocation", as: LLVMDIBuilderCreateDebugLocationFn.self)
+                diBuilderCreateDebugLocationFn: loadSymbol(handle: handle, name: "LLVMDIBuilderCreateDebugLocation", as: LLVMDIBuilderCreateDebugLocationFn.self),
+                diBuilderCreateBasicTypeFn: loadSymbol(handle: handle, name: "LLVMDIBuilderCreateBasicType", as: LLVMDIBuilderCreateBasicTypeFn.self),
+                diBuilderCreateParameterVariableFn: loadSymbol(handle: handle, name: "LLVMDIBuilderCreateParameterVariable", as: LLVMDIBuilderCreateParameterVariableFn.self),
+                diBuilderCreateAutoVariableFn: loadSymbol(handle: handle, name: "LLVMDIBuilderCreateAutoVariable", as: LLVMDIBuilderCreateAutoVariableFn.self),
+                diBuilderInsertDeclareAtEndFn: loadSymbol(handle: handle, name: "LLVMDIBuilderInsertDeclareAtEnd", as: LLVMDIBuilderInsertDeclareAtEndFn.self),
+                diBuilderCreateExpressionFn: loadSymbol(handle: handle, name: "LLVMDIBuilderCreateExpression", as: LLVMDIBuilderCreateExpressionFn.self)
             )
         }
         return nil

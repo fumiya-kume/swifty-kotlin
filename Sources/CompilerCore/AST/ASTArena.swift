@@ -99,7 +99,9 @@ public final class ASTArena: @unchecked Sendable {
              .superRef(let range),
              .thisRef(_, let range),
              .inExpr(_, _, let range),
-             .notInExpr(_, _, let range):
+             .notInExpr(_, _, let range),
+             .destructuringDecl(_, _, _, let range),
+             .forDestructuringExpr(_, _, _, let range):
             return range
         }
     }
