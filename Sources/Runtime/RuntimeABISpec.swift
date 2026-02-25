@@ -67,7 +67,7 @@ public struct RuntimeABIFunctionSpec: Equatable {
 }
 
 public enum RuntimeABISpec {
-    public static let specVersion = "J16.1"
+    public static let specVersion = "J17"
 
     public static let memoryFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
@@ -496,6 +496,64 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "handlesArray", type: .intptr),
                 RuntimeABIParameter(name: "count", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        // Structured Concurrency (P5-89)
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_scope_new",
+            parameters: [],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_scope_cancel",
+            parameters: [
+                RuntimeABIParameter(name: "scopeHandle", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_scope_wait",
+            parameters: [
+                RuntimeABIParameter(name: "scopeHandle", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_scope_register_child",
+            parameters: [
+                RuntimeABIParameter(name: "scopeHandle", type: .intptr),
+                RuntimeABIParameter(name: "childHandle", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_job_join",
+            parameters: [
+                RuntimeABIParameter(name: "jobHandle", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_scope_run",
+            parameters: [
+                RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
+                RuntimeABIParameter(name: "functionID", type: .intptr)
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_scope_run_with_cont",
+            parameters: [
+                RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr)
             ],
             returnType: .intptr,
             section: "Coroutine"

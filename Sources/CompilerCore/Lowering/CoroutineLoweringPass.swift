@@ -13,7 +13,8 @@ final class CoroutineLoweringPass: LoweringPass {
         let launcherCallees: Set<InternedString> = [
             ctx.interner.intern("runBlocking"),
             ctx.interner.intern("launch"),
-            ctx.interner.intern("async")
+            ctx.interner.intern("async"),
+            ctx.interner.intern("coroutineScope")
         ]
         for decl in module.arena.declarations {
             if case .function(let function) = decl {
@@ -36,16 +37,19 @@ final class CoroutineLoweringPass: LoweringPass {
         let kxMiniRunBlockingCallee = ctx.interner.intern("runBlocking")
         let kxMiniLaunchCallee = ctx.interner.intern("launch")
         let kxMiniAsyncCallee = ctx.interner.intern("async")
+        let kxMiniCoroutineScopeCallee = ctx.interner.intern("coroutineScope")
         let kxMiniDelayCallee = ctx.interner.intern("delay")
         let runtimeRunBlockingCallee = ctx.interner.intern("kk_kxmini_run_blocking")
         let runtimeLaunchCallee = ctx.interner.intern("kk_kxmini_launch")
         let runtimeAsyncCallee = ctx.interner.intern("kk_kxmini_async")
+        let runtimeCoroutineScopeRunCallee = ctx.interner.intern("kk_coroutine_scope_run")
         let runtimeDelayCallee = ctx.interner.intern("kk_kxmini_delay")
         let runtimeSuspendCallNames: Set<InternedString> = [kxMiniDelayCallee, runtimeDelayCallee]
         let kxMiniLauncherRuntimeCallees: [InternedString: InternedString] = [
             kxMiniRunBlockingCallee: runtimeRunBlockingCallee,
             kxMiniLaunchCallee: runtimeLaunchCallee,
-            kxMiniAsyncCallee: runtimeAsyncCallee
+            kxMiniAsyncCallee: runtimeAsyncCallee,
+            kxMiniCoroutineScopeCallee: runtimeCoroutineScopeRunCallee
         ]
 
         let suspendFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
@@ -255,7 +259,8 @@ final class CoroutineLoweringPass: LoweringPass {
         let kxMiniLauncherWithContCallees: [InternedString: InternedString] = [
             kxMiniRunBlockingCallee: ctx.interner.intern("kk_kxmini_run_blocking_with_cont"),
             kxMiniLaunchCallee: ctx.interner.intern("kk_kxmini_launch_with_cont"),
-            kxMiniAsyncCallee: ctx.interner.intern("kk_kxmini_async_with_cont")
+            kxMiniAsyncCallee: ctx.interner.intern("kk_kxmini_async_with_cont"),
+            kxMiniCoroutineScopeCallee: ctx.interner.intern("kk_coroutine_scope_run_with_cont")
         ]
 
         module.arena.transformFunctions { function in
