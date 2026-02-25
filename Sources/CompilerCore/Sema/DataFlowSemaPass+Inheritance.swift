@@ -347,10 +347,12 @@ extension DataFlowSemaPassPhase {
                             abstractMembersByName[childSym.name] = childID
                         }
                     } else {
-                        // This is a concrete member — it satisfies any abstract
-                        // member of the same name from a higher supertype.
-                        concreteOverrideNames.insert(childSym.name)
-                        abstractMembersByName.removeValue(forKey: childSym.name)
+                        // This is a concrete member. Only treat it as satisfying
+                        // abstract requirements from higher supertypes if no closer
+                        // supertype has already (re-)abstracted this name.
+                        if abstractMembersByName[childSym.name] == nil {
+                            concreteOverrideNames.insert(childSym.name)
+                        }
                     }
                 }
             }
