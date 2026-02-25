@@ -3,6 +3,7 @@ public final class TypeSystem {
     private var idToKind: [TypeKind] = []
     private var nominalDirectSupertypes: [SymbolID: [SymbolID]] = [:]
     private var nominalTypeParameterVariancesMap: [SymbolID: [TypeVariance]] = [:]
+    private var nominalTypeParameterSymbolsMap: [SymbolID: [SymbolID]] = [:]
     private var nominalSupertypeTypeArgsMap: [SymbolID: [SymbolID: [TypeArg]]] = [:]
 
     public let errorType: TypeID
@@ -132,6 +133,44 @@ public final class TypeSystem {
 
     public func nominalTypeParameterVariances(for symbol: SymbolID) -> [TypeVariance] {
         nominalTypeParameterVariancesMap[symbol] ?? []
+    }
+
+    public func setNominalTypeParameterSymbols(_ symbols: [SymbolID], for nominal: SymbolID) {
+        nominalTypeParameterSymbolsMap[nominal] = symbols
+    }
+
+    public func nominalTypeParameterSymbols(for nominal: SymbolID) -> [SymbolID] {
+        nominalTypeParameterSymbolsMap[nominal] ?? []
+    }
+
+    /// Returns `true` when `type` structurally contains a reference to the
+    /// type parameter identified by `symbol`.
+    public func typeContainsTypeParam(_ type: TypeID, symbol: SymbolID) -> Bool {
+        switch kind(of: type) {
+        case .typeParam(let tp):
+            return tp.symbol == symbol
+        case .classType(let ct):
+            return ct.args.contains { arg in
+                switch arg {
+                case .invariant(let inner), .out(let inner), .in(let inner):
+                    return typeContainsTypeParam(inner, symbol: symbol)
+                case .star:
+                    return false
+                }
+            }
+        case .functionType(let ft):
+            if let receiver = ft.receiver, typeContainsTypeParam(receiver, symbol: symbol) {
+                return true
+            }
+            if ft.params.contains(where: { typeContainsTypeParam($0, symbol: symbol) }) {
+                return true
+            }
+            return typeContainsTypeParam(ft.returnType, symbol: symbol)
+        case .intersection(let parts):
+            return parts.contains { typeContainsTypeParam($0, symbol: symbol) }
+        default:
+            return false
+        }
     }
 
     public func setNominalSupertypeTypeArgs(_ args: [TypeArg], for child: SymbolID, supertype parent: SymbolID) {
