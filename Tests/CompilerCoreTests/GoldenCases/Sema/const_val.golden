@@ -11,13 +11,26 @@ symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public fla
 symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
 symbol s11 kind=property fq=golden.sema.MAX vis=public flags=constValue type=Int
 symbol s12 kind=property fq=golden.sema.NAME vis=public flags=constValue type=String
-symbol s13 kind=function fq=golden.sema.useConst vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s13 kind=property fq=golden.sema.FLAG vis=public flags=constValue type=Boolean
+symbol s14 kind=property fq=golden.sema.RATE vis=public flags=constValue type=Double
+symbol s15 kind=property fq=golden.sema.NEG vis=public flags=constValue type=Int
+symbol s16 kind=function fq=golden.sema.useConst vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s17 kind=function fq=golden.sema.useNegConst vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
   decl d0 property MAX var=0 sym=s11
   decl d1 property NAME var=0 sym=s12
-  decl d2 fun useConst suspend=0 inline=0 sym=s13
+  decl d2 property FLAG var=0 sym=s13
+  decl d3 property RATE var=0 sym=s14
+  decl d4 property NEG var=0 sym=s15
+  decl d5 fun useConst suspend=0 inline=0 sym=s16
+  decl d6 fun useNegConst suspend=0 inline=0 sym=s17
 expr e0 int(100) type=Int ref=s11
 expr e1 string(hello) type=String ref=s12
-expr e2 name(MAX) type=Int ref=s11
-expr e3 int(50) type=Int
-expr e4 binary(greaterThan) lhs=e2 rhs=e3 type=Boolean
+expr e2 bool(true) type=Boolean ref=s13
+expr e3 double(3.14) type=Double ref=s14
+expr e4 int(42) type=Int ref=s15
+expr e5 unary(unaryMinus) operand=e4 type=Int
+expr e6 name(MAX) type=Int ref=s11
+expr e7 int(50) type=Int
+expr e8 binary(greaterThan) lhs=e6 rhs=e7 type=Boolean
+expr e9 name(NEG) type=Int ref=s15
