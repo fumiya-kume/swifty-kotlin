@@ -10,6 +10,7 @@ REPORT_PATH=""
 LAST_ARTIFACT_DIR=""
 COMPILE_TIMEOUT="${DIFF_COMPILE_TIMEOUT:-120}"
 RUN_TIMEOUT="${DIFF_RUN_TIMEOUT:-30}"
+TIMEOUT_CMD="${TIMEOUT:-timeout}"
 
 usage() {
   cat <<USAGE
@@ -55,10 +56,16 @@ while [[ $# -gt 0 ]]; do
       ;;
     --compile-timeout)
       shift
+      if [[ $# -eq 0 ]]; then
+        echo "--compile-timeout requires an argument" >&2; exit 1
+      fi
       COMPILE_TIMEOUT="$1"
       ;;
     --run-timeout)
       shift
+      if [[ $# -eq 0 ]]; then
+        echo "--run-timeout requires an argument" >&2; exit 1
+      fi
       RUN_TIMEOUT="$1"
       ;;
     --keep-temp)
@@ -180,22 +187,22 @@ run_case() {
     local kts_tmp="$tmp_dir/${basename%.kt}.kts"
     cp "$kt_file" "$kts_tmp"
     local script_exit=0
-    timeout "$RUN_TIMEOUT" "$KOTLINC" -script "$kts_tmp" >"$ref_run_stdout" 2>"$ref_run_stderr" || script_exit=$?
+    "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$KOTLINC" -script "$kts_tmp" >"$ref_run_stdout" 2>"$ref_run_stderr" || script_exit=$?
     if [[ $script_exit -ne 0 ]] && [[ ! -s "$ref_run_stdout" ]]; then
       ref_compile_exit=$script_exit
     else
       ref_run_exit=$script_exit
     fi
   else
-    timeout "$COMPILE_TIMEOUT" "$KOTLINC" "$kt_file" -include-runtime -d "$ref_jar" >"$ref_compile_stdout" 2>"$ref_compile_stderr" || ref_compile_exit=$?
+    "$TIMEOUT_CMD" "$COMPILE_TIMEOUT" "$KOTLINC" "$kt_file" -include-runtime -d "$ref_jar" >"$ref_compile_stdout" 2>"$ref_compile_stderr" || ref_compile_exit=$?
     if [[ $ref_compile_exit -eq 0 ]]; then
-      timeout "$RUN_TIMEOUT" "$JAVA_BIN" -jar "$ref_jar" >"$ref_run_stdout" 2>"$ref_run_stderr" || ref_run_exit=$?
+      "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$JAVA_BIN" -jar "$ref_jar" >"$ref_run_stdout" 2>"$ref_run_stderr" || ref_run_exit=$?
     fi
   fi
 
-  timeout "$COMPILE_TIMEOUT" "$KSWIFTC" "$kt_file" -o "$cand_bin" >"$cand_compile_stdout" 2>"$cand_compile_stderr" || cand_compile_exit=$?
+  "$TIMEOUT_CMD" "$COMPILE_TIMEOUT" "$KSWIFTC" "$kt_file" -o "$cand_bin" >"$cand_compile_stdout" 2>"$cand_compile_stderr" || cand_compile_exit=$?
   if [[ $cand_compile_exit -eq 0 ]]; then
-    timeout "$RUN_TIMEOUT" "$cand_bin" >"$cand_run_stdout" 2>"$cand_run_stderr" || cand_run_exit=$?
+    "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$cand_bin" >"$cand_run_stdout" 2>"$cand_run_stderr" || cand_run_exit=$?
   fi
 
   normalize_text <"$ref_compile_stderr" >"$tmp_dir/ref_compile_stderr.norm"

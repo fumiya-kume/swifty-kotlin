@@ -679,13 +679,13 @@ final class ControlFlowTypeChecker {
             bodyLocals[name] = (componentType, symbol, false, true)
         }
 
-        var loopCtx = ctx.copying(loopDepth: ctx.loopDepth + 1)
+        var newLabelStack = ctx.loopLabelStack
         if let userLabel = ctx.ast.arena.loopLabel(for: id) {
-            loopCtx = loopCtx.withLoopLabel(userLabel)
+            newLabelStack.append(userLabel)
         }
         _ = driver.inferExpr(
             bodyExpr,
-            ctx: loopCtx,
+            ctx: ctx.copying(loopDepth: ctx.loopDepth + 1, loopLabelStack: newLabelStack),
             locals: &bodyLocals,
             expectedType: nil
         )
