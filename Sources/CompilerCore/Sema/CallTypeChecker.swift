@@ -314,7 +314,15 @@ final class CallTypeChecker {
             isSuperCall = ast.arena.expr(receiverID).map { if case .superRef = $0 { true } else { false } } ?? false
             if isSuperCall, let currentReceiverType = ctx.implicitReceiverType,
                let classSymbol = driver.helpers.nominalSymbol(of: currentReceiverType, types: sema.types) {
-                var queue = sema.symbols.directSupertypes(for: classSymbol)
+                // When the super expression has a qualifier (super<InterfaceName>), restrict
+                // candidate lookup to only that interface and its transitive supertypes.
+                let qualifiedInterface = sema.bindings.superQualifier(for: receiverID)
+                let startSupertypes: [SymbolID] = if let qualifiedInterface {
+                    [qualifiedInterface]
+                } else {
+                    sema.symbols.directSupertypes(for: classSymbol)
+                }
+                var queue = startSupertypes
                 var visited: Set<SymbolID> = [classSymbol]
                 while !queue.isEmpty {
                     let next = queue.removeFirst()

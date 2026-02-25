@@ -96,7 +96,7 @@ public final class ASTArena: @unchecked Sendable {
              .callableRef(_, _, let range),
              .localFunDecl(_, _, _, _, let range),
              .blockExpr(_, _, let range),
-             .superRef(let range),
+             .superRef(_, let range),
              .thisRef(_, let range),
              .inExpr(_, _, let range),
              .notInExpr(_, _, let range),

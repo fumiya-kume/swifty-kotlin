@@ -85,7 +85,18 @@ extension BuildASTPhase.ExpressionParser {
 
         case .keyword(.super):
             _ = consume()
-            return astArena.appendExpr(.superRef(token.range))
+            // Check for <InterfaceName> qualifier: super<B>
+            if let ltToken = current(), ltToken.kind == .symbol(.lessThan),
+               let nameToken = peek(1),
+               let qualifierName = identifierFromToken(nameToken),
+               let gtToken = peek(2), gtToken.kind == .symbol(.greaterThan) {
+                _ = consume()  // '<'
+                _ = consume()  // identifier
+                _ = consume()  // '>'
+                let range = SourceRange(start: token.range.start, end: gtToken.range.end)
+                return astArena.appendExpr(.superRef(qualifier: qualifierName, range))
+            }
+            return astArena.appendExpr(.superRef(qualifier: nil, token.range))
 
         case .keyword(.this):
             _ = consume()

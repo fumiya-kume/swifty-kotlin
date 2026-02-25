@@ -328,8 +328,8 @@ final class ExprTypeChecker {
         case .localFunDecl(let name, let valueParams, let returnTypeRef, let body, let range):
             return driver.localDeclChecker.inferLocalFunDeclExpr(id, name: name, valueParams: valueParams, returnTypeRef: returnTypeRef, body: body, range: range, ctx: ctx, locals: &locals)
 
-        case .superRef(let range):
-            return inferSuperRefExpr(id, range: range, ctx: ctx)
+        case .superRef(let qualifier, let range):
+            return inferSuperRefExpr(id, qualifier: qualifier, range: range, ctx: ctx)
 
         case .thisRef(let label, let range):
             return inferThisRefExpr(id, label: label, range: range, ctx: ctx)
@@ -970,6 +970,7 @@ final class ExprTypeChecker {
 
     func inferSuperRefExpr(
         _ id: ExprID,
+        qualifier: InternedString?,
         range: SourceRange,
         ctx: TypeInferenceContext
     ) -> TypeID {
@@ -985,6 +986,26 @@ final class ExprTypeChecker {
         }
         if let classSymbol = driver.helpers.nominalSymbol(of: receiverType, types: sema.types) {
             let supertypes = sema.symbols.directSupertypes(for: classSymbol)
+            if let qualifier = qualifier {
+                // Qualified super<InterfaceName>: look for a direct superinterface with this name.
+                for superID in supertypes {
+                    guard let superSym = sema.symbols.symbol(superID),
+                          superSym.kind == .interface,
+                          superSym.name == qualifier else { continue }
+                    let superType = sema.types.make(.classType(ClassType(classSymbol: superID)))
+                    sema.bindings.bindExprType(id, type: superType)
+                    sema.bindings.bindSuperQualifier(id, interfaceSymbol: superID)
+                    return superType
+                }
+                let qualifierStr = ctx.interner.resolve(qualifier)
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0054",
+                    "'\(qualifierStr)' is not a direct superinterface of this class.",
+                    range: range
+                )
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
             let classSupertypes = supertypes.filter {
                 let kind = ctx.cachedSymbol($0)?.kind
                 return kind == .class || kind == .enumClass

@@ -146,7 +146,7 @@ public enum Expr: Equatable {
     case callableRef(receiver: ExprID?, member: InternedString, range: SourceRange)
     case localFunDecl(name: InternedString, valueParams: [ValueParamDecl], returnType: TypeRefID?, body: FunctionBody, range: SourceRange)
     case blockExpr(statements: [ExprID], trailingExpr: ExprID?, range: SourceRange)
-    case superRef(SourceRange)
+    case superRef(qualifier: InternedString?, SourceRange)
     case thisRef(label: InternedString?, SourceRange)
     case inExpr(lhs: ExprID, rhs: ExprID, range: SourceRange)
     case notInExpr(lhs: ExprID, rhs: ExprID, range: SourceRange)

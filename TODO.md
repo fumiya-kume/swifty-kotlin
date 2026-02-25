@@ -918,11 +918,11 @@
   - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-113`
   - **完了条件**: interface default method が override されない場合に default 実装が呼ばれる
 
-- [ ] P5-114: 多重インターフェース実装と diamond override の解決規則を実装する（spec.md J7/J13.2）
-  - [ ] class が複数 interface を実装する場合の itable 割当ロジックを拡張する（slot conflict 解決）
-  - [ ] 同名 default method を複数 interface が持つ場合に override を強制し `KSWIFTK-SEMA-DIAMOND` を出す
-  - [ ] `super<InterfaceName>.method()` で特定 interface の default 実装を明示呼び出しできる
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-114`
+- [x] P5-114: 多重インターフェース実装と diamond override の解決規則を実装する（spec.md J7/J13.2）
+  - [x] class が複数 interface を実装する場合の itable 割当ロジックを拡張する（slot conflict 解決）
+  - [x] 同名 default method を複数 interface が持つ場合に override を強制し `KSWIFTK-SEMA-DIAMOND` を出す
+  - [x] `super<InterfaceName>.method()` で特定 interface の default 実装を明示呼び出しできる
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `class C : A, B` で両方に同名 default method があると `override` を強制し診断が出る
 
 - [ ] P5-115: `open` / `final` / `override` 修飾子の継承制約を完全実装する（spec.md J6/J7）
@@ -1155,6 +1155,248 @@
   - [x] `@file:JvmName("...")` を ABI / metadata で保持し、他モジュールから参照できるようにする
   - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-141`
   - **完了条件**: `@file:Suppress("UNUSED")` がファイル全体の UNUSED 警告を抑制する
+
+---
+
+## P5 (Spec Gap Backlog) — 実用 Kotlin プログラム完全対応拡張
+
+> 共通完了条件ルール（全項目に適用）
+> 1. `Scripts/diff_kotlinc.sh` が exit 0 かつ stdout 完全一致
+> 2. golden テストが byte 一致
+> 3. エラーケースで `KSWIFTK-*` 診断コード出力
+> 4. 各項目末尾エッジケース golden が通過
+
+---
+
+### 📝 stdlib — String 操作
+
+- [ ] P5-142: stdlib String メンバ関数の最小スタブを実装する（spec.md J15/J16）
+  - [ ] runtime に `kk_string_length` / `kk_string_substring` / `kk_string_indexof` / `kk_string_split` / `kk_string_trim` / `kk_string_replace` / `kk_string_starts_with` / `kk_string_ends_with` の C ABI を追加する
+  - [ ] compiler 側で `String` 型の member/extension call を上記 ABI へ解決する stub を追加する（既存 `kk_string_concat`/`kk_string_compareTo` のパターンを踏襲）
+  - [ ] `String.length` プロパティアクセスを property getter lowering と接続する
+  - [ ] String 操作の diff/golden 回帰ケースを追加する（`.length`・`.substring`・`.indexOf`・`.split`・`.replace`）
+  - **完了条件**: `"hello".length == 5` / `"hello".substring(1, 3) == "el"` が `kotlinc` と同一出力になる
+
+### 🔢 stdlib — 数値型変換
+
+- [ ] P5-143: 数値型変換関数（`.toInt()`, `.toLong()`, `.toDouble()`, `.toString()` 等）を実装する（spec.md J8/J15）
+  - [ ] プリミティブ間変換（`Int.toDouble()`, `Int.toLong()`, `Double.toInt()`, `Long.toInt()`, `Long.toDouble()`, `Float.toInt()` 等）を runtime stub として追加する
+  - [ ] `String.toInt()` / `String.toLong()` / `String.toDouble()` を実装し、変換失敗時は `NumberFormatException` を投げる
+  - [ ] `Any.toString()` の汎用ディスパッチを整備し、各 primitive 型の文字列化を統一する（現状 `kk_println_any` 内部のみ）
+  - [ ] `Int.toString(radix: Int)` による基数変換を追加する
+  - [ ] 数値変換の diff/golden 回帰ケースを追加する（primitive 間変換・String 変換・toString）
+  - **完了条件**: `42.toLong() * 2L` / `"123".toInt() + 1` が `kotlinc` と同一出力になる
+
+### ⚠️ runtime — 例外型階層
+
+- [ ] P5-144: 例外型階層の最小実装を行う（spec.md J11.3/J13.3/J15）
+  - [ ] `Exception` / `RuntimeException` / `IllegalArgumentException` / `IllegalStateException` / `NullPointerException` / `IndexOutOfBoundsException` / `ClassCastException` / `NumberFormatException` / `NotImplementedError` を named type として型システムに登録する
+  - [ ] runtime に各例外型の constructor（`kk_illegal_argument_exception_new` / `kk_null_pointer_exception_new` 等）を追加する
+  - [ ] `catch (e: SpecificType)` の型マッチディスパッチを実装する（`kk_throwable_instanceof` で型チェック）
+  - [ ] `!!` → NPE、`as` 失敗 → ClassCastException、配列 bounds check 失敗 → IOOBE と各例外型を接続する
+  - [ ] `String.toInt()` 変換失敗 → NumberFormatException と接続する
+  - [ ] 例外型マッチの diff/golden 回帰ケースを追加する（型付き catch・型不一致の再 throw）
+  - **完了条件**: `catch (e: IllegalArgumentException)` が `IllegalStateException` を捕捉せず、型階層に沿ったマッチが動作する
+
+### 📦 stdlib — コレクション操作
+
+- [ ] P5-145: `Iterable<T>` 拡張関数（`.map`, `.filter`, `.forEach` 等）の最小スタブを実装する（spec.md J15）
+  - [ ] `.map`, `.filter`, `.forEach`, `.flatMap`, `.reduce`, `.fold`, `.any`, `.all`, `.none` を `Iterable<T>` extension として stub 実装する
+  - [ ] `.first()` / `.last()` / `.firstOrNull()` / `.lastOrNull()` を追加する
+  - [ ] `.sorted()` / `.sortedBy { }` / `.reversed()` を追加する
+  - [ ] `.toList()` / `.toSet()` / `.toMutableList()` 変換を追加する
+  - [ ] lambda 引数の型推論（`list.map { it + 1 }`）が P5-121 連携で機能することを確認する
+  - [ ] `listOf(1,2,3).filter { it > 1 }.map { it * 2 }` の diff/golden ケースを追加する
+  - **完了条件**: `listOf(1,2,3).map { it * 2 }.filter { it > 2 }` が `[4, 6]` を返し `kotlinc` と一致する
+
+- [ ] P5-148: `MutableList` / `MutableMap` の変更操作を実装する（spec.md J15）
+  - [ ] `MutableList.add()` / `.remove()` / `.removeAt()` / `.clear()` / `.addAll()` を runtime stub に追加する
+  - [ ] `MutableMap.put()` / `.remove()` / `.clear()` / `.putAll()` を runtime stub に追加する
+  - [ ] `mutableListOf(...)` / `mutableMapOf(...)` ファクトリ関数を追加する
+  - [ ] P5-84 の read-only `List<T>`/`Map<K,V>` を `MutableList`/`MutableMap` 継承関係で整理する
+  - [ ] mutable collection の変更操作 diff/golden ケースを追加する
+  - **完了条件**: `val list = mutableListOf(1); list.add(2); println(list.size)` が `2` を出力し `kotlinc` と一致する
+
+### 🖨️ stdlib — 基本 I/O
+
+- [ ] P5-146: `print()` 関数（改行なし出力）を実装する（spec.md J15）
+  - [ ] runtime に `kk_print_any` / `kk_print_int` / `kk_print_long` / `kk_print_float` / `kk_print_double` / `kk_print_char` / `kk_print_bool` を追加する（`kk_println_*` パターンを踏襲）
+  - [ ] compiler で `print(...)` 呼び出しを上記 ABI へ解決する（`println` の解決経路を参照）
+  - [ ] `print()` の diff/golden 回帰ケースを追加する
+  - **完了条件**: `print("Hello "); println("World")` が `Hello World\n` を出力し `kotlinc` と一致する
+
+### 🎯 stdlib — Pair / Triple
+
+- [ ] P5-147: `Pair<A,B>` / `Triple<A,B,C>` クラスと `to` infix 関数を実装する（spec.md J6/J15）
+  - [ ] `Pair(first: A, second: B)` を stdlib stub として data-class 相当で定義する（`component1`/`component2`/`toString`/`copy` 合成）
+  - [ ] `Triple(first: A, second: B, third: C)` も同様に定義する
+  - [ ] `to` infix 関数（`a to b` → `Pair(a, b)`）を P5-119（infix 関数）連携で実装する
+  - [ ] destructuring（P5-82 連携）で `val (a, b) = pair` を `component1()`/`component2()` 展開にする
+  - [ ] `mapOf(1 to "one", 2 to "two")` の diff/golden ケースを追加する
+  - **完了条件**: `val (x, y) = 1 to 2; println("$x $y")` が `1 2` を出力し `kotlinc` と一致する
+
+### 🔗 class delegation
+
+- [ ] P5-149: class delegation（`class A : B by impl`）を front-to-back で実装する（spec.md J6/J7/J13.2）
+  - [ ] Parser/AST で `classDecl` の superType 節にある `by delegateExpr` 句を保持する
+  - [ ] Sema で delegate 対象の interface member を自動 forward 実装として生成する（`impl.method(args)` 呼び出しを body とする合成 member）
+  - [ ] delegated member と明示 override の共存を検証し、override 優先ルールを実装する
+  - [ ] compiler-generated delegation と vtable/itable dispatch（P5-25）を接続する
+  - [ ] class delegation の diff/golden 回帰ケースを追加する
+  - **完了条件**: `class LoggingList<T>(private val inner: MutableList<T>) : MutableList<T> by inner` が inner の全メソッドを委譲して動作する
+
+---
+
+### 🛠️ stdlib — 標準ユーティリティ
+
+- [ ] P5-150: 標準ユーティリティ関数スタブを実装する（spec.md J15）
+  - [ ] `require(value: Boolean)` / `require(value: Boolean, lazyMessage: () -> Any)` → 失敗時 `IllegalArgumentException` throw
+  - [ ] `requireNotNull(value: T?)` → 失敗時 `IllegalArgumentException` throw、成功時 `T` を返す
+  - [ ] `check(value: Boolean)` / `checkNotNull(value: T?)` → 失敗時 `IllegalStateException` throw
+  - [ ] `error(message: Any)` → `IllegalStateException` throw
+  - [ ] `TODO(reason: String = "An operation is not implemented.")` → `NotImplementedError` throw
+  - [ ] `readLine()` / `readln()` → 標準入力から 1 行を `String?`/`String` として読み取る（runtime に `kk_readline` を追加）
+  - [ ] `maxOf(a, b)` / `minOf(a, b)` → 各プリミティブ型オーバーロードを stub 実装
+  - [ ] `repeat(times: Int, action: (Int) -> Unit)` → loop 展開として lowering
+  - [ ] P5-144（例外型階層）が前提となることを確認する
+  - [ ] 各関数の diff/golden 回帰ケースを追加する
+  - **完了条件**: `require(x > 0) { "must be positive" }` が x≦0 で `IllegalArgumentException` を throw し `kotlinc` と一致する
+
+### 📌 annotation class 宣言
+
+- [ ] P5-151: `annotation class` 宣言（カスタムアノテーション型定義）を実装する（spec.md J6.3/J7.1）
+  - [ ] `annotation class Foo(val x: String = "default")` を Parser/AST で専用ノード化し `SymbolKind.annotationClass` に登録する
+  - [ ] primary constructor パラメータは `val` のみ、型は primitive/String/enum/KClass/annotation/array に制限し違反時に診断する
+  - [ ] Sema でアノテーション適用時に annotation class シンボルを参照して引数型を検証する
+  - [ ] `annotation class` の基本 diff/golden ケースを追加する
+  - **完了条件**: `@MyAnnotation("hello") fun foo()` が `MyAnnotation` を annotation class として解決し metadata に保存される
+
+### 📚 --emit library モード
+
+- [ ] P5-152: `--emit library` モード（`.kklib` 生成）を実装する（spec.md J1.1/J14）
+  - [ ] `CompilerOptions.emitMode == .library` 時のパイプラインを整備し、object ファイル・metadata.bin・inline-kir を生成して `.kklib/` ディレクトリへ出力する
+  - [ ] manifest.json に `formatVersion`/`moduleName`/`kotlinLanguageVersion`/`target`/`objects`/`metadata`/`inlineKIRDir` を書き出す（P5-54 の検証スキーマを逆用）
+  - [ ] `--emit library` で生成した `.kklib` を `-I` で consumer に渡す E2E テストを追加する
+  - **完了条件**: `kswiftc --emit library lib.kt -o mylib.kklib` が生成した `.kklib` を consumer が正しくリンクできる
+
+### 🔧 inline 修飾子
+
+- [ ] P5-153: `crossinline` / `noinline` ラムダパラメータ修飾子を実装する（spec.md J6.3/J12.2）
+  - [ ] `noinline` modifier を Parser/AST で保持し、InlineLowering で当該ラムダパラメータの inline 展開をスキップする
+  - [ ] `crossinline` modifier を保持し、non-local return を含む lambda を `crossinline` 位置で使用した場合に `KSWIFTK-SEMA-*` 診断を出す
+  - [ ] `noinline`/`crossinline` の diff/golden 回帰ケースを追加する
+  - **完了条件**: `inline fun foo(noinline block: () -> Unit)` で `block` が展開されず関数オブジェクトとして渡される
+
+### 🌐 external fun (FFI)
+
+- [ ] P5-154: `external fun` 宣言（ネイティブ FFI）を実装する（spec.md J6.3）
+  - [ ] `external fun` を Sema で body なし関数として許可し、ABI 互換な C 関数シンボルへの direct call を codegen で生成する
+  - [ ] `@CName("c_func")` アノテーション連携でシンボル名を上書き可能にする（P5-154 のスコープ内）
+  - [ ] external 関数の diff/golden ケースを追加する
+  - **完了条件**: `external fun c_sqrt(x: Double): Double` が C stdlib の `sqrt` を呼び出して正しい値を返す
+
+### 🔍 Parser — `<T>` vs `<` 曖昧性
+
+- [ ] P5-155: `<T>` vs `<` 曖昧性解消アルゴリズムを Parser に実装する（spec.md J5.5）
+  - [ ] `canStartTypeArguments` 関数（N=32 先読み）を Parser に追加する
+  - [ ] `foo<Int>(x)` を generic 呼び出しとして、`a < b` を比較として正しく区別する
+  - [ ] 型引数付き generic call の parser golden ケースを追加する
+  - **完了条件**: `val x = foo<Int>(1) + bar<Long>(2L)` が型引数付き呼び出しとして正しく parse される
+
+### 🏷️ Lexer — backticked identifiers
+
+- [ ] P5-156: backticked identifiers（`` `reserved` ``）を Lexer に実装する（spec.md J4.1）
+  - [ ] Lexer で `` ` `` で囲まれた任意のテキストを `backtickedIdentifier` トークンとして認識する
+  - [ ] backticked identifier を通常の識別子と同等に Sema で扱う
+  - [ ] `` fun `should return true`() `` 形式のテスト関数名の lexer golden を追加する
+  - **完了条件**: `` val `class` = 1 `` が予約語エラーなく parse・コンパイルされる
+
+### 🎰 enum エントリコンストラクタ引数
+
+- [ ] P5-157: enum entry コンストラクタ引数を実装する（spec.md J6.2/J7）
+  - [ ] `enum class Color(val rgb: Int) { RED(0xFF0000), GREEN(0x00FF00), BLUE(0x0000FF) }` を Parser/AST で扱う
+  - [ ] enum primary constructor の引数を entry 宣言時に解決する（constructor overload resolution と接続）
+  - [ ] entry body（abstract fun override 等）の解析と合成メンバ生成を追加する
+  - [ ] データ付き enum の diff/golden ケースを追加する
+  - **完了条件**: `Color.RED.rgb == 0xFF0000` が動作し `kotlinc` と同一出力になる
+
+### 🎯 stdlib — takeIf / takeUnless
+
+- [ ] P5-158: `takeIf` / `takeUnless` スコープ関数を実装する（spec.md J9/J15）
+  - [ ] `T.takeIf(predicate: (T) -> Boolean): T?` → 条件 true なら `this`、false なら `null`
+  - [ ] `T.takeUnless(predicate: (T) -> Boolean): T?` → 逆
+  - [ ] P5-137（スコープ関数）の stub パターンを踏襲して実装する
+  - [ ] `takeIf`/`takeUnless` の diff/golden ケースを追加する
+  - **完了条件**: `"hello".takeIf { it.length > 3 }?.uppercase()` が `"HELLO"` を返し `kotlinc` と一致する
+
+---
+
+### 🗑️ GC / Runtime（将来対応）
+
+- [ ] P5-159: GC write barrier 挿入（`kk_write_barrier`）を codegen に実装する（spec.md J16.1）
+  - [ ] 参照型フィールドへの書き込み時に `kk_write_barrier(owner, fieldAddr)` を codegen で挿入する
+  - [ ] write barrier 挿入の E2E テスト（GC 圧力下での正確性確認）を追加する
+  - **完了条件**: 参照型フィールド書き込みが全て write barrier を経由し、GC が cycles を正しく追跡できる
+
+- [ ] P5-160: `gcDescriptor` per-type 生成（精密 GC スキャン）を実装する（spec.md J16.1）
+  - [ ] `KTypeInfo.gcDescriptor` にフィールドの参照/非参照情報をビットマップで埋め込む
+  - [ ] codegen でクラスごとの `gcDescriptor` を生成し `KTypeInfo` に接続する
+  - [ ] 精密スキャンの GC 回帰テストを追加する
+  - **完了条件**: GC がヒープオブジェクト内の参照フィールドのみをスキャンし、primitive フィールドをスキップする
+
+### ⚡ Backend — 最適化レベル
+
+- [ ] P5-161: 最適化レベル（O0/O1/O2/O3）を LLVM backend に連携させる（spec.md J1.1/J15.2）
+  - [ ] `CompilerOptions.optimizationLevel` を `LLVMCAPIBackend` の `LLVMSetModuleIdentifier` / PassManager 呼び出しに伝播させる
+  - [ ] `clang` 呼び出しに `-O0`/`-O1`/`-O2`/`-O3` フラグを接続する（synthetic C backend）
+  - [ ] 最適化レベル別の出力サイズ・速度ベンチを追加する
+  - **完了条件**: `kswiftc -O2` が `-O0` より小さい object を生成し、コードが正しく動作する
+
+### 🐚 Lexer — shebang サポート
+
+- [ ] P5-162: shebang（`#!`）の Lexer サポートを実装する（spec.md J4.1）
+  - [ ] スクリプトファイル先頭の `#!...` 行をトリビアとして処理し、字句解析に影響させない
+  - [ ] shebang 付きスクリプトの lexer golden ケースを追加する
+  - **完了条件**: `#!/usr/bin/env kswiftc` を先頭に持つファイルが正常にコンパイルされる
+
+### 🔄 Coroutines — CoroutineContext 型階層
+
+- [ ] P5-163: `CoroutineContext` 型階層と合成演算子を実装する（spec.md J17.1）
+  - [ ] `CoroutineContext` / `CoroutineContext.Element` / `CoroutineContext.Key<E>` の型定義を stdlib stub として追加する
+  - [ ] `context1 + context2` 合成演算子（`plus` operator）を実装する
+  - [ ] P5-89（structured concurrency）の `coroutineScope { }` と接続する
+  - [ ] CoroutineContext 合成の E2E ケースを追加する
+  - **完了条件**: `coroutineScope(CoroutineName("test") + Dispatchers.IO) { }` が正しく context を合成して実行される
+
+- [ ] P5-164: `KKContinuation` プロトコルと `resumeWith`/`suspendCoroutine` を実装する（spec.md J17.1）
+  - [ ] `suspendCoroutine { cont -> cont.resume(value) }` / `suspendCancellableCoroutine` のユーザーレベル API を追加する
+  - [ ] `Result<T>` 型（`success`/`failure`）を stdlib stub として定義する
+  - [ ] continuation の `resume(value)`/`resumeWithException(e)` を lowering/runtime に接続する
+  - [ ] `suspendCoroutine` を使った手動 suspend 制御の E2E ケースを追加する
+  - **完了条件**: `suspendCoroutine<Int> { cont -> cont.resume(42) }` が `42` を返す
+
+### 📑 Contracts
+
+- [ ] P5-165: Kotlin contracts（`contract { }` ブロック）の最小実装を追加する（spec.md J10）
+  - [ ] `contract { }` ブロックを Parser/AST で保持し（エラーにしない）、`callsInPlace`/`returns`/`returnsNotNull` エフェクトを AST に記録する
+  - [ ] `callsInPlace(block, InvocationKind.EXACTLY_ONCE)` を DataFlow が認識し、lambda 内変数初期化を "definite assignment" として扱う
+  - [ ] `returns(true) implies (x != null)` を DataFlowState の smart cast に接続する
+  - [ ] contracts を使った smart cast 改善の diff/golden ケースを追加する
+  - **完了条件**: `contract { callsInPlace(block, EXACTLY_ONCE) }` により lambda 内での `val` 初期化が definite assignment として認識される
+
+---
+
+## 優先度マトリクス（P5-142〜P5-165）
+
+| 優先度 | 番号 | 理由 |
+|---|---|---|
+| 🔴 P0 ブロッカー | P5-142/143/144 | String 操作・数値変換・例外型が無いと実用プログラムが動かない |
+| 🔴 P0 ブロッカー | P5-145/146/147/148 | コレクション操作・print・Pair・MutableList が必須 |
+| 🟠 P1 高 | P5-149/150/151 | class delegation・標準ユーティリティ・annotation class |
+| 🟠 P1 高 | P5-152/153/155/156 | --emit library・crossinline/noinline・型引数曖昧性・backtick |
+| 🟡 P2 中 | P5-154/157/158 | external fun・enum entry 引数・takeIf/takeUnless |
+| 🟢 P3 低 | P5-159/160/161 | GC write barrier・gcDescriptor・最適化レベル |
+| 🟢 P3 低 | P5-162/163/164/165 | shebang・CoroutineContext・suspendCoroutine・contracts |
 
 ---
 

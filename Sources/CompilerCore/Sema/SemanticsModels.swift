@@ -595,6 +595,7 @@ public final class BindingTable {
     public private(set) var captureSymbolsByExpr: [ExprID: [SymbolID]] = [:]
     public private(set) var declSymbols: [DeclID: SymbolID] = [:]
     public private(set) var superCallExprs: Set<ExprID> = []
+    public private(set) var superQualifiers: [ExprID: SymbolID] = [:]
     public private(set) var invokeOperatorCallExprs: Set<ExprID> = []
     public private(set) var collectionExprIDs: Set<ExprID> = []
     public private(set) var collectionSymbolIDs: Set<SymbolID> = []
@@ -636,6 +637,14 @@ public final class BindingTable {
 
     public func markSuperCall(_ expr: ExprID) {
         superCallExprs.insert(expr)
+    }
+
+    public func bindSuperQualifier(_ expr: ExprID, interfaceSymbol: SymbolID) {
+        superQualifiers[expr] = interfaceSymbol
+    }
+
+    public func superQualifier(for expr: ExprID) -> SymbolID? {
+        superQualifiers[expr]
     }
 
     public func markInvokeOperatorCall(_ expr: ExprID) {

@@ -1202,10 +1202,16 @@ final class ASTModelsTests: XCTestCase {
     func testExprSuperRefAndThisRef() {
         let interner = StringInterner()
         let r = makeRange(start: 0, end: 5)
-        let superRef = Expr.superRef(r)
-        if case .superRef(let range) = superRef {
+        let superRef = Expr.superRef(qualifier: nil, r)
+        if case .superRef(let qualifier, let range) = superRef {
+            XCTAssertNil(qualifier)
             XCTAssertEqual(range, r)
         } else { XCTFail("Expected .superRef") }
+
+        let qualifiedSuperRef = Expr.superRef(qualifier: interner.intern("B"), r)
+        if case .superRef(let qualifier, _) = qualifiedSuperRef {
+            XCTAssertEqual(qualifier, interner.intern("B"))
+        } else { XCTFail("Expected .superRef with qualifier") }
 
         let thisRef = Expr.thisRef(label: nil, r)
         if case .thisRef(let label, _) = thisRef {

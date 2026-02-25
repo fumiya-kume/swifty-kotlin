@@ -405,6 +405,132 @@ extension DataFlowSemaPassPhase {
         return overriddenNames
     }
 
+    // P5-114: Validate that concrete classes override conflicting default methods from multiple interfaces.
+    func validateDiamondOverrideConflicts(
+        ast: ASTModule,
+        symbols: SymbolTable,
+        bindings: BindingTable,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner
+    ) {
+        for file in ast.sortedFiles {
+            for declID in file.topLevelDecls {
+                validateDiamondForDecl(
+                    declID: declID,
+                    ast: ast,
+                    symbols: symbols,
+                    bindings: bindings,
+                    diagnostics: diagnostics,
+                    interner: interner
+                )
+            }
+        }
+    }
+
+    private func validateDiamondForDecl(
+        declID: DeclID,
+        ast: ASTModule,
+        symbols: SymbolTable,
+        bindings: BindingTable,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner
+    ) {
+        guard let symbol = bindings.declSymbols[declID],
+              let symbolInfo = symbols.symbol(symbol),
+              let decl = ast.arena.decl(declID) else { return }
+
+        // Recurse into nested classes/objects
+        switch decl {
+        case .classDecl(let classDecl):
+            for nestedID in classDecl.nestedClasses {
+                validateDiamondForDecl(
+                    declID: nestedID, ast: ast, symbols: symbols,
+                    bindings: bindings, diagnostics: diagnostics, interner: interner
+                )
+            }
+        case .interfaceDecl(let interfaceDecl):
+            for nestedID in interfaceDecl.nestedClasses {
+                validateDiamondForDecl(
+                    declID: nestedID, ast: ast, symbols: symbols,
+                    bindings: bindings, diagnostics: diagnostics, interner: interner
+                )
+            }
+        case .objectDecl(let objectDecl):
+            for nestedID in objectDecl.nestedClasses {
+                validateDiamondForDecl(
+                    declID: nestedID, ast: ast, symbols: symbols,
+                    bindings: bindings, diagnostics: diagnostics, interner: interner
+                )
+            }
+        default:
+            return
+        }
+
+        // Only check concrete classes/objects (not abstract, not interfaces)
+        guard (symbolInfo.kind == .class || symbolInfo.kind == .object),
+              !symbolInfo.flags.contains(.abstractType) else { return }
+
+        // Collect direct interface supertypes
+        let directSupertypes = symbols.directSupertypes(for: symbol)
+        let interfaceSupertypes = directSupertypes.filter {
+            symbols.symbol($0)?.kind == .interface
+        }
+        guard interfaceSupertypes.count >= 2 else { return }
+
+        // For each interface, collect non-abstract (default) methods via BFS.
+        // A method is a default method when it does NOT have the .abstractType flag.
+        // (DataFlowSemaPass+MemberHeaderCollection sets .abstractType on interface
+        //  functions without a body.)
+        // Key: method name; Value: set of interface SymbolIDs that contribute a default.
+        var defaultsByName: [InternedString: Set<SymbolID>] = [:]
+        for ifaceID in interfaceSupertypes {
+            var queue = [ifaceID]
+            var visited: Set<SymbolID> = []
+            while !queue.isEmpty {
+                let current = queue.removeFirst()
+                guard visited.insert(current).inserted else { continue }
+                guard let currentSym = symbols.symbol(current),
+                      currentSym.kind == .interface else { continue }
+                let children = symbols.children(ofFQName: currentSym.fqName)
+                for childID in children {
+                    guard let childSym = symbols.symbol(childID),
+                          childSym.kind == .function,
+                          !childSym.flags.contains(.abstractType) else { continue }
+                    defaultsByName[childSym.name, default: []].insert(ifaceID)
+                }
+                queue.append(contentsOf: symbols.directSupertypes(for: current))
+            }
+        }
+
+        // Find names where 2+ interfaces each provide a default method
+        let conflictingNames = defaultsByName.filter { $0.value.count >= 2 }.map(\.key)
+        guard !conflictingNames.isEmpty else { return }
+
+        // Check which names this class already overrides
+        let overriddenNames = collectOverriddenMemberNames(
+            for: symbol, decl: decl, ast: ast, symbols: symbols
+        )
+
+        let className = symbolInfo.fqName.map { interner.resolve($0) }.joined(separator: ".")
+        let declRange: SourceRange? = {
+            switch decl {
+            case .classDecl(let cd): return cd.range
+            case .objectDecl(let od): return od.range
+            default: return nil
+            }
+        }()
+        for name in conflictingNames.sorted(by: { $0.rawValue < $1.rawValue }) {
+            if !overriddenNames.contains(name) {
+                let memberName = interner.resolve(name)
+                diagnostics.error(
+                    "KSWIFTK-SEMA-DIAMOND",
+                    "Class '\(className)' inherits conflicting default implementations of '\(memberName)' from multiple interfaces and must provide an explicit override.",
+                    range: declRange
+                )
+            }
+        }
+    }
+
     // P5-78: Validate that direct subclasses of sealed types are in the same package.
     func validateSealedHierarchy(
         ast: ASTModule,
