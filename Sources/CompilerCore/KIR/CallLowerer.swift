@@ -268,7 +268,7 @@ final class CallLowerer {
             let callBinding = sema.bindings.callBindings[exprID]
             if let chosen = callBinding?.chosenCallee,
                let constant = propertyConstantInitializers[chosen] {
-                let id = arena.appendExpr(constant, type: boundType)
+                let id = arena.appendExpr(constant, type: boundType ?? sema.types.anyType)
                 instructions.append(.constValue(result: id, value: constant))
                 return id
             }
@@ -462,7 +462,7 @@ final class CallLowerer {
             let callBinding = sema.bindings.callBindings[exprID]
             if let chosen = callBinding?.chosenCallee,
                let constant = propertyConstantInitializers[chosen] {
-                let id = arena.appendExpr(constant, type: boundType)
+                let id = arena.appendExpr(constant, type: boundType ?? sema.types.anyType)
                 instructions.append(.constValue(result: id, value: constant))
                 return id
             }
