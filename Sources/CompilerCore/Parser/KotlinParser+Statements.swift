@@ -460,7 +460,9 @@ extension KotlinParser {
                 break
             }
             if case .symbol(.lBrace) = token.kind, inBlock {
-                children.append(.node(parseBlock()))
+                let blockID = parseBlock()
+                children.append(.node(blockID))
+                range.append(arena.node(blockID).range)
                 progress = true
                 continue
             }
@@ -468,10 +470,11 @@ extension KotlinParser {
                 let blockID = parseBlock()
                 children.append(.node(blockID))
                 range.append(arena.node(blockID).range)
+                progress = true
                 // Continue if next token is catch/finally (try expression continuation)
                 let nextAfterBlock = stream.peek()
-                if case .keyword(.catch) = nextAfterBlock.kind { progress = true; continue }
-                if case .keyword(.finally) = nextAfterBlock.kind { progress = true; continue }
+                if case .keyword(.catch) = nextAfterBlock.kind { continue }
+                if case .keyword(.finally) = nextAfterBlock.kind { continue }
                 break
             }
             _ = consumeToken(into: &children, range: &range)

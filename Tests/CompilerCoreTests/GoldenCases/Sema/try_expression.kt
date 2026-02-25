@@ -13,6 +13,11 @@ fun tryFinally(): String =
     try { "result" }
     finally { }
 
+fun tryCatchFinally(): String =
+    try { "ok" }
+    catch (e: Exception) { "err" }
+    finally { }
+
 val propTryCatch: String =
     try { "ok" }
     catch (e: Exception) { "err" }
