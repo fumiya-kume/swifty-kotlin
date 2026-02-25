@@ -20,7 +20,7 @@
 
 ## 2. モジュール構成
 
-```
+```text
 Package.swift
  +-- CompilerCore  (library)   コンパイラ本体ロジック全般
  +-- KSwiftKCLI   (executable) CLI エントリポイント -> kswiftc
@@ -30,7 +30,7 @@ Package.swift
 
 ### 依存グラフ
 
-```
+```text
 KSwiftKCLI --> CompilerCore --> CLLVM
 Runtime (独立 — リンク時に結合)
 ```
@@ -42,8 +42,8 @@ Runtime (独立 — リンク時に結合)
 `CompilerDriver.run()` が以下の Phase を順に実行する。  
 各 Phase は `CompilerPhase` プロトコルに準拠し、`CompilationContext` を読み書きする。
 
-```
-LoadSources --> Lex --> Parse --> BuildAST --> SemaPasses --> BuildKIR --> Lowerings --> Codegen --> Link
+```text
+LoadSources --> Lex --> Parse --> BuildAST --> SemaPasses --> BuildKIR --> Lowering --> Codegen --> Link
 ```
 
 | # | Phase | 入力 | 出力 (ctx に格納) | 主要ファイル |
@@ -54,7 +54,7 @@ LoadSources --> Lex --> Parse --> BuildAST --> SemaPasses --> BuildKIR --> Lower
 | 4 | **BuildAST** | CST | `ctx.ast` (ASTModule) | `Driver/FrontendPhases.swift`, `AST/BuildASTPhase+*.swift` |
 | 5 | **SemaPasses** | AST | `ctx.sema` (SemaModule) | `Sema/SemaPasses.swift` -> DataFlowSemaPass + TypeCheckSemaPass |
 | 6 | **BuildKIR** | AST + Sema | `ctx.kir` (KIRModule) | `KIR/BuildKIRPass.swift`, `KIR/KIRLoweringDriver.swift` |
-| 7 | **Lowerings** | KIR | KIR (in-place 変換) | `Lowering/LoweringPhase.swift` + 各 `*LoweringPass.swift` |
+| 7 | **Lowering** | KIR | KIR (in-place 変換) | `Lowering/LoweringPhase.swift` + 各 `*LoweringPass.swift` |
 | 8 | **Codegen** | KIR | `.o` / `.ll` / `.kir` / `.kklib` | `Codegen/CodegenPass.swift`, `Codegen/LLVMBackend*.swift`, `Codegen/LLVMCAPIBackend.swift` |
 | 9 | **Link** | `.o` ファイル | 実行ファイル (clang 呼び出し) | `Codegen/LinkPass.swift` |
 
@@ -105,7 +105,7 @@ LoadSources --> Lex --> Parse --> BuildAST --> SemaPasses --> BuildKIR --> Lower
 
 ## 5. テスト構造
 
-```
+```text
 Tests/
  +-- CompilerCoreTests/
  |    +-- Lexer/          # TokenModelTests, TokenStreamTests, LexerParserCoverageTests
@@ -135,7 +135,7 @@ bash Scripts/diff_kotlinc.sh Scripts/diff_cases           # kotlinc 差分回帰
 
 ## 6. データフロー — 中間表現の流れ
 
-```
+```text
 ソースコード (.kt)
     |
     v
@@ -217,7 +217,7 @@ KIRModule (lowered)
 
 `LoweringPhase.passes` で定義。順序に依存関係あり:
 
-```
+```text
 1. NormalizeBlocksPass          -- ブロック正規化
 2. OperatorLoweringPass         -- 演算子展開
 3. ForLoweringPass              -- for ループ脱糖 (iterator パターン)
@@ -324,7 +324,7 @@ KIRModule (lowered)
 
 `--emit library` で生成される `.kklib` バンドルの構造:
 
-```
+```text
 module.kklib/
   manifest.json        -- formatVersion, moduleName, target, objects[], metadata, inlineKIRDir
   metadata.bin         -- シンボル/型/レイアウト情報のシリアライズ
