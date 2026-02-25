@@ -465,7 +465,9 @@ extension KotlinParser {
                 continue
             }
             if case .symbol(.lBrace) = token.kind {
-                children.append(.node(parseBlock()))
+                let blockID = parseBlock()
+                children.append(.node(blockID))
+                range.append(arena.node(blockID).range)
                 // Continue if next token is catch/finally (try expression continuation)
                 let nextAfterBlock = stream.peek()
                 if case .keyword(.catch) = nextAfterBlock.kind { progress = true; continue }

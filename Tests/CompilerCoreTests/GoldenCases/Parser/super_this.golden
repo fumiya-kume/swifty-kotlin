@@ -1,4 +1,4 @@
-node kotlinFile f0:0..103
+node kotlinFile f0:0..185
   node packageHeader f0:0..21
     tok keyword(package) f0:0..7
     tok identifier(golden) f0:8..14
@@ -24,7 +24,7 @@ node kotlinFile f0:0..103
         tok stringSegment(hello) f0:73..78
         tok stringQuote f0:78..79
       tok symbol(}) f0:80..81
-  node classDecl f0:83..103
+  node classDecl f0:83..185
     tok keyword(class) f0:83..88
     tok identifier(Child) f0:89..94
     tok symbol(:) f0:95..96
