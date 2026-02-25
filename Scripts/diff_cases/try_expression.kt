@@ -1,13 +1,12 @@
-fun safeParse(s: String): Int =
-    try { s.toInt() }
-    catch (e: NumberFormatException) { -1 }
+fun tryCatchExpr(): String =
+    try { "ok" }
+    catch (e: Exception) { "error" }
 
-fun safeParseWithFinally(s: String): Int =
-    try { s.toInt() }
-    finally { println("done") }
+fun tryFinallyExpr(): String =
+    try { "result" }
+    finally { println("cleanup") }
 
 fun main() {
-    println(safeParse("42"))
-    println(safeParse("abc"))
-    println(safeParseWithFinally("99"))
+    println(tryCatchExpr())
+    println(tryFinallyExpr())
 }
