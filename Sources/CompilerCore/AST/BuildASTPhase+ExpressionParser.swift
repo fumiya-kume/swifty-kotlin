@@ -129,8 +129,8 @@ extension BuildASTPhase {
 
                 // General infix function call: any identifier in infix position
                 // Kotlin grammar: infixFunctionCall = rangeExpression (simpleIdentifier rangeExpression)*
-                // All infix functions share precedence level 95 (left-associative)
-                let infixPrecedence = 95
+                // All infix functions share the same precedence level as range operators (.downTo / .step)
+                let infixPrecedence = precedence(of: .downTo)
                 if infixPrecedence >= minPrecedence,
                    let token = current(),
                    isInfixIdentifierToken(token),
