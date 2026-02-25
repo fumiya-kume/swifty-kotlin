@@ -91,7 +91,18 @@ final class DeclTypeChecker {
                 delegateExpr, ctx: ctx, locals: &delegateLocals,
                 expectedType: nil
             )
-            _ = delegateType
+            // Record the delegate type on the property symbol so the KIR
+            // lowering phase can synthesise getValue/setValue calls.
+            // If no explicit property type was declared, use Any? as fallback
+            // (the real property type will be set below from the declared or
+            // inferred type).
+            sema.symbols.setPropertyType(delegateType, for: SymbolID(rawValue: -(symbol.rawValue + 50_000)))
+            // If no explicit type is declared, attempt to use the delegate
+            // type as property type (best-effort; full getValue resolution
+            // would require matching operator conventions which is deferred).
+            if inferredPropertyType == nil {
+                inferredPropertyType = sema.types.nullableAnyType
+            }
         }
 
         let finalPropertyType = inferredPropertyType ?? sema.types.nullableAnyType
