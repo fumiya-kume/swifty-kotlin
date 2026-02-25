@@ -843,6 +843,30 @@ extension NativeEmitter {
                     storeResult(to, copySource)
                 }
 
+            case .storeGlobal(let value, let symbol):
+                guard !bindings.hasTerminator(currentBlock) else {
+                    continue
+                }
+                let resolved = resolveValue(value)
+                if let globalPtr = globalVariables[symbol] {
+                    _ = bindings.buildStore(builder, value: resolved, pointer: globalPtr)
+                }
+
+            case .loadGlobal(let result, let symbol):
+                guard !bindings.hasTerminator(currentBlock) else {
+                    continue
+                }
+                if let globalPtr = globalVariables[symbol] {
+                    if let loaded = bindings.buildLoad(
+                        builder, type: int64Type, pointer: globalPtr,
+                        name: "load_global_\(symbol.rawValue)"
+                    ) {
+                        storeResult(result, loaded)
+                    }
+                } else {
+                    storeResult(result, zeroValue)
+                }
+
             case .rethrow(let value):
                 guard !bindings.hasTerminator(currentBlock) else {
                     continue
