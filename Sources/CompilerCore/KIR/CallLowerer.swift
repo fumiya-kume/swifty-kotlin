@@ -261,6 +261,19 @@ final class CallLowerer {
         }
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
 
+        // const val member property folding (P5-109): if the resolved callee
+        // is a const val property, replace the member access with its constant
+        // value instead of emitting a getter call.
+        if args.isEmpty {
+            let callBinding = sema.bindings.callBindings[exprID]
+            if let chosen = callBinding?.chosenCallee,
+               let constant = propertyConstantInitializers[chosen] {
+                let id = arena.appendExpr(constant, type: boundType)
+                instructions.append(.constValue(result: id, value: constant))
+                return id
+            }
+        }
+
         // Primitive member function: Int/Long.inv() → kk_op_inv (P5-103)
         let intType = sema.types.make(.primitive(.int, .nonNull))
         let longType = sema.types.make(.primitive(.long, .nonNull))
@@ -442,6 +455,18 @@ final class CallLowerer {
             )
         }
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+
+        // const val member property folding (P5-109): fold safe member access
+        // to a const val property into its constant value.
+        if args.isEmpty {
+            let callBinding = sema.bindings.callBindings[exprID]
+            if let chosen = callBinding?.chosenCallee,
+               let constant = propertyConstantInitializers[chosen] {
+                let id = arena.appendExpr(constant, type: boundType)
+                instructions.append(.constValue(result: id, value: constant))
+                return id
+            }
+        }
 
         // Primitive member function: Int/Long.inv() → kk_op_inv (P5-103)
         if interner.resolve(calleeName) == "inv",
