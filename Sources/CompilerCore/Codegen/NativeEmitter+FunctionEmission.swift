@@ -9,6 +9,7 @@ extension NativeEmitter {
         int64Type: LLVMCAPIBindings.LLVMTypeRef,
         outThrownPointerType: LLVMCAPIBindings.LLVMTypeRef,
         internalFunctions: [SymbolID: LLVMFunction],
+        globalVariables: [SymbolID: LLVMCAPIBindings.LLVMValueRef] = [:],
         diContext: DebugInfoContext? = nil
     ) throws {
         guard let builder = bindings.createBuilder(context: context) else {
@@ -193,6 +194,7 @@ extension NativeEmitter {
                 state: builderState,
                 parameterValues: parameterValues,
                 internalFunctions: internalFunctions,
+                globalVariables: globalVariables,
                 generatedStringLiteralCount: &generatedStringLiteralCount,
                 declareExternalFunction: { name, argCount, appendThrown in
                     declareExternalFunction(named: name, argumentCount: argCount, appendThrownChannel: appendThrown)
@@ -829,7 +831,13 @@ extension NativeEmitter {
                     continue
                 }
                 let copySource = resolveValue(from)
-                if let alloca = copyTargetAllocas[to.rawValue] {
+                // If the copy target is a global symbolRef, store to the
+                // LLVM global variable so the write persists across reads.
+                if let targetExpr = module.arena.expr(to),
+                   case .symbolRef(let targetSymbol) = targetExpr,
+                   let globalPtr = globalVariables[targetSymbol] {
+                    _ = bindings.buildStore(builder, value: copySource, pointer: globalPtr)
+                } else if let alloca = copyTargetAllocas[to.rawValue] {
                     _ = bindings.buildStore(builder, value: copySource, pointer: alloca)
                 } else {
                     storeResult(to, copySource)
