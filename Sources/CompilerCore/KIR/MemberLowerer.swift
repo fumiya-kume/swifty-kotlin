@@ -159,9 +159,20 @@ final class MemberLowerer {
                 continue
             }
             let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
-            let kirID = arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: propType)))
-            directMembers.append(kirID)
-            allDecls.append(kirID)
+
+            // Getter-only computed properties (`val x: T get() = expr`) have no
+            // storage — skip emitting a KIRGlobal so no backing field is generated
+            // in codegen.  The getter accessor function alone is sufficient.
+            let isGetterOnlyComputed = propertyDecl.getter != nil
+                && propertyDecl.setter == nil
+                && propertyDecl.initializer == nil
+                && propertyDecl.delegateExpression == nil
+
+            if !isGetterOnlyComputed {
+                let kirID = arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: propType)))
+                directMembers.append(kirID)
+                allDecls.append(kirID)
+            }
 
             // Emit backing field global for properties with custom accessors.
             if let backingFieldSymbol = sema.symbols.backingFieldSymbol(for: symbol) {
@@ -206,23 +217,58 @@ final class MemberLowerer {
                 )
             }
 
-            // Lower delegated property storage as an additional global.
+            // Lower delegated property: emit delegate storage global and
+            // synthesise getter (and setter for var) that call getValue/setValue
+            // on the delegate instance.
             if propertyDecl.delegateExpression != nil {
-                let delegateStorageName = interner.intern("$delegate_\(interner.resolve(propertyDecl.name))")
-                let delegateStorageFQName = (sema.symbols.symbol(symbol)?.fqName.dropLast() ?? []) + [delegateStorageName]
-                let delegateStorageSymbol = sema.symbols.define(
-                    kind: .field,
-                    name: delegateStorageName,
-                    fqName: Array(delegateStorageFQName),
-                    declSite: propertyDecl.range,
-                    visibility: .private,
-                    flags: []
-                )
+                let delegateStorageSymbol: SymbolID
+                if let existingStorage = sema.symbols.delegateStorageSymbol(for: symbol) {
+                    delegateStorageSymbol = existingStorage
+                } else {
+                    let delegateStorageName = interner.intern("$delegate_\(interner.resolve(propertyDecl.name))")
+                    let delegateStorageFQName = (sema.symbols.symbol(symbol)?.fqName.dropLast() ?? []) + [delegateStorageName]
+                    delegateStorageSymbol = sema.symbols.define(
+                        kind: .field,
+                        name: delegateStorageName,
+                        fqName: Array(delegateStorageFQName),
+                        declSite: propertyDecl.range,
+                        visibility: .private,
+                        flags: []
+                    )
+                }
                 let delegateType = sema.types.anyType
                 let delegateKirID = arena.appendDecl(
                     .global(KIRGlobal(symbol: delegateStorageSymbol, type: delegateType))
                 )
                 allDecls.append(delegateKirID)
+
+                // Synthesise getter: calls getValue on the delegate storage.
+                lowerDelegateAccessor(
+                    propertySymbol: symbol,
+                    propertyType: propType,
+                    delegateStorageSymbol: delegateStorageSymbol,
+                    accessorKind: .getter,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    allDecls: &allDecls
+                )
+
+                // Synthesise setter for var properties: calls setValue on the delegate.
+                if propertyDecl.isVar {
+                    lowerDelegateAccessor(
+                        propertySymbol: symbol,
+                        propertyType: propType,
+                        delegateStorageSymbol: delegateStorageSymbol,
+                        accessorKind: .setter,
+                        ast: ast,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        allDecls: &allDecls
+                    )
+                }
             }
         }
 
@@ -302,6 +348,143 @@ final class MemberLowerer {
         }
 
         return (directMembers, allDecls)
+    }
+
+    /// Synthesise a getter or setter function for a delegated property.
+    ///
+    /// Getter emits: `return $delegate_x.getValue(thisRef, KProperty("x"))`
+    /// Setter emits: `$delegate_x.setValue(thisRef, KProperty("x"), value)`
+    ///
+    /// The actual `getValue`/`setValue` calls use the delegate storage symbol
+    /// so that `PropertyLoweringPass` can later rewrite them to
+    /// `kk_property_access`.
+    func lowerDelegateAccessor(
+        propertySymbol: SymbolID,
+        propertyType: TypeID,
+        delegateStorageSymbol: SymbolID,
+        accessorKind: PropertyAccessorKind,
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        allDecls: inout [KIRDeclID]
+    ) {
+        driver.ctx.resetScopeForFunction()
+        driver.ctx.beginCallableLoweringScope()
+
+        let ownerSymbol = sema.symbols.parentSymbol(for: propertySymbol)
+        var params: [KIRParameter] = []
+
+        // Add receiver parameter if property has an owner class/object.
+        if let ownerSymbol,
+           let ownerSym = sema.symbols.symbol(ownerSymbol) {
+            let ownerType = sema.types.make(
+                .classType(ClassType(classSymbol: ownerSym.id, args: [], nullability: .nonNull))
+            )
+            let receiverSymbol = driver.callSupportLowerer.syntheticReceiverParameterSymbol(functionSymbol: propertySymbol)
+            params.append(KIRParameter(symbol: receiverSymbol, type: ownerType))
+            driver.ctx.currentImplicitReceiverSymbol = receiverSymbol
+            driver.ctx.currentImplicitReceiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: ownerType)
+        }
+
+        let returnType: TypeID
+        let accessorName: InternedString
+        let getValueName = interner.intern("getValue")
+        let setValueName = interner.intern("setValue")
+
+        var body: [KIRInstruction] = [.beginBlock]
+        if let receiverExpr = driver.ctx.currentImplicitReceiverExprID,
+           let receiverSym = driver.ctx.currentImplicitReceiverSymbol {
+            body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
+        }
+
+        // Build the thisRef argument (receiver or null for top-level).
+        let thisRefExprID: KIRExprID
+        if let receiver = driver.ctx.currentImplicitReceiverExprID {
+            thisRefExprID = receiver
+        } else {
+            thisRefExprID = arena.appendExpr(.null, type: sema.types.nullableAnyType)
+            body.append(.constValue(result: thisRefExprID, value: .null))
+        }
+
+        // Build a KProperty metadata argument (string name of the property).
+        let propertyName = sema.symbols.symbol(propertySymbol)?.name ?? interner.intern("")
+        let kPropertyExprID = arena.appendExpr(
+            .stringLiteral(propertyName),
+            type: sema.types.make(.primitive(.string, .nonNull))
+        )
+        body.append(.constValue(result: kPropertyExprID, value: .stringLiteral(propertyName)))
+
+        switch accessorKind {
+        case .getter:
+            returnType = propertyType
+            accessorName = interner.intern("get")
+
+            // call: $delegate_x.getValue(thisRef, kProperty) -> PropertyType
+            let resultExprID = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: propertyType
+            )
+            body.append(
+                .call(
+                    symbol: delegateStorageSymbol,
+                    callee: getValueName,
+                    arguments: [thisRefExprID, kPropertyExprID],
+                    result: resultExprID,
+                    canThrow: false,
+                    thrownResult: nil
+                )
+            )
+            body.append(.returnValue(resultExprID))
+
+        case .setter:
+            returnType = sema.types.unitType
+            accessorName = interner.intern("set")
+
+            let valueParamSymbol = SymbolID(rawValue: -(propertySymbol.rawValue + 30_000))
+            params.append(KIRParameter(symbol: valueParamSymbol, type: propertyType))
+
+            // call: $delegate_x.setValue(thisRef, kProperty, value)
+            let valueExprID = arena.appendExpr(.symbolRef(valueParamSymbol), type: propertyType)
+            body.append(.constValue(result: valueExprID, value: .symbolRef(valueParamSymbol)))
+            let resultExprID = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: sema.types.unitType
+            )
+            body.append(
+                .call(
+                    symbol: delegateStorageSymbol,
+                    callee: setValueName,
+                    arguments: [thisRefExprID, kPropertyExprID, valueExprID],
+                    result: resultExprID,
+                    canThrow: false,
+                    thrownResult: nil
+                )
+            )
+            body.append(.returnUnit)
+        }
+        body.append(.endBlock)
+
+        let accessorSymbolOffset: Int32 = accessorKind == .getter ? -12_000 : -13_000
+        let syntheticAccessorSymbol = SymbolID(rawValue: accessorSymbolOffset - propertySymbol.rawValue)
+
+        let kirID = arena.appendDecl(
+            .function(
+                KIRFunction(
+                    symbol: syntheticAccessorSymbol,
+                    name: accessorName,
+                    params: params,
+                    returnType: returnType,
+                    body: body,
+                    isSuspend: false,
+                    isInline: false
+                )
+            )
+        )
+        allDecls.append(kirID)
+        allDecls.append(contentsOf: driver.ctx.drainGeneratedCallableDecls())
+        driver.ctx.currentImplicitReceiverExprID = nil
+        driver.ctx.currentImplicitReceiverSymbol = nil
     }
 
     /// Lower a property getter or setter body as a synthetic KIR function.

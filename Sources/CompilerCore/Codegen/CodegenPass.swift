@@ -36,12 +36,12 @@ public final class CodegenPhase: CompilerPhase {
 
             case .llvmIR:
                 let path = outputPath(base: ctx.options.outputPath, defaultExtension: "ll")
-                try backend.emitLLVMIR(module: kir, runtime: runtime, outputIRPath: path, interner: ctx.interner)
+                try backend.emitLLVMIR(module: kir, runtime: runtime, outputIRPath: path, interner: ctx.interner, sourceManager: ctx.sourceManager)
                 ctx.generatedLLVMIRPath = path
 
             case .object, .executable:
                 let path = outputPath(base: ctx.options.outputPath, defaultExtension: "o")
-                try backend.emitObject(module: kir, runtime: runtime, outputObjectPath: path, interner: ctx.interner)
+                try backend.emitObject(module: kir, runtime: runtime, outputObjectPath: path, interner: ctx.interner, sourceManager: ctx.sourceManager)
                 ctx.generatedObjectPath = path
                 ctx.runtimeStubObjectPath = runtimeStubObjectPath(backend: backend, ctx: ctx)
 
@@ -103,7 +103,7 @@ public final class CodegenPhase: CompilerPhase {
         try fm.createDirectory(atPath: inlineDir, withIntermediateDirectories: true)
 
         let objectPath = objectsDir + "/\(ctx.options.moduleName)_0.o"
-        try backend.emitObject(module: module, runtime: runtime, outputObjectPath: objectPath, interner: ctx.interner)
+        try backend.emitObject(module: module, runtime: runtime, outputObjectPath: objectPath, interner: ctx.interner, sourceManager: ctx.sourceManager)
         ctx.generatedObjectPath = objectPath
 
         try emitInlineKIRArtifacts(module: module, outputDir: inlineDir, ctx: ctx)

@@ -23,15 +23,22 @@ extension NativeEmitter {
         }
 
         // When debug info is active and the function has a subprogram,
-        // set a dummy debug location (line 0) so the LLVM verifier accepts
+        // set the function-level debug location so the LLVM verifier accepts
         // all instructions emitted under this builder.
         if let diContext,
            let subprogram = diContext.subprograms[function.symbol],
            bindings.debugLocationAvailable {
+            var funcLine: UInt32 = 0
+            var funcCol: UInt32 = 0
+            if let sourceRange = function.sourceRange, let sm = sourceManager {
+                let lc = sm.lineColumn(of: sourceRange.start)
+                funcLine = UInt32(lc.line)
+                funcCol = UInt32(lc.column)
+            }
             if let loc = bindings.createDebugLocation(
                 context: context,
-                line: 0,
-                column: 0,
+                line: funcLine,
+                column: funcCol,
                 scope: subprogram
             ) {
                 bindings.setCurrentDebugLocation(builder, location: loc)
@@ -61,6 +68,64 @@ extension NativeEmitter {
                 continue
             }
             parameterValues[parameter.symbol] = value
+        }
+
+        // Position builder at the entry block before emitting parameter debug
+        // info (alloca/store require a valid insert point).
+        bindings.positionBuilder(builder, at: entryBlock)
+
+        // Emit DILocalVariable + dbg.declare for each parameter when debug
+        // info is active and the required bindings are available.
+        if let diContext,
+           let subprogram = diContext.subprograms[function.symbol],
+           let int64DIType = diContext.int64DIType,
+           bindings.localVariableAvailable,
+           bindings.debugLocationAvailable {
+            var funcLine: UInt32 = 0
+            if let sourceRange = function.sourceRange, let sm = sourceManager {
+                funcLine = UInt32(sm.lineColumn(of: sourceRange.start).line)
+            }
+            let funcDIFile: LLVMCAPIBindings.LLVMMetadataRef? = {
+                if let sourceRange = function.sourceRange {
+                    return diContext.diFiles[sourceRange.start.file] ?? diContext.file
+                }
+                return diContext.file
+            }()
+            let emptyExpr = bindings.diBuilderCreateExpression(diContext.diBuilder)
+            for (index, parameter) in function.params.enumerated() {
+                guard let paramValue = parameterValues[parameter.symbol] else {
+                    continue
+                }
+                let paramName = "arg\(index)"
+                guard let diVar = bindings.diBuilderCreateParameterVariable(
+                    diContext.diBuilder,
+                    scope: subprogram,
+                    name: paramName,
+                    argNo: UInt32(index + 1),
+                    file: funcDIFile,
+                    lineNo: funcLine,
+                    type: int64DIType
+                ) else {
+                    continue
+                }
+                // Create an alloca for the parameter so dbg.declare can reference it.
+                let paramAlloca = bindings.buildAlloca(builder, type: int64Type, name: "dbg_\(paramName)")
+                if let paramAlloca {
+                    _ = bindings.buildStore(builder, value: paramValue, pointer: paramAlloca)
+                    if let debugLoc = bindings.createDebugLocation(
+                        context: context, line: funcLine, column: 0, scope: subprogram
+                    ) {
+                        _ = bindings.diBuilderInsertDeclareAtEnd(
+                            diContext.diBuilder,
+                            storage: paramAlloca,
+                            varInfo: diVar,
+                            expr: emptyExpr,
+                            debugLoc: debugLoc,
+                            block: entryBlock
+                        )
+                    }
+                }
+            }
         }
         let outThrownParameter = bindings.getParam(
             function: llvmFunction.value,
@@ -298,6 +363,36 @@ extension NativeEmitter {
         }
 
         for (instructionIndex, instruction) in function.body.enumerated() {
+            // Update debug location per-instruction when debug info is active.
+            if let diContext,
+               let subprogram = diContext.subprograms[function.symbol],
+               bindings.debugLocationAvailable {
+                var instrLine: UInt32 = 0
+                var instrCol: UInt32 = 0
+                // Try per-instruction source location first, then fall back to
+                // function-level source range.
+                if instructionIndex < function.instructionLocations.count,
+                   let instrRange = function.instructionLocations[instructionIndex],
+                   let sm = sourceManager {
+                    let lc = sm.lineColumn(of: instrRange.start)
+                    instrLine = UInt32(lc.line)
+                    instrCol = UInt32(lc.column)
+                } else if let sourceRange = function.sourceRange, let sm = sourceManager {
+                    let lc = sm.lineColumn(of: sourceRange.start)
+                    instrLine = UInt32(lc.line)
+                    instrCol = UInt32(lc.column)
+                }
+                if instrLine > 0,
+                   let loc = bindings.createDebugLocation(
+                    context: context,
+                    line: instrLine,
+                    column: instrCol,
+                    scope: subprogram
+                   ) {
+                    bindings.setCurrentDebugLocation(builder, location: loc)
+                }
+            }
+
             switch instruction {
             case .nop, .beginBlock, .endBlock:
                 continue
