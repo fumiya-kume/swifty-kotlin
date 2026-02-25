@@ -55,8 +55,11 @@ extension BuildASTPhase.ExpressionParser {
                     case .keyword(.do), .keyword(.while), .keyword(.for):
                         _ = consume() // identifier
                         _ = consume() // @
-                        let loopExpr = parseLabeledLoop(label: name)
-                        return loopExpr
+                        if let loopExpr = parseLabeledLoop(label: name) {
+                            return loopExpr
+                        } else {
+                            return nil
+                        }
                     default:
                         break
                     }

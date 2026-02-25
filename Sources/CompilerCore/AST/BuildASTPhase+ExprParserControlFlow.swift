@@ -299,6 +299,7 @@ extension BuildASTPhase.ExpressionParser {
         case .keyword(.for):
             loopExpr = parseForExpression()
         default:
+            // Label@ must be followed by a loop keyword
             return nil
         }
         if let loopExpr {
