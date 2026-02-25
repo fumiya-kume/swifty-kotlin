@@ -142,9 +142,12 @@ public final class OverloadResolver {
 
         let typeVarBySymbol = ctx.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
 
-        // Apply explicit type argument constraints if provided
+        // Apply explicit type argument constraints if provided.
+        // Only compare against the function's own type params (skip leading
+        // class type params that are inferred from the receiver).
+        let funcOwnTypeParamCount = signature.typeParameterSymbols.count - signature.classTypeParameterCount
         if !call.explicitTypeArgs.isEmpty {
-            guard call.explicitTypeArgs.count == signature.typeParameterSymbols.count else {
+            guard call.explicitTypeArgs.count == funcOwnTypeParamCount else {
                 return .rejected
             }
         }
@@ -187,9 +190,10 @@ public final class OverloadResolver {
             return .rejected
         }
 
-        // Add equality constraints for explicit type arguments
+        // Add equality constraints for explicit type arguments.
+        // Map to function-own type params (after the class type params).
         for (index, explicitArg) in call.explicitTypeArgs.enumerated() {
-            let typeParamSymbol = signature.typeParameterSymbols[index]
+            let typeParamSymbol = signature.typeParameterSymbols[signature.classTypeParameterCount + index]
             if let typeVar = typeVarBySymbol[typeParamSymbol] {
                 constraints.append(
                     VariableConstraint(
@@ -288,17 +292,16 @@ public final class OverloadResolver {
         guard let implicitReceiverType else {
             return nil
         }
-        let rhsOperand = operand(
-            for: receiverType,
+        // Use decomposeSubtypeConstraint to properly extract type variables
+        // from generic receiver types (e.g. Class<T>) so the solver can
+        // infer type arguments from projected receivers (e.g. Class<out Any>).
+        return decomposeSubtypeConstraint(
+            subtype: implicitReceiverType,
+            supertype: receiverType,
             typeVarBySymbol: typeVarBySymbol,
-            typeSystem: typeSystem
-        )
-        return [VariableConstraint(
-            kind: .subtype,
-            left: .type(implicitReceiverType),
-            right: rhsOperand,
+            typeSystem: typeSystem,
             blameRange: range
-        )]
+        )
     }
 
     private func appendArgumentConstraints(
@@ -675,7 +678,7 @@ public final class OverloadResolver {
                 return result
             }
             // Different class symbols or mismatched arity – fall through to
-            // simple constraint.
+            // simple constraint which will use isSubtype.
         }
 
         // Case 3: supertype is a function type with type variables in params/return.
@@ -800,9 +803,19 @@ public final class OverloadResolver {
                 blameRange: blameRange
             )
 
-        case (_, .star), (.star, _):
-            // Star projection: no constraints.
-            return []
+        case (.star, .invariant(let superInner)):
+            // Subtype is star (e.g. receiver `Box<*>` against signature `Box<T>`).
+            // Star projection is equivalent to `out Any?`, so constrain T = Any?
+            // to ensure the solver can infer the type variable.
+            return decomposeSubtypeConstraint(
+                subtype: typeSystem.nullableAnyType, supertype: superInner,
+                typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
+                blameRange: blameRange
+            ) + decomposeSubtypeConstraint(
+                subtype: superInner, supertype: typeSystem.nullableAnyType,
+                typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
+                blameRange: blameRange
+            )
 
         default:
             // Incompatible variance combinations (e.g. .out vs .in) – conservatively
