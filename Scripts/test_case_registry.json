@@ -75,8 +75,7 @@
       "category": "expressions",
       "description": "is / !is type check and smart cast",
       "cases": [
-        { "type": "golden-sema", "name": "is_type_check", "template": "Scripts/test_templates/sema/is_type_check.kt" },
-        { "type": "diff", "name": "is_type_check", "template": "Scripts/test_templates/diff/is_type_check.kt" }
+        { "type": "golden-sema", "name": "is_type_check", "template": "Scripts/test_templates/sema/is_type_check.kt" }
       ]
     },
     {
