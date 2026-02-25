@@ -9,7 +9,7 @@ extension NativeEmitter {
         int64Type: LLVMCAPIBindings.LLVMTypeRef,
         outThrownPointerType: LLVMCAPIBindings.LLVMTypeRef,
         internalFunctions: [SymbolID: LLVMFunction],
-        llvmGlobals: [SymbolID: LLVMCAPIBindings.LLVMValueRef] = [:],
+        globalVariables: [SymbolID: LLVMCAPIBindings.LLVMValueRef] = [:],
         diContext: DebugInfoContext? = nil
     ) throws {
         guard let builder = bindings.createBuilder(context: context) else {
@@ -194,7 +194,7 @@ extension NativeEmitter {
                 state: builderState,
                 parameterValues: parameterValues,
                 internalFunctions: internalFunctions,
-                llvmGlobals: llvmGlobals,
+                globalVariables: globalVariables,
                 generatedStringLiteralCount: &generatedStringLiteralCount,
                 declareExternalFunction: { name, argCount, appendThrown in
                     declareExternalFunction(named: name, argumentCount: argCount, appendThrownChannel: appendThrown)
@@ -831,17 +831,40 @@ extension NativeEmitter {
                     continue
                 }
                 let copySource = resolveValue(from)
-                if let alloca = copyTargetAllocas[to.rawValue] {
+                // If the copy target is a global symbolRef, store to the
+                // LLVM global variable so the write persists across reads.
+                if let targetExpr = module.arena.expr(to),
+                   case .symbolRef(let targetSymbol) = targetExpr,
+                   let globalPtr = globalVariables[targetSymbol] {
+                    _ = bindings.buildStore(builder, value: copySource, pointer: globalPtr)
+                } else if let alloca = copyTargetAllocas[to.rawValue] {
                     _ = bindings.buildStore(builder, value: copySource, pointer: alloca)
                 } else {
                     storeResult(to, copySource)
                 }
 
-            case .storeGlobal(let symbol, let value):
-                // P5-111: Store to LLVM global variable for object member properties.
-                if let globalVar = llvmGlobals[symbol] {
-                    let resolved = resolveValue(value)
-                    _ = bindings.buildStore(builder, value: resolved, pointer: globalVar)
+            case .storeGlobal(let value, let symbol):
+                guard !bindings.hasTerminator(currentBlock) else {
+                    continue
+                }
+                let resolved = resolveValue(value)
+                if let globalPtr = globalVariables[symbol] {
+                    _ = bindings.buildStore(builder, value: resolved, pointer: globalPtr)
+                }
+
+            case .loadGlobal(let result, let symbol):
+                guard !bindings.hasTerminator(currentBlock) else {
+                    continue
+                }
+                if let globalPtr = globalVariables[symbol] {
+                    if let loaded = bindings.buildLoad(
+                        builder, type: int64Type, pointer: globalPtr,
+                        name: "load_global_\(symbol.rawValue)"
+                    ) {
+                        storeResult(result, loaded)
+                    }
+                } else {
+                    storeResult(result, zeroValue)
                 }
 
             case .rethrow(let value):

@@ -695,34 +695,42 @@ final class CodegenAndBackendCoverageTests: XCTestCase {
     }
 
     private func stripPathDependentBytes(_ data: Data, outputPath: String) -> Data {
-        // The synthetic C backend writes the generated C source to a temp path derived from
-        // the output path.  clang then embeds that source filename inside the object file
-        // (e.g. in the ELF .strtab or Mach-O STABS).  When we compile twice with different
-        // output paths the embedded filenames differ, making the raw bytes non-equal even
-        // though the code is identical.  Replacing every occurrence of the path-dependent
-        // prefix with a fixed placeholder normalises the two objects so they can be compared.
-        let prefix = "kswiftk_codegen_"
-        guard let prefixData = prefix.data(using: .utf8) else { return data }
         var result = data
-        // Find all occurrences of the prefix and zero-out the hex hash that follows until '.c'
-        var searchStart = result.startIndex
-        while let range = result.range(of: prefixData, in: searchStart..<result.endIndex) {
-            let hashStart = range.upperBound
-            // Find the end of the hash (look for '.c' or null byte)
-            var hashEnd = hashStart
-            while hashEnd < result.endIndex {
-                let byte = result[hashEnd]
-                if byte == 0x2E || byte == 0x00 { // '.' or null
-                    break
+
+        // 1. Synthetic C backend: strip the hash in "kswiftk_codegen_<hash>.c" paths
+        //    embedded by clang in the object file's string table.
+        let prefix = "kswiftk_codegen_"
+        if let prefixData = prefix.data(using: .utf8) {
+            var searchStart = result.startIndex
+            while let range = result.range(of: prefixData, in: searchStart..<result.endIndex) {
+                let hashStart = range.upperBound
+                var hashEnd = hashStart
+                while hashEnd < result.endIndex {
+                    let byte = result[hashEnd]
+                    if byte == 0x2E || byte == 0x00 { break }
+                    hashEnd = result.index(after: hashEnd)
                 }
-                hashEnd = result.index(after: hashEnd)
+                for i in hashStart..<hashEnd { result[i] = 0x30 }
+                searchStart = hashEnd
             }
-            // Replace hash bytes with zeros
-            for i in hashStart..<hashEnd {
-                result[i] = 0x30 // '0'
-            }
-            searchStart = hashEnd
         }
+
+        // 2. LLVM C API backend: LLVM embeds the output path itself in the object file
+        //    (e.g. the basename "deterministic_1" in Mach-O STABS / ELF debug sections).
+        //    Replace every occurrence of the output path with a fixed placeholder so that
+        //    two compilations with different paths produce identical bytes.
+        let outputBasename = (outputPath as NSString).lastPathComponent
+        let placeholder = "deterministic_X"
+        if outputBasename != placeholder,
+           let pathData = outputBasename.data(using: .utf8),
+           let fixedData = placeholder.data(using: .utf8) {
+            var searchStart = result.startIndex
+            while let range = result.range(of: pathData, in: searchStart..<result.endIndex) {
+                result.replaceSubrange(range, with: fixedData)
+                searchStart = result.index(range.lowerBound, offsetBy: fixedData.count)
+            }
+        }
+
         return result
     }
 

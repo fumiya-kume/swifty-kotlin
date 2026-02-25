@@ -82,6 +82,8 @@ final class LLVMCAPIBindings {
         UInt32,
         UnsafePointer<CChar>?
     ) -> LLVMValueRef?
+    internal typealias LLVMAddGlobalFn = @convention(c) (LLVMModuleRef?, LLVMTypeRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    internal typealias LLVMSetInitializerFn = @convention(c) (LLVMValueRef?, LLVMValueRef?) -> Void
     internal typealias LLVMConstIntFn = @convention(c) (LLVMTypeRef?, UInt64, LLVMBool) -> LLVMValueRef?
     internal typealias LLVMConstPointerNullFn = @convention(c) (LLVMTypeRef?) -> LLVMValueRef?
     internal typealias LLVMGetDefaultTargetTripleFn = @convention(c) () -> UnsafeMutablePointer<CChar>?
@@ -279,6 +281,8 @@ final class LLVMCAPIBindings {
     internal let initializeAArch64TargetFn: LLVMInitializeAArch64TargetFn?
     internal let initializeAArch64TargetMCFn: LLVMInitializeAArch64TargetMCFn?
     internal let initializeAArch64AsmPrinterFn: LLVMInitializeAArch64AsmPrinterFn?
+    internal let addGlobalFn: LLVMAddGlobalFn?
+    internal let setInitializerFn: LLVMSetInitializerFn?
     internal let createDIBuilderFn: LLVMCreateDIBuilderFn?
     internal let disposeDIBuilderFn: LLVMDisposeDIBuilderFn?
     internal let diBuilderFinalizeFn: LLVMDIBuilderFinalizeFn?
@@ -370,6 +374,8 @@ final class LLVMCAPIBindings {
         initializeAArch64TargetFn: LLVMInitializeAArch64TargetFn?,
         initializeAArch64TargetMCFn: LLVMInitializeAArch64TargetMCFn?,
         initializeAArch64AsmPrinterFn: LLVMInitializeAArch64AsmPrinterFn?,
+        addGlobalFn: LLVMAddGlobalFn? = nil,
+        setInitializerFn: LLVMSetInitializerFn? = nil,
         createDIBuilderFn: LLVMCreateDIBuilderFn?,
         disposeDIBuilderFn: LLVMDisposeDIBuilderFn?,
         diBuilderFinalizeFn: LLVMDIBuilderFinalizeFn?,
@@ -460,6 +466,8 @@ final class LLVMCAPIBindings {
         self.initializeAArch64TargetFn = initializeAArch64TargetFn
         self.initializeAArch64TargetMCFn = initializeAArch64TargetMCFn
         self.initializeAArch64AsmPrinterFn = initializeAArch64AsmPrinterFn
+        self.addGlobalFn = addGlobalFn
+        self.setInitializerFn = setInitializerFn
         self.createDIBuilderFn = createDIBuilderFn
         self.disposeDIBuilderFn = disposeDIBuilderFn
         self.diBuilderFinalizeFn = diBuilderFinalizeFn
@@ -592,9 +600,9 @@ final class LLVMCAPIBindings {
         getBasicBlockTerminatorFn(block) != nil
     }
 
-    // P5-111: Global variable convenience methods
     func addGlobal(module: LLVMModuleRef?, type: LLVMTypeRef?, name: String) -> LLVMValueRef? {
-        name.withCString { addGlobalFn?(module, type, $0) }
+        guard let fn = addGlobalFn else { return nil }
+        return name.withCString { fn(module, type, $0) }
     }
 
     func getNamedGlobal(module: LLVMModuleRef?, name: String) -> LLVMValueRef? {

@@ -454,19 +454,34 @@ extension KotlinParser {
 
     internal func parseTail(inBlock: Bool, into children: inout [SyntaxChild], range: inout RangeAccumulator) {
         var progress = false
+        var sawTryKeyword = false
         while !stream.atEOF() {
             let token = stream.peek()
             if shouldStopStatementBefore(token, inBlock: inBlock) {
                 break
             }
             if case .symbol(.lBrace) = token.kind, inBlock {
-                children.append(.node(parseBlock()))
+                let blockID = parseBlock()
+                children.append(.node(blockID))
+                range.append(arena.node(blockID).range)
                 progress = true
                 continue
             }
             if case .symbol(.lBrace) = token.kind {
-                children.append(.node(parseBlock()))
+                let blockID = parseBlock()
+                children.append(.node(blockID))
+                range.append(arena.node(blockID).range)
+                progress = true
+                // Continue if next token is catch/finally (try expression continuation)
+                if sawTryKeyword {
+                    let nextAfterBlock = stream.peek()
+                    if case .keyword(.catch) = nextAfterBlock.kind { continue }
+                    if case .keyword(.finally) = nextAfterBlock.kind { continue }
+                }
                 break
+            }
+            if case .keyword(.try) = token.kind {
+                sawTryKeyword = true
             }
             _ = consumeToken(into: &children, range: &range)
             progress = true
@@ -474,6 +489,22 @@ extension KotlinParser {
                 break
             }
             if !inBlock, hasLeadingNewline(stream.peek()) {
+                // After `=`, continue consuming across newlines so that
+                // expression bodies like `= \n try { ... } catch { ... }` are
+                // captured in the same declaration node.
+                if case .symbol(.assign) = token.kind {
+                    // But stop if the next line starts a new declaration
+                    // (modifier keyword, declaration keyword, or annotation).
+                    let nextToken = stream.peek()
+                    if case .keyword(let kw) = nextToken.kind,
+                       Self.isDeclarationModifierKeyword(kw) {
+                        break
+                    }
+                    if isDeclarationStart(nextToken.kind) {
+                        break
+                    }
+                    continue
+                }
                 break
             }
         }

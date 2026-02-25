@@ -85,35 +85,72 @@ final class LocalDeclTypeChecker {
         let interner = ctx.interner
 
         let valueType = driver.inferExpr(value, ctx: ctx, locals: &locals, expectedType: nil)
-        guard let local = locals[name] else {
-            ctx.semaCtx.diagnostics.error(
-                "KSWIFTK-SEMA-0013",
-                "Unresolved local variable '\(interner.resolve(name))'.",
-                range: range
-            )
-            sema.bindings.bindExprType(id, type: sema.types.errorType)
-            return sema.types.errorType
+        if let local = locals[name] {
+            sema.bindings.bindIdentifier(id, symbol: local.symbol)
+            if !local.isMutable && local.isInitialized {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0014",
+                    "Val cannot be reassigned.",
+                    range: range
+                )
+            } else {
+                driver.emitSubtypeConstraint(
+                    left: valueType,
+                    right: local.type,
+                    range: range,
+                    solver: ConstraintSolver(),
+                    sema: sema,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+                locals[name] = (local.type, local.symbol, local.isMutable, true)
+            }
+            sema.bindings.bindExprType(id, type: sema.types.unitType)
+            return sema.types.unitType
         }
-        sema.bindings.bindIdentifier(id, symbol: local.symbol)
-        if !local.isMutable && local.isInitialized {
-            ctx.semaCtx.diagnostics.error(
-                "KSWIFTK-SEMA-0014",
-                "Val cannot be reassigned.",
-                range: range
-            )
-        } else {
-            driver.emitSubtypeConstraint(
-                left: valueType,
-                right: local.type,
-                range: range,
-                solver: ConstraintSolver(),
-                sema: sema,
-                diagnostics: ctx.semaCtx.diagnostics
-            )
-            locals[name] = (local.type, local.symbol, local.isMutable, true)
+
+        // Fall back to top-level property lookup for assignments like `counter = counter + 1`
+        // where `counter` is a top-level var, not a local variable.
+        let allCandidateIDs = ctx.cachedScopeLookup(name)
+        let (visibleIDs, _) = ctx.filterByVisibility(allCandidateIDs)
+        let candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
+        // Only match top-level properties, not class member properties.
+        // Top-level properties have no parentSymbol set (nil) or parent is a package.
+        // Class member properties always have parentSymbol set to a class/object/interface.
+        if let propSymbol = candidates.first(where: { sym in
+            guard sym.kind == .property else { return false }
+            guard let parentID = sema.symbols.parentSymbol(for: sym.id),
+                  let parentSym = sema.symbols.symbol(parentID) else { return true }
+            return parentSym.kind == .package
+        }) {
+            sema.bindings.bindIdentifier(id, symbol: propSymbol.id)
+            let propType = sema.symbols.propertyType(for: propSymbol.id) ?? sema.types.anyType
+            if !propSymbol.flags.contains(.mutable) {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0014",
+                    "Val cannot be reassigned.",
+                    range: range
+                )
+            } else {
+                driver.emitSubtypeConstraint(
+                    left: valueType,
+                    right: propType,
+                    range: range,
+                    solver: ConstraintSolver(),
+                    sema: sema,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+            }
+            sema.bindings.bindExprType(id, type: sema.types.unitType)
+            return sema.types.unitType
         }
-        sema.bindings.bindExprType(id, type: sema.types.unitType)
-        return sema.types.unitType
+
+        ctx.semaCtx.diagnostics.error(
+            "KSWIFTK-SEMA-0013",
+            "Unresolved local variable '\(interner.resolve(name))'.",
+            range: range
+        )
+        sema.bindings.bindExprType(id, type: sema.types.errorType)
+        return sema.types.errorType
     }
 
     func inferIndexedAccessExpr(

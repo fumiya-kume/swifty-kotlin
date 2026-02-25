@@ -421,8 +421,29 @@ extension LLVMBackend {
 
             case .copy(let from, let to):
                 ensureDeclared(from, declared: &declared, lines: &lines)
-                ensureDeclared(to, declared: &declared, lines: &lines)
-                lines.append("  \(varName(to)) = \(varName(from));")
+                // If the copy target is a global symbolRef, write to the global slot
+                // instead of the local register so the store persists.
+                if let targetExpr = arena.expr(to),
+                   case .symbolRef(let targetSymbol) = targetExpr,
+                   let globalSlot = globalValueSymbols[targetSymbol] {
+                    lines.append("  \(globalSlot) = \(varName(from));")
+                } else {
+                    ensureDeclared(to, declared: &declared, lines: &lines)
+                    lines.append("  \(varName(to)) = \(varName(from));")
+                }
+
+            case .storeGlobal(let value, let symbol):
+                ensureDeclared(value, declared: &declared, lines: &lines)
+                if let globalName = globalValueSymbols[symbol] {
+                    lines.append("  \(globalName) = \(varName(value));")
+                }
+
+            case .loadGlobal(let result, let symbol):
+                ensureDeclared(result, declared: &declared, lines: &lines)
+                if let globalName = globalValueSymbols[symbol] {
+                    lines.append("  \(varName(result)) = \(globalName);")
+                }
+                syncRoot(result)
 
             case .storeGlobal(let symbol, let value):
                 ensureDeclared(value, declared: &declared, lines: &lines)

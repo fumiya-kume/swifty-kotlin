@@ -149,9 +149,22 @@ final class ExprLowerer {
                 if let localValue = driver.ctx.localValuesBySymbol[symbol] {
                     return localValue
                 }
-                if let constant = propertyConstantInitializers[symbol] {
+                // Inline constant initializers only for immutable (val) properties.
+                // Mutable (var) properties must always load from global store at runtime.
+                if let constant = propertyConstantInitializers[symbol],
+                   let symInfo = sema.symbols.symbol(symbol),
+                   !symInfo.flags.contains(.mutable) {
                     let id = arena.appendExpr(constant, type: boundType)
                     instructions.append(.constValue(result: id, value: constant))
+                    return id
+                }
+                // For top-level property symbols, emit loadGlobal so the
+                // backend reads the current value from the global slot.
+                if let sym = sema.symbols.symbol(symbol),
+                   (sym.kind == .property || sym.kind == .field),
+                   sema.symbols.parentSymbol(for: symbol) == nil || sema.symbols.symbol(sema.symbols.parentSymbol(for: symbol)!)?.kind == .package {
+                    let id = arena.appendExpr(.symbolRef(symbol), type: boundType)
+                    instructions.append(.loadGlobal(result: id, symbol: symbol))
                     return id
                 }
                 let id = arena.appendExpr(.symbolRef(symbol), type: boundType)
@@ -162,26 +175,38 @@ final class ExprLowerer {
             instructions.append(.constValue(result: id, value: .unit))
             return id
 
-        case .forExpr(_, let iterableExpr, let bodyExpr, _):
-            return driver.controlFlowLowerer.lowerForExpr(exprID, iterableExpr: iterableExpr, bodyExpr: bodyExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+        case .forExpr(_, let iterableExpr, let bodyExpr, let label, _):
+            return driver.controlFlowLowerer.lowerForExpr(exprID, iterableExpr: iterableExpr, bodyExpr: bodyExpr, label: label, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
-        case .whileExpr(let conditionExpr, let bodyExpr, _):
-            return driver.controlFlowLowerer.lowerWhileExpr(exprID, conditionExpr: conditionExpr, bodyExpr: bodyExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+        case .whileExpr(let conditionExpr, let bodyExpr, let label, _):
+            return driver.controlFlowLowerer.lowerWhileExpr(exprID, conditionExpr: conditionExpr, bodyExpr: bodyExpr, label: label, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
-        case .doWhileExpr(let bodyExpr, let conditionExpr, _):
-            return driver.controlFlowLowerer.lowerDoWhileExpr(exprID, bodyExpr: bodyExpr, conditionExpr: conditionExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+        case .doWhileExpr(let bodyExpr, let conditionExpr, let label, _):
+            return driver.controlFlowLowerer.lowerDoWhileExpr(exprID, bodyExpr: bodyExpr, conditionExpr: conditionExpr, label: label, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
-        case .breakExpr:
-            if let breakLabel = driver.ctx.loopControlStack.last?.breakLabel {
-                instructions.append(.jump(breakLabel))
+        case .breakExpr(let label, _):
+            let targetLabel: Int32?
+            if let label {
+                targetLabel = driver.ctx.loopControlStack.last(where: { $0.name == label })?.breakLabel
+            } else {
+                targetLabel = driver.ctx.loopControlStack.last?.breakLabel
+            }
+            if let targetLabel {
+                instructions.append(.jump(targetLabel))
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
-        case .continueExpr:
-            if let continueLabel = driver.ctx.loopControlStack.last?.continueLabel {
-                instructions.append(.jump(continueLabel))
+        case .continueExpr(let label, _):
+            let targetLabel: Int32?
+            if let label {
+                targetLabel = driver.ctx.loopControlStack.last(where: { $0.name == label })?.continueLabel
+            } else {
+                targetLabel = driver.ctx.loopControlStack.last?.continueLabel
+            }
+            if let targetLabel {
+                instructions.append(.jump(targetLabel))
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))
@@ -429,7 +454,7 @@ final class ExprLowerer {
                     var terminatedByReturn = false
                     for bodyExprID in bodyExprIDs {
                         if let bodyExpr = ast.arena.expr(bodyExprID),
-                           case .returnExpr(let value, _) = bodyExpr {
+                           case .returnExpr(let value, _, _) = bodyExpr {
                             if let value {
                                 let lowered = lowerExpr(
                                     value,
@@ -548,7 +573,23 @@ final class ExprLowerer {
                 instructions: &instructions
             )
             if let symbol = sema.bindings.identifierSymbols[exprID] {
-                driver.ctx.localValuesBySymbol[symbol] = valueID
+                // Check if this is a top-level property assignment (not a local variable).
+                // Top-level properties need a copy to global storage rather than just
+                // updating localValuesBySymbol (which wouldn't persist across function calls).
+                // Top-level properties have no parentSymbol (nil) or parent is a package.
+                // Class member properties always have parentSymbol set to a class/object.
+                if let symInfo = sema.symbols.symbol(symbol), symInfo.kind == .property, {
+                    let p = sema.symbols.parentSymbol(for: symbol)
+                    let pk = p.flatMap({ sema.symbols.symbol($0) })?.kind
+                    return pk == nil || pk == .package
+                }() {
+                    let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
+                    let globalRef = arena.appendExpr(.symbolRef(symbol), type: propType)
+                    instructions.append(.constValue(result: globalRef, value: .symbolRef(symbol)))
+                    instructions.append(.copy(from: valueID, to: globalRef))
+                } else {
+                    driver.ctx.localValuesBySymbol[symbol] = valueID
+                }
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))
@@ -578,7 +619,7 @@ final class ExprLowerer {
             )
             // Emit a storeGlobal into the property's global slot.
             if let propSymbol = sema.bindings.identifierSymbols[exprID] {
-                instructions.append(.storeGlobal(symbol: propSymbol, value: valueID))
+                instructions.append(.storeGlobal(value: valueID, symbol: propSymbol))
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))
@@ -590,7 +631,7 @@ final class ExprLowerer {
         case .indexedAssign(let receiverExpr, let indices, let valueExpr, _):
             return driver.callLowerer.lowerIndexedAssignExpr(exprID, receiverExpr: receiverExpr, indices: indices, valueExpr: valueExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
-        case .returnExpr(let value, _):
+        case .returnExpr(let value, _, _):
             if let value {
                 let lowered = lowerExpr(
                     value,
@@ -721,7 +762,21 @@ final class ExprLowerer {
                 instructions: &instructions
             )
             if let symbol = sema.bindings.identifierSymbols[exprID] {
-                driver.ctx.localValuesBySymbol[symbol] = valueID
+                // Top-level property compound assignment needs a copy to global storage.
+                // Top-level properties have no parentSymbol (nil) or parent is a package.
+                // Class member properties always have parentSymbol set to a class/object.
+                if let symInfo = sema.symbols.symbol(symbol), symInfo.kind == .property, {
+                    let p = sema.symbols.parentSymbol(for: symbol)
+                    let pk = p.flatMap({ sema.symbols.symbol($0) })?.kind
+                    return pk == nil || pk == .package
+                }() {
+                    let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
+                    let globalRef = arena.appendExpr(.symbolRef(symbol), type: propType)
+                    instructions.append(.constValue(result: globalRef, value: .symbolRef(symbol)))
+                    instructions.append(.copy(from: valueID, to: globalRef))
+                } else {
+                    driver.ctx.localValuesBySymbol[symbol] = valueID
+                }
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))
@@ -745,7 +800,7 @@ final class ExprLowerer {
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
-        case .lambdaLiteral(let params, let bodyExpr, _):
+        case .lambdaLiteral(let params, let bodyExpr, _, _):
             return driver.lambdaLowerer.lowerLambdaLiteralExpr(
                 exprID,
                 params: params,

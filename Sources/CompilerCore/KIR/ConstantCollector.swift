@@ -32,6 +32,9 @@ struct ConstantCollector {
         switch decl {
         case .propertyDecl(let property):
             guard let symbol = sema.bindings.declSymbols[declID] else { return }
+            // Mutable (var) properties must never be constant-folded because
+            // their value can change at runtime via assignment.
+            if property.isVar { return }
             // Prioritize const val values stored during sema (compile-time constants)
             if let constKind = sema.symbols.constValueExprKind(for: symbol) {
                 mapping[symbol] = constKind
@@ -145,7 +148,7 @@ struct ConstantCollector {
                   let lastExpr = ast.arena.expr(lastExprID) else {
                 return nil
             }
-            if case .returnExpr(let valueExprID, _) = lastExpr,
+            if case .returnExpr(let valueExprID, _, _) = lastExpr,
                let valueExprID {
                 return literalConstantExpr(valueExprID, ast: ast)
             }

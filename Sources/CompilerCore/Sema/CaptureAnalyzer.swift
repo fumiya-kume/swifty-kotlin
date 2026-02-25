@@ -45,15 +45,15 @@ struct CaptureAnalyzer {
             case .nameRef:
                 recordCapture(for: currentExprID)
 
-            case .forExpr(_, let iterable, let body, _):
+            case .forExpr(_, let iterable, let body, _, _):
                 visit(iterable)
                 visit(body)
 
-            case .whileExpr(let condition, let body, _):
+            case .whileExpr(let condition, let body, _, _):
                 visit(condition)
                 visit(body)
 
-            case .doWhileExpr(let body, let condition, _):
+            case .doWhileExpr(let body, let condition, _, _):
                 visit(body)
                 visit(condition)
 
@@ -108,7 +108,7 @@ struct CaptureAnalyzer {
                     visit(elseExpr)
                 }
 
-            case .returnExpr(let value, _):
+            case .returnExpr(let value, _, _):
                 if let value {
                     visit(value)
                 }
@@ -158,7 +158,7 @@ struct CaptureAnalyzer {
             case .throwExpr(let value, _):
                 visit(value)
 
-            case .lambdaLiteral(_, let body, _):
+            case .lambdaLiteral(_, let body, _, _):
                 if !skipNestedClosures {
                     visit(body)
                 }

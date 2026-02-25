@@ -96,7 +96,10 @@ public enum KIRInstruction: Equatable {
     case virtualCall(symbol: SymbolID?, callee: InternedString, receiver: KIRExprID, arguments: [KIRExprID], result: KIRExprID?, canThrow: Bool, thrownResult: KIRExprID?, dispatch: KIRDispatchKind)
     case jumpIfNotNull(value: KIRExprID, target: Int32)
     case copy(from: KIRExprID, to: KIRExprID)
-    case storeGlobal(symbol: SymbolID, value: KIRExprID)
+    /// Store a value into a global variable identified by its symbol.
+    case storeGlobal(value: KIRExprID, symbol: SymbolID)
+    /// Load a global variable into a result expression.
+    case loadGlobal(result: KIRExprID, symbol: SymbolID)
     case rethrow(value: KIRExprID)
     case returnIfEqual(lhs: KIRExprID, rhs: KIRExprID)
     case returnUnit
@@ -367,8 +370,10 @@ public final class KIRModule {
             return "jumpIfNotNull r\(value.rawValue) -> L\(target)"
         case .copy(let from, let to):
             return "copy r\(from.rawValue) -> r\(to.rawValue)"
-        case .storeGlobal(let symbol, let value):
-            return "storeGlobal sym=\(symbol.rawValue) r\(value.rawValue)"
+        case .storeGlobal(let value, let symbol):
+            return "storeGlobal r\(value.rawValue) -> s\(symbol.rawValue)"
+        case .loadGlobal(let result, let symbol):
+            return "loadGlobal s\(symbol.rawValue) -> r\(result.rawValue)"
         case .rethrow(let value):
             return "rethrow r\(value.rawValue)"
         case .returnIfEqual(let lhs, let rhs):

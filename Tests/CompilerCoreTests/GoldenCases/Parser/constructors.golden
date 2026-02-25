@@ -1,4 +1,4 @@
-node kotlinFile f0:0..102
+node kotlinFile f0:0..200
   node packageHeader f0:0..21
     tok keyword(package) f0:0..7
     tok identifier(golden) f0:8..14
@@ -18,7 +18,7 @@ node kotlinFile f0:0..102
     tok symbol(:) f0:61..62
     tok identifier(Int) f0:63..66
     tok symbol()) f0:66..67
-  node classDecl f0:69..102
+  node classDecl f0:69..200
     tok keyword(class) f0:69..74
     tok identifier(Animal) f0:75..81
     tok symbol(() f0:81..82
