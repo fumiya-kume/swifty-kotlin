@@ -251,11 +251,23 @@ final class RuntimeCoroutineStateTests: XCTestCase {
         )
         _ = kk_kxmini_launch(entryRaw, runtimeKxMiniDelayFunctionID)
 
+        // Measure how long cancel + wait take to complete.
+        // The child uses kk_kxmini_delay(1, ...), so a correct cancellation
+        // should cause wait to complete significantly earlier than 1 second.
+        let start = DispatchTime.now()
+
         // Cancel the scope — should propagate to children
         XCTAssertEqual(kk_coroutine_scope_cancel(scopeHandle), 0)
 
         // Wait should complete (children are cancelled so they exit early)
         XCTAssertEqual(kk_coroutine_scope_wait(scopeHandle), 0)
+
+        let end = DispatchTime.now()
+        let elapsedSeconds = Double(end.uptimeNanoseconds - start.uptimeNanoseconds) / 1_000_000_000
+
+        // Ensure we didn't just wait for the full 1-second delay, which would
+        // indicate that the child was not actually cancelled.
+        XCTAssertLessThan(elapsedSeconds, 0.9)
     }
 
     func testCoroutineScopeRegisterChildManualRegistration() {
@@ -283,6 +295,27 @@ final class RuntimeCoroutineStateTests: XCTestCase {
         XCTAssertEqual(result, 73)
 
         // Wait for children — scope releases remaining retains for the child
+        XCTAssertEqual(kk_coroutine_scope_wait(scopeHandle), 0)
+    }
+
+    func testJobJoinWithinScopeAndScopeWaitsForChild() {
+        let scopeHandle = kk_coroutine_scope_new()
+        XCTAssertNotEqual(scopeHandle, 0)
+
+        let entryRaw = unsafeBitCast(
+            runtime_test_suspend_async as RuntimeTestSuspendEntry,
+            to: Int.self
+        )
+
+        // Launch within an active scope so the job is registered with it
+        let jobHandle = kk_kxmini_launch(entryRaw, runtimeKxMiniAsyncFunctionID)
+        XCTAssertNotEqual(jobHandle, 0)
+
+        // Explicitly join the job and verify it completed successfully
+        let result = kk_job_join(jobHandle)
+        XCTAssertEqual(result, 73)
+
+        // Scope wait should also complete successfully after the child has finished
         XCTAssertEqual(kk_coroutine_scope_wait(scopeHandle), 0)
     }
 

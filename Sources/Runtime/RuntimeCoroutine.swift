@@ -7,6 +7,11 @@ internal final class RuntimeContinuationState {
     var completion: Int64
     var spillSlots: [Int64: Int64]
     var launcherArgs: [Int64: Int64]
+    // The link from continuation state to job handle is weak on purpose:
+    // - to avoid retain cycles between RuntimeJobHandle and RuntimeContinuationState
+    // - because job handle lifetime is managed externally and cancellation is best-effort.
+    // If the jobHandle is deallocated before cancellation is observed, the continuation
+    // will simply not be woken by cancellation, which is an accepted behavior.
     weak var jobHandle: RuntimeJobHandle?
     private let stateLock = NSLock()
     private let resumeSemaphore = DispatchSemaphore(value: 0)
