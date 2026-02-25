@@ -277,8 +277,8 @@ extension DataFlowSemaPassPhase {
             return
         }
 
-        // Only check concrete class declarations (not abstract, not interface, not object)
-        guard symbolInfo.kind == .class,
+        // Only check concrete class/object declarations (not abstract, not interface)
+        guard (symbolInfo.kind == .class || symbolInfo.kind == .object),
               !symbolInfo.flags.contains(.abstractType) else {
             return
         }
@@ -307,6 +307,7 @@ extension DataFlowSemaPassPhase {
                 let declRange: SourceRange? = {
                     switch decl {
                     case .classDecl(let cd): return cd.range
+                    case .objectDecl(let od): return od.range
                     default: return nil
                     }
                 }()
@@ -376,6 +377,9 @@ extension DataFlowSemaPassPhase {
         case .classDecl(let classDecl):
             memberFunctions = classDecl.memberFunctions
             memberProperties = classDecl.memberProperties
+        case .objectDecl(let objectDecl):
+            memberFunctions = objectDecl.memberFunctions
+            memberProperties = objectDecl.memberProperties
         default:
             return overriddenNames
         }

@@ -47,7 +47,6 @@ public struct SymbolFlags: OptionSet {
     public static let operatorFunction = SymbolFlags(rawValue: 1 << 10)
     public static let constValue = SymbolFlags(rawValue: 1 << 11)
     public static let abstractType = SymbolFlags(rawValue: 1 << 12)
-    public static let abstractMember = SymbolFlags(rawValue: 1 << 13)
 }
 
 public struct SemanticSymbol {
