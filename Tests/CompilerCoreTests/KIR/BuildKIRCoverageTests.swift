@@ -39,6 +39,7 @@ final class BuildKIRCoverageTests: XCTestCase {
                 "NormalizeBlocks",
                 "OperatorLowering",
                 "ForLowering",
+                "CollectionLiteralLowering",
                 "PropertyLowering",
                 "StdlibDelegateLowering",
                 "DataEnumSealedSynthesis",

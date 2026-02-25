@@ -33,4 +33,4 @@ expr e5 string(add) type=_
 expr e6 isCheck expr=e5 type=t6 type=_
 expr e7 string(multiply) type=String
 expr e8 when subject=e0 branches=[e1->e2] else=e7 type=Any?
-expr e9 return value=e8 type=Any?
+expr e9 return value=e8 type=Nothing

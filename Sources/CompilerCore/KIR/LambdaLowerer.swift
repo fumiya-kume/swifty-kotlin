@@ -713,6 +713,13 @@ final class LambdaLowerer {
              .notInExpr(let lhsExpr, let rhsExpr, _):
             collectBoundIdentifierSymbols(in: lhsExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
             collectBoundIdentifierSymbols(in: rhsExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
+
+        case .destructuringDecl(_, _, let initializer, _):
+            collectBoundIdentifierSymbols(in: initializer, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
+
+        case .forDestructuringExpr(_, let iterable, let body, _):
+            collectBoundIdentifierSymbols(in: iterable, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
+            collectBoundIdentifierSymbols(in: body, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
         }
     }
 
@@ -888,6 +895,13 @@ final class LambdaLowerer {
              .notInExpr(let lhsExpr, let rhsExpr, _):
             return containsImplicitReceiverReference(in: lhsExpr, ast: ast)
                 || containsImplicitReceiverReference(in: rhsExpr, ast: ast)
+
+        case .destructuringDecl(_, _, let initializer, _):
+            return containsImplicitReceiverReference(in: initializer, ast: ast)
+
+        case .forDestructuringExpr(_, let iterable, let body, _):
+            return containsImplicitReceiverReference(in: iterable, ast: ast)
+                || containsImplicitReceiverReference(in: body, ast: ast)
         }
     }
 }
