@@ -66,10 +66,17 @@ public final class LinkPhase: CompilerPhase {
             if ctx.options.debugInfo {
                 args.append("-g")
             }
-            // P5-111: Use -no-pie so that LLVM global variables (used for
-            // object singleton member properties) link correctly with ld.gold.
+            // P5-111: Use -no-pie only when the module contains global variables
+            // (e.g. object singleton member properties) that need non-PIC relocations.
+            // This preserves PIE/ASLR for programs that don't use globals.
             #if os(Linux)
-            args.append("-no-pie")
+            let hasGlobals = kir.arena.declarations.contains { decl in
+                if case .global = decl { return true }
+                return false
+            }
+            if hasGlobals {
+                args.append("-no-pie")
+            }
             #endif
             args.append("-o")
             args.append(ctx.options.outputPath)

@@ -140,39 +140,25 @@ struct NativeEmitter {
         }
 
         // Create LLVM global variables for each KIR global declaration.
+        // Globals are zero-initialized (null sentinel for lazy singleton init).
         var llvmGlobalVariables: [SymbolID: LLVMCAPIBindings.LLVMValueRef] = [:]
         for declaration in module.arena.declarations {
             guard case .global(let global) = declaration else {
                 continue
             }
-            let slotName = "kk_global_root_slot_\(max(0, Int(global.symbol.rawValue)))"
-            if let llvmGlobal = bindings.addGlobal(module: llvmModule, type: int64Type, name: slotName) {
-                if let zero = bindings.constInt(int64Type, value: 0) {
-                    bindings.setInitializer(llvmGlobal, value: zero)
-                }
-                llvmGlobalVariables[global.symbol] = llvmGlobal
+            let slotName = LLVMBackend.globalSlotSymbol(for: global.symbol)
+            guard let llvmGlobal = bindings.addGlobal(module: llvmModule, type: int64Type, name: slotName) else {
+                bindings.disposeModule(llvmModule)
+                bindings.disposeContext(context)
+                throw LLVMCAPIBackendError.nativeEmissionFailed("failed to declare global '\(slotName)'")
             }
+            if let zero = bindings.constInt(int64Type, value: 0) {
+                bindings.setInitializer(llvmGlobal, value: zero)
+            }
+            llvmGlobalVariables[global.symbol] = llvmGlobal
         }
 
         var internalFunctions: [SymbolID: LLVMFunction] = [:]
-
-        // P5-111: Create LLVM global variables for KIRGlobal declarations.
-        var llvmGlobals: [SymbolID: LLVMCAPIBindings.LLVMValueRef] = [:]
-        if bindings.globalsAvailable {
-            let globals: [KIRGlobal] = module.arena.declarations.compactMap { decl in
-                guard case .global(let global) = decl else { return nil }
-                return global
-            }
-            for global in globals {
-                let globalName = LLVMBackend.globalSlotSymbol(for: global.symbol)
-                if let globalVar = bindings.addGlobal(module: llvmModule, type: int64Type, name: globalName) {
-                    let zero = bindings.constInt(int64Type, value: 0)
-                    bindings.setInitializer(globalVar, value: zero)
-                    bindings.setInternalLinkage(globalVar)
-                    llvmGlobals[global.symbol] = globalVar
-                }
-            }
-        }
 
         for declaration in module.arena.declarations {
             guard case .function(let function) = declaration else {
