@@ -115,6 +115,8 @@ internal final class RuntimeAsyncTask {
         }
         lock.unlock()
         ready.wait()
+        // Re-signal so other concurrent awaitResult() callers also wake up
+        ready.signal()
         lock.lock()
         let value = result
         lock.unlock()
