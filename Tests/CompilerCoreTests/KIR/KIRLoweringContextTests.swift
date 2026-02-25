@@ -16,7 +16,7 @@ final class KIRLoweringContextTests: XCTestCase {
         ctx.localValuesBySymbol[SymbolID(rawValue: 1)] = KIRExprID(rawValue: 10)
         ctx.currentImplicitReceiverExprID = KIRExprID(rawValue: 5)
         ctx.currentImplicitReceiverSymbol = SymbolID(rawValue: 2)
-        ctx.loopControlStack = [(continueLabel: 100, breakLabel: 200)]
+        ctx.loopControlStack = [(continueLabel: 100, breakLabel: 200, userLabel: nil)]
         ctx.nextLoopLabel = 20_000
 
         let snapshot = ctx.saveScope()
@@ -35,7 +35,7 @@ final class KIRLoweringContextTests: XCTestCase {
         ctx.localValuesBySymbol[SymbolID(rawValue: 99)] = KIRExprID(rawValue: 99)
         ctx.currentImplicitReceiverExprID = KIRExprID(rawValue: 7)
         ctx.currentImplicitReceiverSymbol = SymbolID(rawValue: 3)
-        ctx.loopControlStack = [(continueLabel: 1, breakLabel: 2)]
+        ctx.loopControlStack = [(continueLabel: 1, breakLabel: 2, userLabel: nil)]
         ctx.nextLoopLabel = 50_000
 
         ctx.restoreScope(snapshot)
@@ -108,7 +108,7 @@ final class KIRLoweringContextTests: XCTestCase {
         ctx.localValuesBySymbol[SymbolID(rawValue: 1)] = KIRExprID(rawValue: 1)
         ctx.currentImplicitReceiverExprID = KIRExprID(rawValue: 3)
         ctx.currentImplicitReceiverSymbol = SymbolID(rawValue: 2)
-        ctx.loopControlStack = [(10, 20), (30, 40)]
+        ctx.loopControlStack = [(continueLabel: 10, breakLabel: 20, userLabel: nil), (continueLabel: 30, breakLabel: 40, userLabel: nil)]
         ctx.nextLoopLabel = 99_999
 
         ctx.resetScopeForFunction()
