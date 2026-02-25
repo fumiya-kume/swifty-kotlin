@@ -92,7 +92,27 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_observable_set_value"),
             ctx.interner.intern("kk_vetoable_create"),
             ctx.interner.intern("kk_vetoable_get_value"),
-            ctx.interner.intern("kk_vetoable_set_value")
+            ctx.interner.intern("kk_vetoable_set_value"),
+            ctx.interner.intern("kk_list_of"),
+            ctx.interner.intern("kk_list_size"),
+            ctx.interner.intern("kk_list_get"),
+            ctx.interner.intern("kk_list_contains"),
+            ctx.interner.intern("kk_list_is_empty"),
+            ctx.interner.intern("kk_list_iterator"),
+            ctx.interner.intern("kk_list_iterator_hasNext"),
+            ctx.interner.intern("kk_list_iterator_next"),
+            ctx.interner.intern("kk_list_to_string"),
+            ctx.interner.intern("kk_map_of"),
+            ctx.interner.intern("kk_map_size"),
+            ctx.interner.intern("kk_map_get"),
+            ctx.interner.intern("kk_map_contains_key"),
+            ctx.interner.intern("kk_map_is_empty"),
+            ctx.interner.intern("kk_map_to_string"),
+            ctx.interner.intern("kk_map_iterator"),
+            ctx.interner.intern("kk_map_iterator_hasNext"),
+            ctx.interner.intern("kk_map_iterator_next"),
+            ctx.interner.intern("kk_array_of"),
+            ctx.interner.intern("kk_array_size")
         ]
 
         let boxIntCallee = ctx.interner.intern("kk_box_int")
