@@ -770,11 +770,6 @@ final class ExprLowerer {
                         let resultID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
                         instructions.append(.binary(op: kirOp, lhs: storageID, rhs: rhsID, result: resultID))
                         instructions.append(.copy(from: resultID, to: storageID))
-                    } else if let currentID = driver.ctx.localValuesBySymbol[symbol] {
-                        let resultType = arena.exprType(currentID) ?? sema.types.intType
-                        let resultID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-                        instructions.append(.binary(op: kirOp, lhs: currentID, rhs: rhsID, result: resultID))
-                        driver.ctx.localValuesBySymbol[symbol] = resultID
                     } else {
                         // No existing local value — create a symbol reference as lhs
                         // so compound assignment still computes lhs op rhs.
