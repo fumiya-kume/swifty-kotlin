@@ -96,6 +96,21 @@ extension NativeEmitter {
             } else {
                 lowered = nil
             }
+        // Bitwise/shift operations (P5-103)
+        case "kk_bitwise_and":
+            lowered = bindings.buildAnd(state.builder, lhs: lhs, rhs: rhs, name: "bitand_\(instructionIndex)")
+        case "kk_bitwise_or":
+            lowered = bindings.buildOr(state.builder, lhs: lhs, rhs: rhs, name: "bitor_\(instructionIndex)")
+        case "kk_bitwise_xor":
+            lowered = bindings.buildXor(state.builder, lhs: lhs, rhs: rhs, name: "bitxor_\(instructionIndex)")
+        case "kk_op_shl":
+            lowered = bindings.buildShl(state.builder, lhs: lhs, rhs: rhs, name: "shl_\(instructionIndex)")
+        case "kk_op_shr":
+            lowered = bindings.buildAShr(state.builder, lhs: lhs, rhs: rhs, name: "shr_\(instructionIndex)")
+        case "kk_op_ushr":
+            lowered = bindings.buildLShr(state.builder, lhs: lhs, rhs: rhs, name: "ushr_\(instructionIndex)")
+        case "kk_op_inv":
+            lowered = bindings.buildNot(state.builder, value: lhs, name: "inv_\(instructionIndex)")
         case "kk_op_elvis":
             // Elvis operator: return lhs if non-null (not KK_NULL_SENTINEL), otherwise rhs.
             let sentinel = bindings.constInt(state.int64Type, value: UInt64(bitPattern: Int64.min), signExtend: true) ?? state.zeroValue

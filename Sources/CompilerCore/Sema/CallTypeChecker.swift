@@ -285,6 +285,19 @@ final class CallTypeChecker {
         let argTypes = args.map { driver.inferExpr($0.expr, ctx: ctx, locals: &locals) }
         let lookupReceiverType = safeCall ? sema.types.makeNonNullable(receiverType) : receiverType
 
+        // Primitive member function: Int/Long.inv() → same type (P5-103)
+        if interner.resolve(calleeName) == "inv",
+           args.isEmpty {
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let longType = sema.types.make(.primitive(.long, .nonNull))
+            if lookupReceiverType == intType || lookupReceiverType == longType {
+                let resultType = lookupReceiverType
+                let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            }
+        }
+
         var isSuperCall = false
         var supertypeSymbols: Set<SymbolID> = []
         if !safeCall {
@@ -514,6 +527,58 @@ final class CallTypeChecker {
             ctx.semaCtx.diagnostics.error("KSWIFTK-SEMA-0024", "Unresolved member function '\(interner.resolve(calleeName))'.", range: range)
             return driver.helpers.bindAndReturnErrorType(id, sema: sema)
         }
+        // --- Use-site variance projection check ---
+        // When the receiver has projected type arguments (e.g. MutableList<out Number>),
+        // check that the member access respects variance constraints.
+        if let signature = sema.symbols.functionSignature(for: chosen),
+           let varianceResult = sema.types.buildVarianceProjectionSubstitutions(
+               receiverType: lookupReceiverType,
+               signature: signature,
+               symbols: sema.symbols
+           ) {
+            // Check if any parameter uses a write-forbidden type parameter
+            if let violatingParamIndex = sema.types.checkVarianceViolationInParameters(
+                signature: signature,
+                writeForbiddenSymbols: varianceResult.writeForbiddenSymbols
+            ) {
+                let paramType = sema.types.renderType(signature.parameterTypes[violatingParamIndex])
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-VAR-OUT",
+                    "A type projection on the receiver prevents calling '\(interner.resolve(calleeName))' because the type parameter appears in an 'in' position (parameter type '\(paramType)').",
+                    range: range
+                )
+                return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+            }
+
+            // For projected types, merge the solver's substitution with the
+            // variance projection (projection overrides receiver type params).
+            let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
+            let mergedSubstitution = resolved.substitutedTypeArguments.merging(
+                varianceResult.covariantSubstitution,
+                uniquingKeysWith: { _, projected in projected }
+            )
+            sema.bindings.bindCall(
+                id,
+                binding: CallBinding(
+                    chosenCallee: chosen,
+                    substitutedTypeArguments: mergedSubstitution
+                        .sorted(by: { $0.key.rawValue < $1.key.rawValue })
+                        .map(\.value),
+                    parameterMapping: resolved.parameterMapping
+                )
+            )
+            sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+            let projectedReturnType = sema.types.substituteTypeParameters(
+                in: signature.returnType,
+                substitution: mergedSubstitution,
+                typeVarBySymbol: typeVarBySymbol
+            )
+            if isSuperCall { sema.bindings.markSuperCall(id) }
+            let finalType = safeCall ? sema.types.makeNullable(projectedReturnType) : projectedReturnType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+        }
+
         let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
         if isSuperCall { sema.bindings.markSuperCall(id) }
         let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
