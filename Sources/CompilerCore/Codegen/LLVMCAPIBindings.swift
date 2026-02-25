@@ -120,9 +120,6 @@ final class LLVMCAPIBindings {
     typealias LLVMDIBuilderRef = OpaquePointer
     typealias LLVMMetadataRef = OpaquePointer
 
-    internal typealias LLVMAddGlobalFn = @convention(c) (LLVMModuleRef?, LLVMTypeRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
-    internal typealias LLVMSetInitializerFn = @convention(c) (LLVMValueRef?, LLVMValueRef?) -> Void
-
     internal typealias LLVMCreateDIBuilderFn = @convention(c) (LLVMModuleRef?) -> LLVMDIBuilderRef?
     internal typealias LLVMDisposeDIBuilderFn = @convention(c) (LLVMDIBuilderRef?) -> Void
     internal typealias LLVMDIBuilderFinalizeFn = @convention(c) (LLVMDIBuilderRef?) -> Void
@@ -299,8 +296,6 @@ final class LLVMCAPIBindings {
     internal let diBuilderCreateParameterVariableFn: LLVMDIBuilderCreateParameterVariableFn?
     internal let diBuilderCreateAutoVariableFn: LLVMDIBuilderCreateAutoVariableFn?
     internal let diBuilderInsertDeclareAtEndFn: LLVMDIBuilderInsertDeclareAtEndFn?
-    internal let addGlobalFn: LLVMAddGlobalFn?
-    internal let setInitializerFn: LLVMSetInitializerFn?
     internal let diBuilderCreateExpressionFn: LLVMDIBuilderCreateExpressionFn?
 
     internal init(
@@ -390,8 +385,6 @@ final class LLVMCAPIBindings {
         diBuilderCreateParameterVariableFn: LLVMDIBuilderCreateParameterVariableFn? = nil,
         diBuilderCreateAutoVariableFn: LLVMDIBuilderCreateAutoVariableFn? = nil,
         diBuilderInsertDeclareAtEndFn: LLVMDIBuilderInsertDeclareAtEndFn? = nil,
-        addGlobalFn: LLVMAddGlobalFn? = nil,
-        setInitializerFn: LLVMSetInitializerFn? = nil,
         diBuilderCreateExpressionFn: LLVMDIBuilderCreateExpressionFn? = nil
     ) {
         self.handle = handle
@@ -480,8 +473,6 @@ final class LLVMCAPIBindings {
         self.diBuilderCreateParameterVariableFn = diBuilderCreateParameterVariableFn
         self.diBuilderCreateAutoVariableFn = diBuilderCreateAutoVariableFn
         self.diBuilderInsertDeclareAtEndFn = diBuilderInsertDeclareAtEndFn
-        self.addGlobalFn = addGlobalFn
-        self.setInitializerFn = setInitializerFn
         self.diBuilderCreateExpressionFn = diBuilderCreateExpressionFn
     }
 

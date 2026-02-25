@@ -848,7 +848,7 @@ extension NativeEmitter {
                     continue
                 }
                 let resolved = resolveValue(value)
-                if let globalPtr = llvmGlobals[symbol] {
+                if let globalPtr = globalVariables[symbol] {
                     _ = bindings.buildStore(builder, value: resolved, pointer: globalPtr)
                 }
 
@@ -856,7 +856,7 @@ extension NativeEmitter {
                 guard !bindings.hasTerminator(currentBlock) else {
                     continue
                 }
-                if let globalPtr = llvmGlobals[symbol] {
+                if let globalPtr = globalVariables[symbol] {
                     if let loaded = bindings.buildLoad(
                         builder, type: int64Type, pointer: globalPtr,
                         name: "load_global_\(symbol.rawValue)"

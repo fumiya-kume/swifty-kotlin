@@ -372,6 +372,15 @@ final class InlineLoweringPass: LoweringPass {
                 result: result
             )
 
+        case .storeGlobal(let value, let symbol):
+            return .storeGlobal(
+                value: resolveAlias(of: value, aliases: aliases),
+                symbol: symbol
+            )
+
+        case .loadGlobal(_, _):
+            return instruction
+
         default:
             return instruction
         }
@@ -390,6 +399,8 @@ final class InlineLoweringPass: LoweringPass {
         case .unary(_, _, let result):
             return result
         case .nullAssert(_, let result):
+            return result
+        case .loadGlobal(let result, _):
             return result
         default:
             return nil
