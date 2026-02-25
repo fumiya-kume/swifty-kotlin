@@ -643,9 +643,13 @@ final class KIRLoweringDriver {
                     // (declaration order is preserved since we iterate topLevelDecls in order).
                     if let initializer = propertyDecl.initializer,
                        propertyDecl.delegateExpression == nil {
-                        // Only emit init for properties that aren't compile-time constants
-                        // (constants are already inlined by propertyConstantInitializers).
-                        if propertyConstantInitializers[symbol] == nil {
+                        // Emit runtime init when the property is NOT a compile-time
+                        // constant, OR when it is mutable (var).  Mutable properties
+                        // are never constant-folded at use-sites (ExprLowerer skips
+                        // inlining for .mutable), so their globals must be initialised
+                        // to the declared value at program start.
+                        if propertyConstantInitializers[symbol] == nil
+                            || (sema.symbols.symbol(symbol)?.flags.contains(.mutable) == true) {
                             ctx.resetScopeForFunction()
                             ctx.beginCallableLoweringScope()
                             var initInstructions: [KIRInstruction] = []
