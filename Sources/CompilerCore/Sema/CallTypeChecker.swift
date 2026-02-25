@@ -286,15 +286,16 @@ final class CallTypeChecker {
         let lookupReceiverType = safeCall ? sema.types.makeNonNullable(receiverType) : receiverType
 
         // Primitive member function: Int/Long.inv() → same type (P5-103)
-        let intType = sema.types.make(.primitive(.int, .nonNull))
-        let longType = sema.types.make(.primitive(.long, .nonNull))
         if interner.resolve(calleeName) == "inv",
-           args.isEmpty,
-           (lookupReceiverType == intType || lookupReceiverType == longType) {
-            let resultType = lookupReceiverType
-            let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
-            sema.bindings.bindExprType(id, type: finalType)
-            return finalType
+           args.isEmpty {
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let longType = sema.types.make(.primitive(.long, .nonNull))
+            if lookupReceiverType == intType || lookupReceiverType == longType {
+                let resultType = lookupReceiverType
+                let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            }
         }
 
         var isSuperCall = false

@@ -254,13 +254,7 @@ extension BuildASTPhase {
                 return 95
             case .step:
                 return 93
-            case .shl, .shr, .ushr:
-                return 95
-            case .bitwiseAnd:
-                return 95
-            case .bitwiseXor:
-                return 95
-            case .bitwiseOr:
+            case .shl, .shr, .ushr, .bitwiseAnd, .bitwiseXor, .bitwiseOr:
                 return 95
             case .elvis:
                 return 90

@@ -273,6 +273,7 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertTrue(header.contains("Coroutine"))
         XCTAssertTrue(header.contains("Boxing"))
         XCTAssertTrue(header.contains("Array"))
+        XCTAssertTrue(header.contains("Bitwise"))
     }
 
     // MARK: - Cross-Module ABI Reconciliation (Runtime <-> CompilerCore)
