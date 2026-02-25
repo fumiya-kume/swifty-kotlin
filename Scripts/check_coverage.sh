@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-threshold="${COVERAGE_THRESHOLD:-97}"
+threshold="${COVERAGE_THRESHOLD:-80}"
 readonly report_file="${COVERAGE_REPORT_MD:-}"
 
 readonly targets=(

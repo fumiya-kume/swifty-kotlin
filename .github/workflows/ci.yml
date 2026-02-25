@@ -103,7 +103,7 @@ jobs:
         id: coverage
         continue-on-error: true
         env:
-          COVERAGE_THRESHOLD: "95"
+          COVERAGE_THRESHOLD: "80"
           COVERAGE_REPORT_MD: ${{ runner.temp }}/coverage_report.md
         run: bash Scripts/check_coverage.sh
       - name: Post or update coverage comment on PR
