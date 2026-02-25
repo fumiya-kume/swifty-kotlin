@@ -57,7 +57,8 @@ public final class LLVMBackend {
         module: KIRModule,
         runtime: RuntimeLinkInfo,
         outputObjectPath: String,
-        interner: StringInterner
+        interner: StringInterner,
+        sourceManager: SourceManager? = nil
     ) throws {
         try compileWithClang(
             module: module, interner: interner,
@@ -78,7 +79,8 @@ public final class LLVMBackend {
         module: KIRModule,
         runtime: RuntimeLinkInfo,
         outputIRPath: String,
-        interner: StringInterner
+        interner: StringInterner,
+        sourceManager: SourceManager? = nil
     ) throws {
         try compileWithClang(
             module: module, interner: interner,

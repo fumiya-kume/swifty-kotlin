@@ -171,6 +171,24 @@ extension DataFlowSemaPassPhase {
                 symbols.setPropertyType(resolvedType, for: backingFieldSymbol)
                 symbols.setBackingFieldSymbol(backingFieldSymbol, for: memberSymbol)
             }
+
+            // Create a delegate storage symbol for properties with `by` delegation.
+            // This symbol tracks the delegate instance so that KIR lowering can
+            // synthesise getValue/setValue accessor calls.
+            if propertyDecl.delegateExpression != nil {
+                let delegateStorageName = interner.intern("$delegate_\(interner.resolve(propertyDecl.name))")
+                let delegateStorageFQName = ownerFQName + [delegateStorageName]
+                let delegateStorageSymbol = symbols.define(
+                    kind: .field,
+                    name: delegateStorageName,
+                    fqName: delegateStorageFQName,
+                    declSite: propertyDecl.range,
+                    visibility: .private,
+                    flags: []
+                )
+                symbols.setParentSymbol(ownerSymbol, for: delegateStorageSymbol)
+                symbols.setDelegateStorageSymbol(delegateStorageSymbol, for: memberSymbol)
+            }
         }
 
         for declID in nestedClasses {
