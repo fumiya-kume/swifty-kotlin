@@ -1,32 +1,36 @@
 symbol s0 kind=package fq=_root_ vis=public flags=_
 symbol s1 kind=package fq=kotlin vis=public flags=synthetic
-symbol s2 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s3 kind=package fq=kotlin.properties vis=public flags=synthetic
-symbol s4 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#4
-symbol s5 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s6 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#4 params=[Any] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s7 kind=interface fq=Expr vis=public flags=sealedType
-symbol s8 kind=class fq=Literal vis=public flags=_
-symbol s9 kind=constructor fq=Literal.<init> vis=public flags=_ sig=recv=Class#8 params=[] ret=Class#8 suspend=0 defaults=[] vararg=[]
-symbol s10 kind=class fq=Add vis=public flags=_
-symbol s11 kind=constructor fq=Add.<init> vis=public flags=_ sig=recv=Class#10 params=[] ret=Class#10 suspend=0 defaults=[] vararg=[]
-symbol s12 kind=class fq=Multiply vis=public flags=_
-symbol s13 kind=constructor fq=Multiply.<init> vis=public flags=_ sig=recv=Class#12 params=[] ret=Class#12 suspend=0 defaults=[] vararg=[]
-symbol s14 kind=function fq=eval vis=public flags=_ sig=recv=_ params=[Class#7] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s15 kind=valueParameter fq=eval.$14.e vis=private flags=_
+symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
+symbol s4 kind=interface fq=kotlin.properties.ReadWriteProperty vis=public flags=synthetic
+symbol s5 kind=interface fq=kotlin.properties.ReadOnlyProperty vis=public flags=synthetic
+symbol s6 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=_ params=[Any,() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
+symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s11 kind=interface fq=Expr vis=public flags=sealedType
+symbol s12 kind=class fq=Literal vis=public flags=_
+symbol s13 kind=constructor fq=Literal.<init> vis=public flags=_ sig=recv=Class#12 params=[] ret=Class#12 suspend=0 defaults=[] vararg=[]
+symbol s14 kind=class fq=Add vis=public flags=_
+symbol s15 kind=constructor fq=Add.<init> vis=public flags=_ sig=recv=Class#14 params=[] ret=Class#14 suspend=0 defaults=[] vararg=[]
+symbol s16 kind=class fq=Multiply vis=public flags=_
+symbol s17 kind=constructor fq=Multiply.<init> vis=public flags=_ sig=recv=Class#16 params=[] ret=Class#16 suspend=0 defaults=[] vararg=[]
+symbol s18 kind=function fq=eval vis=public flags=_ sig=recv=_ params=[Class#11] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s19 kind=valueParameter fq=eval.$18.e vis=private flags=_
 file f0 package=_
-  decl d0 interface Expr sym=s7
-  decl d1 class Literal sym=s8
-  decl d2 class Add sym=s10
-  decl d3 class Multiply sym=s12
-  decl d4 fun eval suspend=0 inline=0 sym=s14
-expr e0 name(e) type=Class#7 ref=s15
+  decl d0 interface Expr sym=s11
+  decl d1 class Literal sym=s12
+  decl d2 class Add sym=s14
+  decl d3 class Multiply sym=s16
+  decl d4 fun eval suspend=0 inline=0 sym=s18
+expr e0 name(e) type=Class#11 ref=s19
 expr e1 name(is) type=<error>
-expr e2 name(Literal) type=Any ref=s8
+expr e2 name(Literal) type=Any ref=s12
 expr e3 string(literal) type=_
 expr e4 isCheck expr=e3 type=t5 type=_
 expr e5 string(add) type=_
 expr e6 isCheck expr=e5 type=t6 type=_
 expr e7 string(multiply) type=String
 expr e8 when subject=e0 branches=[e1->e2] else=e7 type=Any?
-expr e9 return value=e8 type=Any?
+expr e9 return value=e8 type=Nothing

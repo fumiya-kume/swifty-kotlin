@@ -17,6 +17,7 @@ public final class LoweringPhase: CompilerPhase {
         NormalizeBlocksPass(),
         OperatorLoweringPass(),
         ForLoweringPass(),
+        CollectionLiteralLoweringPass(),
 
         PropertyLoweringPass(),
         StdlibDelegateLoweringPass(),

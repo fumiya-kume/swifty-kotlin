@@ -26,11 +26,36 @@ final class DeclTypeChecker {
 
         case .block(let exprIDs, _):
             var last = ctx.sema.types.unitType
-            for (index, exprID) in exprIDs.enumerated() {
-                let expectedTypeForExpr = index == exprIDs.count - 1 ? expectedType : nil
-                last = driver.inferExpr(exprID, ctx: ctx, locals: &locals, expectedType: expectedTypeForExpr)
+            var reachedNothing = false
+            for exprID in exprIDs {
+                if reachedNothing {
+                    if let stmtRange = ctx.ast.arena.exprRange(exprID) {
+                        ctx.semaCtx.diagnostics.warning(
+                            "KSWIFTK-SEMA-0096",
+                            "Unreachable code.",
+                            range: stmtRange
+                        )
+                    }
+                    _ = driver.inferExpr(exprID, ctx: ctx, locals: &locals, expectedType: nil)
+                    continue
+                }
+                // Pass expectedType to return expressions (so the return value is
+                // checked against the function return type) and to the last expression
+                // (which determines the block's result type for expression-body inference).
+                let exprExpectedType: TypeID?
+                if let expr = ctx.ast.arena.expr(exprID), case .returnExpr = expr {
+                    exprExpectedType = expectedType
+                } else if exprID == exprIDs.last {
+                    exprExpectedType = expectedType
+                } else {
+                    exprExpectedType = nil
+                }
+                last = driver.inferExpr(exprID, ctx: ctx, locals: &locals, expectedType: exprExpectedType)
+                if last == ctx.sema.types.nothingType {
+                    reachedNothing = true
+                }
             }
-            return last
+            return reachedNothing ? ctx.sema.types.nothingType : last
         }
     }
 
@@ -91,7 +116,18 @@ final class DeclTypeChecker {
                 delegateExpr, ctx: ctx, locals: &delegateLocals,
                 expectedType: nil
             )
-            _ = delegateType
+            // Record the delegate type on the property symbol so the KIR
+            // lowering phase can synthesise getValue/setValue calls.
+            // If no explicit property type was declared, use Any? as fallback
+            // (the real property type will be set below from the declared or
+            // inferred type).
+            sema.symbols.setPropertyType(delegateType, for: SymbolID(rawValue: -(symbol.rawValue + 50_000)))
+            // If no explicit type is declared, attempt to use the delegate
+            // type as property type (best-effort; full getValue resolution
+            // would require matching operator conventions which is deferred).
+            if inferredPropertyType == nil {
+                inferredPropertyType = sema.types.nullableAnyType
+            }
         }
 
         let finalPropertyType = inferredPropertyType ?? sema.types.nullableAnyType
@@ -281,7 +317,37 @@ final class DeclTypeChecker {
             diagnostics: diagnostics
         )
 
-        if function.returnType == nil && bodyType != sema.types.errorType {
+        // When inferring return type for functions without explicit annotation:
+        // - Skip if bodyType is error (broken code)
+        // - Skip if bodyType is Nothing AND the body is a block ending with a
+        //   control-flow statement (return/break/continue), because Nothing here
+        //   reflects control flow, not the function's logical return type.
+        // - Allow Nothing for .expr bodies (e.g. `fun f() = throw ...`) and for
+        //   .block bodies ending with throw or a Nothing-returning call, since
+        //   these genuinely diverge.
+        let skipSignatureUpdate: Bool
+        if bodyType == sema.types.errorType {
+            skipSignatureUpdate = true
+        } else if bodyType == sema.types.nothingType {
+            switch function.body {
+            case .block:
+                // Block-body functions without explicit return type should not have
+                // their return type inferred as Nothing. In Kotlin, block-body
+                // functions default to Unit. Nothing can arise from control flow
+                // (return/break/continue), throw, compound expressions where all
+                // branches return, etc. Return value type checking is already
+                // handled at the returnExpr level, so skipping here is safe.
+                skipSignatureUpdate = true
+            case .expr, .unit:
+                // Expression-body functions (e.g. `fun f() = throw ...`) should
+                // infer Nothing when the expression genuinely evaluates to Nothing.
+                skipSignatureUpdate = false
+            }
+        } else {
+            skipSignatureUpdate = false
+        }
+
+        if function.returnType == nil && !skipSignatureUpdate {
             sema.symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: signature.receiverType,
