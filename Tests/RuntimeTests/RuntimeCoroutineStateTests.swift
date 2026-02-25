@@ -277,11 +277,13 @@ final class RuntimeCoroutineStateTests: XCTestCase {
         RuntimeCoroutineScope.current = savedScope
         _ = kk_coroutine_scope_register_child(scopeHandle, asyncHandle)
 
-        // Wait for children — should wait for the manually-registered async task
-        XCTAssertEqual(kk_coroutine_scope_wait(scopeHandle), 0)
+        // Await the async result BEFORE scope_wait, since scope_wait releases the handle.
+        // This matches real usage: user code awaits within the scope block, then scope cleans up.
+        let result = kk_kxmini_async_await(asyncHandle)
+        XCTAssertEqual(result, 73)
 
-        // The async task should have completed
-        XCTAssertEqual(kk_kxmini_async_await(asyncHandle), 73)
+        // Wait for children — scope releases remaining retains for the child
+        XCTAssertEqual(kk_coroutine_scope_wait(scopeHandle), 0)
     }
 
     func testNestedCoroutineScopesRestoreParent() {
