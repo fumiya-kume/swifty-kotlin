@@ -46,6 +46,14 @@ final class LLVMCAPIBindings {
     internal typealias LLVMBuildSubFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     internal typealias LLVMBuildMulFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     internal typealias LLVMBuildSDivFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    // Bitwise/shift builder function types (P5-103)
+    internal typealias LLVMBuildAndFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    internal typealias LLVMBuildOrFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    internal typealias LLVMBuildXorFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    internal typealias LLVMBuildShlFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    internal typealias LLVMBuildAShrFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    internal typealias LLVMBuildLShrFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    internal typealias LLVMBuildNotFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     internal typealias LLVMBuildICmpFn = @convention(c) (LLVMBuilderRef?, UInt32, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     internal typealias LLVMBuildZExtFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMTypeRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     internal typealias LLVMBuildAllocaFn = @convention(c) (LLVMBuilderRef?, LLVMTypeRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
@@ -230,6 +238,14 @@ final class LLVMCAPIBindings {
     internal let buildSubFn: LLVMBuildSubFn
     internal let buildMulFn: LLVMBuildMulFn
     internal let buildSDivFn: LLVMBuildSDivFn
+    // Bitwise/shift builder stored properties (P5-103)
+    internal let buildAndFn: LLVMBuildAndFn?
+    internal let buildOrFn: LLVMBuildOrFn?
+    internal let buildXorFn: LLVMBuildXorFn?
+    internal let buildShlFn: LLVMBuildShlFn?
+    internal let buildAShrFn: LLVMBuildAShrFn?
+    internal let buildLShrFn: LLVMBuildLShrFn?
+    internal let buildNotFn: LLVMBuildNotFn?
     internal let buildICmpFn: LLVMBuildICmpFn
     internal let buildZExtFn: LLVMBuildZExtFn?
     internal let buildAllocaFn: LLVMBuildAllocaFn?
@@ -309,6 +325,14 @@ final class LLVMCAPIBindings {
         buildSubFn: @escaping LLVMBuildSubFn,
         buildMulFn: @escaping LLVMBuildMulFn,
         buildSDivFn: @escaping LLVMBuildSDivFn,
+        // Bitwise/shift builder init params (P5-103)
+        buildAndFn: LLVMBuildAndFn?,
+        buildOrFn: LLVMBuildOrFn?,
+        buildXorFn: LLVMBuildXorFn?,
+        buildShlFn: LLVMBuildShlFn?,
+        buildAShrFn: LLVMBuildAShrFn?,
+        buildLShrFn: LLVMBuildLShrFn?,
+        buildNotFn: LLVMBuildNotFn?,
         buildICmpFn: @escaping LLVMBuildICmpFn,
         buildZExtFn: LLVMBuildZExtFn?,
         buildAllocaFn: LLVMBuildAllocaFn?,
@@ -387,6 +411,14 @@ final class LLVMCAPIBindings {
         self.buildSubFn = buildSubFn
         self.buildMulFn = buildMulFn
         self.buildSDivFn = buildSDivFn
+        // Bitwise/shift builder assignments (P5-103)
+        self.buildAndFn = buildAndFn
+        self.buildOrFn = buildOrFn
+        self.buildXorFn = buildXorFn
+        self.buildShlFn = buildShlFn
+        self.buildAShrFn = buildAShrFn
+        self.buildLShrFn = buildLShrFn
+        self.buildNotFn = buildNotFn
         self.buildICmpFn = buildICmpFn
         self.buildZExtFn = buildZExtFn
         self.buildAllocaFn = buildAllocaFn

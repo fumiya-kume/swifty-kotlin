@@ -285,6 +285,19 @@ final class CallTypeChecker {
         let argTypes = args.map { driver.inferExpr($0.expr, ctx: ctx, locals: &locals) }
         let lookupReceiverType = safeCall ? sema.types.makeNonNullable(receiverType) : receiverType
 
+        // Primitive member function: Int/Long.inv() → same type (P5-103)
+        if interner.resolve(calleeName) == "inv",
+           args.isEmpty {
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let longType = sema.types.make(.primitive(.long, .nonNull))
+            if lookupReceiverType == intType || lookupReceiverType == longType {
+                let resultType = lookupReceiverType
+                let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            }
+        }
+
         var isSuperCall = false
         var supertypeSymbols: Set<SymbolID> = []
         if !safeCall {
