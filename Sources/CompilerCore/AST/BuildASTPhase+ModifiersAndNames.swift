@@ -59,6 +59,8 @@ extension BuildASTPhase {
                     modifiers.insert(.companion)
                 case .keyword(.const):
                     modifiers.insert(.const)
+                case .keyword(.override):
+                    modifiers.insert(.override)
                 default:
                     continue
                 }

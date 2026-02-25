@@ -48,23 +48,36 @@ extension BuildASTPhase.ExpressionParser {
             return astArena.appendExpr(.boolLiteral(false, token.range))
 
         case .identifier(let name), .backtickedIdentifier(let name):
-            // Check for labeled statement: `identifier@ do/while/for { ... }`
-            if let atToken = peek(1), atToken.kind == .symbol(.at) {
-                if let loopToken = peek(2) {
-                    switch loopToken.kind {
-                    case .keyword(.do), .keyword(.while), .keyword(.for):
-                        _ = consume() // identifier
-                        _ = consume() // @
-                        if let loopExpr = parseLabeledLoop(label: name) {
-                            return loopExpr
-                        } else {
-                            return nil
-                        }
-                    default:
-                        break
+            if let atToken = peek(1), atToken.kind == .symbol(.at),
+               let nextToken = peek(2) {
+                switch nextToken.kind {
+                case .keyword(.for), .keyword(.while), .keyword(.do), .symbol(.lBrace):
+                    let savedIndex = index
+                    _ = consume()
+                    _ = consume()
+                    let start = token.range.start
+
+                    if matches(.keyword(.for)) {
+                        return parseForExpression(label: name, start: start)
                     }
+                    if matches(.keyword(.while)) {
+                        return parseWhileExpression(label: name, start: start)
+                    }
+                    if matches(.keyword(.do)) {
+                        return parseDoWhileExpression(label: name, start: start)
+                    }
+                    if matches(.symbol(.lBrace)) {
+                        if let lambda = parseLambdaLiteral(label: name, start: start) {
+                            return lambda
+                        }
+                    }
+
+                    index = savedIndex
+                default:
+                    break
                 }
             }
+
             _ = consume()
             return astArena.appendExpr(.nameRef(name, token.range))
 
@@ -79,33 +92,33 @@ extension BuildASTPhase.ExpressionParser {
 
         case .keyword(.break):
             _ = consume()
-            var breakLabel: InternedString?
-            var endPos = token.range.end
+            var label: InternedString?
+            var end = token.range.end
             if let atToken = current(), atToken.kind == .symbol(.at),
                let labelToken = peek(1),
                let labelName = identifierFromToken(labelToken) {
-                _ = consume() // @
-                _ = consume() // label
-                breakLabel = labelName
-                endPos = labelToken.range.end
+                _ = consume()
+                _ = consume()
+                label = labelName
+                end = labelToken.range.end
             }
-            let breakRange = SourceRange(start: token.range.start, end: endPos)
-            return astArena.appendExpr(.breakExpr(label: breakLabel, range: breakRange))
+            let range = SourceRange(start: token.range.start, end: end)
+            return astArena.appendExpr(.breakExpr(label: label, range: range))
 
         case .keyword(.continue):
             _ = consume()
-            var continueLabel: InternedString?
-            var endPos = token.range.end
+            var label: InternedString?
+            var end = token.range.end
             if let atToken = current(), atToken.kind == .symbol(.at),
                let labelToken = peek(1),
                let labelName = identifierFromToken(labelToken) {
-                _ = consume() // @
-                _ = consume() // label
-                continueLabel = labelName
-                endPos = labelToken.range.end
+                _ = consume()
+                _ = consume()
+                label = labelName
+                end = labelToken.range.end
             }
-            let continueRange = SourceRange(start: token.range.start, end: endPos)
-            return astArena.appendExpr(.continueExpr(label: continueLabel, range: continueRange))
+            let range = SourceRange(start: token.range.start, end: end)
+            return astArena.appendExpr(.continueExpr(label: label, range: range))
 
         case .keyword(.return):
             return parseReturnExpression()

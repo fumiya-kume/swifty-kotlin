@@ -271,17 +271,22 @@ final class GoldenHarnessTests: XCTestCase {
             return "string(\(interner.resolve(text)))"
         case .nameRef(let name, _):
             return "name(\(interner.resolve(name)))"
-        case .forExpr(let loopVariable, let iterable, let body, _):
+        case .forExpr(let loopVariable, let iterable, let body, let label, _):
             let variable = loopVariable.map { interner.resolve($0) } ?? "_"
-            return "for var=\(variable) iterable=e\(iterable.rawValue) body=e\(body.rawValue)"
-        case .whileExpr(let condition, let body, _):
-            return "while cond=e\(condition.rawValue) body=e\(body.rawValue)"
-        case .doWhileExpr(let body, let condition, _):
-            return "doWhile body=e\(body.rawValue) cond=e\(condition.rawValue)"
-        case .breakExpr:
-            return "break"
-        case .continueExpr:
-            return "continue"
+            let labelStr = label.map { " label=\(interner.resolve($0))" } ?? ""
+            return "for var=\(variable) iterable=e\(iterable.rawValue) body=e\(body.rawValue)\(labelStr)"
+        case .whileExpr(let condition, let body, let label, _):
+            let labelStr = label.map { " label=\(interner.resolve($0))" } ?? ""
+            return "while cond=e\(condition.rawValue) body=e\(body.rawValue)\(labelStr)"
+        case .doWhileExpr(let body, let condition, let label, _):
+            let labelStr = label.map { " label=\(interner.resolve($0))" } ?? ""
+            return "doWhile body=e\(body.rawValue) cond=e\(condition.rawValue)\(labelStr)"
+        case .breakExpr(let label, _):
+            let labelStr = label.map { "@\(interner.resolve($0))" } ?? ""
+            return "break\(labelStr)"
+        case .continueExpr(let label, _):
+            let labelStr = label.map { "@\(interner.resolve($0))" } ?? ""
+            return "continue\(labelStr)"
         case .localDecl(let name, let isMutable, let typeAnnotation, let initializer, _):
             let typeStr = typeAnnotation.map { "t\($0.rawValue)" } ?? "_"
             let initStr = initializer.map { "e\($0.rawValue)" } ?? "_"
@@ -321,9 +326,10 @@ final class GoldenHarnessTests: XCTestCase {
             let renderedElse = elseExpr.map { "e\($0.rawValue)" } ?? "_"
             let renderedSubject = subject.map { "e\($0.rawValue)" } ?? "_"
             return "when subject=\(renderedSubject) branches=[\(renderedBranches)] else=\(renderedElse)"
-        case .returnExpr(let value, _):
+        case .returnExpr(let value, let label, _):
             let renderedValue = value.map { "e\($0.rawValue)" } ?? "_"
-            return "return value=\(renderedValue)"
+            let labelStr = label.map { "@\(interner.resolve($0))" } ?? ""
+            return "return\(labelStr) value=\(renderedValue)"
         case .ifExpr(let condition, let thenExpr, let elseExpr, _):
             let renderedElse = elseExpr.map { "e\($0.rawValue)" } ?? "_"
             return "if cond=e\(condition.rawValue) then=e\(thenExpr.rawValue) else=\(renderedElse)"
@@ -362,9 +368,10 @@ final class GoldenHarnessTests: XCTestCase {
             return "stringTemplate[\(rendered)]"
         case .throwExpr(let value, _):
             return "throw value=e\(value.rawValue)"
-        case .lambdaLiteral(let params, let body, _):
+        case .lambdaLiteral(let params, let body, let label, _):
             let renderedParams = params.map { interner.resolve($0) }.joined(separator: ",")
-            return "lambda params=[\(renderedParams)] body=e\(body.rawValue)"
+            let labelStr = label.map { " label=\(interner.resolve($0))" } ?? ""
+            return "lambda params=[\(renderedParams)] body=e\(body.rawValue)\(labelStr)"
         case .objectLiteral(let superTypes, _):
             let renderedSuperTypes = superTypes.map { "t\($0.rawValue)" }.joined(separator: ",")
             return "objectLiteral supers=[\(renderedSuperTypes)]"
@@ -440,6 +447,7 @@ final class GoldenHarnessTests: XCTestCase {
         if flags.contains(.valueType) { names.append("valueType") }
         if flags.contains(.operatorFunction) { names.append("operatorFunction") }
         if flags.contains(.constValue) { names.append("constValue") }
+        if flags.contains(.abstractType) { names.append("abstractType") }
         return names.joined(separator: "|")
     }
 

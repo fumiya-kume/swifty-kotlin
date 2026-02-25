@@ -74,14 +74,14 @@ final class ExprTypeChecker {
         case .nameRef(let name, let nameRange):
             return inferNameRefExpr(id, name: name, nameRange: nameRange, ctx: ctx, locals: &locals)
 
-        case .forExpr(let loopVariable, let iterableExpr, let bodyExpr, let range):
-            return driver.controlFlowChecker.inferForExpr(id, loopVariable: loopVariable, iterableExpr: iterableExpr, bodyExpr: bodyExpr, range: range, ctx: ctx, locals: &locals)
+        case .forExpr(let loopVariable, let iterableExpr, let bodyExpr, let label, let range):
+            return driver.controlFlowChecker.inferForExpr(id, loopVariable: loopVariable, iterableExpr: iterableExpr, bodyExpr: bodyExpr, label: label, range: range, ctx: ctx, locals: &locals)
 
-        case .whileExpr(let conditionExpr, let bodyExpr, let range):
-            return driver.controlFlowChecker.inferWhileExpr(id, conditionExpr: conditionExpr, bodyExpr: bodyExpr, range: range, ctx: ctx, locals: &locals)
+        case .whileExpr(let conditionExpr, let bodyExpr, let label, let range):
+            return driver.controlFlowChecker.inferWhileExpr(id, conditionExpr: conditionExpr, bodyExpr: bodyExpr, label: label, range: range, ctx: ctx, locals: &locals)
 
-        case .doWhileExpr(let bodyExpr, let conditionExpr, let range):
-            return driver.controlFlowChecker.inferDoWhileExpr(id, bodyExpr: bodyExpr, conditionExpr: conditionExpr, range: range, ctx: ctx, locals: &locals)
+        case .doWhileExpr(let bodyExpr, let conditionExpr, let label, let range):
+            return driver.controlFlowChecker.inferDoWhileExpr(id, bodyExpr: bodyExpr, conditionExpr: conditionExpr, label: label, range: range, ctx: ctx, locals: &locals)
 
         case .breakExpr(let label, let range):
             if ctx.loopDepth == 0 {
@@ -90,10 +90,10 @@ final class ExprTypeChecker {
                     "'break' is only allowed inside loop bodies.",
                     range: range
                 )
-            } else if let label, !ctx.hasLoopLabel(label) {
+            } else if let label, !ctx.loopLabelStack.contains(label) {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0097",
-                    "'break' with label '@\(ctx.interner.resolve(label))' does not reference a valid enclosing loop.",
+                    "'break' with label '@\(interner.resolve(label))' does not reference a valid enclosing loop.",
                     range: range
                 )
             }
@@ -107,10 +107,10 @@ final class ExprTypeChecker {
                     "'continue' is only allowed inside loop bodies.",
                     range: range
                 )
-            } else if let label, !ctx.hasLoopLabel(label) {
+            } else if let label, !ctx.loopLabelStack.contains(label) {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0098",
-                    "'continue' with label '@\(ctx.interner.resolve(label))' does not reference a valid enclosing loop.",
+                    "'continue' with label '@\(interner.resolve(label))' does not reference a valid enclosing loop.",
                     range: range
                 )
             }
@@ -129,7 +129,15 @@ final class ExprTypeChecker {
         case .indexedAssign(let receiverExpr, let indices, let valueExpr, let range):
             return driver.localDeclChecker.inferIndexedAssignExpr(id, receiverExpr: receiverExpr, indices: indices, valueExpr: valueExpr, range: range, ctx: ctx, locals: &locals)
 
-        case .returnExpr(let value, let range):
+        case .returnExpr(let value, let label, let range):
+            if let label {
+                let labelName = interner.resolve(label)
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0042",
+                    "Labeled return 'return@\(labelName)' is not yet supported.",
+                    range: range
+                )
+            }
             if let value {
                 let resolved = driver.inferExpr(value, ctx: ctx, locals: &locals, expectedType: expectedType)
                 // Emit subtype constraint: return value must conform to expected (function) return type
@@ -275,7 +283,7 @@ final class ExprTypeChecker {
             sema.bindings.bindExprType(id, type: sema.types.nothingType)
             return sema.types.nothingType
 
-        case .lambdaLiteral(let params, let body, _):
+        case .lambdaLiteral(let params, let body, _, _):
             return inferLambdaLiteralExpr(id, params: params, body: body, ctx: ctx, locals: &locals, expectedType: expectedType)
 
         case .objectLiteral(let superTypes, _):

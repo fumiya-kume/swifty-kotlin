@@ -502,6 +502,42 @@ final class DeclTypeChecker {
         )
     }
 
+    func typeCheckInterfaceDecl(
+        _ interfaceDecl: InterfaceDecl,
+        symbol: SymbolID,
+        ctx: TypeInferenceContext,
+        solver: ConstraintSolver,
+        diagnostics: DiagnosticEngine
+    ) {
+        let sema = ctx.sema
+        let interfaceType = sema.types.make(.classType(ClassType(
+            classSymbol: symbol, args: [], nullability: .nonNull
+        )))
+        let interfaceScope = buildClassMemberScope(
+            ownerSymbol: symbol,
+            ownerType: interfaceType,
+            memberFunctions: interfaceDecl.memberFunctions,
+            memberProperties: interfaceDecl.memberProperties,
+            nestedClasses: interfaceDecl.nestedClasses,
+            nestedObjects: interfaceDecl.nestedObjects,
+            ctx: ctx
+        )
+        let label = sema.symbols.symbol(symbol)?.name ?? ctx.interner.intern("")
+        let interfaceCtx = ctx
+            .withOuterReceiver(label: label, type: interfaceType)
+            .copying(scope: interfaceScope, implicitReceiverType: interfaceType)
+
+        typeCheckClassLikeMembers(
+            memberFunctions: interfaceDecl.memberFunctions,
+            memberProperties: interfaceDecl.memberProperties,
+            nestedClasses: interfaceDecl.nestedClasses,
+            nestedObjects: interfaceDecl.nestedObjects,
+            ctx: interfaceCtx,
+            solver: solver,
+            diagnostics: diagnostics
+        )
+    }
+
     func typeCheckClassLikeMembers(
         memberFunctions: [DeclID],
         memberProperties: [DeclID],
@@ -567,8 +603,15 @@ final class DeclTypeChecker {
                     solver: solver,
                     diagnostics: diagnostics
                 )
-            case .interfaceDecl:
-                continue
+            case .interfaceDecl(let nestedInterface):
+                let nestedCtx = ctx.copying(outerReceiverTypes: [])
+                typeCheckInterfaceDecl(
+                    nestedInterface,
+                    symbol: symbol,
+                    ctx: nestedCtx,
+                    solver: solver,
+                    diagnostics: diagnostics
+                )
             default:
                 continue
             }

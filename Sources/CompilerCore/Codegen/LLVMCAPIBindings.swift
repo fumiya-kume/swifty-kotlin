@@ -78,6 +78,8 @@ final class LLVMCAPIBindings {
         UInt32,
         UnsafePointer<CChar>?
     ) -> LLVMValueRef?
+    internal typealias LLVMAddGlobalFn = @convention(c) (LLVMModuleRef?, LLVMTypeRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    internal typealias LLVMSetInitializerFn = @convention(c) (LLVMValueRef?, LLVMValueRef?) -> Void
     internal typealias LLVMConstIntFn = @convention(c) (LLVMTypeRef?, UInt64, LLVMBool) -> LLVMValueRef?
     internal typealias LLVMConstPointerNullFn = @convention(c) (LLVMTypeRef?) -> LLVMValueRef?
     internal typealias LLVMGetDefaultTargetTripleFn = @convention(c) () -> UnsafeMutablePointer<CChar>?
@@ -117,9 +119,6 @@ final class LLVMCAPIBindings {
 
     typealias LLVMDIBuilderRef = OpaquePointer
     typealias LLVMMetadataRef = OpaquePointer
-
-    internal typealias LLVMAddGlobalFn = @convention(c) (LLVMModuleRef?, LLVMTypeRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
-    internal typealias LLVMSetInitializerFn = @convention(c) (LLVMValueRef?, LLVMValueRef?) -> Void
 
     internal typealias LLVMCreateDIBuilderFn = @convention(c) (LLVMModuleRef?) -> LLVMDIBuilderRef?
     internal typealias LLVMDisposeDIBuilderFn = @convention(c) (LLVMDIBuilderRef?) -> Void

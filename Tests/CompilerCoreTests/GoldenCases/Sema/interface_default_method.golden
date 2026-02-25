@@ -10,6 +10,15 @@ symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic 
 symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
 symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
 symbol s11 kind=interface fq=golden.sema.Greeter vis=public flags=_
-symbol s12 kind=function fq=golden.sema.Greeter.greet vis=public flags=abstractType sig=recv=Class#11 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s12 kind=function fq=golden.sema.Greeter.greet vis=public flags=_ sig=recv=Class#11 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s13 kind=class fq=golden.sema.FormalGreeter vis=public flags=_
+symbol s14 kind=constructor fq=golden.sema.FormalGreeter.<init> vis=public flags=_ sig=recv=Class#13 params=[] ret=Class#13 suspend=0 defaults=[] vararg=[]
+symbol s15 kind=function fq=golden.sema.FormalGreeter.greet vis=public flags=_ sig=recv=Class#13 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s16 kind=class fq=golden.sema.DefaultGreeter vis=public flags=_
+symbol s17 kind=constructor fq=golden.sema.DefaultGreeter.<init> vis=public flags=_ sig=recv=Class#16 params=[] ret=Class#16 suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
   decl d1 interface Greeter sym=s11
+  decl d3 class FormalGreeter sym=s13
+  decl d4 class DefaultGreeter sym=s16
+expr e0 string(Hello) type=String
+expr e1 string(Good day) type=String

@@ -14,6 +14,7 @@ final class ControlFlowTypeChecker {
         loopVariable: InternedString?,
         iterableExpr: ExprID,
         bodyExpr: ExprID,
+        label: InternedString?,
         range: SourceRange,
         ctx: TypeInferenceContext,
         locals: inout LocalBindings
@@ -38,13 +39,11 @@ final class ControlFlowTypeChecker {
             bodyLocals[loopVariable] = (elementType, loopVariableSymbol, false, true)
             sema.bindings.bindIdentifier(id, symbol: loopVariableSymbol)
         }
-        var loopCtx = ctx.copying(loopDepth: ctx.loopDepth + 1)
-        if let userLabel = ctx.ast.arena.loopLabel(for: id) {
-            loopCtx = loopCtx.withLoopLabel(userLabel)
-        }
+        var newLabelStack = ctx.loopLabelStack
+        if let label { newLabelStack.append(label) }
         _ = driver.inferExpr(
             bodyExpr,
-            ctx: loopCtx,
+            ctx: ctx.copying(loopDepth: ctx.loopDepth + 1, loopLabelStack: newLabelStack),
             locals: &bodyLocals,
             expectedType: nil
         )
@@ -56,6 +55,7 @@ final class ControlFlowTypeChecker {
         _ id: ExprID,
         conditionExpr: ExprID,
         bodyExpr: ExprID,
+        label: InternedString?,
         range: SourceRange,
         ctx: TypeInferenceContext,
         locals: inout LocalBindings
@@ -80,10 +80,9 @@ final class ControlFlowTypeChecker {
         )
         var bodyLocals = locals
         driver.exprChecker.applyFlowStateToLocals(branch.trueState, locals: &bodyLocals, sema: sema)
-        var bodyCtx = ctx.copying(loopDepth: ctx.loopDepth + 1, flowState: branch.trueState)
-        if let userLabel = ctx.ast.arena.loopLabel(for: id) {
-            bodyCtx = bodyCtx.withLoopLabel(userLabel)
-        }
+        var newLabelStack = ctx.loopLabelStack
+        if let label { newLabelStack.append(label) }
+        let bodyCtx = ctx.copying(loopDepth: ctx.loopDepth + 1, loopLabelStack: newLabelStack, flowState: branch.trueState)
         _ = driver.inferExpr(
             bodyExpr,
             ctx: bodyCtx,
@@ -98,6 +97,7 @@ final class ControlFlowTypeChecker {
         _ id: ExprID,
         bodyExpr: ExprID,
         conditionExpr: ExprID,
+        label: InternedString?,
         range: SourceRange,
         ctx: TypeInferenceContext,
         locals: inout LocalBindings
@@ -105,14 +105,12 @@ final class ControlFlowTypeChecker {
         let ast = ctx.ast
         let sema = ctx.sema
         let boolType = sema.types.booleanType
+        var newLabelStack = ctx.loopLabelStack
+        if let label { newLabelStack.append(label) }
         var bodyLocals = locals
-        var loopCtx = ctx.copying(loopDepth: ctx.loopDepth + 1)
-        if let userLabel = ctx.ast.arena.loopLabel(for: id) {
-            loopCtx = loopCtx.withLoopLabel(userLabel)
-        }
         _ = driver.inferExpr(
             bodyExpr,
-            ctx: loopCtx,
+            ctx: ctx.copying(loopDepth: ctx.loopDepth + 1, loopLabelStack: newLabelStack),
             locals: &bodyLocals,
             expectedType: nil
         )

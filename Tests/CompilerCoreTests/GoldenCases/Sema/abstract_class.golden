@@ -9,7 +9,18 @@ symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=
 symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
 symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
 symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
-symbol s11 kind=interface fq=golden.sema.Greeter vis=public flags=_
-symbol s12 kind=function fq=golden.sema.Greeter.greet vis=public flags=abstractType sig=recv=Class#11 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s11 kind=class fq=golden.sema.Shape vis=public flags=abstractType
+symbol s12 kind=constructor fq=golden.sema.Shape.<init> vis=public flags=_ sig=recv=Class#11 params=[] ret=Class#11 suspend=0 defaults=[] vararg=[]
+symbol s13 kind=function fq=golden.sema.Shape.area vis=public flags=abstractType sig=recv=Class#11 params=[] ret=<error> suspend=0 defaults=[] vararg=[]
+symbol s14 kind=class fq=golden.sema.Circle vis=public flags=_
+symbol s15 kind=constructor fq=golden.sema.Circle.<init> vis=public flags=_ sig=recv=Class#14 params=[<error>] ret=Class#14 suspend=0 defaults=[0] vararg=[0]
+symbol s16 kind=valueParameter fq=golden.sema.Circle.<init>.$15.radius vis=private flags=_
+symbol s17 kind=function fq=golden.sema.Circle.area vis=public flags=_ sig=recv=Class#14 params=[] ret=<error> suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d1 interface Greeter sym=s11
+  decl d1 class Shape sym=s11
+  decl d3 class Circle sym=s14
+expr e0 double(3.14) type=Double
+expr e1 name(radius) type=<error>
+expr e2 binary(multiply) lhs=e0 rhs=e1 type=Double
+expr e3 name(radius) type=<error>
+expr e4 binary(multiply) lhs=e2 rhs=e3 type=Double

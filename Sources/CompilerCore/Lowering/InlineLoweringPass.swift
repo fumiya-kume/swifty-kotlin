@@ -251,6 +251,19 @@ final class InlineLoweringPass: LoweringPass {
                     )
                 )
 
+            case .storeGlobal(let value, let symbol):
+                lowered.append(
+                    .storeGlobal(
+                        value: resolveAlias(of: value, aliases: localExprMap),
+                        symbol: symbol
+                    )
+                )
+
+            case .loadGlobal(let result, let symbol):
+                let loweredResult = cloneExpr(result, in: module.arena)
+                localExprMap[result] = loweredResult
+                lowered.append(.loadGlobal(result: loweredResult, symbol: symbol))
+
             case .rethrow(let value):
                 lowered.append(
                     .rethrow(value: resolveAlias(of: value, aliases: localExprMap))
@@ -359,6 +372,15 @@ final class InlineLoweringPass: LoweringPass {
                 result: result
             )
 
+        case .storeGlobal(let value, let symbol):
+            return .storeGlobal(
+                value: resolveAlias(of: value, aliases: aliases),
+                symbol: symbol
+            )
+
+        case .loadGlobal(_, _):
+            return instruction
+
         default:
             return instruction
         }
@@ -377,6 +399,8 @@ final class InlineLoweringPass: LoweringPass {
         case .unary(_, _, let result):
             return result
         case .nullAssert(_, let result):
+            return result
+        case .loadGlobal(let result, _):
             return result
         default:
             return nil

@@ -54,6 +54,7 @@ struct TypeInferenceContext {
         scope: Scope? = nil,
         implicitReceiverType: TypeID?? = nil,
         loopDepth: Int? = nil,
+        loopLabelStack: [InternedString]? = nil,
         flowState: DataFlowState? = nil,
         enclosingClassSymbol: SymbolID?? = nil,
         outerReceiverTypes: [(label: InternedString, type: TypeID)]? = nil
@@ -62,6 +63,7 @@ struct TypeInferenceContext {
         if let scope { copy.scope = scope }
         if let implicitReceiverType { copy.implicitReceiverType = implicitReceiverType }
         if let loopDepth { copy.loopDepth = loopDepth }
+        if let loopLabelStack { copy.loopLabelStack = loopLabelStack }
         if let flowState { copy.flowState = flowState }
         if let enclosingClassSymbol { copy.enclosingClassSymbol = enclosingClassSymbol }
         if let outerReceiverTypes { copy.outerReceiverTypes = outerReceiverTypes }
