@@ -48,7 +48,8 @@ public final class LLVMCAPIBackend: CodegenBackend {
         module: KIRModule,
         runtime: RuntimeLinkInfo,
         outputObjectPath: String,
-        interner: StringInterner
+        interner: StringInterner,
+        sourceManager: SourceManager? = nil
     ) throws {
         _ = runtime
         try emitNative(
@@ -60,7 +61,8 @@ public final class LLVMCAPIBackend: CodegenBackend {
                     debugInfo: debugInfo,
                     bindings: bindings,
                     module: module,
-                    interner: interner
+                    interner: interner,
+                    sourceManager: sourceManager
                 )
                 try emitter.emitObject(outputPath: outputObjectPath)
             }
@@ -71,7 +73,8 @@ public final class LLVMCAPIBackend: CodegenBackend {
         module: KIRModule,
         runtime: RuntimeLinkInfo,
         outputIRPath: String,
-        interner: StringInterner
+        interner: StringInterner,
+        sourceManager: SourceManager? = nil
     ) throws {
         _ = runtime
         try emitNative(
@@ -83,7 +86,8 @@ public final class LLVMCAPIBackend: CodegenBackend {
                     debugInfo: debugInfo,
                     bindings: bindings,
                     module: module,
-                    interner: interner
+                    interner: interner,
+                    sourceManager: sourceManager
                 )
                 try emitter.emitLLVMIR(outputPath: outputIRPath)
             }

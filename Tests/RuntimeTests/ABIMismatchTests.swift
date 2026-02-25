@@ -98,8 +98,8 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testCoroutineFunctionCount() {
-        // 19 base coroutine functions + 12 consolidated stubs (Flow/Dispatchers/Channel/awaitAll)
-        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 31)
+        // 19 base coroutine functions + 12 consolidated stubs (Flow/Dispatchers/Channel/awaitAll) + 7 structured concurrency (P5-89)
+        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 38)
     }
 
     func testBoxingFunctionCount() {

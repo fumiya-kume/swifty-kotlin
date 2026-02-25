@@ -230,6 +230,16 @@ extension BuildASTPhase {
             switch child {
             case .token(let tokenID):
                 if let token = resolveToken(tokenID, in: arena) {
+                    // Stop before inline `get(`/`set(` accessor keywords so that
+                    // type and initializer parsing don't consume accessor tokens.
+                    switch token.kind {
+                    case .softKeyword(.get), .softKeyword(.set):
+                        if let idx = inlineAccessorStartIndex(in: tokens + [token]) {
+                            return Array(tokens.prefix(idx))
+                        }
+                    default:
+                        break
+                    }
                     tokens.append(token)
                 }
             case .node(let childID):
@@ -237,6 +247,10 @@ extension BuildASTPhase {
                     return tokens
                 }
             }
+        }
+        // Final check: scan collected tokens for inline accessor start.
+        if let idx = inlineAccessorStartIndex(in: tokens) {
+            return Array(tokens.prefix(idx))
         }
         return tokens
     }

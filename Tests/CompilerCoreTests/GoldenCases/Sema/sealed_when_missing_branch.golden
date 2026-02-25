@@ -32,4 +32,4 @@ expr e3 string(dog) type=_
 expr e4 isCheck expr=e3 type=t5 type=_
 expr e5 string(cat) type=String
 expr e6 when subject=e0 branches=[e1->e2] else=e5 type=Any?
-expr e7 return value=e6 type=Any?
+expr e7 return value=e6 type=Nothing

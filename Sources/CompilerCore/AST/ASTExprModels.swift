@@ -132,4 +132,6 @@ public enum Expr: Equatable {
     case thisRef(label: InternedString?, SourceRange)
     case inExpr(lhs: ExprID, rhs: ExprID, range: SourceRange)
     case notInExpr(lhs: ExprID, rhs: ExprID, range: SourceRange)
+    case destructuringDecl(names: [InternedString?], isMutable: Bool, initializer: ExprID, range: SourceRange)
+    case forDestructuringExpr(names: [InternedString?], iterable: ExprID, body: ExprID, range: SourceRange)
 }

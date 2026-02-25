@@ -30,8 +30,8 @@ expr e7 name(x) type=Class#11 & Class#13 ref=s16
 expr e8 memberCall recv=e7 callee=b args=[] type=Int call=s14 map=[] targs=[]
 expr e9 memberCall recv=e8 callee=toString args=[] type=<error>
 expr e10 binary(add) lhs=e6 rhs=e9 type=String
-expr e11 return value=e10 type=String
-expr e12 blockExpr stmts=[] trailing=e11 type=String
+expr e11 return value=e10 type=Nothing
+expr e12 blockExpr stmts=[] trailing=e11 type=Nothing
 expr e13 if cond=e4 then=e12 else=_ type=Unit
 expr e14 string(unknown) type=String
-expr e15 return value=e14 type=String
+expr e15 return value=e14 type=Nothing
