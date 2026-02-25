@@ -236,6 +236,7 @@ public final class SymbolTable {
     private var typeAliasTypeParameters: [SymbolID: [SymbolID]] = [:]
     private var parentSymbols: [SymbolID: SymbolID] = [:]
     private var backingFieldSymbols: [SymbolID: SymbolID] = [:]
+    private var delegateStorageSymbols: [SymbolID: SymbolID] = [:]
     private var typeParameterUpperBoundsMap: [SymbolID: TypeID] = [:]
     private var sourceFileIDs: [SymbolID: FileID] = [:]
     private var annotationsStorage: [SymbolID: [MetadataAnnotationRecord]] = [:]
@@ -451,6 +452,14 @@ public final class SymbolTable {
 
     public func backingFieldSymbol(for property: SymbolID) -> SymbolID? {
         backingFieldSymbols[property]
+    }
+
+    public func setDelegateStorageSymbol(_ storage: SymbolID, for property: SymbolID) {
+        delegateStorageSymbols[property] = storage
+    }
+
+    public func delegateStorageSymbol(for property: SymbolID) -> SymbolID? {
+        delegateStorageSymbols[property]
     }
 
     public func setTypeParameterUpperBound(_ bound: TypeID, for symbol: SymbolID) {

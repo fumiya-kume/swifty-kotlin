@@ -92,6 +92,10 @@ final class DeclTypeChecker {
                 expectedType: nil
             )
 
+            // Record the delegate type on the property symbol so the KIR
+            // lowering phase can synthesise getValue/setValue calls.
+            sema.symbols.setPropertyType(delegateType, for: SymbolID(rawValue: -(symbol.rawValue + 50_000)))
+
             // Resolve getValue operator on the delegate type to infer the
             // property type from its return type (Kotlin spec J12).
             let getValueName = interner.intern("getValue")
@@ -110,6 +114,12 @@ final class DeclTypeChecker {
                 if inferredPropertyType == nil {
                     inferredPropertyType = getValueSig.returnType
                 }
+            }
+
+            // Fallback: if no getValue was resolved and no explicit type,
+            // use Any? as the property type.
+            if inferredPropertyType == nil {
+                inferredPropertyType = sema.types.nullableAnyType
             }
 
             // For var properties, also check that setValue operator exists.
