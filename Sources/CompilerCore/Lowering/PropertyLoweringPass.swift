@@ -90,6 +90,13 @@ final class PropertyLoweringPass: LoweringPass {
                         continue
                     }
                     let accessorSymbol = SymbolID(rawValue: accessorSymbolOffset - propSymbol.rawValue)
+                    // If the current function IS the accessor being
+                    // targeted, keep the original getValue/setValue call
+                    // to avoid infinite recursion (accessor calling itself).
+                    if function.symbol == accessorSymbol {
+                        loweredBody.append(instruction)
+                        continue
+                    }
                     loweredBody.append(
                         .call(
                             symbol: accessorSymbol,
