@@ -229,19 +229,6 @@ final class CallLowerer {
             return
         }
 
-        // P5-111: If the sema bound this member-call expression to a
-        // property/field symbol (zero-arg property access like `Counter.n`),
-        // emit a symbolRef load from the property global instead of a call.
-        if args.isEmpty,
-           let propSymbol = sema.bindings.identifierSymbols[exprID],
-           let propSym = sema.symbols.symbol(propSymbol),
-           (propSym.kind == .property || propSym.kind == .field) {
-            let propType = boundType ?? sema.symbols.propertyType(for: propSymbol) ?? sema.types.anyType
-            let propRef = arena.appendExpr(.symbolRef(propSymbol), type: propType)
-            instructions.append(.constValue(result: propRef, value: .symbolRef(propSymbol)))
-            return propRef
-        }
-
         // Primitive member function: Int/Long.inv() → kk_op_inv (P5-103)
         let intType = sema.types.make(.primitive(.int, .nonNull))
         for index in signature.reifiedTypeParameterIndices.sorted() {

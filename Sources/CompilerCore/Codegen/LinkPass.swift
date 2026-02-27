@@ -76,6 +76,11 @@ public final class LinkPhase: CompilerPhase {
             }
             if hasGlobals {
                 args.append("-no-pie")
+                ctx.diagnostics.warning(
+                    "KSWIFTK-LINK-0004",
+                    "Global variables detected: linking with -no-pie, which disables PIE/ASLR on this binary.",
+                    range: nil
+                )
             }
             #endif
             args.append("-o")

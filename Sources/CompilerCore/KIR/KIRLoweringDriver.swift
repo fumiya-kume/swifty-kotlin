@@ -464,7 +464,7 @@ final class KIRLoweringDriver {
                     declIDs.append(singletonGlobalKirID)
 
                     // Build the synthetic <clinit> function body.
-                    let clinitSymbol = SymbolID(rawValue: -300_000 - symbol.rawValue)
+                    let clinitSymbol = SymbolID(rawValue: -500_000 - symbol.rawValue)
                     let clinitName = compilationCtx.interner.intern("<clinit>_\(compilationCtx.interner.resolve(objectDecl.name))")
                     objectClinitSymbolByObjectSymbol[symbol] = clinitSymbol
                     objectClinitNameByObjectSymbol[symbol] = clinitName
@@ -567,10 +567,10 @@ final class KIRLoweringDriver {
                         }
                     }
 
-                    // Done label: load and return the singleton.
+                    // Done label: load and return the singleton from the global slot.
                     clinitBody.append(.label(doneLabel))
                     let returnExpr = arena.appendExpr(.symbolRef(singletonGlobalSymbol), type: sema.types.anyType)
-                    clinitBody.append(.constValue(result: returnExpr, value: .symbolRef(singletonGlobalSymbol)))
+                    clinitBody.append(.loadGlobal(result: returnExpr, symbol: singletonGlobalSymbol))
                     clinitBody.append(.returnValue(returnExpr))
                     clinitBody.append(.endBlock)
 
@@ -1156,6 +1156,23 @@ final class KIRLoweringDriver {
                        let clinitSym = objectClinitSymbolByObjectSymbol[sym],
                        let clinitNm = objectClinitNameByObjectSymbol[sym] {
                         // Replace symbolRef(objectSymbol) with call to <clinit> accessor.
+                        rewrittenBody.append(
+                            .call(
+                                symbol: clinitSym,
+                                callee: clinitNm,
+                                arguments: [],
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            )
+                        )
+                        didRewrite = true
+                        continue
+                    }
+                    // Also handle loadGlobal pattern for future-proofing.
+                    if case .loadGlobal(let result, let sym) = instruction,
+                       let clinitSym = objectClinitSymbolByObjectSymbol[sym],
+                       let clinitNm = objectClinitNameByObjectSymbol[sym] {
                         rewrittenBody.append(
                             .call(
                                 symbol: clinitSym,

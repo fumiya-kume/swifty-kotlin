@@ -626,6 +626,8 @@ final class ExprLowerer {
             // Emit a storeGlobal into the property's global slot.
             if let propSymbol = sema.bindings.identifierSymbols[exprID] {
                 instructions.append(.storeGlobal(value: valueID, symbol: propSymbol))
+            } else {
+                assertionFailure("memberAssign: missing property symbol binding for \(exprID)")
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))
