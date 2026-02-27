@@ -585,9 +585,11 @@ final class ExprLowerer {
                         let globalRef = arena.appendExpr(.symbolRef(symbol), type: propType)
                         instructions.append(.constValue(result: globalRef, value: .symbolRef(symbol)))
                         instructions.append(.copy(from: valueID, to: globalRef))
-                    } else if pk == .object || pk == .class {
-                        // Object/class member property: emit storeGlobal to the property's
+                    } else if pk == .object {
+                        // Object member property: emit storeGlobal to the property's
                         // dedicated global slot (registered via KIRGlobal in objectDecl lowering).
+                        // Note: class member properties are instance fields on the heap and
+                        // require a field store on the receiver — not handled here.
                         instructions.append(.storeGlobal(value: valueID, symbol: symbol))
                     } else {
                         driver.ctx.localValuesBySymbol[symbol] = valueID

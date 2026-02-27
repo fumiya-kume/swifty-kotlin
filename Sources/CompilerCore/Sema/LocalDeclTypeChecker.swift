@@ -144,10 +144,16 @@ final class LocalDeclTypeChecker {
             return sema.types.unitType
         }
 
-        // Fall back to member property lookup when inside an object/class scope.
+        // Fall back to member property lookup when inside an object scope.
         // This handles bare name assignments like `n = 1` inside init blocks
-        // where the property belongs to the enclosing object/class.
+        // where the property belongs to the enclosing object singleton.
+        // Note: class member properties are instance fields on the heap and need
+        // a different lowering path (field store on receiver), so we exclude
+        // classes here until that path is implemented.
         if let receiverType = ctx.implicitReceiverType,
+           case .classType(let ct) = sema.types.kind(of: receiverType),
+           let ownerSym = sema.symbols.symbol(ct.classSymbol),
+           ownerSym.kind == .object,
            let propResult = driver.helpers.lookupMemberProperty(
                named: name,
                receiverType: receiverType,
