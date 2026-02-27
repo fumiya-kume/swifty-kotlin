@@ -153,9 +153,12 @@ struct NativeEmitter {
                 bindings.disposeContext(context)
                 throw LLVMCAPIBackendError.nativeEmissionFailed("failed to declare global '\(slotName)'")
             }
-            if let zero = bindings.constInt(int64Type, value: 0) {
-                bindings.setInitializer(llvmGlobal, value: zero)
+            guard let zero = bindings.constInt(int64Type, value: 0) else {
+                bindings.disposeModule(llvmModule)
+                bindings.disposeContext(context)
+                throw LLVMCAPIBackendError.nativeEmissionFailed("failed to create zero initializer for global '\(slotName)'")
             }
+            bindings.setInitializer(llvmGlobal, value: zero)
             llvmGlobalVariables[global.symbol] = llvmGlobal
         }
 

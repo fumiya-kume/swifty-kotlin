@@ -476,7 +476,7 @@ final class KIRLoweringDriver {
 
                     // Load singleton global; if already initialized, jump to done.
                     let guardExpr = arena.appendExpr(.symbolRef(singletonGlobalSymbol), type: sema.types.anyType)
-                    clinitBody.append(.constValue(result: guardExpr, value: .symbolRef(singletonGlobalSymbol)))
+                    clinitBody.append(.loadGlobal(result: guardExpr, symbol: singletonGlobalSymbol))
                     let doneLabel = ctx.makeLoopLabel()
                     clinitBody.append(.jumpIfNotNull(value: guardExpr, target: doneLabel))
 
