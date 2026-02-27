@@ -66,19 +66,20 @@ public final class LinkPhase: CompilerPhase {
             if ctx.options.debugInfo {
                 args.append("-g")
             }
-            // P5-111: Use -no-pie only when the module contains global variables
-            // (e.g. object singleton member properties) that need non-PIC relocations.
-            // This preserves PIE/ASLR for programs that don't use globals.
+            // P5-111: On Linux, only use -no-pie for debug builds that contain
+            // global variables (e.g. object singleton member properties) that
+            // currently need non-PIC relocations. This preserves PIE/ASLR for
+            // release builds and for programs that don't use globals.
             #if os(Linux)
             let hasGlobals = kir.arena.declarations.contains { decl in
                 if case .global = decl { return true }
                 return false
             }
-            if hasGlobals {
+            if hasGlobals && ctx.options.debugInfo {
                 args.append("-no-pie")
                 ctx.diagnostics.warning(
                     "KSWIFTK-LINK-0004",
-                    "Global variables detected: linking with -no-pie, which disables PIE/ASLR on this binary.",
+                    "Debug build with global variables: linking with -no-pie, which disables PIE/ASLR on this binary.",
                     range: nil
                 )
             }

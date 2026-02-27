@@ -140,7 +140,8 @@ struct NativeEmitter {
         }
 
         // Create LLVM global variables for each KIR global declaration.
-        // Globals are zero-initialized (null sentinel for lazy singleton init).
+        // Globals are zero-initialized; `0` is used as an uninitialized/absent sentinel
+        // for lazy singleton init (distinct from the language-level null sentinel).
         var llvmGlobalVariables: [SymbolID: LLVMCAPIBindings.LLVMValueRef] = [:]
         for declaration in module.arena.declarations {
             guard case .global(let global) = declaration else {

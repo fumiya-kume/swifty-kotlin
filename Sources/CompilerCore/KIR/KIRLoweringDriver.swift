@@ -506,7 +506,10 @@ final class KIRLoweringDriver {
                     // Set up implicit receiver for property initializers and init blocks.
                     // Use the allocated instance directly instead of indirecting through
                     // the global slot, avoiding a redundant global load.
-                    let receiverSymbol = callSupportLowerer.syntheticReceiverParameterSymbol(functionSymbol: clinitSymbol)
+                    // Use a dedicated negative range for the clinit receiver symbol.
+                    // syntheticReceiverParameterSymbol computes -10_000 - rawValue which
+                    // would produce a positive ID for our negative clinitSymbol.
+                    let receiverSymbol = SymbolID(rawValue: -400_000 - symbol.rawValue)
                     let receiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: sema.types.anyType)
                     clinitBody.append(.copy(from: allocResult, to: receiverExprID))
                     ctx.currentImplicitReceiverSymbol = receiverSymbol

@@ -134,6 +134,15 @@ final class ExprTypeChecker {
                 sema: sema
             ) {
                 sema.bindings.bindIdentifier(id, symbol: propResult.symbol)
+                // Enforce mutability: val properties cannot be reassigned.
+                if let propSym = sema.symbols.symbol(propResult.symbol),
+                   !propSym.flags.contains(.mutable) {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0014",
+                        "Val cannot be reassigned.",
+                        range: range
+                    )
+                }
                 driver.emitSubtypeConstraint(
                     left: valueType,
                     right: propResult.type,
