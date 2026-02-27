@@ -573,20 +573,25 @@ final class ExprLowerer {
                 instructions: &instructions
             )
             if let symbol = sema.bindings.identifierSymbols[exprID] {
-                // Check if this is a top-level property assignment (not a local variable).
-                // Top-level properties need a copy to global storage rather than just
+                // Check if this is a property assignment (not a local variable).
+                // Properties need a store to global storage rather than just
                 // updating localValuesBySymbol (which wouldn't persist across function calls).
-                // Top-level properties have no parentSymbol (nil) or parent is a package.
-                // Class member properties always have parentSymbol set to a class/object.
-                if let symInfo = sema.symbols.symbol(symbol), symInfo.kind == .property, {
+                if let symInfo = sema.symbols.symbol(symbol), symInfo.kind == .property {
                     let p = sema.symbols.parentSymbol(for: symbol)
                     let pk = p.flatMap({ sema.symbols.symbol($0) })?.kind
-                    return pk == nil || pk == .package
-                }() {
-                    let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
-                    let globalRef = arena.appendExpr(.symbolRef(symbol), type: propType)
-                    instructions.append(.constValue(result: globalRef, value: .symbolRef(symbol)))
-                    instructions.append(.copy(from: valueID, to: globalRef))
+                    if pk == nil || pk == .package {
+                        // Top-level property: emit constValue + copy to global.
+                        let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
+                        let globalRef = arena.appendExpr(.symbolRef(symbol), type: propType)
+                        instructions.append(.constValue(result: globalRef, value: .symbolRef(symbol)))
+                        instructions.append(.copy(from: valueID, to: globalRef))
+                    } else if pk == .object || pk == .class {
+                        // Object/class member property: emit storeGlobal to the property's
+                        // dedicated global slot (registered via KIRGlobal in objectDecl lowering).
+                        instructions.append(.storeGlobal(value: valueID, symbol: symbol))
+                    } else {
+                        driver.ctx.localValuesBySymbol[symbol] = valueID
+                    }
                 } else {
                     if let storageID = driver.ctx.localValuesBySymbol[symbol] {
                         // Mutable local already has storage: emit a copy so the C variable

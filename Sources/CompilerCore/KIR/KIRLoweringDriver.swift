@@ -463,6 +463,16 @@ final class KIRLoweringDriver {
                     )
                     declIDs.append(singletonGlobalKirID)
 
+                    // Create KIRGlobal declarations for each member property so that
+                    // storeGlobal/loadGlobal/symbolRef can find them in globalValueSymbols.
+                    for propDeclID in objectDecl.memberProperties {
+                        guard let propSymbol = sema.bindings.declSymbols[propDeclID] else { continue }
+                        let propType = sema.symbols.propertyType(for: propSymbol) ?? sema.types.anyType
+                        let targetSymbol = sema.symbols.backingFieldSymbol(for: propSymbol) ?? propSymbol
+                        let propGlobalID = arena.appendDecl(.global(KIRGlobal(symbol: targetSymbol, type: propType)))
+                        declIDs.append(propGlobalID)
+                    }
+
                     // Build the synthetic <clinit> function body.
                     let clinitSymbol = SymbolID(rawValue: -500_000 - symbol.rawValue)
                     let clinitName = compilationCtx.interner.intern("<clinit>_\(compilationCtx.interner.resolve(objectDecl.name))")
@@ -536,8 +546,7 @@ final class KIRLoweringDriver {
                             propertyConstantInitializers: propertyConstantInitializers,
                             instructions: &clinitBody
                         )
-                        let fieldRef = arena.appendExpr(.symbolRef(targetSymbol), type: propType)
-                        clinitBody.append(.copy(from: initValue, to: fieldRef))
+                        clinitBody.append(.storeGlobal(value: initValue, symbol: targetSymbol))
                     }
 
                     // Emit init blocks in declaration order.
