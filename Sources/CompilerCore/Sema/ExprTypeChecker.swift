@@ -91,10 +91,9 @@ final class ExprTypeChecker {
                     range: range
                 )
             } else if let label, !ctx.loopLabelStack.contains(label) {
-                let labelName = interner.resolve(label)
                 ctx.semaCtx.diagnostics.error(
-                    "KSWIFTK-SEMA-0040",
-                    "Unresolved label '@\(labelName)'. No enclosing loop is labeled '\(labelName)'.",
+                    "KSWIFTK-SEMA-0097",
+                    "'break' with label '@\(interner.resolve(label))' does not reference a valid enclosing loop.",
                     range: range
                 )
             }
@@ -109,10 +108,9 @@ final class ExprTypeChecker {
                     range: range
                 )
             } else if let label, !ctx.loopLabelStack.contains(label) {
-                let labelName = interner.resolve(label)
                 ctx.semaCtx.diagnostics.error(
-                    "KSWIFTK-SEMA-0041",
-                    "Unresolved label '@\(labelName)'. No enclosing loop is labeled '\(labelName)'.",
+                    "KSWIFTK-SEMA-0098",
+                    "'continue' with label '@\(interner.resolve(label))' does not reference a valid enclosing loop.",
                     range: range
                 )
             }

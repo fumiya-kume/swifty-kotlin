@@ -190,7 +190,7 @@ extension BuildASTPhase.ExpressionParser {
 
         var hasTemplate = false
         var scanIdx = index
-        while scanIdx < tokens.count {
+        while scanIdx < tokens.endIndex {
             let tk = tokens[scanIdx]
             if tk.kind == closingKind { break }
             if case .templateExprStart = tk.kind { hasTemplate = true; break }

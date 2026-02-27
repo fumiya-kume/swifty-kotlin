@@ -165,8 +165,8 @@ final class ASTModelsTests: XCTestCase {
             .forExpr(loopVariable: name, iterable: dummyExprID, body: dummyExprID, range: r),
             .whileExpr(condition: dummyExprID, body: dummyExprID, range: r),
             .doWhileExpr(body: dummyExprID, condition: dummyExprID, range: r),
-            .breakExpr(range: r),
-            .continueExpr(range: r),
+            .breakExpr(label: nil, range: r),
+            .continueExpr(label: nil, range: r),
             .localDecl(name: name, isMutable: false, typeAnnotation: nil, initializer: dummyExprID, range: r),
             .localAssign(name: name, value: dummyExprID, range: r),
             .indexedAssign(receiver: dummyExprID, indices: [dummyExprID], value: dummyExprID, range: r),
@@ -878,13 +878,15 @@ final class ASTModelsTests: XCTestCase {
             XCTAssertEqual(c, condID)
         } else { XCTFail("Expected .doWhileExpr") }
 
-        let breakExpr = Expr.breakExpr(range: r)
-        if case .breakExpr(_, let range) = breakExpr {
+        let breakExpr = Expr.breakExpr(label: nil, range: r)
+        if case .breakExpr(let label, let range) = breakExpr {
+            XCTAssertNil(label)
             XCTAssertEqual(range, r)
         } else { XCTFail("Expected .breakExpr") }
 
-        let continueExpr = Expr.continueExpr(range: r)
-        if case .continueExpr(_, let range) = continueExpr {
+        let continueExpr = Expr.continueExpr(label: nil, range: r)
+        if case .continueExpr(let label, let range) = continueExpr {
+            XCTAssertNil(label)
             XCTAssertEqual(range, r)
         } else { XCTFail("Expected .continueExpr") }
     }
@@ -1264,7 +1266,7 @@ final class ASTModelsTests: XCTestCase {
         let intID = arena.appendExpr(.intLiteral(1, r))
         let boolID = arena.appendExpr(.boolLiteral(false, r))
         let strID = arena.appendExpr(.stringLiteral(interner.intern("test"), r))
-        let breakID = arena.appendExpr(.breakExpr(range: r))
+        let breakID = arena.appendExpr(.breakExpr(label: nil, range: r))
 
         if case .intLiteral = arena.expr(intID) {} else { XCTFail("Expected .intLiteral") }
         if case .boolLiteral = arena.expr(boolID) {} else { XCTFail("Expected .boolLiteral") }

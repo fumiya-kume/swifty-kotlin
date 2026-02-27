@@ -5,6 +5,8 @@ public final class ASTArena: @unchecked Sendable {
     public private(set) var decls: [Decl] = []
     public private(set) var exprs: [Expr] = []
     public private(set) var typeRefs: [TypeRef] = []
+    /// Maps loop expression IDs (forExpr/whileExpr/doWhileExpr) to their user-defined label.
+    public private(set) var loopLabels: [ExprID: InternedString] = [:]
 
     public init() {}
 
@@ -104,6 +106,18 @@ public final class ASTArena: @unchecked Sendable {
              .forDestructuringExpr(_, _, _, let range):
             return range
         }
+    }
+
+    public func setLoopLabel(_ label: InternedString, for exprID: ExprID) {
+        lock.lock()
+        defer { lock.unlock() }
+        loopLabels[exprID] = label
+    }
+
+    public func loopLabel(for exprID: ExprID) -> InternedString? {
+        lock.lock()
+        defer { lock.unlock() }
+        return loopLabels[exprID]
     }
 
     public func appendTypeRef(_ typeRef: TypeRef) -> TypeRefID {

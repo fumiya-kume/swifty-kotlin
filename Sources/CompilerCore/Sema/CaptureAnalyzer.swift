@@ -197,8 +197,8 @@ struct CaptureAnalyzer {
                 visit(body)
 
             case .intLiteral, .longLiteral, .floatLiteral, .doubleLiteral,
-                 .charLiteral, .boolLiteral, .stringLiteral, .breakExpr,
-                 .continueExpr, .objectLiteral, .superRef, .thisRef:
+                 .charLiteral, .boolLiteral, .stringLiteral,
+                 .breakExpr, .continueExpr, .objectLiteral, .superRef, .thisRef:
                 break
             }
         }
