@@ -18,11 +18,21 @@ extension LLVMBackend {
     }
 
     func frameMapDescriptorSymbol(for function: KIRFunction) -> String {
-        "kk_frame_map_\(max(0, Int(function.symbol.rawValue)))"
+        let id = Int(function.symbol.rawValue)
+        if id >= 0 {
+            return "kk_frame_map_\(id)"
+        } else {
+            return "kk_frame_map_neg\(-id)"
+        }
     }
 
     func frameMapOffsetsSymbol(for function: KIRFunction) -> String {
-        "kk_frame_map_offsets_\(max(0, Int(function.symbol.rawValue)))"
+        let id = Int(function.symbol.rawValue)
+        if id >= 0 {
+            return "kk_frame_map_offsets_\(id)"
+        } else {
+            return "kk_frame_map_offsets_neg\(-id)"
+        }
     }
 
     func buildFrameMapPlan(function: KIRFunction) -> FrameMapPlan {
