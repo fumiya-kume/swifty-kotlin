@@ -10,10 +10,10 @@ symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic 
 symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
 symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
 symbol s11 kind=object fq=golden.sema.Counter vis=public flags=_
-symbol s12 kind=function fq=golden.sema.Counter.increment vis=public flags=_ sig=recv=Class#11 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s12 kind=function fq=golden.sema.Counter.increment vis=public flags=_ sig=recv=Class#11 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s13 kind=property fq=golden.sema.Counter.label vis=public flags=_ type=String
 symbol s14 kind=property fq=golden.sema.Counter.n vis=public flags=mutable type=Int
-symbol s15 kind=function fq=golden.sema.useCounter vis=public flags=_ sig=recv=_ params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s15 kind=function fq=golden.sema.useCounter vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
   decl d3 object Counter sym=s11
   decl d4 fun useCounter suspend=0 inline=0 sym=s15
@@ -23,11 +23,11 @@ expr e2 name(n) type=_
 expr e3 name(n) type=Int ref=s14
 expr e4 int(1) type=Int
 expr e5 binary(add) lhs=e3 rhs=e4 type=Int
-expr e6 localAssign n value=e5 type=<error>
+expr e6 localAssign n value=e5 type=Unit ref=s14
 expr e7 name(n) type=_
 expr e8 int(1) type=Int
-expr e9 localAssign n value=e8 type=<error>
+expr e9 localAssign n value=e8 type=Unit ref=s14
 expr e10 name(Counter) type=Class#11 ref=s11
-expr e11 memberCall recv=e10 callee=increment args=[] type=Any call=s12 map=[] targs=[]
+expr e11 memberCall recv=e10 callee=increment args=[] type=Unit call=s12 map=[] targs=[]
 expr e12 name(Counter) type=Class#11 ref=s11
-expr e13 memberCall recv=e12 callee=increment args=[] type=Any call=s12 map=[] targs=[]
+expr e13 memberCall recv=e12 callee=increment args=[] type=Unit call=s12 map=[] targs=[]

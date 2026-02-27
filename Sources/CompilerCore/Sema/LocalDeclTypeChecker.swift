@@ -144,6 +144,38 @@ final class LocalDeclTypeChecker {
             return sema.types.unitType
         }
 
+        // Fall back to member property lookup when inside an object/class scope.
+        // This handles bare name assignments like `n = 1` inside init blocks
+        // where the property belongs to the enclosing object/class.
+        if let receiverType = ctx.implicitReceiverType,
+           let propResult = driver.helpers.lookupMemberProperty(
+               named: name,
+               receiverType: receiverType,
+               sema: sema
+           ) {
+            sema.bindings.bindIdentifier(id, symbol: propResult.symbol)
+            let propType = propResult.type
+            if let propSym = sema.symbols.symbol(propResult.symbol),
+               !propSym.flags.contains(.mutable) {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0014",
+                    "Val cannot be reassigned.",
+                    range: range
+                )
+            } else {
+                driver.emitSubtypeConstraint(
+                    left: valueType,
+                    right: propType,
+                    range: range,
+                    solver: ConstraintSolver(),
+                    sema: sema,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+            }
+            sema.bindings.bindExprType(id, type: sema.types.unitType)
+            return sema.types.unitType
+        }
+
         ctx.semaCtx.diagnostics.error(
             "KSWIFTK-SEMA-0013",
             "Unresolved local variable '\(interner.resolve(name))'.",
