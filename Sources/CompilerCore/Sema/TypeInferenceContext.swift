@@ -32,6 +32,16 @@ struct TypeInferenceContext {
         var copy = self; copy.loopDepth = newDepth; return copy
     }
 
+    func withLoopLabel(_ label: InternedString) -> TypeInferenceContext {
+        var copy = self
+        copy.loopLabelStack = self.loopLabelStack + [label]
+        return copy
+    }
+
+    func hasLoopLabel(_ label: InternedString) -> Bool {
+        loopLabelStack.contains(label)
+    }
+
     func with(flowState newState: DataFlowState) -> TypeInferenceContext {
         var copy = self; copy.flowState = newState; return copy
     }

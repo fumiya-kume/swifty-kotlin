@@ -1,0 +1,941 @@
+import XCTest
+@testable import CompilerCore
+
+extension OverloadResolverTests {
+    /// Named arguments select the correct overload from multiple candidates.
+    func testResolveCallNamedArgsSelectCorrectOverload() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+
+        // Candidate 1: fn(x: Int, y: Bool)
+        let fn1 = defineSymbol(kind: .function, name: "overloaded", suffix: "namedOvl1", symbols: symbols, interner: interner)
+        let p1x = defineSymbol(kind: .valueParameter, name: "x", suffix: "namedOvl1_x", symbols: symbols, interner: interner)
+        let p1y = defineSymbol(kind: .valueParameter, name: "y", suffix: "namedOvl1_y", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType, boolType],
+                returnType: intType,
+                valueParameterSymbols: [p1x, p1y]
+            ),
+            for: fn1
+        )
+
+        // Candidate 2: fn(a: Int, b: Bool) — different parameter names
+        let fn2 = defineSymbol(kind: .function, name: "overloaded", suffix: "namedOvl2", symbols: symbols, interner: interner)
+        let p2a = defineSymbol(kind: .valueParameter, name: "a", suffix: "namedOvl2_a", symbols: symbols, interner: interner)
+        let p2b = defineSymbol(kind: .valueParameter, name: "b", suffix: "namedOvl2_b", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType, boolType],
+                returnType: intType,
+                valueParameterSymbols: [p2a, p2b]
+            ),
+            for: fn2
+        )
+
+        // Call with named args x, y → should match fn1
+        let call = CallExpr(
+            range: makeRange(start: 521, end: 540),
+            calleeName: interner.intern("overloaded"),
+            args: [
+                CallArg(label: interner.intern("x"), type: intType),
+                CallArg(label: interner.intern("y"), type: boolType)
+            ]
+        )
+        let resolved = resolver.resolveCall(candidates: [fn1, fn2], call: call, expectedType: nil, ctx: ctx)
+        XCTAssertEqual(resolved.chosenCallee, fn1)
+        XCTAssertNil(resolved.diagnostic)
+    }
+
+    /// Named arguments combined with default argument omission.
+    func testResolveCallNamedArgsWithDefaultArgsCombined() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let stringType = types.make(.primitive(.string, .nonNull))
+
+        // fn(a: Int, b: Bool = true, c: String)
+        let fn = defineSymbol(kind: .function, name: "namedDef", suffix: "namedDef", symbols: symbols, interner: interner)
+        let paramA = defineSymbol(kind: .valueParameter, name: "a", suffix: "namedDef_a", symbols: symbols, interner: interner)
+        let paramB = defineSymbol(kind: .valueParameter, name: "b", suffix: "namedDef_b", symbols: symbols, interner: interner)
+        let paramC = defineSymbol(kind: .valueParameter, name: "c", suffix: "namedDef_c", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType, boolType, stringType],
+                returnType: intType,
+                valueParameterSymbols: [paramA, paramB, paramC],
+                valueParameterHasDefaultValues: [false, true, false]
+            ),
+            for: fn
+        )
+
+        // Call with named c and a only, omitting default b
+        let call = CallExpr(
+            range: makeRange(start: 541, end: 560),
+            calleeName: interner.intern("namedDef"),
+            args: [
+                CallArg(label: interner.intern("c"), type: stringType),
+                CallArg(label: interner.intern("a"), type: intType)
+            ]
+        )
+        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
+        XCTAssertEqual(resolved.chosenCallee, fn)
+        XCTAssertNil(resolved.diagnostic)
+        XCTAssertEqual(resolved.parameterMapping, [0: 2, 1: 0])
+    }
+
+    // MARK: - Advanced Vararg Tests
+
+    /// Vararg parameter receives zero elements when only non-vararg params provided.
+    func testResolveCallVarargReceivesZeroElements() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+
+        // fn(head: Int, tail: vararg Int)
+        let fn = defineSymbol(kind: .function, name: "zeroVararg", suffix: "zeroVararg", symbols: symbols, interner: interner)
+        let paramHead = defineSymbol(kind: .valueParameter, name: "head", suffix: "zeroVararg_head", symbols: symbols, interner: interner)
+        let paramTail = defineSymbol(kind: .valueParameter, name: "tail", suffix: "zeroVararg_tail", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType, intType],
+                returnType: boolType,
+                valueParameterSymbols: [paramHead, paramTail],
+                valueParameterIsVararg: [false, true]
+            ),
+            for: fn
+        )
+
+        // Only pass one arg for the non-vararg head, zero for tail
+        let call = CallExpr(
+            range: makeRange(start: 561, end: 575),
+            calleeName: interner.intern("zeroVararg"),
+            args: [CallArg(type: intType)]
+        )
+        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
+        XCTAssertEqual(resolved.chosenCallee, fn)
+        XCTAssertNil(resolved.diagnostic)
+        XCTAssertEqual(resolved.parameterMapping, [0: 0])
+    }
+
+    /// Vararg-only function accepting multiple elements.
+    func testResolveCallVarargOnlyFunctionMultipleElements() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+
+        // fn(nums: vararg Int)
+        let fn = defineSymbol(kind: .function, name: "varargOnly", suffix: "varargOnly", symbols: symbols, interner: interner)
+        let paramNums = defineSymbol(kind: .valueParameter, name: "nums", suffix: "varargOnly_nums", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType],
+                returnType: intType,
+                valueParameterSymbols: [paramNums],
+                valueParameterIsVararg: [true]
+            ),
+            for: fn
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 576, end: 590),
+            calleeName: interner.intern("varargOnly"),
+            args: [CallArg(type: intType), CallArg(type: intType), CallArg(type: intType), CallArg(type: intType)]
+        )
+        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
+        XCTAssertEqual(resolved.chosenCallee, fn)
+        XCTAssertNil(resolved.diagnostic)
+        XCTAssertEqual(resolved.parameterMapping, [0: 0, 1: 0, 2: 0, 3: 0])
+    }
+
+    /// Spread argument on a vararg parameter should be accepted.
+    func testResolveCallSpreadArgumentOnVarargParameter() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+
+        let fn = defineSymbol(kind: .function, name: "spreadVararg", suffix: "spreadVararg", symbols: symbols, interner: interner)
+        let paramX = defineSymbol(kind: .valueParameter, name: "x", suffix: "spreadVararg_x", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType],
+                returnType: intType,
+                valueParameterSymbols: [paramX],
+                valueParameterIsVararg: [true]
+            ),
+            for: fn
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 591, end: 605),
+            calleeName: interner.intern("spreadVararg"),
+            args: [CallArg(isSpread: true, type: intType)]
+        )
+        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
+        XCTAssertEqual(resolved.chosenCallee, fn)
+        XCTAssertNil(resolved.diagnostic)
+    }
+
+    /// Vararg with wrong element type is rejected.
+    func testResolveCallVarargWithTypeMismatch() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+
+        let fn = defineSymbol(kind: .function, name: "varargTyped", suffix: "varargTyped", symbols: symbols, interner: interner)
+        let paramX = defineSymbol(kind: .valueParameter, name: "x", suffix: "varargTyped_x", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [boolType],
+                returnType: boolType,
+                valueParameterSymbols: [paramX],
+                valueParameterIsVararg: [true]
+            ),
+            for: fn
+        )
+
+        // Pass Int to a Bool vararg
+        let call = CallExpr(
+            range: makeRange(start: 606, end: 620),
+            calleeName: interner.intern("varargTyped"),
+            args: [CallArg(type: intType)]
+        )
+        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
+        XCTAssertNil(resolved.chosenCallee)
+    }
+
+    // MARK: - Advanced Default Arguments Tests
+
+    /// All parameters have defaults; calling with zero args should succeed.
+    func testResolveCallAllDefaultsOmitted() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+
+        let fn = defineSymbol(kind: .function, name: "allDefaults", suffix: "allDefaults", symbols: symbols, interner: interner)
+        let paramA = defineSymbol(kind: .valueParameter, name: "a", suffix: "allDefaults_a", symbols: symbols, interner: interner)
+        let paramB = defineSymbol(kind: .valueParameter, name: "b", suffix: "allDefaults_b", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType, boolType],
+                returnType: intType,
+                valueParameterSymbols: [paramA, paramB],
+                valueParameterHasDefaultValues: [true, true]
+            ),
+            for: fn
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 621, end: 630),
+            calleeName: interner.intern("allDefaults"),
+            args: []
+        )
+        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
+        XCTAssertEqual(resolved.chosenCallee, fn)
+        XCTAssertNil(resolved.diagnostic)
+        XCTAssertEqual(resolved.parameterMapping, [:])
+    }
+
+    /// Three params: first required, middle default, last required. Provide first and last via named args.
+    func testResolveCallDefaultArgMiddleOmittedWithNamedArgs() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let stringType = types.make(.primitive(.string, .nonNull))
+
+        // fn(first: Int, mid: Bool = false, last: String)
+        let fn = defineSymbol(kind: .function, name: "midDefault", suffix: "midDefault", symbols: symbols, interner: interner)
+        let paramFirst = defineSymbol(kind: .valueParameter, name: "first", suffix: "midDefault_first", symbols: symbols, interner: interner)
+        let paramMid = defineSymbol(kind: .valueParameter, name: "mid", suffix: "midDefault_mid", symbols: symbols, interner: interner)
+        let paramLast = defineSymbol(kind: .valueParameter, name: "last", suffix: "midDefault_last", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType, boolType, stringType],
+                returnType: intType,
+                valueParameterSymbols: [paramFirst, paramMid, paramLast],
+                valueParameterHasDefaultValues: [false, true, false]
+            ),
+            for: fn
+        )
+
+        // Provide first and last via named args, skipping mid
+        let call = CallExpr(
+            range: makeRange(start: 631, end: 650),
+            calleeName: interner.intern("midDefault"),
+            args: [
+                CallArg(label: interner.intern("first"), type: intType),
+                CallArg(label: interner.intern("last"), type: stringType)
+            ]
+        )
+        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
+        XCTAssertEqual(resolved.chosenCallee, fn)
+        XCTAssertNil(resolved.diagnostic)
+        XCTAssertEqual(resolved.parameterMapping, [0: 0, 1: 2])
+    }
+
+    /// Default args help select between overloads: one candidate matches with defaults, other doesn't.
+    func testResolveCallDefaultArgsSelectOverload() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+
+        // Candidate 1: fn(a: Int, b: Bool) — no defaults, requires both args
+        let fn1 = defineSymbol(kind: .function, name: "defOvl", suffix: "defOvl1", symbols: symbols, interner: interner)
+        let p1a = defineSymbol(kind: .valueParameter, name: "a", suffix: "defOvl1_a", symbols: symbols, interner: interner)
+        let p1b = defineSymbol(kind: .valueParameter, name: "b", suffix: "defOvl1_b", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType, boolType],
+                returnType: intType,
+                valueParameterSymbols: [p1a, p1b]
+            ),
+            for: fn1
+        )
+
+        // Candidate 2: fn(a: Int) — single param
+        let fn2 = defineSymbol(kind: .function, name: "defOvl", suffix: "defOvl2", symbols: symbols, interner: interner)
+        let p2a = defineSymbol(kind: .valueParameter, name: "a", suffix: "defOvl2_a", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType],
+                returnType: intType,
+                valueParameterSymbols: [p2a]
+            ),
+            for: fn2
+        )
+
+        // Call with 1 arg → fn1 rejected (missing b, no default), fn2 matches
+        let call = CallExpr(
+            range: makeRange(start: 651, end: 665),
+            calleeName: interner.intern("defOvl"),
+            args: [CallArg(type: intType)]
+        )
+        let resolved = resolver.resolveCall(candidates: [fn1, fn2], call: call, expectedType: nil, ctx: ctx)
+        XCTAssertEqual(resolved.chosenCallee, fn2)
+        XCTAssertNil(resolved.diagnostic)
+    }
+
+    /// When a required param is missing (no default), call should fail.
+    func testResolveCallRejectsWhenRequiredParamNotProvided() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+
+        // fn(a: Int, b: Bool) — both required
+        let fn = defineSymbol(kind: .function, name: "reqBoth", suffix: "reqBoth", symbols: symbols, interner: interner)
+        let paramA = defineSymbol(kind: .valueParameter, name: "a", suffix: "reqBoth_a", symbols: symbols, interner: interner)
+        let paramB = defineSymbol(kind: .valueParameter, name: "b", suffix: "reqBoth_b", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType, boolType],
+                returnType: intType,
+                valueParameterSymbols: [paramA, paramB]
+            ),
+            for: fn
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 666, end: 675),
+            calleeName: interner.intern("reqBoth"),
+            args: [CallArg(type: intType)]
+        )
+        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
+        XCTAssertNil(resolved.chosenCallee)
+    }
+
+    // MARK: - Advanced Receiver Type (Extension Function) Tests
+
+    /// Extension function with wrong receiver type is rejected.
+    func testResolveCallRejectsExtensionWithReceiverTypeMismatch() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let stringType = types.make(.primitive(.string, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+
+        // Extension on String
+        let ext = defineSymbol(kind: .function, name: "extMismatch", suffix: "extMismatch", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: stringType,
+                parameterTypes: [],
+                returnType: intType
+            ),
+            for: ext
+        )
+
+        // Call with Bool receiver (not String)
+        let call = CallExpr(
+            range: makeRange(start: 676, end: 690),
+            calleeName: interner.intern("extMismatch"),
+            args: []
+        )
+        let resolved = resolver.resolveCall(
+            candidates: [ext],
+            call: call,
+            expectedType: nil,
+            implicitReceiverType: boolType,
+            ctx: ctx
+        )
+        XCTAssertNil(resolved.chosenCallee)
+    }
+
+    /// Multiple extension candidates with different receiver types — correct one selected.
+    func testResolveCallSelectsCorrectExtensionByReceiverType() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let stringType = types.make(.primitive(.string, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+
+        // Extension on String
+        let extString = defineSymbol(kind: .function, name: "extSel", suffix: "extSelString", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: stringType,
+                parameterTypes: [],
+                returnType: intType
+            ),
+            for: extString
+        )
+
+        // Extension on Bool
+        let extBool = defineSymbol(kind: .function, name: "extSel", suffix: "extSelBool", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: boolType,
+                parameterTypes: [],
+                returnType: intType
+            ),
+            for: extBool
+        )
+
+        // Call with String receiver → should select extString
+        let call = CallExpr(
+            range: makeRange(start: 691, end: 705),
+            calleeName: interner.intern("extSel"),
+            args: []
+        )
+        let resolved = resolver.resolveCall(
+            candidates: [extString, extBool],
+            call: call,
+            expectedType: nil,
+            implicitReceiverType: stringType,
+            ctx: ctx
+        )
+        XCTAssertEqual(resolved.chosenCallee, extString)
+        XCTAssertNil(resolved.diagnostic)
+    }
+
+    /// Extension function with parameters and receiver type.
+    func testResolveCallExtensionFunctionWithParameters() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let stringType = types.make(.primitive(.string, .nonNull))
+
+        let ext = defineSymbol(kind: .function, name: "extWithParams", suffix: "extWithParams", symbols: symbols, interner: interner)
+        let paramX = defineSymbol(kind: .valueParameter, name: "x", suffix: "extWithParams_x", symbols: symbols, interner: interner)
+        let paramY = defineSymbol(kind: .valueParameter, name: "y", suffix: "extWithParams_y", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: stringType,
+                parameterTypes: [intType, intType],
+                returnType: intType,
+                valueParameterSymbols: [paramX, paramY]
+            ),
+            for: ext
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 706, end: 720),
+            calleeName: interner.intern("extWithParams"),
+            args: [CallArg(type: intType), CallArg(type: intType)]
+        )
+        let resolved = resolver.resolveCall(
+            candidates: [ext],
+            call: call,
+            expectedType: nil,
+            implicitReceiverType: stringType,
+            ctx: ctx
+        )
+        XCTAssertEqual(resolved.chosenCallee, ext)
+        XCTAssertNil(resolved.diagnostic)
+        XCTAssertEqual(resolved.parameterMapping, [0: 0, 1: 1])
+    }
+
+    /// Extension function with receiver + generic type param.
+    func testResolveCallExtensionFunctionWithGenericParam() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let stringType = types.make(.primitive(.string, .nonNull))
+
+        let tpSym = defineSymbol(kind: .typeParameter, name: "T", suffix: "extGen_T", symbols: symbols, interner: interner)
+        let tpType = types.make(.typeParam(TypeParamType(symbol: tpSym, nullability: .nonNull)))
+
+        let ext = defineSymbol(kind: .function, name: "extGeneric", suffix: "extGeneric", symbols: symbols, interner: interner)
+        let paramX = defineSymbol(kind: .valueParameter, name: "x", suffix: "extGeneric_x", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: stringType,
+                parameterTypes: [tpType],
+                returnType: tpType,
+                valueParameterSymbols: [paramX],
+                typeParameterSymbols: [tpSym]
+            ),
+            for: ext
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 721, end: 735),
+            calleeName: interner.intern("extGeneric"),
+            args: [CallArg(type: intType)]
+        )
+        let resolved = resolver.resolveCall(
+            candidates: [ext],
+            call: call,
+            expectedType: intType,
+            implicitReceiverType: stringType,
+            ctx: ctx
+        )
+        XCTAssertEqual(resolved.chosenCallee, ext)
+        XCTAssertNil(resolved.diagnostic)
+        XCTAssertEqual(resolved.substitutedTypeArguments.count, 1)
+    }
+
+    // MARK: - Advanced Multiple Type Parameters Tests
+
+    /// Multiple type params where one violates its bound.
+    func testResolveCallMultipleTypeParamsOneViolatesBound() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+
+        let tpT = defineSymbol(kind: .typeParameter, name: "T", suffix: "multiViol_T", symbols: symbols, interner: interner)
+        let tpU = defineSymbol(kind: .typeParameter, name: "U", suffix: "multiViol_U", symbols: symbols, interner: interner)
+        let tpTType = types.make(.typeParam(TypeParamType(symbol: tpT, nullability: .nonNull)))
+        let tpUType = types.make(.typeParam(TypeParamType(symbol: tpU, nullability: .nonNull)))
+
+        let fn = defineSymbol(kind: .function, name: "multiViol", suffix: "multiViol", symbols: symbols, interner: interner)
+        let paramA = defineSymbol(kind: .valueParameter, name: "a", suffix: "multiViol_a", symbols: symbols, interner: interner)
+        let paramB = defineSymbol(kind: .valueParameter, name: "b", suffix: "multiViol_b", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [tpTType, tpUType],
+                returnType: tpTType,
+                valueParameterSymbols: [paramA, paramB],
+                typeParameterSymbols: [tpT, tpU],
+                typeParameterUpperBounds: [types.anyType, boolType]  // U bound to Bool
+            ),
+            for: fn
+        )
+
+        // T=Int (satisfies Any), U=Int (violates Bool bound)
+        let call = CallExpr(
+            range: makeRange(start: 736, end: 750),
+            calleeName: interner.intern("multiViol"),
+            args: [CallArg(type: intType), CallArg(type: intType)]
+        )
+        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
+        XCTAssertNil(resolved.chosenCallee)
+        XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-SEMA-0030")
+    }
+
+    /// Multiple type params with expected return type constraint.
+    func testResolveCallMultipleTypeParamsWithExpectedReturnType() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let anyType = types.anyType
+
+        let tpT = defineSymbol(kind: .typeParameter, name: "T", suffix: "multiRet_T", symbols: symbols, interner: interner)
+        let tpU = defineSymbol(kind: .typeParameter, name: "U", suffix: "multiRet_U", symbols: symbols, interner: interner)
+        let tpTType = types.make(.typeParam(TypeParamType(symbol: tpT, nullability: .nonNull)))
+        let tpUType = types.make(.typeParam(TypeParamType(symbol: tpU, nullability: .nonNull)))
+
+        // fn<T, U>(a: T, b: U) -> U
+        let fn = defineSymbol(kind: .function, name: "multiRet", suffix: "multiRet", symbols: symbols, interner: interner)
+        let paramA = defineSymbol(kind: .valueParameter, name: "a", suffix: "multiRet_a", symbols: symbols, interner: interner)
+        let paramB = defineSymbol(kind: .valueParameter, name: "b", suffix: "multiRet_b", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [tpTType, tpUType],
+                returnType: tpUType,
+                valueParameterSymbols: [paramA, paramB],
+                typeParameterSymbols: [tpT, tpU],
+                typeParameterUpperBounds: [anyType, anyType]
+            ),
+            for: fn
+        )
+
+        // Call with (Int, Bool) expecting Bool return
+        let call = CallExpr(
+            range: makeRange(start: 751, end: 765),
+            calleeName: interner.intern("multiRet"),
+            args: [CallArg(type: intType), CallArg(type: boolType)]
+        )
+        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: boolType, ctx: ctx)
+        XCTAssertEqual(resolved.chosenCallee, fn)
+        XCTAssertNil(resolved.diagnostic)
+        XCTAssertEqual(resolved.substitutedTypeArguments.count, 2)
+    }
+
+    /// Multiple type params where return type constraint conflicts with argument types.
+    func testResolveCallMultipleTypeParamsReturnTypeConflict() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let anyType = types.anyType
+
+        let tpT = defineSymbol(kind: .typeParameter, name: "T", suffix: "multiConflict_T", symbols: symbols, interner: interner)
+        let tpTType = types.make(.typeParam(TypeParamType(symbol: tpT, nullability: .nonNull)))
+
+        // fn<T>(a: T) -> T — single type param used for both param and return
+        let fn = defineSymbol(kind: .function, name: "multiConflict", suffix: "multiConflict", symbols: symbols, interner: interner)
+        let paramA = defineSymbol(kind: .valueParameter, name: "a", suffix: "multiConflict_a", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [tpTType],
+                returnType: tpTType,
+                valueParameterSymbols: [paramA],
+                typeParameterSymbols: [tpT],
+                typeParameterUpperBounds: [anyType]
+            ),
+            for: fn
+        )
+
+        // Pass Int arg but expect Bool return → T can't be both Int and Bool
+        let call = CallExpr(
+            range: makeRange(start: 766, end: 780),
+            calleeName: interner.intern("multiConflict"),
+            args: [CallArg(type: intType)]
+        )
+        let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: boolType, ctx: ctx)
+        XCTAssertNil(resolved.chosenCallee)
+        XCTAssertNotNil(resolved.diagnostic)
+    }
+
+    // MARK: - Advanced Most Specific Overload Selection Tests
+
+    /// Three candidates, one is most specific (Int < Any, String < Any).
+    func testResolveCallMostSpecificFromThreeCandidates() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let anyType = types.anyType
+
+        // Candidate 1: fn(Any)
+        let fn1 = defineSymbol(kind: .function, name: "triple", suffix: "specTriple1", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(parameterTypes: [anyType], returnType: anyType),
+            for: fn1
+        )
+
+        // Candidate 2: fn(Int)
+        let fn2 = defineSymbol(kind: .function, name: "triple", suffix: "specTriple2", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(parameterTypes: [intType], returnType: intType),
+            for: fn2
+        )
+
+        // Candidate 3: fn(Any) — duplicate of fn1
+        let fn3 = defineSymbol(kind: .function, name: "triple", suffix: "specTriple3", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(parameterTypes: [anyType], returnType: anyType),
+            for: fn3
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 781, end: 795),
+            calleeName: interner.intern("triple"),
+            args: [CallArg(type: intType)]
+        )
+        let resolved = resolver.resolveCall(candidates: [fn1, fn2, fn3], call: call, expectedType: nil, ctx: ctx)
+        XCTAssertEqual(resolved.chosenCallee, fn2)
+        XCTAssertNil(resolved.diagnostic)
+    }
+
+    /// Multi-parameter most specific selection.
+    func testResolveCallMostSpecificMultipleParameters() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let anyType = types.anyType
+
+        // Candidate 1: fn(Int, Any) — partially specific
+        let fn1 = defineSymbol(kind: .function, name: "multiSpec", suffix: "multiSpec1", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(parameterTypes: [intType, anyType], returnType: intType),
+            for: fn1
+        )
+
+        // Candidate 2: fn(Int, Bool) — more specific
+        let fn2 = defineSymbol(kind: .function, name: "multiSpec", suffix: "multiSpec2", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(parameterTypes: [intType, boolType], returnType: intType),
+            for: fn2
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 796, end: 810),
+            calleeName: interner.intern("multiSpec"),
+            args: [CallArg(type: intType), CallArg(type: boolType)]
+        )
+        let resolved = resolver.resolveCall(candidates: [fn1, fn2], call: call, expectedType: nil, ctx: ctx)
+        XCTAssertEqual(resolved.chosenCallee, fn2)
+        XCTAssertNil(resolved.diagnostic)
+    }
+
+    /// Three truly ambiguous candidates → ambiguous diagnostic.
+    func testResolveCallAmbiguousAmongThreeCandidates() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+
+        let fn1 = defineSymbol(kind: .function, name: "amb3", suffix: "amb3_1", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(parameterTypes: [intType], returnType: intType),
+            for: fn1
+        )
+
+        let fn2 = defineSymbol(kind: .function, name: "amb3", suffix: "amb3_2", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(parameterTypes: [intType], returnType: intType),
+            for: fn2
+        )
+
+        let fn3 = defineSymbol(kind: .function, name: "amb3", suffix: "amb3_3", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(parameterTypes: [intType], returnType: intType),
+            for: fn3
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 811, end: 820),
+            calleeName: interner.intern("amb3"),
+            args: [CallArg(type: intType)]
+        )
+        let resolved = resolver.resolveCall(candidates: [fn1, fn2, fn3], call: call, expectedType: nil, ctx: ctx)
+        XCTAssertNil(resolved.chosenCallee)
+        XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-SEMA-0003")
+    }
+
+    /// Generic candidate instantiated to same types as concrete → ambiguous
+    /// (resolver compares instantiated parameter types, not generic vs concrete).
+    func testResolveCallGenericVsConcreteWithSameInstantiatedTypesIsAmbiguous() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let anyType = types.anyType
+
+        // Generic candidate: fn<T>(x: T) -> T
+        let tpSym = defineSymbol(kind: .typeParameter, name: "T", suffix: "concreteVsGen_T", symbols: symbols, interner: interner)
+        let tpType = types.make(.typeParam(TypeParamType(symbol: tpSym, nullability: .nonNull)))
+        let genericFn = defineSymbol(kind: .function, name: "concreteGen", suffix: "concreteVsGen_generic", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [tpType],
+                returnType: tpType,
+                typeParameterSymbols: [tpSym],
+                typeParameterUpperBounds: [anyType]
+            ),
+            for: genericFn
+        )
+
+        // Concrete candidate: fn(x: Int) -> Int
+        let concreteFn = defineSymbol(kind: .function, name: "concreteGen", suffix: "concreteVsGen_concrete", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType],
+                returnType: intType
+            ),
+            for: concreteFn
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 821, end: 835),
+            calleeName: interner.intern("concreteGen"),
+            args: [CallArg(type: intType)]
+        )
+        let resolved = resolver.resolveCall(candidates: [genericFn, concreteFn], call: call, expectedType: nil, ctx: ctx)
+        // After type substitution both have [Int] → isMoreSpecific sees them as equal → ambiguous
+        XCTAssertNil(resolved.chosenCallee)
+        XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-SEMA-0003")
+    }
+
+    /// Most specific selection with incompatible parameter counts yields no winner.
+    func testResolveCallMostSpecificDifferentArityCandidates() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+
+        // Candidate 1: fn(a: Int) with default b
+        let fn1 = defineSymbol(kind: .function, name: "aritySpec", suffix: "aritySpec1", symbols: symbols, interner: interner)
+        let p1a = defineSymbol(kind: .valueParameter, name: "a", suffix: "aritySpec1_a", symbols: symbols, interner: interner)
+        let p1b = defineSymbol(kind: .valueParameter, name: "b", suffix: "aritySpec1_b", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType, intType],
+                returnType: intType,
+                valueParameterSymbols: [p1a, p1b],
+                valueParameterHasDefaultValues: [false, true]
+            ),
+            for: fn1
+        )
+
+        // Candidate 2: fn(a: Int) — single param
+        let fn2 = defineSymbol(kind: .function, name: "aritySpec", suffix: "aritySpec2", symbols: symbols, interner: interner)
+        let p2a = defineSymbol(kind: .valueParameter, name: "a", suffix: "aritySpec2_a", symbols: symbols, interner: interner)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType],
+                returnType: intType,
+                valueParameterSymbols: [p2a]
+            ),
+            for: fn2
+        )
+
+        // Call with 1 arg → both match, but different arity → ambiguous
+        let call = CallExpr(
+            range: makeRange(start: 836, end: 850),
+            calleeName: interner.intern("aritySpec"),
+            args: [CallArg(type: intType)]
+        )
+        let resolved = resolver.resolveCall(candidates: [fn1, fn2], call: call, expectedType: nil, ctx: ctx)
+        // Both match, isMoreSpecific requires same count → ambiguous
+        XCTAssertNil(resolved.chosenCallee)
+        XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-SEMA-0003")
+    }
+
+    // MARK: - P5-39: positional args after named args for vararg
+
+    func testResolveCallAcceptsPositionalArgsAfterNamedArgForVarargParameter() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let stringType = types.make(.primitive(.string, .nonNull))
+        let fn = defineSymbol(
+            kind: .function,
+            name: "namedThenVararg",
+            suffix: "namedThenVararg",
+            symbols: symbols,
+            interner: interner
+        )
+        let paramA = defineSymbol(
+            kind: .valueParameter,
+            name: "a",
+            suffix: "namedThenVararg_a",
+            symbols: symbols,
+            interner: interner
+        )
+        let paramB = defineSymbol(
+            kind: .valueParameter,
+            name: "b",
+            suffix: "namedThenVararg_b",
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [stringType, intType],
+                returnType: intType,
+                valueParameterSymbols: [paramA, paramB],
+                valueParameterIsVararg: [false, true]
+            ),
+            for: fn
+        )
+
+        // f(a = "x", 2, 3) — positional args 2,3 should bind to vararg param b
+        let call = CallExpr(
+            range: makeRange(start: 461, end: 480),
+            calleeName: interner.intern("namedThenVararg"),
+            args: [
+                CallArg(label: interner.intern("a"), type: stringType),
+                CallArg(type: intType),
+                CallArg(type: intType)
+            ]
+        )
+        let resolved = resolver.resolveCall(
+            candidates: [fn],
+            call: call,
+            expectedType: nil,
+            ctx: ctx
+        )
+
+        XCTAssertEqual(resolved.chosenCallee, fn)
+        XCTAssertNil(resolved.diagnostic)
+        // arg 0 → param 0 (named "a"), args 1,2 → param 1 (vararg "b")
+        XCTAssertEqual(resolved.parameterMapping, [0: 0, 1: 1, 2: 1])
+    }
+
+    func testResolveCallRejectsPositionalAfterNamedArgForNonVarargParameter() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let fn = defineSymbol(
+            kind: .function,
+            name: "namedThenNonVararg",
+            suffix: "namedThenNonVararg",
+            symbols: symbols,
+            interner: interner
+        )
+        let paramA = defineSymbol(
+            kind: .valueParameter,
+            name: "a",
+            suffix: "namedThenNonVararg_a",
+            symbols: symbols,
+            interner: interner
+        )
+        let paramB = defineSymbol(
+            kind: .valueParameter,
+            name: "b",
+            suffix: "namedThenNonVararg_b",
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType, boolType],
+                returnType: boolType,
+                valueParameterSymbols: [paramA, paramB]
+                // no valueParameterIsVararg → b is NOT vararg
+            ),
+            for: fn
+        )
+
+        // f(a = 1, true) — positional after named for non-vararg should still be rejected
+        let call = CallExpr(
+            range: makeRange(start: 481, end: 500),
+            calleeName: interner.intern("namedThenNonVararg"),
+            args: [
+                CallArg(label: interner.intern("a"), type: intType),
+                CallArg(type: boolType)
+            ]
+        )
+        let resolved = resolver.resolveCall(
+            candidates: [fn],
+            call: call,
+            expectedType: nil,
+            ctx: ctx
+        )
+
+        XCTAssertNil(resolved.chosenCallee)
+        XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-SEMA-0002")
+    }
+
+}

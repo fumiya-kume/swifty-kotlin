@@ -27,6 +27,7 @@ final class KIRLoweringContextTests: XCTestCase {
         XCTAssertEqual(snapshot.loopControlStack.count, 1)
         XCTAssertEqual(snapshot.loopControlStack[0].continueLabel, 100)
         XCTAssertEqual(snapshot.loopControlStack[0].breakLabel, 200)
+        XCTAssertNil(snapshot.loopControlStack[0].name)
         XCTAssertEqual(snapshot.nextLoopLabel, 20_000)
     }
 

@@ -670,7 +670,8 @@ final class ControlFlowLowerer {
             }
         }
 
-        driver.ctx.loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel, name: nil))
+        let loopLabel = ast.arena.loopLabel(for: exprID)
+        driver.ctx.loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel, name: loopLabel))
         _ = driver.lowerExpr(
             bodyExpr,
             ast: ast,

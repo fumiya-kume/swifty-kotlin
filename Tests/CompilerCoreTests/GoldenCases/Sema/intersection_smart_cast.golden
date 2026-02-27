@@ -10,9 +10,9 @@ symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic 
 symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
 symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
 symbol s11 kind=interface fq=golden.sema.A vis=public flags=_
-symbol s12 kind=function fq=golden.sema.A.a vis=public flags=_ sig=recv=Class#11 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s12 kind=function fq=golden.sema.A.a vis=public flags=abstractType sig=recv=Class#11 params=[] ret=String suspend=0 defaults=[] vararg=[]
 symbol s13 kind=interface fq=golden.sema.B vis=public flags=_
-symbol s14 kind=function fq=golden.sema.B.b vis=public flags=_ sig=recv=Class#13 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s14 kind=function fq=golden.sema.B.b vis=public flags=abstractType sig=recv=Class#13 params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s15 kind=function fq=golden.sema.intersect vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
 symbol s16 kind=valueParameter fq=golden.sema.intersect.$15.x vis=private flags=_
 file f0 package=golden.sema
