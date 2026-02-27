@@ -94,26 +94,32 @@ extension CallLowerer {
 
         // P5-111: If the sema bound this member-call expression to a
         // property/field symbol (zero-arg property access like `Counter.n`),
-        // emit a symbolRef load from the property global instead of a call.
+        // emit a loadGlobal from the property's global slot instead of a call.
+        // Only applies to object member properties (which have KIRGlobal declarations).
+        // Class instance property reads fall through to the normal call path.
         if args.isEmpty,
            let propSymbol = sema.bindings.identifierSymbols[exprID],
            let propSym = sema.symbols.symbol(propSymbol),
            (propSym.kind == .property || propSym.kind == .field) {
-            // Lower receiver first (triggers singleton <clinit> for objects).
-            _ = driver.lowerExpr(
-                receiverExpr,
-                ast: ast,
-                sema: sema,
-                arena: arena,
-                interner: interner,
-                propertyConstantInitializers: propertyConstantInitializers,
-                instructions: &instructions
-            )
-            let propType = boundType ?? sema.symbols.propertyType(for: propSymbol) ?? sema.types.anyType
-            let propRef = arena.appendExpr(.symbolRef(propSymbol), type: propType)
-            let targetSym = sema.symbols.backingFieldSymbol(for: propSymbol) ?? propSymbol
-            instructions.append(.loadGlobal(result: propRef, symbol: targetSym))
-            return propRef
+            let parentSym = sema.symbols.parentSymbol(for: propSymbol)
+            let parentKind = parentSym.flatMap({ sema.symbols.symbol($0) })?.kind
+            if parentKind == .object {
+                // Lower receiver first (triggers singleton <clinit> for objects).
+                _ = driver.lowerExpr(
+                    receiverExpr,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+                let propType = boundType ?? sema.symbols.propertyType(for: propSymbol) ?? sema.types.anyType
+                let propRef = arena.appendExpr(.symbolRef(propSymbol), type: propType)
+                let targetSym = sema.symbols.backingFieldSymbol(for: propSymbol) ?? propSymbol
+                instructions.append(.loadGlobal(result: propRef, symbol: targetSym))
+                return propRef
+            }
         }
 
         let loweredReceiverID = driver.lowerExpr(

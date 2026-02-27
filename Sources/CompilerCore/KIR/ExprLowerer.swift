@@ -631,10 +631,16 @@ final class ExprLowerer {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
-            // Emit a storeGlobal into the property's global slot.
+            // Emit a storeGlobal into the property's global slot (object members only).
+            // Class instance properties need field stores on the receiver — not yet implemented.
             if let propSymbol = sema.bindings.identifierSymbols[exprID] {
-                let targetSym = sema.symbols.backingFieldSymbol(for: propSymbol) ?? propSymbol
-                instructions.append(.storeGlobal(value: valueID, symbol: targetSym))
+                let p = sema.symbols.parentSymbol(for: propSymbol)
+                let pk = p.flatMap({ sema.symbols.symbol($0) })?.kind
+                if pk == .object {
+                    let targetSym = sema.symbols.backingFieldSymbol(for: propSymbol) ?? propSymbol
+                    instructions.append(.storeGlobal(value: valueID, symbol: targetSym))
+                }
+                // else: class instance property — field store not yet implemented; assignment is a no-op.
             } else {
                 assertionFailure("memberAssign: missing property symbol binding for \(exprID)")
             }
