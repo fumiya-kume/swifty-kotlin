@@ -62,7 +62,12 @@ extension LLVMBackend {
     }
 
     static func globalSlotSymbol(for symbol: SymbolID) -> String {
-        "kk_global_root_slot_\(max(0, Int(symbol.rawValue)))"
+        let id = Int(symbol.rawValue)
+        if id >= 0 {
+            return "kk_global_root_slot_\(id)"
+        } else {
+            return "kk_global_root_slot_neg\(-id)"
+        }
     }
 
     static func fpOpSymbol(_ calleeName: String) -> String {
