@@ -590,7 +590,8 @@ final class ExprLowerer {
                         // dedicated global slot (registered via KIRGlobal in objectDecl lowering).
                         // Note: class member properties are instance fields on the heap and
                         // require a field store on the receiver — not handled here.
-                        instructions.append(.storeGlobal(value: valueID, symbol: symbol))
+                        let targetSym = sema.symbols.backingFieldSymbol(for: symbol) ?? symbol
+                        instructions.append(.storeGlobal(value: valueID, symbol: targetSym))
                     } else {
                         driver.ctx.localValuesBySymbol[symbol] = valueID
                     }
@@ -632,7 +633,8 @@ final class ExprLowerer {
             )
             // Emit a storeGlobal into the property's global slot.
             if let propSymbol = sema.bindings.identifierSymbols[exprID] {
-                instructions.append(.storeGlobal(value: valueID, symbol: propSymbol))
+                let targetSym = sema.symbols.backingFieldSymbol(for: propSymbol) ?? propSymbol
+                instructions.append(.storeGlobal(value: valueID, symbol: targetSym))
             } else {
                 assertionFailure("memberAssign: missing property symbol binding for \(exprID)")
             }

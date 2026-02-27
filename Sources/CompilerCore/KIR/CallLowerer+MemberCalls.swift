@@ -111,7 +111,8 @@ extension CallLowerer {
             )
             let propType = boundType ?? sema.symbols.propertyType(for: propSymbol) ?? sema.types.anyType
             let propRef = arena.appendExpr(.symbolRef(propSymbol), type: propType)
-            instructions.append(.loadGlobal(result: propRef, symbol: propSymbol))
+            let targetSym = sema.symbols.backingFieldSymbol(for: propSymbol) ?? propSymbol
+            instructions.append(.loadGlobal(result: propRef, symbol: targetSym))
             return propRef
         }
 
