@@ -7,8 +7,8 @@ import Foundation
 /// `CallTypeChecker`, `ControlFlowTypeChecker`, etc.). Each delegate holds only
 /// the context it needs, replacing the previous extension-based splitting
 /// where a single monolithic class shared all state across multiple files.
-public final class TypeCheckSemaPassPhase: CompilerPhase {
-    public static let name = "TypeCheckSemaPass"
+public final class TypeCheckSemaPhase: CompilerPhase {
+    public static let name = "TypeCheckSema"
 
     public init() {}
 

@@ -379,6 +379,16 @@ extension BuildASTPhase.ExpressionParser {
         switch lhs {
         case .nameRef(let name, _):
             return astArena.appendExpr(.localAssign(name: name, value: valueExpr, range: range))
+        case .memberCall(let receiver, let callee, let typeArgs, let args, _):
+            guard typeArgs.isEmpty, args.isEmpty else {
+                return nil
+            }
+            return astArena.appendExpr(.memberAssign(
+                receiver: receiver,
+                callee: callee,
+                value: valueExpr,
+                range: range
+            ))
         case .indexedAccess(let receiver, let indices, _):
             return astArena.appendExpr(.indexedAssign(receiver: receiver, indices: indices, value: valueExpr, range: range))
         default:

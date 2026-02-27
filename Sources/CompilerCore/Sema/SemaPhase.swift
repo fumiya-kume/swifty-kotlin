@@ -1,11 +1,11 @@
 import Foundation
 
-public final class SemaPassesPhase: CompilerPhase {
-    public static let name = "SemaPasses"
+public final class SemaPhase: CompilerPhase {
+    public static let name = "Sema"
 
     private let passes: [CompilerPhase] = [
-        DataFlowSemaPassPhase(),
-        TypeCheckSemaPassPhase()
+        DataFlowSemaPhase(),
+        TypeCheckSemaPhase()
     ]
 
     public init() {}

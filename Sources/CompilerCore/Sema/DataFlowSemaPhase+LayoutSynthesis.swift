@@ -1,6 +1,6 @@
 import Foundation
 
-extension DataFlowSemaPassPhase {
+extension DataFlowSemaPhase {
     func synthesizeNominalLayouts(symbols: SymbolTable) {
         let nominalKinds: [SymbolKind] = [.class, .interface, .object, .enumClass, .annotationClass]
         let nominalIDs = nominalKinds.flatMap { symbols.symbols(ofKind: $0) }

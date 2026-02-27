@@ -199,9 +199,11 @@ public final class LinkPhase: CompilerPhase {
         if let data = try? Data(contentsOf: URL(fileURLWithPath: manifestPath)),
            let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
            let manifestObjects = object["objects"] as? [String] {
+            let libraryDirNormalized = URL(fileURLWithPath: libraryDir).standardized.path
             let mapped = manifestObjects
                 .filter { !$0.isEmpty }
-                .map { URL(fileURLWithPath: libraryDir).appendingPathComponent($0).path }
+                .map { URL(fileURLWithPath: libraryDir).appendingPathComponent($0).standardized.path }
+                .filter { $0.hasPrefix(libraryDirNormalized + "/") }
             if !mapped.isEmpty {
                 return mapped
             }

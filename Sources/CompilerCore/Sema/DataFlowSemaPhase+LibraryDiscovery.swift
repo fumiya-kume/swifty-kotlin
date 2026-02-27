@@ -1,6 +1,6 @@
 import Foundation
 
-extension DataFlowSemaPassPhase {
+extension DataFlowSemaPhase {
     func discoverLibraryDirectories(searchPaths: [String]) -> [String] {
         let fm = FileManager.default
         var found: Set<String> = []

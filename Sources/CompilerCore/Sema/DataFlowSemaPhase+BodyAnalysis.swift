@@ -1,6 +1,6 @@
 import Foundation
 
-extension DataFlowSemaPassPhase {
+extension DataFlowSemaPhase {
     func analyzeBody(
         declID: DeclID,
         ast: ASTModule,
@@ -288,10 +288,10 @@ extension DataFlowSemaPassPhase {
             return nil
         }
         // Depth limit
-        guard depth < DataFlowSemaPassPhase.maxAliasExpansionDepth else {
+        guard depth < DataFlowSemaPhase.maxAliasExpansionDepth else {
             diagnostics?.error(
                 "KSWIFTK-SEMA-ALIAS-DEPTH",
-                "Typealias expansion exceeded maximum depth of \(DataFlowSemaPassPhase.maxAliasExpansionDepth).",
+                "Typealias expansion exceeded maximum depth of \(DataFlowSemaPhase.maxAliasExpansionDepth).",
                 range: symbols.symbol(symbolID)?.declSite
             )
             return nil

@@ -1,6 +1,6 @@
 import Foundation
 
-extension DataFlowSemaPassPhase {
+extension DataFlowSemaPhase {
     struct LibraryManifestInfo {
         let metadataPath: String
         let inlineKIRDir: String?

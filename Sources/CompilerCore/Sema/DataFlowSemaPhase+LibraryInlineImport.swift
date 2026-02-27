@@ -1,6 +1,6 @@
 import Foundation
 
-extension DataFlowSemaPassPhase {
+extension DataFlowSemaPhase {
     func parseImportedInlineFunction(
         path: String,
         importedSymbol: SymbolID,

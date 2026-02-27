@@ -1,7 +1,7 @@
 import Foundation
 
-public final class DataFlowSemaPassPhase: CompilerPhase {
-    public static let name = "DataFlowSemaPass"
+public final class DataFlowSemaPhase: CompilerPhase {
+    public static let name = "DataFlowSema"
 
     public init() {}
 

@@ -1,6 +1,6 @@
 import Foundation
 
-extension DataFlowSemaPassPhase {
+extension DataFlowSemaPhase {
     func collectHeader(
         declID: DeclID,
         file: ASTFile,
@@ -498,6 +498,57 @@ extension DataFlowSemaPassPhase {
                 diagnostics: diagnostics
             ) ?? types.nullableAnyType
             symbols.setPropertyType(resolvedType, for: symbol)
+
+            if let receiverType = resolveTypeRef(
+                propertyDecl.receiverType,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                diagnostics: diagnostics
+            ) {
+                symbols.setExtensionPropertyReceiverType(receiverType, for: symbol)
+
+                let getterSymbol = symbols.define(
+                    kind: .function,
+                    name: interner.intern("get"),
+                    fqName: fqName + [interner.intern("$get")],
+                    declSite: propertyDecl.range,
+                    visibility: visibility(from: propertyDecl.modifiers),
+                    flags: [.synthetic]
+                )
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [],
+                        returnType: resolvedType
+                    ),
+                    for: getterSymbol
+                )
+                symbols.setParentSymbol(symbol, for: getterSymbol)
+                symbols.setExtensionPropertyGetterAccessor(getterSymbol, for: symbol)
+
+                if propertyDecl.isVar {
+                    let setterSymbol = symbols.define(
+                        kind: .function,
+                        name: interner.intern("set"),
+                        fqName: fqName + [interner.intern("$set")],
+                        declSite: propertyDecl.range,
+                        visibility: visibility(from: propertyDecl.modifiers),
+                        flags: [.synthetic]
+                    )
+                    symbols.setFunctionSignature(
+                        FunctionSignature(
+                            receiverType: receiverType,
+                            parameterTypes: [resolvedType],
+                            returnType: unitType
+                        ),
+                        for: setterSymbol
+                    )
+                    symbols.setParentSymbol(symbol, for: setterSymbol)
+                    symbols.setExtensionPropertySetterAccessor(setterSymbol, for: symbol)
+                }
+            }
 
             // const val validation: must be immutable and have a primitive or String type
             if propertyDecl.modifiers.contains(.const) {

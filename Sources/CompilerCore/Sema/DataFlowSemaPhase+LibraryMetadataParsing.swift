@@ -1,6 +1,6 @@
 import Foundation
 
-extension DataFlowSemaPassPhase {
+extension DataFlowSemaPhase {
     func parseLibraryMetadata(
         path: String,
         diagnostics: DiagnosticEngine,
@@ -281,7 +281,7 @@ extension DataFlowSemaPassPhase {
         private let diagnostics: DiagnosticEngine
         private let metadataPath: String
         private let ownerFQName: [InternedString]
-        private let syntheticTypeParameterBase: Int32 = DataFlowSemaPassPhase.syntheticTypeParameterBase
+        private let syntheticTypeParameterBase: Int32 = DataFlowSemaPhase.syntheticTypeParameterBase
 
         init(
             source: String,

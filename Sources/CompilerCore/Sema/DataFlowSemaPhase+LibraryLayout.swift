@@ -1,6 +1,6 @@
 import Foundation
 
-extension DataFlowSemaPassPhase {
+extension DataFlowSemaPhase {
     func parseImportedFieldOffsets(
         token: String,
         diagnostics: DiagnosticEngine,
