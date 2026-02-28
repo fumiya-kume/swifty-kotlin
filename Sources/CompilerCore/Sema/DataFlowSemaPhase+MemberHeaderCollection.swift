@@ -400,6 +400,7 @@ extension DataFlowSemaPhase {
                             visibility: .public,
                             flags: []
                         )
+                        symbols.setParentSymbol(nestedSymbol, for: entrySymbol)
                         symbols.setPropertyType(nestedType, for: entrySymbol)
                     }
                 }

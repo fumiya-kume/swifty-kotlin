@@ -163,7 +163,10 @@ extension BuildASTPhase.ExpressionParser {
             }
 
             if foundCloseParen && !destructuringNames.isEmpty {
-                _ = consumeIf(.keyword(.in))
+                guard consumeIf(.keyword(.in)) != nil else {
+                    index = savedIndex
+                    return parseForExpressionFallback(forToken: forToken, label: label, start: start)
+                }
                 guard let iterable = parseExpression(minPrecedence: 0) else {
                     index = savedIndex
                     return parseForExpressionFallback(forToken: forToken, label: label, start: start)

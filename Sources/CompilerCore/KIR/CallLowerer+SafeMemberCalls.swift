@@ -227,21 +227,29 @@ extension CallLowerer {
             return nil
         }
         if parentSymbol.kind == .interface {
+            // The itable slot must be derived from the concrete receiver's layout
+            // (which records where each interface is stored), not the interface's
+            // own layout.  Without a concrete class receiver we cannot form an
+            // itable dispatch.
+            guard let receiverTypeID,
+                  case .classType(let classType) = sema.types.kind(of: receiverTypeID) else {
+                return nil
+            }
+            let receiverClassSymID = classType.classSymbol
             // If the receiver is a concrete class with no subtypes, use direct
             // dispatch.  Kotlin classes are final by default, so this is safe and
             // avoids the itable path which requires runtime typeInfo support.
-            if let receiverTypeID,
-               case .classType(let classType) = sema.types.kind(of: receiverTypeID) {
-                let receiverClassSymID = classType.classSymbol
-                if let receiverClassSym = sema.symbols.symbol(receiverClassSymID),
-                   receiverClassSym.kind == .class {
-                    let subtypes = sema.symbols.directSubtypes(of: receiverClassSymID)
-                    if subtypes.isEmpty {
-                        return nil
-                    }
+            if let receiverClassSym = sema.symbols.symbol(receiverClassSymID),
+               receiverClassSym.kind == .class {
+                let subtypes = sema.symbols.directSubtypes(of: receiverClassSymID)
+                if subtypes.isEmpty {
+                    return nil
                 }
             }
-            let interfaceSlot = layout.itableSlots[parentID] ?? 0
+            guard let receiverLayout = sema.symbols.nominalLayout(for: receiverClassSymID) else {
+                return nil
+            }
+            let interfaceSlot = receiverLayout.itableSlots[parentID] ?? 0
             if let methodSlot = layout.vtableSlots[callee] {
                 return .itable(interfaceSlot: interfaceSlot, methodSlot: methodSlot)
             }
@@ -263,37 +271,4 @@ extension CallLowerer {
         return nil
     }
 
-    func normalizedCallableValueArguments(
-        providedArguments: [KIRExprID],
-        callableValueCallBinding: CallableValueCallBinding?,
-        sema: SemaModule
-    ) -> [KIRExprID] {
-        guard let callableValueCallBinding,
-              case .functionType(let functionType) = sema.types.kind(of: callableValueCallBinding.functionType) else {
-            return providedArguments
-        }
-
-        let parameterCount = functionType.params.count
-        guard parameterCount == providedArguments.count,
-              !callableValueCallBinding.parameterMapping.isEmpty else {
-            return providedArguments
-        }
-
-        var reordered = Array(repeating: KIRExprID.invalid, count: parameterCount)
-        for (argIndex, paramIndex) in callableValueCallBinding.parameterMapping {
-            guard argIndex >= 0,
-                  argIndex < providedArguments.count,
-                  paramIndex >= 0,
-                  paramIndex < parameterCount,
-                  reordered[paramIndex] == .invalid else {
-                return providedArguments
-            }
-            reordered[paramIndex] = providedArguments[argIndex]
-        }
-
-        guard !reordered.contains(.invalid) else {
-            return providedArguments
-        }
-        return reordered
-    }
 }

@@ -124,6 +124,7 @@ public enum Expr: Equatable {
     case continueExpr(label: InternedString? = nil, range: SourceRange)
     case localDecl(name: InternedString, isMutable: Bool, typeAnnotation: TypeRefID?, initializer: ExprID?, range: SourceRange)
     case localAssign(name: InternedString, value: ExprID, range: SourceRange)
+    case memberAssign(receiver: ExprID, callee: InternedString, value: ExprID, range: SourceRange)
     case indexedAssign(receiver: ExprID, indices: [ExprID], value: ExprID, range: SourceRange)
     case call(callee: ExprID, typeArgs: [TypeRefID], args: [CallArgument], range: SourceRange)
     case memberCall(receiver: ExprID, callee: InternedString, typeArgs: [TypeRefID], args: [CallArgument], range: SourceRange)

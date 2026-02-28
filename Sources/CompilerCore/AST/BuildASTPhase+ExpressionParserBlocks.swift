@@ -53,7 +53,7 @@ extension BuildASTPhase.ExpressionParser {
         var trailingExpr: ExprID?
         if let lastID = statements.last, let lastExpr = astArena.expr(lastID) {
             switch lastExpr {
-            case .localDecl, .localAssign, .indexedAssign, .compoundAssign, .indexedCompoundAssign, .localFunDecl:
+            case .localDecl, .localAssign, .memberAssign, .indexedAssign, .compoundAssign, .indexedCompoundAssign, .localFunDecl:
                 break
             default:
                 trailingExpr = statements.removeLast()
