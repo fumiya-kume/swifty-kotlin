@@ -50,7 +50,7 @@ extension CallSupportLowerer {
         return result
     }
 
-func normalizeBoolFlags(_ flags: [Bool], count: Int) -> [Bool] {
+    func normalizeBoolFlags(_ flags: [Bool], count: Int) -> [Bool] {
         if flags.count == count { return flags }
         if flags.count > count { return Array(flags.prefix(count)) }
         return flags + Array(repeating: false, count: count - flags.count)
@@ -216,50 +216,7 @@ func normalizeBoolFlags(_ flags: [Bool], count: Int) -> [Bool] {
     }
 
     func binaryOperatorFunctionName(for op: BinaryOp, interner: StringInterner) -> InternedString {
-        switch op {
-        case .add:
-            return interner.intern("plus")
-        case .subtract:
-            return interner.intern("minus")
-        case .multiply:
-            return interner.intern("times")
-        case .divide:
-            return interner.intern("div")
-        case .modulo:
-            return interner.intern("rem")
-        case .equal:
-            return interner.intern("equals")
-        case .notEqual:
-            return interner.intern("equals")
-        case .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
-            return interner.intern("compareTo")
-        case .logicalAnd:
-            return interner.intern("and")
-        case .logicalOr:
-            return interner.intern("or")
-        case .elvis:
-            return interner.intern("elvis")
-        case .rangeTo:
-            return interner.intern("rangeTo")
-        case .rangeUntil:
-            return interner.intern("rangeUntil")
-        case .downTo:
-            return interner.intern("downTo")
-        case .step:
-            return interner.intern("step")
-        case .bitwiseAnd:
-            return interner.intern("and")
-        case .bitwiseOr:
-            return interner.intern("or")
-        case .bitwiseXor:
-            return interner.intern("xor")
-        case .shl:
-            return interner.intern("shl")
-        case .shr:
-            return interner.intern("shr")
-        case .ushr:
-            return interner.intern("ushr")
-        }
+        interner.intern(op.kotlinFunctionName)
     }
 
 }
