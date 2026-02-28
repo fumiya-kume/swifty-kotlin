@@ -446,6 +446,15 @@ final class ControlFlowLowerer {
         instructions.append(.jump(endLabel))
 
         instructions.append(.label(rethrowLabel))
+        let cancellationCheckResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_throwable_is_cancellation"),
+            arguments: [exceptionSlot],
+            result: cancellationCheckResult,
+            canThrow: false,
+            thrownResult: nil
+        ))
         instructions.append(.rethrow(value: exceptionSlot))
 
         instructions.append(.label(endLabel))

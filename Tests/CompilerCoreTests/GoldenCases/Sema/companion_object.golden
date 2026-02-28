@@ -21,10 +21,10 @@ symbol s19 kind=local fq=__local_9.m vis=private flags=_
 file f0 package=golden.sema
   decl d3 class Foo sym=s11
   decl d4 fun main suspend=0 inline=0 sym=s17
-expr e0 int(100) type=_
+expr e0 int(100) type=Int ref=s16
 expr e1 name(Foo) type=_
-expr e2 int(0) type=_
-expr e3 call callee=e1 args=[_:e2] type=_
+expr e2 int(0) type=Int
+expr e3 call callee=e1 args=[_:e2] type=Class#11 call=s12 map=[0->0] targs=[]
 expr e4 name(Foo) type=Class#14 ref=s11
 expr e5 memberCall recv=e4 callee=create args=[] type=Class#11 call=s15 map=[] targs=[]
 expr e6 localDecl f mutable=0 type=t3 init=e5 type=Unit ref=s18

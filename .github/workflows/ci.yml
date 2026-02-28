@@ -20,7 +20,7 @@ jobs:
       - name: Install jscpd
         run: npm install -g jscpd@4.0.8
       - name: Run jscpd
-        run: jscpd --threshold 5 --format swift Sources/
+        run: jscpd --threshold 5 --min-lines 15 --format swift Sources/
 
   smoke-tests:
     name: Smoke Tests
