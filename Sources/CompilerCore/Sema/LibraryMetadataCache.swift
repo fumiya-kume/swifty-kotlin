@@ -18,7 +18,7 @@ public final class LibraryMetadataCache {
     private struct ManifestCacheEntry {
         let mtimeNanos: Int64
         let targetString: String
-        let info: DataFlowSemaPassPhase.LibraryManifestInfo
+        let info: DataFlowSemaPhase.LibraryManifestInfo
     }
 
     /// Stores at most one entry per `libraryDir`. When the file's mtime changes or
@@ -27,7 +27,7 @@ public final class LibraryMetadataCache {
 
     /// Returns a cached manifest info if the library directory has not been modified
     /// since the last read and the compilation target matches, or `nil` on cache miss.
-    func cachedManifestInfo(libraryDir: String, target: TargetTriple) -> DataFlowSemaPassPhase.LibraryManifestInfo? {
+    func cachedManifestInfo(libraryDir: String, target: TargetTriple) -> DataFlowSemaPhase.LibraryManifestInfo? {
         let manifestPath = URL(fileURLWithPath: libraryDir)
             .appendingPathComponent("manifest.json").path
         let mtime = Self.fileMtimeNanos(path: manifestPath)
@@ -42,7 +42,7 @@ public final class LibraryMetadataCache {
 
     /// Stores a manifest info result for the given library directory.
     /// Replaces any previous entry for the same `libraryDir`.
-    func cacheManifestInfo(_ info: DataFlowSemaPassPhase.LibraryManifestInfo, libraryDir: String, target: TargetTriple) {
+    func cacheManifestInfo(_ info: DataFlowSemaPhase.LibraryManifestInfo, libraryDir: String, target: TargetTriple) {
         let manifestPath = URL(fileURLWithPath: libraryDir)
             .appendingPathComponent("manifest.json").path
         let mtime = Self.fileMtimeNanos(path: manifestPath)
@@ -54,7 +54,7 @@ public final class LibraryMetadataCache {
 
     private struct MetadataCacheEntry {
         let mtimeNanos: Int64
-        let records: [DataFlowSemaPassPhase.ImportedLibrarySymbolRecord]
+        let records: [DataFlowSemaPhase.ImportedLibrarySymbolRecord]
     }
 
     /// `ImportedLibrarySymbolRecord` contains `InternedString` values whose IDs are
@@ -68,7 +68,7 @@ public final class LibraryMetadataCache {
 
     /// Returns cached metadata records if the metadata file has not been modified
     /// since the last parse and the same `StringInterner` is in use, or `nil` on cache miss.
-    func cachedMetadataRecords(metadataPath: String, interner: StringInterner) -> [DataFlowSemaPassPhase.ImportedLibrarySymbolRecord]? {
+    func cachedMetadataRecords(metadataPath: String, interner: StringInterner) -> [DataFlowSemaPhase.ImportedLibrarySymbolRecord]? {
         let intID = ObjectIdentifier(interner)
         if currentInternerID != intID {
             return nil  // different interner — treat as miss
@@ -85,7 +85,7 @@ public final class LibraryMetadataCache {
     /// Replaces any previous entry for the same `metadataPath`.
     /// Automatically clears the metadata cache when a different `StringInterner` is encountered.
     func cacheMetadataRecords(
-        _ records: [DataFlowSemaPassPhase.ImportedLibrarySymbolRecord],
+        _ records: [DataFlowSemaPhase.ImportedLibrarySymbolRecord],
         metadataPath: String,
         interner: StringInterner
     ) {

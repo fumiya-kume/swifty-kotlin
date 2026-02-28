@@ -341,13 +341,6 @@ final class CallSupportLowerer {
         }
         return NormalizedCallResult(arguments: normalized, defaultMask: mask)
     }
-
-    private func normalizeBoolFlags(_ flags: [Bool], count: Int) -> [Bool] {
-        if flags.count == count { return flags }
-        if flags.count > count { return Array(flags.prefix(count)) }
-        return flags + Array(repeating: false, count: count - flags.count)
-    }
-
     private func packVarargArguments(
         argIndices: [Int],
         providedArguments: [KIRExprID],
@@ -465,93 +458,4 @@ final class CallSupportLowerer {
         ))
         return arrayID
     }
-
-    func syntheticReceiverParameterSymbol(functionSymbol: SymbolID) -> SymbolID {
-        SymbolID(rawValue: -10_000 - functionSymbol.rawValue)
-    }
-
-    func loweredRuntimeBuiltinCallee(
-        for callee: InternedString,
-        argumentCount: Int,
-        interner: StringInterner
-    ) -> InternedString? {
-        switch interner.resolve(callee) {
-        case "IntArray":
-            guard argumentCount == 1 else {
-                return nil
-            }
-            return interner.intern("kk_array_new")
-        default:
-            return nil
-        }
-    }
-
-    func builtinBinaryRuntimeCallee(for op: BinaryOp, interner: StringInterner) -> InternedString? {
-        switch op {
-        case .notEqual:
-            return interner.intern("kk_op_ne")
-        case .lessThan:
-            return interner.intern("kk_op_lt")
-        case .lessOrEqual:
-            return interner.intern("kk_op_le")
-        case .greaterThan:
-            return interner.intern("kk_op_gt")
-        case .greaterOrEqual:
-            return interner.intern("kk_op_ge")
-        case .logicalAnd:
-            return interner.intern("kk_op_and")
-        case .logicalOr:
-            return interner.intern("kk_op_or")
-        default:
-            return nil
-        }
-    }
-
-    func binaryOperatorFunctionName(for op: BinaryOp, interner: StringInterner) -> InternedString {
-        switch op {
-        case .add:
-            return interner.intern("plus")
-        case .subtract:
-            return interner.intern("minus")
-        case .multiply:
-            return interner.intern("times")
-        case .divide:
-            return interner.intern("div")
-        case .modulo:
-            return interner.intern("rem")
-        case .equal:
-            return interner.intern("equals")
-        case .notEqual:
-            return interner.intern("equals")
-        case .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
-            return interner.intern("compareTo")
-        case .logicalAnd:
-            return interner.intern("and")
-        case .logicalOr:
-            return interner.intern("or")
-        case .elvis:
-            return interner.intern("elvis")
-        case .rangeTo:
-            return interner.intern("rangeTo")
-        case .rangeUntil:
-            return interner.intern("rangeUntil")
-        case .downTo:
-            return interner.intern("downTo")
-        case .step:
-            return interner.intern("step")
-        case .bitwiseAnd:
-            return interner.intern("and")
-        case .bitwiseOr:
-            return interner.intern("or")
-        case .bitwiseXor:
-            return interner.intern("xor")
-        case .shl:
-            return interner.intern("shl")
-        case .shr:
-            return interner.intern("shr")
-        case .ushr:
-            return interner.intern("ushr")
-        }
-    }
-
 }

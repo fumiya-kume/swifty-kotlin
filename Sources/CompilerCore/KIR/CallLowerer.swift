@@ -256,7 +256,7 @@ final class CallLowerer {
         arguments.append(maskExpr)
     }
 
-    private func normalizedCallableValueArguments(
+    func normalizedCallableValueArguments(
         providedArguments: [KIRExprID],
         callableValueCallBinding: CallableValueCallBinding?,
         sema: SemaModule

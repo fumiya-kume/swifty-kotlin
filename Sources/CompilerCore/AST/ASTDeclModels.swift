@@ -268,6 +268,9 @@ public struct PropertyDecl {
     /// `Delegates.observable(init) { body }`). Captured separately because
     /// `propertyHeadTokens` excludes the block node from the delegate expression.
     public let delegateBody: FunctionBody?
+    /// The receiver type reference for extension properties (e.g. `val Int.double`).
+    /// `nil` for regular (non-extension) properties.
+    public let receiverType: TypeRefID?
 
     public init(
         range: SourceRange,
@@ -279,7 +282,8 @@ public struct PropertyDecl {
         getter: PropertyAccessorDecl? = nil,
         setter: PropertyAccessorDecl? = nil,
         delegateExpression: ExprID? = nil,
-        delegateBody: FunctionBody? = nil
+        delegateBody: FunctionBody? = nil,
+        receiverType: TypeRefID? = nil
     ) {
         self.range = range
         self.name = name
@@ -291,6 +295,7 @@ public struct PropertyDecl {
         self.setter = setter
         self.delegateExpression = delegateExpression
         self.delegateBody = delegateBody
+        self.receiverType = receiverType
     }
 }
 

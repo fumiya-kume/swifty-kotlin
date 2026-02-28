@@ -47,7 +47,7 @@ final class GoldenHarnessTests: XCTestCase {
         try runGoldenSuite(.sema) { sourcePath in
             let ctx = makeCompilationContext(inputs: [sourcePath], moduleName: "GoldenSema", emit: .kirDump)
             try runFrontend(ctx)
-            try SemaPassesPhase().run(ctx)
+            try SemaPhase().run(ctx)
 
             let ast = try XCTUnwrap(ctx.ast)
             let sema = try XCTUnwrap(ctx.sema)
@@ -412,6 +412,8 @@ final class GoldenHarnessTests: XCTestCase {
         case .forDestructuringExpr(let names, let iterable, let body, _):
             let renderedNames = names.map { $0.map { interner.resolve($0) } ?? "_" }.joined(separator: ",")
             return "forDestructuring names=[\(renderedNames)] iterable=e\(iterable.rawValue) body=e\(body.rawValue)"
+        case .memberAssign(let receiver, let callee, let value, _):
+            return "memberAssign recv=e\(receiver.rawValue) callee=\(interner.resolve(callee)) value=e\(value.rawValue)"
         }
     }
 

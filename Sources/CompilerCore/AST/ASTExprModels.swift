@@ -36,6 +36,33 @@ public enum BinaryOp: Equatable {
     case shl
     case shr
     case ushr
+
+    /// The Kotlin operator function name for this binary operator (e.g. "plus", "compareTo").
+    public var kotlinFunctionName: String {
+        switch self {
+        case .add:          return "plus"
+        case .subtract:     return "minus"
+        case .multiply:     return "times"
+        case .divide:       return "div"
+        case .modulo:       return "rem"
+        case .equal:        return "equals"
+        case .notEqual:     return "equals"
+        case .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual: return "compareTo"
+        case .logicalAnd:   return "and"
+        case .logicalOr:    return "or"
+        case .elvis:        return "elvis"
+        case .rangeTo:      return "rangeTo"
+        case .rangeUntil:   return "rangeUntil"
+        case .downTo:       return "downTo"
+        case .step:         return "step"
+        case .bitwiseAnd:   return "and"
+        case .bitwiseOr:    return "or"
+        case .bitwiseXor:   return "xor"
+        case .shl:          return "shl"
+        case .shr:          return "shr"
+        case .ushr:         return "ushr"
+        }
+    }
 }
 
 public enum UnaryOp: Equatable {
@@ -124,6 +151,7 @@ public enum Expr: Equatable {
     case continueExpr(label: InternedString? = nil, range: SourceRange)
     case localDecl(name: InternedString, isMutable: Bool, typeAnnotation: TypeRefID?, initializer: ExprID?, range: SourceRange)
     case localAssign(name: InternedString, value: ExprID, range: SourceRange)
+    case memberAssign(receiver: ExprID, callee: InternedString, value: ExprID, range: SourceRange)
     case indexedAssign(receiver: ExprID, indices: [ExprID], value: ExprID, range: SourceRange)
     case call(callee: ExprID, typeArgs: [TypeRefID], args: [CallArgument], range: SourceRange)
     case memberCall(receiver: ExprID, callee: InternedString, typeArgs: [TypeRefID], args: [CallArgument], range: SourceRange)

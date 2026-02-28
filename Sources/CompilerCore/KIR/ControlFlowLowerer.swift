@@ -446,6 +446,15 @@ final class ControlFlowLowerer {
         instructions.append(.jump(endLabel))
 
         instructions.append(.label(rethrowLabel))
+        let cancellationCheckResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_throwable_is_cancellation"),
+            arguments: [exceptionSlot],
+            result: cancellationCheckResult,
+            canThrow: false,
+            thrownResult: nil
+        ))
         instructions.append(.rethrow(value: exceptionSlot))
 
         instructions.append(.label(endLabel))
@@ -506,77 +515,6 @@ final class ControlFlowLowerer {
                 instructions.append(instruction)
             }
         }
-    }
-
-    private func resolveCatchClauseBinding(
-        _ clause: CatchClause,
-        sema: SemaModule,
-        interner: StringInterner
-    ) -> CatchClauseBinding {
-        if let binding = sema.bindings.catchClauseBinding(for: clause.body) {
-            return binding
-        }
-        let fallbackType = resolveLegacyCatchClauseType(
-            clause.paramTypeName,
-            sema: sema,
-            interner: interner
-        )
-        let fallbackSymbol = sema.bindings.identifierSymbols[clause.body] ?? .invalid
-        return CatchClauseBinding(parameterSymbol: fallbackSymbol, parameterType: fallbackType)
-    }
-
-    private func resolveLegacyCatchClauseType(
-        _ typeName: InternedString?,
-        sema: SemaModule,
-        interner: StringInterner
-    ) -> TypeID {
-        guard let typeName else {
-            return sema.types.anyType
-        }
-        switch interner.resolve(typeName) {
-        case "Int":
-            return sema.types.make(.primitive(.int, .nonNull))
-        case "Long":
-            return sema.types.make(.primitive(.long, .nonNull))
-        case "Float":
-            return sema.types.make(.primitive(.float, .nonNull))
-        case "Double":
-            return sema.types.make(.primitive(.double, .nonNull))
-        case "Boolean":
-            return sema.types.make(.primitive(.boolean, .nonNull))
-        case "Char":
-            return sema.types.make(.primitive(.char, .nonNull))
-        case "String":
-            return sema.types.make(.primitive(.string, .nonNull))
-        case "Any":
-            return sema.types.anyType
-        case "Unit":
-            return sema.types.unitType
-        case "Nothing":
-            return sema.types.nothingType
-        default:
-            let candidates = sema.symbols.lookupAll(fqName: [typeName])
-                .filter { symbolID in
-                    guard let symbol = sema.symbols.symbol(symbolID) else {
-                        return false
-                    }
-                    switch symbol.kind {
-                    case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
-                        return true
-                    default:
-                        return false
-                    }
-                }
-                .sorted { $0.rawValue < $1.rawValue }
-            guard let symbol = candidates.first else {
-                return sema.types.anyType
-            }
-            return sema.types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
-        }
-    }
-
-    private func isCatchAllType(_ type: TypeID, sema: SemaModule) -> Bool {
-        type == sema.types.anyType || type == sema.types.nullableAnyType
     }
 
     func lowerForDestructuringExpr(

@@ -75,7 +75,7 @@ public final class CompilerDriver {
             LexPhase(),
             ParsePhase(),
             BuildASTPhase(),
-            SemaPassesPhase(),
+            SemaPhase(),
             BuildKIRPhase(),
             LoweringPhase(),
             CodegenPhase(),

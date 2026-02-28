@@ -601,6 +601,20 @@ final class ExprLowerer {
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
+        case .memberAssign(let receiverExpr, let calleeName, let valueExpr, _):
+            return driver.callLowerer.lowerMemberAssignExpr(
+                exprID,
+                receiverExpr: receiverExpr,
+                calleeName: calleeName,
+                valueExpr: valueExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+
         case .indexedAccess(let receiverExpr, let indices, _):
             return driver.callLowerer.lowerIndexedAccessExpr(exprID, receiverExpr: receiverExpr, indices: indices, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 

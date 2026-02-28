@@ -246,6 +246,10 @@ public final class SymbolTable {
     private var parentSymbols: [SymbolID: SymbolID] = [:]
     private var backingFieldSymbols: [SymbolID: SymbolID] = [:]
     private var delegateStorageSymbols: [SymbolID: SymbolID] = [:]
+    private var accessorOwnerProperties: [SymbolID: SymbolID] = [:]
+    private var extensionPropertyReceiverTypes: [SymbolID: TypeID] = [:]
+    private var extensionPropertyGetterAccessors: [SymbolID: SymbolID] = [:]
+    private var extensionPropertySetterAccessors: [SymbolID: SymbolID] = [:]
     private var typeParameterUpperBoundsMap: [SymbolID: TypeID] = [:]
     private var sourceFileIDs: [SymbolID: FileID] = [:]
     private var annotationsStorage: [SymbolID: [MetadataAnnotationRecord]] = [:]
@@ -471,6 +475,40 @@ public final class SymbolTable {
     public func delegateStorageSymbol(for property: SymbolID) -> SymbolID? {
         delegateStorageSymbols[property]
     }
+
+    public func setExtensionPropertyReceiverType(_ type: TypeID, for property: SymbolID) {
+        extensionPropertyReceiverTypes[property] = type
+    }
+
+    public func extensionPropertyReceiverType(for property: SymbolID) -> TypeID? {
+        extensionPropertyReceiverTypes[property]
+    }
+
+    public func setExtensionPropertyGetterAccessor(_ accessor: SymbolID, for property: SymbolID) {
+        extensionPropertyGetterAccessors[property] = accessor
+    }
+
+    public func extensionPropertyGetterAccessor(for property: SymbolID) -> SymbolID? {
+        extensionPropertyGetterAccessors[property]
+    }
+
+    public func setExtensionPropertySetterAccessor(_ accessor: SymbolID, for property: SymbolID) {
+        extensionPropertySetterAccessors[property] = accessor
+    }
+
+    public func extensionPropertySetterAccessor(for property: SymbolID) -> SymbolID? {
+        extensionPropertySetterAccessors[property]
+    }
+
+    public func setAccessorOwnerProperty(_ propertySymbol: SymbolID, for accessorSymbol: SymbolID) {
+        accessorOwnerProperties[accessorSymbol] = propertySymbol
+    }
+
+    public func accessorOwnerProperty(for accessorSymbol: SymbolID) -> SymbolID? {
+        accessorOwnerProperties[accessorSymbol]
+    }
+
+
 
     public func setTypeParameterUpperBound(_ bound: TypeID, for symbol: SymbolID) {
         typeParameterUpperBoundsMap[symbol] = bound

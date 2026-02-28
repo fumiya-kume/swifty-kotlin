@@ -396,55 +396,74 @@ extension CallLowerer {
         return interner.intern(externalLinkName)
     }
 
-    /// Determine if a callee method requires virtual dispatch.
-    /// Returns `.vtable(slot:)` for class methods or `.itable(slot:)` for interface methods,
-    /// or `nil` if the call should use direct (static) dispatch.
-    private func resolveVirtualDispatch(callee: SymbolID, receiverTypeID: TypeID?, sema: SemaModule) -> KIRDispatchKind? {
-        guard let calleeSymbol = sema.symbols.symbol(callee),
-              calleeSymbol.kind == .function else {
-            return nil
-        }
-        guard let parentID = sema.symbols.parentSymbol(for: callee),
-              let parentSymbol = sema.symbols.symbol(parentID) else {
-            return nil
-        }
-        guard let layout = sema.symbols.nominalLayout(for: parentID) else {
-            return nil
-        }
-        if parentSymbol.kind == .interface {
-            // If the receiver is a concrete class with no subtypes, use direct
-            // dispatch.  Kotlin classes are final by default, so this is safe and
-            // avoids the itable path which requires runtime typeInfo support.
-            if let receiverTypeID,
-               case .classType(let classType) = sema.types.kind(of: receiverTypeID) {
-                let receiverClassSymID = classType.classSymbol
-                if let receiverClassSym = sema.symbols.symbol(receiverClassSymID),
-                   receiverClassSym.kind == .class {
-                    let subtypes = sema.symbols.directSubtypes(of: receiverClassSymID)
-                    if subtypes.isEmpty {
-                        return nil
-                    }
-                }
-            }
-            let interfaceSlot = layout.itableSlots[parentID] ?? 0
-            if let methodSlot = layout.vtableSlots[callee] {
-                return .itable(interfaceSlot: interfaceSlot, methodSlot: methodSlot)
-            }
-            return nil
-        }
-        if parentSymbol.kind == .class {
-            // Only use virtual dispatch if the class actually has subtypes.
-            // In Kotlin, classes are final by default; virtual dispatch is only
-            // needed when the class is open/abstract (has known subtypes).
-            let subtypes = sema.symbols.directSubtypes(of: parentID)
-            guard !subtypes.isEmpty else {
-                return nil
-            }
-            if let vtableSlot = layout.vtableSlots[callee] {
-                return .vtable(slot: vtableSlot)
-            }
-            return nil
-        }
-        return nil
+
+    // MARK: - Member Assignment
+
+    func lowerMemberAssignExpr(
+        _ exprID: ExprID,
+        receiverExpr: ExprID,
+        calleeName: InternedString,
+        valueExpr: ExprID,
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        let receiverID = driver.lowerExpr(
+            receiverExpr,
+            ast: ast, sema: sema, arena: arena, interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+        let valueID = driver.lowerExpr(
+            valueExpr,
+            ast: ast, sema: sema, arena: arena, interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+        // Use the call binding from sema if available (property setter).
+        let callBinding = sema.bindings.callBindings[exprID]
+        let chosenCallee = callBinding?.chosenCallee
+        let setterName = loweredMemberCalleeName(chosenCallee: chosenCallee, fallback: calleeName, sema: sema, interner: interner)
+        let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.unitType)
+        instructions.append(.call(
+            symbol: chosenCallee,
+            callee: setterName,
+            arguments: [receiverID, valueID],
+            result: result,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+        instructions.append(.constValue(result: unit, value: .unit))
+        return unit
     }
+
+    func lowerMemberAssignExpr(
+        _ exprID: ExprID,
+        receiverExpr: ExprID,
+        calleeName: InternedString,
+        valueExpr: ExprID,
+        shared: KIRLoweringSharedContext,
+        emit instructions: inout KIRLoweringEmitContext
+    ) -> KIRExprID {
+        var oldInstructions = Array(instructions)
+        let result = lowerMemberAssignExpr(
+            exprID,
+            receiverExpr: receiverExpr,
+            calleeName: calleeName,
+            valueExpr: valueExpr,
+            ast: shared.ast,
+            sema: shared.sema,
+            arena: shared.arena,
+            interner: shared.interner,
+            propertyConstantInitializers: shared.propertyConstantInitializers,
+            instructions: &oldInstructions
+        )
+        instructions = KIRLoweringEmitContext(oldInstructions)
+        return result
+    }
+
 }

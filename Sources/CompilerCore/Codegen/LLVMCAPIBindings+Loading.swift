@@ -9,7 +9,10 @@ extension LLVMCAPIBindings {
     static func candidateLibraryPaths(environment: [String: String] = ProcessInfo.processInfo.environment) -> [String] {
         var candidates: [String] = []
         if let override = environment["KSWIFTK_LLVM_DYLIB"], !override.isEmpty {
-            candidates.append(override)
+            let resolved = URL(fileURLWithPath: override).standardized.path
+            if FileManager.default.fileExists(atPath: resolved) {
+                candidates.append(resolved)
+            }
         }
         candidates.append(contentsOf: [
             "/opt/homebrew/opt/llvm/lib/libLLVM.dylib",

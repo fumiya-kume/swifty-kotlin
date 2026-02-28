@@ -1,0 +1,430 @@
+extension OverloadResolver {
+    func buildParameterMapping(
+        signature: FunctionSignature,
+        callArgs: [CallArg],
+        symbols: SymbolTable
+    ) -> [Int: Int]? {
+        let paramCount = signature.parameterTypes.count
+        if paramCount == 0 {
+            return callArgs.isEmpty ? [:] : nil
+        }
+
+        let hasDefaultValues = normalizeFlags(signature.valueParameterHasDefaultValues, count: paramCount)
+        let isVararg = normalizeFlags(signature.valueParameterIsVararg, count: paramCount)
+        let paramNames = parameterNames(
+            for: signature,
+            symbols: symbols,
+            count: paramCount
+        )
+        var mapping: [Int: Int] = [:]
+        var boundNonVarargParams: Set<Int> = []
+        var sawNamedArgument = false
+        var positionalCursor = 0
+
+        for (argIndex, arg) in callArgs.enumerated() {
+            if let label = arg.label {
+                sawNamedArgument = true
+                guard let paramIndex = paramNames.firstIndex(where: { $0 == label }) else {
+                    return nil
+                }
+                if arg.isSpread && !isVararg[paramIndex] {
+                    return nil
+                }
+                if isVararg[paramIndex] {
+                    mapping[argIndex] = paramIndex
+                    continue
+                }
+                if boundNonVarargParams.contains(paramIndex) {
+                    return nil
+                }
+                boundNonVarargParams.insert(paramIndex)
+                mapping[argIndex] = paramIndex
+                if paramIndex == positionalCursor {
+                    positionalCursor += 1
+                }
+                continue
+            }
+
+            if sawNamedArgument {
+                // In Kotlin, positional arguments after named arguments
+                // are allowed only when they bind to a vararg parameter.
+                // Advance the cursor past already-bound non-vararg params.
+                while positionalCursor < paramCount &&
+                        !isVararg[positionalCursor] &&
+                        boundNonVarargParams.contains(positionalCursor) {
+                    positionalCursor += 1
+                }
+                if positionalCursor >= paramCount || !isVararg[positionalCursor] {
+                    return nil
+                }
+                mapping[argIndex] = positionalCursor
+                continue
+            }
+
+            while positionalCursor < paramCount &&
+                    !isVararg[positionalCursor] &&
+                    boundNonVarargParams.contains(positionalCursor) {
+                positionalCursor += 1
+            }
+            if positionalCursor >= paramCount {
+                return nil
+            }
+
+            let paramIndex = positionalCursor
+            if arg.isSpread && !isVararg[paramIndex] {
+                return nil
+            }
+            if isVararg[paramIndex] {
+                mapping[argIndex] = paramIndex
+                continue
+            }
+            boundNonVarargParams.insert(paramIndex)
+            mapping[argIndex] = paramIndex
+            positionalCursor += 1
+        }
+
+        for paramIndex in paramNames.indices {
+            if isVararg[paramIndex] {
+                continue
+            }
+            if boundNonVarargParams.contains(paramIndex) {
+                continue
+            }
+            if !hasDefaultValues[paramIndex] {
+                return nil
+            }
+        }
+        return mapping
+    }
+
+    func normalizeFlags(_ flags: [Bool], count: Int) -> [Bool] {
+        if flags.count == count {
+            return flags
+        }
+        if flags.count > count {
+            return Array(flags.prefix(count))
+        }
+        return flags + Array(repeating: false, count: count - flags.count)
+    }
+
+    func parameterNames(
+        for signature: FunctionSignature,
+        symbols: SymbolTable,
+        count: Int
+    ) -> [InternedString?] {
+        var names: [InternedString?] = []
+        names.reserveCapacity(count)
+        for index in 0..<count {
+            if index < signature.valueParameterSymbols.count,
+               let symbol = symbols.symbol(signature.valueParameterSymbols[index]) {
+                names.append(symbol.name)
+            } else {
+                names.append(nil)
+            }
+        }
+        return names
+    }
+
+    func usedTypeVariables(from constraints: [VariableConstraint]) -> [TypeVarID] {
+        var seen: Set<TypeVarID> = []
+        for constraint in constraints {
+            if case .variable(let variable) = constraint.left {
+                seen.insert(variable)
+            }
+            if case .variable(let variable) = constraint.right {
+                seen.insert(variable)
+            }
+        }
+        return seen.sorted(by: { $0.rawValue < $1.rawValue })
+    }
+
+    func operand(
+        for type: TypeID,
+        typeVarBySymbol: [SymbolID: TypeVarID],
+        typeSystem: TypeSystem
+    ) -> ConstraintOperand {
+        let kind = typeSystem.kind(of: type)
+        if case .typeParam(let typeParam) = kind,
+           let variable = typeVarBySymbol[typeParam.symbol] {
+            return .variable(variable)
+        }
+        return .type(type)
+    }
+
+    /// Checks whether a type contains any type parameters mapped in `typeVarBySymbol`.
+    func containsTypeVariable(
+        _ type: TypeID,
+        typeVarBySymbol: [SymbolID: TypeVarID],
+        typeSystem: TypeSystem
+    ) -> Bool {
+        switch typeSystem.kind(of: type) {
+        case .typeParam(let typeParam):
+            return typeVarBySymbol[typeParam.symbol] != nil
+        case .classType(let classType):
+            return classType.args.contains { arg in
+                switch arg {
+                case .invariant(let inner), .out(let inner), .in(let inner):
+                    return containsTypeVariable(inner, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem)
+                case .star:
+                    return false
+                }
+            }
+        case .functionType(let functionType):
+            if let receiver = functionType.receiver,
+               containsTypeVariable(receiver, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem) {
+                return true
+            }
+            if containsTypeVariable(functionType.returnType, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem) {
+                return true
+            }
+            return functionType.params.contains {
+                containsTypeVariable($0, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem)
+            }
+        default:
+            return false
+        }
+    }
+
+    /// Decomposes `subtype <: supertype` into fine-grained constraints that expose
+    /// type variables nested inside generic class types and function types.
+    ///
+    /// For example, given `List<Int> <: List<T>` where `T` is a type variable, this
+    /// produces the equality constraint `Int == T` (for invariant type arguments).
+    /// For `out` positions it produces `Int <: T`, and for `in` positions `T <: Int`.
+    ///
+    /// When the supertype is a direct type parameter, it produces a single
+    /// `subtype <: variable` constraint, matching the previous `operand()` behavior.
+    ///
+    /// Falls back to a simple `subtype <: supertype` type constraint when no
+    /// decomposition is possible (different class symbols, non-generic types, etc.).
+    func decomposeSubtypeConstraint(
+        subtype: TypeID,
+        supertype: TypeID,
+        typeVarBySymbol: [SymbolID: TypeVarID],
+        typeSystem: TypeSystem,
+        blameRange: SourceRange?
+    ) -> [VariableConstraint] {
+        let supertypeKind = typeSystem.kind(of: supertype)
+
+        // Case 1: supertype is a direct type parameter → single variable constraint.
+        if case .typeParam(let typeParam) = supertypeKind,
+           let variable = typeVarBySymbol[typeParam.symbol] {
+            return [VariableConstraint(
+                kind: .subtype,
+                left: .type(subtype),
+                right: .variable(variable),
+                blameRange: blameRange
+            )]
+        }
+
+        // Case 2: supertype is a class type with type args containing type variables.
+        if case .classType(let superClass) = supertypeKind,
+           !superClass.args.isEmpty,
+           containsTypeVariable(supertype, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem) {
+            let subtypeKind = typeSystem.kind(of: subtype)
+            if case .classType(let subClass) = subtypeKind,
+               subClass.classSymbol == superClass.classSymbol,
+               subClass.args.count == superClass.args.count,
+               subClass.nullability == superClass.nullability || superClass.nullability == .nullable {
+                var result: [VariableConstraint] = []
+                for (subArg, superArg) in zip(subClass.args, superClass.args) {
+                    let decomposed = decomposeTypeArgConstraint(
+                        subArg: subArg,
+                        superArg: superArg,
+                        typeVarBySymbol: typeVarBySymbol,
+                        typeSystem: typeSystem,
+                        blameRange: blameRange
+                    )
+                    result.append(contentsOf: decomposed)
+                }
+                return result
+            }
+            // Different class symbols or mismatched arity – fall through to
+            // simple constraint which will use isSubtype.
+        }
+
+        // Case 3: supertype is a function type with type variables in params/return.
+        if case .functionType(let superFunc) = supertypeKind,
+           containsTypeVariable(supertype, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem) {
+            let subtypeKind = typeSystem.kind(of: subtype)
+            if case .functionType(let subFunc) = subtypeKind,
+               subFunc.params.count == superFunc.params.count,
+               subFunc.isSuspend == superFunc.isSuspend,
+               subFunc.nullability == superFunc.nullability || superFunc.nullability == .nullable,
+               subFunc.receiver == superFunc.receiver {
+                var result: [VariableConstraint] = []
+                // Function types are contravariant in parameter types.
+                for (subParam, superParam) in zip(subFunc.params, superFunc.params) {
+                    result.append(contentsOf: decomposeSubtypeConstraint(
+                        subtype: superParam,
+                        supertype: subParam,
+                        typeVarBySymbol: typeVarBySymbol,
+                        typeSystem: typeSystem,
+                        blameRange: blameRange
+                    ))
+                }
+                // Covariant in return type.
+                result.append(contentsOf: decomposeSubtypeConstraint(
+                    subtype: subFunc.returnType,
+                    supertype: superFunc.returnType,
+                    typeVarBySymbol: typeVarBySymbol,
+                    typeSystem: typeSystem,
+                    blameRange: blameRange
+                ))
+                return result
+            }
+        }
+
+        // Case 4: subtype contains type variables (e.g. return type T or List<T>).
+        let subtypeKind = typeSystem.kind(of: subtype)
+        if case .typeParam(let typeParam) = subtypeKind,
+           let variable = typeVarBySymbol[typeParam.symbol] {
+            return [VariableConstraint(
+                kind: .subtype,
+                left: .variable(variable),
+                right: .type(supertype),
+                blameRange: blameRange
+            )]
+        }
+
+        if case .classType(let subClass) = subtypeKind,
+           !subClass.args.isEmpty,
+           containsTypeVariable(subtype, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem) {
+            if case .classType(let superClass) = supertypeKind,
+               subClass.classSymbol == superClass.classSymbol,
+               subClass.args.count == superClass.args.count,
+               subClass.nullability == superClass.nullability || superClass.nullability == .nullable {
+                var result: [VariableConstraint] = []
+                for (subArg, superArg) in zip(subClass.args, superClass.args) {
+                    let decomposed = decomposeTypeArgConstraint(
+                        subArg: subArg,
+                        superArg: superArg,
+                        typeVarBySymbol: typeVarBySymbol,
+                        typeSystem: typeSystem,
+                        blameRange: blameRange
+                    )
+                    result.append(contentsOf: decomposed)
+                }
+                return result
+            }
+        }
+
+        // Default: simple type-to-type constraint.
+        return [VariableConstraint(
+            kind: .subtype,
+            left: .type(subtype),
+            right: .type(supertype),
+            blameRange: blameRange
+        )]
+    }
+
+    /// Decomposes a pair of type arguments into constraints respecting variance.
+    /// Invariant args produce equality constraints, `out` produces subtype,
+    /// `in` produces supertype (reversed direction).
+    ///
+    /// NOTE: Variance is currently derived from the `TypeArg` enum cases (use-site
+    /// projection). A future enhancement could incorporate declaration-site variance
+    /// from the enclosing class's type parameter definitions.
+    func decomposeTypeArgConstraint(
+        subArg: TypeArg,
+        superArg: TypeArg,
+        typeVarBySymbol: [SymbolID: TypeVarID],
+        typeSystem: TypeSystem,
+        blameRange: SourceRange?
+    ) -> [VariableConstraint] {
+        switch (subArg, superArg) {
+        case (.invariant(let subInner), .invariant(let superInner)):
+            // Invariant: both directions (equality).
+            var result = decomposeSubtypeConstraint(
+                subtype: subInner, supertype: superInner,
+                typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
+                blameRange: blameRange
+            )
+            result.append(contentsOf: decomposeSubtypeConstraint(
+                subtype: superInner, supertype: subInner,
+                typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
+                blameRange: blameRange
+            ))
+            return result
+
+        case (.invariant(let subInner), .out(let superInner)),
+             (.out(let subInner), .out(let superInner)):
+            // Covariant: sub <: super.
+            return decomposeSubtypeConstraint(
+                subtype: subInner, supertype: superInner,
+                typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
+                blameRange: blameRange
+            )
+
+        case (.invariant(let subInner), .in(let superInner)),
+             (.in(let subInner), .in(let superInner)):
+            // Contravariant: super <: sub.
+            return decomposeSubtypeConstraint(
+                subtype: superInner, supertype: subInner,
+                typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
+                blameRange: blameRange
+            )
+
+        case (.star, .invariant(let superInner)):
+            // Subtype is star (e.g. receiver `Box<*>` against signature `Box<T>`).
+            // Star projection is equivalent to `out Any?`, so constrain T = Any?
+            // to ensure the solver can infer the type variable.
+            return decomposeSubtypeConstraint(
+                subtype: typeSystem.nullableAnyType, supertype: superInner,
+                typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
+                blameRange: blameRange
+            ) + decomposeSubtypeConstraint(
+                subtype: superInner, supertype: typeSystem.nullableAnyType,
+                typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
+                blameRange: blameRange
+            )
+
+        default:
+            // Incompatible variance combinations (e.g. .out vs .in) – conservatively
+            // treat as invariant so the original subtype relation is still enforced.
+            let subInner: TypeID
+            let superInner: TypeID
+            switch subArg {
+            case .invariant(let t), .out(let t), .in(let t): subInner = t
+            case .star: return []
+            }
+            switch superArg {
+            case .invariant(let t), .out(let t), .in(let t): superInner = t
+            case .star: return []
+            }
+            var fallback = decomposeSubtypeConstraint(
+                subtype: subInner, supertype: superInner,
+                typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
+                blameRange: blameRange
+            )
+            fallback.append(contentsOf: decomposeSubtypeConstraint(
+                subtype: superInner, supertype: subInner,
+                typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
+                blameRange: blameRange
+            ))
+            return fallback
+        }
+    }
+
+    func isConstraintSatisfiedWithoutVariables(
+        _ constraint: VariableConstraint,
+        typeSystem: TypeSystem
+    ) -> Bool {
+        guard case .type(let lhs) = constraint.left,
+              case .type(let rhs) = constraint.right else {
+            return false
+        }
+        switch constraint.kind {
+        case .subtype:
+            return typeSystem.isSubtype(lhs, rhs)
+        case .equal:
+            return typeSystem.isSubtype(lhs, rhs) && typeSystem.isSubtype(rhs, lhs)
+        case .supertype:
+            return typeSystem.isSubtype(rhs, lhs)
+        }
+    }
+
+    /// Returns a diagnostic when the solver resolved a type variable to `errorType`,
+    /// meaning no constraints existed to determine it.  The caller should require
+    /// explicit type arguments in that case.
+}
