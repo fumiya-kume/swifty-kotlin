@@ -116,7 +116,7 @@ func runFrontend(_ ctx: CompilationContext) throws {
 
 func runSema(_ ctx: CompilationContext) throws {
     try runFrontend(ctx)
-    try SemaPassesPhase().run(ctx)
+    try SemaPhase().run(ctx)
 }
 
 func runToKIR(_ ctx: CompilationContext) throws {

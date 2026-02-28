@@ -261,7 +261,7 @@ final class DeepPhaseCoverageTests: XCTestCase {
         // CST contains: class, object, typealias, enum entry, 2 properties, 2 functions = 8+ decls
         XCTAssertGreaterThanOrEqual(ast.declarationCount, 8)
 
-        try SemaPassesPhase().run(ctx)
+        try SemaPhase().run(ctx)
         try BuildKIRPhase().run(ctx)
         try LoweringPhase().run(ctx)
 

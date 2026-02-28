@@ -396,4 +396,74 @@ extension CallLowerer {
         return interner.intern(externalLinkName)
     }
 
+
+    // MARK: - Member Assignment
+
+    func lowerMemberAssignExpr(
+        _ exprID: ExprID,
+        receiverExpr: ExprID,
+        calleeName: InternedString,
+        valueExpr: ExprID,
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        let receiverID = driver.lowerExpr(
+            receiverExpr,
+            ast: ast, sema: sema, arena: arena, interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+        let valueID = driver.lowerExpr(
+            valueExpr,
+            ast: ast, sema: sema, arena: arena, interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+        // Use the call binding from sema if available (property setter).
+        let callBinding = sema.bindings.callBindings[exprID]
+        let chosenCallee = callBinding?.chosenCallee
+        let setterName = loweredMemberCalleeName(chosenCallee: chosenCallee, fallback: calleeName, sema: sema, interner: interner)
+        let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.unitType)
+        instructions.append(.call(
+            symbol: chosenCallee,
+            callee: setterName,
+            arguments: [receiverID, valueID],
+            result: result,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+        instructions.append(.constValue(result: unit, value: .unit))
+        return unit
+    }
+
+    func lowerMemberAssignExpr(
+        _ exprID: ExprID,
+        receiverExpr: ExprID,
+        calleeName: InternedString,
+        valueExpr: ExprID,
+        shared: KIRLoweringSharedContext,
+        emit instructions: inout KIRLoweringEmitContext
+    ) -> KIRExprID {
+        var oldInstructions = Array(instructions)
+        let result = lowerMemberAssignExpr(
+            exprID,
+            receiverExpr: receiverExpr,
+            calleeName: calleeName,
+            valueExpr: valueExpr,
+            ast: shared.ast,
+            sema: shared.sema,
+            arena: shared.arena,
+            interner: shared.interner,
+            propertyConstantInitializers: shared.propertyConstantInitializers,
+            instructions: &oldInstructions
+        )
+        instructions = KIRLoweringEmitContext(oldInstructions)
+        return result
+    }
+
 }

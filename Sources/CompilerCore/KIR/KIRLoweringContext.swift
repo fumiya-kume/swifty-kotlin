@@ -25,6 +25,10 @@ final class KIRLoweringContext {
     var emittedObjectLiteralExprIDs: Set<ExprID> = []
     var nextSyntheticLambdaSymbolRawValue: Int32 = 1
 
+    /// Companion object initializer functions registered during class lowering.
+    /// These are called in order during module initialization.
+    var companionInitializerFunctions: [(symbol: SymbolID, name: InternedString)] = []
+
     // MARK: - Structured Scope Management
 
     struct ScopeSnapshot {
@@ -139,11 +143,17 @@ final class KIRLoweringContext {
 
     // MARK: - Reset
 
+
+    func registerCompanionInitializer(symbol: SymbolID, name: InternedString) {
+        companionInitializerFunctions.append((symbol: symbol, name: name))
+    }
+
     func resetModuleState() {
         pendingGeneratedCallableDeclIDs.removeAll(keepingCapacity: true)
         callableValueInfoByExprID.removeAll(keepingCapacity: true)
         syntheticLambdaSymbolsByExprID.removeAll(keepingCapacity: true)
         syntheticObjectLiteralSymbolsByExprID.removeAll(keepingCapacity: true)
         emittedObjectLiteralExprIDs.removeAll(keepingCapacity: true)
+        companionInitializerFunctions.removeAll(keepingCapacity: true)
     }
 }
