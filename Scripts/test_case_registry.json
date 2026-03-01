@@ -1,22 +1,38 @@
 {
-  "_comment": "Test case registry for swifty-kotlin P5 tasks. Use with Scripts/generate_test_case.sh --from-registry.",
+  "_comment": "Test case registry for swifty-kotlin TODO tasks. Use with Scripts/generate_test_case.sh --from-registry.",
   "test_cases": [
     {
       "task": "P5-93",
       "category": "lexer",
       "description": "Raw string literals (multiline, interpolation, trailing whitespace trim)",
       "cases": [
-        { "type": "golden-lexer", "name": "raw_string_literals", "template": "Scripts/test_templates/lexer/raw_string_literals.kt" },
-        { "type": "diff", "name": "raw_string_basic", "template": "Scripts/test_templates/diff/raw_string_basic.kt" }
+        {
+          "type": "golden-lexer",
+          "name": "raw_string_literals",
+          "template": "Scripts/test_templates/lexer/raw_string_literals.kt"
+        },
+        {
+          "type": "diff",
+          "name": "raw_string_basic",
+          "template": "Scripts/test_templates/diff/raw_string_basic.kt"
+        }
       ]
     },
     {
-      "task": "P5-94",
+      "task": "LEX-001",
       "category": "lexer",
       "description": "Char literals and Unicode escape",
       "cases": [
-        { "type": "golden-lexer", "name": "char_literals", "template": "Scripts/test_templates/lexer/char_literals.kt" },
-        { "type": "diff", "name": "char_escape", "template": "Scripts/test_templates/diff/char_escape.kt" }
+        {
+          "type": "golden-lexer",
+          "name": "char_literals",
+          "template": "Scripts/test_templates/lexer/char_literals.kt"
+        },
+        {
+          "type": "diff",
+          "name": "char_escape",
+          "template": "Scripts/test_templates/diff/char_escape.kt"
+        }
       ]
     },
     {
@@ -24,41 +40,69 @@
       "category": "lexer",
       "description": "Numeric literal formats (binary, hex, underscore, suffix)",
       "cases": [
-        { "type": "golden-lexer", "name": "numeric_formats_extended", "template": "Scripts/test_templates/lexer/numeric_formats_extended.kt" }
+        {
+          "type": "golden-lexer",
+          "name": "numeric_formats_extended",
+          "template": "Scripts/test_templates/lexer/numeric_formats_extended.kt"
+        }
       ]
     },
     {
-      "task": "P5-96",
+      "task": "TYPE-001",
       "category": "types",
       "description": "Nothing/throw/return branch narrowing",
       "cases": [
-        { "type": "golden-sema", "name": "nothing_branch_narrowing", "template": "Scripts/test_templates/sema/nothing_branch_narrowing.kt" },
-        { "type": "diff", "name": "nothing_return_throw", "template": "Scripts/test_templates/diff/nothing_return_throw.kt" }
+        {
+          "type": "golden-sema",
+          "name": "nothing_branch_narrowing",
+          "template": "Scripts/test_templates/sema/nothing_branch_narrowing.kt"
+        },
+        {
+          "type": "diff",
+          "name": "nothing_return_throw",
+          "template": "Scripts/test_templates/diff/nothing_return_throw.kt"
+        }
       ]
     },
     {
-      "task": "P5-97",
+      "task": "TYPE-002",
       "category": "types",
       "description": "Intersection smart cast",
       "cases": [
-        { "type": "golden-sema", "name": "intersection_smart_cast", "template": "Scripts/test_templates/sema/intersection_smart_cast.kt" }
+        {
+          "type": "golden-sema",
+          "name": "intersection_smart_cast",
+          "template": "Scripts/test_templates/sema/intersection_smart_cast.kt"
+        }
       ]
     },
     {
-      "task": "P5-98",
+      "task": "TYPE-003",
       "category": "types",
       "description": "Use-site variance (out T / in T / star projection)",
       "cases": [
-        { "type": "golden-sema", "name": "use_site_variance", "template": "Scripts/test_templates/sema/use_site_variance.kt" },
-        { "type": "diff", "name": "star_projection", "template": "Scripts/test_templates/diff/star_projection.kt" }
+        {
+          "type": "golden-sema",
+          "name": "use_site_variance",
+          "template": "Scripts/test_templates/sema/use_site_variance.kt"
+        },
+        {
+          "type": "diff",
+          "name": "star_projection",
+          "template": "Scripts/test_templates/diff/star_projection.kt"
+        }
       ]
     },
     {
-      "task": "P5-99",
+      "task": "TYPE-004",
       "category": "types",
       "description": "Generic typealias / circular alias detection",
       "cases": [
-        { "type": "golden-sema", "name": "generic_typealias", "template": "Scripts/test_templates/sema/generic_typealias.kt" }
+        {
+          "type": "golden-sema",
+          "name": "generic_typealias",
+          "template": "Scripts/test_templates/sema/generic_typealias.kt"
+        }
       ]
     },
     {
@@ -66,86 +110,154 @@
       "category": "expressions",
       "description": "as (unsafe cast) / as? (safe cast)",
       "cases": [
-        { "type": "golden-sema", "name": "cast_operators", "template": "Scripts/test_templates/sema/cast_operators.kt" },
-        { "type": "diff", "name": "cast_operators", "template": "Scripts/test_templates/diff/cast_operators.kt" }
+        {
+          "type": "golden-sema",
+          "name": "cast_operators",
+          "template": "Scripts/test_templates/sema/cast_operators.kt"
+        },
+        {
+          "type": "diff",
+          "name": "cast_operators",
+          "template": "Scripts/test_templates/diff/cast_operators.kt"
+        }
       ]
     },
     {
-      "task": "P5-101",
+      "task": "EXPR-001",
       "category": "expressions",
       "description": "is / !is type check and smart cast",
       "cases": [
-        { "type": "golden-sema", "name": "is_type_check", "template": "Scripts/test_templates/sema/is_type_check.kt" }
+        {
+          "type": "golden-sema",
+          "name": "is_type_check",
+          "template": "Scripts/test_templates/sema/is_type_check.kt"
+        }
       ]
     },
     {
-      "task": "P5-102",
+      "task": "EXPR-002",
       "category": "expressions",
       "description": "Operator precedence table (full Kotlin spec compliance)",
       "cases": [
-        { "type": "golden-parser", "name": "operator_precedence", "template": "Scripts/test_templates/parser/operator_precedence.kt" }
+        {
+          "type": "golden-parser",
+          "name": "operator_precedence",
+          "template": "Scripts/test_templates/parser/operator_precedence.kt"
+        }
       ]
     },
     {
-      "task": "P5-103",
+      "task": "EXPR-003",
       "category": "expressions",
       "description": "Bitwise/shift operators (and/or/xor/inv/shl/shr/ushr)",
       "cases": [
-        { "type": "golden-sema", "name": "bitwise_operators", "template": "Scripts/test_templates/sema/bitwise_operators.kt" },
-        { "type": "diff", "name": "bitwise_operators", "template": "Scripts/test_templates/diff/bitwise_operators.kt" }
+        {
+          "type": "golden-sema",
+          "name": "bitwise_operators",
+          "template": "Scripts/test_templates/sema/bitwise_operators.kt"
+        },
+        {
+          "type": "diff",
+          "name": "bitwise_operators",
+          "template": "Scripts/test_templates/diff/bitwise_operators.kt"
+        }
       ]
     },
     {
-      "task": "P5-104",
+      "task": "EXPR-004",
       "category": "expressions",
       "description": "Label / return@label / break@label / continue@label",
       "cases": [
-        { "type": "golden-parser", "name": "labeled_control_flow", "template": "Scripts/test_templates/parser/labeled_control_flow.kt" },
-        { "type": "diff", "name": "labeled_control_flow", "template": "Scripts/test_templates/diff/labeled_control_flow.kt" }
+        {
+          "type": "golden-parser",
+          "name": "labeled_control_flow",
+          "template": "Scripts/test_templates/parser/labeled_control_flow.kt"
+        },
+        {
+          "type": "diff",
+          "name": "labeled_control_flow",
+          "template": "Scripts/test_templates/diff/labeled_control_flow.kt"
+        }
       ]
     },
     {
-      "task": "P5-105",
+      "task": "CTRL-001",
       "category": "control_flow",
       "description": "when multi-condition branches (comma-separated) and exhaustive diagnostics",
       "cases": [
-        { "type": "golden-sema", "name": "when_multi_condition", "template": "Scripts/test_templates/sema/when_multi_condition.kt" },
-        { "type": "diff", "name": "when_multi_condition", "template": "Scripts/test_templates/diff/when_multi_condition.kt" }
+        {
+          "type": "golden-sema",
+          "name": "when_multi_condition",
+          "template": "Scripts/test_templates/sema/when_multi_condition.kt"
+        },
+        {
+          "type": "diff",
+          "name": "when_multi_condition",
+          "template": "Scripts/test_templates/diff/when_multi_condition.kt"
+        }
       ]
     },
     {
-      "task": "P5-106",
+      "task": "CTRL-002",
       "category": "control_flow",
       "description": "try as expression (type inference, finally impact)",
       "cases": [
-        { "type": "golden-sema", "name": "try_expression", "template": "Scripts/test_templates/sema/try_expression.kt" },
-        { "type": "diff", "name": "try_expression", "template": "Scripts/test_templates/diff/try_expression.kt" }
+        {
+          "type": "golden-sema",
+          "name": "try_expression",
+          "template": "Scripts/test_templates/sema/try_expression.kt"
+        },
+        {
+          "type": "diff",
+          "name": "try_expression",
+          "template": "Scripts/test_templates/diff/try_expression.kt"
+        }
       ]
     },
     {
-      "task": "P5-107",
+      "task": "CTRL-003",
       "category": "control_flow",
       "description": "do-while condition scope, break/continue, first-run guarantee",
       "cases": [
-        { "type": "diff", "name": "do_while_label_break", "template": "Scripts/test_templates/diff/do_while_label_break.kt" }
+        {
+          "type": "diff",
+          "name": "do_while_label_break",
+          "template": "Scripts/test_templates/diff/do_while_label_break.kt"
+        }
       ]
     },
     {
-      "task": "P5-108",
+      "task": "DECL-001",
       "category": "declarations",
       "description": "Top-level property backing field / getter / setter",
       "cases": [
-        { "type": "golden-sema", "name": "top_level_property", "template": "Scripts/test_templates/sema/top_level_property.kt" },
-        { "type": "diff", "name": "top_level_property", "template": "Scripts/test_templates/diff/top_level_property.kt" }
+        {
+          "type": "golden-sema",
+          "name": "top_level_property",
+          "template": "Scripts/test_templates/sema/top_level_property.kt"
+        },
+        {
+          "type": "diff",
+          "name": "top_level_property",
+          "template": "Scripts/test_templates/diff/top_level_property.kt"
+        }
       ]
     },
     {
-      "task": "P5-109",
+      "task": "DECL-002",
       "category": "declarations",
       "description": "const val compile-time constant folding",
       "cases": [
-        { "type": "golden-sema", "name": "const_val", "template": "Scripts/test_templates/sema/const_val.kt" },
-        { "type": "diff", "name": "const_val", "template": "Scripts/test_templates/diff/const_val.kt" }
+        {
+          "type": "golden-sema",
+          "name": "const_val",
+          "template": "Scripts/test_templates/sema/const_val.kt"
+        },
+        {
+          "type": "diff",
+          "name": "const_val",
+          "template": "Scripts/test_templates/diff/const_val.kt"
+        }
       ]
     },
     {
@@ -153,86 +265,154 @@
       "category": "declarations",
       "description": "lateinit var initialization check and isInitialized",
       "cases": [
-        { "type": "diff", "name": "lateinit_var", "template": "Scripts/test_templates/diff/lateinit_var.kt" }
+        {
+          "type": "diff",
+          "name": "lateinit_var",
+          "template": "Scripts/test_templates/diff/lateinit_var.kt"
+        }
       ]
     },
     {
-      "task": "P5-111",
+      "task": "DECL-003",
       "category": "declarations",
       "description": "object declaration (singleton) lazy init and init block order",
       "cases": [
-        { "type": "golden-sema", "name": "object_singleton", "template": "Scripts/test_templates/sema/object_singleton.kt" },
-        { "type": "diff", "name": "object_singleton", "template": "Scripts/test_templates/diff/object_singleton.kt" }
+        {
+          "type": "golden-sema",
+          "name": "object_singleton",
+          "template": "Scripts/test_templates/sema/object_singleton.kt"
+        },
+        {
+          "type": "diff",
+          "name": "object_singleton",
+          "template": "Scripts/test_templates/diff/object_singleton.kt"
+        }
       ]
     },
     {
-      "task": "P5-112",
+      "task": "CLASS-002",
       "category": "class_object",
       "description": "abstract class / abstract member constraints and override enforcement",
       "cases": [
-        { "type": "golden-sema", "name": "abstract_class", "template": "Scripts/test_templates/sema/abstract_class.kt" },
-        { "type": "diff", "name": "abstract_class", "template": "Scripts/test_templates/diff/abstract_class.kt" }
+        {
+          "type": "golden-sema",
+          "name": "abstract_class",
+          "template": "Scripts/test_templates/sema/abstract_class.kt"
+        },
+        {
+          "type": "diff",
+          "name": "abstract_class",
+          "template": "Scripts/test_templates/diff/abstract_class.kt"
+        }
       ]
     },
     {
-      "task": "P5-113",
+      "task": "CLASS-003",
       "category": "class_object",
       "description": "interface default method (body in interface fun)",
       "cases": [
-        { "type": "golden-sema", "name": "interface_default_method", "template": "Scripts/test_templates/sema/interface_default_method.kt" },
-        { "type": "diff", "name": "interface_default_method", "template": "Scripts/test_templates/diff/interface_default_method.kt" }
+        {
+          "type": "golden-sema",
+          "name": "interface_default_method",
+          "template": "Scripts/test_templates/sema/interface_default_method.kt"
+        },
+        {
+          "type": "diff",
+          "name": "interface_default_method",
+          "template": "Scripts/test_templates/diff/interface_default_method.kt"
+        }
       ]
     },
     {
-      "task": "P5-114",
+      "task": "CLASS-004",
       "category": "class_object",
       "description": "Multiple interface implementation and diamond override resolution",
       "cases": [
-        { "type": "golden-sema", "name": "diamond_inheritance", "template": "Scripts/test_templates/sema/diamond_inheritance.kt" },
-        { "type": "diff", "name": "diamond_inheritance", "template": "Scripts/test_templates/diff/diamond_inheritance.kt" }
+        {
+          "type": "golden-sema",
+          "name": "diamond_inheritance",
+          "template": "Scripts/test_templates/sema/diamond_inheritance.kt"
+        },
+        {
+          "type": "diff",
+          "name": "diamond_inheritance",
+          "template": "Scripts/test_templates/diff/diamond_inheritance.kt"
+        }
       ]
     },
     {
-      "task": "P5-115",
+      "task": "CLASS-005",
       "category": "class_object",
       "description": "open / final / override modifier constraints",
       "cases": [
-        { "type": "golden-sema", "name": "open_final_override", "template": "Scripts/test_templates/sema/open_final_override.kt" },
-        { "type": "diff", "name": "open_final_override", "template": "Scripts/test_templates/diff/open_final_override.kt" }
+        {
+          "type": "golden-sema",
+          "name": "open_final_override",
+          "template": "Scripts/test_templates/sema/open_final_override.kt"
+        },
+        {
+          "type": "diff",
+          "name": "open_final_override",
+          "template": "Scripts/test_templates/diff/open_final_override.kt"
+        }
       ]
     },
     {
-      "task": "P5-116",
+      "task": "CLASS-006",
       "category": "class_object",
       "description": "data object / anonymous object type and equality",
       "cases": [
-        { "type": "golden-sema", "name": "data_object", "template": "Scripts/test_templates/sema/data_object.kt" },
-        { "type": "diff", "name": "data_object", "template": "Scripts/test_templates/diff/data_object.kt" }
+        {
+          "type": "golden-sema",
+          "name": "data_object",
+          "template": "Scripts/test_templates/sema/data_object.kt"
+        },
+        {
+          "type": "diff",
+          "name": "data_object",
+          "template": "Scripts/test_templates/diff/data_object.kt"
+        }
       ]
     },
     {
-      "task": "P5-117",
+      "task": "CLASS-007",
       "category": "class_object",
       "description": "Constructor init block and primary constructor property init order",
       "cases": [
-        { "type": "diff", "name": "init_block_order", "template": "Scripts/test_templates/diff/init_block_order.kt" }
+        {
+          "type": "diff",
+          "name": "init_block_order",
+          "template": "Scripts/test_templates/diff/init_block_order.kt"
+        }
       ]
     },
     {
-      "task": "P5-118",
+      "task": "FUNC-001",
       "category": "functions",
       "description": "tailrec fun tail-call optimization",
       "cases": [
-        { "type": "diff", "name": "tailrec_fun", "template": "Scripts/test_templates/diff/tailrec_fun.kt" }
+        {
+          "type": "diff",
+          "name": "tailrec_fun",
+          "template": "Scripts/test_templates/diff/tailrec_fun.kt"
+        }
       ]
     },
     {
-      "task": "P5-119",
+      "task": "FUNC-002",
       "category": "functions",
       "description": "infix fun declaration and resolution",
       "cases": [
-        { "type": "golden-sema", "name": "infix_fun", "template": "Scripts/test_templates/sema/infix_fun.kt" },
-        { "type": "diff", "name": "infix_fun", "template": "Scripts/test_templates/diff/infix_fun.kt" }
+        {
+          "type": "golden-sema",
+          "name": "infix_fun",
+          "template": "Scripts/test_templates/sema/infix_fun.kt"
+        },
+        {
+          "type": "diff",
+          "name": "infix_fun",
+          "template": "Scripts/test_templates/diff/infix_fun.kt"
+        }
       ]
     },
     {
@@ -240,52 +420,96 @@
       "category": "functions",
       "description": "operator fun (plus/minus/times/unaryMinus/get)",
       "cases": [
-        { "type": "golden-sema", "name": "operator_fun_all", "template": "Scripts/test_templates/sema/operator_fun_all.kt" },
-        { "type": "diff", "name": "operator_fun", "template": "Scripts/test_templates/diff/operator_fun.kt" }
+        {
+          "type": "golden-sema",
+          "name": "operator_fun_all",
+          "template": "Scripts/test_templates/sema/operator_fun_all.kt"
+        },
+        {
+          "type": "diff",
+          "name": "operator_fun",
+          "template": "Scripts/test_templates/diff/operator_fun.kt"
+        }
       ]
     },
     {
-      "task": "P5-121",
+      "task": "FUNC-003",
       "category": "functions",
       "description": "Function type / lambda it, type elision, destructuring",
       "cases": [
-        { "type": "golden-sema", "name": "lambda_it_destructuring", "template": "Scripts/test_templates/sema/lambda_it_destructuring.kt" },
-        { "type": "diff", "name": "lambda_it", "template": "Scripts/test_templates/diff/lambda_it.kt" }
+        {
+          "type": "golden-sema",
+          "name": "lambda_it_destructuring",
+          "template": "Scripts/test_templates/sema/lambda_it_destructuring.kt"
+        },
+        {
+          "type": "diff",
+          "name": "lambda_it",
+          "template": "Scripts/test_templates/diff/lambda_it.kt"
+        }
       ]
     },
     {
-      "task": "P5-122",
+      "task": "PROP-005",
       "category": "properties",
       "description": "Extension property integration into type system / member dispatch",
       "cases": [
-        { "type": "golden-sema", "name": "extension_property", "template": "Scripts/test_templates/sema/extension_property.kt" },
-        { "type": "diff", "name": "extension_property", "template": "Scripts/test_templates/diff/extension_property.kt" }
+        {
+          "type": "golden-sema",
+          "name": "extension_property",
+          "template": "Scripts/test_templates/sema/extension_property.kt"
+        },
+        {
+          "type": "diff",
+          "name": "extension_property",
+          "template": "Scripts/test_templates/diff/extension_property.kt"
+        }
       ]
     },
     {
-      "task": "P5-123",
+      "task": "PROP-006",
       "category": "properties",
       "description": "field keyword in getter/setter for backing field reference",
       "cases": [
-        { "type": "golden-sema", "name": "backing_field", "template": "Scripts/test_templates/sema/backing_field.kt" },
-        { "type": "diff", "name": "backing_field", "template": "Scripts/test_templates/diff/backing_field.kt" }
+        {
+          "type": "golden-sema",
+          "name": "backing_field",
+          "template": "Scripts/test_templates/sema/backing_field.kt"
+        },
+        {
+          "type": "diff",
+          "name": "backing_field",
+          "template": "Scripts/test_templates/diff/backing_field.kt"
+        }
       ]
     },
     {
-      "task": "P5-124",
+      "task": "PROP-007",
       "category": "properties",
       "description": "provideDelegate operator and KProperty stub",
       "cases": [
-        { "type": "golden-sema", "name": "provide_delegate", "template": "Scripts/test_templates/sema/provide_delegate.kt" }
+        {
+          "type": "golden-sema",
+          "name": "provide_delegate",
+          "template": "Scripts/test_templates/sema/provide_delegate.kt"
+        }
       ]
     },
     {
-      "task": "P5-125",
+      "task": "GEN-001",
       "category": "generics",
       "description": "Multiple upper bounds (where T : A, T : B) and F-bound",
       "cases": [
-        { "type": "golden-sema", "name": "f_bound_generics", "template": "Scripts/test_templates/sema/f_bound_generics.kt" },
-        { "type": "diff", "name": "f_bound_generics", "template": "Scripts/test_templates/diff/f_bound_generics.kt" }
+        {
+          "type": "golden-sema",
+          "name": "f_bound_generics",
+          "template": "Scripts/test_templates/sema/f_bound_generics.kt"
+        },
+        {
+          "type": "diff",
+          "name": "f_bound_generics",
+          "template": "Scripts/test_templates/diff/f_bound_generics.kt"
+        }
       ]
     },
     {
@@ -293,56 +517,88 @@
       "category": "generics",
       "description": "Generic function type inference (argument type, expected type)",
       "cases": [
-        { "type": "golden-sema", "name": "generic_inference", "template": "Scripts/test_templates/sema/generic_inference.kt" }
+        {
+          "type": "golden-sema",
+          "name": "generic_inference",
+          "template": "Scripts/test_templates/sema/generic_inference.kt"
+        }
       ]
     },
     {
-      "task": "P5-127",
+      "task": "GEN-002",
       "category": "generics",
       "description": "Variance (out T / in T) declaration-site constraint violation diagnostics",
       "cases": [
-        { "type": "golden-sema", "name": "variance_violation", "template": "Scripts/test_templates/sema/variance_violation.kt" }
+        {
+          "type": "golden-sema",
+          "name": "variance_violation",
+          "template": "Scripts/test_templates/sema/variance_violation.kt"
+        }
       ]
     },
     {
-      "task": "P5-128",
+      "task": "GEN-003",
       "category": "generics",
       "description": "reified inline T::class / typeOf<T>()",
       "cases": [
-        { "type": "golden-sema", "name": "reified_type", "template": "Scripts/test_templates/sema/reified_type.kt" }
+        {
+          "type": "golden-sema",
+          "name": "reified_type",
+          "template": "Scripts/test_templates/sema/reified_type.kt"
+        }
       ]
     },
     {
-      "task": "P5-129",
+      "task": "GEN-004",
       "category": "generics",
       "description": "Generic lambda and SAM conversion (fun interface)",
       "cases": [
-        { "type": "golden-sema", "name": "sam_conversion", "template": "Scripts/test_templates/sema/sam_conversion.kt" },
-        { "type": "diff", "name": "sam_conversion", "template": "Scripts/test_templates/diff/sam_conversion.kt" }
+        {
+          "type": "golden-sema",
+          "name": "sam_conversion",
+          "template": "Scripts/test_templates/sema/sam_conversion.kt"
+        },
+        {
+          "type": "diff",
+          "name": "sam_conversion",
+          "template": "Scripts/test_templates/diff/sam_conversion.kt"
+        }
       ]
     },
     {
-      "task": "P5-130",
+      "task": "NULL-001",
       "category": "null_safety",
       "description": "Platform type (T!) handling",
       "cases": [
-        { "type": "golden-sema", "name": "platform_type", "template": "Scripts/test_templates/sema/platform_type.kt" }
+        {
+          "type": "golden-sema",
+          "name": "platform_type",
+          "template": "Scripts/test_templates/sema/platform_type.kt"
+        }
       ]
     },
     {
-      "task": "P5-131",
+      "task": "NULL-002",
       "category": "null_safety",
       "description": "Nullable receiver (T?.foo()) extension function resolution",
       "cases": [
-        { "type": "golden-sema", "name": "nullable_receiver_ext", "template": "Scripts/test_templates/sema/nullable_receiver_ext.kt" }
+        {
+          "type": "golden-sema",
+          "name": "nullable_receiver_ext",
+          "template": "Scripts/test_templates/sema/nullable_receiver_ext.kt"
+        }
       ]
     },
     {
-      "task": "P5-132",
+      "task": "NULL-003",
       "category": "null_safety",
       "description": "Nullable type argument (List<String?>) vs non-null distinction",
       "cases": [
-        { "type": "golden-sema", "name": "nullable_type_arg", "template": "Scripts/test_templates/sema/nullable_type_arg.kt" }
+        {
+          "type": "golden-sema",
+          "name": "nullable_type_arg",
+          "template": "Scripts/test_templates/sema/nullable_type_arg.kt"
+        }
       ]
     },
     {
@@ -350,7 +606,11 @@
       "category": "coroutines",
       "description": "withContext(Dispatchers.IO) dispatcher switching",
       "cases": [
-        { "type": "diff", "name": "with_context", "template": "Scripts/test_templates/diff/with_context.kt" }
+        {
+          "type": "diff",
+          "name": "with_context",
+          "template": "Scripts/test_templates/diff/with_context.kt"
+        }
       ]
     },
     {
@@ -358,7 +618,11 @@
       "category": "coroutines",
       "description": "Channel<T> basic send/receive",
       "cases": [
-        { "type": "diff", "name": "channel_basic", "template": "Scripts/test_templates/diff/channel_basic.kt" }
+        {
+          "type": "diff",
+          "name": "channel_basic",
+          "template": "Scripts/test_templates/diff/channel_basic.kt"
+        }
       ]
     },
     {
@@ -366,15 +630,23 @@
       "category": "coroutines",
       "description": "async/await (Deferred<T>)",
       "cases": [
-        { "type": "diff", "name": "async_await", "template": "Scripts/test_templates/diff/async_await.kt" }
+        {
+          "type": "diff",
+          "name": "async_await",
+          "template": "Scripts/test_templates/diff/async_await.kt"
+        }
       ]
     },
     {
-      "task": "P5-136",
+      "task": "CORO-002",
       "category": "coroutines",
       "description": "Coroutine cancellation and CancellationException propagation",
       "cases": [
-        { "type": "diff", "name": "coroutine_cancellation", "template": "Scripts/test_templates/diff/coroutine_cancellation.kt" }
+        {
+          "type": "diff",
+          "name": "coroutine_cancellation",
+          "template": "Scripts/test_templates/diff/coroutine_cancellation.kt"
+        }
       ]
     },
     {
@@ -382,32 +654,52 @@
       "category": "stdlib",
       "description": "Scope functions (let/run/apply/also)",
       "cases": [
-        { "type": "golden-sema", "name": "scope_functions", "template": "Scripts/test_templates/sema/scope_functions.kt" },
-        { "type": "diff", "name": "scope_functions", "template": "Scripts/test_templates/diff/scope_functions.kt" }
+        {
+          "type": "golden-sema",
+          "name": "scope_functions",
+          "template": "Scripts/test_templates/sema/scope_functions.kt"
+        },
+        {
+          "type": "diff",
+          "name": "scope_functions",
+          "template": "Scripts/test_templates/diff/scope_functions.kt"
+        }
       ]
     },
     {
-      "task": "P5-138",
+      "task": "STDLIB-002",
       "category": "stdlib",
       "description": "buildString/buildList/buildMap DSL builder",
       "cases": [
-        { "type": "diff", "name": "builder_dsl", "template": "Scripts/test_templates/diff/builder_dsl.kt" }
+        {
+          "type": "diff",
+          "name": "builder_dsl",
+          "template": "Scripts/test_templates/diff/builder_dsl.kt"
+        }
       ]
     },
     {
-      "task": "P5-139",
+      "task": "STDLIB-003",
       "category": "stdlib",
       "description": "Sequence<T> and lazy evaluation chain",
       "cases": [
-        { "type": "diff", "name": "sequence_lazy", "template": "Scripts/test_templates/diff/sequence_lazy.kt" }
+        {
+          "type": "diff",
+          "name": "sequence_lazy",
+          "template": "Scripts/test_templates/diff/sequence_lazy.kt"
+        }
       ]
     },
     {
-      "task": "P5-140",
+      "task": "MPP-001",
       "category": "multiplatform",
       "description": "expect/actual declarations",
       "cases": [
-        { "type": "golden-sema", "name": "expect_actual", "template": "Scripts/test_templates/sema/expect_actual.kt" }
+        {
+          "type": "golden-sema",
+          "name": "expect_actual",
+          "template": "Scripts/test_templates/sema/expect_actual.kt"
+        }
       ]
     },
     {
@@ -415,7 +707,11 @@
       "category": "multiplatform",
       "description": "File-level annotation (@file:JvmName, @file:Suppress)",
       "cases": [
-        { "type": "golden-sema", "name": "file_annotation", "template": "Scripts/test_templates/sema/file_annotation.kt" }
+        {
+          "type": "golden-sema",
+          "name": "file_annotation",
+          "template": "Scripts/test_templates/sema/file_annotation.kt"
+        }
       ]
     }
   ],
