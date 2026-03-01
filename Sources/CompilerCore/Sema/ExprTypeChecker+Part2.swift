@@ -182,12 +182,15 @@ extension ExprTypeChecker {
             if let signature = sema.symbols.functionSignature(for: symbol.id) {
                 return signature.returnType
             }
-            if symbol.kind == .property || symbol.kind == .field || symbol.kind == .object {
+            if symbol.kind == .property || symbol.kind == .field {
                 return sema.symbols.propertyType(for: symbol.id)
             }
             // Objects are singletons – always resolve to their nominal type so
             // that `ObjectName.member()` works.
             if symbol.kind == .object {
+                if let objectType = sema.symbols.propertyType(for: symbol.id) {
+                    return objectType
+                }
                 return sema.types.make(.classType(ClassType(classSymbol: symbol.id, args: [], nullability: .nonNull)))
             }
             // For class/interface/enum symbols, only resolve to nominal type when

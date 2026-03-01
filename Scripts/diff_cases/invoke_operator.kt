@@ -1,5 +1,3 @@
-package golden.sema
-
 class Adder {
     operator fun invoke(x: Int): Int = x + 1
 }
@@ -13,9 +11,7 @@ object Incrementer {
 fun makeAdder(): Adder = Adder()
 
 fun main() {
-    val adder = Adder()
-    val localResult: Int = adder(5)
-    val topLevelResult: Int = globalAdder(6)
-    val objectResult: Int = Incrementer(7)
-    val exprResult: Int = makeAdder()(8)
+    println(globalAdder(3))
+    println(Incrementer(3))
+    println(makeAdder()(3))
 }

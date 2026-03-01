@@ -136,14 +136,34 @@ final class CallTypeChecker {
                 callableTarget = .localValue(local.symbol)
                 callableCalleeType = local.type
             }
+        } else if let calleeName {
+            if !ctx.cachedScopeLookup(calleeName).isEmpty {
+                callableCalleeType = driver.inferExpr(
+                    calleeID,
+                    ctx: ctx,
+                    locals: &locals,
+                    expectedType: nil
+                )
+                callableTarget = driver.helpers.callableTargetForCalleeExpr(calleeID, sema: sema)
+            }
         } else if calleeName == nil {
-            let contextualReturnType = expectedType ?? sema.types.anyType
-            let contextualCalleeType = sema.types.make(.functionType(FunctionType(
-                params: argTypes,
-                returnType: contextualReturnType,
-                isSuspend: false,
-                nullability: .nonNull
-            )))
+            let contextualCalleeType: TypeID?
+            if let calleeExpr {
+                switch calleeExpr {
+                case .lambdaLiteral, .callableRef:
+                    let contextualReturnType = expectedType ?? sema.types.anyType
+                    contextualCalleeType = sema.types.make(.functionType(FunctionType(
+                        params: argTypes,
+                        returnType: contextualReturnType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                default:
+                    contextualCalleeType = nil
+                }
+            } else {
+                contextualCalleeType = nil
+            }
             callableCalleeType = driver.inferExpr(
                 calleeID,
                 ctx: ctx,
@@ -151,6 +171,11 @@ final class CallTypeChecker {
                 expectedType: contextualCalleeType
             )
             callableTarget = driver.helpers.callableTargetForCalleeExpr(calleeID, sema: sema)
+        }
+
+        if callableCalleeType == sema.types.errorType {
+            sema.bindings.bindExprType(id, type: sema.types.errorType)
+            return sema.types.errorType
         }
 
         if let callableCalleeType,
