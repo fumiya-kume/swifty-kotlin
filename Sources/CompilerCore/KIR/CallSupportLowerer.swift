@@ -341,7 +341,7 @@ final class CallSupportLowerer {
         }
         return NormalizedCallResult(arguments: normalized, defaultMask: mask)
     }
-    private func packVarargArguments(
+    func packVarargArguments(
         argIndices: [Int],
         providedArguments: [KIRExprID],
         spreadFlags: [Bool],
@@ -437,7 +437,7 @@ final class CallSupportLowerer {
         return arrayID
     }
 
-    private func emitArrayNew(
+    func emitArrayNew(
         count: Int,
         arena: KIRArena,
         interner: StringInterner,
