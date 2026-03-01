@@ -5,9 +5,9 @@ public func kk_box_int(_ value: Int) -> Int {
     if value == runtimeNullSentinelInt { return value }
     let box = RuntimeIntBox(value)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    RuntimeStorage.lock.lock()
-    RuntimeStorage.objectPointers.insert(UInt(bitPattern: opaque))
-    RuntimeStorage.lock.unlock()
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
     return Int(bitPattern: opaque)
 }
 
@@ -16,9 +16,9 @@ public func kk_box_bool(_ value: Int) -> Int {
     if value == runtimeNullSentinelInt { return value }
     let box = RuntimeBoolBox(value != 0)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    RuntimeStorage.lock.lock()
-    RuntimeStorage.objectPointers.insert(UInt(bitPattern: opaque))
-    RuntimeStorage.lock.unlock()
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
     return Int(bitPattern: opaque)
 }
 
@@ -30,9 +30,9 @@ public func kk_unbox_int(_ obj: Int) -> Int {
     guard let objPointer = UnsafeMutableRawPointer(bitPattern: obj) else {
         return obj
     }
-    RuntimeStorage.lock.lock()
-    let isObjectPointer = RuntimeStorage.objectPointers.contains(UInt(bitPattern: objPointer))
-    RuntimeStorage.lock.unlock()
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: objPointer))
+    }
     guard isObjectPointer else {
         return obj
     }
@@ -50,9 +50,9 @@ public func kk_unbox_bool(_ obj: Int) -> Int {
     guard let objPointer = UnsafeMutableRawPointer(bitPattern: obj) else {
         return obj != 0 ? 1 : 0
     }
-    RuntimeStorage.lock.lock()
-    let isObjectPointer = RuntimeStorage.objectPointers.contains(UInt(bitPattern: objPointer))
-    RuntimeStorage.lock.unlock()
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: objPointer))
+    }
     guard isObjectPointer else {
         return obj != 0 ? 1 : 0
     }

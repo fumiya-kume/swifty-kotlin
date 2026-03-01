@@ -146,22 +146,22 @@ final class RuntimeHelpersTests: XCTestCase {
     func testRunBlockingCompletesWhenCallbackCalledAsync() {
         var count = 0
         KxMiniRuntime.runBlocking { done in
-            DispatchQueue.global().async {
+            DispatchQueue.global().async(execute: DispatchWorkItem {
                 count = 42
                 done(nil)
-            }
+            })
         }
         XCTAssertEqual(count, 42)
     }
 
     // MARK: - KxMiniRuntime.launch
 
-    func testLaunchExecutesBlock() {
+    func testLaunchExecutesBlock() async {
         let expectation = self.expectation(description: "launch block executed")
         KxMiniRuntime.launch {
             expectation.fulfill()
         }
-        waitForExpectations(timeout: 2.0)
+        await fulfillment(of: [expectation], timeout: 2.0)
     }
 
     // MARK: - KxMiniRuntime.async
@@ -173,30 +173,30 @@ final class RuntimeHelpersTests: XCTestCase {
 
     // MARK: - KxMiniRuntime.delay
 
-    func testDelayInvokesContinuationAfterDelay() {
+    func testDelayInvokesContinuationAfterDelay() async {
         let expectation = self.expectation(description: "delay continuation invoked")
         let continuation = KKDispatchContinuation(context: nil) { _ in
             expectation.fulfill()
         }
         KxMiniRuntime.delay(milliseconds: 10, continuation: continuation)
-        waitForExpectations(timeout: 3.0)
+        await fulfillment(of: [expectation], timeout: 3.0)
     }
 
-    func testDelayWithZeroMilliseconds() {
+    func testDelayWithZeroMilliseconds() async {
         let expectation = self.expectation(description: "zero delay continuation invoked")
         let continuation = KKDispatchContinuation(context: nil) { _ in
             expectation.fulfill()
         }
         KxMiniRuntime.delay(milliseconds: 0, continuation: continuation)
-        waitForExpectations(timeout: 3.0)
+        await fulfillment(of: [expectation], timeout: 3.0)
     }
 
-    func testDelayWithNegativeMilliseconds() {
+    func testDelayWithNegativeMilliseconds() async {
         let expectation = self.expectation(description: "negative delay continuation invoked")
         let continuation = KKDispatchContinuation(context: nil) { _ in
             expectation.fulfill()
         }
         KxMiniRuntime.delay(milliseconds: -5, continuation: continuation)
-        waitForExpectations(timeout: 3.0)
+        await fulfillment(of: [expectation], timeout: 3.0)
     }
 }

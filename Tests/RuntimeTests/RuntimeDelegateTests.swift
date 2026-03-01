@@ -1,17 +1,114 @@
+import Foundation
 import XCTest
 @testable import Runtime
 
+private final class DelegateCallbackState: @unchecked Sendable {
+    private let lock = NSLock()
+    private var lazyCallCount = 0
+    private var observableCapturedOld = -1
+    private var observableCapturedNew = -1
+    private var observableHandle: Int = 0
+    private var observableValueInsideCallback = -1
+    private var vetoableHandle: Int = 0
+    private var vetoableValueInsideCallback = -1
+
+    func reset() {
+        lock.lock()
+        lazyCallCount = 0
+        observableCapturedOld = -1
+        observableCapturedNew = -1
+        observableHandle = 0
+        observableValueInsideCallback = -1
+        vetoableHandle = 0
+        vetoableValueInsideCallback = -1
+        lock.unlock()
+    }
+
+    func incrementLazyCallCount() {
+        lock.lock()
+        lazyCallCount += 1
+        lock.unlock()
+    }
+
+    func lazyCallCountSnapshot() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return lazyCallCount
+    }
+
+    func setObservableCaptured(old: Int, new: Int) {
+        lock.lock()
+        observableCapturedOld = old
+        observableCapturedNew = new
+        lock.unlock()
+    }
+
+    func observableCapturedOldSnapshot() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return observableCapturedOld
+    }
+
+    func observableCapturedNewSnapshot() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return observableCapturedNew
+    }
+
+    func setObservableHandle(_ value: Int) {
+        lock.lock()
+        observableHandle = value
+        lock.unlock()
+    }
+
+    func observableHandleSnapshot() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return observableHandle
+    }
+
+    func setObservableValueInsideCallback(_ value: Int) {
+        lock.lock()
+        observableValueInsideCallback = value
+        lock.unlock()
+    }
+
+    func observableValueInsideCallbackSnapshot() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return observableValueInsideCallback
+    }
+
+    func setVetoableHandle(_ value: Int) {
+        lock.lock()
+        vetoableHandle = value
+        lock.unlock()
+    }
+
+    func vetoableHandleSnapshot() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return vetoableHandle
+    }
+
+    func setVetoableValueInsideCallback(_ value: Int) {
+        lock.lock()
+        vetoableValueInsideCallback = value
+        lock.unlock()
+    }
+
+    func vetoableValueInsideCallbackSnapshot() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return vetoableValueInsideCallback
+    }
+}
+
 // Global state for callback testing (C function pointers cannot capture context).
-private var gLazyCallCount = 0
-private var gObservableCapturedOld = -1
-private var gObservableCapturedNew = -1
-private var gObservableHandle: Int = 0
-private var gObservableValueInsideCallback = -1
-private var gVetoableHandle: Int = 0
-private var gVetoableValueInsideCallback = -1
+private let gDelegateState = DelegateCallbackState()
 
 private func lazyCountingInit() -> Int {
-    gLazyCallCount += 1
+    gDelegateState.incrementLazyCallCount()
     return 99
 }
 private let lazyCountingInitCConv: @convention(c) () -> Int = { lazyCountingInit() }
@@ -21,17 +118,18 @@ private let lazySimple77: @convention(c) () -> Int = { 77 }
 
 private let observableNoopCallback: @convention(c) (Int, Int, Int) -> Void = { _, _, _ in }
 private let observableCaptureCallback: @convention(c) (Int, Int, Int) -> Void = { _, old, new in
-    gObservableCapturedOld = old
-    gObservableCapturedNew = new
+    gDelegateState.setObservableCaptured(old: old, new: new)
 }
 private let observableOrderCallback: @convention(c) (Int, Int, Int) -> Void = { _, _, _ in
-    gObservableValueInsideCallback = kk_observable_get_value(gObservableHandle)
+    let handle = gDelegateState.observableHandleSnapshot()
+    gDelegateState.setObservableValueInsideCallback(kk_observable_get_value(handle))
 }
 
 private let vetoableAcceptCallback: @convention(c) (Int, Int, Int) -> Int = { _, _, _ in 1 }
 private let vetoableRejectCallback: @convention(c) (Int, Int, Int) -> Int = { _, _, _ in 0 }
 private let vetoableOrderCallback: @convention(c) (Int, Int, Int) -> Int = { _, _, _ in
-    gVetoableValueInsideCallback = kk_vetoable_get_value(gVetoableHandle)
+    let handle = gDelegateState.vetoableHandleSnapshot()
+    gDelegateState.setVetoableValueInsideCallback(kk_vetoable_get_value(handle))
     return 1
 }
 
@@ -39,13 +137,7 @@ final class RuntimeDelegateTests: XCTestCase {
     override func setUp() {
         super.setUp()
         kk_runtime_force_reset()
-        gLazyCallCount = 0
-        gObservableCapturedOld = -1
-        gObservableCapturedNew = -1
-        gObservableHandle = 0
-        gObservableValueInsideCallback = -1
-        gVetoableHandle = 0
-        gVetoableValueInsideCallback = -1
+        gDelegateState.reset()
     }
 
     override func tearDown() {
@@ -67,11 +159,11 @@ final class RuntimeDelegateTests: XCTestCase {
 
         let v1 = kk_lazy_get_value(handle)
         XCTAssertEqual(v1, 99)
-        XCTAssertEqual(gLazyCallCount, 1)
+        XCTAssertEqual(gDelegateState.lazyCallCountSnapshot(), 1)
 
         let v2 = kk_lazy_get_value(handle)
         XCTAssertEqual(v2, 99)
-        XCTAssertEqual(gLazyCallCount, 1, "Initializer should only be called once")
+        XCTAssertEqual(gDelegateState.lazyCallCountSnapshot(), 1, "Initializer should only be called once")
     }
 
     func testLazyNoneModeAlsoWorks() {
@@ -106,8 +198,8 @@ final class RuntimeDelegateTests: XCTestCase {
         XCTAssertEqual(result, 20)
 
         // Callback should have been invoked with old=10, new=20
-        XCTAssertEqual(gObservableCapturedOld, 10)
-        XCTAssertEqual(gObservableCapturedNew, 20)
+        XCTAssertEqual(gDelegateState.observableCapturedOldSnapshot(), 10)
+        XCTAssertEqual(gDelegateState.observableCapturedNewSnapshot(), 20)
 
         let current = kk_observable_get_value(handle)
         XCTAssertEqual(current, 20)
@@ -116,10 +208,11 @@ final class RuntimeDelegateTests: XCTestCase {
     func testObservableCallbackOrderMatchesKotlinc() {
         // In kotlinc, observable callback fires AFTER the value is already changed.
         let cbPtr = unsafeBitCast(observableOrderCallback, to: Int.self)
-        gObservableHandle = kk_observable_create(5, cbPtr)
+        let handle = kk_observable_create(5, cbPtr)
+        gDelegateState.setObservableHandle(handle)
 
-        _ = kk_observable_set_value(gObservableHandle, 15)
-        XCTAssertEqual(gObservableValueInsideCallback, 15,
+        _ = kk_observable_set_value(handle, 15)
+        XCTAssertEqual(gDelegateState.observableValueInsideCallbackSnapshot(), 15,
                        "Value should be updated before callback is invoked")
     }
 
@@ -164,10 +257,11 @@ final class RuntimeDelegateTests: XCTestCase {
     func testVetoableCallbackOrderMatchesKotlinc() {
         // In kotlinc, vetoable callback fires BEFORE the value is changed.
         let cbPtr = unsafeBitCast(vetoableOrderCallback, to: Int.self)
-        gVetoableHandle = kk_vetoable_create(50, cbPtr)
+        let handle = kk_vetoable_create(50, cbPtr)
+        gDelegateState.setVetoableHandle(handle)
 
-        _ = kk_vetoable_set_value(gVetoableHandle, 60)
-        XCTAssertEqual(gVetoableValueInsideCallback, 50,
+        _ = kk_vetoable_set_value(handle, 60)
+        XCTAssertEqual(gDelegateState.vetoableValueInsideCallbackSnapshot(), 50,
                        "Value should NOT be updated before vetoable callback")
     }
 

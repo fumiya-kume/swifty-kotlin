@@ -291,9 +291,9 @@ internal final class RuntimeCoroutineScope {
                 if !consumed {
                     Unmanaged<AnyObject>.fromOpaque(ptr).release()
                     // Clean up from RuntimeStorage
-                    RuntimeStorage.lock.lock()
-                    RuntimeStorage.objectPointers.remove(UInt(bitPattern: ptr))
-                    RuntimeStorage.lock.unlock()
+                    runtimeStorage.withLock { state in
+                        state.objectPointers.remove(UInt(bitPattern: ptr))
+                    }
                 }
             }
         }
@@ -302,10 +302,10 @@ internal final class RuntimeCoroutineScope {
 
 @_cdecl("kk_coroutine_suspended")
 public func kk_coroutine_suspended() -> UnsafeMutableRawPointer {
-    let ptr = UnsafeMutableRawPointer(Unmanaged.passUnretained(RuntimeStorage.coroutineSuspendedBox).toOpaque())
-    RuntimeStorage.lock.lock()
-    RuntimeStorage.objectPointers.insert(UInt(bitPattern: ptr))
-    RuntimeStorage.lock.unlock()
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passUnretained(runtimeStorage.coroutineSuspendedBox).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: ptr))
+    }
     return ptr
 }
 
@@ -313,9 +313,9 @@ public func kk_coroutine_suspended() -> UnsafeMutableRawPointer {
 public func kk_coroutine_continuation_new(_ functionID: Int) -> Int {
     let state = RuntimeContinuationState(functionID: Int64(functionID))
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(state).toOpaque())
-    RuntimeStorage.lock.lock()
-    RuntimeStorage.objectPointers.insert(UInt(bitPattern: ptr))
-    RuntimeStorage.lock.unlock()
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: ptr))
+    }
     return Int(bitPattern: ptr)
 }
 
@@ -348,9 +348,9 @@ public func kk_coroutine_state_set_label(_ continuation: Int, _ label: Int) -> I
 @_cdecl("kk_coroutine_state_exit")
 public func kk_coroutine_state_exit(_ continuation: Int, _ value: Int) -> Int {
     if let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) {
-        RuntimeStorage.lock.lock()
-        RuntimeStorage.objectPointers.remove(UInt(bitPattern: continuationPtr))
-        RuntimeStorage.lock.unlock()
+        runtimeStorage.withLock { state in
+            state.objectPointers.remove(UInt(bitPattern: continuationPtr))
+        }
         Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).release()
     }
     return value
@@ -403,9 +403,9 @@ public func kk_kxmini_run_blocking(_ entryPointRaw: Int, _ functionID: Int) -> I
 public func kk_kxmini_launch(_ entryPointRaw: Int, _ functionID: Int) -> Int {
     let job = RuntimeJobHandle()
     let jobPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(job).toOpaque())
-    RuntimeStorage.lock.lock()
-    RuntimeStorage.objectPointers.insert(UInt(bitPattern: jobPtr))
-    RuntimeStorage.lock.unlock()
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: jobPtr))
+    }
 
     // Register with current scope if any
     if let scope = RuntimeCoroutineScope.current {
@@ -462,9 +462,9 @@ public func kk_kxmini_run_blocking_with_cont(_ entryPointRaw: Int, _ continuatio
 public func kk_kxmini_launch_with_cont(_ entryPointRaw: Int, _ continuation: Int) -> Int {
     let job = RuntimeJobHandle()
     let jobPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(job).toOpaque())
-    RuntimeStorage.lock.lock()
-    RuntimeStorage.objectPointers.insert(UInt(bitPattern: jobPtr))
-    RuntimeStorage.lock.unlock()
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: jobPtr))
+    }
 
     // Link job to continuation state
     if let state = runtimeContinuationState(from: continuation) {
@@ -540,9 +540,9 @@ internal final class RuntimeFlowHandle {
 public func kk_flow_create(_ emitterFnPtr: Int, _ continuation: Int) -> Int {
     let flow = RuntimeFlowHandle(emitterFnPtr: emitterFnPtr)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(flow).toOpaque())
-    RuntimeStorage.lock.lock()
-    RuntimeStorage.objectPointers.insert(UInt(bitPattern: ptr))
-    RuntimeStorage.lock.unlock()
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: ptr))
+    }
     return Int(bitPattern: ptr)
 }
 
@@ -699,9 +699,9 @@ internal final class RuntimeChannelHandle {
 public func kk_channel_create(_ capacity: Int) -> Int {
     let channel = RuntimeChannelHandle(capacity: capacity)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(channel).toOpaque())
-    RuntimeStorage.lock.lock()
-    RuntimeStorage.objectPointers.insert(UInt(bitPattern: ptr))
-    RuntimeStorage.lock.unlock()
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: ptr))
+    }
     return Int(bitPattern: ptr)
 }
 
@@ -762,9 +762,9 @@ private func runtimeReadArrayElement(arrayRaw: Int, index: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: arrayRaw) else {
         return 0
     }
-    RuntimeStorage.lock.lock()
-    let isObjectPointer = RuntimeStorage.objectPointers.contains(UInt(bitPattern: ptr))
-    RuntimeStorage.lock.unlock()
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
     guard isObjectPointer else {
         return 0
     }
@@ -784,9 +784,9 @@ private func runtimeReadArrayElement(arrayRaw: Int, index: Int) -> Int {
 public func kk_coroutine_scope_new() -> Int {
     let scope = RuntimeCoroutineScope()
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(scope).toOpaque())
-    RuntimeStorage.lock.lock()
-    RuntimeStorage.objectPointers.insert(UInt(bitPattern: ptr))
-    RuntimeStorage.lock.unlock()
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: ptr))
+    }
 
     // Push: save parent scope and set this as current
     scope.parent = RuntimeCoroutineScope.current
@@ -819,9 +819,9 @@ public func kk_coroutine_scope_wait(_ scopeHandle: Int) -> Int {
     RuntimeCoroutineScope.current = scope.parent
 
     // Release the scope
-    RuntimeStorage.lock.lock()
-    RuntimeStorage.objectPointers.remove(UInt(bitPattern: ptr))
-    RuntimeStorage.lock.unlock()
+    runtimeStorage.withLock { state in
+        state.objectPointers.remove(UInt(bitPattern: ptr))
+    }
     Unmanaged<RuntimeCoroutineScope>.fromOpaque(ptr).release()
     return 0
 }
@@ -863,9 +863,9 @@ public func kk_job_join(_ jobHandle: Int) -> Int {
     // Release the original passRetained from launch
     Unmanaged<AnyObject>.fromOpaque(ptr).release()
     // Clean up from RuntimeStorage
-    RuntimeStorage.lock.lock()
-    RuntimeStorage.objectPointers.remove(UInt(bitPattern: ptr))
-    RuntimeStorage.lock.unlock()
+    runtimeStorage.withLock { state in
+        state.objectPointers.remove(UInt(bitPattern: ptr))
+    }
     return result
 }
 

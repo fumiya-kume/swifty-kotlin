@@ -29,6 +29,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install Swift
         uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.2"
       - name: Install LLVM
         run: sudo apt-get update && sudo apt-get install -y llvm-dev
       - name: Configure LLVM paths
@@ -39,9 +41,9 @@ jobs:
       - name: Show toolchain versions
         run: swift --version
       - name: Build with strict concurrency (warnings)
-        run: swift build -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency
+        run: swift build -Xswiftc -swift-version -Xswiftc 6 -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency
       - name: Run smoke tests
-        run: bash Scripts/swift_test.sh --filter SmokeTests
+        run: bash Scripts/swift_test.sh --filter SmokeTests -Xswiftc -swift-version -Xswiftc 6
 
   diff-regression:
     name: kotlinc Diff Regression
@@ -51,6 +53,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install Swift
         uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.2"
       - name: Install LLVM
         run: sudo apt-get update && sudo apt-get install -y llvm-dev
       - name: Configure LLVM paths
@@ -65,9 +69,9 @@ jobs:
           java -version
           kotlinc -version
       - name: Build compiler
-        run: swift build
+        run: swift build -Xswiftc -swift-version -Xswiftc 6
       - name: Build with strict concurrency (warnings)
-        run: swift build -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency
+        run: swift build -Xswiftc -swift-version -Xswiftc 6 -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency
       - name: Run kotlinc diff regression cases
         id: diff_kotlinc
         continue-on-error: true
@@ -97,6 +101,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install Swift
         uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.2"
       - name: Install LLVM and jq
         run: sudo apt-get update && sudo apt-get install -y llvm-dev jq
       - name: Configure LLVM paths
@@ -107,7 +113,7 @@ jobs:
       - name: Verify prerequisites
         run: jq --version
       - name: Build with strict concurrency (warnings)
-        run: swift build -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency
+        run: swift build -Xswiftc -swift-version -Xswiftc 6 -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency
       - name: Run tests with coverage threshold
         id: coverage
         continue-on-error: true

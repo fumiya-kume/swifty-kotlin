@@ -12,9 +12,9 @@ public func kk_lazy_create(_ initFnPtr: Int, _ mode: Int) -> Int {
     let safetyMode = LazyThreadSafetyMode(rawValue: mode) ?? .synchronized
     let box = RuntimeLazyBox(initializerFnPtr: initFnPtr, mode: safetyMode)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    RuntimeStorage.lock.lock()
-    RuntimeStorage.objectPointers.insert(UInt(bitPattern: opaque))
-    RuntimeStorage.lock.unlock()
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
     return Int(bitPattern: opaque)
 }
 
@@ -26,9 +26,9 @@ public func kk_lazy_get_value(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return 0
     }
-    RuntimeStorage.lock.lock()
-    let isObj = RuntimeStorage.objectPointers.contains(UInt(bitPattern: ptr))
-    RuntimeStorage.lock.unlock()
+    let isObj = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
     guard isObj, let box = tryCast(ptr, to: RuntimeLazyBox.self) else {
         return 0
     }
@@ -47,9 +47,9 @@ public func kk_lazy_get_value(_ handle: Int) -> Int {
 public func kk_observable_create(_ initialValue: Int, _ callbackFnPtr: Int) -> Int {
     let box = RuntimeObservableBox(initialValue: initialValue, callbackFnPtr: callbackFnPtr)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    RuntimeStorage.lock.lock()
-    RuntimeStorage.objectPointers.insert(UInt(bitPattern: opaque))
-    RuntimeStorage.lock.unlock()
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
     return Int(bitPattern: opaque)
 }
 
@@ -59,9 +59,9 @@ public func kk_observable_get_value(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return 0
     }
-    RuntimeStorage.lock.lock()
-    let isObj = RuntimeStorage.objectPointers.contains(UInt(bitPattern: ptr))
-    RuntimeStorage.lock.unlock()
+    let isObj = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
     guard isObj, let box = tryCast(ptr, to: RuntimeObservableBox.self) else {
         return 0
     }
@@ -76,9 +76,9 @@ public func kk_observable_set_value(_ handle: Int, _ newValue: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return 0
     }
-    RuntimeStorage.lock.lock()
-    let isObj = RuntimeStorage.objectPointers.contains(UInt(bitPattern: ptr))
-    RuntimeStorage.lock.unlock()
+    let isObj = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
     guard isObj, let box = tryCast(ptr, to: RuntimeObservableBox.self) else {
         return 0
     }
@@ -106,9 +106,9 @@ public func kk_observable_set_value(_ handle: Int, _ newValue: Int) -> Int {
 public func kk_vetoable_create(_ initialValue: Int, _ callbackFnPtr: Int) -> Int {
     let box = RuntimeVetoableBox(initialValue: initialValue, callbackFnPtr: callbackFnPtr)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    RuntimeStorage.lock.lock()
-    RuntimeStorage.objectPointers.insert(UInt(bitPattern: opaque))
-    RuntimeStorage.lock.unlock()
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
     return Int(bitPattern: opaque)
 }
 
@@ -118,9 +118,9 @@ public func kk_vetoable_get_value(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return 0
     }
-    RuntimeStorage.lock.lock()
-    let isObj = RuntimeStorage.objectPointers.contains(UInt(bitPattern: ptr))
-    RuntimeStorage.lock.unlock()
+    let isObj = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
     guard isObj, let box = tryCast(ptr, to: RuntimeVetoableBox.self) else {
         return 0
     }
@@ -136,9 +136,9 @@ public func kk_vetoable_set_value(_ handle: Int, _ newValue: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return 0
     }
-    RuntimeStorage.lock.lock()
-    let isObj = RuntimeStorage.objectPointers.contains(UInt(bitPattern: ptr))
-    RuntimeStorage.lock.unlock()
+    let isObj = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
     guard isObj, let box = tryCast(ptr, to: RuntimeVetoableBox.self) else {
         return 0
     }

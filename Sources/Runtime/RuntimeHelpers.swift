@@ -19,9 +19,9 @@ internal func runtimeArrayBox(from rawValue: Int) -> RuntimeArrayBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }
-    RuntimeStorage.lock.lock()
-    let isObjectPointer = RuntimeStorage.objectPointers.contains(UInt(bitPattern: ptr))
-    RuntimeStorage.lock.unlock()
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
     guard isObjectPointer else {
         return nil
     }
@@ -31,9 +31,9 @@ internal func runtimeArrayBox(from rawValue: Int) -> RuntimeArrayBox? {
 internal func runtimeAllocateThrowable(message: String) -> Int {
     let throwable = RuntimeThrowableBox(message: message)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(throwable).toOpaque())
-    RuntimeStorage.lock.lock()
-    RuntimeStorage.objectPointers.insert(UInt(bitPattern: ptr))
-    RuntimeStorage.lock.unlock()
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: ptr))
+    }
     return Int(bitPattern: ptr)
 }
 
@@ -47,9 +47,9 @@ internal func extractString(from ptr: UnsafeMutableRawPointer?) -> String? {
     guard let ptr = normalizeNullableRuntimePointer(ptr) else {
         return nil
     }
-    RuntimeStorage.lock.lock()
-    let isObjectPointer = RuntimeStorage.objectPointers.contains(UInt(bitPattern: ptr))
-    RuntimeStorage.lock.unlock()
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
     guard isObjectPointer else {
         return nil
     }
@@ -94,8 +94,8 @@ public enum KxMiniRuntime {
         group.wait()
     }
 
-    public static func launch(_ block: @escaping @Sendable () -> Void) {
-        DispatchQueue.global().async(execute: block)
+    public static func launch(_ block: @escaping () -> Void) {
+        DispatchQueue.global().async(execute: DispatchWorkItem(block: block))
     }
 
     public static func `async`(_ block: @escaping () -> UnsafeMutableRawPointer?) -> KKContinuation {

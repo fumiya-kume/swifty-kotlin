@@ -29,9 +29,9 @@ public func kk_string_from_utf8(_ ptr: UnsafePointer<UInt8>, _ len: Int32) -> Un
     let string = String(decoding: buffer, as: UTF8.self)
     let box = RuntimeStringBox(string)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    RuntimeStorage.lock.lock()
-    RuntimeStorage.objectPointers.insert(UInt(bitPattern: opaque))
-    RuntimeStorage.lock.unlock()
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
     return opaque
 }
 
@@ -41,9 +41,9 @@ public func kk_string_concat(_ a: UnsafeMutableRawPointer?, _ b: UnsafeMutableRa
     let rhs = extractString(from: normalizeNullableRuntimePointer(b)) ?? ""
     let box = RuntimeStringBox(lhs + rhs)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    RuntimeStorage.lock.lock()
-    RuntimeStorage.objectPointers.insert(UInt(bitPattern: opaque))
-    RuntimeStorage.lock.unlock()
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
     return opaque
 }
 
@@ -60,9 +60,9 @@ public func kk_string_compareTo(_ a: UnsafeMutableRawPointer?, _ b: UnsafeMutabl
 public func kk_array_new(_ length: Int) -> Int {
     let box = RuntimeArrayBox(length: length)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    RuntimeStorage.lock.lock()
-    RuntimeStorage.objectPointers.insert(UInt(bitPattern: opaque))
-    RuntimeStorage.lock.unlock()
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
     return Int(bitPattern: opaque)
 }
 
@@ -150,9 +150,9 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
         Swift.print(intValue)
         return
     }
-    RuntimeStorage.lock.lock()
-    let isObjectPointer = RuntimeStorage.objectPointers.contains(UInt(bitPattern: raw))
-    RuntimeStorage.lock.unlock()
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: raw))
+    }
     if !isObjectPointer {
         Swift.print(intValue)
         return
