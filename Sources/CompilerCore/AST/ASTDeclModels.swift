@@ -326,7 +326,7 @@ public struct EnumEntryDecl {
     public let name: InternedString
 }
 
-public struct ImportDecl {
+public struct ImportDecl: Sendable {
     public let range: SourceRange
     public let path: [InternedString]
     public let alias: InternedString?

@@ -28,7 +28,7 @@ public struct TypeRefID: Hashable, Sendable {
     }
 }
 
-public enum Visibility: Int {
+public enum Visibility: Int, Sendable {
     case `public`
     case `private`
     case `internal`

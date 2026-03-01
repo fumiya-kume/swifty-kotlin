@@ -45,6 +45,8 @@ public struct SyntaxNode: Equatable {
     public let childCount: Int16
 }
 
+/// Concurrency model:
+/// single-owner lifecycle (`KotlinParser` build, then one AST build task reads it).
 public final class SyntaxArena: @unchecked Sendable {
     public private(set) var nodes: [SyntaxNode] = []
     public private(set) var children: [SyntaxChild] = []

@@ -13,7 +13,7 @@ public enum RuntimeABIExterns {
     public static let specVersion = "J17"
 
     /// A single extern function declaration for the C preamble.
-    public struct ExternDecl: Equatable {
+    public struct ExternDecl: Equatable, Sendable {
         public let name: String
         public let parameterTypes: [String]
         public let returnType: String

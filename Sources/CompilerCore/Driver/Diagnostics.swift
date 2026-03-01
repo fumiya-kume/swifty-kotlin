@@ -17,14 +17,20 @@ public struct Diagnostic: Equatable {
 
 public final class DiagnosticEngine: @unchecked Sendable {
     private let lock = NSLock()
-    public private(set) var diagnostics: [Diagnostic] = []
+    private var _diagnostics: [Diagnostic] = []
+
+    public var diagnostics: [Diagnostic] {
+        lock.lock()
+        defer { lock.unlock() }
+        return _diagnostics
+    }
 
     public init() {}
 
     public func emit(_ diagnostic: Diagnostic) {
         lock.lock()
         defer { lock.unlock() }
-        diagnostics.append(diagnostic)
+        _diagnostics.append(diagnostic)
     }
 
     public func error(_ code: String, _ message: String, range: SourceRange?) {
@@ -68,7 +74,9 @@ public final class DiagnosticEngine: @unchecked Sendable {
     }
 
     public var hasError: Bool {
-        diagnostics.contains(where: { $0.severity == .error })
+        lock.lock()
+        defer { lock.unlock() }
+        return _diagnostics.contains(where: { $0.severity == .error })
     }
 
     /// Sort the diagnostics array in-place by source location for deterministic
@@ -76,12 +84,12 @@ public final class DiagnosticEngine: @unchecked Sendable {
     public func sortBySourceLocation() {
         lock.lock()
         defer { lock.unlock() }
-        diagnostics.sort(by: diagnosticsOrder(lhs:rhs:))
+        _diagnostics.sort(by: diagnosticsOrder(lhs:rhs:))
     }
 
     public func render(_ sourceManager: SourceManager) -> String {
         lock.lock()
-        let ordered = diagnostics.sorted(by: diagnosticsOrder(lhs:rhs:))
+        let ordered = _diagnostics.sorted(by: diagnosticsOrder(lhs:rhs:))
         lock.unlock()
         return ordered.map { formatDiagnostic($0, sourceManager: sourceManager) }.joined(separator: "\n")
     }

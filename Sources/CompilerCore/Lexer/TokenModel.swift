@@ -1,6 +1,6 @@
 import Foundation
 
-public struct InternedString: Hashable {
+public struct InternedString: Hashable, Sendable {
     public let rawValue: Int32
 
     public static let invalid = InternedString(rawValue: -1)
@@ -42,7 +42,7 @@ public final class StringInterner: @unchecked Sendable {
     }
 }
 
-public enum Keyword: String {
+public enum Keyword: String, Sendable {
     case `as`
     case `break`
     case `class`
@@ -106,7 +106,7 @@ public enum Keyword: String {
     case value
 }
 
-public enum SoftKeyword: String {
+public enum SoftKeyword: String, Sendable {
     case by
     case get
     case set
@@ -124,7 +124,7 @@ public enum SoftKeyword: String {
     case `when`
 }
 
-public enum Symbol: String {
+public enum Symbol: String, Sendable {
     case plus = "+"
     case minus = "-"
     case star = "*"
@@ -172,7 +172,7 @@ public enum Symbol: String {
     case hash = "#"
 }
 
-public enum TriviaPiece: Equatable {
+public enum TriviaPiece: Equatable, Sendable {
     case spaces(Int)
     case tabs(Int)
     case newline
@@ -181,7 +181,7 @@ public enum TriviaPiece: Equatable {
     case shebang(String)
 }
 
-public enum TokenKind: Equatable {
+public enum TokenKind: Equatable, Sendable {
     case identifier(InternedString)
     case backtickedIdentifier(InternedString)
     case keyword(Keyword)
@@ -202,7 +202,7 @@ public enum TokenKind: Equatable {
     indirect case missing(expected: TokenKind)
 }
 
-public struct Token: Equatable {
+public struct Token: Equatable, Sendable {
     public let kind: TokenKind
     public let range: SourceRange
     public let leadingTrivia: [TriviaPiece]

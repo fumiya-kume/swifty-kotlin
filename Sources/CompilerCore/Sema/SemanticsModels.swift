@@ -1,4 +1,4 @@
-public struct SymbolID: Hashable {
+public struct SymbolID: Hashable, Sendable {
     public let rawValue: Int32
 
     public static let invalid = SymbolID(rawValue: -1)
@@ -8,7 +8,7 @@ public struct SymbolID: Hashable {
     }
 }
 
-public enum SymbolKind: Hashable {
+public enum SymbolKind: Hashable, Sendable {
     case package
     case `class`
     case `interface`
@@ -27,7 +27,7 @@ public enum SymbolKind: Hashable {
     case label
 }
 
-public struct SymbolFlags: OptionSet {
+public struct SymbolFlags: OptionSet, Sendable {
     public let rawValue: UInt32
 
     public init(rawValue: UInt32) {
@@ -49,7 +49,7 @@ public struct SymbolFlags: OptionSet {
     public static let abstractType = SymbolFlags(rawValue: 1 << 12)
 }
 
-public struct SemanticSymbol {
+public struct SemanticSymbol: Sendable {
     public let id: SymbolID
     public let kind: SymbolKind
     public let name: InternedString
@@ -59,7 +59,7 @@ public struct SemanticSymbol {
     public let flags: SymbolFlags
 }
 
-public struct FunctionSignature: Hashable {
+public struct FunctionSignature: Hashable, Sendable {
     public let receiverType: TypeID?
     public let parameterTypes: [TypeID]
     public let returnType: TypeID
@@ -103,7 +103,7 @@ public struct FunctionSignature: Hashable {
     }
 }
 
-public struct NominalLayout: Equatable {
+public struct NominalLayout: Equatable, Sendable {
     public let objectHeaderWords: Int
     public let instanceFieldCount: Int
     public let instanceSizeWords: Int
@@ -144,7 +144,7 @@ public struct NominalLayout: Equatable {
     }
 }
 
-public struct NominalLayoutHint: Equatable {
+public struct NominalLayoutHint: Equatable, Sendable {
     public let declaredFieldCount: Int?
     public let declaredInstanceSizeWords: Int?
     public let declaredVtableSize: Int?

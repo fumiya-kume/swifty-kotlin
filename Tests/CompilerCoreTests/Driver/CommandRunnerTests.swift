@@ -89,6 +89,24 @@ final class CommandRunnerTests: XCTestCase {
                       "stderr should contain the error message")
     }
 
+    func testRunLargeOutputDoesNotDeadlock() throws {
+        let result = try CommandRunner.run(
+            executable: "/bin/sh",
+            arguments: ["-c", "yes x | head -c 131072"]
+        )
+        XCTAssertEqual(result.exitCode, 0)
+        XCTAssertEqual(result.stdout.count, 131072)
+    }
+
+    func testRunLargeStderrDoesNotDeadlock() throws {
+        let result = try CommandRunner.run(
+            executable: "/bin/sh",
+            arguments: ["-c", "yes e | head -c 131072 1>&2"]
+        )
+        XCTAssertEqual(result.exitCode, 0)
+        XCTAssertEqual(result.stderr.count, 131072)
+    }
+
     // MARK: - run: currentDirectoryPath
 
     func testRunCurrentDirectoryPathSetsWorkingDirectory() throws {

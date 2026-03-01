@@ -2,19 +2,43 @@ import Foundation
 
 public final class ASTArena: @unchecked Sendable {
     private let lock = NSLock()
-    public private(set) var decls: [Decl] = []
-    public private(set) var exprs: [Expr] = []
-    public private(set) var typeRefs: [TypeRef] = []
+    private var _decls: [Decl] = []
+    private var _exprs: [Expr] = []
+    private var _typeRefs: [TypeRef] = []
     /// Maps loop expression IDs (forExpr/whileExpr/doWhileExpr) to their user-defined label.
-    public private(set) var loopLabels: [ExprID: InternedString] = [:]
+    private var _loopLabels: [ExprID: InternedString] = [:]
+
+    public var decls: [Decl] {
+        lock.lock()
+        defer { lock.unlock() }
+        return _decls
+    }
+
+    public var exprs: [Expr] {
+        lock.lock()
+        defer { lock.unlock() }
+        return _exprs
+    }
+
+    public var typeRefs: [TypeRef] {
+        lock.lock()
+        defer { lock.unlock() }
+        return _typeRefs
+    }
+
+    public var loopLabels: [ExprID: InternedString] {
+        lock.lock()
+        defer { lock.unlock() }
+        return _loopLabels
+    }
 
     public init() {}
 
     public func appendDecl(_ decl: Decl) -> DeclID {
         lock.lock()
         defer { lock.unlock() }
-        let id = Int32(decls.count)
-        decls.append(decl)
+        let id = Int32(_decls.count)
+        _decls.append(decl)
         return DeclID(rawValue: id)
     }
 
@@ -22,28 +46,28 @@ public final class ASTArena: @unchecked Sendable {
         let index = Int(id.rawValue)
         lock.lock()
         defer { lock.unlock() }
-        guard decls.indices.contains(index) else { return nil }
-        return decls[index]
+        guard _decls.indices.contains(index) else { return nil }
+        return _decls[index]
     }
 
     public func declarations() -> [Decl] {
         lock.lock()
         defer { lock.unlock() }
-        return decls
+        return _decls
     }
 
     /// The number of declarations in the arena (thread-safe).
     public var declCount: Int {
         lock.lock()
         defer { lock.unlock() }
-        return decls.count
+        return _decls.count
     }
 
     public func appendExpr(_ expr: Expr) -> ExprID {
         lock.lock()
         defer { lock.unlock() }
-        let id = ExprID(rawValue: Int32(exprs.count))
-        exprs.append(expr)
+        let id = ExprID(rawValue: Int32(_exprs.count))
+        _exprs.append(expr)
         return id
     }
 
@@ -51,8 +75,8 @@ public final class ASTArena: @unchecked Sendable {
         let index = Int(id.rawValue)
         lock.lock()
         defer { lock.unlock() }
-        guard exprs.indices.contains(index) else { return nil }
-        return exprs[index]
+        guard _exprs.indices.contains(index) else { return nil }
+        return _exprs[index]
     }
 
     public func exprRange(_ id: ExprID) -> SourceRange? {
@@ -112,20 +136,20 @@ public final class ASTArena: @unchecked Sendable {
     public func setLoopLabel(_ label: InternedString, for exprID: ExprID) {
         lock.lock()
         defer { lock.unlock() }
-        loopLabels[exprID] = label
+        _loopLabels[exprID] = label
     }
 
     public func loopLabel(for exprID: ExprID) -> InternedString? {
         lock.lock()
         defer { lock.unlock() }
-        return loopLabels[exprID]
+        return _loopLabels[exprID]
     }
 
     public func appendTypeRef(_ typeRef: TypeRef) -> TypeRefID {
         lock.lock()
         defer { lock.unlock() }
-        let id = TypeRefID(rawValue: Int32(typeRefs.count))
-        typeRefs.append(typeRef)
+        let id = TypeRefID(rawValue: Int32(_typeRefs.count))
+        _typeRefs.append(typeRef)
         return id
     }
 
@@ -133,8 +157,8 @@ public final class ASTArena: @unchecked Sendable {
         let index = Int(id.rawValue)
         lock.lock()
         defer { lock.unlock() }
-        guard typeRefs.indices.contains(index) else { return nil }
-        return typeRefs[index]
+        guard _typeRefs.indices.contains(index) else { return nil }
+        return _typeRefs[index]
     }
 }
 

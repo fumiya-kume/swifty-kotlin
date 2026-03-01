@@ -38,6 +38,8 @@ jobs:
           echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
       - name: Show toolchain versions
         run: swift --version
+      - name: Build with strict concurrency (warnings)
+        run: swift build -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency
       - name: Run smoke tests
         run: bash Scripts/swift_test.sh --filter SmokeTests
 
@@ -64,6 +66,8 @@ jobs:
           kotlinc -version
       - name: Build compiler
         run: swift build
+      - name: Build with strict concurrency (warnings)
+        run: swift build -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency
       - name: Run kotlinc diff regression cases
         id: diff_kotlinc
         continue-on-error: true
@@ -102,6 +106,8 @@ jobs:
           echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
       - name: Verify prerequisites
         run: jq --version
+      - name: Build with strict concurrency (warnings)
+        run: swift build -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency
       - name: Run tests with coverage threshold
         id: coverage
         continue-on-error: true

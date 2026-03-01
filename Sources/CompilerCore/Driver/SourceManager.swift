@@ -1,5 +1,8 @@
 import Foundation
 
+/// Concurrency model:
+/// `SourceManager` is populated sequentially during `LoadSourcesPhase`,
+/// and treated as read-only after that phase completes.
 public final class SourceManager: @unchecked Sendable {
     private struct FileRecord {
         let path: String

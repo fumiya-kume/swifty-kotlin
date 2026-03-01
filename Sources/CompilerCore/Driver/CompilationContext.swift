@@ -26,6 +26,9 @@ public struct FileIR {
     }
 }
 
+/// Concurrency model:
+/// mutable context fields are written on the main pipeline thread between phases,
+/// while parallel phase workers operate on per-phase local data.
 public final class CompilationContext: @unchecked Sendable {
     public let options: CompilerOptions
     public let sourceManager: SourceManager

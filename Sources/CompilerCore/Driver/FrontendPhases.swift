@@ -4,28 +4,15 @@ private func collectPerFileResultsInParallel<Result: Sendable>(
     fileIDs: [FileID],
     task: @escaping @Sendable (FileID) -> Result
 ) -> [(FileID, Result)] {
-    let semaphore = DispatchSemaphore(value: 0)
-    nonisolated(unsafe) var results: [(FileID, Result)] = []
-
-    Task {
-        results = await withTaskGroup(of: (FileID, Result).self) { group in
-            for fileID in fileIDs {
-                group.addTask {
-                    (fileID, task(fileID))
-                }
-            }
-
-            var collected: [(FileID, Result)] = []
-            for await result in group {
-                collected.append(result)
-            }
-            return collected.sorted(by: { $0.0.rawValue < $1.0.rawValue })
-        }
-        semaphore.signal()
+    let count = fileIDs.count
+    guard count > 0 else { return [] }
+    var results: [Result?] = Array(repeating: nil, count: count)
+    DispatchQueue.concurrentPerform(iterations: count) { index in
+        results[index] = task(fileIDs[index])
     }
-
-    semaphore.wait()
-    return results
+    return fileIDs.enumerated().map { index, fileID in
+        (fileID, results[index]!)
+    }.sorted(by: { $0.0.rawValue < $1.0.rawValue })
 }
 
 public final class LoadSourcesPhase: CompilerPhase {
@@ -218,60 +205,34 @@ public final class BuildASTPhase: CompilerPhase {
         let arena = ASTArena() // thread-safe with locks
         let interner = ctx.interner
         let syntaxTrees = ctx.syntaxTrees
+        let count = syntaxTrees.count
+        var perFileResults: [PerFileASTResult?] = Array(repeating: nil, count: count)
+        let jobSemaphore = DispatchSemaphore(value: jobs)
+        let completionGroup = DispatchGroup()
 
-        let semaphore = DispatchSemaphore(value: 0)
-        nonisolated(unsafe) var perFileResults: [PerFileASTResult] = []
-
-        Task {
-            let taskResults = await withTaskGroup(of: PerFileASTResult.self) { group in
-                var activeCount = 0
-                var fileIndex = 0
-                var results: [PerFileASTResult] = []
-
-                func addFileTask(at index: Int) {
-                    let (fileID, cst, root) = syntaxTrees[index]
-                    group.addTask {
-                        // Each task gets its own BuildASTPhase so that
-                        // `tokenCache` is not shared across concurrent tasks
-                        // (different SyntaxArenas may reuse the same NodeID space).
-                        let taskPhase = BuildASTPhase()
-                        return taskPhase.buildFileAST(
-                            fileID: fileID,
-                            cst: cst,
-                            root: root,
-                            interner: interner,
-                            arena: arena
-                        )
-                    }
-                }
-
-                // Seed initial batch up to jobs limit.
-                while fileIndex < syntaxTrees.count && activeCount < jobs {
-                    addFileTask(at: fileIndex)
-                    activeCount += 1
-                    fileIndex += 1
-                }
-
-                for await result in group {
-                    results.append(result)
-                    activeCount -= 1
-                    if fileIndex < syntaxTrees.count {
-                        addFileTask(at: fileIndex)
-                        activeCount += 1
-                        fileIndex += 1
-                    }
-                }
-
-                return results
+        for index in 0..<count {
+            jobSemaphore.wait()
+            completionGroup.enter()
+            DispatchQueue.global().async {
+                let (fileID, cst, root) = syntaxTrees[index]
+                // Each task gets its own BuildASTPhase so that `tokenCache`
+                // is not shared across concurrent tasks.
+                let taskPhase = BuildASTPhase()
+                perFileResults[index] = taskPhase.buildFileAST(
+                    fileID: fileID,
+                    cst: cst,
+                    root: root,
+                    interner: interner,
+                    arena: arena
+                )
+                completionGroup.leave()
+                jobSemaphore.signal()
             }
-
-            // Sort results by FileID for deterministic ordering.
-            perFileResults = taskResults.sorted(by: { $0.fileRawID < $1.fileRawID })
-            semaphore.signal()
         }
-        semaphore.wait()
+        completionGroup.wait()
+        let orderedResults = perFileResults.map { $0! }
 
-        let merged = mergePerFileASTResults(perFileResults)
+        let merged = mergePerFileASTResults(orderedResults)
 
         finalizeAST(
             ctx: ctx,

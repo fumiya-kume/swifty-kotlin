@@ -1,6 +1,6 @@
 import Foundation
 
-public struct KIRDeclID: Hashable {
+public struct KIRDeclID: Hashable, Sendable {
     public let rawValue: Int32
 
     public static let invalid = KIRDeclID(rawValue: -1)
@@ -10,7 +10,7 @@ public struct KIRDeclID: Hashable {
     }
 }
 
-public struct KIRExprID: Hashable {
+public struct KIRExprID: Hashable, Sendable {
     public let rawValue: Int32
 
     public static let invalid = KIRExprID(rawValue: -1)
@@ -20,7 +20,7 @@ public struct KIRExprID: Hashable {
     }
 }
 
-public struct KIRTypeID: Hashable {
+public struct KIRTypeID: Hashable, Sendable {
     public let rawValue: Int32
 
     public static let invalid = KIRTypeID(rawValue: -1)
@@ -30,7 +30,7 @@ public struct KIRTypeID: Hashable {
     }
 }
 
-public struct KIRParameter {
+public struct KIRParameter: Sendable {
     public let symbol: SymbolID
     public let type: TypeID
 
@@ -40,7 +40,7 @@ public struct KIRParameter {
     }
 }
 
-public enum KIRBinaryOp: Equatable {
+public enum KIRBinaryOp: Equatable, Sendable {
     case add
     case subtract
     case multiply
@@ -56,13 +56,13 @@ public enum KIRBinaryOp: Equatable {
     case logicalOr
 }
 
-public enum KIRUnaryOp: Equatable {
+public enum KIRUnaryOp: Equatable, Sendable {
     case not
     case unaryPlus
     case unaryMinus
 }
 
-public enum KIRExprKind: Equatable {
+public enum KIRExprKind: Equatable, Sendable {
     case intLiteral(Int64)
     case longLiteral(Int64)
     case floatLiteral(Double)
@@ -76,12 +76,12 @@ public enum KIRExprKind: Equatable {
     case unit
 }
 
-public enum KIRDispatchKind: Equatable {
+public enum KIRDispatchKind: Equatable, Sendable {
     case vtable(slot: Int)
     case itable(interfaceSlot: Int, methodSlot: Int)
 }
 
-public enum KIRInstruction: Equatable {
+public enum KIRInstruction: Equatable, Sendable {
     case nop
     case beginBlock
     case endBlock
@@ -106,7 +106,7 @@ public enum KIRInstruction: Equatable {
     case returnValue(KIRExprID)
 }
 
-public struct KIRFunction {
+public struct KIRFunction: Sendable {
     public let symbol: SymbolID
     public let name: InternedString
     public let params: [KIRParameter]
@@ -143,7 +143,7 @@ public struct KIRFunction {
     }
 }
 
-public struct KIRGlobal {
+public struct KIRGlobal: Sendable {
     public let symbol: SymbolID
     public let type: TypeID
 
@@ -153,7 +153,7 @@ public struct KIRGlobal {
     }
 }
 
-public struct KIRNominalType {
+public struct KIRNominalType: Sendable {
     public let symbol: SymbolID
     public let memberDecls: [KIRDeclID]
 
@@ -163,13 +163,13 @@ public struct KIRNominalType {
     }
 }
 
-public enum KIRDecl {
+public enum KIRDecl: Sendable {
     case function(KIRFunction)
     case global(KIRGlobal)
     case nominalType(KIRNominalType)
 }
 
-public struct KIRFile {
+public struct KIRFile: Sendable {
     public let fileID: FileID
     public let decls: [KIRDeclID]
 

@@ -55,10 +55,25 @@ public enum CommandRunner {
         } catch {
             throw CommandRunnerError.launchFailed("Failed to launch \(executable): \(error)")
         }
+        // Drain both pipes before waiting for process termination to avoid
+        // deadlocks when child output exceeds the kernel pipe buffer.
+        var stdoutData = Data()
+        var stderrData = Data()
+        let drainGroup = DispatchGroup()
+
+        drainGroup.enter()
+        DispatchQueue.global().async {
+            stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+            drainGroup.leave()
+        }
+        drainGroup.enter()
+        DispatchQueue.global().async {
+            stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+            drainGroup.leave()
+        }
+        drainGroup.wait()
         process.waitUntilExit()
 
-        let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-        let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
         let result = CommandResult(
             exitCode: process.terminationStatus,
             stdout: String(decoding: stdoutData, as: UTF8.self),

@@ -4,7 +4,10 @@ import Foundation
 public func kk_throwable_new(_ message: UnsafeMutableRawPointer?) -> UnsafeMutableRawPointer {
     let text = extractString(from: message) ?? "Throwable"
     let throwableInt = runtimeAllocateThrowable(message: text)
-    return UnsafeMutableRawPointer(bitPattern: throwableInt) ?? UnsafeMutableRawPointer(bitPattern: 0x1)!
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: throwableInt) else {
+        fatalError("kk_throwable_new: allocation returned null")
+    }
+    return ptr
 }
 
 @_cdecl("kk_panic")
