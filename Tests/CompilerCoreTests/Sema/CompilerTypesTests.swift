@@ -39,8 +39,7 @@ final class CompilerTypesTests: XCTestCase {
         XCTAssertEqual(options.runtimeFlags, [])
     }
 
-    @available(*, deprecated)
-    func testDeprecatedEmitsDebugInfoPropertyAndInit() {
+    func testCompilerOptionsDebugInfoPropertyAndInit() {
         let target = TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
 
         var options = CompilerOptions(
@@ -49,14 +48,12 @@ final class CompilerTypesTests: XCTestCase {
             outputPath: "out",
             emit: .executable,
             target: target,
-            emitsDebugInfo: true
+            debugInfo: true
         )
         XCTAssertTrue(options.debugInfo)
-        XCTAssertTrue(options.emitsDebugInfo)
 
-        options.emitsDebugInfo = false
+        options.debugInfo = false
         XCTAssertFalse(options.debugInfo)
-        XCTAssertFalse(options.emitsDebugInfo)
     }
 
     func testCompilerOptionsCustomArgumentsAndEnums() {
@@ -105,8 +102,7 @@ final class CompilerTypesTests: XCTestCase {
         XCTAssertNil(triple.osVersion)
     }
 
-    @available(*, deprecated)
-    func testDeprecatedEmitsDebugInfoPropertyGetAndSet() {
+    func testCompilerOptionsDebugInfoPropertyGetAndSet() {
         let target = TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
         var options = CompilerOptions(
             moduleName: "M",
@@ -116,17 +112,15 @@ final class CompilerTypesTests: XCTestCase {
             target: target,
             debugInfo: false
         )
-        XCTAssertFalse(options.emitsDebugInfo)
-        options.emitsDebugInfo = true
-        XCTAssertTrue(options.emitsDebugInfo)
+        XCTAssertFalse(options.debugInfo)
+        options.debugInfo = true
         XCTAssertTrue(options.debugInfo)
     }
 
-    @available(*, deprecated)
-    func testDeprecatedInitWithEmitsDebugInfo() {
+    func testInitWithDebugInfo() {
         let target = TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
         let options = CompilerOptions(
-            moduleName: "DeprecatedModule",
+            moduleName: "ModuleWithDebug",
             inputs: ["b.kt"],
             outputPath: "out2",
             emit: .executable,
@@ -135,12 +129,12 @@ final class CompilerTypesTests: XCTestCase {
             linkLibraries: ["z"],
             target: target,
             optLevel: .O2,
-            emitsDebugInfo: true,
+            debugInfo: true,
             frontendFlags: ["-Xf"],
             irFlags: ["-Xi"],
             runtimeFlags: ["-Xr"]
         )
-        XCTAssertEqual(options.moduleName, "DeprecatedModule")
+        XCTAssertEqual(options.moduleName, "ModuleWithDebug")
         XCTAssertEqual(options.inputs, ["b.kt"])
         XCTAssertEqual(options.outputPath, "out2")
         XCTAssertEqual(options.emit, .executable)
@@ -155,15 +149,14 @@ final class CompilerTypesTests: XCTestCase {
         XCTAssertEqual(options.runtimeFlags, ["-Xr"])
     }
 
-    @available(*, deprecated)
-    func testDeprecatedInitWithEmitsDebugInfoDefaultArguments() {
+    func testInitWithDebugInfoDefaultArguments() {
         let options = CompilerOptions(
             moduleName: "M2",
             inputs: ["b.kt"],
             outputPath: "out2",
             emit: .llvmIR,
             target: TargetTriple(arch: "x86_64", vendor: "pc", os: "linux", osVersion: nil),
-            emitsDebugInfo: false
+            debugInfo: false
         )
         XCTAssertEqual(options.moduleName, "M2")
         XCTAssertEqual(options.emit, .llvmIR)

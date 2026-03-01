@@ -18,7 +18,7 @@ extension LibraryMetadataCacheBehaviorTests {
             """
             let metadata = """
             symbols=1
-            function _ fq=multi\(i).fn\(i) arity=0 suspend=0 sig=F0<I>
+            function _ fq=multi\(i).fn\(i) schema=v1 arity=0 suspend=0 sig=F0<I>
             """
             try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
             try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -68,8 +68,8 @@ extension LibraryMetadataCacheBehaviorTests {
         """
         let metadata = """
         symbols=2
-        function _ fq=tid.fn1 arity=1 suspend=0 sig=F1<I,I>
-        function _ fq=tid.fn2 arity=1 suspend=0 sig=F1<I,I>
+        function _ fq=tid.fn1 schema=v1 arity=1 suspend=0 sig=F1<I,I>
+        function _ fq=tid.fn2 schema=v1 arity=1 suspend=0 sig=F1<I,I>
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -153,8 +153,8 @@ extension LibraryMetadataCacheBehaviorTests {
         """
         let metadata = """
         symbols=2
-        function _ fq=susp.fetch arity=1 suspend=1 sig=SF1<I,I>
-        function _ fq=susp.process arity=1 suspend=0 sig=F1<I,I>
+        function _ fq=susp.fetch schema=v1 arity=1 suspend=1 sig=SF1<I,I>
+        function _ fq=susp.process schema=v1 arity=1 suspend=0 sig=F1<I,I>
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -210,8 +210,8 @@ extension LibraryMetadataCacheBehaviorTests {
         """
         let metadata = """
         symbols=2
-        property _ fq=nullable.x sig=Q<I>
-        property _ fq=nullable.y sig=I
+        property _ fq=nullable.x schema=v1 sig=Q<I>
+        property _ fq=nullable.y schema=v1 sig=I
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)

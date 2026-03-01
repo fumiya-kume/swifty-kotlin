@@ -322,22 +322,6 @@ final class TypeSystemTests: XCTestCase {
         }
     }
 
-    // MARK: - Deprecated Aliases
-
-    @available(*, deprecated)
-    func testLeastUpperBoundCallsLub() {
-        let ts = TypeSystem()
-        let intType = ts.make(.primitive(.int, .nonNull))
-        XCTAssertEqual(ts.leastUpperBound([intType]), ts.lub([intType]))
-    }
-
-    @available(*, deprecated)
-    func testGreatestLowerBoundCallsGlb() {
-        let ts = TypeSystem()
-        let intType = ts.make(.primitive(.int, .nonNull))
-        XCTAssertEqual(ts.greatestLowerBound([intType]), ts.glb([intType]))
-    }
-
     // MARK: - Nominal Supertypes
 
     func testSetAndGetNominalDirectSupertypes() {

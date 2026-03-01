@@ -78,7 +78,7 @@ extension ControlFlowTypeChecker {
                 if let subjectLocalBinding, subjectLocalBinding.isStable {
                     // FIXME: Currently only the first condition contributes to flow-state narrowing for subject-ful `when` branches.
                     //        Extend this to support all conditions in the branch (OR semantics) for more precise narrowing.
-                    if let cond = branch.condition {
+                    if let cond = branch.conditions.first {
                         let branchFlowState = ctx.dataFlow.branchOnWhenSubject(
                             subjectSymbol: subjectLocalBinding.symbol,
                             subjectType: subjectType,

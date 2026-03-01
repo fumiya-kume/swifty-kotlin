@@ -63,8 +63,8 @@ extension BuildKIRRegressionTests {
         let eDoWhile = astArena.appendExpr(.doWhileExpr(body: eContinue, condition: eBoolTrue, range: range))
         let eFor = astArena.appendExpr(.forExpr(loopVariable: interner.intern("i"), iterable: eNameUnknown, body: eInt1, range: range))
 
-        let whenBranchTrue = WhenBranch(condition: eBoolTrue, body: eInt1, range: range)
-        let whenBranchFalse = WhenBranch(condition: eBoolFalse, body: eInt2, range: range)
+        let whenBranchTrue = WhenBranch(conditions: [eBoolTrue], body: eInt1, range: range)
+        let whenBranchFalse = WhenBranch(conditions: [eBoolFalse], body: eInt2, range: range)
         let eWhenNoElse = astArena.appendExpr(.whenExpr(subject: eBoolTrue, branches: [whenBranchTrue], elseExpr: nil, range: range))
         let eWhenElse = astArena.appendExpr(.whenExpr(subject: eBoolTrue, branches: [whenBranchTrue, whenBranchFalse], elseExpr: eInt1, range: range))
 

@@ -161,20 +161,14 @@ final class LibraryMetadataSerializationRoundTripTests: XCTestCase {
         XCTAssertTrue(decoded[0].isSealedClass)
     }
 
-    func testMetadataDecoderHandlesLegacyFormatWithoutNewFields() {
-        // Simulate old metadata without dataClass/sealedClass/annotations fields
+    func testMetadataDecoderRejectsRecordsWithoutSchema() {
         let legacy = """
         symbols=1
         class _kk_ext_C fq=ext.C fields=0 layoutWords=3 vtable=0 itable=0
         """
         let decoder = MetadataDecoder()
         let decoded = decoder.decode(legacy)
-        XCTAssertEqual(decoded.count, 1)
-        XCTAssertEqual(decoded[0].kind, .class)
-        XCTAssertEqual(decoded[0].fqName, "ext.C")
-        XCTAssertFalse(decoded[0].isDataClass)
-        XCTAssertFalse(decoded[0].isSealedClass)
-        XCTAssertTrue(decoded[0].annotations.isEmpty)
+        XCTAssertEqual(decoded.count, 0)
     }
 
     func testMetadataRoundTripMultipleRecords() {
@@ -244,7 +238,7 @@ final class LibraryMetadataSerializationRoundTripTests: XCTestCase {
         """
         let metadata = """
         symbols=1
-        class _kk_Point fq=ext.Point fields=2 layoutWords=4 vtable=0 itable=0 dataClass=1
+        class _kk_Point fq=ext.Point schema=v1 fields=2 layoutWords=4 vtable=0 itable=0 dataClass=1
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -295,7 +289,7 @@ final class LibraryMetadataSerializationRoundTripTests: XCTestCase {
         XCTAssertNil(decoder.symbolKindFromMetadata("unknown"))
         XCTAssertNil(decoder.symbolKindFromMetadata("CLASS"))
         XCTAssertNil(decoder.symbolKindFromMetadata("Function"))
-        XCTAssertNil(decoder.symbolKindFromMetadata("backingField"))
+        XCTAssertEqual(decoder.symbolKindFromMetadata("backingField"), .backingField)
     }
 
     // MARK: - MetadataDecoder Edge Cases
@@ -318,8 +312,8 @@ final class LibraryMetadataSerializationRoundTripTests: XCTestCase {
     func testMetadataDecoderSkipsLinesWithUnknownKind() {
         let metadata = """
         symbols=2
-        unknownKind _kk_foo fq=demo.Foo
-        function _kk_bar fq=demo.bar arity=0 suspend=0 inline=0
+        unknownKind _kk_foo fq=demo.Foo schema=v1
+        function _kk_bar fq=demo.bar schema=v1 arity=0 suspend=0 inline=0
         """
         let decoder = MetadataDecoder()
         let decoded = decoder.decode(metadata)
@@ -351,7 +345,7 @@ final class LibraryMetadataSerializationRoundTripTests: XCTestCase {
         // Tokens without '=' should be silently skipped (except kind and mangledName)
         let metadata = """
         symbols=1
-        function _kk_bar fq=demo.bar randomtoken arity=2 suspend=1 inline=0
+        function _kk_bar fq=demo.bar schema=v1 randomtoken arity=2 suspend=1 inline=0
         """
         let decoder = MetadataDecoder()
         let decoded = decoder.decode(metadata)
@@ -363,7 +357,7 @@ final class LibraryMetadataSerializationRoundTripTests: XCTestCase {
     func testMetadataDecoderIgnoresUnknownKeyValuePairs() {
         let metadata = """
         symbols=1
-        class _kk_Foo fq=demo.Foo futureKey=futureValue fields=1 layoutWords=2
+        class _kk_Foo fq=demo.Foo schema=v1 futureKey=futureValue fields=1 layoutWords=2
         """
         let decoder = MetadataDecoder()
         let decoded = decoder.decode(metadata)

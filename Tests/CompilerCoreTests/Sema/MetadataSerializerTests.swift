@@ -328,7 +328,7 @@ final class MetadataSerializerTests: XCTestCase {
 
     func testDecodeFunctionRecord() {
         let decoder = MetadataDecoder()
-        let content = "symbols=1\nfunction _KK_test__fn__F__sig fq=test.fn arity=2 suspend=0 inline=0 sig=F2<I,I,I>\n"
+        let content = "symbols=1\nfunction _KK_test__fn__F__sig fq=test.fn schema=v1 arity=2 suspend=0 inline=0 sig=F2<I,I,I>\n"
         let records = decoder.decode(content)
         XCTAssertEqual(records.count, 1)
         XCTAssertEqual(records[0].kind, .function)
@@ -341,7 +341,7 @@ final class MetadataSerializerTests: XCTestCase {
 
     func testDecodeSuspendFunction() {
         let decoder = MetadataDecoder()
-        let content = "symbols=1\nfunction _KK fq=test.fn arity=1 suspend=1 inline=1 sig=SF1<I,U>\n"
+        let content = "symbols=1\nfunction _KK fq=test.fn schema=v1 arity=1 suspend=1 inline=1 sig=SF1<I,U>\n"
         let records = decoder.decode(content)
         XCTAssertEqual(records.count, 1)
         XCTAssertTrue(records[0].isSuspend)
@@ -350,7 +350,7 @@ final class MetadataSerializerTests: XCTestCase {
 
     func testDecodeClassWithLayout() {
         let decoder = MetadataDecoder()
-        let content = "symbols=1\nclass _KK fq=test.Foo layoutWords=5 fields=3 vtable=2 itable=1 superFq=test.Base fieldOffsets=x@0 vtableSlots=bar@0 itableSlots=baz@0\n"
+        let content = "symbols=1\nclass _KK fq=test.Foo schema=v1 layoutWords=5 fields=3 vtable=2 itable=1 superFq=test.Base fieldOffsets=x@0 vtableSlots=bar@0 itableSlots=baz@0\n"
         let records = decoder.decode(content)
         XCTAssertEqual(records.count, 1)
         XCTAssertEqual(records[0].kind, .class)

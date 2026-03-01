@@ -19,7 +19,7 @@ final class LibraryMetadataImportResolutionIntegrationTests: XCTestCase {
         """
         let metadata = """
         symbols=1
-        function _ fq=nv.foo arity=0
+        function _ fq=nv.foo schema=v1 arity=0
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -56,7 +56,7 @@ final class LibraryMetadataImportResolutionIntegrationTests: XCTestCase {
         """
         let metadata = """
         symbols=1
-        function _ fq=bv.bar arity=0
+        function _ fq=bv.bar schema=v1 arity=0
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -88,7 +88,7 @@ final class LibraryMetadataImportResolutionIntegrationTests: XCTestCase {
         """
         let metadata = """
         symbols=1
-        function _ fq=nm.baz arity=0
+        function _ fq=nm.baz schema=v1 arity=0
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -121,7 +121,7 @@ final class LibraryMetadataImportResolutionIntegrationTests: XCTestCase {
         """
         let metadata = """
         symbols=1
-        function _ fq=em.qux arity=0
+        function _ fq=em.qux schema=v1 arity=0
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -155,7 +155,7 @@ final class LibraryMetadataImportResolutionIntegrationTests: XCTestCase {
         """
         let metadata = """
         symbols=1
-        function _ fq=bl.fn arity=0
+        function _ fq=bl.fn schema=v1 arity=0
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -190,7 +190,7 @@ final class LibraryMetadataImportResolutionIntegrationTests: XCTestCase {
         """
         let metadata = """
         symbols=1
-        function _ fq=wt.fn arity=0
+        function _ fq=wt.fn schema=v1 arity=0
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -231,7 +231,7 @@ final class LibraryMetadataImportResolutionIntegrationTests: XCTestCase {
         """
         let metadata = """
         symbols=1
-        function _ fq=gt.fn arity=0
+        function _ fq=gt.fn schema=v1 arity=0
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -304,7 +304,7 @@ final class LibraryMetadataImportResolutionIntegrationTests: XCTestCase {
         """
         let metadata = """
         symbols=1
-        function _ fq=mo.fn arity=0
+        function _ fq=mo.fn schema=v1 arity=0
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -345,7 +345,7 @@ final class LibraryMetadataImportResolutionIntegrationTests: XCTestCase {
         """
         let metadata = """
         symbols=1
-        function _ fq=mi.fn arity=0
+        function _ fq=mi.fn schema=v1 arity=0
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)

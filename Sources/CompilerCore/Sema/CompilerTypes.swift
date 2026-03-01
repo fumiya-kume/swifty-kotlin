@@ -159,42 +159,4 @@ public struct CompilerOptions: Equatable {
         return .synchronized
     }
 
-    @available(*, deprecated, message: "Use debugInfo instead.")
-    public var emitsDebugInfo: Bool {
-        get { debugInfo }
-        set { debugInfo = newValue }
-    }
-
-    @available(*, deprecated, message: "Use init(..., debugInfo: ...) instead.")
-    public init(
-        moduleName: String,
-        inputs: [String],
-        outputPath: String,
-        emit: EmitMode,
-        searchPaths: [String] = [],
-        libraryPaths: [String] = [],
-        linkLibraries: [String] = [],
-        target: TargetTriple,
-        optLevel: OptimizationLevel = .O0,
-        emitsDebugInfo: Bool,
-        frontendFlags: [String] = [],
-        irFlags: [String] = [],
-        runtimeFlags: [String] = []
-    ) {
-        self.init(
-            moduleName: moduleName,
-            inputs: inputs,
-            outputPath: outputPath,
-            emit: emit,
-            searchPaths: searchPaths,
-            libraryPaths: libraryPaths,
-            linkLibraries: linkLibraries,
-            target: target,
-            optLevel: optLevel,
-            debugInfo: emitsDebugInfo,
-            frontendFlags: frontendFlags,
-            irFlags: irFlags,
-            runtimeFlags: runtimeFlags
-        )
-    }
 }

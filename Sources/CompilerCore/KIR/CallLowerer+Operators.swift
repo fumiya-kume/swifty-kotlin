@@ -530,11 +530,6 @@ extension CallLowerer {
                     return elementType == stringType
                 }
             }
-            // Fallback: support legacy non-generic StringArray by name only.
-            if let symbol = sema.symbols.symbol(classType.classSymbol) {
-                let name = interner.resolve(symbol.name)
-                return name == "StringArray"
-            }
             return false
         }()
         let opName: String

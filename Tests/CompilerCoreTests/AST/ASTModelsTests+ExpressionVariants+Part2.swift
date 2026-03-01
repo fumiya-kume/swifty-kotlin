@@ -10,7 +10,7 @@ extension ASTModelsTests {
         let bodyID = arena.appendExpr(.intLiteral(2, r))
         let condID = arena.appendExpr(.boolLiteral(true, r))
         let elseID = arena.appendExpr(.intLiteral(3, r))
-        let branch = WhenBranch(condition: condID, body: bodyID, range: r)
+        let branch = WhenBranch(conditions: [condID], body: bodyID, range: r)
         let expr = Expr.whenExpr(subject: subjectID, branches: [branch], elseExpr: elseID, range: r)
         if case .whenExpr(let s, let bs, let e, _) = expr {
             XCTAssertEqual(s, subjectID)

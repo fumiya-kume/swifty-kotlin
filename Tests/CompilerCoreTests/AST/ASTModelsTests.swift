@@ -343,8 +343,8 @@ final class ASTModelsTests: XCTestCase {
         let exprID = ExprID(rawValue: 0)
         let name = interner.intern("x")
 
-        let branch = WhenBranch(condition: exprID, body: exprID, range: r)
-        XCTAssertEqual(branch.condition, exprID)
+        let branch = WhenBranch(conditions: [exprID], body: exprID, range: r)
+        XCTAssertEqual(branch.conditions.first, exprID)
         let callArg = CallArgument(label: name, isSpread: true, expr: exprID)
         XCTAssertEqual(callArg.label, name)
         XCTAssertTrue(callArg.isSpread)

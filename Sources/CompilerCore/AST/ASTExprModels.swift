@@ -89,18 +89,6 @@ public struct WhenBranch: Equatable {
         self.body = body
         self.range = range
     }
-
-    /// Convenience: single-condition branch (backward compat helper).
-    public init(condition: ExprID?, body: ExprID, range: SourceRange) {
-        self.conditions = condition.map { [$0] } ?? []
-        self.body = body
-        self.range = range
-    }
-
-    /// Backward-compat accessor: returns the first condition, or nil for else branches.
-    public var condition: ExprID? {
-        conditions.first
-    }
 }
 
 public struct CallArgument: Equatable {

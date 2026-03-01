@@ -300,7 +300,8 @@ public final class MetadataEncoder {
             var fields: [String] = [
                 "\(record.kind)",
                 record.mangledName,
-                "fq=\(record.fqName)"
+                "fq=\(record.fqName)",
+                "schema=v1"
             ]
             if record.kind == .function || record.kind == .constructor {
                 fields.append("arity=\(record.arity)")
@@ -505,6 +506,7 @@ public final class MetadataDecoder {
             var valueClassUnderlyingTypeSig: String?
             var annotations: [MetadataAnnotationRecord] = []
             var sealedSubclassFQNames: [String] = []
+            var schemaVersion: String?
 
             for part in parts.dropFirst() {
                 guard let separatorIndex = part.firstIndex(of: "=") else {
@@ -553,12 +555,15 @@ public final class MetadataDecoder {
                     sealedSubclassFQNames = value.split(separator: ",").map(String.init).filter { !$0.isEmpty }
                 case "annotations":
                     annotations = decodeAnnotations(value)
+                case "schema":
+                    schemaVersion = value
                 default:
                     continue
                 }
             }
 
-            guard !fqName.isEmpty else {
+            // Strict schema gate: only v1 records are accepted.
+            guard schemaVersion == "v1", !fqName.isEmpty else {
                 continue
             }
 

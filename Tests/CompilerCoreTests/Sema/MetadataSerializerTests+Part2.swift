@@ -5,7 +5,7 @@ import XCTest
 extension MetadataSerializerTests {
     func testDecodeDataClassFlag() {
         let decoder = MetadataDecoder()
-        let content = "symbols=1\nclass _KK fq=test.Data dataClass=1\n"
+        let content = "symbols=1\nclass _KK fq=test.Data schema=v1 dataClass=1\n"
         let records = decoder.decode(content)
         XCTAssertEqual(records.count, 1)
         XCTAssertTrue(records[0].isDataClass)
@@ -13,7 +13,7 @@ extension MetadataSerializerTests {
 
     func testDecodeSealedClassWithSubs() {
         let decoder = MetadataDecoder()
-        let content = "symbols=1\nclass _KK fq=test.Sealed sealedClass=1 sealedSubs=test.SubA,test.SubB\n"
+        let content = "symbols=1\nclass _KK fq=test.Sealed schema=v1 sealedClass=1 sealedSubs=test.SubA,test.SubB\n"
         let records = decoder.decode(content)
         XCTAssertEqual(records.count, 1)
         XCTAssertTrue(records[0].isSealedClass)
@@ -22,7 +22,7 @@ extension MetadataSerializerTests {
 
     func testDecodeValueClass() {
         let decoder = MetadataDecoder()
-        let content = "symbols=1\nclass _KK fq=test.Wrapper valueClass=1 valueUnderlying=I\n"
+        let content = "symbols=1\nclass _KK fq=test.Wrapper schema=v1 valueClass=1 valueUnderlying=I\n"
         let records = decoder.decode(content)
         XCTAssertEqual(records.count, 1)
         XCTAssertTrue(records[0].isValueClass)
@@ -31,7 +31,7 @@ extension MetadataSerializerTests {
 
     func testDecodeConstructorWithLink() {
         let decoder = MetadataDecoder()
-        let content = "symbols=1\nconstructor _KK fq=test.Foo.init arity=1 suspend=0 inline=0 sig=F1<I,U> link=Foo_init\n"
+        let content = "symbols=1\nconstructor _KK fq=test.Foo.init schema=v1 arity=1 suspend=0 inline=0 sig=F1<I,U> link=Foo_init\n"
         let records = decoder.decode(content)
         XCTAssertEqual(records.count, 1)
         XCTAssertEqual(records[0].kind, .constructor)
@@ -40,7 +40,7 @@ extension MetadataSerializerTests {
 
     func testDecodePropertyWithSig() {
         let decoder = MetadataDecoder()
-        let content = "symbols=1\nproperty _KK fq=test.x sig=I\n"
+        let content = "symbols=1\nproperty _KK fq=test.x schema=v1 sig=I\n"
         let records = decoder.decode(content)
         XCTAssertEqual(records.count, 1)
         XCTAssertEqual(records[0].kind, .property)
@@ -69,7 +69,7 @@ extension MetadataSerializerTests {
 
     func testDecodeSkipsUnknownKind() {
         let decoder = MetadataDecoder()
-        let content = "symbols=1\nunknownKind _KK fq=test.fn\n"
+        let content = "symbols=1\nunknownKind _KK fq=test.fn schema=v1\n"
         let records = decoder.decode(content)
         XCTAssertTrue(records.isEmpty)
     }
@@ -78,8 +78,8 @@ extension MetadataSerializerTests {
         let decoder = MetadataDecoder()
         let content = """
         symbols=2
-        function _KK1 fq=test.fn1 arity=0 suspend=0 inline=0
-        class _KK2 fq=test.Cls
+        function _KK1 fq=test.fn1 schema=v1 arity=0 suspend=0 inline=0
+        class _KK2 fq=test.Cls schema=v1
         """
         let records = decoder.decode(content)
         XCTAssertEqual(records.count, 2)
@@ -335,7 +335,7 @@ extension MetadataSerializerTests {
 
     func testDecodeFieldRecord() {
         let decoder = MetadataDecoder()
-        let content = "symbols=1\nfield _KK fq=test.Foo.x sig=I\n"
+        let content = "symbols=1\nfield _KK fq=test.Foo.x schema=v1 sig=I\n"
         let records = decoder.decode(content)
         XCTAssertEqual(records.count, 1)
         XCTAssertEqual(records[0].kind, .field)
@@ -343,7 +343,7 @@ extension MetadataSerializerTests {
 
     func testDecodeTypeAliasRecord() {
         let decoder = MetadataDecoder()
-        let content = "symbols=1\ntypeAlias _KK fq=test.MyInt sig=I\n"
+        let content = "symbols=1\ntypeAlias _KK fq=test.MyInt schema=v1 sig=I\n"
         let records = decoder.decode(content)
         XCTAssertEqual(records.count, 1)
         XCTAssertEqual(records[0].kind, .typeAlias)

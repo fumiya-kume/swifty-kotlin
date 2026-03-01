@@ -1,5 +1,57 @@
 import Foundation
 
+/// Actor-isolated cache for pre-compiled runtime stub objects.
+/// Replaces the previous static var + NSLock pattern for Swift 6 concurrency compliance.
+private actor RuntimeStubCache {
+    private var cache: [String: String] = [:]
+
+    func getOrInsert(triple: String, context: StubCompilationContext) -> String? {
+        if let cached = cache[triple], FileManager.default.fileExists(atPath: cached) {
+            return cached
+        }
+        guard let path = Self.compileStub(context: context) else {
+            return nil
+        }
+        cache[triple] = path
+        return path
+    }
+
+    private static func compileStub(context: StubCompilationContext) -> String? {
+        try? FileManager.default.createDirectory(at: context.stubDir, withIntermediateDirectories: true)
+
+        let stubSource = context.stubDir.appendingPathComponent("kk_runtime_\(context.cacheKey).c")
+        let stubObject = context.stubDir.appendingPathComponent("kk_runtime_\(context.cacheKey).o")
+
+        if FileManager.default.fileExists(atPath: stubObject.path) {
+            return stubObject.path
+        }
+        do {
+            try context.source.write(to: stubSource, atomically: true, encoding: .utf8)
+            let clangPath = CommandRunner.resolveExecutable("clang", fallback: "/usr/bin/clang")
+            var args = ["-x", "c", "-std=c11", "-c", stubSource.path, "-o", stubObject.path]
+            args.append(contentsOf: context.clangTargetArgs)
+            _ = try CommandRunner.run(
+                executable: clangPath,
+                arguments: args,
+                phaseTimer: nil,
+                subPhaseName: "Codegen/clang-stub"
+            )
+            return stubObject.path
+        } catch {
+            return nil
+        }
+    }
+}
+
+/// Immutable context for compiling a runtime stub. Used to bridge sync caller to actor.
+private struct StubCompilationContext: Sendable {
+    let triple: String
+    let source: String
+    let cacheKey: String
+    let clangTargetArgs: [String]
+    let stubDir: URL
+}
+
 public struct RuntimeLinkInfo {
     public let libraryPaths: [String]
     public let libraries: [String]
@@ -22,9 +74,8 @@ public final class LLVMBackend {
     var phaseTimer: PhaseTimer?
 
     /// Process-wide cache for the pre-compiled runtime stub object.
-    /// Key: target triple string, Value: path to the cached .o file.
-    private static var runtimeStubCache: [String: String] = [:]
-    private static let runtimeStubLock = NSLock()
+    /// Isolated in an actor to satisfy Swift 6 concurrency requirements.
+    private static let stubCache = RuntimeStubCache()
 
     public init(
         target: TargetTriple,
@@ -36,21 +87,6 @@ public final class LLVMBackend {
         self.optLevel = optLevel
         self.debugInfo = debugInfo
         self.diagnostics = diagnostics
-    }
-
-    @available(*, deprecated, message: "Use init(target:optLevel:debugInfo:diagnostics:) instead.")
-    public convenience init(
-        target: TargetTriple,
-        optLevel: OptimizationLevel,
-        emitsDebugInfo: Bool,
-        diagnostics: DiagnosticEngine
-    ) {
-        self.init(
-            target: target,
-            optLevel: optLevel,
-            debugInfo: emitsDebugInfo,
-            diagnostics: diagnostics
-        )
     }
 
     public func emitObject(
@@ -98,42 +134,24 @@ public final class LLVMBackend {
         let triple = targetTripleString()
         let source = cRuntimePreamble().joined(separator: "\n")
         let cacheKey = Self.stableFNV1a64Hex(triple + "_" + Self.stableFNV1a64Hex(source))
-
-        Self.runtimeStubLock.lock()
-        defer { Self.runtimeStubLock.unlock() }
-
-        if let cached = Self.runtimeStubCache[triple],
-           FileManager.default.fileExists(atPath: cached) {
-            return cached
-        }
-
         let stubDir = FileManager.default.temporaryDirectory
             .appendingPathComponent("kswiftk_rt_stubs")
-        try? FileManager.default.createDirectory(at: stubDir, withIntermediateDirectories: true)
+        let context = StubCompilationContext(
+            triple: triple,
+            source: source,
+            cacheKey: cacheKey,
+            clangTargetArgs: clangTargetArgs(),
+            stubDir: stubDir
+        )
 
-        let stubSource = stubDir.appendingPathComponent("kk_runtime_\(cacheKey).c")
-        let stubObject = stubDir.appendingPathComponent("kk_runtime_\(cacheKey).o")
-
-        if FileManager.default.fileExists(atPath: stubObject.path) {
-            Self.runtimeStubCache[triple] = stubObject.path
-            return stubObject.path
+        var result: String?
+        let semaphore = DispatchSemaphore(value: 0)
+        Task {
+            result = await Self.stubCache.getOrInsert(triple: triple, context: context)
+            semaphore.signal()
         }
-        do {
-            try source.write(to: stubSource, atomically: true, encoding: .utf8)
-            let clangPath = CommandRunner.resolveExecutable("clang", fallback: "/usr/bin/clang")
-            var args = ["-x", "c", "-std=c11", "-c", stubSource.path, "-o", stubObject.path]
-            args.append(contentsOf: clangTargetArgs())
-            _ = try CommandRunner.run(
-                executable: clangPath,
-                arguments: args,
-                phaseTimer: phaseTimer,
-                subPhaseName: "Codegen/clang-stub"
-            )
-            Self.runtimeStubCache[triple] = stubObject.path
-            return stubObject.path
-        } catch {
-            return nil
-        }
+        semaphore.wait()
+        return result
     }
 
     private func compileWithClang(

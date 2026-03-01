@@ -19,9 +19,9 @@ extension LibraryMetadataImportResolutionIntegrationTests {
         """
         let metadata = """
         symbols=3
-        package _ fq=sc.util
-        function _ fq=sc.util.compute arity=1 sig=F1<I,I>
-        class _ fq=sc.util.Engine
+        package _ fq=sc.util schema=v1
+        function _ fq=sc.util.compute schema=v1 arity=1 sig=F1<I,I>
+        class _ fq=sc.util.Engine schema=v1
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -72,9 +72,9 @@ extension LibraryMetadataImportResolutionIntegrationTests {
         """
         let metadata = """
         symbols=3
-        package _ fq=kotlin
-        package _ fq=kotlin.text
-        function _ fq=kotlin.text.isBlank arity=1 sig=F1<Lkotlin_String;,Z>
+        package _ fq=kotlin schema=v1
+        package _ fq=kotlin.text schema=v1
+        function _ fq=kotlin.text.isBlank schema=v1 arity=1 sig=F1<Lkotlin_String;,Z>
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -122,8 +122,8 @@ extension LibraryMetadataImportResolutionIntegrationTests {
         // Metadata has no explicit package records; packages should be synthesized
         let metadata = """
         symbols=2
-        function _ fq=np.api.doWork arity=0
-        class _ fq=np.api.Worker
+        function _ fq=np.api.doWork schema=v1 arity=0
+        class _ fq=np.api.Worker schema=v1
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -181,8 +181,8 @@ extension LibraryMetadataImportResolutionIntegrationTests {
         """
         let metadata1 = """
         symbols=2
-        package _ fq=lib.a
-        function _ fq=lib.a.funcA arity=0
+        package _ fq=lib.a schema=v1
+        function _ fq=lib.a.funcA schema=v1 arity=0
         """
         try manifest1.write(to: libDir1.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata1.write(to: libDir1.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -201,8 +201,8 @@ extension LibraryMetadataImportResolutionIntegrationTests {
         """
         let metadata2 = """
         symbols=2
-        package _ fq=lib.b
-        function _ fq=lib.b.funcB arity=0
+        package _ fq=lib.b schema=v1
+        function _ fq=lib.b.funcB schema=v1 arity=0
         """
         try manifest2.write(to: libDir2.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata2.write(to: libDir2.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -258,9 +258,9 @@ extension LibraryMetadataImportResolutionIntegrationTests {
         // Library has both a class 'cx.util' and functions under package 'cx.util'
         let metadata = """
         symbols=3
-        class _ fq=cx.util
-        function _ fq=cx.util.process arity=0
-        function _ fq=cx.util.transform arity=1 sig=F1<I,I>
+        class _ fq=cx.util schema=v1
+        function _ fq=cx.util.process schema=v1 arity=0
+        function _ fq=cx.util.transform schema=v1 arity=1 sig=F1<I,I>
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -316,11 +316,11 @@ extension LibraryMetadataImportResolutionIntegrationTests {
         """
         let metadata = """
         symbols=5
-        package _ fq=kotlin
-        package _ fq=kotlin.collections
-        package _ fq=kotlin.text
-        function _ fq=kotlin.collections.listOf arity=0 sig=F0<A>
-        function _ fq=kotlin.text.trim arity=1 sig=F1<Lkotlin_String;,Lkotlin_String;>
+        package _ fq=kotlin schema=v1
+        package _ fq=kotlin.collections schema=v1
+        package _ fq=kotlin.text schema=v1
+        function _ fq=kotlin.collections.listOf schema=v1 arity=0 sig=F0<A>
+        function _ fq=kotlin.text.trim schema=v1 arity=1 sig=F1<Lkotlin_String;,Lkotlin_String;>
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)

@@ -157,11 +157,11 @@ extension BuildKIRRegressionTests {
     }
 
     func testSyntheticLambdaSymbolGenerationNeverUsesZeroOrInvalidSentinel() {
-        let phase = BuildKIRPhase()
-        let zeroExprSymbol = phase.syntheticLambdaSymbol(for: ExprID(rawValue: 0))
-        let maxExprSymbol = phase.syntheticLambdaSymbol(for: ExprID(rawValue: Int32.max))
+        let loweringCtx = KIRLoweringContext()
+        let zeroExprSymbol = loweringCtx.syntheticLambdaSymbol(for: ExprID(rawValue: 0))
+        let maxExprSymbol = loweringCtx.syntheticLambdaSymbol(for: ExprID(rawValue: Int32.max))
 
-        XCTAssertEqual(zeroExprSymbol, phase.syntheticLambdaSymbol(for: ExprID(rawValue: 0)))
+        XCTAssertEqual(zeroExprSymbol, loweringCtx.syntheticLambdaSymbol(for: ExprID(rawValue: 0)))
         XCTAssertGreaterThan(zeroExprSymbol.rawValue, 0)
         XCTAssertNotEqual(zeroExprSymbol.rawValue, 0)
         XCTAssertNotEqual(zeroExprSymbol, .invalid)

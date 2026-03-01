@@ -85,7 +85,7 @@ extension LibraryMetadataSerializationRoundTripTests {
     func testMetadataRoundTripForConstructor() {
         let metadata = """
         symbols=1
-        constructor _kk_demo_init fq=demo.Foo.init arity=2 suspend=0 inline=0
+        constructor _kk_demo_init fq=demo.Foo.init schema=v1 arity=2 suspend=0 inline=0
         """
         let decoder = MetadataDecoder()
         let decoded = decoder.decode(metadata)
@@ -364,7 +364,7 @@ extension LibraryMetadataSerializationRoundTripTests {
         """
         let metadata = """
         symbols=1
-        class _kk_Shape fq=ext.Shape fields=0 layoutWords=2 vtable=0 itable=0 sealedClass=1
+        class _kk_Shape fq=ext.Shape schema=v1 fields=0 layoutWords=2 vtable=0 itable=0 sealedClass=1
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)

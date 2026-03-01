@@ -14,7 +14,7 @@ final class LibraryMetadataManifestValidationTests: XCTestCase {
         // Create metadata.bin but NO manifest.json
         let metadata = """
         symbols=1
-        function _ fq=nm.foo arity=0
+        function _ fq=nm.foo schema=v1 arity=0
         """
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
 
@@ -46,7 +46,7 @@ final class LibraryMetadataManifestValidationTests: XCTestCase {
 
         let metadata = """
         symbols=1
-        function _ fq=ij.bar arity=0
+        function _ fq=ij.bar schema=v1 arity=0
         """
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
 
@@ -83,7 +83,7 @@ final class LibraryMetadataManifestValidationTests: XCTestCase {
         """
         let metadata = """
         symbols=1
-        function _ fq=nmf.fn arity=0
+        function _ fq=nmf.fn schema=v1 arity=0
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -122,7 +122,7 @@ final class LibraryMetadataManifestValidationTests: XCTestCase {
         """
         let metadata = """
         symbols=1
-        function _ fq=ecv.fn arity=0
+        function _ fq=ecv.fn schema=v1 arity=0
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -159,7 +159,7 @@ final class LibraryMetadataManifestValidationTests: XCTestCase {
         """
         let metadata = """
         symbols=1
-        function _ fq=bcvt.fn arity=0
+        function _ fq=bcvt.fn schema=v1 arity=0
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -200,7 +200,7 @@ final class LibraryMetadataManifestValidationTests: XCTestCase {
         """
         let metadata = """
         symbols=1
-        function _ fq=gcv.fn arity=0
+        function _ fq=gcv.fn schema=v1 arity=0
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -264,7 +264,7 @@ final class LibraryMetadataManifestValidationTests: XCTestCase {
         """
         let metadata = """
         symbols=1
-        function _ fq=ot.fn arity=0
+        function _ fq=ot.fn schema=v1 arity=0
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -298,7 +298,7 @@ final class LibraryMetadataManifestValidationTests: XCTestCase {
         """
         let metadata = """
         symbols=1
-        function _ fq=it.fn arity=0
+        function _ fq=it.fn schema=v1 arity=0
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -334,7 +334,7 @@ final class LibraryMetadataManifestValidationTests: XCTestCase {
         """
         let metadata = """
         symbols=1
-        function _ fq=bo.fn arity=0
+        function _ fq=bo.fn schema=v1 arity=0
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -382,7 +382,7 @@ final class LibraryMetadataManifestValidationTests: XCTestCase {
         """
         let metadata = """
         symbols=1
-        function _ fq=fv.fn arity=0
+        function _ fq=fv.fn schema=v1 arity=0
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)

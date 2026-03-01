@@ -199,16 +199,6 @@ extension TypeSystem {
         return make(.intersection(types))
     }
 
-    @available(*, deprecated, message: "Use lub(_:) instead.")
-    public func leastUpperBound(_ types: [TypeID]) -> TypeID {
-        lub(types)
-    }
-
-    @available(*, deprecated, message: "Use glb(_:) instead.")
-    public func greatestLowerBound(_ types: [TypeID]) -> TypeID {
-        glb(types)
-    }
-
     internal func nullabilitySubtype(_ lhs: Nullability, _ rhs: Nullability) -> Bool {
         lhs == rhs || (lhs == .nonNull && rhs == .nullable)
     }

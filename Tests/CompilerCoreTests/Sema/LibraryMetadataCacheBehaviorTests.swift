@@ -20,8 +20,8 @@ final class LibraryMetadataCacheBehaviorTests: XCTestCase {
         """
         let metadata = """
         symbols=2
-        function _ fq=cachetest.add arity=2 suspend=0 sig=F2<I,I,I>
-        property _ fq=cachetest.version sig=I
+        function _ fq=cachetest.add schema=v1 arity=2 suspend=0 sig=F2<I,I,I>
+        property _ fq=cachetest.version schema=v1 sig=I
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -123,11 +123,11 @@ final class LibraryMetadataCacheBehaviorTests: XCTestCase {
         """
         let metadata = """
         symbols=5
-        function _ fq=memo.inc arity=1 suspend=0 sig=F1<I,I>
-        function _ fq=memo.dec arity=1 suspend=0 sig=F1<I,I>
-        function _ fq=memo.neg arity=1 suspend=0 sig=F1<I,I>
-        function _ fq=memo.abs arity=1 suspend=0 sig=F1<I,I>
-        function _ fq=memo.dbl arity=1 suspend=0 sig=F1<I,I>
+        function _ fq=memo.inc schema=v1 arity=1 suspend=0 sig=F1<I,I>
+        function _ fq=memo.dec schema=v1 arity=1 suspend=0 sig=F1<I,I>
+        function _ fq=memo.neg schema=v1 arity=1 suspend=0 sig=F1<I,I>
+        function _ fq=memo.abs schema=v1 arity=1 suspend=0 sig=F1<I,I>
+        function _ fq=memo.dbl schema=v1 arity=1 suspend=0 sig=F1<I,I>
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -198,7 +198,7 @@ final class LibraryMetadataCacheBehaviorTests: XCTestCase {
             """
             var metadataLines = ["symbols=\(symbolsPerLibrary)"]
             for symIndex in 0..<symbolsPerLibrary {
-                metadataLines.append("function _ fq=bench\(libIndex).fn\(symIndex) arity=1 suspend=0 sig=F1<I,I>")
+                metadataLines.append("function _ fq=bench\(libIndex).fn\(symIndex) schema=v1 arity=1 suspend=0 sig=F1<I,I>")
             }
             let metadata = metadataLines.joined(separator: "\n")
 

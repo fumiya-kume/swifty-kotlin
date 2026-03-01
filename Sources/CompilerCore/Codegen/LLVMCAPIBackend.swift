@@ -27,23 +27,6 @@ public final class LLVMCAPIBackend: CodegenBackend {
         self.hasUsableBindings = loadedBindings?.smokeTestContextLifecycle() == true
     }
 
-    @available(*, deprecated, message: "Use init(target:optLevel:debugInfo:diagnostics:isStrictMode:) instead.")
-    public convenience init(
-        target: TargetTriple,
-        optLevel: OptimizationLevel,
-        emitsDebugInfo: Bool,
-        diagnostics: DiagnosticEngine,
-        isStrictMode: Bool = false
-    ) {
-        self.init(
-            target: target,
-            optLevel: optLevel,
-            debugInfo: emitsDebugInfo,
-            diagnostics: diagnostics,
-            isStrictMode: isStrictMode
-        )
-    }
-
     public func emitObject(
         module: KIRModule,
         runtime: RuntimeLinkInfo,

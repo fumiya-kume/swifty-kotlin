@@ -19,9 +19,9 @@ extension LibraryMetadataCacheBehaviorTests {
         """
         let metadata = """
         symbols=3
-        function _ fq=nilcache.add arity=2 suspend=0 sig=F2<I,I,I>
-        property _ fq=nilcache.version sig=I
-        function _ fq=nilcache.noop arity=0 suspend=0 sig=F0<U>
+        function _ fq=nilcache.add schema=v1 arity=2 suspend=0 sig=F2<I,I,I>
+        property _ fq=nilcache.version schema=v1 sig=I
+        function _ fq=nilcache.noop schema=v1 arity=0 suspend=0 sig=F0<U>
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -90,8 +90,8 @@ extension LibraryMetadataCacheBehaviorTests {
         """
         let metadata = """
         symbols=2
-        function _ fq=pop.calc arity=1 suspend=0 sig=F1<I,I>
-        property _ fq=pop.val sig=I
+        function _ fq=pop.calc schema=v1 arity=1 suspend=0 sig=F1<I,I>
+        property _ fq=pop.val schema=v1 sig=I
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -160,9 +160,9 @@ extension LibraryMetadataCacheBehaviorTests {
         """
         let metadata = """
         symbols=3
-        function _ fq=mixed.fn arity=1 suspend=0 sig=F1<I,I>
-        property _ fq=mixed.prop sig=I
-        typeAlias _ fq=mixed.MyInt sig=I
+        function _ fq=mixed.fn schema=v1 arity=1 suspend=0 sig=F1<I,I>
+        property _ fq=mixed.prop schema=v1 sig=I
+        typeAlias _ fq=mixed.MyInt schema=v1 sig=I
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -211,7 +211,7 @@ extension LibraryMetadataCacheBehaviorTests {
         }
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
-        try "symbols=1\nfunction _ fq=bad.fn arity=0 suspend=0".write(
+        try "symbols=1\nfunction _ fq=bad.fn schema=v1 arity=0 suspend=0".write(
             to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
 
         let cache = LibraryMetadataCache()

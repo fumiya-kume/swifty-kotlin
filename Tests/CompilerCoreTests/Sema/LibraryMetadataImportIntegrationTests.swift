@@ -168,8 +168,8 @@ final class LibraryMetadataImportIntegrationTests: XCTestCase {
         """
         let metadata = """
         symbols=2
-        class _ fq=ext.C
-        function _ fq=ext.C.m arity=0 suspend=0
+        class _ fq=ext.C schema=v1
+        function _ fq=ext.C.m schema=v1 arity=0 suspend=0
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -212,10 +212,10 @@ final class LibraryMetadataImportIntegrationTests: XCTestCase {
         """
         let metadata = """
         symbols=4
-        class _ fq=ext.Base fields=0 layoutWords=3 vtable=1 itable=0
-        function _ fq=ext.Base.m arity=0 suspend=0
-        class _ fq=ext.Derived superFq=ext.Base fields=0 layoutWords=3 vtable=1 itable=0
-        function _ fq=ext.Derived.m arity=0 suspend=0
+        class _ fq=ext.Base schema=v1 fields=0 layoutWords=3 vtable=1 itable=0
+        function _ fq=ext.Base.m schema=v1 arity=0 suspend=0
+        class _ fq=ext.Derived schema=v1 superFq=ext.Base fields=0 layoutWords=3 vtable=1 itable=0
+        function _ fq=ext.Derived.m schema=v1 arity=0 suspend=0
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
@@ -259,7 +259,7 @@ final class LibraryMetadataImportIntegrationTests: XCTestCase {
         """
         let metadata = """
         symbols=1
-        class _ fq=ext.Base fields=1 layoutWords=4 vtable=0 itable=0
+        class _ fq=ext.Base schema=v1 fields=1 layoutWords=4 vtable=0 itable=0
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
