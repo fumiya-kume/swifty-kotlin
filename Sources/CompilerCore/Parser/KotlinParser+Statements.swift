@@ -207,37 +207,13 @@ extension KotlinParser {
         range: inout RangeAccumulator,
         stopBeforeElse: Bool
     ) {
-        let token = stream.peek()
-        switch token.kind {
-        case .symbol(.lBrace):
-            let block = parseBlock()
-            children.append(.node(block))
-            range.append(arena.node(block).range)
-        case .keyword(.if):
-            let node = parseIfStatement(inBlock: inBlock)
-            children.append(.node(node))
-            range.append(arena.node(node).range)
-        case .keyword(.when):
-            let node = parseWhenStatement(inBlock: inBlock)
-            children.append(.node(node))
-            range.append(arena.node(node).range)
-        case .keyword(.try):
-            let node = parseTryStatement(inBlock: inBlock)
-            children.append(.node(node))
-            range.append(arena.node(node).range)
-        case .keyword(.for), .keyword(.while), .keyword(.do):
-            let node = parseLoopStatement(inBlock: inBlock)
-            children.append(.node(node))
-            range.append(arena.node(node).range)
-        default:
-            consumeInlineBody(
-                inBlock: inBlock,
-                into: &children,
-                range: &range,
-                stopBeforeElse: stopBeforeElse,
-                stopBeforeCatchFinally: false
-            )
-        }
+        appendControlFlowBody(
+            inBlock: inBlock,
+            into: &children,
+            range: &range,
+            stopBeforeElse: stopBeforeElse,
+            stopBeforeCatchFinally: false
+        )
     }
 
     /// Appends a try/catch/finally body. Can be a block, a nested control flow,
@@ -246,6 +222,24 @@ extension KotlinParser {
         inBlock: Bool,
         into children: inout [SyntaxChild],
         range: inout RangeAccumulator
+    ) {
+        appendControlFlowBody(
+            inBlock: inBlock,
+            into: &children,
+            range: &range,
+            stopBeforeElse: false,
+            stopBeforeCatchFinally: true
+        )
+    }
+
+    /// Appends a control flow body (if/else branch or try/catch/finally body).
+    /// Can be a block, nested control flow, or inline tokens.
+    private func appendControlFlowBody(
+        inBlock: Bool,
+        into children: inout [SyntaxChild],
+        range: inout RangeAccumulator,
+        stopBeforeElse: Bool,
+        stopBeforeCatchFinally: Bool
     ) {
         let token = stream.peek()
         switch token.kind {
@@ -274,8 +268,8 @@ extension KotlinParser {
                 inBlock: inBlock,
                 into: &children,
                 range: &range,
-                stopBeforeElse: false,
-                stopBeforeCatchFinally: true
+                stopBeforeElse: stopBeforeElse,
+                stopBeforeCatchFinally: stopBeforeCatchFinally
             )
         }
     }

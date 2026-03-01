@@ -6,140 +6,10 @@ extension KotlinLexer {
         var parsedPrefix = false
         var isHexOrBin = false
 
-        if bytes[cursor] == 0x30 && cursor + 1 < bytes.count {
-            let marker = bytes[cursor + 1]
-            if marker == 0x78 || marker == 0x58 {
-                parsedPrefix = true
-                isHexOrBin = true
-                cursor += 2
-                let startDigits = cursor
-                if cursor < bytes.count && bytes[cursor] == 0x5F {
-                    diagnostics.error(
-                        "KSWIFTK-LEX-0006",
-                        "Invalid underscore placement in numeric literal.",
-                        range: makeRange(start: cursor, end: min(cursor + 1, bytes.count))
-                    )
-                }
-                var hexDigitCount = 0
-                while cursor < bytes.count {
-                    let ch = bytes[cursor]
-                    if isHexDigit(ch) {
-                        hexDigitCount += 1
-                        cursor += 1
-                        continue
-                    }
-                    if ch == 0x5F {
-                        cursor += 1
-                        continue
-                    }
-                    break
-                }
-                if hexDigitCount == 0 {
-                    diagnostics.error(
-                        "KSWIFTK-LEX-0003",
-                        "Invalid number format in numeric literal.",
-                        range: makeRange(start: start, end: min(cursor + 1, bytes.count))
-                    )
-                } else if cursor > startDigits && bytes[cursor - 1] == 0x5F {
-                    diagnostics.error(
-                        "KSWIFTK-LEX-0006",
-                        "Trailing underscore in numeric literal.",
-                        range: makeRange(start: cursor - 1, end: cursor)
-                    )
-                }
-            } else if marker == 0x62 || marker == 0x42 {
-                parsedPrefix = true
-                isHexOrBin = true
-                cursor += 2
-                let startDigits = cursor
-                if cursor < bytes.count && bytes[cursor] == 0x5F {
-                    diagnostics.error(
-                        "KSWIFTK-LEX-0006",
-                        "Invalid underscore placement in numeric literal.",
-                        range: makeRange(start: cursor, end: min(cursor + 1, bytes.count))
-                    )
-                }
-                var binDigitCount = 0
-                while cursor < bytes.count {
-                    let ch = bytes[cursor]
-                    if isBinaryDigit(ch) {
-                        binDigitCount += 1
-                        cursor += 1
-                        continue
-                    }
-                    if ch == 0x5F {
-                        cursor += 1
-                        continue
-                    }
-                    break
-                }
-                if binDigitCount == 0 {
-                    diagnostics.error(
-                        "KSWIFTK-LEX-0003",
-                        "Invalid number format in numeric literal.",
-                        range: makeRange(start: start, end: min(cursor + 1, bytes.count))
-                    )
-                } else if cursor > startDigits && bytes[cursor - 1] == 0x5F {
-                    diagnostics.error(
-                        "KSWIFTK-LEX-0006",
-                        "Trailing underscore in numeric literal.",
-                        range: makeRange(start: cursor - 1, end: cursor)
-                    )
-                }
-            } else if marker == 0x6F || marker == 0x4F {
-                parsedPrefix = true
-                cursor += 2
-                diagnostics.error(
-                    "KSWIFTK-LEX-0003",
-                    "Octal literal prefix '0o' is not supported in Kotlin.",
-                    range: makeRange(start: start, end: cursor)
-                )
-                while cursor < bytes.count {
-                    let ch = bytes[cursor]
-                    if isOctalDigit(ch) || ch == 0x5F {
-                        cursor += 1
-                        continue
-                    }
-                    break
-                }
-            }
-        }
+        (parsedPrefix, isHexOrBin) = scanNumberPrefix(cursor: &cursor, start: start)
 
         if !parsedPrefix {
-            while cursor < bytes.count {
-                let ch = bytes[cursor]
-                if isDigit(ch) {
-                    cursor += 1
-                    continue
-                }
-                if ch == 0x5F {
-                    cursor += 1
-                    continue
-                }
-                if ch == 0x2E && !hasDot {
-                    if cursor + 1 >= bytes.count || !isDigit(bytes[cursor + 1]) {
-                        break
-                    }
-                    if cursor > start && bytes[cursor - 1] == 0x5F {
-                        diagnostics.error(
-                            "KSWIFTK-LEX-0006",
-                            "Trailing underscore in numeric literal.",
-                            range: makeRange(start: cursor - 1, end: cursor)
-                        )
-                    }
-                    hasDot = true
-                    cursor += 1
-                    continue
-                }
-                break
-            }
-            if cursor > start && bytes[cursor - 1] == 0x5F {
-                diagnostics.error(
-                    "KSWIFTK-LEX-0006",
-                    "Trailing underscore in numeric literal.",
-                    range: makeRange(start: cursor - 1, end: cursor)
-                )
-            }
+            scanDecimalDigits(cursor: &cursor, start: start, hasDot: &hasDot)
         }
 
         if !parsedPrefix && cursor < bytes.count && (bytes[cursor] == 0x45 || bytes[cursor] == 0x65) {
@@ -247,6 +117,122 @@ extension KotlinLexer {
             return Token(kind: .doubleLiteral(literal), range: makeRange(start: start, end: textEnd), leadingTrivia: leadingTrivia)
         }
         return Token(kind: .intLiteral(literal), range: makeRange(start: start, end: textEnd), leadingTrivia: leadingTrivia)
+    }
+
+    // MARK: - scanNumber helpers
+
+    /// Scans hex/bin digits with underscore handling. Advances cursor past digits; emits diagnostics for invalid placement.
+    private func scanPrefixedDigits(cursor: inout Int, isDigit: (UInt8) -> Bool, rangeStart: Int) -> Int {
+        let startDigits = cursor
+        if cursor < bytes.count && bytes[cursor] == 0x5F {
+            diagnostics.error(
+                "KSWIFTK-LEX-0006",
+                "Invalid underscore placement in numeric literal.",
+                range: makeRange(start: cursor, end: min(cursor + 1, bytes.count))
+            )
+        }
+        var digitCount = 0
+        while cursor < bytes.count {
+            let ch = bytes[cursor]
+            if isDigit(ch) {
+                digitCount += 1
+                cursor += 1
+                continue
+            }
+            if ch == 0x5F {
+                cursor += 1
+                continue
+            }
+            break
+        }
+        if digitCount == 0 {
+            diagnostics.error(
+                "KSWIFTK-LEX-0003",
+                "Invalid number format in numeric literal.",
+                range: makeRange(start: rangeStart, end: min(cursor + 1, bytes.count))
+            )
+        } else if cursor > startDigits && bytes[cursor - 1] == 0x5F {
+            diagnostics.error(
+                "KSWIFTK-LEX-0006",
+                "Trailing underscore in numeric literal.",
+                range: makeRange(start: cursor - 1, end: cursor)
+            )
+        }
+        return digitCount
+    }
+
+    /// Handles 0x, 0b, 0o prefixes. Returns (parsedPrefix, isHexOrBin).
+    private func scanNumberPrefix(cursor: inout Int, start: Int) -> (Bool, Bool) {
+        guard bytes[cursor] == 0x30 && cursor + 1 < bytes.count else {
+            return (false, false)
+        }
+        let marker = bytes[cursor + 1]
+        if marker == 0x78 || marker == 0x58 {
+            cursor += 2
+            _ = scanPrefixedDigits(cursor: &cursor, isDigit: isHexDigit, rangeStart: start)
+            return (true, true)
+        }
+        if marker == 0x62 || marker == 0x42 {
+            cursor += 2
+            _ = scanPrefixedDigits(cursor: &cursor, isDigit: isBinaryDigit, rangeStart: start)
+            return (true, true)
+        }
+        if marker == 0x6F || marker == 0x4F {
+            cursor += 2
+            diagnostics.error(
+                "KSWIFTK-LEX-0003",
+                "Octal literal prefix '0o' is not supported in Kotlin.",
+                range: makeRange(start: start, end: cursor)
+            )
+            while cursor < bytes.count {
+                let ch = bytes[cursor]
+                if isOctalDigit(ch) || ch == 0x5F {
+                    cursor += 1
+                    continue
+                }
+                break
+            }
+            return (true, false)
+        }
+        return (false, false)
+    }
+
+    /// Scans decimal digits and optional decimal point. Advances cursor.
+    private func scanDecimalDigits(cursor: inout Int, start: Int, hasDot: inout Bool) {
+        while cursor < bytes.count {
+            let ch = bytes[cursor]
+            if isDigit(ch) {
+                cursor += 1
+                continue
+            }
+            if ch == 0x5F {
+                cursor += 1
+                continue
+            }
+            if ch == 0x2E && !hasDot {
+                if cursor + 1 >= bytes.count || !isDigit(bytes[cursor + 1]) {
+                    break
+                }
+                if cursor > start && bytes[cursor - 1] == 0x5F {
+                    diagnostics.error(
+                        "KSWIFTK-LEX-0006",
+                        "Trailing underscore in numeric literal.",
+                        range: makeRange(start: cursor - 1, end: cursor)
+                    )
+                }
+                hasDot = true
+                cursor += 1
+                continue
+            }
+            break
+        }
+        if cursor > start && bytes[cursor - 1] == 0x5F {
+            diagnostics.error(
+                "KSWIFTK-LEX-0006",
+                "Trailing underscore in numeric literal.",
+                range: makeRange(start: cursor - 1, end: cursor)
+            )
+        }
     }
 
     func scanCharLiteral(leadingTrivia: [TriviaPiece], start: Int) -> Token {

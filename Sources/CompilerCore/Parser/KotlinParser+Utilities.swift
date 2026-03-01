@@ -1,4 +1,9 @@
 extension KotlinParser {
+    /// Keywords that start declarations or act as statement/synchronization boundaries.
+    private static let declarationBoundaryKeywords: Set<Keyword> = [
+        .class, .object, .interface, .fun, .val, .var, .typealias, .enum, .package, .import
+    ]
+
     internal func parseBalancedGroup(opening: Symbol, closing: Symbol) -> NodeID {
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
@@ -115,9 +120,7 @@ extension KotlinParser {
         switch token.kind {
         case .symbol(.rBrace):
             return true
-        case .keyword(.class), .keyword(.object), .keyword(.interface), .keyword(.fun),
-             .keyword(.val), .keyword(.var), .keyword(.typealias), .keyword(.enum),
-             .keyword(.package), .keyword(.import):
+        case .keyword(let kw) where Self.declarationBoundaryKeywords.contains(kw):
             return !inBlock && hasLeadingNewline(token)
         default:
             return false
@@ -208,9 +211,7 @@ extension KotlinParser {
             return true
         case .symbol(.rBrace):
             return true
-        case .keyword(.class), .keyword(.fun), .keyword(.val), .keyword(.var),
-             .keyword(.object), .keyword(.interface), .keyword(.typealias),
-             .keyword(.import), .keyword(.package):
+        case .keyword(let kw) where Self.declarationBoundaryKeywords.contains(kw):
             return true
         default:
             break

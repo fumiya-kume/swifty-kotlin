@@ -1,5 +1,28 @@
 import Foundation
 
+/// Returns (getCallee, setCallee) for a delegate kind. Lazy is read-only so setCallee is nil.
+private func delegateAccessorCallees(
+    kind: StdlibDelegateKind,
+    lazyGetValueName: InternedString,
+    observableGetValueName: InternedString,
+    observableSetValueName: InternedString,
+    vetoableGetValueName: InternedString,
+    vetoableSetValueName: InternedString,
+    customGetValueName: InternedString,
+    customSetValueName: InternedString
+) -> (getCallee: InternedString, setCallee: InternedString?) {
+    switch kind {
+    case .lazy:
+        return (lazyGetValueName, nil)
+    case .observable:
+        return (observableGetValueName, observableSetValueName)
+    case .vetoable:
+        return (vetoableGetValueName, vetoableSetValueName)
+    case .custom:
+        return (customGetValueName, customSetValueName)
+    }
+}
+
 /// Delegate kinds recognized by the compiler (P5-80, P5-79).
 enum StdlibDelegateKind: Equatable {
     case lazy
@@ -136,102 +159,36 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                 let delegateRef = module.arena.appendExpr(.symbolRef(sym), type: nil)
                 loweredBody.append(.constValue(result: delegateRef, value: .symbolRef(sym)))
 
-                switch delegateKind {
-                case .lazy:
-                    // lazy delegates are read-only: always emit kk_lazy_get_value.
-                    loweredBody.append(
-                        .call(
-                            symbol: sym,
-                            callee: lazyGetValueName,
-                            arguments: [delegateRef],
-                            result: result,
-                            canThrow: canThrow,
-                            thrownResult: thrownResult,
-                            isSuperCall: isSuperCall
-                        )
-                    )
-
-                case .observable:
-                    if isSetter, arguments.count >= 2 {
-                        loweredBody.append(
-                            .call(
-                                symbol: sym,
-                                callee: observableSetValueName,
-                                arguments: [delegateRef, arguments[1]],
-                                result: result,
-                                canThrow: canThrow,
-                                thrownResult: thrownResult,
-                                isSuperCall: isSuperCall
-                            )
-                        )
-                    } else {
-                        loweredBody.append(
-                            .call(
-                                symbol: sym,
-                                callee: observableGetValueName,
-                                arguments: [delegateRef],
-                                result: result,
-                                canThrow: canThrow,
-                                thrownResult: thrownResult,
-                                isSuperCall: isSuperCall
-                            )
-                        )
-                    }
-
-                case .vetoable:
-                    if isSetter, arguments.count >= 2 {
-                        loweredBody.append(
-                            .call(
-                                symbol: sym,
-                                callee: vetoableSetValueName,
-                                arguments: [delegateRef, arguments[1]],
-                                result: result,
-                                canThrow: canThrow,
-                                thrownResult: thrownResult,
-                                isSuperCall: isSuperCall
-                            )
-                        )
-                    } else {
-                        loweredBody.append(
-                            .call(
-                                symbol: sym,
-                                callee: vetoableGetValueName,
-                                arguments: [delegateRef],
-                                result: result,
-                                canThrow: canThrow,
-                                thrownResult: thrownResult,
-                                isSuperCall: isSuperCall
-                            )
-                        )
-                    }
-
-                case .custom:
-                    if isSetter, arguments.count >= 2 {
-                        loweredBody.append(
-                            .call(
-                                symbol: sym,
-                                callee: customSetValueName,
-                                arguments: [delegateRef, arguments[1]],
-                                result: result,
-                                canThrow: canThrow,
-                                thrownResult: thrownResult,
-                                isSuperCall: isSuperCall
-                            )
-                        )
-                    } else {
-                        loweredBody.append(
-                            .call(
-                                symbol: sym,
-                                callee: customGetValueName,
-                                arguments: [delegateRef],
-                                result: result,
-                                canThrow: canThrow,
-                                thrownResult: thrownResult,
-                                isSuperCall: isSuperCall
-                            )
-                        )
-                    }
+                let (getCallee, setCallee) = delegateAccessorCallees(
+                    kind: delegateKind,
+                    lazyGetValueName: lazyGetValueName,
+                    observableGetValueName: observableGetValueName,
+                    observableSetValueName: observableSetValueName,
+                    vetoableGetValueName: vetoableGetValueName,
+                    vetoableSetValueName: vetoableSetValueName,
+                    customGetValueName: customGetValueName,
+                    customSetValueName: customSetValueName
+                )
+                let accessorCallee: InternedString
+                let callArgs: [KIRExprID]
+                if isSetter, arguments.count >= 2, let setCallee {
+                    accessorCallee = setCallee
+                    callArgs = [delegateRef, arguments[1]]
+                } else {
+                    accessorCallee = getCallee
+                    callArgs = [delegateRef]
                 }
+                loweredBody.append(
+                    .call(
+                        symbol: sym,
+                        callee: accessorCallee,
+                        arguments: callArgs,
+                        result: result,
+                        canThrow: canThrow,
+                        thrownResult: thrownResult,
+                        isSuperCall: isSuperCall
+                    )
+                )
             }
 
             // Second pass: rewrite delegate initialization sequences.
