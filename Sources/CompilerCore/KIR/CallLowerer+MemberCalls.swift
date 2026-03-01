@@ -19,10 +19,15 @@ extension CallLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
-        lowerMemberLikeCallExpr(
+        let effectiveCalleeName = if sema.bindings.isInvokeOperatorCall(exprID) {
+            interner.intern("invoke")
+        } else {
+            calleeName
+        }
+        return lowerMemberLikeCallExpr(
             exprID,
             receiverExpr: receiverExpr,
-            calleeName: calleeName,
+            calleeName: effectiveCalleeName,
             args: args,
             ast: ast,
             sema: sema,
@@ -47,10 +52,15 @@ extension CallLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
-        lowerMemberLikeCallExpr(
+        let effectiveCalleeName = if sema.bindings.isInvokeOperatorCall(exprID) {
+            interner.intern("invoke")
+        } else {
+            calleeName
+        }
+        return lowerMemberLikeCallExpr(
             exprID,
             receiverExpr: receiverExpr,
-            calleeName: calleeName,
+            calleeName: effectiveCalleeName,
             args: args,
             ast: ast,
             sema: sema,

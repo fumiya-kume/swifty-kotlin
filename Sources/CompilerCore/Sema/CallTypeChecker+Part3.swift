@@ -197,6 +197,84 @@ extension CallTypeChecker {
             // Skip this for class-name receivers — only companion members are
             // accessible via `ClassName.member`, not instance properties.
             if !isClassNameReceiver,
+               !args.isEmpty,
+               let propResult = driver.helpers.lookupMemberProperty(
+                   named: calleeName,
+                   receiverType: memberLookupType,
+                   sema: sema
+               )
+            {
+                // Check visibility before trying callable-style resolution.
+                if let propSymbol = sema.symbols.symbol(propResult.symbol),
+                   !ctx.visibilityChecker.isAccessible(propSymbol, fromFile: ctx.currentFileID, enclosingClass: ctx.enclosingClassSymbol)
+                {
+                    driver.helpers.emitVisibilityError(for: propSymbol, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
+
+                // Property value call with function type (`receiver.f(...)`).
+                if let callableType = inferFunctionTypeOrError(from: propResult.type, sema: sema)
+                {
+                    if let callableResult = inferCallableValueInvocation(
+                        id,
+                        calleeType: callableType,
+                        callableTarget: .localValue(propResult.symbol),
+                        args: args,
+                        argTypes: argTypes,
+                        range: range,
+                        ctx: ctx,
+                        expectedType: expectedType
+                    ) {
+                        let finalType = safeCall ? sema.types.makeNullable(callableResult) : callableResult
+                        sema.bindings.markInvokeOperatorCall(id)
+                        sema.bindings.bindExprType(id, type: finalType)
+                        return finalType
+                    }
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
+
+                // Property value call through `operator fun invoke(...)`.
+                let invokeName = interner.intern("invoke")
+                let invokeCandidates = driver.helpers.collectMemberFunctionCandidates(
+                    named: invokeName,
+                    receiverType: propResult.type,
+                    sema: sema
+                ).filter { candidateID in
+                    guard let sym = sema.symbols.symbol(candidateID) else { return false }
+                    return sym.flags.contains(.operatorFunction)
+                }
+
+                if !invokeCandidates.isEmpty {
+                    let resolvedArgs = zip(args, argTypes).map { argument, type in
+                        CallArg(label: argument.label, isSpread: argument.isSpread, type: type)
+                    }
+                    let resolved = ctx.resolver.resolveCall(
+                        candidates: invokeCandidates,
+                        call: CallExpr(
+                            range: range,
+                            calleeName: invokeName,
+                            args: resolvedArgs,
+                            explicitTypeArgs: explicitTypeArgs
+                        ),
+                        expectedType: expectedType,
+                        implicitReceiverType: propResult.type,
+                        ctx: ctx.semaCtx
+                    )
+                    if let diagnostic = resolved.diagnostic {
+                        ctx.semaCtx.diagnostics.emit(diagnostic)
+                        return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                    }
+                    if let chosen = resolved.chosenCallee {
+                        let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
+                        sema.bindings.markInvokeOperatorCall(id)
+                        let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
+                        sema.bindings.bindExprType(id, type: finalType)
+                        return finalType
+                    }
+                }
+            }
+
+            if !isClassNameReceiver,
                args.isEmpty,
                let propResult = driver.helpers.lookupMemberProperty(
                    named: calleeName,

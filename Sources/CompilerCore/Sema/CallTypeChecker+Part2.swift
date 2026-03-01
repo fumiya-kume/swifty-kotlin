@@ -95,4 +95,12 @@ extension CallTypeChecker {
         sema.bindings.bindExprType(id, type: functionType.returnType)
         return functionType.returnType
     }
+
+    func inferFunctionTypeOrError(from type: TypeID, sema: SemaModule) -> TypeID? {
+        let nonNullType = sema.types.makeNonNullable(type)
+        guard case .functionType = sema.types.kind(of: nonNullType) else {
+            return nil
+        }
+        return nonNullType
+    }
 }

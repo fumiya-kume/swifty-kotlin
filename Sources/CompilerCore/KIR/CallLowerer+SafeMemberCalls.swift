@@ -62,9 +62,14 @@ extension CallLowerer {
         } else {
             true
         }
+        let effectiveCalleeName = if sema.bindings.isInvokeOperatorCall(exprID) {
+            interner.intern("invoke")
+        } else {
+            calleeName
+        }
 
         // Primitive member function: Int/Long.inv() → kk_op_inv (P5-103)
-        if interner.resolve(calleeName) == "inv",
+        if interner.resolve(effectiveCalleeName) == "inv",
            args.isEmpty
         {
             let intType = sema.types.make(.primitive(.int, .nonNull))
@@ -101,7 +106,7 @@ extension CallLowerer {
         {
             finalArguments.insert(loweredReceiverID, at: 0)
         } else if chosen == nil {
-            let calleeStr = interner.resolve(calleeName)
+            let calleeStr = interner.resolve(effectiveCalleeName)
             if Self.coroutineHandleMemberNames.contains(calleeStr), isCoroutineReceiver, args.isEmpty {
                 finalArguments.insert(loweredReceiverID, at: 0)
             }
@@ -122,7 +127,7 @@ extension CallLowerer {
                 instructions: &instructions.instructions,
                 arguments: &finalArguments
             )
-            let stubName = interner.intern(interner.resolve(calleeName) + "$default")
+            let stubName = interner.intern(interner.resolve(effectiveCalleeName) + "$default")
             let stubSym = driver.callSupportLowerer.defaultStubSymbol(for: chosen)
             instructions.append(.call(
                 symbol: stubSym,
@@ -148,7 +153,7 @@ extension CallLowerer {
             {
                 interner.intern(externalLinkName)
             } else if chosen == nil, isCoroutineReceiver, args.isEmpty {
-                switch interner.resolve(calleeName) {
+                switch interner.resolve(effectiveCalleeName) {
                 case "await":
                     interner.intern("kk_kxmini_async_await")
                 case "join":
@@ -156,10 +161,10 @@ extension CallLowerer {
                 case "cancel":
                     interner.intern("kk_job_cancel")
                 default:
-                    calleeName
+                    effectiveCalleeName
                 }
             } else {
-                calleeName
+                effectiveCalleeName
             }
             let receiverTypeForDispatch = sema.bindings.exprTypes[receiverExpr]
             if !isSuperCall,

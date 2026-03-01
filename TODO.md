@@ -522,11 +522,11 @@
   - [x] 配列・文字列・カスタム演算子それぞれの diff/golden ケースを追加する
   - **完了条件**: `Array<Int>` / カスタム `operator fun get` で `a[i]` が正しく呼び出され、bounds check と組み合わせて動作する
 
-- [ ] P5-70: `invoke` 演算子を関数呼び出し解決に統合する（spec.md J9）
-  - [ ] `callExpr` 解決時に callee が関数型でない場合に `operator fun invoke` 候補を overload resolver へフォールバックする
-  - [ ] lambda/callable reference 型の `invoke` と通常 `operator fun invoke` を統一した解決経路に通す
-  - [ ] object が `invoke` を持つ場合の `obj(args)` 構文を Parser/Sema で認識し、member call へ lowering する
-  - [ ] `invoke` 演算子の diff/golden ケース（function object、SAM 等）を追加する
+- [x] P5-70: `invoke` 演算子を関数呼び出し解決に統合する（spec.md J9）
+  - [x] `callExpr` 解決時に callee が関数型でない場合に `operator fun invoke` 候補を overload resolver へフォールバックする
+  - [x] lambda/callable reference 型の `invoke` と通常 `operator fun invoke` を統一した解決経路に通す
+  - [x] object が `invoke` を持つ場合の `obj(args)` 構文を Parser/Sema で認識し、member call へ lowering する
+  - [x] `invoke` 演算子の diff/golden ケース（function object、SAM 等）を追加する
   - **完了条件**: `class F { operator fun invoke(x: Int) = x }; val f = F(); f(1)` が動作し、`kotlinc` 出力と一致する
 
 - [x] P5-71: `in` / `!in` 演算子と `contains` operator への desugaring を実装する（spec.md J9）

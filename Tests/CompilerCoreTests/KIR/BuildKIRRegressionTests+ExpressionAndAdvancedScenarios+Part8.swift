@@ -607,6 +607,168 @@ extension BuildKIRRegressionTests {
         })
     }
 
+    func testDirectMemberCallWithInvokeOperatorRoutesToInvokeCallee() {
+        let fixture = makeKIRDirectLoweringFixture()
+        let range = makeRange()
+        let intType = fixture.types.make(.primitive(.int, .nonNull))
+
+        let owner = defineSemanticSymbol(in: fixture, kind: .class, fqName: ["pkg", "Invoker"])
+        let invoke = defineSemanticSymbol(in: fixture, kind: .function, fqName: ["pkg", "Invoker", "call"])
+        let valueParam = defineSemanticSymbol(in: fixture, kind: .valueParameter, fqName: ["pkg", "Invoker", "call", "x"])
+        let ownerType = fixture.types.make(
+            .classType(
+                ClassType(
+                    classSymbol: owner,
+                    args: [],
+                    nullability: .nonNull
+                )
+            )
+        )
+        fixture.symbols.setParentSymbol(owner, for: invoke)
+        fixture.symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: ownerType,
+                parameterTypes: [intType],
+                returnType: intType,
+                valueParameterSymbols: [valueParam],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false]
+            ),
+            for: invoke
+        )
+
+        let receiver = appendTypedExpr(
+            .nameRef(fixture.interner.intern("obj"), range),
+            type: ownerType,
+            fixture: fixture
+        )
+        let argExpr = appendTypedExpr(.intLiteral(3, range), type: intType, fixture: fixture)
+        let args = [CallArgument(expr: argExpr)]
+        let exprID = appendTypedExpr(
+            .memberCall(
+                receiver: receiver,
+                callee: fixture.interner.intern("value"),
+                typeArgs: [],
+                args: args,
+                range: range
+            ),
+            type: intType,
+            fixture: fixture
+        )
+        fixture.bindings.bindCall(
+            exprID,
+            binding: CallBinding(
+                chosenCallee: invoke,
+                substitutedTypeArguments: [],
+                parameterMapping: [0: 0]
+            )
+        )
+        fixture.bindings.markInvokeOperatorCall(exprID)
+
+        var emit = KIRLoweringEmitContext()
+        _ = fixture.driver.callLowerer.lowerMemberCallExpr(
+            exprID,
+            receiverExpr: receiver,
+            calleeName: fixture.interner.intern("value"),
+            args: args,
+            shared: fixture.makeShared(),
+            emit: &emit
+        )
+
+        guard let callInstruction = emit.instructions.first(where: { instruction in
+            if case .call = instruction { return true }
+            return false
+        }) else {
+            XCTFail("Expected member invoke call instruction")
+            return
+        }
+        guard case let .call(chosen, loweredCallee, _, _, _, _, _) = callInstruction else {
+            XCTFail("Expected .call instruction")
+            return
+        }
+        XCTAssertEqual(chosen, invoke)
+        XCTAssertEqual(fixture.interner.resolve(loweredCallee), "invoke")
+    }
+
+    func testDirectSafeMemberCallWithInvokeOperatorRoutesToInvokeCallee() {
+        let fixture = makeKIRDirectLoweringFixture()
+        let range = makeRange()
+        let intType = fixture.types.make(.primitive(.int, .nonNull))
+
+        let owner = defineSemanticSymbol(in: fixture, kind: .class, fqName: ["pkg", "SafeInvoker"])
+        let invoke = defineSemanticSymbol(in: fixture, kind: .function, fqName: ["pkg", "SafeInvoker", "call"])
+        let valueParam = defineSemanticSymbol(in: fixture, kind: .valueParameter, fqName: ["pkg", "SafeInvoker", "call", "x"])
+        let ownerType = fixture.types.make(
+            .classType(
+                ClassType(
+                    classSymbol: owner,
+                    args: [],
+                    nullability: .nonNull
+                )
+            )
+        )
+        fixture.symbols.setParentSymbol(owner, for: invoke)
+        fixture.symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: ownerType,
+                parameterTypes: [intType],
+                returnType: intType,
+                valueParameterSymbols: [valueParam],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false]
+            ),
+            for: invoke
+        )
+
+        let receiver = appendTypedExpr(
+            .nameRef(fixture.interner.intern("obj"), range),
+            type: ownerType,
+            fixture: fixture
+        )
+        let argExpr = appendTypedExpr(.intLiteral(9, range), type: intType, fixture: fixture)
+        let args = [CallArgument(expr: argExpr)]
+        let exprID = appendSafeMemberExpr(
+            receiver: receiver,
+            callee: fixture.interner.intern("value"),
+            args: args,
+            type: intType,
+            fixture: fixture
+        )
+        fixture.bindings.bindCall(
+            exprID,
+            binding: CallBinding(
+                chosenCallee: invoke,
+                substitutedTypeArguments: [],
+                parameterMapping: [0: 0]
+            )
+        )
+        fixture.bindings.markInvokeOperatorCall(exprID)
+
+        var emit = KIRLoweringEmitContext()
+        _ = fixture.driver.callLowerer.lowerSafeMemberCallExpr(
+            exprID,
+            receiverExpr: receiver,
+            calleeName: fixture.interner.intern("value"),
+            args: args,
+            shared: fixture.makeShared(),
+            emit: &emit
+        )
+
+        guard let callInstruction = emit.instructions.first(where: { instruction in
+            if case .call = instruction { return true }
+            return false
+        }) else {
+            XCTFail("Expected safe member invoke call instruction")
+            return
+        }
+        guard case let .call(chosen, loweredCallee, _, _, _, _, _) = callInstruction else {
+            XCTFail("Expected .call instruction")
+            return
+        }
+        XCTAssertEqual(chosen, invoke)
+        XCTAssertEqual(fixture.interner.resolve(loweredCallee), "invoke")
+    }
+
     func testDirectSharedAPILambdaAndObjectForwardersAreReachable() {
         let fixture = makeKIRDirectLoweringFixture()
         let range = makeRange()
