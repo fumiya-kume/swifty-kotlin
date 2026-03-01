@@ -16,14 +16,15 @@ internal struct FrameMapDescriptorC {
 }
 
 internal enum RuntimeStorage {
+    // Access to shared mutable runtime state is synchronized by `lock`.
     static let lock = NSLock()
-    static var heapObjects: [UInt: HeapObjectRecord] = [:]
-    static var objectPointers: Set<UInt> = []
-    static var globalRootSlots: Set<UInt> = []
-    static var frameMaps: [UInt32: [Int32]] = [:]
-    static var activeFrames: [ActiveFrameRecord] = []
-    static var coroutineRoots: Set<UInt> = []
-    static let coroutineSuspendedBox = RuntimeStringBox("COROUTINE_SUSPENDED")
+    nonisolated(unsafe) static var heapObjects: [UInt: HeapObjectRecord] = [:]
+    nonisolated(unsafe) static var objectPointers: Set<UInt> = []
+    nonisolated(unsafe) static var globalRootSlots: Set<UInt> = []
+    nonisolated(unsafe) static var frameMaps: [UInt32: [Int32]] = [:]
+    nonisolated(unsafe) static var activeFrames: [ActiveFrameRecord] = []
+    nonisolated(unsafe) static var coroutineRoots: Set<UInt> = []
+    nonisolated(unsafe) static let coroutineSuspendedBox = RuntimeStringBox("COROUTINE_SUSPENDED")
 }
 
 internal let kkObjMarkFlag: UInt32 = 1 << 0

@@ -123,7 +123,7 @@ final class ExprTypeChecker {
         case .localAssign(let name, let value, let range):
             return driver.localDeclChecker.inferLocalAssignExpr(id, name: name, value: value, range: range, ctx: ctx, locals: &locals)
 
-        case .memberAssign(let receiverExpr, _, let valueExpr, let range):
+        case .memberAssign(let receiverExpr, _, let valueExpr, _):
             // Type-check the receiver and value, bind as unit-typed expression.
             _ = driver.inferExpr(receiverExpr, ctx: ctx, locals: &locals, expectedType: nil)
             _ = driver.inferExpr(valueExpr, ctx: ctx, locals: &locals, expectedType: nil)

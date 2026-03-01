@@ -1,4 +1,4 @@
-public enum RuntimeABICType: String, Equatable {
+public enum RuntimeABICType: String, Equatable, Sendable {
     case void = "void"
     case uint32 = "uint32_t"
     case int32 = "int32_t"
@@ -17,7 +17,7 @@ public enum RuntimeABICType: String, Equatable {
     case noreturn = "_Noreturn void"
 }
 
-public struct RuntimeABIParameter: Equatable {
+public struct RuntimeABIParameter: Equatable, Sendable {
     public let name: String
     public let type: RuntimeABICType
 
@@ -27,7 +27,7 @@ public struct RuntimeABIParameter: Equatable {
     }
 }
 
-public struct RuntimeABIFunctionSpec: Equatable {
+public struct RuntimeABIFunctionSpec: Equatable, Sendable {
     public let name: String
     public let parameters: [RuntimeABIParameter]
     public let returnType: RuntimeABICType

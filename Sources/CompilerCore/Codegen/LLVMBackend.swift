@@ -1,19 +1,29 @@
 import Foundation
 
-/// Actor-isolated cache for pre-compiled runtime stub objects.
-/// Replaces the previous static var + NSLock pattern for Swift 6 concurrency compliance.
-private actor RuntimeStubCache {
+/// Lock-protected cache for pre-compiled runtime stub objects.
+private final class RuntimeStubCache: @unchecked Sendable {
+    private let lock = NSLock()
     private var cache: [String: String] = [:]
 
     func getOrInsert(triple: String, context: StubCompilationContext) -> String? {
+        lock.lock()
+        if let cached = cache[triple], FileManager.default.fileExists(atPath: cached) {
+            lock.unlock()
+            return cached
+        }
+        lock.unlock()
+
+        guard let compiled = Self.compileStub(context: context) else {
+            return nil
+        }
+
+        lock.lock()
+        defer { lock.unlock() }
         if let cached = cache[triple], FileManager.default.fileExists(atPath: cached) {
             return cached
         }
-        guard let path = Self.compileStub(context: context) else {
-            return nil
-        }
-        cache[triple] = path
-        return path
+        cache[triple] = compiled
+        return compiled
     }
 
     private static func compileStub(context: StubCompilationContext) -> String? {
@@ -43,9 +53,8 @@ private actor RuntimeStubCache {
     }
 }
 
-/// Immutable context for compiling a runtime stub. Used to bridge sync caller to actor.
+/// Immutable context for compiling a runtime stub.
 private struct StubCompilationContext: Sendable {
-    let triple: String
     let source: String
     let cacheKey: String
     let clangTargetArgs: [String]
@@ -74,7 +83,7 @@ public final class LLVMBackend {
     var phaseTimer: PhaseTimer?
 
     /// Process-wide cache for the pre-compiled runtime stub object.
-    /// Isolated in an actor to satisfy Swift 6 concurrency requirements.
+    /// Protected by a lock for Swift 6 concurrency compliance in synchronous APIs.
     private static let stubCache = RuntimeStubCache()
 
     public init(
@@ -137,21 +146,13 @@ public final class LLVMBackend {
         let stubDir = FileManager.default.temporaryDirectory
             .appendingPathComponent("kswiftk_rt_stubs")
         let context = StubCompilationContext(
-            triple: triple,
             source: source,
             cacheKey: cacheKey,
             clangTargetArgs: clangTargetArgs(),
             stubDir: stubDir
         )
 
-        var result: String?
-        let semaphore = DispatchSemaphore(value: 0)
-        Task {
-            result = await Self.stubCache.getOrInsert(triple: triple, context: context)
-            semaphore.signal()
-        }
-        semaphore.wait()
-        return result
+        return Self.stubCache.getOrInsert(triple: triple, context: context)
     }
 
     private func compileWithClang(

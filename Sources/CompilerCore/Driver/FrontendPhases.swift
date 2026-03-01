@@ -1,18 +1,43 @@
 import Foundation
 
+private final class LockedIndexedResults<Element>: @unchecked Sendable {
+    private let lock = NSLock()
+    private var values: [Element?]
+
+    init(count: Int) {
+        self.values = Array(repeating: nil, count: count)
+    }
+
+    func store(_ value: Element, at index: Int) {
+        lock.lock()
+        values[index] = value
+        lock.unlock()
+    }
+
+    func orderedResults() -> [Element] {
+        lock.lock()
+        defer { lock.unlock() }
+        return values.enumerated().map { index, value in
+            guard let value else {
+                preconditionFailure("Missing parallel result at index \(index).")
+            }
+            return value
+        }
+    }
+}
+
 private func collectPerFileResultsInParallel<Result: Sendable>(
     fileIDs: [FileID],
     task: @escaping @Sendable (FileID) -> Result
 ) -> [(FileID, Result)] {
     let count = fileIDs.count
     guard count > 0 else { return [] }
-    var results: [Result?] = Array(repeating: nil, count: count)
+    let results = LockedIndexedResults<Result>(count: count)
     DispatchQueue.concurrentPerform(iterations: count) { index in
-        results[index] = task(fileIDs[index])
+        results.store(task(fileIDs[index]), at: index)
     }
-    return fileIDs.enumerated().map { index, fileID in
-        (fileID, results[index]!)
-    }.sorted(by: { $0.0.rawValue < $1.0.rawValue })
+    let orderedResults = results.orderedResults()
+    return zip(fileIDs, orderedResults).sorted(by: { $0.0.rawValue < $1.0.rawValue })
 }
 
 public final class LoadSourcesPhase: CompilerPhase {
@@ -206,7 +231,7 @@ public final class BuildASTPhase: CompilerPhase {
         let interner = ctx.interner
         let syntaxTrees = ctx.syntaxTrees
         let count = syntaxTrees.count
-        var perFileResults: [PerFileASTResult?] = Array(repeating: nil, count: count)
+        let perFileResults = LockedIndexedResults<PerFileASTResult>(count: count)
         let jobSemaphore = DispatchSemaphore(value: jobs)
         let completionGroup = DispatchGroup()
 
@@ -214,23 +239,25 @@ public final class BuildASTPhase: CompilerPhase {
             jobSemaphore.wait()
             completionGroup.enter()
             DispatchQueue.global().async {
+                defer {
+                    completionGroup.leave()
+                    jobSemaphore.signal()
+                }
                 let (fileID, cst, root) = syntaxTrees[index]
                 // Each task gets its own BuildASTPhase so that `tokenCache`
                 // is not shared across concurrent tasks.
                 let taskPhase = BuildASTPhase()
-                perFileResults[index] = taskPhase.buildFileAST(
+                perFileResults.store(taskPhase.buildFileAST(
                     fileID: fileID,
                     cst: cst,
                     root: root,
                     interner: interner,
                     arena: arena
-                )
-                completionGroup.leave()
-                jobSemaphore.signal()
+                ), at: index)
             }
         }
         completionGroup.wait()
-        let orderedResults = perFileResults.map { $0! }
+        let orderedResults = perFileResults.orderedResults()
 
         let merged = mergePerFileASTResults(orderedResults)
 

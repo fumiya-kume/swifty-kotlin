@@ -54,7 +54,6 @@ final class StdlibDelegateLoweringPass: LoweringPass {
         let vetoableCreateName = interner.intern("kk_vetoable_create")
         let vetoableGetValueName = interner.intern("kk_vetoable_get_value")
         let vetoableSetValueName = interner.intern("kk_vetoable_set_value")
-        let customDelegateCreateName = interner.intern("kk_custom_delegate_create")
         let customGetValueName = interner.intern("kk_custom_delegate_get_value")
         let customSetValueName = interner.intern("kk_custom_delegate_set_value")
 
@@ -246,7 +245,7 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                                 skipNext = true
                                 continue
                             case .observable:
-                                if let callResult {
+                                if callResult != nil {
                                     // Original factory call (Delegates.observable(...))
                                     // is intentionally NOT emitted — synthetic stub only.
                                     // kk_observable_create(initialValue, callbackFnPtr)
@@ -273,7 +272,7 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                                     continue
                                 }
                             case .vetoable:
-                                if let callResult {
+                                if callResult != nil {
                                     // Original factory call (Delegates.vetoable(...))
                                     // is intentionally NOT emitted — synthetic stub only.
                                     // kk_vetoable_create(initialValue, callbackFnPtr)

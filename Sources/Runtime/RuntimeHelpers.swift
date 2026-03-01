@@ -94,7 +94,7 @@ public enum KxMiniRuntime {
         group.wait()
     }
 
-    public static func launch(_ block: @escaping () -> Void) {
+    public static func launch(_ block: @escaping @Sendable () -> Void) {
         DispatchQueue.global().async(execute: block)
     }
 

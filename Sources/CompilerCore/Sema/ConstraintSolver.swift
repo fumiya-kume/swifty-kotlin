@@ -1,4 +1,4 @@
-public struct TypeVarID: Hashable {
+public struct TypeVarID: Hashable, Sendable {
     public let rawValue: Int32
 
     public static let invalid = TypeVarID(rawValue: -1)

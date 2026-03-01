@@ -79,7 +79,7 @@ internal final class RuntimeContinuationState {
     }
 }
 
-internal final class RuntimeAsyncTask {
+internal final class RuntimeAsyncTask: @unchecked Sendable {
     private let lock = NSLock()
     private let ready = DispatchSemaphore(value: 0)
     private var isCompleted = false
@@ -148,7 +148,7 @@ internal final class RuntimeAsyncTask {
 // MARK: - Structured Concurrency (P5-89)
 
 /// A job handle representing a launched coroutine. Supports join and cancellation.
-internal final class RuntimeJobHandle {
+internal final class RuntimeJobHandle: @unchecked Sendable {
     private let lock = NSLock()
     private let completionSemaphore = DispatchSemaphore(value: 0)
     private(set) var isCompleted = false

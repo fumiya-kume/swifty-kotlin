@@ -212,11 +212,9 @@ extension KIRLoweringDriver {
         shared: KIRLoweringSharedContext,
         emit instructions: inout KIRLoweringEmitContext
     ) -> KIRExprID {
-        let ast = shared.ast
         let sema = shared.sema
         let arena = shared.arena
         let interner = shared.interner
-        let propertyConstantInitializers = shared.propertyConstantInitializers
         let lambdaSymbol = ctx.allocateSyntheticGeneratedSymbol()
         let lambdaName = interner.intern("kk_delegate_lambda_\(propertySymbol.rawValue)")
 
@@ -295,8 +293,6 @@ extension KIRLoweringDriver {
         let ast = shared.ast
         let sema = shared.sema
         let arena = shared.arena
-        let interner = shared.interner
-        let propertyConstantInitializers = shared.propertyConstantInitializers
         guard let exprID = delegateExpr,
               let expr = ast.arena.expr(exprID) else {
             // Fallback: return 0.
