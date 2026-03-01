@@ -16,7 +16,7 @@ extension CompilerCoreTests {
             fun use() = h(1)
             """
         ]
-        let ctx = try makeContextFromSources(sources)
+        let ctx = makeContextFromSources(sources)
         try runFrontend(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -42,7 +42,7 @@ extension CompilerCoreTests {
             fun use() = helper(1)
             """
         ]
-        let ctx = try makeContextFromSources(sources)
+        let ctx = makeContextFromSources(sources)
         try runFrontend(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -61,7 +61,7 @@ extension CompilerCoreTests {
             return add(1)
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -103,7 +103,7 @@ extension CompilerCoreTests {
             return ref(1)
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -147,7 +147,7 @@ extension CompilerCoreTests {
             return ref()
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -185,7 +185,7 @@ extension CompilerCoreTests {
             return ref(1)
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -219,7 +219,7 @@ extension CompilerCoreTests {
         fun target(x: Int): Int = x + 1
         fun use(): Int = (::target)(1)
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -260,7 +260,7 @@ extension CompilerCoreTests {
         let source = """
         fun apply(f: (Int) -> Int, x: Int): Int = f(x)
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0023", in: ctx)

@@ -250,6 +250,13 @@ enum ParserBoundaryPolicy {
         .class, .object, .interface, .fun, .val, .var, .typealias, .enum, .package, .import
     ]
 
+    /// Keywords used as error-recovery synchronization points.
+    /// Excludes `.enum` because `enum` is a soft modifier (always followed by `class`)
+    /// and was not a synchronization point in the original implementation.
+    private static let synchronizationKeywords: Set<Keyword> = [
+        .class, .object, .interface, .fun, .val, .var, .typealias, .package, .import
+    ]
+
     private static let nonSplittingNewlineSymbols: Set<Symbol> = [
         .dot, .comma, .questionDot, .questionQuestion,
         .plus, .minus, .star, .slash,
@@ -285,7 +292,7 @@ enum ParserBoundaryPolicy {
             return true
         case .symbol(.rBrace):
             return true
-        case .keyword(let kw) where declarationBoundaryKeywords.contains(kw):
+        case .keyword(let kw) where synchronizationKeywords.contains(kw):
             return true
         default:
             break

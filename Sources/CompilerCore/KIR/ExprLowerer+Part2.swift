@@ -6,17 +6,14 @@ extension ExprLowerer {
         shared: KIRLoweringSharedContext,
         emit instructions: inout KIRLoweringEmitContext
     ) -> KIRExprID {
-        var old = Array(instructions)
-        let result = lowerExpr(
+        return lowerExpr(
             exprID,
             ast: shared.ast,
             sema: shared.sema,
             arena: shared.arena,
             interner: shared.interner,
             propertyConstantInitializers: shared.propertyConstantInitializers,
-            instructions: &old
+            instructions: &instructions.instructions
         )
-        instructions = KIRLoweringEmitContext(old)
-        return result
     }
 }

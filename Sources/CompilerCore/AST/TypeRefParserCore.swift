@@ -176,6 +176,7 @@ enum TypeRefParserCore {
             while next + 1 < tokens.count,
                   tokens[next].kind == .symbol(.dot),
                   let name = identifier(from: tokens[next + 1], interner: interner, options: options) {
+                typeArgs = []
                 path.append(name)
                 next += 2
 
@@ -225,7 +226,7 @@ enum TypeRefParserCore {
             }
 
             if tokens[next].kind == .symbol(.greaterThan) {
-                return (args, next + 1)
+                return args.isEmpty ? nil : (args, next + 1)
             }
 
             if !args.isEmpty {

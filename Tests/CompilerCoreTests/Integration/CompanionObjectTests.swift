@@ -25,7 +25,7 @@ final class CompanionObjectTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0025", in: ctx)
@@ -37,7 +37,7 @@ final class CompanionObjectTests: XCTestCase {
         class Foo
         fun makeFoo(): Foo = Foo()
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0025", in: ctx)
@@ -49,7 +49,7 @@ final class CompanionObjectTests: XCTestCase {
         class Foo
         fun takeFoo(f: Foo): Int = 1
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0025", in: ctx)
@@ -60,7 +60,7 @@ final class CompanionObjectTests: XCTestCase {
         class Foo
         fun makeFoo(): Foo = Foo()
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0025", in: ctx)
@@ -73,7 +73,7 @@ final class CompanionObjectTests: XCTestCase {
         fun strFn(): String = "hello"
         fun boolFn(): Boolean = true
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0025", in: ctx)
@@ -85,7 +85,7 @@ final class CompanionObjectTests: XCTestCase {
         package test
         fun bad(): NoSuchType = 1
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0025", in: ctx)
@@ -99,7 +99,7 @@ final class CompanionObjectTests: XCTestCase {
         fun makeAlpha(): Alpha = Alpha()
         fun makeBeta(): Beta = Beta()
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0025", in: ctx)
@@ -115,7 +115,7 @@ final class CompanionObjectTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runFrontend(ctx)
 
         assertNoDiagnostic("KSWIFTK-PARSE-0002", in: ctx)
@@ -129,7 +129,7 @@ final class CompanionObjectTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runFrontend(ctx)
 
         assertNoDiagnostic("KSWIFTK-PARSE-0002", in: ctx)
@@ -141,7 +141,7 @@ final class CompanionObjectTests: XCTestCase {
             fun value(): Int = 42
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runFrontend(ctx)
 
         assertNoDiagnostic("KSWIFTK-PARSE-0002", in: ctx)
@@ -159,7 +159,7 @@ final class CompanionObjectTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-PARSE-0002", in: ctx)
@@ -176,7 +176,7 @@ final class CompanionObjectTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-PARSE-0002", in: ctx)
@@ -194,7 +194,7 @@ final class CompanionObjectTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-PARSE-0002", in: ctx)
@@ -211,7 +211,7 @@ final class CompanionObjectTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runToKIR(ctx)
 
         XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }))
@@ -229,7 +229,7 @@ final class CompanionObjectTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runToKIR(ctx)
 
         XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }))

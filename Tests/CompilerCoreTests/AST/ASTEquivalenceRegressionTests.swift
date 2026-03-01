@@ -11,7 +11,7 @@ final class ASTEquivalenceRegressionTests: XCTestCase {
     // MARK: - Helpers
 
     private func buildAST(from source: String) throws -> (ASTModule, CompilationContext) {
-        let ctx: CompilationContext = try makeContextFromSource(source)
+        let ctx: CompilationContext = makeContextFromSource(source)
         try runFrontend(ctx)
         let ast = try XCTUnwrap(ctx.ast)
         return (ast, ctx)

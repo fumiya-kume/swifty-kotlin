@@ -250,7 +250,7 @@ final class SemaCacheContextTests: XCTestCase {
         """
 
         // Without cache
-        let ctxNoCache = try makeContextFromSource(source)
+        let ctxNoCache = makeContextFromSource(source)
         try runSema(ctxNoCache)
         let diagsNoCache = ctxNoCache.diagnostics.diagnostics
 

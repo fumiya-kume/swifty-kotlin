@@ -69,7 +69,7 @@ func runToLowering(_ ctx: CompilationContext) throws {
     try LoweringPhase().run(ctx)
 }
 
-func makeContextFromSource(_ source: String) throws -> CompilationContext {
+func makeContextFromSource(_ source: String) -> CompilationContext {
     let fakePath = FileManager.default.temporaryDirectory
         .appendingPathComponent(UUID().uuidString + ".kt").path
     let ctx = makeCompilationContext(inputs: [fakePath])
@@ -77,7 +77,7 @@ func makeContextFromSource(_ source: String) throws -> CompilationContext {
     return ctx
 }
 
-func makeContextFromSources(_ sources: [String]) throws -> CompilationContext {
+func makeContextFromSources(_ sources: [String]) -> CompilationContext {
     let tempDir = FileManager.default.temporaryDirectory
         .appendingPathComponent(UUID().uuidString)
     let fakePaths = sources.enumerated().map { index, _ in

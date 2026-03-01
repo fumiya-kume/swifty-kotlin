@@ -9,7 +9,7 @@ extension CompilerCoreTests {
         fun take(x: Int) = x
         fun use() = take(*1)
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -21,7 +21,7 @@ extension CompilerCoreTests {
         fun pick(x: String) = x
         fun use() = pick(1)
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0001", in: ctx)
@@ -34,7 +34,7 @@ extension CompilerCoreTests {
         fun takesInt(a: Int) = a
         fun bar() = takesInt(foo())
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -44,7 +44,7 @@ extension CompilerCoreTests {
         let source = """
         fun String.echo(): String = this
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runFrontend(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -72,7 +72,7 @@ extension CompilerCoreTests {
         let source = """
         class Box<out T, in U, V>
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runFrontend(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -94,7 +94,7 @@ extension CompilerCoreTests {
         fun String.ext() = 1
         fun String.wrap() = ext()
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -106,7 +106,7 @@ extension CompilerCoreTests {
         fun takesInt(a: Int) = a
         fun main() = takesInt(id(1))
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -117,7 +117,7 @@ extension CompilerCoreTests {
         fun <T> id(x: T): T = x
         fun bad(): Boolean = id(1)
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
@@ -135,7 +135,7 @@ extension CompilerCoreTests {
             fun use() = helper(1)
             """
         ]
-        let ctx = try makeContextFromSources(sources)
+        let ctx = makeContextFromSources(sources)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -153,7 +153,7 @@ extension CompilerCoreTests {
             fun use() = helper(1)
             """
         ]
-        let ctx = try makeContextFromSources(sources)
+        let ctx = makeContextFromSources(sources)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -175,7 +175,7 @@ extension CompilerCoreTests {
             fun use() = pick(1)
             """
         ]
-        let ctx = try makeContextFromSources(sources)
+        let ctx = makeContextFromSources(sources)
         try runSema(ctx)
 
         let sema = try XCTUnwrap(ctx.sema)
@@ -201,7 +201,7 @@ extension CompilerCoreTests {
             fun use() = 1
             """
         ]
-        let ctx = try makeContextFromSources(sources)
+        let ctx = makeContextFromSources(sources)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0022", in: ctx)
@@ -221,7 +221,7 @@ extension CompilerCoreTests {
             fun use() = 1
             """
         ]
-        let ctx = try makeContextFromSources(sources)
+        let ctx = makeContextFromSources(sources)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0023", in: ctx)
@@ -233,7 +233,7 @@ extension CompilerCoreTests {
         import nonexistent.Thing as X
         fun use() = 1
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
@@ -251,7 +251,7 @@ extension CompilerCoreTests {
             fun use() = h(1)
             """
         ]
-        let ctx = try makeContextFromSources(sources)
+        let ctx = makeContextFromSources(sources)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -269,7 +269,7 @@ extension CompilerCoreTests {
             fun use(): Int = calc(5)
             """
         ]
-        let ctx = try makeContextFromSources(sources)
+        let ctx = makeContextFromSources(sources)
         try runSema(ctx)
 
         let sema = try XCTUnwrap(ctx.sema)
@@ -296,7 +296,7 @@ extension CompilerCoreTests {
             fun use() = f(1) + b(2)
             """
         ]
-        let ctx = try makeContextFromSources(sources)
+        let ctx = makeContextFromSources(sources)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -317,7 +317,7 @@ extension CompilerCoreTests {
             fun use() = f(1) + bar(2)
             """
         ]
-        let ctx = try makeContextFromSources(sources)
+        let ctx = makeContextFromSources(sources)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -329,7 +329,7 @@ extension CompilerCoreTests {
         import kotlin.io.println as
         fun use() = 1
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         // Parser should insert missing token; alias with empty name is skipped

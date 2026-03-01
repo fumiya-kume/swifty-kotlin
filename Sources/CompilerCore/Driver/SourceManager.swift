@@ -13,6 +13,9 @@ public final class SourceManager: @unchecked Sendable {
     public init() {}
 
     public func addFile(path: String, contents: Data) -> FileID {
+        if let existingID = fileIDByPath[path] {
+            return existingID
+        }
         let id = FileID(rawValue: files.count)
         let record = FileRecord(
             path: path,
@@ -20,7 +23,7 @@ public final class SourceManager: @unchecked Sendable {
             lineStartOffsets: computeLineStartOffsets(contents: contents)
         )
         files.append(record)
-        fileIDByPath[path] = fileIDByPath[path] ?? id
+        fileIDByPath[path] = id
         return id
     }
 

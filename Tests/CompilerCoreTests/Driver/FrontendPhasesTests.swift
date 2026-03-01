@@ -44,14 +44,14 @@ final class FrontendPhasesTests: XCTestCase {
 
     func testLexPhasePopulatesTokens() throws {
         let source = "fun main() { println(42) }"
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         XCTAssertNoThrow(try LexPhase().run(ctx))
         XCTAssertFalse(ctx.tokens.isEmpty, "LexPhase should populate ctx.tokens")
     }
 
     func testLexPhasePopulatesFileIRs() throws {
         let source = "fun main() {}"
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         XCTAssertNoThrow(try LexPhase().run(ctx))
         XCTAssertFalse(ctx.fileIRs.isEmpty, "LexPhase should populate fileIRs")
         let fileID = try XCTUnwrap(ctx.fileIRs.keys.first)
@@ -62,7 +62,7 @@ final class FrontendPhasesTests: XCTestCase {
 
     func testLexPhaseProducesEOFTokenLast() throws {
         let source = "val x = 1"
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         XCTAssertNoThrow(try LexPhase().run(ctx))
         XCTAssertFalse(ctx.tokens.isEmpty)
         let fileTokens = ctx.tokensByFile.first?.1
@@ -73,7 +73,7 @@ final class FrontendPhasesTests: XCTestCase {
 
     func testParsePhasePopulatesSyntaxTrees() throws {
         let source = "fun main() {}"
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try LexPhase().run(ctx)
         XCTAssertNoThrow(try ParsePhase().run(ctx))
         XCTAssertFalse(ctx.syntaxTrees.isEmpty, "ParsePhase should populate syntaxTrees")
@@ -81,7 +81,7 @@ final class FrontendPhasesTests: XCTestCase {
 
     func testParsePhasePopulatesFileIRSyntaxArena() throws {
         let source = "fun main() {}"
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try LexPhase().run(ctx)
         XCTAssertNoThrow(try ParsePhase().run(ctx))
         for (_, fileIR) in ctx.fileIRs {
@@ -95,7 +95,7 @@ final class FrontendPhasesTests: XCTestCase {
             fun bar(): Int = 42
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try LexPhase().run(ctx)
         XCTAssertNoThrow(try ParsePhase().run(ctx))
         XCTAssertFalse(ctx.diagnostics.hasError, "Valid Kotlin source should parse without errors")
@@ -105,7 +105,7 @@ final class FrontendPhasesTests: XCTestCase {
 
     func testBuildASTProducesASTModule() throws {
         let source = "fun main() {}"
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try LexPhase().run(ctx)
         try ParsePhase().run(ctx)
         XCTAssertNoThrow(try BuildASTPhase().run(ctx))
@@ -117,7 +117,7 @@ final class FrontendPhasesTests: XCTestCase {
         fun foo() {}
         fun bar() {}
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try LexPhase().run(ctx)
         try ParsePhase().run(ctx)
         try BuildASTPhase().run(ctx)
@@ -128,7 +128,7 @@ final class FrontendPhasesTests: XCTestCase {
 
     func testBuildASTHandlesScriptMode() throws {
         let source = "val x = 42"
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try LexPhase().run(ctx)
         try ParsePhase().run(ctx)
         // Script mode may produce diagnostics but should not crash
@@ -145,7 +145,7 @@ final class FrontendPhasesTests: XCTestCase {
             val result = add(1, 2)
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         XCTAssertNoThrow(try runFrontend(ctx))
         XCTAssertNotNil(ctx.ast, "Full frontend pipeline should produce an ASTModule")
         XCTAssertFalse(ctx.diagnostics.hasError, "Valid Kotlin source should not produce errors")

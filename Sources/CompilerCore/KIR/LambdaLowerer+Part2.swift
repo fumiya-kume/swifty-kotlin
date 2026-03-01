@@ -34,10 +34,7 @@ extension LambdaLowerer {
         arena: KIRArena,
         emit instructions: inout KIRLoweringEmitContext
     ) -> KIRExprID? {
-        var old = Array(instructions)
-        let result = captureValueExpr(for: symbol, sema: sema, arena: arena, instructions: &old)
-        instructions = KIRLoweringEmitContext(old)
-        return result
+        return captureValueExpr(for: symbol, sema: sema, arena: arena, instructions: &instructions.instructions)
     }
 
     func uniqueSymbolsPreservingOrder(_ symbols: [SymbolID]) -> [SymbolID] {

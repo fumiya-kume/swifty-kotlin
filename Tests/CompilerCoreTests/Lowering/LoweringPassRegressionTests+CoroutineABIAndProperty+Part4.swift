@@ -326,7 +326,7 @@ extension LoweringPassRegressionTests {
                 set(value) { field = value }
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runToLowering(ctx)
 
         guard let module = ctx.kir else {

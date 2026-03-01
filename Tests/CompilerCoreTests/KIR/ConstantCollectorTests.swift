@@ -104,7 +104,7 @@ final class ConstantCollectorTests: XCTestCase {
     // MARK: - literalConstantExpr via collectPropertyConstantInitializers
 
     func testCollectIntLiteralFromTopLevelVal() throws {
-        let ctx = try makeContextFromSource("val answer = 42")
+        let ctx = makeContextFromSource("val answer = 42")
         try runSema(ctx)
         guard let ast = ctx.ast, let sema = ctx.sema else {
             XCTFail("AST/Sema module not available")
@@ -120,7 +120,7 @@ final class ConstantCollectorTests: XCTestCase {
     }
 
     func testCollectBoolLiteralFromTopLevelVal() throws {
-        let ctx = try makeContextFromSource("val flag = true")
+        let ctx = makeContextFromSource("val flag = true")
         try runSema(ctx)
         guard let ast = ctx.ast, let sema = ctx.sema else {
             XCTFail("AST/Sema module not available")
@@ -135,7 +135,7 @@ final class ConstantCollectorTests: XCTestCase {
     }
 
     func testCollectStringLiteralFromTopLevelVal() throws {
-        let ctx = try makeContextFromSource(#"val greeting = "hello""#)
+        let ctx = makeContextFromSource(#"val greeting = "hello""#)
         try runSema(ctx)
         guard let ast = ctx.ast, let sema = ctx.sema else {
             XCTFail("AST/Sema module not available")
@@ -152,7 +152,7 @@ final class ConstantCollectorTests: XCTestCase {
     }
 
     func testCollectNegativeIntLiteralViaUnaryMinus() throws {
-        let ctx = try makeContextFromSource("val neg = -100")
+        let ctx = makeContextFromSource("val neg = -100")
         try runSema(ctx)
         guard let ast = ctx.ast, let sema = ctx.sema else {
             XCTFail("AST/Sema module not available")
@@ -167,7 +167,7 @@ final class ConstantCollectorTests: XCTestCase {
     }
 
     func testCollectBoolNegationViaUnaryNot() throws {
-        let ctx = try makeContextFromSource("val flag = !false")
+        let ctx = makeContextFromSource("val flag = !false")
         try runSema(ctx)
         guard let ast = ctx.ast, let sema = ctx.sema else {
             XCTFail("AST/Sema module not available")
@@ -182,7 +182,7 @@ final class ConstantCollectorTests: XCTestCase {
     }
 
     func testNonLiteralInitializerNotCollected() throws {
-        let ctx = try makeContextFromSource("""
+        let ctx = makeContextFromSource("""
             fun compute() = 42
             val x = compute()
             """)

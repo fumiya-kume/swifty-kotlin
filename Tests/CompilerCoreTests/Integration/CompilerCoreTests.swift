@@ -26,7 +26,7 @@ final class CompilerCoreTests: XCTestCase {
         fun foo(a: Int) = a
         fun bar() = foo(1)
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         let sema = try XCTUnwrap(ctx.sema)
@@ -41,7 +41,7 @@ final class CompilerCoreTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
@@ -56,7 +56,7 @@ final class CompilerCoreTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
@@ -72,7 +72,7 @@ final class CompilerCoreTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
@@ -86,7 +86,7 @@ final class CompilerCoreTests: XCTestCase {
             Green -> 2
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
@@ -104,7 +104,7 @@ final class CompilerCoreTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
@@ -122,7 +122,7 @@ final class CompilerCoreTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         // P5-78: sealed missing-branch diagnostic now uses KSWIFTK-SEMA-0071
@@ -155,7 +155,7 @@ final class CompilerCoreTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
@@ -172,7 +172,7 @@ final class CompilerCoreTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -191,7 +191,7 @@ final class CompilerCoreTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -208,7 +208,7 @@ final class CompilerCoreTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -218,7 +218,7 @@ final class CompilerCoreTests: XCTestCase {
         let source = """
         fun bad(): Int = "x"
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
@@ -230,7 +230,7 @@ final class CompilerCoreTests: XCTestCase {
         fun takesInt(x: Int) = x
         fun use() = takesInt(num)
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -240,7 +240,7 @@ final class CompilerCoreTests: XCTestCase {
         let source = """
         val bad: Int = "x"
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
@@ -252,7 +252,7 @@ final class CompilerCoreTests: XCTestCase {
             get() = "x"
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
@@ -266,7 +266,7 @@ final class CompilerCoreTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0005", in: ctx)
@@ -281,7 +281,7 @@ final class CompilerCoreTests: XCTestCase {
             }
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -292,7 +292,7 @@ final class CompilerCoreTests: XCTestCase {
         fun foo(a: Int) = a
         fun bar() = foo(true)
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -303,7 +303,7 @@ final class CompilerCoreTests: XCTestCase {
         fun pick(x: Int, flag: Boolean) = x
         fun use() = pick(1, flag = true)
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -314,7 +314,7 @@ final class CompilerCoreTests: XCTestCase {
         fun pick(x: Int, y: Int) = x
         fun use() = pick(y = 1, 2)
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -325,7 +325,7 @@ final class CompilerCoreTests: XCTestCase {
         fun sum(vararg items: Int, tail: Int) = tail
         fun use() = sum(1, 2, tail = 3)
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)

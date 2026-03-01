@@ -10,7 +10,7 @@ extension SemaCacheContextTests {
         }
         """
 
-        let ctxNoCache = try makeContextFromSource(source)
+        let ctxNoCache = makeContextFromSource(source)
         try runSema(ctxNoCache)
         let diagsNoCache = ctxNoCache.diagnostics.diagnostics
 
@@ -36,7 +36,7 @@ extension SemaCacheContextTests {
         }
         """
 
-        let ctxNoCache = try makeContextFromSource(source)
+        let ctxNoCache = makeContextFromSource(source)
         try runSema(ctxNoCache)
         let diagsNoCache = ctxNoCache.diagnostics.diagnostics
 
@@ -60,7 +60,7 @@ extension SemaCacheContextTests {
         }
         """
 
-        let ctxNoCache = try makeContextFromSource(source)
+        let ctxNoCache = makeContextFromSource(source)
         try runSema(ctxNoCache)
         let diagsNoCache = ctxNoCache.diagnostics.diagnostics
 
@@ -85,7 +85,7 @@ extension SemaCacheContextTests {
         }
         """
 
-        let ctxNoCache = try makeContextFromSource(source)
+        let ctxNoCache = makeContextFromSource(source)
         try runSema(ctxNoCache)
         let diagsNoCache = ctxNoCache.diagnostics.diagnostics
 
@@ -151,7 +151,7 @@ extension SemaCacheContextTests {
         }
         """
 
-        let ctxNoCache = try makeContextFromSource(source)
+        let ctxNoCache = makeContextFromSource(source)
         try runSema(ctxNoCache)
         let diagsNoCache = ctxNoCache.diagnostics.diagnostics
 
@@ -176,7 +176,7 @@ extension SemaCacheContextTests {
         }
         """
 
-        let ctxNoCache = try makeContextFromSource(source)
+        let ctxNoCache = makeContextFromSource(source)
         try runSema(ctxNoCache)
         let diagsNoCache = ctxNoCache.diagnostics.diagnostics
 
@@ -240,7 +240,7 @@ extension SemaCacheContextTests {
         }
         """
 
-        let ctxNoCache = try makeContextFromSource(source)
+        let ctxNoCache = makeContextFromSource(source)
         try runSema(ctxNoCache)
         let diagsNoCache = ctxNoCache.diagnostics.diagnostics
 

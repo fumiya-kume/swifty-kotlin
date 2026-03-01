@@ -39,7 +39,7 @@ extension CompilerCoreTests {
             else -> 20
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runFrontend(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -71,7 +71,7 @@ extension CompilerCoreTests {
             println(2)
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runFrontend(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -100,7 +100,7 @@ extension CompilerCoreTests {
         let source = """
         fun build() = { x: Int -> x + 1 }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runFrontend(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -125,7 +125,7 @@ extension CompilerCoreTests {
         interface I
         fun build() = object : I {}
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runFrontend(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -153,7 +153,7 @@ extension CompilerCoreTests {
         fun unbound() = ::target
         fun bound(x: Int) = x::toString
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runFrontend(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -194,7 +194,7 @@ extension CompilerCoreTests {
             }
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runFrontend(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -232,7 +232,7 @@ extension CompilerCoreTests {
             else -> 0
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
@@ -246,7 +246,7 @@ extension CompilerCoreTests {
             }
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
@@ -259,7 +259,7 @@ extension CompilerCoreTests {
             else -> "ok"
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0032", in: ctx)
@@ -269,7 +269,7 @@ extension CompilerCoreTests {
         let source = """
         fun test() = unknownVariable
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0022", in: ctx)
@@ -279,7 +279,7 @@ extension CompilerCoreTests {
         let source = """
         fun test() = unknownFunction(1)
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0023", in: ctx)
@@ -289,7 +289,7 @@ extension CompilerCoreTests {
         let source = """
         fun test(x: UnknownType) = x
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0025", in: ctx)

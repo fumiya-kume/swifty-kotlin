@@ -12,7 +12,7 @@ extension CompilerCoreTests {
             return 0
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0022", in: ctx)
@@ -22,7 +22,7 @@ extension CompilerCoreTests {
         let source = """
         fun test(): Int = 1 + noSuchVar
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0022", in: ctx)
@@ -32,7 +32,7 @@ extension CompilerCoreTests {
         let source = """
         fun test() = missingFun(1, 2, 3)
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0023", in: ctx)
@@ -43,7 +43,7 @@ extension CompilerCoreTests {
         fun known(x: Int): Int = x
         fun test(): Int = known(unknownFn())
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0023", in: ctx)
@@ -54,7 +54,7 @@ extension CompilerCoreTests {
         class Foo
         fun test(f: Foo) = f.missing()
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
@@ -67,7 +67,7 @@ extension CompilerCoreTests {
         class Foo
         fun test(f: Foo?) = f?.missing()
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
@@ -78,7 +78,7 @@ extension CompilerCoreTests {
         class Foo
         fun test(f: Foo): Foo = f + f
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -90,7 +90,7 @@ extension CompilerCoreTests {
             val x: NoSuchType = 42
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0025", in: ctx)
@@ -100,7 +100,7 @@ extension CompilerCoreTests {
         let source = """
         fun test(): MissingReturn = 1
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0025", in: ctx)
@@ -112,7 +112,7 @@ extension CompilerCoreTests {
             val x: GhostType = 0
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0025", in: ctx)
@@ -125,7 +125,7 @@ extension CompilerCoreTests {
             return x
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0022", in: ctx)
@@ -137,7 +137,7 @@ extension CompilerCoreTests {
         fun helper(x: Int): Int = x
         fun test(): Int = helper(42)
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0023", in: ctx)
@@ -147,7 +147,7 @@ extension CompilerCoreTests {
         let source = """
         fun test(x: Int): String = "ok"
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0025", in: ctx)
@@ -159,7 +159,7 @@ extension CompilerCoreTests {
             fun inner(p: Phantom): Int = 0
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0025", in: ctx)
@@ -171,7 +171,7 @@ extension CompilerCoreTests {
             fun inner(): Ghost = 0
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertHasDiagnostic("KSWIFTK-SEMA-0025", in: ctx)
@@ -183,7 +183,7 @@ extension CompilerCoreTests {
         let source = """
         fun test(): Int = noSuchVar + 1
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertDiagnosticCount("KSWIFTK-SEMA-0022", expected: 1, in: ctx)
@@ -194,7 +194,7 @@ extension CompilerCoreTests {
         let source = """
         fun test(): Int = unknownObj.method()
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertDiagnosticCount("KSWIFTK-SEMA-0022", expected: 1, in: ctx)
@@ -205,7 +205,7 @@ extension CompilerCoreTests {
         let source = """
         fun test() = missingVar?.call()
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertDiagnosticCount("KSWIFTK-SEMA-0022", expected: 1, in: ctx)
@@ -216,7 +216,7 @@ extension CompilerCoreTests {
         let source = """
         fun test(): Int = noSuchVar - 1
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertDiagnosticCount("KSWIFTK-SEMA-0022", expected: 1, in: ctx)
@@ -227,7 +227,7 @@ extension CompilerCoreTests {
         let source = """
         fun test(): Int = noSuchVar * 2
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertDiagnosticCount("KSWIFTK-SEMA-0022", expected: 1, in: ctx)
@@ -243,7 +243,7 @@ extension CompilerCoreTests {
         }
         fun test(f: Foo): Int = f.bar()
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
@@ -256,7 +256,7 @@ extension CompilerCoreTests {
         }
         fun test(f: Foo?): Int? = f?.bar()
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
@@ -266,7 +266,7 @@ extension CompilerCoreTests {
         let source = """
         fun test(): Int = 1 + 2
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -276,7 +276,7 @@ extension CompilerCoreTests {
         let source = """
         fun test(): Boolean = 1 == 2
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -286,7 +286,7 @@ extension CompilerCoreTests {
         let source = """
         fun test(): String = "a" + "b"
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
