@@ -8,6 +8,7 @@ public final class SourceManager: @unchecked Sendable {
     }
 
     private var files: [FileRecord] = []
+    private var fileIDByPath: [String: FileID] = [:]
 
     public init() {}
 
@@ -19,6 +20,7 @@ public final class SourceManager: @unchecked Sendable {
             lineStartOffsets: computeLineStartOffsets(contents: contents)
         )
         files.append(record)
+        fileIDByPath[path] = fileIDByPath[path] ?? id
         return id
     }
 
@@ -46,7 +48,11 @@ public final class SourceManager: @unchecked Sendable {
     }
 
     internal func containsFile(path: String) -> Bool {
-        files.contains { $0.path == path }
+        fileIDByPath[path] != nil
+    }
+
+    internal func fileID(forPath path: String) -> FileID? {
+        fileIDByPath[path]
     }
 
     internal func fileIDs() -> [FileID] {

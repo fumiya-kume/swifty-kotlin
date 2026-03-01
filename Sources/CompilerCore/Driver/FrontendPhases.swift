@@ -1,5 +1,33 @@
 import Foundation
 
+private func collectPerFileResultsInParallel<Result: Sendable>(
+    fileIDs: [FileID],
+    task: @escaping @Sendable (FileID) -> Result
+) -> [(FileID, Result)] {
+    let semaphore = DispatchSemaphore(value: 0)
+    nonisolated(unsafe) var results: [(FileID, Result)] = []
+
+    Task {
+        results = await withTaskGroup(of: (FileID, Result).self) { group in
+            for fileID in fileIDs {
+                group.addTask {
+                    (fileID, task(fileID))
+                }
+            }
+
+            var collected: [(FileID, Result)] = []
+            for await result in group {
+                collected.append(result)
+            }
+            return collected.sorted(by: { $0.0.rawValue < $1.0.rawValue })
+        }
+        semaphore.signal()
+    }
+
+    semaphore.wait()
+    return results
+}
+
 public final class LoadSourcesPhase: CompilerPhase {
     public static let name = "LoadSources"
 
@@ -42,33 +70,16 @@ public final class LexPhase: CompilerPhase {
         let diagnostics = ctx.diagnostics
         let sourceManager = ctx.sourceManager
 
-        let semaphore = DispatchSemaphore(value: 0)
-        nonisolated(unsafe) var tokensByFile: [(FileID, [Token])] = []
-        Task {
-            tokensByFile = await withTaskGroup(of: (FileID, [Token]).self) { group in
-                // Submit all file tasks up front so the Swift concurrency
-                // runtime can schedule them freely (original pre-PR behaviour).
-                for fileID in fileIDs {
-                    group.addTask {
-                        let contents = sourceManager.contents(of: fileID)
-                        let lexer = KotlinLexer(
-                            file: fileID,
-                            source: contents,
-                            interner: interner,
-                            diagnostics: diagnostics
-                        )
-                        return (fileID, lexer.lexAll())
-                    }
-                }
-                var results: [(FileID, [Token])] = []
-                for await result in group {
-                    results.append(result)
-                }
-                return results.sorted(by: { $0.0.rawValue < $1.0.rawValue })
-            }
-            semaphore.signal()
+        let tokensByFile = collectPerFileResultsInParallel(fileIDs: fileIDs) { fileID in
+            let contents = sourceManager.contents(of: fileID)
+            let lexer = KotlinLexer(
+                file: fileID,
+                source: contents,
+                interner: interner,
+                diagnostics: diagnostics
+            )
+            return lexer.lexAll()
         }
-        semaphore.wait()
 
         var allTokens: [Token] = []
         for (_, fileTokens) in tokensByFile {
@@ -99,34 +110,20 @@ public final class ParsePhase: CompilerPhase {
     public func run(_ ctx: CompilationContext) throws {
         let interner = ctx.interner
         let diagnostics = ctx.diagnostics
-        let tokensByFile = ctx.tokensByFile
-
-        let semaphore = DispatchSemaphore(value: 0)
-        nonisolated(unsafe) var syntaxTrees: [(FileID, SyntaxArena, NodeID)] = []
-        Task {
-            syntaxTrees = await withTaskGroup(of: (FileID, SyntaxArena, NodeID).self) { group in
-                // Submit all file tasks up front so the Swift concurrency
-                // runtime can schedule them freely (original pre-PR behaviour).
-                for (fileID, fileTokens) in tokensByFile {
-                    group.addTask {
-                        let parser = KotlinParser(
-                            tokens: fileTokens,
-                            interner: interner,
-                            diagnostics: diagnostics
-                        )
-                        let parsed = parser.parseFile()
-                        return (fileID, parsed.arena, parsed.root)
-                    }
-                }
-                var results: [(FileID, SyntaxArena, NodeID)] = []
-                for await result in group {
-                    results.append(result)
-                }
-                return results.sorted(by: { $0.0.rawValue < $1.0.rawValue })
-            }
-            semaphore.signal()
+        let tokensByFile = Dictionary(uniqueKeysWithValues: ctx.tokensByFile.map { ($0.0, $0.1) })
+        let fileIDs = tokensByFile.keys.sorted(by: { $0.rawValue < $1.rawValue })
+        let parsedByFile = collectPerFileResultsInParallel(fileIDs: fileIDs) { fileID in
+            let parser = KotlinParser(
+                tokens: tokensByFile[fileID] ?? [],
+                interner: interner,
+                diagnostics: diagnostics
+            )
+            let parsed = parser.parseFile()
+            return (parsed.arena, parsed.root)
         }
-        semaphore.wait()
+        let syntaxTrees = parsedByFile.map { (fileID, parsed) in
+            (fileID, parsed.0, parsed.1)
+        }
 
         ctx.syntaxTrees = syntaxTrees
         if let first = syntaxTrees.first {
@@ -147,6 +144,16 @@ public final class ParsePhase: CompilerPhase {
 
 public final class BuildASTPhase: CompilerPhase {
     public static let name = "BuildAST"
+
+    internal struct PerFileASTResult: Sendable {
+        let fileID: FileID
+        let fileRawID: Int32
+        let packageFQName: [InternedString]
+        let imports: [ImportDecl]
+        let topLevelDecls: [DeclID]
+        let scriptBody: [ExprID]
+        let allDecls: [DeclID]
+    }
 
     /// Per-arena cache for `collectTokens(from:in:)`.  Cleared between files
     /// because different `SyntaxArena`s reuse the same `NodeID` space.
@@ -177,40 +184,31 @@ public final class BuildASTPhase: CompilerPhase {
         }
     }
 
-    // MARK: - Sequential (legacy) path
+    // MARK: - Sequential path
 
     private func runSequential(_ ctx: CompilationContext) {
         let arena = ASTArena()
-        var declarations: [DeclID] = []
-        var packageByFile: [Int32: [InternedString]] = [:]
-        var importsByFile: [Int32: [ImportDecl]] = [:]
-        var declarationsByFile: [Int32: [DeclID]] = [:]
-        var scriptExprsByFile: [Int32: [ExprID]] = [:]
-
-        for (fileID, cst, root) in ctx.syntaxTrees {
+        let perFileResults: [PerFileASTResult] = ctx.syntaxTrees.map { fileID, cst, root in
             tokenCache.removeAll(keepingCapacity: true)
-            buildFileAST(
+            return buildFileAST(
                 fileID: fileID,
                 cst: cst,
                 root: root,
                 interner: ctx.interner,
-                arena: arena,
-                declarations: &declarations,
-                packageByFile: &packageByFile,
-                importsByFile: &importsByFile,
-                declarationsByFile: &declarationsByFile,
-                scriptExprsByFile: &scriptExprsByFile
+                arena: arena
             )
         }
+
+        let merged = mergePerFileASTResults(perFileResults)
 
         finalizeAST(
             ctx: ctx,
             arena: arena,
-            declarations: declarations,
-            packageByFile: packageByFile,
-            importsByFile: importsByFile,
-            declarationsByFile: declarationsByFile,
-            scriptExprsByFile: scriptExprsByFile
+            declarations: merged.declarations,
+            packageByFile: merged.packageByFile,
+            importsByFile: merged.importsByFile,
+            declarationsByFile: merged.declarationsByFile,
+            scriptExprsByFile: merged.scriptExprsByFile
         )
     }
 
@@ -221,25 +219,14 @@ public final class BuildASTPhase: CompilerPhase {
         let interner = ctx.interner
         let syntaxTrees = ctx.syntaxTrees
 
-        // Each file produces its own per-file results that we merge afterward.
-        struct PerFileResult: Sendable {
-            let fileID: FileID
-            let fileRawID: Int32
-            let packageFQName: [InternedString]
-            let imports: [ImportDecl]
-            let topLevelDecls: [DeclID]
-            let scriptBody: [ExprID]
-            let allDecls: [DeclID]
-        }
-
         let semaphore = DispatchSemaphore(value: 0)
-        nonisolated(unsafe) var perFileResults: [PerFileResult] = []
+        nonisolated(unsafe) var perFileResults: [PerFileASTResult] = []
 
         Task {
-            let taskResults = await withTaskGroup(of: PerFileResult.self) { group in
+            let taskResults = await withTaskGroup(of: PerFileASTResult.self) { group in
                 var activeCount = 0
                 var fileIndex = 0
-                var results: [PerFileResult] = []
+                var results: [PerFileASTResult] = []
 
                 func addFileTask(at index: Int) {
                     let (fileID, cst, root) = syntaxTrees[index]
@@ -248,34 +235,12 @@ public final class BuildASTPhase: CompilerPhase {
                         // `tokenCache` is not shared across concurrent tasks
                         // (different SyntaxArenas may reuse the same NodeID space).
                         let taskPhase = BuildASTPhase()
-                        var declarations: [DeclID] = []
-                        var packageByFile: [Int32: [InternedString]] = [:]
-                        var importsByFile: [Int32: [ImportDecl]] = [:]
-                        var declarationsByFile: [Int32: [DeclID]] = [:]
-                        var scriptExprsByFile: [Int32: [ExprID]] = [:]
-
-                        taskPhase.buildFileAST(
+                        return taskPhase.buildFileAST(
                             fileID: fileID,
                             cst: cst,
                             root: root,
                             interner: interner,
-                            arena: arena,
-                            declarations: &declarations,
-                            packageByFile: &packageByFile,
-                            importsByFile: &importsByFile,
-                            declarationsByFile: &declarationsByFile,
-                            scriptExprsByFile: &scriptExprsByFile
-                        )
-
-                        let fileRawID = fileID.rawValue
-                        return PerFileResult(
-                            fileID: fileID,
-                            fileRawID: fileRawID,
-                            packageFQName: packageByFile[fileRawID] ?? [],
-                            imports: importsByFile[fileRawID] ?? [],
-                            topLevelDecls: declarationsByFile[fileRawID] ?? [],
-                            scriptBody: scriptExprsByFile[fileRawID] ?? [],
-                            allDecls: declarations
+                            arena: arena
                         )
                     }
                 }
@@ -306,31 +271,16 @@ public final class BuildASTPhase: CompilerPhase {
         }
         semaphore.wait()
 
-        // Build final merged structures.
-        var declarations: [DeclID] = []
-        var packageByFile: [Int32: [InternedString]] = [:]
-        var importsByFile: [Int32: [ImportDecl]] = [:]
-        var declarationsByFile: [Int32: [DeclID]] = [:]
-        var scriptExprsByFile: [Int32: [ExprID]] = [:]
-
-        for result in perFileResults {
-            declarations.append(contentsOf: result.allDecls)
-            packageByFile[result.fileRawID] = result.packageFQName
-            importsByFile[result.fileRawID] = result.imports
-            declarationsByFile[result.fileRawID] = result.topLevelDecls
-            if !result.scriptBody.isEmpty {
-                scriptExprsByFile[result.fileRawID] = result.scriptBody
-            }
-        }
+        let merged = mergePerFileASTResults(perFileResults)
 
         finalizeAST(
             ctx: ctx,
             arena: arena,
-            declarations: declarations,
-            packageByFile: packageByFile,
-            importsByFile: importsByFile,
-            declarationsByFile: declarationsByFile,
-            scriptExprsByFile: scriptExprsByFile
+            declarations: merged.declarations,
+            packageByFile: merged.packageByFile,
+            importsByFile: merged.importsByFile,
+            declarationsByFile: merged.declarationsByFile,
+            scriptExprsByFile: merged.scriptExprsByFile
         )
     }
 
@@ -341,15 +291,15 @@ public final class BuildASTPhase: CompilerPhase {
         cst: SyntaxArena,
         root: NodeID,
         interner: StringInterner,
-        arena: ASTArena,
-        declarations: inout [DeclID],
-        packageByFile: inout [Int32: [InternedString]],
-        importsByFile: inout [Int32: [ImportDecl]],
-        declarationsByFile: inout [Int32: [DeclID]],
-        scriptExprsByFile: inout [Int32: [ExprID]]
-    ) {
+        arena: ASTArena
+    ) -> PerFileASTResult {
         let isScript = cst.node(root).kind == .script
         let fileRawID = fileID.rawValue
+        var declarations: [DeclID] = []
+        var packageFQName: [InternedString] = []
+        var imports: [ImportDecl] = []
+        var topLevelDecls: [DeclID] = []
+        var scriptBody: [ExprID] = []
 
         for child in cst.children(of: root) {
             guard case .node(let nodeID) = child else {
@@ -359,12 +309,12 @@ public final class BuildASTPhase: CompilerPhase {
 
             switch node.kind {
             case .packageHeader:
-                packageByFile[fileRawID] = extractQualifiedPath(from: nodeID, in: cst, interner: interner, isPackageHeader: true)
+                packageFQName = extractQualifiedPath(from: nodeID, in: cst, interner: interner, isPackageHeader: true)
 
             case .importHeader:
                 let path = extractQualifiedPath(from: nodeID, in: cst, interner: interner, isPackageHeader: false)
                 let alias = extractImportAlias(from: nodeID, in: cst, interner: interner)
-                importsByFile[fileRawID, default: []].append(ImportDecl(range: node.range, path: path, alias: alias))
+                imports.append(ImportDecl(range: node.range, path: path, alias: alias))
 
             case .importList:
                 for importChild in cst.children(of: nodeID) {
@@ -373,36 +323,36 @@ public final class BuildASTPhase: CompilerPhase {
                     guard importNode.kind == .importHeader else { continue }
                     let path = extractQualifiedPath(from: importNodeID, in: cst, interner: interner, isPackageHeader: false)
                     let alias = extractImportAlias(from: importNodeID, in: cst, interner: interner)
-                    importsByFile[fileRawID, default: []].append(ImportDecl(range: importNode.range, path: path, alias: alias))
+                    imports.append(ImportDecl(range: importNode.range, path: path, alias: alias))
                 }
 
             case .classDecl:
                 let decl = Decl.classDecl(makeClassDecl(from: nodeID, in: cst, interner: interner, astArena: arena))
-                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
+                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &topLevelDecls)
 
             case .interfaceDecl:
                 let decl = Decl.interfaceDecl(makeInterfaceDecl(from: nodeID, in: cst, interner: interner, astArena: arena))
-                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
+                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &topLevelDecls)
 
             case .objectDecl:
                 let decl = Decl.objectDecl(makeObjectDecl(from: nodeID, in: cst, interner: interner, astArena: arena))
-                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
+                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &topLevelDecls)
 
             case .funDecl:
                 let decl = Decl.funDecl(makeFunDecl(from: nodeID, in: cst, interner: interner, astArena: arena))
-                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
+                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &topLevelDecls)
 
             case .propertyDecl where !isScript:
                 let decl = Decl.propertyDecl(makePropertyDecl(from: nodeID, in: cst, interner: interner, astArena: arena))
-                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
+                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &topLevelDecls)
 
             case .typeAliasDecl:
                 let decl = Decl.typeAliasDecl(makeTypeAliasDecl(from: nodeID, in: cst, interner: interner, astArena: arena))
-                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
+                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &topLevelDecls)
 
             case .enumEntry:
                 let decl = Decl.enumEntryDecl(makeEnumEntryDecl(from: nodeID, in: cst, interner: interner))
-                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &declarationsByFile, fileRawID: fileRawID)
+                appendDecl(decl, to: arena, declarations: &declarations, fileDecls: &topLevelDecls)
 
             default:
                 continue
@@ -417,7 +367,7 @@ public final class BuildASTPhase: CompilerPhase {
                 astArena: arena
             )
             let rootNode = cst.node(root)
-            scriptExprsByFile[fileRawID] = scriptExprs
+            scriptBody = scriptExprs
 
             let mainName = interner.intern("main")
             let mainDecl = FunDecl(
@@ -428,8 +378,61 @@ public final class BuildASTPhase: CompilerPhase {
             )
             let declID = arena.appendDecl(.funDecl(mainDecl))
             declarations.append(declID)
-            declarationsByFile[fileRawID, default: []].append(declID)
+            topLevelDecls.append(declID)
         }
+
+        return PerFileASTResult(
+            fileID: fileID,
+            fileRawID: fileRawID,
+            packageFQName: packageFQName,
+            imports: imports,
+            topLevelDecls: topLevelDecls,
+            scriptBody: scriptBody,
+            allDecls: declarations
+        )
+    }
+
+    private func appendDecl(
+        _ decl: Decl,
+        to arena: ASTArena,
+        declarations: inout [DeclID],
+        fileDecls: inout [DeclID]
+    ) {
+        let declID = arena.appendDecl(decl)
+        declarations.append(declID)
+        fileDecls.append(declID)
+    }
+
+    private func mergePerFileASTResults(_ results: [PerFileASTResult]) -> (
+        declarations: [DeclID],
+        packageByFile: [Int32: [InternedString]],
+        importsByFile: [Int32: [ImportDecl]],
+        declarationsByFile: [Int32: [DeclID]],
+        scriptExprsByFile: [Int32: [ExprID]]
+    ) {
+        var declarations: [DeclID] = []
+        var packageByFile: [Int32: [InternedString]] = [:]
+        var importsByFile: [Int32: [ImportDecl]] = [:]
+        var declarationsByFile: [Int32: [DeclID]] = [:]
+        var scriptExprsByFile: [Int32: [ExprID]] = [:]
+
+        for result in results.sorted(by: { $0.fileRawID < $1.fileRawID }) {
+            declarations.append(contentsOf: result.allDecls)
+            packageByFile[result.fileRawID] = result.packageFQName
+            importsByFile[result.fileRawID] = result.imports
+            declarationsByFile[result.fileRawID] = result.topLevelDecls
+            if !result.scriptBody.isEmpty {
+                scriptExprsByFile[result.fileRawID] = result.scriptBody
+            }
+        }
+
+        return (
+            declarations: declarations,
+            packageByFile: packageByFile,
+            importsByFile: importsByFile,
+            declarationsByFile: declarationsByFile,
+            scriptExprsByFile: scriptExprsByFile
+        )
     }
 
     // MARK: - Finalization (shared between sequential and parallel)

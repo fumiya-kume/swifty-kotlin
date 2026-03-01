@@ -51,7 +51,7 @@ final class MemberLowerer {
                 for index in signature.reifiedTypeParameterIndices.sorted() {
                     guard index < signature.typeParameterSymbols.count else { continue }
                     let typeParamSymbol = signature.typeParameterSymbols[index]
-                    let tokenSymbol = SymbolID(rawValue: -20_000 - typeParamSymbol.rawValue)
+                    let tokenSymbol = SyntheticSymbolScheme.reifiedTypeTokenSymbol(for: typeParamSymbol)
                     params.append(KIRParameter(symbol: tokenSymbol, type: intType))
                 }
             }
@@ -441,7 +441,7 @@ final class MemberLowerer {
             returnType = sema.types.unitType
             accessorName = interner.intern("set")
 
-            let valueParamSymbol = SymbolID(rawValue: -(propertySymbol.rawValue + 30_000))
+            let valueParamSymbol = SyntheticSymbolScheme.setterValueParameterSymbol(for: propertySymbol)
             params.append(KIRParameter(symbol: valueParamSymbol, type: propertyType))
 
             // call: $delegate_x.setValue(thisRef, kProperty, value)
@@ -465,8 +465,10 @@ final class MemberLowerer {
         }
         body.append(.endBlock)
 
-        let accessorSymbolOffset: Int32 = accessorKind == .getter ? -12_000 : -13_000
-        let syntheticAccessorSymbol = SymbolID(rawValue: accessorSymbolOffset - propertySymbol.rawValue)
+        let syntheticAccessorSymbol = SyntheticSymbolScheme.propertyAccessorSymbol(
+            for: propertySymbol,
+            kind: accessorKind
+        )
 
         let kirID = arena.appendDecl(
             .function(
@@ -537,14 +539,14 @@ final class MemberLowerer {
         case .setter:
             returnType = sema.types.unitType
             accessorName = interner.intern("set")
-            let valueParamSymbol = SymbolID(rawValue: -(propertySymbol.rawValue + 30_000))
+            let valueParamSymbol = SyntheticSymbolScheme.setterValueParameterSymbol(for: propertySymbol)
             params.append(KIRParameter(symbol: valueParamSymbol, type: propertyType))
             let valueExprID = arena.appendExpr(.symbolRef(valueParamSymbol), type: propertyType)
             driver.ctx.localValuesBySymbol[valueParamSymbol] = valueExprID
             // Sema binds the setter parameter name to a synthetic setter-value
             // symbol (offset -40_000) distinct from both the property symbol
             // and the backing field symbol.
-            let semaSetterValueSymbol = SymbolID(rawValue: -(propertySymbol.rawValue + 40_000))
+            let semaSetterValueSymbol = SyntheticSymbolScheme.semaSetterValueSymbol(for: propertySymbol)
             driver.ctx.localValuesBySymbol[semaSetterValueSymbol] = valueExprID
             // Map the backing field symbol so `field` references in the setter
             // resolve to backing field storage, not the value parameter.
@@ -622,10 +624,11 @@ final class MemberLowerer {
         body.append(.endBlock)
 
         // Use a synthetic symbol derived from the property symbol for the accessor.
-        // Offsets -12_000 / -13_000 avoid collision with receiver parameter symbols
-        // which use -10_000 (see syntheticReceiverParameterSymbol).
-        let accessorSymbolOffset: Int32 = accessorKind == .getter ? -12_000 : -13_000
-        let syntheticAccessorSymbol = SymbolID(rawValue: accessorSymbolOffset - propertySymbol.rawValue)
+        // Offsets are centralized in SyntheticSymbolScheme.
+        let syntheticAccessorSymbol = SyntheticSymbolScheme.propertyAccessorSymbol(
+            for: propertySymbol,
+            kind: accessorKind
+        )
 
         let kirID = arena.appendDecl(
             .function(

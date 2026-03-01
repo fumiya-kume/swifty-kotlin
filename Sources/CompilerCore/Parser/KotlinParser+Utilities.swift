@@ -1,9 +1,4 @@
 extension KotlinParser {
-    /// Keywords that start declarations or act as statement/synchronization boundaries.
-    private static let declarationBoundaryKeywords: Set<Keyword> = [
-        .class, .object, .interface, .fun, .val, .var, .typealias, .enum, .package, .import
-    ]
-
     internal func parseBalancedGroup(opening: Symbol, closing: Symbol) -> NodeID {
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
@@ -114,17 +109,11 @@ extension KotlinParser {
     }
 
     internal func shouldStopStatementBefore(_ token: Token, inBlock: Bool) -> Bool {
-        if token.kind == .eof {
-            return true
-        }
-        switch token.kind {
-        case .symbol(.rBrace):
-            return true
-        case .keyword(let kw) where Self.declarationBoundaryKeywords.contains(kw):
-            return !inBlock && hasLeadingNewline(token)
-        default:
-            return false
-        }
+        ParserBoundaryPolicy.shouldStopStatementBefore(
+            token,
+            inBlock: inBlock,
+            hasLeadingNewline: hasLeadingNewline(token)
+        )
     }
 
     static func isDeclarationModifierKeyword(_ keyword: Keyword) -> Bool {
@@ -206,29 +195,11 @@ extension KotlinParser {
     }
 
     internal func isSynchronizationPoint(_ token: Token, inBlock: Bool) -> Bool {
-        switch token.kind {
-        case .eof:
-            return true
-        case .symbol(.rBrace):
-            return true
-        case .keyword(let kw) where Self.declarationBoundaryKeywords.contains(kw):
-            return true
-        default:
-            break
-        }
-        if inBlock {
-            switch token.kind {
-            case .symbol(.semicolon):
-                return true
-            case .keyword(.catch), .keyword(.finally), .keyword(.else):
-                return true
-            default:
-                if hasLeadingNewline(token) {
-                    return true
-                }
-            }
-        }
-        return false
+        ParserBoundaryPolicy.isSynchronizationPoint(
+            token,
+            inBlock: inBlock,
+            hasLeadingNewline: hasLeadingNewline(token)
+        )
     }
 
     internal func skipToSynchronizationPoint(
@@ -270,6 +241,75 @@ extension KotlinParser {
             start: SourceLocation(file: FileID.invalid, offset: 0),
             end: SourceLocation(file: FileID.invalid, offset: 0)
         )
+    }
+}
+
+enum ParserBoundaryPolicy {
+    /// Keywords that start declarations or act as statement/synchronization boundaries.
+    private static let declarationBoundaryKeywords: Set<Keyword> = [
+        .class, .object, .interface, .fun, .val, .var, .typealias, .enum, .package, .import
+    ]
+
+    private static let nonSplittingNewlineSymbols: Set<Symbol> = [
+        .dot, .comma, .questionDot, .questionQuestion,
+        .plus, .minus, .star, .slash,
+        .equalEqual, .assign, .arrow,
+        .rParen, .rBracket, .rBrace
+    ]
+
+    static func shouldStopStatementBefore(
+        _ token: Token,
+        inBlock: Bool,
+        hasLeadingNewline: Bool
+    ) -> Bool {
+        if token.kind == .eof {
+            return true
+        }
+        switch token.kind {
+        case .symbol(.rBrace):
+            return true
+        case .keyword(let kw) where declarationBoundaryKeywords.contains(kw):
+            return !inBlock && hasLeadingNewline
+        default:
+            return false
+        }
+    }
+
+    static func isSynchronizationPoint(
+        _ token: Token,
+        inBlock: Bool,
+        hasLeadingNewline: Bool
+    ) -> Bool {
+        switch token.kind {
+        case .eof:
+            return true
+        case .symbol(.rBrace):
+            return true
+        case .keyword(let kw) where declarationBoundaryKeywords.contains(kw):
+            return true
+        default:
+            break
+        }
+        if inBlock {
+            switch token.kind {
+            case .symbol(.semicolon):
+                return true
+            case .keyword(.catch), .keyword(.finally), .keyword(.else):
+                return true
+            default:
+                if hasLeadingNewline {
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
+    static func shouldSplitStatementOnNewline(_ kind: TokenKind) -> Bool {
+        if case .symbol(let symbol) = kind {
+            return !nonSplittingNewlineSymbols.contains(symbol)
+        }
+        return true
     }
 }
 

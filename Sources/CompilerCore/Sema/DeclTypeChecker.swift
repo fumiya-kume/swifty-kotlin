@@ -189,7 +189,7 @@ final class DeclTypeChecker {
             let fieldSymbol = sema.symbols.backingFieldSymbol(for: symbol) ?? symbol
             setterLocals[interner.intern("field")] = (finalPropertyType, fieldSymbol, true, true)
             let parameterName = setter.parameterName ?? interner.intern("value")
-            let setterValueSymbol = SymbolID(rawValue: -(symbol.rawValue + 40_000))
+            let setterValueSymbol = SyntheticSymbolScheme.semaSetterValueSymbol(for: symbol)
             setterLocals[parameterName] = (finalPropertyType, setterValueSymbol, true, true)
             let setterType = inferFunctionBodyType(
                 setter.body, ctx: ctx, locals: &setterLocals,

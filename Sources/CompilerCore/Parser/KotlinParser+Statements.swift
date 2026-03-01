@@ -22,7 +22,7 @@ extension KotlinParser {
             }
             if isDeclarationStart(token.kind) && hasLeadingNewline(token) {
                 children.append(.node(parseDeclaration()))
-            } else if parseStatementTail(inBlock: true) == .canContinue {
+            } else if !shouldStopStatementBefore(token, inBlock: true) {
                 children.append(.node(parseStatement(inBlock: true)))
             } else {
                 let before = stream.index
@@ -419,31 +419,7 @@ extension KotlinParser {
     }
 
     internal func shouldSplitStatementOnNewline(_ kind: TokenKind) -> Bool {
-        switch kind {
-        case .symbol(.dot), .symbol(.comma), .symbol(.questionDot), .symbol(.questionQuestion),
-             .symbol(.plus), .symbol(.minus), .symbol(.star), .symbol(.slash),
-             .symbol(.equalEqual), .symbol(.assign), .symbol(.arrow),
-             .symbol(.rParen), .symbol(.rBracket), .symbol(.rBrace):
-            return false
-        default:
-            return true
-        }
-    }
-
-    internal enum StatementTailStatus {
-        case noProgress
-        case canContinue
-    }
-
-    internal func parseStatementTail(inBlock: Bool) -> StatementTailStatus {
-        let token = stream.peek()
-        if shouldStopStatementBefore(token, inBlock: inBlock) {
-            return .noProgress
-        }
-        if case .symbol(.semicolon) = token.kind {
-            return .canContinue
-        }
-        return .canContinue
+        ParserBoundaryPolicy.shouldSplitStatementOnNewline(kind)
     }
 
     internal func parseTail(inBlock: Bool, into children: inout [SyntaxChild], range: inout RangeAccumulator) {

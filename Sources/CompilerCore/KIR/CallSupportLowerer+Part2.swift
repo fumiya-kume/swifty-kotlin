@@ -172,7 +172,7 @@ extension CallSupportLowerer {
     }
 
     func syntheticReceiverParameterSymbol(functionSymbol: SymbolID) -> SymbolID {
-        SymbolID(rawValue: -10_000 - functionSymbol.rawValue)
+        SyntheticSymbolScheme.receiverParameterSymbol(for: functionSymbol)
     }
 
     func loweredRuntimeBuiltinCallee(

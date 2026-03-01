@@ -40,7 +40,7 @@ final class PropertyLoweringPass: LoweringPass {
                 // Only include if a getter accessor function was actually
                 // emitted — this avoids over-matching regular stored properties
                 // that have no custom getter.
-                let getterSymbol = SymbolID(rawValue: -12_000 - sym.id.rawValue)
+                let getterSymbol = SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: sym.id)
                 guard emittedFunctionSymbols.contains(getterSymbol) else {
                     continue
                 }
@@ -65,7 +65,7 @@ final class PropertyLoweringPass: LoweringPass {
                        computedPropertySymbols.contains(sym) {
                         // Skip rewriting if we are inside the getter accessor
                         // for this property to avoid infinite recursion.
-                        let getterSymbol = SymbolID(rawValue: -12_000 - sym.rawValue)
+                        let getterSymbol = SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: sym)
                         if function.symbol != getterSymbol {
                             loweredBody.append(
                                 .call(
@@ -98,9 +98,7 @@ final class PropertyLoweringPass: LoweringPass {
                                 loweredBody.append(instruction)
                                 continue
                             }
-                            let setterSymbol = SymbolID(
-                                rawValue: -13_000 - baseSymbol.rawValue
-                            )
+                            let setterSymbol = SyntheticSymbolScheme.propertySetterAccessorSymbol(for: baseSymbol)
                             // If the current function IS the setter accessor
                             // for this property, keep the original copy to
                             // avoid infinite recursion (setter calling itself).
@@ -137,7 +135,6 @@ final class PropertyLoweringPass: LoweringPass {
                    symInfo.kind == .field,
                    interner.resolve(symInfo.name).hasPrefix("$delegate_") {
                     let isSetter = callee == setValueName
-                    let accessorSymbolOffset: Int32 = isSetter ? -13_000 : -12_000
                     // Derive the property symbol from the delegate field name
                     // ($delegate_<propName> → <propName>). MemberLowerer creates
                     // accessor functions keyed off the property symbol, not the
@@ -149,7 +146,9 @@ final class PropertyLoweringPass: LoweringPass {
                         loweredBody.append(instruction)
                         continue
                     }
-                    let accessorSymbol = SymbolID(rawValue: accessorSymbolOffset - propSymbol.rawValue)
+                    let accessorSymbol = isSetter
+                        ? SyntheticSymbolScheme.propertySetterAccessorSymbol(for: propSymbol)
+                        : SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: propSymbol)
                     // If the current function IS the accessor being
                     // targeted, keep the original getValue/setValue call
                     // to avoid infinite recursion (accessor calling itself).
@@ -181,9 +180,10 @@ final class PropertyLoweringPass: LoweringPass {
                 // kk_property_access indirection and accessor-kind
                 // boolean argument.
                 let isSetter = callee == setterName
-                let accessorSymbolOffset: Int32 = isSetter ? -13_000 : -12_000
                 if let sym = symbol {
-                    let accessorSymbol = SymbolID(rawValue: accessorSymbolOffset - sym.rawValue)
+                    let accessorSymbol = isSetter
+                        ? SyntheticSymbolScheme.propertySetterAccessorSymbol(for: sym)
+                        : SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: sym)
                     loweredBody.append(
                         .call(
                             symbol: accessorSymbol,

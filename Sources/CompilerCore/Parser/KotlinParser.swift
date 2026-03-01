@@ -20,6 +20,19 @@ public final class KotlinParser {
 
         var pendingImports: [SyntaxChild] = []
         var importRange = RangeAccumulator()
+        func flushPendingImportsIfNeeded() {
+            guard !pendingImports.isEmpty else {
+                return
+            }
+            let importListNode = arena.appendNode(
+                kind: .importList,
+                range: importRange.value ?? invalidRange,
+                pendingImports
+            )
+            children.append(.node(importListNode))
+            pendingImports.removeAll(keepingCapacity: true)
+            importRange = RangeAccumulator()
+        }
 
         while !stream.atEOF() {
             let token = stream.peek()
@@ -58,29 +71,13 @@ public final class KotlinParser {
                 sawTopLevelStatement = true
             }
 
-            if !pendingImports.isEmpty {
-                let importListNode = arena.appendNode(
-                    kind: .importList,
-                    range: importRange.value ?? invalidRange,
-                    pendingImports
-                )
-                children.append(.node(importListNode))
-                pendingImports.removeAll(keepingCapacity: true)
-                importRange = RangeAccumulator()
-            }
+            flushPendingImportsIfNeeded()
 
             children.append(.node(node))
             range.append(arena.node(node).range)
         }
 
-        if !pendingImports.isEmpty {
-            let importListNode = arena.appendNode(
-                kind: .importList,
-                range: importRange.value ?? invalidRange,
-                pendingImports
-            )
-            children.append(.node(importListNode))
-        }
+        flushPendingImportsIfNeeded()
 
         let rootKind: SyntaxKind
         if sawTopLevelStatement && !sawNonPropertyDecl {

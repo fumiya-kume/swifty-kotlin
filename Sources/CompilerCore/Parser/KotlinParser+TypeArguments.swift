@@ -48,8 +48,8 @@ extension KotlinParser {
         )
     }
 
-    internal func canStartTypeArgumentsInternal(after token: Token?) -> Bool {
-        guard token != nil else { return false }
+    internal func canStartTypeArgumentsInternal(hasAnchorToken: Bool) -> Bool {
+        guard hasAnchorToken else { return false }
         guard case .symbol(.lessThan) = stream.peek().kind else { return false }
 
         var depth = 1
@@ -125,7 +125,8 @@ extension KotlinParser {
     }
 
     public func canStartTypeArguments(after token: Token) -> Bool {
-        return canStartTypeArgumentsInternal(after: token)
+        _ = token
+        return canStartTypeArgumentsInternal(hasAnchorToken: true)
     }
 
     public func canStartTypeArguments(after node: NodeID) -> Bool {
@@ -134,6 +135,6 @@ extension KotlinParser {
         if case .typeArgs = nodeKind {
             return false
         }
-        return canStartTypeArgumentsInternal(after: lastConsumedToken)
+        return canStartTypeArgumentsInternal(hasAnchorToken: lastConsumedToken != nil)
     }
 }

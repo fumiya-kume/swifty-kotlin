@@ -93,11 +93,11 @@ final class CallSupportLowerer {
     }
 
     func defaultStubSymbol(for originalSymbol: SymbolID) -> SymbolID {
-        SymbolID(rawValue: -40_000 - originalSymbol.rawValue)
+        SyntheticSymbolScheme.defaultStubSymbol(for: originalSymbol)
     }
 
     func defaultStubMaskSymbol(for originalSymbol: SymbolID) -> SymbolID {
-        SymbolID(rawValue: -30_000 - originalSymbol.rawValue)
+        SyntheticSymbolScheme.defaultMaskSymbol(for: originalSymbol)
     }
 
     func generateDefaultStubFunction(
@@ -133,7 +133,7 @@ final class CallSupportLowerer {
             for index in signature.reifiedTypeParameterIndices.sorted() {
                 guard index < signature.typeParameterSymbols.count else { continue }
                 let typeParamSymbol = signature.typeParameterSymbols[index]
-                let tokenSymbol = SymbolID(rawValue: -20_000 - typeParamSymbol.rawValue)
+                let tokenSymbol = SyntheticSymbolScheme.reifiedTypeTokenSymbol(for: typeParamSymbol)
                 params.append(KIRParameter(symbol: tokenSymbol, type: intType))
                 reifiedTokenSymbols.append(tokenSymbol)
             }

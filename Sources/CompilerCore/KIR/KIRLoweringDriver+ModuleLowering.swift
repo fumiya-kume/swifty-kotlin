@@ -115,7 +115,7 @@ extension KIRLoweringDriver {
                         for index in signature.reifiedTypeParameterIndices.sorted() {
                             guard index < signature.typeParameterSymbols.count else { continue }
                             let typeParamSymbol = signature.typeParameterSymbols[index]
-                            let tokenSymbol = SymbolID(rawValue: -20_000 - typeParamSymbol.rawValue)
+                            let tokenSymbol = SyntheticSymbolScheme.reifiedTypeTokenSymbol(for: typeParamSymbol)
                             params.append(KIRParameter(symbol: tokenSymbol, type: intType))
                         }
                     }

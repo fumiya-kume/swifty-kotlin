@@ -115,7 +115,7 @@ final class InlineLoweringPass: LoweringPass {
             for index in sig.reifiedTypeParameterIndices.sorted() {
                 guard index < sig.typeParameterSymbols.count else { continue }
                 let typeParamSymbol = sig.typeParameterSymbols[index]
-                let tokenSymbol = SymbolID(rawValue: -20_000 - typeParamSymbol.rawValue)
+                let tokenSymbol = SyntheticSymbolScheme.reifiedTypeTokenSymbol(for: typeParamSymbol)
                 if let tokenArg = parameterValues[tokenSymbol] {
                     typeParamTokenValues[typeParamSymbol] = tokenArg
                 }

@@ -374,18 +374,11 @@ final class ABILoweringPass: LoweringPass {
                     continue
                 }
 
-                // Synthetic property accessor symbols (getter: -12_000 - propSym,
-                // setter: -13_000 - propSym) are always non-throwing.
-                // Derive the property symbol from the call symbol and verify it is
-                // a valid non-negative index, bounded above by the -20_000 reified
-                // type parameter range to avoid false positives.
+                // Synthetic property accessor symbols are always non-throwing.
+                // Preserve historical classification via SyntheticSymbolScheme.
                 let isSyntheticAccessor: Bool = {
                     guard let s = callSymbol else { return false }
-                    let raw = s.rawValue
-                    // Accepted range: (-20_000, -12_000].
-                    // Bounded below by the -20_000 reified type parameter range.
-                    guard raw <= -12_000 && raw > -20_000 else { return false }
-                    return true
+                    return SyntheticSymbolScheme.isLikelySyntheticPropertyAccessor(s)
                 }()
                 let canThrow = !isSyntheticAccessor && !nonThrowingCallees.contains(callee)
 

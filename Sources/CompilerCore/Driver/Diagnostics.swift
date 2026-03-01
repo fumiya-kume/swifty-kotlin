@@ -76,40 +76,13 @@ public final class DiagnosticEngine: @unchecked Sendable {
     public func sortBySourceLocation() {
         lock.lock()
         defer { lock.unlock() }
-        diagnostics.sort { lhs, rhs in
-            guard let lRange = lhs.primaryRange else {
-                guard rhs.primaryRange != nil else { return lhs.code < rhs.code }
-                return false
-            }
-            guard let rRange = rhs.primaryRange else {
-                return true
-            }
-            if lRange.start.file.rawValue != rRange.start.file.rawValue {
-                return lRange.start.file.rawValue < rRange.start.file.rawValue
-            }
-            if lRange.start.offset != rRange.start.offset {
-                return lRange.start.offset < rRange.start.offset
-            }
-            let lSev = severityRank(for: lhs.severity)
-            let rSev = severityRank(for: rhs.severity)
-            if lSev != rSev { return lSev < rSev }
-            if lhs.code != rhs.code { return lhs.code < rhs.code }
-            return lhs.message < rhs.message
-        }
+        diagnostics.sort(by: diagnosticsOrder(lhs:rhs:))
     }
 
     public func render(_ sourceManager: SourceManager) -> String {
-        let ordered = diagnostics.sorted { lhs, rhs in
-            let lhsKey = renderSortKey(for: lhs, sourceManager: sourceManager)
-            let rhsKey = renderSortKey(for: rhs, sourceManager: sourceManager)
-
-            if lhsKey.path != rhsKey.path { return lhsKey.path < rhsKey.path }
-            if lhsKey.line != rhsKey.line { return lhsKey.line < rhsKey.line }
-            if lhsKey.column != rhsKey.column { return lhsKey.column < rhsKey.column }
-            if lhsKey.offset != rhsKey.offset { return lhsKey.offset < rhsKey.offset }
-            if lhsKey.severityRank != rhsKey.severityRank { return lhsKey.severityRank < rhsKey.severityRank }
-            return lhsKey.code < rhsKey.code
-        }
+        lock.lock()
+        let ordered = diagnostics.sorted(by: diagnosticsOrder(lhs:rhs:))
+        lock.unlock()
         return ordered.map { formatDiagnostic($0, sourceManager: sourceManager) }.joined(separator: "\n")
     }
 
@@ -148,33 +121,31 @@ public final class DiagnosticEngine: @unchecked Sendable {
         }
     }
 
-    private func renderSortKey(for diagnostic: Diagnostic, sourceManager: SourceManager) -> (
-        path: String,
-        line: Int,
-        column: Int,
-        offset: Int,
-        severityRank: Int,
-        code: String
-    ) {
-        guard let range = diagnostic.primaryRange else {
-            return (
-                path: "\u{10FFFF}",
-                line: Int.max,
-                column: Int.max,
-                offset: Int.max,
-                severityRank: severityRank(for: diagnostic.severity),
-                code: diagnostic.code
-            )
+    private func diagnosticsOrder(lhs: Diagnostic, rhs: Diagnostic) -> Bool {
+        guard let lhsRange = lhs.primaryRange else {
+            guard rhs.primaryRange != nil else {
+                return tieBreak(lhs: lhs, rhs: rhs)
+            }
+            return false
         }
-        let position = sourceManager.lineColumn(of: range.start)
-        return (
-            path: sourceManager.path(of: range.start.file),
-            line: position.line,
-            column: position.column,
-            offset: range.start.offset,
-            severityRank: severityRank(for: diagnostic.severity),
-            code: diagnostic.code
-        )
+        guard let rhsRange = rhs.primaryRange else {
+            return true
+        }
+        if lhsRange.start.file.rawValue != rhsRange.start.file.rawValue {
+            return lhsRange.start.file.rawValue < rhsRange.start.file.rawValue
+        }
+        if lhsRange.start.offset != rhsRange.start.offset {
+            return lhsRange.start.offset < rhsRange.start.offset
+        }
+        return tieBreak(lhs: lhs, rhs: rhs)
+    }
+
+    private func tieBreak(lhs: Diagnostic, rhs: Diagnostic) -> Bool {
+        let lhsSeverity = severityRank(for: lhs.severity)
+        let rhsSeverity = severityRank(for: rhs.severity)
+        if lhsSeverity != rhsSeverity { return lhsSeverity < rhsSeverity }
+        if lhs.code != rhs.code { return lhs.code < rhs.code }
+        return lhs.message < rhs.message
     }
 
     private func severityRank(for severity: DiagnosticSeverity) -> Int {

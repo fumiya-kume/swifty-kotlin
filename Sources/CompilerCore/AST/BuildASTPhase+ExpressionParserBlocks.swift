@@ -144,40 +144,11 @@ extension BuildASTPhase.ExpressionParser {
     }
 
     internal func isLocalDeclarationTokens(_ tokens: [Token]) -> Bool {
-        guard !tokens.isEmpty else { return false }
-        var i = 0
-        while i < tokens.count {
-            if case .keyword(let kw) = tokens[i].kind,
-               KotlinParser.isDeclarationModifierKeyword(kw) {
-                i += 1
-                continue
-            }
-            break
-        }
-        guard i < tokens.count else { return false }
-        switch tokens[i].kind {
-        case .keyword(.val), .keyword(.var):
-            return true
-        default:
-            return false
-        }
+        BuildASTPhase.LocalStatementCore.isLocalDeclarationTokens(tokens)
     }
 
     internal func isLocalAssignmentTokens(_ tokens: [Token]) -> Bool {
-        guard tokens.count >= 3 else { return false }
-        let assignOps: [TokenKind] = [
-            .symbol(.assign),
-            .symbol(.plusAssign), .symbol(.minusAssign),
-            .symbol(.starAssign), .symbol(.slashAssign), .symbol(.percentAssign),
-        ]
-        var depth = BuildASTPhase.BracketDepth()
-        for token in tokens {
-            if assignOps.contains(token.kind) && depth.isAtTopLevel {
-                return true
-            }
-            depth.track(token.kind)
-        }
-        return false
+        BuildASTPhase.LocalStatementCore.isLocalAssignmentTokens(tokens)
     }
 
     internal func parseLocalDeclFromTokens(_ tokens: [Token]) -> ExprID? {
@@ -185,116 +156,39 @@ extension BuildASTPhase.ExpressionParser {
     }
 
     internal func parseLocalDeclFromSlice(_ tokens: ArraySlice<Token>) -> ExprID? {
-        guard !tokens.isEmpty else { return nil }
-        var si = tokens.startIndex
-        while si < tokens.endIndex {
-            if case .keyword(let kw) = tokens[si].kind,
-               KotlinParser.isDeclarationModifierKeyword(kw) {
-                si += 1
-                continue
-            }
-            break
-        }
-        guard si < tokens.endIndex else { return nil }
-        let head = tokens[si]
-        let isMutable: Bool
-        switch head.kind {
-        case .keyword(.val):
-            isMutable = false
-        case .keyword(.var):
-            isMutable = true
-        default:
-            return nil
-        }
-
-        let nameToken = tokens[(si + 1)...].first(where: { token in
-            switch token.kind {
-            case .identifier, .backtickedIdentifier:
-                return true
-            default:
-                return false
-            }
-        })
-        guard let nameToken, let name = tokenText(nameToken) else {
-            return nil
-        }
-
-        let nameIndex = tokens.firstIndex(where: { $0.range.start == nameToken.range.start }) ?? (si + 1)
-
-        var typeAnnotation: TypeRefID?
-        var colonIndex: Int?
-        for i in (nameIndex + 1)..<tokens.endIndex {
-            let token = tokens[i]
-            if token.kind == .symbol(.colon) {
-                colonIndex = i
-                break
-            }
-            if token.kind == .symbol(.assign) || token.kind == .symbol(.semicolon) {
-                break
-            }
-        }
-        if let colonIndex {
-            var typeTokens: [Token] = []
-            var typeDepth = BuildASTPhase.BracketDepth()
-            var idx = colonIndex + 1
-            while idx < tokens.endIndex {
-                let token = tokens[idx]
-                if typeDepth.isAtTopLevel {
-                    if token.kind == .symbol(.assign) || token.kind == .symbol(.semicolon) {
-                        break
-                    }
+        let interner = self.interner
+        let astArena = self.astArena
+        let context = BuildASTPhase.LocalStatementCoreContext(
+            interner: interner,
+            astArena: astArena,
+            parseExpression: { slice in
+                BuildASTPhase.ExpressionParser(tokens: slice, interner: interner, astArena: astArena).parse()
+            },
+            parseTypeReference: { typeTokens in
+                guard let first = typeTokens.first else {
+                    return nil
                 }
-                typeDepth.track(token.kind)
-                typeTokens.append(token)
-                idx += 1
-            }
-            if !typeTokens.isEmpty {
-                let typeParser = BuildASTPhase.ExpressionParser(
-                    tokens: typeTokens, interner: interner, astArena: astArena
+                let parser = BuildASTPhase.ExpressionParser(
+                    tokens: typeTokens,
+                    interner: interner,
+                    astArena: astArena
                 )
-                let fallbackRange = typeTokens[0].range
-                typeAnnotation = typeParser.parseTypeReference(fallbackRange)
+                return parser.parseTypeReference(first.range)
+            },
+            resolveDeclarationName: { token, _ in
+                switch token.kind {
+                case .identifier(let name), .backtickedIdentifier(let name):
+                    return name
+                default:
+                    return nil
+                }
             }
-        }
-
-        var assignIndex: Int?
-        var depth = BuildASTPhase.BracketDepth()
-        for i in tokens.startIndex..<tokens.endIndex {
-            let token = tokens[i]
-            if token.kind == .symbol(.assign) && depth.isAtTopLevel {
-                assignIndex = i
-                break
-            }
-            depth.track(token.kind)
-        }
-
-        var initializerExpr: ExprID?
-        if let assignIndex {
-            let initSlice = tokens[(assignIndex + 1)...]
-            if !initSlice.isEmpty {
-                let parser = BuildASTPhase.ExpressionParser(tokens: initSlice, interner: interner, astArena: astArena)
-                initializerExpr = parser.parse()
-            }
-        }
-
-        if typeAnnotation == nil && initializerExpr == nil {
-            return nil
-        }
-
-        let rangeEnd: SourceLocation
-        if let initializerExpr {
-            rangeEnd = astArena.exprRange(initializerExpr)?.end ?? tokens.last?.range.end ?? head.range.end
-        } else {
-            rangeEnd = tokens.last?.range.end ?? head.range.end
-        }
-        let range = SourceRange(start: tokens[tokens.startIndex].range.start, end: rangeEnd)
-        return astArena.appendExpr(.localDecl(
-            name: name,
-            isMutable: isMutable,
-            typeAnnotation: typeAnnotation,
-            initializer: initializerExpr,
-            range: range
-        ))
+        )
+        return BuildASTPhase.LocalStatementCore.parseLocalDeclaration(
+            from: tokens,
+            context: context,
+            options: .blockExpression
+        )
     }
 
     internal func parseLocalAssignFromTokens(_ tokens: [Token]) -> ExprID? {
@@ -302,98 +196,22 @@ extension BuildASTPhase.ExpressionParser {
     }
 
     internal func parseLocalAssignFromSlice(_ tokens: ArraySlice<Token>) -> ExprID? {
-        guard tokens.count >= 3 else { return nil }
-
-        let compoundOps: [(TokenKind, CompoundAssignOp)] = [
-            (.symbol(.plusAssign), .plusAssign),
-            (.symbol(.minusAssign), .minusAssign),
-            (.symbol(.starAssign), .timesAssign),
-            (.symbol(.slashAssign), .divAssign),
-            (.symbol(.percentAssign), .modAssign),
-        ]
-        var compoundIndex: Int?
-        var compoundOp: CompoundAssignOp?
-        var compoundDepth = BuildASTPhase.BracketDepth()
-        for i in tokens.startIndex..<tokens.endIndex {
-            let token = tokens[i]
-            for (kind, op) in compoundOps {
-                if token.kind == kind && compoundDepth.isAtTopLevel {
-                    compoundIndex = i
-                    compoundOp = op
-                    break
-                }
-            }
-            if compoundIndex != nil { break }
-            compoundDepth.track(token.kind)
-        }
-        if let compoundIndex, let op = compoundOp, compoundIndex > tokens.startIndex {
-            let lhsSlice = tokens[tokens.startIndex..<compoundIndex]
-            guard !lhsSlice.isEmpty else { return nil }
-            let lhsParser = BuildASTPhase.ExpressionParser(tokens: lhsSlice, interner: interner, astArena: astArena)
-            guard let lhsExpr = lhsParser.parse(),
-                  let lhs = astArena.expr(lhsExpr),
-                  let lhsRange = astArena.exprRange(lhsExpr) else {
-                return nil
-            }
-            let valueSlice = tokens[(compoundIndex + 1)...]
-            guard !valueSlice.isEmpty else { return nil }
-            let parser = BuildASTPhase.ExpressionParser(tokens: valueSlice, interner: interner, astArena: astArena)
-            guard let valueExpr = parser.parse() else { return nil }
-            let rangeEnd = astArena.exprRange(valueExpr)?.end ?? tokens.last?.range.end ?? lhsRange.end
-            let range = SourceRange(start: tokens[tokens.startIndex].range.start, end: rangeEnd)
-            switch lhs {
-            case .nameRef(let name, _):
-                return astArena.appendExpr(.compoundAssign(op: op, name: name, value: valueExpr, range: range))
-            case .indexedAccess(let receiver, let indices, _):
-                return astArena.appendExpr(.indexedCompoundAssign(op: op, receiver: receiver, indices: indices, value: valueExpr, range: range))
-            default:
-                return nil
-            }
-        }
-
-        var assignIndex: Int?
-        var depth = BuildASTPhase.BracketDepth()
-        for i in tokens.startIndex..<tokens.endIndex {
-            let token = tokens[i]
-            if token.kind == .symbol(.assign) && depth.isAtTopLevel {
-                assignIndex = i
-                break
-            }
-            depth.track(token.kind)
-        }
-        guard let assignIndex, assignIndex > tokens.startIndex else { return nil }
-        let lhsSlice = tokens[tokens.startIndex..<assignIndex]
-        guard !lhsSlice.isEmpty else { return nil }
-        let valueSlice = tokens[(assignIndex + 1)...]
-        guard !valueSlice.isEmpty else { return nil }
-        let lhsParser = BuildASTPhase.ExpressionParser(tokens: lhsSlice, interner: interner, astArena: astArena)
-        guard let lhsExpr = lhsParser.parse() else { return nil }
-        let parser = BuildASTPhase.ExpressionParser(tokens: valueSlice, interner: interner, astArena: astArena)
-        guard let valueExpr = parser.parse() else { return nil }
-        guard let lhs = astArena.expr(lhsExpr),
-              let lhsRange = astArena.exprRange(lhsExpr) else {
-            return nil
-        }
-        let rangeEnd = astArena.exprRange(valueExpr)?.end ?? tokens.last?.range.end ?? lhsRange.end
-        let range = SourceRange(start: lhsRange.start, end: rangeEnd)
-        switch lhs {
-        case .nameRef(let name, _):
-            return astArena.appendExpr(.localAssign(name: name, value: valueExpr, range: range))
-        case .memberCall(let receiver, let callee, let typeArgs, let args, _):
-            guard typeArgs.isEmpty, args.isEmpty else {
-                return nil
-            }
-            return astArena.appendExpr(.memberAssign(
-                receiver: receiver,
-                callee: callee,
-                value: valueExpr,
-                range: range
-            ))
-        case .indexedAccess(let receiver, let indices, _):
-            return astArena.appendExpr(.indexedAssign(receiver: receiver, indices: indices, value: valueExpr, range: range))
-        default:
-            return nil
-        }
+        let interner = self.interner
+        let astArena = self.astArena
+        let context = BuildASTPhase.LocalStatementCoreContext(
+            interner: interner,
+            astArena: astArena,
+            parseExpression: { slice in
+                BuildASTPhase.ExpressionParser(tokens: slice, interner: interner, astArena: astArena).parse()
+            },
+            parseTypeReference: { _ in nil },
+            resolveDeclarationName: { _, _ in nil }
+        )
+        return BuildASTPhase.LocalStatementCore.parseLocalAssignment(
+            from: tokens,
+            context: context,
+            options: .blockExpression
+        )
     }
 
     internal func skipBalancedParenthesisIfNeeded() {

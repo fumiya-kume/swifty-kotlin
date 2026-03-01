@@ -111,7 +111,7 @@ extension KotlinParser {
             // so only emit a diagnostic for non-companion declarations.
             insertMissingToken(expected: .identifier(.invalid), into: &children, range: &range, code: "KSWIFTK-PARSE-0002", message: "Expected declaration name.")
         }
-        if supportsTypeParameters && canStartTypeArgumentsInternal(after: lastConsumedToken) {
+        if supportsTypeParameters && canStartTypeArgumentsInternal(hasAnchorToken: lastConsumedToken != nil) {
             children.append(.node(parseTypeArguments()))
             if let last = children.last {
                 range.append(childRange(last))
@@ -136,7 +136,7 @@ extension KotlinParser {
         var range = RangeAccumulator(value: leadingRange)
 
         _ = consumeToken(into: &children, range: &range)
-        if canStartTypeArgumentsInternal(after: lastConsumedToken) {
+        if canStartTypeArgumentsInternal(hasAnchorToken: lastConsumedToken != nil) {
             children.append(.node(parseTypeArguments()))
             if let last = children.last {
                 range.append(childRange(last))
@@ -201,7 +201,7 @@ extension KotlinParser {
         } else {
             insertMissingToken(expected: .identifier(.invalid), into: &children, range: &range, code: "KSWIFTK-PARSE-0002", message: "Expected typealias name.")
         }
-        if canStartTypeArgumentsInternal(after: lastConsumedToken) {
+        if canStartTypeArgumentsInternal(hasAnchorToken: lastConsumedToken != nil) {
             children.append(.node(parseTypeArguments()))
             if let last = children.last {
                 range.append(childRange(last))

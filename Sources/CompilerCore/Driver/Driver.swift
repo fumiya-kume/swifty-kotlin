@@ -1,6 +1,12 @@
 import Foundation
 
 public final class CompilerDriver {
+    private struct PreparedRunContext {
+        let context: CompilationContext
+        let timePhasesEnabled: Bool
+        let incrementalEnabled: Bool
+    }
+
     private let version: CompilerVersion
     private let kotlinVersion: KotlinLanguageVersion
 
@@ -45,30 +51,8 @@ public final class CompilerDriver {
         options: CompilerOptions,
         printDiagnostics: Bool
     ) -> (exitCode: Int, diagnostics: [Diagnostic]) {
-        let sourceManager = SourceManager()
-        let diagnostics = DiagnosticEngine()
-        let interner = StringInterner()
-        let ctx = CompilationContext(
-            options: options,
-            sourceManager: sourceManager,
-            diagnostics: diagnostics,
-            interner: interner
-        )
-
-        // Set up phase timer when time-phases flag is present.
-        let timePhasesEnabled = options.frontendFlags.contains("time-phases")
-        if timePhasesEnabled {
-            ctx.phaseTimer = PhaseTimer()
-        }
-
-        // Set up incremental compilation if enabled.
-        let incrementalEnabled = isIncrementalEnabled(options: options)
-        if incrementalEnabled {
-            let cachePath = resolveIncrementalCachePath(options: options)
-            let cache = IncrementalCompilationCache(cachePath: cachePath)
-            cache.loadPreviousState()
-            ctx.incrementalCache = cache
-        }
+        let prepared = prepareContext(options: options)
+        let ctx = prepared.context
 
         let phases: [CompilerPhase] = [
             LoadSourcesPhase(),
@@ -82,54 +66,8 @@ public final class CompilerDriver {
             LinkPhase()
         ]
 
-        do {
-            for phase in phases {
-                let phaseName = type(of: phase).name
-                ctx.phaseTimer?.beginPhase(phaseName)
-                defer { ctx.phaseTimer?.endPhase() }
-
-                // After loading sources, compute fingerprints and determine
-                // which files need recompilation.
-                if phase is LoadSourcesPhase {
-                    try phase.run(ctx)
-                    if ctx.diagnostics.hasError { break }
-                    if incrementalEnabled {
-                        setupIncrementalRecompileSet(ctx: ctx)
-                    }
-                    continue
-                }
-
-                try phase.run(ctx)
-                if ctx.diagnostics.hasError {
-                    break
-                }
-            }
-        } catch {
-            if !ctx.diagnostics.hasError {
-                if let fallback = Self.fallbackDiagnostic(for: error) {
-                    ctx.diagnostics.error(fallback.code, fallback.message, range: nil)
-                } else {
-                    ctx.diagnostics.error("KSWIFTK-ICE-0001", "Compiler internal error: \(error)", range: nil)
-                }
-            }
-        }
-
-        // Save the incremental cache on successful compilation.
-        if !ctx.diagnostics.hasError, let cache = ctx.incrementalCache {
-            let depGraph = buildDependencyGraph(ctx: ctx)
-            cache.saveState(dependencyGraph: depGraph)
-        }
-
-        if printDiagnostics {
-            ctx.diagnostics.printDiagnostics(from: sourceManager)
-        }
-
-        // Print phase timing summary when requested.
-        if timePhasesEnabled, let timer = ctx.phaseTimer {
-            timer.printSummary()
-        }
-
-        return (ctx.diagnostics.hasError ? 1 : 0, ctx.diagnostics.diagnostics)
+        executePhases(ctx: ctx, phases: phases, incrementalEnabled: prepared.incrementalEnabled)
+        return finalizeRun(ctx: ctx, printDiagnostics: printDiagnostics, timePhasesEnabled: prepared.timePhasesEnabled)
     }
 
     // MARK: - Incremental compilation helpers
@@ -176,6 +114,91 @@ public final class CompilerDriver {
             // No previous cache — full build.
             ctx.incrementalRecompileSet = nil
         }
+    }
+
+    private func prepareContext(options: CompilerOptions) -> PreparedRunContext {
+        let context = CompilationContext(
+            options: options,
+            sourceManager: SourceManager(),
+            diagnostics: DiagnosticEngine(),
+            interner: StringInterner()
+        )
+
+        let timePhasesEnabled = options.frontendFlags.contains("time-phases")
+        if timePhasesEnabled {
+            context.phaseTimer = PhaseTimer()
+        }
+
+        let incrementalEnabled = isIncrementalEnabled(options: options)
+        if incrementalEnabled {
+            let cachePath = resolveIncrementalCachePath(options: options)
+            let cache = IncrementalCompilationCache(cachePath: cachePath)
+            cache.loadPreviousState()
+            context.incrementalCache = cache
+        }
+
+        return PreparedRunContext(
+            context: context,
+            timePhasesEnabled: timePhasesEnabled,
+            incrementalEnabled: incrementalEnabled
+        )
+    }
+
+    private func executePhases(
+        ctx: CompilationContext,
+        phases: [CompilerPhase],
+        incrementalEnabled: Bool
+    ) {
+        do {
+            for phase in phases {
+                let phaseName = type(of: phase).name
+                ctx.phaseTimer?.beginPhase(phaseName)
+                defer { ctx.phaseTimer?.endPhase() }
+
+                if phase is LoadSourcesPhase {
+                    try phase.run(ctx)
+                    if ctx.diagnostics.hasError { break }
+                    if incrementalEnabled {
+                        setupIncrementalRecompileSet(ctx: ctx)
+                    }
+                    continue
+                }
+
+                try phase.run(ctx)
+                if ctx.diagnostics.hasError {
+                    break
+                }
+            }
+        } catch {
+            if !ctx.diagnostics.hasError {
+                if let fallback = Self.fallbackDiagnostic(for: error) {
+                    ctx.diagnostics.error(fallback.code, fallback.message, range: nil)
+                } else {
+                    ctx.diagnostics.error("KSWIFTK-ICE-0001", "Compiler internal error: \(error)", range: nil)
+                }
+            }
+        }
+    }
+
+    private func finalizeRun(
+        ctx: CompilationContext,
+        printDiagnostics: Bool,
+        timePhasesEnabled: Bool
+    ) -> (exitCode: Int, diagnostics: [Diagnostic]) {
+        if !ctx.diagnostics.hasError, let cache = ctx.incrementalCache {
+            let depGraph = buildDependencyGraph(ctx: ctx)
+            cache.saveState(dependencyGraph: depGraph)
+        }
+
+        if printDiagnostics {
+            ctx.diagnostics.printDiagnostics(from: ctx.sourceManager)
+        }
+
+        if timePhasesEnabled, let timer = ctx.phaseTimer {
+            timer.printSummary()
+        }
+
+        return (ctx.diagnostics.hasError ? 1 : 0, ctx.diagnostics.diagnostics)
     }
 
     /// Builds a dependency graph from the current compilation state.
@@ -235,7 +258,6 @@ public final class CompilerDriver {
                     declID: declID,
                     ast: ast,
                     interner: interner,
-                    provided: provided,
                     depended: &depended
                 )
             }
@@ -272,36 +294,35 @@ public final class CompilerDriver {
         declID: DeclID,
         ast: ASTModule,
         interner: StringInterner,
-        provided: Set<String>,
         depended: inout Set<String>
     ) {
         guard let decl = ast.arena.decl(declID) else { return }
 
         switch decl {
         case .classDecl(let d):
-            for superType in d.superTypes {
-                collectTypeRefDependencies(typeRefID: superType, ast: ast, interner: interner, depended: &depended)
-            }
-            let memberIDs = d.memberFunctions + d.memberProperties + d.nestedClasses + d.nestedObjects
-            for memberID in memberIDs {
-                collectDeclDependencies(declID: memberID, ast: ast, interner: interner, provided: provided, depended: &depended)
-            }
+            collectNominalDeclDependencies(
+                superTypes: d.superTypes,
+                memberIDs: d.memberFunctions + d.memberProperties + d.nestedClasses + d.nestedObjects,
+                ast: ast,
+                interner: interner,
+                depended: &depended
+            )
         case .interfaceDecl(let d):
-            for superType in d.superTypes {
-                collectTypeRefDependencies(typeRefID: superType, ast: ast, interner: interner, depended: &depended)
-            }
-            let memberIDs = d.memberFunctions + d.memberProperties + d.nestedClasses + d.nestedObjects
-            for memberID in memberIDs {
-                collectDeclDependencies(declID: memberID, ast: ast, interner: interner, provided: provided, depended: &depended)
-            }
+            collectNominalDeclDependencies(
+                superTypes: d.superTypes,
+                memberIDs: d.memberFunctions + d.memberProperties + d.nestedClasses + d.nestedObjects,
+                ast: ast,
+                interner: interner,
+                depended: &depended
+            )
         case .objectDecl(let d):
-            for superType in d.superTypes {
-                collectTypeRefDependencies(typeRefID: superType, ast: ast, interner: interner, depended: &depended)
-            }
-            let memberIDs = d.memberFunctions + d.memberProperties + d.nestedClasses + d.nestedObjects
-            for memberID in memberIDs {
-                collectDeclDependencies(declID: memberID, ast: ast, interner: interner, provided: provided, depended: &depended)
-            }
+            collectNominalDeclDependencies(
+                superTypes: d.superTypes,
+                memberIDs: d.memberFunctions + d.memberProperties + d.nestedClasses + d.nestedObjects,
+                ast: ast,
+                interner: interner,
+                depended: &depended
+            )
         case .funDecl(let d):
             for param in d.valueParams {
                 if let typeRef = param.type {
@@ -321,6 +342,26 @@ public final class CompilerDriver {
             }
         case .enumEntryDecl:
             break
+        }
+    }
+
+    private func collectNominalDeclDependencies(
+        superTypes: [TypeRefID],
+        memberIDs: [DeclID],
+        ast: ASTModule,
+        interner: StringInterner,
+        depended: inout Set<String>
+    ) {
+        for superType in superTypes {
+            collectTypeRefDependencies(typeRefID: superType, ast: ast, interner: interner, depended: &depended)
+        }
+        for memberID in memberIDs {
+            collectDeclDependencies(
+                declID: memberID,
+                ast: ast,
+                interner: interner,
+                depended: &depended
+            )
         }
     }
 
