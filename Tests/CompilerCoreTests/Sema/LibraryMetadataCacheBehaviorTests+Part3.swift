@@ -172,7 +172,7 @@ extension LibraryMetadataCacheBehaviorTests {
         let retrieved = cache.cachedSignature("INVALID", types: types, symbols: symbols)
         // Outer optional should be non-nil (cache hit), inner should be nil (cached failure)
         XCTAssertNotNil(retrieved, "Outer optional should be non-nil (cache hit for nil value)")
-        XCTAssertNil(retrieved, "Inner value should be nil (cached failed parse)")
+        XCTAssertNil(try XCTUnwrap(retrieved), "Inner value should be nil (cached failed parse)")
         XCTAssertEqual(cache.signatureCacheCount, 1)
     }
 
