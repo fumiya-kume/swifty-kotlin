@@ -113,7 +113,7 @@ extension CallLowerer {
                 arguments: &finalArguments
             )
             appendDefaultMaskArgument(
-                Int64(safeNormalized.defaultMask),
+                safeNormalized.defaultMask,
                 sema: sema,
                 arena: arena,
                 instructions: &instructions.instructions,

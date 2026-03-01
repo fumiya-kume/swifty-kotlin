@@ -24,6 +24,8 @@ func symbolKindFromMetadataToken(_ token: String) -> SymbolKind? {
         return .property
     case "field":
         return .field
+    case "backingField":
+        return .backingField
     case "typeParameter":
         return .typeParameter
     case "valueParameter":
