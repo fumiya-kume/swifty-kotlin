@@ -114,7 +114,7 @@ extension CallLowerer {
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
 
         // Primitive member function: Int/Long.inv() → kk_op_inv (P5-103)
-        if interner.resolve(calleeName) == "inv",
+        if calleeName == interner.intern("inv"),
            args.isEmpty,
            shouldLowerPrimitiveInv(receiverExpr: receiverExpr, sema: sema, nullableReceiverAllowed: requireNonNullableReceiverForConstFold) {
             instructions.append(.call(
@@ -261,7 +261,7 @@ extension CallLowerer {
         var finalArguments = arguments
         if normalized.defaultMask != 0,
            let chosenCallee {
-            appendMemberReifiedTypeTokens(
+            appendReifiedTypeTokens(
                 chosenCallee: chosenCallee,
                 callBinding: callBinding,
                 sema: sema,
@@ -269,7 +269,7 @@ extension CallLowerer {
                 instructions: &instructions,
                 arguments: &finalArguments
             )
-            appendMemberDefaultMask(
+            appendDefaultMaskArgument(
                 normalized.defaultMask,
                 sema: sema,
                 arena: arena,
@@ -290,7 +290,7 @@ extension CallLowerer {
             return
         }
 
-        appendMemberReifiedTypeTokens(
+        appendReifiedTypeTokens(
             chosenCallee: chosenCallee,
             callBinding: callBinding,
             sema: sema,
@@ -338,48 +338,6 @@ extension CallLowerer {
             thrownResult: nil,
             isSuperCall: isSuperCall
         ))
-    }
-
-    private func appendMemberReifiedTypeTokens(
-        chosenCallee: SymbolID?,
-        callBinding: CallBinding?,
-        sema: SemaModule,
-        arena: KIRArena,
-        instructions: inout [KIRInstruction],
-        arguments: inout [KIRExprID]
-    ) {
-        guard let chosenCallee,
-              let callBinding,
-              let signature = sema.symbols.functionSignature(for: chosenCallee),
-              !signature.reifiedTypeParameterIndices.isEmpty else {
-            return
-        }
-
-        let intType = sema.types.make(.primitive(.int, .nonNull))
-        for index in signature.reifiedTypeParameterIndices.sorted() {
-            let concreteType = index < callBinding.substitutedTypeArguments.count
-                ? callBinding.substitutedTypeArguments[index]
-                : sema.types.anyType
-            let tokenExpr = arena.appendExpr(
-                .intLiteral(Int64(concreteType.rawValue)),
-                type: intType
-            )
-            instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(concreteType.rawValue))))
-            arguments.append(tokenExpr)
-        }
-    }
-
-    private func appendMemberDefaultMask(
-        _ defaultMask: Int64,
-        sema: SemaModule,
-        arena: KIRArena,
-        instructions: inout [KIRInstruction],
-        arguments: inout [KIRExprID]
-    ) {
-        let intType = sema.types.make(.primitive(.int, .nonNull))
-        let maskExpr = arena.appendExpr(.intLiteral(defaultMask), type: intType)
-        instructions.append(.constValue(result: maskExpr, value: .intLiteral(defaultMask)))
-        arguments.append(maskExpr)
     }
 
     private func loweredMemberCalleeName(
@@ -449,8 +407,7 @@ extension CallLowerer {
         shared: KIRLoweringSharedContext,
         emit instructions: inout KIRLoweringEmitContext
     ) -> KIRExprID {
-        var oldInstructions = Array(instructions)
-        let result = lowerMemberAssignExpr(
+        lowerMemberAssignExpr(
             exprID,
             receiverExpr: receiverExpr,
             calleeName: calleeName,
@@ -460,10 +417,8 @@ extension CallLowerer {
             arena: shared.arena,
             interner: shared.interner,
             propertyConstantInitializers: shared.propertyConstantInitializers,
-            instructions: &oldInstructions
+            instructions: &instructions.instructions
         )
-        instructions = KIRLoweringEmitContext(oldInstructions)
-        return result
     }
 
 }

@@ -461,7 +461,7 @@ final class ControlFlowLowerer {
         return tryResult
     }
 
-    private func appendThrowAwareInstructions(
+    func appendThrowAwareInstructions(
         _ loweredInstructions: [KIRInstruction],
         exceptionSlot: KIRExprID,
         exceptionTypeSlot: KIRExprID,

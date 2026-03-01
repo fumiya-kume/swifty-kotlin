@@ -47,7 +47,7 @@ extension ExprTypeChecker {
         let rhs = driver.inferExpr(rhsID, ctx: ctx, locals: &locals)
         let lhsIsPrimitive: Bool
         if case .primitive = sema.types.kind(of: lhs) { lhsIsPrimitive = true } else { lhsIsPrimitive = false }
-        let operatorName = driver.helpers.binaryOperatorFunctionName(for: op, interner: interner)
+        let operatorName = interner.intern(op.kotlinFunctionName)
         let memberOperatorCandidates = lhsIsPrimitive ? [] : driver.helpers.collectMemberFunctionCandidates(
             named: operatorName,
             receiverType: lhs,

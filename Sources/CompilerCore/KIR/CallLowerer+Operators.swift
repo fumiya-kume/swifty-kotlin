@@ -109,7 +109,7 @@ extension CallLowerer {
                 } else if let symbol = sema.symbols.symbol(callBinding.chosenCallee) {
                     loweredCalleeName = symbol.name
                 } else {
-                    loweredCalleeName = driver.callSupportLowerer.binaryOperatorFunctionName(for: op, interner: interner)
+                    loweredCalleeName = interner.intern(op.kotlinFunctionName)
                 }
                 instructions.append(.call(
                     symbol: callBinding.chosenCallee,

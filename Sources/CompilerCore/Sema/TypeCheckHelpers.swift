@@ -102,10 +102,6 @@ struct TypeCheckHelpers {
         }
     }
 
-    func binaryOperatorFunctionName(for op: BinaryOp, interner: StringInterner) -> InternedString {
-        interner.intern(op.kotlinFunctionName)
-    }
-
     func resolveBuiltinTypeName(_ name: String, nullability: Nullability = .nonNull, types: TypeSystem) -> TypeID? {
         switch name {
         case "Int":     return types.withNullability(nullability, for: types.intType)

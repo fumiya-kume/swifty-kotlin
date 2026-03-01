@@ -136,12 +136,14 @@ final class ExprLowerer {
             return accumulated
 
         case .nameRef(let name, _):
-            if interner.resolve(name) == "null" {
+            let nullID = interner.intern("null")
+            let thisID = interner.intern("this")
+            if name == nullID {
                 let id = arena.appendExpr(.null, type: boundType ?? sema.types.nullableAnyType)
                 instructions.append(.constValue(result: id, value: .null))
                 return id
             }
-            if interner.resolve(name) == "this",
+            if name == thisID,
                let receiverExprID = driver.ctx.currentImplicitReceiverExprID {
                 return receiverExprID
             }

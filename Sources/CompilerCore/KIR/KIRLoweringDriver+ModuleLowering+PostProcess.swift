@@ -148,20 +148,21 @@ extension KIRLoweringDriver {
               let expr = ast.arena.expr(exprID) else {
             return .custom
         }
+        let lazyID = interner.intern("lazy")
+        let observableID = interner.intern("observable")
+        let vetoableID = interner.intern("vetoable")
         switch expr {
         case .nameRef(let name, _):
-            let resolved = interner.resolve(name)
-            if resolved == "lazy" { return .lazy }
+            if name == lazyID { return .lazy }
             return .custom
         case .call(let callee, _, _, _):
             // call(callee: memberCall(...) or nameRef(...))
             if let calleeExpr = ast.arena.expr(callee) {
                 switch calleeExpr {
                 case .nameRef(let name, _):
-                    let resolved = interner.resolve(name)
-                    if resolved == "observable" { return .observable }
-                    if resolved == "vetoable" { return .vetoable }
-                    if resolved == "lazy" { return .lazy }
+                    if name == observableID { return .observable }
+                    if name == vetoableID { return .vetoable }
+                    if name == lazyID { return .lazy }
                 default:
                     break
                 }
@@ -169,9 +170,8 @@ extension KIRLoweringDriver {
             // Check memberCall pattern: Delegates.observable(...)
             return detectDelegateKindFromCallExpr(callee: callee, ast: ast, interner: interner)
         case .memberCall(_, let callee, _, _, _):
-            let resolved = interner.resolve(callee)
-            if resolved == "observable" { return .observable }
-            if resolved == "vetoable" { return .vetoable }
+            if callee == observableID { return .observable }
+            if callee == vetoableID { return .vetoable }
             return .custom
         default:
             return .custom
@@ -184,19 +184,19 @@ extension KIRLoweringDriver {
         interner: StringInterner
     ) -> StdlibDelegateKind {
         guard let expr = ast.arena.expr(callee) else { return .custom }
+        let observableID = interner.intern("observable")
+        let vetoableID = interner.intern("vetoable")
         // memberAccess: Delegates.observable → memberCall with receiver
         // In the expression parser, `Delegates.observable("initial")` may be parsed as
         // call(callee: memberAccess(...), args: [...])
         // We need to check if the callee resolves to "observable" or "vetoable".
         switch expr {
         case .memberCall(_, let name, _, _, _):
-            let resolved = interner.resolve(name)
-            if resolved == "observable" { return .observable }
-            if resolved == "vetoable" { return .vetoable }
+            if name == observableID { return .observable }
+            if name == vetoableID { return .vetoable }
         case .nameRef(let name, _):
-            let resolved = interner.resolve(name)
-            if resolved == "observable" { return .observable }
-            if resolved == "vetoable" { return .vetoable }
+            if name == observableID { return .observable }
+            if name == vetoableID { return .vetoable }
         default:
             break
         }

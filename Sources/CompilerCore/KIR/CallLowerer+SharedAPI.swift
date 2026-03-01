@@ -10,8 +10,7 @@ extension CallLowerer {
         shared: KIRLoweringSharedContext,
         emit instructions: inout KIRLoweringEmitContext
     ) -> KIRExprID {
-        var old = Array(instructions)
-        let result = lowerCallExpr(
+        lowerCallExpr(
             exprID,
             calleeExpr: calleeExpr,
             args: args,
@@ -20,10 +19,8 @@ extension CallLowerer {
             arena: shared.arena,
             interner: shared.interner,
             propertyConstantInitializers: shared.propertyConstantInitializers,
-            instructions: &old
+            instructions: &instructions.instructions
         )
-        instructions = KIRLoweringEmitContext(old)
-        return result
     }
 
     func lowerMemberCallExpr(
@@ -34,8 +31,7 @@ extension CallLowerer {
         shared: KIRLoweringSharedContext,
         emit instructions: inout KIRLoweringEmitContext
     ) -> KIRExprID {
-        var old = Array(instructions)
-        let result = lowerMemberCallExpr(
+        lowerMemberCallExpr(
             exprID,
             receiverExpr: receiverExpr,
             calleeName: calleeName,
@@ -45,9 +41,7 @@ extension CallLowerer {
             arena: shared.arena,
             interner: shared.interner,
             propertyConstantInitializers: shared.propertyConstantInitializers,
-            instructions: &old
+            instructions: &instructions.instructions
         )
-        instructions = KIRLoweringEmitContext(old)
-        return result
     }
 }

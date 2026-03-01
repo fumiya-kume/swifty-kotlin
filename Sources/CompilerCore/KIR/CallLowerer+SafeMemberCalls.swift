@@ -1,6 +1,8 @@
 import Foundation
 
 extension CallLowerer {
+    private static let coroutineHandleMemberNames: Set<String> = ["await", "join", "cancel"]
+
     func lowerSafeMemberCallExpr(
         _ exprID: ExprID,
         receiverExpr: ExprID,
@@ -97,33 +99,26 @@ extension CallLowerer {
             finalArguments.insert(loweredReceiverID, at: 0)
         } else if chosen == nil {
             let calleeStr = interner.resolve(calleeName)
-            let coroutineHandleMemberNames: Set<String> = [
-                "await", "join", "cancel"
-            ]
-            if coroutineHandleMemberNames.contains(calleeStr), isCoroutineReceiver, args.isEmpty {
+            if Self.coroutineHandleMemberNames.contains(calleeStr), isCoroutineReceiver, args.isEmpty {
                 finalArguments.insert(loweredReceiverID, at: 0)
             }
         }
         if safeNormalized.defaultMask != 0, let chosen {
-            let intType = sema.types.make(.primitive(.int, .nonNull))
-            if let callBinding,
-               let sig = sema.symbols.functionSignature(for: chosen),
-               !sig.reifiedTypeParameterIndices.isEmpty {
-                for index in sig.reifiedTypeParameterIndices.sorted() {
-                    let concreteType = index < callBinding.substitutedTypeArguments.count
-                        ? callBinding.substitutedTypeArguments[index]
-                        : sema.types.anyType
-                    let tokenExpr = arena.appendExpr(
-                        .intLiteral(Int64(concreteType.rawValue)),
-                        type: intType
-                    )
-                    instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(concreteType.rawValue))))
-                    finalArguments.append(tokenExpr)
-                }
-            }
-            let maskExpr = arena.appendExpr(.intLiteral(Int64(safeNormalized.defaultMask)), type: intType)
-            instructions.append(.constValue(result: maskExpr, value: .intLiteral(Int64(safeNormalized.defaultMask))))
-            finalArguments.append(maskExpr)
+            appendReifiedTypeTokens(
+                chosenCallee: chosen,
+                callBinding: callBinding,
+                sema: sema,
+                arena: arena,
+                instructions: &instructions.instructions,
+                arguments: &finalArguments
+            )
+            appendDefaultMaskArgument(
+                Int64(safeNormalized.defaultMask),
+                sema: sema,
+                arena: arena,
+                instructions: &instructions.instructions,
+                arguments: &finalArguments
+            )
             let stubName = interner.intern(interner.resolve(calleeName) + "$default")
             let stubSym = driver.callSupportLowerer.defaultStubSymbol(for: chosen)
             instructions.append(.call(
@@ -136,22 +131,14 @@ extension CallLowerer {
                 isSuperCall: isSuperCall
             ))
         } else {
-            if let callBinding, let chosen,
-               let sig = sema.symbols.functionSignature(for: chosen),
-               !sig.reifiedTypeParameterIndices.isEmpty {
-                let intType = sema.types.make(.primitive(.int, .nonNull))
-                for index in sig.reifiedTypeParameterIndices.sorted() {
-                    let concreteType = index < callBinding.substitutedTypeArguments.count
-                        ? callBinding.substitutedTypeArguments[index]
-                        : sema.types.anyType
-                    let tokenExpr = arena.appendExpr(
-                        .intLiteral(Int64(concreteType.rawValue)),
-                        type: intType
-                    )
-                    instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(concreteType.rawValue))))
-                    finalArguments.append(tokenExpr)
-                }
-            }
+            appendReifiedTypeTokens(
+                chosenCallee: chosen,
+                callBinding: callBinding,
+                sema: sema,
+                arena: arena,
+                instructions: &instructions.instructions,
+                arguments: &finalArguments
+            )
             let loweredMemberCalleeName: InternedString
             if let chosen,
                let externalLinkName = sema.symbols.externalLinkName(for: chosen),
@@ -168,8 +155,6 @@ extension CallLowerer {
                 default:
                     loweredMemberCalleeName = calleeName
                 }
-            } else if chosen == nil {
-                loweredMemberCalleeName = calleeName
             } else {
                 loweredMemberCalleeName = calleeName
             }

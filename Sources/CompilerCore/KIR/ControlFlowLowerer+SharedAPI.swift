@@ -11,8 +11,7 @@ extension ControlFlowLowerer {
         shared: KIRLoweringSharedContext,
         emit instructions: inout KIRLoweringEmitContext
     ) -> KIRExprID {
-        var old = Array(instructions)
-        let result = lowerForExpr(
+        lowerForExpr(
             exprID,
             iterableExpr: iterableExpr,
             bodyExpr: bodyExpr,
@@ -22,10 +21,8 @@ extension ControlFlowLowerer {
             arena: shared.arena,
             interner: shared.interner,
             propertyConstantInitializers: shared.propertyConstantInitializers,
-            instructions: &old
+            instructions: &instructions.instructions
         )
-        instructions = KIRLoweringEmitContext(old)
-        return result
     }
 
     func lowerWhileExpr(
@@ -36,8 +33,7 @@ extension ControlFlowLowerer {
         shared: KIRLoweringSharedContext,
         emit instructions: inout KIRLoweringEmitContext
     ) -> KIRExprID {
-        var old = Array(instructions)
-        let result = lowerWhileExpr(
+        lowerWhileExpr(
             exprID,
             conditionExpr: conditionExpr,
             bodyExpr: bodyExpr,
@@ -47,10 +43,8 @@ extension ControlFlowLowerer {
             arena: shared.arena,
             interner: shared.interner,
             propertyConstantInitializers: shared.propertyConstantInitializers,
-            instructions: &old
+            instructions: &instructions.instructions
         )
-        instructions = KIRLoweringEmitContext(old)
-        return result
     }
 
     func lowerDoWhileExpr(
@@ -61,8 +55,7 @@ extension ControlFlowLowerer {
         shared: KIRLoweringSharedContext,
         emit instructions: inout KIRLoweringEmitContext
     ) -> KIRExprID {
-        var old = Array(instructions)
-        let result = lowerDoWhileExpr(
+        lowerDoWhileExpr(
             exprID,
             bodyExpr: bodyExpr,
             conditionExpr: conditionExpr,
@@ -72,10 +65,8 @@ extension ControlFlowLowerer {
             arena: shared.arena,
             interner: shared.interner,
             propertyConstantInitializers: shared.propertyConstantInitializers,
-            instructions: &old
+            instructions: &instructions.instructions
         )
-        instructions = KIRLoweringEmitContext(old)
-        return result
     }
 
     func lowerIfExpr(
@@ -86,8 +77,7 @@ extension ControlFlowLowerer {
         shared: KIRLoweringSharedContext,
         emit instructions: inout KIRLoweringEmitContext
     ) -> KIRExprID {
-        var old = Array(instructions)
-        let result = lowerIfExpr(
+        lowerIfExpr(
             exprID,
             condition: condition,
             thenExpr: thenExpr,
@@ -97,10 +87,8 @@ extension ControlFlowLowerer {
             arena: shared.arena,
             interner: shared.interner,
             propertyConstantInitializers: shared.propertyConstantInitializers,
-            instructions: &old
+            instructions: &instructions.instructions
         )
-        instructions = KIRLoweringEmitContext(old)
-        return result
     }
 
     func lowerTryExpr(
@@ -111,8 +99,7 @@ extension ControlFlowLowerer {
         shared: KIRLoweringSharedContext,
         emit instructions: inout KIRLoweringEmitContext
     ) -> KIRExprID {
-        var old = Array(instructions)
-        let result = lowerTryExpr(
+        lowerTryExpr(
             exprID,
             bodyExpr: bodyExpr,
             catchClauses: catchClauses,
@@ -122,9 +109,7 @@ extension ControlFlowLowerer {
             arena: shared.arena,
             interner: shared.interner,
             propertyConstantInitializers: shared.propertyConstantInitializers,
-            instructions: &old
+            instructions: &instructions.instructions
         )
-        instructions = KIRLoweringEmitContext(old)
-        return result
     }
 }

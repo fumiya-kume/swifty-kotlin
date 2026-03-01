@@ -33,8 +33,7 @@ extension CallSupportLowerer {
         shared: KIRLoweringSharedContext,
         emit instructions: inout KIRLoweringEmitContext
     ) -> NormalizedCallResult {
-        var oldStyleInstructions = Array(instructions)
-        let result = normalizedCallArguments(
+        normalizedCallArguments(
             providedArguments: providedArguments,
             callBinding: callBinding,
             chosenCallee: chosenCallee,
@@ -44,10 +43,8 @@ extension CallSupportLowerer {
             arena: shared.arena,
             interner: shared.interner,
             propertyConstantInitializers: shared.propertyConstantInitializers,
-            instructions: &oldStyleInstructions
+            instructions: &instructions.instructions
         )
-        instructions = KIRLoweringEmitContext(oldStyleInstructions)
-        return result
     }
 
     func normalizeBoolFlags(_ flags: [Bool], count: Int) -> [Bool] {
@@ -215,8 +212,5 @@ extension CallSupportLowerer {
         }
     }
 
-    func binaryOperatorFunctionName(for op: BinaryOp, interner: StringInterner) -> InternedString {
-        interner.intern(op.kotlinFunctionName)
-    }
 
 }

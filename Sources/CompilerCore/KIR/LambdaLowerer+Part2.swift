@@ -34,22 +34,10 @@ extension LambdaLowerer {
         arena: KIRArena,
         emit instructions: inout KIRLoweringEmitContext
     ) -> KIRExprID? {
-        if let localValue = driver.ctx.localValuesBySymbol[symbol] {
-            return localValue
-        }
-        if symbol == driver.ctx.currentImplicitReceiverSymbol,
-           let receiverExprID = driver.ctx.currentImplicitReceiverExprID {
-            return receiverExprID
-        }
-        guard let semanticSymbol = sema.symbols.symbol(symbol),
-              semanticSymbol.kind == .valueParameter else {
-            return nil
-        }
-
-        let symbolType = typeForSymbolReference(symbol, sema: sema)
-        let symbolExpr = arena.appendExpr(.symbolRef(symbol), type: symbolType)
-        instructions.append(.constValue(result: symbolExpr, value: .symbolRef(symbol)))
-        return symbolExpr
+        var old = Array(instructions)
+        let result = captureValueExpr(for: symbol, sema: sema, arena: arena, instructions: &old)
+        instructions = KIRLoweringEmitContext(old)
+        return result
     }
 
     func uniqueSymbolsPreservingOrder(_ symbols: [SymbolID]) -> [SymbolID] {

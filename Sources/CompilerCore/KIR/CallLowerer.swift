@@ -141,10 +141,12 @@ final class CallLowerer {
         // referenced suspend function and should not be expanded.
         if chosen == nil,
            loweredCallable == nil {
-            let resolvedSourceCallee = interner.resolve(sourceCalleeName)
-            if resolvedSourceCallee == "runBlocking"
-                || resolvedSourceCallee == "launch"
-                || resolvedSourceCallee == "async",
+            let runBlockingID = interner.intern("runBlocking")
+            let launchID = interner.intern("launch")
+            let asyncID = interner.intern("async")
+            if sourceCalleeName == runBlockingID
+                || sourceCalleeName == launchID
+                || sourceCalleeName == asyncID,
                let firstArg = finalArgIDs.first,
                let callableInfo = driver.ctx.callableValueInfoByExprID[firstArg],
                !callableInfo.captureArguments.isEmpty {
@@ -214,7 +216,7 @@ final class CallLowerer {
         return result
     }
 
-    private func appendReifiedTypeTokens(
+    func appendReifiedTypeTokens(
         chosenCallee: SymbolID?,
         callBinding: CallBinding?,
         sema: SemaModule,
@@ -243,7 +245,7 @@ final class CallLowerer {
         }
     }
 
-    private func appendDefaultMaskArgument(
+    func appendDefaultMaskArgument(
         _ defaultMask: Int64,
         sema: SemaModule,
         arena: KIRArena,
