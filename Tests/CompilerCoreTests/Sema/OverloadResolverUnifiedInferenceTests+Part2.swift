@@ -1,6 +1,5 @@
-import XCTest
 @testable import CompilerCore
-
+import XCTest
 
 extension OverloadResolverTests {
     func testUnifiedInference_StarProjectionProducesNoConstraint() {
@@ -327,5 +326,4 @@ extension OverloadResolverTests {
         let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: stringType, ctx: ctx)
         XCTAssertEqual(resolved.chosenCallee, fn)
     }
-
 }

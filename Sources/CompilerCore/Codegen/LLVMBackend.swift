@@ -100,10 +100,10 @@ public final class LLVMBackend {
 
     public func emitObject(
         module: KIRModule,
-        runtime: RuntimeLinkInfo,
+        runtime _: RuntimeLinkInfo,
         outputObjectPath: String,
         interner: StringInterner,
-        sourceManager: SourceManager? = nil
+        sourceManager _: SourceManager? = nil
     ) throws {
         try compileWithClang(
             module: module, interner: interner,
@@ -117,15 +117,15 @@ public final class LLVMBackend {
     /// Returns the path to the cached runtime stub `.o` if available,
     /// for use by the link phase as an additional link input.
     public func runtimeStubPath() -> String? {
-        return cachedRuntimeStubPath()
+        cachedRuntimeStubPath()
     }
 
     public func emitLLVMIR(
         module: KIRModule,
-        runtime: RuntimeLinkInfo,
+        runtime _: RuntimeLinkInfo,
         outputIRPath: String,
         interner: StringInterner,
-        sourceManager: SourceManager? = nil
+        sourceManager _: SourceManager? = nil
     ) throws {
         try compileWithClang(
             module: module, interner: interner,
@@ -212,10 +212,10 @@ public final class LLVMBackend {
     }
 
     static func stableFNV1a64Hex(_ value: String) -> String {
-        var hash: UInt64 = 0xcbf29ce484222325
+        var hash: UInt64 = 0xCBF2_9CE4_8422_2325
         for byte in value.utf8 {
             hash ^= UInt64(byte)
-            hash &*= 0x100000001b3
+            hash &*= 0x100_0000_01B3
         }
         return String(hash, radix: 16)
     }
@@ -249,12 +249,12 @@ public final class LLVMBackend {
 
     static let floatBuiltinOps: Set<String> = [
         "kk_op_fadd", "kk_op_fsub", "kk_op_fmul", "kk_op_fdiv", "kk_op_fmod",
-        "kk_op_feq", "kk_op_fne", "kk_op_flt", "kk_op_fle", "kk_op_fgt", "kk_op_fge"
+        "kk_op_feq", "kk_op_fne", "kk_op_flt", "kk_op_fle", "kk_op_fgt", "kk_op_fge",
     ]
 
     static let doubleBuiltinOps: Set<String> = [
         "kk_op_dadd", "kk_op_dsub", "kk_op_dmul", "kk_op_ddiv", "kk_op_dmod",
-        "kk_op_deq", "kk_op_dne", "kk_op_dlt", "kk_op_dle", "kk_op_dgt", "kk_op_dge"
+        "kk_op_deq", "kk_op_dne", "kk_op_dlt", "kk_op_dle", "kk_op_dgt", "kk_op_dge",
     ]
 
     public static func cFunctionSymbol(for function: KIRFunction, interner: StringInterner) -> String {
@@ -273,13 +273,13 @@ public final class LLVMBackend {
 
     private func emitCModule(module: KIRModule, interner: StringInterner, useExternRuntime: Bool = false) -> String {
         let functions: [KIRFunction] = module.arena.declarations.compactMap { decl in
-            guard case .function(let function) = decl else {
+            guard case let .function(function) = decl else {
                 return nil
             }
             return function
         }
         let globals: [KIRGlobal] = module.arena.declarations.compactMap { decl in
-            guard case .global(let global) = decl else {
+            guard case let .global(global) = decl else {
                 return nil
             }
             return global
@@ -297,11 +297,10 @@ public final class LLVMBackend {
         }
         let externalCallees = collectExternalCallees(module: module, interner: interner, functionSymbols: functionSymbols)
 
-        var lines: [String]
-        if useExternRuntime {
-            lines = cRuntimeExternDeclarations()
+        var lines: [String] = if useExternRuntime {
+            cRuntimeExternDeclarations()
         } else {
-            lines = cRuntimePreamble()
+            cRuntimePreamble()
         }
 
         for global in globals {
@@ -469,22 +468,21 @@ public final class LLVMBackend {
             "kk_op_inv",
             "kk_op_shl",
             "kk_op_shr",
-            "kk_op_ushr"
+            "kk_op_ushr",
         ]
 
         for decl in module.arena.declarations {
-            guard case .function(let function) = decl else {
+            guard case let .function(function) = decl else {
                 continue
             }
             for instruction in function.body {
-                let calleeInfo: (symbol: SymbolID?, callee: InternedString)?
-                switch instruction {
-                case .call(let symbol, let callee, _, _, _, _, _):
-                    calleeInfo = (symbol, callee)
-                case .virtualCall(let symbol, let callee, _, _, _, _, _, _):
-                    calleeInfo = (symbol, callee)
+                let calleeInfo: (symbol: SymbolID?, callee: InternedString)? = switch instruction {
+                case let .call(symbol, callee, _, _, _, _, _):
+                    (symbol, callee)
+                case let .virtualCall(symbol, callee, _, _, _, _, _, _):
+                    (symbol, callee)
                 default:
-                    calleeInfo = nil
+                    nil
                 }
                 guard let calleeInfo else {
                     continue
@@ -526,9 +524,9 @@ public final class LLVMBackend {
 
     private func reportBackendError(code: String, message: String, error: CommandRunnerError) {
         switch error {
-        case .launchFailed(let reason):
+        case let .launchFailed(reason):
             diagnostics.error(code, "\(message). \(reason)", range: nil)
-        case .nonZeroExit(let result):
+        case let .nonZeroExit(result):
             let stderr = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
             if stderr.isEmpty {
                 diagnostics.error(code, "\(message). exit=\(result.exitCode)", range: nil)

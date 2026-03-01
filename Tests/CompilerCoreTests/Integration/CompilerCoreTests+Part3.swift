@@ -1,7 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
 
 extension CompilerCoreTests {
     func testCallRejectsSpreadForNonVarargParameter() throws {
@@ -51,7 +50,7 @@ extension CompilerCoreTests {
         let firstFile = try XCTUnwrap(ast.files.first)
         let firstDeclID = try XCTUnwrap(firstFile.topLevelDecls.first)
         let decl = try XCTUnwrap(ast.arena.decl(firstDeclID))
-        guard case .funDecl(let funDecl) = decl else {
+        guard case let .funDecl(funDecl) = decl else {
             XCTFail("Expected function declaration")
             return
         }
@@ -59,7 +58,7 @@ extension CompilerCoreTests {
         XCTAssertNotEqual(funDecl.name, .invalid)
         let receiverTypeID = try XCTUnwrap(funDecl.receiverType)
         let receiverType = try XCTUnwrap(ast.arena.typeRef(receiverTypeID))
-        if case .named(let path, _, let nullable) = receiverType {
+        if case let .named(path, _, nullable) = receiverType {
             XCTAssertFalse(nullable)
             XCTAssertEqual(path.count, 1)
             XCTAssertEqual(ctx.interner.resolve(path[0]), "String")
@@ -79,7 +78,7 @@ extension CompilerCoreTests {
         let firstFile = try XCTUnwrap(ast.files.first)
         let firstDeclID = try XCTUnwrap(firstFile.topLevelDecls.first)
         let decl = try XCTUnwrap(ast.arena.decl(firstDeclID))
-        guard case .classDecl(let classDecl) = decl else {
+        guard case let .classDecl(classDecl) = decl else {
             XCTFail("Expected class declaration")
             return
         }
@@ -133,7 +132,7 @@ extension CompilerCoreTests {
             """
             package demo
             fun use() = helper(1)
-            """
+            """,
         ]
         let ctx = makeContextFromSources(sources)
         try runSema(ctx)
@@ -151,7 +150,7 @@ extension CompilerCoreTests {
             package app
             import lib.helper
             fun use() = helper(1)
-            """
+            """,
         ]
         let ctx = makeContextFromSources(sources)
         try runSema(ctx)
@@ -173,7 +172,7 @@ extension CompilerCoreTests {
             package app
             import custom.io.pick
             fun use() = pick(1)
-            """
+            """,
         ]
         let ctx = makeContextFromSources(sources)
         try runSema(ctx)
@@ -199,7 +198,7 @@ extension CompilerCoreTests {
             package app
             import lib as L
             fun use() = 1
-            """
+            """,
         ]
         let ctx = makeContextFromSources(sources)
         try runSema(ctx)
@@ -219,7 +218,7 @@ extension CompilerCoreTests {
             import lib.foo as X
             import lib.bar as X
             fun use() = 1
-            """
+            """,
         ]
         let ctx = makeContextFromSources(sources)
         try runSema(ctx)
@@ -249,7 +248,7 @@ extension CompilerCoreTests {
             package app
             import lib.helper as h
             fun use() = h(1)
-            """
+            """,
         ]
         let ctx = makeContextFromSources(sources)
         try runSema(ctx)
@@ -267,7 +266,7 @@ extension CompilerCoreTests {
             package app
             import lib.compute as calc
             fun use(): Int = calc(5)
-            """
+            """,
         ]
         let ctx = makeContextFromSources(sources)
         try runSema(ctx)
@@ -294,7 +293,7 @@ extension CompilerCoreTests {
             import lib.foo as f
             import lib.bar as b
             fun use() = f(1) + b(2)
-            """
+            """,
         ]
         let ctx = makeContextFromSources(sources)
         try runSema(ctx)
@@ -315,7 +314,7 @@ extension CompilerCoreTests {
             import lib.foo as f
             import lib.bar
             fun use() = f(1) + bar(2)
-            """
+            """,
         ]
         let ctx = makeContextFromSources(sources)
         try runSema(ctx)
@@ -336,5 +335,4 @@ extension CompilerCoreTests {
         assertNoDiagnostic("KSWIFTK-SEMA-0022", in: ctx)
         assertNoDiagnostic("KSWIFTK-SEMA-0023", in: ctx)
     }
-
 }

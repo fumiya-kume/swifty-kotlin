@@ -1,6 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 // MARK: - Helper to extract isSuperCall flags from KIR instructions
 
@@ -9,7 +9,7 @@ private func extractSuperCallFlags(
     interner: StringInterner
 ) -> [(callee: String, isSuperCall: Bool)] {
     body.compactMap { instruction -> (callee: String, isSuperCall: Bool)? in
-        guard case .call(_, let callee, _, _, _, _, let isSuperCall) = instruction else {
+        guard case let .call(_, callee, _, _, _, _, isSuperCall) = instruction else {
             return nil
         }
         return (interner.resolve(callee), isSuperCall)
@@ -23,7 +23,7 @@ private func findAllKIRFunctionBodies(
     interner: StringInterner
 ) -> [[KIRInstruction]] {
     module.arena.declarations.compactMap { decl -> [KIRInstruction]? in
-        guard case .function(let function) = decl else { return nil }
+        guard case let .function(function) = decl else { return nil }
         return interner.resolve(function.name) == name ? function.body : nil
     }
 }
@@ -39,7 +39,6 @@ private func extractSuperCallFlagsAcrossOverrides(
 }
 
 final class SuperCallAndQualifiedThisTests: XCTestCase {
-
     // MARK: - Test 1: super.method() produces isSuperCall=true in KIR
 
     func testSuperCallProducesIsSuperCallTrueInKIR() throws {
@@ -56,7 +55,7 @@ final class SuperCallAndQualifiedThisTests: XCTestCase {
             try runToKIR(ctx)
 
             XCTAssertFalse(ctx.diagnostics.hasError,
-                "Expected super call program to compile without sema errors, got: \(ctx.diagnostics.diagnostics.map(\.message))")
+                           "Expected super call program to compile without sema errors, got: \(ctx.diagnostics.diagnostics.map(\.message))")
 
             let module = try XCTUnwrap(ctx.kir)
             // Both Base.greet and Child.greet exist; search across all overrides
@@ -82,7 +81,7 @@ final class SuperCallAndQualifiedThisTests: XCTestCase {
             try runToKIR(ctx)
 
             XCTAssertFalse(ctx.diagnostics.hasError,
-                "Expected regular call program to compile without errors.")
+                           "Expected regular call program to compile without errors.")
 
             let module = try XCTUnwrap(ctx.kir)
             let body = try findKIRFunctionBody(named: "callGreet", in: module, interner: ctx.interner)
@@ -91,7 +90,7 @@ final class SuperCallAndQualifiedThisTests: XCTestCase {
             let greetCall = flags.first { $0.callee == "greet" }
             XCTAssertNotNil(greetCall, "Expected a call to 'greet' in callGreet() body.")
             XCTAssertFalse(greetCall?.isSuperCall ?? true,
-                "Expected this.greet() to have isSuperCall=false, got: \(flags)")
+                           "Expected this.greet() to have isSuperCall=false, got: \(flags)")
         }
     }
 
@@ -112,7 +111,7 @@ final class SuperCallAndQualifiedThisTests: XCTestCase {
             try LoweringPhase().run(ctx)
 
             XCTAssertFalse(ctx.diagnostics.hasError,
-                "Expected super call program to compile and lower without errors.")
+                           "Expected super call program to compile and lower without errors.")
 
             let module = try XCTUnwrap(ctx.kir)
             // Search across all overrides of 'greet'
@@ -121,7 +120,7 @@ final class SuperCallAndQualifiedThisTests: XCTestCase {
             // After full lowering, the super call should still have isSuperCall=true
             let superGreetCall = flags.first { $0.callee == "greet" && $0.isSuperCall }
             XCTAssertNotNil(superGreetCall,
-                "Expected isSuperCall=true to survive full lowering pipeline, got: \(flags)")
+                            "Expected isSuperCall=true to survive full lowering pipeline, got: \(flags)")
         }
     }
 
@@ -143,7 +142,7 @@ final class SuperCallAndQualifiedThisTests: XCTestCase {
             try LoweringPhase().run(ctx)
 
             XCTAssertFalse(ctx.diagnostics.hasError,
-                "Expected ABI boxing super call to compile and lower without errors.")
+                           "Expected ABI boxing super call to compile and lower without errors.")
 
             let module = try XCTUnwrap(ctx.kir)
             // Search across all overrides of 'process'
@@ -151,7 +150,7 @@ final class SuperCallAndQualifiedThisTests: XCTestCase {
 
             let processCall = flags.first { $0.callee == "process" && $0.isSuperCall }
             XCTAssertNotNil(processCall,
-                "Expected isSuperCall=true to survive ABI lowering with boxing, got: \(flags)")
+                            "Expected isSuperCall=true to survive ABI lowering with boxing, got: \(flags)")
         }
     }
 
@@ -173,7 +172,7 @@ final class SuperCallAndQualifiedThisTests: XCTestCase {
             // Should compile without errors — this@Outer resolves to Outer type
             let hasError = ctx.diagnostics.diagnostics.contains { $0.severity == .error }
             XCTAssertFalse(hasError,
-                "Expected this@Outer in nested class to resolve without errors, got: \(ctx.diagnostics.diagnostics.map(\.message))")
+                           "Expected this@Outer in nested class to resolve without errors, got: \(ctx.diagnostics.diagnostics.map(\.message))")
         }
     }
 
@@ -215,7 +214,7 @@ final class SuperCallAndQualifiedThisTests: XCTestCase {
             // The full dump should include 'super=1' for the super.greet() call
             let dumpOutput = module.dump(interner: ctx.interner, symbols: ctx.sema?.symbols)
             XCTAssertTrue(dumpOutput.contains("super=1"),
-                "Expected KIR dump to contain 'super=1' for super call, got:\n\(dumpOutput)")
+                          "Expected KIR dump to contain 'super=1' for super call, got:\n\(dumpOutput)")
         }
     }
 
@@ -233,7 +232,7 @@ final class SuperCallAndQualifiedThisTests: XCTestCase {
             let module = try XCTUnwrap(ctx.kir)
             let dumpOutput = module.dump(interner: ctx.interner, symbols: ctx.sema?.symbols)
             XCTAssertFalse(dumpOutput.contains("super=1"),
-                "Regular call dump should not contain 'super=1', got:\n\(dumpOutput)")
+                           "Regular call dump should not contain 'super=1', got:\n\(dumpOutput)")
         }
     }
 }

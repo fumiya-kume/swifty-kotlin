@@ -57,10 +57,10 @@ extension DataFlowSemaPhase {
                 }
                 let name = record.fqName.last ?? interner.intern("_")
                 var flags: SymbolFlags = [.synthetic]
-                if record.isSuspend && record.kind == .function {
+                if record.isSuspend, record.kind == .function {
                     flags.insert(.suspendFunction)
                 }
-                if record.isInline && record.kind == .function {
+                if record.isInline, record.kind == .function {
                     flags.insert(.inlineFunction)
                 }
                 if record.isDataClass {
@@ -114,7 +114,8 @@ extension DataFlowSemaPhase {
                 symbols.setFunctionSignature(signature, for: symbol)
                 if record.isInline,
                    !record.mangledName.isEmpty,
-                   let inlineDir = binding.inlineKIRDir {
+                   let inlineDir = binding.inlineKIRDir
+                {
                     let inlinePath = URL(fileURLWithPath: inlineDir)
                         .appendingPathComponent(record.mangledName + ".kirbin")
                         .path
@@ -211,7 +212,7 @@ extension DataFlowSemaPhase {
         var syntheticPackagePaths: Set<[InternedString]> = []
         for binding in importedBindings where binding.record.kind != .package {
             let fq = binding.record.fqName
-            for length in 1..<fq.count {
+            for length in 1 ..< fq.count {
                 let prefix = Array(fq.prefix(length))
                 syntheticPackagePaths.insert(prefix)
             }
@@ -237,7 +238,8 @@ extension DataFlowSemaPhase {
         for edge in pendingSupertypeEdges {
             guard let superSymbol = symbols.lookupAll(fqName: edge.superFQName)
                 .compactMap({ symbols.symbol($0) })
-                .first(where: { isNominalLayoutTargetSymbol($0.kind) })?.id else {
+                .first(where: { isNominalLayoutTargetSymbol($0.kind) })?.id
+            else {
                 continue
             }
             var supertypes = symbols.directSupertypes(for: edge.subtype)
@@ -263,7 +265,7 @@ extension DataFlowSemaPhase {
         for binding in importedBindings where binding.record.isSealedClass && !binding.record.sealedSubclassFQNames.isEmpty {
             let resolvedSubclasses: [SymbolID] = binding.record.sealedSubclassFQNames.compactMap { subFQName in
                 symbols.lookupAll(fqName: subFQName)
-                    .compactMap({ symbols.symbol($0) })
+                    .compactMap { symbols.symbol($0) }
                     .first(where: { isNominalLayoutTargetSymbol($0.kind) })?.id
             }
             // Only record concrete sealed subclasses when all declared subclass FQ names could be resolved.
@@ -343,20 +345,20 @@ extension DataFlowSemaPhase {
         into collected: inout Set<SymbolID>
     ) {
         switch types.kind(of: typeID) {
-        case .typeParam(let tp):
+        case let .typeParam(tp):
             if tp.symbol.rawValue <= base {
                 collected.insert(tp.symbol)
             }
-        case .classType(let ct):
+        case let .classType(ct):
             for arg in ct.args {
                 switch arg {
-                case .invariant(let inner), .out(let inner), .in(let inner):
+                case let .invariant(inner), let .out(inner), let .in(inner):
                     collectSyntheticTypeParamsRecursive(inner, types: types, base: base, into: &collected)
                 case .star:
                     break
                 }
             }
-        case .functionType(let ft):
+        case let .functionType(ft):
             if let receiver = ft.receiver {
                 collectSyntheticTypeParamsRecursive(receiver, types: types, base: base, into: &collected)
             }
@@ -364,7 +366,7 @@ extension DataFlowSemaPhase {
                 collectSyntheticTypeParamsRecursive(param, types: types, base: base, into: &collected)
             }
             collectSyntheticTypeParamsRecursive(ft.returnType, types: types, base: base, into: &collected)
-        case .intersection(let parts):
+        case let .intersection(parts):
             for part in parts {
                 collectSyntheticTypeParamsRecursive(part, types: types, base: base, into: &collected)
             }
@@ -376,5 +378,4 @@ extension DataFlowSemaPhase {
     func renderFQName(_ fqName: [InternedString], interner: StringInterner) -> String {
         fqName.map { interner.resolve($0) }.joined(separator: ".")
     }
-
 }

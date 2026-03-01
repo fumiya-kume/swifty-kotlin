@@ -1,8 +1,7 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 final class CommandRunnerTests: XCTestCase {
-
     // MARK: - resolveExecutable
 
     func testResolveExecutableFindsExistingCommand() {
@@ -45,7 +44,7 @@ final class CommandRunnerTests: XCTestCase {
 
     func testRunNonZeroExitThrowsNonZeroExitError() {
         XCTAssertThrowsError(try CommandRunner.run(executable: "/usr/bin/false", arguments: [])) { error in
-            guard case CommandRunnerError.nonZeroExit(let result) = error else {
+            guard case let CommandRunnerError.nonZeroExit(result) = error else {
                 XCTFail("Expected nonZeroExit error, got: \(error)")
                 return
             }
@@ -57,7 +56,7 @@ final class CommandRunnerTests: XCTestCase {
         do {
             _ = try CommandRunner.run(executable: "/usr/bin/false", arguments: [])
             XCTFail("Expected nonZeroExit to be thrown")
-        } catch CommandRunnerError.nonZeroExit(let result) {
+        } catch let CommandRunnerError.nonZeroExit(result) {
             XCTAssertNotEqual(result.exitCode, 0)
         } catch {
             XCTFail("Unexpected error type: \(error)")
@@ -95,7 +94,7 @@ final class CommandRunnerTests: XCTestCase {
             arguments: ["-c", "yes x | head -c 131072"]
         )
         XCTAssertEqual(result.exitCode, 0)
-        XCTAssertEqual(result.stdout.count, 131072)
+        XCTAssertEqual(result.stdout.count, 131_072)
     }
 
     func testRunLargeStderrDoesNotDeadlock() throws {
@@ -104,7 +103,7 @@ final class CommandRunnerTests: XCTestCase {
             arguments: ["-c", "yes e | head -c 131072 1>&2"]
         )
         XCTAssertEqual(result.exitCode, 0)
-        XCTAssertEqual(result.stderr.count, 131072)
+        XCTAssertEqual(result.stderr.count, 131_072)
     }
 
     // MARK: - run: currentDirectoryPath

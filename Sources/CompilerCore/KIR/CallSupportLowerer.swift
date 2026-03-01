@@ -35,13 +35,13 @@ final class CallSupportLowerer {
     ) {
         guard let decl = ast.arena.decl(declID) else { return }
         switch decl {
-        case .funDecl(let function):
+        case let .funDecl(function):
             guard let symbol = sema.bindings.declSymbols[declID] else { return }
             let defaults = function.valueParams.map(\.defaultValue)
             if defaults.contains(where: { $0 != nil }) {
                 mapping[symbol] = defaults
             }
-        case .classDecl(let classDecl):
+        case let .classDecl(classDecl):
             // Collect default arguments for primary constructor parameters.
             collectConstructorDefaults(classDecl, ast: ast, sema: sema, mapping: &mapping)
             for memberDeclID in classDecl.memberFunctions {
@@ -50,7 +50,7 @@ final class CallSupportLowerer {
             for nestedDeclID in classDecl.nestedClasses + classDecl.nestedObjects {
                 collectFunctionDefaults(nestedDeclID, ast: ast, sema: sema, mapping: &mapping)
             }
-        case .objectDecl(let objectDecl):
+        case let .objectDecl(objectDecl):
             for memberDeclID in objectDecl.memberFunctions {
                 collectFunctionDefaults(memberDeclID, ast: ast, sema: sema, mapping: &mapping)
             }
@@ -64,7 +64,7 @@ final class CallSupportLowerer {
 
     func collectConstructorDefaults(
         _ classDecl: ClassDecl,
-        ast: ASTModule,
+        ast _: ASTModule,
         sema: SemaModule,
         mapping: inout [SymbolID: [ExprID?]]
     ) {
@@ -144,7 +144,8 @@ final class CallSupportLowerer {
         var body: [KIRInstruction] = [.beginBlock]
 
         if let receiverExpr = driver.ctx.currentImplicitReceiverExprID,
-           let receiverSym = driver.ctx.currentImplicitReceiverSymbol {
+           let receiverSym = driver.ctx.currentImplicitReceiverSymbol
+        {
             body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
         }
 
@@ -152,7 +153,7 @@ final class CallSupportLowerer {
         body.append(.constValue(result: maskExpr, value: .symbolRef(maskSymbol)))
 
         var resolvedParamExprs: [KIRExprID] = []
-        for i in 0..<paramCount {
+        for i in 0 ..< paramCount {
             let paramSymbol = signature.valueParameterSymbols[i]
             let paramType = signature.parameterTypes[i]
             let paramExpr = arena.appendExpr(.symbolRef(paramSymbol), type: paramType)
@@ -247,16 +248,17 @@ final class CallSupportLowerer {
         callBinding: CallBinding?,
         chosenCallee: SymbolID?,
         spreadFlags: [Bool],
-        ast: ASTModule,
+        ast _: ASTModule,
         sema: SemaModule,
         arena: KIRArena,
         interner: StringInterner,
-        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        propertyConstantInitializers _: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> NormalizedCallResult {
         guard let callBinding,
               let chosenCallee,
-              let signature = sema.symbols.functionSignature(for: chosenCallee) else {
+              let signature = sema.symbols.functionSignature(for: chosenCallee)
+        else {
             return NormalizedCallResult(arguments: providedArguments, defaultMask: 0)
         }
 
@@ -298,7 +300,7 @@ final class CallSupportLowerer {
         let intType = sema.types.make(.primitive(.int, .nonNull))
         var mask: Int64 = 0
 
-        for paramIndex in 0..<parameterCount {
+        for paramIndex in 0 ..< parameterCount {
             if let argIndices = argIndicesByParameter[paramIndex] {
                 if isVararg[paramIndex] {
                     let packed = packVarargArguments(
@@ -341,6 +343,7 @@ final class CallSupportLowerer {
         }
         return NormalizedCallResult(arguments: normalized, defaultMask: mask)
     }
+
     func packVarargArguments(
         argIndices: [Int],
         providedArguments: [KIRExprID],
@@ -358,7 +361,7 @@ final class CallSupportLowerer {
             idx < spreadFlags.count && spreadFlags[idx]
         }
 
-        if argIndices.count == 1 && allSpread {
+        if argIndices.count == 1, allSpread {
             return providedArguments[argIndices[0]]
         }
 

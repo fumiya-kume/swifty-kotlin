@@ -1,7 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
 
 extension LoweringPassRegressionTests {
     func testCoroutineLoweringSpillsAndReloadsLiveValuesAcrossSuspension() throws {
@@ -23,7 +22,7 @@ extension LoweringPassRegressionTests {
                 .constValue(result: liveValue, value: .intLiteral(41)),
                 .call(symbol: suspendSym, callee: interner.intern("suspendTarget"), arguments: [], result: callResult, canThrow: false, thrownResult: nil),
                 .binary(op: .add, lhs: liveValue, rhs: callResult, result: summedResult),
-                .returnValue(summedResult)
+                .returnValue(summedResult),
             ],
             isSuspend: true,
             isInline: false
@@ -62,11 +61,11 @@ extension LoweringPassRegressionTests {
         XCTAssertEqual(getSpillCount, 1)
 
         let throwFlags = extractThrowFlags(from: loweredSuspend.body, interner: interner)
-        XCTAssertEqual(throwFlags["kk_suspend_suspendTarget"]?.allSatisfy({ $0 == true }), true)
-        XCTAssertEqual(throwFlags["kk_coroutine_state_set_spill"]?.allSatisfy({ $0 == false }), true)
-        XCTAssertEqual(throwFlags["kk_coroutine_state_get_spill"]?.allSatisfy({ $0 == false }), true)
-        XCTAssertEqual(throwFlags["kk_coroutine_state_set_completion"]?.allSatisfy({ $0 == false }), true)
-        XCTAssertEqual(throwFlags["kk_coroutine_state_get_completion"]?.allSatisfy({ $0 == false }), true)
+        XCTAssertEqual(throwFlags["kk_suspend_suspendTarget"]?.allSatisfy { $0 == true }, true)
+        XCTAssertEqual(throwFlags["kk_coroutine_state_set_spill"]?.allSatisfy { $0 == false }, true)
+        XCTAssertEqual(throwFlags["kk_coroutine_state_get_spill"]?.allSatisfy { $0 == false }, true)
+        XCTAssertEqual(throwFlags["kk_coroutine_state_set_completion"]?.allSatisfy { $0 == false }, true)
+        XCTAssertEqual(throwFlags["kk_coroutine_state_get_completion"]?.allSatisfy { $0 == false }, true)
     }
 
     func testCoroutineLoweringSynthesizesContinuationNominalTypeLayoutAndSignature() throws {
@@ -128,7 +127,7 @@ extension LoweringPassRegressionTests {
                     thrownResult: nil
                 ),
                 .binary(op: .add, lhs: liveValue, rhs: callResult, result: sumResult),
-                .returnValue(sumResult)
+                .returnValue(sumResult),
             ],
             isSuspend: true,
             isInline: false
@@ -192,14 +191,14 @@ extension LoweringPassRegressionTests {
         }))
         let loweredSignature = try XCTUnwrap(sema.symbols.functionSignature(for: loweredSuspendSymbol.id))
         let continuationParameterType = try XCTUnwrap(loweredSignature.parameterTypes.last)
-        guard case .classType(let classType) = types.kind(of: continuationParameterType) else {
+        guard case let .classType(classType) = types.kind(of: continuationParameterType) else {
             XCTFail("Expected lowered continuation parameter type to be class type.")
             return
         }
         XCTAssertEqual(classType.classSymbol, continuationTypeSymbol.id)
 
         let nominalSymbols = module.arena.declarations.compactMap { decl -> SymbolID? in
-            guard case .nominalType(let nominal) = decl else {
+            guard case let .nominalType(nominal) = decl else {
                 return nil
             }
             return nominal.symbol
@@ -227,7 +226,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .call(symbol: topSymbol, callee: interner.intern("top"), arguments: [], result: mainResult, canThrow: false, thrownResult: nil),
-                .returnValue(mainResult)
+                .returnValue(mainResult),
             ],
             isSuspend: false,
             isInline: false
@@ -239,7 +238,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .call(symbol: leafSymbol, callee: interner.intern("leaf"), arguments: [], result: topResult, canThrow: false, thrownResult: nil),
-                .returnValue(topResult)
+                .returnValue(topResult),
             ],
             isSuspend: true,
             isInline: false
@@ -251,7 +250,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .call(symbol: nil, callee: interner.intern("external_throwing"), arguments: [], result: leafResult, canThrow: false, thrownResult: nil),
-                .returnValue(leafResult)
+                .returnValue(leafResult),
             ],
             isSuspend: true,
             isInline: false
@@ -283,15 +282,14 @@ extension LoweringPassRegressionTests {
         let loweredLeaf = try findKIRFunction(named: "kk_suspend_leaf", in: module, interner: interner)
 
         let mainThrowFlags = extractThrowFlags(from: loweredMain.body, interner: interner)
-        XCTAssertEqual(mainThrowFlags["kk_suspend_top"]?.allSatisfy({ $0 == true }), true)
+        XCTAssertEqual(mainThrowFlags["kk_suspend_top"]?.allSatisfy { $0 == true }, true)
 
         let topThrowFlags = extractThrowFlags(from: loweredTop.body, interner: interner)
-        XCTAssertEqual(topThrowFlags["kk_suspend_leaf"]?.allSatisfy({ $0 == true }), true)
-        XCTAssertEqual(topThrowFlags["kk_coroutine_state_set_label"]?.allSatisfy({ $0 == false }), true)
-        XCTAssertEqual(topThrowFlags["kk_coroutine_state_set_completion"]?.allSatisfy({ $0 == false }), true)
+        XCTAssertEqual(topThrowFlags["kk_suspend_leaf"]?.allSatisfy { $0 == true }, true)
+        XCTAssertEqual(topThrowFlags["kk_coroutine_state_set_label"]?.allSatisfy { $0 == false }, true)
+        XCTAssertEqual(topThrowFlags["kk_coroutine_state_set_completion"]?.allSatisfy { $0 == false }, true)
 
         let leafThrowFlags = extractThrowFlags(from: loweredLeaf.body, interner: interner)
-        XCTAssertEqual(leafThrowFlags["external_throwing"]?.allSatisfy({ $0 == true }), true)
+        XCTAssertEqual(leafThrowFlags["external_throwing"]?.allSatisfy { $0 == true }, true)
     }
-
 }

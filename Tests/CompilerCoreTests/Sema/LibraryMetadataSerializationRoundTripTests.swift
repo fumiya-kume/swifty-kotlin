@@ -1,6 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 final class LibraryMetadataSerializationRoundTripTests: XCTestCase {
     // MARK: - MetadataSerializer Round-Trip Tests
@@ -181,7 +181,7 @@ final class LibraryMetadataSerializationRoundTripTests: XCTestCase {
                 declaredInstanceSizeWords: 4,
                 isDataClass: true,
                 annotations: [
-                    MetadataAnnotationRecord(annotationFQName: "kotlin.Serializable")
+                    MetadataAnnotationRecord(annotationFQName: "kotlin.Serializable"),
                 ]
             ),
             MetadataRecord(
@@ -456,5 +456,4 @@ final class LibraryMetadataSerializationRoundTripTests: XCTestCase {
         XCTAssertEqual(decoded[0].fqName, "demo.ID")
         XCTAssertEqual(decoded[0].typeSignature, "L")
     }
-
 }

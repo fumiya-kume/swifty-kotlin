@@ -7,7 +7,9 @@ protocol LoweringPass: KIRPass {
 }
 
 extension LoweringPass {
-    func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool { true }
+    func shouldRun(module _: KIRModule, ctx _: KIRContext) -> Bool {
+        true
+    }
 }
 
 public final class LoweringPhase: CompilerPhase {
@@ -25,7 +27,7 @@ public final class LoweringPhase: CompilerPhase {
         LambdaClosureConversionPass(),
         InlineLoweringPass(),
         CoroutineLoweringPass(),
-        ABILoweringPass()
+        ABILoweringPass(),
     ]
 
     public init() {}

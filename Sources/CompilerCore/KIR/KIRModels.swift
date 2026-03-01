@@ -203,7 +203,7 @@ public final class KIRArena {
 
     public func decl(_ id: KIRDeclID) -> KIRDecl? {
         let index = Int(id.rawValue)
-        guard index >= 0 && index < declarations.count else {
+        guard index >= 0, index < declarations.count else {
             return nil
         }
         return declarations[index]
@@ -211,7 +211,7 @@ public final class KIRArena {
 
     public func expr(_ id: KIRExprID) -> KIRExprKind? {
         let index = Int(id.rawValue)
-        guard index >= 0 && index < expressions.count else {
+        guard index >= 0, index < expressions.count else {
             return nil
         }
         return expressions[index]
@@ -230,7 +230,7 @@ public final class KIRArena {
 
     public func transformFunctions(_ transform: (KIRFunction) -> KIRFunction) {
         for index in declarations.indices {
-            guard case .function(let function) = declarations[index] else {
+            guard case let .function(function) = declarations[index] else {
                 continue
             }
             let transformed = transform(function)
@@ -265,11 +265,11 @@ public final class KIRModule {
         var seen: Set<SymbolID> = []
         for decl in arena.declarations {
             switch decl {
-            case .function(let fn):
+            case let .function(fn):
                 seen.insert(fn.symbol)
-            case .global(let global):
+            case let .global(global):
                 seen.insert(global.symbol)
-            case .nominalType(let nominal):
+            case let .nominalType(nominal):
                 seen.insert(nominal.symbol)
             }
         }
@@ -284,7 +284,7 @@ public final class KIRModule {
         var lines: [String] = []
         for (index, decl) in arena.declarations.enumerated() {
             switch decl {
-            case .function(let function):
+            case let .function(function):
                 let name = interner.resolve(function.name)
                 lines.append("decl[\(index)] function \(name) params=\(function.params.count) suspend=\(function.isSuspend) inline=\(function.isInline)")
                 for instruction in function.body {
@@ -292,7 +292,7 @@ public final class KIRModule {
                 }
             case .global:
                 lines.append("decl[\(index)] global")
-            case .nominalType(let nominal):
+            case let .nominalType(nominal):
                 if let symbol = symbols?.symbol(nominal.symbol) {
                     let name = interner.resolve(symbol.name)
                     lines.append("decl[\(index)] type \(name)")
@@ -310,7 +310,7 @@ public final class KIRModule {
     private func instructionDescription(
         _ instruction: KIRInstruction,
         interner: StringInterner,
-        arena: KIRArena,
+        arena _: KIRArena,
         symbols: SymbolTable?
     ) -> String {
         switch instruction {
@@ -320,67 +320,64 @@ public final class KIRModule {
             return "beginBlock"
         case .endBlock:
             return "endBlock"
-        case .label(let id):
+        case let .label(id):
             return "label L\(id)"
-        case .jump(let target):
+        case let .jump(target):
             return "jump L\(target)"
-        case .jumpIfEqual(let lhs, let rhs, let target):
+        case let .jumpIfEqual(lhs, rhs, target):
             return "jumpIfEqual r\(lhs.rawValue), r\(rhs.rawValue) -> L\(target)"
-        case .constValue(let result, let value):
+        case let .constValue(result, value):
             return "const r\(result.rawValue)=\(value)"
-        case .binary(let op, let lhs, let rhs, let result):
+        case let .binary(op, lhs, rhs, result):
             return "binary \(op) r\(lhs.rawValue), r\(rhs.rawValue) -> r\(result.rawValue)"
-        case .unary(let op, let operand, let result):
+        case let .unary(op, operand, result):
             return "unary \(op) r\(operand.rawValue) -> r\(result.rawValue)"
-        case .nullAssert(let operand, let result):
+        case let .nullAssert(operand, result):
             return "nullAssert r\(operand.rawValue) -> r\(result.rawValue)"
-        case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult, let isSuperCall):
+        case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall):
             let calleeName = interner.resolve(callee)
             let args = arguments.map { "r\($0.rawValue)" }.joined(separator: ", ")
-            let symbolLabel: String
-            if let symbol, let sym = symbols?.symbol(symbol) {
-                symbolLabel = interner.resolve(sym.name)
+            let symbolLabel: String = if let symbol, let sym = symbols?.symbol(symbol) {
+                interner.resolve(sym.name)
             } else {
-                symbolLabel = "_"
+                "_"
             }
             let ret = result.map { "r\($0.rawValue)" } ?? "_"
             let thrownRet = thrownResult.map { "r\($0.rawValue)" } ?? "_"
             let superTag = isSuperCall ? " super=1" : ""
             return "call \(calleeName) symbol=\(symbolLabel) args=[\(args)] ret=\(ret) thrown=\(canThrow) thrownResult=\(thrownRet)\(superTag)"
-        case .virtualCall(let symbol, let callee, let receiver, let arguments, let result, let canThrow, let thrownResult, let dispatch):
+        case let .virtualCall(symbol, callee, receiver, arguments, result, canThrow, thrownResult, dispatch):
             let calleeName = interner.resolve(callee)
             let args = arguments.map { "r\($0.rawValue)" }.joined(separator: ", ")
-            let symbolLabel: String
-            if let symbol, let sym = symbols?.symbol(symbol) {
-                symbolLabel = interner.resolve(sym.name)
+            let symbolLabel: String = if let symbol, let sym = symbols?.symbol(symbol) {
+                interner.resolve(sym.name)
             } else {
-                symbolLabel = "_"
+                "_"
             }
             let ret = result.map { "r\($0.rawValue)" } ?? "_"
             let thrownRet = thrownResult.map { "r\($0.rawValue)" } ?? "_"
-            let dispatchLabel: String
-            switch dispatch {
-            case .vtable(let slot):
-                dispatchLabel = "vtable[\(slot)]"
-            case .itable(let interfaceSlot, let methodSlot):
-                dispatchLabel = "itable[\(interfaceSlot):\(methodSlot)]"
+            let dispatchLabel = switch dispatch {
+            case let .vtable(slot):
+                "vtable[\(slot)]"
+            case let .itable(interfaceSlot, methodSlot):
+                "itable[\(interfaceSlot):\(methodSlot)]"
             }
             return "virtualCall \(calleeName) symbol=\(symbolLabel) receiver=r\(receiver.rawValue) args=[\(args)] ret=\(ret) thrown=\(canThrow) thrownResult=\(thrownRet) dispatch=\(dispatchLabel)"
-        case .jumpIfNotNull(let value, let target):
+        case let .jumpIfNotNull(value, target):
             return "jumpIfNotNull r\(value.rawValue) -> L\(target)"
-        case .copy(let from, let to):
+        case let .copy(from, to):
             return "copy r\(from.rawValue) -> r\(to.rawValue)"
-        case .storeGlobal(let value, let symbol):
+        case let .storeGlobal(value, symbol):
             return "storeGlobal r\(value.rawValue) -> s\(symbol.rawValue)"
-        case .loadGlobal(let result, let symbol):
+        case let .loadGlobal(result, symbol):
             return "loadGlobal s\(symbol.rawValue) -> r\(result.rawValue)"
-        case .rethrow(let value):
+        case let .rethrow(value):
             return "rethrow r\(value.rawValue)"
-        case .returnIfEqual(let lhs, let rhs):
+        case let .returnIfEqual(lhs, rhs):
             return "returnIfEqual r\(lhs.rawValue), r\(rhs.rawValue)"
         case .returnUnit:
             return "returnUnit"
-        case .returnValue(let value):
+        case let .returnValue(value):
             return "return r\(value.rawValue)"
         }
     }

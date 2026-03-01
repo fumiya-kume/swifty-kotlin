@@ -34,8 +34,9 @@ extension BuildASTPhase {
             }
             var index = 0
             while index < tokens.count {
-                if case .keyword(let keyword) = tokens[index].kind,
-                   KotlinParser.isDeclarationModifierKeyword(keyword) {
+                if case let .keyword(keyword) = tokens[index].kind,
+                   KotlinParser.isDeclarationModifierKeyword(keyword)
+                {
                     index += 1
                     continue
                 }
@@ -90,8 +91,9 @@ extension BuildASTPhase {
 
             var startIndex = statementTokens.startIndex
             while startIndex < statementTokens.endIndex,
-                  case .keyword(let keyword) = statementTokens[startIndex].kind,
-                  KotlinParser.isDeclarationModifierKeyword(keyword) {
+                  case let .keyword(keyword) = statementTokens[startIndex].kind,
+                  KotlinParser.isDeclarationModifierKeyword(keyword)
+            {
                 startIndex = statementTokens.index(after: startIndex)
             }
             guard startIndex < statementTokens.endIndex else {
@@ -121,7 +123,8 @@ extension BuildASTPhase {
                 lookup = statementTokens.index(after: lookup)
             }
             guard let nameIndex,
-                  let name else {
+                  let name
+            else {
                 return nil
             }
 
@@ -151,7 +154,8 @@ extension BuildASTPhase {
                 while index < statementTokens.endIndex {
                     let token = statementTokens[index]
                     if typeDepth.isAtTopLevel,
-                       (token.kind == .symbol(.assign) || token.kind == .symbol(.semicolon)) {
+                       token.kind == .symbol(.assign) || token.kind == .symbol(.semicolon)
+                    {
                         break
                     }
                     typeDepth.track(token.kind)
@@ -168,7 +172,7 @@ extension BuildASTPhase {
             var index = statementTokens.startIndex
             while index < statementTokens.endIndex {
                 let token = statementTokens[index]
-                if token.kind == .symbol(.assign) && assignDepth.isAtTopLevel {
+                if token.kind == .symbol(.assign), assignDepth.isAtTopLevel {
                     assignIndex = index
                     break
                 }
@@ -179,7 +183,7 @@ extension BuildASTPhase {
             var initializerExpr: ExprID?
             if let assignIndex {
                 let initStart = statementTokens.index(after: assignIndex)
-                let initTokens = stripSemicolons(statementTokens[initStart..<statementTokens.endIndex])
+                let initTokens = stripSemicolons(statementTokens[initStart ..< statementTokens.endIndex])
                 guard !initTokens.isEmpty else {
                     return nil
                 }
@@ -190,17 +194,16 @@ extension BuildASTPhase {
                 initializerExpr = parsed
             }
 
-            if typeAnnotation == nil && initializerExpr == nil {
+            if typeAnnotation == nil, initializerExpr == nil {
                 return nil
             }
 
-            let end: SourceLocation
-            if let initializerExpr {
-                end = context.astArena.exprRange(initializerExpr)?.end
+            let end: SourceLocation = if let initializerExpr {
+                context.astArena.exprRange(initializerExpr)?.end
                     ?? statementTokens.last?.range.end
                     ?? head.range.end
             } else {
-                end = statementTokens.last?.range.end ?? head.range.end
+                statementTokens.last?.range.end ?? head.range.end
             }
             let range = SourceRange(start: statementTokens[statementTokens.startIndex].range.start, end: end)
             return context.astArena.appendExpr(.localDecl(
@@ -241,7 +244,7 @@ extension BuildASTPhase {
             var index = statementTokens.startIndex
             while index < statementTokens.endIndex {
                 let token = statementTokens[index]
-                if token.kind == .symbol(.assign) && depth.isAtTopLevel {
+                if token.kind == .symbol(.assign), depth.isAtTopLevel {
                     assignIndex = index
                     break
                 }
@@ -249,17 +252,18 @@ extension BuildASTPhase {
                 index = statementTokens.index(after: index)
             }
             guard let assignIndex,
-                  assignIndex > statementTokens.startIndex else {
+                  assignIndex > statementTokens.startIndex
+            else {
                 return nil
             }
 
-            let lhsTokens = stripSemicolons(statementTokens[statementTokens.startIndex..<assignIndex])
+            let lhsTokens = stripSemicolons(statementTokens[statementTokens.startIndex ..< assignIndex])
             guard !lhsTokens.isEmpty else {
                 return nil
             }
 
             let valueStart = statementTokens.index(after: assignIndex)
-            let valueTokens = stripSemicolons(statementTokens[valueStart..<statementTokens.endIndex])
+            let valueTokens = stripSemicolons(statementTokens[valueStart ..< statementTokens.endIndex])
             guard !valueTokens.isEmpty else {
                 return nil
             }
@@ -267,7 +271,8 @@ extension BuildASTPhase {
             guard let lhsExpr = context.parseExpression(lhsTokens[...]),
                   let lhs = context.astArena.expr(lhsExpr),
                   let lhsRange = context.astArena.exprRange(lhsExpr),
-                  let valueExpr = context.parseExpression(valueTokens[...]) else {
+                  let valueExpr = context.parseExpression(valueTokens[...])
+            else {
                 return nil
             }
 
@@ -277,7 +282,7 @@ extension BuildASTPhase {
             let range = SourceRange(start: lhsRange.start, end: end)
 
             switch lhs {
-            case .nameRef(let name, _):
+            case let .nameRef(name, _):
                 if options.rejectValVarSimpleAssignLHS {
                     let text = context.interner.resolve(name)
                     if text == "val" || text == "var" {
@@ -286,10 +291,11 @@ extension BuildASTPhase {
                 }
                 return context.astArena.appendExpr(.localAssign(name: name, value: valueExpr, range: range))
 
-            case .memberCall(let receiver, let callee, let typeArgs, let args, _):
+            case let .memberCall(receiver, callee, typeArgs, args, _):
                 guard options.allowMemberAssign,
                       typeArgs.isEmpty,
-                      args.isEmpty else {
+                      args.isEmpty
+                else {
                     return nil
                 }
                 return context.astArena.appendExpr(.memberAssign(
@@ -299,7 +305,7 @@ extension BuildASTPhase {
                     range: range
                 ))
 
-            case .indexedAccess(let receiver, let indices, _):
+            case let .indexedAccess(receiver, indices, _):
                 return context.astArena.appendExpr(.indexedAssign(
                     receiver: receiver,
                     indices: indices,
@@ -344,17 +350,18 @@ extension BuildASTPhase {
 
             guard let assignIndex = foundIndex,
                   let op = foundOp,
-                  assignIndex > statementTokens.startIndex else {
+                  assignIndex > statementTokens.startIndex
+            else {
                 return nil
             }
 
-            let lhsTokens = stripSemicolons(statementTokens[statementTokens.startIndex..<assignIndex])
+            let lhsTokens = stripSemicolons(statementTokens[statementTokens.startIndex ..< assignIndex])
             guard !lhsTokens.isEmpty else {
                 return nil
             }
 
             let valueStart = statementTokens.index(after: assignIndex)
-            let valueTokens = stripSemicolons(statementTokens[valueStart..<statementTokens.endIndex])
+            let valueTokens = stripSemicolons(statementTokens[valueStart ..< statementTokens.endIndex])
             guard !valueTokens.isEmpty else {
                 return nil
             }
@@ -362,7 +369,8 @@ extension BuildASTPhase {
             guard let lhsExpr = context.parseExpression(lhsTokens[...]),
                   let lhs = context.astArena.expr(lhsExpr),
                   let lhsRange = context.astArena.exprRange(lhsExpr),
-                  let valueExpr = context.parseExpression(valueTokens[...]) else {
+                  let valueExpr = context.parseExpression(valueTokens[...])
+            else {
                 return nil
             }
 
@@ -372,14 +380,14 @@ extension BuildASTPhase {
             let range = SourceRange(start: lhsRange.start, end: end)
 
             switch lhs {
-            case .nameRef(let name, _):
+            case let .nameRef(name, _):
                 return context.astArena.appendExpr(.compoundAssign(
                     op: op,
                     name: name,
                     value: valueExpr,
                     range: range
                 ))
-            case .indexedAccess(let receiver, let indices, _):
+            case let .indexedAccess(receiver, indices, _):
                 return context.astArena.appendExpr(.indexedCompoundAssign(
                     op: op,
                     receiver: receiver,

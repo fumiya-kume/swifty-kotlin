@@ -1,7 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
 
 extension BuildKIRRegressionTests {
     func testDefaultArgNoStubWhenAllArgsProvided() throws {
@@ -43,7 +42,7 @@ extension BuildKIRRegressionTests {
 
             // Stub must exist and call the original function
             let stubFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let function) = decl else { return nil }
+                guard case let .function(function) = decl else { return nil }
                 return ctx.interner.resolve(function.name) == "withDep$default" ? function : nil
             }.first
             XCTAssertNotNil(stubFunction, "Expected withDep$default stub function")
@@ -53,7 +52,7 @@ extension BuildKIRRegressionTests {
                               "Stub should call original withDep, got: \(stubCallees)")
                 // Stub body must contain a binary add for the default expression `a + 1`
                 let hasBinaryAdd = stub.body.contains { instruction in
-                    guard case .binary(let op, _, _, _) = instruction else { return false }
+                    guard case let .binary(op, _, _, _) = instruction else { return false }
                     return op == .add
                 }
                 XCTAssertTrue(hasBinaryAdd,
@@ -78,7 +77,7 @@ extension BuildKIRRegressionTests {
 
             let module = try XCTUnwrap(ctx.kir)
             let stubFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let function) = decl else { return nil }
+                guard case let .function(function) = decl else { return nil }
                 return ctx.interner.resolve(function.name) == "chain$default" ? function : nil
             }.first
             XCTAssertNotNil(stubFunction, "Expected chain$default stub function")
@@ -91,14 +90,14 @@ extension BuildKIRRegressionTests {
                 // 3 defaults → 6 labels (2 per default), processed left-to-right.
                 var labelOrder: [Int32] = []
                 for instruction in stub.body {
-                    if case .label(let id) = instruction {
+                    if case let .label(id) = instruction {
                         labelOrder.append(id)
                     }
                 }
                 XCTAssertEqual(labelOrder.count, 6,
                                "Expected 6 labels (2 per default param), got \(labelOrder.count)")
                 // Labels must be strictly ascending (left-to-right order).
-                for i in 1..<labelOrder.count {
+                for i in 1 ..< labelOrder.count {
                     XCTAssertGreaterThan(labelOrder[i], labelOrder[i - 1],
                                          "Labels must be ascending for left-to-right evaluation")
                 }
@@ -126,7 +125,7 @@ extension BuildKIRRegressionTests {
 
             // Stub must exist and include a receiver parameter
             let stubFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let function) = decl else { return nil }
+                guard case let .function(function) = decl else { return nil }
                 return ctx.interner.resolve(function.name) == "addDefault$default" ? function : nil
             }.first
             XCTAssertNotNil(stubFunction, "Expected addDefault$default stub function")
@@ -162,7 +161,7 @@ extension BuildKIRRegressionTests {
             // The caller (main) body should NOT have a binary add — that belongs
             // in the stub's callee-context evaluation.
             let callerHasBinaryAdd = mainBody.contains { instruction in
-                guard case .binary(let op, _, _, _) = instruction else { return false }
+                guard case let .binary(op, _, _, _) = instruction else { return false }
                 return op == .add
             }
             XCTAssertFalse(callerHasBinaryAdd,
@@ -188,7 +187,7 @@ extension BuildKIRRegressionTests {
             let module = try XCTUnwrap(ctx.kir)
             let body = try findKIRFunctionBody(named: "choose", in: module, interner: ctx.interner)
             let returnValues = body.compactMap { instruction -> KIRExprID? in
-                guard case .returnValue(let id) = instruction else { return nil }
+                guard case let .returnValue(id) = instruction else { return nil }
                 return id
             }
             XCTAssertGreaterThanOrEqual(returnValues.count, 2, "Expected at least 2 returnValue instructions (if-branch + fallthrough), got \(returnValues.count)")
@@ -212,7 +211,7 @@ extension BuildKIRRegressionTests {
             let module = try XCTUnwrap(ctx.kir)
             let body = try findKIRFunctionBody(named: "pick", in: module, interner: ctx.interner)
             let returnValues = body.compactMap { instruction -> KIRExprID? in
-                guard case .returnValue(let id) = instruction else { return nil }
+                guard case let .returnValue(id) = instruction else { return nil }
                 return id
             }
             XCTAssertGreaterThanOrEqual(returnValues.count, 2, "Expected at least 2 returnValue instructions (then-branch + else-branch), got \(returnValues.count)")
@@ -236,7 +235,7 @@ extension BuildKIRRegressionTests {
             let module = try XCTUnwrap(ctx.kir)
             let body = try findKIRFunctionBody(named: "describe", in: module, interner: ctx.interner)
             let returnValues = body.compactMap { instruction -> KIRExprID? in
-                guard case .returnValue(let id) = instruction else { return nil }
+                guard case let .returnValue(id) = instruction else { return nil }
                 return id
             }
             XCTAssertGreaterThanOrEqual(returnValues.count, 2, "Expected at least 2 returnValue instructions for when-branch returns, got \(returnValues.count)")
@@ -284,5 +283,4 @@ extension BuildKIRRegressionTests {
             XCTAssertFalse(deadCopyAfterReturn, "No dead copy should follow a returnValue instruction in a terminated branch")
         }
     }
-
 }

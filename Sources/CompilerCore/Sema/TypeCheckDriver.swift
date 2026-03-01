@@ -63,7 +63,7 @@ final class TypeCheckDriver {
         locals: inout LocalBindings,
         expectedType: TypeID? = nil
     ) -> TypeID {
-        return exprChecker.inferExpr(id, ctx: ctx, locals: &locals, expectedType: expectedType)
+        exprChecker.inferExpr(id, ctx: ctx, locals: &locals, expectedType: expectedType)
     }
 
     // MARK: - Module-Level Type Checking
@@ -91,11 +91,12 @@ final class TypeCheckDriver {
             )
             for declID in file.topLevelDecls {
                 guard let decl = ast.arena.decl(declID),
-                      let declSymbol = sema.bindings.declSymbols[declID] else {
+                      let declSymbol = sema.bindings.declSymbols[declID]
+                else {
                     continue
                 }
                 switch decl {
-                case .funDecl(let function):
+                case let .funDecl(function):
                     declChecker.typeCheckFunctionDecl(
                         function,
                         symbol: declSymbol,
@@ -104,7 +105,7 @@ final class TypeCheckDriver {
                         diagnostics: diagnostics
                     )
 
-                case .propertyDecl(let property):
+                case let .propertyDecl(property):
                     declChecker.typeCheckBoundPropertyDecl(
                         property,
                         declID: declID,
@@ -114,7 +115,7 @@ final class TypeCheckDriver {
                         diagnostics: diagnostics
                     )
 
-                case .classDecl(let classDecl):
+                case let .classDecl(classDecl):
                     declChecker.typeCheckClassDecl(
                         classDecl,
                         symbol: declSymbol,
@@ -123,7 +124,7 @@ final class TypeCheckDriver {
                         diagnostics: diagnostics
                     )
 
-                case .interfaceDecl(let interfaceDecl):
+                case let .interfaceDecl(interfaceDecl):
                     declChecker.typeCheckInterfaceDecl(
                         interfaceDecl,
                         symbol: declSymbol,
@@ -132,7 +133,7 @@ final class TypeCheckDriver {
                         diagnostics: diagnostics
                     )
 
-                case .objectDecl(let objectDecl):
+                case let .objectDecl(objectDecl):
                     declChecker.typeCheckObjectDecl(
                         objectDecl,
                         symbol: declSymbol,
@@ -166,7 +167,7 @@ final class TypeCheckDriver {
                     left: left,
                     right: right,
                     blameRange: range
-                )
+                ),
             ],
             typeSystem: sema.types
         )

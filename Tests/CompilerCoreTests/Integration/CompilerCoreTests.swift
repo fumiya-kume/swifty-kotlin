@@ -1,6 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 final class CompilerCoreTests: XCTestCase {
     func testLexerRecognizesQuestionQuestionSymbol() {
@@ -336,6 +336,4 @@ final class CompilerCoreTests: XCTestCase {
     // MARK: - P5-40 Cascading diagnostic suppression
 
     // MARK: - P5-40 Resolved negative tests (no spurious diagnostics)
-
-
 }

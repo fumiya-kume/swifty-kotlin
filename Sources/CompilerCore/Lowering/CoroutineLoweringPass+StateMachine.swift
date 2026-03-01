@@ -130,14 +130,15 @@ extension CoroutineLoweringPass {
                 let suspendCallInfo = extractCallInfo(instruction)
                 if let suspendCallInfo,
                    isSuspendCall(
-                    symbol: suspendCallInfo.symbol,
-                    callee: suspendCallInfo.callee,
-                    suspendFunctionSymbols: suspendFunctionSymbols,
-                   suspendFunctionNames: suspendFunctionNames,
-                   runtimeSuspendCallNames: runtimeSuspendCallNames
+                       symbol: suspendCallInfo.symbol,
+                       callee: suspendCallInfo.callee,
+                       suspendFunctionSymbols: suspendFunctionSymbols,
+                       suspendFunctionNames: suspendFunctionNames,
+                       runtimeSuspendCallNames: runtimeSuspendCallNames
                    ),
-                   let nextResumeLabel {
-                   let spilledExprs = spillPlan.exprsByTransitionSource[stateInstruction.sourceIndex] ?? []
+                   let nextResumeLabel
+                {
+                    let spilledExprs = spillPlan.exprsByTransitionSource[stateInstruction.sourceIndex] ?? []
                     for exprID in spilledExprs {
                         guard let slot = slotForSpillExpr(exprID) else {
                             continue
@@ -187,7 +188,8 @@ extension CoroutineLoweringPass {
                         loweredSuspendArguments.append(continuationExpr)
                     }
                     if suspendCallInfo.isVirtual,
-                       case .virtualCall(_, _, let receiver, _, _, _, _, let dispatch) = suspendCallInfo.originalInstruction {
+                       case let .virtualCall(_, _, receiver, _, _, _, _, dispatch) = suspendCallInfo.originalInstruction
+                    {
                         lowered.append(
                             .virtualCall(
                                 symbol: suspendCallInfo.symbol,
@@ -243,7 +245,7 @@ extension CoroutineLoweringPass {
                 }
 
                 switch instruction {
-                case .returnValue(let value):
+                case let .returnValue(value):
                     let exitValueExpr = module.arena.appendExpr(
                         .temporary(Int32(module.arena.expressions.count)),
                         type: continuationType

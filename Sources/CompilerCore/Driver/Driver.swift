@@ -34,7 +34,7 @@ public final class CompilerDriver {
                 code: "KSWIFTK-PIPELINE-0001",
                 message: "Compiler pipeline failed while loading input sources."
             )
-        case .invalidInput(let detail):
+        case let .invalidInput(detail):
             return (
                 code: "KSWIFTK-PIPELINE-0002",
                 message: "Compiler pipeline received invalid intermediate state: \(detail)"
@@ -63,7 +63,7 @@ public final class CompilerDriver {
             BuildKIRPhase(),
             LoweringPhase(),
             CodegenPhase(),
-            LinkPhase()
+            LinkPhase(),
         ]
 
         executePhases(ctx: ctx, phases: phases, incrementalEnabled: prepared.incrementalEnabled)
@@ -272,20 +272,20 @@ public final class CompilerDriver {
     /// Extracts the declaration name as a String, if available.
     private func extractDeclName(_ decl: Decl, interner: StringInterner) -> String? {
         switch decl {
-        case .classDecl(let d):
-            return interner.resolve(d.name)
-        case .interfaceDecl(let d):
-            return interner.resolve(d.name)
-        case .funDecl(let d):
-            return interner.resolve(d.name)
-        case .propertyDecl(let d):
-            return interner.resolve(d.name)
-        case .typeAliasDecl(let d):
-            return interner.resolve(d.name)
-        case .objectDecl(let d):
-            return interner.resolve(d.name)
-        case .enumEntryDecl(let d):
-            return interner.resolve(d.name)
+        case let .classDecl(d):
+            interner.resolve(d.name)
+        case let .interfaceDecl(d):
+            interner.resolve(d.name)
+        case let .funDecl(d):
+            interner.resolve(d.name)
+        case let .propertyDecl(d):
+            interner.resolve(d.name)
+        case let .typeAliasDecl(d):
+            interner.resolve(d.name)
+        case let .objectDecl(d):
+            interner.resolve(d.name)
+        case let .enumEntryDecl(d):
+            interner.resolve(d.name)
         }
     }
 
@@ -299,7 +299,7 @@ public final class CompilerDriver {
         guard let decl = ast.arena.decl(declID) else { return }
 
         switch decl {
-        case .classDecl(let d):
+        case let .classDecl(d):
             collectNominalDeclDependencies(
                 superTypes: d.superTypes,
                 memberIDs: d.memberFunctions + d.memberProperties + d.nestedClasses + d.nestedObjects,
@@ -307,7 +307,7 @@ public final class CompilerDriver {
                 interner: interner,
                 depended: &depended
             )
-        case .interfaceDecl(let d):
+        case let .interfaceDecl(d):
             collectNominalDeclDependencies(
                 superTypes: d.superTypes,
                 memberIDs: d.memberFunctions + d.memberProperties + d.nestedClasses + d.nestedObjects,
@@ -315,7 +315,7 @@ public final class CompilerDriver {
                 interner: interner,
                 depended: &depended
             )
-        case .objectDecl(let d):
+        case let .objectDecl(d):
             collectNominalDeclDependencies(
                 superTypes: d.superTypes,
                 memberIDs: d.memberFunctions + d.memberProperties + d.nestedClasses + d.nestedObjects,
@@ -323,7 +323,7 @@ public final class CompilerDriver {
                 interner: interner,
                 depended: &depended
             )
-        case .funDecl(let d):
+        case let .funDecl(d):
             for param in d.valueParams {
                 if let typeRef = param.type {
                     collectTypeRefDependencies(typeRefID: typeRef, ast: ast, interner: interner, depended: &depended)
@@ -332,11 +332,11 @@ public final class CompilerDriver {
             if let retType = d.returnType {
                 collectTypeRefDependencies(typeRefID: retType, ast: ast, interner: interner, depended: &depended)
             }
-        case .propertyDecl(let d):
+        case let .propertyDecl(d):
             if let typeRef = d.type {
                 collectTypeRefDependencies(typeRefID: typeRef, ast: ast, interner: interner, depended: &depended)
             }
-        case .typeAliasDecl(let d):
+        case let .typeAliasDecl(d):
             if let underlyingType = d.underlyingType {
                 collectTypeRefDependencies(typeRefID: underlyingType, ast: ast, interner: interner, depended: &depended)
             }
@@ -375,19 +375,19 @@ public final class CompilerDriver {
         guard let typeRef = ast.arena.typeRef(typeRefID) else { return }
 
         switch typeRef {
-        case .named(let path, _, _):
+        case let .named(path, _, _):
             // Use only the last path component (the simple type name) to match
             // provided symbol granularity. Earlier components are package/module
             // qualifiers that don't correspond to per-file provided symbols.
             if let last = path.last {
                 depended.insert(interner.resolve(last))
             }
-        case .functionType(let paramTypes, let returnType, _, _):
+        case let .functionType(paramTypes, returnType, _, _):
             for paramType in paramTypes {
                 collectTypeRefDependencies(typeRefID: paramType, ast: ast, interner: interner, depended: &depended)
             }
             collectTypeRefDependencies(typeRefID: returnType, ast: ast, interner: interner, depended: &depended)
-        case .intersection(let parts):
+        case let .intersection(parts):
             for part in parts {
                 collectTypeRefDependencies(typeRefID: part, ast: ast, interner: interner, depended: &depended)
             }

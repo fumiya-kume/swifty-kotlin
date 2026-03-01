@@ -1,7 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
 
 extension LoweringPassRegressionTests {
     func testABILoweringBoxesIntArgumentForAnyParameter() throws {
@@ -34,7 +33,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .call(symbol: targetSym, callee: targetName, arguments: [argExpr], result: resultExpr, canThrow: false, thrownResult: nil),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -100,7 +99,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .call(symbol: targetSym, callee: targetName, arguments: [argExpr], result: resultExpr, canThrow: false, thrownResult: nil),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -166,7 +165,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .call(symbol: targetSym, callee: targetName, arguments: [argExpr], result: resultExpr, canThrow: false, thrownResult: nil),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -230,7 +229,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .call(symbol: targetSym, callee: targetName, arguments: [], result: resultExpr, canThrow: false, thrownResult: nil),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -294,7 +293,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .call(symbol: targetSym, callee: targetName, arguments: [], result: resultExpr, canThrow: false, thrownResult: nil),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -329,5 +328,4 @@ extension LoweringPassRegressionTests {
         let callees = extractCallees(from: lowered.body, interner: interner)
         XCTAssertTrue(callees.contains("kk_unbox_int"), "Expected kk_unbox_int call for Int? -> Int unboxing, got: \(callees)")
     }
-
 }

@@ -1,10 +1,9 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 // MARK: - SymbolTable Missing Accessor Tests
 
 final class SymbolTableAdditionalTests: XCTestCase {
-
     func testLookupByShortNameReturnsMatchingSymbols() {
         let interner = StringInterner()
         let symbols = SymbolTable()
@@ -99,7 +98,6 @@ final class SymbolTableAdditionalTests: XCTestCase {
 // MARK: - BindingTable Read-Side Accessor Tests
 
 final class BindingTableAdditionalTests: XCTestCase {
-
     func testExprTypeForMethod() {
         let bindings = BindingTable()
         let types = TypeSystem()
@@ -177,7 +175,6 @@ final class BindingTableAdditionalTests: XCTestCase {
 // MARK: - TypeSystem Nominal Supertype TypeArgs Tests
 
 final class TypeSystemAdditionalTests: XCTestCase {
-
     func testSetAndGetNominalSupertypeTypeArgs() {
         let ts = TypeSystem()
         let child = SymbolID(rawValue: 0)
@@ -202,7 +199,6 @@ final class TypeSystemAdditionalTests: XCTestCase {
 // MARK: - ASTArena Edge Case Tests
 
 final class ASTArenaAdditionalTests: XCTestCase {
-
     func testDeclReturnsNilForInvalidID() {
         let arena = ASTArena()
         // DeclID uses Int32, so -1 is the canonical .invalid sentinel
@@ -223,7 +219,6 @@ final class ASTArenaAdditionalTests: XCTestCase {
         let arena = ASTArena()
         XCTAssertNil(arena.typeRef(TypeRefID(rawValue: 999)))
     }
-
 }
 
 // Note: testASTModuleConvenienceInit and testASTModuleSortedFiles were removed
@@ -233,7 +228,6 @@ final class ASTArenaAdditionalTests: XCTestCase {
 // MARK: - DataFlowAnalyzer Struct Init Edge Cases
 
 final class DataFlowStructTests: XCTestCase {
-
     func testDataFlowStateDefaultInit() {
         let state = DataFlowState()
         XCTAssertTrue(state.variables.isEmpty)
@@ -307,7 +301,6 @@ final class DataFlowStructTests: XCTestCase {
 // MARK: - DiagnosticEngine.hasError Tests
 
 final class DiagnosticEngineAdditionalTests: XCTestCase {
-
     func testHasErrorReturnsFalseWhenEmpty() {
         let engine = DiagnosticEngine()
         XCTAssertFalse(engine.hasError)
@@ -338,7 +331,6 @@ final class DiagnosticEngineAdditionalTests: XCTestCase {
 // MARK: - CallableValueCallBinding and CatchClauseBinding Init Tests
 
 final class BindingModelAdditionalTests: XCTestCase {
-
     func testCallableValueCallBindingInit() {
         let types = TypeSystem()
         let fnType = types.make(.functionType(FunctionType(

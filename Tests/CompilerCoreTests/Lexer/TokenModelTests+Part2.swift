@@ -1,6 +1,5 @@
-import XCTest
 @testable import CompilerCore
-
+import XCTest
 
 extension TokenModelTests {
     func testSymbolAllCasesRawValues() {
@@ -240,8 +239,8 @@ extension TokenModelTests {
         ]
 
         // Each kind should only be equal to itself
-        for i in 0..<allKinds.count {
-            for j in 0..<allKinds.count {
+        for i in 0 ..< allKinds.count {
+            for j in 0 ..< allKinds.count {
                 if i == j {
                     XCTAssertEqual(allKinds[i], allKinds[j], "TokenKind at index \(i) should equal itself")
                 } else {

@@ -4,8 +4,9 @@ extension BuildASTPhase {
     func declarationModifiers(from nodeID: NodeID, in arena: SyntaxArena) -> Modifiers {
         var modifiers: Modifiers = []
         for child in arena.children(of: nodeID) {
-            if case .token(let tokenID) = child,
-               let token = resolveToken(tokenID, in: arena) {
+            if case let .token(tokenID) = child,
+               let token = resolveToken(tokenID, in: arena)
+            {
                 switch token.kind {
                 case .keyword(.public):
                     modifiers.insert(.public)
@@ -77,8 +78,9 @@ extension BuildASTPhase {
     ) -> [InternedString] {
         var names: [InternedString] = []
         for child in arena.children(of: nodeID) {
-            guard case .token(let tokenID) = child,
-                  let token = resolveToken(tokenID, in: arena) else {
+            guard case let .token(tokenID) = child,
+                  let token = resolveToken(tokenID, in: arena)
+            else {
                 continue
             }
             if case .symbol(.star) = token.kind {
@@ -107,8 +109,9 @@ extension BuildASTPhase {
     ) -> InternedString? {
         var foundAs = false
         for child in arena.children(of: nodeID) {
-            guard case .token(let tokenID) = child,
-                  let token = resolveToken(tokenID, in: arena) else {
+            guard case let .token(tokenID) = child,
+                  let token = resolveToken(tokenID, in: arena)
+            else {
                 continue
             }
             if foundAs {
@@ -129,30 +132,29 @@ extension BuildASTPhase {
 
     func internedIdentifier(from token: Token, interner: StringInterner) -> InternedString? {
         switch token.kind {
-        case .identifier(let interned):
-            return interned
-        case .backtickedIdentifier(let interned):
-            return interned
-        case .keyword(let keyword):
-            return interner.intern(keyword.rawValue)
-        case .softKeyword(let soft):
-            return interner.intern(soft.rawValue)
+        case let .identifier(interned):
+            interned
+        case let .backtickedIdentifier(interned):
+            interned
+        case let .keyword(keyword):
+            interner.intern(keyword.rawValue)
+        case let .softKeyword(soft):
+            interner.intern(soft.rawValue)
         default:
-            return nil
+            nil
         }
     }
 
     func isLeadingDeclarationKeyword(_ keyword: Keyword) -> Bool {
         switch keyword {
         case .class, .object, .interface, .fun, .val, .var, .typealias, .enum, .import, .package, .companion:
-            return true
+            true
         case .public, .private, .internal, .protected, .open, .abstract, .sealed, .data, .annotation,
              .inner, .expect, .actual, .const, .lateinit, .override, .final,
              .crossinline, .noinline, .tailrec, .inline, .suspend, .operator, .infix, .external, .value:
-            return true
+            true
         default:
-            return false
+            false
         }
     }
-
 }

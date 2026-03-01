@@ -6,7 +6,7 @@ extension ExprLowerer {
         shared: KIRLoweringSharedContext,
         emit instructions: inout KIRLoweringEmitContext
     ) -> KIRExprID {
-        return lowerExpr(
+        lowerExpr(
             exprID,
             ast: shared.ast,
             sema: shared.sema,

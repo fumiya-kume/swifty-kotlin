@@ -54,7 +54,7 @@ final class LocalDeclTypeChecker {
             name: name,
             fqName: [
                 ctx.interner.intern("__local_\(id.rawValue)"),
-                name
+                name,
             ],
             declSite: range,
             visibility: .private,
@@ -87,7 +87,7 @@ final class LocalDeclTypeChecker {
         let valueType = driver.inferExpr(value, ctx: ctx, locals: &locals, expectedType: nil)
         if let local = locals[name] {
             sema.bindings.bindIdentifier(id, symbol: local.symbol)
-            if !local.isMutable && local.isInitialized {
+            if !local.isMutable, local.isInitialized {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0014",
                     "Val cannot be reassigned.",
@@ -199,7 +199,8 @@ final class LocalDeclTypeChecker {
                 ctx: ctx.semaCtx
             )
             if let chosen = resolved.chosenCallee,
-               let signature = sema.symbols.functionSignature(for: chosen) {
+               let signature = sema.symbols.functionSignature(for: chosen)
+            {
                 // Record the resolved call so KIR lowering can dispatch correctly
                 sema.bindings.bindCall(
                     id,

@@ -134,7 +134,7 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_op_inv"),
             ctx.interner.intern("kk_op_shl"),
             ctx.interner.intern("kk_op_shr"),
-            ctx.interner.intern("kk_op_ushr")
+            ctx.interner.intern("kk_op_ushr"),
         ]
 
         let boxIntCallee = ctx.interner.intern("kk_box_int")
@@ -156,7 +156,7 @@ final class ABILoweringPass: LoweringPass {
         var signatureByName: [InternedString: FunctionSignature] = [:]
         if let symbols {
             for decl in module.arena.declarations {
-                guard case .function(let fn) = decl else { continue }
+                guard case let .function(fn) = decl else { continue }
                 if let sig = symbols.functionSignature(for: fn.symbol) {
                     signatureByName[fn.name] = sig
                 }
@@ -173,7 +173,7 @@ final class ABILoweringPass: LoweringPass {
             var idx = 0
             while idx < function.body.count {
                 let instruction = function.body[idx]
-                if case .virtualCall(let vcSymbol, let vcCallee, let vcReceiver, let vcArguments, let vcResult, _, let vcThrownResult, let vcDispatch) = instruction {
+                if case let .virtualCall(vcSymbol, vcCallee, vcReceiver, vcArguments, vcResult, _, vcThrownResult, vcDispatch) = instruction {
                     let vcCanThrow = !nonThrowingCallees.contains(vcCallee)
                     var vcSignature: FunctionSignature?
                     if let symbols, let vcSymbol {
@@ -182,9 +182,8 @@ final class ABILoweringPass: LoweringPass {
                     if vcSignature == nil {
                         vcSignature = signatureByName[vcCallee]
                     }
-                    let vcBoxedArguments: [KIRExprID]
-                    if let vcSignature, let types {
-                        vcBoxedArguments = applyArgumentBoxing(
+                    let vcBoxedArguments: [KIRExprID] = if let vcSignature, let types {
+                        applyArgumentBoxing(
                             arguments: vcArguments,
                             signature: vcSignature,
                             receiverOffset: 0,
@@ -200,7 +199,7 @@ final class ABILoweringPass: LoweringPass {
                             newBody: &newBody
                         )
                     } else {
-                        vcBoxedArguments = vcArguments
+                        vcArguments
                     }
                     let vcUnbox = resolveUnboxForCall(
                         callSymbol: vcSymbol,
@@ -235,7 +234,8 @@ final class ABILoweringPass: LoweringPass {
                         if vcThrownResult != nil {
                             let nextIdx = idx + 1
                             if nextIdx < function.body.count,
-                               case .jumpIfNotNull = function.body[nextIdx] {
+                               case .jumpIfNotNull = function.body[nextIdx]
+                            {
                                 newBody.append(function.body[nextIdx])
                                 idx += 1
                             }
@@ -265,22 +265,22 @@ final class ABILoweringPass: LoweringPass {
                 }
 
                 // Handle returnValue: box primitive if function returns Any/Any?
-                if case .returnValue(let value) = instruction, let types {
+                if case let .returnValue(value) = instruction, let types {
                     if let functionReturnKind, isAnyOrNullableAny(functionReturnKind) || isNonValueClassReference(functionReturnKind, symbols: symbols) {
                         let valueType = intrinsicArgType(value, arena: module.arena, types: types)
                         if let valueType {
-                                let resolvedValueKind = resolveValueClassKind(
-                                    types.kind(of: valueType), types: types, symbols: symbols
-                                )
-                                if let boxCallee = boxCalleeForPrimitive(
-                                    resolvedValueKind,
-                                    boxIntCallee: boxIntCallee,
-                                    boxBoolCallee: boxBoolCallee,
-                                    boxLongCallee: boxLongCallee,
-                                    boxFloatCallee: boxFloatCallee,
-                                    boxDoubleCallee: boxDoubleCallee,
-                                    boxCharCallee: boxCharCallee
-                                ) {
+                            let resolvedValueKind = resolveValueClassKind(
+                                types.kind(of: valueType), types: types, symbols: symbols
+                            )
+                            if let boxCallee = boxCalleeForPrimitive(
+                                resolvedValueKind,
+                                boxIntCallee: boxIntCallee,
+                                boxBoolCallee: boxBoolCallee,
+                                boxLongCallee: boxLongCallee,
+                                boxFloatCallee: boxFloatCallee,
+                                boxDoubleCallee: boxDoubleCallee,
+                                boxCharCallee: boxCharCallee
+                            ) {
                                 let boxedResult = module.arena.appendExpr(
                                     .temporary(Int32(module.arena.expressions.count)),
                                     type: function.returnType
@@ -305,7 +305,7 @@ final class ABILoweringPass: LoweringPass {
                 }
 
                 // Handle copy: insert boxing/unboxing at type boundaries
-                if case .copy(let from, let to) = instruction, let types {
+                if case let .copy(from, to) = instruction, let types {
                     let fromType = intrinsicArgType(from, arena: module.arena, types: types)
                     let toType = module.arena.exprType(to)
                     if let fromType, let toType {
@@ -368,7 +368,7 @@ final class ABILoweringPass: LoweringPass {
                     continue
                 }
 
-                guard case .call(let callSymbol, let callee, let arguments, let result, _, let thrownResult, let isSuperCall) = instruction else {
+                guard case let .call(callSymbol, callee, arguments, result, _, thrownResult, isSuperCall) = instruction else {
                     newBody.append(instruction)
                     idx += 1
                     continue
@@ -444,7 +444,8 @@ final class ABILoweringPass: LoweringPass {
                     if thrownResult != nil {
                         let nextIdx = idx + 1
                         if nextIdx < function.body.count,
-                           case .jumpIfNotNull = function.body[nextIdx] {
+                           case .jumpIfNotNull = function.body[nextIdx]
+                        {
                             newBody.append(function.body[nextIdx])
                             idx += 1
                         }
@@ -497,10 +498,10 @@ final class ABILoweringPass: LoweringPass {
         let varargFlags = signature.valueParameterIsVararg
         for argIndex in arguments.indices {
             let paramIndex = argIndex - receiverOffset
-            guard paramIndex >= 0 && paramIndex < parameterTypes.count else {
+            guard paramIndex >= 0, paramIndex < parameterTypes.count else {
                 continue
             }
-            if paramIndex < varargFlags.count && varargFlags[paramIndex] {
+            if paramIndex < varargFlags.count, varargFlags[paramIndex] {
                 continue
             }
             let paramType = parameterTypes[paramIndex]
@@ -595,12 +596,13 @@ final class ABILoweringPass: LoweringPass {
         symbols: SymbolTable?
     ) -> TypeKind {
         guard let symbols else { return kind }
-        if case .classType(let ct) = kind {
+        if case let .classType(ct) = kind {
             // Do not resolve nullable value class types — they are boxed at the ABI level.
             guard ct.nullability == .nonNull else { return kind }
             let sym = symbols.symbol(ct.classSymbol)
             if let sym, sym.flags.contains(.valueType),
-               let underlyingType = symbols.valueClassUnderlyingType(for: ct.classSymbol) {
+               let underlyingType = symbols.valueClassUnderlyingType(for: ct.classSymbol)
+            {
                 return types.kind(of: underlyingType)
             }
         }
@@ -628,13 +630,14 @@ final class ABILoweringPass: LoweringPass {
             if isAnyOrNullableAny(paramKind) {
                 return true
             }
-            if case .classType(let ct) = paramKind {
+            if case let .classType(ct) = paramKind {
                 // If we know this is a non-null value class, do not treat it as a boxing boundary.
                 // Nullable value class types (e.g. Meter?) are boxed at ABI level and ARE boundaries.
                 if let symbols,
                    let sym = symbols.symbol(ct.classSymbol),
                    sym.flags.contains(.valueType),
-                   ct.nullability == .nonNull {
+                   ct.nullability == .nonNull
+                {
                     return false
                 }
                 // Otherwise, any non-value-class reference type is a boxing boundary.
@@ -644,9 +647,10 @@ final class ABILoweringPass: LoweringPass {
         }()
 
         guard isReferenceBoxingBoundary else {
-            if case .primitive(let paramPrimitive, .nullable) = paramKind,
-               case .primitive(let argPrimitive, .nonNull) = argKind,
-               paramPrimitive == argPrimitive {
+            if case let .primitive(paramPrimitive, .nullable) = paramKind,
+               case let .primitive(argPrimitive, .nonNull) = argKind,
+               paramPrimitive == argPrimitive
+            {
                 switch argPrimitive {
                 case .int:
                     return boxIntCallee
@@ -697,11 +701,10 @@ final class ABILoweringPass: LoweringPass {
         types: TypeSystem? = nil,
         symbols: SymbolTable? = nil
     ) -> InternedString? {
-        let resolvedTargetKind: TypeKind
-        if let types, let symbols {
-            resolvedTargetKind = resolveValueClassKind(targetKind, types: types, symbols: symbols)
+        let resolvedTargetKind: TypeKind = if let types, let symbols {
+            resolveValueClassKind(targetKind, types: types, symbols: symbols)
         } else {
-            resolvedTargetKind = targetKind
+            targetKind
         }
         guard needsUnboxing(sourceKind: sourceKind, targetKind: resolvedTargetKind, symbols: symbols) else {
             return nil
@@ -764,11 +767,12 @@ final class ABILoweringPass: LoweringPass {
     /// Value class arguments need boxing when passed to such types.
     /// Nullable value class types (e.g. Meter?) ARE boxing boundaries since they are boxed at ABI level.
     private func isNonValueClassReference(_ kind: TypeKind, symbols: SymbolTable?) -> Bool {
-        if case .classType(let ct) = kind {
+        if case let .classType(ct) = kind {
             if let symbols,
                let sym = symbols.symbol(ct.classSymbol),
                sym.flags.contains(.valueType),
-               ct.nullability == .nonNull {
+               ct.nullability == .nonNull
+            {
                 return false
             }
             return true
@@ -799,9 +803,10 @@ final class ABILoweringPass: LoweringPass {
             }
             return false
         }
-        if case .primitive(let sourcePrimitive, .nullable) = sourceKind,
-           case .primitive(let targetPrimitive, .nonNull) = targetKind,
-           sourcePrimitive == targetPrimitive {
+        if case let .primitive(sourcePrimitive, .nullable) = sourceKind,
+           case let .primitive(targetPrimitive, .nonNull) = targetKind,
+           sourcePrimitive == targetPrimitive
+        {
             return true
         }
         return false
@@ -810,9 +815,10 @@ final class ABILoweringPass: LoweringPass {
     /// Determines whether a copy from sourceKind to targetKind requires boxing.
     /// Boxing is needed when a non-null primitive is copied to a nullable primitive slot.
     private func needsBoxingForCopy(sourceKind: TypeKind, targetKind: TypeKind) -> Bool {
-        if case .primitive(let sourcePrimitive, .nonNull) = sourceKind,
-           case .primitive(let targetPrimitive, .nullable) = targetKind,
-           sourcePrimitive == targetPrimitive {
+        if case let .primitive(sourcePrimitive, .nonNull) = sourceKind,
+           case let .primitive(targetPrimitive, .nullable) = targetKind,
+           sourcePrimitive == targetPrimitive
+        {
             return true
         }
         return false
@@ -831,19 +837,19 @@ final class ABILoweringPass: LoweringPass {
     ) -> InternedString? {
         switch kind {
         case .primitive(.int, .nonNull):
-            return boxIntCallee
+            boxIntCallee
         case .primitive(.long, .nonNull):
-            return boxLongCallee
+            boxLongCallee
         case .primitive(.boolean, .nonNull):
-            return boxBoolCallee
+            boxBoolCallee
         case .primitive(.float, .nonNull):
-            return boxFloatCallee
+            boxFloatCallee
         case .primitive(.double, .nonNull):
-            return boxDoubleCallee
+            boxDoubleCallee
         case .primitive(.char, .nonNull):
-            return boxCharCallee
+            boxCharCallee
         default:
-            return nil
+            nil
         }
     }
 

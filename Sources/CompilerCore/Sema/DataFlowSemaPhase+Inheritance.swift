@@ -10,16 +10,17 @@ extension DataFlowSemaPhase {
         for file in ast.sortedFiles {
             for declID in file.topLevelDecls {
                 guard let symbol = bindings.declSymbols[declID],
-                      let decl = ast.arena.decl(declID) else {
+                      let decl = ast.arena.decl(declID)
+                else {
                     continue
                 }
                 let superTypeRefs: [TypeRefID]
                 switch decl {
-                case .classDecl(let classDecl):
+                case let .classDecl(classDecl):
                     superTypeRefs = classDecl.superTypes
-                case .interfaceDecl(let interfaceDecl):
+                case let .interfaceDecl(interfaceDecl):
                     superTypeRefs = interfaceDecl.superTypes
-                case .objectDecl(let objectDecl):
+                case let .objectDecl(objectDecl):
                     superTypeRefs = objectDecl.superTypes
                 default:
                     continue
@@ -66,7 +67,7 @@ extension DataFlowSemaPhase {
         let path: [InternedString]
         let argRefs: [TypeArgRef]
         switch typeRef {
-        case .named(let refPath, let refs, _):
+        case let .named(refPath, refs, _):
             path = refPath
             argRefs = refs
         case .functionType, .intersection:
@@ -77,14 +78,15 @@ extension DataFlowSemaPhase {
         }
 
         var candidatePaths: [[InternedString]] = [path]
-        if path.count == 1 && !currentPackage.isEmpty {
+        if path.count == 1, !currentPackage.isEmpty {
             candidatePaths.append(currentPackage + path)
         }
 
         for candidatePath in candidatePaths {
             if let symbol = symbols.lookupAll(fqName: candidatePath)
                 .compactMap({ symbols.symbol($0) })
-                .first(where: { isNominalTypeSymbol($0.kind) })?.id {
+                .first(where: { isNominalTypeSymbol($0.kind) })?.id
+            {
                 let resolvedArgs = resolveTypeArgRefsForInheritance(
                     argRefs,
                     currentPackage: currentPackage,
@@ -111,17 +113,17 @@ extension DataFlowSemaPhase {
         result.reserveCapacity(argRefs.count)
         for argRef in argRefs {
             switch argRef {
-            case .invariant(let innerRef):
+            case let .invariant(innerRef):
                 guard let resolved = resolveTypeRefForInheritance(innerRef, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types) else {
                     return []
                 }
                 result.append(.invariant(resolved))
-            case .out(let innerRef):
+            case let .out(innerRef):
                 guard let resolved = resolveTypeRefForInheritance(innerRef, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types) else {
                     return []
                 }
                 result.append(.out(resolved))
-            case .in(let innerRef):
+            case let .in(innerRef):
                 guard let resolved = resolveTypeRefForInheritance(innerRef, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types) else {
                     return []
                 }
@@ -144,20 +146,21 @@ extension DataFlowSemaPhase {
             return nil
         }
         switch typeRef {
-        case .named(let path, let argRefs, let nullable):
+        case let .named(path, argRefs, nullable):
             let nullability: Nullability = nullable ? .nullable : .nonNull
             guard !path.isEmpty else {
                 return nil
             }
             // Try both raw path and package-qualified path (same as resolveNominalSymbolAndTypeArgs)
             var candidatePaths: [[InternedString]] = [path]
-            if path.count == 1 && !currentPackage.isEmpty {
+            if path.count == 1, !currentPackage.isEmpty {
                 candidatePaths.append(currentPackage + path)
             }
             for candidatePath in candidatePaths {
                 if let nominalSymbol = symbols.lookupAll(fqName: candidatePath)
                     .compactMap({ symbols.symbol($0) })
-                    .first(where: { isNominalTypeSymbol($0.kind) }) {
+                    .first(where: { isNominalTypeSymbol($0.kind) })
+                {
                     let resolvedArgs = resolveTypeArgRefsForInheritance(argRefs, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types)
                     return types.make(.classType(ClassType(classSymbol: nominalSymbol.id, args: resolvedArgs, nullability: nullability)))
                 }
@@ -168,7 +171,7 @@ extension DataFlowSemaPhase {
             // resolveTypeArgRefsForInheritance drops all type args for that supertype edge.
             // This is a known limitation; the full TypeCheckSemaPhase resolves these correctly later.
             return nil
-        case .functionType(let paramRefIDs, let returnRefID, let isSuspend, let nullable):
+        case let .functionType(paramRefIDs, returnRefID, isSuspend, nullable):
             let nullability: Nullability = nullable ? .nullable : .nonNull
             var paramTypes: [TypeID] = []
             for paramRef in paramRefIDs {
@@ -186,7 +189,7 @@ extension DataFlowSemaPhase {
                 isSuspend: isSuspend,
                 nullability: nullability
             )))
-        case .intersection(let partRefs):
+        case let .intersection(partRefs):
             let partTypes = partRefs.compactMap { resolveTypeRefForInheritance($0, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types) }
             guard partTypes.count == partRefs.count else { return nil }
             return types.make(.intersection(partTypes))
@@ -196,9 +199,9 @@ extension DataFlowSemaPhase {
     func isNominalTypeSymbol(_ kind: SymbolKind) -> Bool {
         switch kind {
         case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
-            return true
+            true
         default:
-            return false
+            false
         }
     }
 
@@ -234,13 +237,14 @@ extension DataFlowSemaPhase {
     ) {
         guard let symbol = bindings.declSymbols[declID],
               let decl = ast.arena.decl(declID),
-              let symbolInfo = symbols.symbol(symbol) else {
+              let symbolInfo = symbols.symbol(symbol)
+        else {
             return
         }
 
         // Recursively validate nested classes
         switch decl {
-        case .classDecl(let classDecl):
+        case let .classDecl(classDecl):
             for nestedDeclID in classDecl.nestedClasses {
                 validateAbstractOverridesForDecl(
                     declID: nestedDeclID,
@@ -251,7 +255,7 @@ extension DataFlowSemaPhase {
                     interner: interner
                 )
             }
-        case .interfaceDecl(let interfaceDecl):
+        case let .interfaceDecl(interfaceDecl):
             for nestedDeclID in interfaceDecl.nestedClasses {
                 validateAbstractOverridesForDecl(
                     declID: nestedDeclID,
@@ -262,7 +266,7 @@ extension DataFlowSemaPhase {
                     interner: interner
                 )
             }
-        case .objectDecl(let objectDecl):
+        case let .objectDecl(objectDecl):
             for nestedDeclID in objectDecl.nestedClasses {
                 validateAbstractOverridesForDecl(
                     declID: nestedDeclID,
@@ -278,8 +282,9 @@ extension DataFlowSemaPhase {
         }
 
         // Only check concrete class/object declarations (not abstract, not interface)
-        guard (symbolInfo.kind == .class || symbolInfo.kind == .object),
-              !symbolInfo.flags.contains(.abstractType) else {
+        guard symbolInfo.kind == .class || symbolInfo.kind == .object,
+              !symbolInfo.flags.contains(.abstractType)
+        else {
             return
         }
 
@@ -304,13 +309,11 @@ extension DataFlowSemaPhase {
             let memberName = interner.resolve(abstractSym.name)
             if !overriddenNames.contains(abstractSym.name) {
                 let className = symbolInfo.fqName.map { interner.resolve($0) }.joined(separator: ".")
-                let declRange: SourceRange? = {
-                    switch decl {
-                    case .classDecl(let cd): return cd.range
-                    case .objectDecl(let od): return od.range
-                    default: return nil
-                    }
-                }()
+                let declRange: SourceRange? = switch decl {
+                case let .classDecl(cd): cd.range
+                case let .objectDecl(od): od.range
+                default: nil
+                }
                 diagnostics.error(
                     "KSWIFTK-SEMA-ABSTRACT",
                     "Class '\(className)' must override abstract member '\(memberName)' or be declared abstract.",
@@ -366,20 +369,20 @@ extension DataFlowSemaPhase {
 
     /// Collects the set of member names that this class provides via `override`.
     private func collectOverriddenMemberNames(
-        for classSymbol: SymbolID,
+        for _: SymbolID,
         decl: Decl,
         ast: ASTModule,
-        symbols: SymbolTable
+        symbols _: SymbolTable
     ) -> Set<InternedString> {
         var overriddenNames: Set<InternedString> = []
 
         let memberFunctions: [DeclID]
         let memberProperties: [DeclID]
         switch decl {
-        case .classDecl(let classDecl):
+        case let .classDecl(classDecl):
             memberFunctions = classDecl.memberFunctions
             memberProperties = classDecl.memberProperties
-        case .objectDecl(let objectDecl):
+        case let .objectDecl(objectDecl):
             memberFunctions = objectDecl.memberFunctions
             memberProperties = objectDecl.memberProperties
         default:
@@ -388,7 +391,7 @@ extension DataFlowSemaPhase {
 
         for memberDeclID in memberFunctions {
             guard let memberDecl = ast.arena.decl(memberDeclID),
-                  case .funDecl(let funDecl) = memberDecl else { continue }
+                  case let .funDecl(funDecl) = memberDecl else { continue }
             if funDecl.modifiers.contains(.override) {
                 overriddenNames.insert(funDecl.name)
             }
@@ -396,7 +399,7 @@ extension DataFlowSemaPhase {
 
         for memberDeclID in memberProperties {
             guard let memberDecl = ast.arena.decl(memberDeclID),
-                  case .propertyDecl(let propertyDecl) = memberDecl else { continue }
+                  case let .propertyDecl(propertyDecl) = memberDecl else { continue }
             if propertyDecl.modifiers.contains(.override) {
                 overriddenNames.insert(propertyDecl.name)
             }
@@ -417,17 +420,18 @@ extension DataFlowSemaPhase {
             for declID in file.topLevelDecls {
                 guard let symbol = bindings.declSymbols[declID],
                       let decl = ast.arena.decl(declID),
-                      let symbolInfo = symbols.symbol(symbol) else {
+                      let symbolInfo = symbols.symbol(symbol)
+                else {
                     continue
                 }
                 // Only check class and interface declarations that have supertypes
                 let hasSuperTypes: Bool
                 switch decl {
-                case .classDecl(let classDecl):
+                case let .classDecl(classDecl):
                     hasSuperTypes = !classDecl.superTypes.isEmpty
-                case .interfaceDecl(let interfaceDecl):
+                case let .interfaceDecl(interfaceDecl):
                     hasSuperTypes = !interfaceDecl.superTypes.isEmpty
-                case .objectDecl(let objectDecl):
+                case let .objectDecl(objectDecl):
                     hasSuperTypes = !objectDecl.superTypes.isEmpty
                 default:
                     continue
@@ -437,7 +441,8 @@ extension DataFlowSemaPhase {
                 let supertypes = symbols.directSupertypes(for: symbol)
                 for supertypeID in supertypes {
                     guard let supertypeSymbol = symbols.symbol(supertypeID),
-                          supertypeSymbol.flags.contains(.sealedType) else {
+                          supertypeSymbol.flags.contains(.sealedType)
+                    else {
                         continue
                     }
                     // Check same-package: compare package prefixes
@@ -451,9 +456,9 @@ extension DataFlowSemaPhase {
                             "'\(subtypeName)' cannot inherit from sealed type '\(supertypeName)': sealed subclasses must be in the same package.",
                             range: ast.arena.decl(declID).flatMap { d -> SourceRange? in
                                 switch d {
-                                case .classDecl(let cd): return cd.range
-                                case .interfaceDecl(let id): return id.range
-                                case .objectDecl(let od): return od.range
+                                case let .classDecl(cd): return cd.range
+                                case let .interfaceDecl(id): return id.range
+                                case let .objectDecl(od): return od.range
                                 default: return nil
                                 }
                             }

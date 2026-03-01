@@ -1,7 +1,7 @@
 import Foundation
 
-/// Delegate class for KIR lowering: CallSupportLowerer.
-/// Holds an unowned reference to the driver for mutual recursion.
+// Delegate class for KIR lowering: CallSupportLowerer.
+// Holds an unowned reference to the driver for mutual recursion.
 
 extension CallSupportLowerer {
     func generateDefaultStubFunction(
@@ -11,7 +11,7 @@ extension CallSupportLowerer {
         defaultExpressions: [ExprID?],
         shared: KIRLoweringSharedContext
     ) -> KIRDeclID {
-        return generateDefaultStubFunction(
+        generateDefaultStubFunction(
             originalSymbol: originalSymbol,
             originalName: originalName,
             signature: signature,
@@ -24,7 +24,6 @@ extension CallSupportLowerer {
         )
     }
 
-    
     func normalizedCallArguments(
         providedArguments: [KIRExprID],
         callBinding: CallBinding?,
@@ -122,23 +121,21 @@ extension CallSupportLowerer {
     func builtinBinaryRuntimeCallee(for op: BinaryOp, interner: StringInterner) -> InternedString? {
         switch op {
         case .notEqual:
-            return interner.intern("kk_op_ne")
+            interner.intern("kk_op_ne")
         case .lessThan:
-            return interner.intern("kk_op_lt")
+            interner.intern("kk_op_lt")
         case .lessOrEqual:
-            return interner.intern("kk_op_le")
+            interner.intern("kk_op_le")
         case .greaterThan:
-            return interner.intern("kk_op_gt")
+            interner.intern("kk_op_gt")
         case .greaterOrEqual:
-            return interner.intern("kk_op_ge")
+            interner.intern("kk_op_ge")
         case .logicalAnd:
-            return interner.intern("kk_op_and")
+            interner.intern("kk_op_and")
         case .logicalOr:
-            return interner.intern("kk_op_or")
+            interner.intern("kk_op_or")
         default:
-            return nil
+            nil
         }
     }
-
-
 }

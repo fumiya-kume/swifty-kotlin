@@ -1,6 +1,5 @@
-import XCTest
 @testable import CompilerCore
-
+import XCTest
 
 extension SemaCacheContextTests {
     func testDifferentialVerificationUnresolvedFunction() throws {

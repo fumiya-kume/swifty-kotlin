@@ -1,7 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
 
 extension BuildKIRRegressionTests {
     func testBuildKIRAddsHiddenTypeTokenForInlineReifiedCalls() throws {
@@ -11,13 +10,13 @@ extension BuildKIRRegressionTests {
 
         let kir = try XCTUnwrap(ctx.kir)
         let pickFunction = try XCTUnwrap(kir.arena.declarations.compactMap { decl -> KIRFunction? in
-            guard case .function(let function) = decl else {
+            guard case let .function(function) = decl else {
                 return nil
             }
             return function.symbol == pickSymbol ? function : nil
         }.first)
         let mainFunction = try XCTUnwrap(kir.arena.declarations.compactMap { decl -> KIRFunction? in
-            guard case .function(let function) = decl else {
+            guard case let .function(function) = decl else {
                 return nil
             }
             return function.symbol == mainSymbol ? function : nil
@@ -29,18 +28,19 @@ extension BuildKIRRegressionTests {
         XCTAssertEqual(pickFunction.params.last?.symbol, expectedTokenSymbol)
 
         guard let callInstruction = mainFunction.body.first(where: { instruction in
-            guard case .call(let symbol, _, _, _, _, _, _) = instruction else {
+            guard case let .call(symbol, _, _, _, _, _, _) = instruction else {
                 return false
             }
             return symbol == pickSymbol
         }),
-        case .call(_, _, let arguments, _, _, _, _) = callInstruction else {
+            case let .call(_, _, arguments, _, _, _, _) = callInstruction
+        else {
             XCTFail("Expected main to call inline reified function.")
             return
         }
         XCTAssertEqual(arguments.count, 2)
         let tokenArgument = arguments[1]
-        guard case .intLiteral(let tokenLiteral)? = kir.arena.expr(tokenArgument) else {
+        guard case let .intLiteral(tokenLiteral)? = kir.arena.expr(tokenArgument) else {
             XCTFail("Expected hidden type token argument to be lowered as int literal.")
             return
         }
@@ -58,12 +58,12 @@ extension BuildKIRRegressionTests {
 
             let module = try XCTUnwrap(ctx.kir)
             let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let function) = decl else { return nil }
+                guard case let .function(function) = decl else { return nil }
                 return ctx.interner.resolve(function.name) == "main" ? function : nil
             }.first
             let body = try XCTUnwrap(mainFunction?.body)
             let callNames = body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _, _, _) = instruction else { return nil }
+                guard case let .call(_, callee, _, _, _, _, _) = instruction else { return nil }
                 return ctx.interner.resolve(callee)
             }
             XCTAssertTrue(callNames.contains("kk_array_new"), "Expected kk_array_new for vararg packing, got: \(callNames)")
@@ -82,12 +82,12 @@ extension BuildKIRRegressionTests {
 
             let module = try XCTUnwrap(ctx.kir)
             let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let function) = decl else { return nil }
+                guard case let .function(function) = decl else { return nil }
                 return ctx.interner.resolve(function.name) == "main" ? function : nil
             }.first
             let body = try XCTUnwrap(mainFunction?.body)
             let callNames = body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _, _, _) = instruction else { return nil }
+                guard case let .call(_, callee, _, _, _, _, _) = instruction else { return nil }
                 return ctx.interner.resolve(callee)
             }
             XCTAssertTrue(callNames.contains("kk_array_new"), "Expected kk_array_new for vararg packing with default arg, got: \(callNames)")
@@ -105,12 +105,12 @@ extension BuildKIRRegressionTests {
 
             let module = try XCTUnwrap(ctx.kir)
             let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let function) = decl else { return nil }
+                guard case let .function(function) = decl else { return nil }
                 return ctx.interner.resolve(function.name) == "main" ? function : nil
             }.first
             let body = try XCTUnwrap(mainFunction?.body)
             let callNames = body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _, _, _) = instruction else { return nil }
+                guard case let .call(_, callee, _, _, _, _, _) = instruction else { return nil }
                 return ctx.interner.resolve(callee)
             }
             XCTAssertTrue(callNames.contains("kk_array_new"), "Expected kk_array_new for empty vararg, got: \(callNames)")
@@ -128,7 +128,7 @@ extension BuildKIRRegressionTests {
 
             let module = try XCTUnwrap(ctx.kir)
             let allFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let function) = decl else { return nil }
+                guard case let .function(function) = decl else { return nil }
                 return function
             }
             let stubNames = allFunctions.map { ctx.interner.resolve($0.name) }
@@ -164,7 +164,7 @@ extension BuildKIRRegressionTests {
 
             let module = try XCTUnwrap(ctx.kir)
             let stubFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let function) = decl else { return nil }
+                guard case let .function(function) = decl else { return nil }
                 return ctx.interner.resolve(function.name) == "compute$default" ? function : nil
             }.first
             XCTAssertNotNil(stubFunction, "Expected compute$default stub function")
@@ -188,22 +188,21 @@ extension BuildKIRRegressionTests {
 
             let module = try XCTUnwrap(ctx.kir)
             let stubFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let function) = decl else { return nil }
+                guard case let .function(function) = decl else { return nil }
                 return ctx.interner.resolve(function.name) == "ordered$default" ? function : nil
             }.first
             XCTAssertNotNil(stubFunction, "Expected ordered$default stub function")
             if let stub = stubFunction {
                 var labelOrder: [Int32] = []
                 for instruction in stub.body {
-                    if case .label(let id) = instruction {
+                    if case let .label(id) = instruction {
                         labelOrder.append(id)
                     }
                 }
-                for i in 1..<labelOrder.count {
+                for i in 1 ..< labelOrder.count {
                     XCTAssertGreaterThan(labelOrder[i], labelOrder[i - 1], "Labels should be in ascending order for left-to-right evaluation")
                 }
             }
         }
     }
-
 }

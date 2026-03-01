@@ -1,6 +1,5 @@
-import XCTest
 @testable import CompilerCore
-
+import XCTest
 
 extension OverloadResolverTests {
     func testResolveCallRejectsGenericWithViolatedUpperBoundFromSymbolTable() {
@@ -119,7 +118,7 @@ extension OverloadResolverTests {
             calleeName: interner.intern("dupNamed"),
             args: [
                 CallArg(label: interner.intern("x"), type: intType),
-                CallArg(label: interner.intern("x"), type: intType)
+                CallArg(label: interner.intern("x"), type: intType),
             ]
         )
         let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
@@ -186,7 +185,7 @@ extension OverloadResolverTests {
             calleeName: interner.intern("namedVararg"),
             args: [
                 CallArg(label: interner.intern("x"), type: intType),
-                CallArg(label: interner.intern("x"), type: intType)
+                CallArg(label: interner.intern("x"), type: intType),
             ]
         )
         let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
@@ -286,7 +285,7 @@ extension OverloadResolverTests {
             args: [
                 CallArg(label: interner.intern("a"), type: intType),
                 CallArg(label: interner.intern("b"), type: boolType),
-                CallArg(label: interner.intern("c"), type: intType)
+                CallArg(label: interner.intern("c"), type: intType),
             ]
         )
         let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
@@ -439,7 +438,7 @@ extension OverloadResolverTests {
             args: [
                 CallArg(label: interner.intern("c"), type: stringType),
                 CallArg(label: interner.intern("a"), type: intType),
-                CallArg(label: interner.intern("b"), type: boolType)
+                CallArg(label: interner.intern("b"), type: boolType),
             ]
         )
         let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)

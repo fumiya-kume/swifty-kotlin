@@ -1,8 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
-
 
 extension CodegenBackendIntegrationTests {
     func testSyntheticCBackendObjectContainsDebugSectionWhenDebugInfoEnabled() throws {
@@ -190,7 +188,7 @@ extension CodegenBackendIntegrationTests {
             returnType: types.unitType,
             body: [
                 .constValue(result: e0, value: .intLiteral(42)),
-                .returnValue(e0)
+                .returnValue(e0),
             ],
             isSuspend: false,
             isInline: false
@@ -232,5 +230,4 @@ extension CodegenBackendIntegrationTests {
         XCTAssertTrue(ir.contains("!dbg"), "Expected !dbg metadata references in IR when debugInfo is enabled")
         XCTAssertTrue(ir.contains("DISubprogram"), "Expected DISubprogram metadata in IR")
     }
-
 }

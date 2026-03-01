@@ -1,6 +1,6 @@
 import Foundation
-import XCTest
 @testable import Runtime
+import XCTest
 
 private final class DelegateCallbackState: @unchecked Sendable {
     private let lock = NSLock()
@@ -104,13 +104,14 @@ private final class DelegateCallbackState: @unchecked Sendable {
     }
 }
 
-// Global state for callback testing (C function pointers cannot capture context).
+/// Global state for callback testing (C function pointers cannot capture context).
 private let gDelegateState = DelegateCallbackState()
 
 private func lazyCountingInit() -> Int {
     gDelegateState.incrementLazyCallCount()
     return 99
 }
+
 private let lazyCountingInitCConv: @convention(c) () -> Int = { lazyCountingInit() }
 
 private let lazySimple42: @convention(c) () -> Int = { 42 }
@@ -120,6 +121,7 @@ private let observableNoopCallback: @convention(c) (Int, Int, Int) -> Void = { _
 private let observableCaptureCallback: @convention(c) (Int, Int, Int) -> Void = { _, old, new in
     gDelegateState.setObservableCaptured(old: old, new: new)
 }
+
 private let observableOrderCallback: @convention(c) (Int, Int, Int) -> Void = { _, _, _ in
     let handle = gDelegateState.observableHandleSnapshot()
     gDelegateState.setObservableValueInsideCallback(kk_observable_get_value(handle))

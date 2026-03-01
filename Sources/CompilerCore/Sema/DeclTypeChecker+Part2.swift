@@ -1,7 +1,7 @@
 import Foundation
 
-/// Handles declaration-level type checking (functions, properties, classes, objects).
-/// Derived from TypeCheckSemaPhase.swift (second extension) and TypeCheckSemaPhase+DeclTypeCheck.swift.
+// Handles declaration-level type checking (functions, properties, classes, objects).
+// Derived from TypeCheckSemaPhase.swift (second extension) and TypeCheckSemaPhase+DeclTypeCheck.swift.
 
 extension DeclTypeChecker {
     func typeCheckBoundPropertyDecl(
@@ -155,8 +155,9 @@ extension DeclTypeChecker {
 
         for declID in memberFunctions {
             guard let decl = ast.arena.decl(declID),
-                  case .funDecl(let function) = decl,
-                  let symbol = sema.bindings.declSymbols[declID] else {
+                  case let .funDecl(function) = decl,
+                  let symbol = sema.bindings.declSymbols[declID]
+            else {
                 continue
             }
             typeCheckFunctionDecl(
@@ -170,8 +171,9 @@ extension DeclTypeChecker {
 
         for declID in memberProperties {
             guard let decl = ast.arena.decl(declID),
-                  case .propertyDecl(let property) = decl,
-                  let symbol = sema.bindings.declSymbols[declID] else {
+                  case let .propertyDecl(property) = decl,
+                  let symbol = sema.bindings.declSymbols[declID]
+            else {
                 continue
             }
             typeCheckBoundPropertyDecl(
@@ -186,18 +188,18 @@ extension DeclTypeChecker {
 
         for declID in nestedClasses {
             guard let decl = ast.arena.decl(declID),
-                  let symbol = sema.bindings.declSymbols[declID] else {
+                  let symbol = sema.bindings.declSymbols[declID]
+            else {
                 continue
             }
             switch decl {
-            case .classDecl(let classDecl):
+            case let .classDecl(classDecl):
                 // Inner classes inherit outer receiver context (can use this@Outer).
                 // Non-inner nested classes are effectively static: clear outer receivers.
-                let nestedCtx: TypeInferenceContext
-                if classDecl.isInner {
-                    nestedCtx = ctx
+                let nestedCtx: TypeInferenceContext = if classDecl.isInner {
+                    ctx
                 } else {
-                    nestedCtx = ctx.copying(outerReceiverTypes: [])
+                    ctx.copying(outerReceiverTypes: [])
                 }
                 typeCheckClassDecl(
                     classDecl,
@@ -206,7 +208,7 @@ extension DeclTypeChecker {
                     solver: solver,
                     diagnostics: diagnostics
                 )
-            case .interfaceDecl(let nestedInterface):
+            case let .interfaceDecl(nestedInterface):
                 let nestedCtx = ctx.copying(outerReceiverTypes: [])
                 typeCheckInterfaceDecl(
                     nestedInterface,
@@ -222,8 +224,9 @@ extension DeclTypeChecker {
 
         for declID in nestedObjects {
             guard let decl = ast.arena.decl(declID),
-                  case .objectDecl(let objectDecl) = decl,
-                  let symbol = sema.bindings.declSymbols[declID] else {
+                  case let .objectDecl(objectDecl) = decl,
+                  let symbol = sema.bindings.declSymbols[declID]
+            else {
                 continue
             }
             typeCheckObjectDecl(
@@ -263,10 +266,12 @@ extension DeclTypeChecker {
         // owning class/interface scope (e.g. `MAX_COUNT` instead of
         // `Companion.MAX_COUNT`).
         if let companionSymbol = sema.symbols.companionObjectSymbol(for: ownerSymbol),
-           let companion = sema.symbols.symbol(companionSymbol) {
+           let companion = sema.symbols.symbol(companionSymbol)
+        {
             for memberSymbol in sema.symbols.children(ofFQName: companion.fqName) {
                 guard let member = sema.symbols.symbol(memberSymbol),
-                      member.kind == .property || member.kind == .field else {
+                      member.kind == .property || member.kind == .field
+                else {
                     continue
                 }
                 classScope.insert(memberSymbol)

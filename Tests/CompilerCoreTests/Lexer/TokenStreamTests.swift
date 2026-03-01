@@ -1,5 +1,5 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 final class TokenStreamTests: XCTestCase {
     func testPeekReturnsSyntheticEOFForEmptyStreamAndNegativeOffset() {
@@ -71,7 +71,7 @@ final class TokenStreamTests: XCTestCase {
         // offset 0 is valid
         XCTAssertEqual(stream.peek(0), token)
         // offsets 1..5 are all out of range → synthetic EOF
-        for offset in 1...5 {
+        for offset in 1 ... 5 {
             XCTAssertEqual(stream.peek(offset).kind, .eof,
                            "peek(\(offset)) should return EOF for a single-element stream")
         }
@@ -82,7 +82,7 @@ final class TokenStreamTests: XCTestCase {
 
         // Calling advance() repeatedly on an empty stream should always
         // return synthetic EOF and never move the index past 0.
-        for _ in 0..<5 {
+        for _ in 0 ..< 5 {
             let token = stream.advance()
             XCTAssertEqual(token.kind, .eof)
             XCTAssertEqual(stream.index, 0)
@@ -98,7 +98,7 @@ final class TokenStreamTests: XCTestCase {
 
         // Complex predicate: identifier AND the interned name resolves to "hello"
         let matched = stream.consumeIf { token in
-            if case .identifier(let interned) = token.kind {
+            if case let .identifier(interned) = token.kind {
                 return interner.resolve(interned) == "hello"
             }
             return false
@@ -108,7 +108,7 @@ final class TokenStreamTests: XCTestCase {
 
         // Complex predicate: symbol that is either plus or minus
         let matchedSymbol = stream.consumeIf { token in
-            if case .symbol(let sym) = token.kind {
+            if case let .symbol(sym) = token.kind {
                 return sym == .plus || sym == .minus
             }
             return false
@@ -118,8 +118,9 @@ final class TokenStreamTests: XCTestCase {
 
         // Complex predicate that does NOT match: intLiteral with value > 100
         let noMatch = stream.consumeIf { token in
-            if case .intLiteral(let value) = token.kind,
-               let intValue = Int(value) {
+            if case let .intLiteral(value) = token.kind,
+               let intValue = Int(value)
+            {
                 return intValue > 100
             }
             return false

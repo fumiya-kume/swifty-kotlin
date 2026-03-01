@@ -30,9 +30,8 @@ extension DataFlowSemaPhase {
                 let parsed = value.split(separator: ".").map { interner.intern(String($0)) }
                 return parsed.isEmpty ? nil : parsed
             }
-            let fieldOffsets: [ImportedFieldOffsetEntry]
-            if let fieldOffsetsStr = metadataRecord.fieldOffsets {
-                fieldOffsets = parseImportedFieldOffsets(
+            let fieldOffsets: [ImportedFieldOffsetEntry] = if let fieldOffsetsStr = metadataRecord.fieldOffsets {
+                parseImportedFieldOffsets(
                     token: fieldOffsetsStr,
                     diagnostics: diagnostics,
                     metadataPath: path,
@@ -40,11 +39,10 @@ extension DataFlowSemaPhase {
                     interner: interner
                 )
             } else {
-                fieldOffsets = []
+                []
             }
-            let vtableSlots: [ImportedVTableSlotEntry]
-            if let vtableSlotsStr = metadataRecord.vtableSlots {
-                vtableSlots = parseImportedVTableSlots(
+            let vtableSlots: [ImportedVTableSlotEntry] = if let vtableSlotsStr = metadataRecord.vtableSlots {
+                parseImportedVTableSlots(
                     token: vtableSlotsStr,
                     diagnostics: diagnostics,
                     metadataPath: path,
@@ -52,11 +50,10 @@ extension DataFlowSemaPhase {
                     interner: interner
                 )
             } else {
-                vtableSlots = []
+                []
             }
-            let itableSlots: [ImportedITableSlotEntry]
-            if let itableSlotsStr = metadataRecord.itableSlots {
-                itableSlots = parseImportedITableSlots(
+            let itableSlots: [ImportedITableSlotEntry] = if let itableSlotsStr = metadataRecord.itableSlots {
+                parseImportedITableSlots(
                     token: itableSlotsStr,
                     diagnostics: diagnostics,
                     metadataPath: path,
@@ -64,7 +61,7 @@ extension DataFlowSemaPhase {
                     interner: interner
                 )
             } else {
-                itableSlots = []
+                []
             }
             // P5-78: parse sealed subclass FQ names for cross-module exhaustiveness
             let sealedSubclassFQNames: [[InternedString]] = metadataRecord.sealedSubclassFQNames.compactMap { fqStr in
@@ -130,7 +127,7 @@ extension DataFlowSemaPhase {
         ) else {
             return fallback
         }
-        guard case .functionType(let functionType) = types.kind(of: decoded) else {
+        guard case let .functionType(functionType) = types.kind(of: decoded) else {
             diagnostics.warning(
                 "KSWIFTK-LIB-0003",
                 "Invalid function signature metadata at \(metadataPath): \(renderFQName(record.fqName, interner: interner))",
@@ -255,7 +252,7 @@ extension DataFlowSemaPhase {
         ownerFQName: [InternedString],
         cache: LibraryMetadataCache? = nil
     ) -> TypeID? {
-        if let cache = cache, let cached = cache.cachedSignature(token, types: types, symbols: symbols) {
+        if let cache, let cached = cache.cachedSignature(token, types: types, symbols: symbols) {
             return cached
         }
         var parser = MetadataTypeSignatureParser(
@@ -293,7 +290,7 @@ extension DataFlowSemaPhase {
             ownerFQName: [InternedString]
         ) {
             self.source = Array(source)
-            self.index = 0
+            index = 0
             self.symbols = symbols
             self.types = types
             self.interner = interner
@@ -406,9 +403,9 @@ extension DataFlowSemaPhase {
                 .filter { symbol in
                     switch symbol.kind {
                     case .class, .interface, .object, .enumClass, .annotationClass:
-                        return true
+                        true
                     default:
-                        return false
+                        false
                     }
                 }
                 .sorted(by: { $0.id.rawValue < $1.id.rawValue })
@@ -460,7 +457,7 @@ extension DataFlowSemaPhase {
 
             var params: [TypeID] = []
             params.reserveCapacity(arity)
-            for _ in 0..<arity {
+            for _ in 0 ..< arity {
                 guard let parameterType = parseType() else {
                     return nil
                 }
@@ -510,19 +507,19 @@ extension DataFlowSemaPhase {
         private func makeNullable(_ type: TypeID) -> TypeID {
             switch types.kind(of: type) {
             case .any:
-                return types.nullableAnyType
-            case .primitive(let primitive, _):
-                return types.make(.primitive(primitive, .nullable))
-            case .classType(let classType):
-                return types.make(.classType(ClassType(
+                types.nullableAnyType
+            case let .primitive(primitive, _):
+                types.make(.primitive(primitive, .nullable))
+            case let .classType(classType):
+                types.make(.classType(ClassType(
                     classSymbol: classType.classSymbol,
                     args: classType.args,
                     nullability: .nullable
                 )))
-            case .typeParam(let typeParam):
-                return types.make(.typeParam(TypeParamType(symbol: typeParam.symbol, nullability: .nullable)))
-            case .functionType(let functionType):
-                return types.make(.functionType(FunctionType(
+            case let .typeParam(typeParam):
+                types.make(.typeParam(TypeParamType(symbol: typeParam.symbol, nullability: .nullable)))
+            case let .functionType(functionType):
+                types.make(.functionType(FunctionType(
                     receiver: functionType.receiver,
                     params: functionType.params,
                     returnType: functionType.returnType,
@@ -530,9 +527,9 @@ extension DataFlowSemaPhase {
                     nullability: .nullable
                 )))
             case .nothing:
-                return types.nullableNothingType
+                types.nullableNothingType
             default:
-                return types.nullableAnyType
+                types.nullableAnyType
             }
         }
 
@@ -544,7 +541,7 @@ extension DataFlowSemaPhase {
             guard index > start else {
                 return nil
             }
-            return Int(String(source[start..<index]))
+            return Int(String(source[start ..< index]))
         }
 
         private mutating func parseUntilDelimiters(_ delimiters: Set<Character>) -> String {
@@ -552,7 +549,7 @@ extension DataFlowSemaPhase {
             while let ch = peek(), !delimiters.contains(ch) {
                 index += 1
             }
-            return String(source[start..<index])
+            return String(source[start ..< index])
         }
 
         private func peek() -> Character? {

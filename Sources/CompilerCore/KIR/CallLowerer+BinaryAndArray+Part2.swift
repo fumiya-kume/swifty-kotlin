@@ -1,6 +1,5 @@
 import Foundation
 
-
 extension CallLowerer {
     func lowerIndexedAccessExpr(
         _ exprID: ExprID,
@@ -9,7 +8,7 @@ extension CallLowerer {
         shared: KIRLoweringSharedContext,
         emit instructions: inout KIRLoweringEmitContext
     ) -> KIRExprID {
-        return lowerIndexedAccessExpr(
+        lowerIndexedAccessExpr(
             exprID,
             receiverExpr: receiverExpr,
             indices: indices,
@@ -30,7 +29,7 @@ extension CallLowerer {
         shared: KIRLoweringSharedContext,
         emit instructions: inout KIRLoweringEmitContext
     ) -> KIRExprID {
-        return lowerIndexedAssignExpr(
+        lowerIndexedAssignExpr(
             exprID,
             receiverExpr: receiverExpr,
             indices: indices,
@@ -52,7 +51,7 @@ extension CallLowerer {
         shared: KIRLoweringSharedContext,
         emit instructions: inout KIRLoweringEmitContext
     ) -> KIRExprID {
-        return lowerIndexedCompoundAssignExpr(
+        lowerIndexedCompoundAssignExpr(
             exprID,
             receiverExpr: receiverExpr,
             indices: indices,

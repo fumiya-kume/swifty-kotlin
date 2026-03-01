@@ -11,7 +11,7 @@ extension CallLowerer {
         shared: KIRLoweringSharedContext,
         emit instructions: inout KIRLoweringEmitContext
     ) -> KIRExprID {
-        return lowerBinaryExpr(
+        lowerBinaryExpr(
             exprID,
             op: op,
             lhs: lhs,

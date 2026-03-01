@@ -1,12 +1,12 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 final class LoweringPassRegressionTests: XCTestCase {
     func testLoweringRewritesMainCallSites() throws {
         let fixture = try makeLoweringRewriteFixture()
 
-        guard case .function(let loweredMain)? = fixture.module.arena.decl(fixture.mainID) else {
+        guard case let .function(loweredMain)? = fixture.module.arena.decl(fixture.mainID) else {
             XCTFail("expected lowered main function")
             return
         }
@@ -29,8 +29,8 @@ final class LoweringPassRegressionTests: XCTestCase {
         XCTAssertTrue(callees.contains("kk_suspend_suspendTarget"))
 
         let throwFlags = extractThrowFlags(from: loweredMain.body, interner: fixture.interner)
-        XCTAssertEqual(throwFlags["kk_coroutine_continuation_new"]?.allSatisfy({ $0 == false }), true)
-        XCTAssertEqual(throwFlags["kk_suspend_suspendTarget"]?.allSatisfy({ $0 == true }), true)
+        XCTAssertEqual(throwFlags["kk_coroutine_continuation_new"]?.allSatisfy { $0 == false }, true)
+        XCTAssertEqual(throwFlags["kk_suspend_suspendTarget"]?.allSatisfy { $0 == true }, true)
     }
 
     func testLoweringBuildsSuspendStateMachineAndThrowFlags() throws {
@@ -58,7 +58,7 @@ final class LoweringPassRegressionTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(dispatchJumpCount, 2)
 
         let dispatchLabels = loweredSuspend.body.compactMap { instruction -> Int32? in
-            if case .label(let id) = instruction {
+            if case let .label(id) = instruction {
                 return id
             }
             return nil
@@ -76,17 +76,17 @@ final class LoweringPassRegressionTests: XCTestCase {
         XCTAssertTrue(hasSuspendGuard)
 
         let throwFlags = extractThrowFlags(from: loweredSuspend.body, interner: fixture.interner)
-        XCTAssertEqual(throwFlags["kk_suspend_suspendTarget"]?.allSatisfy({ $0 == true }), true)
-        XCTAssertEqual(throwFlags["kk_coroutine_suspended"]?.allSatisfy({ $0 == false }), true)
-        XCTAssertEqual(throwFlags["kk_coroutine_state_set_label"]?.allSatisfy({ $0 == false }), true)
-        XCTAssertEqual(throwFlags["kk_coroutine_state_set_completion"]?.allSatisfy({ $0 == false }), true)
-        XCTAssertEqual(throwFlags["kk_coroutine_state_get_completion"]?.allSatisfy({ $0 == false }), true)
+        XCTAssertEqual(throwFlags["kk_suspend_suspendTarget"]?.allSatisfy { $0 == true }, true)
+        XCTAssertEqual(throwFlags["kk_coroutine_suspended"]?.allSatisfy { $0 == false }, true)
+        XCTAssertEqual(throwFlags["kk_coroutine_state_set_label"]?.allSatisfy { $0 == false }, true)
+        XCTAssertEqual(throwFlags["kk_coroutine_state_set_completion"]?.allSatisfy { $0 == false }, true)
+        XCTAssertEqual(throwFlags["kk_coroutine_state_get_completion"]?.allSatisfy { $0 == false }, true)
     }
 
     func testLoweringNormalizesEmptyFunctionBody() throws {
         let fixture = try makeLoweringRewriteFixture()
 
-        guard case .function(let loweredEmpty)? = fixture.module.arena.decl(fixture.emptyID) else {
+        guard case let .function(loweredEmpty)? = fixture.module.arena.decl(fixture.emptyID) else {
             XCTFail("expected lowered empty function")
             return
         }
@@ -120,7 +120,7 @@ final class LoweringPassRegressionTests: XCTestCase {
             XCTAssertTrue(delayCalls.contains("kk_kxmini_delay"))
 
             let throwFlags = extractThrowFlags(from: suspendBody, interner: ctx.interner)
-            XCTAssertEqual(throwFlags["kk_kxmini_delay"]?.allSatisfy({ $0 == false }), true)
+            XCTAssertEqual(throwFlags["kk_kxmini_delay"]?.allSatisfy { $0 == false }, true)
         }
     }
 
@@ -177,7 +177,7 @@ final class LoweringPassRegressionTests: XCTestCase {
                 _ = try CommandRunner.run(executable: outputPath, arguments: [])
                 XCTFail("Expected non-zero exit")
                 return
-            } catch CommandRunnerError.nonZeroExit(let failed) {
+            } catch let CommandRunnerError.nonZeroExit(failed) {
                 XCTAssertEqual(failed.exitCode, 42)
             } catch {
                 XCTFail("Unexpected error: \(error)")
@@ -208,7 +208,7 @@ final class LoweringPassRegressionTests: XCTestCase {
                 .constValue(result: argValue, value: .intLiteral(42)),
                 .call(symbol: nil, callee: interner.intern("susp"), arguments: [], result: noArgResult, canThrow: false, thrownResult: nil),
                 .call(symbol: nil, callee: interner.intern("susp"), arguments: [argValue], result: oneArgResult, canThrow: false, thrownResult: nil),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -253,13 +253,13 @@ final class LoweringPassRegressionTests: XCTestCase {
 
         try LoweringPhase().run(ctx)
 
-        guard case .function(let loweredCaller)? = module.arena.decl(callerID) else {
+        guard case let .function(loweredCaller)? = module.arena.decl(callerID) else {
             XCTFail("expected lowered caller function")
             return
         }
 
         let rawSuspendCalls = loweredCaller.body.contains { instruction in
-            guard case .call(_, let callee, _, _, _, _, _) = instruction else {
+            guard case let .call(_, callee, _, _, _, _, _) = instruction else {
                 return false
             }
             return interner.resolve(callee) == "susp"
@@ -267,7 +267,7 @@ final class LoweringPassRegressionTests: XCTestCase {
         XCTAssertFalse(rawSuspendCalls)
 
         let rewrittenSuspendCalls = loweredCaller.body.compactMap { instruction -> (name: String, arity: Int, canThrow: Bool)? in
-            guard case .call(_, let callee, let arguments, _, let canThrow, _, _) = instruction else {
+            guard case let .call(_, callee, arguments, _, canThrow, _, _) = instruction else {
                 return nil
             }
             let name = interner.resolve(callee)
@@ -302,7 +302,7 @@ final class LoweringPassRegressionTests: XCTestCase {
                 .jumpIfEqual(lhs: lhs, rhs: rhs, target: 20),
                 .returnValue(lhs),
                 .label(20),
-                .returnValue(rhs)
+                .returnValue(rhs),
             ],
             isSuspend: true,
             isInline: false
@@ -330,7 +330,7 @@ final class LoweringPassRegressionTests: XCTestCase {
         let loweredSuspend = try findKIRFunction(named: "kk_suspend_suspendTarget", in: module, interner: interner)
 
         let labels = loweredSuspend.body.compactMap { instruction -> Int32? in
-            if case .label(let id) = instruction {
+            if case let .label(id) = instruction {
                 return id
             }
             return nil
@@ -341,7 +341,7 @@ final class LoweringPassRegressionTests: XCTestCase {
         XCTAssertTrue(labels.contains(20))
 
         let hasOriginalBranch = loweredSuspend.body.contains { instruction in
-            if case .jumpIfEqual(_, _, let target) = instruction {
+            if case let .jumpIfEqual(_, _, target) = instruction {
                 return target == 20
             }
             return false

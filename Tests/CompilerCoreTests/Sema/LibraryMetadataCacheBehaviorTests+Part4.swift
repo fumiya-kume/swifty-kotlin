@@ -1,15 +1,13 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
-
 
 extension LibraryMetadataCacheBehaviorTests {
     func testMultipleLibrariesAllCached() throws {
         let fm = FileManager.default
         var libDirs: [String] = []
 
-        for i in 0..<3 {
+        for i in 0 ..< 3 {
             let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
             let libDir = baseDir.appendingPathExtension("kklib")
             try fm.createDirectory(at: libDir, withIntermediateDirectories: true)

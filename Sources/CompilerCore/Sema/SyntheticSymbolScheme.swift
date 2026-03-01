@@ -1,10 +1,10 @@
 public enum SyntheticSymbolScheme {
-    public static let defaultStubOffset: Int32 = -40_000
-    public static let defaultMaskOffset: Int32 = -30_000
-    public static let typeTokenOffset: Int32 = -20_000
-    public static let propertySetterAccessorOffset: Int32 = -13_000
-    public static let propertyGetterAccessorOffset: Int32 = -12_000
-    public static let receiverParameterOffset: Int32 = -10_000
+    public static let defaultStubOffset: Int32 = -40000
+    public static let defaultMaskOffset: Int32 = -30000
+    public static let typeTokenOffset: Int32 = -20000
+    public static let propertySetterAccessorOffset: Int32 = -13000
+    public static let propertyGetterAccessorOffset: Int32 = -12000
+    public static let receiverParameterOffset: Int32 = -10000
 
     private static func makeSymbol(offset: Int32, original: SymbolID) -> SymbolID {
         SymbolID(rawValue: offset - original.rawValue)
@@ -48,9 +48,9 @@ public enum SyntheticSymbolScheme {
     ) -> SymbolID {
         switch kind {
         case .getter:
-            return propertyGetterAccessorSymbol(for: propertySymbol)
+            propertyGetterAccessorSymbol(for: propertySymbol)
         case .setter:
-            return propertySetterAccessorSymbol(for: propertySymbol)
+            propertySetterAccessorSymbol(for: propertySymbol)
         }
     }
 

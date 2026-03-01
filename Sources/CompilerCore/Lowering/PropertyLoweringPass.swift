@@ -18,7 +18,7 @@ final class PropertyLoweringPass: LoweringPass {
         let emittedFunctionSymbols: Set<SymbolID> = {
             var result = Set<SymbolID>()
             for decl in module.arena.declarations {
-                if case .function(let fn) = decl {
+                if case let .function(fn) = decl {
                     result.insert(fn.symbol)
                 }
             }
@@ -34,7 +34,8 @@ final class PropertyLoweringPass: LoweringPass {
             var result = Set<SymbolID>()
             for sym in sema.symbols.allSymbols() {
                 guard sym.kind == .property,
-                      sema.symbols.backingFieldSymbol(for: sym.id) == nil else {
+                      sema.symbols.backingFieldSymbol(for: sym.id) == nil
+                else {
                     continue
                 }
                 // Only include if a getter accessor function was actually
@@ -55,14 +56,15 @@ final class PropertyLoweringPass: LoweringPass {
             loweredBody.reserveCapacity(function.body.count)
 
             for instruction in function.body {
-                guard case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult, let isSuperCall) = instruction else {
+                guard case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall) = instruction else {
                     // Rewrite constValue(.symbolRef(propSym)) for getter-only
                     // computed properties into a getter call so that each
                     // access invokes the getter body rather than loading a
                     // non-existent global.
-                    if case .constValue(let cvResult, let value) = instruction,
-                       case .symbolRef(let sym) = value,
-                       computedPropertySymbols.contains(sym) {
+                    if case let .constValue(cvResult, value) = instruction,
+                       case let .symbolRef(sym) = value,
+                       computedPropertySymbols.contains(sym)
+                    {
                         // Skip rewriting if we are inside the getter accessor
                         // for this property to avoid infinite recursion.
                         let getterSymbol = SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: sym)
@@ -83,11 +85,13 @@ final class PropertyLoweringPass: LoweringPass {
                     // Rewrite backing field copy instructions to direct
                     // setter accessor calls when the target is a backing
                     // field symbol.
-                    if case .copy(let from, let to) = instruction,
-                       let sema = ctx.sema {
+                    if case let .copy(from, to) = instruction,
+                       let sema = ctx.sema
+                    {
                         let toExpr = module.arena.expr(to)
-                        if case .symbolRef(let targetSym) = toExpr,
-                           sema.symbols.symbol(targetSym)?.kind == .backingField {
+                        if case let .symbolRef(targetSym) = toExpr,
+                           sema.symbols.symbol(targetSym)?.kind == .backingField
+                        {
                             // Find the property symbol that owns this backing
                             // field and emit a direct setter accessor call.
                             let propSym = self.propertySymbolForBackingField(
@@ -128,12 +132,13 @@ final class PropertyLoweringPass: LoweringPass {
                 // Only rewrite calls whose symbol is a delegate storage field
                 // (name starts with $delegate_) to avoid rewriting user-defined
                 // getValue/setValue methods.
-                if (callee == getValueName || callee == setValueName),
+                if callee == getValueName || callee == setValueName,
                    let sema = ctx.sema,
                    let sym = symbol,
                    let symInfo = sema.symbols.symbol(sym),
                    symInfo.kind == .field,
-                   interner.resolve(symInfo.name).hasPrefix("$delegate_") {
+                   interner.resolve(symInfo.name).hasPrefix("$delegate_")
+                {
                     let isSetter = callee == setValueName
                     // Derive the property symbol from the delegate field name
                     // ($delegate_<propName> → <propName>). MemberLowerer creates
@@ -229,7 +234,7 @@ final class PropertyLoweringPass: LoweringPass {
     /// property symbol it belongs to by stripping the prefix and looking
     /// up a sibling symbol with the property name.
     private func propertySymbolForDelegateField(
-        _ delegateFieldSymbol: SymbolID,
+        _: SymbolID,
         symInfo: SemanticSymbol,
         sema: SemaModule,
         interner: StringInterner

@@ -1,12 +1,11 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 /// Tests for P5-79: property delegation (`by`) full desugaring.
 /// Covers KIR lowering, StdlibDelegateLoweringPass, and end-to-end compilation
 /// of lazy, observable, vetoable, and custom delegate properties.
 final class DelegatePropertyKIRTests: XCTestCase {
-
     // MARK: - KIR Lowering: Lazy Delegate
 
     func testLazyDelegateEmitsCreateAndGetValueInKIR() throws {
@@ -45,9 +44,9 @@ final class DelegatePropertyKIRTests: XCTestCase {
             let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let throwFlags = extractThrowFlags(from: mainBody, interner: ctx.interner)
 
-            XCTAssertEqual(throwFlags["kk_lazy_create"]?.allSatisfy({ $0 == false }), true,
+            XCTAssertEqual(throwFlags["kk_lazy_create"]?.allSatisfy { $0 == false }, true,
                            "kk_lazy_create should be non-throwing")
-            XCTAssertEqual(throwFlags["kk_lazy_get_value"]?.allSatisfy({ $0 == false }), true,
+            XCTAssertEqual(throwFlags["kk_lazy_get_value"]?.allSatisfy { $0 == false }, true,
                            "kk_lazy_get_value should be non-throwing")
         }
     }
@@ -145,9 +144,9 @@ final class DelegatePropertyKIRTests: XCTestCase {
             let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let throwFlags = extractThrowFlags(from: mainBody, interner: ctx.interner)
 
-            XCTAssertEqual(throwFlags["kk_custom_delegate_create"]?.allSatisfy({ $0 == false }), true,
+            XCTAssertEqual(throwFlags["kk_custom_delegate_create"]?.allSatisfy { $0 == false }, true,
                            "kk_custom_delegate_create should be non-throwing")
-            XCTAssertEqual(throwFlags["kk_custom_delegate_get_value"]?.allSatisfy({ $0 == false }), true,
+            XCTAssertEqual(throwFlags["kk_custom_delegate_get_value"]?.allSatisfy { $0 == false }, true,
                            "kk_custom_delegate_get_value should be non-throwing")
         }
     }

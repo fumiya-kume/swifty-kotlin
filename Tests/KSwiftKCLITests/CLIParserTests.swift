@@ -1,6 +1,6 @@
-import XCTest
-@testable import KSwiftKCLI
 @testable import CompilerCore
+@testable import KSwiftKCLI
+import XCTest
 
 final class CLIParserTests: XCTestCase {
     func testParsesMinimalInput() throws {
@@ -25,7 +25,7 @@ final class CLIParserTests: XCTestCase {
             "-Xir", "backend=llvm-c-api",
             "-Xruntime", "trace=true",
             "-g",
-            "main.kt"
+            "main.kt",
         ])
 
         XCTAssertEqual(options.outputPath, "out.bin")

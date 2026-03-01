@@ -62,7 +62,7 @@ extension DataFlowSemaPhase {
         parsedParameterCount = max(parsedParameterCount, parsedParameterSymbols.count)
         var params: [KIRParameter] = []
         var parameterSymbolMapping: [Int32: SymbolID] = [:]
-        for index in 0..<parsedParameterCount {
+        for index in 0 ..< parsedParameterCount {
             let localSymbol = importedInlineParameterSymbol(functionSymbol: importedSymbol, index: index)
             params.append(KIRParameter(symbol: localSymbol, type: types.anyType))
             if index < parsedParameterSymbols.count {
@@ -122,7 +122,8 @@ extension DataFlowSemaPhase {
             guard let conditionRaw = pairs["condition"], let condition = Int32(conditionRaw),
                   let thenRaw = pairs["then"], let thenValue = Int32(thenRaw),
                   let elseRaw = pairs["else"], let elseValue = Int32(elseRaw),
-                  let resultRaw = pairs["result"], let result = Int32(resultRaw) else {
+                  let resultRaw = pairs["result"], let result = Int32(resultRaw)
+            else {
                 return []
             }
             let elseLabel = labelCounter
@@ -139,7 +140,7 @@ extension DataFlowSemaPhase {
                 .jump(endLabel),
                 .label(elseLabel),
                 .copy(from: KIRExprID(rawValue: elseValue), to: KIRExprID(rawValue: result)),
-                .label(endLabel)
+                .label(endLabel),
             ]
         }
 
@@ -156,7 +157,7 @@ extension DataFlowSemaPhase {
     }
 
     private func parseImportedInlineInstruction(
-        line: String,
+        line _: String,
         pairs: [String: String],
         opcode: Substring,
         parameterSymbolMapping: [Int32: SymbolID],
@@ -178,7 +179,8 @@ extension DataFlowSemaPhase {
         case "jumpIfEqual":
             guard let lhsRaw = pairs["lhs"], let lhs = Int32(lhsRaw),
                   let rhsRaw = pairs["rhs"], let rhs = Int32(rhsRaw),
-                  let targetRaw = pairs["target"], let target = Int32(targetRaw) else {
+                  let targetRaw = pairs["target"], let target = Int32(targetRaw)
+            else {
                 return nil
             }
             return .jumpIfEqual(
@@ -190,10 +192,11 @@ extension DataFlowSemaPhase {
             guard let resultRaw = pairs["result"], let result = Int32(resultRaw),
                   let valueToken = pairs["value"],
                   let value = parseImportedInlineExprKind(
-                    token: valueToken,
-                    parameterSymbolMapping: parameterSymbolMapping,
-                    interner: interner
-                  ) else {
+                      token: valueToken,
+                      parameterSymbolMapping: parameterSymbolMapping,
+                      interner: interner
+                  )
+            else {
                 return nil
             }
             return .constValue(result: KIRExprID(rawValue: result), value: value)
@@ -201,7 +204,8 @@ extension DataFlowSemaPhase {
             guard let opRaw = pairs["op"], let op = parseBinaryOp(opRaw),
                   let lhsRaw = pairs["lhs"], let lhs = Int32(lhsRaw),
                   let rhsRaw = pairs["rhs"], let rhs = Int32(rhsRaw),
-                  let resultRaw = pairs["result"], let result = Int32(resultRaw) else {
+                  let resultRaw = pairs["result"], let result = Int32(resultRaw)
+            else {
                 return nil
             }
             return .binary(
@@ -219,7 +223,8 @@ extension DataFlowSemaPhase {
             return .returnValue(KIRExprID(rawValue: value))
         case "returnIfEqual":
             guard let lhsRaw = pairs["lhs"], let lhs = Int32(lhsRaw),
-                  let rhsRaw = pairs["rhs"], let rhs = Int32(rhsRaw) else {
+                  let rhsRaw = pairs["rhs"], let rhs = Int32(rhsRaw)
+            else {
                 return nil
             }
             return .returnIfEqual(
@@ -228,17 +233,17 @@ extension DataFlowSemaPhase {
             )
         case "call":
             guard let calleeEncoded = pairs["calleeB64"],
-                  let calleeName = decodeBase64String(calleeEncoded) else {
+                  let calleeName = decodeBase64String(calleeEncoded)
+            else {
                 return nil
             }
             let args = parseInlineIntList(pairs["args"] ?? "[]").map { value in
                 KIRExprID(rawValue: Int32(truncatingIfNeeded: value))
             }
-            let result: KIRExprID?
-            if let resultRaw = pairs["result"], resultRaw != "_" {
-                result = Int32(resultRaw).map(KIRExprID.init(rawValue:))
+            let result: KIRExprID? = if let resultRaw = pairs["result"], resultRaw != "_" {
+                Int32(resultRaw).map(KIRExprID.init(rawValue:))
             } else {
-                result = nil
+                nil
             }
             let canThrowRaw = pairs["canThrow"] ?? "0"
             let canThrow = canThrowRaw == "1" || canThrowRaw == "true"
@@ -304,17 +309,17 @@ extension DataFlowSemaPhase {
     private func parseBinaryOp(_ raw: String) -> KIRBinaryOp? {
         switch raw {
         case "add":
-            return .add
+            .add
         case "subtract":
-            return .subtract
+            .subtract
         case "multiply":
-            return .multiply
+            .multiply
         case "divide":
-            return .divide
+            .divide
         case "equal":
-            return .equal
+            .equal
         default:
-            return nil
+            nil
         }
     }
 
@@ -345,7 +350,8 @@ extension DataFlowSemaPhase {
 
     private func decodeBase64String(_ token: String) -> String? {
         guard let data = Data(base64Encoded: token),
-              let decoded = String(data: data, encoding: .utf8) else {
+              let decoded = String(data: data, encoding: .utf8)
+        else {
             return nil
         }
         return decoded

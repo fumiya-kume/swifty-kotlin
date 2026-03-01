@@ -29,54 +29,54 @@ final class ExprLowerer {
         let stringType = sema.types.make(.primitive(.string, .nonNull))
 
         switch expr {
-        case .intLiteral(let value, _):
+        case let .intLiteral(value, _):
             let id = arena.appendExpr(.intLiteral(value), type: boundType ?? intType)
             instructions.append(.constValue(result: id, value: .intLiteral(value)))
             return id
 
-        case .longLiteral(let value, _):
+        case let .longLiteral(value, _):
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let id = arena.appendExpr(.longLiteral(value), type: boundType ?? longType)
             instructions.append(.constValue(result: id, value: .longLiteral(value)))
             return id
 
-        case .floatLiteral(let value, _):
+        case let .floatLiteral(value, _):
             let floatType = sema.types.make(.primitive(.float, .nonNull))
             let id = arena.appendExpr(.floatLiteral(value), type: boundType ?? floatType)
             instructions.append(.constValue(result: id, value: .floatLiteral(value)))
             return id
 
-        case .doubleLiteral(let value, _):
+        case let .doubleLiteral(value, _):
             let doubleType = sema.types.make(.primitive(.double, .nonNull))
             let id = arena.appendExpr(.doubleLiteral(value), type: boundType ?? doubleType)
             instructions.append(.constValue(result: id, value: .doubleLiteral(value)))
             return id
 
-        case .charLiteral(let value, _):
+        case let .charLiteral(value, _):
             let charType = sema.types.make(.primitive(.char, .nonNull))
             let id = arena.appendExpr(.charLiteral(value), type: boundType ?? charType)
             instructions.append(.constValue(result: id, value: .charLiteral(value)))
             return id
 
-        case .boolLiteral(let value, _):
+        case let .boolLiteral(value, _):
             let id = arena.appendExpr(.boolLiteral(value), type: boundType ?? boolType)
             instructions.append(.constValue(result: id, value: .boolLiteral(value)))
             return id
 
-        case .stringLiteral(let value, _):
+        case let .stringLiteral(value, _):
             let id = arena.appendExpr(.stringLiteral(value), type: boundType ?? stringType)
             instructions.append(.constValue(result: id, value: .stringLiteral(value)))
             return id
 
-        case .stringTemplate(let parts, _):
+        case let .stringTemplate(parts, _):
             var partIDs: [KIRExprID] = []
             for part in parts {
                 switch part {
-                case .literal(let interned):
+                case let .literal(interned):
                     let partID = arena.appendExpr(.stringLiteral(interned), type: stringType)
                     instructions.append(.constValue(result: partID, value: .stringLiteral(interned)))
                     partIDs.append(partID)
-                case .expression(let exprID):
+                case let .expression(exprID):
                     let lowered = lowerExpr(
                         exprID,
                         ast: ast,
@@ -88,14 +88,13 @@ final class ExprLowerer {
                     )
                     let exprType = sema.bindings.exprTypes[exprID]
                     if let exprType, exprType != stringType {
-                        let tag: Int64
-                        switch sema.types.kind(of: exprType) {
+                        let tag: Int64 = switch sema.types.kind(of: exprType) {
                         case .primitive(.boolean, _):
-                            tag = 2
+                            2
                         case .primitive(.string, _):
-                            tag = 3
+                            3
                         default:
-                            tag = 1
+                            1
                         }
                         let tagID = arena.appendExpr(.intLiteral(tag), type: intType)
                         instructions.append(.constValue(result: tagID, value: .intLiteral(tag)))
@@ -121,7 +120,7 @@ final class ExprLowerer {
                 return id
             }
             var accumulated = partIDs[0]
-            for i in 1..<partIDs.count {
+            for i in 1 ..< partIDs.count {
                 let concatResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: stringType)
                 instructions.append(.call(
                     symbol: nil,
@@ -135,7 +134,7 @@ final class ExprLowerer {
             }
             return accumulated
 
-        case .nameRef(let name, _):
+        case let .nameRef(name, _):
             let nullID = interner.intern("null")
             let thisID = interner.intern("this")
             if name == nullID {
@@ -144,7 +143,8 @@ final class ExprLowerer {
                 return id
             }
             if name == thisID,
-               let receiverExprID = driver.ctx.currentImplicitReceiverExprID {
+               let receiverExprID = driver.ctx.currentImplicitReceiverExprID
+            {
                 return receiverExprID
             }
             if let symbol = sema.bindings.identifierSymbols[exprID] {
@@ -155,7 +155,8 @@ final class ExprLowerer {
                 // Mutable (var) properties must always load from global store at runtime.
                 if let constant = propertyConstantInitializers[symbol],
                    let symInfo = sema.symbols.symbol(symbol),
-                   !symInfo.flags.contains(.mutable) {
+                   !symInfo.flags.contains(.mutable)
+                {
                     let id = arena.appendExpr(constant, type: boundType)
                     instructions.append(.constValue(result: id, value: constant))
                     return id
@@ -163,8 +164,9 @@ final class ExprLowerer {
                 // For top-level property symbols, emit loadGlobal so the
                 // backend reads the current value from the global slot.
                 if let sym = sema.symbols.symbol(symbol),
-                   (sym.kind == .property || sym.kind == .field),
-                   sema.symbols.parentSymbol(for: symbol) == nil || sema.symbols.symbol(sema.symbols.parentSymbol(for: symbol)!)?.kind == .package {
+                   sym.kind == .property || sym.kind == .field,
+                   sema.symbols.parentSymbol(for: symbol) == nil || sema.symbols.symbol(sema.symbols.parentSymbol(for: symbol)!)?.kind == .package
+                {
                     let id = arena.appendExpr(.symbolRef(symbol), type: boundType)
                     instructions.append(.loadGlobal(result: id, symbol: symbol))
                     return id
@@ -177,21 +179,20 @@ final class ExprLowerer {
             instructions.append(.constValue(result: id, value: .unit))
             return id
 
-        case .forExpr(_, let iterableExpr, let bodyExpr, let label, _):
+        case let .forExpr(_, iterableExpr, bodyExpr, label, _):
             return driver.controlFlowLowerer.lowerForExpr(exprID, iterableExpr: iterableExpr, bodyExpr: bodyExpr, label: label, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
-        case .whileExpr(let conditionExpr, let bodyExpr, let label, _):
+        case let .whileExpr(conditionExpr, bodyExpr, label, _):
             return driver.controlFlowLowerer.lowerWhileExpr(exprID, conditionExpr: conditionExpr, bodyExpr: bodyExpr, label: label, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
-        case .doWhileExpr(let bodyExpr, let conditionExpr, let label, _):
+        case let .doWhileExpr(bodyExpr, conditionExpr, label, _):
             return driver.controlFlowLowerer.lowerDoWhileExpr(exprID, bodyExpr: bodyExpr, conditionExpr: conditionExpr, label: label, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
-        case .breakExpr(let label, _):
-            let targetLabel: Int32?
-            if let label {
-                targetLabel = driver.ctx.loopControlStack.last(where: { $0.name == label })?.breakLabel
+        case let .breakExpr(label, _):
+            let targetLabel: Int32? = if let label {
+                driver.ctx.loopControlStack.last(where: { $0.name == label })?.breakLabel
             } else {
-                targetLabel = driver.ctx.loopControlStack.last?.breakLabel
+                driver.ctx.loopControlStack.last?.breakLabel
             }
             if let targetLabel {
                 instructions.append(.jump(targetLabel))
@@ -200,12 +201,11 @@ final class ExprLowerer {
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
-        case .continueExpr(let label, _):
-            let targetLabel: Int32?
-            if let label {
-                targetLabel = driver.ctx.loopControlStack.last(where: { $0.name == label })?.continueLabel
+        case let .continueExpr(label, _):
+            let targetLabel: Int32? = if let label {
+                driver.ctx.loopControlStack.last(where: { $0.name == label })?.continueLabel
             } else {
-                targetLabel = driver.ctx.loopControlStack.last?.continueLabel
+                driver.ctx.loopControlStack.last?.continueLabel
             }
             if let targetLabel {
                 instructions.append(.jump(targetLabel))
@@ -214,19 +214,18 @@ final class ExprLowerer {
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
-        case .localFunDecl(let localFunName, let localFunValueParams, _, let localFunBody, _):
+        case let .localFunDecl(localFunName, localFunValueParams, _, localFunBody, _):
             if let symbol = sema.bindings.identifierSymbols[exprID] {
                 let sig = sema.symbols.functionSignature(for: symbol)
-                let funType: TypeID
-                if let sig {
-                    funType = sema.types.make(.functionType(FunctionType(
+                let funType: TypeID = if let sig {
+                    sema.types.make(.functionType(FunctionType(
                         params: sig.parameterTypes,
                         returnType: sig.returnType,
                         isSuspend: sig.isSuspend,
                         nullability: .nonNull
                     )))
                 } else {
-                    funType = boundType ?? sema.types.anyType
+                    boundType ?? sema.types.anyType
                 }
                 let funRef = arena.appendExpr(.symbolRef(symbol), type: funType)
                 instructions.append(.constValue(result: funRef, value: .symbolRef(symbol)))
@@ -257,9 +256,9 @@ final class ExprLowerer {
                 // the current scope (analogous to lambda capture analysis).
                 var captureBodyExprIDs: [ExprID] = []
                 switch localFunBody {
-                case .block(let bodyExprIDs, _):
+                case let .block(bodyExprIDs, _):
                     captureBodyExprIDs = bodyExprIDs
-                case .expr(let bodyExprID, _):
+                case let .expr(bodyExprID, _):
                     captureBodyExprIDs = [bodyExprID]
                 case .unit:
                     break
@@ -276,7 +275,7 @@ final class ExprLowerer {
                         seen: &seenSymbols
                     )
                 }
-                let localFunParamSymbols = Set(localFunValueParamList.map { $0.symbol })
+                let localFunParamSymbols = Set(localFunValueParamList.map(\.symbol))
                 var captureSymbols = referencedSymbols.filter { sym in
                     if localFunParamSymbols.contains(sym) { return false }
                     if sym == symbol { return false }
@@ -292,7 +291,8 @@ final class ExprLowerer {
                 // mirrors the post-filter in lexicalCaptureSymbolsForLambda.
                 if let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol,
                    driver.ctx.currentImplicitReceiverExprID != nil,
-                   !captureSymbols.contains(receiverSymbol) {
+                   !captureSymbols.contains(receiverSymbol)
+                {
                     let needsReceiver = captureBodyExprIDs.contains { bodyExprID in
                         driver.lambdaLowerer.containsImplicitReceiverReference(in: bodyExprID, ast: ast)
                     }
@@ -316,14 +316,15 @@ final class ExprLowerer {
                     transitiveChanged = false
                     for sym in captureSymbols {
                         guard let outerExpr = driver.ctx.localValuesBySymbol[sym],
-                              let callableInfo = driver.ctx.callableValueInfoByExprID[outerExpr] else {
+                              let callableInfo = driver.ctx.callableValueInfoByExprID[outerExpr]
+                        else {
                             continue
                         }
                         for captureArg in callableInfo.captureArguments {
                             var transitiveSym: SymbolID?
                             if let found = exprIDToSymbol[captureArg] {
                                 transitiveSym = found
-                            } else if case .symbolRef(let argSym) = arena.expr(captureArg) {
+                            } else if case let .symbolRef(argSym) = arena.expr(captureArg) {
                                 transitiveSym = argSym
                             } else if captureArg == driver.ctx.currentImplicitReceiverExprID {
                                 transitiveSym = driver.ctx.currentImplicitReceiverSymbol
@@ -364,7 +365,7 @@ final class ExprLowerer {
                     funRef,
                     symbol: symbol,
                     callee: localFunCalleeName,
-                    captureArguments: captureBindings.map { $0.valueExpr }
+                    captureArguments: captureBindings.map(\.valueExpr)
                 )
 
                 let scopeSnapshot = driver.ctx.saveScope()
@@ -404,14 +405,16 @@ final class ExprLowerer {
                 }
                 for capture in captureBindings {
                     if let outerCallableInfo = driver.ctx.callableValueInfoByExprID[capture.valueExpr],
-                       let bodyCallableExpr = driver.ctx.localValuesBySymbol[capture.capturedSymbol] {
+                       let bodyCallableExpr = driver.ctx.localValuesBySymbol[capture.capturedSymbol]
+                    {
                         var remappedArgs: [KIRExprID] = []
                         var mappingFailed = false
                         for argExpr in outerCallableInfo.captureArguments {
                             if let bodyArgExpr = outerExprToBodyExpr[argExpr] {
                                 remappedArgs.append(bodyArgExpr)
-                            } else if case .symbolRef(let argSym) = arena.expr(argExpr),
-                                      let bodyArgExpr = driver.ctx.localValuesBySymbol[argSym] {
+                            } else if case let .symbolRef(argSym) = arena.expr(argExpr),
+                                      let bodyArgExpr = driver.ctx.localValuesBySymbol[argSym]
+                            {
                                 remappedArgs.append(bodyArgExpr)
                             } else {
                                 assertionFailure("BuildKIRPhase: failed to remap capture argument for local function body")
@@ -451,12 +454,13 @@ final class ExprLowerer {
                 )
 
                 switch localFunBody {
-                case .block(let bodyExprIDs, _):
+                case let .block(bodyExprIDs, _):
                     var lastValue: KIRExprID?
                     var terminatedByReturn = false
                     for bodyExprID in bodyExprIDs {
                         if let bodyExpr = ast.arena.expr(bodyExprID),
-                           case .returnExpr(let value, _, _) = bodyExpr {
+                           case let .returnExpr(value, _, _) = bodyExpr
+                        {
                             if let value {
                                 let lowered = lowerExpr(
                                     value,
@@ -475,7 +479,8 @@ final class ExprLowerer {
                             break
                         }
                         if let bodyExpr = ast.arena.expr(bodyExprID),
-                           case .throwExpr = bodyExpr {
+                           case .throwExpr = bodyExpr
+                        {
                             _ = lowerExpr(
                                 bodyExprID,
                                 ast: ast,
@@ -510,7 +515,7 @@ final class ExprLowerer {
                             localFunBodyInstructions.append(.returnUnit)
                         }
                     }
-                case .expr(let bodyExprID, _):
+                case let .expr(bodyExprID, _):
                     let value = lowerExpr(
                         bodyExprID,
                         ast: ast,
@@ -531,7 +536,7 @@ final class ExprLowerer {
                         KIRFunction(
                             symbol: symbol,
                             name: localFunName,
-                            params: captureBindings.map { $0.param } + localFunValueParamList,
+                            params: captureBindings.map(\.param) + localFunValueParamList,
                             returnType: localFunReturnType,
                             body: localFunBodyInstructions,
                             isSuspend: sig?.isSuspend ?? false,
@@ -545,7 +550,7 @@ final class ExprLowerer {
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
-        case .localDecl(_, _, _, let initializer, _):
+        case let .localDecl(_, _, _, initializer, _):
             if let initializer {
                 let initializerID = lowerExpr(
                     initializer,
@@ -564,7 +569,7 @@ final class ExprLowerer {
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
-        case .localAssign(_, let valueExpr, _):
+        case let .localAssign(_, valueExpr, _):
             let valueID = lowerExpr(
                 valueExpr,
                 ast: ast,
@@ -582,7 +587,7 @@ final class ExprLowerer {
                 // Class member properties always have parentSymbol set to a class/object.
                 if let symInfo = sema.symbols.symbol(symbol), symInfo.kind == .property, {
                     let p = sema.symbols.parentSymbol(for: symbol)
-                    let pk = p.flatMap({ sema.symbols.symbol($0) })?.kind
+                    let pk = p.flatMap { sema.symbols.symbol($0) }?.kind
                     return pk == nil || pk == .package
                 }() {
                     let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
@@ -603,7 +608,7 @@ final class ExprLowerer {
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
-        case .memberAssign(let receiverExpr, let calleeName, let valueExpr, _):
+        case let .memberAssign(receiverExpr, calleeName, valueExpr, _):
             return driver.callLowerer.lowerMemberAssignExpr(
                 exprID,
                 receiverExpr: receiverExpr,
@@ -617,13 +622,13 @@ final class ExprLowerer {
                 instructions: &instructions
             )
 
-        case .indexedAccess(let receiverExpr, let indices, _):
+        case let .indexedAccess(receiverExpr, indices, _):
             return driver.callLowerer.lowerIndexedAccessExpr(exprID, receiverExpr: receiverExpr, indices: indices, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
-        case .indexedAssign(let receiverExpr, let indices, let valueExpr, _):
+        case let .indexedAssign(receiverExpr, indices, valueExpr, _):
             return driver.callLowerer.lowerIndexedAssignExpr(exprID, receiverExpr: receiverExpr, indices: indices, valueExpr: valueExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
-        case .returnExpr(let value, _, _):
+        case let .returnExpr(value, _, _):
             if let value {
                 let lowered = lowerExpr(
                     value,
@@ -642,22 +647,22 @@ final class ExprLowerer {
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
-        case .ifExpr(let condition, let thenExpr, let elseExpr, _):
+        case let .ifExpr(condition, thenExpr, elseExpr, _):
             return driver.controlFlowLowerer.lowerIfExpr(exprID, condition: condition, thenExpr: thenExpr, elseExpr: elseExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
-        case .tryExpr(let bodyExpr, let catchClauses, let finallyExpr, _):
+        case let .tryExpr(bodyExpr, catchClauses, finallyExpr, _):
             return driver.controlFlowLowerer.lowerTryExpr(exprID, bodyExpr: bodyExpr, catchClauses: catchClauses, finallyExpr: finallyExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
-        case .binary(let op, let lhs, let rhs, _):
+        case let .binary(op, lhs, rhs, _):
             return driver.callLowerer.lowerBinaryExpr(exprID, op: op, lhs: lhs, rhs: rhs, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
-        case .call(let calleeExpr, _, let args, _):
+        case let .call(calleeExpr, _, args, _):
             return driver.callLowerer.lowerCallExpr(exprID, calleeExpr: calleeExpr, args: args, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
-        case .memberCall(let receiverExpr, let calleeName, _, let args, _):
+        case let .memberCall(receiverExpr, calleeName, _, args, _):
             return driver.callLowerer.lowerMemberCallExpr(exprID, receiverExpr: receiverExpr, calleeName: calleeName, args: args, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
-        case .unaryExpr(let op, let operandExpr, _):
+        case let .unaryExpr(op, operandExpr, _):
             let operandID = lowerExpr(
                 operandExpr,
                 ast: ast,
@@ -684,7 +689,7 @@ final class ExprLowerer {
                 return result
             }
 
-        case .isCheck(let exprToCheck, _, _, _):
+        case let .isCheck(exprToCheck, _, _, _):
             let operandID = lowerExpr(
                 exprToCheck,
                 ast: ast,
@@ -705,7 +710,7 @@ final class ExprLowerer {
             ))
             return result
 
-        case .asCast(let exprToCast, _, _, _):
+        case let .asCast(exprToCast, _, _, _):
             let operandID = lowerExpr(
                 exprToCast,
                 ast: ast,
@@ -726,7 +731,7 @@ final class ExprLowerer {
             ))
             return result
 
-        case .nullAssert(let innerExpr, _):
+        case let .nullAssert(innerExpr, _):
             let operandID = lowerExpr(
                 innerExpr,
                 ast: ast,
@@ -740,10 +745,10 @@ final class ExprLowerer {
             instructions.append(.nullAssert(operand: operandID, result: result))
             return result
 
-        case .safeMemberCall(let receiverExpr, let calleeName, _, let args, _):
+        case let .safeMemberCall(receiverExpr, calleeName, _, args, _):
             return driver.callLowerer.lowerSafeMemberCallExpr(exprID, receiverExpr: receiverExpr, calleeName: calleeName, args: args, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
-        case .compoundAssign(let op, _, let valueExpr, _):
+        case let .compoundAssign(op, _, valueExpr, _):
             let rhsID = lowerExpr(
                 valueExpr,
                 ast: ast,
@@ -753,13 +758,12 @@ final class ExprLowerer {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
-            let kirOp: KIRBinaryOp
-            switch op {
-            case .plusAssign: kirOp = .add
-            case .minusAssign: kirOp = .subtract
-            case .timesAssign: kirOp = .multiply
-            case .divAssign: kirOp = .divide
-            case .modAssign: kirOp = .modulo
+            let kirOp: KIRBinaryOp = switch op {
+            case .plusAssign: .add
+            case .minusAssign: .subtract
+            case .timesAssign: .multiply
+            case .divAssign: .divide
+            case .modAssign: .modulo
             }
             if let symbol = sema.bindings.identifierSymbols[exprID] {
                 // Top-level property compound assignment needs a copy to global storage.
@@ -767,7 +771,7 @@ final class ExprLowerer {
                 // Class member properties always have parentSymbol set to a class/object.
                 if let symInfo = sema.symbols.symbol(symbol), symInfo.kind == .property, {
                     let p = sema.symbols.parentSymbol(for: symbol)
-                    let pk = p.flatMap({ sema.symbols.symbol($0) })?.kind
+                    let pk = p.flatMap { sema.symbols.symbol($0) }?.kind
                     return pk == nil || pk == .package
                 }() {
                     let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
@@ -802,10 +806,10 @@ final class ExprLowerer {
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
-        case .indexedCompoundAssign(_, let receiverExpr, let indices, let valueExpr, _):
+        case let .indexedCompoundAssign(_, receiverExpr, indices, valueExpr, _):
             return driver.callLowerer.lowerIndexedCompoundAssignExpr(exprID, receiverExpr: receiverExpr, indices: indices, valueExpr: valueExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
-        case .throwExpr(let valueExpr, _):
+        case let .throwExpr(valueExpr, _):
             let thrownValue = lowerExpr(
                 valueExpr,
                 ast: ast,
@@ -820,7 +824,7 @@ final class ExprLowerer {
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
-        case .lambdaLiteral(let params, let bodyExpr, _, _):
+        case let .lambdaLiteral(params, bodyExpr, _, _):
             return driver.lambdaLowerer.lowerLambdaLiteralExpr(
                 exprID,
                 params: params,
@@ -833,7 +837,7 @@ final class ExprLowerer {
                 instructions: &instructions
             )
 
-        case .callableRef(let receiverExpr, let memberName, _):
+        case let .callableRef(receiverExpr, memberName, _):
             return driver.lambdaLowerer.lowerCallableRefExpr(
                 exprID,
                 receiverExpr: receiverExpr,
@@ -846,7 +850,7 @@ final class ExprLowerer {
                 instructions: &instructions
             )
 
-        case .objectLiteral(let superTypes, _):
+        case let .objectLiteral(superTypes, _):
             return driver.objectLiteralLowerer.lowerObjectLiteralExpr(
                 exprID,
                 superTypes: superTypes,
@@ -856,10 +860,10 @@ final class ExprLowerer {
                 instructions: &instructions
             )
 
-        case .whenExpr(let subject, let branches, let elseExpr, _):
+        case let .whenExpr(subject, branches, elseExpr, _):
             return driver.controlFlowLowerer.lowerWhenExpr(exprID, subject: subject, branches: branches, elseExpr: elseExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
 
-        case .blockExpr(let statements, let trailingExpr, _):
+        case let .blockExpr(statements, trailingExpr, _):
             for stmt in statements {
                 let loweredStmt = lowerExpr(
                     stmt,
@@ -906,7 +910,7 @@ final class ExprLowerer {
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
-        case .inExpr(let lhsExpr, let rhsExpr, _):
+        case let .inExpr(lhsExpr, rhsExpr, _):
             let lhsID = lowerExpr(
                 lhsExpr, ast: ast, sema: sema, arena: arena, interner: interner,
                 propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions
@@ -926,7 +930,7 @@ final class ExprLowerer {
             ))
             return result
 
-        case .notInExpr(let lhsExpr, let rhsExpr, _):
+        case let .notInExpr(lhsExpr, rhsExpr, _):
             let lhsID = lowerExpr(
                 lhsExpr, ast: ast, sema: sema, arena: arena, interner: interner,
                 propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions
@@ -948,7 +952,7 @@ final class ExprLowerer {
             instructions.append(.unary(op: .not, operand: containsResult, result: result))
             return result
 
-        case .destructuringDecl(let names, _, let initializer, _):
+        case let .destructuringDecl(names, _, initializer, _):
             // Lower: val (a, b) = expr  →  tmp = expr; a = tmp.component1(); b = tmp.component2()
             let rhsID = lowerExpr(
                 initializer, ast: ast, sema: sema, arena: arena, interner: interner,
@@ -966,7 +970,7 @@ final class ExprLowerer {
                 // so we can use its per-component type (not the expression-level Unit type)
                 let candidates = sema.symbols.lookupAll(fqName: [
                     interner.intern("__destructuring_\(exprID.rawValue)"),
-                    name
+                    name,
                 ])
                 let componentType = candidates.first.flatMap { sema.symbols.propertyType(for: $0) } ?? sema.types.anyType
                 let componentResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: componentType)
@@ -988,7 +992,7 @@ final class ExprLowerer {
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
-        case .forDestructuringExpr(let names, let iterableExpr, let bodyExpr, _):
+        case let .forDestructuringExpr(names, iterableExpr, bodyExpr, _):
             // Lower as a regular for-loop, but inside the body, destructure the element
             // Delegate to control flow lowerer for loop structure
             return driver.controlFlowLowerer.lowerForDestructuringExpr(

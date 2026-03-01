@@ -1,7 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
 
 extension LibraryMetadataCacheBehaviorTests {
     func testLoadImportedSymbolsWithNilCacheMatchesWithoutCache() throws {
@@ -212,7 +211,8 @@ extension LibraryMetadataCacheBehaviorTests {
         """
         try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try "symbols=1\nfunction _ fq=bad.fn schema=v1 arity=0 suspend=0".write(
-            to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
+            to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8
+        )
 
         let cache = LibraryMetadataCache()
         let interner = StringInterner()
@@ -264,5 +264,5 @@ extension LibraryMetadataCacheBehaviorTests {
         XCTAssertEqual(cache.manifestCacheCount, 1, "Manifest cache should have been reused")
     }
 
-    /// B5: Multiple libraries → all manifests and metadata cached correctly
+    // B5: Multiple libraries → all manifests and metadata cached correctly
 }

@@ -1,6 +1,5 @@
 import Foundation
 
-
 extension DataFlowSemaPhase {
     func collectCompanionObjectHeader(
         companionDeclID: DeclID,
@@ -15,7 +14,8 @@ extension DataFlowSemaPhase {
         interner: StringInterner
     ) {
         guard let decl = ast.arena.decl(companionDeclID),
-              case .objectDecl(let companionObject) = decl else {
+              case let .objectDecl(companionObject) = decl
+        else {
             return
         }
 

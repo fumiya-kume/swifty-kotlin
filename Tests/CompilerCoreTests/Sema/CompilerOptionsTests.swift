@@ -1,8 +1,7 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 final class CompilerOptionsTests: XCTestCase {
-
     // MARK: - CompilerVersion
 
     func testCompilerVersionInit() {

@@ -1,9 +1,8 @@
-import XCTest
-import Foundation
 @testable import CompilerCore
+import Foundation
+import XCTest
 
 final class DriverIncrementalTests: XCTestCase {
-
     private var tempDir: String!
     private var outputPath: String!
 
@@ -43,7 +42,7 @@ final class DriverIncrementalTests: XCTestCase {
             )
             let result = driver.runForTesting(options: options)
             XCTAssertEqual(result.exitCode, 0,
-                "KIR dump with time-phases should succeed. Diagnostics: \(result.diagnostics.map(\.message))")
+                           "KIR dump with time-phases should succeed. Diagnostics: \(result.diagnostics.map(\.message))")
         }
     }
 
@@ -64,7 +63,7 @@ final class DriverIncrementalTests: XCTestCase {
             )
             let result = driver.runForTesting(options: options)
             XCTAssertEqual(result.exitCode, 0,
-                "KIR dump with incremental should succeed. Diagnostics: \(result.diagnostics.map(\.message))")
+                           "KIR dump with incremental should succeed. Diagnostics: \(result.diagnostics.map(\.message))")
             // Cache files should have been written
             XCTAssertTrue(FileManager.default.fileExists(atPath: cachePath + "/manifest.json"))
             XCTAssertTrue(FileManager.default.fileExists(atPath: cachePath + "/deps.json"))
@@ -107,7 +106,7 @@ final class DriverIncrementalTests: XCTestCase {
     func testIncrementalWithMultipleFiles() throws {
         try withTemporaryFiles(contents: [
             "fun greet(): String = \"Hello\"",
-            "fun main() { println(greet()) }"
+            "fun main() { println(greet()) }",
         ]) { paths in
             let driver = makeDriver()
             let cachePath = tempDir + "/cache"
@@ -122,7 +121,7 @@ final class DriverIncrementalTests: XCTestCase {
             )
             let result = driver.runForTesting(options: options)
             XCTAssertEqual(result.exitCode, 0,
-                "Multi-file incremental should succeed. Diagnostics: \(result.diagnostics.map(\.message))")
+                           "Multi-file incremental should succeed. Diagnostics: \(result.diagnostics.map(\.message))")
         }
     }
 

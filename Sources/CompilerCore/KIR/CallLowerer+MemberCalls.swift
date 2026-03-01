@@ -4,7 +4,7 @@ extension CallLowerer {
     private static let unresolvedCollectionMemberNames: Set<String> = [
         "size", "get", "contains", "containsKey",
         "isEmpty", "first", "last", "indexOf",
-        "count", "iterator"
+        "count", "iterator",
     ]
 
     func lowerMemberCallExpr(
@@ -116,7 +116,8 @@ extension CallLowerer {
         // Primitive member function: Int/Long.inv() → kk_op_inv (P5-103)
         if calleeName == interner.intern("inv"),
            args.isEmpty,
-           shouldLowerPrimitiveInv(receiverExpr: receiverExpr, sema: sema, nullableReceiverAllowed: requireNonNullableReceiverForConstFold) {
+           shouldLowerPrimitiveInv(receiverExpr: receiverExpr, sema: sema, nullableReceiverAllowed: requireNonNullableReceiverForConstFold)
+        {
             instructions.append(.call(
                 symbol: nil,
                 callee: interner.intern("kk_op_inv"),
@@ -188,12 +189,14 @@ extension CallLowerer {
         guard let chosen = callBinding?.chosenCallee,
               let constant = propertyConstantInitializers[chosen],
               let symInfo = sema.symbols.symbol(chosen),
-              symInfo.flags.contains(.constValue) else {
+              symInfo.flags.contains(.constValue)
+        else {
             return nil
         }
         if requireNonNullableReceiver {
             guard let receiverType = sema.bindings.exprTypes[receiverExpr],
-                  receiverType == sema.types.makeNonNullable(receiverType) else {
+                  receiverType == sema.types.makeNonNullable(receiverType)
+            else {
                 return nil
             }
         }
@@ -219,7 +222,7 @@ extension CallLowerer {
 
     private func appendReceiverToMemberArguments(
         _ loweredReceiverID: KIRExprID,
-        receiverExpr: ExprID,
+        receiverExpr _: ExprID,
         calleeName: InternedString,
         chosenCallee: SymbolID?,
         prependReceiverForUnresolvedCollectionCall: Bool,
@@ -229,12 +232,14 @@ extension CallLowerer {
     ) {
         if let chosenCallee,
            let signature = sema.symbols.functionSignature(for: chosenCallee),
-           signature.receiverType != nil {
+           signature.receiverType != nil
+        {
             arguments.insert(loweredReceiverID, at: 0)
             return
         }
         guard chosenCallee == nil,
-              prependReceiverForUnresolvedCollectionCall else {
+              prependReceiverForUnresolvedCollectionCall
+        else {
             return
         }
         let calleeText = interner.resolve(calleeName)
@@ -260,7 +265,8 @@ extension CallLowerer {
     ) {
         var finalArguments = arguments
         if normalized.defaultMask != 0,
-           let chosenCallee {
+           let chosenCallee
+        {
             appendReifiedTypeTokens(
                 chosenCallee: chosenCallee,
                 callBinding: callBinding,
@@ -308,13 +314,15 @@ extension CallLowerer {
         let receiverTypeForDispatch = sema.bindings.exprTypes[receiverExpr]
         if !isSuperCall,
            let chosenCallee,
-           let dispatchKind = resolveVirtualDispatch(callee: chosenCallee, receiverTypeID: receiverTypeForDispatch, sema: sema) {
+           let dispatchKind = resolveVirtualDispatch(callee: chosenCallee, receiverTypeID: receiverTypeForDispatch, sema: sema)
+        {
             // For virtualCall, the receiver is a separate field, so remove it
             // from finalArguments (it was inserted at index 0 above).
             var vcArguments = finalArguments
             if let signature = sema.symbols.functionSignature(for: chosenCallee),
                signature.receiverType != nil,
-               !vcArguments.isEmpty {
+               !vcArguments.isEmpty
+            {
                 vcArguments.removeFirst()
             }
             instructions.append(.virtualCall(
@@ -348,12 +356,12 @@ extension CallLowerer {
     ) -> InternedString {
         guard let chosenCallee,
               let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
-              !externalLinkName.isEmpty else {
+              !externalLinkName.isEmpty
+        else {
             return fallback
         }
         return interner.intern(externalLinkName)
     }
-
 
     // MARK: - Member Assignment
 
@@ -420,5 +428,4 @@ extension CallLowerer {
             instructions: &instructions.instructions
         )
     }
-
 }

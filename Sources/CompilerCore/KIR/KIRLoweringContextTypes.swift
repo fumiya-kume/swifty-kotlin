@@ -19,11 +19,11 @@ struct KIRLoweringEmitContext: RandomAccessCollection, MutableCollection, RangeR
     }
 
     init() {
-        self.instructions = []
+        instructions = []
     }
 
     init(arrayLiteral elements: KIRInstruction...) {
-        self.instructions = elements
+        instructions = elements
     }
 
     var startIndex: Index {
@@ -47,7 +47,7 @@ struct KIRLoweringEmitContext: RandomAccessCollection, MutableCollection, RangeR
         set { instructions[position] = newValue }
     }
 
-    mutating func replaceSubrange<C>(_ subrange: Range<Index>, with newElements: C) where C: Collection, KIRInstruction == C.Element {
+    mutating func replaceSubrange<C: Collection>(_ subrange: Range<Index>, with newElements: C) where KIRInstruction == C.Element {
         instructions.replaceSubrange(subrange, with: newElements)
     }
 }

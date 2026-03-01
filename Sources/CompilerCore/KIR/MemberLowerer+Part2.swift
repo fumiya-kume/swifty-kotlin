@@ -1,7 +1,7 @@
 import Foundation
 
-/// Delegate class for KIR lowering: MemberLowerer.
-/// Holds an unowned reference to the driver for mutual recursion.
+// Delegate class for KIR lowering: MemberLowerer.
+// Holds an unowned reference to the driver for mutual recursion.
 
 extension MemberLowerer {
     func lowerMemberDecls(
@@ -11,7 +11,7 @@ extension MemberLowerer {
         nestedObjects: [DeclID],
         shared: KIRLoweringSharedContext
     ) -> (directMembers: [KIRDeclID], allDecls: [KIRDeclID]) {
-        return lowerMemberDecls(
+        lowerMemberDecls(
             memberFunctions: memberFunctions,
             memberProperties: memberProperties,
             nestedClasses: nestedClasses,
@@ -44,7 +44,8 @@ extension MemberLowerer {
 
         // Add receiver parameter if property has an owner class/object.
         if let ownerSymbol,
-           let ownerSym = sema.symbols.symbol(ownerSymbol) {
+           let ownerSym = sema.symbols.symbol(ownerSymbol)
+        {
             let ownerType = sema.types.make(
                 .classType(ClassType(classSymbol: ownerSym.id, args: [], nullability: .nonNull))
             )
@@ -61,7 +62,8 @@ extension MemberLowerer {
 
         var body: KIRLoweringEmitContext = [.beginBlock]
         if let receiverExpr = driver.ctx.currentImplicitReceiverExprID,
-           let receiverSym = driver.ctx.currentImplicitReceiverSymbol {
+           let receiverSym = driver.ctx.currentImplicitReceiverSymbol
+        {
             body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
         }
 
@@ -182,7 +184,7 @@ extension MemberLowerer {
         propertySymbol: SymbolID,
         propertyType: TypeID,
         accessorKind: PropertyAccessorKind,
-        setterParamName: InternedString?,
+        setterParamName _: InternedString?,
         shared: KIRLoweringSharedContext,
         allDecls: inout [KIRDeclID]
     ) {
@@ -205,7 +207,8 @@ extension MemberLowerer {
             driver.ctx.currentImplicitReceiverSymbol = receiverSymbol
             driver.ctx.currentImplicitReceiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: receiverType)
         } else if let ownerSymbol,
-                  let ownerSym = sema.symbols.symbol(ownerSymbol) {
+                  let ownerSym = sema.symbols.symbol(ownerSymbol)
+        {
             let ownerType = sema.types.make(
                 .classType(ClassType(classSymbol: ownerSym.id, args: [], nullability: .nonNull))
             )
@@ -249,17 +252,19 @@ extension MemberLowerer {
 
         var body: KIRLoweringEmitContext = [.beginBlock]
         if let receiverExpr = driver.ctx.currentImplicitReceiverExprID,
-           let receiverSym = driver.ctx.currentImplicitReceiverSymbol {
+           let receiverSym = driver.ctx.currentImplicitReceiverSymbol
+        {
             body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
         }
 
         switch accessorBody {
-        case .block(let exprIDs, _):
+        case let .block(exprIDs, _):
             var lastValue: KIRExprID?
             var terminatedByReturn = false
             for exprID in exprIDs {
                 if let expr = ast.arena.expr(exprID),
-                   case .returnExpr(let value, _, _) = expr {
+                   case let .returnExpr(value, _, _) = expr
+                {
                     if let value {
                         let lowered = driver.lowerExpr(
                             value,
@@ -286,7 +291,7 @@ extension MemberLowerer {
                     body.append(.returnUnit)
                 }
             }
-        case .expr(let exprID, _):
+        case let .expr(exprID, _):
             let value = driver.lowerExpr(
                 exprID,
                 shared: shared,
@@ -304,13 +309,12 @@ extension MemberLowerer {
 
         // Use a synthetic symbol derived from the property symbol for the accessor.
         // Offsets are centralized in SyntheticSymbolScheme.
-        let syntheticAccessorSymbol: SymbolID
-        switch accessorKind {
+        let syntheticAccessorSymbol: SymbolID = switch accessorKind {
         case .getter:
-            syntheticAccessorSymbol = sema.symbols.extensionPropertyGetterAccessor(for: propertySymbol)
+            sema.symbols.extensionPropertyGetterAccessor(for: propertySymbol)
                 ?? SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: propertySymbol)
         case .setter:
-            syntheticAccessorSymbol = sema.symbols.extensionPropertySetterAccessor(for: propertySymbol)
+            sema.symbols.extensionPropertySetterAccessor(for: propertySymbol)
                 ?? SyntheticSymbolScheme.propertySetterAccessorSymbol(for: propertySymbol)
         }
 

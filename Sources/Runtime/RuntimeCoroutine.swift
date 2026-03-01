@@ -1,7 +1,7 @@
-import Foundation
 import Dispatch
+import Foundation
 
-internal final class RuntimeContinuationState {
+final class RuntimeContinuationState {
     var functionID: Int64
     var label: Int64
     var completion: Int64
@@ -79,7 +79,7 @@ internal final class RuntimeContinuationState {
     }
 }
 
-internal final class RuntimeAsyncTask: @unchecked Sendable {
+final class RuntimeAsyncTask: @unchecked Sendable {
     private let lock = NSLock()
     private let ready = DispatchSemaphore(value: 0)
     private var isCompleted = false
@@ -148,7 +148,7 @@ internal final class RuntimeAsyncTask: @unchecked Sendable {
 // MARK: - Structured Concurrency (P5-89)
 
 /// A job handle representing a launched coroutine. Supports join and cancellation.
-internal final class RuntimeJobHandle: @unchecked Sendable {
+final class RuntimeJobHandle: @unchecked Sendable {
     private let lock = NSLock()
     private let completionSemaphore = DispatchSemaphore(value: 0)
     private(set) var isCompleted = false
@@ -226,9 +226,9 @@ internal final class RuntimeJobHandle: @unchecked Sendable {
 }
 
 /// A coroutine scope that tracks child jobs and supports structured cancellation.
-internal final class RuntimeCoroutineScope {
+final class RuntimeCoroutineScope {
     private let lock = NSLock()
-    private var children: [Int] = []  // opaque handles (RuntimeJobHandle or RuntimeAsyncTask)
+    private var children: [Int] = [] // opaque handles (RuntimeJobHandle or RuntimeAsyncTask)
     private(set) var isCancelled = false
     fileprivate var parent: RuntimeCoroutineScope?
 
@@ -527,7 +527,7 @@ public func kk_kxmini_delay(_ milliseconds: Int, _ continuation: Int) -> Int {
 // MARK: - Flow Runtime Stubs (P5-88)
 
 /// Opaque handle wrapping a flow emitter function pointer and its continuation.
-internal final class RuntimeFlowHandle {
+final class RuntimeFlowHandle {
     let emitterFnPtr: Int
     var collectedValues: [Int] = []
 
@@ -537,7 +537,7 @@ internal final class RuntimeFlowHandle {
 }
 
 @_cdecl("kk_flow_create")
-public func kk_flow_create(_ emitterFnPtr: Int, _ continuation: Int) -> Int {
+public func kk_flow_create(_ emitterFnPtr: Int, _: Int) -> Int {
     let flow = RuntimeFlowHandle(emitterFnPtr: emitterFnPtr)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(flow).toOpaque())
     runtimeStorage.withLock { state in
@@ -547,7 +547,7 @@ public func kk_flow_create(_ emitterFnPtr: Int, _ continuation: Int) -> Int {
 }
 
 @_cdecl("kk_flow_emit")
-public func kk_flow_emit(_ flowHandle: Int, _ value: Int, _ continuation: Int) -> Int {
+public func kk_flow_emit(_ flowHandle: Int, _ value: Int, _: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: flowHandle) else {
         return 0
     }
@@ -557,7 +557,7 @@ public func kk_flow_emit(_ flowHandle: Int, _ value: Int, _ continuation: Int) -
 }
 
 @_cdecl("kk_flow_collect")
-public func kk_flow_collect(_ flowHandle: Int, _ collectorFnPtr: Int, _ continuation: Int) -> Int {
+public func kk_flow_collect(_ flowHandle: Int, _: Int, _: Int) -> Int {
     // Stub: invoke collector on each emitted value; full suspend semantics deferred
     guard let ptr = UnsafeMutableRawPointer(bitPattern: flowHandle) else {
         return 0
@@ -572,9 +572,9 @@ public func kk_flow_collect(_ flowHandle: Int, _ collectorFnPtr: Int, _ continua
 
 /// Dispatcher tag constants used as opaque handles.
 private enum RuntimeDispatcherTag {
-    static let defaultDispatcher: Int = 0x4B4B4401  // "KKD\x01"
-    static let ioDispatcher: Int = 0x4B4B4402        // "KKD\x02"
-    static let mainDispatcher: Int = 0x4B4B4403      // "KKD\x03"
+    static let defaultDispatcher: Int = 0x4B4B_4401 // "KKD\x01"
+    static let ioDispatcher: Int = 0x4B4B_4402 // "KKD\x02"
+    static let mainDispatcher: Int = 0x4B4B_4403 // "KKD\x03"
 }
 
 @_cdecl("kk_dispatcher_default")
@@ -593,13 +593,13 @@ public func kk_dispatcher_main() -> Int {
 }
 
 @_cdecl("kk_with_context")
-public func kk_with_context(_ dispatcher: Int, _ blockFnPtr: Int, _ continuation: Int) -> Int {
+public func kk_with_context(_: Int, _ blockFnPtr: Int, _ continuation: Int) -> Int {
     // Stub: execute blockFnPtr on the appropriate dispatch queue.
     // For now, all dispatchers execute synchronously on the current thread.
     guard let entryPoint = suspendEntryPoint(from: blockFnPtr) else {
         return 0
     }
-    var outThrown: Int = 0
+    var outThrown = 0
     let result = entryPoint(continuation, &outThrown)
     if outThrown != 0 {
         return 0
@@ -610,7 +610,7 @@ public func kk_with_context(_ dispatcher: Int, _ blockFnPtr: Int, _ continuation
 // MARK: - Channel Runtime Stubs (P5-134)
 
 /// Channel with rendezvous (capacity 0) and buffered (capacity > 0) semantics.
-internal final class RuntimeChannelHandle {
+final class RuntimeChannelHandle {
     private let lock = NSLock()
     private var buffer: [Int] = []
     private let capacity: Int
@@ -631,11 +631,11 @@ internal final class RuntimeChannelHandle {
             return 0
         }
         // For buffered channels, drop when full; for rendezvous, allow exactly one item
-        if capacity > 0 && buffer.count >= capacity {
+        if capacity > 0, buffer.count >= capacity {
             lock.unlock()
             return 0
         }
-        if capacity == 0 && !buffer.isEmpty {
+        if capacity == 0, !buffer.isEmpty {
             lock.unlock()
             return 0
         }
@@ -656,7 +656,7 @@ internal final class RuntimeChannelHandle {
 
     func receive() -> Int {
         lock.lock()
-        if closed && buffer.isEmpty {
+        if closed, buffer.isEmpty {
             lock.unlock()
             return 0
         }
@@ -686,10 +686,10 @@ internal final class RuntimeChannelHandle {
         let sendersToWake = waitingSenders
         lock.unlock()
         // Wake all blocked receivers and senders
-        for _ in 0..<receiversToWake {
+        for _ in 0 ..< receiversToWake {
             receiveSemaphore.signal()
         }
-        for _ in 0..<sendersToWake {
+        for _ in 0 ..< sendersToWake {
             sendSemaphore.signal()
         }
     }
@@ -706,7 +706,7 @@ public func kk_channel_create(_ capacity: Int) -> Int {
 }
 
 @_cdecl("kk_channel_send")
-public func kk_channel_send(_ handle: Int, _ value: Int, _ continuation: Int) -> Int {
+public func kk_channel_send(_ handle: Int, _ value: Int, _: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return 0
     }
@@ -715,7 +715,7 @@ public func kk_channel_send(_ handle: Int, _ value: Int, _ continuation: Int) ->
 }
 
 @_cdecl("kk_channel_receive")
-public func kk_channel_receive(_ handle: Int, _ continuation: Int) -> Int {
+public func kk_channel_receive(_ handle: Int, _: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return 0
     }
@@ -742,8 +742,8 @@ public func kk_await_all(_ handlesArray: Int, _ count: Int) -> Int {
     guard count > 0 else {
         return 0
     }
-    var lastResult: Int = 0
-    for i in 0..<count {
+    var lastResult = 0
+    for i in 0 ..< count {
         // Read handle from array using kk_array_get pattern
         let handleValue = runtimeReadArrayElement(arrayRaw: handlesArray, index: i)
         if handleValue != 0 {
@@ -852,13 +852,12 @@ public func kk_job_join(_ jobHandle: Int) -> Int {
     } else if let task = obj as? RuntimeAsyncTask {
         task.markConsumedByUserCode()
     }
-    let result: Int
-    if let job = obj as? RuntimeJobHandle {
-        result = job.join()
+    let result: Int = if let job = obj as? RuntimeJobHandle {
+        job.join()
     } else if let task = obj as? RuntimeAsyncTask {
-        result = task.awaitResult()
+        task.awaitResult()
     } else {
-        result = 0
+        0
     }
     // Release the original passRetained from launch
     Unmanaged<AnyObject>.fromOpaque(ptr).release()
@@ -891,7 +890,7 @@ public func kk_coroutine_scope_run_with_cont(_ entryPointRaw: Int, _ continuatio
 // MARK: - Child Cancel/Join Helpers (P5-89)
 
 /// Cancel a child handle (RuntimeJobHandle or RuntimeAsyncTask).
-internal func runtimeCancelChild(_ handle: Int) {
+func runtimeCancelChild(_ handle: Int) {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return
     }
@@ -904,7 +903,7 @@ internal func runtimeCancelChild(_ handle: Int) {
 }
 
 /// Join a child handle (RuntimeJobHandle or RuntimeAsyncTask). Returns the result.
-internal func runtimeJoinChild(_ handle: Int) -> Int {
+func runtimeJoinChild(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return 0
     }
@@ -919,7 +918,7 @@ internal func runtimeJoinChild(_ handle: Int) -> Int {
 
 // MARK: - Suspend Entry Loop
 
-internal func runSuspendEntryLoop(entryPointRaw: Int, functionID: Int, jobHandle: RuntimeJobHandle? = nil) -> Int {
+func runSuspendEntryLoop(entryPointRaw: Int, functionID: Int, jobHandle: RuntimeJobHandle? = nil) -> Int {
     guard suspendEntryPoint(from: entryPointRaw) != nil else {
         return 0
     }
@@ -931,19 +930,20 @@ internal func runSuspendEntryLoop(entryPointRaw: Int, functionID: Int, jobHandle
     return runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
 }
 
-internal func runSuspendEntryLoopWithContinuation(entryPointRaw: Int, continuation: Int) -> Int {
+func runSuspendEntryLoopWithContinuation(entryPointRaw: Int, continuation: Int) -> Int {
     guard let entryPoint = suspendEntryPoint(from: entryPointRaw) else {
         _ = kk_coroutine_state_exit(continuation, 0)
         return 0
     }
 
     let suspendedToken = Int(bitPattern: kk_coroutine_suspended())
-    var outThrown: Int = 0
+    var outThrown = 0
 
     while true {
         // Check cancellation before each resume (cooperative cancellation)
         if let state = runtimeContinuationState(from: continuation),
-           let job = state.jobHandle, job.cancellationSnapshot() {
+           let job = state.jobHandle, job.cancellationSnapshot()
+        {
             _ = kk_coroutine_state_exit(continuation, 0)
             return 0
         }

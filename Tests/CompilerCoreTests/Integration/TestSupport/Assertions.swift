@@ -1,5 +1,5 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 func assertHasDiagnostic(
     _ code: String,

@@ -1,13 +1,13 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 // MARK: - Block Expression Multi-Statement Evaluation Tests
+
 // Covers: P5-47 — block expression with multiple statements + trailing expression
 // Spec references: J6, J9, J11
 
 final class BlockExpressionTests: XCTestCase {
-
     // MARK: - AST: single expression block always produces blockExpr
 
     func testSingleExpressionBlockProducesBlockExprNode() throws {
@@ -309,8 +309,9 @@ final class BlockExpressionTests: XCTestCase {
             // Find a blockExpr with non-empty statements and a trailing expression
             var foundMultiStmtBlock = false
             for expr in ast.arena.exprs {
-                if case .blockExpr(let stmts, let trailing, _) = expr,
-                   !stmts.isEmpty, trailing != nil {
+                if case let .blockExpr(stmts, trailing, _) = expr,
+                   !stmts.isEmpty, trailing != nil
+                {
                     foundMultiStmtBlock = true
                     break
                 }

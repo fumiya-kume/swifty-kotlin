@@ -1,9 +1,8 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 final class FrontendPhasesTests: XCTestCase {
-
     // MARK: - LoadSourcesPhase
 
     func testLoadSourcesWithNoInputsEmitsDiagnosticAndThrows() {

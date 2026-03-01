@@ -138,12 +138,13 @@ enum TypeRefParserCore {
 
         if options.allowFunctionType,
            let functionType = parseFunctionTypeRefPrefix(
-                tokens,
-                from: start,
-                interner: interner,
-                astArena: astArena,
-                options: options
-           ) {
+               tokens,
+               from: start,
+               interner: interner,
+               astArena: astArena,
+               options: options
+           )
+        {
             return functionType
         }
 
@@ -162,12 +163,13 @@ enum TypeRefParserCore {
         if next < tokens.count,
            tokens[next].kind == .symbol(.lessThan),
            let parsedArgs = parseTypeArgRefsPrefix(
-                tokens,
-                from: next,
-                interner: interner,
-                astArena: astArena,
-                options: options
-           ) {
+               tokens,
+               from: next,
+               interner: interner,
+               astArena: astArena,
+               options: options
+           )
+        {
             typeArgs = parsedArgs.args
             next = parsedArgs.next
         }
@@ -175,7 +177,8 @@ enum TypeRefParserCore {
         if options.allowQualifiedPath {
             while next + 1 < tokens.count,
                   tokens[next].kind == .symbol(.dot),
-                  let name = identifier(from: tokens[next + 1], interner: interner, options: options) {
+                  let name = identifier(from: tokens[next + 1], interner: interner, options: options)
+            {
                 typeArgs = []
                 path.append(name)
                 next += 2
@@ -183,12 +186,13 @@ enum TypeRefParserCore {
                 if next < tokens.count,
                    tokens[next].kind == .symbol(.lessThan),
                    let parsedArgs = parseTypeArgRefsPrefix(
-                        tokens,
-                        from: next,
-                        interner: interner,
-                        astArena: astArena,
-                        options: options
-                   ) {
+                       tokens,
+                       from: next,
+                       interner: interner,
+                       astArena: astArena,
+                       options: options
+                   )
+                {
                     typeArgs = parsedArgs.args
                     next = parsedArgs.next
                 }
@@ -213,7 +217,8 @@ enum TypeRefParserCore {
         options: Options
     ) -> (args: [TypeArgRef], next: Int)? {
         guard start < tokens.count,
-              tokens[start].kind == .symbol(.lessThan) else {
+              tokens[start].kind == .symbol(.lessThan)
+        else {
             return nil
         }
 
@@ -293,15 +298,17 @@ enum TypeRefParserCore {
             if case .keyword(.suspend) = tokens[next].kind {
                 isSuspend = true
                 next += 1
-            } else if case .softKeyword(let keyword) = tokens[next].kind,
-                      keyword.rawValue == "suspend" {
+            } else if case let .softKeyword(keyword) = tokens[next].kind,
+                      keyword.rawValue == "suspend"
+            {
                 isSuspend = true
                 next += 1
             }
         }
 
         guard next < tokens.count,
-              tokens[next].kind == .symbol(.lParen) else {
+              tokens[next].kind == .symbol(.lParen)
+        else {
             return nil
         }
 
@@ -310,13 +317,14 @@ enum TypeRefParserCore {
         }
 
         guard closeParen + 1 < tokens.count,
-              tokens[closeParen + 1].kind == .symbol(.arrow) else {
+              tokens[closeParen + 1].kind == .symbol(.arrow)
+        else {
             return nil
         }
 
         guard let params = parseFunctionParamRefs(
             in: tokens,
-            range: (next + 1)..<closeParen,
+            range: (next + 1) ..< closeParen,
             interner: interner,
             astArena: astArena,
             options: options
@@ -365,13 +373,14 @@ enum TypeRefParserCore {
             if token.kind == .symbol(.comma), depth.isAtTopLevel {
                 guard segmentStart < index,
                       let parsed = parseTypeRefPrefix(
-                        tokens,
-                        from: segmentStart,
-                        interner: interner,
-                        astArena: astArena,
-                        options: options
+                          tokens,
+                          from: segmentStart,
+                          interner: interner,
+                          astArena: astArena,
+                          options: options
                       ),
-                      parsed.next == index else {
+                      parsed.next == index
+                else {
                     return nil
                 }
                 refs.append(parsed.ref)
@@ -389,7 +398,8 @@ enum TypeRefParserCore {
                 astArena: astArena,
                 options: options
             ),
-            parsed.next == range.upperBound else {
+                parsed.next == range.upperBound
+            else {
                 return nil
             }
             refs.append(parsed.ref)
@@ -400,7 +410,7 @@ enum TypeRefParserCore {
 
     private static func findMatchingCloseParen(in tokens: [Token], from openIndex: Int) -> Int? {
         var depth = 0
-        for index in openIndex..<tokens.count {
+        for index in openIndex ..< tokens.count {
             if tokens[index].kind == .symbol(.lParen) {
                 depth += 1
             } else if tokens[index].kind == .symbol(.rParen) {
@@ -423,11 +433,11 @@ enum TypeRefParserCore {
         }
 
         switch token.kind {
-        case .identifier(let name), .backtickedIdentifier(let name):
+        case let .identifier(name), let .backtickedIdentifier(name):
             return name
-        case .keyword(let keyword):
+        case let .keyword(keyword):
             return interner.intern(keyword.rawValue)
-        case .softKeyword(let keyword):
+        case let .softKeyword(keyword):
             return interner.intern(keyword.rawValue)
         default:
             return nil
@@ -437,17 +447,17 @@ enum TypeRefParserCore {
     private static func isTypeNameToken(_ kind: TokenKind, options: Options) -> Bool {
         switch kind {
         case .identifier, .backtickedIdentifier:
-            return true
+            true
         case .keyword(.in):
-            return options.allowKeywordIdentifiers && !options.reserveVarianceKeywords
+            options.allowKeywordIdentifiers && !options.reserveVarianceKeywords
         case .keyword:
-            return options.allowKeywordIdentifiers
+            options.allowKeywordIdentifiers
         case .softKeyword(.out):
-            return options.allowKeywordIdentifiers && !options.reserveVarianceKeywords
+            options.allowKeywordIdentifiers && !options.reserveVarianceKeywords
         case .softKeyword:
-            return options.allowKeywordIdentifiers
+            options.allowKeywordIdentifiers
         default:
-            return false
+            false
         }
     }
 }

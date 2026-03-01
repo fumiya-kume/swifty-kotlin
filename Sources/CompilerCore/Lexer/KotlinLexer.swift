@@ -10,7 +10,7 @@ public final class KotlinLexer {
 
     public init(file: FileID, source: Data, interner: StringInterner, diagnostics: DiagnosticEngine) {
         self.file = file
-        self.bytes = Array(source)
+        bytes = Array(source)
         self.interner = interner
         self.diagnostics = diagnostics
     }
@@ -54,7 +54,7 @@ public final class KotlinLexer {
 
             if let blockComment = consumeBlockCommentTrivia() {
                 switch blockComment {
-                case .consumed(let piece):
+                case let .consumed(piece):
                     trivia.append(piece)
                 case .unterminated:
                     return trivia
@@ -72,14 +72,14 @@ public final class KotlinLexer {
         let ch = bytes[offset]
         if ch == 0x20 {
             let start = offset
-            while offset < bytes.count && bytes[offset] == 0x20 {
+            while offset < bytes.count, bytes[offset] == 0x20 {
                 offset += 1
             }
             return .spaces(offset - start)
         }
         if ch == 0x09 {
             let start = offset
-            while offset < bytes.count && bytes[offset] == 0x09 {
+            while offset < bytes.count, bytes[offset] == 0x09 {
                 offset += 1
             }
             return .tabs(offset - start)
@@ -91,7 +91,7 @@ public final class KotlinLexer {
         guard offset < bytes.count else { return nil }
         let ch = bytes[offset]
         if ch == 0x0D {
-            if offset + 1 < bytes.count && bytes[offset + 1] == 0x0A {
+            if offset + 1 < bytes.count, bytes[offset + 1] == 0x0A {
                 offset += 2
                 return .newline
             }
@@ -111,10 +111,10 @@ public final class KotlinLexer {
             return nil
         }
         let start = offset
-        while offset < bytes.count && bytes[offset] != 0x0A {
+        while offset < bytes.count, bytes[offset] != 0x0A {
             offset += 1
         }
-        return .shebang(text(from: start..<offset))
+        return .shebang(text(from: start ..< offset))
     }
 
     private func consumeLineCommentTrivia() -> TriviaPiece? {
@@ -123,10 +123,10 @@ public final class KotlinLexer {
         }
         let start = offset
         offset += 2
-        while offset < bytes.count && bytes[offset] != 0x0A {
+        while offset < bytes.count, bytes[offset] != 0x0A {
             offset += 1
         }
-        return .lineComment(text(from: start..<offset))
+        return .lineComment(text(from: start ..< offset))
     }
 
     private enum BlockCommentTriviaResult {
@@ -142,7 +142,7 @@ public final class KotlinLexer {
         let start = offset
         offset += 2
         var depth = 1
-        while offset < bytes.count && depth > 0 {
+        while offset < bytes.count, depth > 0 {
             if starts(with: "/*") {
                 depth += 1
                 offset += 2
@@ -171,7 +171,7 @@ public final class KotlinLexer {
             return .unterminated
         }
 
-        return .consumed(.blockComment(text(from: start..<offset)))
+        return .consumed(.blockComment(text(from: start ..< offset)))
     }
 
     func scanNextTokens(leadingTrivia: [TriviaPiece]) -> [Token] {
@@ -212,7 +212,7 @@ public final class KotlinLexer {
 
         diagnostics.error(
             "KSWIFTK-LEX-0001",
-            "Unknown character '\(text(from: start..<(start + 1)))'",
+            "Unknown character '\(text(from: start ..< (start + 1)))'",
             range: SourceRange(
                 start: SourceLocation(file: file, offset: start),
                 end: SourceLocation(file: file, offset: min(start + 1, bytes.count))

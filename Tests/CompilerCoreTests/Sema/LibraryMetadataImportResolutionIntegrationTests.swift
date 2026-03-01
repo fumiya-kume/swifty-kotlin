@@ -1,6 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 final class LibraryMetadataImportResolutionIntegrationTests: XCTestCase {
     // MARK: - Manifest Schema Validation Tests
@@ -365,5 +365,4 @@ final class LibraryMetadataImportResolutionIntegrationTests: XCTestCase {
             XCTAssertFalse(pathWarnings.isEmpty)
         }
     }
-
 }

@@ -1,7 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
 
 extension VirtualDispatchTests {
     func testResolveVirtualDispatchViaFullPipelineOpenClass() throws {
@@ -38,11 +37,11 @@ extension VirtualDispatchTests {
                     if case .virtualCall = instruction { return true }
                     return false
                 }
-                guard case .virtualCall(_, _, _, _, _, _, _, let dispatch) = vcInstruction else {
+                guard case let .virtualCall(_, _, _, _, _, _, _, dispatch) = vcInstruction else {
                     XCTFail("Expected virtualCall")
                     return
                 }
-                if case .vtable(let slot) = dispatch {
+                if case let .vtable(slot) = dispatch {
                     XCTAssertGreaterThanOrEqual(slot, 0, "vtable slot should be non-negative")
                 } else {
                     XCTFail("Expected vtable dispatch for class method")
@@ -111,7 +110,7 @@ extension VirtualDispatchTests {
             params: [
                 KIRParameter(symbol: SymbolID(rawValue: 8011), type: anyType),
                 KIRParameter(symbol: SymbolID(rawValue: 8012), type: anyType),
-                KIRParameter(symbol: SymbolID(rawValue: 8013), type: anyType)
+                KIRParameter(symbol: SymbolID(rawValue: 8013), type: anyType),
             ],
             returnType: types.unitType,
             body: [
@@ -125,7 +124,7 @@ extension VirtualDispatchTests {
                     thrownResult: nil,
                     dispatch: .vtable(slot: 0)
                 ),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -157,7 +156,7 @@ extension VirtualDispatchTests {
             if case .virtualCall = instruction { return true }
             return false
         }
-        guard case .virtualCall(_, _, let receiver, let arguments, _, _, _, _) = vcInstruction else {
+        guard case let .virtualCall(_, _, receiver, arguments, _, _, _, _) = vcInstruction else {
             XCTFail("Expected virtualCall instruction")
             return
         }

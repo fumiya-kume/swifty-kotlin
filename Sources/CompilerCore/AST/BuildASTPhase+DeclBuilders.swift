@@ -171,7 +171,7 @@ extension BuildASTPhase {
         if delegateExpr != nil {
             // Find the block child node — this is the trailing lambda body.
             for child in arena.children(of: nodeID) {
-                if case .node(let childID) = child, arena.node(childID).kind == .block {
+                if case let .node(childID) = child, arena.node(childID).kind == .block {
                     let exprs = blockExpressions(from: childID, in: arena, interner: interner, astArena: astArena)
                     delegateBody = .block(exprs, arena.node(childID).range)
                     break
@@ -231,10 +231,11 @@ extension BuildASTPhase {
 
     func declarationName(from nodeID: NodeID, in arena: SyntaxArena, interner: StringInterner) -> InternedString {
         for child in arena.children(of: nodeID) {
-            if case .token(let tokenID) = child,
+            if case let .token(tokenID) = child,
                let token = resolveToken(tokenID, in: arena),
-               let name = internedIdentifier(from: token, interner: interner) {
-                if case .keyword(let keyword) = token.kind, isLeadingDeclarationKeyword(keyword) {
+               let name = internedIdentifier(from: token, interner: interner)
+            {
+                if case let .keyword(keyword) = token.kind, isLeadingDeclarationKeyword(keyword) {
                     continue
                 }
                 return name
@@ -284,7 +285,7 @@ extension BuildASTPhase {
                 if depth >= 0 {
                     paramTokens.append(token)
                 }
-            } else if token.kind == .symbol(.comma) && depth == 0 {
+            } else if token.kind == .symbol(.comma), depth == 0 {
                 appendValueParameter(from: paramTokens, into: &arguments, interner: interner, astArena: astArena)
                 paramTokens.removeAll(keepingCapacity: true)
             } else {
@@ -322,11 +323,10 @@ extension BuildASTPhase {
             return false
         })
 
-        let nameSearchTokens: ArraySlice<Token>
-        if let colonIndex {
-            nameSearchTokens = withoutDefault[..<colonIndex]
+        let nameSearchTokens: ArraySlice<Token> = if let colonIndex {
+            withoutDefault[..<colonIndex]
         } else {
-            nameSearchTokens = withoutDefault[...]
+            withoutDefault[...]
         }
 
         guard let nameToken = nameSearchTokens.last(where: { token in
@@ -340,7 +340,7 @@ extension BuildASTPhase {
         guard let name = internedIdentifier(from: nameToken, interner: interner) else {
             return
         }
-        if case .keyword(let keyword) = nameToken.kind, isLeadingDeclarationKeyword(keyword) {
+        if case let .keyword(keyword) = nameToken.kind, isLeadingDeclarationKeyword(keyword) {
             return
         }
 
@@ -361,7 +361,8 @@ extension BuildASTPhase {
         let defaultValueExpr: ExprID?
         if let defaultTokens = split.defaultTokens?
             .filter({ $0.kind != .symbol(.semicolon) }),
-           !defaultTokens.isEmpty {
+            !defaultTokens.isEmpty
+        {
             let parser = ExpressionParser(tokens: defaultTokens, interner: interner, astArena: astArena)
             defaultValueExpr = parser.parse()
         } else {

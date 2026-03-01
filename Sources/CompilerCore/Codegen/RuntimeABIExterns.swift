@@ -26,11 +26,10 @@ public enum RuntimeABIExterns {
 
         /// Generates the C extern declaration string.
         public var cExternDeclaration: String {
-            let params: String
-            if parameterTypes.isEmpty {
-                params = "void"
+            let params: String = if parameterTypes.isEmpty {
+                "void"
             } else {
-                params = parameterTypes.joined(separator: ", ")
+                parameterTypes.joined(separator: ", ")
             }
             return "extern \(returnType) \(name)(\(params));"
         }

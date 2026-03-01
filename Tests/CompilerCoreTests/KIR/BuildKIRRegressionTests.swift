@@ -1,6 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 final class BuildKIRRegressionTests: XCTestCase {
     func testLoadSourcesPhaseReportsMissingInputsAndUnreadableFiles() {
@@ -46,7 +46,7 @@ final class BuildKIRRegressionTests: XCTestCase {
                 "LambdaClosureConversion",
                 "InlineLowering",
                 "CoroutineLowering",
-                "ABILowering"
+                "ABILowering",
             ])
             // Source defines add, susp, chooser, main
             XCTAssertGreaterThanOrEqual(module.functionCount, 4)
@@ -67,7 +67,7 @@ final class BuildKIRRegressionTests: XCTestCase {
 
             XCTAssertTrue(callees.contains("kk_string_concat"))
             XCTAssertFalse(body.contains { instruction in
-                guard case .binary(let op, _, _, _) = instruction else {
+                guard case let .binary(op, _, _, _) = instruction else {
                     return false
                 }
                 return op == .add
@@ -93,7 +93,7 @@ final class BuildKIRRegressionTests: XCTestCase {
             let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
 
             let binaryOps = body.compactMap { instruction -> KIRBinaryOp? in
-                guard case .binary(let op, _, _, _) = instruction else {
+                guard case let .binary(op, _, _, _) = instruction else {
                     return nil
                 }
                 return op
@@ -153,13 +153,13 @@ final class BuildKIRRegressionTests: XCTestCase {
 
             // The built-in binary .add instruction should be used, not a call.
             XCTAssertTrue(body.contains { instruction in
-                guard case .binary(let op, _, _, _) = instruction else {
+                guard case let .binary(op, _, _, _) = instruction else {
                     return false
                 }
                 return op == .add
             })
             XCTAssertFalse(body.contains { instruction in
-                guard case .call(_, let callee, _, _, _, _, _) = instruction else {
+                guard case let .call(_, callee, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return ctx.interner.resolve(callee) == "plus"
@@ -189,7 +189,8 @@ final class BuildKIRRegressionTests: XCTestCase {
                 interner: ctx.interner
             ))
             guard let operatorExpr = ast.arena.expr(operatorExprID),
-                  case .binary(let op, _, _, _) = operatorExpr else {
+                  case let .binary(op, _, _, _) = operatorExpr
+            else {
                 XCTFail("Expected useOperator body to be a binary expression.")
                 return
             }
@@ -211,12 +212,12 @@ final class BuildKIRRegressionTests: XCTestCase {
 
             let body = try findKIRFunctionBody(named: "useOperator", in: module, interner: ctx.interner)
             let resolvedCall = try XCTUnwrap(body.first { instruction in
-                guard case .call(let symbol, _, _, _, _, _, _) = instruction else {
+                guard case let .call(symbol, _, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return symbol == chosenSymbol
             })
-            guard case .call(let callSymbol, let callee, let arguments, _, _, _, _) = resolvedCall else {
+            guard case let .call(callSymbol, callee, arguments, _, _, _, _) = resolvedCall else {
                 XCTFail("Expected chosen call instruction for useOperator.")
                 return
             }
@@ -225,13 +226,13 @@ final class BuildKIRRegressionTests: XCTestCase {
             XCTAssertEqual(ctx.interner.resolve(callee), "plus")
             XCTAssertFalse(ctx.interner.resolve(callee).hasPrefix("kk_op_"))
             XCTAssertFalse(body.contains { instruction in
-                guard case .binary(let op, _, _, _) = instruction else {
+                guard case let .binary(op, _, _, _) = instruction else {
                     return false
                 }
                 return op == .add
             })
             XCTAssertFalse(body.contains { instruction in
-                guard case .call(_, let callCallee, _, _, _, _, _) = instruction else {
+                guard case let .call(_, callCallee, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return ctx.interner.resolve(callCallee).hasPrefix("kk_op_")
@@ -263,7 +264,8 @@ final class BuildKIRRegressionTests: XCTestCase {
                 interner: ctx.interner
             ))
             guard let memberExpr = ast.arena.expr(memberExprID),
-                  case .memberCall = memberExpr else {
+                  case .memberCall = memberExpr
+            else {
                 XCTFail("Expected useMemberCall body to be a member call expression.")
                 return
             }
@@ -284,12 +286,12 @@ final class BuildKIRRegressionTests: XCTestCase {
 
             let body = try findKIRFunctionBody(named: "useMemberCall", in: module, interner: ctx.interner)
             let memberCall = try XCTUnwrap(body.first { instruction in
-                guard case .call(let symbol, _, _, _, _, _, _) = instruction else {
+                guard case let .call(symbol, _, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return symbol == chosenSymbol
             })
-            guard case .call(let callSymbol, let callee, let arguments, _, _, _, _) = memberCall else {
+            guard case let .call(callSymbol, callee, arguments, _, _, _, _) = memberCall else {
                 XCTFail("Expected chosen call instruction for useMemberCall.")
                 return
             }

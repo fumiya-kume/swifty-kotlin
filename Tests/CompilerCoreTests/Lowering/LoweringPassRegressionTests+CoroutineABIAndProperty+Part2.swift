@@ -1,7 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
 
 extension LoweringPassRegressionTests {
     func testABILoweringBoxesReturnValueWhenFunctionReturnsAny() throws {
@@ -21,7 +20,7 @@ extension LoweringPassRegressionTests {
             params: [],
             returnType: anyNullableType,
             body: [
-                .returnValue(valueExpr)
+                .returnValue(valueExpr),
             ],
             isSuspend: false,
             isInline: false
@@ -66,7 +65,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .copy(from: fromExpr, to: toExpr),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -117,7 +116,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .copy(from: fromExpr, to: toExpr),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -190,7 +189,7 @@ extension LoweringPassRegressionTests {
                 returnType: types.unitType,
                 body: [
                     .call(symbol: targetSym, callee: targetName, arguments: [argExpr], result: resultExpr, canThrow: false, thrownResult: nil),
-                    .returnUnit
+                    .returnUnit,
                 ],
                 isSuspend: false,
                 isInline: false
@@ -246,7 +245,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .copy(from: fromExpr, to: toExpr),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -301,7 +300,7 @@ extension LoweringPassRegressionTests {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -319,19 +318,19 @@ extension LoweringPassRegressionTests {
         ctx.kir = module
         try LoweringPhase().run(ctx)
 
-        guard case .function(let lowered)? = module.arena.decl(fnID) else {
+        guard case let .function(lowered)? = module.arena.decl(fnID) else {
             XCTFail("expected function")
             return
         }
 
         // The getter call should use the synthetic accessor symbol.
-        let expectedGetterSymbol = SymbolID(rawValue: -12_000 - propertySym.rawValue)
+        let expectedGetterSymbol = SymbolID(rawValue: -12000 - propertySym.rawValue)
         let callSymbols = lowered.body.compactMap { instruction -> SymbolID? in
-            guard case .call(let sym, _, _, _, _, _, _) = instruction else { return nil }
+            guard case let .call(sym, _, _, _, _, _, _) = instruction else { return nil }
             return sym
         }
         XCTAssertTrue(callSymbols.contains(expectedGetterSymbol),
-                       "Expected synthetic getter symbol \(expectedGetterSymbol), got: \(callSymbols)")
+                      "Expected synthetic getter symbol \(expectedGetterSymbol), got: \(callSymbols)")
 
         // kk_property_access must NOT appear.
         let callees = extractCallees(from: lowered.body, interner: interner)
@@ -366,7 +365,7 @@ extension LoweringPassRegressionTests {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -384,22 +383,22 @@ extension LoweringPassRegressionTests {
         ctx.kir = module
         try LoweringPhase().run(ctx)
 
-        guard case .function(let lowered)? = module.arena.decl(fnID) else {
+        guard case let .function(lowered)? = module.arena.decl(fnID) else {
             XCTFail("expected function")
             return
         }
 
-        let expectedSetterSymbol = SymbolID(rawValue: -13_000 - propertySym.rawValue)
+        let expectedSetterSymbol = SymbolID(rawValue: -13000 - propertySym.rawValue)
         let callSymbols = lowered.body.compactMap { instruction -> SymbolID? in
-            guard case .call(let sym, _, _, _, _, _, _) = instruction else { return nil }
+            guard case let .call(sym, _, _, _, _, _, _) = instruction else { return nil }
             return sym
         }
         XCTAssertTrue(callSymbols.contains(expectedSetterSymbol),
-                       "Expected synthetic setter symbol \(expectedSetterSymbol), got: \(callSymbols)")
+                      "Expected synthetic setter symbol \(expectedSetterSymbol), got: \(callSymbols)")
 
         let callees = extractCallees(from: lowered.body, interner: interner)
         XCTAssertFalse(callees.contains("kk_property_access"))
     }
 
-    /// Verify that get/set calls without a property symbol are left unchanged.
+    // Verify that get/set calls without a property symbol are left unchanged.
 }

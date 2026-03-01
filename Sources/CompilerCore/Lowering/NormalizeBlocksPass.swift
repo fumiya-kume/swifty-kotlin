@@ -3,9 +3,9 @@ import Foundation
 final class NormalizeBlocksPass: LoweringPass {
     static let name = "NormalizeBlocks"
 
-    func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool {
+    func shouldRun(module: KIRModule, ctx _: KIRContext) -> Bool {
         for decl in module.arena.declarations {
-            guard case .function(let function) = decl else { continue }
+            guard case let .function(function) = decl else { continue }
             for instruction in function.body {
                 switch instruction {
                 case .beginBlock, .endBlock:
@@ -29,15 +29,15 @@ final class NormalizeBlocksPass: LoweringPass {
         return false
     }
 
-    func run(module: KIRModule, ctx: KIRContext) throws {
+    func run(module: KIRModule, ctx _: KIRContext) throws {
         module.arena.transformFunctions { function in
             var updated = function
             updated.body = function.body.filter { instruction in
                 switch instruction {
                 case .beginBlock, .endBlock:
-                    return false
+                    false
                 default:
-                    return true
+                    true
                 }
             }
             if let last = updated.body.last {
@@ -55,4 +55,3 @@ final class NormalizeBlocksPass: LoweringPass {
         module.recordLowering(Self.name)
     }
 }
-

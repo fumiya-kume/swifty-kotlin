@@ -49,20 +49,20 @@ public final class SourceManager: @unchecked Sendable {
         return record.path
     }
 
-    internal var fileCount: Int {
+    var fileCount: Int {
         files.count
     }
 
-    internal func containsFile(path: String) -> Bool {
+    func containsFile(path: String) -> Bool {
         fileIDByPath[path] != nil
     }
 
-    internal func fileID(forPath path: String) -> FileID? {
+    func fileID(forPath path: String) -> FileID? {
         fileIDByPath[path]
     }
 
-    internal func fileIDs() -> [FileID] {
-        return files.enumerated().map { FileID(rawValue: $0.offset) }
+    func fileIDs() -> [FileID] {
+        files.enumerated().map { FileID(rawValue: $0.offset) }
     }
 
     public func lineColumn(of loc: SourceLocation) -> LineColumn {
@@ -73,7 +73,7 @@ public final class SourceManager: @unchecked Sendable {
         let clampedOffset = max(0, min(loc.offset, record.contents.count))
         let lineIndex = lineIndex(for: clampedOffset, in: record.lineStartOffsets)
         let lineStartOffset = record.lineStartOffsets[lineIndex]
-        let lineText = String(decoding: record.contents[lineStartOffset..<clampedOffset], as: UTF8.self)
+        let lineText = String(decoding: record.contents[lineStartOffset ..< clampedOffset], as: UTF8.self)
         let column = lineText.unicodeScalars.count + 1
         return LineColumn(line: lineIndex + 1, column: column)
     }
@@ -86,13 +86,13 @@ public final class SourceManager: @unchecked Sendable {
         let fileSize = record.contents.count
         let start = max(0, min(range.start.offset, fileSize))
         let end = max(start, min(range.end.offset, fileSize))
-        let text = String(decoding: record.contents[start..<end], as: UTF8.self)
+        let text = String(decoding: record.contents[start ..< end], as: UTF8.self)
         return Substring(text)
     }
 
     private func fileRecord(for id: FileID) -> FileRecord? {
         let index = Int(id.rawValue)
-        guard index >= 0 && index < files.count else {
+        guard index >= 0, index < files.count else {
             return nil
         }
         return files[index]
@@ -100,7 +100,7 @@ public final class SourceManager: @unchecked Sendable {
 
     private func computeLineStartOffsets(contents: Data) -> [Int] {
         var lineStarts = [0]
-        for index in 0..<contents.count {
+        for index in 0 ..< contents.count {
             if contents[index] == 0x0A {
                 lineStarts.append(index + 1)
             }

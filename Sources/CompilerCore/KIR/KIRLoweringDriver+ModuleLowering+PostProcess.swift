@@ -22,9 +22,10 @@ extension KIRLoweringDriver {
             for file in ast.sortedFiles {
                 for declID in file.topLevelDecls {
                     guard let decl = ast.arena.decl(declID),
-                          case .propertyDecl(let prop) = decl,
+                          case let .propertyDecl(prop) = decl,
                           let sym = sema.bindings.declSymbols[declID],
-                          prop.delegateExpression != nil else {
+                          prop.delegateExpression != nil
+                    else {
                         continue
                     }
                     delegateKindByPropertySymbol[sym] = detectDelegateKind(
@@ -61,24 +62,24 @@ extension KIRLoweringDriver {
                     rewrittenBody.reserveCapacity(updated.body.count)
                     for instruction in updated.body {
                         // Rewrite loadGlobal for delegated properties → getValue calls.
-                        if case .loadGlobal(let result, let sym) = instruction,
-                           let delegateStorageSymbol = delegateStorageSymbolByPropertySymbol[sym] {
+                        if case let .loadGlobal(result, sym) = instruction,
+                           let delegateStorageSymbol = delegateStorageSymbolByPropertySymbol[sym]
+                        {
                             let handleExpr = arena.appendExpr(
                                 .temporary(Int32(arena.expressions.count)),
                                 type: sema.types.anyType
                             )
                             rewrittenBody.append(.loadGlobal(result: handleExpr, symbol: delegateStorageSymbol))
 
-                            let getValueName: InternedString
-                            switch delegateKindByPropertySymbol[sym] {
+                            let getValueName: InternedString = switch delegateKindByPropertySymbol[sym] {
                             case .lazy:
-                                getValueName = lazyGetValueName
+                                lazyGetValueName
                             case .observable:
-                                getValueName = observableGetValueName
+                                observableGetValueName
                             case .vetoable:
-                                getValueName = vetoableGetValueName
+                                vetoableGetValueName
                             case .custom, nil:
-                                getValueName = customGetValueName
+                                customGetValueName
                             }
                             rewrittenBody.append(
                                 .call(
@@ -93,25 +94,25 @@ extension KIRLoweringDriver {
                             continue
                         }
 
-                        if case .constValue(let result, let value) = instruction,
-                           case .symbolRef(let sym) = value,
-                           let delegateStorageSymbol = delegateStorageSymbolByPropertySymbol[sym] {
+                        if case let .constValue(result, value) = instruction,
+                           case let .symbolRef(sym) = value,
+                           let delegateStorageSymbol = delegateStorageSymbolByPropertySymbol[sym]
+                        {
                             let handleExpr = arena.appendExpr(
                                 .temporary(Int32(arena.expressions.count)),
                                 type: sema.types.anyType
                             )
                             rewrittenBody.append(.loadGlobal(result: handleExpr, symbol: delegateStorageSymbol))
 
-                            let getValueName: InternedString
-                            switch delegateKindByPropertySymbol[sym] {
+                            let getValueName: InternedString = switch delegateKindByPropertySymbol[sym] {
                             case .lazy:
-                                getValueName = lazyGetValueName
+                                lazyGetValueName
                             case .observable:
-                                getValueName = observableGetValueName
+                                observableGetValueName
                             case .vetoable:
-                                getValueName = vetoableGetValueName
+                                vetoableGetValueName
                             case .custom, nil:
-                                getValueName = customGetValueName
+                                customGetValueName
                             }
                             rewrittenBody.append(
                                 .call(
@@ -145,21 +146,22 @@ extension KIRLoweringDriver {
         interner: StringInterner
     ) -> StdlibDelegateKind {
         guard let exprID = delegateExpr,
-              let expr = ast.arena.expr(exprID) else {
+              let expr = ast.arena.expr(exprID)
+        else {
             return .custom
         }
         let lazyID = interner.intern("lazy")
         let observableID = interner.intern("observable")
         let vetoableID = interner.intern("vetoable")
         switch expr {
-        case .nameRef(let name, _):
+        case let .nameRef(name, _):
             if name == lazyID { return .lazy }
             return .custom
-        case .call(let callee, _, _, _):
+        case let .call(callee, _, _, _):
             // call(callee: memberCall(...) or nameRef(...))
             if let calleeExpr = ast.arena.expr(callee) {
                 switch calleeExpr {
-                case .nameRef(let name, _):
+                case let .nameRef(name, _):
                     if name == observableID { return .observable }
                     if name == vetoableID { return .vetoable }
                     if name == lazyID { return .lazy }
@@ -169,7 +171,7 @@ extension KIRLoweringDriver {
             }
             // Check memberCall pattern: Delegates.observable(...)
             return detectDelegateKindFromCallExpr(callee: callee, ast: ast, interner: interner)
-        case .memberCall(_, let callee, _, _, _):
+        case let .memberCall(_, callee, _, _, _):
             if callee == observableID { return .observable }
             if callee == vetoableID { return .vetoable }
             return .custom
@@ -191,10 +193,10 @@ extension KIRLoweringDriver {
         // call(callee: memberAccess(...), args: [...])
         // We need to check if the callee resolves to "observable" or "vetoable".
         switch expr {
-        case .memberCall(_, let name, _, _, _):
+        case let .memberCall(_, name, _, _, _):
             if name == observableID { return .observable }
             if name == vetoableID { return .vetoable }
-        case .nameRef(let name, _):
+        case let .nameRef(name, _):
             if name == observableID { return .observable }
             if name == vetoableID { return .vetoable }
         default:
@@ -220,8 +222,8 @@ extension KIRLoweringDriver {
 
         // Create parameters for the lambda.
         var params: [KIRParameter] = []
-        for i in 0..<paramCount {
-            let paramSymbol = SymbolID(rawValue: -(propertySymbol.rawValue + Int32(i + 1) * 1000 + 50_000))
+        for i in 0 ..< paramCount {
+            let paramSymbol = SymbolID(rawValue: -(propertySymbol.rawValue + Int32(i + 1) * 1000 + 50000))
             params.append(KIRParameter(symbol: paramSymbol, type: sema.types.anyType))
         }
 
@@ -235,7 +237,7 @@ extension KIRLoweringDriver {
 
         // Lower the delegate body expressions.
         switch delegateBody {
-        case .block(let exprIDs, _):
+        case let .block(exprIDs, _):
             var lastValue: KIRExprID?
             for exprID in exprIDs {
                 lastValue = lowerExpr(
@@ -249,7 +251,7 @@ extension KIRLoweringDriver {
             } else {
                 lambdaBody.append(.returnUnit)
             }
-        case .expr(let exprID, _):
+        case let .expr(exprID, _):
             let value = lowerExpr(
                 exprID,
                 shared: shared,
@@ -294,7 +296,8 @@ extension KIRLoweringDriver {
         let sema = shared.sema
         let arena = shared.arena
         guard let exprID = delegateExpr,
-              let expr = ast.arena.expr(exprID) else {
+              let expr = ast.arena.expr(exprID)
+        else {
             // Fallback: return 0.
             let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.anyType)
             instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
@@ -304,7 +307,7 @@ extension KIRLoweringDriver {
         // For call expressions like `Delegates.observable("initial")` or `observable("initial")`,
         // extract and lower the first argument.
         switch expr {
-        case .call(_, _, let args, _):
+        case let .call(_, _, args, _):
             if let firstArg = args.first {
                 return lowerExpr(
                     firstArg.expr,
@@ -312,7 +315,7 @@ extension KIRLoweringDriver {
                     emit: &instructions
                 )
             }
-        case .memberCall(_, _, _, let args, _):
+        case let .memberCall(_, _, _, args, _):
             if let firstArg = args.first {
                 return lowerExpr(
                     firstArg.expr,

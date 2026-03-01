@@ -1,8 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
-
 
 extension LoweringPassRegressionTests {
     func testInlineLoweringMapsReifiedTypeTokenSymbolRefToHiddenArgument() throws {
@@ -72,7 +70,7 @@ extension LoweringPassRegressionTests {
             returnType: intType,
             body: [
                 .constValue(result: inlineTokenExpr, value: .symbolRef(typeParameterSymbol)),
-                .returnValue(inlineTokenExpr)
+                .returnValue(inlineTokenExpr),
             ],
             isSuspend: false,
             isInline: true
@@ -92,7 +90,7 @@ extension LoweringPassRegressionTests {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .returnValue(callerResultExpr)
+                .returnValue(callerResultExpr),
             ],
             isSuspend: false,
             isInline: false
@@ -127,13 +125,13 @@ extension LoweringPassRegressionTests {
 
         try LoweringPhase().run(ctx)
 
-        guard case .function(let loweredMain)? = module.arena.decl(mainDeclID) else {
+        guard case let .function(loweredMain)? = module.arena.decl(mainDeclID) else {
             XCTFail("Expected lowered main function.")
             return
         }
 
         let loweredCallees = loweredMain.body.compactMap { instruction -> InternedString? in
-            guard case .call(_, let callee, _, _, _, _, _) = instruction else {
+            guard case let .call(_, callee, _, _, _, _, _) = instruction else {
                 return nil
             }
             return callee
@@ -141,8 +139,9 @@ extension LoweringPassRegressionTests {
         XCTAssertFalse(loweredCallees.contains(inlineName))
 
         let symbolRefConstants = loweredMain.body.compactMap { instruction -> SymbolID? in
-            guard case .constValue(_, let value) = instruction,
-                  case .symbolRef(let symbol) = value else {
+            guard case let .constValue(_, value) = instruction,
+                  case let .symbolRef(symbol) = value
+            else {
                 return nil
             }
             return symbol
@@ -150,12 +149,12 @@ extension LoweringPassRegressionTests {
         XCTAssertFalse(symbolRefConstants.contains(typeParameterSymbol))
 
         let returnExpr = try XCTUnwrap(loweredMain.body.compactMap { instruction -> KIRExprID? in
-            guard case .returnValue(let value) = instruction else {
+            guard case let .returnValue(value) = instruction else {
                 return nil
             }
             return value
         }.first)
-        guard case .intLiteral(let returnedLiteral)? = module.arena.expr(returnExpr) else {
+        guard case let .intLiteral(returnedLiteral)? = module.arena.expr(returnExpr) else {
             XCTFail("Expected inline result to resolve to hidden token argument value.")
             return
         }
@@ -205,7 +204,7 @@ extension LoweringPassRegressionTests {
                 .call(symbol: nil, callee: interner.intern("<lambda>"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil),
                 .call(symbol: nil, callee: interner.intern("inlineTarget"), arguments: [], result: v1, canThrow: false, thrownResult: nil),
                 .call(symbol: nil, callee: interner.intern("suspendTarget"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -226,7 +225,7 @@ extension LoweringPassRegressionTests {
             returnType: TypeSystem().unitType,
             body: [
                 .call(symbol: suspendSym, callee: interner.intern("suspendTarget"), arguments: [], result: v2, canThrow: false, thrownResult: nil),
-                .returnValue(v2)
+                .returnValue(v2),
             ],
             isSuspend: true,
             isInline: false

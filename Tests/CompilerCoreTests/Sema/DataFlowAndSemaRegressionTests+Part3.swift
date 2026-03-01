@@ -1,12 +1,12 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 // MARK: - DataFlow + Sema Regression Tests
+
 // Targets: DataFlowSemaPhase+BodyAnalysis.swift (45.8%)
 //          DataFlowSemaPhase+HeaderCollection.swift (49.9%)
 //          TypeCheckSemaPhase+ExprInference.swift (51.4%)
-
 
 extension DataFlowAndSemaRegressionTests {
     func testClassWithTypeParametersDefinesVariance() throws {
@@ -300,5 +300,4 @@ extension DataFlowAndSemaRegressionTests {
             assertHasDiagnostic("KSWIFTK-SEMA-0018", in: ctx)
         }
     }
-
 }

@@ -1,7 +1,7 @@
 import Foundation
 
 extension BuildASTPhase.ExpressionParser {
-    internal func parseBlockExpression() -> ExprID? {
+    func parseBlockExpression() -> ExprID? {
         guard let openBrace = consume() else {
             return nil
         }
@@ -39,7 +39,7 @@ extension BuildASTPhase.ExpressionParser {
         var statements: [ExprID] = []
         let allTokens = blockTokens[...]
         for (start, rangeEnd) in ranges {
-            let group = allTokens[start..<rangeEnd]
+            let group = allTokens[start ..< rangeEnd]
             guard !group.isEmpty else { continue }
             if let localDecl = parseLocalDeclFromSlice(group) {
                 statements.append(localDecl)
@@ -65,7 +65,7 @@ extension BuildASTPhase.ExpressionParser {
     }
 
     /// Returns statement boundary ranges as `(startIndex, endIndex)` pairs into `tokens`.
-    internal func splitBlockTokensIntoStatementRanges(_ tokens: [Token]) -> [(Int, Int)] {
+    func splitBlockTokensIntoStatementRanges(_ tokens: [Token]) -> [(Int, Int)] {
         var ranges: [(Int, Int)] = []
         var groupStart = 0
         var lastTokenIndex = -1
@@ -81,12 +81,12 @@ extension BuildASTPhase.ExpressionParser {
                     }
                     groupStart = idx + 1
                     switch token.kind {
-                    case .symbol(.lParen):    parenDepth += 1
-                    case .symbol(.rParen):    parenDepth = max(0, parenDepth - 1)
-                    case .symbol(.lBracket):  bracketDepth += 1
-                    case .symbol(.rBracket):  bracketDepth = max(0, bracketDepth - 1)
-                    case .symbol(.lBrace):    braceDepth += 1
-                    case .symbol(.rBrace):    braceDepth = max(0, braceDepth - 1)
+                    case .symbol(.lParen): parenDepth += 1
+                    case .symbol(.rParen): parenDepth = max(0, parenDepth - 1)
+                    case .symbol(.lBracket): bracketDepth += 1
+                    case .symbol(.rBracket): bracketDepth = max(0, bracketDepth - 1)
+                    case .symbol(.lBrace): braceDepth += 1
+                    case .symbol(.rBrace): braceDepth = max(0, braceDepth - 1)
                     default: break
                     }
                     continue
@@ -95,23 +95,23 @@ extension BuildASTPhase.ExpressionParser {
                     if case .newline = piece { return true }
                     return false
                 }
-                if hasNewline && lastTokenIndex >= groupStart {
+                if hasNewline, lastTokenIndex >= groupStart {
                     let lastKind = tokens[lastTokenIndex].kind
                     let lastIsContinuation = isBinaryOperatorTokenKind(lastKind)
                     let nextIsContinuation = isBinaryOperatorTokenKind(token.kind)
-                    if !lastIsContinuation && !nextIsContinuation {
+                    if !lastIsContinuation, !nextIsContinuation {
                         ranges.append((groupStart, lastTokenIndex + 1))
                         groupStart = idx
                     }
                 }
             }
             switch token.kind {
-            case .symbol(.lParen):    parenDepth += 1
-            case .symbol(.rParen):    parenDepth = max(0, parenDepth - 1)
-            case .symbol(.lBracket):  bracketDepth += 1
-            case .symbol(.rBracket):  bracketDepth = max(0, bracketDepth - 1)
-            case .symbol(.lBrace):    braceDepth += 1
-            case .symbol(.rBrace):    braceDepth = max(0, braceDepth - 1)
+            case .symbol(.lParen): parenDepth += 1
+            case .symbol(.rParen): parenDepth = max(0, parenDepth - 1)
+            case .symbol(.lBracket): bracketDepth += 1
+            case .symbol(.rBracket): bracketDepth = max(0, bracketDepth - 1)
+            case .symbol(.lBrace): braceDepth += 1
+            case .symbol(.rBrace): braceDepth = max(0, braceDepth - 1)
             default: break
             }
             lastTokenIndex = idx
@@ -122,7 +122,7 @@ extension BuildASTPhase.ExpressionParser {
         return ranges
     }
 
-    internal func isBinaryOperatorTokenKind(_ kind: TokenKind) -> Bool {
+    func isBinaryOperatorTokenKind(_ kind: TokenKind) -> Bool {
         switch kind {
         case .symbol(.plus), .symbol(.minus), .symbol(.star), .symbol(.slash), .symbol(.percent),
              .symbol(.ampAmp), .symbol(.barBar),
@@ -137,27 +137,27 @@ extension BuildASTPhase.ExpressionParser {
              .symbol(.arrow), .symbol(.fatArrow),
              .keyword(.as), .keyword(.is), .keyword(.in),
              .keyword(.else), .keyword(.catch), .keyword(.finally):
-            return true
+            true
         default:
-            return false
+            false
         }
     }
 
-    internal func isLocalDeclarationTokens(_ tokens: [Token]) -> Bool {
+    func isLocalDeclarationTokens(_ tokens: [Token]) -> Bool {
         BuildASTPhase.LocalStatementCore.isLocalDeclarationTokens(tokens)
     }
 
-    internal func isLocalAssignmentTokens(_ tokens: [Token]) -> Bool {
+    func isLocalAssignmentTokens(_ tokens: [Token]) -> Bool {
         BuildASTPhase.LocalStatementCore.isLocalAssignmentTokens(tokens)
     }
 
-    internal func parseLocalDeclFromTokens(_ tokens: [Token]) -> ExprID? {
+    func parseLocalDeclFromTokens(_ tokens: [Token]) -> ExprID? {
         parseLocalDeclFromSlice(tokens[...])
     }
 
-    internal func parseLocalDeclFromSlice(_ tokens: ArraySlice<Token>) -> ExprID? {
-        let interner = self.interner
-        let astArena = self.astArena
+    func parseLocalDeclFromSlice(_ tokens: ArraySlice<Token>) -> ExprID? {
+        let interner = interner
+        let astArena = astArena
         let context = BuildASTPhase.LocalStatementCoreContext(
             interner: interner,
             astArena: astArena,
@@ -177,10 +177,10 @@ extension BuildASTPhase.ExpressionParser {
             },
             resolveDeclarationName: { token, _ in
                 switch token.kind {
-                case .identifier(let name), .backtickedIdentifier(let name):
-                    return name
+                case let .identifier(name), let .backtickedIdentifier(name):
+                    name
                 default:
-                    return nil
+                    nil
                 }
             }
         )
@@ -191,13 +191,13 @@ extension BuildASTPhase.ExpressionParser {
         )
     }
 
-    internal func parseLocalAssignFromTokens(_ tokens: [Token]) -> ExprID? {
+    func parseLocalAssignFromTokens(_ tokens: [Token]) -> ExprID? {
         parseLocalAssignFromSlice(tokens[...])
     }
 
-    internal func parseLocalAssignFromSlice(_ tokens: ArraySlice<Token>) -> ExprID? {
-        let interner = self.interner
-        let astArena = self.astArena
+    func parseLocalAssignFromSlice(_ tokens: ArraySlice<Token>) -> ExprID? {
+        let interner = interner
+        let astArena = astArena
         let context = BuildASTPhase.LocalStatementCoreContext(
             interner: interner,
             astArena: astArena,
@@ -214,7 +214,7 @@ extension BuildASTPhase.ExpressionParser {
         )
     }
 
-    internal func skipBalancedParenthesisIfNeeded() {
+    func skipBalancedParenthesisIfNeeded() {
         guard matches(.symbol(.lParen)) else {
             return
         }

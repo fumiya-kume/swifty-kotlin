@@ -3,38 +3,38 @@ import Foundation
 func symbolKindFromMetadataToken(_ token: String) -> SymbolKind? {
     switch token {
     case "package":
-        return .package
+        .package
     case "class":
-        return .class
+        .class
     case "interface":
-        return .interface
+        .interface
     case "object":
-        return .object
+        .object
     case "enumClass":
-        return .enumClass
+        .enumClass
     case "annotationClass":
-        return .annotationClass
+        .annotationClass
     case "typeAlias":
-        return .typeAlias
+        .typeAlias
     case "function":
-        return .function
+        .function
     case "constructor":
-        return .constructor
+        .constructor
     case "property":
-        return .property
+        .property
     case "field":
-        return .field
+        .field
     case "backingField":
-        return .backingField
+        .backingField
     case "typeParameter":
-        return .typeParameter
+        .typeParameter
     case "valueParameter":
-        return .valueParameter
+        .valueParameter
     case "local":
-        return .local
+        .local
     case "label":
-        return .label
+        .label
     default:
-        return nil
+        nil
     }
 }

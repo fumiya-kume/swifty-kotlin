@@ -1,8 +1,7 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 final class StringInternerTests: XCTestCase {
-
     // MARK: - InternedString
 
     func testInternedStringInvalidDefault() {
@@ -138,10 +137,10 @@ final class StringInternerTests: XCTestCase {
         let lock = NSLock()
         var capturedIDs: [(String, InternedString)] = []
 
-        for i in 0..<10 {
+        for i in 0 ..< 10 {
             DispatchQueue.global().async {
                 var localIDs: [(String, InternedString)] = []
-                for j in 0..<100 {
+                for j in 0 ..< 100 {
                     let str = "string_\(i)_\(j)"
                     let id = interner.intern(str)
                     localIDs.append((str, id))
@@ -164,17 +163,17 @@ final class StringInternerTests: XCTestCase {
     func testConcurrentResolveDoesNotCrash() {
         let interner = StringInterner()
         var ids: [InternedString] = []
-        for i in 0..<100 {
+        for i in 0 ..< 100 {
             ids.append(interner.intern("value_\(i)"))
         }
 
         let expectation = XCTestExpectation(description: "Concurrent resolve")
         expectation.expectedFulfillmentCount = 10
 
-        for _ in 0..<10 {
+        for _ in 0 ..< 10 {
             DispatchQueue.global().async {
                 for id in ids {
-                    let _ = interner.resolve(id)
+                    _ = interner.resolve(id)
                 }
                 expectation.fulfill()
             }

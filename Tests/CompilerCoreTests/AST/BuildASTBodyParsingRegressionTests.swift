@@ -1,12 +1,12 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 // MARK: - BuildAST BodyParsing Regression Tests
+
 // Target: BuildASTPhase+BodyParsing.swift (56.9%)
 
 final class BuildASTBodyParsingRegressionTests: XCTestCase {
-
     // MARK: - Typed local variable declaration
 
     func testTypedLocalVariableDeclaration() throws {
@@ -185,7 +185,7 @@ final class BuildASTBodyParsingRegressionTests: XCTestCase {
 
             let ast = try XCTUnwrap(ctx.ast)
             let funDecls = ast.arena.declarations().compactMap { decl -> FunDecl? in
-                guard case .funDecl(let funDecl) = decl else {
+                guard case let .funDecl(funDecl) = decl else {
                     return nil
                 }
                 return funDecl
@@ -195,15 +195,16 @@ final class BuildASTBodyParsingRegressionTests: XCTestCase {
             XCTAssertTrue(funNames.contains("after"))
 
             let hostDecl = try XCTUnwrap(funDecls.first(where: { ctx.interner.resolve($0.name) == "host" }))
-            guard case .block(let bodyExprs, _) = hostDecl.body else {
+            guard case let .block(bodyExprs, _) = hostDecl.body else {
                 XCTFail("host should have a block body")
                 return
             }
 
             let localInitializers = bodyExprs.compactMap { exprID -> (String, ExprID)? in
                 guard let expr = ast.arena.expr(exprID),
-                      case .localDecl(let name, _, _, let initializer, _) = expr,
-                      let initializer else {
+                      case let .localDecl(name, _, _, initializer, _) = expr,
+                      let initializer
+                else {
                     return nil
                 }
                 return (ctx.interner.resolve(name), initializer)
@@ -212,21 +213,24 @@ final class BuildASTBodyParsingRegressionTests: XCTestCase {
 
             let lambdaInit = try XCTUnwrap(localsByName["lambda"], "Missing lambda initializer")
             guard let lambdaExpr = ast.arena.expr(lambdaInit),
-                  case .lambdaLiteral = lambdaExpr else {
+                  case .lambdaLiteral = lambdaExpr
+            else {
                 XCTFail("Expected `lambda` local initializer to be `.lambdaLiteral`.")
                 return
             }
 
             let objectInit = try XCTUnwrap(localsByName["instance"], "Missing object initializer")
             guard let objectExpr = ast.arena.expr(objectInit),
-                  case .objectLiteral = objectExpr else {
+                  case .objectLiteral = objectExpr
+            else {
                 XCTFail("Expected `instance` local initializer to be `.objectLiteral`.")
                 return
             }
 
             let callableInit = try XCTUnwrap(localsByName["ref"], "Missing callable reference initializer")
             guard let callableExpr = ast.arena.expr(callableInit),
-                  case .callableRef = callableExpr else {
+                  case .callableRef = callableExpr
+            else {
                 XCTFail("Expected `ref` local initializer to be `.callableRef`.")
                 return
             }

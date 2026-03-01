@@ -101,7 +101,7 @@ public func kk_vararg_spread_concat(_ pairsArrayRaw: Int, _ pairCount: Int) -> I
           pairCount > 0,
           pairs.elements.count >= pairCount * 2 else { return kk_array_new(0) }
     var totalCount = 0
-    for i in 0..<pairCount {
+    for i in 0 ..< pairCount {
         let marker = pairs.elements[i * 2]
         let value = pairs.elements[i * 2 + 1]
         if marker == -1 {
@@ -115,7 +115,7 @@ public func kk_vararg_spread_concat(_ pairsArrayRaw: Int, _ pairCount: Int) -> I
     let result = kk_array_new(totalCount)
     if let box = runtimeArrayBox(from: result) {
         var writeIndex = 0
-        for i in 0..<pairCount {
+        for i in 0 ..< pairCount {
             let marker = pairs.elements[i * 2]
             let value = pairs.elements[i * 2 + 1]
             if marker == -1 {
@@ -136,11 +136,10 @@ public func kk_vararg_spread_concat(_ pairsArrayRaw: Int, _ pairCount: Int) -> I
 
 @_cdecl("kk_println_any")
 public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
-    let intValue: Int
-    if let ptr = obj {
-        intValue = Int(bitPattern: ptr)
+    let intValue = if let ptr = obj {
+        Int(bitPattern: ptr)
     } else {
-        intValue = 0
+        0
     }
     if intValue == runtimeNullSentinelInt {
         Swift.print("null")

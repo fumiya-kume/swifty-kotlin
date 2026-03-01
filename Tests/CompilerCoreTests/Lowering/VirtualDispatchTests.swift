@@ -1,10 +1,9 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 /// Tests for virtual dispatch (vtable/itable) lowering, codegen, and backend emission (P5-25).
 final class VirtualDispatchTests: XCTestCase {
-
     // MARK: - Helpers
 
     /// Build a minimal symbol table + KIR module for an open class with a virtual method.
@@ -136,7 +135,7 @@ final class VirtualDispatchTests: XCTestCase {
                     thrownResult: nil,
                     dispatch: .vtable(slot: 0)
                 ),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -252,7 +251,7 @@ final class VirtualDispatchTests: XCTestCase {
                     thrownResult: nil,
                     dispatch: .itable(interfaceSlot: 0, methodSlot: 0)
                 ),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -322,7 +321,7 @@ final class VirtualDispatchTests: XCTestCase {
         )
 
         // Verify receiver is NOT in arguments
-        guard case .virtualCall(_, _, let receiver, let arguments, _, _, _, _) = instruction else {
+        guard case let .virtualCall(_, _, receiver, arguments, _, _, _, _) = instruction else {
             XCTFail("Expected virtualCall instruction")
             return
         }
@@ -378,7 +377,7 @@ final class VirtualDispatchTests: XCTestCase {
                     thrownResult: nil,
                     dispatch: .vtable(slot: 0)
                 ),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -409,9 +408,9 @@ final class VirtualDispatchTests: XCTestCase {
         // Check that boxing call was inserted before the virtualCall
         let callees = lowered.body.compactMap { instruction -> String? in
             switch instruction {
-            case .call(_, let callee, _, _, _, _, _):
+            case let .call(_, callee, _, _, _, _, _):
                 return interner.resolve(callee)
-            case .virtualCall(_, let callee, _, _, _, _, _, _):
+            case let .virtualCall(_, callee, _, _, _, _, _, _):
                 return "vc:" + interner.resolve(callee)
             default:
                 return nil

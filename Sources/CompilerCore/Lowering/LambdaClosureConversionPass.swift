@@ -6,10 +6,11 @@ final class LambdaClosureConversionPass: LoweringPass {
     func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool {
         let marker = ctx.interner.intern("<lambda>")
         for decl in module.arena.declarations {
-            guard case .function(let function) = decl else { continue }
+            guard case let .function(function) = decl else { continue }
             for instruction in function.body {
-                if case .call(_, let callee, _, _, _, _, _) = instruction,
-                   callee == marker {
+                if case let .call(_, callee, _, _, _, _, _) = instruction,
+                   callee == marker
+                {
                     return true
                 }
             }
@@ -24,8 +25,9 @@ final class LambdaClosureConversionPass: LoweringPass {
         module.arena.transformFunctions { function in
             var updated = function
             updated.body = function.body.map { instruction in
-                guard case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult, let isSuperCall) = instruction,
-                      callee == markerCallee else {
+                guard case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall) = instruction,
+                      callee == markerCallee
+                else {
                     return instruction
                 }
                 return .call(
@@ -43,4 +45,3 @@ final class LambdaClosureConversionPass: LoweringPass {
         module.recordLowering(Self.name)
     }
 }
-

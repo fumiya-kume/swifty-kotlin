@@ -1,8 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
-
 
 extension BuildKIRRegressionTests {
     func testNestedReturnInBothIfElseBranchesDoesNotEmitDeadEpilogue() throws {
@@ -23,7 +21,7 @@ extension BuildKIRRegressionTests {
             let body = try findKIRFunctionBody(named: "pick", in: module, interner: ctx.interner)
 
             let returnValues = body.compactMap { instruction -> KIRExprID? in
-                guard case .returnValue(let id) = instruction else { return nil }
+                guard case let .returnValue(id) = instruction else { return nil }
                 return id
             }
             // Should have exactly 2 returns: one from each branch, no spurious epilogue return
@@ -49,7 +47,7 @@ extension BuildKIRRegressionTests {
             let body = try findKIRFunctionBody(named: "classify", in: module, interner: ctx.interner)
 
             let returnValues = body.compactMap { instruction -> KIRExprID? in
-                guard case .returnValue(let id) = instruction else { return nil }
+                guard case let .returnValue(id) = instruction else { return nil }
                 return id
             }
             XCTAssertGreaterThanOrEqual(returnValues.count, 3, "Expected at least 3 returnValue instructions for when-branch returns, got \(returnValues.count)")
@@ -94,7 +92,7 @@ extension BuildKIRRegressionTests {
 
             // The val x = 99 after return should not produce any const 99 in the body
             let has99 = body.contains { instruction in
-                guard case .constValue(_, let value) = instruction else { return false }
+                guard case let .constValue(_, value) = instruction else { return false }
                 if case .intLiteral(99) = value { return true }
                 return false
             }
@@ -120,7 +118,7 @@ extension BuildKIRRegressionTests {
             let body = try findKIRFunctionBody(named: "safeDivide", in: module, interner: ctx.interner)
 
             let returnValues = body.compactMap { instruction -> KIRExprID? in
-                guard case .returnValue(let id) = instruction else { return nil }
+                guard case let .returnValue(id) = instruction else { return nil }
                 return id
             }
             XCTAssertGreaterThanOrEqual(returnValues.count, 2, "Expected at least 2 returnValue instructions (try body + catch), got \(returnValues.count)")
@@ -131,7 +129,7 @@ extension BuildKIRRegressionTests {
                 "Try/catch lowering must guard CancellationException with runtime predicate"
             )
             let throwFlags = extractThrowFlags(from: body, interner: ctx.interner)
-            XCTAssertEqual(throwFlags["kk_throwable_is_cancellation"]?.allSatisfy({ $0 == false }), true)
+            XCTAssertEqual(throwFlags["kk_throwable_is_cancellation"]?.allSatisfy { $0 == false }, true)
         }
     }
 
@@ -201,12 +199,12 @@ extension BuildKIRRegressionTests {
 
             let module = try XCTUnwrap(ctx.kir)
             let mainFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let function) = decl else { return nil }
+                guard case let .function(function) = decl else { return nil }
                 return ctx.interner.resolve(function.name) == "main" ? function : nil
             }.first
             let body = try XCTUnwrap(mainFunction?.body)
             let callNames = body.compactMap { instruction -> String? in
-                guard case .call(_, let callee, _, _, _, _, _) = instruction else { return nil }
+                guard case let .call(_, callee, _, _, _, _, _) = instruction else { return nil }
                 return ctx.interner.resolve(callee)
             }
             XCTAssertTrue(callNames.contains("kk_array_new"), "Expected kk_array_new for non-trailing vararg, got: \(callNames)")
@@ -256,7 +254,6 @@ extension BuildKIRRegressionTests {
             XCTAssertGreaterThanOrEqual(labelCount, 3, "whenExpr with 2 branches + else needs at least 3 labels")
         }
     }
-
 }
 
 private struct KIRDirectLoweringFixture {
@@ -718,7 +715,7 @@ extension BuildKIRRegressionTests {
         )
 
         XCTAssertTrue(emitFolded.instructions.contains { instruction in
-            guard case .constValue(_, let value) = instruction else { return false }
+            guard case let .constValue(_, value) = instruction else { return false }
             if case .intLiteral(42) = value { return true }
             return false
         })
@@ -808,7 +805,7 @@ extension BuildKIRRegressionTests {
         )
 
         XCTAssertTrue(emit.instructions.contains { instruction in
-            guard case .constValue(_, let value) = instruction else { return false }
+            guard case let .constValue(_, value) = instruction else { return false }
             if case .intLiteral(11) = value { return true }
             return false
         })
@@ -959,7 +956,7 @@ extension BuildKIRRegressionTests {
                 XCTFail("Expected .call for \(testCase.input)")
                 continue
             }
-            guard case .call(_, let loweredCallee, let arguments, _, _, _, _) = callInstruction else {
+            guard case let .call(_, loweredCallee, arguments, _, _, _, _) = callInstruction else {
                 XCTFail("Expected .call payload for \(testCase.input)")
                 continue
             }
@@ -1033,13 +1030,13 @@ extension BuildKIRRegressionTests {
         )
 
         guard let callInstruction = emit.instructions.first(where: { instruction in
-            guard case .call(let symbol, _, _, _, _, _, _) = instruction else { return false }
+            guard case let .call(symbol, _, _, _, _, _, _) = instruction else { return false }
             return symbol == callee
         }) else {
             XCTFail("Expected chosen callee call")
             return
         }
-        guard case .call(_, let loweredCallee, let arguments, _, _, _, _) = callInstruction else {
+        guard case let .call(_, loweredCallee, arguments, _, _, _, _) = callInstruction else {
             XCTFail("Expected .call payload")
             return
         }
@@ -1113,13 +1110,13 @@ extension BuildKIRRegressionTests {
 
         let expectedStub = fixture.driver.callSupportLowerer.defaultStubSymbol(for: chosen)
         guard let stubCall = emit.instructions.first(where: { instruction in
-            guard case .call(let symbol, _, _, _, _, _, _) = instruction else { return false }
+            guard case let .call(symbol, _, _, _, _, _, _) = instruction else { return false }
             return symbol == expectedStub
         }) else {
             XCTFail("Expected default stub call")
             return
         }
-        guard case .call(_, let callee, let arguments, _, _, _, _) = stubCall else {
+        guard case let .call(_, callee, arguments, _, _, _, _) = stubCall else {
             XCTFail("Expected .call payload")
             return
         }
@@ -1211,7 +1208,7 @@ extension BuildKIRRegressionTests {
             XCTFail("Expected virtualCall instruction")
             return
         }
-        guard case .virtualCall(_, _, _, let arguments, _, _, _, let dispatch) = virtualInstruction else {
+        guard case let .virtualCall(_, _, _, arguments, _, _, _, dispatch) = virtualInstruction else {
             XCTFail("Expected virtualCall payload")
             return
         }
@@ -1303,7 +1300,7 @@ extension BuildKIRRegressionTests {
         }
         XCTAssertFalse(hasVirtualCall)
         XCTAssertTrue(emit.instructions.contains { instruction in
-            guard case .call(_, _, _, _, _, _, let isSuperCall) = instruction else { return false }
+            guard case let .call(_, _, _, _, _, _, isSuperCall) = instruction else { return false }
             return isSuperCall
         })
     }

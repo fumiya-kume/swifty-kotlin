@@ -1,7 +1,7 @@
 import Foundation
 
-/// Handles call expression type inference (function calls, member calls, safe member calls).
-/// Derived from TypeCheckSemaPhase+InferCallsAndBinary.swift.
+// Handles call expression type inference (function calls, member calls, safe member calls).
+// Derived from TypeCheckSemaPhase+InferCallsAndBinary.swift.
 
 extension CallTypeChecker {
     func bindCallAndResolveReturnType(
@@ -45,11 +45,12 @@ extension CallTypeChecker {
         let ast = ctx.ast
         let sema = ctx.sema
         let nonNullCalleeType = sema.types.makeNonNullable(calleeType)
-        guard case .functionType(let functionType) = sema.types.kind(of: nonNullCalleeType) else {
+        guard case let .functionType(functionType) = sema.types.kind(of: nonNullCalleeType) else {
             return nil
         }
         guard !args.contains(where: { $0.label != nil || $0.isSpread }),
-              functionType.params.count == argTypes.count else {
+              functionType.params.count == argTypes.count
+        else {
             ctx.semaCtx.diagnostics.error(
                 "KSWIFTK-SEMA-0002",
                 "No viable overload found for call.",

@@ -81,7 +81,7 @@ extension LLVMCAPIBindings {
         return "LLVMTargetMachineEmitToFile failed."
     }
 
-    internal func initializeTarget(for triple: String) {
+    func initializeTarget(for triple: String) {
         if triple.hasPrefix("x86_64") || triple.hasPrefix("i386") {
             initializeX86TargetInfoFn?()
             initializeX86TargetFn?()
@@ -97,16 +97,16 @@ extension LLVMCAPIBindings {
         }
     }
 
-    internal func llvmOptLevel(_ level: OptimizationLevel) -> UInt32 {
+    func llvmOptLevel(_ level: OptimizationLevel) -> UInt32 {
         switch level {
         case .O0:
-            return 0
+            0
         case .O1:
-            return 1
+            1
         case .O2:
-            return 2
+            2
         case .O3:
-            return 3
+            3
         }
     }
 }

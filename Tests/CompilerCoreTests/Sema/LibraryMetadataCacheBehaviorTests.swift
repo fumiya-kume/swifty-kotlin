@@ -1,6 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 final class LibraryMetadataCacheBehaviorTests: XCTestCase {
     // MARK: - P5-62: Library metadata cache tests
@@ -184,7 +184,7 @@ final class LibraryMetadataCacheBehaviorTests: XCTestCase {
         var libDirs: [String] = []
 
         // Create multiple .kklib directories
-        for libIndex in 0..<libraryCount {
+        for libIndex in 0 ..< libraryCount {
             let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
             let libDir = baseDir.appendingPathExtension("kklib")
             try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
@@ -197,7 +197,7 @@ final class LibraryMetadataCacheBehaviorTests: XCTestCase {
             }
             """
             var metadataLines = ["symbols=\(symbolsPerLibrary)"]
-            for symIndex in 0..<symbolsPerLibrary {
+            for symIndex in 0 ..< symbolsPerLibrary {
                 metadataLines.append("function _ fq=bench\(libIndex).fn\(symIndex) schema=v1 arity=1 suspend=0 sig=F1<I,I>")
             }
             let metadata = metadataLines.joined(separator: "\n")
@@ -213,7 +213,7 @@ final class LibraryMetadataCacheBehaviorTests: XCTestCase {
         let timeWithoutCache: Double = try {
             var total: Double = 0
             let iterations = 3
-            for _ in 0..<iterations {
+            for _ in 0 ..< iterations {
                 try withTemporaryFile(contents: source) { path in
                     let ctx = makeCompilationContext(
                         inputs: [path],
@@ -256,7 +256,7 @@ final class LibraryMetadataCacheBehaviorTests: XCTestCase {
         let timeWithCache: Double = try {
             var total: Double = 0
             let iterations = 3
-            for _ in 0..<iterations {
+            for _ in 0 ..< iterations {
                 try withTemporaryFile(contents: source) { path in
                     let ctx = makeCompilationContext(
                         inputs: [path],
@@ -317,43 +317,43 @@ final class LibraryMetadataCacheBehaviorTests: XCTestCase {
 
     // --- A. LibraryMetadataCache unit tests (isolated, direct) ---
 
-    /// A1: Manifest cache hit — same libraryDir, same mtime
+    // A1: Manifest cache hit — same libraryDir, same mtime
 
-    /// A2: Manifest cache miss — different libraryDir
+    // A2: Manifest cache miss — different libraryDir
 
-    /// A3: Manifest cache miss — mtime changed (file modified)
+    // A3: Manifest cache miss — mtime changed (file modified)
 
-    /// A4: Metadata cache hit — same interner, same path+mtime
+    // A4: Metadata cache hit — same interner, same path+mtime
 
-    /// A5: Metadata cache miss — different interner
+    // A5: Metadata cache miss — different interner
 
-    /// A6: Signature cache hit — same TypeSystem + SymbolTable
+    // A6: Signature cache hit — same TypeSystem + SymbolTable
 
-    /// A7: Signature cache miss — different TypeSystem
+    // A7: Signature cache miss — different TypeSystem
 
-    /// A8: Signature cache miss — different SymbolTable
+    // A8: Signature cache miss — different SymbolTable
 
-    /// A9: Signature cache correctly caches nil (failed parse)
+    // A9: Signature cache correctly caches nil (failed parse)
 
-    /// A10: Signature cache auto-clears on TypeSystem change
+    // A10: Signature cache auto-clears on TypeSystem change
 
-    /// A11: Metadata cache auto-clears on interner change
+    // A11: Metadata cache auto-clears on interner change
 
     // --- B. Integration tests (loadImportedLibrarySymbols with cache) ---
 
-    /// B1: cache=nil produces identical results to without cache (no regression)
+    // B1: cache=nil produces identical results to without cache (no regression)
 
-    /// B2: cache provided → correct symbols on first load + correct cache population
+    // B2: cache provided → correct symbols on first load + correct cache population
 
-    /// B3: Properties and typeAliases also cache correctly (not just functions)
+    // B3: Properties and typeAliases also cache correctly (not just functions)
 
-    /// B4: Invalid manifest is still cached (avoids re-reading invalid manifest)
+    // B4: Invalid manifest is still cached (avoids re-reading invalid manifest)
 
-    /// B5: Multiple libraries → all manifests and metadata cached correctly
+    // B5: Multiple libraries → all manifests and metadata cached correctly
 
-    /// B6: Cached results produce semantically identical TypeIDs as non-cached
+    // B6: Cached results produce semantically identical TypeIDs as non-cached
 
-    /// B7: Suspend functions work with cache
+    // B7: Suspend functions work with cache
 
-    /// B8: Nullable type signatures cached correctly
+    // B8: Nullable type signatures cached correctly
 }

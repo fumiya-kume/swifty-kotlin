@@ -1,6 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 extension BuildKIRRegressionTests {
     // MARK: - Expression Variants Scenarios
@@ -93,7 +93,7 @@ extension BuildKIRRegressionTests {
                 eInt1, eBoolTrue, eString, eNameLocal, eNameKnown, eNameUnknown,
                 eAdd, eSub, eMul, eDiv, eEq, eNe, eLt, eLe, eGt, eGe, eAnd, eOr, eUnaryPlus, eUnaryMinus, eUnaryNot,
                 eCallKnown, eCallUnknown, eCallNonName,
-                eWhenNoElse, eWhenElse, eWhile, eDoWhile, eFor
+                eWhenNoElse, eWhenElse, eWhile, eDoWhile, eFor,
             ], range),
             isSuspend: true,
             isInline: true
@@ -369,5 +369,4 @@ extension BuildKIRRegressionTests {
 
         return (ctx, pickSymbol, mainSymbol, typeParameterSymbol, intType)
     }
-
 }

@@ -1,5 +1,5 @@
-import Foundation
 import CompilerCore
+import Foundation
 
 func printUsage() {
     print(CLIParser.usageText)
@@ -9,15 +9,15 @@ func printCLIError(_ error: CLIParseError) {
     switch error {
     case .usageRequested, .noInputFiles:
         break
-    case .missingValue(let option):
+    case let .missingValue(option):
         print("Missing value for option: \(option)")
-    case .unsupportedEmitMode(let value):
+    case let .unsupportedEmitMode(value):
         print("Unsupported emit mode: \(value)")
-    case .unsupportedOptimizationLevel(let value):
+    case let .unsupportedOptimizationLevel(value):
         print("Unsupported optimization level: \(value)")
-    case .invalidTargetTriple(let value):
+    case let .invalidTargetTriple(value):
         print("Invalid target triple: \(value)")
-    case .unknownOption(let option):
+    case let .unknownOption(option):
         print("Unknown option: \(option)")
     }
 }

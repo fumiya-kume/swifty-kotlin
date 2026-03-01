@@ -1,9 +1,8 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 final class LinkPhaseIntegrationTests: XCTestCase {
-
     func testLinkPhaseAutoLinksKotlinLibraryObjectForCrossModuleCall() throws {
         let librarySource = """
         package extdemo
@@ -46,7 +45,7 @@ final class LinkPhaseIntegrationTests: XCTestCase {
                     _ = try CommandRunner.run(executable: outputPath, arguments: [])
                     XCTFail("Expected non-zero exit")
                     return
-                } catch CommandRunnerError.nonZeroExit(let failed) {
+                } catch let CommandRunnerError.nonZeroExit(failed) {
                     XCTAssertEqual(failed.exitCode, 42)
                 } catch {
                     XCTFail("Unexpected error: \(error)")
@@ -114,7 +113,7 @@ final class LinkPhaseIntegrationTests: XCTestCase {
                 result = try CommandRunner.run(executable: out, arguments: [])
                 XCTFail("Expected executable to fail on unhandled top-level exception.")
                 return
-            } catch CommandRunnerError.nonZeroExit(let failed) {
+            } catch let CommandRunnerError.nonZeroExit(failed) {
                 result = failed
             } catch {
                 XCTFail("Unexpected error: \(error)")
@@ -198,7 +197,7 @@ final class LinkPhaseIntegrationTests: XCTestCase {
                 _ = try CommandRunner.run(executable: outputPath, arguments: [])
                 XCTFail("Expected non-zero exit")
                 return
-            } catch CommandRunnerError.nonZeroExit(let failed) {
+            } catch let CommandRunnerError.nonZeroExit(failed) {
                 XCTAssertEqual(failed.exitCode, 42)
             } catch {
                 XCTFail("Unexpected error: \(error)")

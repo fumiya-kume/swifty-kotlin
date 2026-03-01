@@ -35,7 +35,8 @@ extension NativeEmitter {
             lowered = bindings.buildSDiv(state.builder, lhs: lhs, rhs: rhs, name: "div_\(instructionIndex)")
         case "kk_op_mod":
             if let quotient = bindings.buildSDiv(state.builder, lhs: lhs, rhs: rhs, name: "mod_q_\(instructionIndex)"),
-               let product = bindings.buildMul(state.builder, lhs: quotient, rhs: rhs, name: "mod_p_\(instructionIndex)") {
+               let product = bindings.buildMul(state.builder, lhs: quotient, rhs: rhs, name: "mod_p_\(instructionIndex)")
+            {
                 lowered = bindings.buildSub(state.builder, lhs: lhs, rhs: product, name: "mod_\(instructionIndex)")
             } else {
                 lowered = nil
@@ -80,7 +81,8 @@ extension NativeEmitter {
             if let lhsBool = boolCondition(from: lhs, name: "and_lhs_\(instructionIndex)"),
                let rhsBool = boolCondition(from: rhs, name: "and_rhs_\(instructionIndex)"),
                let lhsInt = bindings.buildZExt(state.builder, value: lhsBool, type: state.int64Type, name: "and_lhs64_\(instructionIndex)"),
-               let rhsInt = bindings.buildZExt(state.builder, value: rhsBool, type: state.int64Type, name: "and_rhs64_\(instructionIndex)") {
+               let rhsInt = bindings.buildZExt(state.builder, value: rhsBool, type: state.int64Type, name: "and_rhs64_\(instructionIndex)")
+            {
                 lowered = bindings.buildMul(state.builder, lhs: lhsInt, rhs: rhsInt, name: "and64_\(instructionIndex)")
             } else {
                 lowered = nil
@@ -91,7 +93,8 @@ extension NativeEmitter {
                let lhsInt = bindings.buildZExt(state.builder, value: lhsBool, type: state.int64Type, name: "or_lhs64_\(instructionIndex)"),
                let rhsInt = bindings.buildZExt(state.builder, value: rhsBool, type: state.int64Type, name: "or_rhs64_\(instructionIndex)"),
                let sum = bindings.buildAdd(state.builder, lhs: lhsInt, rhs: rhsInt, name: "or_sum_\(instructionIndex)"),
-               let nonZero = bindings.buildICmpNotEqual(state.builder, lhs: sum, rhs: state.zeroValue, name: "or_nonzero_\(instructionIndex)") {
+               let nonZero = bindings.buildICmpNotEqual(state.builder, lhs: sum, rhs: state.zeroValue, name: "or_nonzero_\(instructionIndex)")
+            {
                 lowered = bindings.buildZExt(state.builder, value: nonZero, type: state.int64Type, name: "or64_\(instructionIndex)")
             } else {
                 lowered = nil
@@ -136,25 +139,25 @@ extension NativeEmitter {
         declareExternalFunction: (String, Int, Bool) -> LLVMFunction?
     ) -> LLVMCAPIBindings.LLVMValueRef {
         switch expression {
-        case .intLiteral(let number):
+        case let .intLiteral(number):
             return bindings.constInt(state.int64Type, value: UInt64(bitPattern: number), signExtend: true) ?? state.zeroValue
-        case .longLiteral(let number):
+        case let .longLiteral(number):
             return bindings.constInt(state.int64Type, value: UInt64(bitPattern: number), signExtend: true) ?? state.zeroValue
-        case .floatLiteral(let value):
+        case let .floatLiteral(value):
             var f = Float(value)
             var bits: UInt32 = 0
             memcpy(&bits, &f, MemoryLayout<UInt32>.size)
             return bindings.constInt(state.int64Type, value: UInt64(bits)) ?? state.zeroValue
-        case .doubleLiteral(let value):
+        case let .doubleLiteral(value):
             var d = value
             var bits: UInt64 = 0
             memcpy(&bits, &d, MemoryLayout<UInt64>.size)
             return bindings.constInt(state.int64Type, value: bits) ?? state.zeroValue
-        case .charLiteral(let scalar):
+        case let .charLiteral(scalar):
             return bindings.constInt(state.int64Type, value: UInt64(scalar)) ?? state.zeroValue
-        case .boolLiteral(let value):
+        case let .boolLiteral(value):
             return bindings.constInt(state.int64Type, value: value ? 1 : 0) ?? state.zeroValue
-        case .stringLiteral(let interned):
+        case let .stringLiteral(interned):
             let text = interner.resolve(interned)
             let literalID: Int32
             if let expressionRawID {
@@ -193,17 +196,18 @@ extension NativeEmitter {
                 arguments: [pointerAsInt, lengthValue],
                 name: "str_from_utf8_\(literalID)"
             ) ?? state.zeroValue
-        case .symbolRef(let symbol):
+        case let .symbolRef(symbol):
             if let parameter = parameterValues[symbol] {
                 return parameter
             }
             if let internalFunction = internalFunctions[symbol],
                let functionPointer = bindings.buildPtrToInt(
-                state.builder,
-                value: internalFunction.value,
-                type: state.int64Type,
-                name: "fn_ptr_\(symbol.rawValue)"
-               ) {
+                   state.builder,
+                   value: internalFunction.value,
+                   type: state.int64Type,
+                   name: "fn_ptr_\(symbol.rawValue)"
+               )
+            {
                 return functionPointer
             }
             // Load from LLVM global variable if this symbol refers to a global.
@@ -216,7 +220,7 @@ extension NativeEmitter {
                 ) ?? state.zeroValue
             }
             return state.zeroValue
-        case .temporary(let raw):
+        case let .temporary(raw):
             return bindings.constInt(
                 state.int64Type,
                 value: UInt64(bitPattern: Int64(raw)),

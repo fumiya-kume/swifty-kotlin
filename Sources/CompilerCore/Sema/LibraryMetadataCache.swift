@@ -10,7 +10,6 @@ import Foundation
 ///   single compilation session on one thread — the same threading model used by the
 ///   rest of the Sema pipeline.
 public final class LibraryMetadataCache {
-
     public init() {}
 
     // MARK: - Manifest cache (libraryDir → single entry with mtime + target)
@@ -34,7 +33,8 @@ public final class LibraryMetadataCache {
         let targetStr = "\(target.arch)-\(target.vendor)-\(target.os)"
         guard let entry = manifestCache[libraryDir],
               entry.mtimeNanos == mtime,
-              entry.targetString == targetStr else {
+              entry.targetString == targetStr
+        else {
             return nil
         }
         return entry.info
@@ -71,11 +71,12 @@ public final class LibraryMetadataCache {
     func cachedMetadataRecords(metadataPath: String, interner: StringInterner) -> [DataFlowSemaPhase.ImportedLibrarySymbolRecord]? {
         let intID = ObjectIdentifier(interner)
         if currentInternerID != intID {
-            return nil  // different interner — treat as miss
+            return nil // different interner — treat as miss
         }
         let mtime = Self.fileMtimeNanos(path: metadataPath)
         guard let entry = metadataCache[metadataPath],
-              entry.mtimeNanos == mtime else {
+              entry.mtimeNanos == mtime
+        else {
             return nil
         }
         return entry.records
@@ -123,12 +124,12 @@ public final class LibraryMetadataCache {
         let tsID = ObjectIdentifier(types)
         let stID = ObjectIdentifier(symbols)
         if currentTypeSystemID != tsID || currentSymbolTableID != stID {
-            return nil  // different TypeSystem or SymbolTable — treat as miss
+            return nil // different TypeSystem or SymbolTable — treat as miss
         }
         guard let entry = signatureCache[signature] else {
-            return nil  // cache miss — outer optional is nil
+            return nil // cache miss — outer optional is nil
         }
-        return entry  // cache hit — may be .some(nil) for previously-failed parses
+        return entry // cache hit — may be .some(nil) for previously-failed parses
     }
 
     /// Stores a type signature parse result (including `nil` for failures).
@@ -147,20 +148,27 @@ public final class LibraryMetadataCache {
     // MARK: - Statistics
 
     /// Number of manifest cache entries.
-    public var manifestCacheCount: Int { manifestCache.count }
+    public var manifestCacheCount: Int {
+        manifestCache.count
+    }
 
     /// Number of metadata record cache entries.
-    public var metadataCacheCount: Int { metadataCache.count }
+    public var metadataCacheCount: Int {
+        metadataCache.count
+    }
 
     /// Number of cached type signature entries.
-    public var signatureCacheCount: Int { signatureCache.count }
+    public var signatureCacheCount: Int {
+        signatureCache.count
+    }
 
     // MARK: - Helpers
 
     private static func fileMtimeNanos(path: String) -> Int64 {
         let url = URL(fileURLWithPath: path)
         guard let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
-              let date = attrs[.modificationDate] as? Date else {
+              let date = attrs[.modificationDate] as? Date
+        else {
             return 0
         }
         return Int64(date.timeIntervalSince1970 * 1_000_000_000)

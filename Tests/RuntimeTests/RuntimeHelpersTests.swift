@@ -1,8 +1,7 @@
-import XCTest
 @testable import Runtime
+import XCTest
 
 final class RuntimeHelpersTests: XCTestCase {
-
     override func setUp() {
         super.setUp()
         kk_runtime_force_reset()
@@ -157,7 +156,7 @@ final class RuntimeHelpersTests: XCTestCase {
     // MARK: - KxMiniRuntime.launch
 
     func testLaunchExecutesBlock() async {
-        let expectation = self.expectation(description: "launch block executed")
+        let expectation = expectation(description: "launch block executed")
         KxMiniRuntime.launch {
             expectation.fulfill()
         }
@@ -174,7 +173,7 @@ final class RuntimeHelpersTests: XCTestCase {
     // MARK: - KxMiniRuntime.delay
 
     func testDelayInvokesContinuationAfterDelay() async {
-        let expectation = self.expectation(description: "delay continuation invoked")
+        let expectation = expectation(description: "delay continuation invoked")
         let continuation = KKDispatchContinuation(context: nil) { _ in
             expectation.fulfill()
         }
@@ -183,7 +182,7 @@ final class RuntimeHelpersTests: XCTestCase {
     }
 
     func testDelayWithZeroMilliseconds() async {
-        let expectation = self.expectation(description: "zero delay continuation invoked")
+        let expectation = expectation(description: "zero delay continuation invoked")
         let continuation = KKDispatchContinuation(context: nil) { _ in
             expectation.fulfill()
         }
@@ -192,7 +191,7 @@ final class RuntimeHelpersTests: XCTestCase {
     }
 
     func testDelayWithNegativeMilliseconds() async {
-        let expectation = self.expectation(description: "negative delay continuation invoked")
+        let expectation = expectation(description: "negative delay continuation invoked")
         let continuation = KKDispatchContinuation(context: nil) { _ in
             expectation.fulfill()
         }

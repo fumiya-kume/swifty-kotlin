@@ -17,7 +17,6 @@
 /// When caching is disabled (the default), all call-sites receive `nil` and fall
 /// back to the original uncached paths.
 public final class SemaCacheContext {
-
     // MARK: - Scope lookup cache
 
     /// Keyed by the identity of the ``Scope`` object (via ``ObjectIdentifier``)
@@ -152,11 +151,22 @@ public final class SemaCacheContext {
     public private(set) var callResolutionMisses: Int = 0
 
     /// Increments scope hit counter (called internally).
-    func recordScopeHit() { scopeHits += 1 }
+    func recordScopeHit() {
+        scopeHits += 1
+    }
+
     /// Increments scope miss counter (called internally).
-    func recordScopeMiss() { scopeMisses += 1 }
+    func recordScopeMiss() {
+        scopeMisses += 1
+    }
+
     /// Increments call resolution hit counter.
-    func recordCallResolutionHit() { callResolutionHits += 1 }
+    func recordCallResolutionHit() {
+        callResolutionHits += 1
+    }
+
     /// Increments call resolution miss counter.
-    func recordCallResolutionMiss() { callResolutionMisses += 1 }
+    func recordCallResolutionMiss() {
+        callResolutionMisses += 1
+    }
 }

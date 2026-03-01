@@ -1,8 +1,8 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
-/// Tests for virtual dispatch (vtable/itable) lowering, codegen, and backend emission (P5-25).
+// Tests for virtual dispatch (vtable/itable) lowering, codegen, and backend emission (P5-25).
 
 extension VirtualDispatchTests {
     func testABILoweringUnboxesReturnForVirtualCall() throws {
@@ -48,7 +48,7 @@ extension VirtualDispatchTests {
                     thrownResult: nil,
                     dispatch: .vtable(slot: 0)
                 ),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -78,7 +78,7 @@ extension VirtualDispatchTests {
         let lowered = try findKIRFunction(named: "main", in: module, interner: interner)
         let callees = lowered.body.compactMap { instruction -> String? in
             switch instruction {
-            case .call(_, let callee, _, _, _, _, _):
+            case let .call(_, callee, _, _, _, _, _):
                 return interner.resolve(callee)
             default:
                 return nil
@@ -154,7 +154,7 @@ extension VirtualDispatchTests {
             if case .virtualCall = instruction { return true }
             return false
         }
-        guard case .virtualCall(_, _, _, _, _, _, _, let dispatch) = vcInstruction else {
+        guard case let .virtualCall(_, _, _, _, _, _, _, dispatch) = vcInstruction else {
             XCTFail("Expected virtualCall instruction after lowering")
             return
         }
@@ -191,7 +191,7 @@ extension VirtualDispatchTests {
             if case .virtualCall = instruction { return true }
             return false
         }
-        guard case .virtualCall(_, _, _, _, _, _, _, let dispatch) = vcInstruction else {
+        guard case let .virtualCall(_, _, _, _, _, _, _, dispatch) = vcInstruction else {
             XCTFail("Expected virtualCall instruction after lowering")
             return
         }
@@ -230,7 +230,7 @@ extension VirtualDispatchTests {
             if case .virtualCall = instruction { return true }
             return false
         }
-        guard case .virtualCall(_, _, let receiver, let arguments, _, _, _, _) = vcInstruction else {
+        guard case let .virtualCall(_, _, receiver, arguments, _, _, _, _) = vcInstruction else {
             XCTFail("Expected virtualCall instruction after lowering")
             return
         }
@@ -243,7 +243,7 @@ extension VirtualDispatchTests {
 
     // MARK: - 7. KIR dump contains vtable/itable dispatch info
 
-    func testKIRDumpContainsVtableLookupDispatchInfo() throws {
+    func testKIRDumpContainsVtableLookupDispatchInfo() {
         let fixture = makeVtableFixture()
         let dump = fixture.module.dump(interner: fixture.interner, symbols: fixture.symbols)
         XCTAssertTrue(dump.contains("virtualCall"), "KIR dump should contain virtualCall instruction")
@@ -251,7 +251,7 @@ extension VirtualDispatchTests {
         XCTAssertTrue(dump.contains("receiver="), "KIR dump should contain receiver field")
     }
 
-    func testKIRDumpContainsItableLookupDispatchInfo() throws {
+    func testKIRDumpContainsItableLookupDispatchInfo() {
         let fixture = makeItableFixture()
         let dump = fixture.module.dump(interner: fixture.interner, symbols: fixture.symbols)
         XCTAssertTrue(dump.contains("virtualCall"), "KIR dump should contain virtualCall instruction")
@@ -260,7 +260,7 @@ extension VirtualDispatchTests {
 
     // MARK: - 8. C backend receiver prepend: test via KIR dump
 
-    func testCBackendVirtualCallReceiverInOutput() throws {
+    func testCBackendVirtualCallReceiverInOutput() {
         let interner = StringInterner()
         let arena = KIRArena()
         let types = TypeSystem()
@@ -290,7 +290,7 @@ extension VirtualDispatchTests {
             name: interner.intern("callWithArg"),
             params: [
                 KIRParameter(symbol: SymbolID(rawValue: 5003), type: anyType),
-                KIRParameter(symbol: SymbolID(rawValue: 5004), type: anyType)
+                KIRParameter(symbol: SymbolID(rawValue: 5004), type: anyType),
             ],
             returnType: types.unitType,
             body: [
@@ -304,7 +304,7 @@ extension VirtualDispatchTests {
                     thrownResult: nil,
                     dispatch: .vtable(slot: 0)
                 ),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -374,7 +374,7 @@ extension VirtualDispatchTests {
 
     // MARK: - 10. Codegen serialization of virtualCall
 
-    func testCodegenSerializesVirtualCallWithVtableDispatch() throws {
+    func testCodegenSerializesVirtualCallWithVtableDispatch() {
         let fixture = makeVtableFixture()
 
         let dump = fixture.module.dump(interner: fixture.interner, symbols: fixture.symbols)
@@ -383,7 +383,7 @@ extension VirtualDispatchTests {
         XCTAssertTrue(dump.contains("dispatch=vtable[0]"), "KIR dump should contain dispatch=vtable[0], got:\n\(dump)")
     }
 
-    func testCodegenSerializesVirtualCallWithItableDispatch() throws {
+    func testCodegenSerializesVirtualCallWithItableDispatch() {
         let fixture = makeItableFixture()
 
         let dump = fixture.module.dump(interner: fixture.interner, symbols: fixture.symbols)
@@ -391,5 +391,4 @@ extension VirtualDispatchTests {
         XCTAssertTrue(dump.contains("virtualCall"), "KIR dump should contain virtualCall instruction, got:\n\(dump)")
         XCTAssertTrue(dump.contains("dispatch=itable[0:0]"), "KIR dump should contain dispatch=itable[0:0], got:\n\(dump)")
     }
-
 }

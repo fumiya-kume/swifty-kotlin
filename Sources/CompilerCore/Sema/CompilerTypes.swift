@@ -33,16 +33,16 @@ public struct TargetTriple: Equatable {
 
     public static func hostDefault() -> TargetTriple {
         #if arch(arm64)
-        let arch = "arm64"
+            let arch = "arm64"
         #elseif arch(x86_64)
-        let arch = "x86_64"
+            let arch = "x86_64"
         #else
-        let arch = "arm64"
+            let arch = "arm64"
         #endif
         #if os(Linux)
-        return TargetTriple(arch: arch, vendor: "unknown", os: "linux-gnu", osVersion: nil)
+            return TargetTriple(arch: arch, vendor: "unknown", os: "linux-gnu", osVersion: nil)
         #else
-        return TargetTriple(arch: arch, vendor: "apple", os: "macosx", osVersion: nil)
+            return TargetTriple(arch: arch, vendor: "apple", os: "macosx", osVersion: nil)
         #endif
     }
 }
@@ -131,7 +131,8 @@ public struct CompilerOptions: Equatable {
         for flag in frontendFlags {
             if flag.hasPrefix("jobs="),
                let n = Int(flag.dropFirst(5)),
-               n >= 1 {
+               n >= 1
+            {
                 return n
             }
         }
@@ -158,5 +159,4 @@ public struct CompilerOptions: Equatable {
         }
         return .synchronized
     }
-
 }

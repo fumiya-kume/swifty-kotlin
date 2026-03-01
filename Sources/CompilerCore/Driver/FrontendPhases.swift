@@ -5,7 +5,7 @@ private final class LockedIndexedResults<Element>: @unchecked Sendable {
     private var values: [Element?]
 
     init(count: Int) {
-        self.values = Array(repeating: nil, count: count)
+        values = Array(repeating: nil, count: count)
     }
 
     func store(_ value: Element, at index: Int) {
@@ -133,7 +133,7 @@ public final class ParsePhase: CompilerPhase {
             let parsed = parser.parseFile()
             return (parsed.arena, parsed.root)
         }
-        let syntaxTrees = parsedByFile.map { (fileID, parsed) in
+        let syntaxTrees = parsedByFile.map { fileID, parsed in
             (fileID, parsed.0, parsed.1)
         }
 
@@ -157,7 +157,7 @@ public final class ParsePhase: CompilerPhase {
 public final class BuildASTPhase: CompilerPhase {
     public static let name = "BuildAST"
 
-    internal struct PerFileASTResult: Sendable {
+    struct PerFileASTResult: Sendable {
         let fileID: FileID
         let fileRawID: Int32
         let packageFQName: [InternedString]
@@ -169,18 +169,17 @@ public final class BuildASTPhase: CompilerPhase {
 
     /// Per-arena cache for `collectTokens(from:in:)`.  Cleared between files
     /// because different `SyntaxArena`s reuse the same `NodeID` space.
-    internal var tokenCache: [NodeID: [Token]] = [:]
+    var tokenCache: [NodeID: [Token]] = [:]
 
     public init() {}
 
     public func run(_ ctx: CompilationContext) throws {
         if ctx.syntaxTrees.isEmpty {
             if let cst = ctx.syntaxTree {
-                let fileID: FileID
-                if let firstToken = ctx.tokens.first, firstToken.range.start.file != FileID.invalid {
-                    fileID = firstToken.range.start.file
+                let fileID: FileID = if let firstToken = ctx.tokens.first, firstToken.range.start.file != FileID.invalid {
+                    firstToken.range.start.file
                 } else {
-                    fileID = FileID(rawValue: 0)
+                    FileID(rawValue: 0)
                 }
                 ctx.syntaxTrees = [(fileID, cst, ctx.syntaxTreeRoot)]
             } else {
@@ -235,7 +234,7 @@ public final class BuildASTPhase: CompilerPhase {
         let jobSemaphore = DispatchSemaphore(value: jobs)
         let completionGroup = DispatchGroup()
 
-        for index in 0..<count {
+        for index in 0 ..< count {
             jobSemaphore.wait()
             completionGroup.enter()
             DispatchQueue.global().async {
@@ -290,7 +289,7 @@ public final class BuildASTPhase: CompilerPhase {
         var scriptBody: [ExprID] = []
 
         for child in cst.children(of: root) {
-            guard case .node(let nodeID) = child else {
+            guard case let .node(nodeID) = child else {
                 continue
             }
             let node = cst.node(nodeID)
@@ -306,7 +305,7 @@ public final class BuildASTPhase: CompilerPhase {
 
             case .importList:
                 for importChild in cst.children(of: nodeID) {
-                    guard case .node(let importNodeID) = importChild else { continue }
+                    guard case let .node(importNodeID) = importChild else { continue }
                     let importNode = cst.node(importNodeID)
                     guard importNode.kind == .importHeader else { continue }
                     let path = extractQualifiedPath(from: importNodeID, in: cst, interner: interner, isPackageHeader: false)
@@ -434,7 +433,7 @@ public final class BuildASTPhase: CompilerPhase {
         declarationsByFile: [Int32: [DeclID]],
         scriptExprsByFile: [Int32: [ExprID]]
     ) {
-        let fileIDs = ctx.syntaxTrees.map { $0.0.rawValue }.filter { $0 != FileID.invalid.rawValue }
+        let fileIDs = ctx.syntaxTrees.map(\.0.rawValue).filter { $0 != FileID.invalid.rawValue }
         let uniqueFileIDs = Array(Set(fileIDs)).sorted()
         let files: [ASTFile] = uniqueFileIDs.map { rawID in
             ASTFile(
@@ -447,11 +446,10 @@ public final class BuildASTPhase: CompilerPhase {
         }
 
         // Compute total token count from per-file data.
-        let totalTokenCount: Int
-        if !ctx.tokensByFile.isEmpty {
-            totalTokenCount = ctx.tokensByFile.reduce(0) { $0 + $1.1.count }
+        let totalTokenCount: Int = if !ctx.tokensByFile.isEmpty {
+            ctx.tokensByFile.reduce(0) { $0 + $1.1.count }
         } else {
-            totalTokenCount = ctx.tokens.count
+            ctx.tokens.count
         }
 
         ctx.ast = ASTModule(files: files, arena: arena, declarationCount: declarations.count, tokenCount: totalTokenCount)

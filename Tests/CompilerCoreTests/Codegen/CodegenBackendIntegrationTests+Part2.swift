@@ -1,7 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
 
 extension CodegenBackendIntegrationTests {
     func testLLVMBackendEmitsCoroutineRootLifecycleHooks() throws {
@@ -39,7 +38,7 @@ extension CodegenBackendIntegrationTests {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .returnValue(exited)
+                .returnValue(exited),
             ],
             isSuspend: false,
             isInline: false
@@ -78,7 +77,7 @@ extension CodegenBackendIntegrationTests {
             returnType: types.anyType,
             body: [
                 .call(symbol: nil, callee: interner.intern("external_throwing"), arguments: [], result: callResult, canThrow: true, thrownResult: nil),
-                .returnValue(callResult)
+                .returnValue(callResult),
             ],
             isSuspend: false,
             isInline: false
@@ -145,7 +144,7 @@ extension CodegenBackendIntegrationTests {
         let prefix = "kswiftk_codegen_"
         if let prefixData = prefix.data(using: .utf8) {
             var searchStart = result.startIndex
-            while let range = result.range(of: prefixData, in: searchStart..<result.endIndex) {
+            while let range = result.range(of: prefixData, in: searchStart ..< result.endIndex) {
                 let hashStart = range.upperBound
                 var hashEnd = hashStart
                 while hashEnd < result.endIndex {
@@ -153,7 +152,9 @@ extension CodegenBackendIntegrationTests {
                     if byte == 0x2E || byte == 0x00 { break }
                     hashEnd = result.index(after: hashEnd)
                 }
-                for i in hashStart..<hashEnd { result[i] = 0x30 }
+                for i in hashStart ..< hashEnd {
+                    result[i] = 0x30
+                }
                 searchStart = hashEnd
             }
         }
@@ -166,9 +167,10 @@ extension CodegenBackendIntegrationTests {
         let placeholder = "deterministic_X"
         if outputBasename != placeholder,
            let pathData = outputBasename.data(using: .utf8),
-           let fixedData = placeholder.data(using: .utf8) {
+           let fixedData = placeholder.data(using: .utf8)
+        {
             var searchStart = result.startIndex
-            while let range = result.range(of: pathData, in: searchStart..<result.endIndex) {
+            while let range = result.range(of: pathData, in: searchStart ..< result.endIndex) {
                 result.replaceSubrange(range, with: fixedData)
                 searchStart = result.index(range.lowerBound, offsetBy: fixedData.count)
             }
@@ -272,7 +274,7 @@ extension CodegenBackendIntegrationTests {
                 .label(801),
                 .call(symbol: calleeSym, callee: interner.intern("ignored"), arguments: [], result: e5, canThrow: false, thrownResult: nil),
                 .returnValue(e5),
-                .endBlock
+                .endBlock,
             ],
             isSuspend: false,
             isInline: false
@@ -285,5 +287,4 @@ extension CodegenBackendIntegrationTests {
 
         return KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [mainID])], arena: arena)
     }
-
 }

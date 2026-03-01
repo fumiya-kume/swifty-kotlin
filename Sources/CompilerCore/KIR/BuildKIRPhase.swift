@@ -16,7 +16,7 @@ public final class BuildKIRPhase: CompilerPhase {
         let driver = KIRLoweringDriver(ctx: loweringCtx)
         let module = driver.lowerModule(ast: ast, sema: sema, compilationCtx: ctx)
 
-        if module.functionCount == 0 && !ctx.diagnostics.hasError {
+        if module.functionCount == 0, !ctx.diagnostics.hasError {
             ctx.diagnostics.warning(
                 "KSWIFTK-KIR-0001",
                 "No function declarations found.",

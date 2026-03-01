@@ -1,9 +1,8 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 final class OperatorAndForLoweringTests: XCTestCase {
-
     // MARK: - Helper
 
     private func makeKIRContext(interner: StringInterner) -> KIRContext {
@@ -43,12 +42,12 @@ final class OperatorAndForLoweringTests: XCTestCase {
     }
 
     private func calleesInDecl(_ declID: KIRDeclID, module: KIRModule, interner: StringInterner) -> [String] {
-        guard case .function(let fn) = module.arena.decl(declID) else { return [] }
+        guard case let .function(fn) = module.arena.decl(declID) else { return [] }
         return extractCallees(from: fn.body, interner: interner)
     }
 
     private func bodyInDecl(_ declID: KIRDeclID, module: KIRModule) -> [KIRInstruction] {
-        guard case .function(let fn) = module.arena.decl(declID) else { return [] }
+        guard case let .function(fn) = module.arena.decl(declID) else { return [] }
         return fn.body
     }
 
@@ -63,12 +62,12 @@ final class OperatorAndForLoweringTests: XCTestCase {
         let (module, declID) = makeModule(
             body: [
                 .call(symbol: nil, callee: interner.intern("println"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil),
-                .returnUnit
+                .returnUnit,
             ],
             interner: interner,
             arena: arena
         )
-        let ctx = makeKIRContext(interner: interner)  // no sema
+        let ctx = makeKIRContext(interner: interner) // no sema
 
         try OperatorLoweringPass().run(module: module, ctx: ctx)
 
@@ -88,7 +87,7 @@ final class OperatorAndForLoweringTests: XCTestCase {
         let (module, declID) = makeModule(
             body: [
                 .binary(op: .add, lhs: v0, rhs: v1, result: v2),
-                .returnUnit
+                .returnUnit,
             ],
             interner: interner,
             arena: arena
@@ -117,7 +116,7 @@ final class OperatorAndForLoweringTests: XCTestCase {
         let (module, declID) = makeModule(
             body: [
                 .nullAssert(operand: v0, result: v1),
-                .returnUnit
+                .returnUnit,
             ],
             interner: interner,
             arena: arena
@@ -213,7 +212,7 @@ final class OperatorAndForLoweringTests: XCTestCase {
             body: [
                 .call(symbol: nil, callee: interner.intern("kk_range_iterator"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil),
                 .call(symbol: nil, callee: interner.intern("kk_for_lowered"), arguments: [v1], result: v2, canThrow: false, thrownResult: nil),
-                .returnUnit
+                .returnUnit,
             ],
             interner: interner,
             arena: arena
@@ -242,7 +241,7 @@ final class OperatorAndForLoweringTests: XCTestCase {
             returnType: TypeSystem().unitType,
             body: [
                 .call(symbol: nil, callee: interner.intern("someFunction"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -265,7 +264,7 @@ final class OperatorAndForLoweringTests: XCTestCase {
             params: [],
             returnType: TypeSystem().unitType,
             body: [
-                .call(symbol: nil, callee: interner.intern("kk_for_lowered"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil)
+                .call(symbol: nil, callee: interner.intern("kk_for_lowered"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil),
             ],
             isSuspend: false,
             isInline: false
@@ -327,7 +326,7 @@ final class OperatorAndForLoweringTests: XCTestCase {
                 .beginBlock,
                 .call(symbol: nil, callee: interner.intern("foo"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil),
                 .endBlock,
-                .returnUnit
+                .returnUnit,
             ],
             interner: interner,
             arena: arena

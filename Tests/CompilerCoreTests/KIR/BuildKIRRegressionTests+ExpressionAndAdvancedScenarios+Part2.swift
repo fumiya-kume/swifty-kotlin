@@ -1,7 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
 
 extension BuildKIRRegressionTests {
     func testIfExprSideEffectsDoNotLeakFromUnselectedBranch() throws {
@@ -21,7 +20,7 @@ extension BuildKIRRegressionTests {
 
             // .select was removed; verify control flow guards side-effect branches
             let sideEffectCalls = body.filter { instruction in
-                guard case .call(_, let callee, _, _, _, _, _) = instruction else { return false }
+                guard case let .call(_, callee, _, _, _, _, _) = instruction else { return false }
                 return ctx.interner.resolve(callee) == "sideEffect"
             }
             XCTAssertEqual(sideEffectCalls.count, 2, "Both branches should have sideEffect calls in IR")
@@ -68,7 +67,7 @@ extension BuildKIRRegressionTests {
 
             // .select was removed; verify control flow guards side-effect branches
             let effectCalls = body.filter { instruction in
-                guard case .call(_, let callee, _, _, _, _, _) = instruction else { return false }
+                guard case let .call(_, callee, _, _, _, _, _) = instruction else { return false }
                 return ctx.interner.resolve(callee) == "effect"
             }
             XCTAssertEqual(effectCalls.count, 3, "All 3 branches should have effect calls in IR")
@@ -113,7 +112,7 @@ extension BuildKIRRegressionTests {
                 }
                 return false
             })
-            guard case .tryExpr(_, let catchClauses, _, _)? = ast.arena.expr(tryExprID) else {
+            guard case let .tryExpr(_, catchClauses, _, _)? = ast.arena.expr(tryExprID) else {
                 XCTFail("Expected try expression in demo.")
                 return
             }
@@ -128,31 +127,32 @@ extension BuildKIRRegressionTests {
             let body = try findKIRFunctionBody(named: "demo", in: module, interner: ctx.interner)
 
             let matcherCalls = body.compactMap { instruction -> KIRInstruction? in
-                guard case .call(_, let callee, let arguments, _, _, _, _) = instruction,
-                      ctx.interner.resolve(callee) == "kk_catch_type_matches" else {
+                guard case let .call(_, callee, arguments, _, _, _, _) = instruction,
+                      ctx.interner.resolve(callee) == "kk_catch_type_matches"
+                else {
                     return nil
                 }
-                let _ = arguments
+                _ = arguments
                 return instruction
             }
             XCTAssertTrue(matcherCalls.isEmpty, "Try-catch lowering should not require runtime matcher helper calls.")
 
             let labelPositions: [Int32: Int] = body.enumerated().reduce(into: [:]) { partial, entry in
-                if case .label(let labelID) = entry.element {
+                if case let .label(labelID) = entry.element {
                     partial[labelID] = entry.offset
                 }
             }
 
             func thrownEdge(for calleeName: String) -> (callIndex: Int, thrownSlot: KIRExprID, typeSlot: KIRExprID, target: Int32)? {
                 guard let callIndex = body.firstIndex(where: { instruction in
-                    guard case .call(_, let callee, _, _, _, _, _) = instruction else {
+                    guard case let .call(_, callee, _, _, _, _, _) = instruction else {
                         return false
                     }
                     return ctx.interner.resolve(callee) == calleeName
                 }) else {
                     return nil
                 }
-                guard case .call(_, _, _, _, _, let thrownResult?, _) = body[callIndex] else {
+                guard case let .call(_, _, _, _, _, thrownResult?, _) = body[callIndex] else {
                     return nil
                 }
                 let tokenConstIndex = callIndex + 1
@@ -161,10 +161,11 @@ extension BuildKIRRegressionTests {
                 guard body.indices.contains(tokenConstIndex),
                       body.indices.contains(tokenCopyIndex),
                       body.indices.contains(jumpIndex),
-                      case .constValue(let unknownTypeToken, .intLiteral(0)) = body[tokenConstIndex],
+                      case let .constValue(unknownTypeToken, .intLiteral(0)) = body[tokenConstIndex],
                       case .copy(from: unknownTypeToken, to: let typeSlot) = body[tokenCopyIndex],
-                      case .jumpIfNotNull(let value, let target) = body[jumpIndex],
-                      value == thrownResult else {
+                      case let .jumpIfNotNull(value, target) = body[jumpIndex],
+                      value == thrownResult
+                else {
                     return nil
                 }
                 return (callIndex, thrownResult, typeSlot, target)
@@ -172,7 +173,8 @@ extension BuildKIRRegressionTests {
 
             guard let bodyEdge = thrownEdge(for: "bodyCall"),
                   let catchEdge = thrownEdge(for: "catchCall"),
-                  let finallyEdge = thrownEdge(for: "finallyCall") else {
+                  let finallyEdge = thrownEdge(for: "finallyCall")
+            else {
                 XCTFail("Expected throw-aware edges for body/catch/finally calls.")
                 return
             }
@@ -186,7 +188,8 @@ extension BuildKIRRegressionTests {
 
             guard let bodyDispatchPos = labelPositions[bodyEdge.target],
                   let finallyEntryPos = labelPositions[catchEdge.target],
-                  let rethrowPos = labelPositions[finallyEdge.target] else {
+                  let rethrowPos = labelPositions[finallyEdge.target]
+            else {
                 XCTFail("Expected target labels for body/catch/finally throw edges.")
                 return
             }
@@ -198,7 +201,8 @@ extension BuildKIRRegressionTests {
             let typeComparisons = body.enumerated().compactMap { index, instruction -> (index: Int, typeToken: Int64)? in
                 guard case .binary(op: .equal, lhs: let lhs, rhs: let rhs, result: _) = instruction,
                       lhs == sharedExceptionTypeSlot,
-                      case .intLiteral(let token)? = module.arena.expr(rhs) else {
+                      case let .intLiteral(token)? = module.arena.expr(rhs)
+                else {
                     return nil
                 }
                 return (index, token)
@@ -211,22 +215,25 @@ extension BuildKIRRegressionTests {
             }
 
             guard body.indices.contains(typeComparisons[0].index + 1),
-                  case .jumpIfEqual(_, _, let firstMismatchTarget) = body[typeComparisons[0].index + 1],
-                let firstMismatchLabelPos = labelPositions[firstMismatchTarget] else {
+                  case let .jumpIfEqual(_, _, firstMismatchTarget) = body[typeComparisons[0].index + 1],
+                  let firstMismatchLabelPos = labelPositions[firstMismatchTarget]
+            else {
                 XCTFail("Expected mismatch branch after first catch matcher.")
                 return
             }
             XCTAssertLessThan(firstMismatchLabelPos, typeComparisons[1].index, "First catch mismatch should fall through to second catch dispatch.")
 
             guard body.indices.contains(typeComparisons[1].index + 1),
-                  case .jumpIfEqual(_, _, let unmatchedLabel) = body[typeComparisons[1].index + 1],
-                let unmatchedLabelPos = labelPositions[unmatchedLabel] else {
+                  case let .jumpIfEqual(_, _, unmatchedLabel) = body[typeComparisons[1].index + 1],
+                  let unmatchedLabelPos = labelPositions[unmatchedLabel]
+            else {
                 XCTFail("Expected unmatched-catch branch after last matcher.")
                 return
             }
             let unmatchedJumpIndex = body.index(after: unmatchedLabelPos)
             guard body.indices.contains(unmatchedJumpIndex),
-                  case .jump(let unmatchedTarget) = body[unmatchedJumpIndex] else {
+                  case let .jump(unmatchedTarget) = body[unmatchedJumpIndex]
+            else {
                 XCTFail("Expected unmatched-catch path to jump to finally.")
                 return
             }
@@ -234,21 +241,23 @@ extension BuildKIRRegressionTests {
 
             let finallyGuardJump = body.enumerated().contains { index, instruction in
                 guard index > finallyEdge.callIndex + 3,
-                      case .jumpIfNotNull(let value, let target) = instruction else {
+                      case let .jumpIfNotNull(value, target) = instruction
+                else {
                     return false
                 }
                 return value == sharedExceptionSlot && target == finallyEdge.target
             }
             XCTAssertTrue(finallyGuardJump, "Expected post-finally rethrow guard for pending exception slot.")
             XCTAssertTrue(body.contains { instruction in
-                if case .rethrow(let value) = instruction {
+                if case let .rethrow(value) = instruction {
                     return value == sharedExceptionSlot
                 }
                 return false
             })
 
-            guard case .call(_, _, let catchArguments, _, _, _, _) = body[catchEdge.callIndex],
-                  let firstCatchArgument = catchArguments.first else {
+            guard case let .call(_, _, catchArguments, _, _, _, _) = body[catchEdge.callIndex],
+                  let firstCatchArgument = catchArguments.first
+            else {
                 XCTFail("Expected catchCall argument in first catch body.")
                 return
             }
@@ -276,13 +285,13 @@ extension BuildKIRRegressionTests {
             ))
             let makeBody = try findKIRFunctionBody(named: "make", in: module, interner: ctx.interner)
             let objectFactoryCall = try XCTUnwrap(makeBody.first { instruction in
-                guard case .call(_, let callee, _, _, _, _, _) = instruction else {
+                guard case let .call(_, callee, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return ctx.interner.resolve(callee).hasPrefix("kk_object_literal_")
             })
 
-            guard case .call(let factorySymbol, let callee, let arguments, let result, _, _, _) = objectFactoryCall else {
+            guard case let .call(factorySymbol, callee, arguments, result, _, _, _) = objectFactoryCall else {
                 XCTFail("Expected object literal to lower to generated factory call.")
                 return
             }
@@ -298,17 +307,17 @@ extension BuildKIRRegressionTests {
             }
 
             let generatedFactoryDeclIndex = try XCTUnwrap(module.arena.declarations.firstIndex(where: { decl in
-                guard case .function(let function) = decl else {
+                guard case let .function(function) = decl else {
                     return false
                 }
                 return function.symbol == generatedFactorySymbol
             }))
-            guard case .function(let generatedFactory) = module.arena.declarations[generatedFactoryDeclIndex] else {
+            guard case let .function(generatedFactory) = module.arena.declarations[generatedFactoryDeclIndex] else {
                 XCTFail("Expected generated object factory function declaration.")
                 return
             }
             let hasAllocationRuntimeCall = generatedFactory.body.contains { instruction in
-                guard case .call(_, let loweredCallee, _, _, _, _, _) = instruction else {
+                guard case let .call(_, loweredCallee, _, _, _, _, _) = instruction else {
                     return false
                 }
                 let calleeName = ctx.interner.resolve(loweredCallee)
@@ -320,7 +329,7 @@ extension BuildKIRRegressionTests {
             )
 
             let generatedNominalDeclIndex = try XCTUnwrap(module.arena.declarations.firstIndex(where: { decl in
-                guard case .nominalType(let nominal) = decl else {
+                guard case let .nominalType(nominal) = decl else {
                     return false
                 }
                 return sema.symbols.symbol(nominal.symbol) == nil
@@ -335,5 +344,4 @@ extension BuildKIRRegressionTests {
     }
 
     // MARK: - Lambda / CallableRef Lowering (P5-20)
-
 }

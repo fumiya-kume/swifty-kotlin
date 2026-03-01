@@ -16,7 +16,7 @@ extension KotlinLexer {
                 return tokens
             }
 
-            if ch == 0x24 && offset + 1 < bytes.count && bytes[offset + 1] == 0x7B {
+            if ch == 0x24, offset + 1 < bytes.count, bytes[offset + 1] == 0x7B {
                 appendSegment(to: &tokens, from: segmentStart, to: offset, leadingTrivia: [])
                 let templateStart = offset
                 offset += 2
@@ -28,7 +28,7 @@ extension KotlinLexer {
                 continue
             }
 
-            if ch == 0x24 && offset + 1 < bytes.count && isIdentifierStart(bytes[offset + 1]) {
+            if ch == 0x24, offset + 1 < bytes.count, isIdentifierStart(bytes[offset + 1]) {
                 appendSegment(to: &tokens, from: segmentStart, to: offset, leadingTrivia: [])
                 tokens.append(
                     Token(
@@ -140,7 +140,7 @@ extension KotlinLexer {
             if starts(with: "\"\"\"", at: offset) {
                 break
             }
-            if bytes[offset] == 0x24 && offset + 1 < bytes.count && bytes[offset + 1] == 0x7B {
+            if bytes[offset] == 0x24, offset + 1 < bytes.count, bytes[offset + 1] == 0x7B {
                 appendSegment(to: &tokens, from: segmentStart, to: offset, leadingTrivia: [])
                 let templateStart = offset
                 offset += 2
@@ -181,13 +181,13 @@ extension KotlinLexer {
         var depth = 1
         var tokens: [Token] = []
 
-        while offset < bytes.count && depth > 0 {
+        while offset < bytes.count, depth > 0 {
             let leadingTrivia = consumeTrivia()
             if offset >= bytes.count {
                 break
             }
 
-            if bytes[offset] == 0x24 && offset + 1 < bytes.count && bytes[offset + 1] == 0x7B {
+            if bytes[offset] == 0x24, offset + 1 < bytes.count, bytes[offset + 1] == 0x7B {
                 let templateStart = offset
                 let templateRange = makeRange(start: templateStart, end: templateStart + 2)
                 offset += 2
@@ -284,7 +284,7 @@ extension KotlinLexer {
         if from >= to {
             return
         }
-        let segmentText = text(from: from..<to)
+        let segmentText = text(from: from ..< to)
         tokens.append(
             Token(
                 kind: .stringSegment(interner.intern(segmentText)),

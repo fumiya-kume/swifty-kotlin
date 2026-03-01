@@ -53,7 +53,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
         let kkMapIteratorHasNextName = interner.intern("kk_map_iterator_hasNext")
         let kkMapIteratorNextName = interner.intern("kk_map_iterator_next")
 
-        let _ = interner.intern("kk_array_of")
+        _ = interner.intern("kk_array_of")
         let kkArraySizeName = interner.intern("kk_array_size")
 
         let kkArrayNewName = interner.intern("kk_array_new")
@@ -79,17 +79,17 @@ final class CollectionLiteralLoweringPass: LoweringPass {
         // Set of all list-factory callee names
         let listFactoryNames: Set<InternedString> = [
             listOfName, mutableListOfName, emptyListName, listOfNotNullName,
-            setOfName, mutableSetOfName, emptySetName
+            setOfName, mutableSetOfName, emptySetName,
         ]
 
         // Set of all map-factory callee names
         let mapFactoryNames: Set<InternedString> = [
-            mapOfName, mutableMapOfName, emptyMapName
+            mapOfName, mutableMapOfName, emptyMapName,
         ]
 
         // Set of all arrayOf-factory callee names
         let arrayOfFactoryNames: Set<InternedString> = [
-            arrayOfName, intArrayOfName, longArrayOfName
+            arrayOfName, intArrayOfName, longArrayOfName,
         ]
 
         module.arena.transformFunctions { function in
@@ -102,7 +102,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
 
             for instruction in function.body {
                 switch instruction {
-                case .call(_, let callee, _, let result, _, _, _):
+                case let .call(_, callee, _, result, _, _, _):
                     if listFactoryNames.contains(callee) || callee == kkListOfName {
                         if let result { listExprIDs.insert(result.rawValue) }
                     } else if mapFactoryNames.contains(callee) || callee == kkMapOfName {
@@ -110,7 +110,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     } else if arrayOfFactoryNames.contains(callee) {
                         if let result { arrayExprIDs.insert(result.rawValue) }
                     }
-                case .copy(let from, let to):
+                case let .copy(from, to):
                     if listExprIDs.contains(from.rawValue) {
                         listExprIDs.insert(to.rawValue)
                     }
@@ -133,8 +133,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
 
             for instruction in function.body {
                 switch instruction {
-                case .call(_, let callee, let arguments, let result, let canThrow, let thrownResult, _):
-
+                case let .call(_, callee, arguments, result, canThrow, thrownResult, _):
                     // --- Rewrite listOf/mutableListOf/emptyList → kk_list_of ---
                     if listFactoryNames.contains(callee) {
                         let count = arguments.count
@@ -611,7 +610,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     // Default: keep instruction as-is
                     loweredBody.append(instruction)
 
-                case .copy(let from, let to):
+                case let .copy(from, to):
                     // Track copies of collection expressions
                     if listExprIDs.contains(from.rawValue) {
                         listExprIDs.insert(to.rawValue)

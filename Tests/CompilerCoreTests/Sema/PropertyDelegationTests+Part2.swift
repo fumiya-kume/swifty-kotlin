@@ -1,9 +1,8 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 // MARK: - SymbolTable Delegate Storage Tests
-
 
 extension DelegateStorageSymbolTableTests {
     func testConstructorInitializesDelegateStorage() throws {
@@ -24,7 +23,7 @@ extension DelegateStorageSymbolTableTests {
 
             // KIR constructors are named by the class name ("Foo"), not "<init>".
             let constructors = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let fn) = decl else { return nil }
+                guard case let .function(fn) = decl else { return nil }
                 return interner.resolve(fn.name) == "Foo" ? fn : nil
             }
             XCTAssertFalse(constructors.isEmpty, "Expected constructor to be emitted")
@@ -57,7 +56,7 @@ extension DelegateStorageSymbolTableTests {
             let interner = ctx.interner
 
             let constructors = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let fn) = decl else { return nil }
+                guard case let .function(fn) = decl else { return nil }
                 return interner.resolve(fn.name) == "Foo" ? fn : nil
             }
 
@@ -92,7 +91,7 @@ extension DelegateStorageSymbolTableTests {
             let interner = ctx.interner
 
             let constructors = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let fn) = decl else { return nil }
+                guard case let .function(fn) = decl else { return nil }
                 return interner.resolve(fn.name) == "Foo" ? fn : nil
             }
             XCTAssertFalse(constructors.isEmpty, "Expected Foo constructor")
@@ -115,7 +114,7 @@ extension DelegateStorageSymbolTableTests {
                     // method call (non-nil symbol) with 2 args.
                     let provideDelegateCalls = ctor.body.compactMap { instruction
                         -> (symbol: SymbolID?, args: [KIRExprID])? in
-                        guard case .call(let sym, let callee, let args, _, _, _, _) = instruction,
+                        guard case let .call(sym, callee, args, _, _, _, _) = instruction,
                               interner.resolve(callee) == "provideDelegate" else { return nil }
                         return (symbol: sym, args: args)
                     }
@@ -151,7 +150,7 @@ extension DelegateStorageSymbolTableTests {
             let interner = ctx.interner
 
             let constructors = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let fn) = decl else { return nil }
+                guard case let .function(fn) = decl else { return nil }
                 return interner.resolve(fn.name) == "Foo" ? fn : nil
             }
             XCTAssertFalse(constructors.isEmpty, "Expected Foo constructor")
@@ -159,7 +158,7 @@ extension DelegateStorageSymbolTableTests {
             if let ctor = constructors.first {
                 let provideDelegateCalls = ctor.body.compactMap { instruction
                     -> (symbol: SymbolID?, args: [KIRExprID])? in
-                    guard case .call(let sym, let callee, let args, _, _, _, _) = instruction,
+                    guard case let .call(sym, callee, args, _, _, _, _) = instruction,
                           interner.resolve(callee) == "provideDelegate" else { return nil }
                     return (symbol: sym, args: args)
                 }
@@ -178,7 +177,6 @@ extension DelegateStorageSymbolTableTests {
 // MARK: - PropertyLoweringPass Delegate Rewrite Tests
 
 final class PropertyLoweringDelegateTests: XCTestCase {
-
     func testPropertyLoweringPreservesGetValueInsideAccessorToAvoidRecursion() throws {
         let source = """
         class MyDelegate {
@@ -200,7 +198,7 @@ final class PropertyLoweringDelegateTests: XCTestCase {
             // contain a getValue call (not rewritten to a self-call via
             // "get") to avoid infinite recursion.
             let allFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let fn) = decl else { return nil }
+                guard case let .function(fn) = decl else { return nil }
                 return fn
             }
 
@@ -237,7 +235,7 @@ final class PropertyLoweringDelegateTests: XCTestCase {
             // Before lowering, verify provideDelegate exists in a constructor.
             let moduleBeforeLowering = try XCTUnwrap(ctx.kir)
             let constructors = moduleBeforeLowering.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let fn) = decl else { return nil }
+                guard case let .function(fn) = decl else { return nil }
                 return ctx.interner.resolve(fn.name) == "Foo" ? fn : nil
             }
             let hasProvideDelegateBeforeLowering = constructors.contains { ctor in
@@ -253,7 +251,7 @@ final class PropertyLoweringDelegateTests: XCTestCase {
             // (not rewritten to kk_property_access).
             if hasProvideDelegateBeforeLowering {
                 let constructorsAfter = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                    guard case .function(let fn) = decl else { return nil }
+                    guard case let .function(fn) = decl else { return nil }
                     return interner.resolve(fn.name) == "Foo" ? fn : nil
                 }
                 let hasProvideDelegate = constructorsAfter.contains { ctor in
@@ -284,7 +282,7 @@ final class PropertyLoweringDelegateTests: XCTestCase {
             let interner = ctx.interner
 
             let allFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let fn) = decl else { return nil }
+                guard case let .function(fn) = decl else { return nil }
                 return fn
             }
 
@@ -308,7 +306,6 @@ final class PropertyLoweringDelegateTests: XCTestCase {
 // MARK: - End-to-end Compilation Tests
 
 final class PropertyDelegationEndToEndTests: XCTestCase {
-
     func testDelegatedPropertyCompilesWithoutErrors() throws {
         let source = """
         class MyDelegate {

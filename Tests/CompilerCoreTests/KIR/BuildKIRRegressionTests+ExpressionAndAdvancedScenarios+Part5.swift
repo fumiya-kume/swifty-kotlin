@@ -1,8 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
-
 
 extension BuildKIRRegressionTests {
     func testVarargNamedArgSkipsToVarargParameter() throws {
@@ -48,7 +46,7 @@ extension BuildKIRRegressionTests {
             for index in ast.arena.exprs.indices {
                 let exprID = ExprID(rawValue: Int32(index))
                 guard let expr = ast.arena.expr(exprID) else { continue }
-                if case .call(_, _, let args, _) = expr {
+                if case let .call(_, _, args, _) = expr {
                     for arg in args {
                         if arg.isSpread {
                             foundSpread = true
@@ -116,7 +114,7 @@ extension BuildKIRRegressionTests {
             // If boxing were incorrectly applied, we would see kk_box_int
             // targeting the array argument passed to `sum`.
             let sumCalls = body.filter { instruction in
-                guard case .call(_, let callee, _, _, _, _, _) = instruction else { return false }
+                guard case let .call(_, callee, _, _, _, _, _) = instruction else { return false }
                 return ctx.interner.resolve(callee) == "sum"
             }
             XCTAssertFalse(sumCalls.isEmpty, "Expected a call to sum after ABI lowering.")
@@ -124,7 +122,7 @@ extension BuildKIRRegressionTests {
             // Verify that arguments to sum are not individually boxed—the
             // array_new/array_set calls produce the packed array argument.
             for call in sumCalls {
-                guard case .call(_, _, let arguments, _, _, _, _) = call else { continue }
+                guard case let .call(_, _, arguments, _, _, _, _) = call else { continue }
                 for arg in arguments {
                     guard let argKind = module.arena.expr(arg) else { continue }
                     // The argument to sum should be a temporary holding the
@@ -207,9 +205,10 @@ extension BuildKIRRegressionTests {
             .flatMap(\.topLevelDecls)
             .compactMap { declID -> ExprID? in
                 guard let decl = ast.arena.decl(declID),
-                      case .funDecl(let funDecl) = decl,
+                      case let .funDecl(funDecl) = decl,
                       interner.resolve(funDecl.name) == functionName,
-                      case .expr(let exprID, _) = funDecl.body else {
+                      case let .expr(exprID, _) = funDecl.body
+                else {
                     return nil
                 }
                 return exprID
@@ -224,8 +223,9 @@ extension BuildKIRRegressionTests {
         interner: StringInterner
     ) -> [String] {
         arguments.compactMap { argument in
-            guard case .symbolRef(let symbolID)? = module.arena.expr(argument),
-                  let symbol = sema.symbols.symbol(symbolID) else {
+            guard case let .symbolRef(symbolID)? = module.arena.expr(argument),
+                  let symbol = sema.symbols.symbol(symbolID)
+            else {
                 return nil
             }
             return interner.resolve(symbol.name)
@@ -264,5 +264,4 @@ extension BuildKIRRegressionTests {
             XCTAssertGreaterThanOrEqual(module.functionCount, 2, "Expected KIR to contain both main and local function 'add'")
         }
     }
-
 }

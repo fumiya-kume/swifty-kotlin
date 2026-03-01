@@ -23,8 +23,8 @@ public final class LLVMCAPIBackend: CodegenBackend {
         self.isStrictMode = isStrictMode
 
         let loadedBindings = LLVMCAPIBindings.load()
-        self.bindings = loadedBindings
-        self.hasUsableBindings = loadedBindings?.smokeTestContextLifecycle() == true
+        bindings = loadedBindings
+        hasUsableBindings = loadedBindings?.smokeTestContextLifecycle() == true
     }
 
     public func emitObject(
@@ -124,7 +124,7 @@ public final class LLVMCAPIBackend: CodegenBackend {
             switch backendError {
             case .bindingsUnavailable:
                 return "backend unavailable"
-            case .nativeEmissionFailed(let reason):
+            case let .nativeEmissionFailed(reason):
                 return reason
             }
         }

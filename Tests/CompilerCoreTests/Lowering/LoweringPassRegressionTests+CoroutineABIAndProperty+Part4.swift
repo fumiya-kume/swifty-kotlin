@@ -1,8 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
-
 
 extension LoweringPassRegressionTests {
     func testPropertyLoweringPreservesGetSetCallsWithoutSymbol() throws {
@@ -28,7 +26,7 @@ extension LoweringPassRegressionTests {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -46,7 +44,7 @@ extension LoweringPassRegressionTests {
         ctx.kir = module
         try LoweringPhase().run(ctx)
 
-        guard case .function(let lowered)? = module.arena.decl(fnID) else {
+        guard case let .function(lowered)? = module.arena.decl(fnID) else {
             XCTFail("expected function")
             return
         }
@@ -94,7 +92,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .copy(from: fromExpr, to: toExpr),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -114,20 +112,20 @@ extension LoweringPassRegressionTests {
         ctx.sema = sema
         try LoweringPhase().run(ctx)
 
-        guard case .function(let lowered)? = module.arena.decl(fnID) else {
+        guard case let .function(lowered)? = module.arena.decl(fnID) else {
             XCTFail("expected function")
             return
         }
 
         // The copy should be rewritten to a set call with the synthetic setter
         // symbol derived from the property (not the backing field).
-        let expectedSetterSymbol = SymbolID(rawValue: -13_000 - propertySym.rawValue)
+        let expectedSetterSymbol = SymbolID(rawValue: -13000 - propertySym.rawValue)
         let callSymbols = lowered.body.compactMap { instruction -> SymbolID? in
-            guard case .call(let sym, _, _, _, _, _, _) = instruction else { return nil }
+            guard case let .call(sym, _, _, _, _, _, _) = instruction else { return nil }
             return sym
         }
         XCTAssertTrue(callSymbols.contains(expectedSetterSymbol),
-                       "Expected setter symbol \(expectedSetterSymbol) for backing field copy, got: \(callSymbols)")
+                      "Expected setter symbol \(expectedSetterSymbol) for backing field copy, got: \(callSymbols)")
 
         let callees = extractCallees(from: lowered.body, interner: interner)
         XCTAssertTrue(callees.contains("set"))
@@ -163,7 +161,7 @@ extension LoweringPassRegressionTests {
         // Emit a getter accessor function so PropertyLoweringPass recognises
         // this property as a computed property (it checks that the getter
         // function actually exists in the KIR module).
-        let getterSymbol = SymbolID(rawValue: -12_000 - propertySym.rawValue)
+        let getterSymbol = SymbolID(rawValue: -12000 - propertySym.rawValue)
         let getterRetExpr = arena.appendExpr(.stringLiteral(interner.intern("hello")), type: types.anyType)
         let getterFn = KIRFunction(
             symbol: getterSymbol,
@@ -172,12 +170,12 @@ extension LoweringPassRegressionTests {
             returnType: types.anyType,
             body: [
                 .constValue(result: getterRetExpr, value: .stringLiteral(interner.intern("hello"))),
-                .returnValue(getterRetExpr)
+                .returnValue(getterRetExpr),
             ],
             isSuspend: false,
             isInline: false
         )
-        let _ = arena.appendDecl(.function(getterFn))
+        _ = arena.appendDecl(.function(getterFn))
 
         let callerSym = SymbolID(rawValue: 200)
         let propRef = arena.appendExpr(.symbolRef(propertySym), type: types.anyType)
@@ -189,7 +187,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .constValue(result: propRef, value: .symbolRef(propertySym)),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -209,32 +207,33 @@ extension LoweringPassRegressionTests {
         ctx.sema = sema
         try LoweringPhase().run(ctx)
 
-        guard case .function(let lowered)? = module.arena.decl(fnID) else {
+        guard case let .function(lowered)? = module.arena.decl(fnID) else {
             XCTFail("expected function")
             return
         }
 
         // The constValue(.symbolRef) should be rewritten to a getter call
         // using the synthetic getter symbol (-12_000 - propSym).
-        let expectedGetterSymbol = SymbolID(rawValue: -12_000 - propertySym.rawValue)
+        let expectedGetterSymbol = SymbolID(rawValue: -12000 - propertySym.rawValue)
         let callSymbols = lowered.body.compactMap { instruction -> SymbolID? in
-            guard case .call(let sym, _, _, _, _, _, _) = instruction else { return nil }
+            guard case let .call(sym, _, _, _, _, _, _) = instruction else { return nil }
             return sym
         }
         XCTAssertTrue(callSymbols.contains(expectedGetterSymbol),
-                       "Expected getter call for computed property, got: \(callSymbols)")
+                      "Expected getter call for computed property, got: \(callSymbols)")
 
         // No constValue(.symbolRef) should remain for the computed property.
         let hasSymbolRef = lowered.body.contains { instruction in
-            if case .constValue(_, let value) = instruction,
-               case .symbolRef(let sym) = value,
-               sym == propertySym {
+            if case let .constValue(_, value) = instruction,
+               case let .symbolRef(sym) = value,
+               sym == propertySym
+            {
                 return true
             }
             return false
         }
         XCTAssertFalse(hasSymbolRef,
-                        "constValue(.symbolRef) for computed property should have been rewritten to a getter call")
+                       "constValue(.symbolRef) for computed property should have been rewritten to a getter call")
     }
 
     /// Verify that a `var` property with a backing field is NOT rewritten
@@ -274,7 +273,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .constValue(result: propRef, value: .symbolRef(propertySym)),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -294,22 +293,23 @@ extension LoweringPassRegressionTests {
         ctx.sema = sema
         try LoweringPhase().run(ctx)
 
-        guard case .function(let lowered)? = module.arena.decl(fnID) else {
+        guard case let .function(lowered)? = module.arena.decl(fnID) else {
             XCTFail("expected function")
             return
         }
 
         // The constValue(.symbolRef) for a backed property should be preserved.
         let hasSymbolRef = lowered.body.contains { instruction in
-            if case .constValue(_, let value) = instruction,
-               case .symbolRef(let sym) = value,
-               sym == propertySym {
+            if case let .constValue(_, value) = instruction,
+               case let .symbolRef(sym) = value,
+               sym == propertySym
+            {
                 return true
             }
             return false
         }
         XCTAssertTrue(hasSymbolRef,
-                       "constValue(.symbolRef) for backed property should NOT be rewritten")
+                      "constValue(.symbolRef) for backed property should NOT be rewritten")
     }
 
     /// Integration test: compile `val computed: String get() = "hello"` through
@@ -339,7 +339,7 @@ extension LoweringPassRegressionTests {
         // Collect all global symbols.
         var globalSymbols: [SymbolID] = []
         for decl in module.arena.declarations {
-            if case .global(let global) = decl {
+            if case let .global(global) = decl {
                 globalSymbols.append(global.symbol)
             }
         }
@@ -350,7 +350,7 @@ extension LoweringPassRegressionTests {
             ctx.sema?.symbols.symbol(sym)?.name == computedName
         }
         XCTAssertTrue(computedSymbols.isEmpty,
-                       "Getter-only computed property should NOT have a KIRGlobal, found: \(computedSymbols)")
+                      "Getter-only computed property should NOT have a KIRGlobal, found: \(computedSymbols)")
 
         // The "backed" property SHOULD have a KIRGlobal (it has storage).
         let backedName = interner.intern("backed")
@@ -358,12 +358,12 @@ extension LoweringPassRegressionTests {
             ctx.sema?.symbols.symbol(sym)?.name == backedName
         }
         XCTAssertFalse(backedSymbols.isEmpty,
-                        "Var property with backing field should have a KIRGlobal")
+                       "Var property with backing field should have a KIRGlobal")
 
         // Verify that accessor functions were generated for the computed property.
         var accessorCallees: [String] = []
         for decl in module.arena.declarations {
-            if case .function(let fn) = decl {
+            if case let .function(fn) = decl {
                 let name = interner.resolve(fn.name)
                 if name == "get" || name == "set" {
                     accessorCallees.append(name)
@@ -371,7 +371,6 @@ extension LoweringPassRegressionTests {
             }
         }
         XCTAssertTrue(accessorCallees.contains("get"),
-                       "Getter accessor function should be emitted for computed property")
+                      "Getter accessor function should be emitted for computed property")
     }
-
 }

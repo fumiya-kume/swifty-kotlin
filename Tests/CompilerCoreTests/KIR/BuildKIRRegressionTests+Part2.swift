@@ -1,7 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
 
 extension BuildKIRRegressionTests {
     func testThisBasedMemberCallCompilesAndUsesImplicitReceiverInLowering() throws {
@@ -20,19 +19,19 @@ extension BuildKIRRegressionTests {
             let module = try XCTUnwrap(ctx.kir)
             let combineFunction = try findKIRFunction(named: "combine", in: module, interner: ctx.interner)
             let plusCall = try XCTUnwrap(combineFunction.body.first { instruction in
-                guard case .call(_, let callee, _, _, _, _, _) = instruction else {
+                guard case let .call(_, callee, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return ctx.interner.resolve(callee) == "plus"
             })
-            guard case .call(_, _, let arguments, _, _, _, _) = plusCall else {
+            guard case let .call(_, _, arguments, _, _, _, _) = plusCall else {
                 XCTFail("Expected combine to lower to a call to plus.")
                 return
             }
 
             let implicitReceiverSymbol = try XCTUnwrap(combineFunction.params.first?.symbol)
             XCTAssertEqual(arguments.count, 2)
-            guard case .symbolRef(let insertedReceiver)? = module.arena.expr(arguments[0]) else {
+            guard case let .symbolRef(insertedReceiver)? = module.arena.expr(arguments[0]) else {
                 XCTFail("Expected first argument to be a symbolRef for implicit this receiver.")
                 return
             }
@@ -79,12 +78,13 @@ extension BuildKIRRegressionTests {
             let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
 
             let boxingThrowFlags = body.compactMap { instruction -> Bool? in
-                guard case .call(_, let callee, _, _, let canThrow, _, _) = instruction else {
+                guard case let .call(_, callee, _, _, canThrow, _, _) = instruction else {
                     return nil
                 }
                 let name = ctx.interner.resolve(callee)
                 guard name == "kk_box_int" || name == "kk_box_bool" ||
-                      name == "kk_unbox_int" || name == "kk_unbox_bool" else {
+                    name == "kk_unbox_int" || name == "kk_unbox_bool"
+                else {
                     return nil
                 }
                 return canThrow
@@ -116,9 +116,9 @@ extension BuildKIRRegressionTests {
             XCTAssertTrue(callNames.contains("kk_array_get"))
 
             let throwFlags = extractThrowFlags(from: body, interner: ctx.interner)
-            XCTAssertEqual(throwFlags["kk_array_new"]?.allSatisfy({ $0 == false }), true)
-            XCTAssertEqual(throwFlags["kk_array_set"]?.allSatisfy({ $0 == true }), true)
-            XCTAssertEqual(throwFlags["kk_array_get"]?.allSatisfy({ $0 == true }), true)
+            XCTAssertEqual(throwFlags["kk_array_new"]?.allSatisfy { $0 == false }, true)
+            XCTAssertEqual(throwFlags["kk_array_set"]?.allSatisfy { $0 == true }, true)
+            XCTAssertEqual(throwFlags["kk_array_get"]?.allSatisfy { $0 == true }, true)
         }
     }
 
@@ -153,7 +153,7 @@ extension BuildKIRRegressionTests {
                 result = try CommandRunner.run(executable: outputPath, arguments: [])
                 XCTFail("Expected top-level thrown channel to fail process exit.")
                 return
-            } catch CommandRunnerError.nonZeroExit(let failed) {
+            } catch let CommandRunnerError.nonZeroExit(failed) {
                 result = failed
             } catch {
                 XCTFail("Unexpected error: \(error)")
@@ -206,7 +206,7 @@ extension BuildKIRRegressionTests {
 
             for decl in declarations {
                 switch decl {
-                case .funDecl(let fn):
+                case let .funDecl(fn):
                     if fn.returnType != nil {
                         sawFunctionReturnType = true
                     }
@@ -216,10 +216,10 @@ extension BuildKIRRegressionTests {
                     if fn.valueParams.contains(where: { $0.type != nil }) {
                         sawTypedParameter = true
                     }
-                case .propertyDecl(let property):
+                case let .propertyDecl(property):
                     if let typeID = property.type, let typeRef = ast.arena.typeRef(typeID) {
                         sawExplicitPropertyType = true
-                        if case .named(let path, _, _) = typeRef {
+                        if case let .named(path, _, _) = typeRef {
                             XCTAssertFalse(path.isEmpty)
                         }
                     } else if ctx.interner.resolve(property.name) == "delegated" {
@@ -253,5 +253,4 @@ extension BuildKIRRegressionTests {
             XCTAssertTrue(codes.contains("KSWIFTK-SEMA-0001"))
         }
     }
-
 }

@@ -1,8 +1,8 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 /// Type token symbols use this negative offset to avoid collision with real symbol IDs.
-let typeTokenSymbolOffset: Int = -20_000
+let typeTokenSymbolOffset: Int = -20000
 
 /// Coroutine state machine dispatch labels start at this offset.
 let coroutineDispatchLabelBase: Int32 = 1000
@@ -15,7 +15,7 @@ func findKIRFunction(
     line: UInt = #line
 ) throws -> KIRFunction {
     let function = module.arena.declarations.compactMap { decl -> KIRFunction? in
-        guard case .function(let function) = decl else { return nil }
+        guard case let .function(function) = decl else { return nil }
         return interner.resolve(function.name) == name ? function : nil
     }.first
     return try XCTUnwrap(function, "KIR function '\(name)' not found in module", file: file, line: line)
@@ -37,7 +37,7 @@ func extractCallees(
     interner: StringInterner
 ) -> [String] {
     body.compactMap { instruction -> String? in
-        guard case .call(_, let callee, _, _, _, _, _) = instruction else { return nil }
+        guard case let .call(_, callee, _, _, _, _, _) = instruction else { return nil }
         return interner.resolve(callee)
     }
 }
@@ -47,7 +47,7 @@ func extractThrowFlags(
     interner: StringInterner
 ) -> [String: [Bool]] {
     body.reduce(into: [:]) { partial, instruction in
-        guard case .call(_, let callee, _, _, let canThrow, _, _) = instruction else { return }
+        guard case let .call(_, callee, _, _, canThrow, _, _) = instruction else { return }
         partial[interner.resolve(callee), default: []].append(canThrow)
     }
 }

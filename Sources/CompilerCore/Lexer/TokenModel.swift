@@ -35,7 +35,7 @@ public final class StringInterner: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         let index = Int(id.rawValue)
-        guard index >= 0 && index < values.count else {
+        guard index >= 0, index < values.count else {
             return ""
         }
         return values[index]
@@ -48,61 +48,61 @@ public enum Keyword: String, Sendable {
     case `class`
     case `catch`
     case `continue`
-    case `data`
+    case data
     case `do`
     case `else`
     case `false`
-    case `dynamic`
+    case dynamic
     case `enum`
-    case `external`
+    case external
     case `for`
-    case `fun`
+    case fun
     case `if`
-    case `infix`
+    case infix
     case `in`
     case `is`
     case `import`
-    case `interface`
-    case `finally`
-    case `null`
+    case interface
+    case finally
+    case null
     case `operator`
-    case `object`
-    case `package`
+    case object
+    case package
     case `return`
     case `super`
-    case `this`
+    case this
     case `typealias`
     case `throw`
     case `true`
     case `try`
-    case `val`
+    case val
     case `var`
     case `while`
-    case `when`
-    case `sealed`
-    case `inner`
-    case `reified`
-    case `open`
+    case when
+    case sealed
+    case inner
+    case reified
+    case open
     case `private`
     case `public`
-    case `protected`
+    case protected
     case `internal`
-    case `override`
-    case `final`
-    case `abstract`
-    case `suspend`
-    case `inline`
-    case `expect`
-    case `actual`
-    case `constructor`
-    case `companion`
-    case `annotation`
-    case `const`
-    case `crossinline`
-    case `lateinit`
-    case `noinline`
-    case `tailrec`
-    case `vararg`
+    case override
+    case final
+    case abstract
+    case suspend
+    case inline
+    case expect
+    case actual
+    case constructor
+    case companion
+    case annotation
+    case const
+    case crossinline
+    case lateinit
+    case noinline
+    case tailrec
+    case vararg
     case value
 }
 
@@ -119,9 +119,9 @@ public enum SoftKeyword: String, Sendable {
     case file
     case `where`
     case `init`
-    case `constructor`
-    case `out`
-    case `when`
+    case constructor
+    case out
+    case when
 }
 
 public enum Symbol: String, Sendable {

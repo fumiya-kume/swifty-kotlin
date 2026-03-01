@@ -1,7 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
 
 extension LibraryMetadataSerializationRoundTripTests {
     func testMetadataRoundTripForInterface() {
@@ -167,7 +166,7 @@ extension LibraryMetadataSerializationRoundTripTests {
                 annotationFQName: "kotlin.Deprecated",
                 arguments: ["old name", "use new() instead", "WARNING"],
                 useSiteTarget: nil
-            )
+            ),
         ]
         let record = MetadataRecord(
             kind: .function,
@@ -195,7 +194,7 @@ extension LibraryMetadataSerializationRoundTripTests {
                 annotationFQName: "custom.Config",
                 arguments: ["key=value", "a|b|c", "semi;colon", "space here", "emoji\u{1F600}"],
                 useSiteTarget: nil
-            )
+            ),
         ]
         let record = MetadataRecord(
             kind: .property,
@@ -311,8 +310,8 @@ extension LibraryMetadataSerializationRoundTripTests {
             kind: .function,
             mangledName: "_kk_f",
             fqName: "demo.f",
-            declaredFieldCount: 1,  // should be ignored for function
-            declaredInstanceSizeWords: 2  // should be ignored for function
+            declaredFieldCount: 1, // should be ignored for function
+            declaredInstanceSizeWords: 2 // should be ignored for function
         )
         let encoder = MetadataEncoder()
 
@@ -409,7 +408,7 @@ extension LibraryMetadataSerializationRoundTripTests {
             fqName: "ext.oldMethod",
             arity: 0,
             annotations: [
-                MetadataAnnotationRecord(annotationFQName: "kotlin.Deprecated", arguments: ["replaced"])
+                MetadataAnnotationRecord(annotationFQName: "kotlin.Deprecated", arguments: ["replaced"]),
             ]
         )
         let serialized = encoder.serialize([annotatedRecord])
@@ -441,5 +440,4 @@ extension LibraryMetadataSerializationRoundTripTests {
             XCTAssertEqual(annotations[0].arguments, ["replaced"])
         }
     }
-
 }

@@ -43,7 +43,7 @@ struct TypeCheckHelpers {
     ) -> TypeID? {
         // Range/progression types (Int) are iterable over Int elements,
         // but only when the expression is actually a range operator.
-        if isRangeExpr && iterableType == sema.types.intType {
+        if isRangeExpr, iterableType == sema.types.intType {
             return sema.types.intType
         }
         return arrayElementType(for: iterableType, sema: sema, interner: interner)
@@ -54,8 +54,9 @@ struct TypeCheckHelpers {
         sema: SemaModule,
         interner: StringInterner
     ) -> TypeID? {
-        guard case .classType(let classType) = sema.types.kind(of: arrayType),
-              let symbol = sema.symbols.symbol(classType.classSymbol) else {
+        guard case let .classType(classType) = sema.types.kind(of: arrayType),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
             return nil
         }
         switch interner.resolve(symbol.name) {
@@ -104,17 +105,17 @@ struct TypeCheckHelpers {
 
     func resolveBuiltinTypeName(_ name: String, nullability: Nullability = .nonNull, types: TypeSystem) -> TypeID? {
         switch name {
-        case "Int":     return types.withNullability(nullability, for: types.intType)
-        case "Long":    return types.withNullability(nullability, for: types.longType)
-        case "Float":   return types.withNullability(nullability, for: types.floatType)
-        case "Double":  return types.withNullability(nullability, for: types.doubleType)
-        case "Boolean": return types.withNullability(nullability, for: types.booleanType)
-        case "Char":    return types.withNullability(nullability, for: types.charType)
-        case "String":  return types.withNullability(nullability, for: types.stringType)
-        case "Any":     return nullability == .nullable ? types.nullableAnyType : types.anyType
-        case "Unit":    return types.unitType
-        case "Nothing": return nullability == .nullable ? types.nullableNothingType : types.nothingType
-        default:        return nil
+        case "Int": types.withNullability(nullability, for: types.intType)
+        case "Long": types.withNullability(nullability, for: types.longType)
+        case "Float": types.withNullability(nullability, for: types.floatType)
+        case "Double": types.withNullability(nullability, for: types.doubleType)
+        case "Boolean": types.withNullability(nullability, for: types.booleanType)
+        case "Char": types.withNullability(nullability, for: types.charType)
+        case "String": types.withNullability(nullability, for: types.stringType)
+        case "Any": nullability == .nullable ? types.nullableAnyType : types.anyType
+        case "Unit": types.unitType
+        case "Nothing": nullability == .nullable ? types.nullableNothingType : types.nothingType
+        default: nil
         }
     }
 
@@ -129,7 +130,7 @@ struct TypeCheckHelpers {
             return sema.types.errorType
         }
         switch typeRef {
-        case .named(let path, let argRefs, let nullable):
+        case let .named(path, argRefs, nullable):
             guard let firstName = path.first else {
                 return sema.types.errorType
             }
@@ -151,11 +152,10 @@ struct TypeCheckHelpers {
                 // Fall back to short-name lookup so that packaged types
                 // (e.g. `package test; class Foo`) resolve when referenced
                 // by simple name (`Foo`) during type checking.
-                let candidates: [SymbolID]
-                if !fqCandidates.isEmpty {
-                    candidates = fqCandidates
+                let candidates: [SymbolID] = if !fqCandidates.isEmpty {
+                    fqCandidates
                 } else {
-                    candidates = sema.symbols.lookupByShortName(firstName).filter { symbolID in
+                    sema.symbols.lookupByShortName(firstName).filter { symbolID in
                         guard let sym = sema.symbols.symbol(symbolID) else { return false }
                         switch sym.kind {
                         case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
@@ -201,7 +201,7 @@ struct TypeCheckHelpers {
                 return sema.types.errorType
             }
 
-        case .functionType(let paramRefIDs, let returnRefID, let isSuspend, let nullable):
+        case let .functionType(paramRefIDs, returnRefID, isSuspend, nullable):
             let nullability: Nullability = nullable ? .nullable : .nonNull
             let paramTypes = paramRefIDs.map { resolveTypeRef($0, ast: ast, sema: sema, interner: interner, diagnostics: diagnostics) }
             let returnType = resolveTypeRef(returnRefID, ast: ast, sema: sema, interner: interner, diagnostics: diagnostics)
@@ -212,7 +212,7 @@ struct TypeCheckHelpers {
                 nullability: nullability
             )))
 
-        case .intersection(let partRefs):
+        case let .intersection(partRefs):
             let partTypes = partRefs.map { resolveTypeRef($0, ast: ast, sema: sema, interner: interner, diagnostics: diagnostics) }
             return sema.types.make(.intersection(partTypes))
         }
@@ -227,14 +227,14 @@ struct TypeCheckHelpers {
     ) -> [TypeArg] {
         argRefs.map { argRef in
             switch argRef {
-            case .invariant(let innerRef):
-                return .invariant(resolveTypeRef(innerRef, ast: ast, sema: sema, interner: interner, diagnostics: diagnostics))
-            case .out(let innerRef):
-                return .out(resolveTypeRef(innerRef, ast: ast, sema: sema, interner: interner, diagnostics: diagnostics))
-            case .in(let innerRef):
-                return .in(resolveTypeRef(innerRef, ast: ast, sema: sema, interner: interner, diagnostics: diagnostics))
+            case let .invariant(innerRef):
+                .invariant(resolveTypeRef(innerRef, ast: ast, sema: sema, interner: interner, diagnostics: diagnostics))
+            case let .out(innerRef):
+                .out(resolveTypeRef(innerRef, ast: ast, sema: sema, interner: interner, diagnostics: diagnostics))
+            case let .in(innerRef):
+                .in(resolveTypeRef(innerRef, ast: ast, sema: sema, interner: interner, diagnostics: diagnostics))
             case .star:
-                return .star
+                .star
             }
         }
     }
@@ -289,9 +289,10 @@ struct TypeCheckHelpers {
             sema: sema, diagnostics: diagnostics
         )
         // If expanded type is itself a typealias, continue expansion
-        if case .classType(let classType) = sema.types.kind(of: expanded),
+        if case let .classType(classType) = sema.types.kind(of: expanded),
            let targetSymbol = sema.symbols.symbol(classType.classSymbol),
-           targetSymbol.kind == .typeAlias {
+           targetSymbol.kind == .typeAlias
+        {
             var newVisited = visited
             newVisited.insert(symbolID)
             let chainArgs = classType.args
@@ -358,14 +359,13 @@ struct TypeCheckHelpers {
     ) -> TypeID {
         let types = sema.types
         switch types.kind(of: typeID) {
-        case .typeParam(let tp):
+        case let .typeParam(tp):
             if let replacement = argSubstitution[tp.symbol] {
-                let replacementType: TypeID
-                switch replacement {
-                case .invariant(let inner), .out(let inner), .in(let inner):
-                    replacementType = inner
+                let replacementType: TypeID = switch replacement {
+                case let .invariant(inner), let .out(inner), let .in(inner):
+                    inner
                 case .star:
-                    replacementType = types.nullableAnyType
+                    types.nullableAnyType
                 }
                 if tp.nullability == .nullable {
                     return applyNullabilityForTypeCheck(replacementType, types: types)
@@ -373,7 +373,7 @@ struct TypeCheckHelpers {
                 return replacementType
             }
             return typeID
-        case .classType(let ct):
+        case let .classType(ct):
             let newArgs = ct.args.map { arg -> TypeArg in
                 substituteAliasArg(arg, argSubstitution: argSubstitution, sema: sema)
             }
@@ -381,7 +381,7 @@ struct TypeCheckHelpers {
             return types.make(.classType(ClassType(
                 classSymbol: ct.classSymbol, args: newArgs, nullability: ct.nullability
             )))
-        case .functionType(let ft):
+        case let .functionType(ft):
             let newReceiver = ft.receiver.map {
                 applyAliasSubstitution($0, argSubstitution: argSubstitution, sema: sema)
             }
@@ -391,14 +391,14 @@ struct TypeCheckHelpers {
             let newReturn = applyAliasSubstitution(
                 ft.returnType, argSubstitution: argSubstitution, sema: sema
             )
-            if newReceiver == ft.receiver && newParams == ft.params && newReturn == ft.returnType {
+            if newReceiver == ft.receiver, newParams == ft.params, newReturn == ft.returnType {
                 return typeID
             }
             return types.make(.functionType(FunctionType(
                 receiver: newReceiver, params: newParams, returnType: newReturn,
                 isSuspend: ft.isSuspend, nullability: ft.nullability
             )))
-        case .intersection(let parts):
+        case let .intersection(parts):
             let newParts = parts.map {
                 applyAliasSubstitution($0, argSubstitution: argSubstitution, sema: sema)
             }

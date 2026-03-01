@@ -1,8 +1,7 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 final class ConstantCollectorTests: XCTestCase {
-
     var collector: ConstantCollector!
     var interner: StringInterner!
 
@@ -183,9 +182,9 @@ final class ConstantCollectorTests: XCTestCase {
 
     func testNonLiteralInitializerNotCollected() throws {
         let ctx = makeContextFromSource("""
-            fun compute() = 42
-            val x = compute()
-            """)
+        fun compute() = 42
+        val x = compute()
+        """)
         try runSema(ctx)
         guard let ast = ctx.ast, let sema = ctx.sema else {
             XCTFail("AST/Sema module not available")

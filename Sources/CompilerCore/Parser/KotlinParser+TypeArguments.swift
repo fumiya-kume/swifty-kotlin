@@ -1,5 +1,5 @@
 extension KotlinParser {
-    internal func parseTypeArguments() -> NodeID {
+    func parseTypeArguments() -> NodeID {
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
         var depth = 1
@@ -12,9 +12,9 @@ extension KotlinParser {
             )
         }
 
-        while !stream.atEOF() && depth > 0 {
+        while !stream.atEOF(), depth > 0 {
             let next = stream.peek()
-            if depth == 1 && hasLeadingNewline(next) && isLikelyTopLevelDeclarationStart(next) {
+            if depth == 1, hasLeadingNewline(next), isLikelyTopLevelDeclarationStart(next) {
                 break
             }
 
@@ -48,7 +48,7 @@ extension KotlinParser {
         )
     }
 
-    internal func canStartTypeArgumentsInternal(hasAnchorToken: Bool) -> Bool {
+    func canStartTypeArgumentsInternal(hasAnchorToken: Bool) -> Bool {
         guard hasAnchorToken else { return false }
         guard case .symbol(.lessThan) = stream.peek().kind else { return false }
 
@@ -56,7 +56,7 @@ extension KotlinParser {
         var projectionExpected = true
         var sawProjection = false
 
-        for lookahead in 1...32 {
+        for lookahead in 1 ... 32 {
             let token = stream.peek(lookahead)
             switch token.kind {
             case .eof:
@@ -85,7 +85,7 @@ extension KotlinParser {
                     projectionExpected = false
                 } else { return false }
             case .keyword(.in), .softKeyword(.out):
-                if depth == 1 && projectionExpected {
+                if depth == 1, projectionExpected {
                     break
                 }
                 if depth == 1 {
@@ -95,7 +95,7 @@ extension KotlinParser {
                 }
             case .symbol(.dot), .symbol(.question), .symbol(.questionDot),
                  .symbol(.doubleColon), .symbol(.colon):
-                if depth == 1 && projectionExpected {
+                if depth == 1, projectionExpected {
                     return false
                 }
             default:
@@ -108,19 +108,19 @@ extension KotlinParser {
         return false
     }
 
-    internal func followsTypeArgs(_ token: Token) -> Bool {
+    func followsTypeArgs(_ token: Token) -> Bool {
         switch token.kind {
         case .symbol(.lParen), .symbol(.dot), .symbol(.questionDot), .symbol(.bangBang),
              .symbol(.doubleColon), .symbol(.lessThan), .symbol(.colon), .symbol(.comma),
              .symbol(.lBrace), .symbol(.rParen), .symbol(.rBrace), .symbol(.question),
              .symbol(.assign):
-            return true
+            true
         case .identifier, .backtickedIdentifier, .keyword, .softKeyword:
-            return true
+            true
         case .eof:
-            return true
+            true
         default:
-            return false
+            false
         }
     }
 
@@ -130,7 +130,7 @@ extension KotlinParser {
     }
 
     public func canStartTypeArguments(after node: NodeID) -> Bool {
-        guard Int(node.rawValue) >= 0 && Int(node.rawValue) < arena.nodes.count else { return false }
+        guard Int(node.rawValue) >= 0, Int(node.rawValue) < arena.nodes.count else { return false }
         let nodeKind = arena.node(node).kind
         if case .typeArgs = nodeKind {
             return false

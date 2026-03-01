@@ -1,8 +1,7 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 final class MetadataSerializerTests: XCTestCase {
-
     // MARK: - Helpers
 
     /// Parse the serialized record line (after the header) into space-separated tokens,
@@ -19,7 +18,7 @@ final class MetadataSerializerTests: XCTestCase {
         var fields: [String: String] = [:]
         for token in tokens.dropFirst(2) {
             if let eqIdx = token.firstIndex(of: "=") {
-                let key = String(token[token.startIndex..<eqIdx])
+                let key = String(token[token.startIndex ..< eqIdx])
                 let value = String(token[token.index(after: eqIdx)...])
                 fields[key] = value
             }
@@ -297,7 +296,7 @@ final class MetadataSerializerTests: XCTestCase {
                     annotationFQName: "kotlin.Deprecated",
                     arguments: ["old"],
                     useSiteTarget: "get"
-                )
+                ),
             ]
         )
         let output = encoder.serialize([record])

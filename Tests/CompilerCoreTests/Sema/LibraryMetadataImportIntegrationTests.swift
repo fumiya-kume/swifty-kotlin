@@ -1,6 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 final class LibraryMetadataImportIntegrationTests: XCTestCase {
     func testSemaLoadsSymbolsFromKklibSearchPath() throws {
@@ -36,8 +36,8 @@ final class LibraryMetadataImportIntegrationTests: XCTestCase {
                 let sema = try XCTUnwrap(appCtx.sema)
                 let importedPlus = sema.symbols.allSymbols().first { symbol in
                     appCtx.interner.resolve(symbol.name) == "plus" &&
-                    symbol.kind == .function &&
-                    symbol.flags.contains(.synthetic)
+                        symbol.kind == .function &&
+                        symbol.flags.contains(.synthetic)
                 }
                 XCTAssertNotNil(importedPlus)
                 XCTAssertFalse(appCtx.diagnostics.diagnostics.contains { $0.code == "KSWIFTK-SEMA-0002" })
@@ -79,23 +79,23 @@ final class LibraryMetadataImportIntegrationTests: XCTestCase {
                 let sema = try XCTUnwrap(appCtx.sema)
                 let importedInline = sema.symbols.allSymbols().first { symbol in
                     appCtx.interner.resolve(symbol.name) == "plus1" &&
-                    symbol.kind == .function &&
-                    symbol.flags.contains(.inlineFunction)
+                        symbol.kind == .function &&
+                        symbol.flags.contains(.inlineFunction)
                 }
                 XCTAssertNotNil(importedInline)
                 XCTAssertFalse(sema.importedInlineFunctions.isEmpty)
 
                 let kir = try XCTUnwrap(appCtx.kir)
                 let mainFunction = try XCTUnwrap(
-                    kir.arena.declarations.compactMap({ decl -> KIRFunction? in
-                        guard case .function(let function) = decl else { return nil }
+                    kir.arena.declarations.compactMap { decl -> KIRFunction? in
+                        guard case let .function(function) = decl else { return nil }
                         return appCtx.interner.resolve(function.name) == "main" ? function : nil
-                    }).first,
+                    }.first,
                     "Expected lowered main function"
                 )
 
                 let calls = mainFunction.body.compactMap { instruction -> String? in
-                    guard case .call(_, let callee, _, _, _, _, _) = instruction else {
+                    guard case let .call(_, callee, _, _, _, _, _) = instruction else {
                         return nil
                     }
                     return appCtx.interner.resolve(callee)
@@ -317,5 +317,4 @@ final class LibraryMetadataImportIntegrationTests: XCTestCase {
             XCTAssertTrue(metadata.contains("sig=I"))
         }
     }
-
 }

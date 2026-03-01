@@ -1,8 +1,8 @@
 extension KotlinParser {
-    internal func parseDeclaration() -> NodeID {
+    func parseDeclaration() -> NodeID {
         var modifierChildren: [SyntaxChild] = []
         var modifierRange = RangeAccumulator()
-        while case .keyword(let keyword) = stream.peek().kind, Self.isDeclarationModifierKeyword(keyword) {
+        while case let .keyword(keyword) = stream.peek().kind, Self.isDeclarationModifierKeyword(keyword) {
             _ = consumeToken(into: &modifierChildren, range: &modifierRange)
         }
         let token = stream.peek()
@@ -52,15 +52,15 @@ extension KotlinParser {
         }
     }
 
-    internal func parsePackageHeader(leadingChildren: [SyntaxChild] = [], leadingRange: SourceRange? = nil) -> NodeID {
+    func parsePackageHeader(leadingChildren: [SyntaxChild] = [], leadingRange: SourceRange? = nil) -> NodeID {
         parseHeaderDeclaration(keyword: .keyword(.package), kind: .packageHeader, allowWildcard: false, leadingChildren: leadingChildren, leadingRange: leadingRange)
     }
 
-    internal func parseImportHeader(leadingChildren: [SyntaxChild] = [], leadingRange: SourceRange? = nil) -> NodeID {
+    func parseImportHeader(leadingChildren: [SyntaxChild] = [], leadingRange: SourceRange? = nil) -> NodeID {
         parseHeaderDeclaration(keyword: .keyword(.import), kind: .importHeader, allowWildcard: true, allowAlias: true, leadingChildren: leadingChildren, leadingRange: leadingRange)
     }
 
-    internal func parseHeaderDeclaration(
+    func parseHeaderDeclaration(
         keyword: TokenKind,
         kind: SyntaxKind,
         allowWildcard: Bool,
@@ -84,7 +84,7 @@ extension KotlinParser {
         return arena.appendNode(kind: kind, range: range.value ?? invalidRange, children)
     }
 
-    internal func parseNamedDeclaration(
+    func parseNamedDeclaration(
         kind: SyntaxKind,
         leadingChildren: [SyntaxChild] = [],
         leadingRange: SourceRange? = nil
@@ -95,9 +95,10 @@ extension KotlinParser {
 
         // Detect companion object: leading modifiers contain the `companion` keyword
         let isCompanionObject = kind == .objectDecl && leadingChildren.contains(where: { child in
-            if case .token(let tokenID) = child,
+            if case let .token(tokenID) = child,
                let token = arena.token(tokenID),
-               case .keyword(.companion) = token.kind {
+               case .keyword(.companion) = token.kind
+            {
                 return true
             }
             return false
@@ -111,7 +112,7 @@ extension KotlinParser {
             // so only emit a diagnostic for non-companion declarations.
             insertMissingToken(expected: .identifier(.invalid), into: &children, range: &range, code: "KSWIFTK-PARSE-0002", message: "Expected declaration name.")
         }
-        if supportsTypeParameters && canStartTypeArgumentsInternal(hasAnchorToken: lastConsumedToken != nil) {
+        if supportsTypeParameters, canStartTypeArgumentsInternal(hasAnchorToken: lastConsumedToken != nil) {
             children.append(.node(parseTypeArguments()))
             if let last = children.last {
                 range.append(childRange(last))
@@ -125,10 +126,11 @@ extension KotlinParser {
 
         return arena.appendNode(
             kind: kind,
-            range: range.value ?? invalidRange, children)
+            range: range.value ?? invalidRange, children
+        )
     }
 
-    internal func parseFunctionDeclaration(
+    func parseFunctionDeclaration(
         leadingChildren: [SyntaxChild] = [],
         leadingRange: SourceRange? = nil
     ) -> NodeID {
@@ -160,10 +162,11 @@ extension KotlinParser {
 
         return arena.appendNode(
             kind: .funDecl,
-            range: range.value ?? invalidRange, children)
+            range: range.value ?? invalidRange, children
+        )
     }
 
-    internal func parsePropertyDeclaration(
+    func parsePropertyDeclaration(
         leadingChildren: [SyntaxChild] = [],
         leadingRange: SourceRange? = nil
     ) -> NodeID {
@@ -185,10 +188,11 @@ extension KotlinParser {
 
         return arena.appendNode(
             kind: .propertyDecl,
-            range: range.value ?? invalidRange, children)
+            range: range.value ?? invalidRange, children
+        )
     }
 
-    internal func parseTypeAliasDeclaration(
+    func parseTypeAliasDeclaration(
         leadingChildren: [SyntaxChild] = [],
         leadingRange: SourceRange? = nil
     ) -> NodeID {
@@ -211,10 +215,11 @@ extension KotlinParser {
 
         return arena.appendNode(
             kind: .typeAliasDecl,
-            range: range.value ?? invalidRange, children)
+            range: range.value ?? invalidRange, children
+        )
     }
 
-    internal func parseEnumDeclaration(
+    func parseEnumDeclaration(
         leadingChildren: [SyntaxChild] = [],
         leadingRange: SourceRange? = nil
     ) -> NodeID {
@@ -239,10 +244,11 @@ extension KotlinParser {
 
         return arena.appendNode(
             kind: .classDecl,
-            range: range.value ?? invalidRange, children)
+            range: range.value ?? invalidRange, children
+        )
     }
 
-    internal func parseEnumBody() -> NodeID {
+    func parseEnumBody() -> NodeID {
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
         guard consumeIfSymbol(.lBrace, into: &children, range: &range) else {
@@ -274,7 +280,7 @@ extension KotlinParser {
         return arena.appendNode(kind: .block, range: range.value ?? invalidRange, children)
     }
 
-    internal func parseEnumEntryDeclaration() -> NodeID {
+    func parseEnumEntryDeclaration() -> NodeID {
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
 
@@ -288,10 +294,11 @@ extension KotlinParser {
 
         return arena.appendNode(
             kind: .enumEntry,
-            range: range.value ?? invalidRange, children)
+            range: range.value ?? invalidRange, children
+        )
     }
 
-    internal func parseConstructorDeclaration() -> NodeID {
+    func parseConstructorDeclaration() -> NodeID {
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
 
@@ -330,7 +337,7 @@ extension KotlinParser {
         return arena.appendNode(kind: .constructorDecl, range: range.value ?? invalidRange, children)
     }
 
-    internal func parsePostDeclarationTail(into children: inout [SyntaxChild], range: inout RangeAccumulator, includeBlock: Bool) {
+    func parsePostDeclarationTail(into children: inout [SyntaxChild], range: inout RangeAccumulator, includeBlock: Bool) {
         if case .symbol(.lBrace) = stream.peek().kind {
             if includeBlock {
                 children.append(.node(parseBlock()))

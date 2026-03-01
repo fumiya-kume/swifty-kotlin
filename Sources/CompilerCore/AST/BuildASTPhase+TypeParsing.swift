@@ -12,7 +12,7 @@ extension BuildASTPhase {
     func splitDefaultValue(_ tokens: [Token]) -> (withoutDefault: [Token], defaultTokens: [Token]?) {
         var depth = BracketDepth()
         for (index, token) in tokens.enumerated() {
-            if token.kind == .symbol(.assign) && depth.isAtTopLevel {
+            if token.kind == .symbol(.assign), depth.isAtTopLevel {
                 let defaultStart = tokens.index(after: index)
                 let trailing = defaultStart < tokens.endIndex ? Array(tokens[defaultStart...]) : []
                 return (Array(tokens[..<index]), trailing)
@@ -55,7 +55,8 @@ extension BuildASTPhase {
     ) -> TypeRefID? {
         let tokens = collectTokens(from: nodeID, in: arena)
         guard let paramsOpenIndex = tokens.firstIndex(where: { $0.kind == .symbol(.lParen) }),
-              paramsOpenIndex > 0 else {
+              paramsOpenIndex > 0
+        else {
             return nil
         }
 
@@ -72,7 +73,7 @@ extension BuildASTPhase {
 
         var dotIndex: Int?
         var depth = BracketDepth()
-        for index in 0..<nameIndex {
+        for index in 0 ..< nameIndex {
             let token = tokens[index]
             depth.track(token.kind)
             if depth.angle == 0, token.kind == .symbol(.dot) {
@@ -96,7 +97,7 @@ extension BuildASTPhase {
             return nil
         }
 
-        let receiverTokens = Array(tokens[receiverStart..<dotIndex])
+        let receiverTokens = Array(tokens[receiverStart ..< dotIndex])
         return parseTypeRef(from: receiverTokens, interner: interner, astArena: astArena)
     }
 
@@ -207,7 +208,6 @@ extension BuildASTPhase {
         return parseTypeRef(from: typeTokens, interner: interner, astArena: astArena)
     }
 
-
     func propertyHeadTokens(
         from nodeID: NodeID,
         in arena: SyntaxArena
@@ -215,7 +215,7 @@ extension BuildASTPhase {
         var tokens: [Token] = []
         for child in arena.children(of: nodeID) {
             switch child {
-            case .token(let tokenID):
+            case let .token(tokenID):
                 if let token = resolveToken(tokenID, in: arena) {
                     // Stop before inline `get(`/`set(` accessor keywords so that
                     // type and initializer parsing don't consume accessor tokens.
@@ -229,7 +229,7 @@ extension BuildASTPhase {
                     }
                     tokens.append(token)
                 }
-            case .node(let childID):
+            case let .node(childID):
                 if arena.node(childID).kind == .block {
                     return tokens
                 }
@@ -274,7 +274,7 @@ extension BuildASTPhase {
     }
 
     func isParameterModifierToken(_ token: Token) -> Bool {
-        guard case .keyword(let keyword) = token.kind else {
+        guard case let .keyword(keyword) = token.kind else {
             return false
         }
         switch keyword {
@@ -284,5 +284,4 @@ extension BuildASTPhase {
             return false
         }
     }
-
 }

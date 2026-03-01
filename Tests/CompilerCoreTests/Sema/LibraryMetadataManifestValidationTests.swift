@@ -1,6 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 final class LibraryMetadataManifestValidationTests: XCTestCase {
     // MARK: - P5-54: Missing/Invalid manifest.json
@@ -415,5 +415,4 @@ final class LibraryMetadataManifestValidationTests: XCTestCase {
             XCTAssertNotNil(fnSymbol, "Fully valid manifest should load symbols successfully")
         }
     }
-
 }

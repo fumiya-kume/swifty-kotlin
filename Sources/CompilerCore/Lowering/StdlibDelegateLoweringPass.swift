@@ -13,13 +13,13 @@ private func delegateAccessorCallees(
 ) -> (getCallee: InternedString, setCallee: InternedString?) {
     switch kind {
     case .lazy:
-        return (lazyGetValueName, nil)
+        (lazyGetValueName, nil)
     case .observable:
-        return (observableGetValueName, observableSetValueName)
+        (observableGetValueName, observableSetValueName)
     case .vetoable:
-        return (vetoableGetValueName, vetoableSetValueName)
+        (vetoableGetValueName, vetoableSetValueName)
     case .custom:
-        return (customGetValueName, customSetValueName)
+        (customGetValueName, customSetValueName)
     }
 }
 
@@ -72,21 +72,23 @@ final class StdlibDelegateLoweringPass: LoweringPass {
             module.arena.transformFunctions { function in
                 let body = function.body
                 for (index, instruction) in body.enumerated() {
-                    guard case .call(_, let callee, _, _, _, _, _) = instruction else {
+                    guard case let .call(_, callee, _, _, _, _, _) = instruction else {
                         continue
                     }
                     let nextIndex = index + 1
                     guard nextIndex < body.count,
-                          case .copy(_, let to) = body[nextIndex],
+                          case let .copy(_, to) = body[nextIndex],
                           let toExpr = module.arena.expr(to),
-                          case .symbolRef(let targetSym) = toExpr,
+                          case let .symbolRef(targetSym) = toExpr,
                           let targetSymInfo = sema.symbols.symbol(targetSym),
-                          targetSymInfo.kind == .field else {
+                          targetSymInfo.kind == .field
+                    else {
                         continue
                     }
                     let fieldName = interner.resolve(targetSymInfo.name)
                     guard fieldName.hasPrefix("$delegate_"),
-                          delegateKindByFieldName[fieldName] == nil else {
+                          delegateKindByFieldName[fieldName] == nil
+                    else {
                         continue
                     }
                     // Try to determine kind from the callee name directly.
@@ -113,7 +115,7 @@ final class StdlibDelegateLoweringPass: LoweringPass {
             loweredBody.reserveCapacity(function.body.count)
 
             for instruction in function.body {
-                guard case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult, let isSuperCall) = instruction else {
+                guard case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall) = instruction else {
                     loweredBody.append(instruction)
                     continue
                 }
@@ -122,14 +124,16 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                 guard callee == propertyAccessName,
                       let sym = symbol,
                       let symInfo = sema?.symbols.symbol(sym),
-                      symInfo.kind == .field else {
+                      symInfo.kind == .field
+                else {
                     loweredBody.append(instruction)
                     continue
                 }
 
                 let symName = interner.resolve(symInfo.name)
                 guard symName.hasPrefix("$delegate_"),
-                      let delegateKind = delegateKindByFieldName[symName] else {
+                      let delegateKind = delegateKindByFieldName[symName]
+                else {
                     loweredBody.append(instruction)
                     continue
                 }
@@ -146,9 +150,10 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                 // (not in the arena expression which is .temporary), so scan
                 // backward through already-lowered instructions to find it.
                 for prev in loweredBody.reversed() {
-                    if case .constValue(let result, let value) = prev,
+                    if case let .constValue(result, value) = prev,
                        result == isSetterExprID,
-                       case .boolLiteral(let v) = value {
+                       case let .boolLiteral(v) = value
+                    {
                         isSetter = v
                         break
                     }
@@ -203,17 +208,19 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                     continue
                 }
 
-                if case .call(_, _, let callArgs, let callResult, _, _, _) = instruction {
+                if case let .call(_, _, callArgs, callResult, _, _, _) = instruction {
                     let nextIndex = index + 1
                     if nextIndex < loweredBody.count,
-                       case .copy(_, let to) = loweredBody[nextIndex],
+                       case let .copy(_, to) = loweredBody[nextIndex],
                        let toExpr = module.arena.expr(to),
-                       case .symbolRef(let targetSym) = toExpr,
+                       case let .symbolRef(targetSym) = toExpr,
                        let targetSymInfo = sema?.symbols.symbol(targetSym),
-                       targetSymInfo.kind == .field {
+                       targetSymInfo.kind == .field
+                    {
                         let targetName = interner.resolve(targetSymInfo.name)
                         if targetName.hasPrefix("$delegate_"),
-                           let kind = delegateKindByFieldName[targetName] {
+                           let kind = delegateKindByFieldName[targetName]
+                        {
                             switch kind {
                             case .lazy:
                                 guard !callArgs.isEmpty else { break }
@@ -318,11 +325,10 @@ final class StdlibDelegateLoweringPass: LoweringPass {
     /// Returns the delegate kind for a known factory function name, or nil.
     private func delegateFactoryKind(_ name: String) -> StdlibDelegateKind? {
         switch name {
-        case "lazy": return .lazy
-        case "observable": return .observable
-        case "vetoable": return .vetoable
-        default: return nil
+        case "lazy": .lazy
+        case "observable": .observable
+        case "vetoable": .vetoable
+        default: nil
         }
     }
-
 }

@@ -1,5 +1,5 @@
-import Foundation
 @testable import CompilerCore
+import Foundation
 
 func makeSemaModule() -> (ctx: SemaModule, symbols: SymbolTable, types: TypeSystem, interner: StringInterner) {
     let symbols = SymbolTable()

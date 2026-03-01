@@ -1,6 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 extension CompilerCoreTests {
     // MARK: - P5-40 Regression: Strict unresolved reference / type diagnostics
@@ -291,5 +291,4 @@ extension CompilerCoreTests {
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
     }
-
 }

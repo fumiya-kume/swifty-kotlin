@@ -1,13 +1,12 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 // MARK: - DataFlow + Sema Regression Tests
+
 // Targets: DataFlowSemaPhase+BodyAnalysis.swift (45.8%)
 //          DataFlowSemaPhase+HeaderCollection.swift (49.9%)
 //          TypeCheckSemaPhase+ExprInference.swift (51.4%)
-
-
 
 extension DataFlowAndSemaRegressionTests {
     func testFunctionTypeParameterWithUpperBound() throws {
@@ -24,7 +23,8 @@ extension DataFlowAndSemaRegressionTests {
             }
             XCTAssertNotNil(wrapSymbol)
             if let sym = wrapSymbol,
-               let sig = sema.symbols.functionSignature(for: sym.id) {
+               let sig = sema.symbols.functionSignature(for: sym.id)
+            {
                 XCTAssertFalse(sig.typeParameterSymbols.isEmpty)
             }
         }
@@ -79,7 +79,7 @@ extension DataFlowAndSemaRegressionTests {
                 }
                 return false
             })
-            guard case .tryExpr(_, let catchClauses, _, _)? = ast.arena.expr(tryExprID) else {
+            guard case let .tryExpr(_, catchClauses, _, _)? = ast.arena.expr(tryExprID) else {
                 XCTFail("Expected try expression")
                 return
             }
@@ -99,7 +99,7 @@ extension DataFlowAndSemaRegressionTests {
                 symbol.kind == .class && ctx.interner.resolve(symbol.name) == "MyError"
             }
             let resolvedCustomErrorSymbol = try XCTUnwrap(customErrorSymbol)
-            guard case .classType(let customErrorType) = sema.types.kind(of: secondBinding.parameterType) else {
+            guard case let .classType(customErrorType) = sema.types.kind(of: secondBinding.parameterType) else {
                 XCTFail("Expected nominal catch parameter type")
                 return
             }
@@ -107,7 +107,7 @@ extension DataFlowAndSemaRegressionTests {
             XCTAssertEqual(sema.symbols.propertyType(for: secondBinding.parameterSymbol), secondBinding.parameterType)
 
             let catchNameRef = try XCTUnwrap(firstExprID(in: ast) { exprID, expr in
-                guard case .nameRef(let name, _) = expr else {
+                guard case let .nameRef(name, _) = expr else {
                     return false
                 }
                 return ctx.interner.resolve(name) == "e"
@@ -141,7 +141,7 @@ extension DataFlowAndSemaRegressionTests {
                 }
                 return false
             })
-            guard case .tryExpr(_, let catchClauses, _, _)? = ast.arena.expr(tryExprID) else {
+            guard case let .tryExpr(_, catchClauses, _, _)? = ast.arena.expr(tryExprID) else {
                 XCTFail("Expected try expression")
                 return
             }
@@ -221,7 +221,8 @@ extension DataFlowAndSemaRegressionTests {
             }
             XCTAssertNotNil(delayedSymbol)
             if let sym = delayedSymbol,
-               let sig = sema.symbols.functionSignature(for: sym.id) {
+               let sig = sema.symbols.functionSignature(for: sym.id)
+            {
                 XCTAssertTrue(sig.isSuspend)
             }
         }
@@ -286,5 +287,4 @@ extension DataFlowAndSemaRegressionTests {
             assertNoDiagnostic("KSWIFTK-SEMA-0080", in: ctx)
         }
     }
-
 }

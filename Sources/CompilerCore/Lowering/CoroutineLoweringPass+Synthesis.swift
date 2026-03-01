@@ -129,10 +129,12 @@ extension CoroutineLoweringPass {
         var spillSlotByExpr: [KIRExprID: Int64] = [:]
         if let firstSpillExpr = spilledExprs.first,
            let firstSpillField = spillFieldByExpr[firstSpillExpr],
-           let baseOffset = fieldOffsets[firstSpillField] {
+           let baseOffset = fieldOffsets[firstSpillField]
+        {
             for exprID in spilledExprs {
                 guard let fieldSymbol = spillFieldByExpr[exprID],
-                      let offset = fieldOffsets[fieldSymbol] else {
+                      let offset = fieldOffsets[fieldSymbol]
+                else {
                     continue
                 }
                 spillSlotByExpr[exprID] = Int64(offset - baseOffset)
@@ -192,7 +194,7 @@ extension CoroutineLoweringPass {
 
     func defineSyntheticContinuationParameterSymbol(
         owner: SymbolID,
-        loweredName: InternedString,
+        loweredName _: InternedString,
         nextSyntheticSymbol: inout Int32,
         sema: SemaModule?,
         interner: StringInterner

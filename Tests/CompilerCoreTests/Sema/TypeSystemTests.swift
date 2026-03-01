@@ -1,8 +1,7 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 final class TypeSystemTests: XCTestCase {
-
     // MARK: - Built-in Types
 
     func testBuiltInTypesArePreInitialized() {
@@ -60,7 +59,7 @@ final class TypeSystemTests: XCTestCase {
         let ts = TypeSystem()
         let classType = ClassType(classSymbol: SymbolID(rawValue: 0), args: [], nullability: .nonNull)
         let id = ts.make(.classType(classType))
-        if case .classType(let ct) = ts.kind(of: id) {
+        if case let .classType(ct) = ts.kind(of: id) {
             XCTAssertEqual(ct.classSymbol, SymbolID(rawValue: 0))
             XCTAssertEqual(ct.nullability, .nonNull)
         } else {
@@ -72,7 +71,7 @@ final class TypeSystemTests: XCTestCase {
         let ts = TypeSystem()
         let tp = TypeParamType(symbol: SymbolID(rawValue: 1), nullability: .nullable)
         let id = ts.make(.typeParam(tp))
-        if case .typeParam(let result) = ts.kind(of: id) {
+        if case let .typeParam(result) = ts.kind(of: id) {
             XCTAssertEqual(result.symbol, SymbolID(rawValue: 1))
             XCTAssertEqual(result.nullability, .nullable)
         } else {
@@ -91,7 +90,7 @@ final class TypeSystemTests: XCTestCase {
             nullability: .nonNull
         )
         let id = ts.make(.functionType(ft))
-        if case .functionType(let result) = ts.kind(of: id) {
+        if case let .functionType(result) = ts.kind(of: id) {
             XCTAssertEqual(result.params.count, 1)
             XCTAssertNil(result.receiver)
             XCTAssertFalse(result.isSuspend)
@@ -105,7 +104,7 @@ final class TypeSystemTests: XCTestCase {
         let a = ts.make(.primitive(.int, .nonNull))
         let b = ts.make(.primitive(.string, .nonNull))
         let id = ts.make(.intersection([a, b]))
-        if case .intersection(let parts) = ts.kind(of: id) {
+        if case let .intersection(parts) = ts.kind(of: id) {
             XCTAssertEqual(parts.count, 2)
             XCTAssertTrue(parts.contains(a))
             XCTAssertTrue(parts.contains(b))
@@ -315,7 +314,7 @@ final class TypeSystemTests: XCTestCase {
         let intType = ts.make(.primitive(.int, .nonNull))
         let stringType = ts.make(.primitive(.string, .nonNull))
         let result = ts.glb([intType, stringType])
-        if case .intersection(let parts) = ts.kind(of: result) {
+        if case let .intersection(parts) = ts.kind(of: result) {
             XCTAssertEqual(parts.count, 2)
         } else {
             XCTFail("Expected intersection type from glb")

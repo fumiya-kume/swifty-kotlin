@@ -1,7 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
 
 extension LoweringPassRegressionTests {
     func testInlineLoweringExpandsInlineBodyAndRewritesResultUse() throws {
@@ -28,7 +27,7 @@ extension LoweringPassRegressionTests {
                 .constValue(result: inlineArg, value: .symbolRef(inlineParamSym)),
                 .constValue(result: inlineOne, value: .intLiteral(1)),
                 .call(symbol: nil, callee: interner.intern("kk_op_add"), arguments: [inlineArg, inlineOne], result: inlineSum, canThrow: false, thrownResult: nil),
-                .returnValue(inlineSum)
+                .returnValue(inlineSum),
             ],
             isSuspend: false,
             isInline: true
@@ -41,7 +40,7 @@ extension LoweringPassRegressionTests {
             body: [
                 .constValue(result: callerArg, value: .intLiteral(41)),
                 .call(symbol: inlineSym, callee: interner.intern("plusOne"), arguments: [callerArg], result: callerResult, canThrow: false, thrownResult: nil),
-                .returnValue(callerResult)
+                .returnValue(callerResult),
             ],
             isSuspend: false,
             isInline: false
@@ -66,7 +65,7 @@ extension LoweringPassRegressionTests {
         ctx.kir = module
         try LoweringPhase().run(ctx)
 
-        guard case .function(let loweredCaller)? = module.arena.decl(callerID) else {
+        guard case let .function(loweredCaller)? = module.arena.decl(callerID) else {
             XCTFail("expected lowered caller function")
             return
         }
@@ -76,7 +75,7 @@ extension LoweringPassRegressionTests {
         XCTAssertTrue(calleeNames.contains("kk_op_add"))
 
         let returnValues = loweredCaller.body.compactMap { instruction -> KIRExprID? in
-            guard case .returnValue(let expr) = instruction else { return nil }
+            guard case let .returnValue(expr) = instruction else { return nil }
             return expr
         }
         XCTAssertEqual(returnValues.count, 1)
@@ -170,7 +169,7 @@ extension LoweringPassRegressionTests {
         try LoweringPhase().run(ctx)
 
         let functionNames = module.arena.declarations.compactMap { decl -> String? in
-            guard case .function(let function) = decl else {
+            guard case let .function(function) = decl else {
                 return nil
             }
             return interner.resolve(function.name)
@@ -246,7 +245,7 @@ extension LoweringPassRegressionTests {
         try LoweringPhase().run(ctx)
 
         let functionNames = module.arena.declarations.compactMap { decl -> String? in
-            guard case .function(let function) = decl else {
+            guard case let .function(function) = decl else {
                 return nil
             }
             return interner.resolve(function.name)
@@ -276,19 +275,19 @@ extension LoweringPassRegressionTests {
 
         // Each ordinal function should have a constValue instruction with the correct ordinal
         let redConst = redOrdinal.body.compactMap { inst -> Int64? in
-            guard case .constValue(_, let value) = inst, case .intLiteral(let v) = value else { return nil }
+            guard case let .constValue(_, value) = inst, case let .intLiteral(v) = value else { return nil }
             return v
         }
         XCTAssertTrue(redConst.contains(0), "RED ordinal should be 0, got consts: \(redConst)")
 
         let greenConst = greenOrdinal.body.compactMap { inst -> Int64? in
-            guard case .constValue(_, let value) = inst, case .intLiteral(let v) = value else { return nil }
+            guard case let .constValue(_, value) = inst, case let .intLiteral(v) = value else { return nil }
             return v
         }
         XCTAssertTrue(greenConst.contains(1), "GREEN ordinal should be 1, got consts: \(greenConst)")
 
         let blueConst = blueOrdinal.body.compactMap { inst -> Int64? in
-            guard case .constValue(_, let value) = inst, case .intLiteral(let v) = value else { return nil }
+            guard case let .constValue(_, value) = inst, case let .intLiteral(v) = value else { return nil }
             return v
         }
         XCTAssertTrue(blueConst.contains(2), "BLUE ordinal should be 2, got consts: \(blueConst)")
@@ -296,7 +295,7 @@ extension LoweringPassRegressionTests {
         // Verify name functions return correct string literals
         let redName = try findKIRFunction(named: "RED$enumName", in: module, interner: interner)
         let redNameConsts = redName.body.compactMap { inst -> InternedString? in
-            guard case .constValue(_, let value) = inst, case .stringLiteral(let s) = value else { return nil }
+            guard case let .constValue(_, value) = inst, case let .stringLiteral(s) = value else { return nil }
             return s
         }
         XCTAssertTrue(redNameConsts.contains(interner.intern("RED")), "RED name function should return \"RED\"")
@@ -310,5 +309,4 @@ extension LoweringPassRegressionTests {
         XCTAssertTrue(valueOfCallees.contains("kk_string_equals"), "valueOf should call kk_string_equals")
         XCTAssertTrue(valueOfCallees.contains("kk_enum_valueOf_throw"), "valueOf should call kk_enum_valueOf_throw for no-match case")
     }
-
 }

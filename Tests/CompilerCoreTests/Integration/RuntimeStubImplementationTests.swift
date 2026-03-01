@@ -1,12 +1,11 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 /// Tests verifying that the C runtime preamble contains proper GC data structure
 /// definitions and function implementations (not no-op stubs), and that the
 /// LLVM C API backend declares runtime functions as external (not internal no-ops).
 final class RuntimeStubImplementationTests: XCTestCase {
-
     // MARK: - Helpers
 
     private func makePreamble() -> String {
@@ -334,14 +333,15 @@ final class RuntimeStubImplementationTests: XCTestCase {
 
         // Frame map descriptors should be emitted as globals
         XCTAssertTrue(ir.contains("kk_frame_map_offsets_") || ir.contains("KKFrameMapDescriptor"),
-                       "Synthetic backend must emit frame map descriptor data")
+                      "Synthetic backend must emit frame map descriptor data")
     }
 
     // MARK: - LLVM C API Backend Tests
 
     func testLlvmCapiBackendDefinesFrameRuntimeFunctionsWithWeakLinkage() throws {
         guard let bindings = LLVMCAPIBindings.load(),
-              bindings.smokeTestContextLifecycle() else {
+              bindings.smokeTestContextLifecycle()
+        else {
             throw XCTSkip("LLVM C API bindings are unavailable in this environment.")
         }
 
@@ -391,7 +391,7 @@ final class RuntimeStubImplementationTests: XCTestCase {
             "kk_register_global_root",
             "kk_unregister_global_root",
             "kk_register_coroutine_root",
-            "kk_unregister_coroutine_root"
+            "kk_unregister_coroutine_root",
         ]
         for name in runtimeFunctions {
             XCTAssertTrue(

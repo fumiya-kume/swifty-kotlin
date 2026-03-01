@@ -25,8 +25,9 @@ final class MemberLowerer {
 
         for declID in memberFunctions {
             guard let decl = ast.arena.decl(declID),
-                  case .funDecl(let function) = decl,
-                  let symbol = sema.bindings.declSymbols[declID] else {
+                  case let .funDecl(function) = decl,
+                  let symbol = sema.bindings.declSymbols[declID]
+            else {
                 continue
             }
             driver.ctx.resetScopeForFunction()
@@ -46,7 +47,8 @@ final class MemberLowerer {
                 })
             }
             if function.isInline, let signature,
-               !signature.reifiedTypeParameterIndices.isEmpty {
+               !signature.reifiedTypeParameterIndices.isEmpty
+            {
                 let intType = sema.types.make(.primitive(.int, .nonNull))
                 for index in signature.reifiedTypeParameterIndices.sorted() {
                     guard index < signature.typeParameterSymbols.count else { continue }
@@ -58,16 +60,18 @@ final class MemberLowerer {
             let returnType = signature?.returnType ?? sema.types.unitType
             var body: [KIRInstruction] = [.beginBlock]
             if let receiverExpr = driver.ctx.currentImplicitReceiverExprID,
-               let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol {
+               let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol
+            {
                 body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSymbol)))
             }
             switch function.body {
-            case .block(let exprIDs, _):
+            case let .block(exprIDs, _):
                 var lastValue: KIRExprID?
                 var terminatedByReturn = false
                 for exprID in exprIDs {
                     if let expr = ast.arena.expr(exprID),
-                       case .returnExpr(let value, _, _) = expr {
+                       case let .returnExpr(value, _, _) = expr
+                    {
                         if let value {
                             let lowered = driver.lowerExpr(
                                 value,
@@ -102,7 +106,7 @@ final class MemberLowerer {
                         body.append(.returnUnit)
                     }
                 }
-            case .expr(let exprID, _):
+            case let .expr(exprID, _):
                 let value = driver.lowerExpr(
                     exprID,
                     ast: ast,
@@ -133,7 +137,8 @@ final class MemberLowerer {
             directMembers.append(kirID)
             allDecls.append(kirID)
             if let defaults = driver.ctx.functionDefaultArgumentsBySymbol[symbol],
-               let sig = signature {
+               let sig = signature
+            {
                 let stubID = driver.callSupportLowerer.generateDefaultStubFunction(
                     originalSymbol: symbol,
                     originalName: function.name,
@@ -154,8 +159,9 @@ final class MemberLowerer {
 
         for declID in memberProperties {
             guard let decl = ast.arena.decl(declID),
-                  case .propertyDecl(let propertyDecl) = decl,
-                  let symbol = sema.bindings.declSymbols[declID] else {
+                  case let .propertyDecl(propertyDecl) = decl,
+                  let symbol = sema.bindings.declSymbols[declID]
+            else {
                 continue
             }
             let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
@@ -274,11 +280,12 @@ final class MemberLowerer {
 
         for declID in nestedClasses {
             guard let decl = ast.arena.decl(declID),
-                  let symbol = sema.bindings.declSymbols[declID] else {
+                  let symbol = sema.bindings.declSymbols[declID]
+            else {
                 continue
             }
             switch decl {
-            case .classDecl(let nested):
+            case let .classDecl(nested):
                 var nestedAllObjects = nested.nestedObjects
                 if let companionDeclID = nested.companionObject {
                     nestedAllObjects.append(companionDeclID)
@@ -298,7 +305,7 @@ final class MemberLowerer {
                 directMembers.append(kirID)
                 allDecls.append(kirID)
                 allDecls.append(contentsOf: nestedAll)
-            case .interfaceDecl(let nestedInterface):
+            case let .interfaceDecl(nestedInterface):
                 // Interface properties have no backing storage; pass empty list.
                 var nestedInterfaceAllObjects = nestedInterface.nestedObjects
                 if let companionDeclID = nestedInterface.companionObject {
@@ -326,8 +333,9 @@ final class MemberLowerer {
 
         for declID in nestedObjects {
             guard let decl = ast.arena.decl(declID),
-                  case .objectDecl(let nested) = decl,
-                  let symbol = sema.bindings.declSymbols[declID] else {
+                  case let .objectDecl(nested) = decl,
+                  let symbol = sema.bindings.declSymbols[declID]
+            else {
                 continue
             }
             let (nestedDirect, nestedAll) = lowerMemberDecls(

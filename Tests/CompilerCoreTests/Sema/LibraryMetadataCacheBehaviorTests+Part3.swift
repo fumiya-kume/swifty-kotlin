@@ -1,7 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
 
 extension LibraryMetadataCacheBehaviorTests {
     func testManifestCacheHitOnSameKey() throws {
@@ -121,7 +120,7 @@ extension LibraryMetadataCacheBehaviorTests {
     }
 
     /// A6: Signature cache hit — same TypeSystem + SymbolTable
-    func testSignatureCacheHitWithSameTypeSystemAndSymbolTable() {
+    func testSignatureCacheHitWithSameTypeSystemAndSymbolTable() throws {
         let cache = LibraryMetadataCache()
         let types = TypeSystem()
         let symbols = SymbolTable()
@@ -131,7 +130,7 @@ extension LibraryMetadataCacheBehaviorTests {
 
         let retrieved = cache.cachedSignature("I", types: types, symbols: symbols)
         XCTAssertNotNil(retrieved, "Outer optional should be non-nil (cache hit)")
-        XCTAssertEqual(retrieved!, intType, "Should return the cached TypeID")
+        XCTAssertEqual(try XCTUnwrap(retrieved), intType, "Should return the cached TypeID")
     }
 
     /// A7: Signature cache miss — different TypeSystem
@@ -173,7 +172,7 @@ extension LibraryMetadataCacheBehaviorTests {
         let retrieved = cache.cachedSignature("INVALID", types: types, symbols: symbols)
         // Outer optional should be non-nil (cache hit), inner should be nil (cached failure)
         XCTAssertNotNil(retrieved, "Outer optional should be non-nil (cache hit for nil value)")
-        XCTAssertNil(retrieved!, "Inner value should be nil (cached failed parse)")
+        XCTAssertNil(retrieved, "Inner value should be nil (cached failed parse)")
         XCTAssertEqual(cache.signatureCacheCount, 1)
     }
 
@@ -232,5 +231,5 @@ extension LibraryMetadataCacheBehaviorTests {
 
     // --- B. Integration tests (loadImportedLibrarySymbols with cache) ---
 
-    /// B1: cache=nil produces identical results to without cache (no regression)
+    // B1: cache=nil produces identical results to without cache (no regression)
 }

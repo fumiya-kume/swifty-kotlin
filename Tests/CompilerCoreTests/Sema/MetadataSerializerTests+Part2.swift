@@ -1,6 +1,5 @@
-import XCTest
 @testable import CompilerCore
-
+import XCTest
 
 extension MetadataSerializerTests {
     func testDecodeDataClassFlag() {
@@ -175,7 +174,7 @@ extension MetadataSerializerTests {
                 ),
                 MetadataAnnotationRecord(
                     annotationFQName: "kotlin.JvmStatic"
-                )
+                ),
             ]
         )
         let serialized = encoder.serialize([original])
@@ -251,7 +250,7 @@ extension MetadataSerializerTests {
             mangledName: "_KK",
             fqName: "test.fn",
             annotations: [
-                MetadataAnnotationRecord(annotationFQName: "kotlin.JvmStatic")
+                MetadataAnnotationRecord(annotationFQName: "kotlin.JvmStatic"),
             ]
         )
         let output = encoder.serialize([record])
@@ -270,7 +269,7 @@ extension MetadataSerializerTests {
                     annotationFQName: "kotlin.Deprecated",
                     arguments: ["msg1", "msg2"],
                     useSiteTarget: "set"
-                )
+                ),
             ]
         )
         let serialized = encoder.serialize([record])

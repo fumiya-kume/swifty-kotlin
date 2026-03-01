@@ -1,8 +1,7 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 final class NominalLayoutTests: XCTestCase {
-
     // MARK: - Basic Init
 
     func testNominalLayoutMinimalInit() {

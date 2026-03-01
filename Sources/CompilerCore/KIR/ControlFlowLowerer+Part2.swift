@@ -1,7 +1,7 @@
 import Foundation
 
-/// Delegate class for KIR lowering: ControlFlowLowerer.
-/// Holds an unowned reference to the driver for mutual recursion.
+// Delegate class for KIR lowering: ControlFlowLowerer.
+// Holds an unowned reference to the driver for mutual recursion.
 
 extension ControlFlowLowerer {
     func appendThrowAwareInstructions(

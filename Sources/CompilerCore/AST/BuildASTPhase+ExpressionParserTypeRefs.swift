@@ -1,7 +1,7 @@
 import Foundation
 
 extension BuildASTPhase.ExpressionParser {
-    internal func parseTypeReference(_ fallbackRange: SourceRange) -> TypeRefID? {
+    func parseTypeReference(_ fallbackRange: SourceRange) -> TypeRefID? {
         _ = fallbackRange
         let options = TypeRefParserCore.Options.expressionInline
         guard let parsed = TypeRefParserCore.parseTypeRefPrefix(
@@ -16,7 +16,7 @@ extension BuildASTPhase.ExpressionParser {
         return parsed.ref
     }
 
-    internal func tryParseExplicitTypeArgs() -> [TypeRefID]? {
+    func tryParseExplicitTypeArgs() -> [TypeRefID]? {
         guard matches(.symbol(.lessThan)) else { return nil }
         let savedIndex = index
         _ = consume()
@@ -48,7 +48,7 @@ extension BuildASTPhase.ExpressionParser {
         }
     }
 
-    internal func tryParseTypeArgRefs() -> [TypeArgRef]? {
+    func tryParseTypeArgRefs() -> [TypeArgRef]? {
         guard matches(.symbol(.lessThan)) else { return nil }
         let savedIndex = index
         let options = TypeRefParserCore.Options.expressionInline
@@ -65,7 +65,7 @@ extension BuildASTPhase.ExpressionParser {
         return parsed.args
     }
 
-    internal func parseInlineTypeRef() -> TypeRefID? {
+    func parseInlineTypeRef() -> TypeRefID? {
         guard let token = current() else {
             return nil
         }

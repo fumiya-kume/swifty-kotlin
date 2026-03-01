@@ -1,6 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 /// Tests for companion object support (P5-73).
 ///
@@ -12,7 +12,6 @@ import XCTest
 ///   `companion object { ... }` (without a name) must not emit
 ///   "Expected declaration name" warning (KSWIFTK-PARSE-0002).
 final class CompanionObjectTests: XCTestCase {
-
     // MARK: - Fix 1: Type resolution short-name fallback for packaged types
 
     func testPackagedClassInCompanionFunctionReturnTypeResolves() throws {

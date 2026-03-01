@@ -59,9 +59,9 @@ extension OverloadResolver {
                 ctx: ctx
             )
             switch evaluation {
-            case .viable(let value):
+            case let .viable(value):
                 viable.append(value)
-            case .constraintFailure(let diagnostic):
+            case let .constraintFailure(diagnostic):
                 candidateFailures.append(diagnostic)
             case .rejected:
                 continue
@@ -85,7 +85,8 @@ extension OverloadResolver {
     ) -> CandidateEvaluation {
         guard let symbol = ctx.symbols.symbol(candidate),
               symbol.kind == .function || symbol.kind == .constructor,
-              let signature = ctx.symbols.functionSignature(for: candidate) else {
+              let signature = ctx.symbols.functionSignature(for: candidate)
+        else {
             return .rejected
         }
 
@@ -173,9 +174,9 @@ extension OverloadResolver {
         )
         let substitution: [TypeVarID: TypeID]
         switch solveResult {
-        case .success(let value):
+        case let .success(value):
             substitution = value
-        case .constraintFailure(let diagnostic):
+        case let .constraintFailure(diagnostic):
             return .constraintFailure(diagnostic)
         case .rejected:
             return .rejected
@@ -206,7 +207,8 @@ extension OverloadResolver {
         let instantiatedParameterTypes: [TypeID] = call.args.indices.compactMap { argIndex in
             guard let paramIndex = parameterMapping[argIndex],
                   paramIndex >= 0,
-                  paramIndex < signature.parameterTypes.count else {
+                  paramIndex < signature.parameterTypes.count
+            else {
                 return nil
             }
             return ctx.types.substituteTypeParameters(
@@ -264,7 +266,8 @@ extension OverloadResolver {
         for argIndex in call.args.indices {
             guard let paramIndex = parameterMapping[argIndex],
                   paramIndex >= 0,
-                  paramIndex < signature.parameterTypes.count else {
+                  paramIndex < signature.parameterTypes.count
+            else {
                 constraints.removeAll(keepingCapacity: false)
                 break
             }
@@ -426,7 +429,8 @@ extension OverloadResolver {
         }
         guard paramsEqual,
               let lhsReceiver = lhs.signature.receiverType,
-              let rhsReceiver = rhs.signature.receiverType else {
+              let rhsReceiver = rhs.signature.receiverType
+        else {
             return false
         }
         return typeSystem.isSubtype(lhsReceiver, rhsReceiver)
@@ -447,7 +451,7 @@ extension OverloadResolver {
                 return false
             }
             let rhsSubLhs = typeSystem.isSubtype(rhsParam, lhsParam)
-            if lhsSubRhs && !rhsSubLhs {
+            if lhsSubRhs, !rhsSubLhs {
                 sawStrict = true
             }
         }

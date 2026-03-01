@@ -1,6 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 final class SourceManagerTests: XCTestCase {
     func testAddFileAndLookupByIDAndEnumeration() {

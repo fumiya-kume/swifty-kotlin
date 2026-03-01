@@ -1,10 +1,10 @@
-import XCTest
 @testable import Runtime
+import XCTest
 
 #if canImport(Glibc)
-import Glibc
+    import Glibc
 #elseif canImport(Darwin)
-import Darwin
+    import Darwin
 #endif
 
 final class RuntimeStringArrayTests: XCTestCase {

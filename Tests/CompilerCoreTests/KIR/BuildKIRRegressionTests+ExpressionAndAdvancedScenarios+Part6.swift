@@ -1,9 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
-
-
 
 extension BuildKIRRegressionTests {
     func testNestedLocalFunctionScopeResolution() throws {

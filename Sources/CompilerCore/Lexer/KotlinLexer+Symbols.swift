@@ -44,28 +44,28 @@ extension KotlinLexer {
     ]
 
     private static let singleCharSymbols: [UInt8: Symbol] = [
-        0x26: .amp,      // &
-        0x2B: .plus,     // +
-        0x2D: .minus,    // -
-        0x2A: .star,     // *
-        0x2F: .slash,    // /
-        0x25: .percent,   // %
-        0x21: .bang,     // !
-        0x3D: .assign,    // =
-        0x3C: .lessThan,  // <
+        0x26: .amp, // &
+        0x2B: .plus, // +
+        0x2D: .minus, // -
+        0x2A: .star, // *
+        0x2F: .slash, // /
+        0x25: .percent, // %
+        0x21: .bang, // !
+        0x3D: .assign, // =
+        0x3C: .lessThan, // <
         0x3E: .greaterThan, // >
-        0x2E: .dot,       // .
-        0x2C: .comma,    // ,
+        0x2E: .dot, // .
+        0x2C: .comma, // ,
         0x3B: .semicolon, // ;
-        0x3A: .colon,    // :
-        0x28: .lParen,   // (
-        0x29: .rParen,   // )
+        0x3A: .colon, // :
+        0x28: .lParen, // (
+        0x29: .rParen, // )
         0x5B: .lBracket, // [
         0x5D: .rBracket, // ]
-        0x7B: .lBrace,   // {
-        0x7D: .rBrace,    // }
-        0x40: .at,       // @
-        0x23: .hash,     // #
-        0x3F: .question,  // ?
+        0x7B: .lBrace, // {
+        0x7D: .rBrace, // }
+        0x40: .at, // @
+        0x23: .hash, // #
+        0x3F: .question, // ?
     ]
 }

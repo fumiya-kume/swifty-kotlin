@@ -1,13 +1,13 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 // MARK: - AST Equivalence Regression Tests (P5-58)
+
 // Verify that decl/expr counts and source ranges remain consistent
 // after BuildAST optimisation changes.
 
 final class ASTEquivalenceRegressionTests: XCTestCase {
-
     // MARK: - Helpers
 
     private func buildAST(from source: String) throws -> (ASTModule, CompilationContext) {
@@ -49,7 +49,7 @@ final class ASTEquivalenceRegressionTests: XCTestCase {
 
         for decl in ast.arena.declarations() {
             switch decl {
-            case .funDecl(let f):
+            case let .funDecl(f):
                 assertValidSourceRange(f.range, label: "funDecl")
             default:
                 break
@@ -98,7 +98,7 @@ final class ASTEquivalenceRegressionTests: XCTestCase {
         XCTAssertEqual(ast.declarationCount, 2)
 
         let classDecls = ast.arena.declarations().compactMap { decl -> ClassDecl? in
-            guard case .classDecl(let c) = decl else { return nil }
+            guard case let .classDecl(c) = decl else { return nil }
             return c
         }
         XCTAssertEqual(classDecls.count, 1)
@@ -186,7 +186,7 @@ final class ASTEquivalenceRegressionTests: XCTestCase {
         XCTAssertEqual(ast.declarationCount, 3)
 
         let interfaceDecls = ast.arena.declarations().compactMap { decl -> InterfaceDecl? in
-            guard case .interfaceDecl(let i) = decl else { return nil }
+            guard case let .interfaceDecl(i) = decl else { return nil }
             return i
         }
         XCTAssertEqual(interfaceDecls.count, 1)
@@ -243,19 +243,19 @@ final class ASTEquivalenceRegressionTests: XCTestCase {
         // Verify ALL decl ranges are valid
         for decl in ast.arena.declarations() {
             switch decl {
-            case .funDecl(let f):
+            case let .funDecl(f):
                 assertValidSourceRange(f.range, label: "funDecl(\(f.name.rawValue))")
-            case .classDecl(let c):
+            case let .classDecl(c):
                 assertValidSourceRange(c.range, label: "classDecl")
-            case .interfaceDecl(let i):
+            case let .interfaceDecl(i):
                 assertValidSourceRange(i.range, label: "interfaceDecl")
-            case .propertyDecl(let p):
+            case let .propertyDecl(p):
                 assertValidSourceRange(p.range, label: "propertyDecl")
-            case .objectDecl(let o):
+            case let .objectDecl(o):
                 assertValidSourceRange(o.range, label: "objectDecl")
-            case .typeAliasDecl(let t):
+            case let .typeAliasDecl(t):
                 assertValidSourceRange(t.range, label: "typeAliasDecl")
-            case .enumEntryDecl(let e):
+            case let .enumEntryDecl(e):
                 assertValidSourceRange(e.range, label: "enumEntryDecl")
             }
         }

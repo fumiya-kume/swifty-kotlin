@@ -1,7 +1,7 @@
 import Foundation
 
 extension BuildASTPhase {
-    internal func declarationInitBlocks(
+    func declarationInitBlocks(
         from nodeID: NodeID,
         in arena: SyntaxArena,
         interner: StringInterner,
@@ -9,26 +9,30 @@ extension BuildASTPhase {
     ) -> [FunctionBody] {
         var result: [FunctionBody] = []
         for child in arena.children(of: nodeID) {
-            guard case .node(let bodyBlockID) = child,
-                  arena.node(bodyBlockID).kind == .block else {
+            guard case let .node(bodyBlockID) = child,
+                  arena.node(bodyBlockID).kind == .block
+            else {
                 continue
             }
             for bodyChild in arena.children(of: bodyBlockID) {
-                guard case .node(let statementID) = bodyChild,
-                      isStatementLikeKind(arena.node(statementID).kind) else {
+                guard case let .node(statementID) = bodyChild,
+                      isStatementLikeKind(arena.node(statementID).kind)
+                else {
                     continue
                 }
                 let headerTokens = collectDirectTokens(from: statementID, in: arena).filter { token in
                     token.kind != .symbol(.semicolon)
                 }
                 guard let firstToken = headerTokens.first,
-                      firstToken.kind == .softKeyword(.`init`) else {
+                      firstToken.kind == .softKeyword(.`init`)
+                else {
                     continue
                 }
 
                 if let nestedBlockID = arena.children(of: statementID).compactMap({ inner -> NodeID? in
-                    guard case .node(let nodeID) = inner,
-                          arena.node(nodeID).kind == .block else {
+                    guard case let .node(nodeID) = inner,
+                          arena.node(nodeID).kind == .block
+                    else {
                         return nil
                     }
                     return nodeID
@@ -50,7 +54,8 @@ extension BuildASTPhase {
                         astArena: astArena
                     )
                     if let exprID = parser.parse(),
-                       let range = astArena.exprRange(exprID) {
+                       let range = astArena.exprRange(exprID)
+                    {
                         result.append(.expr(exprID, range))
                         continue
                     }
@@ -61,7 +66,7 @@ extension BuildASTPhase {
         return result
     }
 
-    internal func declarationSecondaryConstructors(
+    func declarationSecondaryConstructors(
         from nodeID: NodeID,
         in arena: SyntaxArena,
         interner: StringInterner,
@@ -69,13 +74,15 @@ extension BuildASTPhase {
     ) -> [ConstructorDecl] {
         var result: [ConstructorDecl] = []
         for child in arena.children(of: nodeID) {
-            guard case .node(let bodyBlockID) = child,
-                  arena.node(bodyBlockID).kind == .block else {
+            guard case let .node(bodyBlockID) = child,
+                  arena.node(bodyBlockID).kind == .block
+            else {
                 continue
             }
             for bodyChild in arena.children(of: bodyBlockID) {
-                guard case .node(let ctorNodeID) = bodyChild,
-                      arena.node(ctorNodeID).kind == .constructorDecl else {
+                guard case let .node(ctorNodeID) = bodyChild,
+                      arena.node(ctorNodeID).kind == .constructorDecl
+                else {
                     continue
                 }
                 let ctorNode = arena.node(ctorNodeID)
@@ -83,7 +90,7 @@ extension BuildASTPhase {
                 let delegationCall = extractDelegationCall(from: ctorNodeID, in: arena, interner: interner, astArena: astArena)
                 let body: FunctionBody
                 if let blockID = arena.children(of: ctorNodeID).compactMap({ child -> NodeID? in
-                    guard case .node(let id) = child, arena.node(id).kind == .block else { return nil }
+                    guard case let .node(id) = child, arena.node(id).kind == .block else { return nil }
                     return id
                 }).first {
                     let exprs = blockExpressions(from: blockID, in: arena, interner: interner, astArena: astArena)
@@ -103,7 +110,7 @@ extension BuildASTPhase {
         return result
     }
 
-    internal func extractDelegationCall(
+    func extractDelegationCall(
         from nodeID: NodeID,
         in arena: SyntaxArena,
         interner: StringInterner,
@@ -123,7 +130,7 @@ extension BuildASTPhase {
             }
             if token.kind == .symbol(.rParen) {
                 parenDepth -= 1
-                if parenDepth == 0 && foundFirstParens {
+                if parenDepth == 0, foundFirstParens {
                     index += 1
                     break
                 }
@@ -164,7 +171,7 @@ extension BuildASTPhase {
                     if depth == 0 { index += 1; break }
                     depth -= 1
                 }
-                if t.kind == .symbol(.comma) && depth == 0 {
+                if t.kind == .symbol(.comma), depth == 0 {
                     if !argTokens.isEmpty {
                         let parser = ExpressionParser(tokens: argTokens, interner: interner, astArena: astArena)
                         if let exprID = parser.parse() {

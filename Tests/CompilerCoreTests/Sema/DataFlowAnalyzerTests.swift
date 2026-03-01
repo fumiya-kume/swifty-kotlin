@@ -1,8 +1,7 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 final class DataFlowAnalyzerTests: XCTestCase {
-
     // MARK: - VariableFlowState
 
     func testVariableFlowStateEquality() {
@@ -137,7 +136,7 @@ final class DataFlowAnalyzerTests: XCTestCase {
         XCTAssertNil(result.variables[sym2])
     }
 
-    func testMergeUnionsPossibleTypes() {
+    func testMergeUnionsPossibleTypes() throws {
         let analyzer = DataFlowAnalyzer()
         let types = TypeSystem()
         let intType = types.make(.primitive(.int, .nonNull))
@@ -147,9 +146,9 @@ final class DataFlowAnalyzerTests: XCTestCase {
         let lhs = DataFlowState(variables: [sym: VariableFlowState(possibleTypes: [intType], nullability: .nonNull, isStable: true)])
         let rhs = DataFlowState(variables: [sym: VariableFlowState(possibleTypes: [stringType], nullability: .nonNull, isStable: true)])
         let result = analyzer.merge(lhs, rhs)
-        XCTAssertEqual(result.variables[sym]!.possibleTypes.count, 2)
-        XCTAssertTrue(result.variables[sym]!.possibleTypes.contains(intType))
-        XCTAssertTrue(result.variables[sym]!.possibleTypes.contains(stringType))
+        XCTAssertEqual(result.variables[sym]?.possibleTypes.count, 2)
+        XCTAssertTrue(try XCTUnwrap(result.variables[sym]?.possibleTypes.contains(intType)))
+        XCTAssertTrue(try XCTUnwrap(result.variables[sym]?.possibleTypes.contains(stringType)))
     }
 
     func testMergeNullabilityIsNullableIfEitherIsNullable() {
@@ -161,10 +160,10 @@ final class DataFlowAnalyzerTests: XCTestCase {
         let lhs = DataFlowState(variables: [sym: VariableFlowState(possibleTypes: [intType], nullability: .nonNull, isStable: true)])
         let rhs = DataFlowState(variables: [sym: VariableFlowState(possibleTypes: [intType], nullability: .nullable, isStable: true)])
         let result = analyzer.merge(lhs, rhs)
-        XCTAssertEqual(result.variables[sym]!.nullability, .nullable)
+        XCTAssertEqual(result.variables[sym]?.nullability, .nullable)
     }
 
-    func testMergeStabilityIsFalseIfEitherUnstable() {
+    func testMergeStabilityIsFalseIfEitherUnstable() throws {
         let analyzer = DataFlowAnalyzer()
         let types = TypeSystem()
         let intType = types.make(.primitive(.int, .nonNull))
@@ -173,7 +172,7 @@ final class DataFlowAnalyzerTests: XCTestCase {
         let lhs = DataFlowState(variables: [sym: VariableFlowState(possibleTypes: [intType], nullability: .nonNull, isStable: true)])
         let rhs = DataFlowState(variables: [sym: VariableFlowState(possibleTypes: [intType], nullability: .nonNull, isStable: false)])
         let result = analyzer.merge(lhs, rhs)
-        XCTAssertFalse(result.variables[sym]!.isStable)
+        XCTAssertFalse(try XCTUnwrap(result.variables[sym]?.isStable))
     }
 
     // MARK: - isWhenExhaustive

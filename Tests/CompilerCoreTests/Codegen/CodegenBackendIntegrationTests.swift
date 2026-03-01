@@ -1,6 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 final class CodegenBackendIntegrationTests: XCTestCase {
     func testCodegenEmitsKirDumpArtifact() throws {
@@ -191,7 +191,8 @@ final class CodegenBackendIntegrationTests: XCTestCase {
 
     func testLlvmCapiBackendNativeFailureReportsErrorWithoutFallback() throws {
         guard let bindings = LLVMCAPIBindings.load(),
-              bindings.smokeTestContextLifecycle() else {
+              bindings.smokeTestContextLifecycle()
+        else {
             throw XCTSkip("LLVM C API bindings are unavailable in this environment.")
         }
 
@@ -304,5 +305,4 @@ final class CodegenBackendIntegrationTests: XCTestCase {
     }
 
     // MARK: - Private Helpers
-
 }

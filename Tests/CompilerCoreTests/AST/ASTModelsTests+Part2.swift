@@ -1,6 +1,5 @@
-import XCTest
 @testable import CompilerCore
-
+import XCTest
 
 extension ASTModelsTests {
     func testDeclVariantClassDecl() {
@@ -8,7 +7,7 @@ extension ASTModelsTests {
         let r = makeRange(start: 0, end: 5)
         let classDecl = ClassDecl(range: r, name: interner.intern("MyClass"), modifiers: [.public], typeParams: [], primaryConstructorParams: [])
         let decl = Decl.classDecl(classDecl)
-        if case .classDecl(let d) = decl {
+        if case let .classDecl(d) = decl {
             XCTAssertEqual(d.name, interner.intern("MyClass"))
         } else {
             XCTFail("Expected .classDecl")
@@ -20,7 +19,7 @@ extension ASTModelsTests {
         let r = makeRange(start: 0, end: 5)
         let ifaceDecl = InterfaceDecl(range: r, name: interner.intern("MyInterface"), modifiers: [.abstract])
         let decl = Decl.interfaceDecl(ifaceDecl)
-        if case .interfaceDecl(let d) = decl {
+        if case let .interfaceDecl(d) = decl {
             XCTAssertEqual(d.name, interner.intern("MyInterface"))
             XCTAssertEqual(d.modifiers, [.abstract])
         } else {
@@ -33,7 +32,7 @@ extension ASTModelsTests {
         let r = makeRange(start: 0, end: 5)
         let funDecl = FunDecl(range: r, name: interner.intern("doStuff"), modifiers: [.suspend])
         let decl = Decl.funDecl(funDecl)
-        if case .funDecl(let d) = decl {
+        if case let .funDecl(d) = decl {
             XCTAssertEqual(d.name, interner.intern("doStuff"))
             XCTAssertTrue(d.modifiers.contains(.suspend))
         } else {
@@ -46,7 +45,7 @@ extension ASTModelsTests {
         let r = makeRange(start: 0, end: 5)
         let propDecl = PropertyDecl(range: r, name: interner.intern("count"), modifiers: [.private], type: TypeRefID(rawValue: 0))
         let decl = Decl.propertyDecl(propDecl)
-        if case .propertyDecl(let d) = decl {
+        if case let .propertyDecl(d) = decl {
             XCTAssertEqual(d.name, interner.intern("count"))
             XCTAssertTrue(d.modifiers.contains(.private))
         } else {
@@ -59,7 +58,7 @@ extension ASTModelsTests {
         let r = makeRange(start: 0, end: 5)
         let alias = TypeAliasDecl(range: r, name: interner.intern("StringList"), modifiers: [.internal])
         let decl = Decl.typeAliasDecl(alias)
-        if case .typeAliasDecl(let d) = decl {
+        if case let .typeAliasDecl(d) = decl {
             XCTAssertEqual(d.name, interner.intern("StringList"))
             XCTAssertEqual(d.modifiers, [.internal])
         } else {
@@ -72,7 +71,7 @@ extension ASTModelsTests {
         let r = makeRange(start: 0, end: 5)
         let objDecl = ObjectDecl(range: r, name: interner.intern("Companion"), modifiers: [.public])
         let decl = Decl.objectDecl(objDecl)
-        if case .objectDecl(let d) = decl {
+        if case let .objectDecl(d) = decl {
             XCTAssertEqual(d.name, interner.intern("Companion"))
         } else {
             XCTFail("Expected .objectDecl")
@@ -84,7 +83,7 @@ extension ASTModelsTests {
         let r = makeRange(start: 0, end: 5)
         let entry = EnumEntryDecl(range: r, name: interner.intern("RED"))
         let decl = Decl.enumEntryDecl(entry)
-        if case .enumEntryDecl(let d) = decl {
+        if case let .enumEntryDecl(d) = decl {
             XCTAssertEqual(d.name, interner.intern("RED"))
         } else {
             XCTFail("Expected .enumEntryDecl")
@@ -247,7 +246,7 @@ extension ASTModelsTests {
         let interner = StringInterner()
         let arena = ASTArena()
         let id = arena.appendTypeRef(.named(path: [interner.intern("kotlin"), interner.intern("String")], args: [], nullable: false))
-        if case .named(let path, let args, let nullable) = arena.typeRef(id) {
+        if case let .named(path, args, nullable) = arena.typeRef(id) {
             XCTAssertEqual(path.count, 2)
             XCTAssertTrue(args.isEmpty)
             XCTAssertFalse(nullable)
@@ -260,7 +259,7 @@ extension ASTModelsTests {
         let interner = StringInterner()
         let arena = ASTArena()
         let id = arena.appendTypeRef(.named(path: [interner.intern("Int")], args: [], nullable: true))
-        if case .named(_, _, let nullable) = arena.typeRef(id) {
+        if case let .named(_, _, nullable) = arena.typeRef(id) {
             XCTAssertTrue(nullable)
         } else {
             XCTFail("Expected .named")
@@ -276,7 +275,7 @@ extension ASTModelsTests {
             args: [.invariant(innerID)],
             nullable: false
         ))
-        if case .named(let path, let args, _) = arena.typeRef(id) {
+        if case let .named(path, args, _) = arena.typeRef(id) {
             XCTAssertEqual(path.count, 1)
             XCTAssertEqual(args.count, 1)
         } else {
@@ -289,7 +288,7 @@ extension ASTModelsTests {
         let paramID = arena.appendTypeRef(.named(path: [], args: [], nullable: false))
         let returnID = arena.appendTypeRef(.named(path: [], args: [], nullable: false))
         let id = arena.appendTypeRef(.functionType(params: [paramID], returnType: returnID, isSuspend: false, nullable: false))
-        if case .functionType(let params, let ret, let isSuspend, let nullable) = arena.typeRef(id) {
+        if case let .functionType(params, ret, isSuspend, nullable) = arena.typeRef(id) {
             XCTAssertEqual(params.count, 1)
             XCTAssertEqual(ret, returnID)
             XCTAssertFalse(isSuspend)
@@ -303,7 +302,7 @@ extension ASTModelsTests {
         let arena = ASTArena()
         let returnID = arena.appendTypeRef(.named(path: [], args: [], nullable: false))
         let id = arena.appendTypeRef(.functionType(params: [], returnType: returnID, isSuspend: true, nullable: true))
-        if case .functionType(let params, _, let isSuspend, let nullable) = arena.typeRef(id) {
+        if case let .functionType(params, _, isSuspend, nullable) = arena.typeRef(id) {
             XCTAssertTrue(params.isEmpty)
             XCTAssertTrue(isSuspend)
             XCTAssertTrue(nullable)
@@ -342,5 +341,4 @@ extension ASTModelsTests {
         XCTAssertEqual(TypeArgRef.in(typeRef), inArg)
         XCTAssertEqual(TypeArgRef.star, star)
     }
-
 }

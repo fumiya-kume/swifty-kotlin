@@ -21,19 +21,19 @@ public final class TypeSystem {
     public let stringType: TypeID
 
     public init() {
-        self.errorType = TypeID(rawValue: 0)
-        self.unitType = TypeID(rawValue: 1)
-        self.nothingType = TypeID(rawValue: 2)
-        self.nullableNothingType = TypeID(rawValue: 3)
-        self.anyType = TypeID(rawValue: 4)
-        self.nullableAnyType = TypeID(rawValue: 5)
-        self.booleanType = TypeID(rawValue: 6)
-        self.charType = TypeID(rawValue: 7)
-        self.intType = TypeID(rawValue: 8)
-        self.longType = TypeID(rawValue: 9)
-        self.floatType = TypeID(rawValue: 10)
-        self.doubleType = TypeID(rawValue: 11)
-        self.stringType = TypeID(rawValue: 12)
+        errorType = TypeID(rawValue: 0)
+        unitType = TypeID(rawValue: 1)
+        nothingType = TypeID(rawValue: 2)
+        nullableNothingType = TypeID(rawValue: 3)
+        anyType = TypeID(rawValue: 4)
+        nullableAnyType = TypeID(rawValue: 5)
+        booleanType = TypeID(rawValue: 6)
+        charType = TypeID(rawValue: 7)
+        intType = TypeID(rawValue: 8)
+        longType = TypeID(rawValue: 9)
+        floatType = TypeID(rawValue: 10)
+        doubleType = TypeID(rawValue: 11)
+        stringType = TypeID(rawValue: 12)
 
         idToKind = [
             .error,
@@ -74,24 +74,24 @@ public final class TypeSystem {
     public func isDefinitelyNonNull(_ type: TypeID) -> Bool {
         switch kind(of: type) {
         case .error:
-            return false
+            false
         case .unit:
-            return true
-        case .nothing(let n):
-            return n == .nonNull
-        case .any(let n):
-            return n == .nonNull
-        case .primitive(_, let n):
-            return n == .nonNull
-        case .classType(let ct):
-            return ct.nullability == .nonNull
-        case .functionType(let ft):
-            return ft.nullability == .nonNull
-        case .typeParam(let tp):
-            return tp.nullability == .nonNull
-        case .intersection(let parts):
+            true
+        case let .nothing(n):
+            n == .nonNull
+        case let .any(n):
+            n == .nonNull
+        case let .primitive(_, n):
+            n == .nonNull
+        case let .classType(ct):
+            ct.nullability == .nonNull
+        case let .functionType(ft):
+            ft.nullability == .nonNull
+        case let .typeParam(tp):
+            tp.nullability == .nonNull
+        case let .intersection(parts):
             // T & Any is definitely non-null; any part being non-null suffices
-            return parts.contains { isDefinitelyNonNull($0) }
+            parts.contains { isDefinitelyNonNull($0) }
         }
     }
 
@@ -100,17 +100,17 @@ public final class TypeSystem {
     public func nullability(of type: TypeID) -> Nullability {
         switch kind(of: type) {
         case .error, .unit:
-            return .nonNull
-        case .nothing(let n), .any(let n), .primitive(_, let n):
-            return n
-        case .classType(let ct):
-            return ct.nullability
-        case .functionType(let ft):
-            return ft.nullability
-        case .typeParam(let tp):
-            return tp.nullability
-        case .intersection(let parts):
-            return parts.contains { nullability(of: $0) == .nonNull } ? .nonNull : .nullable
+            .nonNull
+        case let .nothing(n), let .any(n), let .primitive(_, n):
+            n
+        case let .classType(ct):
+            ct.nullability
+        case let .functionType(ft):
+            ft.nullability
+        case let .typeParam(tp):
+            tp.nullability
+        case let .intersection(parts):
+            parts.contains { nullability(of: $0) == .nonNull } ? .nonNull : .nullable
         }
     }
 
@@ -118,7 +118,7 @@ public final class TypeSystem {
         switch kind(of: type) {
         case .error, .unit:
             return type
-        case .intersection(let parts):
+        case let .intersection(parts):
             // For intersection types, apply nullability to each part
             if nullability == .nonNull {
                 // If intersection is already definitely non-null, return as-is
@@ -128,23 +128,23 @@ public final class TypeSystem {
                 // Add Any to make it definitely non-null
                 return make(.intersection(parts + [anyType]))
             }
-            return type  // intersections don't become nullable directly
-        case .nothing(let existing):
+            return type // intersections don't become nullable directly
+        case let .nothing(existing):
             if existing == nullability { return type }
             return nullability == .nullable ? nullableNothingType : nothingType
-        case .any(let existing):
+        case let .any(existing):
             if existing == nullability { return type }
             return nullability == .nullable ? nullableAnyType : anyType
-        case .primitive(let prim, let existing):
+        case let .primitive(prim, existing):
             if existing == nullability { return type }
             return make(.primitive(prim, nullability))
-        case .classType(let ct):
+        case let .classType(ct):
             if ct.nullability == nullability { return type }
             return make(.classType(ClassType(classSymbol: ct.classSymbol, args: ct.args, nullability: nullability)))
-        case .typeParam(let tp):
+        case let .typeParam(tp):
             if tp.nullability == nullability { return type }
             return make(.typeParam(TypeParamType(symbol: tp.symbol, nullability: nullability)))
-        case .functionType(let ft):
+        case let .functionType(ft):
             if ft.nullability == nullability { return type }
             return make(.functionType(FunctionType(receiver: ft.receiver, params: ft.params, returnType: ft.returnType, isSuspend: ft.isSuspend, nullability: nullability)))
         }
@@ -170,7 +170,7 @@ public final class TypeSystem {
 
     public func kind(of id: TypeID) -> TypeKind {
         let index = Int(id.rawValue)
-        guard index >= 0 && index < idToKind.count else {
+        guard index >= 0, index < idToKind.count else {
             return .error
         }
         return idToKind[index]
@@ -205,18 +205,18 @@ public final class TypeSystem {
     /// type parameter identified by `symbol`.
     public func typeContainsTypeParam(_ type: TypeID, symbol: SymbolID) -> Bool {
         switch kind(of: type) {
-        case .typeParam(let tp):
+        case let .typeParam(tp):
             return tp.symbol == symbol
-        case .classType(let ct):
+        case let .classType(ct):
             return ct.args.contains { arg in
                 switch arg {
-                case .invariant(let inner), .out(let inner), .in(let inner):
-                    return typeContainsTypeParam(inner, symbol: symbol)
+                case let .invariant(inner), let .out(inner), let .in(inner):
+                    typeContainsTypeParam(inner, symbol: symbol)
                 case .star:
-                    return false
+                    false
                 }
             }
-        case .functionType(let ft):
+        case let .functionType(ft):
             if let receiver = ft.receiver, typeContainsTypeParam(receiver, symbol: symbol) {
                 return true
             }
@@ -224,7 +224,7 @@ public final class TypeSystem {
                 return true
             }
             return typeContainsTypeParam(ft.returnType, symbol: symbol)
-        case .intersection(let parts):
+        case let .intersection(parts):
             return parts.contains { typeContainsTypeParam($0, symbol: symbol) }
         default:
             return false

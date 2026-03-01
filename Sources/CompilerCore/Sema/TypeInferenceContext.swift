@@ -1,6 +1,6 @@
 import Foundation
 
-// Internal visibility is required for cross-file extension decomposition.
+/// Internal visibility is required for cross-file extension decomposition.
 struct TypeInferenceContext {
     let ast: ASTModule
     let sema: SemaModule
@@ -34,7 +34,7 @@ struct TypeInferenceContext {
 
     func withLoopLabel(_ label: InternedString) -> TypeInferenceContext {
         var copy = self
-        copy.loopLabelStack = self.loopLabelStack + [label]
+        copy.loopLabelStack = loopLabelStack + [label]
         return copy
     }
 
@@ -72,7 +72,7 @@ struct TypeInferenceContext {
 
     func withOuterReceiver(label: InternedString, type: TypeID) -> TypeInferenceContext {
         var copy = self
-        copy.outerReceiverTypes = self.outerReceiverTypes + [(label: label, type: type)]
+        copy.outerReceiverTypes = outerReceiverTypes + [(label: label, type: type)]
         return copy
     }
 

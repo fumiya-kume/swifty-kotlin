@@ -38,7 +38,7 @@ public final class TypeCheckSemaPhase: CompilerPhase {
         )
 
         // Run consistency checks: every declaration should have a symbol binding.
-        for decl in 0..<ast.arena.declCount {
+        for decl in 0 ..< ast.arena.declCount {
             let declID = DeclID(rawValue: Int32(decl))
             if sema.bindings.declSymbols[declID] == nil {
                 ctx.diagnostics.error(

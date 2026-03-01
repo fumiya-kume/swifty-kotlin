@@ -3,7 +3,9 @@ import Foundation
 extension DataFlowSemaPhase {
     /// Base value for synthetic type parameter symbol IDs used in metadata encoding.
     /// Shared between MetadataTypeSignatureParser (encoding) and collectSyntheticTypeParameters (decoding).
-    static var syntheticTypeParameterBase: Int32 { -1_000_000 }
+    static var syntheticTypeParameterBase: Int32 {
+        -1_000_000
+    }
 
     func definePackageSymbol(for file: ASTFile, symbols: SymbolTable, interner: StringInterner) -> SymbolID {
         let package = file.packageFQName.isEmpty ? [interner.intern("_root_")] : file.packageFQName
@@ -185,7 +187,8 @@ extension DataFlowSemaPhase {
         }
         for typeParam in typeParams {
             if let boundRef = typeParam.upperBound,
-               let typeParamSym = localTypeParameters[typeParam.name] {
+               let typeParamSym = localTypeParameters[typeParam.name]
+            {
                 if let boundType = resolveTypeRef(
                     boundRef,
                     ast: ast,
@@ -198,7 +201,7 @@ extension DataFlowSemaPhase {
                 }
             }
         }
-        if !reifiedIndices.isEmpty && !isInline {
+        if !reifiedIndices.isEmpty, !isInline {
             diagnostics.error(
                 "KSWIFTK-SEMA-0020",
                 "Only type parameters of inline functions can be reified",
@@ -282,11 +285,10 @@ extension DataFlowSemaPhase {
         // ------------------------------------------------------------------
         let lazyInterfaceName = interner.intern("Lazy")
         let lazyInterfaceFQName = kotlinPropertiesPkg + [lazyInterfaceName]
-        let lazyInterfaceSymbol: SymbolID
-        if let existing = symbols.lookup(fqName: lazyInterfaceFQName) {
-            lazyInterfaceSymbol = existing
+        let lazyInterfaceSymbol: SymbolID = if let existing = symbols.lookup(fqName: lazyInterfaceFQName) {
+            existing
         } else {
-            lazyInterfaceSymbol = symbols.define(
+            symbols.define(
                 kind: .interface,
                 name: lazyInterfaceName,
                 fqName: lazyInterfaceFQName,
@@ -308,11 +310,10 @@ extension DataFlowSemaPhase {
         // ------------------------------------------------------------------
         let rwPropertyName = interner.intern("ReadWriteProperty")
         let rwPropertyFQName = kotlinPropertiesPkg + [rwPropertyName]
-        let rwPropertySymbol: SymbolID
-        if let existing = symbols.lookup(fqName: rwPropertyFQName) {
-            rwPropertySymbol = existing
+        let rwPropertySymbol: SymbolID = if let existing = symbols.lookup(fqName: rwPropertyFQName) {
+            existing
         } else {
-            rwPropertySymbol = symbols.define(
+            symbols.define(
                 kind: .interface,
                 name: rwPropertyName,
                 fqName: rwPropertyFQName,
@@ -407,11 +408,10 @@ extension DataFlowSemaPhase {
         // ------------------------------------------------------------------
         let delegatesName = interner.intern("Delegates")
         let delegatesFQName = kotlinPropertiesPkg + [delegatesName]
-        let delegatesSymbol: SymbolID
-        if let existing = symbols.lookup(fqName: delegatesFQName) {
-            delegatesSymbol = existing
+        let delegatesSymbol: SymbolID = if let existing = symbols.lookup(fqName: delegatesFQName) {
+            existing
         } else {
-            delegatesSymbol = symbols.define(
+            symbols.define(
                 kind: .object,
                 name: delegatesName,
                 fqName: delegatesFQName,
@@ -481,5 +481,4 @@ extension DataFlowSemaPhase {
             )
         }
     }
-
 }

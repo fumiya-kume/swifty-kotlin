@@ -1,7 +1,7 @@
 import Foundation
 
 extension BuildASTPhase.ExpressionParser {
-    internal func parsePostfixOrPrimary() -> ExprID? {
+    func parsePostfixOrPrimary() -> ExprID? {
         guard var expr = parsePrimary() else {
             return nil
         }
@@ -69,7 +69,8 @@ extension BuildASTPhase.ExpressionParser {
             if matches(.symbol(.doubleColon)) {
                 guard let opToken = consume(),
                       let memberToken = current(),
-                      let memberName = tokenText(memberToken) else {
+                      let memberName = tokenText(memberToken)
+                else {
                     break
                 }
                 _ = consume()
@@ -85,7 +86,8 @@ extension BuildASTPhase.ExpressionParser {
             }
             guard let dotToken = consume(),
                   let memberToken = consume(),
-                  let memberName = tokenText(memberToken) else {
+                  let memberName = tokenText(memberToken)
+            else {
                 break
             }
             var args: [CallArgument] = []
@@ -100,7 +102,8 @@ extension BuildASTPhase.ExpressionParser {
                 }
             }
             if matches(.symbol(.lParen)),
-               let open = consume() {
+               let open = consume()
+            {
                 args = parseCallArguments()
                 let close = consumeIf(.symbol(.rParen))
                 memberEndRange = close?.range ?? open.range
@@ -127,7 +130,7 @@ extension BuildASTPhase.ExpressionParser {
         return expr
     }
 
-    internal func parseCallArguments() -> [CallArgument] {
+    func parseCallArguments() -> [CallArgument] {
         var args: [CallArgument] = []
         if !matches(.symbol(.rParen)) {
             while true {
@@ -144,7 +147,7 @@ extension BuildASTPhase.ExpressionParser {
         return args
     }
 
-    internal func parseCallArgument() -> CallArgument? {
+    func parseCallArgument() -> CallArgument? {
         var isSpread = false
         if matches(.symbol(.star)) {
             _ = consume()
@@ -155,7 +158,8 @@ extension BuildASTPhase.ExpressionParser {
         if let first = current(),
            let second = peek(1),
            isArgumentLabelToken(first.kind),
-           second.kind == .symbol(.assign) {
+           second.kind == .symbol(.assign)
+        {
             label = tokenText(first)
             _ = consume()
             _ = consume()
@@ -167,12 +171,12 @@ extension BuildASTPhase.ExpressionParser {
         return CallArgument(label: label, isSpread: isSpread, expr: expr)
     }
 
-    internal func isArgumentLabelToken(_ kind: TokenKind) -> Bool {
+    func isArgumentLabelToken(_ kind: TokenKind) -> Bool {
         switch kind {
         case .identifier, .backtickedIdentifier, .keyword, .softKeyword:
-            return true
+            true
         default:
-            return false
+            false
         }
     }
 }

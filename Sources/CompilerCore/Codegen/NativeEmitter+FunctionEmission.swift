@@ -28,7 +28,8 @@ extension NativeEmitter {
         // all instructions emitted under this builder.
         if let diContext,
            let subprogram = diContext.subprograms[function.symbol],
-           bindings.debugLocationAvailable {
+           bindings.debugLocationAvailable
+        {
             var funcLine: UInt32 = 0
             var funcCol: UInt32 = 0
             if let sourceRange = function.sourceRange, let sm = sourceManager {
@@ -52,7 +53,7 @@ extension NativeEmitter {
 
         var labelBlocks: [Int32: LLVMCAPIBindings.LLVMBasicBlockRef] = [:]
         for instruction in function.body {
-            guard case .label(let id) = instruction else {
+            guard case let .label(id) = instruction else {
                 continue
             }
             if labelBlocks[id] != nil {
@@ -81,7 +82,8 @@ extension NativeEmitter {
            let subprogram = diContext.subprograms[function.symbol],
            let int64DIType = diContext.int64DIType,
            bindings.localVariableAvailable,
-           bindings.debugLocationAvailable {
+           bindings.debugLocationAvailable
+        {
             var funcLine: UInt32 = 0
             if let sourceRange = function.sourceRange, let sm = sourceManager {
                 funcLine = UInt32(sm.lineColumn(of: sourceRange.start).line)
@@ -150,7 +152,7 @@ extension NativeEmitter {
 
         var copyTargetAllocas: [Int32: LLVMCAPIBindings.LLVMValueRef] = [:]
         for instruction in function.body {
-            if case .copy(_, let to) = instruction, copyTargetAllocas[to.rawValue] == nil {
+            if case let .copy(_, to) = instruction, copyTargetAllocas[to.rawValue] == nil {
                 if let alloca = bindings.buildAlloca(builder, type: int64Type, name: "copy_slot_\(to.rawValue)") {
                     _ = bindings.buildStore(builder, value: zeroValue, pointer: alloca)
                     copyTargetAllocas[to.rawValue] = alloca
@@ -248,21 +250,22 @@ extension NativeEmitter {
         ) {
             guard let outThrownParameter,
                   let pointerIsNonNull = bindings.buildICmpNotEqual(
-                    builder,
-                    lhs: outThrownParameter,
-                    rhs: nullThrownPointer,
-                    name: "out_nonnull_\(suffix)"
+                      builder,
+                      lhs: outThrownParameter,
+                      rhs: nullThrownPointer,
+                      name: "out_nonnull_\(suffix)"
                   ),
                   let storeBlock = bindings.appendBasicBlock(
-                    context: context,
-                    function: llvmFunction.value,
-                    name: "out_store_\(suffix)"
+                      context: context,
+                      function: llvmFunction.value,
+                      name: "out_store_\(suffix)"
                   ),
                   let continueBlock = bindings.appendBasicBlock(
-                    context: context,
-                    function: llvmFunction.value,
-                    name: "out_cont_\(suffix)"
-                  ) else {
+                      context: context,
+                      function: llvmFunction.value,
+                      name: "out_cont_\(suffix)"
+                  )
+            else {
                 return
             }
 
@@ -368,14 +371,16 @@ extension NativeEmitter {
             // Update debug location per-instruction when debug info is active.
             if let diContext,
                let subprogram = diContext.subprograms[function.symbol],
-               bindings.debugLocationAvailable {
+               bindings.debugLocationAvailable
+            {
                 var instrLine: UInt32 = 0
                 var instrCol: UInt32 = 0
                 // Try per-instruction source location first, then fall back to
                 // function-level source range.
                 if instructionIndex < function.instructionLocations.count,
                    let instrRange = function.instructionLocations[instructionIndex],
-                   let sm = sourceManager {
+                   let sm = sourceManager
+                {
                     let lc = sm.lineColumn(of: instrRange.start)
                     instrLine = UInt32(lc.line)
                     instrCol = UInt32(lc.column)
@@ -386,11 +391,12 @@ extension NativeEmitter {
                 }
                 if instrLine > 0,
                    let loc = bindings.createDebugLocation(
-                    context: context,
-                    line: instrLine,
-                    column: instrCol,
-                    scope: subprogram
-                   ) {
+                       context: context,
+                       line: instrLine,
+                       column: instrCol,
+                       scope: subprogram
+                   )
+                {
                     bindings.setCurrentDebugLocation(builder, location: loc)
                 }
             }
@@ -399,7 +405,7 @@ extension NativeEmitter {
             case .nop, .beginBlock, .endBlock:
                 continue
 
-            case .label(let id):
+            case let .label(id):
                 guard let destination = blockForLabel(id) else {
                     continue
                 }
@@ -409,21 +415,23 @@ extension NativeEmitter {
                 currentBlock = destination
                 bindings.positionBuilder(builder, at: destination)
 
-            case .jump(let target):
+            case let .jump(target):
                 guard !bindings.hasTerminator(currentBlock),
-                      let destination = blockForLabel(target) else {
+                      let destination = blockForLabel(target)
+                else {
                     continue
                 }
                 _ = bindings.buildBr(builder, destination: destination)
 
-            case .jumpIfEqual(let lhs, let rhs, let target):
+            case let .jumpIfEqual(lhs, rhs, target):
                 guard !bindings.hasTerminator(currentBlock),
                       let thenBlock = blockForLabel(target),
                       let continueBlock = bindings.appendBasicBlock(
-                        context: context,
-                        function: llvmFunction.value,
-                        name: "if_cont_\(instructionIndex)"
-                      ) else {
+                          context: context,
+                          function: llvmFunction.value,
+                          name: "if_cont_\(instructionIndex)"
+                      )
+                else {
                     continue
                 }
                 let condition = bindings.buildICmpEqual(
@@ -441,28 +449,28 @@ extension NativeEmitter {
                 currentBlock = continueBlock
                 bindings.positionBuilder(builder, at: continueBlock)
 
-            case .constValue(let result, let value):
+            case let .constValue(result, value):
                 values[result.rawValue] = valueForConstant(value, expressionRawID: result.rawValue)
 
-            case .binary(let op, let lhs, let rhs, let result):
+            case let .binary(op, lhs, rhs, result):
                 let lhsValue = resolveValue(lhs)
                 let rhsValue = resolveValue(rhs)
-                let lowered: LLVMCAPIBindings.LLVMValueRef?
-                switch op {
+                let lowered: LLVMCAPIBindings.LLVMValueRef? = switch op {
                 case .add:
-                    lowered = bindings.buildAdd(builder, lhs: lhsValue, rhs: rhsValue, name: "bin_add_\(instructionIndex)")
+                    bindings.buildAdd(builder, lhs: lhsValue, rhs: rhsValue, name: "bin_add_\(instructionIndex)")
                 case .subtract:
-                    lowered = bindings.buildSub(builder, lhs: lhsValue, rhs: rhsValue, name: "bin_sub_\(instructionIndex)")
+                    bindings.buildSub(builder, lhs: lhsValue, rhs: rhsValue, name: "bin_sub_\(instructionIndex)")
                 case .multiply:
-                    lowered = bindings.buildMul(builder, lhs: lhsValue, rhs: rhsValue, name: "bin_mul_\(instructionIndex)")
+                    bindings.buildMul(builder, lhs: lhsValue, rhs: rhsValue, name: "bin_mul_\(instructionIndex)")
                 case .divide:
-                    lowered = bindings.buildSDiv(builder, lhs: lhsValue, rhs: rhsValue, name: "bin_div_\(instructionIndex)")
+                    bindings.buildSDiv(builder, lhs: lhsValue, rhs: rhsValue, name: "bin_div_\(instructionIndex)")
                 case .modulo:
                     if let quotient = bindings.buildSDiv(builder, lhs: lhsValue, rhs: rhsValue, name: "bin_mod_q_\(instructionIndex)"),
-                       let product = bindings.buildMul(builder, lhs: quotient, rhs: rhsValue, name: "bin_mod_p_\(instructionIndex)") {
-                        lowered = bindings.buildSub(builder, lhs: lhsValue, rhs: product, name: "bin_mod_\(instructionIndex)")
+                       let product = bindings.buildMul(builder, lhs: quotient, rhs: rhsValue, name: "bin_mod_p_\(instructionIndex)")
+                    {
+                        bindings.buildSub(builder, lhs: lhsValue, rhs: product, name: "bin_mod_\(instructionIndex)")
                     } else {
-                        lowered = nil
+                        nil
                     }
                 case .equal:
                     if let compared = bindings.buildICmpEqual(
@@ -471,21 +479,21 @@ extension NativeEmitter {
                         rhs: rhsValue,
                         name: "bin_eq_\(instructionIndex)"
                     ) {
-                        lowered = bindings.buildZExt(builder, value: compared, type: int64Type, name: "bin_eq64_\(instructionIndex)")
+                        bindings.buildZExt(builder, value: compared, type: int64Type, name: "bin_eq64_\(instructionIndex)")
                     } else {
-                        lowered = nil
+                        nil
                     }
                 case .notEqual, .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
-                    lowered = nil
+                    nil
                 case .logicalAnd, .logicalOr:
-                    lowered = nil
+                    nil
                 }
                 storeResult(result, lowered)
 
-            case .unary(_, let operand, let result):
+            case let .unary(_, operand, result):
                 storeResult(result, resolveValue(operand))
 
-            case .nullAssert(let operand, let result):
+            case let .nullAssert(operand, result):
                 let operandValue = resolveValue(operand)
                 if let notNullFunc = declareExternalFunction(
                     named: "kk_op_notnull",
@@ -513,20 +521,21 @@ extension NativeEmitter {
                             pointer: thrownSlot,
                             name: "notnull_thrown_val_\(instructionIndex)"
                         ),
-                        let hasThrown = buildBoolCondition(
-                            from: thrownValue,
-                            name: "notnull_has_thrown_\(instructionIndex)"
-                        ),
-                        let thrownBlock = bindings.appendBasicBlock(
-                            context: context,
-                            function: llvmFunction.value,
-                            name: "notnull_thrown_\(instructionIndex)"
-                        ),
-                        let continueBlock = bindings.appendBasicBlock(
-                            context: context,
-                            function: llvmFunction.value,
-                            name: "notnull_cont_\(instructionIndex)"
-                        ) {
+                            let hasThrown = buildBoolCondition(
+                                from: thrownValue,
+                                name: "notnull_has_thrown_\(instructionIndex)"
+                            ),
+                            let thrownBlock = bindings.appendBasicBlock(
+                                context: context,
+                                function: llvmFunction.value,
+                                name: "notnull_thrown_\(instructionIndex)"
+                            ),
+                            let continueBlock = bindings.appendBasicBlock(
+                                context: context,
+                                function: llvmFunction.value,
+                                name: "notnull_cont_\(instructionIndex)"
+                            )
+                        {
                             _ = bindings.buildCondBr(
                                 builder,
                                 condition: hasThrown,
@@ -547,7 +556,7 @@ extension NativeEmitter {
                     storeResult(result, operandValue)
                 }
 
-            case .call(let symbol, let callee, let arguments, let result, let usesThrownChannel, let thrownResult, let isSuperCall):
+            case let .call(symbol, callee, arguments, result, usesThrownChannel, thrownResult, isSuperCall):
                 // super calls always use direct dispatch – when virtual dispatch
                 // is introduced the isSuperCall flag will bypass vtable lookup.
                 _ = isSuperCall
@@ -591,7 +600,8 @@ extension NativeEmitter {
                 let shouldAppendThrownChannel = usesThrownChannel || isInternalCall
 
                 if let symbol,
-                   let internalFunction = internalFunctions[symbol] {
+                   let internalFunction = internalFunctions[symbol]
+                {
                     calleeFunction = internalFunction
                 } else if calleeName.isEmpty {
                     calleeFunction = nil
@@ -638,7 +648,8 @@ extension NativeEmitter {
                 )
                 storeResult(result, callValue)
                 if calleeName == "kk_coroutine_continuation_new",
-                   let coroutineRegisterRootFunction {
+                   let coroutineRegisterRootFunction
+                {
                     _ = bindings.buildCall(
                         builder,
                         functionType: coroutineRegisterRootFunction.type,
@@ -648,7 +659,8 @@ extension NativeEmitter {
                     )
                 }
                 if calleeName == "kk_coroutine_state_exit",
-                   let coroutineUnregisterRootFunction {
+                   let coroutineUnregisterRootFunction
+                {
                     _ = bindings.buildCall(
                         builder,
                         functionType: coroutineUnregisterRootFunction.type,
@@ -660,11 +672,12 @@ extension NativeEmitter {
                 if usesThrownChannel,
                    let thrownSlotPointer,
                    let thrownValue = bindings.buildLoad(
-                    builder,
-                    type: int64Type,
-                    pointer: thrownSlotPointer,
-                    name: "thrown_val_\(instructionIndex)"
-                   ) {
+                       builder,
+                       type: int64Type,
+                       pointer: thrownSlotPointer,
+                       name: "thrown_val_\(instructionIndex)"
+                   )
+                {
                     if let thrownResult {
                         if let alloca = copyTargetAllocas[thrownResult.rawValue] {
                             _ = bindings.buildStore(builder, value: thrownValue, pointer: alloca)
@@ -675,16 +688,17 @@ extension NativeEmitter {
                         from: thrownValue,
                         name: "has_thrown_\(instructionIndex)"
                     ),
-                    let thrownBlock = bindings.appendBasicBlock(
-                        context: context,
-                        function: llvmFunction.value,
-                        name: "thrown_\(instructionIndex)"
-                    ),
-                    let continueBlock = bindings.appendBasicBlock(
-                        context: context,
-                        function: llvmFunction.value,
-                        name: "call_cont_\(instructionIndex)"
-                    ) {
+                        let thrownBlock = bindings.appendBasicBlock(
+                            context: context,
+                            function: llvmFunction.value,
+                            name: "thrown_\(instructionIndex)"
+                        ),
+                        let continueBlock = bindings.appendBasicBlock(
+                            context: context,
+                            function: llvmFunction.value,
+                            name: "call_cont_\(instructionIndex)"
+                        )
+                    {
                         _ = bindings.buildCondBr(
                             builder,
                             condition: hasThrown,
@@ -702,7 +716,7 @@ extension NativeEmitter {
                     }
                 }
 
-            case .virtualCall(let symbol, let callee, let receiver, let arguments, let result, let usesThrownChannel, let thrownResult, _):
+            case let .virtualCall(symbol, callee, receiver, arguments, result, usesThrownChannel, thrownResult, _):
                 // Virtual dispatch: fall back to direct call via symbol/callee resolution.
                 // The vtable/itable lookup is handled by the C backend; the LLVM IR backend
                 // emits a direct call using the statically resolved callee for now.
@@ -718,7 +732,8 @@ extension NativeEmitter {
                 let shouldAppendThrownChannel = usesThrownChannel || isInternalCall
 
                 if let symbol,
-                   let internalFunction = internalFunctions[symbol] {
+                   let internalFunction = internalFunctions[symbol]
+                {
                     calleeFunction = internalFunction
                 } else if calleeName.isEmpty {
                     calleeFunction = nil
@@ -767,11 +782,12 @@ extension NativeEmitter {
                 if usesThrownChannel,
                    let thrownSlotPointer,
                    let thrownValue = bindings.buildLoad(
-                    builder,
-                    type: int64Type,
-                    pointer: thrownSlotPointer,
-                    name: "vthrown_val_\(instructionIndex)"
-                   ) {
+                       builder,
+                       type: int64Type,
+                       pointer: thrownSlotPointer,
+                       name: "vthrown_val_\(instructionIndex)"
+                   )
+                {
                     if let thrownResult {
                         if let alloca = copyTargetAllocas[thrownResult.rawValue] {
                             _ = bindings.buildStore(builder, value: thrownValue, pointer: alloca)
@@ -782,16 +798,17 @@ extension NativeEmitter {
                         from: thrownValue,
                         name: "vhas_thrown_\(instructionIndex)"
                     ),
-                    let thrownBlock = bindings.appendBasicBlock(
-                        context: context,
-                        function: llvmFunction.value,
-                        name: "vthrown_\(instructionIndex)"
-                    ),
-                    let continueBlock = bindings.appendBasicBlock(
-                        context: context,
-                        function: llvmFunction.value,
-                        name: "vcall_cont_\(instructionIndex)"
-                    ) {
+                        let thrownBlock = bindings.appendBasicBlock(
+                            context: context,
+                            function: llvmFunction.value,
+                            name: "vthrown_\(instructionIndex)"
+                        ),
+                        let continueBlock = bindings.appendBasicBlock(
+                            context: context,
+                            function: llvmFunction.value,
+                            name: "vcall_cont_\(instructionIndex)"
+                        )
+                    {
                         _ = bindings.buildCondBr(
                             builder,
                             condition: hasThrown,
@@ -809,7 +826,7 @@ extension NativeEmitter {
                     }
                 }
 
-            case .jumpIfNotNull(let value, let target):
+            case let .jumpIfNotNull(value, target):
                 guard !bindings.hasTerminator(currentBlock) else {
                     continue
                 }
@@ -817,16 +834,17 @@ extension NativeEmitter {
                 if let condition = buildBoolCondition(from: resolved, name: "jnn_cond_\(instructionIndex)"),
                    let targetBlock = blockForLabel(target),
                    let fallthroughBlock = bindings.appendBasicBlock(
-                    context: context,
-                    function: llvmFunction.value,
-                    name: "jnn_cont_\(instructionIndex)"
-                   ) {
+                       context: context,
+                       function: llvmFunction.value,
+                       name: "jnn_cont_\(instructionIndex)"
+                   )
+                {
                     _ = bindings.buildCondBr(builder, condition: condition, thenBlock: targetBlock, elseBlock: fallthroughBlock)
                     currentBlock = fallthroughBlock
                     bindings.positionBuilder(builder, at: fallthroughBlock)
                 }
 
-            case .copy(let from, let to):
+            case let .copy(from, to):
                 guard !bindings.hasTerminator(currentBlock) else {
                     continue
                 }
@@ -834,8 +852,9 @@ extension NativeEmitter {
                 // If the copy target is a global symbolRef, store to the
                 // LLVM global variable so the write persists across reads.
                 if let targetExpr = module.arena.expr(to),
-                   case .symbolRef(let targetSymbol) = targetExpr,
-                   let globalPtr = globalVariables[targetSymbol] {
+                   case let .symbolRef(targetSymbol) = targetExpr,
+                   let globalPtr = globalVariables[targetSymbol]
+                {
                     _ = bindings.buildStore(builder, value: copySource, pointer: globalPtr)
                 } else if let alloca = copyTargetAllocas[to.rawValue] {
                     _ = bindings.buildStore(builder, value: copySource, pointer: alloca)
@@ -843,7 +862,7 @@ extension NativeEmitter {
                     storeResult(to, copySource)
                 }
 
-            case .storeGlobal(let value, let symbol):
+            case let .storeGlobal(value, symbol):
                 guard !bindings.hasTerminator(currentBlock) else {
                     continue
                 }
@@ -852,7 +871,7 @@ extension NativeEmitter {
                     _ = bindings.buildStore(builder, value: resolved, pointer: globalPtr)
                 }
 
-            case .loadGlobal(let result, let symbol):
+            case let .loadGlobal(result, symbol):
                 guard !bindings.hasTerminator(currentBlock) else {
                     continue
                 }
@@ -867,7 +886,7 @@ extension NativeEmitter {
                     storeResult(result, zeroValue)
                 }
 
-            case .rethrow(let value):
+            case let .rethrow(value):
                 guard !bindings.hasTerminator(currentBlock) else {
                     continue
                 }
@@ -876,18 +895,19 @@ extension NativeEmitter {
                 emitFramePop("rethrow_\(instructionIndex)")
                 _ = bindings.buildRet(builder, value: zeroValue)
 
-            case .returnIfEqual(let lhs, let rhs):
+            case let .returnIfEqual(lhs, rhs):
                 guard !bindings.hasTerminator(currentBlock),
                       let trueBlock = bindings.appendBasicBlock(
-                        context: context,
-                        function: llvmFunction.value,
-                        name: "ret_if_true_\(instructionIndex)"
+                          context: context,
+                          function: llvmFunction.value,
+                          name: "ret_if_true_\(instructionIndex)"
                       ),
                       let falseBlock = bindings.appendBasicBlock(
-                        context: context,
-                        function: llvmFunction.value,
-                        name: "ret_if_false_\(instructionIndex)"
-                      ) else {
+                          context: context,
+                          function: llvmFunction.value,
+                          name: "ret_if_false_\(instructionIndex)"
+                      )
+                else {
                     continue
                 }
 
@@ -910,7 +930,7 @@ extension NativeEmitter {
                 emitFramePop("ret_unit_\(instructionIndex)")
                 _ = bindings.buildRet(builder, value: zeroValue)
 
-            case .returnValue(let value):
+            case let .returnValue(value):
                 guard !bindings.hasTerminator(currentBlock) else {
                     continue
                 }

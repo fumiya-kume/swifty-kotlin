@@ -1,9 +1,8 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
-
     func testTypeSystemLUBAndGLB() {
         let types = TypeSystem()
 
@@ -171,10 +170,10 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         let stringType = types.make(.primitive(.string, .nonNull))
 
         let trueState = DataFlowState(variables: [
-            sym: VariableFlowState(possibleTypes: [intType], nullability: .nonNull, isStable: true)
+            sym: VariableFlowState(possibleTypes: [intType], nullability: .nonNull, isStable: true),
         ])
         let falseState = DataFlowState(variables: [
-            sym: VariableFlowState(possibleTypes: [stringType], nullability: .nonNull, isStable: true)
+            sym: VariableFlowState(possibleTypes: [stringType], nullability: .nonNull, isStable: true),
         ])
         let branch = ConditionBranch(trueState: trueState, falseState: falseState)
 
@@ -206,7 +205,7 @@ final class CommandRunnerErrorPathTests: XCTestCase {
                 arguments: ["sh", "-c", "printf 'err' >&2; exit 7"]
             )
         ) { error in
-            guard case CommandRunnerError.nonZeroExit(let result) = error else {
+            guard case let CommandRunnerError.nonZeroExit(result) = error else {
                 XCTFail("Expected nonZeroExit, got \(error)")
                 return
             }
@@ -222,7 +221,7 @@ final class CommandRunnerErrorPathTests: XCTestCase {
                 arguments: []
             )
         ) { error in
-            guard case CommandRunnerError.launchFailed(let message) = error else {
+            guard case let CommandRunnerError.launchFailed(message) = error else {
                 XCTFail("Expected launchFailed, got \(error)")
                 return
             }

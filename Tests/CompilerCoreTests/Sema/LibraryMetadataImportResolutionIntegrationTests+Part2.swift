@@ -1,7 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
 
 extension LibraryMetadataImportResolutionIntegrationTests {
     func testWildcardImportResolvesKklibSymbolInScope() throws {
@@ -44,8 +43,8 @@ extension LibraryMetadataImportResolutionIntegrationTests {
             // Verify the symbol is present
             let computeSymbol = sema.symbols.allSymbols().first { symbol in
                 ctx.interner.resolve(symbol.name) == "compute" &&
-                symbol.kind == .function &&
-                symbol.flags.contains(.synthetic)
+                    symbol.kind == .function &&
+                    symbol.flags.contains(.synthetic)
             }
             XCTAssertNotNil(computeSymbol, "Wildcard import should make library function 'compute' available")
 
@@ -94,8 +93,8 @@ extension LibraryMetadataImportResolutionIntegrationTests {
             let sema = try XCTUnwrap(ctx.sema)
             let isBlankSymbol = sema.symbols.allSymbols().first { symbol in
                 ctx.interner.resolve(symbol.name) == "isBlank" &&
-                symbol.kind == .function &&
-                symbol.flags.contains(.synthetic)
+                    symbol.kind == .function &&
+                    symbol.flags.contains(.synthetic)
             }
             XCTAssertNotNil(isBlankSymbol, "Default import should make library function 'isBlank' from kotlin.text available")
 
@@ -146,14 +145,14 @@ extension LibraryMetadataImportResolutionIntegrationTests {
             // Verify synthetic package was created
             let packageSymbol = sema.symbols.allSymbols().first { symbol in
                 symbol.kind == .package &&
-                symbol.fqName.map { ctx.interner.resolve($0) } == ["np", "api"]
+                    symbol.fqName.map { ctx.interner.resolve($0) } == ["np", "api"]
             }
             XCTAssertNotNil(packageSymbol, "Synthetic package 'np.api' should be created even without explicit package record")
 
             let doWorkSymbol = sema.symbols.allSymbols().first { symbol in
                 ctx.interner.resolve(symbol.name) == "doWork" &&
-                symbol.kind == .function &&
-                symbol.flags.contains(.synthetic)
+                    symbol.kind == .function &&
+                    symbol.flags.contains(.synthetic)
             }
             XCTAssertNotNil(doWorkSymbol, "Wildcard import should resolve function from synthesized package")
 
@@ -283,14 +282,14 @@ extension LibraryMetadataImportResolutionIntegrationTests {
             // Verify the package symbol was created despite the class 'cx.util' existing
             let packageSymbol = sema.symbols.allSymbols().first { symbol in
                 symbol.kind == .package &&
-                symbol.fqName.map { ctx.interner.resolve($0) } == ["cx", "util"]
+                    symbol.fqName.map { ctx.interner.resolve($0) } == ["cx", "util"]
             }
             XCTAssertNotNil(packageSymbol, "Package 'cx.util' should be created even when class 'cx.util' exists")
 
             let processSymbol = sema.symbols.allSymbols().first { symbol in
                 ctx.interner.resolve(symbol.name) == "process" &&
-                symbol.kind == .function &&
-                symbol.flags.contains(.synthetic)
+                    symbol.kind == .function &&
+                    symbol.flags.contains(.synthetic)
             }
             XCTAssertNotNil(processSymbol, "Wildcard import should resolve 'process' even when non-package symbol coexists at package path")
 
@@ -357,5 +356,4 @@ extension LibraryMetadataImportResolutionIntegrationTests {
             XCTAssertTrue(semaErrors.isEmpty, "No SEMA errors expected: \(semaErrors.map(\.code))")
         }
     }
-
 }

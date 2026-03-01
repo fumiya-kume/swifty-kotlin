@@ -5,6 +5,32 @@
 - Tune workers: `SWIFT_TEST_WORKERS=4 bash Scripts/swift_test.sh`
 - Disable parallel mode: `SWIFT_TEST_PARALLEL=0 bash Scripts/swift_test.sh`
 
+## Style workflow
+
+Format all Swift sources and tests:
+
+```bash
+bash Scripts/swift_format.sh
+```
+
+Lint formatting without modifying files:
+
+```bash
+bash Scripts/swift_format.sh --lint
+```
+
+Run SwiftLint with strict mode and baseline filtering:
+
+```bash
+bash Scripts/swift_lint.sh
+```
+
+Update SwiftLint baseline intentionally after reviewing violations:
+
+```bash
+bash Scripts/swift_lint.sh --update-baseline
+```
+
 ## Golden update workflow
 
 1. Run golden tests without updating fixtures:

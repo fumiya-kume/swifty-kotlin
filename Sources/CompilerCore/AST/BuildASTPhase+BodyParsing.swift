@@ -14,7 +14,7 @@ extension BuildASTPhase {
 
         if !hasExpressionBody {
             for child in arena.children(of: nodeID) {
-                if case .node(let childID) = child, arena.node(childID).kind == .block {
+                if case let .node(childID) = child, arena.node(childID).kind == .block {
                     let exprs = blockExpressions(from: childID, in: arena, interner: interner, astArena: astArena)
                     return .block(exprs, arena.node(childID).range)
                 }
@@ -25,7 +25,7 @@ extension BuildASTPhase {
         var assignIndex: Int?
         var depth = BracketDepth()
         for (index, token) in tokens.enumerated() {
-            if token.kind == .symbol(.assign) && depth.isAtTopLevel {
+            if token.kind == .symbol(.assign), depth.isAtTopLevel {
                 assignIndex = index
                 break
             }
@@ -58,7 +58,7 @@ extension BuildASTPhase {
     ) -> [ExprID] {
         var result: [ExprID] = []
         for child in arena.children(of: blockNodeID) {
-            guard case .node(let nodeID) = child else {
+            guard case let .node(nodeID) = child else {
                 continue
             }
             let node = arena.node(nodeID)
@@ -139,10 +139,10 @@ extension BuildASTPhase {
                     if case .newline = piece { return true }
                     return false
                 }
-                if hasNewline && !current.isEmpty {
+                if hasNewline, !current.isEmpty {
                     let lastIsContinuation = current.last.map { isBinaryOperatorToken($0.kind) } ?? false
                     let nextIsContinuation = isBinaryOperatorToken(token.kind)
-                    if !lastIsContinuation && !nextIsContinuation {
+                    if !lastIsContinuation, !nextIsContinuation {
                         groups.append(current)
                         current = []
                     }
@@ -172,9 +172,9 @@ extension BuildASTPhase {
              .symbol(.arrow), .symbol(.fatArrow),
              .keyword(.as), .keyword(.is), .keyword(.in),
              .keyword(.else), .keyword(.catch), .keyword(.finally):
-            return true
+            true
         default:
-            return false
+            false
         }
     }
 
@@ -215,11 +215,11 @@ extension BuildASTPhase {
         var tokens: [Token] = []
         for child in arena.children(of: nodeID) {
             switch child {
-            case .token(let tokenID):
+            case let .token(tokenID):
                 if let token = resolveToken(tokenID, in: arena) {
                     tokens.append(token)
                 }
-            case .node(let childID):
+            case let .node(childID):
                 tokens.append(contentsOf: collectTokens(from: childID, in: arena))
             }
         }
@@ -230,8 +230,9 @@ extension BuildASTPhase {
     func collectDirectTokens(from nodeID: NodeID, in arena: SyntaxArena) -> [Token] {
         var tokens: [Token] = []
         for child in arena.children(of: nodeID) {
-            guard case .token(let tokenID) = child,
-                  let token = resolveToken(tokenID, in: arena) else {
+            guard case let .token(tokenID) = child,
+                  let token = resolveToken(tokenID, in: arena)
+            else {
                 continue
             }
             tokens.append(token)
@@ -244,9 +245,9 @@ extension BuildASTPhase {
         case .statement, .propertyDecl, .loopStmt,
              .ifExpr, .whenExpr, .tryExpr, .callExpr,
              .funDecl:
-            return true
+            true
         default:
-            return false
+            false
         }
     }
 
@@ -257,9 +258,9 @@ extension BuildASTPhase {
     func isControlFlowExprKind(_ kind: SyntaxKind) -> Bool {
         switch kind {
         case .ifExpr, .whenExpr, .tryExpr, .loopStmt:
-            return true
+            true
         default:
-            return false
+            false
         }
     }
 }

@@ -29,12 +29,11 @@ extension DataFlowSemaPhase {
             )
         }
         if propertyDecl.type != nil {
-            let isConstCompatible: Bool
-            switch types.kind(of: resolvedType) {
+            let isConstCompatible = switch types.kind(of: resolvedType) {
             case .primitive:
-                isConstCompatible = true
+                true
             default:
-                isConstCompatible = false
+                false
             }
             if !isConstCompatible {
                 diagnostics.error(

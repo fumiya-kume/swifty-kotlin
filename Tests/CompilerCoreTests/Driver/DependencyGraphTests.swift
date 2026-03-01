@@ -1,8 +1,7 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 final class DependencyGraphTests: XCTestCase {
-
     // MARK: - Basic mutation and query
 
     func testRecordProvidedAndQuery() {

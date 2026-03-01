@@ -119,13 +119,13 @@ public final class DiagnosticEngine: @unchecked Sendable {
     private func label(for severity: DiagnosticSeverity) -> String {
         switch severity {
         case .error:
-            return "error"
+            "error"
         case .warning:
-            return "warning"
+            "warning"
         case .note:
-            return "note"
+            "note"
         case .info:
-            return "info"
+            "info"
         }
     }
 
@@ -159,13 +159,13 @@ public final class DiagnosticEngine: @unchecked Sendable {
     private func severityRank(for severity: DiagnosticSeverity) -> Int {
         switch severity {
         case .error:
-            return 0
+            0
         case .warning:
-            return 1
+            1
         case .note:
-            return 2
+            2
         case .info:
-            return 3
+            3
         }
     }
 }

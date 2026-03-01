@@ -1,5 +1,5 @@
-import Foundation
 @testable import CompilerCore
+import Foundation
 
 func makeRange(file: FileID = FileID(rawValue: 0), start: Int = 0, end: Int = 1) -> SourceRange {
     SourceRange(

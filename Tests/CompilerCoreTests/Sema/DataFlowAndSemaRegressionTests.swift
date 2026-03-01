@@ -1,14 +1,14 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 // MARK: - DataFlow + Sema Regression Tests
+
 // Targets: DataFlowSemaPass+BodyAnalysis.swift (45.8%)
 //          DataFlowSemaPass+HeaderCollection.swift (49.9%)
 //          TypeCheckSemaPass+ExprInference.swift (51.4%)
 
 final class DataFlowAndSemaRegressionTests: XCTestCase {
-
     // MARK: - BodyAnalysis: duplicate parameter name
 
     func testDuplicateParameterNameEmitsDiagnostic() throws {
@@ -71,7 +71,8 @@ final class DataFlowAndSemaRegressionTests: XCTestCase {
             }
             XCTAssertNotNil(nullableSymbol)
             if let sym = nullableSymbol,
-               let sig = sema.symbols.functionSignature(for: sym.id) {
+               let sig = sema.symbols.functionSignature(for: sym.id)
+            {
                 XCTAssertEqual(sig.parameterTypes.count, 1)
             }
         }
@@ -129,8 +130,8 @@ final class DataFlowAndSemaRegressionTests: XCTestCase {
             let fieldSymbols = sema.symbols.allSymbols().filter { symbol in
                 symbol.kind == .field && (
                     ctx.interner.resolve(symbol.name) == "RED" ||
-                    ctx.interner.resolve(symbol.name) == "GREEN" ||
-                    ctx.interner.resolve(symbol.name) == "BLUE"
+                        ctx.interner.resolve(symbol.name) == "GREEN" ||
+                        ctx.interner.resolve(symbol.name) == "BLUE"
                 )
             }
             XCTAssertGreaterThanOrEqual(fieldSymbols.count, 1, "Expected at least 1 enum entry field")
@@ -212,7 +213,8 @@ final class DataFlowAndSemaRegressionTests: XCTestCase {
             }
             XCTAssertNotNil(shoutSymbol)
             if let sym = shoutSymbol,
-               let sig = sema.symbols.functionSignature(for: sym.id) {
+               let sig = sema.symbols.functionSignature(for: sym.id)
+            {
                 XCTAssertNotNil(sig.receiverType)
             }
         }
@@ -234,7 +236,8 @@ final class DataFlowAndSemaRegressionTests: XCTestCase {
             }
             XCTAssertNotNil(typeCheckSymbol)
             if let sym = typeCheckSymbol,
-               let sig = sema.symbols.functionSignature(for: sym.id) {
+               let sig = sema.symbols.functionSignature(for: sym.id)
+            {
                 XCTAssertFalse(sig.reifiedTypeParameterIndices.isEmpty)
             }
         }
@@ -293,5 +296,4 @@ final class DataFlowAndSemaRegressionTests: XCTestCase {
             assertHasDiagnostic("KSWIFTK-SEMA-0001", in: ctx)
         }
     }
-
 }

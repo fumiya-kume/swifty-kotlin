@@ -1,9 +1,8 @@
-import XCTest
 @testable import CompilerCore
-
+import XCTest
 
 extension NameManglerTests {
-    func testMangledSignatureForProperty() {
+    func testMangledSignatureForProperty() throws {
         let mangler = NameMangler()
         let interner = StringInterner()
         let symbols = SymbolTable()
@@ -19,15 +18,15 @@ extension NameManglerTests {
         let intType = types.make(.primitive(.int, .nonNull))
         symbols.setPropertyType(intType, for: sym)
 
-        let sig = mangler.mangledSignature(
-            for: symbols.symbol(sym)!,
+        let sig = try mangler.mangledSignature(
+            for: XCTUnwrap(symbols.symbol(sym)),
             symbols: symbols,
             types: types
         )
         XCTAssertEqual(sig, "I")
     }
 
-    func testMangledSignatureForPropertyWithoutTypeReturnsUnderscore() {
+    func testMangledSignatureForPropertyWithoutTypeReturnsUnderscore() throws {
         let mangler = NameMangler()
         let interner = StringInterner()
         let symbols = SymbolTable()
@@ -41,15 +40,15 @@ extension NameManglerTests {
             visibility: .public
         )
 
-        let sig = mangler.mangledSignature(
-            for: symbols.symbol(sym)!,
+        let sig = try mangler.mangledSignature(
+            for: XCTUnwrap(symbols.symbol(sym)),
             symbols: symbols,
             types: types
         )
         XCTAssertEqual(sig, "_")
     }
 
-    func testMangledSignatureForTypeAlias() {
+    func testMangledSignatureForTypeAlias() throws {
         let mangler = NameMangler()
         let interner = StringInterner()
         let symbols = SymbolTable()
@@ -65,15 +64,15 @@ extension NameManglerTests {
         let intType = types.make(.primitive(.int, .nonNull))
         symbols.setTypeAliasUnderlyingType(intType, for: sym)
 
-        let sig = mangler.mangledSignature(
-            for: symbols.symbol(sym)!,
+        let sig = try mangler.mangledSignature(
+            for: XCTUnwrap(symbols.symbol(sym)),
             symbols: symbols,
             types: types
         )
         XCTAssertEqual(sig, "I")
     }
 
-    func testMangledSignatureForTypeAliasWithoutTypeReturnsUnderscore() {
+    func testMangledSignatureForTypeAliasWithoutTypeReturnsUnderscore() throws {
         let mangler = NameMangler()
         let interner = StringInterner()
         let symbols = SymbolTable()
@@ -87,15 +86,15 @@ extension NameManglerTests {
             visibility: .public
         )
 
-        let sig = mangler.mangledSignature(
-            for: symbols.symbol(sym)!,
+        let sig = try mangler.mangledSignature(
+            for: XCTUnwrap(symbols.symbol(sym)),
             symbols: symbols,
             types: types
         )
         XCTAssertEqual(sig, "_")
     }
 
-    func testMangledSignatureForClassReturnsUnderscore() {
+    func testMangledSignatureForClassReturnsUnderscore() throws {
         let mangler = NameMangler()
         let interner = StringInterner()
         let symbols = SymbolTable()
@@ -109,8 +108,8 @@ extension NameManglerTests {
             visibility: .public
         )
 
-        let sig = mangler.mangledSignature(
-            for: symbols.symbol(sym)!,
+        let sig = try mangler.mangledSignature(
+            for: XCTUnwrap(symbols.symbol(sym)),
             symbols: symbols,
             types: types
         )
@@ -119,7 +118,7 @@ extension NameManglerTests {
 
     // MARK: - FQ Name Encoding
 
-    func testMangleFQNameMultipleComponents() {
+    func testMangleFQNameMultipleComponents() throws {
         let mangler = NameMangler()
         let interner = StringInterner()
         let symbols = SymbolTable()
@@ -131,8 +130,8 @@ extension NameManglerTests {
             declSite: nil,
             visibility: .public
         )
-        let result = mangler.mangle(
-            moduleName: "M", symbol: symbols.symbol(sym)!,
+        let result = try mangler.mangle(
+            moduleName: "M", symbol: XCTUnwrap(symbols.symbol(sym)),
             signature: "_", nameResolver: { interner.resolve($0) }
         )
         XCTAssertTrue(result.contains("3com"))
@@ -142,7 +141,7 @@ extension NameManglerTests {
 
     // MARK: - Suspend Function Signature
 
-    func testMangledSignatureForSuspendFunction() {
+    func testMangledSignatureForSuspendFunction() throws {
         let mangler = NameMangler()
         let interner = StringInterner()
         let symbols = SymbolTable()
@@ -162,8 +161,8 @@ extension NameManglerTests {
             for: sym
         )
 
-        let sig = mangler.mangledSignature(
-            for: symbols.symbol(sym)!,
+        let sig = try mangler.mangledSignature(
+            for: XCTUnwrap(symbols.symbol(sym)),
             symbols: symbols,
             types: types
         )
@@ -172,7 +171,7 @@ extension NameManglerTests {
 
     // MARK: - Nullable Type Encoding
 
-    func testMangledSignatureNullableType() {
+    func testMangledSignatureNullableType() throws {
         let mangler = NameMangler()
         let interner = StringInterner()
         let symbols = SymbolTable()
@@ -188,8 +187,8 @@ extension NameManglerTests {
         let nullableInt = types.make(.primitive(.int, .nullable))
         symbols.setPropertyType(nullableInt, for: sym)
 
-        let sig = mangler.mangledSignature(
-            for: symbols.symbol(sym)!,
+        let sig = try mangler.mangledSignature(
+            for: XCTUnwrap(symbols.symbol(sym)),
             symbols: symbols,
             types: types
         )
@@ -198,7 +197,7 @@ extension NameManglerTests {
 
     // MARK: - All Primitive Encodings
 
-    func testMangledSignatureAllPrimitives() {
+    func testMangledSignatureAllPrimitives() throws {
         let mangler = NameMangler()
         let interner = StringInterner()
         let symbols = SymbolTable()
@@ -207,7 +206,7 @@ extension NameManglerTests {
         let primitives: [(PrimitiveType, String)] = [
             (.boolean, "Z"), (.char, "C"), (.int, "I"),
             (.long, "J"), (.float, "F"), (.double, "D"),
-            (.string, "Lkotlin_String;")
+            (.string, "Lkotlin_String;"),
         ]
 
         for (prim, expected) in primitives {
@@ -221,8 +220,8 @@ extension NameManglerTests {
             let type = types.make(.primitive(prim, .nonNull))
             symbols.setPropertyType(type, for: sym)
 
-            let sig = mangler.mangledSignature(
-                for: symbols.symbol(sym)!,
+            let sig = try mangler.mangledSignature(
+                for: XCTUnwrap(symbols.symbol(sym)),
                 symbols: symbols,
                 types: types
             )
@@ -232,7 +231,7 @@ extension NameManglerTests {
 
     // MARK: - Special Type Encodings
 
-    func testMangledSignatureUnitType() {
+    func testMangledSignatureUnitType() throws {
         let mangler = NameMangler()
         let interner = StringInterner()
         let symbols = SymbolTable()
@@ -250,15 +249,15 @@ extension NameManglerTests {
             for: sym
         )
 
-        let sig = mangler.mangledSignature(
-            for: symbols.symbol(sym)!,
+        let sig = try mangler.mangledSignature(
+            for: XCTUnwrap(symbols.symbol(sym)),
             symbols: symbols,
             types: types
         )
         XCTAssertTrue(sig.contains("U"))
     }
 
-    func testMangledSignatureNothingType() {
+    func testMangledSignatureNothingType() throws {
         let mangler = NameMangler()
         let interner = StringInterner()
         let symbols = SymbolTable()
@@ -276,15 +275,15 @@ extension NameManglerTests {
             for: sym
         )
 
-        let sig = mangler.mangledSignature(
-            for: symbols.symbol(sym)!,
+        let sig = try mangler.mangledSignature(
+            for: XCTUnwrap(symbols.symbol(sym)),
             symbols: symbols,
             types: types
         )
         XCTAssertTrue(sig.contains("N"))
     }
 
-    func testMangledSignatureAnyType() {
+    func testMangledSignatureAnyType() throws {
         let mangler = NameMangler()
         let interner = StringInterner()
         let symbols = SymbolTable()
@@ -299,15 +298,15 @@ extension NameManglerTests {
         )
         symbols.setPropertyType(types.anyType, for: sym)
 
-        let sig = mangler.mangledSignature(
-            for: symbols.symbol(sym)!,
+        let sig = try mangler.mangledSignature(
+            for: XCTUnwrap(symbols.symbol(sym)),
             symbols: symbols,
             types: types
         )
         XCTAssertEqual(sig, "A")
     }
 
-    func testMangledSignatureErrorType() {
+    func testMangledSignatureErrorType() throws {
         let mangler = NameMangler()
         let interner = StringInterner()
         let symbols = SymbolTable()
@@ -322,8 +321,8 @@ extension NameManglerTests {
         )
         symbols.setPropertyType(types.errorType, for: sym)
 
-        let sig = mangler.mangledSignature(
-            for: symbols.symbol(sym)!,
+        let sig = try mangler.mangledSignature(
+            for: XCTUnwrap(symbols.symbol(sym)),
             symbols: symbols,
             types: types
         )

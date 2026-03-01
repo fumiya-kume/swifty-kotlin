@@ -1,18 +1,19 @@
 import Foundation
 
 extension BuildASTPhase {
-    internal func declarationIsVar(from nodeID: NodeID, in arena: SyntaxArena) -> Bool {
+    func declarationIsVar(from nodeID: NodeID, in arena: SyntaxArena) -> Bool {
         for child in arena.children(of: nodeID) {
-            if case .token(let tokenID) = child,
+            if case let .token(tokenID) = child,
                let token = resolveToken(tokenID, in: arena),
-               token.kind == .keyword(.var) {
+               token.kind == .keyword(.var)
+            {
                 return true
             }
         }
         return false
     }
 
-    internal func declarationPropertyInitializer(
+    func declarationPropertyInitializer(
         from nodeID: NodeID,
         in arena: SyntaxArena,
         interner: StringInterner,
@@ -29,7 +30,7 @@ extension BuildASTPhase {
             if case .softKeyword(.by) = token.kind, depth.isAtTopLevel {
                 return nil
             }
-            if token.kind == .symbol(.assign) && depth.isAtTopLevel {
+            if token.kind == .symbol(.assign), depth.isAtTopLevel {
                 assignIndex = index
                 break
             }
@@ -51,7 +52,7 @@ extension BuildASTPhase {
         return parser.parse()
     }
 
-    internal func declarationPropertyAccessors(
+    func declarationPropertyAccessors(
         from nodeID: NodeID,
         in arena: SyntaxArena,
         interner: StringInterner,
@@ -62,15 +63,17 @@ extension BuildASTPhase {
 
         // First, try to find accessors inside a block child (e.g. `val x: T { get() = ... }`).
         if let accessorBlockID = arena.children(of: nodeID).compactMap({ child -> NodeID? in
-            guard case .node(let childID) = child,
-                  arena.node(childID).kind == .block else {
+            guard case let .node(childID) = child,
+                  arena.node(childID).kind == .block
+            else {
                 return nil
             }
             return childID
         }).first {
             for child in arena.children(of: accessorBlockID) {
-                guard case .node(let statementID) = child,
-                      isStatementLikeKind(arena.node(statementID).kind) else {
+                guard case let .node(statementID) = child,
+                      isStatementLikeKind(arena.node(statementID).kind)
+                else {
                     continue
                 }
 
@@ -91,11 +94,10 @@ extension BuildASTPhase {
                     continue
                 }
 
-                let parameterName: InternedString?
-                if kind == .setter {
-                    parameterName = setterParameterName(from: headerTokens, interner: interner)
+                let parameterName: InternedString? = if kind == .setter {
+                    setterParameterName(from: headerTokens, interner: interner)
                 } else {
-                    parameterName = nil
+                    nil
                 }
 
                 let body = accessorBody(
@@ -129,25 +131,24 @@ extension BuildASTPhase {
         // Handles `val x: T get() = expr` where get()/set() appear as flat
         // tokens of the property node without a wrapping block.
         let allTokens = collectTokens(from: nodeID, in: arena)
-        let inlineAccessors = parseInlineAccessors(from: allTokens, nodeRange: arena.node(nodeID).range, interner: interner, astArena: astArena)
-        return inlineAccessors
+        return parseInlineAccessors(from: allTokens, nodeRange: arena.node(nodeID).range, interner: interner, astArena: astArena)
     }
 
     /// Find the index where an inline `get`/`set` accessor keyword starts in
     /// a flat token list.  Returns `nil` when no accessor keyword is present.
-    internal func inlineAccessorStartIndex(in tokens: [Token]) -> Int? {
+    func inlineAccessorStartIndex(in tokens: [Token]) -> Int? {
         for (index, token) in tokens.enumerated() {
-            let isAccessorKeyword: Bool
-            switch token.kind {
+            let isAccessorKeyword = switch token.kind {
             case .softKeyword(.get), .softKeyword(.set):
-                isAccessorKeyword = true
+                true
             default:
-                isAccessorKeyword = false
+                false
             }
             guard isAccessorKeyword else { continue }
             // Require `(` immediately after to distinguish from identifiers.
             if index + 1 < tokens.count,
-               tokens[index + 1].kind == .symbol(.lParen) {
+               tokens[index + 1].kind == .symbol(.lParen)
+            {
                 return index
             }
         }
@@ -170,9 +171,9 @@ extension BuildASTPhase {
         while let startIdx = remaining.firstIndex(where: { token in
             switch token.kind {
             case .softKeyword(.get), .softKeyword(.set):
-                return true
+                true
             default:
-                return false
+                false
             }
         }) {
             let token = remaining[startIdx]
@@ -187,7 +188,8 @@ extension BuildASTPhase {
 
             // Require `(` immediately after the keyword.
             guard startIdx + 1 < remaining.endIndex,
-                  remaining[startIdx + 1].kind == .symbol(.lParen) else {
+                  remaining[startIdx + 1].kind == .symbol(.lParen)
+            else {
                 remaining = remaining[(startIdx + 1)...]
                 continue
             }
@@ -210,7 +212,7 @@ extension BuildASTPhase {
 
             let parameterName: InternedString?
             if kind == .setter {
-                let parenTokens = Array(remaining[(startIdx + 1)...closeParenIdx])
+                let parenTokens = Array(remaining[(startIdx + 1) ... closeParenIdx])
                 parameterName = setterParameterName(from: parenTokens, interner: interner)
             } else {
                 parameterName = nil
@@ -220,16 +222,18 @@ extension BuildASTPhase {
             let afterParen = closeParenIdx + 1
             let body: FunctionBody
             if afterParen < remaining.endIndex,
-               remaining[afterParen].kind == .symbol(.assign) {
+               remaining[afterParen].kind == .symbol(.assign)
+            {
                 // Find extent of body expression: up to the next get/set keyword or end.
                 let exprStart = afterParen + 1
                 var exprEnd = remaining.endIndex
-                for i in exprStart..<remaining.endIndex {
+                for i in exprStart ..< remaining.endIndex {
                     switch remaining[i].kind {
                     case .softKeyword(.get), .softKeyword(.set):
                         // Check if it's followed by `(` to confirm it's an accessor keyword.
                         if i + 1 < remaining.endIndex,
-                           remaining[i + 1].kind == .symbol(.lParen) {
+                           remaining[i + 1].kind == .symbol(.lParen)
+                        {
                             exprEnd = i
                         }
                     default:
@@ -237,11 +241,12 @@ extension BuildASTPhase {
                     }
                     if exprEnd != remaining.endIndex { break }
                 }
-                let exprTokens = remaining[exprStart..<exprEnd].filter { $0.kind != .symbol(.semicolon) }
+                let exprTokens = remaining[exprStart ..< exprEnd].filter { $0.kind != .symbol(.semicolon) }
                 if !exprTokens.isEmpty {
                     let parser = ExpressionParser(tokens: ArraySlice(exprTokens), interner: interner, astArena: astArena)
                     if let exprID = parser.parse(),
-                       let range = astArena.exprRange(exprID) {
+                       let range = astArena.exprRange(exprID)
+                    {
                         body = .expr(exprID, range)
                     } else {
                         body = .unit
@@ -272,7 +277,7 @@ extension BuildASTPhase {
         return (getter, setter)
     }
 
-    internal func setterParameterName(
+    func setterParameterName(
         from headerTokens: [Token],
         interner: StringInterner
     ) -> InternedString? {
@@ -284,14 +289,15 @@ extension BuildASTPhase {
                 break
             }
             if let name = internedIdentifier(from: token, interner: interner),
-               isTypeLikeNameToken(token.kind) {
+               isTypeLikeNameToken(token.kind)
+            {
                 return name
             }
         }
         return nil
     }
 
-    internal func accessorBody(
+    func accessorBody(
         statementID: NodeID,
         headerTokens: [Token],
         in arena: SyntaxArena,
@@ -299,8 +305,9 @@ extension BuildASTPhase {
         astArena: ASTArena
     ) -> FunctionBody {
         if let nestedBlockID = arena.children(of: statementID).compactMap({ child -> NodeID? in
-            guard case .node(let nodeID) = child,
-                  arena.node(nodeID).kind == .block else {
+            guard case let .node(nodeID) = child,
+                  arena.node(nodeID).kind == .block
+            else {
                 return nil
             }
             return nodeID
@@ -325,7 +332,8 @@ extension BuildASTPhase {
         }
         let parser = ExpressionParser(tokens: ArraySlice(exprTokens), interner: interner, astArena: astArena)
         guard let exprID = parser.parse(),
-              let range = astArena.exprRange(exprID) else {
+              let range = astArena.exprRange(exprID)
+        else {
             return .unit
         }
         return .expr(exprID, range)

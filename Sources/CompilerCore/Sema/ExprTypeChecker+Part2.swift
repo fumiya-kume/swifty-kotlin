@@ -1,7 +1,7 @@
 import Foundation
 
-/// Handles expression type inference dispatch and specific expression cases.
-/// Derived from TypeCheckSemaPhase+ExprInference.swift and TypeCheckSemaPhase+ExprInferCases.swift.
+// Handles expression type inference dispatch and specific expression cases.
+// Derived from TypeCheckSemaPhase+ExprInference.swift and TypeCheckSemaPhase+ExprInferCases.swift.
 
 extension ExprTypeChecker {
     func inferCompoundAssignExpr(
@@ -38,26 +38,25 @@ extension ExprTypeChecker {
                 )
             }
             let underlyingOp = driver.helpers.compoundAssignToBinaryOp(op)
-            let resultType: TypeID
-            switch underlyingOp {
+            let resultType: TypeID = switch underlyingOp {
             case .add:
                 if local.type == stringType || valueType == stringType {
-                    resultType = stringType
-                } else if local.type == charType && valueType == intType {
-                    resultType = charType
+                    stringType
+                } else if local.type == charType, valueType == intType {
+                    charType
                 } else {
-                    resultType = intType
+                    intType
                 }
             case .subtract:
-                if local.type == charType && valueType == intType {
-                    resultType = charType
+                if local.type == charType, valueType == intType {
+                    charType
                 } else {
-                    resultType = intType
+                    intType
                 }
             case .multiply, .divide, .modulo:
-                resultType = intType
+                intType
             default:
-                resultType = local.type
+                local.type
             }
             locals[name] = (resultType, local.symbol, local.isMutable, local.isInitialized)
             sema.bindings.bindExprType(id, type: sema.types.unitType)
@@ -88,28 +87,27 @@ extension ExprTypeChecker {
                 )
             }
             let underlyingOp = driver.helpers.compoundAssignToBinaryOp(op)
-            let resultType: TypeID
-            switch underlyingOp {
+            let resultType: TypeID = switch underlyingOp {
             case .add:
                 if propType == stringType || valueType == stringType {
-                    resultType = stringType
-                } else if propType == charType && valueType == intType {
-                    resultType = charType
+                    stringType
+                } else if propType == charType, valueType == intType {
+                    charType
                 } else {
-                    resultType = intType
+                    intType
                 }
             case .subtract:
-                if propType == charType && valueType == intType {
-                    resultType = charType
+                if propType == charType, valueType == intType {
+                    charType
                 } else {
-                    resultType = intType
+                    intType
                 }
             case .multiply, .divide, .modulo:
-                resultType = intType
+                intType
             default:
-                resultType = propType
+                propType
             }
-            _ = resultType  // top-level property type not updated in locals
+            _ = resultType // top-level property type not updated in locals
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
         }
@@ -140,7 +138,8 @@ extension ExprTypeChecker {
             return sema.types.nullableNothingType
         }
         if interner.resolve(name) == "this",
-           let receiverType = ctx.implicitReceiverType {
+           let receiverType = ctx.implicitReceiverType
+        {
             sema.bindings.bindExprType(id, type: receiverType)
             return receiverType
         }
@@ -195,8 +194,9 @@ extension ExprTypeChecker {
             // they have a companion object so that `ClassName.companionMember()`
             // can resolve.  Without a companion, keep the previous anyType
             // fallback so that `ClassName.instanceMethod()` correctly errors.
-            if (symbol.kind == .class || symbol.kind == .interface || symbol.kind == .enumClass),
-               sema.symbols.companionObjectSymbol(for: symbol.id) != nil {
+            if symbol.kind == .class || symbol.kind == .interface || symbol.kind == .enumClass,
+               sema.symbols.companionObjectSymbol(for: symbol.id) != nil
+            {
                 return sema.types.make(.classType(ClassType(classSymbol: symbol.id, args: [], nullability: .nonNull)))
             }
             return nil
@@ -216,21 +216,20 @@ extension ExprTypeChecker {
         let ast = ctx.ast
         let sema = ctx.sema
 
-        let expectedFunctionType: FunctionType?
-        if let expectedType,
-           case .functionType(let functionType) = sema.types.kind(of: expectedType) {
-            expectedFunctionType = functionType
+        let expectedFunctionType: FunctionType? = if let expectedType,
+                                                     case let .functionType(functionType) = sema.types.kind(of: expectedType)
+        {
+            functionType
         } else {
-            expectedFunctionType = nil
+            nil
         }
 
         var lambdaLocals = locals
-        let outerSymbols = Set(locals.values.map { $0.symbol })
-        let parameterTypes: [TypeID]
-        if let expectedFunctionType, expectedFunctionType.params.count == params.count {
-            parameterTypes = expectedFunctionType.params
+        let outerSymbols = Set(locals.values.map(\.symbol))
+        let parameterTypes: [TypeID] = if let expectedFunctionType, expectedFunctionType.params.count == params.count {
+            expectedFunctionType.params
         } else {
-            parameterTypes = Array(repeating: sema.types.anyType, count: params.count)
+            Array(repeating: sema.types.anyType, count: params.count)
         }
         for (offset, param) in params.enumerated() {
             let syntheticSymbol = SymbolID(rawValue: Int32(clamping: Int64(-1_000_000) - Int64(id.rawValue) * 256 - Int64(offset)))
@@ -291,13 +290,12 @@ extension ExprTypeChecker {
     ) -> TypeID {
         let ast = ctx.ast
         let sema = ctx.sema
-        let outerSymbols = Set(locals.values.map { $0.symbol })
+        let outerSymbols = Set(locals.values.map(\.symbol))
 
-        let receiverType: TypeID?
-        if let receiver {
-            receiverType = driver.inferExpr(receiver, ctx: ctx, locals: &locals, expectedType: nil)
+        let receiverType: TypeID? = if let receiver {
+            driver.inferExpr(receiver, ctx: ctx, locals: &locals, expectedType: nil)
         } else {
-            receiverType = nil
+            nil
         }
 
         var candidates: [SymbolID] = []
@@ -315,7 +313,8 @@ extension ExprTypeChecker {
                     guard let symbol = ctx.cachedSymbol(symbolID),
                           symbol.kind == .function,
                           let signature = sema.symbols.functionSignature(for: symbolID),
-                          let declaredReceiver = signature.receiverType else {
+                          let declaredReceiver = signature.receiverType
+                    else {
                         return false
                     }
                     return sema.types.isSubtype(nonNullReceiver, declaredReceiver)
@@ -331,7 +330,8 @@ extension ExprTypeChecker {
             if candidates.isEmpty,
                let local = locals[member],
                let localSymbol = ctx.cachedSymbol(local.symbol),
-               localSymbol.kind == .function {
+               localSymbol.kind == .function
+            {
                 candidates = [local.symbol]
             }
         }
@@ -344,7 +344,8 @@ extension ExprTypeChecker {
         )
 
         if let chosen,
-           let signature = sema.symbols.functionSignature(for: chosen) {
+           let signature = sema.symbols.functionSignature(for: chosen)
+        {
             let inferredType = driver.helpers.callableFunctionType(
                 for: signature,
                 bindReceiver: receiver != nil,
@@ -352,7 +353,8 @@ extension ExprTypeChecker {
             )
             let resultType: TypeID
             if let expectedType,
-               case .functionType = sema.types.kind(of: expectedType) {
+               case .functionType = sema.types.kind(of: expectedType)
+            {
                 driver.emitSubtypeConstraint(
                     left: inferredType,
                     right: expectedType,
@@ -380,12 +382,12 @@ extension ExprTypeChecker {
             return resultType
         }
 
-        let fallbackType: TypeID
-        if let expectedType,
-           case .functionType = sema.types.kind(of: expectedType) {
-            fallbackType = expectedType
+        let fallbackType: TypeID = if let expectedType,
+                                      case .functionType = sema.types.kind(of: expectedType)
+        {
+            expectedType
         } else {
-            fallbackType = sema.types.anyType
+            sema.types.anyType
         }
         let fallbackCaptures = receiver.map { recv in
             driver.captureAnalyzer.collectCapturedOuterSymbols(

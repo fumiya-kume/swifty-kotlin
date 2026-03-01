@@ -1,5 +1,5 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 final class CompilerTypesTests: XCTestCase {
     func testCompilerVersionAndTargetTripleStoreValues() {
@@ -83,7 +83,6 @@ final class CompilerTypesTests: XCTestCase {
         XCTAssertEqual(options.frontendFlags, ["-XfrontendA"])
         XCTAssertEqual(options.irFlags, ["-XirA"])
         XCTAssertEqual(options.runtimeFlags, ["-XruntimeA"])
-
     }
 
     func testCompilerVersionWithNilGitHash() {
@@ -294,16 +293,16 @@ final class CompilerTypesTests: XCTestCase {
     func testHostDefaultTargetTripleMatchesCompileArchitecture() {
         let host = TargetTriple.hostDefault()
         #if arch(arm64)
-        XCTAssertEqual(host.arch, "arm64")
+            XCTAssertEqual(host.arch, "arm64")
         #elseif arch(x86_64)
-        XCTAssertEqual(host.arch, "x86_64")
+            XCTAssertEqual(host.arch, "x86_64")
         #endif
         #if os(Linux)
-        XCTAssertEqual(host.vendor, "unknown")
-        XCTAssertEqual(host.os, "linux-gnu")
+            XCTAssertEqual(host.vendor, "unknown")
+            XCTAssertEqual(host.os, "linux-gnu")
         #else
-        XCTAssertEqual(host.vendor, "apple")
-        XCTAssertEqual(host.os, "macosx")
+            XCTAssertEqual(host.vendor, "apple")
+            XCTAssertEqual(host.os, "macosx")
         #endif
         XCTAssertNil(host.osVersion)
     }

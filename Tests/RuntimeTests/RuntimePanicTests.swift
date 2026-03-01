@@ -1,5 +1,5 @@
-import XCTest
 @testable import Runtime
+import XCTest
 
 final class RuntimePanicTests: XCTestCase {
     func testRuntimePanicMessageIncludesDiagnosticCodeAndPayload() {

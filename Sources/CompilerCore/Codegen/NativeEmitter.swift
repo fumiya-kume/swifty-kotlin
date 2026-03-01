@@ -1,7 +1,7 @@
 import Foundation
 
 struct NativeEmitter {
-    // DWARF constants used across the emitter.
+    /// DWARF constants used across the emitter.
     /// DW_LANG_C99 – used as the compile-unit language tag.
     static let dwarfLangC99: UInt32 = 11
     /// DW_ATE_signed – DWARF attribute encoding for signed integers.
@@ -81,7 +81,8 @@ struct NativeEmitter {
         if targetMachine == nil,
            let hostTriple = bindings.defaultTargetTriple(),
            !hostTriple.isEmpty,
-           hostTriple != triple {
+           hostTriple != triple
+        {
             triple = hostTriple
             bindings.setTarget(built.module, triple: triple)
             targetMachine = bindings.createTargetMachine(triple: hostTriple, optLevel: optLevel)
@@ -142,7 +143,7 @@ struct NativeEmitter {
         // Create LLVM global variables for each KIR global declaration.
         var llvmGlobalVariables: [SymbolID: LLVMCAPIBindings.LLVMValueRef] = [:]
         for declaration in module.arena.declarations {
-            guard case .global(let global) = declaration else {
+            guard case let .global(global) = declaration else {
                 continue
             }
             let slotName = "kk_global_root_slot_\(max(0, Int(global.symbol.rawValue)))"
@@ -157,7 +158,7 @@ struct NativeEmitter {
         var internalFunctions: [SymbolID: LLVMFunction] = [:]
 
         for declaration in module.arena.declarations {
-            guard case .function(let function) = declaration else {
+            guard case let .function(function) = declaration else {
                 continue
             }
             let functionName = LLVMBackend.cFunctionSymbol(for: function, interner: interner)
@@ -165,7 +166,8 @@ struct NativeEmitter {
             parameterTypes.append(outThrownPointerType)
 
             guard let functionType = bindings.functionType(returnType: int64Type, parameters: parameterTypes, isVarArg: false),
-                  let functionValue = bindings.addFunction(module: llvmModule, name: functionName, functionType: functionType) else {
+                  let functionValue = bindings.addFunction(module: llvmModule, name: functionName, functionType: functionType)
+            else {
                 bindings.disposeModule(llvmModule)
                 bindings.disposeContext(context)
                 throw LLVMCAPIBackendError.nativeEmissionFailed("failed to declare function '\(functionName)'")
@@ -184,8 +186,9 @@ struct NativeEmitter {
             : nil
 
         for declaration in module.arena.declarations {
-            guard case .function(let function) = declaration,
-                  let llvmFunction = internalFunctions[function.symbol] else {
+            guard case let .function(function) = declaration,
+                  let llvmFunction = internalFunctions[function.symbol]
+            else {
                 continue
             }
             do {
@@ -226,7 +229,7 @@ struct NativeEmitter {
     /// on instructions during emission.
     func createDebugInfoContext(
         llvmModule: LLVMCAPIBindings.LLVMModuleRef,
-        context: LLVMCAPIBindings.LLVMContextRef,
+        context _: LLVMCAPIBindings.LLVMContextRef,
         internalFunctions: [SymbolID: LLVMFunction]
     ) -> DebugInfoContext? {
         guard bindings.debugInfoAvailable else {
@@ -302,8 +305,9 @@ struct NativeEmitter {
         var subprograms: [SymbolID: LLVMCAPIBindings.LLVMMetadataRef] = [:]
 
         for declaration in module.arena.declarations {
-            guard case .function(let function) = declaration,
-                  let llvmFunction = internalFunctions[function.symbol] else {
+            guard case let .function(function) = declaration,
+                  let llvmFunction = internalFunctions[function.symbol]
+            else {
                 continue
             }
             let functionName = LLVMBackend.cFunctionSymbol(for: function, interner: interner)
@@ -360,13 +364,15 @@ struct NativeEmitter {
 
         if let int32Type = bindings.int32Type(context: context),
            let debugVersionConst = bindings.constInt(int32Type, value: 3),
-           let debugVersionMD = bindings.valueAsMetadata(debugVersionConst) {
+           let debugVersionMD = bindings.valueAsMetadata(debugVersionConst)
+        {
             bindings.addModuleFlag(llvmModule, behavior: 1, key: "Debug Info Version", value: debugVersionMD)
         }
 
         if let int32Type = bindings.int32Type(context: context),
            let dwarfVersionConst = bindings.constInt(int32Type, value: 5),
-           let dwarfVersionMD = bindings.valueAsMetadata(dwarfVersionConst) {
+           let dwarfVersionMD = bindings.valueAsMetadata(dwarfVersionConst)
+        {
             bindings.addModuleFlag(llvmModule, behavior: 1, key: "Dwarf Version", value: dwarfVersionMD)
         }
     }
@@ -415,7 +421,8 @@ struct NativeEmitter {
             throw LLVMCAPIBackendError.nativeEmissionFailed("failed to create runtime function type for '\(name)'")
         }
         guard let functionValue = bindings.getNamedFunction(module: module, name: name)
-            ?? bindings.addFunction(module: module, name: name, functionType: functionType) else {
+            ?? bindings.addFunction(module: module, name: name, functionType: functionType)
+        else {
             throw LLVMCAPIBackendError.nativeEmissionFailed("failed to define weak runtime stub '\(name)'")
         }
         bindings.setWeakAnyLinkage(functionValue)

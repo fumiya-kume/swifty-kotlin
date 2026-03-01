@@ -1,8 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
-
 
 extension BuildKIRRegressionTests {
     func testBuildKIRObjectLiteralArgumentIsNotLoweredToUnitPlaceholder() throws {
@@ -22,12 +20,12 @@ extension BuildKIRRegressionTests {
             let module = try XCTUnwrap(ctx.kir)
             let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let consumeCall = try XCTUnwrap(mainBody.first { instruction in
-                guard case .call(_, let callee, _, _, _, _, _) = instruction else {
+                guard case let .call(_, callee, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return ctx.interner.resolve(callee) == "consume"
             })
-            guard case .call(_, _, let arguments, _, _, _, _) = consumeCall else {
+            guard case let .call(_, _, arguments, _, _, _, _) = consumeCall else {
                 XCTFail("Expected call instruction for consume(instance).")
                 return
             }
@@ -55,13 +53,13 @@ extension BuildKIRRegressionTests {
             let module = try XCTUnwrap(ctx.kir)
             let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let lambdaCall = try XCTUnwrap(mainBody.first { instruction in
-                guard case .call(_, let callee, _, _, _, _, _) = instruction else {
+                guard case let .call(_, callee, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return ctx.interner.resolve(callee).hasPrefix("kk_lambda_")
             })
 
-            guard case .call(let callSymbol, let callee, let arguments, _, _, _, _) = lambdaCall else {
+            guard case let .call(callSymbol, callee, arguments, _, _, _, _) = lambdaCall else {
                 XCTFail("Expected lowered lambda call in main.")
                 return
             }
@@ -78,15 +76,17 @@ extension BuildKIRRegressionTests {
             }
 
             let generatedLambdaFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let function) = decl,
-                      ctx.interner.resolve(function.name).hasPrefix("kk_lambda_") else {
+                guard case let .function(function) = decl,
+                      ctx.interner.resolve(function.name).hasPrefix("kk_lambda_")
+                else {
                     return nil
                 }
                 return function
             }
             XCTAssertFalse(generatedLambdaFunctions.isEmpty)
             if let generatedSymbol = callSymbol,
-               let generatedFunction = generatedLambdaFunctions.first(where: { $0.symbol == generatedSymbol }) {
+               let generatedFunction = generatedLambdaFunctions.first(where: { $0.symbol == generatedSymbol })
+            {
                 XCTAssertEqual(generatedFunction.params.count, 2)
             }
         }
@@ -108,9 +108,10 @@ extension BuildKIRRegressionTests {
             let ast = try XCTUnwrap(ctx.ast)
             let sema = try XCTUnwrap(ctx.sema)
             let addCallExprID = try XCTUnwrap(firstExprID(in: ast) { _, expr in
-                guard case .call(let calleeExprID, _, _, _) = expr,
+                guard case let .call(calleeExprID, _, _, _) = expr,
                       let calleeExpr = ast.arena.expr(calleeExprID),
-                      case .nameRef(let calleeName, _) = calleeExpr else {
+                      case let .nameRef(calleeName, _) = calleeExpr
+                else {
                     return false
                 }
                 return ctx.interner.resolve(calleeName) == "add"
@@ -130,13 +131,13 @@ extension BuildKIRRegressionTests {
             let module = try XCTUnwrap(ctx.kir)
             let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let lambdaCall = try XCTUnwrap(mainBody.first { instruction in
-                guard case .call(_, let callee, _, _, _, _, _) = instruction else {
+                guard case let .call(_, callee, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return ctx.interner.resolve(callee).hasPrefix("kk_lambda_")
             })
 
-            guard case .call(_, _, let arguments, _, _, _, _) = lambdaCall else {
+            guard case let .call(_, _, arguments, _, _, _, _) = lambdaCall else {
                 XCTFail("Expected callable-value call to lowered lambda target.")
                 return
             }
@@ -193,13 +194,13 @@ extension BuildKIRRegressionTests {
 
             let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let incCall = try XCTUnwrap(mainBody.first { instruction in
-                guard case .call(let symbol, _, _, _, _, _, _) = instruction else {
+                guard case let .call(symbol, _, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return symbol == incSymbol
             })
 
-            guard case .call(let callSymbol, let callee, let arguments, _, _, _, _) = incCall else {
+            guard case let .call(callSymbol, callee, arguments, _, _, _, _) = incCall else {
                 XCTFail("Expected callable reference call to inc.")
                 return
             }
@@ -236,20 +237,21 @@ extension BuildKIRRegressionTests {
 
             let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let plusCall = try XCTUnwrap(mainBody.first { instruction in
-                guard case .call(let symbol, _, _, _, _, _, _) = instruction else {
+                guard case let .call(symbol, _, _, _, _, _, _) = instruction else {
                     return false
                 }
                 return symbol == plusSymbol
             })
 
-            guard case .call(_, let callee, let arguments, _, _, _, _) = plusCall else {
+            guard case let .call(_, callee, arguments, _, _, _, _) = plusCall else {
                 XCTFail("Expected bound callable reference to lower to plus call.")
                 return
             }
             XCTAssertEqual(ctx.interner.resolve(callee), "plus")
             XCTAssertEqual(arguments.count, 2)
-            guard case .symbolRef(let receiverSymbol)? = module.arena.expr(arguments[0]),
-                  let receiver = sema.symbols.symbol(receiverSymbol) else {
+            guard case let .symbolRef(receiverSymbol)? = module.arena.expr(arguments[0]),
+                  let receiver = sema.symbols.symbol(receiverSymbol)
+            else {
                 XCTFail("Expected first argument to be captured receiver symbol.")
                 return
             }
@@ -262,5 +264,4 @@ extension BuildKIRRegressionTests {
     }
 
     // MARK: - P5-39: vararg call lowering / ABI regression tests
-
 }

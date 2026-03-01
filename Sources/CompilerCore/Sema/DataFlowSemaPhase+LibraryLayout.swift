@@ -46,7 +46,8 @@ extension DataFlowSemaPhase {
         return pairs.compactMap { key, slot in
             let components = key.split(separator: "#", omittingEmptySubsequences: false).map(String.init)
             guard components.count == 3,
-                  let arity = Int(components[1]) else {
+                  let arity = Int(components[1])
+            else {
                 diagnostics.warning(
                     "KSWIFTK-LIB-0003",
                     "Invalid vtableSlots entry in metadata at \(metadataPath): \(key)",
@@ -118,7 +119,8 @@ extension DataFlowSemaPhase {
             let entry = String(rawEntry)
             guard let separatorIndex = entry.lastIndex(of: "@"),
                   separatorIndex < entry.index(before: entry.endIndex),
-                  let slot = Int(entry[entry.index(after: separatorIndex)...]) else {
+                  let slot = Int(entry[entry.index(after: separatorIndex)...])
+            else {
                 diagnostics.warning(
                     "KSWIFTK-LIB-0003",
                     "Malformed metadata slot entry at \(metadataPath): \(entry) (\(renderFQName(ownerFQName, interner: interner)))",
@@ -206,7 +208,8 @@ extension DataFlowSemaPhase {
         let maxITableSize = (resolvedITableSlots.values.max() ?? -1) + 1
         if let declaredVTableSize = record.declaredVtableSize,
            declaredVTableSize >= 0,
-           declaredVTableSize < maxVTableSize {
+           declaredVTableSize < maxVTableSize
+        {
             diagnostics.warning(
                 "KSWIFTK-LIB-0005",
                 "metadata vtable size mismatch at \(metadataPath) for symbol \(symbol.rawValue)",
@@ -215,7 +218,8 @@ extension DataFlowSemaPhase {
         }
         if let declaredITableSize = record.declaredItableSize,
            declaredITableSize >= 0,
-           declaredITableSize < maxITableSize {
+           declaredITableSize < maxITableSize
+        {
             diagnostics.warning(
                 "KSWIFTK-LIB-0005",
                 "metadata itable size mismatch at \(metadataPath) for symbol \(symbol.rawValue)",
@@ -264,7 +268,8 @@ extension DataFlowSemaPhase {
             .compactMap { symbols.symbol($0) }
             .filter { symbol in
                 guard symbol.kind == .function,
-                      let signature = symbols.functionSignature(for: symbol.id) else {
+                      let signature = symbols.functionSignature(for: symbol.id)
+                else {
                     return false
                 }
                 return signature.parameterTypes.count == arity && signature.isSuspend == isSuspend

@@ -1,5 +1,5 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 final class SyntaxArenaTests: XCTestCase {
     func testAppendTokenAndMakeNodeRoundTrip() {
@@ -49,13 +49,13 @@ final class SyntaxArenaTests: XCTestCase {
 
     // MARK: - Edge Cases
 
-    func testLargeNumberOfTokenAdditions() {
+    func testLargeNumberOfTokenAdditions() throws {
         let arena = SyntaxArena()
         let interner = StringInterner()
-        let count = 10_000
+        let count = 10000
 
         var tokenIDs: [TokenID] = []
-        for i in 0..<count {
+        for i in 0 ..< count {
             let token = makeToken(kind: .identifier(interner.intern("t\(i)")), start: i, end: i + 1)
             tokenIDs.append(arena.appendToken(token))
         }
@@ -66,16 +66,16 @@ final class SyntaxArenaTests: XCTestCase {
         XCTAssertEqual(arena.tokens.count, count)
 
         // Verify first and last tokens are retrievable
-        XCTAssertEqual(arena.tokens[Int(tokenIDs.first!.rawValue)].range.start.offset, 0)
-        XCTAssertEqual(arena.tokens[Int(tokenIDs.last!.rawValue)].range.start.offset, count - 1)
+        XCTAssertEqual(try arena.tokens[Int(XCTUnwrap(tokenIDs.first?.rawValue))].range.start.offset, 0)
+        XCTAssertEqual(try arena.tokens[Int(XCTUnwrap(tokenIDs.last?.rawValue))].range.start.offset, count - 1)
     }
 
-    func testLargeNumberOfNodeAdditions() {
+    func testLargeNumberOfNodeAdditions() throws {
         let arena = SyntaxArena()
-        let count = 10_000
+        let count = 10000
 
         var nodeIDs: [NodeID] = []
-        for i in 0..<count {
+        for i in 0 ..< count {
             let range = makeRange(start: i, end: i + 1)
             nodeIDs.append(arena.appendNode(kind: .statement, range: range, []))
         }
@@ -86,8 +86,8 @@ final class SyntaxArenaTests: XCTestCase {
         XCTAssertEqual(arena.nodes.count, count)
 
         // Verify retrieval of first and last nodes
-        let firstNode = arena.node(nodeIDs.first!)
-        let lastNode = arena.node(nodeIDs.last!)
+        let firstNode = try arena.node(XCTUnwrap(nodeIDs.first))
+        let lastNode = try arena.node(XCTUnwrap(nodeIDs.last))
         XCTAssertEqual(firstNode.range.start.offset, 0)
         XCTAssertEqual(lastNode.range.start.offset, count - 1)
     }
@@ -111,7 +111,7 @@ final class SyntaxArenaTests: XCTestCase {
         XCTAssertEqual(manualNegID.rawValue, Int32.min)
     }
 
-    func testDeeplyNestedNodeStructure() {
+    func testDeeplyNestedNodeStructure() throws {
         let arena = SyntaxArena()
         let interner = StringInterner()
         let depth = 100
@@ -124,7 +124,7 @@ final class SyntaxArenaTests: XCTestCase {
         var currentChild: SyntaxChild = .token(leafTokenID)
         var allNodeIDs: [NodeID] = []
 
-        for level in 0..<depth {
+        for level in 0 ..< depth {
             let range = makeRange(start: level, end: level + 1)
             let nodeID = arena.appendNode(kind: .block, range: range, [currentChild])
             allNodeIDs.append(nodeID)
@@ -132,12 +132,12 @@ final class SyntaxArenaTests: XCTestCase {
         }
 
         // Verify the outermost node
-        let outermost = arena.node(allNodeIDs.last!)
+        let outermost = try arena.node(XCTUnwrap(allNodeIDs.last))
         XCTAssertEqual(outermost.kind, .block)
         XCTAssertEqual(outermost.childCount, 1)
 
         // Walk from outermost to innermost
-        var currentNodeID = allNodeIDs.last!
+        var currentNodeID = try XCTUnwrap(allNodeIDs.last)
         for level in stride(from: depth - 1, through: 0, by: -1) {
             let node = arena.node(currentNodeID)
             XCTAssertEqual(node.kind, .block)
@@ -148,7 +148,7 @@ final class SyntaxArenaTests: XCTestCase {
 
             if level > 0 {
                 // Child should be a node
-                if case .node(let childNodeID) = nodeChildren[0] {
+                if case let .node(childNodeID) = nodeChildren[0] {
                     currentNodeID = childNodeID
                 } else {
                     XCTFail("Expected node child at level \(level), got token")
@@ -282,7 +282,7 @@ final class SyntaxArenaTests: XCTestCase {
         let childCount = 1000
 
         var childEntries: [SyntaxChild] = []
-        for i in 0..<childCount {
+        for i in 0 ..< childCount {
             let token = makeToken(kind: .identifier(interner.intern("c\(i)")), start: i, end: i + 1)
             let tokenID = arena.appendToken(token)
             childEntries.append(.token(tokenID))

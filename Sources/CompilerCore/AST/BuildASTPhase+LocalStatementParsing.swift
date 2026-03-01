@@ -1,7 +1,7 @@
 import Foundation
 
 extension BuildASTPhase {
-    internal func parseLocalDeclarationExpr(
+    func parseLocalDeclarationExpr(
         from statementTokens: [Token],
         interner: StringInterner,
         astArena: ASTArena
@@ -11,8 +11,9 @@ extension BuildASTPhase {
         }
         var startIndex = 0
         while startIndex < statementTokens.count,
-              case .keyword(let kw) = statementTokens[startIndex].kind,
-              KotlinParser.isDeclarationModifierKeyword(kw) {
+              case let .keyword(kw) = statementTokens[startIndex].kind,
+              KotlinParser.isDeclarationModifierKeyword(kw)
+        {
             startIndex += 1
         }
         guard startIndex < statementTokens.count else {
@@ -63,7 +64,7 @@ extension BuildASTPhase {
         )
     }
 
-    internal func parseLocalAssignmentExpr(
+    func parseLocalAssignmentExpr(
         from statementTokens: [Token],
         interner: StringInterner,
         astArena: ASTArena
@@ -86,7 +87,7 @@ extension BuildASTPhase {
 
     /// Parse destructuring declaration: `val (a, b, _) = expr`
     /// Returns nil if the tokens don't match the destructuring pattern.
-    internal func parseDestructuringDeclarationExpr(
+    func parseDestructuringDeclarationExpr(
         from statementTokens: [Token],
         startIndex: Int,
         isMutable: Bool,
@@ -98,18 +99,20 @@ extension BuildASTPhase {
         var afterKeyword = startIndex + 1
         // Skip any missing tokens inserted by the CST parser
         while afterKeyword < statementTokens.count,
-              case .missing = statementTokens[afterKeyword].kind {
+              case .missing = statementTokens[afterKeyword].kind
+        {
             afterKeyword += 1
         }
         guard afterKeyword < statementTokens.count,
-              statementTokens[afterKeyword].kind == .symbol(.lParen) else {
+              statementTokens[afterKeyword].kind == .symbol(.lParen)
+        else {
             return nil
         }
 
         // Find the matching closing paren
         var depth = 0
         var closeParenIndex: Int?
-        for i in afterKeyword..<statementTokens.count {
+        for i in afterKeyword ..< statementTokens.count {
             switch statementTokens[i].kind {
             case .symbol(.lParen):
                 depth += 1
@@ -130,7 +133,7 @@ extension BuildASTPhase {
 
         // Parse names between parens, separated by commas
         // Supports: identifiers and `_` (underscore)
-        let innerTokens = Array(statementTokens[(afterKeyword + 1)..<closeParenIndex])
+        let innerTokens = Array(statementTokens[(afterKeyword + 1) ..< closeParenIndex])
         var names: [InternedString?] = []
         var idx = 0
         while idx < innerTokens.count {
@@ -139,7 +142,7 @@ extension BuildASTPhase {
             case .symbol(.comma):
                 idx += 1
                 continue
-            case .identifier(let name):
+            case let .identifier(name):
                 let nameStr = interner.resolve(name)
                 if nameStr == "_" {
                     names.append(nil)
@@ -147,7 +150,7 @@ extension BuildASTPhase {
                     names.append(name)
                 }
                 idx += 1
-            case .backtickedIdentifier(let name):
+            case let .backtickedIdentifier(name):
                 names.append(name)
                 idx += 1
             default:
@@ -158,7 +161,7 @@ extension BuildASTPhase {
                     var typeDepth = BracketDepth()
                     while idx < innerTokens.count {
                         let t = innerTokens[idx]
-                        if typeDepth.isAtTopLevel && t.kind == .symbol(.comma) {
+                        if typeDepth.isAtTopLevel, t.kind == .symbol(.comma) {
                             break
                         }
                         typeDepth.track(t.kind)
@@ -176,7 +179,7 @@ extension BuildASTPhase {
 
         // After closing paren, expect `=`
         var assignIndex: Int?
-        for i in (closeParenIndex + 1)..<statementTokens.count {
+        for i in (closeParenIndex + 1) ..< statementTokens.count {
             if statementTokens[i].kind == .symbol(.assign) {
                 assignIndex = i
                 break

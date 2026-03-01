@@ -1,7 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
 
 extension LexerParserEdgeCaseTests {
     func testFrontendPhasesBuildASTForMixedDeclarations() throws {
@@ -49,7 +48,7 @@ extension LexerParserEdgeCaseTests {
             XCTAssertGreaterThanOrEqual(declarations.count, 2)
 
             let names: [String] = declarations.compactMap { decl in
-                guard case .funDecl(let funDecl) = decl else {
+                guard case let .funDecl(funDecl) = decl else {
                     return nil
                 }
                 return ctx.interner.resolve(funDecl.name)
@@ -85,15 +84,15 @@ extension LexerParserEdgeCaseTests {
             let all = sema.symbols.allSymbols()
             let elem = all.first(where: { symbol in
                 symbol.kind == .typeAlias &&
-                ctx.interner.resolve(symbol.name) == "Elem" &&
-                symbol.fqName.count >= 2 &&
-                ctx.interner.resolve(symbol.fqName[symbol.fqName.count - 2]) == "Box"
+                    ctx.interner.resolve(symbol.name) == "Elem" &&
+                    symbol.fqName.count >= 2 &&
+                    ctx.interner.resolve(symbol.fqName[symbol.fqName.count - 2]) == "Box"
             })
             let value = all.first(where: { symbol in
                 symbol.kind == .typeAlias &&
-                ctx.interner.resolve(symbol.name) == "Value" &&
-                symbol.fqName.count >= 2 &&
-                ctx.interner.resolve(symbol.fqName[symbol.fqName.count - 2]) == "Holder"
+                    ctx.interner.resolve(symbol.name) == "Value" &&
+                    symbol.fqName.count >= 2 &&
+                    ctx.interner.resolve(symbol.fqName[symbol.fqName.count - 2]) == "Holder"
             })
 
             XCTAssertNotNil(elem)
@@ -172,16 +171,16 @@ extension LexerParserEdgeCaseTests {
             let file0DeclNames = file0.topLevelDecls.compactMap { declID -> String? in
                 guard let decl = ast.arena.decl(declID) else { return nil }
                 switch decl {
-                case .funDecl(let f): return ctx.interner.resolve(f.name)
-                case .classDecl(let c): return ctx.interner.resolve(c.name)
+                case let .funDecl(f): return ctx.interner.resolve(f.name)
+                case let .classDecl(c): return ctx.interner.resolve(c.name)
                 default: return nil
                 }
             }
             let file1DeclNames = file1.topLevelDecls.compactMap { declID -> String? in
                 guard let decl = ast.arena.decl(declID) else { return nil }
                 switch decl {
-                case .funDecl(let f): return ctx.interner.resolve(f.name)
-                case .objectDecl(let o): return ctx.interner.resolve(o.name)
+                case let .funDecl(f): return ctx.interner.resolve(f.name)
+                case let .objectDecl(o): return ctx.interner.resolve(o.name)
                 default: return nil
                 }
             }
@@ -212,7 +211,7 @@ extension LexerParserEdgeCaseTests {
             XCTAssertEqual(ast.files.count, 2)
 
             let allFunNames = ast.arena.declarations().compactMap { decl -> String? in
-                guard case .funDecl(let f) = decl else { return nil }
+                guard case let .funDecl(f) = decl else { return nil }
                 return ctx.interner.resolve(f.name)
             }
             XCTAssertTrue(allFunNames.contains("alpha"))
@@ -257,8 +256,8 @@ extension LexerParserEdgeCaseTests {
             let kotlinDeclNames = (kotlinFile?.topLevelDecls ?? []).compactMap { declID -> String? in
                 guard let decl = ast.arena.decl(declID) else { return nil }
                 switch decl {
-                case .funDecl(let f): return ctx.interner.resolve(f.name)
-                case .classDecl(let c): return ctx.interner.resolve(c.name)
+                case let .funDecl(f): return ctx.interner.resolve(f.name)
+                case let .classDecl(c): return ctx.interner.resolve(c.name)
                 default: return nil
                 }
             }
@@ -273,7 +272,7 @@ extension LexerParserEdgeCaseTests {
         let source = "'\\t' '\\n' '\\r' '\\\\' '\\'' '\\\"' '\\$'"
         let result = lex(source)
         let charValues = result.tokens.compactMap { token -> UInt32? in
-            if case .charLiteral(let value) = token.kind { return value }
+            if case let .charLiteral(value) = token.kind { return value }
             return nil
         }
         XCTAssertEqual(charValues, [9, 10, 13, 92, 39, 34, 36])
@@ -284,7 +283,7 @@ extension LexerParserEdgeCaseTests {
         let source = "'\\u0041' '\\u0000' '\\uFFFF' '\\u2764'"
         let result = lex(source)
         let charValues = result.tokens.compactMap { token -> UInt32? in
-            if case .charLiteral(let value) = token.kind { return value }
+            if case let .charLiteral(value) = token.kind { return value }
             return nil
         }
         // \u0041 = 'A' = 65, \u0000 = 0, \uFFFF = 65535, \u2764 = 10084
@@ -298,11 +297,11 @@ extension LexerParserEdgeCaseTests {
         let resultA = lex(sourceA)
         let resultUnicode = lex(sourceUnicode)
         let valueA = resultA.tokens.compactMap { token -> UInt32? in
-            if case .charLiteral(let value) = token.kind { return value }
+            if case let .charLiteral(value) = token.kind { return value }
             return nil
         }.first
         let valueUnicode = resultUnicode.tokens.compactMap { token -> UInt32? in
-            if case .charLiteral(let value) = token.kind { return value }
+            if case let .charLiteral(value) = token.kind { return value }
             return nil
         }.first
         XCTAssertEqual(valueA, valueUnicode)
@@ -336,8 +335,9 @@ extension LexerParserEdgeCaseTests {
             for index in ast.arena.exprs.indices {
                 let exprID = ExprID(rawValue: Int32(index))
                 guard let expr = ast.arena.expr(exprID),
-                      case .binary(let op, _, _, _) = expr,
-                      let exprType = sema.bindings.exprTypes[exprID] else {
+                      case let .binary(op, _, _, _) = expr,
+                      let exprType = sema.bindings.exprTypes[exprID]
+                else {
                     continue
                 }
                 let typeName = sema.types.renderType(exprType)
@@ -392,8 +392,9 @@ extension LexerParserEdgeCaseTests {
             for index in ast.arena.exprs.indices {
                 let exprID = ExprID(rawValue: Int32(index))
                 guard let expr = ast.arena.expr(exprID),
-                      case .binary(let op, _, _, _) = expr,
-                      let exprType = sema.bindings.exprTypes[exprID] else {
+                      case let .binary(op, _, _, _) = expr,
+                      let exprType = sema.bindings.exprTypes[exprID]
+                else {
                     continue
                 }
                 let typeName = sema.types.renderType(exprType)

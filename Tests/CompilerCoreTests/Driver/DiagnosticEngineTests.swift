@@ -1,8 +1,7 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 final class DiagnosticEngineTests: XCTestCase {
-
     // MARK: - Emit and Severity Helpers
 
     func testEmitAppendsDiagnostic() {

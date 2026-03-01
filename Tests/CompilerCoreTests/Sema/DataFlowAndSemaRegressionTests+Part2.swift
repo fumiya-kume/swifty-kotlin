@@ -1,12 +1,12 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 // MARK: - DataFlow + Sema Regression Tests
+
 // Targets: DataFlowSemaPhase+BodyAnalysis.swift (45.8%)
 //          DataFlowSemaPhase+HeaderCollection.swift (49.9%)
 //          TypeCheckSemaPhase+ExprInference.swift (51.4%)
-
 
 extension DataFlowAndSemaRegressionTests {
     func testContinueOutsideLoopEmitsDiagnostic() throws {
@@ -302,5 +302,4 @@ extension DataFlowAndSemaRegressionTests {
     }
 
     // MARK: - HeaderCollection: function with type parameters and upper bounds
-
 }

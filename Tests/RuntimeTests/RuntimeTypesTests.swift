@@ -1,8 +1,7 @@
-import XCTest
 @testable import Runtime
+import XCTest
 
 final class RuntimeTypesTests: XCTestCase {
-
     // MARK: - RuntimeStringBox
 
     func testRuntimeStringBoxStoresValue() {

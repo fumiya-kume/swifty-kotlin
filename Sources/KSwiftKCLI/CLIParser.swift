@@ -1,5 +1,5 @@
-import Foundation
 import CompilerCore
+import Foundation
 
 enum CLIParseError: Error, Equatable {
     case usageRequested
@@ -13,20 +13,20 @@ enum CLIParseError: Error, Equatable {
 
 enum CLIParser {
     static let usageText = """
-Usage: kswiftc [options] <input files>
-  -o <path>              Output path
-  --emit <mode>          executable|object|llvm|kir
-  -O0|-O1|-O2|-O3        Optimization level
-  -m <name>              Module name
-  -I <path>              Search path
-  -L <path>              Library path
-  -l <name>              Link library
-  --target <triple>      Target triple (arch-vendor-os[-version])
-  -Xfrontend <flag>      Frontend feature flag (e.g. time-phases)
-  -Xir <flag>            IR/lowering feature flag (e.g. backend=llvm-c-api, backend-strict=true)
-  -Xruntime <flag>       Runtime feature flag
-  -g                     Emit debug info
-"""
+    Usage: kswiftc [options] <input files>
+      -o <path>              Output path
+      --emit <mode>          executable|object|llvm|kir
+      -O0|-O1|-O2|-O3        Optimization level
+      -m <name>              Module name
+      -I <path>              Search path
+      -L <path>              Library path
+      -l <name>              Link library
+      --target <triple>      Target triple (arch-vendor-os[-version])
+      -Xfrontend <flag>      Frontend feature flag (e.g. time-phases)
+      -Xir <flag>            IR/lowering feature flag (e.g. backend=llvm-c-api, backend-strict=true)
+      -Xruntime <flag>       Runtime feature flag
+      -g                     Emit debug info
+    """
 
     static func parse(args: [String]) throws -> CompilerOptions {
         var inputPaths: [String] = []
@@ -80,17 +80,17 @@ Usage: kswiftc [options] <input files>
                 }
                 target = parsed
             case "-Xfrontend":
-                frontendFlags.append(try requireValue(option: arg, args: args, index: &index))
+                try frontendFlags.append(requireValue(option: arg, args: args, index: &index))
             case "-Xir":
-                irFlags.append(try requireValue(option: arg, args: args, index: &index))
+                try irFlags.append(requireValue(option: arg, args: args, index: &index))
             case "-Xruntime":
-                runtimeFlags.append(try requireValue(option: arg, args: args, index: &index))
+                try runtimeFlags.append(requireValue(option: arg, args: args, index: &index))
             case "-I":
-                searchPaths.append(try requireValue(option: arg, args: args, index: &index))
+                try searchPaths.append(requireValue(option: arg, args: args, index: &index))
             case "-L":
-                libraryPaths.append(try requireValue(option: arg, args: args, index: &index))
+                try libraryPaths.append(requireValue(option: arg, args: args, index: &index))
             case "-l":
-                linkLibraries.append(try requireValue(option: arg, args: args, index: &index))
+                try linkLibraries.append(requireValue(option: arg, args: args, index: &index))
             case "-g":
                 debugInfo = true
             default:
@@ -135,32 +135,32 @@ Usage: kswiftc [options] <input files>
     private static func parseEmitMode(_ value: String) -> EmitMode? {
         switch value {
         case "executable":
-            return .executable
+            .executable
         case "object":
-            return .object
+            .object
         case "llvm", "llvm-ir", "ll":
-            return .llvmIR
+            .llvmIR
         case "kir", "kir-dump":
-            return .kirDump
+            .kirDump
         case "library", "lib":
-            return .library
+            .library
         default:
-            return nil
+            nil
         }
     }
 
     private static func parseOptimizationLevel(_ value: String) -> OptimizationLevel? {
         switch value {
         case "O0":
-            return .O0
+            .O0
         case "O1":
-            return .O1
+            .O1
         case "O2":
-            return .O2
+            .O2
         case "O3":
-            return .O3
+            .O3
         default:
-            return nil
+            nil
         }
     }
 

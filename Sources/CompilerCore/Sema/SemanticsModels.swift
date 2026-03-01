@@ -11,7 +11,7 @@ public struct SymbolID: Hashable, Sendable {
 public enum SymbolKind: Hashable, Sendable {
     case package
     case `class`
-    case `interface`
+    case interface
     case object
     case enumClass
     case annotationClass
@@ -220,8 +220,13 @@ public final class ClassMemberScope: BaseScope {
         super.init(parent: parent, symbols: symbols)
     }
 
-    public var receiverType: TypeID? { thisType }
-    public var owner: SymbolID { ownerSymbol }
+    public var receiverType: TypeID? {
+        thisType
+    }
+
+    public var owner: SymbolID {
+        ownerSymbol
+    }
 }
 
 public final class FunctionScope: BaseScope {}
@@ -270,7 +275,7 @@ public final class SymbolTable {
 
     public func symbol(_ id: SymbolID) -> SemanticSymbol? {
         let index = Int(id.rawValue)
-        guard index >= 0 && index < symbolsStorage.count else {
+        guard index >= 0, index < symbolsStorage.count else {
             return nil
         }
         return symbolsStorage[index]
@@ -507,8 +512,6 @@ public final class SymbolTable {
     public func accessorOwnerProperty(for accessorSymbol: SymbolID) -> SymbolID? {
         accessorOwnerProperties[accessorSymbol]
     }
-
-
 
     public func setTypeParameterUpperBound(_ bound: TypeID, for symbol: SymbolID) {
         typeParameterUpperBoundsMap[symbol] = bound

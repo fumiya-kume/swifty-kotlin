@@ -18,7 +18,8 @@ struct CaptureAnalyzer {
 
         func recordCapture(for targetExprID: ExprID) {
             guard let symbol = sema.bindings.identifierSymbol(for: targetExprID),
-                  outerSymbols.contains(symbol) else {
+                  outerSymbols.contains(symbol)
+            else {
                 return
             }
             captured.insert(symbol)
@@ -26,11 +27,11 @@ struct CaptureAnalyzer {
 
         func visitBody(_ body: FunctionBody) {
             switch body {
-            case .block(let exprs, _):
+            case let .block(exprs, _):
                 for expr in exprs {
                     visit(expr)
                 }
-            case .expr(let expr, _):
+            case let .expr(expr, _):
                 visit(expr)
             case .unit:
                 break
@@ -45,56 +46,60 @@ struct CaptureAnalyzer {
             case .nameRef:
                 recordCapture(for: currentExprID)
 
-            case .forExpr(_, let iterable, let body, _, _):
+            case let .forExpr(_, iterable, body, _, _):
                 visit(iterable)
                 visit(body)
 
-            case .whileExpr(let condition, let body, _, _):
+            case let .whileExpr(condition, body, _, _):
                 visit(condition)
                 visit(body)
 
-            case .doWhileExpr(let body, let condition, _, _):
+            case let .doWhileExpr(body, condition, _, _):
                 visit(body)
                 visit(condition)
 
-            case .localDecl(_, _, _, let initializer, _):
+            case let .localDecl(_, _, _, initializer, _):
                 if let initializer {
                     visit(initializer)
                 }
 
-            case .localAssign(_, let value, _):
+            case let .localAssign(_, value, _):
                 visit(value)
 
-            case .memberAssign(let receiver, _, let value, _):
+            case let .memberAssign(receiver, _, value, _):
                 visit(receiver)
                 visit(value)
 
-            case .indexedAssign(let receiver, let indices, let value, _):
+            case let .indexedAssign(receiver, indices, value, _):
                 visit(receiver)
-                for idx in indices { visit(idx) }
+                for idx in indices {
+                    visit(idx)
+                }
                 visit(value)
 
-            case .call(let callee, _, let args, _):
+            case let .call(callee, _, args, _):
                 visit(callee)
                 for arg in args {
                     visit(arg.expr)
                 }
 
-            case .memberCall(let receiver, _, _, let args, _):
+            case let .memberCall(receiver, _, _, args, _):
                 visit(receiver)
                 for arg in args {
                     visit(arg.expr)
                 }
 
-            case .indexedAccess(let receiver, let indices, _):
+            case let .indexedAccess(receiver, indices, _):
                 visit(receiver)
-                for idx in indices { visit(idx) }
+                for idx in indices {
+                    visit(idx)
+                }
 
-            case .binary(_, let lhs, let rhs, _):
+            case let .binary(_, lhs, rhs, _):
                 visit(lhs)
                 visit(rhs)
 
-            case .whenExpr(let subject, let branches, let elseExpr, _):
+            case let .whenExpr(subject, branches, elseExpr, _):
                 if let subject {
                     visit(subject)
                 }
@@ -108,19 +113,19 @@ struct CaptureAnalyzer {
                     visit(elseExpr)
                 }
 
-            case .returnExpr(let value, _, _):
+            case let .returnExpr(value, _, _):
                 if let value {
                     visit(value)
                 }
 
-            case .ifExpr(let condition, let thenExpr, let elseExpr, _):
+            case let .ifExpr(condition, thenExpr, elseExpr, _):
                 visit(condition)
                 visit(thenExpr)
                 if let elseExpr {
                     visit(elseExpr)
                 }
 
-            case .tryExpr(let body, let catchClauses, let finallyExpr, _):
+            case let .tryExpr(body, catchClauses, finallyExpr, _):
                 visit(body)
                 for catchClause in catchClauses {
                     visit(catchClause.body)
@@ -129,51 +134,53 @@ struct CaptureAnalyzer {
                     visit(finallyExpr)
                 }
 
-            case .unaryExpr(_, let operand, _):
+            case let .unaryExpr(_, operand, _):
                 visit(operand)
 
-            case .isCheck(let value, _, _, _):
+            case let .isCheck(value, _, _, _):
                 visit(value)
 
-            case .asCast(let value, _, _, _):
+            case let .asCast(value, _, _, _):
                 visit(value)
 
-            case .nullAssert(let value, _):
+            case let .nullAssert(value, _):
                 visit(value)
 
-            case .safeMemberCall(let receiver, _, _, let args, _):
+            case let .safeMemberCall(receiver, _, _, args, _):
                 visit(receiver)
                 for arg in args {
                     visit(arg.expr)
                 }
 
-            case .compoundAssign(_, _, let value, _):
+            case let .compoundAssign(_, _, value, _):
                 visit(value)
 
-            case .indexedCompoundAssign(_, let receiver, let indices, let value, _):
+            case let .indexedCompoundAssign(_, receiver, indices, value, _):
                 visit(receiver)
-                for idx in indices { visit(idx) }
+                for idx in indices {
+                    visit(idx)
+                }
                 visit(value)
 
-            case .throwExpr(let value, _):
+            case let .throwExpr(value, _):
                 visit(value)
 
-            case .lambdaLiteral(_, let body, _, _):
+            case let .lambdaLiteral(_, body, _, _):
                 if !skipNestedClosures {
                     visit(body)
                 }
 
-            case .callableRef(let receiver, _, _):
+            case let .callableRef(receiver, _, _):
                 if let receiver {
                     visit(receiver)
                 }
 
-            case .localFunDecl(_, _, _, let body, _):
+            case let .localFunDecl(_, _, _, body, _):
                 if !skipNestedClosures {
                     visitBody(body)
                 }
 
-            case .blockExpr(let statements, let trailingExpr, _):
+            case let .blockExpr(statements, trailingExpr, _):
                 for statement in statements {
                     visit(statement)
                 }
@@ -181,22 +188,22 @@ struct CaptureAnalyzer {
                     visit(trailingExpr)
                 }
 
-            case .stringTemplate(let parts, _):
+            case let .stringTemplate(parts, _):
                 for part in parts {
-                    if case .expression(let expr) = part {
+                    if case let .expression(expr) = part {
                         visit(expr)
                     }
                 }
 
-            case .inExpr(let lhs, let rhs, _),
-                 .notInExpr(let lhs, let rhs, _):
+            case let .inExpr(lhs, rhs, _),
+                 let .notInExpr(lhs, rhs, _):
                 visit(lhs)
                 visit(rhs)
 
-            case .destructuringDecl(_, _, let initializer, _):
+            case let .destructuringDecl(_, _, initializer, _):
                 visit(initializer)
 
-            case .forDestructuringExpr(_, let iterable, let body, _):
+            case let .forDestructuringExpr(_, iterable, body, _):
                 visit(iterable)
                 visit(body)
 

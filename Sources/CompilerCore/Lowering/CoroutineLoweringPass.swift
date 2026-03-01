@@ -1,7 +1,7 @@
 import Foundation
 
 final class CoroutineLoweringPass: LoweringPass {
-    // Internal visibility is required for cross-file extension decomposition
+    /// Internal visibility is required for cross-file extension decomposition
     static let name = "CoroutineLowering"
 
     private struct SuspendCallLookupKey: Hashable {
@@ -14,14 +14,15 @@ final class CoroutineLoweringPass: LoweringPass {
             ctx.interner.intern("runBlocking"),
             ctx.interner.intern("launch"),
             ctx.interner.intern("async"),
-            ctx.interner.intern("coroutineScope")
+            ctx.interner.intern("coroutineScope"),
         ]
         for decl in module.arena.declarations {
-            if case .function(let function) = decl {
+            if case let .function(function) = decl {
                 if function.isSuspend { return true }
                 for instruction in function.body {
-                    if case .call(_, let callee, _, _, _, _, _) = instruction,
-                       launcherCallees.contains(callee) {
+                    if case let .call(_, callee, _, _, _, _, _) = instruction,
+                       launcherCallees.contains(callee)
+                    {
                         return true
                     }
                 }
@@ -49,11 +50,11 @@ final class CoroutineLoweringPass: LoweringPass {
             kxMiniRunBlockingCallee: runtimeRunBlockingCallee,
             kxMiniLaunchCallee: runtimeLaunchCallee,
             kxMiniAsyncCallee: runtimeAsyncCallee,
-            kxMiniCoroutineScopeCallee: runtimeCoroutineScopeRunCallee
+            kxMiniCoroutineScopeCallee: runtimeCoroutineScopeRunCallee,
         ]
 
         let suspendFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
-            guard case .function(let function) = decl, function.isSuspend else {
+            guard case let .function(function) = decl, function.isSuspend else {
                 return nil
             }
             return function
@@ -62,7 +63,7 @@ final class CoroutineLoweringPass: LoweringPass {
         let suspendFunctionNames = Set(suspendFunctions.map(\.name))
 
         var existingFunctionNames: Set<InternedString> = Set(module.arena.declarations.compactMap { decl in
-            guard case .function(let function) = decl else {
+            guard case let .function(function) = decl else {
                 return nil
             }
             return function.name
@@ -136,7 +137,7 @@ final class CoroutineLoweringPass: LoweringPass {
                 symbol: loweredSymbol,
                 name: loweredName,
                 params: suspendFunction.params + [
-                    KIRParameter(symbol: continuationParameterSymbol, type: continuationType)
+                    KIRParameter(symbol: continuationParameterSymbol, type: continuationType),
                 ],
                 returnType: continuationType,
                 body: loweredBody,
@@ -189,7 +190,7 @@ final class CoroutineLoweringPass: LoweringPass {
             )
 
             var callArgExprs: [KIRExprID] = []
-            for paramIndex in 0..<suspendFunction.params.count {
+            for paramIndex in 0 ..< suspendFunction.params.count {
                 let slotExpr = module.arena.appendExpr(
                     .intLiteral(Int64(paramIndex)),
                     type: intType
@@ -260,7 +261,7 @@ final class CoroutineLoweringPass: LoweringPass {
             kxMiniRunBlockingCallee: ctx.interner.intern("kk_kxmini_run_blocking_with_cont"),
             kxMiniLaunchCallee: ctx.interner.intern("kk_kxmini_launch_with_cont"),
             kxMiniAsyncCallee: ctx.interner.intern("kk_kxmini_async_with_cont"),
-            kxMiniCoroutineScopeCallee: ctx.interner.intern("kk_coroutine_scope_run_with_cont")
+            kxMiniCoroutineScopeCallee: ctx.interner.intern("kk_coroutine_scope_run_with_cont"),
         ]
 
         module.arena.transformFunctions { function in
@@ -268,13 +269,14 @@ final class CoroutineLoweringPass: LoweringPass {
             var loweredBody: [KIRInstruction] = []
             loweredBody.reserveCapacity(function.body.count)
             for instruction in function.body {
-                guard case .call(let symbol, let callee, let arguments, let result, let canThrow, _, let isSuperCall) = instruction else {
+                guard case let .call(symbol, callee, arguments, result, canThrow, _, isSuperCall) = instruction else {
                     loweredBody.append(instruction)
                     continue
                 }
 
                 if symbol == nil,
-                   let runtimeLauncherCallee = kxMiniLauncherRuntimeCallees[callee] {
+                   let runtimeLauncherCallee = kxMiniLauncherRuntimeCallees[callee]
+                {
                     guard arguments.count >= 1 else {
                         ctx.diagnostics.error(
                             "KSWIFTK-CORO-0001",
@@ -286,8 +288,9 @@ final class CoroutineLoweringPass: LoweringPass {
                     }
 
                     guard let argumentExpr = module.arena.expr(arguments[0]),
-                          case .symbolRef(let referencedSymbol) = argumentExpr,
-                          let loweredTarget = loweredBySymbol[referencedSymbol] else {
+                          case let .symbolRef(referencedSymbol) = argumentExpr,
+                          let loweredTarget = loweredBySymbol[referencedSymbol]
+                    else {
                         ctx.diagnostics.error(
                             "KSWIFTK-CORO-0002",
                             "Coroutine launcher '\(ctx.interner.resolve(callee))' requires a suspend function reference argument.",
@@ -415,17 +418,16 @@ final class CoroutineLoweringPass: LoweringPass {
                     continue
                 }
 
-                let loweredTarget: (name: InternedString, symbol: SymbolID)?
-                if let symbol, let bySymbol = loweredBySymbol[symbol] {
-                    loweredTarget = bySymbol
+                let loweredTarget: (name: InternedString, symbol: SymbolID)? = if let symbol, let bySymbol = loweredBySymbol[symbol] {
+                    bySymbol
                 } else if let byNameArity = loweredByUniqueNameArity[
                     SuspendCallLookupKey(name: callee, arity: arguments.count)
                 ] {
-                    loweredTarget = byNameArity
+                    byNameArity
                 } else if let byName = loweredByUniqueName[callee] {
-                    loweredTarget = byName
+                    byName
                 } else {
-                    loweredTarget = nil
+                    nil
                 }
 
                 guard let loweredTarget else {
@@ -482,11 +484,11 @@ final class CoroutineLoweringPass: LoweringPass {
         var maxRaw: Int32 = 0
         for decl in module.arena.declarations {
             switch decl {
-            case .function(let function):
+            case let .function(function):
                 maxRaw = max(maxRaw, function.symbol.rawValue + 1)
-            case .global(let global):
+            case let .global(global):
                 maxRaw = max(maxRaw, global.symbol.rawValue + 1)
-            case .nominalType(let nominal):
+            case let .nominalType(nominal):
                 maxRaw = max(maxRaw, nominal.symbol.rawValue + 1)
             }
         }

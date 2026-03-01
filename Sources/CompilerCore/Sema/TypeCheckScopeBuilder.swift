@@ -143,13 +143,13 @@ struct TypeCheckScopeBuilder {
                 }
                 return symbol.kind != .package
             }
-            if !importedSymbols.isEmpty && !hasPackageImport {
+            if !importedSymbols.isEmpty, !hasPackageImport {
                 for importedSymbol in importedSymbols {
                     explicitImportScope.insert(importedSymbol)
                 }
                 continue
             }
-            if !importedSymbols.isEmpty && hasPackageImport {
+            if !importedSymbols.isEmpty, hasPackageImport {
                 for importedSymbol in importedSymbols {
                     explicitImportScope.insert(importedSymbol)
                 }
@@ -177,16 +177,16 @@ struct TypeCheckScopeBuilder {
         for symbol in allSymbols {
             guard symbol.flags.contains(.synthetic),
                   symbol.kind != .package,
-                  symbol.fqName.count >= 1 else {
+                  symbol.fqName.count >= 1
+            else {
                 continue
             }
-            let candidatePackage: [InternedString]
-            if symbol.fqName.count == 1 {
-                candidatePackage = []
+            let candidatePackage: [InternedString] = if symbol.fqName.count == 1 {
+                []
             } else {
-                candidatePackage = Array(symbol.fqName.dropLast())
+                Array(symbol.fqName.dropLast())
             }
-            if !candidatePackage.isEmpty && !knownPackages.contains(candidatePackage) {
+            if !candidatePackage.isEmpty, !knownPackages.contains(candidatePackage) {
                 continue
             }
             mapping[candidatePackage, default: []].append(symbol.id)
@@ -203,7 +203,7 @@ struct TypeCheckScopeBuilder {
             ["kotlin", "io"],
             ["kotlin", "ranges"],
             ["kotlin", "sequences"],
-            ["kotlin", "text"]
+            ["kotlin", "text"],
         ]
         return packages.map { segments in
             segments.map { interner.intern($0) }

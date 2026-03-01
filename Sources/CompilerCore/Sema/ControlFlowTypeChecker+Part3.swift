@@ -1,7 +1,7 @@
 import Foundation
 
-/// Handles control flow expression type inference (for, while, do-while, if, try, when).
-/// Derived from TypeCheckSemaPhase+InferControlFlow.swift.
+// Handles control flow expression type inference (for, while, do-while, if, try, when).
+// Derived from TypeCheckSemaPhase+InferControlFlow.swift.
 
 extension ControlFlowTypeChecker {
     func inferWhenExpr(
@@ -23,8 +23,9 @@ extension ControlFlowTypeChecker {
             let subjectType = driver.inferExpr(subjectID, ctx: ctx, locals: &locals)
             let subjectLocalBinding: (name: InternedString, type: TypeID, symbol: SymbolID, isStable: Bool, isMutable: Bool)? = {
                 guard let subjectExpr = ast.arena.expr(subjectID),
-                      case .nameRef(let subjectName, _) = subjectExpr,
-                      let local = locals[subjectName] else {
+                      case let .nameRef(subjectName, _) = subjectExpr,
+                      let local = locals[subjectName]
+                else {
                     return nil
                 }
                 return (
@@ -36,7 +37,8 @@ extension ControlFlowTypeChecker {
             let hasExplicitNullBranch = branches.contains { branch in
                 branch.conditions.contains { cond in
                     guard let conditionExpr = ast.arena.expr(cond),
-                          case .nameRef(let name, _) = conditionExpr else {
+                          case let .nameRef(name, _) = conditionExpr
+                    else {
                         return false
                     }
                     return interner.resolve(name) == "null"
@@ -61,7 +63,7 @@ extension ControlFlowTypeChecker {
                         case .boolLiteral(false, _):
                             if condType == boolType { hasFalseCase = true }
                             covered.insert(interner.intern("false"))
-                        case .nameRef(let name, _):
+                        case let .nameRef(name, _):
                             if interner.resolve(name) == "null" {
                                 hasNullCase = true
                                 isNullBranch = true
@@ -93,7 +95,7 @@ extension ControlFlowTypeChecker {
                             branchLocals[subjectLocalBinding.name] = (
                                 narrowedType, subjectLocalBinding.symbol, subjectLocalBinding.isMutable, true
                             )
-                        } else if hasExplicitNullBranch && !isNullBranch {
+                        } else if hasExplicitNullBranch, !isNullBranch {
                             let nonNullState = ctx.dataFlow.whenNonNullBranchState(
                                 subjectSymbol: subjectLocalBinding.symbol,
                                 subjectType: subjectLocalBinding.type,
@@ -157,7 +159,7 @@ extension ControlFlowTypeChecker {
             }
 
             // Propagate definite initialization across exhaustive when branches.
-            if isExhaustive && !allBranchLocals.isEmpty {
+            if isExhaustive, !allBranchLocals.isEmpty {
                 for (name, local) in locals {
                     if !local.isInitialized {
                         let allInit = allBranchLocals.allSatisfy { branchLocal in
@@ -193,7 +195,7 @@ extension ControlFlowTypeChecker {
                 var trueStates: [DataFlowState] = []
                 for cond in branch.conditions {
                     let condType = driver.inferExpr(cond, ctx: condCtx, locals: &branchLocals)
-                    if condType != boolType && condType != sema.types.errorType {
+                    if condType != boolType, condType != sema.types.errorType {
                         ctx.semaCtx.diagnostics.error(
                             "KSWIFTK-SEMA-0032",
                             "Subject-less when branch condition must be a Boolean expression.",
@@ -262,7 +264,7 @@ extension ControlFlowTypeChecker {
             }
 
             // Propagate definite initialization across exhaustive when branches.
-            if isExhaustive && !allBranchLocals.isEmpty {
+            if isExhaustive, !allBranchLocals.isEmpty {
                 for (name, local) in locals {
                     if !local.isInitialized {
                         let allInit = allBranchLocals.allSatisfy { branchLocal in
@@ -285,5 +287,4 @@ extension ControlFlowTypeChecker {
     /// Returns true if the given expression is a range/progression operator
     /// (rangeTo, rangeUntil, downTo, step).
     // MARK: - Destructuring Declarations
-
 }

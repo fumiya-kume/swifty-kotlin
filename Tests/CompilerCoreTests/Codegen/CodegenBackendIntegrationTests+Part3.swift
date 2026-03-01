@@ -1,7 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
 
 extension CodegenBackendIntegrationTests {
     func testLlvmCapiBackendCanLinkAndRunExecutable() throws {
@@ -42,7 +41,8 @@ extension CodegenBackendIntegrationTests {
 
     func testLlvmCapiBackendEmitsRuntimeStringAndCoroutineHelpersInLLVMIR() throws {
         guard let bindings = LLVMCAPIBindings.load(),
-              bindings.smokeTestContextLifecycle() else {
+              bindings.smokeTestContextLifecycle()
+        else {
             throw XCTSkip("LLVM C API bindings are unavailable in this environment.")
         }
 
@@ -149,7 +149,7 @@ extension CodegenBackendIntegrationTests {
                     thrownResult: nil
                 ),
                 .call(symbol: nil, callee: interner.intern("external_throwing"), arguments: [], result: throwingResult, canThrow: true, thrownResult: nil),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -273,5 +273,4 @@ extension CodegenBackendIntegrationTests {
         )
         XCTAssertTrue(failingDiagnostics.diagnostics.contains { $0.code == "KSWIFTK-BACKEND-0001" })
     }
-
 }

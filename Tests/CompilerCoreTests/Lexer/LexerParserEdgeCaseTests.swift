@@ -1,6 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 final class LexerParserEdgeCaseTests: XCTestCase {
     func testLexerConsumesTriviaIdentifiersAndAllSymbols() {
@@ -14,7 +14,7 @@ final class LexerParserEdgeCaseTests: XCTestCase {
 
         let result = lex(source)
         let symbols = Set(result.tokens.compactMap { token -> Symbol? in
-            if case .symbol(let symbol) = token.kind {
+            if case let .symbol(symbol) = token.kind {
                 return symbol
             }
             return nil
@@ -27,7 +27,7 @@ final class LexerParserEdgeCaseTests: XCTestCase {
             .question, .bangBang, .doubleColon, .fatArrow, .arrow, .dotDot,
             .plus, .minus, .star, .slash, .percent, .bang, .assign,
             .lessThan, .greaterThan, .dot, .comma, .semicolon, .colon,
-            .lParen, .rParen, .lBracket, .rBracket, .lBrace, .rBrace, .at, .hash
+            .lParen, .rParen, .lBracket, .rBracket, .lBrace, .rBrace, .at, .hash,
         ]
         XCTAssertEqual(symbols, expected)
 
@@ -194,7 +194,7 @@ final class LexerParserEdgeCaseTests: XCTestCase {
                 makeToken(kind: .symbol(.lessThan)),
                 makeToken(kind: .identifier(interner.intern("T"))),
                 makeToken(kind: .symbol(.greaterThan)),
-                makeToken(kind: .symbol(.lParen))
+                makeToken(kind: .symbol(.lParen)),
             ],
             interner: interner,
             diagnostics: diagnostics
@@ -212,7 +212,7 @@ final class LexerParserEdgeCaseTests: XCTestCase {
                 makeToken(kind: .symbol(.comma)),
                 makeToken(kind: .symbol(.star)),
                 makeToken(kind: .symbol(.greaterThan)),
-                makeToken(kind: .symbol(.colon))
+                makeToken(kind: .symbol(.colon)),
             ],
             interner: interner,
             diagnostics: diagnostics
@@ -231,7 +231,7 @@ final class LexerParserEdgeCaseTests: XCTestCase {
                 makeToken(kind: .symbol(.comma)),
                 makeToken(kind: .symbol(.star)),
                 makeToken(kind: .symbol(.greaterThan)),
-                makeToken(kind: .symbol(.colon))
+                makeToken(kind: .symbol(.colon)),
             ],
             interner: interner,
             diagnostics: diagnostics
@@ -242,7 +242,7 @@ final class LexerParserEdgeCaseTests: XCTestCase {
             tokens: [
                 makeToken(kind: .symbol(.lessThan)),
                 makeToken(kind: .symbol(.greaterThan)),
-                makeToken(kind: .symbol(.lParen))
+                makeToken(kind: .symbol(.lParen)),
             ],
             interner: interner,
             diagnostics: diagnostics
@@ -255,7 +255,7 @@ final class LexerParserEdgeCaseTests: XCTestCase {
                 makeToken(kind: .symbol(.dot)),
                 makeToken(kind: .identifier(interner.intern("T"))),
                 makeToken(kind: .symbol(.greaterThan)),
-                makeToken(kind: .symbol(.lParen))
+                makeToken(kind: .symbol(.lParen)),
             ],
             interner: interner,
             diagnostics: diagnostics
@@ -276,7 +276,7 @@ final class LexerParserEdgeCaseTests: XCTestCase {
                 makeToken(kind: .symbol(.rParen)),
                 makeToken(kind: .symbol(.assign)),
                 makeToken(kind: .identifier(interner.intern("x"))),
-                makeToken(kind: .eof)
+                makeToken(kind: .eof),
             ],
             interner: interner,
             diagnostics: diagnostics
@@ -367,7 +367,7 @@ final class LexerParserEdgeCaseTests: XCTestCase {
             token(.symbol(.semicolon)),
             token(.intLiteral("2")),
             token(.symbol(.rBrace)),
-            token(.eof)
+            token(.eof),
         ]
 
         let parser = KotlinParser(tokens: tokens, interner: interner, diagnostics: diagnostics)
@@ -406,7 +406,7 @@ final class LexerParserEdgeCaseTests: XCTestCase {
             makeToken(kind: .symbol(.rParen)),
             makeToken(kind: .symbol(.assign)),
             makeToken(kind: .identifier(interner.intern("x"))),
-            makeToken(kind: .eof)
+            makeToken(kind: .eof),
         ]
         let typeArgParser = KotlinParser(tokens: typeArgTokens, interner: interner, diagnostics: typeArgDiagnostics)
         let typeArgParsed = typeArgParser.parseFile()
@@ -421,7 +421,7 @@ final class LexerParserEdgeCaseTests: XCTestCase {
             makeToken(kind: .identifier(interner.intern("x"))),
             makeToken(kind: .symbol(.colon)),
             makeToken(kind: .identifier(interner.intern("Int"))),
-            makeToken(kind: .eof)
+            makeToken(kind: .eof),
         ]
         let groupParser = KotlinParser(tokens: groupTokens, interner: interner, diagnostics: groupDiagnostics)
         _ = groupParser.parseFile()

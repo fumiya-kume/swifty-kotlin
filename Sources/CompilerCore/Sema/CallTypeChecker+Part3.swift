@@ -1,7 +1,7 @@
 import Foundation
 
-/// Handles call expression type inference (function calls, member calls, safe member calls).
-/// Derived from TypeCheckSemaPhase+InferCallsAndBinary.swift.
+// Handles call expression type inference (function calls, member calls, safe member calls).
+// Derived from TypeCheckSemaPhase+InferCallsAndBinary.swift.
 
 extension CallTypeChecker {
     func inferMemberCallImpl(
@@ -26,7 +26,8 @@ extension CallTypeChecker {
 
         // Primitive member function: Int/Long.inv() → same type (P5-103)
         if interner.resolve(calleeName) == "inv",
-           args.isEmpty {
+           args.isEmpty
+        {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
             if lookupReceiverType == intType || lookupReceiverType == longType {
@@ -42,7 +43,8 @@ extension CallTypeChecker {
         if !safeCall {
             isSuperCall = ast.arena.expr(receiverID).map { if case .superRef = $0 { true } else { false } } ?? false
             if isSuperCall, let currentReceiverType = ctx.implicitReceiverType,
-               let classSymbol = driver.helpers.nominalSymbol(of: currentReceiverType, types: sema.types) {
+               let classSymbol = driver.helpers.nominalSymbol(of: currentReceiverType, types: sema.types)
+            {
                 var queue = sema.symbols.directSupertypes(for: classSymbol)
                 var visited: Set<SymbolID> = [classSymbol]
                 while !queue.isEmpty {
@@ -63,7 +65,8 @@ extension CallTypeChecker {
         // from resolving when there is no companion with that name.
         let isClassNameReceiver: Bool = {
             guard let receiverSymbolID = sema.bindings.identifierSymbol(for: receiverID),
-                  let receiverSymbol = sema.symbols.symbol(receiverSymbolID) else {
+                  let receiverSymbol = sema.symbols.symbol(receiverSymbolID)
+            else {
                 return false
             }
             return receiverSymbol.kind == .class || receiverSymbol.kind == .interface || receiverSymbol.kind == .enumClass
@@ -80,7 +83,8 @@ extension CallTypeChecker {
             // methods and shadow companion members of the same name.
             if let ownerNominal = driver.helpers.nominalSymbol(of: memberLookupType, types: sema.types),
                let companionSymbol = sema.symbols.companionObjectSymbol(for: ownerNominal),
-               let companionSym = sema.symbols.symbol(companionSymbol) {
+               let companionSym = sema.symbols.symbol(companionSymbol)
+            {
                 let companionMemberFQName = companionSym.fqName + [calleeName]
 
                 // Try companion property access when no arguments are provided
@@ -91,16 +95,19 @@ extension CallTypeChecker {
                     let propertyCandidate = sema.symbols.lookupAll(fqName: companionMemberFQName).first(where: { cid in
                         guard let sym = sema.symbols.symbol(cid),
                               sym.kind == .property,
-                              sema.symbols.parentSymbol(for: cid) == companionSymbol else {
+                              sema.symbols.parentSymbol(for: cid) == companionSymbol
+                        else {
                             return false
                         }
                         return true
                     })
                     if let propSymbol = propertyCandidate,
-                       let propType = sema.symbols.propertyType(for: propSymbol) {
+                       let propType = sema.symbols.propertyType(for: propSymbol)
+                    {
                         // Check visibility before returning the property.
                         if let propSym = sema.symbols.symbol(propSymbol),
-                           !ctx.visibilityChecker.isAccessible(propSym, fromFile: ctx.currentFileID, enclosingClass: ctx.enclosingClassSymbol) {
+                           !ctx.visibilityChecker.isAccessible(propSym, fromFile: ctx.currentFileID, enclosingClass: ctx.enclosingClassSymbol)
+                        {
                             driver.helpers.emitVisibilityError(for: propSym, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
                             return driver.helpers.bindAndReturnErrorType(id, sema: sema)
                         }
@@ -120,7 +127,8 @@ extension CallTypeChecker {
                           symbol.kind == .function,
                           sema.symbols.parentSymbol(for: candidate) == companionSymbol,
                           let signature = sema.symbols.functionSignature(for: candidate),
-                          signature.receiverType != nil else {
+                          signature.receiverType != nil
+                    else {
                         continue
                     }
                     companionCandidates.append(candidate)
@@ -152,7 +160,8 @@ extension CallTypeChecker {
                    let parentSymbol = sema.symbols.parentSymbol(for: first),
                    let ownerNominal = driver.helpers.nominalSymbol(of: memberLookupType, types: sema.types),
                    parentSymbol != ownerNominal,
-                   sema.symbols.companionObjectSymbol(for: ownerNominal) == parentSymbol {
+                   sema.symbols.companionObjectSymbol(for: ownerNominal) == parentSymbol
+                {
                     companionReceiverType = sema.types.make(.classType(ClassType(classSymbol: parentSymbol, args: [], nullability: .nonNull)))
                 }
                 allCandidates = memberCandidates
@@ -193,10 +202,12 @@ extension CallTypeChecker {
                    named: calleeName,
                    receiverType: memberLookupType,
                    sema: sema
-               ) {
+               )
+            {
                 // Check visibility before returning the property.
                 if let propSymbol = sema.symbols.symbol(propResult.symbol),
-                   !ctx.visibilityChecker.isAccessible(propSymbol, fromFile: ctx.currentFileID, enclosingClass: ctx.enclosingClassSymbol) {
+                   !ctx.visibilityChecker.isAccessible(propSymbol, fromFile: ctx.currentFileID, enclosingClass: ctx.enclosingClassSymbol)
+                {
                     driver.helpers.emitVisibilityError(for: propSymbol, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
                     return driver.helpers.bindAndReturnErrorType(id, sema: sema)
                 }
@@ -214,7 +225,8 @@ extension CallTypeChecker {
                    receiverType: memberLookupType,
                    expectedType: expectedType,
                    ctx: ctx
-               ) {
+               )
+            {
                 let finalType = safeCall ? sema.types.makeNullable(extensionPropertyType) : extensionPropertyType
                 sema.bindings.bindExprType(id, type: finalType)
                 return finalType
@@ -234,28 +246,26 @@ extension CallTypeChecker {
                 let collectionMembers: Set<String> = [
                     "size", "get", "contains", "containsKey",
                     "isEmpty", "first", "last", "indexOf",
-                    "count", "iterator"
+                    "count", "iterator",
                 ]
                 if collectionMembers.contains(memberName) {
-                    let resultType: TypeID
-                    switch memberName {
+                    let resultType: TypeID = switch memberName {
                     case "size", "count", "indexOf":
-                        resultType = sema.types.make(.primitive(.int, .nonNull))
+                        sema.types.make(.primitive(.int, .nonNull))
                     case "isEmpty", "contains", "containsKey":
-                        resultType = sema.types.make(.primitive(.boolean, .nonNull))
+                        sema.types.make(.primitive(.boolean, .nonNull))
                     default:
-                        resultType = sema.types.anyType
+                        sema.types.anyType
                     }
                     let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
                 }
             }
-            let isCoroutineHandleReceiver: Bool
-            if case .primitive = sema.types.kind(of: lookupReceiverType) {
-                isCoroutineHandleReceiver = false
+            let isCoroutineHandleReceiver = if case .primitive = sema.types.kind(of: lookupReceiverType) {
+                false
             } else {
-                isCoroutineHandleReceiver = true
+                true
             }
             if !isClassNameReceiver, args.isEmpty, isCoroutineHandleReceiver {
                 let memberName = interner.resolve(calleeName)
@@ -307,7 +317,8 @@ extension CallTypeChecker {
         if isSuperCall,
            let chosenSym = sema.symbols.symbol(chosen),
            chosenSym.flags.contains(.abstractType),
-           (chosenSym.kind == .function || chosenSym.kind == .property) {
+           chosenSym.kind == .function || chosenSym.kind == .property
+        {
             let memberName = interner.resolve(calleeName)
             ctx.semaCtx.diagnostics.error(
                 "KSWIFTK-SEMA-ABSTRACT",
@@ -325,7 +336,8 @@ extension CallTypeChecker {
                receiverType: lookupReceiverType,
                signature: signature,
                symbols: sema.symbols
-           ) {
+           )
+        {
             // Check if any parameter uses a write-forbidden type parameter
             if let violatingParamIndex = sema.types.checkVarianceViolationInParameters(
                 signature: signature,
@@ -391,7 +403,8 @@ extension CallTypeChecker {
             guard let symbol = sema.symbols.symbol(candidate),
                   symbol.kind == .property,
                   sema.symbols.extensionPropertyReceiverType(for: candidate) != nil,
-                  let getterAccessor = sema.symbols.extensionPropertyGetterAccessor(for: candidate) else {
+                  let getterAccessor = sema.symbols.extensionPropertyGetterAccessor(for: candidate)
+            else {
                 continue
             }
             getterCandidates.append(getterAccessor)
@@ -443,5 +456,4 @@ extension CallTypeChecker {
             typeVarBySymbol: typeVarBySymbol
         )
     }
-
 }
