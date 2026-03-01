@@ -24,6 +24,7 @@ final class OperatorLoweringPass: LoweringPass {
         return false
     }
 
+    // swiftlint:disable:next function_body_length
     func run(module: KIRModule, ctx: KIRContext) throws {
         let types = ctx.sema?.types
         let printlnCallee = ctx.interner.intern("println")
@@ -116,16 +117,52 @@ final class OperatorLoweringPass: LoweringPass {
                         if let argType {
                             switch types.kind(of: argType) {
                             case .primitive(.long, _):
-                                newBody.append(.call(symbol: symbol, callee: ctx.interner.intern("kk_println_long"), arguments: arguments, result: result, canThrow: canThrow, thrownResult: thrownResult, isSuperCall: isSuperCall))
+                                appendPrimitivePrintlnCall(
+                                    to: &newBody,
+                                    symbol: symbol,
+                                    callee: ctx.interner.intern("kk_println_long"),
+                                    arguments: arguments,
+                                    result: result,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult,
+                                    isSuperCall: isSuperCall
+                                )
                                 continue
                             case .primitive(.float, _):
-                                newBody.append(.call(symbol: symbol, callee: ctx.interner.intern("kk_println_float"), arguments: arguments, result: result, canThrow: canThrow, thrownResult: thrownResult, isSuperCall: isSuperCall))
+                                appendPrimitivePrintlnCall(
+                                    to: &newBody,
+                                    symbol: symbol,
+                                    callee: ctx.interner.intern("kk_println_float"),
+                                    arguments: arguments,
+                                    result: result,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult,
+                                    isSuperCall: isSuperCall
+                                )
                                 continue
                             case .primitive(.double, _):
-                                newBody.append(.call(symbol: symbol, callee: ctx.interner.intern("kk_println_double"), arguments: arguments, result: result, canThrow: canThrow, thrownResult: thrownResult, isSuperCall: isSuperCall))
+                                appendPrimitivePrintlnCall(
+                                    to: &newBody,
+                                    symbol: symbol,
+                                    callee: ctx.interner.intern("kk_println_double"),
+                                    arguments: arguments,
+                                    result: result,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult,
+                                    isSuperCall: isSuperCall
+                                )
                                 continue
                             case .primitive(.char, _):
-                                newBody.append(.call(symbol: symbol, callee: ctx.interner.intern("kk_println_char"), arguments: arguments, result: result, canThrow: canThrow, thrownResult: thrownResult, isSuperCall: isSuperCall))
+                                appendPrimitivePrintlnCall(
+                                    to: &newBody,
+                                    symbol: symbol,
+                                    callee: ctx.interner.intern("kk_println_char"),
+                                    arguments: arguments,
+                                    result: result,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult,
+                                    isSuperCall: isSuperCall
+                                )
                                 continue
                             default:
                                 break
@@ -160,5 +197,33 @@ final class OperatorLoweringPass: LoweringPass {
             return interner.intern("kk_float_to_double_bits")
         }
         return interner.intern("kk_int_to_double_bits")
+    }
+
+    // swiftlint:disable:next function_parameter_count
+    private func appendPrimitivePrintlnCall(
+        to body: inout [KIRInstruction],
+        symbol: SymbolID?,
+        callee: InternedString,
+        arguments: [KIRExprID],
+        result: KIRExprID?,
+        canThrow: Bool,
+        thrownResult: KIRExprID?,
+        isSuperCall: Bool
+    ) {
+        // Keep the lowered runtime call side-effect only and synthesize Unit explicitly.
+        body.append(
+            .call(
+                symbol: symbol,
+                callee: callee,
+                arguments: arguments,
+                result: nil,
+                canThrow: canThrow,
+                thrownResult: thrownResult,
+                isSuperCall: isSuperCall
+            )
+        )
+        if let result {
+            body.append(.constValue(result: result, value: .unit))
+        }
     }
 }

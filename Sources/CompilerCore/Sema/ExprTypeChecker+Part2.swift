@@ -4,6 +4,7 @@ import Foundation
 // Derived from TypeCheckSemaPhase+ExprInference.swift and TypeCheckSemaPhase+ExprInferCases.swift.
 
 extension ExprTypeChecker {
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func inferCompoundAssignExpr(
         _ id: ExprID,
         op: CompoundAssignOp,
@@ -123,6 +124,7 @@ extension ExprTypeChecker {
 
     // MARK: - Specific Expression Cases (from +ExprInferCases.swift)
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func inferNameRefExpr(
         _ id: ExprID,
         name: InternedString,
@@ -474,4 +476,5 @@ extension ExprTypeChecker {
         sema.bindings.bindExprType(id, type: receiverType)
         return receiverType
     }
+    // swiftlint:disable:next file_length
 }

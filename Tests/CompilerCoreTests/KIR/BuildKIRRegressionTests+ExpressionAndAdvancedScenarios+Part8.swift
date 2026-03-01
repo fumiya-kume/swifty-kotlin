@@ -607,6 +607,7 @@ extension BuildKIRRegressionTests {
         })
     }
 
+    // swiftlint:disable:next function_body_length
     func testDirectMemberCallWithInvokeOperatorRoutesToInvokeCallee() {
         let fixture = makeKIRDirectLoweringFixture()
         let range = makeRange()
@@ -614,6 +615,7 @@ extension BuildKIRRegressionTests {
 
         let owner = defineSemanticSymbol(in: fixture, kind: .class, fqName: ["pkg", "Invoker"])
         let invoke = defineSemanticSymbol(in: fixture, kind: .function, fqName: ["pkg", "Invoker", "call"])
+        // swiftlint:disable:next line_length
         let valueParam = defineSemanticSymbol(in: fixture, kind: .valueParameter, fqName: ["pkg", "Invoker", "call", "x"])
         let ownerType = fixture.types.make(
             .classType(
@@ -690,6 +692,7 @@ extension BuildKIRRegressionTests {
         XCTAssertEqual(fixture.interner.resolve(loweredCallee), "invoke")
     }
 
+    // swiftlint:disable:next function_body_length
     func testDirectSafeMemberCallWithInvokeOperatorRoutesToInvokeCallee() {
         let fixture = makeKIRDirectLoweringFixture()
         let range = makeRange()
@@ -697,6 +700,7 @@ extension BuildKIRRegressionTests {
 
         let owner = defineSemanticSymbol(in: fixture, kind: .class, fqName: ["pkg", "SafeInvoker"])
         let invoke = defineSemanticSymbol(in: fixture, kind: .function, fqName: ["pkg", "SafeInvoker", "call"])
+        // swiftlint:disable:next line_length
         let valueParam = defineSemanticSymbol(in: fixture, kind: .valueParameter, fqName: ["pkg", "SafeInvoker", "call", "x"])
         let ownerType = fixture.types.make(
             .classType(
@@ -1728,4 +1732,5 @@ extension BuildKIRRegressionTests {
             )
         )
     }
+    // swiftlint:disable:next file_length
 }

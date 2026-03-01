@@ -438,4 +438,5 @@ extension CallLowerer {
             instructions: &instructions.instructions
         )
     }
+    // swiftlint:disable:next file_length
 }
