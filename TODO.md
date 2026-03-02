@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-03-01
+最終更新: 2026-03-02
 
 ## 運用ルール
 
@@ -31,7 +31,7 @@
   - [ ] `\uXXXX` Unicode エスケープを Lexer で 4 桁 hex → UTF-16 コードポイントへ変換する
   - [ ] 不正なエスケープシーケンス（`\q` 等）に対して `KSWIFTK-LEX-*` 診断を出す
   - [ ] Char 算術（`'a' + 1`・`'z' - 'a'`）の型推論と runtime 演算を実装する
-  - [ ] Char エスケープ・Unicode escape の diff/golden ケースを追加する
+  - [x] Char エスケープ・Unicode escape の diff/golden ケースを追加する（`Scripts/diff_cases/char_escape.kt` / `GoldenCases/Lexer/char_literals.kt`）
   - **完了条件**: `'\u0041'` が `'A'` と同一 Char 値になり、不正エスケープが診断される
 
 
@@ -60,7 +60,7 @@
   - [ ] star projection `*` を `out Any?` として扱い、write を禁止・read を `Any?` として型付けする
   - [ ] use-site variance と declaration-site variance の合成規則（in×in=out 等）を `TypeSystem` に実装する
   - [ ] variance 違反のメンバアクセスに `KSWIFTK-SEMA-VAR-*` 診断を出す
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task TYPE-003`
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task TYPE-003`（2026-03-02: diff case `Scripts/diff_cases/star_projection.kt` を追加）
   - **完了条件**: `val list: MutableList<out Number>` で `.add(...)` が型エラー、`.get(0)` が `Number` になる
 
 
@@ -109,7 +109,7 @@
   - [ ] Sema で label scope を管理し、`return@label` が lambda/fun のいずれを対象にするか解決する
   - [ ] `break@outer` / `continue@outer` を nested loop の外側ループ制御フローへ接続する
   - [ ] `return@label` がラムダ内から外側関数へ non-local return する場合の lowering を実装する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task EXPR-004`
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task EXPR-004`（2026-03-02: parser golden `GoldenCases/Parser/labeled_control_flow.kt` を追加）
   - **完了条件**: `outer@ for (...) { for (...) { break@outer } }` が外側ループを抜け `kotlinc` と一致
 
 ---
@@ -131,7 +131,7 @@
   - [ ] `finally` ブロックの戻り値が型推論を汚染しない（`Unit` 扱い）ことを保証する
   - [ ] `catch` ブランチが複数ある場合の各ブランチ型合流を実装する
   - [ ] some exception type のみ catch し残りを再 throw する制御フロー型推論を実装する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CTRL-002`
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CTRL-002`（2026-03-02: diff case `Scripts/diff_cases/try_expression.kt` を追加）
   - **完了条件**: `val x: String = try { "ok" } catch (e: Exception) { "err" }` が型エラーなしでコンパイルされる
 
 
