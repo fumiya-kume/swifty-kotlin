@@ -223,7 +223,7 @@ extension ExprTypeChecker {
         let sema = ctx.sema
 
         // Extract label from the lambda literal AST node for labeled lambda support
-        let label: InternedString? = if case let .lambdaLiteral(_, _, l, _) = ast.arena.expr(id) { l } else { nil }
+        let label: InternedString? = if case let .lambdaLiteral(_, _, lbl, _) = ast.arena.expr(id) { lbl } else { nil }
 
         let expectedFunctionType: FunctionType? = if let expectedType,
                                                      case let .functionType(functionType) = sema.types.kind(of: expectedType)
