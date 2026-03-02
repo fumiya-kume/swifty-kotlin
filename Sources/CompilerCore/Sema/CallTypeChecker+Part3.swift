@@ -93,7 +93,7 @@ extension CallTypeChecker {
         var isSuperCall = false
         var supertypeSymbols: Set<SymbolID> = []
         if !safeCall {
-            isSuperCall = ast.arena.expr(receiverID).map { if case .superRef = $0 { true } else { false } } ?? false
+            isSuperCall = ast.arena.expr(receiverID).map { if case .superRef(_, _) = $0 { true } else { false } } ?? false
             if isSuperCall, let currentReceiverType = ctx.implicitReceiverType,
                let classSymbol = driver.helpers.nominalSymbol(of: currentReceiverType, types: sema.types)
             // swiftlint:disable:next opening_brace

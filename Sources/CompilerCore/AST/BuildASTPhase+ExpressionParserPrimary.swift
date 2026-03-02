@@ -139,7 +139,27 @@ extension BuildASTPhase.ExpressionParser {
 
         case .keyword(.super):
             _ = consume()
-            return astArena.appendExpr(.superRef(token.range))
+            // Parse optional interface qualifier: super<InterfaceName>
+            var qualifier: InternedString?
+            if let ltToken = current(), ltToken.kind == .symbol(.lessThan) {
+                let savedIdx = index
+                _ = consume() // consume '<'
+                if let nameToken = current(), let name = identifierFromToken(nameToken) {
+                    _ = consume() // consume identifier
+                    if let gtToken = current(), gtToken.kind == .symbol(.greaterThan) {
+                        _ = consume() // consume '>'
+                        qualifier = name
+                    } else {
+                        // Not a valid super<Name> syntax, restore
+                        index = savedIdx
+                    }
+                } else {
+                    index = savedIdx
+                }
+            }
+            let endPos = qualifier != nil ? tokens[index - 1].range.end : token.range.end
+            let superRange = SourceRange(start: token.range.start, end: endPos)
+            return astArena.appendExpr(.superRef(interfaceQualifier: qualifier, superRange))
 
         case .keyword(.this):
             _ = consume()

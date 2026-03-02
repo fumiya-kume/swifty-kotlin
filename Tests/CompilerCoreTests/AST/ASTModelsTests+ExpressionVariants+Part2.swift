@@ -192,10 +192,17 @@ extension ASTModelsTests {
     func testExprSuperRefAndThisRef() {
         let interner = StringInterner()
         let r = makeRange(start: 0, end: 5)
-        let superRef = Expr.superRef(r)
-        if case let .superRef(range) = superRef {
+        let superRef = Expr.superRef(interfaceQualifier: nil, r)
+        if case let .superRef(qualifier, range) = superRef {
+            XCTAssertNil(qualifier)
             XCTAssertEqual(range, r)
         } else { XCTFail("Expected .superRef") }
+
+        let qualifiedSuperRef = Expr.superRef(interfaceQualifier: interner.intern("MyInterface"), r)
+        if case let .superRef(qualifier, range) = qualifiedSuperRef {
+            XCTAssertEqual(qualifier, interner.intern("MyInterface"))
+            XCTAssertEqual(range, r)
+        } else { XCTFail("Expected .superRef with qualifier") }
 
         let thisRef = Expr.thisRef(label: nil, r)
         if case let .thisRef(label, _) = thisRef {
