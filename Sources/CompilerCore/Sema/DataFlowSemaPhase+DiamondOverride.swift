@@ -144,9 +144,9 @@ extension DataFlowSemaPhase {
 
     private func extractDeclRange(_ decl: Decl) -> SourceRange? {
         switch decl {
-        case let .classDecl(classDecl): return classDecl.range
-        case let .objectDecl(objectDecl): return objectDecl.range
-        default: return nil
+        case let .classDecl(classDecl): classDecl.range
+        case let .objectDecl(objectDecl): objectDecl.range
+        default: nil
         }
     }
 }
