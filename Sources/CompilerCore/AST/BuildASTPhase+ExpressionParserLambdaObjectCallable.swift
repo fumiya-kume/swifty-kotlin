@@ -41,6 +41,20 @@ extension BuildASTPhase.ExpressionParser {
 
         let paramTokens = Array(bodyTokens[..<arrowIndex])
         let lambdaBodySlice = bodyTokens[(arrowIndex + 1)...]
+
+        // Check for lambda destructuring: { (a, b) -> body }
+        // In Kotlin, parenthesized params in a lambda mean destructuring of a single parameter.
+        if let destructuringResult = parseLambdaDestructuringLiteral(
+            paramTokens: paramTokens,
+            bodySlice: lambdaBodySlice,
+            openBrace: openBrace,
+            end: end,
+            label: label,
+            start: start
+        ) {
+            return destructuringResult
+        }
+
         let params = parseLambdaParamNames(from: paramTokens)
 
         let bodyExpr: ExprID
@@ -216,6 +230,133 @@ extension BuildASTPhase.ExpressionParser {
             }
         }
         return Array(tokens.dropFirst().dropLast())
+    }
+
+    /// Detect and parse lambda destructuring: `{ (a, b) -> body }`
+    /// In Kotlin, a parenthesized parameter list in a lambda means the single parameter
+    /// is destructured via componentN(). This desugars to:
+    ///   `{ __destructured_N -> val (a, b) = __destructured_N; body }`
+    // swiftlint:disable:next function_body_length
+    private func parseLambdaDestructuringLiteral(
+        paramTokens: [Token],
+        bodySlice: ArraySlice<Token>,
+        openBrace: Token,
+        end: SourceLocation,
+        label: InternedString?,
+        start: SourceLocation?
+    ) -> ExprID? {
+        // Must start with `(` and end with `)` to be destructuring
+        guard paramTokens.count >= 3,
+              paramTokens.first?.kind == .symbol(.lParen),
+              paramTokens.last?.kind == .symbol(.rParen)
+        else {
+            return nil
+        }
+
+        // Verify the parens are balanced and enclosing
+        var depth = 0
+        for (idx, token) in paramTokens.enumerated() {
+            switch token.kind {
+            case .symbol(.lParen):
+                depth += 1
+            case .symbol(.rParen):
+                depth -= 1
+                if depth == 0, idx != paramTokens.count - 1 {
+                    // Closing paren is not at the end — not a simple destructuring
+                    return nil
+                }
+            default:
+                break
+            }
+        }
+
+        // Parse the names inside the parens
+        let innerTokens = Array(paramTokens.dropFirst().dropLast())
+        var names: [InternedString?] = []
+        var idx = 0
+        while idx < innerTokens.count {
+            let token = innerTokens[idx]
+            switch token.kind {
+            case .symbol(.comma):
+                idx += 1
+                continue
+            case let .identifier(name):
+                let nameStr = interner.resolve(name)
+                if nameStr == "_" {
+                    names.append(nil)
+                } else {
+                    names.append(name)
+                }
+                idx += 1
+            case let .backtickedIdentifier(name):
+                names.append(name)
+                idx += 1
+            default:
+                // Skip type annotations (`: Type`) after variable names
+                if token.kind == .symbol(.colon) {
+                    idx += 1
+                    var typeDepth = BuildASTPhase.BracketDepth()
+                    while idx < innerTokens.count {
+                        let t = innerTokens[idx]
+                        if typeDepth.isAtTopLevel, t.kind == .symbol(.comma) {
+                            break
+                        }
+                        typeDepth.track(t.kind)
+                        idx += 1
+                    }
+                    continue
+                }
+                idx += 1
+            }
+        }
+
+        // Need at least 2 names for destructuring to make sense
+        guard names.count >= 2 else {
+            return nil
+        }
+
+        // Parse the original body expression
+        let parsedBody: ExprID
+        if let body = BuildASTPhase.ExpressionParser(tokens: bodySlice, interner: interner, astArena: astArena).parse() {
+            parsedBody = body
+        } else {
+            let bodyRange = if let first = bodySlice.first, let last = bodySlice.last {
+                SourceRange(start: first.range.start, end: last.range.end)
+            } else {
+                SourceRange(start: openBrace.range.end, end: openBrace.range.end)
+            }
+            parsedBody = astArena.appendExpr(.blockExpr(statements: [], trailingExpr: nil, range: bodyRange))
+        }
+
+        let range = SourceRange(start: start ?? openBrace.range.start, end: end)
+
+        // Create a synthetic parameter name for the single destructured parameter
+        let syntheticParamName = interner.intern("__destructured_0")
+
+        // Create a nameRef for the synthetic parameter to use as the destructuring initializer
+        let nameRefExpr = astArena.appendExpr(.nameRef(syntheticParamName, range))
+
+        // Create a destructuringDecl: val (a, b) = __destructured_0
+        let destructuringExpr = astArena.appendExpr(.destructuringDecl(
+            names: names,
+            isMutable: false,
+            initializer: nameRefExpr,
+            range: range
+        ))
+
+        // Wrap: destructuringDecl + original body in a blockExpr
+        let wrappedBody = astArena.appendExpr(.blockExpr(
+            statements: [destructuringExpr],
+            trailingExpr: parsedBody,
+            range: range
+        ))
+
+        return astArena.appendExpr(.lambdaLiteral(
+            params: [syntheticParamName],
+            body: wrappedBody,
+            label: label,
+            range: range
+        ))
     }
 
     private func isPotentialLambdaParameterList(_ tokens: [Token]) -> Bool {
