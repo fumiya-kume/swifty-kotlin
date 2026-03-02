@@ -33,4 +33,6 @@ Cases:
 - `is_type_check_non_reified_error.kt`: non-reified 型パラメータへの `is` チェック compile-error parity
 - `try_expression.kt`: `try` 式（multi-catch / partial catch / `finally` 実行順）の parity
 
+- `abstract_class.kt`: abstract class / abstract member の制約と override 強制（abstract fun, abstract val, multi-level inheritance chain）
+
 The set intentionally includes both successful programs and compile-error cases.

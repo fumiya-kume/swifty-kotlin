@@ -1,9 +1,7 @@
-package golden.sema
-
 abstract class Shape {
     abstract fun area(): Double
     abstract val name: String
-    fun description(): String = "shape"
+    fun description(): String = name
 }
 
 class Circle(val radius: Double) : Shape() {
@@ -21,5 +19,15 @@ abstract class Pet : Animal() {
 
 class Dog : Pet() {
     override fun speak(): String = "woof"
-    override fun petName(): String = "dog"
+    override fun petName(): String = "buddy"
+}
+
+fun main() {
+    val c = Circle(5.0)
+    println(c.area())
+    println(c.name)
+    println(c.description())
+    val d = Dog()
+    println(d.speak())
+    println(d.petName())
 }
