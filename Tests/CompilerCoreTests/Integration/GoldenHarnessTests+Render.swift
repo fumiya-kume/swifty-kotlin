@@ -197,7 +197,8 @@ extension GoldenHarnessTests {
         var result = "recv=\(receiver) params=[\(parameters)] ret=\(returnType)"
         result += " suspend=\(signature.isSuspend ? 1 : 0) defaults=[\(defaults)] vararg=[\(vararg)]"
         if !signature.typeParameterUpperBounds.isEmpty,
-           signature.typeParameterUpperBounds.contains(where: { $0 != nil }) {
+           signature.typeParameterUpperBounds.contains(where: { $0 != nil })
+        {
             let bounds = signature.typeParameterUpperBounds.map { bound in
                 bound.map { types.renderType($0) } ?? "_"
             }.joined(separator: ",")

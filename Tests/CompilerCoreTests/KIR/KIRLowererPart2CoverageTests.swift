@@ -301,7 +301,6 @@ final class KIRLowererPart2CoverageTests: XCTestCase {
         )
         XCTAssertNil(nonCapturable)
     }
-
 }
 
 struct DirectKIRFixture {
