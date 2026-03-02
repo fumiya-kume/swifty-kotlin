@@ -248,20 +248,20 @@ public func kk_map_iterator_hasNext(_ iterRaw: Int) -> Int {
 }
 
 /// Returns the next entry from a map iterator.
-/// Currently returns the value at the current position (full Pair decomposition TBD).
+/// Returns the key at the current position, matching the C preamble behavior.
 /// - Parameter iterRaw: Opaque handle to a `RuntimeMapIteratorBox`.
-/// - Returns: The next entry value.
+/// - Returns: The next entry key.
 @_cdecl("kk_map_iterator_next")
 public func kk_map_iterator_next(_ iterRaw: Int) -> Int {
     guard let iter = runtimeMapIteratorBox(from: iterRaw) else {
         return 0
     }
-    guard iter.index < iter.keys.count, iter.index < iter.values.count else {
+    guard iter.index < iter.keys.count else {
         return 0
     }
-    let value = iter.values[iter.index]
+    let key = iter.keys[iter.index]
     iter.index += 1
-    return value
+    return key
 }
 
 /// Converts a map to its string representation (e.g. "{1=a, 2=b}").

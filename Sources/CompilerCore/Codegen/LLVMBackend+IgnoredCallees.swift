@@ -127,19 +127,10 @@ extension LLVMBackend {
                 }
 
                 let calleeName = interner.resolve(calleeInfo.callee)
-                guard !calleeName.isEmpty else {
-                    continue
-                }
-                if LLVMBackend.builtinOps[calleeName] != nil {
-                    continue
-                }
-                if LLVMBackend.unaryBuiltinOps[calleeName] != nil || calleeName == "kk_op_ushr" {
-                    continue
-                }
-                if LLVMBackend.floatBuiltinOps.contains(calleeName) || LLVMBackend.doubleBuiltinOps.contains(calleeName) {
-                    continue
-                }
-                if Self.ignoredExternalCallees.contains(calleeName) {
+                guard !calleeName.isEmpty,
+                      !Self.isBuiltinOp(calleeName),
+                      !Self.ignoredExternalCallees.contains(calleeName)
+                else {
                     continue
                 }
                 callees.insert(calleeName)
