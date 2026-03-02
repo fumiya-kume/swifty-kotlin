@@ -26,6 +26,7 @@ extension CallTypeChecker {
         // contextual function type (and thus implicit `it`) is available.
         let collectionHOFNames: Set<String> = ["map", "filter", "forEach", "flatMap", "any", "none", "all"]
         let isCollectionHOF = collectionHOFNames.contains(interner.resolve(calleeName))
+            && sema.bindings.isCollectionExpr(receiverID)
         let argTypes = args.map { arg -> TypeID in
             if isCollectionHOF,
                let argExpr = ast.arena.expr(arg.expr),
