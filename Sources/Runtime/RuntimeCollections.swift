@@ -77,11 +77,10 @@ public func kk_list_is_empty(_ listRaw: Int) -> Int {
 /// - Returns: Opaque handle (Int) to a `RuntimeListIteratorBox`.
 @_cdecl("kk_list_iterator")
 public func kk_list_iterator(_ listRaw: Int) -> Int {
-    let elements: [Int]
-    if let list = runtimeListBox(from: listRaw) {
-        elements = list.elements
+    let elements: [Int] = if let list = runtimeListBox(from: listRaw) {
+        list.elements
     } else {
-        elements = []
+        []
     }
     let box = RuntimeListIteratorBox(elements: elements)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
@@ -226,14 +225,10 @@ public func kk_map_is_empty(_ mapRaw: Int) -> Int {
 /// - Returns: Opaque handle (Int) to a `RuntimeMapIteratorBox`.
 @_cdecl("kk_map_iterator")
 public func kk_map_iterator(_ mapRaw: Int) -> Int {
-    let keys: [Int]
-    let values: [Int]
-    if let map = runtimeMapBox(from: mapRaw) {
-        keys = map.keys
-        values = map.values
+    let (keys, values): ([Int], [Int]) = if let map = runtimeMapBox(from: mapRaw) {
+        (map.keys, map.values)
     } else {
-        keys = []
-        values = []
+        ([], [])
     }
     let box = RuntimeMapIteratorBox(keys: keys, values: values)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
