@@ -21,7 +21,10 @@ public final class DataFlowSemaPhase: CompilerPhase {
         let fileScopes = buildFileScopes(ast: ast, symbols: symbols, interner: ctx.interner)
         sema.importedInlineFunctions = loadImports(ctx: ctx, symbols: symbols, types: types)
 
-        collectAllHeaders(ast: ast, fileScopes: fileScopes, symbols: symbols, types: types, bindings: bindings, ctx: ctx)
+        collectAllHeaders(
+            ast: ast, fileScopes: fileScopes,
+            symbols: symbols, types: types, bindings: bindings, ctx: ctx
+        )
         runValidationPasses(ast: ast, symbols: symbols, bindings: bindings, types: types, ctx: ctx)
         runBodyAnalysis(ast: ast, symbols: symbols, types: types, bindings: bindings, ctx: ctx)
 
@@ -73,7 +76,6 @@ public final class DataFlowSemaPhase: CompilerPhase {
         }
     }
 
-    // swiftlint:disable:next function_parameter_count
     private func runValidationPasses(
         ast: ASTModule, symbols: SymbolTable, bindings: BindingTable,
         types: TypeSystem, ctx: CompilationContext
@@ -95,7 +97,6 @@ public final class DataFlowSemaPhase: CompilerPhase {
         synthesizeNominalLayouts(symbols: symbols)
     }
 
-    // swiftlint:disable:next function_parameter_count
     private func runBodyAnalysis(
         ast: ASTModule, symbols: SymbolTable, types: TypeSystem,
         bindings: BindingTable, ctx: CompilationContext
