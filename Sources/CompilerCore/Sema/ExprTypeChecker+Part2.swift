@@ -458,8 +458,7 @@ extension ExprTypeChecker {
 
     /// Helper: handles `T::class` / `SomeType::class` callable-ref expressions.
     /// Returns the inferred type if matched, or `nil` to fall through.
-    // swiftlint:disable:next function_parameter_count
-    private func inferClassRefExpr(
+    private func inferClassRefExpr( // swiftlint:disable:this function_parameter_count
         _ id: ExprID,
         receiver: ExprID,
         receiverName: InternedString,
