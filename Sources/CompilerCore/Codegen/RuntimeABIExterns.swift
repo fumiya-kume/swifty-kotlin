@@ -724,6 +724,7 @@ public enum RuntimeABIExterns {
         kk_op_rangeUntil,
         kk_op_downTo,
         kk_op_step,
+    ] + kPropertyStubExterns + [
         // Delegate
         kk_lazy_create,
         kk_lazy_get_value,
@@ -742,7 +743,7 @@ public enum RuntimeABIExterns {
         kk_op_shr,
         kk_op_ushr,
         kk_int_toString_radix,
-    ] + kPropertyStubExterns
+    ]
 
     /// Look up an extern declaration by symbol name.
     public static func externDecl(named name: String) -> ExternDecl? {
