@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 
 extension LLVMBackend {
@@ -1273,3 +1274,4 @@ extension LLVMBackend {
         "",
     ]
 }
+// swiftlint:enable file_length

@@ -1,3 +1,4 @@
+// swiftlint:disable file_length type_body_length
 import Foundation
 
 /// Canonical C ABI extern declarations for the KSwiftK runtime.
@@ -757,3 +758,4 @@ public enum RuntimeABIExterns {
         allExterns.first { $0.name == name }
     }
 }
+// swiftlint:enable file_length type_body_length

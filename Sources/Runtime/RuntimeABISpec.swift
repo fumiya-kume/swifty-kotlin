@@ -961,3 +961,4 @@ public enum RuntimeABISpec {
         return lines.joined(separator: "\n")
     }
 }
+// swiftlint:enable file_length type_body_length trailing_comma

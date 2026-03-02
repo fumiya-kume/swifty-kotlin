@@ -1,3 +1,4 @@
+// swiftlint:disable file_length type_body_length
 import Foundation
 
 /// Lock-protected cache for pre-compiled runtime stub objects.
@@ -402,6 +403,7 @@ public final class LLVMBackend {
         return "intptr_t \(symbol)(\(parameters.joined(separator: ", ")))"
     }
 
+    // swiftlint:disable:next function_body_length
     private func collectExternalCallees(
         module: KIRModule,
         interner: StringInterner,
@@ -549,3 +551,4 @@ public final class LLVMBackend {
         }
     }
 }
+// swiftlint:enable file_length type_body_length

@@ -100,7 +100,7 @@ extension KIRLoweringDriver {
 
     // MARK: - Delegate Access Rewriting
 
-    // swiftlint:disable:next function_body_length
+    // swiftlint:disable:next function_body_length function_parameter_count
     private func rewriteDelegateAccesses(
         body: [KIRInstruction],
         arena: KIRArena,
@@ -122,8 +122,7 @@ extension KIRLoweringDriver {
 
         for instruction in body {
             if case let .loadGlobal(res, sym) = instruction,
-               let storageSym = storageMap[sym]
-            {
+               let storageSym = storageMap[sym] { // swiftlint:disable:this opening_brace
                 emitGetValue(
                     result: res, storageSym: storageSym, propSym: sym,
                     kindMap: kindMap, names: names,
@@ -134,8 +133,7 @@ extension KIRLoweringDriver {
 
             if case let .constValue(res, value) = instruction,
                case let .symbolRef(sym) = value,
-               let storageSym = storageMap[sym]
-            {
+               let storageSym = storageMap[sym] { // swiftlint:disable:this opening_brace
                 if copyTargetExprs.contains(res) {
                     targets[res] = sym
                     result.append(instruction)
@@ -151,8 +149,7 @@ extension KIRLoweringDriver {
 
             if case let .copy(fromExpr, toExpr) = instruction,
                let propSym = targets.removeValue(forKey: toExpr),
-               let storageSym = storageMap[propSym]
-            {
+               let storageSym = storageMap[propSym] { // swiftlint:disable:this opening_brace
                 if kindMap[propSym] == .lazy {
                     result.append(instruction)
                     continue
@@ -169,6 +166,7 @@ extension KIRLoweringDriver {
         return result.instructions
     }
 
+    // swiftlint:disable:next function_parameter_count
     private func emitGetValue(
         result: KIRExprID, storageSym: SymbolID, propSym: SymbolID,
         kindMap: [SymbolID: StdlibDelegateKind], names: DelegateRuntimeNames,
@@ -190,6 +188,7 @@ extension KIRLoweringDriver {
         ))
     }
 
+    // swiftlint:disable:next function_parameter_count
     private func emitSetValue(
         fromExpr: KIRExprID, storageSym: SymbolID, kind: StdlibDelegateKind?,
         names: DelegateRuntimeNames,

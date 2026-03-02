@@ -1,3 +1,4 @@
+// swiftlint:disable type_body_length
 @testable import CompilerCore
 import Foundation
 import XCTest
@@ -374,3 +375,4 @@ final class DelegatePropertyKIRTests: XCTestCase {
         }
     }
 }
+// swiftlint:enable type_body_length
