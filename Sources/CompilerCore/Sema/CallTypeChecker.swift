@@ -266,12 +266,13 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
                    case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
                    !expectedClassType.args.isEmpty {
                     collectionType = expectedType
-                } else if !argTypes.isEmpty {
+                } else if !argTypes.isEmpty,
+                          name == "listOf" || name == "listOfNotNull" || name == "emptyList" {
                     // Infer element type from arguments via LUB so that
-                    // `listOf("a", null)` produces a nullable element type.
-                    // Wrap the element type in List<E> if the synthetic
-                    // List interface symbol is available, otherwise fall
-                    // back to anyType.
+                    // `listOf("a", null)` produces List<String?>.
+                    // Only apply List<E> wrapping for list-like factories;
+                    // other collection types (Set, Map, etc.) fall back to
+                    // anyType until their synthetic stubs are registered.
                     let elementType = sema.types.lub(argTypes)
                     let listFQName: [InternedString] = [
                         interner.intern("kotlin"),
