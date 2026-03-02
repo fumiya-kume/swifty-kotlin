@@ -155,19 +155,24 @@ extension DataFlowSemaPhase {
         varianceMap: [InternedString: TypeVariance],
         env: VarianceCheckEnv
     ) {
+        var effectiveMap = varianceMap
+        for typeParam in funDecl.typeParams {
+            effectiveMap.removeValue(forKey: typeParam.name)
+        }
+        guard !effectiveMap.isEmpty else { return }
         for valueParam in funDecl.valueParams {
             if let typeRefID = valueParam.type {
                 checkTypeRefVariance(typeRefID, position: .contravariant,
-                                     varianceMap: varianceMap, env: env, memberRange: funDecl.range)
+                                     varianceMap: effectiveMap, env: env, memberRange: funDecl.range)
             }
         }
         if let receiverTypeRef = funDecl.receiverType {
             checkTypeRefVariance(receiverTypeRef, position: .contravariant,
-                                 varianceMap: varianceMap, env: env, memberRange: funDecl.range)
+                                 varianceMap: effectiveMap, env: env, memberRange: funDecl.range)
         }
         if let returnTypeRef = funDecl.returnType {
             checkTypeRefVariance(returnTypeRef, position: .out,
-                                 varianceMap: varianceMap, env: env, memberRange: funDecl.range)
+                                 varianceMap: effectiveMap, env: env, memberRange: funDecl.range)
         }
     }
 
