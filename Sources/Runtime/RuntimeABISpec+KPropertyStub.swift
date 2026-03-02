@@ -1,4 +1,5 @@
 // KProperty stub ABI specs (PROP-007)
+// swiftlint:disable trailing_comma
 
 public extension RuntimeABISpec {
     /// KProperty stub functions used by the provideDelegate operator.
@@ -7,7 +8,7 @@ public extension RuntimeABISpec {
             name: "kk_kproperty_stub_create",
             parameters: [
                 RuntimeABIParameter(name: "nameStr", type: .intptr),
-                RuntimeABIParameter(name: "returnTypeStr", type: .intptr)
+                RuntimeABIParameter(name: "returnTypeStr", type: .intptr),
             ],
             returnType: .intptr,
             section: "Delegate"
@@ -15,7 +16,7 @@ public extension RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_kproperty_stub_name",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr)
+                RuntimeABIParameter(name: "handle", type: .intptr),
             ],
             returnType: .intptr,
             section: "Delegate"
@@ -23,10 +24,12 @@ public extension RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_kproperty_stub_return_type",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr)
+                RuntimeABIParameter(name: "handle", type: .intptr),
             ],
             returnType: .intptr,
             section: "Delegate"
-        )
+        ),
     ]
 }
+
+// swiftlint:enable trailing_comma

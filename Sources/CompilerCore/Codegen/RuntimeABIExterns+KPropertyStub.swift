@@ -1,4 +1,5 @@
 // KProperty stub extern declarations (PROP-007)
+// swiftlint:disable trailing_comma
 
 public extension RuntimeABIExterns {
     // swiftlint:disable:next identifier_name
@@ -29,3 +30,5 @@ public extension RuntimeABIExterns {
         kk_kproperty_stub_return_type,
     ]
 }
+
+// swiftlint:enable trailing_comma
