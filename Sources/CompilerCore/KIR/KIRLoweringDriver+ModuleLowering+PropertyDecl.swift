@@ -337,18 +337,14 @@ extension KIRLoweringDriver {
         let delegateObjExpr = lowerExpr(propertyDecl.delegateExpression!, shared: shared, emit: &initInstructions)
 
         // When the delegate type defines a `provideDelegate` operator,
-        // wrap the delegate value through provideDelegate(thisRef, property)
-        // before passing it to kk_custom_delegate_create.
+        // call provideDelegate on the raw delegate instance first, then
+        // pass the result to kk_custom_delegate_create.
+        // This matches the ClassDecl reference implementation pattern:
+        //   1. Store raw delegate → 2. provideDelegate on raw → 3. wrap result once.
         let effectiveDelegateExpr: KIRExprID
         if sema.symbols.hasProvideDelegate(for: symbol) {
-            // Store raw delegate temporarily so we have a receiver for the method call.
-            let tempStoreResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: delegateType)
-            initInstructions.append(.call(
-                symbol: nil, callee: interner.intern("kk_custom_delegate_create"),
-                arguments: [delegateObjExpr],
-                result: tempStoreResult, canThrow: false, thrownResult: nil
-            ))
-            initInstructions.append(.storeGlobal(value: tempStoreResult, symbol: delegateStorageSymbol))
+            // Store the raw delegate value so we have a receiver for provideDelegate.
+            initInstructions.append(.storeGlobal(value: delegateObjExpr, symbol: delegateStorageSymbol))
 
             // thisRef is null for top-level properties.
             let thisRefExpr = arena.appendExpr(.null, type: sema.types.nullableAnyType)
@@ -364,7 +360,7 @@ extension KIRLoweringDriver {
             let provideDelegateName = interner.intern("provideDelegate")
             let provideDelegateResult = arena.appendExpr(
                 .temporary(Int32(arena.expressions.count)),
-                type: sema.types.anyType
+                type: delegateType
             )
             initInstructions.append(.call(
                 symbol: delegateStorageSymbol,
