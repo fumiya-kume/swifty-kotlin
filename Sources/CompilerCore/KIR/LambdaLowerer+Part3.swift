@@ -33,10 +33,9 @@ extension LambdaLowerer {
         sema: SemaModule,
         interner: StringInterner
     ) -> InternedString {
-        // swiftlint:disable:next opening_brace
         if let externalLinkName = sema.symbols.externalLinkName(for: symbol),
            !externalLinkName.isEmpty
-        {
+        { // swiftlint:disable:this opening_brace
             return interner.intern(externalLinkName)
         }
         return sema.symbols.symbol(symbol)?.name ?? interner.intern("kk_unknown_callable")
@@ -96,7 +95,7 @@ extension LambdaLowerer {
         if let receiverExpr,
            let receiverType = sema.bindings.exprTypes[receiverExpr],
            let receiverSymbol = nominalSymbol(for: receiverType, types: sema.types)
-        {
+        { // swiftlint:disable:this opening_brace
             var ownerQueue: [SymbolID] = [receiverSymbol]
             var visitedOwners: Set<SymbolID> = []
             while let owner = ownerQueue.first {
@@ -186,7 +185,7 @@ extension LambdaLowerer {
                    sema: sema
                ),
                !captures.contains(receiverSymbol)
-            {
+            { // swiftlint:disable:this opening_brace
                 captures.append(receiverSymbol)
             }
             return captures
@@ -248,10 +247,9 @@ extension LambdaLowerer {
         if let localValue = driver.ctx.localValuesBySymbol[symbol] {
             return localValue
         }
-        // swiftlint:disable:next opening_brace
         if symbol == driver.ctx.currentImplicitReceiverSymbol,
            let receiverExprID = driver.ctx.currentImplicitReceiverExprID
-        {
+        { // swiftlint:disable:this opening_brace
             return receiverExprID
         }
         guard let semanticSymbol = sema.symbols.symbol(symbol),
