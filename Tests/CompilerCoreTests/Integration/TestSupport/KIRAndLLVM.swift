@@ -72,11 +72,10 @@ func llvmCapiBindingsAvailable() -> Bool {
     }
 
     let target = defaultTargetTriple()
-    let triple: String
-    if let osVersion = target.osVersion, !osVersion.isEmpty {
-        triple = "\(target.arch)-\(target.vendor)-\(target.os)\(osVersion)"
+    let triple = if let osVersion = target.osVersion, !osVersion.isEmpty {
+        "\(target.arch)-\(target.vendor)-\(target.os)\(osVersion)"
     } else {
-        triple = "\(target.arch)-\(target.vendor)-\(target.os)"
+        "\(target.arch)-\(target.vendor)-\(target.os)"
     }
 
     guard let machine = bindings.createTargetMachine(triple: triple, optLevel: .O0) else {

@@ -5,16 +5,9 @@ import XCTest
 final class ABIMismatchTests: XCTestCase {
     // MARK: - Helpers
 
-    private func requireSpec(
-        _ name: String,
-        file: StaticString = #filePath,
-        line: UInt = #line
-    ) -> RuntimeABIFunctionSpec? {
-        guard let spec = RuntimeABISpec.allFunctions.first(where: { $0.name == name }) else {
-            XCTFail("'\(name)' not found in RuntimeABISpec.allFunctions", file: file, line: line)
-            return nil
-        }
-        return spec
+    private func requireSpec(_ name: String, file: StaticString = #filePath, line: UInt = #line) throws -> RuntimeABIFunctionSpec {
+        let spec = RuntimeABISpec.allFunctions.first(where: { $0.name == name })
+        return try XCTUnwrap(spec, "'\(name)' not found in RuntimeABISpec.allFunctions", file: file, line: line)
     }
 
     // MARK: - Spec Integrity
@@ -141,8 +134,8 @@ final class ABIMismatchTests: XCTestCase {
 
     // MARK: - J16.1 Signature Verification (spec-fixed)
 
-    func testKKAllocSignature() {
-        guard let spec = requireSpec("kk_alloc") else { return }
+    func testKKAllocSignature() throws {
+        let spec = try requireSpec("kk_alloc")
         XCTAssertEqual(spec.returnType, .opaquePointer)
         XCTAssertEqual(spec.parameters.count, 2)
         XCTAssertEqual(spec.parameters[0].name, "size")
@@ -152,95 +145,95 @@ final class ABIMismatchTests: XCTestCase {
                        "kk_alloc typeInfo must be const KTypeInfo * per J16.1")
     }
 
-    func testKKGcCollectSignature() {
-        guard let spec = requireSpec("kk_gc_collect") else { return }
+    func testKKGcCollectSignature() throws {
+        let spec = try requireSpec("kk_gc_collect")
         XCTAssertEqual(spec.returnType, .void)
         XCTAssertEqual(spec.parameters.count, 0)
     }
 
-    func testKKWriteBarrierSignature() {
-        guard let spec = requireSpec("kk_write_barrier") else { return }
+    func testKKWriteBarrierSignature() throws {
+        let spec = try requireSpec("kk_write_barrier")
         XCTAssertEqual(spec.returnType, .void)
         XCTAssertEqual(spec.parameters.count, 2)
         XCTAssertEqual(spec.parameters[0].type, .opaquePointer)
         XCTAssertEqual(spec.parameters[1].type, .fieldAddrPointer)
     }
 
-    func testKKThrowableNewSignature() {
-        guard let spec = requireSpec("kk_throwable_new") else { return }
+    func testKKThrowableNewSignature() throws {
+        let spec = try requireSpec("kk_throwable_new")
         XCTAssertEqual(spec.returnType, .opaquePointer)
         XCTAssertEqual(spec.parameters.count, 1)
         XCTAssertEqual(spec.parameters[0].type, .nullableOpaquePointer)
     }
 
-    func testKKThrowableIsCancellationSignature() {
-        guard let spec = requireSpec("kk_throwable_is_cancellation") else { return }
+    func testKKThrowableIsCancellationSignature() throws {
+        let spec = try requireSpec("kk_throwable_is_cancellation")
         XCTAssertEqual(spec.returnType, .intptr)
         XCTAssertEqual(spec.parameters.count, 1)
         XCTAssertEqual(spec.parameters[0].type, .intptr)
     }
 
-    func testKKPanicSignature() {
-        guard let spec = requireSpec("kk_panic") else { return }
+    func testKKPanicSignature() throws {
+        let spec = try requireSpec("kk_panic")
         XCTAssertEqual(spec.returnType, .noreturn)
         XCTAssertEqual(spec.parameters.count, 1)
         XCTAssertEqual(spec.parameters[0].type, .constCCharPointer)
     }
 
-    func testKKStringFromUTF8Signature() {
-        guard let spec = requireSpec("kk_string_from_utf8") else { return }
+    func testKKStringFromUTF8Signature() throws {
+        let spec = try requireSpec("kk_string_from_utf8")
         XCTAssertEqual(spec.returnType, .opaquePointer)
         XCTAssertEqual(spec.parameters.count, 2)
         XCTAssertEqual(spec.parameters[0].type, .constUInt8Pointer)
         XCTAssertEqual(spec.parameters[1].type, .int32)
     }
 
-    func testKKStringConcatSignature() {
-        guard let spec = requireSpec("kk_string_concat") else { return }
+    func testKKStringConcatSignature() throws {
+        let spec = try requireSpec("kk_string_concat")
         XCTAssertEqual(spec.returnType, .opaquePointer)
         XCTAssertEqual(spec.parameters.count, 2)
         XCTAssertEqual(spec.parameters[0].type, .nullableOpaquePointer)
         XCTAssertEqual(spec.parameters[1].type, .nullableOpaquePointer)
     }
 
-    func testKKPrintlnAnySignature() {
-        guard let spec = requireSpec("kk_println_any") else { return }
+    func testKKPrintlnAnySignature() throws {
+        let spec = try requireSpec("kk_println_any")
         XCTAssertEqual(spec.returnType, .void)
         XCTAssertEqual(spec.parameters.count, 1)
         XCTAssertEqual(spec.parameters[0].type, .nullableOpaquePointer)
     }
 
-    func testKKCoroutineSuspendedSignature() {
-        guard let spec = requireSpec("kk_coroutine_suspended") else { return }
+    func testKKCoroutineSuspendedSignature() throws {
+        let spec = try requireSpec("kk_coroutine_suspended")
         XCTAssertEqual(spec.returnType, .opaquePointer)
         XCTAssertEqual(spec.parameters.count, 0)
     }
 
     // MARK: - C Declaration Generation
 
-    func testCDeclarationForKKAlloc() {
-        guard let spec = requireSpec("kk_alloc") else { return }
+    func testCDeclarationForKKAlloc() throws {
+        let spec = try requireSpec("kk_alloc")
         XCTAssertEqual(
             spec.cDeclaration,
             "void * kk_alloc(uint32_t size, const KTypeInfo * typeInfo);"
         )
     }
 
-    func testCDeclarationForKKGcCollect() {
-        guard let spec = requireSpec("kk_gc_collect") else { return }
+    func testCDeclarationForKKGcCollect() throws {
+        let spec = try requireSpec("kk_gc_collect")
         XCTAssertEqual(spec.cDeclaration, "void kk_gc_collect(void);")
     }
 
-    func testCDeclarationForKKPrintlnAny() {
-        guard let spec = requireSpec("kk_println_any") else { return }
+    func testCDeclarationForKKPrintlnAny() throws {
+        let spec = try requireSpec("kk_println_any")
         XCTAssertEqual(
             spec.cDeclaration,
             "void kk_println_any(void * _Nullable obj);"
         )
     }
 
-    func testCDeclarationForKKPanic() {
-        guard let spec = requireSpec("kk_panic") else { return }
+    func testCDeclarationForKKPanic() throws {
+        let spec = try requireSpec("kk_panic")
         XCTAssertEqual(
             spec.cDeclaration,
             "_Noreturn void kk_panic(const char * cstr);"
