@@ -765,7 +765,7 @@ public enum RuntimeABISpec {
             name: "kk_kproperty_stub_create",
             parameters: [
                 RuntimeABIParameter(name: "nameStr", type: .intptr),
-                RuntimeABIParameter(name: "returnTypeStr", type: .intptr),
+                RuntimeABIParameter(name: "returnTypeStr", type: .intptr)
             ],
             returnType: .intptr,
             section: "Delegate"
@@ -773,7 +773,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_kproperty_stub_name",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "handle", type: .intptr)
             ],
             returnType: .intptr,
             section: "Delegate"
@@ -781,7 +781,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_kproperty_stub_return_type",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "handle", type: .intptr)
             ],
             returnType: .intptr,
             section: "Delegate"
