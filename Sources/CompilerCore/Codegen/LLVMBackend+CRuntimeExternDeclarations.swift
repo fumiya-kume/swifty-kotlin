@@ -119,6 +119,7 @@ extension LLVMBackend {
         "/* Delegate runtime (P5-80) */",
         "extern intptr_t kk_lazy_create(intptr_t initFnPtr, intptr_t mode);",
         "extern intptr_t kk_lazy_get_value(intptr_t handle);",
+        "extern intptr_t kk_lazy_is_initialized(intptr_t handle);",
         "extern intptr_t kk_observable_create(intptr_t initialValue, intptr_t callbackFnPtr);",
         "extern intptr_t kk_observable_get_value(intptr_t handle);",
         "extern intptr_t kk_observable_set_value(intptr_t handle, intptr_t newValue);",

@@ -181,6 +181,25 @@ final class RuntimeDelegateTests: XCTestCase {
         XCTAssertEqual(value, 0)
     }
 
+    func testLazyIsInitializedReturnsFalseBeforeAccess() {
+        let fnPtr = unsafeBitCast(lazySimple42, to: Int.self)
+        let handle = kk_lazy_create(fnPtr, 1)
+        XCTAssertEqual(kk_lazy_is_initialized(handle), 0,
+                       "Lazy should not be initialized before first access")
+    }
+
+    func testLazyIsInitializedReturnsTrueAfterAccess() {
+        let fnPtr = unsafeBitCast(lazySimple42, to: Int.self)
+        let handle = kk_lazy_create(fnPtr, 1)
+        _ = kk_lazy_get_value(handle)
+        XCTAssertNotEqual(kk_lazy_is_initialized(handle), 0,
+                          "Lazy should be initialized after first access")
+    }
+
+    func testLazyIsInitializedWithInvalidHandleReturnsZero() {
+        XCTAssertEqual(kk_lazy_is_initialized(0), 0)
+    }
+
     // MARK: - Observable Delegate Tests
 
     func testObservableCreateAndGetValue() {

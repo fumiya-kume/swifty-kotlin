@@ -778,6 +778,14 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Delegate"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_lazy_is_initialized",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
         // Observable
         RuntimeABIFunctionSpec(
             name: "kk_observable_create",

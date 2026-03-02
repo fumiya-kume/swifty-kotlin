@@ -16,6 +16,9 @@ extension KIRLoweringDriver {
             let observableGetValueName = interner.intern("kk_observable_get_value")
             let vetoableGetValueName = interner.intern("kk_vetoable_get_value")
             let customGetValueName = interner.intern("kk_custom_delegate_get_value")
+            let observableSetValueName = interner.intern("kk_observable_set_value")
+            let vetoableSetValueName = interner.intern("kk_vetoable_set_value")
+            let customSetValueName = interner.intern("kk_custom_delegate_set_value")
 
             // Build a reverse lookup: property symbol → delegate kind for getValue rewriting.
             var delegateKindByPropertySymbol: [SymbolID: StdlibDelegateKind] = [:]
@@ -54,10 +57,15 @@ extension KIRLoweringDriver {
                     updated.body = newBody.instructions
                 }
 
-                // Rewrite delegate property accesses to getValue calls.
-                // We load the delegate handle from the backing-field global symbol and pass it to
-                // the runtime getValue helpers.
+                // Rewrite delegate property accesses (get and set) to runtime calls.
+                // Getter: loadGlobal/constValue(.symbolRef) → getValue call.
+                // Setter: copy(from:, to:) where target is a delegate-backed property → setValue call.
                 if !delegateStorageSymbolByPropertySymbol.isEmpty {
+                    // Track which expression IDs correspond to delegate property symbolRefs.
+                    // When we see constValue(result: X, value: .symbolRef(delegatedSym)),
+                    // a subsequent copy(from: val, to: X) should become a setValue call.
+                    var delegateTargetExprs: [KIRExprID: SymbolID] = [:]
+
                     var rewrittenBody: KIRLoweringEmitContext = []
                     rewrittenBody.reserveCapacity(updated.body.count)
                     for instruction in updated.body {
@@ -94,32 +102,55 @@ extension KIRLoweringDriver {
                             continue
                         }
 
+                        // Track constValue(.symbolRef) for delegate-backed properties.
+                        // These may be followed by a .copy instruction that acts as a setter.
                         if case let .constValue(result, value) = instruction,
                            case let .symbolRef(sym) = value,
-                           let delegateStorageSymbol = delegateStorageSymbolByPropertySymbol[sym]
+                           delegateStorageSymbolByPropertySymbol[sym] != nil
                         {
+                            delegateTargetExprs[result] = sym
+                            rewrittenBody.append(instruction)
+                            continue
+                        }
+
+                        // Rewrite copy(from: val, to: delegateRef) → setValue call.
+                        // This handles assignment to observable/vetoable delegate-backed properties.
+                        if case let .copy(fromExpr, toExpr) = instruction,
+                           let propertySym = delegateTargetExprs[toExpr],
+                           let delegateStorageSymbol = delegateStorageSymbolByPropertySymbol[propertySym]
+                        {
+                            let kind = delegateKindByPropertySymbol[propertySym]
+                            // lazy delegates don't support setValue – skip rewrite.
+                            if kind == .lazy {
+                                rewrittenBody.append(instruction)
+                                continue
+                            }
                             let handleExpr = arena.appendExpr(
                                 .temporary(Int32(arena.expressions.count)),
                                 type: sema.types.anyType
                             )
                             rewrittenBody.append(.loadGlobal(result: handleExpr, symbol: delegateStorageSymbol))
 
-                            let getValueName: InternedString = switch delegateKindByPropertySymbol[sym] {
-                            case .lazy:
-                                lazyGetValueName
+                            let setValueName: InternedString = switch kind {
                             case .observable:
-                                observableGetValueName
+                                observableSetValueName
                             case .vetoable:
-                                vetoableGetValueName
+                                vetoableSetValueName
                             case .custom, nil:
-                                customGetValueName
+                                customSetValueName
+                            case .lazy:
+                                customSetValueName // unreachable: guarded above
                             }
+                            let setResult = arena.appendExpr(
+                                .temporary(Int32(arena.expressions.count)),
+                                type: sema.types.anyType
+                            )
                             rewrittenBody.append(
                                 .call(
                                     symbol: nil,
-                                    callee: getValueName,
-                                    arguments: [handleExpr],
-                                    result: result,
+                                    callee: setValueName,
+                                    arguments: [handleExpr, fromExpr],
+                                    result: setResult,
                                     canThrow: false,
                                     thrownResult: nil
                                 )

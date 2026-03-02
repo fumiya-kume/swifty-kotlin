@@ -35,6 +35,23 @@ public func kk_lazy_get_value(_ handle: Int) -> Int {
     return box.getValue()
 }
 
+/// Returns whether the lazy delegate has been initialized.
+/// - Parameter handle: Opaque handle returned by `kk_lazy_create`.
+/// - Returns: 1 if initialized, 0 otherwise.
+@_cdecl("kk_lazy_is_initialized")
+public func kk_lazy_is_initialized(_ handle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
+        return 0
+    }
+    let isObj = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObj, let box = tryCast(ptr, to: RuntimeLazyBox.self) else {
+        return 0
+    }
+    return box.isInitialized ? 1 : 0
+}
+
 // MARK: - Observable Delegate (P5-80)
 
 /// Creates an observable delegate instance.
