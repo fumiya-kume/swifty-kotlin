@@ -8,3 +8,4 @@ firebase-debug.log
 .bench_results/
 .claude/settings.local.json
 .runnerctl/
+*.profraw
