@@ -141,8 +141,7 @@ extension CallLowerer {
 
         // Primitive member function: Int/Long.toString(radix: Int) → kk_int_toString_radix (EXPR-003)
         if calleeName == interner.intern("toString"),
-           args.count == 1
-        {
+           args.count == 1 {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
