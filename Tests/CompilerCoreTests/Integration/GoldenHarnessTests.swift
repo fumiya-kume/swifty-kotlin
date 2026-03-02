@@ -432,23 +432,18 @@ final class GoldenHarnessTests: XCTestCase {
     }
 
     private func renderSymbolFlags(_ flags: SymbolFlags) -> String {
-        if flags.isEmpty {
-            return "_"
-        }
-        var names: [String] = []
-        if flags.contains(.suspendFunction) { names.append("suspendFunction") }
-        if flags.contains(.inlineFunction) { names.append("inlineFunction") }
-        if flags.contains(.mutable) { names.append("mutable") }
-        if flags.contains(.synthetic) { names.append("synthetic") }
-        if flags.contains(.static) { names.append("static") }
-        if flags.contains(.sealedType) { names.append("sealedType") }
-        if flags.contains(.dataType) { names.append("dataType") }
-        if flags.contains(.innerClass) { names.append("innerClass") }
-        if flags.contains(.valueType) { names.append("valueType") }
-        if flags.contains(.operatorFunction) { names.append("operatorFunction") }
-        if flags.contains(.constValue) { names.append("constValue") }
-        if flags.contains(.abstractType) { names.append("abstractType") }
-        return names.joined(separator: "|")
+        if flags.isEmpty { return "_" }
+        let allFlags: [(SymbolFlags, String)] = [
+            (.suspendFunction, "suspendFunction"), (.inlineFunction, "inlineFunction"),
+            (.mutable, "mutable"), (.synthetic, "synthetic"), (.static, "static"),
+            (.sealedType, "sealedType"), (.dataType, "dataType"),
+            (.reifiedTypeParameter, "reifiedTypeParameter"),
+            (.innerClass, "innerClass"), (.valueType, "valueType"),
+            (.operatorFunction, "operatorFunction"), (.constValue, "constValue"),
+            (.abstractType, "abstractType"), (.openType, "openType"),
+            (.overrideMember, "overrideMember"), (.finalMember, "finalMember"),
+        ]
+        return allFlags.filter { flags.contains($0.0) }.map(\.1).joined(separator: "|")
     }
 
     private func renderFQName(_ fqName: [InternedString], interner: StringInterner) -> String {

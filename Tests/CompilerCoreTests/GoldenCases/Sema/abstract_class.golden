@@ -17,8 +17,8 @@ symbol s15 kind=property fq=golden.sema.Shape.name vis=public flags=abstractType
 symbol s16 kind=class fq=golden.sema.Circle vis=public flags=_
 symbol s17 kind=constructor fq=golden.sema.Circle.<init> vis=public flags=_ sig=recv=Class#16 params=[Double] ret=Class#16 suspend=0 defaults=[0] vararg=[0]
 symbol s18 kind=valueParameter fq=golden.sema.Circle.<init>.$17.radius vis=private flags=_
-symbol s19 kind=function fq=golden.sema.Circle.area vis=public flags=_ sig=recv=Class#16 params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s20 kind=property fq=golden.sema.Circle.name vis=public flags=_ type=String
+symbol s19 kind=function fq=golden.sema.Circle.area vis=public flags=overrideMember sig=recv=Class#16 params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s20 kind=property fq=golden.sema.Circle.name vis=public flags=overrideMember type=String
 symbol s21 kind=class fq=golden.sema.Animal vis=public flags=abstractType
 symbol s22 kind=constructor fq=golden.sema.Animal.<init> vis=public flags=_ sig=recv=Class#21 params=[] ret=Class#21 suspend=0 defaults=[] vararg=[]
 symbol s23 kind=function fq=golden.sema.Animal.speak vis=public flags=abstractType sig=recv=Class#21 params=[] ret=String suspend=0 defaults=[] vararg=[]
@@ -27,8 +27,8 @@ symbol s25 kind=constructor fq=golden.sema.Pet.<init> vis=public flags=_ sig=rec
 symbol s26 kind=function fq=golden.sema.Pet.petName vis=public flags=abstractType sig=recv=Class#24 params=[] ret=String suspend=0 defaults=[] vararg=[]
 symbol s27 kind=class fq=golden.sema.Dog vis=public flags=_
 symbol s28 kind=constructor fq=golden.sema.Dog.<init> vis=public flags=_ sig=recv=Class#27 params=[] ret=Class#27 suspend=0 defaults=[] vararg=[]
-symbol s29 kind=function fq=golden.sema.Dog.speak vis=public flags=_ sig=recv=Class#27 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s30 kind=function fq=golden.sema.Dog.petName vis=public flags=_ sig=recv=Class#27 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s29 kind=function fq=golden.sema.Dog.speak vis=public flags=overrideMember sig=recv=Class#27 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s30 kind=function fq=golden.sema.Dog.petName vis=public flags=overrideMember sig=recv=Class#27 params=[] ret=String suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
   decl d3 class Shape sym=s11
   decl d6 class Circle sym=s16

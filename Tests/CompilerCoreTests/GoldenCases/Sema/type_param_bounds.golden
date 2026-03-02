@@ -9,7 +9,7 @@ symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=
 symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
 symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
 symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
-symbol s11 kind=class fq=golden.sema.Animal vis=public flags=_
+symbol s11 kind=class fq=golden.sema.Animal vis=public flags=openType
 symbol s12 kind=constructor fq=golden.sema.Animal.<init> vis=public flags=_ sig=recv=Class#11 params=[] ret=Class#11 suspend=0 defaults=[] vararg=[]
 symbol s13 kind=class fq=golden.sema.Dog vis=public flags=_
 symbol s14 kind=constructor fq=golden.sema.Dog.<init> vis=public flags=_ sig=recv=Class#13 params=[] ret=Class#13 suspend=0 defaults=[] vararg=[]
