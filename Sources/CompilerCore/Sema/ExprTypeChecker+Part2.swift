@@ -173,7 +173,9 @@ extension ExprTypeChecker {
         let (visibleIDs, invisibleSyms) = ctx.filterByVisibility(allCandidateIDs)
         let candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
         if candidates.isEmpty {
-            if interner.resolve(name) == "field" {
+            if let firstInvisible = invisibleSyms.first {
+                driver.helpers.emitVisibilityError(for: firstInvisible, name: interner.resolve(name), range: nameRange, diagnostics: ctx.semaCtx.diagnostics)
+            } else if interner.resolve(name) == "field" {
                 // Kotlin's `field` identifier is only valid inside property
                 // getter/setter bodies where it refers to the backing field.
                 // Emit a targeted diagnostic instead of the generic
@@ -183,8 +185,6 @@ extension ExprTypeChecker {
                     "'field' can only be used inside a property getter or setter body.",
                     range: nameRange
                 )
-            } else if let firstInvisible = invisibleSyms.first {
-                driver.helpers.emitVisibilityError(for: firstInvisible, name: interner.resolve(name), range: nameRange, diagnostics: ctx.semaCtx.diagnostics)
             } else {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0022",

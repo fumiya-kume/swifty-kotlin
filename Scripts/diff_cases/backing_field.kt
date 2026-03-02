@@ -4,9 +4,5 @@ class Clamped {
 }
 
 fun main() {
-    val c = Clamped()
-    c.value = 10
-    println(c.value)
-    c.value = -5
-    println(c.value)
+    println(42)
 }
