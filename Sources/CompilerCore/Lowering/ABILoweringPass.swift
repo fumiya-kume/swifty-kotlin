@@ -146,6 +146,7 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_op_shl"),
             ctx.interner.intern("kk_op_shr"),
             ctx.interner.intern("kk_op_ushr"),
+            ctx.interner.intern("kk_int_toString_radix"),
         ]
 
         let boxIntCallee = ctx.interner.intern("kk_box_int")
