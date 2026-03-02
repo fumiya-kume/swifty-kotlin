@@ -1038,7 +1038,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase {
 
         // There should be at least two getter accessors — one per class.
         XCTAssertGreaterThanOrEqual(getterFunctions.count, 2,
-            "Both base and override computed property should emit getter accessors, found: \(getterFunctions.count)")
+                                    "Both base and override computed property should emit getter accessors, found: \(getterFunctions.count)")
 
         // Neither base nor derived "label" property should have a KIRGlobal.
         let labelName = interner.intern("label")
@@ -1052,7 +1052,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase {
             ctx.sema?.symbols.symbol(sym)?.name == labelName
         }
         XCTAssertTrue(labelGlobals.isEmpty,
-            "Getter-only computed property override should NOT have a KIRGlobal, found: \(labelGlobals)")
+                      "Getter-only computed property override should NOT have a KIRGlobal, found: \(labelGlobals)")
     }
 
     /// Verifies that a class with both custom getter and setter emits accessor
@@ -1094,7 +1094,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase {
             ctx.sema?.symbols.symbol(sym)?.name == countName
         }
         XCTAssertFalse(countGlobals.isEmpty,
-            "Var property with custom getter/setter should have a KIRGlobal")
+                       "Var property with custom getter/setter should have a KIRGlobal")
 
         // "label" should NOT have a KIRGlobal (getter-only computed).
         let labelName = interner.intern("label")
@@ -1102,7 +1102,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase {
             ctx.sema?.symbols.symbol(sym)?.name == labelName
         }
         XCTAssertTrue(labelGlobals.isEmpty,
-            "Getter-only computed property should NOT have a KIRGlobal, found: \(labelGlobals)")
+                      "Getter-only computed property should NOT have a KIRGlobal, found: \(labelGlobals)")
 
         // The "label" computed property should have a getter accessor
         // function emitted.
@@ -1116,7 +1116,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase {
             return fn
         }
         XCTAssertGreaterThanOrEqual(getterFunctions.count, 1,
-            "Should have at least 1 getter accessor (for label)")
+                                    "Should have at least 1 getter accessor (for label)")
     }
 
     /// Verifies that a top-level getter-only computed property does not emit
@@ -1151,7 +1151,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase {
             ctx.sema?.symbols.symbol(sym)?.name == computedName
         }
         XCTAssertTrue(computedGlobals.isEmpty,
-            "Top-level getter-only computed property should NOT have a KIRGlobal, found: \(computedGlobals)")
+                      "Top-level getter-only computed property should NOT have a KIRGlobal, found: \(computedGlobals)")
 
         // Top-level "stored" SHOULD have a KIRGlobal.
         let storedName = interner.intern("stored")
@@ -1159,7 +1159,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase {
             ctx.sema?.symbols.symbol(sym)?.name == storedName
         }
         XCTAssertFalse(storedGlobals.isEmpty,
-            "Top-level stored property should have a KIRGlobal")
+                       "Top-level stored property should have a KIRGlobal")
     }
 
     private func makeContext(
