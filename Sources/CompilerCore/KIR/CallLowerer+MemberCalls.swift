@@ -157,7 +157,22 @@ extension CallLowerer {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let rhsType = sema.types.makeNonNullable(sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType)
-            let primitiveCallee = switch interner.resolve(calleeName) { \n+ case "and": \n+ (rhsType == intType || rhsType == longType) ? interner.intern("kk_bitwise_and") : nil \ n+ case "or": \n+ (rhsType == intType || rhsType == longType) ? interner.intern("kk_bitwise_or") : nil \ n+ case "xor": \n+ (rhsType == intType || rhsType == longType) ? interner.intern("kk_bitwise_xor") : nil \ n+ case "shl": \n+ rhsType == intType ? interner.intern("kk_op_shl") : nil \ n+ case "shr": \n+ rhsType == intType ? interner.intern("kk_op_shr") : nil \ n+ case "ushr": \n+ rhsType == intType ? interner.intern("kk_op_ushr") : nil \ n+ default: \n+ nil \ n+ }
+            let primitiveCallee = switch interner.resolve(calleeName) {
+            case "and":
+                (rhsType == intType || rhsType == longType) ? interner.intern("kk_bitwise_and") : nil
+            case "or":
+                (rhsType == intType || rhsType == longType) ? interner.intern("kk_bitwise_or") : nil
+            case "xor":
+                (rhsType == intType || rhsType == longType) ? interner.intern("kk_bitwise_xor") : nil
+            case "shl":
+                rhsType == intType ? interner.intern("kk_op_shl") : nil
+            case "shr":
+                rhsType == intType ? interner.intern("kk_op_shr") : nil
+            case "ushr":
+                rhsType == intType ? interner.intern("kk_op_ushr") : nil
+            default:
+                nil
+            }
             if let primitiveCallee {
                 instructions.append(.call(
                     symbol: nil,
