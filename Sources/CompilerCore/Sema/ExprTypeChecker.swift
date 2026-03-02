@@ -318,10 +318,8 @@ final class ExprTypeChecker {
             return sema.types.nothingType
 
         case let .lambdaLiteral(params, body, label, _):
-            return inferLambdaLiteralExpr(
-                id, params: params, body: body, label: label,
-                ctx: ctx, locals: &locals, expectedType: expectedType
-            )
+            // swiftlint:disable:next line_length
+            return inferLambdaLiteralExpr(id, params: params, body: body, label: label, ctx: ctx, locals: &locals, expectedType: expectedType)
 
         case let .objectLiteral(superTypes, _):
             let objectType = superTypes.first.map {
