@@ -580,15 +580,13 @@ final class ExprLowerer {
                 instructions: &instructions
             )
             if let symbol = sema.bindings.identifierSymbols[exprID] {
-                // Check if this is a top-level property assignment (not a local variable).
-                // Top-level properties need a copy to global storage rather than just
-                // updating localValuesBySymbol (which wouldn't persist across function calls).
-                // Top-level properties have no parentSymbol (nil) or parent is a package.
-                // Class member properties always have parentSymbol set to a class/object.
+                // Check if this is a top-level or object-member property assignment.
+                // These need a copy to global storage rather than just updating
+                // localValuesBySymbol (which wouldn't persist across function calls).
                 if let symInfo = sema.symbols.symbol(symbol), symInfo.kind == .property, {
                     let p = sema.symbols.parentSymbol(for: symbol)
                     let pk = p.flatMap { sema.symbols.symbol($0) }?.kind
-                    return pk == nil || pk == .package
+                    return pk == nil || pk == .package || pk == .object
                 }() {
                     let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
                     let globalRef = arena.appendExpr(.symbolRef(symbol), type: propType)
@@ -809,13 +807,12 @@ final class ExprLowerer {
             case .modAssign: .modulo
             }
             if let symbol = sema.bindings.identifierSymbols[exprID] {
-                // Top-level property compound assignment needs a copy to global storage.
-                // Top-level properties have no parentSymbol (nil) or parent is a package.
-                // Class member properties always have parentSymbol set to a class/object.
+                // Top-level or object-member property compound assignment
+                // needs a copy to global storage.
                 if let symInfo = sema.symbols.symbol(symbol), symInfo.kind == .property, {
                     let p = sema.symbols.parentSymbol(for: symbol)
                     let pk = p.flatMap { sema.symbols.symbol($0) }?.kind
-                    return pk == nil || pk == .package
+                    return pk == nil || pk == .package || pk == .object
                 }() {
                     let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
                     let globalRef = arena.appendExpr(.symbolRef(symbol), type: propType)
