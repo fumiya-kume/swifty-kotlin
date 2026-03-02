@@ -56,6 +56,20 @@ func runtimeMapIteratorBox(from rawValue: Int) -> RuntimeMapIteratorBox? {
     return tryCast(ptr, to: RuntimeMapIteratorBox.self)
 }
 
+/// Extracts a parallel key/value array pair from opaque handles.
+/// Returns nil if either handle is invalid. Guarantees both arrays are valid.
+func runtimeMapArrayPair(
+    keysRaw: Int,
+    valuesRaw: Int
+) -> (keys: [Int], values: [Int])? {
+    guard let keysArray = runtimeArrayBox(from: keysRaw),
+          let valuesArray = runtimeArrayBox(from: valuesRaw)
+    else {
+        return nil
+    }
+    return (keysArray.elements, valuesArray.elements)
+}
+
 /// Converts a runtime element value (intptr_t) to its string representation.
 /// Used by `kk_list_to_string` and `kk_map_to_string`.
 func runtimeElementToString(_ elem: Int) -> String {

@@ -151,14 +151,11 @@ public func kk_list_to_string(_ listRaw: Int) -> UnsafeMutableRawPointer {
 public func kk_map_of(_ keysArrayRaw: Int, _ valuesArrayRaw: Int, _ count: Int) -> Int {
     var keys: [Int] = []
     var values: [Int] = []
-    if count > 0,
-       let keysArray = runtimeArrayBox(from: keysArrayRaw),
-       let valuesArray = runtimeArrayBox(from: valuesArrayRaw)
-    {
-        let effectiveCount = min(count, keysArray.elements.count, valuesArray.elements.count)
+    if count > 0, let arrays = runtimeMapArrayPair(keysRaw: keysArrayRaw, valuesRaw: valuesArrayRaw) {
+        let effectiveCount = min(count, arrays.keys.count, arrays.values.count)
         if effectiveCount > 0 {
-            keys = Array(keysArray.elements.prefix(effectiveCount))
-            values = Array(valuesArray.elements.prefix(effectiveCount))
+            keys = Array(arrays.keys.prefix(effectiveCount))
+            values = Array(arrays.values.prefix(effectiveCount))
         }
     }
     let box = RuntimeMapBox(keys: keys, values: values)
