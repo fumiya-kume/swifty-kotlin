@@ -29,7 +29,7 @@ extension CallTypeChecker {
         // x is a local variable rather than a type name).
         if case let .callableRef(_, refMember, _) = ast.arena.expr(receiverID),
            interner.resolve(refMember) == "class"
-        {
+        { // swiftlint:disable:this opening_brace
             _ = driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
             if sema.bindings.classRefTargetType(for: receiverID) != nil {
                 let callee = interner.resolve(calleeName)

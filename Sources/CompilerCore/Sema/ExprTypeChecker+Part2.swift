@@ -337,7 +337,7 @@ extension ExprTypeChecker {
         if interner.resolve(member) == "class",
            let receiver,
            case let .nameRef(receiverName, _) = ast.arena.expr(receiver)
-        {
+        { // swiftlint:disable:this opening_brace
             if let result = inferClassRefExpr(
                 id, receiver: receiver, receiverName: receiverName,
                 range: range, ctx: ctx, locals: &locals
@@ -456,9 +456,9 @@ extension ExprTypeChecker {
         return fallbackType
     }
 
+    // swiftlint:disable:next function_parameter_count
     /// Helper: handles `T::class` / `SomeType::class` callable-ref expressions.
     /// Returns the inferred type if matched, or `nil` to fall through.
-    // swiftlint:disable:next function_parameter_count
     private func inferClassRefExpr(
         _ id: ExprID,
         receiver: ExprID,
