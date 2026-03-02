@@ -116,12 +116,12 @@
   - **完了条件**: `when (x) { 1, 2 -> "few"; else -> "many" }` が `kotlinc` と同一動作する
 
 
-- [ ] CTRL-002: `try` を式として使う場合の型推論と `finally` 影響を実装する（spec.md J6/J11）
-  - [ ] `val x = try { ... } catch { ... }` の型を `try`/`catch` 最終式の LUB で推論する
-  - [ ] `finally` ブロックの戻り値が型推論を汚染しない（`Unit` 扱い）ことを保証する
-  - [ ] `catch` ブランチが複数ある場合の各ブランチ型合流を実装する
-  - [ ] some exception type のみ catch し残りを再 throw する制御フロー型推論を実装する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CTRL-002`（2026-03-02: diff case `Scripts/diff_cases/try_expression.kt` を追加）
+- [x] CTRL-002: `try` を式として使う場合の型推論と `finally` 影響を実装する（spec.md J6/J11）
+  - [x] `val x = try { ... } catch { ... }` の型を `try`/`catch` 最終式の LUB で推論する
+  - [x] `finally` ブロックの戻り値が型推論を汚染しない（`Unit` 扱い）ことを保証する
+  - [x] `catch` ブランチが複数ある場合の各ブランチ型合流を実装する
+  - [x] some exception type のみ catch し残りを再 throw する制御フロー型推論を実装する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CTRL-002`（2026-03-02: diff case `Scripts/diff_cases/try_expression.kt` を追加）
   - **完了条件**: `val x: String = try { "ok" } catch (e: Exception) { "err" }` が型エラーなしでコンパイルされる
 
 
