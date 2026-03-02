@@ -558,7 +558,7 @@ extension DataFlowSemaPhase {
                 && propertyDecl.initializer == nil
             let needsBackingField = !isGetterOnlyComputed
                 && (propertyDecl.getter != nil || propertyDecl.setter != nil)
-            if needsBackingField, propertyDecl.delegateExpression == nil {
+            if needsBackingField, propertyDecl.delegateExpression == nil, propertyDecl.receiverType == nil {
                 let fieldName = interner.intern("$backing_\(interner.resolve(propertyDecl.name))")
                 let fieldFQName = fqName.dropLast() + [fieldName]
                 let backingFieldSymbol = symbols.define(

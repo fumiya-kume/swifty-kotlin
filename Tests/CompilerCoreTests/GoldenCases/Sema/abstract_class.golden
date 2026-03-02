@@ -20,7 +20,7 @@ file f0 package=golden.sema
   decl d1 class Shape sym=s11
   decl d3 class Circle sym=s14
 expr e0 double(3.14) type=Double
-expr e1 name(radius) type=Double
+expr e1 name(radius) type=<error>
 expr e2 binary(multiply) lhs=e0 rhs=e1 type=Double
-expr e3 name(radius) type=Double
+expr e3 name(radius) type=<error>
 expr e4 binary(multiply) lhs=e2 rhs=e3 type=Double
