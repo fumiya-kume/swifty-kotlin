@@ -12,15 +12,35 @@ symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flag
 symbol s11 kind=class fq=golden.sema.Shape vis=public flags=abstractType
 symbol s12 kind=constructor fq=golden.sema.Shape.<init> vis=public flags=_ sig=recv=Class#11 params=[] ret=Class#11 suspend=0 defaults=[] vararg=[]
 symbol s13 kind=function fq=golden.sema.Shape.area vis=public flags=abstractType sig=recv=Class#11 params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s14 kind=class fq=golden.sema.Circle vis=public flags=_
-symbol s15 kind=constructor fq=golden.sema.Circle.<init> vis=public flags=_ sig=recv=Class#14 params=[Double] ret=Class#14 suspend=0 defaults=[0] vararg=[0]
-symbol s16 kind=valueParameter fq=golden.sema.Circle.<init>.$15.radius vis=private flags=_
-symbol s17 kind=function fq=golden.sema.Circle.area vis=public flags=_ sig=recv=Class#14 params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s14 kind=function fq=golden.sema.Shape.description vis=public flags=_ sig=recv=Class#11 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s15 kind=property fq=golden.sema.Shape.name vis=public flags=abstractType type=String
+symbol s16 kind=class fq=golden.sema.Circle vis=public flags=_
+symbol s17 kind=constructor fq=golden.sema.Circle.<init> vis=public flags=_ sig=recv=Class#16 params=[Double] ret=Class#16 suspend=0 defaults=[0] vararg=[0]
+symbol s18 kind=valueParameter fq=golden.sema.Circle.<init>.$17.radius vis=private flags=_
+symbol s19 kind=function fq=golden.sema.Circle.area vis=public flags=overrideMember sig=recv=Class#16 params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s20 kind=property fq=golden.sema.Circle.name vis=public flags=overrideMember type=String
+symbol s21 kind=class fq=golden.sema.Animal vis=public flags=abstractType
+symbol s22 kind=constructor fq=golden.sema.Animal.<init> vis=public flags=_ sig=recv=Class#21 params=[] ret=Class#21 suspend=0 defaults=[] vararg=[]
+symbol s23 kind=function fq=golden.sema.Animal.speak vis=public flags=abstractType sig=recv=Class#21 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s24 kind=class fq=golden.sema.Pet vis=public flags=abstractType
+symbol s25 kind=constructor fq=golden.sema.Pet.<init> vis=public flags=_ sig=recv=Class#24 params=[] ret=Class#24 suspend=0 defaults=[] vararg=[]
+symbol s26 kind=function fq=golden.sema.Pet.petName vis=public flags=abstractType sig=recv=Class#24 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s27 kind=class fq=golden.sema.Dog vis=public flags=_
+symbol s28 kind=constructor fq=golden.sema.Dog.<init> vis=public flags=_ sig=recv=Class#27 params=[] ret=Class#27 suspend=0 defaults=[] vararg=[]
+symbol s29 kind=function fq=golden.sema.Dog.speak vis=public flags=overrideMember sig=recv=Class#27 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s30 kind=function fq=golden.sema.Dog.petName vis=public flags=overrideMember sig=recv=Class#27 params=[] ret=String suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d1 class Shape sym=s11
-  decl d3 class Circle sym=s14
-expr e0 double(3.14) type=Double
-expr e1 name(radius) type=<error>
-expr e2 binary(multiply) lhs=e0 rhs=e1 type=Double
-expr e3 name(radius) type=<error>
-expr e4 binary(multiply) lhs=e2 rhs=e3 type=Double
+  decl d3 class Shape sym=s11
+  decl d6 class Circle sym=s16
+  decl d8 class Animal sym=s21
+  decl d10 class Pet sym=s24
+  decl d13 class Dog sym=s27
+expr e0 string(shape) type=String
+expr e1 double(3.14) type=Double ref=s15
+expr e2 name(radius) type=<error>
+expr e3 binary(multiply) lhs=e1 rhs=e2 type=Double
+expr e4 name(radius) type=<error>
+expr e5 binary(multiply) lhs=e3 rhs=e4 type=String ref=s20
+expr e6 string(circle) type=String
+expr e7 string(woof) type=String
+expr e8 string(dog) type=String

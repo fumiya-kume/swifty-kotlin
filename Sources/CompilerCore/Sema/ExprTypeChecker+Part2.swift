@@ -64,19 +64,19 @@ extension ExprTypeChecker {
             return sema.types.unitType
         }
 
-        // Fall back to top-level property lookup for compound assignments like `counter += 1`
-        // where `counter` is a top-level var.
+        // Fall back to scope-visible property lookup for compound assignments
+        // like `counter += 1` where `counter` is a top-level var or a member
+        // property accessed via implicit receiver (inside a class/object
+        // member function).
         let allCandidateIDs = ctx.cachedScopeLookup(name)
         let (visibleIDs, _) = ctx.filterByVisibility(allCandidateIDs)
         let candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
-        // Only match top-level properties, not class member properties.
-        // Top-level properties have no parentSymbol set (nil) or parent is a package.
-        // Class member properties always have parentSymbol set to a class/object/interface.
         if let propSymbol = candidates.first(where: { sym in
             guard sym.kind == .property else { return false }
             guard let parentID = sema.symbols.parentSymbol(for: sym.id),
                   let parentSym = sema.symbols.symbol(parentID) else { return true }
-            return parentSym.kind == .package
+            return parentSym.kind == .package || (ctx.implicitReceiverType != nil
+                && (parentSym.kind == .class || parentSym.kind == .object || parentSym.kind == .interface))
         }) {
             sema.bindings.bindIdentifier(id, symbol: propSymbol.id)
             let propType = sema.symbols.propertyType(for: propSymbol.id) ?? sema.types.anyType
@@ -113,11 +113,19 @@ extension ExprTypeChecker {
             return sema.types.unitType
         }
 
-        ctx.semaCtx.diagnostics.error(
-            "KSWIFTK-SEMA-0013",
-            "Unresolved local variable '\(interner.resolve(name))'.",
-            range: range
-        )
+        if interner.resolve(name) == "field" {
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-FIELD",
+                "'field' can only be used inside a property getter or setter body.",
+                range: range
+            )
+        } else {
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-0013",
+                "Unresolved local variable '\(interner.resolve(name))'.",
+                range: range
+            )
+        }
         sema.bindings.bindExprType(id, type: sema.types.errorType)
         return sema.types.errorType
     }
@@ -167,6 +175,16 @@ extension ExprTypeChecker {
         if candidates.isEmpty {
             if let firstInvisible = invisibleSyms.first {
                 driver.helpers.emitVisibilityError(for: firstInvisible, name: interner.resolve(name), range: nameRange, diagnostics: ctx.semaCtx.diagnostics)
+            } else if interner.resolve(name) == "field" {
+                // Kotlin's `field` identifier is only valid inside property
+                // getter/setter bodies where it refers to the backing field.
+                // Emit a targeted diagnostic instead of the generic
+                // "Unresolved reference" error.
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-FIELD",
+                    "'field' can only be used inside a property getter or setter body.",
+                    range: nameRange
+                )
             } else {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0022",
@@ -206,6 +224,13 @@ extension ExprTypeChecker {
             }
             return nil
         } ?? sema.types.anyType
+        // Propagate compile-time constant value for `const val` references
+        // so downstream passes can fold without re-querying the symbol table.
+        if let first = candidates.first, first.flags.contains(.constValue) {
+            if let constKind = sema.symbols.constValueExprKind(for: first.id) {
+                sema.bindings.bindConstExprValue(id, value: constKind)
+            }
+        }
         sema.bindings.bindExprType(id, type: resolvedType)
         return resolvedType
     }

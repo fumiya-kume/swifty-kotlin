@@ -12,12 +12,12 @@ symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flag
 symbol s11 kind=interface fq=golden.sema.A vis=public flags=_
 symbol s12 kind=function fq=golden.sema.A.greet vis=public flags=_ sig=recv=Class#11 params=[] ret=String suspend=0 defaults=[] vararg=[]
 symbol s13 kind=interface fq=golden.sema.B vis=public flags=_
-symbol s14 kind=function fq=golden.sema.B.greet vis=public flags=_ sig=recv=Class#13 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s14 kind=function fq=golden.sema.B.greet vis=public flags=overrideMember sig=recv=Class#13 params=[] ret=String suspend=0 defaults=[] vararg=[]
 symbol s15 kind=interface fq=golden.sema.C vis=public flags=_
-symbol s16 kind=function fq=golden.sema.C.greet vis=public flags=_ sig=recv=Class#15 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s16 kind=function fq=golden.sema.C.greet vis=public flags=overrideMember sig=recv=Class#15 params=[] ret=String suspend=0 defaults=[] vararg=[]
 symbol s17 kind=class fq=golden.sema.D vis=public flags=_
 symbol s18 kind=constructor fq=golden.sema.D.<init> vis=public flags=_ sig=recv=Class#17 params=[] ret=Class#17 suspend=0 defaults=[] vararg=[]
-symbol s19 kind=function fq=golden.sema.D.greet vis=public flags=_ sig=recv=Class#17 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s19 kind=function fq=golden.sema.D.greet vis=public flags=overrideMember sig=recv=Class#17 params=[] ret=String suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
   decl d1 interface A sym=s11
   decl d3 interface B sym=s13
