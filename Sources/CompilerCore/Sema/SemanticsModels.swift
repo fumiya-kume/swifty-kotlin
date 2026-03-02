@@ -50,6 +50,7 @@ public struct SymbolFlags: OptionSet, Sendable {
     public static let openType = SymbolFlags(rawValue: 1 << 13)
     public static let overrideMember = SymbolFlags(rawValue: 1 << 14)
     public static let finalMember = SymbolFlags(rawValue: 1 << 15)
+    public static let funInterface = SymbolFlags(rawValue: 1 << 16)
 }
 
 public struct SemanticSymbol: Sendable {
@@ -619,6 +620,11 @@ public final class BindingTable {
     /// passes (KIR lowering, codegen) to fold constant references without
     /// re-querying the symbol table.
     public private(set) var constExprValues: [ExprID: KIRExprKind] = [:]
+    /// Tracks lambda expressions that undergo SAM (functional interface) conversion.
+    public private(set) var samConversionExprs: Set<ExprID> = []
+    /// Maps SAM-converted lambda expressions to their underlying function type,
+    /// so KIR lowering can generate the correct callable signature.
+    public private(set) var samUnderlyingFunctionTypes: [ExprID: TypeID] = [:]
 
     public init() {}
 
@@ -745,6 +751,27 @@ public final class BindingTable {
     /// Retrieve the compile-time constant value for an expression, if any.
     public func constExprValue(for expr: ExprID) -> KIRExprKind? {
         constExprValues[expr]
+    }
+
+    /// Mark a lambda expression as undergoing SAM (functional interface) conversion.
+    public func markSamConversion(_ expr: ExprID) {
+        samConversionExprs.insert(expr)
+    }
+
+    /// Whether the given expression is a SAM-converted lambda.
+    public func isSamConversion(_ expr: ExprID) -> Bool {
+        samConversionExprs.contains(expr)
+    }
+
+    /// Store the underlying function type for a SAM-converted lambda, so that
+    /// KIR lowering can generate the callable with the correct signature.
+    public func bindSamUnderlyingFunctionType(_ expr: ExprID, type: TypeID) {
+        samUnderlyingFunctionTypes[expr] = type
+    }
+
+    /// Retrieve the underlying function type for a SAM-converted lambda.
+    public func samUnderlyingFunctionType(for expr: ExprID) -> TypeID? {
+        samUnderlyingFunctionTypes[expr]
     }
 }
 

@@ -450,6 +450,54 @@ extension TypeCheckHelpers {
         )))
     }
 
+    /// For a functional interface (SAM type), find the single abstract method and
+    /// return its function signature.  Returns `nil` if the symbol is not a
+    /// `funInterface` or has no abstract method with a signature.
+    func samMethodSignature(
+        for interfaceSymbol: SymbolID,
+        sema: SemaModule
+    ) -> FunctionSignature? {
+        guard let sym = sema.symbols.symbol(interfaceSymbol),
+              sym.kind == .interface,
+              sym.flags.contains(.funInterface)
+        else {
+            return nil
+        }
+        // Walk child symbols looking for the single abstract function member.
+        let children = sema.symbols.children(ofFQName: sym.fqName)
+        for childID in children {
+            guard let childSym = sema.symbols.symbol(childID),
+                  childSym.kind == .function,
+                  let signature = sema.symbols.functionSignature(for: childID)
+            else {
+                continue
+            }
+            return signature
+        }
+        return nil
+    }
+
+    /// Extracts the SAM function type from a functional interface type.
+    /// Given a `classType` whose symbol is a `funInterface`, returns the
+    /// equivalent `FunctionType` derived from the SAM method's signature.
+    func samFunctionType(
+        for expectedType: TypeID,
+        sema: SemaModule
+    ) -> FunctionType? {
+        guard case let .classType(classType) = sema.types.kind(of: expectedType) else {
+            return nil
+        }
+        guard let signature = samMethodSignature(for: classType.classSymbol, sema: sema) else {
+            return nil
+        }
+        return FunctionType(
+            params: signature.parameterTypes,
+            returnType: signature.returnType,
+            isSuspend: signature.isSuspend,
+            nullability: .nonNull
+        )
+    }
+
     func chooseCallableReferenceTarget(
         from candidates: [SymbolID],
         expectedType: TypeID?,
