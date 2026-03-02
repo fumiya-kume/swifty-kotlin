@@ -161,6 +161,10 @@ extension DataFlowSemaPhase {
                                      varianceMap: varianceMap, env: env, memberRange: funDecl.range)
             }
         }
+        if let receiverTypeRef = funDecl.receiverType {
+            checkTypeRefVariance(receiverTypeRef, position: .contravariant,
+                                 varianceMap: varianceMap, env: env, memberRange: funDecl.range)
+        }
         if let returnTypeRef = funDecl.returnType {
             checkTypeRefVariance(returnTypeRef, position: .out,
                                  varianceMap: varianceMap, env: env, memberRange: funDecl.range)
@@ -172,6 +176,10 @@ extension DataFlowSemaPhase {
         varianceMap: [InternedString: TypeVariance],
         env: VarianceCheckEnv
     ) {
+        if let receiverTypeRef = propertyDecl.receiverType {
+            checkTypeRefVariance(receiverTypeRef, position: .contravariant,
+                                 varianceMap: varianceMap, env: env, memberRange: propertyDecl.range)
+        }
         guard let typeRefID = propertyDecl.type else { return }
         if propertyDecl.isVar {
             checkTypeRefVariance(typeRefID, position: .contravariant,
