@@ -189,8 +189,9 @@ final class InterfaceDefaultMethodTests: XCTestCase {
         let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
-        XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }),
-                       "Calling inherited default method should not produce errors. Got: \(ctx.diagnostics.diagnostics.map(\.message))")
+        let errors = ctx.diagnostics.diagnostics.filter { $0.severity == .error }
+        XCTAssertTrue(errors.isEmpty,
+                      "Calling inherited default method should not produce errors. Got: \(errors.map(\.message))")
     }
 
     func testDefaultMethodCallableOnInterfaceTypedVariable() throws {
@@ -207,8 +208,9 @@ final class InterfaceDefaultMethodTests: XCTestCase {
         let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
-        XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }),
-                       "Calling default method on interface-typed variable should not produce errors. Got: \(ctx.diagnostics.diagnostics.map(\.message))")
+        let errors = ctx.diagnostics.diagnostics.filter { $0.severity == .error }
+        XCTAssertTrue(errors.isEmpty,
+                      "Calling default method on interface-typed var should not error. Got: \(errors.map(\.message))")
     }
 
     // MARK: - KIR: default method lowering
@@ -292,7 +294,8 @@ final class InterfaceDefaultMethodTests: XCTestCase {
         let ctx = makeContextFromSource(source)
         try runToLowering(ctx)
 
-        XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }),
-                       "Mixed abstract+default pipeline should succeed. Got: \(ctx.diagnostics.diagnostics.map(\.message))")
+        let errors = ctx.diagnostics.diagnostics.filter { $0.severity == .error }
+        XCTAssertTrue(errors.isEmpty,
+                      "Mixed abstract+default pipeline should succeed. Got: \(errors.map(\.message))")
     }
 }
