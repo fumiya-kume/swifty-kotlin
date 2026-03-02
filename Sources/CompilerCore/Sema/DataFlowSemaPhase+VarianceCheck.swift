@@ -14,7 +14,7 @@ extension DataFlowSemaPhase {
         ast: ASTModule,
         symbols: SymbolTable,
         bindings: BindingTable,
-        types: TypeSystem,
+        types _: TypeSystem,
         diagnostics: DiagnosticEngine,
         interner: StringInterner
     ) {
@@ -198,8 +198,8 @@ extension DataFlowSemaPhase {
         /// Flips the position (used for contravariant nesting).
         var flipped: VariancePosition {
             switch self {
-            case .out: return .in
-            case .in: return .out
+            case .out: .in
+            case .in: .out
             }
         }
     }
