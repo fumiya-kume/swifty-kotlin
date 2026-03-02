@@ -644,6 +644,7 @@ extension CallLowerer {
             instructions: &instructions.instructions
         )
     }
+
     /// Lowers `T::class.simpleName` / `T::class.qualifiedName` to a call to
     /// the runtime function `kk_type_token_simple_name` (or `_qualified_name`).
     ///
@@ -655,12 +656,12 @@ extension CallLowerer {
     ///    string literal so the runtime can use it directly for nominal types
     ///    whose hash-based token is lossy.
     private func lowerClassRefPropertyAccess(
-        _ exprID: ExprID,
-        classRefExprID: ExprID,
-        classRefReceiver: ExprID?,
+        _: ExprID,
+        classRefExprID _: ExprID,
+        classRefReceiver _: ExprID?,
         classRefTargetType: TypeID,
         propertyName: String,
-        ast: ASTModule,
+        ast _: ASTModule,
         sema: SemaModule,
         arena: KIRArena,
         interner: StringInterner,

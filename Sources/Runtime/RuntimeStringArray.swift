@@ -228,20 +228,19 @@ public func kk_type_token_simple_name(_ typeToken: Int, _ nameHint: Int) -> Int 
     }
     let token = Int64(truncatingIfNeeded: typeToken)
     let base = token & RuntimeTypeTokenEncoding.baseMask
-    let name: String
-    switch base {
+    let name = switch base {
     case RuntimeTypeTokenEncoding.anyBase:
-        name = "Any"
+        "Any"
     case RuntimeTypeTokenEncoding.stringBase:
-        name = "String"
+        "String"
     case RuntimeTypeTokenEncoding.intBase:
-        name = "Int"
+        "Int"
     case RuntimeTypeTokenEncoding.booleanBase:
-        name = "Boolean"
+        "Boolean"
     case RuntimeTypeTokenEncoding.nullBase:
-        name = "Nothing"
+        "Nothing"
     default:
-        name = "Unknown"
+        "Unknown"
     }
     let utf8 = Array(name.utf8)
     return utf8.withUnsafeBufferPointer { buf in
