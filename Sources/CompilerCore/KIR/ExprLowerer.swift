@@ -583,6 +583,8 @@ final class ExprLowerer {
                 // Check if this is a top-level or object-member property assignment.
                 // These need a copy to global storage rather than just updating
                 // localValuesBySymbol (which wouldn't persist across function calls).
+                // Top-level properties have nil or .package parent.
+                // Object member properties have .object parent.
                 if let symInfo = sema.symbols.symbol(symbol), symInfo.kind == .property, {
                     let p = sema.symbols.parentSymbol(for: symbol)
                     let pk = p.flatMap { sema.symbols.symbol($0) }?.kind
@@ -808,7 +810,8 @@ final class ExprLowerer {
             }
             if let symbol = sema.bindings.identifierSymbols[exprID] {
                 // Top-level or object-member property compound assignment
-                // needs a copy to global storage.
+                // needs a copy to global storage. Top-level properties have
+                // nil or .package parent; object members have .object parent.
                 if let symInfo = sema.symbols.symbol(symbol), symInfo.kind == .property, {
                     let p = sema.symbols.parentSymbol(for: symbol)
                     let pk = p.flatMap { sema.symbols.symbol($0) }?.kind

@@ -111,32 +111,11 @@ extension CallLowerer {
             return staticMemberValue
         }
 
-        // Object member property read: load from global slot instead
-        // of emitting a function call to the property name.
-        if args.isEmpty {
-            let chosenSym = sema.bindings.callBindings[exprID]?
-                .chosenCallee
-            let valueSym = chosenSym
-                ?? sema.bindings.identifierSymbol(for: exprID)
-            if let valueSym,
-               let info = sema.symbols.symbol(valueSym),
-               info.kind == .property,
-               let parent = sema.symbols.parentSymbol(
-                   for: valueSym
-               ),
-               sema.symbols.symbol(parent)?.kind == .object
-            {
-                let propType = sema.bindings.exprTypes[exprID]
-                    ?? sema.symbols.propertyType(for: valueSym)
-                    ?? sema.types.anyType
-                let id = arena.appendExpr(
-                    .symbolRef(valueSym), type: propType
-                )
-                instructions.append(
-                    .loadGlobal(result: id, symbol: valueSym)
-                )
-                return id
-            }
+        if let objPropValue = tryLowerObjectMemberPropertyRead(
+            exprID, args: args, sema: sema, arena: arena,
+            instructions: &instructions
+        ) {
+            return objPropValue
         }
 
         let boundType = sema.bindings.exprTypes[exprID]
@@ -294,6 +273,30 @@ extension CallLowerer {
             arguments: finalArguments
         )
         return result
+    }
+
+    private func tryLowerObjectMemberPropertyRead(
+        _ exprID: ExprID,
+        args: [CallArgument],
+        sema: SemaModule,
+        arena: KIRArena,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        guard args.isEmpty else { return nil }
+        let chosenSym = sema.bindings.callBindings[exprID]?.chosenCallee
+        let valueSym = chosenSym ?? sema.bindings.identifierSymbol(for: exprID)
+        guard let valueSym,
+              let info = sema.symbols.symbol(valueSym),
+              info.kind == .property,
+              let parent = sema.symbols.parentSymbol(for: valueSym),
+              sema.symbols.symbol(parent)?.kind == .object
+        else { return nil }
+        let propType = sema.bindings.exprTypes[exprID]
+            ?? sema.symbols.propertyType(for: valueSym)
+            ?? sema.types.anyType
+        let id = arena.appendExpr(.symbolRef(valueSym), type: propType)
+        instructions.append(.loadGlobal(result: id, symbol: valueSym))
+        return id
     }
 
     private func tryLowerClassNameMemberValueExpr(
