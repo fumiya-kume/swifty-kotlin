@@ -131,7 +131,11 @@ public final class CodegenPhase: CompilerPhase {
     }
 
     private func makeBackend(ctx: CompilationContext) -> any CodegenBackend {
-        let selection = selectedBackend(irFlags: ctx.options.irFlags, diagnostics: ctx.diagnostics)
+        let selection = selectedBackend(
+            irFlags: ctx.options.irFlags,
+            target: ctx.options.target,
+            diagnostics: ctx.diagnostics
+        )
         switch selection.kind {
         case .syntheticC:
             let backend = LLVMBackend(
@@ -153,7 +157,11 @@ public final class CodegenPhase: CompilerPhase {
         }
     }
 
-    private func selectedBackend(irFlags: [String], diagnostics: DiagnosticEngine) -> BackendSelection {
+    private func selectedBackend(
+        irFlags: [String],
+        target: TargetTriple,
+        diagnostics: DiagnosticEngine
+    ) -> BackendSelection {
         var requestedBackend: String?
         var isStrictMode = false
 
@@ -174,7 +182,7 @@ public final class CodegenPhase: CompilerPhase {
         }
 
         guard let requestedBackend else {
-            if LLVMCAPIBindings.load()?.smokeTestContextLifecycle() == true {
+            if llvmCapiBackendUsableForDefaultSelection(target: target) {
                 return BackendSelection(kind: .llvmCAPI, isStrictMode: isStrictMode)
             }
             return BackendSelection(kind: .syntheticC, isStrictMode: false)
@@ -193,6 +201,45 @@ public final class CodegenPhase: CompilerPhase {
             )
             return BackendSelection(kind: .syntheticC, isStrictMode: false)
         }
+    }
+
+    private func llvmCapiBackendUsableForDefaultSelection(target: TargetTriple) -> Bool {
+        guard let bindings = LLVMCAPIBindings.load(),
+              bindings.smokeTestContextLifecycle()
+        else {
+            return false
+        }
+
+        let requestedTriple = targetTripleString(target)
+        if canCreateTargetMachine(bindings: bindings, triple: requestedTriple) {
+            return true
+        }
+
+        guard let hostTriple = bindings.defaultTargetTriple(),
+              !hostTriple.isEmpty,
+              hostTriple != requestedTriple
+        else {
+            return false
+        }
+        return canCreateTargetMachine(bindings: bindings, triple: hostTriple)
+    }
+
+    private func canCreateTargetMachine(
+        bindings: LLVMCAPIBindings,
+        triple: String
+    ) -> Bool {
+        guard let machine = bindings.createTargetMachine(triple: triple, optLevel: .O0) else {
+            return false
+        }
+        bindings.disposeTargetMachine(machine)
+        return true
+    }
+
+    private func targetTripleString(_ target: TargetTriple) -> String {
+        if let osVersion = target.osVersion, !osVersion.isEmpty {
+            return "\(target.arch)-\(target.vendor)-\(target.os)\(osVersion)"
+        }
+        return "\(target.arch)-\(target.vendor)-\(target.os)"
     }
 
     private func parseStrictModeFlag(_ value: String) -> Bool? {
