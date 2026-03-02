@@ -3,7 +3,6 @@ import Foundation
 // MARK: - provideDelegate operator support (PROP-007)
 
 extension KIRLoweringDriver {
-
     /// Checks whether the delegate expression type defines a `provideDelegate` operator function.
     func checkHasProvideDelegate(
         delegateExprType: TypeID?,

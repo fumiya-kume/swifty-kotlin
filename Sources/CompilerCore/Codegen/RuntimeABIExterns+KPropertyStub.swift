@@ -1,29 +1,29 @@
 // KProperty stub extern declarations (PROP-007)
 
-extension RuntimeABIExterns {
+public extension RuntimeABIExterns {
     // swiftlint:disable:next identifier_name
-    public static let kk_kproperty_stub_create = ExternDecl(
+    static let kk_kproperty_stub_create = ExternDecl(
         name: "kk_kproperty_stub_create",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
     // swiftlint:disable:next identifier_name
-    public static let kk_kproperty_stub_name = ExternDecl(
+    static let kk_kproperty_stub_name = ExternDecl(
         name: "kk_kproperty_stub_name",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
     // swiftlint:disable:next identifier_name
-    public static let kk_kproperty_stub_return_type = ExternDecl(
+    static let kk_kproperty_stub_return_type = ExternDecl(
         name: "kk_kproperty_stub_return_type",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
     /// Combined array for use in `allExterns` concatenation.
-    public static let kPropertyStubExterns: [ExternDecl] = [
+    static let kPropertyStubExterns: [ExternDecl] = [
         kk_kproperty_stub_create,
         kk_kproperty_stub_name,
         kk_kproperty_stub_return_type,

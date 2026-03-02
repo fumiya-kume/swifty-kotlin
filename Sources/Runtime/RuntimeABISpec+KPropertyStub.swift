@@ -1,8 +1,8 @@
 // KProperty stub ABI specs (PROP-007)
 
-extension RuntimeABISpec {
+public extension RuntimeABISpec {
     /// KProperty stub functions used by the provideDelegate operator.
-    public static let kPropertyStubFunctions: [RuntimeABIFunctionSpec] = [
+    static let kPropertyStubFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
             name: "kk_kproperty_stub_create",
             parameters: [
