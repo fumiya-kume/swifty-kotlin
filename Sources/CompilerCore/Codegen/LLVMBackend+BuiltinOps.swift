@@ -80,6 +80,7 @@ extension LLVMBackend {
             "intptr_t p\(index)"
         }
         parameters.append("intptr_t* outThrown")
-        return "intptr_t \(symbol)(\(parameters.joined(separator: \", \")))"
+        let joined = parameters.joined(separator: ", ")
+        return "intptr_t \(symbol)(\(joined))"
     }
 }
