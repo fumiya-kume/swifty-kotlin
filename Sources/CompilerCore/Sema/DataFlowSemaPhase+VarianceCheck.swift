@@ -1,4 +1,3 @@
-
 extension DataFlowSemaPhase {
     // Validates declaration-site variance constraints for all classes and interfaces.
     // Kotlin rules:
