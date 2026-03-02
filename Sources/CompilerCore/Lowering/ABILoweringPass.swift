@@ -118,6 +118,10 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_custom_delegate_create"),
             ctx.interner.intern("kk_custom_delegate_get_value"),
             ctx.interner.intern("kk_custom_delegate_set_value"),
+            // KProperty stub (PROP-007)
+            ctx.interner.intern("kk_kproperty_stub_create"),
+            ctx.interner.intern("kk_kproperty_stub_name"),
+            ctx.interner.intern("kk_kproperty_stub_return_type"),
             ctx.interner.intern("kk_list_of"),
             ctx.interner.intern("kk_list_size"),
             ctx.interner.intern("kk_list_get"),

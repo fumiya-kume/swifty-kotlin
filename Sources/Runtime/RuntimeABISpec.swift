@@ -760,6 +760,32 @@ public enum RuntimeABISpec {
 
     /// Stdlib Delegate Functions (P5-80)
     public static let delegateFunctions: [RuntimeABIFunctionSpec] = [
+        // KProperty stub (PROP-007)
+        RuntimeABIFunctionSpec(
+            name: "kk_kproperty_stub_create",
+            parameters: [
+                RuntimeABIParameter(name: "nameStr", type: .intptr),
+                RuntimeABIParameter(name: "returnTypeStr", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kproperty_stub_name",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kproperty_stub_return_type",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
         // Lazy
         RuntimeABIFunctionSpec(
             name: "kk_lazy_create",

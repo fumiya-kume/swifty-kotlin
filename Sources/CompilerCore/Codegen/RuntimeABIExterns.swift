@@ -529,6 +529,25 @@ public enum RuntimeABIExterns {
 
     // MARK: - Delegate
 
+    // KProperty stub (PROP-007)
+    public static let kk_kproperty_stub_create = ExternDecl(
+        name: "kk_kproperty_stub_create",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kproperty_stub_name = ExternDecl(
+        name: "kk_kproperty_stub_name",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kproperty_stub_return_type = ExternDecl(
+        name: "kk_kproperty_stub_return_type",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_lazy_create = ExternDecl(
         name: "kk_lazy_create",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -725,6 +744,9 @@ public enum RuntimeABIExterns {
         kk_op_downTo,
         kk_op_step,
         // Delegate
+        kk_kproperty_stub_create,
+        kk_kproperty_stub_name,
+        kk_kproperty_stub_return_type,
         kk_lazy_create,
         kk_lazy_get_value,
         kk_observable_create,

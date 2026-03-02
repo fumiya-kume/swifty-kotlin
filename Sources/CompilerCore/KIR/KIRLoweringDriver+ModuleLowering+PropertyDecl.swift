@@ -259,8 +259,10 @@ extension KIRLoweringDriver {
             )
         case .custom:
             emitCustomDelegateInit(
-                propertyDecl: propertyDecl, delegateStorageSymbol: delegateStorageSymbol,
-                delegateType: delegateType, shared: shared, initInstructions: &initInstructions
+                propertyDecl: propertyDecl, symbol: symbol,
+                delegateStorageSymbol: delegateStorageSymbol,
+                delegateType: delegateType, shared: shared,
+                compilationCtx: compilationCtx, initInstructions: &initInstructions
             )
         }
     }
@@ -321,16 +323,41 @@ extension KIRLoweringDriver {
         initInstructions.append(.storeGlobal(value: createResult, symbol: delegateStorageSymbol))
     }
 
+    // swiftlint:disable:next function_parameter_count
     private func emitCustomDelegateInit(
         propertyDecl: PropertyDecl,
+        symbol: SymbolID,
         delegateStorageSymbol: SymbolID,
         delegateType: TypeID,
         shared: KIRLoweringSharedContext,
+        compilationCtx: CompilationContext,
         initInstructions: inout KIRLoweringEmitContext
     ) {
         let arena = shared.arena
+        let sema = shared.sema
         let interner = shared.interner
         let delegateObjExpr = lowerExpr(propertyDecl.delegateExpression!, shared: shared, emit: &initInstructions)
+
+        // Check whether the delegate type defines a provideDelegate operator.
+        let delegateExprType = sema.bindings.exprType(for: propertyDecl.delegateExpression!)
+        let provideDelegateName = interner.intern("provideDelegate")
+        let hasProvideDelegate: Bool = {
+            guard let delType = delegateExprType else { return false }
+            let typeKind = sema.types.kind(of: delType)
+            switch typeKind {
+            case let .classType(ct):
+                guard let sym = sema.symbols.symbol(ct.classSymbol) else { return false }
+                let memberSymbols = sema.symbols.children(ofFQName: sym.fqName)
+                return memberSymbols.contains { memberID in
+                    guard let member = sema.symbols.symbol(memberID) else { return false }
+                    return member.name == provideDelegateName
+                        && member.kind == .function
+                }
+            default:
+                return false
+            }
+        }()
+
         let createResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: delegateType)
         initInstructions.append(.call(
             symbol: nil, callee: interner.intern("kk_custom_delegate_create"),
@@ -338,5 +365,58 @@ extension KIRLoweringDriver {
             result: createResult, canThrow: false, thrownResult: nil
         ))
         initInstructions.append(.storeGlobal(value: createResult, symbol: delegateStorageSymbol))
+
+        if hasProvideDelegate {
+            // Build thisRef (null for top-level properties).
+            let thisRefExprID = arena.appendExpr(.null, type: sema.types.nullableAnyType)
+            initInstructions.append(.constValue(result: thisRefExprID, value: .null))
+
+            // Build a KProperty<*> stub via kk_kproperty_stub_create(name, returnType).
+            let propertyName = sema.symbols.symbol(symbol)?.name ?? interner.intern("")
+            let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
+            let propertyNameExprID = arena.appendExpr(
+                .stringLiteral(propertyName),
+                type: sema.types.make(.primitive(.string, .nonNull))
+            )
+            initInstructions.append(.constValue(result: propertyNameExprID, value: .stringLiteral(propertyName)))
+            let returnTypeSig = interner.intern(sema.types.renderType(propType))
+            let returnTypeExprID = arena.appendExpr(
+                .stringLiteral(returnTypeSig),
+                type: sema.types.make(.primitive(.string, .nonNull))
+            )
+            initInstructions.append(.constValue(result: returnTypeExprID, value: .stringLiteral(returnTypeSig)))
+            let kPropertyExprID = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: sema.types.anyType
+            )
+            initInstructions.append(
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("kk_kproperty_stub_create"),
+                    arguments: [propertyNameExprID, returnTypeExprID],
+                    result: kPropertyExprID,
+                    canThrow: false,
+                    thrownResult: nil
+                )
+            )
+
+            // Call provideDelegate(thisRef, kProperty) on the delegate storage.
+            let provideDelegateResult = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: sema.types.anyType
+            )
+            initInstructions.append(
+                .call(
+                    symbol: delegateStorageSymbol,
+                    callee: provideDelegateName,
+                    arguments: [thisRefExprID, kPropertyExprID],
+                    result: provideDelegateResult,
+                    canThrow: false,
+                    thrownResult: nil
+                )
+            )
+            // Overwrite the delegate storage with the provideDelegate result.
+            initInstructions.append(.storeGlobal(value: provideDelegateResult, symbol: delegateStorageSymbol))
+        }
     }
 }
