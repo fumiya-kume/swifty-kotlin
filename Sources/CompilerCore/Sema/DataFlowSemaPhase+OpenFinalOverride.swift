@@ -90,25 +90,25 @@ extension DataFlowSemaPhase {
         _ decl: Decl
     ) -> OFODeclInfo? {
         switch decl {
-        case let .classDecl(d):
+        case let .classDecl(cls):
             OFODeclInfo(
-                memberFunctions: d.memberFunctions,
-                memberProperties: d.memberProperties,
-                nestedClasses: d.nestedClasses,
-                declRange: d.range
+                memberFunctions: cls.memberFunctions,
+                memberProperties: cls.memberProperties,
+                nestedClasses: cls.nestedClasses,
+                declRange: cls.range
             )
-        case let .objectDecl(d):
+        case let .objectDecl(obj):
             OFODeclInfo(
-                memberFunctions: d.memberFunctions,
-                memberProperties: d.memberProperties,
-                nestedClasses: d.nestedClasses,
-                declRange: d.range
+                memberFunctions: obj.memberFunctions,
+                memberProperties: obj.memberProperties,
+                nestedClasses: obj.nestedClasses,
+                declRange: obj.range
             )
-        case let .interfaceDecl(d):
+        case let .interfaceDecl(iface):
             OFODeclInfo(
                 memberFunctions: [],
                 memberProperties: [],
-                nestedClasses: d.nestedClasses,
+                nestedClasses: iface.nestedClasses,
                 declRange: nil
             )
         default:
@@ -191,17 +191,17 @@ extension DataFlowSemaPhase {
         _ decl: Decl
     ) -> MemberMeta? {
         switch decl {
-        case let .funDecl(d):
+        case let .funDecl(fun):
             MemberMeta(
-                name: d.name,
-                range: d.range,
-                hasOverride: d.modifiers.contains(.override)
+                name: fun.name,
+                range: fun.range,
+                hasOverride: fun.modifiers.contains(.override)
             )
-        case let .propertyDecl(d):
+        case let .propertyDecl(prop):
             MemberMeta(
-                name: d.name,
-                range: d.range,
-                hasOverride: d.modifiers.contains(.override)
+                name: prop.name,
+                range: prop.range,
+                hasOverride: prop.modifiers.contains(.override)
             )
         default:
             nil
@@ -284,8 +284,7 @@ extension DataFlowSemaPhase {
         if sym.flags.contains(.abstractType) { return true }
         // An override member is implicitly open unless marked final.
         if sym.flags.contains(.overrideMember),
-           !sym.flags.contains(.finalMember)
-        {
+           !sym.flags.contains(.finalMember) {
             return true
         }
         return false
