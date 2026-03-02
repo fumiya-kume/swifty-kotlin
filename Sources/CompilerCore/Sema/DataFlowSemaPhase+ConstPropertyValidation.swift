@@ -28,20 +28,21 @@ extension DataFlowSemaPhase {
                 range: propertyDecl.range
             )
         }
-        if propertyDecl.type != nil {
-            let isConstCompatible = switch types.kind(of: resolvedType) {
-            case let .primitive(_, nullability):
-                nullability == .nonNull
-            default:
-                false
-            }
-            if !isConstCompatible {
-                diagnostics.error(
-                    "KSWIFTK-SEMA-0082",
-                    "'const val' type must be a primitive type or String.",
-                    range: propertyDecl.range
-                )
-            }
+        // Validate that the resolved type (whether explicitly annotated or
+        // inferred from the initializer) is a non-null primitive or String.
+        // Kotlin restricts const val to compile-time constant types only.
+        let isConstCompatible = switch types.kind(of: resolvedType) {
+        case let .primitive(_, nullability):
+            nullability == .nonNull
+        default:
+            false
+        }
+        if !isConstCompatible {
+            diagnostics.error(
+                "KSWIFTK-SEMA-0082",
+                "'const val' type must be a primitive type or String.",
+                range: propertyDecl.range
+            )
         }
         // Record the compile-time constant value from the initializer.
         // When no explicit type annotation is present, also validate that
