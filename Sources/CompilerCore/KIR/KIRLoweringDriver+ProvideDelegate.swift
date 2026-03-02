@@ -1,8 +1,8 @@
 import Foundation
 
 // MARK: - provideDelegate operator support (PROP-007)
-// swiftlint:disable trailing_comma
 
+// swiftlint:disable trailing_comma
 extension KIRLoweringDriver {
     /// Checks whether the delegate expression type defines a `provideDelegate` operator function.
     func checkHasProvideDelegate(

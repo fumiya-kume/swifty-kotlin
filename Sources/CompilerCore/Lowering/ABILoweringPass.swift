@@ -4,7 +4,7 @@ final class ABILoweringPass: LoweringPass {
     static let name = "ABILowering"
 
     func run(module: KIRModule, ctx: KIRContext) throws {
-        let nonThrowingCallees: Set<InternedString> = [
+        let nonThrowingCallees: Set<InternedString> = Set([
             ctx.interner.intern("kk_op_add"),
             ctx.interner.intern("kk_op_sub"),
             ctx.interner.intern("kk_op_mul"),
@@ -147,7 +147,7 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_op_shr"),
             ctx.interner.intern("kk_op_ushr"),
             ctx.interner.intern("kk_int_toString_radix"),
-        ].union(Self.kPropertyStubCallees(ctx.interner))
+        ]).union(Self.kPropertyStubCallees(ctx.interner))
 
         let boxIntCallee = ctx.interner.intern("kk_box_int")
         let boxBoolCallee = ctx.interner.intern("kk_box_bool")
