@@ -245,7 +245,6 @@ extension BuildASTPhase.ExpressionParser {
         return true
     }
 
-    // swiftlint:disable:next cyclomatic_complexity
     private func parseDestructuringNames(from innerTokens: [Token]) -> [InternedString?] {
         var names: [InternedString?] = []
         var idx = 0
