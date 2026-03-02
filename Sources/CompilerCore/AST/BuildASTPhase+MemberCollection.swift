@@ -263,7 +263,7 @@ extension BuildASTPhase {
     func declarationClassBodyInitOrder(
         from nodeID: NodeID,
         in arena: SyntaxArena,
-        interner: StringInterner
+        interner _: StringInterner
     ) -> [ClassBodyInitMember] {
         guard let bodyBlockID = arena.children(of: nodeID).compactMap({ child -> NodeID? in
             guard case let .node(childID) = child,
