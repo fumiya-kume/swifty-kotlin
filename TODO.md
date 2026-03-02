@@ -37,12 +37,12 @@
 
 #### 📐 Type System
 
-- [ ] TYPE-001: `Nothing` 型の型推論・制御フロー Unreachable 統合を完成させる（spec.md J8/J10）
-  - [ ] `throw`・`return`・`break`・`continue` の型を `Nothing` として型推論に一貫して伝播させる
-  - [ ] `Nothing` を LUB 規則のボトム型として扱い、`if/when/try` の分岐合流で正しく処理する
-  - [ ] `Nothing?` と `Nothing` の区別（`null` は `Nothing?`）を型システムに反映する
-  - [ ] 到達不能コード（`Nothing` の後の文）を DataFlow が unreachable と判定し diagnostic を出す
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task TYPE-001`
+- [x] TYPE-001: `Nothing` 型の型推論・制御フロー Unreachable 統合を完成させる（spec.md J8/J10）
+  - [x] `throw`・`return`・`break`・`continue` の型を `Nothing` として型推論に一貫して伝播させる
+  - [x] `Nothing` を LUB 規則のボトム型として扱い、`if/when/try` の分岐合流で正しく処理する
+  - [x] `Nothing?` と `Nothing` の区別（`null` は `Nothing?`）を型システムに反映する
+  - [x] 到達不能コード（`Nothing` の後の文）を DataFlow が unreachable と判定し diagnostic を出す
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task TYPE-001`
   - **完了条件**: `val x: Int = if (cond) 1 else throw E()` が型エラーなしで `Int` と推論され、到達不能行が診断される
 
 
