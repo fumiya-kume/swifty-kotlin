@@ -146,12 +146,13 @@ extension BuildASTPhase.ExpressionParser {
         var label: InternedString?
         var end = token.range.end
         let isAtSymbol = current().map { $0.kind == .symbol(.at) } ?? false
-        if isAtSymbol, let labelToken = peek(1),
-           let labelName = identifierFromToken(labelToken) {
+        let labelToken = isAtSymbol ? peek(1) : nil
+        let labelName = labelToken.flatMap { identifierFromToken($0) }
+        if isAtSymbol, let resolvedToken = labelToken, labelName != nil {
             _ = consume()
             _ = consume()
             label = labelName
-            end = labelToken.range.end
+            end = resolvedToken.range.end
         }
         let range = SourceRange(start: token.range.start, end: end)
         if isBreak {
@@ -187,8 +188,9 @@ extension BuildASTPhase.ExpressionParser {
     private func parsePrimaryThis(_ token: Token) -> ExprID {
         _ = consume()
         let isThisAtSymbol = current().map { $0.kind == .symbol(.at) } ?? false
-        if isThisAtSymbol, let labelToken = peek(1),
-           let labelName = identifierFromToken(labelToken) {
+        let thisLabelToken = isThisAtSymbol ? peek(1) : nil
+        let thisLabelName = thisLabelToken.flatMap { identifierFromToken($0) }
+        if isThisAtSymbol, let labelToken = thisLabelToken, let labelName = thisLabelName {
             _ = consume()
             _ = consume()
             let endRange = labelToken.range
