@@ -90,11 +90,10 @@ final class DeclTypeChecker {
 
         // For extension properties, set the implicit receiver type so that
         // `this` resolves correctly inside getter/setter bodies.
-        let accessorCtx: TypeInferenceContext
-        if let receiverType = sema.symbols.extensionPropertyReceiverType(for: symbol) {
-            accessorCtx = ctx.copying(implicitReceiverType: receiverType)
+        let accessorCtx: TypeInferenceContext = if let receiverType = sema.symbols.extensionPropertyReceiverType(for: symbol) {
+            ctx.copying(implicitReceiverType: receiverType)
         } else {
-            accessorCtx = ctx
+            ctx
         }
 
         if let getter = property.getter {

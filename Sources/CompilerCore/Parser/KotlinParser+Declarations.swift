@@ -204,9 +204,9 @@ extension KotlinParser {
     private func isPropertyAccessorStart(_ token: Token) -> Bool {
         switch token.kind {
         case .softKeyword(.get), .softKeyword(.set):
-            return stream.peek(1).kind == .symbol(.lParen)
+            stream.peek(1).kind == .symbol(.lParen)
         default:
-            return false
+            false
         }
     }
 
