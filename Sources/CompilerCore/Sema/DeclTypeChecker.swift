@@ -363,11 +363,9 @@ final class DeclTypeChecker {
         // Abstract methods use .unit as their body sentinel – skip body type
         // inference. Gate on abstractType so non-abstract missing bodies still
         // hit the Unit <: ReturnType constraint.
-        if function.body == .unit {
-            if let sym = sema.symbols.symbol(symbol), sym.flags.contains(.abstractType) {
-                return
-            }
-        }
+        let isAbstract = function.body == .unit
+            && (sema.symbols.symbol(symbol)?.flags.contains(.abstractType) ?? false)
+        if isAbstract { return }
 
         let bodyType = inferFunctionBodyType(
             function.body,
