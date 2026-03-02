@@ -153,10 +153,8 @@ public extension TypeSystem {
     ) -> Int? {
         guard !writeForbiddenSymbols.isEmpty else { return nil }
         for (index, paramType) in signature.parameterTypes.enumerated() {
-            for symbol in writeForbiddenSymbols {
-                if typeContainsTypeParam(paramType, symbol: symbol) {
-                    return index
-                }
+            for symbol in writeForbiddenSymbols where typeContainsTypeParam(paramType, symbol: symbol) {
+                return index
             }
         }
         return nil
@@ -171,8 +169,7 @@ public extension TypeSystem {
         switch kind {
         case let .typeParam(typeParam):
             if let variable = typeVarBySymbol[typeParam.symbol],
-               let concrete = substitution[variable]
-            {
+               let concrete = substitution[variable] {
                 return concrete
             }
             return type
@@ -233,8 +230,7 @@ public extension TypeSystem {
             )
             if newReceiver == functionType.receiver,
                newParams == functionType.params,
-               newReturn == functionType.returnType
-            {
+               newReturn == functionType.returnType {
                 return type
             }
             return make(.functionType(FunctionType(

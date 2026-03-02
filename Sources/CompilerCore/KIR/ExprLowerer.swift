@@ -143,8 +143,7 @@ final class ExprLowerer {
                 return id
             }
             if name == thisID,
-               let receiverExprID = driver.ctx.currentImplicitReceiverExprID
-            {
+               let receiverExprID = driver.ctx.currentImplicitReceiverExprID {
                 return receiverExprID
             }
             if let symbol = sema.bindings.identifierSymbols[exprID] {
@@ -155,8 +154,7 @@ final class ExprLowerer {
                 // Mutable (var) properties must always load from global store at runtime.
                 if let constant = propertyConstantInitializers[symbol],
                    let symInfo = sema.symbols.symbol(symbol),
-                   !symInfo.flags.contains(.mutable)
-                {
+                   !symInfo.flags.contains(.mutable) {
                     let id = arena.appendExpr(constant, type: boundType)
                     instructions.append(.constValue(result: id, value: constant))
                     return id
@@ -165,8 +163,7 @@ final class ExprLowerer {
                 // backend reads the current value from the global slot.
                 if let sym = sema.symbols.symbol(symbol),
                    sym.kind == .property || sym.kind == .field,
-                   sema.symbols.parentSymbol(for: symbol) == nil || sema.symbols.symbol(sema.symbols.parentSymbol(for: symbol)!)?.kind == .package
-                {
+                   sema.symbols.parentSymbol(for: symbol) == nil || sema.symbols.symbol(sema.symbols.parentSymbol(for: symbol)!)?.kind == .package {
                     let id = arena.appendExpr(.symbolRef(symbol), type: boundType)
                     instructions.append(.loadGlobal(result: id, symbol: symbol))
                     return id
@@ -242,7 +239,7 @@ final class ExprLowerer {
                     }
                     localFunReturnType = sig.returnType
                 } else {
-                    localFunValueParamList = localFunValueParams.enumerated().map { index, _ in
+                    localFunValueParamList = localFunValueParams.indices.map { index in
                         KIRParameter(
                             symbol: driver.lambdaLowerer.syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: index),
                             type: sema.types.anyType
@@ -291,8 +288,7 @@ final class ExprLowerer {
                 // mirrors the post-filter in lexicalCaptureSymbolsForLambda.
                 if let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol,
                    driver.ctx.currentImplicitReceiverExprID != nil,
-                   !captureSymbols.contains(receiverSymbol)
-                {
+                   !captureSymbols.contains(receiverSymbol) {
                     let needsReceiver = captureBodyExprIDs.contains { bodyExprID in
                         driver.lambdaLowerer.containsImplicitReceiverReference(in: bodyExprID, ast: ast)
                     }
@@ -405,16 +401,14 @@ final class ExprLowerer {
                 }
                 for capture in captureBindings {
                     if let outerCallableInfo = driver.ctx.callableValueInfoByExprID[capture.valueExpr],
-                       let bodyCallableExpr = driver.ctx.localValuesBySymbol[capture.capturedSymbol]
-                    {
+                       let bodyCallableExpr = driver.ctx.localValuesBySymbol[capture.capturedSymbol] {
                         var remappedArgs: [KIRExprID] = []
                         var mappingFailed = false
                         for argExpr in outerCallableInfo.captureArguments {
                             if let bodyArgExpr = outerExprToBodyExpr[argExpr] {
                                 remappedArgs.append(bodyArgExpr)
                             } else if case let .symbolRef(argSym) = arena.expr(argExpr),
-                                      let bodyArgExpr = driver.ctx.localValuesBySymbol[argSym]
-                            {
+                                      let bodyArgExpr = driver.ctx.localValuesBySymbol[argSym] {
                                 remappedArgs.append(bodyArgExpr)
                             } else {
                                 assertionFailure("BuildKIRPhase: failed to remap capture argument for local function body")
@@ -459,8 +453,7 @@ final class ExprLowerer {
                     var terminatedByReturn = false
                     for bodyExprID in bodyExprIDs {
                         if let bodyExpr = ast.arena.expr(bodyExprID),
-                           case let .returnExpr(value, _, _) = bodyExpr
-                        {
+                           case let .returnExpr(value, _, _) = bodyExpr {
                             if let value {
                                 let lowered = lowerExpr(
                                     value,
@@ -479,8 +472,7 @@ final class ExprLowerer {
                             break
                         }
                         if let bodyExpr = ast.arena.expr(bodyExprID),
-                           case .throwExpr = bodyExpr
-                        {
+                           case .throwExpr = bodyExpr {
                             _ = lowerExpr(
                                 bodyExprID,
                                 ast: ast,
@@ -970,7 +962,7 @@ final class ExprLowerer {
                 // so we can use its per-component type (not the expression-level Unit type)
                 let candidates = sema.symbols.lookupAll(fqName: [
                     interner.intern("__destructuring_\(exprID.rawValue)"),
-                    name,
+                    name
                 ])
                 let componentType = candidates.first.flatMap { sema.symbols.propertyType(for: $0) } ?? sema.types.anyType
                 let componentResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: componentType)

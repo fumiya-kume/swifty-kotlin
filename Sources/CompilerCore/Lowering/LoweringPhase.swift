@@ -27,7 +27,7 @@ public final class LoweringPhase: CompilerPhase {
         LambdaClosureConversionPass(),
         InlineLoweringPass(),
         CoroutineLoweringPass(),
-        ABILoweringPass(),
+        ABILoweringPass()
     ]
 
     public init() {}

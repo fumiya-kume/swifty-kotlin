@@ -136,8 +136,7 @@ extension CoroutineLoweringPass {
                        suspendFunctionNames: suspendFunctionNames,
                        runtimeSuspendCallNames: runtimeSuspendCallNames
                    ),
-                   let nextResumeLabel
-                {
+                   let nextResumeLabel {
                     let spilledExprs = spillPlan.exprsByTransitionSource[stateInstruction.sourceIndex] ?? []
                     for exprID in spilledExprs {
                         guard let slot = slotForSpillExpr(exprID) else {
@@ -188,8 +187,7 @@ extension CoroutineLoweringPass {
                         loweredSuspendArguments.append(continuationExpr)
                     }
                     if suspendCallInfo.isVirtual,
-                       case let .virtualCall(_, _, receiver, _, _, _, _, dispatch) = suspendCallInfo.originalInstruction
-                    {
+                       case let .virtualCall(_, _, receiver, _, _, _, _, dispatch) = suspendCallInfo.originalInstruction {
                         lowered.append(
                             .virtualCall(
                                 symbol: suspendCallInfo.symbol,

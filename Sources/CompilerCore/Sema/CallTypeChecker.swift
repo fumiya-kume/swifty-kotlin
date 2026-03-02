@@ -56,8 +56,7 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
                     return symbol.kind == .class || symbol.kind == .enumClass || symbol.kind == .annotationClass
                 }
                 if let classSym = classSymbols.first,
-                   let classSymbol = ctx.cachedSymbol(classSym)
-                {
+                   let classSymbol = ctx.cachedSymbol(classSym) {
                     // P5-112: Prohibit direct instantiation of abstract classes.
                     if classSymbol.flags.contains(.abstractType) {
                         let className = classSymbol.fqName.map { interner.resolve($0) }.joined(separator: ".")
@@ -121,8 +120,7 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
         var callableTarget: CallableTarget?
         var callableCalleeType: TypeID?
         if let calleeName,
-           let local = locals[calleeName]
-        {
+           let local = locals[calleeName] {
             if !local.isInitialized {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0031",
@@ -183,8 +181,7 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
            let result = inferCallableValueInvocation(
                id, calleeType: callableCalleeType, callableTarget: callableTarget,
                args: args, argTypes: argTypes, range: range, ctx: ctx, expectedType: expectedType
-           )
-        {
+           ) {
             return result
         }
 
@@ -242,8 +239,7 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
         }
         if let calleeName,
            interner.resolve(calleeName) == "println",
-           args.count <= 1
-        {
+           args.count <= 1 {
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
         }

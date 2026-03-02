@@ -47,10 +47,8 @@ extension BuildKIRRegressionTests {
                 let exprID = ExprID(rawValue: Int32(index))
                 guard let expr = ast.arena.expr(exprID) else { continue }
                 if case let .call(_, _, args, _) = expr {
-                    for arg in args {
-                        if arg.isSpread {
-                            foundSpread = true
-                        }
+                    for arg in args where arg.isSpread {
+                        foundSpread = true
                     }
                 }
             }

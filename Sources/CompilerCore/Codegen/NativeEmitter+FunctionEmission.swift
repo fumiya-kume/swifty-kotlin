@@ -28,8 +28,7 @@ extension NativeEmitter {
         // all instructions emitted under this builder.
         if let diContext,
            let subprogram = diContext.subprograms[function.symbol],
-           bindings.debugLocationAvailable
-        {
+           bindings.debugLocationAvailable {
             var funcLine: UInt32 = 0
             var funcCol: UInt32 = 0
             if let sourceRange = function.sourceRange, let sm = sourceManager {
@@ -82,8 +81,7 @@ extension NativeEmitter {
            let subprogram = diContext.subprograms[function.symbol],
            let int64DIType = diContext.int64DIType,
            bindings.localVariableAvailable,
-           bindings.debugLocationAvailable
-        {
+           bindings.debugLocationAvailable {
             var funcLine: UInt32 = 0
             if let sourceRange = function.sourceRange, let sm = sourceManager {
                 funcLine = UInt32(sm.lineColumn(of: sourceRange.start).line)
@@ -371,16 +369,14 @@ extension NativeEmitter {
             // Update debug location per-instruction when debug info is active.
             if let diContext,
                let subprogram = diContext.subprograms[function.symbol],
-               bindings.debugLocationAvailable
-            {
+               bindings.debugLocationAvailable {
                 var instrLine: UInt32 = 0
                 var instrCol: UInt32 = 0
                 // Try per-instruction source location first, then fall back to
                 // function-level source range.
                 if instructionIndex < function.instructionLocations.count,
                    let instrRange = function.instructionLocations[instructionIndex],
-                   let sm = sourceManager
-                {
+                   let sm = sourceManager {
                     let lc = sm.lineColumn(of: instrRange.start)
                     instrLine = UInt32(lc.line)
                     instrCol = UInt32(lc.column)
@@ -395,8 +391,7 @@ extension NativeEmitter {
                        line: instrLine,
                        column: instrCol,
                        scope: subprogram
-                   )
-                {
+                   ) {
                     bindings.setCurrentDebugLocation(builder, location: loc)
                 }
             }
@@ -466,8 +461,7 @@ extension NativeEmitter {
                     bindings.buildSDiv(builder, lhs: lhsValue, rhs: rhsValue, name: "bin_div_\(instructionIndex)")
                 case .modulo:
                     if let quotient = bindings.buildSDiv(builder, lhs: lhsValue, rhs: rhsValue, name: "bin_mod_q_\(instructionIndex)"),
-                       let product = bindings.buildMul(builder, lhs: quotient, rhs: rhsValue, name: "bin_mod_p_\(instructionIndex)")
-                    {
+                       let product = bindings.buildMul(builder, lhs: quotient, rhs: rhsValue, name: "bin_mod_p_\(instructionIndex)") {
                         bindings.buildSub(builder, lhs: lhsValue, rhs: product, name: "bin_mod_\(instructionIndex)")
                     } else {
                         nil
@@ -534,8 +528,7 @@ extension NativeEmitter {
                                 context: context,
                                 function: llvmFunction.value,
                                 name: "notnull_cont_\(instructionIndex)"
-                            )
-                        {
+                            ) {
                             _ = bindings.buildCondBr(
                                 builder,
                                 condition: hasThrown,
@@ -600,8 +593,7 @@ extension NativeEmitter {
                 let shouldAppendThrownChannel = usesThrownChannel || isInternalCall
 
                 if let symbol,
-                   let internalFunction = internalFunctions[symbol]
-                {
+                   let internalFunction = internalFunctions[symbol] {
                     calleeFunction = internalFunction
                 } else if calleeName.isEmpty {
                     calleeFunction = nil
@@ -619,7 +611,7 @@ extension NativeEmitter {
                 }
 
                 var callArguments = argumentValues
-                var thrownSlotPointer: LLVMCAPIBindings.LLVMValueRef? = nil
+                var thrownSlotPointer: LLVMCAPIBindings.LLVMValueRef?
                 if shouldAppendThrownChannel {
                     if usesThrownChannel {
                         let thrownSlot = bindings.buildAlloca(
@@ -648,8 +640,7 @@ extension NativeEmitter {
                 )
                 storeResult(result, callValue)
                 if calleeName == "kk_coroutine_continuation_new",
-                   let coroutineRegisterRootFunction
-                {
+                   let coroutineRegisterRootFunction {
                     _ = bindings.buildCall(
                         builder,
                         functionType: coroutineRegisterRootFunction.type,
@@ -659,8 +650,7 @@ extension NativeEmitter {
                     )
                 }
                 if calleeName == "kk_coroutine_state_exit",
-                   let coroutineUnregisterRootFunction
-                {
+                   let coroutineUnregisterRootFunction {
                     _ = bindings.buildCall(
                         builder,
                         functionType: coroutineUnregisterRootFunction.type,
@@ -676,8 +666,7 @@ extension NativeEmitter {
                        type: int64Type,
                        pointer: thrownSlotPointer,
                        name: "thrown_val_\(instructionIndex)"
-                   )
-                {
+                   ) {
                     if let thrownResult {
                         if let alloca = copyTargetAllocas[thrownResult.rawValue] {
                             _ = bindings.buildStore(builder, value: thrownValue, pointer: alloca)
@@ -697,8 +686,7 @@ extension NativeEmitter {
                             context: context,
                             function: llvmFunction.value,
                             name: "call_cont_\(instructionIndex)"
-                        )
-                    {
+                        ) {
                         _ = bindings.buildCondBr(
                             builder,
                             condition: hasThrown,
@@ -732,8 +720,7 @@ extension NativeEmitter {
                 let shouldAppendThrownChannel = usesThrownChannel || isInternalCall
 
                 if let symbol,
-                   let internalFunction = internalFunctions[symbol]
-                {
+                   let internalFunction = internalFunctions[symbol] {
                     calleeFunction = internalFunction
                 } else if calleeName.isEmpty {
                     calleeFunction = nil
@@ -751,7 +738,7 @@ extension NativeEmitter {
                 }
 
                 var callArguments = argumentValues
-                var thrownSlotPointer: LLVMCAPIBindings.LLVMValueRef? = nil
+                var thrownSlotPointer: LLVMCAPIBindings.LLVMValueRef?
                 if shouldAppendThrownChannel {
                     if usesThrownChannel {
                         let thrownSlot = bindings.buildAlloca(
@@ -786,8 +773,7 @@ extension NativeEmitter {
                        type: int64Type,
                        pointer: thrownSlotPointer,
                        name: "vthrown_val_\(instructionIndex)"
-                   )
-                {
+                   ) {
                     if let thrownResult {
                         if let alloca = copyTargetAllocas[thrownResult.rawValue] {
                             _ = bindings.buildStore(builder, value: thrownValue, pointer: alloca)
@@ -807,8 +793,7 @@ extension NativeEmitter {
                             context: context,
                             function: llvmFunction.value,
                             name: "vcall_cont_\(instructionIndex)"
-                        )
-                    {
+                        ) {
                         _ = bindings.buildCondBr(
                             builder,
                             condition: hasThrown,
@@ -837,8 +822,7 @@ extension NativeEmitter {
                        context: context,
                        function: llvmFunction.value,
                        name: "jnn_cont_\(instructionIndex)"
-                   )
-                {
+                   ) {
                     _ = bindings.buildCondBr(builder, condition: condition, thenBlock: targetBlock, elseBlock: fallthroughBlock)
                     currentBlock = fallthroughBlock
                     bindings.positionBuilder(builder, at: fallthroughBlock)
@@ -853,8 +837,7 @@ extension NativeEmitter {
                 // LLVM global variable so the write persists across reads.
                 if let targetExpr = module.arena.expr(to),
                    case let .symbolRef(targetSymbol) = targetExpr,
-                   let globalPtr = globalVariables[targetSymbol]
-                {
+                   let globalPtr = globalVariables[targetSymbol] {
                     _ = bindings.buildStore(builder, value: copySource, pointer: globalPtr)
                 } else if let alloca = copyTargetAllocas[to.rawValue] {
                     _ = bindings.buildStore(builder, value: copySource, pointer: alloca)

@@ -87,8 +87,7 @@ extension BuildASTPhase.ExpressionParser {
         var end = returnToken.range.end
         if let atToken = current(), atToken.kind == .symbol(.at),
            let labelToken = peek(1),
-           let labelName = identifierFromToken(labelToken)
-        {
+           let labelName = identifierFromToken(labelToken) {
             _ = consume()
             _ = consume()
             label = labelName
@@ -154,8 +153,7 @@ extension BuildASTPhase.ExpressionParser {
                         _ = consume()
                         while let t = current(),
                               t.kind != .symbol(.comma),
-                              t.kind != .symbol(.rParen)
-                        {
+                              t.kind != .symbol(.rParen) {
                             _ = consume()
                         }
                     }
@@ -202,16 +200,14 @@ extension BuildASTPhase.ExpressionParser {
         var loopVariable: InternedString?
         if let token = current(),
            token.kind != .keyword(.in),
-           let name = tokenText(token)
-        {
+           let name = tokenText(token) {
             loopVariable = name
             _ = consume()
         }
 
         while let token = current(),
               token.kind != .keyword(.in),
-              token.kind != .symbol(.rParen)
-        {
+              token.kind != .symbol(.rParen) {
             _ = consume()
         }
         _ = consumeIf(.keyword(.in))

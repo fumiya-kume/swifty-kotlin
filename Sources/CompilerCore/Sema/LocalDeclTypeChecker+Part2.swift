@@ -54,8 +54,7 @@ extension LocalDeclTypeChecker {
                 ctx: ctx.semaCtx
             )
             if let chosen = resolved.chosenCallee,
-               let signature = sema.symbols.functionSignature(for: chosen)
-            {
+               let signature = sema.symbols.functionSignature(for: chosen) {
                 // Record the resolved get call so KIR lowering can dispatch correctly
                 sema.bindings.bindCall(
                     id,
@@ -157,7 +156,7 @@ extension LocalDeclTypeChecker {
                 name: param.name,
                 fqName: [
                     interner.intern("__localfun_\(id.rawValue)"),
-                    param.name,
+                    param.name
                 ],
                 declSite: range,
                 visibility: .private,
@@ -178,7 +177,7 @@ extension LocalDeclTypeChecker {
             name: name,
             fqName: [
                 interner.intern("__localfun_\(id.rawValue)"),
-                name,
+                name
             ],
             declSite: range,
             visibility: .private,

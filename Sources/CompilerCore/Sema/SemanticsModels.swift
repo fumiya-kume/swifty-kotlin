@@ -409,10 +409,8 @@ public final class SymbolTable {
 
     public func directSubtypes(of symbol: SymbolID) -> [SymbolID] {
         var result: [SymbolID] = []
-        for (candidate, supertypes) in directSupertypes {
-            if supertypes.contains(symbol) {
-                result.append(candidate)
-            }
+        for (candidate, supertypes) in directSupertypes where supertypes.contains(symbol) {
+            result.append(candidate)
         }
         return result.sorted(by: { $0.rawValue < $1.rawValue })
     }

@@ -126,17 +126,13 @@ public final class ConstraintSolver {
                     let rightVar = relation.right
 
                     let rightUpper = upperBounds[rightVar, default: []]
-                    for bound in rightUpper {
-                        if appendUnique(bound, to: &upperBounds[leftVar, default: []]) {
-                            changed = true
-                        }
+                    for bound in rightUpper where appendUnique(bound, to: &upperBounds[leftVar, default: []]) {
+                        changed = true
                     }
 
                     let leftLower = lowerBounds[leftVar, default: []]
-                    for bound in leftLower {
-                        if appendUnique(bound, to: &lowerBounds[rightVar, default: []]) {
-                            changed = true
-                        }
+                    for bound in leftLower where appendUnique(bound, to: &lowerBounds[rightVar, default: []]) {
+                        changed = true
                     }
                 }
                 if !changed {
@@ -237,7 +233,7 @@ public final class ConstraintSolver {
         case .equal:
             [
                 (constraint.left, constraint.right, constraint.blameRange),
-                (constraint.right, constraint.left, constraint.blameRange),
+                (constraint.right, constraint.left, constraint.blameRange)
             ]
         case .supertype:
             [(constraint.right, constraint.left, constraint.blameRange)]

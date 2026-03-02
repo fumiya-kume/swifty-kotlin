@@ -129,8 +129,7 @@ extension CoroutineLoweringPass {
         var spillSlotByExpr: [KIRExprID: Int64] = [:]
         if let firstSpillExpr = spilledExprs.first,
            let firstSpillField = spillFieldByExpr[firstSpillExpr],
-           let baseOffset = fieldOffsets[firstSpillField]
-        {
+           let baseOffset = fieldOffsets[firstSpillField] {
             for exprID in spilledExprs {
                 guard let fieldSymbol = spillFieldByExpr[exprID],
                       let offset = fieldOffsets[fieldSymbol]

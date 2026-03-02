@@ -120,7 +120,7 @@ final class RuntimeHelpersTests: XCTestCase {
     }
 
     func testDispatchContinuationResumePassesResultToCallback() {
-        var receivedResult: UnsafeMutableRawPointer? = nil
+        var receivedResult: UnsafeMutableRawPointer?
         let continuation = KKDispatchContinuation(context: nil) { result in
             receivedResult = result
         }

@@ -111,8 +111,7 @@ final class OperatorLoweringPass: LoweringPass {
                 case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall):
                     if callee == printlnCallee || callee == kkPrintlnAnyCallee,
                        arguments.count == 1,
-                       let types
-                    {
+                       let types {
                         let argType = module.arena.exprType(arguments[0])
                         if let argType {
                             switch types.kind(of: argType) {

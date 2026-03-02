@@ -1,11 +1,9 @@
 extension KotlinLexer {
     func symbolKind() -> Symbol? {
         // Multi-character symbols: check longest first for correct greedy matching
-        for (literal, sym) in Self.symbolTable {
-            if starts(with: literal) {
-                offset += literal.utf8.count
-                return sym
-            }
+        for (literal, sym) in Self.symbolTable where starts(with: literal) {
+            offset += literal.utf8.count
+            return sym
         }
         // Single-character symbols: check by byte
         guard offset < bytes.count else { return nil }
@@ -40,7 +38,7 @@ extension KotlinLexer {
         ("%=", .percentAssign),
         ("++", .plusPlus),
         ("--", .minusMinus),
-        ("..", .dotDot),
+        ("..", .dotDot)
     ]
 
     private static let singleCharSymbols: [UInt8: Symbol] = [
@@ -66,6 +64,6 @@ extension KotlinLexer {
         0x7D: .rBrace, // }
         0x40: .at, // @
         0x23: .hash, // #
-        0x3F: .question, // ?
+        0x3F: .question // ?
     ]
 }

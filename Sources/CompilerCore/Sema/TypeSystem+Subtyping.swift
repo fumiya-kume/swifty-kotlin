@@ -132,10 +132,8 @@ extension TypeSystem {
             } else if leftFunction.receiver != nil || rightFunction.receiver != nil {
                 return false
             }
-            for (leftParam, rightParam) in zip(leftFunction.params, rightFunction.params) {
-                if !isSubtype(rightParam, leftParam) {
-                    return false
-                }
+            for (leftParam, rightParam) in zip(leftFunction.params, rightFunction.params) where !isSubtype(rightParam, leftParam) {
+                return false
             }
             return isSubtype(leftFunction.returnType, rightFunction.returnType)
 

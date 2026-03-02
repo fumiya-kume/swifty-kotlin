@@ -188,7 +188,7 @@ extension CodegenBackendIntegrationTests {
             returnType: types.unitType,
             body: [
                 .constValue(result: e0, value: .intLiteral(42)),
-                .returnValue(e0),
+                .returnValue(e0)
             ],
             isSuspend: false,
             isInline: false

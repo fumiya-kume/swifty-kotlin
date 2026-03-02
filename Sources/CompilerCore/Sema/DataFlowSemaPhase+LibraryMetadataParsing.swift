@@ -564,10 +564,8 @@ extension DataFlowSemaPhase {
             guard index + chars.count <= source.count else {
                 return false
             }
-            for (offset, ch) in chars.enumerated() {
-                if source[index + offset] != ch {
-                    return false
-                }
+            for (offset, ch) in chars.enumerated() where source[index + offset] != ch {
+                return false
             }
             index += chars.count
             return true

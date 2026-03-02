@@ -131,8 +131,7 @@ public struct CompilerOptions: Equatable {
         for flag in frontendFlags {
             if flag.hasPrefix("jobs="),
                let n = Int(flag.dropFirst(5)),
-               n >= 1
-            {
+               n >= 1 {
                 return n
             }
         }
@@ -143,18 +142,16 @@ public struct CompilerOptions: Equatable {
     /// `-Xfrontend lazy-thread-safety=SYNCHRONIZED|NONE`.
     /// Defaults to `.synchronized` when the flag is absent.
     public var lazyThreadSafetyMode: LazyDelegateThreadSafetyMode {
-        for flag in frontendFlags {
-            if flag.hasPrefix("lazy-thread-safety=") {
-                let value = String(flag.dropFirst("lazy-thread-safety=".count))
-                    .uppercased()
-                switch value {
-                case "NONE":
-                    return .none
-                case "SYNCHRONIZED":
-                    return .synchronized
-                default:
-                    return .synchronized
-                }
+        for flag in frontendFlags where flag.hasPrefix("lazy-thread-safety=") {
+            let value = String(flag.dropFirst("lazy-thread-safety=".count))
+                .uppercased()
+            switch value {
+            case "NONE":
+                return .none
+            case "SYNCHRONIZED":
+                return .synchronized
+            default:
+                return .synchronized
             }
         }
         return .synchronized

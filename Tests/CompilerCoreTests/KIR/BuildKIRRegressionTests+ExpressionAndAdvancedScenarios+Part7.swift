@@ -85,8 +85,7 @@ extension BuildKIRRegressionTests {
             }
             XCTAssertFalse(generatedLambdaFunctions.isEmpty)
             if let generatedSymbol = callSymbol,
-               let generatedFunction = generatedLambdaFunctions.first(where: { $0.symbol == generatedSymbol })
-            {
+               let generatedFunction = generatedLambdaFunctions.first(where: { $0.symbol == generatedSymbol }) {
                 XCTAssertEqual(generatedFunction.params.count, 2)
             }
         }

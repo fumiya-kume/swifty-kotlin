@@ -291,8 +291,7 @@ struct TypeCheckHelpers {
         // If expanded type is itself a typealias, continue expansion
         if case let .classType(classType) = sema.types.kind(of: expanded),
            let targetSymbol = sema.symbols.symbol(classType.classSymbol),
-           targetSymbol.kind == .typeAlias
-        {
+           targetSymbol.kind == .typeAlias {
             var newVisited = visited
             newVisited.insert(symbolID)
             let chainArgs = classType.args

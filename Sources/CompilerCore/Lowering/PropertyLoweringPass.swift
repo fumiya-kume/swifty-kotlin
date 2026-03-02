@@ -63,8 +63,7 @@ final class PropertyLoweringPass: LoweringPass {
                     // non-existent global.
                     if case let .constValue(cvResult, value) = instruction,
                        case let .symbolRef(sym) = value,
-                       computedPropertySymbols.contains(sym)
-                    {
+                       computedPropertySymbols.contains(sym) {
                         // Skip rewriting if we are inside the getter accessor
                         // for this property to avoid infinite recursion.
                         let getterSymbol = SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: sym)
@@ -86,12 +85,10 @@ final class PropertyLoweringPass: LoweringPass {
                     // setter accessor calls when the target is a backing
                     // field symbol.
                     if case let .copy(from, to) = instruction,
-                       let sema = ctx.sema
-                    {
+                       let sema = ctx.sema {
                         let toExpr = module.arena.expr(to)
                         if case let .symbolRef(targetSym) = toExpr,
-                           sema.symbols.symbol(targetSym)?.kind == .backingField
-                        {
+                           sema.symbols.symbol(targetSym)?.kind == .backingField {
                             // Find the property symbol that owns this backing
                             // field and emit a direct setter accessor call.
                             let propSym = self.propertySymbolForBackingField(
@@ -137,8 +134,7 @@ final class PropertyLoweringPass: LoweringPass {
                    let sym = symbol,
                    let symInfo = sema.symbols.symbol(sym),
                    symInfo.kind == .field,
-                   interner.resolve(symInfo.name).hasPrefix("$delegate_")
-                {
+                   interner.resolve(symInfo.name).hasPrefix("$delegate_") {
                     let isSetter = callee == setValueName
                     // Derive the property symbol from the delegate field name
                     // ($delegate_<propName> → <propName>). MemberLowerer creates

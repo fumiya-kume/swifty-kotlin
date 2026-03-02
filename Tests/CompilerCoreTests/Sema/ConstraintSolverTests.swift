@@ -28,7 +28,7 @@ final class ConstraintSolverTests: XCTestCase {
         let constraints = [
             Constraint(kind: .subtype, left: intType, right: nullableAny),
             Constraint(kind: .equal, left: boolType, right: boolType),
-            Constraint(kind: .supertype, left: nullableAny, right: intType),
+            Constraint(kind: .supertype, left: nullableAny, right: intType)
         ]
 
         let solution = solver.solve(
@@ -71,7 +71,7 @@ final class ConstraintSolverTests: XCTestCase {
         let constraints: [VariableConstraint] = [
             VariableConstraint(kind: .equal, left: .variable(t0), right: .type(intType)),
             VariableConstraint(kind: .supertype, left: .variable(t1), right: .type(intType)),
-            VariableConstraint(kind: .subtype, left: .variable(t1), right: .type(anyType)),
+            VariableConstraint(kind: .subtype, left: .variable(t1), right: .type(anyType))
         ]
         let solution = solver.solve(vars: [t0, t1], constraints: constraints, typeSystem: types)
 
@@ -91,7 +91,7 @@ final class ConstraintSolverTests: XCTestCase {
         let constraints: [VariableConstraint] = [
             VariableConstraint(kind: .subtype, left: .type(intType), right: .variable(t0)),
             VariableConstraint(kind: .subtype, left: .variable(t0), right: .variable(t1)),
-            VariableConstraint(kind: .subtype, left: .variable(t1), right: .type(anyType)),
+            VariableConstraint(kind: .subtype, left: .variable(t1), right: .type(anyType))
         ]
         let solution = solver.solve(vars: [t0, t1], constraints: constraints, typeSystem: types)
 
@@ -108,7 +108,7 @@ final class ConstraintSolverTests: XCTestCase {
 
         let constraints: [VariableConstraint] = [
             VariableConstraint(kind: .equal, left: .variable(t0), right: .type(intType)),
-            VariableConstraint(kind: .subtype, left: .variable(t0), right: .type(boolType), blameRange: blame),
+            VariableConstraint(kind: .subtype, left: .variable(t0), right: .type(boolType), blameRange: blame)
         ]
         let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
 
@@ -128,7 +128,7 @@ final class ConstraintSolverTests: XCTestCase {
 
         let constraints: [VariableConstraint] = [
             VariableConstraint(kind: .supertype, left: .variable(t0), right: .type(intType)),
-            VariableConstraint(kind: .supertype, left: .type(anyType), right: .variable(t0)),
+            VariableConstraint(kind: .supertype, left: .type(anyType), right: .variable(t0))
         ]
         let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
 
@@ -142,7 +142,7 @@ final class ConstraintSolverTests: XCTestCase {
         let t0 = TypeVarID(rawValue: 50)
 
         let constraints: [VariableConstraint] = [
-            VariableConstraint(kind: .subtype, left: .variable(t0), right: .type(anyType)),
+            VariableConstraint(kind: .subtype, left: .variable(t0), right: .type(anyType))
         ]
         let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
 
@@ -159,7 +159,7 @@ final class ConstraintSolverTests: XCTestCase {
 
         let constraints: [VariableConstraint] = [
             VariableConstraint(kind: .supertype, left: .variable(t0), right: .type(intType), blameRange: blame),
-            VariableConstraint(kind: .subtype, left: .variable(t0), right: .type(boolType), blameRange: blame),
+            VariableConstraint(kind: .subtype, left: .variable(t0), right: .type(boolType), blameRange: blame)
         ]
         let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
 
@@ -177,7 +177,7 @@ final class ConstraintSolverTests: XCTestCase {
         let t0 = TypeVarID(rawValue: 31)
 
         let constraints: [VariableConstraint] = [
-            VariableConstraint(kind: .supertype, left: .variable(t0), right: .type(intType)),
+            VariableConstraint(kind: .supertype, left: .variable(t0), right: .type(intType))
         ]
         let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
 
@@ -191,7 +191,7 @@ final class ConstraintSolverTests: XCTestCase {
         let blame = makeRange(start: 40, end: 45)
 
         let constraints: [VariableConstraint] = [
-            VariableConstraint(kind: .subtype, left: .type(types.errorType), right: .variable(t0), blameRange: blame),
+            VariableConstraint(kind: .subtype, left: .type(types.errorType), right: .variable(t0), blameRange: blame)
         ]
         let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
 
@@ -206,7 +206,7 @@ final class ConstraintSolverTests: XCTestCase {
         let t0 = TypeVarID(rawValue: 51)
 
         let constraints: [VariableConstraint] = [
-            VariableConstraint(kind: .subtype, left: .variable(t0), right: .type(intType)),
+            VariableConstraint(kind: .subtype, left: .variable(t0), right: .type(intType))
         ]
         let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
 
@@ -222,7 +222,7 @@ final class ConstraintSolverTests: XCTestCase {
 
         let constraints: [VariableConstraint] = [
             VariableConstraint(kind: .subtype, left: .type(intType), right: .variable(t0)),
-            VariableConstraint(kind: .subtype, left: .variable(t0), right: .type(anyType)),
+            VariableConstraint(kind: .subtype, left: .variable(t0), right: .type(anyType))
         ]
         let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
 
@@ -245,7 +245,7 @@ final class ConstraintSolverTests: XCTestCase {
 
         let constraints: [VariableConstraint] = [
             VariableConstraint(kind: .subtype, left: .type(intType), right: .variable(t0)),
-            VariableConstraint(kind: .subtype, left: .type(intType), right: .variable(t0)),
+            VariableConstraint(kind: .subtype, left: .type(intType), right: .variable(t0))
         ]
         let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
 
@@ -262,7 +262,7 @@ final class ConstraintSolverTests: XCTestCase {
 
         let constraints: [VariableConstraint] = [
             VariableConstraint(kind: .subtype, left: .type(intType), right: .type(boolType), blameRange: blame),
-            VariableConstraint(kind: .subtype, left: .type(intType), right: .variable(t0), blameRange: blame),
+            VariableConstraint(kind: .subtype, left: .type(intType), right: .variable(t0), blameRange: blame)
         ]
         let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
 

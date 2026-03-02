@@ -20,7 +20,7 @@ extension LoweringPassRegressionTests {
             params: [],
             returnType: anyNullableType,
             body: [
-                .returnValue(valueExpr),
+                .returnValue(valueExpr)
             ],
             isSuspend: false,
             isInline: false
@@ -65,7 +65,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .copy(from: fromExpr, to: toExpr),
-                .returnUnit,
+                .returnUnit
             ],
             isSuspend: false,
             isInline: false
@@ -116,7 +116,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .copy(from: fromExpr, to: toExpr),
-                .returnUnit,
+                .returnUnit
             ],
             isSuspend: false,
             isInline: false
@@ -162,7 +162,7 @@ extension LoweringPassRegressionTests {
             (.primitive(.long, .nonNull), .longLiteral(1), "kk_box_long"),
             (.primitive(.float, .nonNull), .floatLiteral(1), "kk_box_float"),
             (.primitive(.double, .nonNull), .doubleLiteral(1), "kk_box_double"),
-            (.primitive(.char, .nonNull), .charLiteral(65), "kk_box_char"),
+            (.primitive(.char, .nonNull), .charLiteral(65), "kk_box_char")
         ]
 
         for (index, (kind, exprKind, expectedCallee)) in primitives.enumerated() {
@@ -189,7 +189,7 @@ extension LoweringPassRegressionTests {
                 returnType: types.unitType,
                 body: [
                     .call(symbol: targetSym, callee: targetName, arguments: [argExpr], result: resultExpr, canThrow: false, thrownResult: nil),
-                    .returnUnit,
+                    .returnUnit
                 ],
                 isSuspend: false,
                 isInline: false
@@ -245,7 +245,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .copy(from: fromExpr, to: toExpr),
-                .returnUnit,
+                .returnUnit
             ],
             isSuspend: false,
             isInline: false
@@ -300,7 +300,7 @@ extension LoweringPassRegressionTests {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .returnUnit,
+                .returnUnit
             ],
             isSuspend: false,
             isInline: false
@@ -365,7 +365,7 @@ extension LoweringPassRegressionTests {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .returnUnit,
+                .returnUnit
             ],
             isSuspend: false,
             isInline: false

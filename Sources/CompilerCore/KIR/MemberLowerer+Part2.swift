@@ -44,8 +44,7 @@ extension MemberLowerer {
 
         // Add receiver parameter if property has an owner class/object.
         if let ownerSymbol,
-           let ownerSym = sema.symbols.symbol(ownerSymbol)
-        {
+           let ownerSym = sema.symbols.symbol(ownerSymbol) {
             let ownerType = sema.types.make(
                 .classType(ClassType(classSymbol: ownerSym.id, args: [], nullability: .nonNull))
             )
@@ -62,8 +61,7 @@ extension MemberLowerer {
 
         var body: KIRLoweringEmitContext = [.beginBlock]
         if let receiverExpr = driver.ctx.currentImplicitReceiverExprID,
-           let receiverSym = driver.ctx.currentImplicitReceiverSymbol
-        {
+           let receiverSym = driver.ctx.currentImplicitReceiverSymbol {
             body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
         }
 
@@ -207,8 +205,7 @@ extension MemberLowerer {
             driver.ctx.currentImplicitReceiverSymbol = receiverSymbol
             driver.ctx.currentImplicitReceiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: receiverType)
         } else if let ownerSymbol,
-                  let ownerSym = sema.symbols.symbol(ownerSymbol)
-        {
+                  let ownerSym = sema.symbols.symbol(ownerSymbol) {
             let ownerType = sema.types.make(
                 .classType(ClassType(classSymbol: ownerSym.id, args: [], nullability: .nonNull))
             )
@@ -252,8 +249,7 @@ extension MemberLowerer {
 
         var body: KIRLoweringEmitContext = [.beginBlock]
         if let receiverExpr = driver.ctx.currentImplicitReceiverExprID,
-           let receiverSym = driver.ctx.currentImplicitReceiverSymbol
-        {
+           let receiverSym = driver.ctx.currentImplicitReceiverSymbol {
             body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
         }
 
@@ -263,8 +259,7 @@ extension MemberLowerer {
             var terminatedByReturn = false
             for exprID in exprIDs {
                 if let expr = ast.arena.expr(exprID),
-                   case let .returnExpr(value, _, _) = expr
-                {
+                   case let .returnExpr(value, _, _) = expr {
                     if let value {
                         let lowered = driver.lowerExpr(
                             value,

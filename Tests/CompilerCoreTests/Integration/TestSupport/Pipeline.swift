@@ -80,7 +80,7 @@ func makeContextFromSource(_ source: String) -> CompilationContext {
 func makeContextFromSources(_ sources: [String]) -> CompilationContext {
     let tempDir = FileManager.default.temporaryDirectory
         .appendingPathComponent(UUID().uuidString)
-    let fakePaths = sources.enumerated().map { index, _ in
+    let fakePaths = sources.indices.map { index in
         tempDir.appendingPathComponent("input\(index).kt").path
     }
     let ctx = makeCompilationContext(inputs: fakePaths)

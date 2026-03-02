@@ -316,7 +316,7 @@ final class OperatorAndForLoweringTests: XCTestCase {
             params: [],
             returnType: TypeSystem().unitType,
             body: [
-                .call(symbol: nil, callee: interner.intern("kk_for_lowered"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil),
+                .call(symbol: nil, callee: interner.intern("kk_for_lowered"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil)
             ],
             isSuspend: false,
             isInline: false

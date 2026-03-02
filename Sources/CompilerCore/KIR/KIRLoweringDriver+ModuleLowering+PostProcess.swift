@@ -63,8 +63,7 @@ extension KIRLoweringDriver {
                     for instruction in updated.body {
                         // Rewrite loadGlobal for delegated properties → getValue calls.
                         if case let .loadGlobal(result, sym) = instruction,
-                           let delegateStorageSymbol = delegateStorageSymbolByPropertySymbol[sym]
-                        {
+                           let delegateStorageSymbol = delegateStorageSymbolByPropertySymbol[sym] {
                             let handleExpr = arena.appendExpr(
                                 .temporary(Int32(arena.expressions.count)),
                                 type: sema.types.anyType
@@ -96,8 +95,7 @@ extension KIRLoweringDriver {
 
                         if case let .constValue(result, value) = instruction,
                            case let .symbolRef(sym) = value,
-                           let delegateStorageSymbol = delegateStorageSymbolByPropertySymbol[sym]
-                        {
+                           let delegateStorageSymbol = delegateStorageSymbolByPropertySymbol[sym] {
                             let handleExpr = arena.appendExpr(
                                 .temporary(Int32(arena.expressions.count)),
                                 type: sema.types.anyType

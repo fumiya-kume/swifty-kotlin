@@ -56,8 +56,7 @@ public final class LinkPhase: CompilerPhase {
 
             var linkInputs: [String] = [objectPath, wrapperURL.path]
             if let stubPath = ctx.runtimeStubObjectPath,
-               FileManager.default.fileExists(atPath: stubPath)
-            {
+               FileManager.default.fileExists(atPath: stubPath) {
                 linkInputs.append(stubPath)
             }
             for extraObject in autoLinkedObjects where !linkInputs.contains(extraObject) {
@@ -200,8 +199,7 @@ public final class LinkPhase: CompilerPhase {
         let manifestPath = URL(fileURLWithPath: libraryDir).appendingPathComponent("manifest.json").path
         if let data = try? Data(contentsOf: URL(fileURLWithPath: manifestPath)),
            let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-           let manifestObjects = object["objects"] as? [String]
-        {
+           let manifestObjects = object["objects"] as? [String] {
             let libraryDirNormalized = URL(fileURLWithPath: libraryDir).standardized.path
             let mapped = manifestObjects
                 .filter { !$0.isEmpty }

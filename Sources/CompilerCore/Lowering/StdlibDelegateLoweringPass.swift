@@ -152,8 +152,7 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                 for prev in loweredBody.reversed() {
                     if case let .constValue(result, value) = prev,
                        result == isSetterExprID,
-                       case let .boolLiteral(v) = value
-                    {
+                       case let .boolLiteral(v) = value {
                         isSetter = v
                         break
                     }
@@ -215,12 +214,10 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                        let toExpr = module.arena.expr(to),
                        case let .symbolRef(targetSym) = toExpr,
                        let targetSymInfo = sema?.symbols.symbol(targetSym),
-                       targetSymInfo.kind == .field
-                    {
+                       targetSymInfo.kind == .field {
                         let targetName = interner.resolve(targetSymInfo.name)
                         if targetName.hasPrefix("$delegate_"),
-                           let kind = delegateKindByFieldName[targetName]
-                        {
+                           let kind = delegateKindByFieldName[targetName] {
                             switch kind {
                             case .lazy:
                                 guard !callArgs.isEmpty else { break }

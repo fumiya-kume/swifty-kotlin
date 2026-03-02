@@ -48,8 +48,7 @@ extension CallLowerer {
         }
         if let callBinding = sema.bindings.callBindings[exprID],
            let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee),
-           signature.receiverType != nil
-        {
+           signature.receiverType != nil {
             // For compareTo desugaring, the call result is Int, not Bool.
             // We allocate a separate temporary for the compareTo call result.
             let callResult: KIRExprID = if isCompareToDesugaring {
@@ -102,8 +101,7 @@ extension CallLowerer {
                 ))
             } else {
                 let loweredCalleeName: InternedString = if let externalLinkName = sema.symbols.externalLinkName(for: callBinding.chosenCallee),
-                                                           !externalLinkName.isEmpty
-                {
+                                                           !externalLinkName.isEmpty {
                     interner.intern(externalLinkName)
                 } else if let symbol = sema.symbols.symbol(callBinding.chosenCallee) {
                     symbol.name

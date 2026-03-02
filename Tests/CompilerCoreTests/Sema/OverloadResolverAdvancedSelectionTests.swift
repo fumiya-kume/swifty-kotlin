@@ -41,7 +41,7 @@ extension OverloadResolverTests {
             calleeName: interner.intern("overloaded"),
             args: [
                 CallArg(label: interner.intern("x"), type: intType),
-                CallArg(label: interner.intern("y"), type: boolType),
+                CallArg(label: interner.intern("y"), type: boolType)
             ]
         )
         let resolved = resolver.resolveCall(candidates: [fn1, fn2], call: call, expectedType: nil, ctx: ctx)
@@ -78,7 +78,7 @@ extension OverloadResolverTests {
             calleeName: interner.intern("namedDef"),
             args: [
                 CallArg(label: interner.intern("c"), type: stringType),
-                CallArg(label: interner.intern("a"), type: intType),
+                CallArg(label: interner.intern("a"), type: intType)
             ]
         )
         let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
@@ -271,7 +271,7 @@ extension OverloadResolverTests {
             calleeName: interner.intern("midDefault"),
             args: [
                 CallArg(label: interner.intern("first"), type: intType),
-                CallArg(label: interner.intern("last"), type: stringType),
+                CallArg(label: interner.intern("last"), type: stringType)
             ]
         )
         let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)

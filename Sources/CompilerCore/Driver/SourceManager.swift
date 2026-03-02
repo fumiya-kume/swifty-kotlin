@@ -62,7 +62,7 @@ public final class SourceManager: @unchecked Sendable {
     }
 
     func fileIDs() -> [FileID] {
-        files.enumerated().map { FileID(rawValue: $0.offset) }
+        files.indices.map { FileID(rawValue: $0) }
     }
 
     public func lineColumn(of loc: SourceLocation) -> LineColumn {
@@ -100,10 +100,8 @@ public final class SourceManager: @unchecked Sendable {
 
     private func computeLineStartOffsets(contents: Data) -> [Int] {
         var lineStarts = [0]
-        for index in 0 ..< contents.count {
-            if contents[index] == 0x0A {
-                lineStarts.append(index + 1)
-            }
+        for index in 0 ..< contents.count where contents[index] == 0x0A {
+            lineStarts.append(index + 1)
         }
         return lineStarts
     }

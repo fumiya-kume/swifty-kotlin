@@ -61,11 +61,9 @@ extension BuildASTPhase {
         }
 
         var nameIndex: Int?
-        for index in stride(from: paramsOpenIndex - 1, through: 0, by: -1) {
-            if isTypeLikeNameToken(tokens[index].kind) {
-                nameIndex = index
-                break
-            }
+        for index in stride(from: paramsOpenIndex - 1, through: 0, by: -1) where isTypeLikeNameToken(tokens[index].kind) {
+            nameIndex = index
+            break
         }
         guard let nameIndex else {
             return nil

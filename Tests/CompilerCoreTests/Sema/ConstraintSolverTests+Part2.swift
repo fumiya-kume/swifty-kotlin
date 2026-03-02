@@ -22,7 +22,7 @@ extension ConstraintSolverTests {
             VariableConstraint(kind: .subtype, left: .variable(t0), right: .variable(t1)),
             VariableConstraint(kind: .subtype, left: .variable(t2), right: .type(intType)),
             VariableConstraint(kind: .subtype, left: .variable(t1), right: .variable(t2)),
-            VariableConstraint(kind: .subtype, left: .variable(t3), right: .variable(t0)),
+            VariableConstraint(kind: .subtype, left: .variable(t3), right: .variable(t0))
         ]
         let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
         // t1 is not in vars so resolve returns nil → failure
@@ -41,7 +41,7 @@ extension ConstraintSolverTests {
         // forces post-substitution check: intType == boolType fails
         let constraints: [VariableConstraint] = [
             VariableConstraint(kind: .subtype, left: .type(intType), right: .variable(t0)),
-            VariableConstraint(kind: .equal, left: .variable(t0), right: .type(boolType), blameRange: blame),
+            VariableConstraint(kind: .equal, left: .variable(t0), right: .type(boolType), blameRange: blame)
         ]
         let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
         XCTAssertFalse(solution.isSuccess)
@@ -106,7 +106,7 @@ extension ConstraintSolverTests {
         let constraints: [VariableConstraint] = [
             VariableConstraint(kind: .subtype, left: .type(intType), right: .variable(t0)),
             VariableConstraint(kind: .subtype, left: .variable(t0), right: .variable(t1)),
-            VariableConstraint(kind: .subtype, left: .variable(t1), right: .variable(t0)),
+            VariableConstraint(kind: .subtype, left: .variable(t1), right: .variable(t0))
         ]
         let solution = solver.solve(vars: [t0, t1], constraints: constraints, typeSystem: types)
 
@@ -129,7 +129,7 @@ extension ConstraintSolverTests {
             VariableConstraint(kind: .subtype, left: .variable(t0), right: .variable(t1)),
             VariableConstraint(kind: .subtype, left: .variable(t1), right: .variable(t2)),
             VariableConstraint(kind: .subtype, left: .variable(t2), right: .variable(t0)),
-            VariableConstraint(kind: .subtype, left: .variable(t2), right: .type(anyType)),
+            VariableConstraint(kind: .subtype, left: .variable(t2), right: .type(anyType))
         ]
         let solution = solver.solve(vars: [t0, t1, t2], constraints: constraints, typeSystem: types)
 
@@ -147,7 +147,7 @@ extension ConstraintSolverTests {
         // circular with no concrete bounds → both remain empty → errorType
         let constraints: [VariableConstraint] = [
             VariableConstraint(kind: .subtype, left: .variable(t0), right: .variable(t1)),
-            VariableConstraint(kind: .subtype, left: .variable(t1), right: .variable(t0)),
+            VariableConstraint(kind: .subtype, left: .variable(t1), right: .variable(t0))
         ]
         let solution = solver.solve(vars: [t0, t1], constraints: constraints, typeSystem: types)
 
@@ -170,7 +170,7 @@ extension ConstraintSolverTests {
         let constraints: [VariableConstraint] = [
             VariableConstraint(kind: .equal, left: .variable(t0), right: .type(intType)),
             VariableConstraint(kind: .subtype, left: .variable(t0), right: .type(anyType)),
-            VariableConstraint(kind: .supertype, left: .variable(t0), right: .type(intType)),
+            VariableConstraint(kind: .supertype, left: .variable(t0), right: .type(intType))
         ]
         let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
 
@@ -197,7 +197,7 @@ extension ConstraintSolverTests {
             // t2 <: t1 (variable-to-variable subtype)
             VariableConstraint(kind: .subtype, left: .variable(t2), right: .variable(t1)),
             // t2 :> stringType (lower bound on t2)
-            VariableConstraint(kind: .supertype, left: .variable(t2), right: .type(stringType)),
+            VariableConstraint(kind: .supertype, left: .variable(t2), right: .type(stringType))
         ]
         let solution = solver.solve(vars: [t0, t1, t2], constraints: constraints, typeSystem: types)
 
@@ -216,7 +216,7 @@ extension ConstraintSolverTests {
         // type-type equal constraint fails: Int == Bool
         let constraints: [VariableConstraint] = [
             VariableConstraint(kind: .equal, left: .type(intType), right: .type(boolType)),
-            VariableConstraint(kind: .supertype, left: .variable(t0), right: .type(intType)),
+            VariableConstraint(kind: .supertype, left: .variable(t0), right: .type(intType))
         ]
         let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
 
@@ -233,7 +233,7 @@ extension ConstraintSolverTests {
         // supertype type-type: Any :> Int → normalized to Int <: Any (true)
         let constraints: [VariableConstraint] = [
             VariableConstraint(kind: .supertype, left: .type(anyType), right: .type(intType)),
-            VariableConstraint(kind: .equal, left: .variable(t0), right: .type(intType)),
+            VariableConstraint(kind: .equal, left: .variable(t0), right: .type(intType))
         ]
         let solution = solver.solve(vars: [t0], constraints: constraints, typeSystem: types)
 
@@ -260,7 +260,7 @@ extension ConstraintSolverTests {
             VariableConstraint(kind: .supertype, left: .variable(t0), right: .type(intType), blameRange: blame0),
             VariableConstraint(kind: .subtype, left: .variable(t0), right: .type(boolType), blameRange: blame0),
             VariableConstraint(kind: .supertype, left: .variable(t1), right: .type(stringType), blameRange: blame1),
-            VariableConstraint(kind: .subtype, left: .variable(t1), right: .type(intType), blameRange: blame1),
+            VariableConstraint(kind: .subtype, left: .variable(t1), right: .type(intType), blameRange: blame1)
         ]
         let solution = solver.solve(vars: [t0, t1], constraints: constraints, typeSystem: types)
 

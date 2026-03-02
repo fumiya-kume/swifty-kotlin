@@ -64,8 +64,7 @@ extension LLVMBackend {
             case let .constValue(result, value):
                 ensureDeclared(result, declared: &declared, lines: &lines)
                 if case let .symbolRef(symbol) = value,
-                   let parameterName = parameterNameBySymbol[symbol]
-                {
+                   let parameterName = parameterNameBySymbol[symbol] {
                     lines.append("  \(varName(result)) = \(parameterName);")
                 } else {
                     lines.append(
@@ -304,7 +303,7 @@ extension LLVMBackend {
                     isInternalFunction = false
                 }
                 var callArguments = argVars
-                var thrownSlotName: String? = nil
+                var thrownSlotName: String?
                 if usesThrownChannel {
                     let slot = "thrown_\(callIndex)"
                     callIndex += 1
@@ -376,7 +375,7 @@ extension LLVMBackend {
                 lines.append("  KKVTableEntry \(fptr) = \(lookupExpr);")
 
                 var callArguments = [varName(receiver)] + argVars
-                var thrownSlotName: String? = nil
+                var thrownSlotName: String?
                 if usesThrownChannel {
                     let thrSlot = "thrown_\(callIndex)"
                     callIndex += 1
@@ -421,8 +420,7 @@ extension LLVMBackend {
                 // instead of the local register so the store persists.
                 if let targetExpr = arena.expr(to),
                    case let .symbolRef(targetSymbol) = targetExpr,
-                   let globalSlot = globalValueSymbols[targetSymbol]
-                {
+                   let globalSlot = globalValueSymbols[targetSymbol] {
                     lines.append("  \(globalSlot) = \(varName(from));")
                 } else {
                     ensureDeclared(to, declared: &declared, lines: &lines)

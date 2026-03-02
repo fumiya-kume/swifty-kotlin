@@ -72,8 +72,7 @@ extension BuildASTPhase {
                 }
 
                 if let token = current(), token.kind == .symbol(.bang),
-                   let next = peek(1), next.kind == .keyword(.is)
-                {
+                   let next = peek(1), next.kind == .keyword(.is) {
                     let prec = 85
                     guard prec >= minPrecedence else { break }
                     _ = consume()
@@ -95,8 +94,7 @@ extension BuildASTPhase {
                 }
 
                 if let token = current(), token.kind == .symbol(.bang),
-                   let next = peek(1), next.kind == .keyword(.in)
-                {
+                   let next = peek(1), next.kind == .keyword(.in) {
                     let prec = 85
                     guard prec >= minPrecedence else { break }
                     _ = consume()
@@ -137,8 +135,7 @@ extension BuildASTPhase {
                    let token = current(),
                    isInfixIdentifierToken(token),
                    let nextToken = peek(1),
-                   canStartExpression(nextToken)
-                {
+                   canStartExpression(nextToken) {
                     guard let calleeName = identifierFromToken(token) else { break }
                     _ = consume()
                     guard let rhs = parseExpression(minPrecedence: infixPrecedence + 1) else { break }

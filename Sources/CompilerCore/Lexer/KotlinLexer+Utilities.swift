@@ -41,10 +41,8 @@ extension KotlinLexer {
         guard position + utf8.count <= bytes.count else {
             return false
         }
-        for index in 0 ..< utf8.count {
-            if bytes[position + index] != utf8[index] {
-                return false
-            }
+        for index in 0 ..< utf8.count where bytes[position + index] != utf8[index] {
+            return false
         }
         return true
     }

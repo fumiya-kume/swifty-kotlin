@@ -78,8 +78,8 @@ extension ControlFlowTypeChecker {
                 var branchLocals = locals
                 var branchCtx = ctx
                 if let subjectLocalBinding, subjectLocalBinding.isStable {
-                    // FIXME: Currently only the first condition contributes to flow-state narrowing for subject-ful `when` branches.
-                    //        Extend this to support all conditions in the branch (OR semantics) for more precise narrowing.
+                    // Known limitation: Currently only the first condition contributes to flow-state narrowing for subject-ful `when` branches.
+                    //                  Extend this to support all conditions in the branch (OR semantics) for more precise narrowing.
                     if let cond = branch.conditions.first {
                         let branchFlowState = ctx.dataFlow.branchOnWhenSubject(
                             subjectSymbol: subjectLocalBinding.symbol,
@@ -160,15 +160,13 @@ extension ControlFlowTypeChecker {
 
             // Propagate definite initialization across exhaustive when branches.
             if isExhaustive, !allBranchLocals.isEmpty {
-                for (name, local) in locals {
-                    if !local.isInitialized {
-                        let allInit = allBranchLocals.allSatisfy { branchLocal in
-                            guard let bl = branchLocal[name] else { return false }
-                            return bl.isInitialized && bl.symbol == local.symbol
-                        }
-                        if allInit {
-                            locals[name] = (local.type, local.symbol, local.isMutable, true)
-                        }
+                for (name, local) in locals where !local.isInitialized {
+                    let allInit = allBranchLocals.allSatisfy { branchLocal in
+                        guard let bl = branchLocal[name] else { return false }
+                        return bl.isInitialized && bl.symbol == local.symbol
+                    }
+                    if allInit {
+                        locals[name] = (local.type, local.symbol, local.isMutable, true)
                     }
                 }
             }
@@ -265,15 +263,13 @@ extension ControlFlowTypeChecker {
 
             // Propagate definite initialization across exhaustive when branches.
             if isExhaustive, !allBranchLocals.isEmpty {
-                for (name, local) in locals {
-                    if !local.isInitialized {
-                        let allInit = allBranchLocals.allSatisfy { branchLocal in
-                            guard let bl = branchLocal[name] else { return false }
-                            return bl.isInitialized && bl.symbol == local.symbol
-                        }
-                        if allInit {
-                            locals[name] = (local.type, local.symbol, local.isMutable, true)
-                        }
+                for (name, local) in locals where !local.isInitialized {
+                    let allInit = allBranchLocals.allSatisfy { branchLocal in
+                        guard let bl = branchLocal[name] else { return false }
+                        return bl.isInitialized && bl.symbol == local.symbol
+                    }
+                    if allInit {
+                        locals[name] = (local.type, local.symbol, local.isMutable, true)
                     }
                 }
             }
@@ -284,7 +280,5 @@ extension ControlFlowTypeChecker {
         }
     }
 
-    /// Returns true if the given expression is a range/progression operator
-    /// (rangeTo, rangeUntil, downTo, step).
     // MARK: - Destructuring Declarations
 }

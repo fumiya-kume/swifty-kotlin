@@ -170,8 +170,7 @@ public final class MetadataEncoder {
             }
 
             if symbol.kind == .property || symbol.kind == .field,
-               symbols.propertyType(for: symbol.id) != nil
-            {
+               symbols.propertyType(for: symbol.id) != nil {
                 typeSignature = mangler.mangledSignature(
                     for: symbol,
                     symbols: symbols,
@@ -181,8 +180,7 @@ public final class MetadataEncoder {
             }
 
             if symbol.kind == .typeAlias,
-               symbols.typeAliasUnderlyingType(for: symbol.id) != nil
-            {
+               symbols.typeAliasUnderlyingType(for: symbol.id) != nil {
                 typeSignature = mangler.mangledSignature(
                     for: symbol,
                     symbols: symbols,
@@ -219,8 +217,7 @@ public final class MetadataEncoder {
                     itableSlotsStr = serializedITableSlots
                 }
                 if let superClass = layout.superClass,
-                   let superSymbol = symbols.symbol(superClass)
-                {
+                   let superSymbol = symbols.symbol(superClass) {
                     superFQName = superSymbol.fqName.map { interner.resolve($0) }.joined(separator: ".")
                 }
             }
@@ -231,8 +228,7 @@ public final class MetadataEncoder {
 
             var valueClassUnderlyingTypeSig: String?
             if rawIsValueClass,
-               let underlyingType = symbols.valueClassUnderlyingType(for: symbol.id)
-            {
+               let underlyingType = symbols.valueClassUnderlyingType(for: symbol.id) {
                 valueClassUnderlyingTypeSig = mangler.encodeType(
                     underlyingType,
                     symbols: symbols,
@@ -305,7 +301,7 @@ public final class MetadataEncoder {
                 "\(record.kind)",
                 record.mangledName,
                 "fq=\(record.fqName)",
-                "schema=v1",
+                "schema=v1"
             ]
             if record.kind == .function || record.kind == .constructor {
                 fields.append("arity=\(record.arity)")

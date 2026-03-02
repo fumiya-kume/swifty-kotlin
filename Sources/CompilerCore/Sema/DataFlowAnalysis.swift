@@ -168,8 +168,7 @@ public final class DataFlowAnalyzer {
             return nil
         }
         let effectiveType: TypeID = if let baseState = base.variables[symbol], baseState.possibleTypes.count == 1,
-                                       let baseType = baseState.possibleTypes.first
-        {
+                                       let baseType = baseState.possibleTypes.first {
             baseType
         } else {
             currentType
@@ -260,8 +259,7 @@ public final class DataFlowAnalyzer {
         // Use intersection with previous flow state type for chained is-checks (P5-97)
         let narrowedType: TypeID = if let baseState = base.variables[symbol],
                                       baseState.possibleTypes.count == 1,
-                                      let existingType = baseState.possibleTypes.first
-        {
+                                      let existingType = baseState.possibleTypes.first {
             if sema.types.isSubtype(existingType, targetType) {
                 // Existing flow type is already more specific; keep it.
                 existingType
@@ -282,8 +280,7 @@ public final class DataFlowAnalyzer {
             isStable: true
         )
         let falseType: TypeID = if let baseState = base.variables[symbol], baseState.possibleTypes.count == 1,
-                                   let baseType = baseState.possibleTypes.first
-        {
+                                   let baseType = baseState.possibleTypes.first {
             baseType
         } else {
             currentType
@@ -384,8 +381,7 @@ public final class DataFlowAnalyzer {
             // Only narrow when the isCheck's expr refers to the when subject.
             // This prevents incorrect narrowing for `when(x) { y is String -> ... }`.
             if let checkedSymbol = sema.bindings.identifierSymbols[exprID],
-               checkedSymbol != subjectSymbol
-            {
+               checkedSymbol != subjectSymbol {
                 return base
             }
             guard !negated else {

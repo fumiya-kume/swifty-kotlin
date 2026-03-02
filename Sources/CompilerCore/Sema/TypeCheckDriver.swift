@@ -167,7 +167,7 @@ final class TypeCheckDriver {
                     left: left,
                     right: right,
                     blameRange: range
-                ),
+                )
             ],
             typeSystem: sema.types
         )
