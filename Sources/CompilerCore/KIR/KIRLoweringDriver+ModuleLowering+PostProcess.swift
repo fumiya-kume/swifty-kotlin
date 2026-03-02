@@ -61,11 +61,17 @@ extension KIRLoweringDriver {
                 // Getter: loadGlobal/constValue(.symbolRef) → getValue call.
                 // Setter: copy(from:, to:) where target is a delegate-backed property → setValue call.
                 if !delegateStorageSymbolByPropertySymbol.isEmpty {
-                    // Track which expression IDs correspond to delegate property symbolRefs.
-                    // When we see constValue(result: X, value: .symbolRef(delegatedSym)),
-                    // a subsequent copy(from: val, to: X) should become a setValue call.
-                    var delegateTargetExprs: [KIRExprID: SymbolID] = [:]
+                    // Pass 1: identify constValue(.symbolRef) results that are used as .copy targets.
+                    // These are setter destinations; all other constValue(.symbolRef) are getter reads.
+                    var copyTargetExprs: Set<KIRExprID> = []
+                    for instruction in updated.body {
+                        if case let .copy(_, toExpr) = instruction {
+                            copyTargetExprs.insert(toExpr)
+                        }
+                    }
 
+                    // Pass 2: rewrite instructions.
+                    var delegateTargetExprs: [KIRExprID: SymbolID] = [:]
                     var rewrittenBody: KIRLoweringEmitContext = []
                     rewrittenBody.reserveCapacity(updated.body.count)
                     for instruction in updated.body {
@@ -102,14 +108,45 @@ extension KIRLoweringDriver {
                             continue
                         }
 
-                        // Track constValue(.symbolRef) for delegate-backed properties.
-                        // These may be followed by a .copy instruction that acts as a setter.
+                        // Handle constValue(.symbolRef) for delegate-backed properties.
                         if case let .constValue(result, value) = instruction,
                            case let .symbolRef(sym) = value,
-                           delegateStorageSymbolByPropertySymbol[sym] != nil
+                           let delegateStorageSymbol = delegateStorageSymbolByPropertySymbol[sym]
                         {
-                            delegateTargetExprs[result] = sym
-                            rewrittenBody.append(instruction)
+                            if copyTargetExprs.contains(result) {
+                                // This result is a .copy target → setter path.
+                                // Track it and emit as-is; the .copy will be rewritten below.
+                                delegateTargetExprs[result] = sym
+                                rewrittenBody.append(instruction)
+                            } else {
+                                // Getter path: rewrite to getValue call (same as loadGlobal path).
+                                let handleExpr = arena.appendExpr(
+                                    .temporary(Int32(arena.expressions.count)),
+                                    type: sema.types.anyType
+                                )
+                                rewrittenBody.append(.loadGlobal(result: handleExpr, symbol: delegateStorageSymbol))
+
+                                let getValueName: InternedString = switch delegateKindByPropertySymbol[sym] {
+                                case .lazy:
+                                    lazyGetValueName
+                                case .observable:
+                                    observableGetValueName
+                                case .vetoable:
+                                    vetoableGetValueName
+                                case .custom, nil:
+                                    customGetValueName
+                                }
+                                rewrittenBody.append(
+                                    .call(
+                                        symbol: nil,
+                                        callee: getValueName,
+                                        arguments: [handleExpr],
+                                        result: result,
+                                        canThrow: false,
+                                        thrownResult: nil
+                                    )
+                                )
+                            }
                             continue
                         }
 
