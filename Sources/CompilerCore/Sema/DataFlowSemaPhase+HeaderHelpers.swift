@@ -77,6 +77,9 @@ extension DataFlowSemaPhase {
         if modifiers.contains(.override) {
             value.insert(.overrideMember)
         }
+        if modifiers.contains(.final) {
+            value.insert(.finalMember)
+        }
         return value
     }
 

@@ -49,6 +49,7 @@ public struct SymbolFlags: OptionSet, Sendable {
     public static let abstractType = SymbolFlags(rawValue: 1 << 12)
     public static let openType = SymbolFlags(rawValue: 1 << 13)
     public static let overrideMember = SymbolFlags(rawValue: 1 << 14)
+    public static let finalMember = SymbolFlags(rawValue: 1 << 15)
 }
 
 public struct SemanticSymbol: Sendable {
