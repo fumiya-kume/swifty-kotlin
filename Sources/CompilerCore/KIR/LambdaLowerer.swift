@@ -15,6 +15,7 @@ final class LambdaLowerer {
         self.driver = driver
     }
 
+    // swiftlint:disable:next function_body_length
     func lowerLambdaLiteralExpr(
         _ exprID: ExprID,
         params: [InternedString],

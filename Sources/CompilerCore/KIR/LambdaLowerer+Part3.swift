@@ -33,6 +33,7 @@ extension LambdaLowerer {
         sema: SemaModule,
         interner: StringInterner
     ) -> InternedString {
+        // swiftlint:disable:next opening_brace
         if let externalLinkName = sema.symbols.externalLinkName(for: symbol),
            !externalLinkName.isEmpty
         {
@@ -232,7 +233,7 @@ extension LambdaLowerer {
                sema: sema
            ),
            !captures.contains(receiverSymbol)
-        {
+        { // swiftlint:disable:this opening_brace
             captures.append(receiverSymbol)
         }
         return captures
@@ -247,6 +248,7 @@ extension LambdaLowerer {
         if let localValue = driver.ctx.localValuesBySymbol[symbol] {
             return localValue
         }
+        // swiftlint:disable:next opening_brace
         if symbol == driver.ctx.currentImplicitReceiverSymbol,
            let receiverExprID = driver.ctx.currentImplicitReceiverExprID
         {
