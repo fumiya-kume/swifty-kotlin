@@ -481,6 +481,26 @@ public final class LLVMBackend {
             "kk_op_shr",
             "kk_op_ushr",
             "kk_int_toString_radix",
+            // Collection (STDLIB-001)
+            "kk_list_of",
+            "kk_list_size",
+            "kk_list_get",
+            "kk_list_contains",
+            "kk_list_is_empty",
+            "kk_list_iterator",
+            "kk_list_iterator_hasNext",
+            "kk_list_iterator_next",
+            "kk_list_to_string",
+            "kk_map_of",
+            "kk_map_size",
+            "kk_map_get",
+            "kk_map_contains_key",
+            "kk_map_is_empty",
+            "kk_map_to_string",
+            "kk_map_iterator",
+            "kk_map_iterator_hasNext",
+            "kk_map_iterator_next",
+            "kk_array_size",
         ]
 
         for decl in module.arena.declarations {
