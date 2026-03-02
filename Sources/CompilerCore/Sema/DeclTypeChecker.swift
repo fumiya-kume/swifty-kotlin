@@ -359,6 +359,15 @@ final class DeclTypeChecker {
             functionScope.insert(typeParameterSymbol)
         }
         let functionCtx = ctx.copying(scope: functionScope, implicitReceiverType: signature.receiverType)
+
+        // Abstract methods (interface functions without a body) have .unit as their
+        // body sentinel. Skip body type inference and the subtype constraint for
+        // these declarations – there is no body expression whose type needs to be
+        // checked against the declared return type.
+        guard function.body != .unit else {
+            return
+        }
+
         let bodyType = inferFunctionBodyType(
             function.body,
             ctx: functionCtx,
