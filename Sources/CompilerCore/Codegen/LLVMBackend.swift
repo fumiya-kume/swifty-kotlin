@@ -481,6 +481,9 @@ public final class LLVMBackend {
             "kk_op_shr",
             "kk_op_ushr",
             "kk_int_toString_radix",
+            // Collection helpers returning void* (P5-84 / FUNC-003)
+            "kk_list_to_string",
+            "kk_map_to_string",
             // Higher-order collection functions (FUNC-003)
             "kk_list_map",
             "kk_list_filter",

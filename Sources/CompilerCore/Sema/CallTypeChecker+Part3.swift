@@ -30,7 +30,7 @@ extension CallTypeChecker {
             if isCollectionHOF,
                let argExpr = ast.arena.expr(arg.expr),
                case .lambdaLiteral = argExpr
-            {
+            { // swiftlint:disable:this opening_brace
                 return sema.types.anyType // placeholder; re-inferred later with expected type
             }
             return driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
@@ -454,7 +454,7 @@ extension CallTypeChecker {
                     "isEmpty", "first", "last", "indexOf",
                     "count", "iterator",
                     "map", "filter", "forEach", "flatMap",
-                    "any", "none", "all",
+                    "any", "none", "all"
                 ]
                 if collectionMembers.contains(memberName) {
                     let resultType: TypeID = switch memberName {
@@ -473,7 +473,7 @@ extension CallTypeChecker {
                     // can infer the implicit `it` parameter type.
                     if ["map", "filter", "forEach", "flatMap", "any", "none", "all"].contains(memberName),
                        args.count == 1
-                    {
+                    { // swiftlint:disable:this opening_brace
                         let lambdaReturnType: TypeID = switch memberName {
                         case "filter", "any", "none", "all":
                             sema.types.make(.primitive(.boolean, .nonNull))
