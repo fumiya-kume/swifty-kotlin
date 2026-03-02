@@ -358,15 +358,10 @@ extension KIRLoweringDriver {
             }
         }()
 
-        let createResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: delegateType)
-        initInstructions.append(.call(
-            symbol: nil, callee: interner.intern("kk_custom_delegate_create"),
-            arguments: [delegateObjExpr],
-            result: createResult, canThrow: false, thrownResult: nil
-        ))
-        initInstructions.append(.storeGlobal(value: createResult, symbol: delegateStorageSymbol))
-
         if hasProvideDelegate {
+            // Store the raw delegate so we can call provideDelegate on it.
+            initInstructions.append(.storeGlobal(value: delegateObjExpr, symbol: delegateStorageSymbol))
+
             // Build thisRef (null for top-level properties).
             let thisRefExprID = arena.appendExpr(.null, type: sema.types.nullableAnyType)
             initInstructions.append(.constValue(result: thisRefExprID, value: .null))
@@ -400,7 +395,7 @@ extension KIRLoweringDriver {
                 )
             )
 
-            // Call provideDelegate(thisRef, kProperty) on the delegate storage.
+            // Call provideDelegate(thisRef, kProperty) on the raw delegate.
             let provideDelegateResult = arena.appendExpr(
                 .temporary(Int32(arena.expressions.count)),
                 type: sema.types.anyType
@@ -415,8 +410,24 @@ extension KIRLoweringDriver {
                     thrownResult: nil
                 )
             )
-            // Overwrite the delegate storage with the provideDelegate result.
-            initInstructions.append(.storeGlobal(value: provideDelegateResult, symbol: delegateStorageSymbol))
+
+            // Wrap the provideDelegate result in kk_custom_delegate_create
+            // so downstream kk_custom_delegate_get_value/set_value work correctly.
+            let wrappedResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: delegateType)
+            initInstructions.append(.call(
+                symbol: nil, callee: interner.intern("kk_custom_delegate_create"),
+                arguments: [provideDelegateResult],
+                result: wrappedResult, canThrow: false, thrownResult: nil
+            ))
+            initInstructions.append(.storeGlobal(value: wrappedResult, symbol: delegateStorageSymbol))
+        } else {
+            let createResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: delegateType)
+            initInstructions.append(.call(
+                symbol: nil, callee: interner.intern("kk_custom_delegate_create"),
+                arguments: [delegateObjExpr],
+                result: createResult, canThrow: false, thrownResult: nil
+            ))
+            initInstructions.append(.storeGlobal(value: createResult, symbol: delegateStorageSymbol))
         }
     }
 }
