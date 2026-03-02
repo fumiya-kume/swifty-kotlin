@@ -329,7 +329,60 @@ extension ExprTypeChecker {
     ) -> TypeID {
         let ast = ctx.ast
         let sema = ctx.sema
+        let interner = ctx.interner
         let outerSymbols = Set(locals.values.map(\.symbol))
+
+        // ── T::class  — reified type-parameter class reference ──────────
+        if interner.resolve(member) == "class",
+           let receiver,
+           case let .nameRef(receiverName, _) = ast.arena.expr(receiver)
+        {
+            // Look up whether the receiver name refers to a type parameter.
+            let allCandidateIDs = ctx.cachedScopeLookup(receiverName)
+            var foundTypeParam: SemanticSymbol?
+            for candidateID in allCandidateIDs {
+                if let sym = ctx.cachedSymbol(candidateID), sym.kind == .typeParameter {
+                    foundTypeParam = sym
+                    break
+                }
+            }
+            if let typeParamSymbol = foundTypeParam {
+                if !typeParamSymbol.flags.contains(.reifiedTypeParameter) {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-REIFIED",
+                        "Cannot use 'T::class' on non-reified type parameter '\(interner.resolve(typeParamSymbol.name))'.",
+                        range: range
+                    )
+                    sema.bindings.bindExprType(id, type: sema.types.errorType)
+                    return sema.types.errorType
+                }
+                let resolvedType = sema.types.make(.typeParam(TypeParamType(symbol: typeParamSymbol.id)))
+                sema.bindings.bindClassRefTargetType(id, type: resolvedType)
+                // Bind expression type as anyType (KClass stub placeholder)
+                sema.bindings.bindExprType(id, type: sema.types.anyType)
+                // Infer receiver so downstream passes see it
+                _ = driver.inferExpr(receiver, ctx: ctx, locals: &locals, expectedType: nil)
+                return sema.types.anyType
+            }
+            // If the receiver name refers to a concrete class (e.g. Int::class),
+            // resolve it as a class reference.
+            var foundClassSym: SemanticSymbol?
+            for candidateID in allCandidateIDs {
+                if let sym = ctx.cachedSymbol(candidateID),
+                   sym.kind == .class || sym.kind == .interface || sym.kind == .object || sym.kind == .enumClass
+                {
+                    foundClassSym = sym
+                    break
+                }
+            }
+            if let classCandidateSymbol = foundClassSym {
+                let classType = sema.types.make(.classType(ClassType(classSymbol: classCandidateSymbol.id)))
+                sema.bindings.bindClassRefTargetType(id, type: classType)
+                sema.bindings.bindExprType(id, type: sema.types.anyType)
+                _ = driver.inferExpr(receiver, ctx: ctx, locals: &locals, expectedType: nil)
+                return sema.types.anyType
+            }
+        }
 
         let receiverType: TypeID? = if let receiver {
             driver.inferExpr(receiver, ctx: ctx, locals: &locals, expectedType: nil)

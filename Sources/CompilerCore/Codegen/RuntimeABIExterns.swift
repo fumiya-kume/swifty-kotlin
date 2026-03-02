@@ -477,6 +477,18 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_type_token_simple_name = ExternDecl(
+        name: "kk_type_token_simple_name",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_type_token_qualified_name = ExternDecl(
+        name: "kk_type_token_qualified_name",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_op_is = ExternDecl(
         name: "kk_op_is",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -715,6 +727,8 @@ public enum RuntimeABIExterns {
         // TypeCheck Operators
         kk_type_register_super,
         kk_type_register_iface,
+        kk_type_token_simple_name,
+        kk_type_token_qualified_name,
         kk_op_is,
         kk_op_cast,
         kk_op_safe_cast,

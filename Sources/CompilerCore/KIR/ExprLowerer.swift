@@ -881,6 +881,18 @@ final class ExprLowerer {
             )
 
         case let .callableRef(receiverExpr, memberName, _):
+            // T::class  — emit the type token for the reified type parameter
+            if interner.resolve(memberName) == "class",
+               sema.bindings.classRefTargetType(for: exprID) != nil
+            {
+                // The actual lowering (to kk_type_token_simple_name) happens
+                // at the enclosing memberCall site (T::class.simpleName).
+                // Here we just emit a placeholder unit value; the memberCall
+                // lowerer will bypass this and emit the runtime call directly.
+                let unit = arena.appendExpr(.unit, type: boundType ?? sema.types.anyType)
+                instructions.append(.constValue(result: unit, value: .unit))
+                return unit
+            }
             return driver.lambdaLowerer.lowerCallableRefExpr(
                 exprID,
                 receiverExpr: receiverExpr,

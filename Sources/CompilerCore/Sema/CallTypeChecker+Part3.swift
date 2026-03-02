@@ -21,6 +21,25 @@ extension CallTypeChecker {
         let sema = ctx.sema
         let interner = ctx.interner
 
+        // ── T::class.simpleName / T::class.qualifiedName ──────────────
+        // Detect member access on a class-reference expression (callableRef
+        // with member "class").  The result type is nullable String.
+        if case let .callableRef(_, refMember, _) = ast.arena.expr(receiverID),
+           interner.resolve(refMember) == "class"
+        {
+            let callee = interner.resolve(calleeName)
+            if callee == "simpleName" || callee == "qualifiedName" {
+                // Infer the receiver (the callableRef) so bindings are populated
+                _ = driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
+                _ = args.map { driver.inferExpr($0.expr, ctx: ctx, locals: &locals) }
+                let nullableStringType = sema.types.makeNullable(
+                    sema.types.make(.primitive(.string, .nonNull))
+                )
+                sema.bindings.bindExprType(id, type: nullableStringType)
+                return nullableStringType
+            }
+        }
+
         let receiverType = driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
         let argTypes = args.map { driver.inferExpr($0.expr, ctx: ctx, locals: &locals) }
         let lookupReceiverType = safeCall ? sema.types.makeNonNullable(receiverType) : receiverType

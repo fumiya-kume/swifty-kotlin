@@ -680,6 +680,24 @@ public enum RuntimeABISpec {
             section: "TypeCheck"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_type_token_simple_name",
+            parameters: [
+                RuntimeABIParameter(name: "typeToken", type: .intptr),
+                RuntimeABIParameter(name: "nameHint", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_type_token_qualified_name",
+            parameters: [
+                RuntimeABIParameter(name: "typeToken", type: .intptr),
+                RuntimeABIParameter(name: "nameHint", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_op_is",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),
