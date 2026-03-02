@@ -31,6 +31,6 @@ Cases:
 - `generic_typealias.kt`: 循環 typealias（`A = B`, `B = A`）の compile-error parity
 - `is_type_check.kt`: `is` / `!is` と `&&` / `||` の smart-cast 伝播 parity
 - `is_type_check_non_reified_error.kt`: non-reified 型パラメータへの `is` チェック compile-error parity
-- `try_expression.kt`: `try` 式 + `finally` 実行順の parity
+- `try_expression.kt`: `try` 式（multi-catch / partial catch / `finally` 実行順）の parity
 
 The set intentionally includes both successful programs and compile-error cases.
