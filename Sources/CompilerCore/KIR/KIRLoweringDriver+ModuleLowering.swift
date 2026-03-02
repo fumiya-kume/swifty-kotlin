@@ -94,6 +94,14 @@ extension KIRLoweringDriver {
                     let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: directMembers)))
                     declIDs.append(kirID)
                     declIDs.append(contentsOf: allDecls)
+                    // Synthesise an initializer for the top-level object so that
+                    // property initializers and init blocks run during module init
+                    // (property initializers first, then init blocks).
+                    declIDs.append(contentsOf: synthesizeObjectInitializer(
+                        objectDecl,
+                        objectSymbol: symbol,
+                        shared: shared
+                    ))
 
                 case let .funDecl(function):
                     ctx.resetScopeForFunction()
