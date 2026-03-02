@@ -126,11 +126,11 @@ extension KIRLoweringDriver {
                                 thisRefExprID = arena.appendExpr(.null, type: sema.types.nullableAnyType)
                                 body.append(.constValue(result: thisRefExprID, value: .null))
                             }
-                            let kPropertyExprID = arena.appendExpr(
-                                .stringLiteral(propertyName),
-                                type: sema.types.make(.primitive(.string, .nonNull))
+                            let kPropertyExprID = emitKPropertyStubCreate(
+                                propertyName: propertyName,
+                                propertyType: sema.symbols.propertyType(for: propSymbol) ?? sema.types.anyType,
+                                shared: shared, emit: &body
                             )
-                            body.append(.constValue(result: kPropertyExprID, value: .stringLiteral(propertyName)))
                             let provideDelegateResult = arena.appendExpr(
                                 .temporary(Int32(arena.expressions.count)),
                                 type: sema.types.anyType
