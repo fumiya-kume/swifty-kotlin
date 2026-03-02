@@ -1,9 +1,9 @@
 package golden.sema
 
-class Producer<out T>(val value: T)
+class Producer<out T>(val item: T)
 
 class Consumer<in T> {
-    fun accept(value: T) {}
+    fun accept(item: T) {}
 }
 
 // Valid covariant/contravariant assignments
@@ -14,7 +14,7 @@ fun validVariance() {
 
 // Illegal: out T used in 'in' position (parameter)
 class BadProducer<out T> {
-    fun consume(value: T) {} // ERROR: Type parameter T is declared as 'out' but occurs in 'in' position
+    fun consume(item: T) {} // ERROR: Type parameter T is declared as 'out' but occurs in 'in' position
 }
 
 // Illegal: in T used in 'out' position (return type)

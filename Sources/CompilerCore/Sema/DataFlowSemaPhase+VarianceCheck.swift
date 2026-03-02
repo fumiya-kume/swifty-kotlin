@@ -1,4 +1,3 @@
-import Foundation
 
 extension DataFlowSemaPhase {
     // Validates declaration-site variance constraints for all classes and interfaces.
