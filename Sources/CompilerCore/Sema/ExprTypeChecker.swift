@@ -138,9 +138,10 @@ final class ExprTypeChecker {
 
         case let .returnExpr(value, label, range):
             if let label, !ctx.hasLambdaLabel(label) {
+                let labelName = interner.resolve(label)
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0042",
-                    "'return@\(interner.resolve(label))' does not reference a valid enclosing lambda.",
+                    "'return@\(labelName)' does not reference a valid enclosing lambda.",
                     range: range
                 )
             }
@@ -316,9 +317,8 @@ final class ExprTypeChecker {
             sema.bindings.bindExprType(id, type: sema.types.nothingType)
             return sema.types.nothingType
 
-        case let .lambdaLiteral(params, body, label, _):
-            // swiftlint:disable:next line_length
-            return inferLambdaLiteralExpr(id, params: params, body: body, label: label, ctx: ctx, locals: &locals, expectedType: expectedType)
+        case let .lambdaLiteral(params, body, _, _):
+            return inferLambdaLiteralExpr(id, params: params, body: body, ctx: ctx, locals: &locals, expectedType: expectedType)
 
         case let .objectLiteral(superTypes, _):
             let objectType = superTypes.first.map {

@@ -215,13 +215,15 @@ extension ExprTypeChecker {
         _ id: ExprID,
         params: [InternedString],
         body: ExprID,
-        label: InternedString? = nil,
         ctx: TypeInferenceContext,
         locals: inout LocalBindings,
         expectedType: TypeID?
     ) -> TypeID {
         let ast = ctx.ast
         let sema = ctx.sema
+
+        // Extract label from the lambda literal AST node for labeled lambda support
+        let label: InternedString? = if case let .lambdaLiteral(_, _, l, _) = ast.arena.expr(id) { l } else { nil }
 
         let expectedFunctionType: FunctionType? = if let expectedType,
                                                      case let .functionType(functionType) = sema.types.kind(of: expectedType)
