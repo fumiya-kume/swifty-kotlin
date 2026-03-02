@@ -159,12 +159,12 @@ final class RuntimeDelegateTests: XCTestCase {
         let fnPtr = unsafeBitCast(lazyCountingInitCConv, to: Int.self)
         let handle = kk_lazy_create(fnPtr, 1) // SYNCHRONIZED
 
-        let v1 = kk_lazy_get_value(handle)
-        XCTAssertEqual(v1, 99)
+        let firstRead = kk_lazy_get_value(handle)
+        XCTAssertEqual(firstRead, 99)
         XCTAssertEqual(gDelegateState.lazyCallCountSnapshot(), 1)
 
-        let v2 = kk_lazy_get_value(handle)
-        XCTAssertEqual(v2, 99)
+        let secondRead = kk_lazy_get_value(handle)
+        XCTAssertEqual(secondRead, 99)
         XCTAssertEqual(gDelegateState.lazyCallCountSnapshot(), 1, "Initializer should only be called once")
     }
 

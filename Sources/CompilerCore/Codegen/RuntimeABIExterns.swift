@@ -541,6 +541,7 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // swiftlint:disable:next identifier_name
     public static let kk_lazy_is_initialized = ExternDecl(
         name: "kk_lazy_is_initialized",
         parameterTypes: ["intptr_t"],
