@@ -2,7 +2,7 @@
 import XCTest
 
 final class TypeCheckHelpersCoverageTests: XCTestCase {
-    func testEmitVisibilityErrorAndBindErrorType() {
+    func testEmitVisibilityErrorAndBindErrorType() throws {
         let fixture = makeHelpersFixture()
         let helpers = TypeCheckHelpers()
 
@@ -24,14 +24,14 @@ final class TypeCheckHelpersCoverageTests: XCTestCase {
         let privateSymbol = fixture.symbols.symbol(privateSymbolID)
         let protectedSymbol = fixture.symbols.symbol(protectedSymbolID)
 
-        helpers.emitVisibilityError(
-            for: privateSymbol!,
+        try helpers.emitVisibilityError(
+            for: XCTUnwrap(privateSymbol),
             name: "privateFn",
             range: makeRange(),
             diagnostics: fixture.diagnostics
         )
-        helpers.emitVisibilityError(
-            for: protectedSymbol!,
+        try helpers.emitVisibilityError(
+            for: XCTUnwrap(protectedSymbol),
             name: "protectedFn",
             range: makeRange(),
             diagnostics: fixture.diagnostics
