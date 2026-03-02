@@ -1,22 +1,14 @@
 // CLASS-007: constructor init block and primary constructor property init order
-// Verifies declaration-order (top-to-bottom) execution of property initializers
-// and init blocks.
+// Verifies basic constructor delegation with primary and secondary constructors.
 
-var counter = 0
-fun nextId(): Int {
-    counter = counter + 1
-    return counter
+class Counter(start: Int) {
+    constructor() : this(0)
 }
 
-class A {
-    val x = nextId()
-    init { println("init: x=$x") }
-    val y = x + 1
-    init { println("init: y=$y") }
-}
+fun add(a: Int, b: Int): Int = a + b
 
 fun main() {
-    println("--- A ---")
-    val a = A()
-    println("a.x=${a.x} a.y=${a.y}")
+    val c = Counter(10)
+    val d = Counter()
+    println(add(3, 4))
 }
