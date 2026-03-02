@@ -129,6 +129,10 @@ extension LLVMBackend {
         "    }",
         "  }",
         "}",
+        "__attribute__((weak)) intptr_t kk_throwable_is_cancellation(intptr_t throwableRaw) {",
+        "  (void)throwableRaw;",
+        "  return 0;",
+        "}",
         "",
         "__attribute__((weak)) void* kk_string_from_utf8(const uint8_t* ptr, int32_t len) {",
         "  if (len < 0) len = 0;",
@@ -999,6 +1003,6 @@ extension LLVMBackend {
         "  if (!arr) return 0;",
         "  return arr->length;",
         "}",
-        "",
+        ""
     ]
 }

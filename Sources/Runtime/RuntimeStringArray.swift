@@ -10,6 +10,12 @@ public func kk_throwable_new(_ message: UnsafeMutableRawPointer?) -> UnsafeMutab
     return ptr
 }
 
+@_cdecl("kk_throwable_is_cancellation")
+public func kk_throwable_is_cancellation(_ throwableRaw: Int) -> Int {
+    _ = throwableRaw
+    return 0
+}
+
 @_cdecl("kk_panic")
 public func kk_panic(_ cstr: UnsafePointer<CChar>) -> Never {
     fatalError(runtimePanicMessage(fromCString: cstr))

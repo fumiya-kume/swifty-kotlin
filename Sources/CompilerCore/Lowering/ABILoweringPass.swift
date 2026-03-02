@@ -95,6 +95,7 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_int_to_double_bits"),
             ctx.interner.intern("kk_float_to_double_bits"),
             ctx.interner.intern("kk_any_to_string"),
+            ctx.interner.intern("kk_throwable_is_cancellation"),
             ctx.interner.intern("kk_op_elvis"),
             ctx.interner.intern("kk_lazy_create"),
             ctx.interner.intern("kk_lazy_get_value"),
@@ -134,7 +135,7 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_op_inv"),
             ctx.interner.intern("kk_op_shl"),
             ctx.interner.intern("kk_op_shr"),
-            ctx.interner.intern("kk_op_ushr"),
+            ctx.interner.intern("kk_op_ushr")
         ]
 
         let boxIntCallee = ctx.interner.intern("kk_box_int")
@@ -234,8 +235,7 @@ final class ABILoweringPass: LoweringPass {
                         if vcThrownResult != nil {
                             let nextIdx = idx + 1
                             if nextIdx < function.body.count,
-                               case .jumpIfNotNull = function.body[nextIdx]
-                            {
+                               case .jumpIfNotNull = function.body[nextIdx] {
                                 newBody.append(function.body[nextIdx])
                                 idx += 1
                             }
@@ -444,8 +444,7 @@ final class ABILoweringPass: LoweringPass {
                     if thrownResult != nil {
                         let nextIdx = idx + 1
                         if nextIdx < function.body.count,
-                           case .jumpIfNotNull = function.body[nextIdx]
-                        {
+                           case .jumpIfNotNull = function.body[nextIdx] {
                             newBody.append(function.body[nextIdx])
                             idx += 1
                         }
@@ -601,8 +600,7 @@ final class ABILoweringPass: LoweringPass {
             guard ct.nullability == .nonNull else { return kind }
             let sym = symbols.symbol(ct.classSymbol)
             if let sym, sym.flags.contains(.valueType),
-               let underlyingType = symbols.valueClassUnderlyingType(for: ct.classSymbol)
-            {
+               let underlyingType = symbols.valueClassUnderlyingType(for: ct.classSymbol) {
                 return types.kind(of: underlyingType)
             }
         }
@@ -636,8 +634,7 @@ final class ABILoweringPass: LoweringPass {
                 if let symbols,
                    let sym = symbols.symbol(ct.classSymbol),
                    sym.flags.contains(.valueType),
-                   ct.nullability == .nonNull
-                {
+                   ct.nullability == .nonNull {
                     return false
                 }
                 // Otherwise, any non-value-class reference type is a boxing boundary.
@@ -649,8 +646,7 @@ final class ABILoweringPass: LoweringPass {
         guard isReferenceBoxingBoundary else {
             if case let .primitive(paramPrimitive, .nullable) = paramKind,
                case let .primitive(argPrimitive, .nonNull) = argKind,
-               paramPrimitive == argPrimitive
-            {
+               paramPrimitive == argPrimitive {
                 switch argPrimitive {
                 case .int:
                     return boxIntCallee
@@ -771,8 +767,7 @@ final class ABILoweringPass: LoweringPass {
             if let symbols,
                let sym = symbols.symbol(ct.classSymbol),
                sym.flags.contains(.valueType),
-               ct.nullability == .nonNull
-            {
+               ct.nullability == .nonNull {
                 return false
             }
             return true
@@ -805,8 +800,7 @@ final class ABILoweringPass: LoweringPass {
         }
         if case let .primitive(sourcePrimitive, .nullable) = sourceKind,
            case let .primitive(targetPrimitive, .nonNull) = targetKind,
-           sourcePrimitive == targetPrimitive
-        {
+           sourcePrimitive == targetPrimitive {
             return true
         }
         return false
@@ -817,8 +811,7 @@ final class ABILoweringPass: LoweringPass {
     private func needsBoxingForCopy(sourceKind: TypeKind, targetKind: TypeKind) -> Bool {
         if case let .primitive(sourcePrimitive, .nonNull) = sourceKind,
            case let .primitive(targetPrimitive, .nullable) = targetKind,
-           sourcePrimitive == targetPrimitive
-        {
+           sourcePrimitive == targetPrimitive {
             return true
         }
         return false

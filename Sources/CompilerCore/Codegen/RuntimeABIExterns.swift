@@ -63,6 +63,12 @@ public enum RuntimeABIExterns {
         returnType: "void *"
     )
 
+    public static let kk_throwable_is_cancellation = ExternDecl(
+        name: "kk_throwable_is_cancellation",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_panic = ExternDecl(
         name: "kk_panic",
         parameterTypes: ["const char *"],
@@ -576,6 +582,7 @@ public enum RuntimeABIExterns {
         kk_write_barrier,
         // Exception
         kk_throwable_new,
+        kk_throwable_is_cancellation,
         kk_panic,
         // String
         kk_string_from_utf8,
@@ -668,7 +675,7 @@ public enum RuntimeABIExterns {
         kk_op_inv,
         kk_op_shl,
         kk_op_shr,
-        kk_op_ushr,
+        kk_op_ushr
     ]
 
     /// Look up an extern declaration by symbol name.

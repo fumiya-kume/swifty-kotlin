@@ -65,6 +65,7 @@ extension LLVMBackend {
         "extern void kk_println_double(intptr_t v);",
         "extern void kk_println_char(intptr_t v);",
         "extern void kk_println_any(void* obj);",
+        "extern intptr_t kk_throwable_is_cancellation(intptr_t throwableRaw);",
         "extern intptr_t kk_coroutine_suspended(void);",
         "extern intptr_t kk_coroutine_continuation_new(intptr_t functionId);",
         "extern intptr_t kk_coroutine_state_enter(intptr_t continuation, intptr_t functionId);",
@@ -145,6 +146,6 @@ extension LLVMBackend {
         "extern intptr_t kk_map_iterator_next(intptr_t iterRaw);",
         "extern intptr_t kk_array_of(intptr_t arrayRaw, intptr_t count);",
         "extern intptr_t kk_array_size(intptr_t arrayRaw);",
-        "",
+        ""
     ]
 }

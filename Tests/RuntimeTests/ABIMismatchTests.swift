@@ -74,8 +74,8 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testExceptionFunctionCount() {
-        // kk_throwable_new, kk_panic
-        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 2)
+        // kk_throwable_new, kk_throwable_is_cancellation, kk_panic
+        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 3)
     }
 
     func testStringFunctionCount() {
@@ -164,6 +164,13 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(spec.returnType, .opaquePointer)
         XCTAssertEqual(spec.parameters.count, 1)
         XCTAssertEqual(spec.parameters[0].type, .nullableOpaquePointer)
+    }
+
+    func testKKThrowableIsCancellationSignature() throws {
+        let spec = try requireSpec("kk_throwable_is_cancellation")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 1)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
     }
 
     func testKKPanicSignature() throws {

@@ -24,5 +24,8 @@ Cases:
 - `zero_null_print.kt`: `println(0)` と `println(null)` の表示分離
 - `type_error.kt`: compile-error parity case
 - `invoke_operator.kt`: `operator fun invoke` による `obj(args)` 呼び出し（top-level property / object / 式結果）
+- `char_escape.kt`: Char escape / Unicode escape の runtime parity（`'\n'`, `'\t'`, `'\\'`, `'\u0041'`）
+- `star_projection.kt`: use-site star projection（`Box<*>`）の型解決 parity
+- `try_expression.kt`: `try` 式 + `finally` 実行順の parity
 
 The set intentionally includes both successful programs and one compile-error case.

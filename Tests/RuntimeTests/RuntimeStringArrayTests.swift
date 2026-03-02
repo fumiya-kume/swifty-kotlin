@@ -131,6 +131,16 @@ final class RuntimeStringArrayTests: XCTestCase {
         XCTAssertTrue(output.contains("Throwable"))
     }
 
+    func testThrowableIsCancellationReturnsFalseForNil() {
+        XCTAssertEqual(kk_throwable_is_cancellation(0), 0)
+    }
+
+    func testThrowableIsCancellationReturnsFalseForRegularThrowable() {
+        let throwable = kk_throwable_new(makeRuntimeString("not cancellation"))
+        let raw = Int(bitPattern: throwable)
+        XCTAssertEqual(kk_throwable_is_cancellation(raw), 0)
+    }
+
     // MARK: - kk_array_new
 
     func testArrayNewCreatesArray() {
