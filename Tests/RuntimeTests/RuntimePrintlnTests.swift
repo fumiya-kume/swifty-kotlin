@@ -21,10 +21,10 @@ final class RuntimePrintlnTests: XCTestCase {
     private func capturePrintln(_ block: () -> Void) -> String {
         let pipe = Pipe()
         let savedFD = dup(STDOUT_FILENO)
-        fflush(stdout)
+        fflush(nil)
         dup2(pipe.fileHandleForWriting.fileDescriptor, STDOUT_FILENO)
         block()
-        fflush(stdout)
+        fflush(nil)
         dup2(savedFD, STDOUT_FILENO)
         close(savedFD)
         pipe.fileHandleForWriting.closeFile()
