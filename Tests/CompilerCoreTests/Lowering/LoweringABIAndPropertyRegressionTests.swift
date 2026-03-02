@@ -1123,10 +1123,10 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase {
         )
     }
 
+    // swiftlint:disable:next function_body_length
     /// Verifies that a top-level getter-only computed property does not emit
     /// a KIRGlobal and that reads of a non-literal getter body are lowered
     /// to getter accessor calls (not loadGlobal) by PropertyLoweringPass.
-    // swiftlint:disable:next function_body_length
     func testTopLevelGetterOnlyComputedPropertyEmitsNoGlobal() throws {
         // Use a non-literal getter body (`= stored`) so the constant
         // collector does NOT inline the value.  This forces ExprLowerer
