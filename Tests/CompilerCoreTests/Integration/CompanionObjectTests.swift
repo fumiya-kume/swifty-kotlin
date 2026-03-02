@@ -346,8 +346,8 @@ final class CompanionObjectTests: XCTestCase {
         )
     }
 
-    /// Verify companion singleton init function is called exactly once in module init.
-    func testCompanionSingletonInitCalledInModuleInit() throws {
+    /// Verify exactly one companion singleton init function is synthesized.
+    func testCompanionSingletonInitSynthesizedExactlyOnce() throws {
         let source = """
         class Host {
             companion object {
@@ -440,6 +440,11 @@ final class CompanionObjectTests: XCTestCase {
         try withTemporaryFile(contents: source) { path in
             let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
             try runToKIR(ctx)
+
+            XCTAssertFalse(
+                ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }),
+                "Expected no KIR errors, got: \(ctx.diagnostics.diagnostics.map(\.code))"
+            )
 
             let module = try XCTUnwrap(ctx.kir)
             // Find the companion init function and verify it has a copy instruction
