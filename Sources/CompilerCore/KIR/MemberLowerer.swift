@@ -47,7 +47,8 @@ final class MemberLowerer {
                 })
             }
             if function.isInline, let signature,
-               !signature.reifiedTypeParameterIndices.isEmpty {
+               !signature.reifiedTypeParameterIndices.isEmpty
+            {
                 let intType = sema.types.make(.primitive(.int, .nonNull))
                 for index in signature.reifiedTypeParameterIndices.sorted() {
                     guard index < signature.typeParameterSymbols.count else { continue }
@@ -59,7 +60,8 @@ final class MemberLowerer {
             let returnType = signature?.returnType ?? sema.types.unitType
             var body: [KIRInstruction] = [.beginBlock]
             if let receiverExpr = driver.ctx.currentImplicitReceiverExprID,
-               let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol {
+               let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol
+            {
                 body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSymbol)))
             }
             switch function.body {
@@ -68,7 +70,8 @@ final class MemberLowerer {
                 var terminatedByReturn = false
                 for exprID in exprIDs {
                     if let expr = ast.arena.expr(exprID),
-                       case let .returnExpr(value, _, _) = expr {
+                       case let .returnExpr(value, _, _) = expr
+                    {
                         if let value {
                             let lowered = driver.lowerExpr(
                                 value,
@@ -134,7 +137,8 @@ final class MemberLowerer {
             directMembers.append(kirID)
             allDecls.append(kirID)
             if let defaults = driver.ctx.functionDefaultArgumentsBySymbol[symbol],
-               let sig = signature {
+               let sig = signature
+            {
                 let stubID = driver.callSupportLowerer.generateDefaultStubFunction(
                     originalSymbol: symbol,
                     originalName: function.name,

@@ -132,7 +132,8 @@ final class DeclTypeChecker {
                 return sym.flags.contains(.operatorFunction)
             }
             if let getValueSymbol = getValueCandidates.first,
-               let getValueSig = sema.symbols.functionSignature(for: getValueSymbol) {
+               let getValueSig = sema.symbols.functionSignature(for: getValueSymbol)
+            {
                 // Use getValue return type to infer the property type when
                 // no explicit type annotation is provided.
                 if inferredPropertyType == nil {
@@ -226,7 +227,8 @@ final class DeclTypeChecker {
             let ctorSymbols = sema.symbols.symbols(atDeclSite: ctor.range).compactMap { sema.symbols.symbol($0) }.filter { $0.kind == .constructor }
             let currentCtorSymbolID = ctorSymbols.first?.id
             if let ctorSymbol = ctorSymbols.first,
-               let signature = sema.symbols.functionSignature(for: ctorSymbol.id) {
+               let signature = sema.symbols.functionSignature(for: ctorSymbol.id)
+            {
                 for (index, paramSymbol) in signature.valueParameterSymbols.enumerated() {
                     guard let param = sema.symbols.symbol(paramSymbol) else { continue }
                     let type = index < signature.parameterTypes.count ? signature.parameterTypes[index] : sema.types.anyType
@@ -253,7 +255,8 @@ final class DeclTypeChecker {
                 switch delegation.kind {
                 case .this:
                     if let owner = ownerSymbol,
-                       let ownerSym = sema.symbols.symbol(owner) {
+                       let ownerSym = sema.symbols.symbol(owner)
+                    {
                         delegationTargetFQName = ownerSym.fqName + [ctx.interner.intern("<init>")]
                     } else {
                         delegationTargetFQName = []
@@ -266,7 +269,8 @@ final class DeclTypeChecker {
                             return kind == .class || kind == .enumClass
                         }
                         if let superclass = classSupertypes.first,
-                           let superSym = sema.symbols.symbol(superclass) {
+                           let superSym = sema.symbols.symbol(superclass)
+                        {
                             delegationTargetFQName = superSym.fqName + [ctx.interner.intern("<init>")]
                         } else {
                             delegationTargetFQName = []

@@ -48,7 +48,7 @@ public final class TypeSystem {
             .primitive(.long, .nonNull),
             .primitive(.float, .nonNull),
             .primitive(.double, .nonNull),
-            .primitive(.string, .nonNull)
+            .primitive(.string, .nonNull),
         ]
         kindToID = [
             .error: errorType,
@@ -63,7 +63,7 @@ public final class TypeSystem {
             .primitive(.long, .nonNull): longType,
             .primitive(.float, .nonNull): floatType,
             .primitive(.double, .nonNull): doubleType,
-            .primitive(.string, .nonNull): stringType
+            .primitive(.string, .nonNull): stringType,
         ]
     }
 

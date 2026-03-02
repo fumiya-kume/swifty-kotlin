@@ -1003,6 +1003,6 @@ extension LLVMBackend {
         "  if (!arr) return 0;",
         "  return arr->length;",
         "}",
-        ""
+        "",
     ]
 }

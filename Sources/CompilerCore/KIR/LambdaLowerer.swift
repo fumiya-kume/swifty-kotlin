@@ -288,7 +288,8 @@ final class LambdaLowerer {
         interner: StringInterner
     ) -> InternedString {
         if let externalLinkName = sema.symbols.externalLinkName(for: symbol),
-           !externalLinkName.isEmpty {
+           !externalLinkName.isEmpty
+        {
             return interner.intern(externalLinkName)
         }
         return sema.symbols.symbol(symbol)?.name ?? interner.intern("kk_unknown_callable")
@@ -346,7 +347,8 @@ final class LambdaLowerer {
         var candidates: [SymbolID] = []
         if let receiverExpr,
            let receiverType = sema.bindings.exprTypes[receiverExpr],
-           let receiverSymbol = nominalSymbol(for: receiverType, types: sema.types) {
+           let receiverSymbol = nominalSymbol(for: receiverType, types: sema.types)
+        {
             var ownerQueue: [SymbolID] = [receiverSymbol]
             var visitedOwners: Set<SymbolID> = []
             while let owner = ownerQueue.first {
@@ -435,7 +437,8 @@ final class LambdaLowerer {
                    lambdaParamCount: lambdaParamCount,
                    sema: sema
                ),
-               !captures.contains(receiverSymbol) {
+               !captures.contains(receiverSymbol)
+            {
                 captures.append(receiverSymbol)
             }
             return captures
@@ -481,7 +484,8 @@ final class LambdaLowerer {
                lambdaParamCount: lambdaParamCount,
                sema: sema
            ),
-           !captures.contains(receiverSymbol) {
+           !captures.contains(receiverSymbol)
+        {
             captures.append(receiverSymbol)
         }
         return captures
@@ -497,7 +501,8 @@ final class LambdaLowerer {
             return localValue
         }
         if symbol == driver.ctx.currentImplicitReceiverSymbol,
-           let receiverExprID = driver.ctx.currentImplicitReceiverExprID {
+           let receiverExprID = driver.ctx.currentImplicitReceiverExprID
+        {
             return receiverExprID
         }
         guard let semanticSymbol = sema.symbols.symbol(symbol),

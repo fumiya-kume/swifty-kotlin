@@ -4,7 +4,7 @@ extension CallLowerer {
     private static let unresolvedCollectionMemberNames: Set<String> = [
         "size", "get", "contains", "containsKey",
         "isEmpty", "first", "last", "indexOf",
-        "count", "iterator"
+        "count", "iterator",
     ]
 
     func lowerMemberCallExpr(
@@ -126,7 +126,8 @@ extension CallLowerer {
         // Primitive member function: Int/Long.inv() → kk_op_inv (P5-103)
         if calleeName == interner.intern("inv"),
            args.isEmpty,
-           shouldLowerPrimitiveInv(receiverExpr: receiverExpr, sema: sema, nullableReceiverAllowed: requireNonNullableReceiverForConstFold) {
+           shouldLowerPrimitiveInv(receiverExpr: receiverExpr, sema: sema, nullableReceiverAllowed: requireNonNullableReceiverForConstFold)
+        {
             instructions.append(.call(
                 symbol: nil,
                 callee: interner.intern("kk_op_inv"),
@@ -241,7 +242,8 @@ extension CallLowerer {
     ) {
         if let chosenCallee,
            let signature = sema.symbols.functionSignature(for: chosenCallee),
-           signature.receiverType != nil {
+           signature.receiverType != nil
+        {
             arguments.insert(loweredReceiverID, at: 0)
             return
         }
@@ -273,7 +275,8 @@ extension CallLowerer {
     ) {
         var finalArguments = arguments
         if normalized.defaultMask != 0,
-           let chosenCallee {
+           let chosenCallee
+        {
             appendReifiedTypeTokens(
                 chosenCallee: chosenCallee,
                 callBinding: callBinding,
@@ -321,13 +324,15 @@ extension CallLowerer {
         let receiverTypeForDispatch = sema.bindings.exprTypes[receiverExpr]
         if !isSuperCall,
            let chosenCallee,
-           let dispatchKind = resolveVirtualDispatch(callee: chosenCallee, receiverTypeID: receiverTypeForDispatch, sema: sema) {
+           let dispatchKind = resolveVirtualDispatch(callee: chosenCallee, receiverTypeID: receiverTypeForDispatch, sema: sema)
+        {
             // For virtualCall, the receiver is a separate field, so remove it
             // from finalArguments (it was inserted at index 0 above).
             var vcArguments = finalArguments
             if let signature = sema.symbols.functionSignature(for: chosenCallee),
                signature.receiverType != nil,
-               !vcArguments.isEmpty {
+               !vcArguments.isEmpty
+            {
                 vcArguments.removeFirst()
             }
             instructions.append(.virtualCall(

@@ -39,7 +39,8 @@ extension DataFlowSemaPhase {
                 continue
             }
             if nominalSymbol.flags.contains(.synthetic),
-               symbols.nominalLayout(for: nominalID) != nil {
+               symbols.nominalLayout(for: nominalID) != nil
+            {
                 continue
             }
 

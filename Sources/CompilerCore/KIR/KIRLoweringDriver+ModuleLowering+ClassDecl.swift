@@ -56,7 +56,8 @@ extension KIRLoweringDriver {
             var body: KIRLoweringEmitContext = [.beginBlock]
 
             if let receiverExpr = ctx.currentImplicitReceiverExprID,
-               let receiverSym = ctx.currentImplicitReceiverSymbol {
+               let receiverSym = ctx.currentImplicitReceiverSymbol
+            {
                 body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
             }
 

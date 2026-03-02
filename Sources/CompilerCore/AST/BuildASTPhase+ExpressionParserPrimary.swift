@@ -48,7 +48,8 @@ extension BuildASTPhase.ExpressionParser {
 
         case let .identifier(name), let .backtickedIdentifier(name):
             if let atToken = peek(1), atToken.kind == .symbol(.at),
-               let nextToken = peek(2) {
+               let nextToken = peek(2)
+            {
                 switch nextToken.kind {
                 case .keyword(.for), .keyword(.while), .keyword(.do), .symbol(.lBrace):
                     let savedIndex = index
@@ -95,7 +96,8 @@ extension BuildASTPhase.ExpressionParser {
             var end = token.range.end
             if let atToken = current(), atToken.kind == .symbol(.at),
                let labelToken = peek(1),
-               let labelName = identifierFromToken(labelToken) {
+               let labelName = identifierFromToken(labelToken)
+            {
                 _ = consume()
                 _ = consume()
                 label = labelName
@@ -110,7 +112,8 @@ extension BuildASTPhase.ExpressionParser {
             var end = token.range.end
             if let atToken = current(), atToken.kind == .symbol(.at),
                let labelToken = peek(1),
-               let labelName = identifierFromToken(labelToken) {
+               let labelName = identifierFromToken(labelToken)
+            {
                 _ = consume()
                 _ = consume()
                 label = labelName
@@ -142,7 +145,8 @@ extension BuildASTPhase.ExpressionParser {
             _ = consume()
             if let atToken = current(), atToken.kind == .symbol(.at),
                let labelToken = peek(1),
-               let labelName = identifierFromToken(labelToken) {
+               let labelName = identifierFromToken(labelToken)
+            {
                 _ = consume()
                 _ = consume()
                 let endRange = labelToken.range

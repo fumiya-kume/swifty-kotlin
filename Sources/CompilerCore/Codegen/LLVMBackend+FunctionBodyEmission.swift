@@ -64,7 +64,8 @@ extension LLVMBackend {
             case let .constValue(result, value):
                 ensureDeclared(result, declared: &declared, lines: &lines)
                 if case let .symbolRef(symbol) = value,
-                   let parameterName = parameterNameBySymbol[symbol] {
+                   let parameterName = parameterNameBySymbol[symbol]
+                {
                     lines.append("  \(varName(result)) = \(parameterName);")
                 } else {
                     lines.append(
@@ -420,7 +421,8 @@ extension LLVMBackend {
                 // instead of the local register so the store persists.
                 if let targetExpr = arena.expr(to),
                    case let .symbolRef(targetSymbol) = targetExpr,
-                   let globalSlot = globalValueSymbols[targetSymbol] {
+                   let globalSlot = globalValueSymbols[targetSymbol]
+                {
                     lines.append("  \(globalSlot) = \(varName(from));")
                 } else {
                     ensureDeclared(to, declared: &declared, lines: &lines)

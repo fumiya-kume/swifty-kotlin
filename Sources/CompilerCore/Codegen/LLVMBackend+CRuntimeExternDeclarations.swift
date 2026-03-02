@@ -146,6 +146,6 @@ extension LLVMBackend {
         "extern intptr_t kk_map_iterator_next(intptr_t iterRaw);",
         "extern intptr_t kk_array_of(intptr_t arrayRaw, intptr_t count);",
         "extern intptr_t kk_array_size(intptr_t arrayRaw);",
-        ""
+        "",
     ]
 }

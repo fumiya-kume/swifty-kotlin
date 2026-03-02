@@ -27,7 +27,8 @@ extension CallTypeChecker {
 
         // Primitive member function: Int/Long.inv() → same type (P5-103)
         if interner.resolve(calleeName) == "inv",
-           args.isEmpty {
+           args.isEmpty
+        {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
             if lookupReceiverType == intType || lookupReceiverType == longType {
@@ -169,7 +170,8 @@ extension CallTypeChecker {
                    let parentSymbol = sema.symbols.parentSymbol(for: first),
                    let ownerNominal = driver.helpers.nominalSymbol(of: memberLookupType, types: sema.types),
                    parentSymbol != ownerNominal,
-                   sema.symbols.companionObjectSymbol(for: ownerNominal) == parentSymbol {
+                   sema.symbols.companionObjectSymbol(for: ownerNominal) == parentSymbol
+                {
                     companionReceiverType = sema.types.make(.classType(ClassType(classSymbol: parentSymbol, args: [], nullability: .nonNull)))
                 }
                 allCandidates = memberCandidates
@@ -345,7 +347,7 @@ extension CallTypeChecker {
                 let collectionMembers: Set<String> = [
                     "size", "get", "contains", "containsKey",
                     "isEmpty", "first", "last", "indexOf",
-                    "count", "iterator"
+                    "count", "iterator",
                 ]
                 if collectionMembers.contains(memberName) {
                     let resultType: TypeID = switch memberName {
@@ -416,7 +418,8 @@ extension CallTypeChecker {
         if isSuperCall,
            let chosenSym = sema.symbols.symbol(chosen),
            chosenSym.flags.contains(.abstractType),
-           chosenSym.kind == .function || chosenSym.kind == .property {
+           chosenSym.kind == .function || chosenSym.kind == .property
+        {
             let memberName = interner.resolve(calleeName)
             ctx.semaCtx.diagnostics.error(
                 "KSWIFTK-SEMA-ABSTRACT",

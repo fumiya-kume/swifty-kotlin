@@ -112,7 +112,8 @@ extension KIRLoweringDriver {
                         })
                     }
                     if function.isInline, let signature,
-                       !signature.reifiedTypeParameterIndices.isEmpty {
+                       !signature.reifiedTypeParameterIndices.isEmpty
+                    {
                         let intType = sema.types.make(.primitive(.int, .nonNull))
                         for index in signature.reifiedTypeParameterIndices.sorted() {
                             guard index < signature.typeParameterSymbols.count else { continue }
@@ -124,7 +125,8 @@ extension KIRLoweringDriver {
                     let returnType = signature?.returnType ?? sema.types.unitType
                     var body: KIRLoweringEmitContext = [.beginBlock]
                     if let receiverExpr = ctx.currentImplicitReceiverExprID,
-                       let receiverSymbol = ctx.currentImplicitReceiverSymbol {
+                       let receiverSymbol = ctx.currentImplicitReceiverSymbol
+                    {
                         body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSymbol)))
                     }
                     switch function.body {
@@ -133,7 +135,8 @@ extension KIRLoweringDriver {
                         var terminatedByReturn = false
                         for exprID in exprIDs {
                             if let expr = ast.arena.expr(exprID),
-                               case let .returnExpr(value, _, _) = expr {
+                               case let .returnExpr(value, _, _) = expr
+                            {
                                 if let value {
                                     let lowered = lowerExpr(
                                         value,
@@ -147,7 +150,8 @@ extension KIRLoweringDriver {
                                 break
                             }
                             if let expr = ast.arena.expr(exprID),
-                               case .throwExpr = expr {
+                               case .throwExpr = expr
+                            {
                                 _ = lowerExpr(
                                     exprID,
                                     shared: shared, emit: &body
@@ -198,7 +202,8 @@ extension KIRLoweringDriver {
                     )
                     declIDs.append(kirID)
                     if let defaults = ctx.functionDefaultArgumentsBySymbol[symbol],
-                       let sig = signature {
+                       let sig = signature
+                    {
                         let stubID = callSupportLowerer.generateDefaultStubFunction(
                             originalSymbol: symbol,
                             originalName: function.name,
@@ -222,7 +227,8 @@ extension KIRLoweringDriver {
 
                     // Emit backing field global for properties with custom accessors.
                     if !isExtensionProperty,
-                       let backingFieldSymbol = sema.symbols.backingFieldSymbol(for: symbol) {
+                       let backingFieldSymbol = sema.symbols.backingFieldSymbol(for: symbol)
+                    {
                         let backingFieldType = sema.symbols.propertyType(for: backingFieldSymbol) ?? propType
                         let backingFieldKirID = arena.appendDecl(
                             .global(KIRGlobal(symbol: backingFieldSymbol, type: backingFieldType))
@@ -260,14 +266,16 @@ extension KIRLoweringDriver {
                     // (declaration order is preserved since we iterate topLevelDecls in order).
                     if let initializer = propertyDecl.initializer,
                        propertyDecl.delegateExpression == nil,
-                       !isExtensionProperty {
+                       !isExtensionProperty
+                    {
                         // Emit runtime init when the property is NOT a compile-time
                         // constant, OR when it is mutable (var).  Mutable properties
                         // are never constant-folded at use-sites (ExprLowerer skips
                         // inlining for .mutable), so their globals must be initialised
                         // to the declared value at program start.
                         if propertyConstantInitializers[symbol] == nil
-                            || (sema.symbols.symbol(symbol)?.flags.contains(.mutable) == true) {
+                            || (sema.symbols.symbol(symbol)?.flags.contains(.mutable) == true)
+                        {
                             ctx.resetScopeForFunction()
                             ctx.beginCallableLoweringScope()
                             var initInstructions: KIRLoweringEmitContext = []
@@ -285,7 +293,8 @@ extension KIRLoweringDriver {
 
                     // Create delegate initialization.
                     if propertyDecl.delegateExpression != nil,
-                       !isExtensionProperty {
+                       !isExtensionProperty
+                    {
                         let interner = compilationCtx.interner
                         let delegateType = sema.types.anyType
 

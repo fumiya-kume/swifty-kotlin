@@ -12,7 +12,8 @@ extension TypeCheckHelpers {
         switch arg {
         case let .invariant(inner):
             if case let .typeParam(tp) = sema.types.kind(of: inner),
-               let replacement = argSubstitution[tp.symbol] {
+               let replacement = argSubstitution[tp.symbol]
+            {
                 if tp.nullability == .nullable {
                     return applyNullabilityToTypeArg(replacement, types: sema.types)
                 }
@@ -21,7 +22,8 @@ extension TypeCheckHelpers {
             return .invariant(applyAliasSubstitution(inner, argSubstitution: argSubstitution, sema: sema))
         case let .out(inner):
             if case let .typeParam(tp) = sema.types.kind(of: inner),
-               let replacement = argSubstitution[tp.symbol] {
+               let replacement = argSubstitution[tp.symbol]
+            {
                 if case .star = replacement { return .star }
                 let innerType = typeArgInnerTypeForCheck(replacement)
                 let resolved = tp.nullability == .nullable ? applyNullabilityForTypeCheck(innerType, types: sema.types) : innerType
@@ -30,7 +32,8 @@ extension TypeCheckHelpers {
             return .out(applyAliasSubstitution(inner, argSubstitution: argSubstitution, sema: sema))
         case let .in(inner):
             if case let .typeParam(tp) = sema.types.kind(of: inner),
-               let replacement = argSubstitution[tp.symbol] {
+               let replacement = argSubstitution[tp.symbol]
+            {
                 if case .star = replacement { return .star }
                 let innerType = typeArgInnerTypeForCheck(replacement)
                 let resolved = tp.nullability == .nullable ? applyNullabilityForTypeCheck(innerType, types: sema.types) : innerType

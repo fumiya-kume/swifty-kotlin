@@ -23,7 +23,8 @@ extension DataFlowAndSemaRegressionTests {
             }
             XCTAssertNotNil(wrapSymbol)
             if let sym = wrapSymbol,
-               let sig = sema.symbols.functionSignature(for: sym.id) {
+               let sig = sema.symbols.functionSignature(for: sym.id)
+            {
                 XCTAssertFalse(sig.typeParameterSymbols.isEmpty)
             }
         }
@@ -220,7 +221,8 @@ extension DataFlowAndSemaRegressionTests {
             }
             XCTAssertNotNil(delayedSymbol)
             if let sym = delayedSymbol,
-               let sig = sema.symbols.functionSignature(for: sym.id) {
+               let sig = sema.symbols.functionSignature(for: sym.id)
+            {
                 XCTAssertTrue(sig.isSuspend)
             }
         }

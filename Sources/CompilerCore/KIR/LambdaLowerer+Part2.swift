@@ -19,7 +19,8 @@ extension LambdaLowerer {
             return true
         }
         if symbol == driver.ctx.currentImplicitReceiverSymbol,
-           driver.ctx.currentImplicitReceiverExprID != nil {
+           driver.ctx.currentImplicitReceiverExprID != nil
+        {
             return true
         }
         guard let semanticSymbol = sema.symbols.symbol(symbol) else {
@@ -294,7 +295,9 @@ extension LambdaLowerer {
 
         case let .indexedAssign(receiverExpr, indices, valueExpr, _):
             if containsImplicitReceiverReference(in: receiverExpr, ast: ast) { return true }
-            for idx in indices where containsImplicitReceiverReference(in: idx, ast: ast) { return true }
+            for idx in indices where containsImplicitReceiverReference(in: idx, ast: ast) {
+                return true
+            }
             return containsImplicitReceiverReference(in: valueExpr, ast: ast)
 
         case let .call(calleeExpr, _, args, _):
@@ -320,7 +323,8 @@ extension LambdaLowerer {
 
         case let .whenExpr(subjectExpr, branches, elseExpr, _):
             if let subjectExpr,
-               containsImplicitReceiverReference(in: subjectExpr, ast: ast) {
+               containsImplicitReceiverReference(in: subjectExpr, ast: ast)
+            {
                 return true
             }
             for branch in branches {
@@ -332,7 +336,8 @@ extension LambdaLowerer {
                 }
             }
             if let elseExpr,
-               containsImplicitReceiverReference(in: elseExpr, ast: ast) {
+               containsImplicitReceiverReference(in: elseExpr, ast: ast)
+            {
                 return true
             }
             return false
@@ -345,7 +350,8 @@ extension LambdaLowerer {
 
         case let .ifExpr(conditionExpr, thenExpr, elseExpr, _):
             if containsImplicitReceiverReference(in: conditionExpr, ast: ast)
-                || containsImplicitReceiverReference(in: thenExpr, ast: ast) {
+                || containsImplicitReceiverReference(in: thenExpr, ast: ast)
+            {
                 return true
             }
             if let elseExpr {
@@ -375,7 +381,9 @@ extension LambdaLowerer {
 
         case let .indexedCompoundAssign(_, receiverExpr, indices, valueExpr, _):
             if containsImplicitReceiverReference(in: receiverExpr, ast: ast) { return true }
-            for idx in indices where containsImplicitReceiverReference(in: idx, ast: ast) { return true }
+            for idx in indices where containsImplicitReceiverReference(in: idx, ast: ast) {
+                return true
+            }
             return containsImplicitReceiverReference(in: valueExpr, ast: ast)
 
         case let .lambdaLiteral(_, bodyExpr, _, _):

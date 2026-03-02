@@ -89,7 +89,8 @@ final class SemaDelegateTypeCheckTests: XCTestCase {
 
             // The storage symbol should be a field.
             if let storageSymID = delegateStorageSymbols.first,
-               let storageSym = sema.symbols.symbol(storageSymID) {
+               let storageSym = sema.symbols.symbol(storageSymID)
+            {
                 XCTAssertEqual(storageSym.kind, .field)
                 XCTAssertEqual(storageSym.visibility, .private)
             }

@@ -27,7 +27,8 @@ extension DataFlowSemaPhase {
 
             if let symbol = bindings.declSymbols[declID],
                let signature = symbols.functionSignature(for: symbol),
-               case .expr = funDecl.body {
+               case .expr = funDecl.body
+            {
                 // Bind a synthetic expression type for expression-body functions.
                 let expr = ExprID(rawValue: declID.rawValue)
                 bindings.bindExprType(expr, type: signature.returnType)
@@ -309,7 +310,8 @@ extension DataFlowSemaPhase {
         )
         if case let .classType(classType) = types.kind(of: expanded),
            let targetSymbol = symbols.symbol(classType.classSymbol),
-           targetSymbol.kind == .typeAlias {
+           targetSymbol.kind == .typeAlias
+        {
             var newVisited = visited
             newVisited.insert(symbolID)
             let chainArgs = classType.args
@@ -431,7 +433,8 @@ extension DataFlowSemaPhase {
             // If the inner type is a bare type parameter with a substitution,
             // replace the entire arg with the use-site TypeArg (preserving projection).
             if case let .typeParam(tp) = types.kind(of: inner),
-               let replacement = argSubstitution[tp.symbol] {
+               let replacement = argSubstitution[tp.symbol]
+            {
                 if tp.nullability == .nullable {
                     return applyNullabilityToArg(replacement, types: types)
                 }
@@ -440,7 +443,8 @@ extension DataFlowSemaPhase {
             return .invariant(applySubstitution(inner, argSubstitution: argSubstitution, types: types, symbols: symbols))
         case let .out(inner):
             if case let .typeParam(tp) = types.kind(of: inner),
-               let replacement = argSubstitution[tp.symbol] {
+               let replacement = argSubstitution[tp.symbol]
+            {
                 // Declaration-site has `.out`; if use-site is `.star`, star wins.
                 if case .star = replacement { return .star }
                 let innerType = typeArgInnerType(replacement)
@@ -450,7 +454,8 @@ extension DataFlowSemaPhase {
             return .out(applySubstitution(inner, argSubstitution: argSubstitution, types: types, symbols: symbols))
         case let .in(inner):
             if case let .typeParam(tp) = types.kind(of: inner),
-               let replacement = argSubstitution[tp.symbol] {
+               let replacement = argSubstitution[tp.symbol]
+            {
                 if case .star = replacement { return .star }
                 let innerType = typeArgInnerType(replacement)
                 let resolved = tp.nullability == .nullable ? applyNullability(innerType, types: types) : innerType

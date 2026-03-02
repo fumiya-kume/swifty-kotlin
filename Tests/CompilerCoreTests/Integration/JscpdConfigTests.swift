@@ -156,7 +156,8 @@ final class JscpdConfigTests: XCTestCase {
             if !line.isEmpty,
                line.hasPrefix("  "),
                !line.hasPrefix("    "),
-               line.trimmingCharacters(in: .whitespaces).hasSuffix(":") {
+               line.trimmingCharacters(in: .whitespaces).hasSuffix(":")
+            {
                 break
             }
             blockLines.append(line)

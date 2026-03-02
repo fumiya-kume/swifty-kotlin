@@ -54,7 +54,7 @@ final class LocalDeclTypeChecker {
             name: name,
             fqName: [
                 ctx.interner.intern("__local_\(id.rawValue)"),
-                name
+                name,
             ],
             declSite: range,
             visibility: .private,
@@ -199,7 +199,8 @@ final class LocalDeclTypeChecker {
                 ctx: ctx.semaCtx
             )
             if let chosen = resolved.chosenCallee,
-               let signature = sema.symbols.functionSignature(for: chosen) {
+               let signature = sema.symbols.functionSignature(for: chosen)
+            {
                 // Record the resolved call so KIR lowering can dispatch correctly
                 sema.bindings.bindCall(
                     id,

@@ -94,7 +94,7 @@ extension OverloadResolverTests {
             calleeName: interner.intern("named"),
             args: [
                 CallArg(label: interner.intern("flag"), type: boolType),
-                CallArg(label: interner.intern("x"), type: intType)
+                CallArg(label: interner.intern("x"), type: intType),
             ]
         )
         let resolved = resolver.resolveCall(
@@ -149,7 +149,7 @@ extension OverloadResolverTests {
             calleeName: interner.intern("mix"),
             args: [
                 CallArg(type: intType),
-                CallArg(label: interner.intern("flag"), type: boolType)
+                CallArg(label: interner.intern("flag"), type: boolType),
             ]
         )
         let resolved = resolver.resolveCall(
@@ -204,7 +204,7 @@ extension OverloadResolverTests {
             calleeName: interner.intern("mixBad"),
             args: [
                 CallArg(label: interner.intern("flag"), type: boolType),
-                CallArg(type: intType)
+                CallArg(type: intType),
             ]
         )
         let resolved = resolver.resolveCall(
@@ -312,7 +312,7 @@ extension OverloadResolverTests {
             args: [
                 CallArg(type: intType),
                 CallArg(type: intType),
-                CallArg(label: interner.intern("tail"), type: boolType)
+                CallArg(label: interner.intern("tail"), type: boolType),
             ]
         )
         let resolved = resolver.resolveCall(

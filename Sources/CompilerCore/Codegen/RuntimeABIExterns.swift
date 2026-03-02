@@ -675,7 +675,7 @@ public enum RuntimeABIExterns {
         kk_op_inv,
         kk_op_shl,
         kk_op_shr,
-        kk_op_ushr
+        kk_op_ushr,
     ]
 
     /// Look up an extern declaration by symbol name.

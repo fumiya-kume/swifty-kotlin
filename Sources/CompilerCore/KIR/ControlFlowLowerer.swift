@@ -590,7 +590,7 @@ final class ControlFlowLowerer {
             // Look up the symbol first so we can use the per-component type
             let candidates = sema.symbols.lookupAll(fqName: [
                 interner.intern("__for_destructuring_\(exprID.rawValue)"),
-                name
+                name,
             ])
             let componentType = candidates.first.flatMap { sema.symbols.propertyType(for: $0) } ?? sema.types.anyType
             let componentResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: componentType)

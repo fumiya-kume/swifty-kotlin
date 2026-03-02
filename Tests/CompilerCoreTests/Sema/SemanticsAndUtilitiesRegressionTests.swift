@@ -170,10 +170,10 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         let stringType = types.make(.primitive(.string, .nonNull))
 
         let trueState = DataFlowState(variables: [
-            sym: VariableFlowState(possibleTypes: [intType], nullability: .nonNull, isStable: true)
+            sym: VariableFlowState(possibleTypes: [intType], nullability: .nonNull, isStable: true),
         ])
         let falseState = DataFlowState(variables: [
-            sym: VariableFlowState(possibleTypes: [stringType], nullability: .nonNull, isStable: true)
+            sym: VariableFlowState(possibleTypes: [stringType], nullability: .nonNull, isStable: true),
         ])
         let branch = ConditionBranch(trueState: trueState, falseState: falseState)
 

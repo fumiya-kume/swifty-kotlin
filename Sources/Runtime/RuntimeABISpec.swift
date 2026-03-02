@@ -73,7 +73,7 @@ public enum RuntimeABISpec {
             name: "kk_alloc",
             parameters: [
                 RuntimeABIParameter(name: "size", type: .uint32),
-                RuntimeABIParameter(name: "typeInfo", type: .constTypeInfoPointer)
+                RuntimeABIParameter(name: "typeInfo", type: .constTypeInfoPointer),
             ],
             returnType: .opaquePointer,
             section: "Memory"
@@ -88,18 +88,18 @@ public enum RuntimeABISpec {
             name: "kk_write_barrier",
             parameters: [
                 RuntimeABIParameter(name: "owner", type: .opaquePointer),
-                RuntimeABIParameter(name: "fieldAddr", type: .fieldAddrPointer)
+                RuntimeABIParameter(name: "fieldAddr", type: .fieldAddrPointer),
             ],
             returnType: .void,
             section: "Memory"
-        )
+        ),
     ]
 
     public static let exceptionFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
             name: "kk_throwable_new",
             parameters: [
-                RuntimeABIParameter(name: "message", type: .nullableOpaquePointer)
+                RuntimeABIParameter(name: "message", type: .nullableOpaquePointer),
             ],
             returnType: .opaquePointer,
             section: "Exception"
@@ -107,7 +107,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_throwable_is_cancellation",
             parameters: [
-                RuntimeABIParameter(name: "throwableRaw", type: .intptr)
+                RuntimeABIParameter(name: "throwableRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Exception"
@@ -115,11 +115,11 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_panic",
             parameters: [
-                RuntimeABIParameter(name: "cstr", type: .constCCharPointer)
+                RuntimeABIParameter(name: "cstr", type: .constCCharPointer),
             ],
             returnType: .noreturn,
             section: "Exception"
-        )
+        ),
     ]
 
     public static let stringFunctions: [RuntimeABIFunctionSpec] = [
@@ -127,7 +127,7 @@ public enum RuntimeABISpec {
             name: "kk_string_from_utf8",
             parameters: [
                 RuntimeABIParameter(name: "ptr", type: .constUInt8Pointer),
-                RuntimeABIParameter(name: "len", type: .int32)
+                RuntimeABIParameter(name: "len", type: .int32),
             ],
             returnType: .opaquePointer,
             section: "String"
@@ -136,7 +136,7 @@ public enum RuntimeABISpec {
             name: "kk_string_concat",
             parameters: [
                 RuntimeABIParameter(name: "a", type: .nullableOpaquePointer),
-                RuntimeABIParameter(name: "b", type: .nullableOpaquePointer)
+                RuntimeABIParameter(name: "b", type: .nullableOpaquePointer),
             ],
             returnType: .opaquePointer,
             section: "String"
@@ -145,29 +145,29 @@ public enum RuntimeABISpec {
             name: "kk_string_compareTo",
             parameters: [
                 RuntimeABIParameter(name: "a", type: .nullableOpaquePointer),
-                RuntimeABIParameter(name: "b", type: .nullableOpaquePointer)
+                RuntimeABIParameter(name: "b", type: .nullableOpaquePointer),
             ],
             returnType: .intptr,
             section: "String"
-        )
+        ),
     ]
 
     public static let printlnFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
             name: "kk_println_any",
             parameters: [
-                RuntimeABIParameter(name: "obj", type: .nullableOpaquePointer)
+                RuntimeABIParameter(name: "obj", type: .nullableOpaquePointer),
             ],
             returnType: .void,
             section: "Println"
-        )
+        ),
     ]
 
     public static let gcFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
             name: "kk_register_global_root",
             parameters: [
-                RuntimeABIParameter(name: "slot", type: .nullableRawPointerPointer)
+                RuntimeABIParameter(name: "slot", type: .nullableRawPointerPointer),
             ],
             returnType: .void,
             section: "GC"
@@ -175,7 +175,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_unregister_global_root",
             parameters: [
-                RuntimeABIParameter(name: "slot", type: .nullableRawPointerPointer)
+                RuntimeABIParameter(name: "slot", type: .nullableRawPointerPointer),
             ],
             returnType: .void,
             section: "GC"
@@ -184,7 +184,7 @@ public enum RuntimeABISpec {
             name: "kk_register_frame_map",
             parameters: [
                 RuntimeABIParameter(name: "functionID", type: .uint32),
-                RuntimeABIParameter(name: "mapPtr", type: .nullableConstRawPointer)
+                RuntimeABIParameter(name: "mapPtr", type: .nullableConstRawPointer),
             ],
             returnType: .void,
             section: "GC"
@@ -193,7 +193,7 @@ public enum RuntimeABISpec {
             name: "kk_push_frame",
             parameters: [
                 RuntimeABIParameter(name: "functionID", type: .uint32),
-                RuntimeABIParameter(name: "frameBase", type: .nullableOpaquePointer)
+                RuntimeABIParameter(name: "frameBase", type: .nullableOpaquePointer),
             ],
             returnType: .void,
             section: "GC"
@@ -207,7 +207,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_register_coroutine_root",
             parameters: [
-                RuntimeABIParameter(name: "value", type: .nullableOpaquePointer)
+                RuntimeABIParameter(name: "value", type: .nullableOpaquePointer),
             ],
             returnType: .void,
             section: "GC"
@@ -215,7 +215,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_unregister_coroutine_root",
             parameters: [
-                RuntimeABIParameter(name: "value", type: .nullableOpaquePointer)
+                RuntimeABIParameter(name: "value", type: .nullableOpaquePointer),
             ],
             returnType: .void,
             section: "GC"
@@ -231,7 +231,7 @@ public enum RuntimeABISpec {
             parameters: [],
             returnType: .void,
             section: "GC"
-        )
+        ),
     ]
 
     public static let coroutineFunctions: [RuntimeABIFunctionSpec] = [
@@ -244,7 +244,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_coroutine_continuation_new",
             parameters: [
-                RuntimeABIParameter(name: "functionID", type: .intptr)
+                RuntimeABIParameter(name: "functionID", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -253,7 +253,7 @@ public enum RuntimeABISpec {
             name: "kk_coroutine_state_enter",
             parameters: [
                 RuntimeABIParameter(name: "continuation", type: .intptr),
-                RuntimeABIParameter(name: "functionID", type: .intptr)
+                RuntimeABIParameter(name: "functionID", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -262,7 +262,7 @@ public enum RuntimeABISpec {
             name: "kk_coroutine_state_set_label",
             parameters: [
                 RuntimeABIParameter(name: "continuation", type: .intptr),
-                RuntimeABIParameter(name: "label", type: .intptr)
+                RuntimeABIParameter(name: "label", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -271,7 +271,7 @@ public enum RuntimeABISpec {
             name: "kk_coroutine_state_exit",
             parameters: [
                 RuntimeABIParameter(name: "continuation", type: .intptr),
-                RuntimeABIParameter(name: "value", type: .intptr)
+                RuntimeABIParameter(name: "value", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -281,7 +281,7 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "continuation", type: .intptr),
                 RuntimeABIParameter(name: "slot", type: .intptr),
-                RuntimeABIParameter(name: "value", type: .intptr)
+                RuntimeABIParameter(name: "value", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -290,7 +290,7 @@ public enum RuntimeABISpec {
             name: "kk_coroutine_state_get_spill",
             parameters: [
                 RuntimeABIParameter(name: "continuation", type: .intptr),
-                RuntimeABIParameter(name: "slot", type: .intptr)
+                RuntimeABIParameter(name: "slot", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -299,7 +299,7 @@ public enum RuntimeABISpec {
             name: "kk_coroutine_state_set_completion",
             parameters: [
                 RuntimeABIParameter(name: "continuation", type: .intptr),
-                RuntimeABIParameter(name: "value", type: .intptr)
+                RuntimeABIParameter(name: "value", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -307,7 +307,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_coroutine_state_get_completion",
             parameters: [
-                RuntimeABIParameter(name: "continuation", type: .intptr)
+                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -316,7 +316,7 @@ public enum RuntimeABISpec {
             name: "kk_kxmini_run_blocking",
             parameters: [
                 RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
-                RuntimeABIParameter(name: "functionID", type: .intptr)
+                RuntimeABIParameter(name: "functionID", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -325,7 +325,7 @@ public enum RuntimeABISpec {
             name: "kk_kxmini_launch",
             parameters: [
                 RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
-                RuntimeABIParameter(name: "functionID", type: .intptr)
+                RuntimeABIParameter(name: "functionID", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -334,7 +334,7 @@ public enum RuntimeABISpec {
             name: "kk_kxmini_async",
             parameters: [
                 RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
-                RuntimeABIParameter(name: "functionID", type: .intptr)
+                RuntimeABIParameter(name: "functionID", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -342,7 +342,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_kxmini_async_await",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr)
+                RuntimeABIParameter(name: "handle", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -351,7 +351,7 @@ public enum RuntimeABISpec {
             name: "kk_kxmini_delay",
             parameters: [
                 RuntimeABIParameter(name: "milliseconds", type: .intptr),
-                RuntimeABIParameter(name: "continuation", type: .intptr)
+                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -361,7 +361,7 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "continuation", type: .intptr),
                 RuntimeABIParameter(name: "index", type: .int64),
-                RuntimeABIParameter(name: "value", type: .int64)
+                RuntimeABIParameter(name: "value", type: .int64),
             ],
             returnType: .int64,
             section: "Coroutine"
@@ -370,7 +370,7 @@ public enum RuntimeABISpec {
             name: "kk_coroutine_launcher_arg_get",
             parameters: [
                 RuntimeABIParameter(name: "continuation", type: .intptr),
-                RuntimeABIParameter(name: "index", type: .int64)
+                RuntimeABIParameter(name: "index", type: .int64),
             ],
             returnType: .int64,
             section: "Coroutine"
@@ -379,7 +379,7 @@ public enum RuntimeABISpec {
             name: "kk_kxmini_run_blocking_with_cont",
             parameters: [
                 RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
-                RuntimeABIParameter(name: "continuation", type: .intptr)
+                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -388,7 +388,7 @@ public enum RuntimeABISpec {
             name: "kk_kxmini_launch_with_cont",
             parameters: [
                 RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
-                RuntimeABIParameter(name: "continuation", type: .intptr)
+                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -397,7 +397,7 @@ public enum RuntimeABISpec {
             name: "kk_kxmini_async_with_cont",
             parameters: [
                 RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
-                RuntimeABIParameter(name: "continuation", type: .intptr)
+                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -407,7 +407,7 @@ public enum RuntimeABISpec {
             name: "kk_flow_create",
             parameters: [
                 RuntimeABIParameter(name: "emitterFnPtr", type: .intptr),
-                RuntimeABIParameter(name: "continuation", type: .intptr)
+                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -417,7 +417,7 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "flowHandle", type: .intptr),
                 RuntimeABIParameter(name: "value", type: .intptr),
-                RuntimeABIParameter(name: "continuation", type: .intptr)
+                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -427,7 +427,7 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "flowHandle", type: .intptr),
                 RuntimeABIParameter(name: "collectorFnPtr", type: .intptr),
-                RuntimeABIParameter(name: "continuation", type: .intptr)
+                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -456,7 +456,7 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "dispatcher", type: .intptr),
                 RuntimeABIParameter(name: "blockFnPtr", type: .intptr),
-                RuntimeABIParameter(name: "continuation", type: .intptr)
+                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -465,7 +465,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_channel_create",
             parameters: [
-                RuntimeABIParameter(name: "capacity", type: .intptr)
+                RuntimeABIParameter(name: "capacity", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -475,7 +475,7 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "handle", type: .intptr),
                 RuntimeABIParameter(name: "value", type: .intptr),
-                RuntimeABIParameter(name: "continuation", type: .intptr)
+                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -484,7 +484,7 @@ public enum RuntimeABISpec {
             name: "kk_channel_receive",
             parameters: [
                 RuntimeABIParameter(name: "handle", type: .intptr),
-                RuntimeABIParameter(name: "continuation", type: .intptr)
+                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -492,7 +492,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_channel_close",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr)
+                RuntimeABIParameter(name: "handle", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -502,7 +502,7 @@ public enum RuntimeABISpec {
             name: "kk_await_all",
             parameters: [
                 RuntimeABIParameter(name: "handlesArray", type: .intptr),
-                RuntimeABIParameter(name: "count", type: .intptr)
+                RuntimeABIParameter(name: "count", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -517,7 +517,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_coroutine_scope_cancel",
             parameters: [
-                RuntimeABIParameter(name: "scopeHandle", type: .intptr)
+                RuntimeABIParameter(name: "scopeHandle", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -525,7 +525,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_coroutine_scope_wait",
             parameters: [
-                RuntimeABIParameter(name: "scopeHandle", type: .intptr)
+                RuntimeABIParameter(name: "scopeHandle", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -534,7 +534,7 @@ public enum RuntimeABISpec {
             name: "kk_coroutine_scope_register_child",
             parameters: [
                 RuntimeABIParameter(name: "scopeHandle", type: .intptr),
-                RuntimeABIParameter(name: "childHandle", type: .intptr)
+                RuntimeABIParameter(name: "childHandle", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -542,7 +542,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_job_join",
             parameters: [
-                RuntimeABIParameter(name: "jobHandle", type: .intptr)
+                RuntimeABIParameter(name: "jobHandle", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -551,7 +551,7 @@ public enum RuntimeABISpec {
             name: "kk_coroutine_scope_run",
             parameters: [
                 RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
-                RuntimeABIParameter(name: "functionID", type: .intptr)
+                RuntimeABIParameter(name: "functionID", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -560,18 +560,18 @@ public enum RuntimeABISpec {
             name: "kk_coroutine_scope_run_with_cont",
             parameters: [
                 RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
-                RuntimeABIParameter(name: "continuation", type: .intptr)
+                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
-        )
+        ),
     ]
 
     public static let boxingFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
             name: "kk_box_int",
             parameters: [
-                RuntimeABIParameter(name: "value", type: .intptr)
+                RuntimeABIParameter(name: "value", type: .intptr),
             ],
             returnType: .intptr,
             section: "Boxing"
@@ -579,7 +579,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_box_bool",
             parameters: [
-                RuntimeABIParameter(name: "value", type: .intptr)
+                RuntimeABIParameter(name: "value", type: .intptr),
             ],
             returnType: .intptr,
             section: "Boxing"
@@ -587,7 +587,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_unbox_int",
             parameters: [
-                RuntimeABIParameter(name: "obj", type: .intptr)
+                RuntimeABIParameter(name: "obj", type: .intptr),
             ],
             returnType: .intptr,
             section: "Boxing"
@@ -595,18 +595,18 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_unbox_bool",
             parameters: [
-                RuntimeABIParameter(name: "obj", type: .intptr)
+                RuntimeABIParameter(name: "obj", type: .intptr),
             ],
             returnType: .intptr,
             section: "Boxing"
-        )
+        ),
     ]
 
     public static let arrayFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
             name: "kk_array_new",
             parameters: [
-                RuntimeABIParameter(name: "length", type: .intptr)
+                RuntimeABIParameter(name: "length", type: .intptr),
             ],
             returnType: .intptr,
             section: "Array"
@@ -616,7 +616,7 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "arrayRaw", type: .intptr),
                 RuntimeABIParameter(name: "index", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Array"
@@ -627,7 +627,7 @@ public enum RuntimeABISpec {
                 RuntimeABIParameter(name: "arrayRaw", type: .intptr),
                 RuntimeABIParameter(name: "index", type: .intptr),
                 RuntimeABIParameter(name: "value", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Array"
@@ -636,11 +636,11 @@ public enum RuntimeABISpec {
             name: "kk_vararg_spread_concat",
             parameters: [
                 RuntimeABIParameter(name: "pairsArrayRaw", type: .intptr),
-                RuntimeABIParameter(name: "pairCount", type: .intptr)
+                RuntimeABIParameter(name: "pairCount", type: .intptr),
             ],
             returnType: .intptr,
             section: "Array"
-        )
+        ),
     ]
 
     /// Range/Progression (P5-68)
@@ -649,7 +649,7 @@ public enum RuntimeABISpec {
             name: "kk_op_rangeTo",
             parameters: [
                 RuntimeABIParameter(name: "a", type: .intptr),
-                RuntimeABIParameter(name: "b", type: .intptr)
+                RuntimeABIParameter(name: "b", type: .intptr),
             ],
             returnType: .intptr,
             section: "Range"
@@ -658,7 +658,7 @@ public enum RuntimeABISpec {
             name: "kk_op_rangeUntil",
             parameters: [
                 RuntimeABIParameter(name: "a", type: .intptr),
-                RuntimeABIParameter(name: "b", type: .intptr)
+                RuntimeABIParameter(name: "b", type: .intptr),
             ],
             returnType: .intptr,
             section: "Range"
@@ -667,7 +667,7 @@ public enum RuntimeABISpec {
             name: "kk_op_downTo",
             parameters: [
                 RuntimeABIParameter(name: "a", type: .intptr),
-                RuntimeABIParameter(name: "b", type: .intptr)
+                RuntimeABIParameter(name: "b", type: .intptr),
             ],
             returnType: .intptr,
             section: "Range"
@@ -676,11 +676,11 @@ public enum RuntimeABISpec {
             name: "kk_op_step",
             parameters: [
                 RuntimeABIParameter(name: "rangeRaw", type: .intptr),
-                RuntimeABIParameter(name: "stepVal", type: .intptr)
+                RuntimeABIParameter(name: "stepVal", type: .intptr),
             ],
             returnType: .intptr,
             section: "Range"
-        )
+        ),
     ]
 
     /// Stdlib Delegate Functions (P5-80)
@@ -690,7 +690,7 @@ public enum RuntimeABISpec {
             name: "kk_lazy_create",
             parameters: [
                 RuntimeABIParameter(name: "initFnPtr", type: .intptr),
-                RuntimeABIParameter(name: "mode", type: .intptr)
+                RuntimeABIParameter(name: "mode", type: .intptr),
             ],
             returnType: .intptr,
             section: "Delegate"
@@ -698,7 +698,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_lazy_get_value",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr)
+                RuntimeABIParameter(name: "handle", type: .intptr),
             ],
             returnType: .intptr,
             section: "Delegate"
@@ -708,7 +708,7 @@ public enum RuntimeABISpec {
             name: "kk_observable_create",
             parameters: [
                 RuntimeABIParameter(name: "initialValue", type: .intptr),
-                RuntimeABIParameter(name: "callbackFnPtr", type: .intptr)
+                RuntimeABIParameter(name: "callbackFnPtr", type: .intptr),
             ],
             returnType: .intptr,
             section: "Delegate"
@@ -716,7 +716,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_observable_get_value",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr)
+                RuntimeABIParameter(name: "handle", type: .intptr),
             ],
             returnType: .intptr,
             section: "Delegate"
@@ -725,7 +725,7 @@ public enum RuntimeABISpec {
             name: "kk_observable_set_value",
             parameters: [
                 RuntimeABIParameter(name: "handle", type: .intptr),
-                RuntimeABIParameter(name: "newValue", type: .intptr)
+                RuntimeABIParameter(name: "newValue", type: .intptr),
             ],
             returnType: .intptr,
             section: "Delegate"
@@ -735,7 +735,7 @@ public enum RuntimeABISpec {
             name: "kk_vetoable_create",
             parameters: [
                 RuntimeABIParameter(name: "initialValue", type: .intptr),
-                RuntimeABIParameter(name: "callbackFnPtr", type: .intptr)
+                RuntimeABIParameter(name: "callbackFnPtr", type: .intptr),
             ],
             returnType: .intptr,
             section: "Delegate"
@@ -743,7 +743,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_vetoable_get_value",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr)
+                RuntimeABIParameter(name: "handle", type: .intptr),
             ],
             returnType: .intptr,
             section: "Delegate"
@@ -752,11 +752,11 @@ public enum RuntimeABISpec {
             name: "kk_vetoable_set_value",
             parameters: [
                 RuntimeABIParameter(name: "handle", type: .intptr),
-                RuntimeABIParameter(name: "newValue", type: .intptr)
+                RuntimeABIParameter(name: "newValue", type: .intptr),
             ],
             returnType: .intptr,
             section: "Delegate"
-        )
+        ),
     ]
     /// Bitwise/Shift (P5-103)
     public static let bitwiseFunctions: [RuntimeABIFunctionSpec] = [
@@ -764,7 +764,7 @@ public enum RuntimeABISpec {
             name: "kk_bitwise_and",
             parameters: [
                 RuntimeABIParameter(name: "a", type: .intptr),
-                RuntimeABIParameter(name: "b", type: .intptr)
+                RuntimeABIParameter(name: "b", type: .intptr),
             ],
             returnType: .intptr,
             section: "Bitwise"
@@ -773,7 +773,7 @@ public enum RuntimeABISpec {
             name: "kk_bitwise_or",
             parameters: [
                 RuntimeABIParameter(name: "a", type: .intptr),
-                RuntimeABIParameter(name: "b", type: .intptr)
+                RuntimeABIParameter(name: "b", type: .intptr),
             ],
             returnType: .intptr,
             section: "Bitwise"
@@ -782,7 +782,7 @@ public enum RuntimeABISpec {
             name: "kk_bitwise_xor",
             parameters: [
                 RuntimeABIParameter(name: "a", type: .intptr),
-                RuntimeABIParameter(name: "b", type: .intptr)
+                RuntimeABIParameter(name: "b", type: .intptr),
             ],
             returnType: .intptr,
             section: "Bitwise"
@@ -790,7 +790,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_op_inv",
             parameters: [
-                RuntimeABIParameter(name: "a", type: .intptr)
+                RuntimeABIParameter(name: "a", type: .intptr),
             ],
             returnType: .intptr,
             section: "Bitwise"
@@ -799,7 +799,7 @@ public enum RuntimeABISpec {
             name: "kk_op_shl",
             parameters: [
                 RuntimeABIParameter(name: "a", type: .intptr),
-                RuntimeABIParameter(name: "b", type: .intptr)
+                RuntimeABIParameter(name: "b", type: .intptr),
             ],
             returnType: .intptr,
             section: "Bitwise"
@@ -808,7 +808,7 @@ public enum RuntimeABISpec {
             name: "kk_op_shr",
             parameters: [
                 RuntimeABIParameter(name: "a", type: .intptr),
-                RuntimeABIParameter(name: "b", type: .intptr)
+                RuntimeABIParameter(name: "b", type: .intptr),
             ],
             returnType: .intptr,
             section: "Bitwise"
@@ -817,11 +817,11 @@ public enum RuntimeABISpec {
             name: "kk_op_ushr",
             parameters: [
                 RuntimeABIParameter(name: "a", type: .intptr),
-                RuntimeABIParameter(name: "b", type: .intptr)
+                RuntimeABIParameter(name: "b", type: .intptr),
             ],
             returnType: .intptr,
             section: "Bitwise"
-        )
+        ),
     ]
 
     public static let allFunctions: [RuntimeABIFunctionSpec] =

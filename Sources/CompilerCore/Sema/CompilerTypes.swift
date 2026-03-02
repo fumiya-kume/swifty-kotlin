@@ -131,7 +131,8 @@ public struct CompilerOptions: Equatable {
         for flag in frontendFlags {
             if flag.hasPrefix("jobs="),
                let n = Int(flag.dropFirst(5)),
-               n >= 1 {
+               n >= 1
+            {
                 return n
             }
         }
