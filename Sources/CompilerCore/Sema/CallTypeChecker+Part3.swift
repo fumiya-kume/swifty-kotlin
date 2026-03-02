@@ -454,8 +454,8 @@ extension CallTypeChecker {
                     "isEmpty", "first", "last", "indexOf",
                     "count", "iterator",
                     "map", "filter", "forEach", "flatMap",
-                    "any", "none", "all"
-                ]
+                    "any", "none", "all",
+                ] // swiftlint:disable:this trailing_comma
                 if collectionMembers.contains(memberName) {
                     let resultType: TypeID = switch memberName {
                     case "size", "count", "indexOf":
