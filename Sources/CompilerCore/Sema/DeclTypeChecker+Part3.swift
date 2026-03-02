@@ -31,8 +31,7 @@ extension DeclTypeChecker {
             let constructorScope = FunctionScope(parent: ctx.scope, symbols: sema.symbols)
             var constructorCtx = ctx.copying(scope: constructorScope)
             if let ctorSymbol = ctorSymbols.first,
-               let signature = sema.symbols.functionSignature(for: ctorSymbol.id)
-            {
+               let signature = sema.symbols.functionSignature(for: ctorSymbol.id) {
                 for typeParameterSymbol in signature.typeParameterSymbols {
                     constructorScope.insert(typeParameterSymbol)
                 }
@@ -126,8 +125,7 @@ extension DeclTypeChecker {
         switch delegation.kind {
         case .this:
             if let owner = ownerSymbol,
-               let ownerSym = sema.symbols.symbol(owner)
-            {
+               let ownerSym = sema.symbols.symbol(owner) {
                 return ownerSym.fqName + [ctx.interner.intern("<init>")]
             }
             return []
@@ -139,8 +137,7 @@ extension DeclTypeChecker {
                 return kind == .class || kind == .enumClass
             }
             if let superclass = classSupertypes.first,
-               let superSym = sema.symbols.symbol(superclass)
-            {
+               let superSym = sema.symbols.symbol(superclass) {
                 return superSym.fqName + [ctx.interner.intern("<init>")]
             }
             return []
