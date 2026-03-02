@@ -463,18 +463,24 @@ extension TypeCheckHelpers {
         else {
             return nil
         }
-        // Walk child symbols looking for the single abstract function member.
+        // Walk child symbols and collect abstract function members.
         let children = sema.symbols.children(ofFQName: sym.fqName)
+        var abstractSignatures: [FunctionSignature] = []
         for childID in children {
             guard let childSym = sema.symbols.symbol(childID),
                   childSym.kind == .function,
+                  childSym.flags.contains(.abstractType),
                   let signature = sema.symbols.functionSignature(for: childID)
             else {
                 continue
             }
-            return signature
+            abstractSignatures.append(signature)
         }
-        return nil
+        // A SAM type must have exactly one abstract method.
+        guard abstractSignatures.count == 1 else {
+            return nil
+        }
+        return abstractSignatures[0]
     }
 
     /// Extracts the SAM function type from a functional interface type.
