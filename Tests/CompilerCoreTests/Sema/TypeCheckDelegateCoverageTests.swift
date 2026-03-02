@@ -386,6 +386,7 @@ private struct TypeCheckFixture {
             implicitReceiverType: nil,
             loopDepth: 0,
             loopLabelStack: [],
+            exportBlockLocalsForExpr: nil,
             flowState: DataFlowState(),
             currentFileID: FileID(rawValue: 0),
             enclosingClassSymbol: nil,

@@ -531,7 +531,7 @@ extension KotlinParser {
             appendLoopBody(into: &children, range: &range)
 
         case .keyword(.do):
-            appendLoopBody(into: &children, range: &range)
+            appendDoWhileBody(into: &children, range: &range)
             if case .keyword(.while) = stream.peek().kind {
                 _ = consumeToken(into: &children, range: &range)
                 if case .symbol(.lParen) = stream.peek().kind {
@@ -562,6 +562,84 @@ extension KotlinParser {
         if stream.index == before, !stream.atEOF() {
             _ = consumeToken(into: &children, range: &range)
         }
+    }
+
+    /// Appends a `do` loop body while keeping the trailing `while (...)`
+    /// condition outside of the body node.
+    func appendDoWhileBody(into children: inout [SyntaxChild], range: inout RangeAccumulator) {
+        if case .symbol(.lBrace) = stream.peek().kind {
+            let block = parseBlock()
+            children.append(.node(block))
+            range.append(arena.node(block).range)
+            return
+        }
+
+        var bodyChildren: [SyntaxChild] = []
+        var bodyRange = RangeAccumulator()
+        var parenDepth = 0
+        var bracketDepth = 0
+        var braceDepth = 0
+
+        while !stream.atEOF() {
+            let token = stream.peek()
+            let atTopLevel = parenDepth == 0 && bracketDepth == 0 && braceDepth == 0
+            if atTopLevel, !bodyChildren.isEmpty,
+               token.kind == .keyword(.while)
+            {
+                break
+            }
+            if shouldStopStatementBefore(token, inBlock: true) {
+                break
+            }
+            if atTopLevel,
+               !bodyChildren.isEmpty,
+               hasLeadingNewline(token),
+               shouldSplitStatementOnNewline(token.kind)
+            {
+                break
+            }
+
+            _ = consumeToken(into: &bodyChildren, range: &bodyRange)
+            switch token.kind {
+            case .symbol(.lParen):
+                parenDepth += 1
+            case .symbol(.rParen):
+                parenDepth = max(0, parenDepth - 1)
+            case .symbol(.lBracket):
+                bracketDepth += 1
+            case .symbol(.rBracket):
+                bracketDepth = max(0, bracketDepth - 1)
+            case .symbol(.lBrace):
+                braceDepth += 1
+            case .symbol(.rBrace):
+                braceDepth = max(0, braceDepth - 1)
+            default:
+                break
+            }
+
+            if token.kind == .symbol(.semicolon), atTopLevel {
+                break
+            }
+        }
+
+        if bodyChildren.isEmpty {
+            let before = stream.index
+            let body = parseStatement(inBlock: true)
+            children.append(.node(body))
+            range.append(arena.node(body).range)
+            if stream.index == before, !stream.atEOF() {
+                _ = consumeToken(into: &children, range: &range)
+            }
+            return
+        }
+
+        let bodyNode = arena.appendNode(
+            kind: .statement,
+            range: bodyRange.value ?? invalidRange,
+            bodyChildren
+        )
+        children.append(.node(bodyNode))
+        range.append(arena.node(bodyNode).range)
     }
 
     func shouldSplitStatementOnNewline(_ kind: TokenKind) -> Bool {

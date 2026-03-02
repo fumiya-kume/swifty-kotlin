@@ -82,6 +82,57 @@ extension DataFlowAndSemaRegressionTests {
         }
     }
 
+    func testDoWhileConditionCanReferenceBodyLocal() throws {
+        let source = """
+        fun main(): Int {
+            var loops = 0
+            do {
+                val local = loops + 1
+                loops = local
+            } while (local < 3)
+            return loops
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0013", in: ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0022", in: ctx)
+        }
+    }
+
+    func testDoWhileBodyLocalDoesNotLeakOutsideLoop() throws {
+        let source = """
+        fun main(): Int {
+            do {
+                val local = 1
+            } while (local < 2)
+            return local
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertHasDiagnostic("KSWIFTK-SEMA-0022", in: ctx)
+        }
+    }
+
+    func testDoWhileInlineBodyAssignmentTypeChecks() throws {
+        let source = """
+        fun main(): Int {
+            var x = 0
+            do x = x + 1 while (x < 3)
+            return x
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0013", in: ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0022", in: ctx)
+        }
+    }
+
     // MARK: - ExprInference: compound assignment operators
 
     func testCompoundAssignmentOperators() throws {

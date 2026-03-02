@@ -108,9 +108,14 @@ final class ControlFlowTypeChecker {
         var newLabelStack = ctx.loopLabelStack
         if let label { newLabelStack.append(label) }
         var bodyLocals = locals
+        let bodyCtx = ctx.copying(
+            loopDepth: ctx.loopDepth + 1,
+            loopLabelStack: newLabelStack,
+            exportBlockLocalsForExpr: bodyExpr
+        )
         _ = driver.inferExpr(
             bodyExpr,
-            ctx: ctx.copying(loopDepth: ctx.loopDepth + 1, loopLabelStack: newLabelStack),
+            ctx: bodyCtx,
             locals: &bodyLocals,
             expectedType: nil
         )

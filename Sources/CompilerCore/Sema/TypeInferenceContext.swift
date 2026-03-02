@@ -12,6 +12,9 @@ struct TypeInferenceContext {
     var implicitReceiverType: TypeID?
     var loopDepth: Int
     var loopLabelStack: [InternedString]
+    /// When set, the specified block expression exports its local bindings to
+    /// the outer locals map. Used for do-while body-to-condition visibility.
+    var exportBlockLocalsForExpr: ExprID?
     var flowState: DataFlowState
     let currentFileID: FileID
     var enclosingClassSymbol: SymbolID?
@@ -55,6 +58,7 @@ struct TypeInferenceContext {
         implicitReceiverType: TypeID?? = nil,
         loopDepth: Int? = nil,
         loopLabelStack: [InternedString]? = nil,
+        exportBlockLocalsForExpr: ExprID?? = nil,
         flowState: DataFlowState? = nil,
         enclosingClassSymbol: SymbolID?? = nil,
         outerReceiverTypes: [(label: InternedString, type: TypeID)]? = nil
@@ -64,6 +68,7 @@ struct TypeInferenceContext {
         if let implicitReceiverType { copy.implicitReceiverType = implicitReceiverType }
         if let loopDepth { copy.loopDepth = loopDepth }
         if let loopLabelStack { copy.loopLabelStack = loopLabelStack }
+        if let exportBlockLocalsForExpr { copy.exportBlockLocalsForExpr = exportBlockLocalsForExpr }
         if let flowState { copy.flowState = flowState }
         if let enclosingClassSymbol { copy.enclosingClassSymbol = enclosingClassSymbol }
         if let outerReceiverTypes { copy.outerReceiverTypes = outerReceiverTypes }

@@ -125,11 +125,11 @@
   - **完了条件**: `val x: String = try { "ok" } catch (e: Exception) { "err" }` が型エラーなしでコンパイルされる
 
 
-- [ ] CTRL-003: `do-while` の condition スコープと `break`/`continue`・初回実行を完全実装する（spec.md J5/J6）
-  - [ ] `do { body } while (cond)` のパースで condition が body スコープ外であることを保証する
-  - [ ] `do-while` 内の `break` / `continue` を正しい label ターゲットに接続する
-  - [ ] do-while の初回実行保証（condition が false でも body が 1 回実行）を codegen で保証する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CTRL-003`
+- [x] CTRL-003: `do-while` の condition スコープと `break`/`continue`・初回実行を完全実装する（spec.md J5/J6）
+  - [x] `do { body } while (cond)` のパースで condition が body スコープ外であることを保証する
+  - [x] `do-while` 内の `break` / `continue` を正しい label ターゲットに接続する
+  - [x] do-while の初回実行保証（condition が false でも body が 1 回実行）を codegen で保証する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CTRL-003`（2026-03-02: diff case `Scripts/diff_cases/do_while_label_break.kt` を拡張）
   - **完了条件**: `do { ... } while (false)` が body を 1 回実行し、`break` が正しくループを脱出する
 
 ---

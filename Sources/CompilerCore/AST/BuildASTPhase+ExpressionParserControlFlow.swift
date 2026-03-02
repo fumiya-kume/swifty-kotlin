@@ -418,7 +418,30 @@ extension BuildASTPhase.ExpressionParser {
         guard let doToken = consume() else {
             return nil
         }
-        guard let body = parseExpression(minPrecedence: 0) else {
+        let bodyStartIndex = index
+
+        var body = parseExpression(minPrecedence: 0)
+
+        if !matches(.keyword(.while)),
+           let whileIndex = findDoWhileConditionKeyword(startingAt: bodyStartIndex),
+           bodyStartIndex < whileIndex,
+           whileIndex >= index
+        {
+            let bodyTokens = tokens[bodyStartIndex ..< whileIndex]
+            if let reparsedBody = parseDoWhileBodyExpression(from: bodyTokens) {
+                body = reparsedBody
+                index = whileIndex
+            }
+        }
+
+        if body != nil, bodyStartIndex < index {
+            let consumedBodyTokens = tokens[bodyStartIndex ..< index]
+            if let normalizedBody = parseDoWhileBodyExpression(from: consumedBodyTokens) {
+                body = normalizedBody
+            }
+        }
+
+        guard let body else {
             return nil
         }
         guard matches(.keyword(.while)),
@@ -432,6 +455,40 @@ extension BuildASTPhase.ExpressionParser {
         let end = astArena.exprRange(condition)?.end ?? astArena.exprRange(body)?.end ?? doToken.range.end
         let range = SourceRange(start: start ?? doToken.range.start, end: end)
         return astArena.appendExpr(.doWhileExpr(body: body, condition: condition, label: label, range: range))
+    }
+
+    /// Parses a do-while body from the consumed token slice, preferring local
+    /// declaration/assignment forms before falling back to expression parsing.
+    private func parseDoWhileBodyExpression(from bodyTokens: ArraySlice<Token>) -> ExprID? {
+        let sanitized = bodyTokens.filter { $0.kind != .symbol(.semicolon) }
+        guard !sanitized.isEmpty else {
+            return nil
+        }
+        if let localDecl = parseLocalDeclFromSlice(sanitized[...]) {
+            return localDecl
+        }
+        if let localAssign = parseLocalAssignFromSlice(sanitized[...]) {
+            return localAssign
+        }
+        return BuildASTPhase.ExpressionParser(tokens: sanitized[...], interner: interner, astArena: astArena).parse()
+    }
+
+    /// Finds the top-level `while` keyword that starts the condition part of
+    /// a do-while expression.
+    private func findDoWhileConditionKeyword(startingAt startIndex: Int) -> Int? {
+        var scan = startIndex
+        var depth = BuildASTPhase.BracketDepth()
+        var sawBodyToken = false
+        while scan < tokens.endIndex {
+            let token = tokens[scan]
+            if token.kind == .keyword(.while), depth.isAtTopLevel, sawBodyToken {
+                return scan
+            }
+            depth.track(token.kind)
+            sawBodyToken = true
+            scan += 1
+        }
+        return nil
     }
 
     func parseIfExpression() -> ExprID? {

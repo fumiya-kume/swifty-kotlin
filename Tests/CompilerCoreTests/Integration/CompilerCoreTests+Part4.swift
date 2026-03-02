@@ -95,6 +95,59 @@ extension CompilerCoreTests {
         }
     }
 
+    func testDoWhileInlineBodyParsesConditionOutsideBody() throws {
+        let source = """
+        fun main(): Int {
+            var x = 0
+            do x = x + 1 while (x < 3)
+            return x
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runFrontend(ctx)
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let function = try XCTUnwrap(topLevelFunction(named: "main", in: ast, interner: ctx.interner))
+        guard case let .block(stmts, _) = function.body else {
+            XCTFail("Expected block-body function.")
+            return
+        }
+        let doWhileExprID = try XCTUnwrap(stmts.first(where: { exprID in
+            guard let expr = ast.arena.expr(exprID) else { return false }
+            if case .doWhileExpr = expr { return true }
+            return false
+        }))
+
+        guard let doWhileExpr = ast.arena.expr(doWhileExprID),
+              case let .doWhileExpr(bodyExprID, conditionExprID, _, _) = doWhileExpr
+        else {
+            XCTFail("Expected do-while expression.")
+            return
+        }
+
+        guard let bodyExpr = ast.arena.expr(bodyExprID),
+              case let .localAssign(name, _, _) = bodyExpr
+        else {
+            XCTFail("Expected inline do-while body to parse as local assignment.")
+            return
+        }
+        XCTAssertEqual(ctx.interner.resolve(name), "x")
+
+        guard let conditionExpr = ast.arena.expr(conditionExprID),
+              case let .binary(op, _, _, _) = conditionExpr
+        else {
+            XCTFail("Expected do-while condition to parse as binary expression.")
+            return
+        }
+        XCTAssertEqual(op, .lessThan)
+
+        if let bodyRange = ast.arena.exprRange(bodyExprID),
+           let conditionRange = ast.arena.exprRange(conditionExprID)
+        {
+            XCTAssertLessThanOrEqual(bodyRange.end.offset, conditionRange.start.offset)
+        }
+    }
+
     func testLambdaLiteralExpressionBodyParsesAsDedicatedExprNode() throws {
         let source = """
         fun build() = { x: Int -> x + 1 }

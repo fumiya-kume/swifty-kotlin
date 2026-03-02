@@ -370,12 +370,17 @@ final class ExprTypeChecker {
             } else {
                 resultType = sema.types.unitType
             }
-            for (name, outerLocal) in locals {
-                if let blockLocal = blockLocals[name],
-                   blockLocal.symbol == outerLocal.symbol,
-                   !outerLocal.isInitialized, blockLocal.isInitialized
-                {
-                    locals[name] = (outerLocal.type, outerLocal.symbol, outerLocal.isMutable, true)
+            if ctx.exportBlockLocalsForExpr == id {
+                // do-while bodies expose their block locals to the loop condition.
+                locals = blockLocals
+            } else {
+                for (name, outerLocal) in locals {
+                    if let blockLocal = blockLocals[name],
+                       blockLocal.symbol == outerLocal.symbol,
+                       !outerLocal.isInitialized, blockLocal.isInitialized
+                    {
+                        locals[name] = (outerLocal.type, outerLocal.symbol, outerLocal.isMutable, true)
+                    }
                 }
             }
             sema.bindings.bindExprType(id, type: resultType)
