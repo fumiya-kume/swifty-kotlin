@@ -63,14 +63,39 @@ public final class DataFlowSemaPhase: CompilerPhase {
                 )
             }
         }
-        runInheritanceAndLayoutPasses(
+        bindInheritanceEdges(
             ast: ast,
             symbols: symbols,
             bindings: bindings,
-            types: types,
+            types: types
+        )
+        validateSealedHierarchy(
+            ast: ast,
+            symbols: symbols,
+            bindings: bindings,
             diagnostics: ctx.diagnostics,
             interner: ctx.interner
         )
+        validateAbstractOverrides(
+            ast: ast,
+            symbols: symbols,
+            bindings: bindings,
+            diagnostics: ctx.diagnostics,
+            interner: ctx.interner
+        )
+        validateOpenFinalOverride(
+            ast: ast,
+            symbols: symbols,
+            bindings: bindings,
+            diagnostics: ctx.diagnostics,
+            interner: ctx.interner
+        )
+        validateConstructorDelegation(
+            ast: ast,
+            symbols: symbols,
+            diagnostics: ctx.diagnostics
+        )
+        synthesizeNominalLayouts(symbols: symbols)
 
         // Pass B: lightweight body checks.
         for file in ast.sortedFiles {
@@ -88,48 +113,5 @@ public final class DataFlowSemaPhase: CompilerPhase {
         }
 
         ctx.sema = sema
-    }
-
-    private func runInheritanceAndLayoutPasses(
-        ast: ASTModule,
-        symbols: SymbolTable,
-        bindings: BindingTable,
-        types: TypeSystem,
-        diagnostics: DiagnosticEngine,
-        interner: StringInterner
-    ) {
-        bindInheritanceEdges(
-            ast: ast,
-            symbols: symbols,
-            bindings: bindings,
-            types: types
-        )
-        validateSealedHierarchy(
-            ast: ast,
-            symbols: symbols,
-            bindings: bindings,
-            diagnostics: diagnostics,
-            interner: interner
-        )
-        validateAbstractOverrides(
-            ast: ast,
-            symbols: symbols,
-            bindings: bindings,
-            diagnostics: diagnostics,
-            interner: interner
-        )
-        validateOpenFinalOverride(
-            ast: ast,
-            symbols: symbols,
-            bindings: bindings,
-            diagnostics: diagnostics,
-            interner: interner
-        )
-        validateConstructorDelegation(
-            ast: ast,
-            symbols: symbols,
-            diagnostics: diagnostics
-        )
-        synthesizeNominalLayouts(symbols: symbols)
     }
 }
