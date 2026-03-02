@@ -143,11 +143,19 @@ final class LocalDeclTypeChecker {
             return ctx.sema.types.unitType
         }
 
-        ctx.semaCtx.diagnostics.error(
-            "KSWIFTK-SEMA-0013",
-            "Unresolved local variable '\(interner.resolve(name))'.",
-            range: range
-        )
+        if interner.resolve(name) == "field" {
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-FIELD",
+                "'field' can only be used inside a property getter or setter body.",
+                range: range
+            )
+        } else {
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-0013",
+                "Unresolved local variable '\(interner.resolve(name))'.",
+                range: range
+            )
+        }
         ctx.sema.bindings.bindExprType(id, type: ctx.sema.types.errorType)
         return ctx.sema.types.errorType
     }
