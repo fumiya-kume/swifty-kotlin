@@ -261,7 +261,8 @@ extension KIRLoweringDriver {
             emitCustomDelegateInit(
                 propertyDecl: propertyDecl, symbol: symbol,
                 delegateStorageSymbol: delegateStorageSymbol,
-                delegateType: delegateType, shared: shared, initInstructions: &initInstructions
+                delegateType: delegateType, shared: shared,
+                compilationCtx: compilationCtx, initInstructions: &initInstructions
             )
         }
     }
@@ -329,58 +330,24 @@ extension KIRLoweringDriver {
         delegateStorageSymbol: SymbolID,
         delegateType: TypeID,
         shared: KIRLoweringSharedContext,
+        compilationCtx _: CompilationContext,
         initInstructions: inout KIRLoweringEmitContext
     ) {
-        let arena = shared.arena
-        let interner = shared.interner
         let sema = shared.sema
         let delegateObjExpr = lowerExpr(propertyDecl.delegateExpression!, shared: shared, emit: &initInstructions)
-
-        // When the delegate type defines a `provideDelegate` operator,
-        // call provideDelegate on the raw delegate instance first, then
-        // pass the result to kk_custom_delegate_create.
-        // This matches the ClassDecl reference implementation pattern:
-        //   1. Store raw delegate → 2. provideDelegate on raw → 3. wrap result once.
-        let effectiveDelegateExpr: KIRExprID
-        if sema.symbols.hasProvideDelegate(for: symbol) {
-            // Store the raw delegate value so we have a receiver for provideDelegate.
-            initInstructions.append(.storeGlobal(value: delegateObjExpr, symbol: delegateStorageSymbol))
-
-            // thisRef is null for top-level properties.
-            let thisRefExpr = arena.appendExpr(.null, type: sema.types.nullableAnyType)
-            initInstructions.append(.constValue(result: thisRefExpr, value: .null))
-
-            let propertyName = sema.symbols.symbol(symbol)?.name ?? interner.intern("")
-            let kPropertyExpr = arena.appendExpr(
-                .stringLiteral(propertyName),
-                type: sema.types.make(.primitive(.string, .nonNull))
+        let delegateExprType = sema.bindings.exprType(for: propertyDecl.delegateExpression!)
+        if checkHasProvideDelegate(delegateExprType: delegateExprType, shared: shared) {
+            emitProvideDelegateInit(
+                delegateObjExpr: delegateObjExpr, symbol: symbol,
+                delegateStorageSymbol: delegateStorageSymbol, delegateType: delegateType,
+                shared: shared, emit: &initInstructions
             )
-            initInstructions.append(.constValue(result: kPropertyExpr, value: .stringLiteral(propertyName)))
-
-            let provideDelegateName = interner.intern("provideDelegate")
-            let provideDelegateResult = arena.appendExpr(
-                .temporary(Int32(arena.expressions.count)),
-                type: delegateType
-            )
-            initInstructions.append(.call(
-                symbol: delegateStorageSymbol,
-                callee: provideDelegateName,
-                arguments: [thisRefExpr, kPropertyExpr],
-                result: provideDelegateResult,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            effectiveDelegateExpr = provideDelegateResult
         } else {
-            effectiveDelegateExpr = delegateObjExpr
+            emitSimpleDelegateInit(
+                delegateObjExpr: delegateObjExpr,
+                delegateStorageSymbol: delegateStorageSymbol, delegateType: delegateType,
+                shared: shared, emit: &initInstructions
+            )
         }
-
-        let createResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: delegateType)
-        initInstructions.append(.call(
-            symbol: nil, callee: interner.intern("kk_custom_delegate_create"),
-            arguments: [effectiveDelegateExpr],
-            result: createResult, canThrow: false, thrownResult: nil
-        ))
-        initInstructions.append(.storeGlobal(value: createResult, symbol: delegateStorageSymbol))
     }
 }

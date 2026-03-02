@@ -1,0 +1,27 @@
+symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s1 kind=package fq=kotlin vis=public flags=synthetic
+symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
+symbol s4 kind=interface fq=kotlin.properties.ReadWriteProperty vis=public flags=synthetic
+symbol s5 kind=interface fq=kotlin.properties.ReadOnlyProperty vis=public flags=synthetic
+symbol s6 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=_ params=[Any,() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
+symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s11 kind=class fq=golden.sema.ResourceDelegate vis=public flags=_
+symbol s12 kind=constructor fq=golden.sema.ResourceDelegate.<init> vis=public flags=_ sig=recv=Class#11 params=[] ret=Class#11 suspend=0 defaults=[] vararg=[]
+symbol s13 kind=function fq=golden.sema.ResourceDelegate.getValue vis=public flags=operatorFunction sig=recv=Class#11 params=[Any?,<error>] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s14 kind=valueParameter fq=golden.sema.ResourceDelegate.getValue.$13.thisRef vis=private flags=_
+symbol s15 kind=valueParameter fq=golden.sema.ResourceDelegate.getValue.$13.property vis=private flags=_
+symbol s16 kind=function fq=golden.sema.ResourceDelegate.provideDelegate vis=public flags=operatorFunction sig=recv=Class#11 params=[Any?,<error>] ret=Class#11 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s17 kind=valueParameter fq=golden.sema.ResourceDelegate.provideDelegate.$16.thisRef vis=private flags=_
+symbol s18 kind=valueParameter fq=golden.sema.ResourceDelegate.provideDelegate.$16.property vis=private flags=_
+symbol s19 kind=property fq=golden.sema.resource vis=public flags=_ type=String
+file f0 package=golden.sema
+  decl d2 class ResourceDelegate sym=s11
+  decl d3 property resource var=0 sym=s19
+expr e0 string(value) type=String
+expr e1 this type=Class#11
+expr e2 name(ResourceDelegate) type=_
+expr e3 call callee=e2 args=[] type=String ref=s19 call=s12 map=[] targs=[]
