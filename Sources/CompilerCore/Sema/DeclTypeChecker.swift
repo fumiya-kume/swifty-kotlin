@@ -171,7 +171,11 @@ final class DeclTypeChecker {
                 guard let sym = sema.symbols.symbol(candidateID) else { return false }
                 return sym.flags.contains(.operatorFunction)
             }
-            _ = provideDelegateCandidates // Track for KIR lowering provideDelegate insertion.
+            // Record provideDelegate availability so the KIR lowering phase
+            // can emit the provideDelegate call for top-level properties.
+            if !provideDelegateCandidates.isEmpty {
+                sema.symbols.setHasProvideDelegate(for: symbol)
+            }
         }
 
         let finalPropertyType = inferredPropertyType ?? sema.types.nullableAnyType

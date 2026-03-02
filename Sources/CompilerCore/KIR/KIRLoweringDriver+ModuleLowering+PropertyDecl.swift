@@ -259,7 +259,8 @@ extension KIRLoweringDriver {
             )
         case .custom:
             emitCustomDelegateInit(
-                propertyDecl: propertyDecl, delegateStorageSymbol: delegateStorageSymbol,
+                propertyDecl: propertyDecl, symbol: symbol,
+                delegateStorageSymbol: delegateStorageSymbol,
                 delegateType: delegateType, shared: shared, initInstructions: &initInstructions
             )
         }
@@ -323,6 +324,7 @@ extension KIRLoweringDriver {
 
     private func emitCustomDelegateInit(
         propertyDecl: PropertyDecl,
+        symbol: SymbolID,
         delegateStorageSymbol: SymbolID,
         delegateType: TypeID,
         shared: KIRLoweringSharedContext,
@@ -330,11 +332,56 @@ extension KIRLoweringDriver {
     ) {
         let arena = shared.arena
         let interner = shared.interner
+        let sema = shared.sema
         let delegateObjExpr = lowerExpr(propertyDecl.delegateExpression!, shared: shared, emit: &initInstructions)
+
+        // When the delegate type defines a `provideDelegate` operator,
+        // wrap the delegate value through provideDelegate(thisRef, property)
+        // before passing it to kk_custom_delegate_create.
+        let effectiveDelegateExpr: KIRExprID
+        if sema.symbols.hasProvideDelegate(for: symbol) {
+            // Store raw delegate temporarily so we have a receiver for the method call.
+            let tempStoreResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: delegateType)
+            initInstructions.append(.call(
+                symbol: nil, callee: interner.intern("kk_custom_delegate_create"),
+                arguments: [delegateObjExpr],
+                result: tempStoreResult, canThrow: false, thrownResult: nil
+            ))
+            initInstructions.append(.storeGlobal(value: tempStoreResult, symbol: delegateStorageSymbol))
+
+            // thisRef is null for top-level properties.
+            let thisRefExpr = arena.appendExpr(.null, type: sema.types.nullableAnyType)
+            initInstructions.append(.constValue(result: thisRefExpr, value: .null))
+
+            let propertyName = sema.symbols.symbol(symbol)?.name ?? interner.intern("")
+            let kPropertyExpr = arena.appendExpr(
+                .stringLiteral(propertyName),
+                type: sema.types.make(.primitive(.string, .nonNull))
+            )
+            initInstructions.append(.constValue(result: kPropertyExpr, value: .stringLiteral(propertyName)))
+
+            let provideDelegateName = interner.intern("provideDelegate")
+            let provideDelegateResult = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: sema.types.anyType
+            )
+            initInstructions.append(.call(
+                symbol: delegateStorageSymbol,
+                callee: provideDelegateName,
+                arguments: [thisRefExpr, kPropertyExpr],
+                result: provideDelegateResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            effectiveDelegateExpr = provideDelegateResult
+        } else {
+            effectiveDelegateExpr = delegateObjExpr
+        }
+
         let createResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: delegateType)
         initInstructions.append(.call(
             symbol: nil, callee: interner.intern("kk_custom_delegate_create"),
-            arguments: [delegateObjExpr],
+            arguments: [effectiveDelegateExpr],
             result: createResult, canThrow: false, thrownResult: nil
         ))
         initInstructions.append(.storeGlobal(value: createResult, symbol: delegateStorageSymbol))

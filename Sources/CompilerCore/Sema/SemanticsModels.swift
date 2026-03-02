@@ -262,6 +262,7 @@ public final class SymbolTable {
     private var valueClassUnderlyingTypes: [SymbolID: TypeID] = [:]
     private var sealedSubclassesStorage: [SymbolID: [SymbolID]] = [:]
     private var constValueExprKinds: [SymbolID: KIRExprKind] = [:]
+    private var delegateHasProvideDelegate: Set<SymbolID> = []
 
     public init() {}
 
@@ -565,6 +566,16 @@ public final class SymbolTable {
 
     public func sealedSubclasses(for symbol: SymbolID) -> [SymbolID]? {
         sealedSubclassesStorage[symbol]
+    }
+
+    /// Mark a property symbol as having a delegate with a `provideDelegate` operator.
+    public func setHasProvideDelegate(for property: SymbolID) {
+        delegateHasProvideDelegate.insert(property)
+    }
+
+    /// Returns whether the delegate type of the given property defines a `provideDelegate` operator.
+    public func hasProvideDelegate(for property: SymbolID) -> Bool {
+        delegateHasProvideDelegate.contains(property)
     }
 
     // MARK: - Indexed queries
