@@ -23,12 +23,4 @@ fun main() {
         }
     }
     println("after continue test")
-
-    // 4. return@label from labeled lambda (local return)
-    val items = listOf(1, 2, 3, 4, 5)
-    items.forEach lit@{
-        if (it == 3) return@lit
-        println(it)
-    }
-    println("after lambda return")
 }

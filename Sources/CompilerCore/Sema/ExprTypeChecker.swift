@@ -138,10 +138,9 @@ final class ExprTypeChecker {
 
         case let .returnExpr(value, label, range):
             if let label, !ctx.hasLambdaLabel(label) {
-                let labelName = interner.resolve(label)
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0042",
-                    "'return@\(labelName)' does not reference a valid enclosing lambda.",
+                    "'return@\(interner.resolve(label))' does not reference a valid enclosing lambda.",
                     range: range
                 )
             }
