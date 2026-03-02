@@ -1,5 +1,3 @@
-// swiftlint:disable file_length
-
 // MARK: - Collection Box Extraction Helpers
 
 /// Extracts a `RuntimeListBox` from an opaque handle.
