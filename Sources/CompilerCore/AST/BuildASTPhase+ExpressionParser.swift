@@ -17,30 +17,30 @@ extension BuildASTPhase {
 
         mutating func track(_ kind: TokenKind) {
             switch kind {
-            case .symbol(.lessThan):    angle += 1
+            case .symbol(.lessThan): angle += 1
             case .symbol(.greaterThan): angle = max(0, angle - 1)
-            case .symbol(.lParen):      paren += 1
-            case .symbol(.rParen):      paren = max(0, paren - 1)
-            case .symbol(.lBracket):    bracket += 1
-            case .symbol(.rBracket):    bracket = max(0, bracket - 1)
-            case .symbol(.lBrace):      brace += 1
-            case .symbol(.rBrace):      brace = max(0, brace - 1)
+            case .symbol(.lParen): paren += 1
+            case .symbol(.rParen): paren = max(0, paren - 1)
+            case .symbol(.lBracket): bracket += 1
+            case .symbol(.rBracket): bracket = max(0, bracket - 1)
+            case .symbol(.lBrace): brace += 1
+            case .symbol(.rBrace): brace = max(0, brace - 1)
             default: break
             }
         }
     }
 
     final class ExpressionParser {
-        internal let tokens: ArraySlice<Token>
-        internal let interner: StringInterner
-        internal let astArena: ASTArena
-        internal var index: Int
+        let tokens: ArraySlice<Token>
+        let interner: StringInterner
+        let astArena: ASTArena
+        var index: Int
 
         init(tokens: ArraySlice<Token>, interner: StringInterner, astArena: ASTArena) {
             self.tokens = tokens
             self.interner = interner
             self.astArena = astArena
-            self.index = tokens.startIndex
+            index = tokens.startIndex
         }
 
         convenience init(tokens: [Token], interner: StringInterner, astArena: ASTArena) {
@@ -55,7 +55,7 @@ extension BuildASTPhase {
             parseExpression(minPrecedence: 0)
         }
 
-        internal func parseExpression(minPrecedence: Int) -> ExprID? {
+        func parseExpression(minPrecedence: Int) -> ExprID? {
             guard var lhs = parsePrefixUnary() else {
                 return nil
             }
@@ -72,7 +72,8 @@ extension BuildASTPhase {
                 }
 
                 if let token = current(), token.kind == .symbol(.bang),
-                   let next = peek(1), next.kind == .keyword(.is) {
+                   let next = peek(1), next.kind == .keyword(.is)
+                {
                     let prec = 85
                     guard prec >= minPrecedence else { break }
                     _ = consume()
@@ -94,7 +95,8 @@ extension BuildASTPhase {
                 }
 
                 if let token = current(), token.kind == .symbol(.bang),
-                   let next = peek(1), next.kind == .keyword(.in) {
+                   let next = peek(1), next.kind == .keyword(.in)
+                {
                     let prec = 85
                     guard prec >= minPrecedence else { break }
                     _ = consume()
@@ -135,7 +137,8 @@ extension BuildASTPhase {
                    let token = current(),
                    isInfixIdentifierToken(token),
                    let nextToken = peek(1),
-                   canStartExpression(nextToken) {
+                   canStartExpression(nextToken)
+                {
                     guard let calleeName = identifierFromToken(token) else { break }
                     _ = consume()
                     guard let rhs = parseExpression(minPrecedence: infixPrecedence + 1) else { break }
@@ -199,16 +202,16 @@ extension BuildASTPhase {
             }
         }
 
-        internal func mergeRanges(_ lhs: SourceRange?, _ rhs: SourceRange?, fallback: SourceRange) -> SourceRange {
+        func mergeRanges(_ lhs: SourceRange?, _ rhs: SourceRange?, fallback: SourceRange) -> SourceRange {
             switch (lhs, rhs) {
             case let (lhs?, rhs?):
-                return SourceRange(start: lhs.start, end: rhs.end)
+                SourceRange(start: lhs.start, end: rhs.end)
             case let (lhs?, nil):
-                return lhs
+                lhs
             case let (nil, rhs?):
-                return rhs
+                rhs
             default:
-                return fallback
+                fallback
             }
         }
 
@@ -247,7 +250,7 @@ extension BuildASTPhase {
                 return .rangeTo
             case .symbol(.dotDotLt):
                 return .rangeUntil
-            case .identifier(let name):
+            case let .identifier(name):
                 let resolved = interner.resolve(name)
                 if resolved == "downTo" { return .downTo }
                 if resolved == "step" { return .step }
@@ -271,58 +274,58 @@ extension BuildASTPhase {
         private func precedence(of op: BinaryOp) -> Int {
             switch op {
             case .multiply, .divide, .modulo:
-                return 120
+                120
             case .add, .subtract:
-                return 110
+                110
             case .rangeTo, .rangeUntil:
-                return 100
+                100
             case .downTo:
-                return 95
+                95
             case .step:
-                return 95
+                95
             case .shl, .shr, .ushr, .bitwiseAnd, .bitwiseXor, .bitwiseOr:
-                return 95
+                95
             case .elvis:
-                return 90
+                90
             case .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
-                return 80
+                80
             case .equal, .notEqual:
-                return 70
+                70
             case .logicalAnd:
-                return 60
+                60
             case .logicalOr:
-                return 50
+                50
             }
         }
 
         private func associativity(of op: BinaryOp) -> Associativity {
             switch op {
             case .elvis:
-                return .right
+                .right
             default:
-                return .left
+                .left
             }
         }
 
-        internal func tokenText(_ token: Token) -> InternedString? {
+        func tokenText(_ token: Token) -> InternedString? {
             switch token.kind {
-            case .identifier(let name), .backtickedIdentifier(let name):
-                return name
-            case .keyword(let keyword):
-                return interner.intern(keyword.rawValue)
-            case .softKeyword(let keyword):
-                return interner.intern(keyword.rawValue)
+            case let .identifier(name), let .backtickedIdentifier(name):
+                name
+            case let .keyword(keyword):
+                interner.intern(keyword.rawValue)
+            case let .softKeyword(keyword):
+                interner.intern(keyword.rawValue)
             default:
-                return nil
+                nil
             }
         }
 
-        internal func identifierFromToken(_ token: Token) -> InternedString? {
+        func identifierFromToken(_ token: Token) -> InternedString? {
             switch token.kind {
-            case .identifier(let name), .backtickedIdentifier(let name):
-                return name
+            case let .identifier(name), let .backtickedIdentifier(name):
+                name
             default:
-                return nil
+                nil
             }
         }
 
@@ -330,7 +333,7 @@ extension BuildASTPhase {
         /// Excludes identifiers already handled as known BinaryOp (downTo, step) by binaryOperator().
         private func isInfixIdentifierToken(_ token: Token) -> Bool {
             switch token.kind {
-            case .identifier(let name):
+            case let .identifier(name):
                 let resolved = interner.resolve(name)
                 // Exclude names already handled by binaryOperator()
                 if resolved == "downTo" || resolved == "step" {
@@ -351,50 +354,50 @@ extension BuildASTPhase {
         private func canStartExpression(_ token: Token) -> Bool {
             switch token.kind {
             case .identifier, .backtickedIdentifier:
-                return true
+                true
             case .intLiteral, .longLiteral, .floatLiteral, .doubleLiteral, .charLiteral:
-                return true
+                true
             case .keyword(.true), .keyword(.false), .keyword(.null):
-                return true
+                true
             case .keyword(.if), .keyword(.when), .keyword(.try), .keyword(.throw), .keyword(.return):
-                return true
+                true
             case .keyword(.for), .keyword(.while), .keyword(.do):
-                return true
+                true
             case .keyword(.super), .keyword(.this), .keyword(.object):
-                return true
+                true
             case .symbol(.lParen), .symbol(.lBrace), .symbol(.lBracket):
-                return true
+                true
             case .symbol(.minus), .symbol(.plus), .symbol(.bang):
-                return true
+                true
             case .symbol(.doubleColon):
-                return true
+                true
             case .stringQuote, .rawStringQuote:
-                return true
+                true
             case .softKeyword:
-                return true
+                true
             default:
-                return false
+                false
             }
         }
 
         @discardableResult
-        internal func current() -> Token? {
-            if index >= tokens.startIndex && index < tokens.endIndex {
+        func current() -> Token? {
+            if index >= tokens.startIndex, index < tokens.endIndex {
                 return tokens[index]
             }
             return nil
         }
 
-        internal func peek(_ offset: Int) -> Token? {
+        func peek(_ offset: Int) -> Token? {
             let target = index + offset
-            if target >= tokens.startIndex && target < tokens.endIndex {
+            if target >= tokens.startIndex, target < tokens.endIndex {
                 return tokens[target]
             }
             return nil
         }
 
         @discardableResult
-        internal func consume() -> Token? {
+        func consume() -> Token? {
             guard let token = current() else {
                 return nil
             }
@@ -402,12 +405,12 @@ extension BuildASTPhase {
             return token
         }
 
-        internal func matches(_ kind: TokenKind) -> Bool {
+        func matches(_ kind: TokenKind) -> Bool {
             current()?.kind == kind
         }
 
         @discardableResult
-        internal func consumeIf(_ kind: TokenKind) -> Token? {
+        func consumeIf(_ kind: TokenKind) -> Token? {
             guard matches(kind) else {
                 return nil
             }

@@ -1,187 +1,69 @@
 extension KotlinLexer {
     func symbolKind() -> Symbol? {
-        if starts(with: "&&") {
-            offset += 2
-            return .ampAmp
+        // Multi-character symbols: check longest first for correct greedy matching
+        for (literal, sym) in Self.symbolTable where starts(with: literal) {
+            offset += literal.utf8.count
+            return sym
         }
-        if bytes[offset] == 0x26 {
+        // Single-character symbols: check by byte
+        guard offset < bytes.count else { return nil }
+        let ch = bytes[offset]
+        if let sym = Self.singleCharSymbols[ch] {
             offset += 1
-            return .amp
+            return sym
         }
-        if starts(with: "||") {
-            offset += 2
-            return .barBar
-        }
-        if starts(with: "==") {
-            offset += 2
-            return .equalEqual
-        }
-        if starts(with: "!=") {
-            offset += 2
-            return .bangEqual
-        }
-        if starts(with: "<=") {
-            offset += 2
-            return .lessOrEqual
-        }
-        if starts(with: ">=") {
-            offset += 2
-            return .greaterOrEqual
-        }
-        if starts(with: "+=") {
-            offset += 2
-            return .plusAssign
-        }
-        if starts(with: "-=") {
-            offset += 2
-            return .minusAssign
-        }
-        if starts(with: "*=") {
-            offset += 2
-            return .starAssign
-        }
-        if starts(with: "/=") {
-            offset += 2
-            return .slashAssign
-        }
-        if starts(with: "%=") {
-            offset += 2
-            return .percentAssign
-        }
-        if starts(with: "++") {
-            offset += 2
-            return .plusPlus
-        }
-        if starts(with: "--") {
-            offset += 2
-            return .minusMinus
-        }
-        if starts(with: "..<") {
-            offset += 3
-            return .dotDotLt
-        }
-        if starts(with: "??") {
-            offset += 2
-            return .questionQuestion
-        }
-        if starts(with: "?.") {
-            offset += 2
-            return .questionDot
-        }
-        if starts(with: "?:") {
-            offset += 2
-            return .questionColon
-        }
-        if starts(with: "?") {
-            offset += 1
-            return .question
-        }
-        if starts(with: "!!") {
-            offset += 2
-            return .bangBang
-        }
-        if starts(with: "::") {
-            offset += 2
-            return .doubleColon
-        }
-        if starts(with: "=>") {
-            offset += 2
-            return .fatArrow
-        }
-        if starts(with: "->") {
-            offset += 2
-            return .arrow
-        }
-        if starts(with: "..") {
-            offset += 2
-            return .dotDot
-        }
-
-        if bytes[offset] == 0x2B {
-            offset += 1
-            return .plus
-        }
-        if bytes[offset] == 0x2D {
-            offset += 1
-            return .minus
-        }
-        if bytes[offset] == 0x2A {
-            offset += 1
-            return .star
-        }
-        if bytes[offset] == 0x2F {
-            offset += 1
-            return .slash
-        }
-        if bytes[offset] == 0x25 {
-            offset += 1
-            return .percent
-        }
-        if bytes[offset] == 0x21 {
-            offset += 1
-            return .bang
-        }
-        if bytes[offset] == 0x3D {
-            offset += 1
-            return .assign
-        }
-        if bytes[offset] == 0x3C {
-            offset += 1
-            return .lessThan
-        }
-        if bytes[offset] == 0x3E {
-            offset += 1
-            return .greaterThan
-        }
-        if bytes[offset] == 0x2E {
-            offset += 1
-            return .dot
-        }
-        if bytes[offset] == 0x2C {
-            offset += 1
-            return .comma
-        }
-        if bytes[offset] == 0x3B {
-            offset += 1
-            return .semicolon
-        }
-        if bytes[offset] == 0x3A {
-            offset += 1
-            return .colon
-        }
-        if bytes[offset] == 0x28 {
-            offset += 1
-            return .lParen
-        }
-        if bytes[offset] == 0x29 {
-            offset += 1
-            return .rParen
-        }
-        if bytes[offset] == 0x5B {
-            offset += 1
-            return .lBracket
-        }
-        if bytes[offset] == 0x5D {
-            offset += 1
-            return .rBracket
-        }
-        if bytes[offset] == 0x7B {
-            offset += 1
-            return .lBrace
-        }
-        if bytes[offset] == 0x7D {
-            offset += 1
-            return .rBrace
-        }
-        if bytes[offset] == 0x40 {
-            offset += 1
-            return .at
-        }
-        if bytes[offset] == 0x23 {
-            offset += 1
-            return .hash
-        }
-
         return nil
     }
+
+    /// Multi-char symbols sorted by length descending (longest match first)
+    private static let symbolTable: [(String, Symbol)] = [
+        ("..<", .dotDotLt),
+        ("??", .questionQuestion),
+        ("?.", .questionDot),
+        ("?:", .questionColon),
+        ("!!", .bangBang),
+        ("::", .doubleColon),
+        ("=>", .fatArrow),
+        ("->", .arrow),
+        ("&&", .ampAmp),
+        ("||", .barBar),
+        ("==", .equalEqual),
+        ("!=", .bangEqual),
+        ("<=", .lessOrEqual),
+        (">=", .greaterOrEqual),
+        ("+=", .plusAssign),
+        ("-=", .minusAssign),
+        ("*=", .starAssign),
+        ("/=", .slashAssign),
+        ("%=", .percentAssign),
+        ("++", .plusPlus),
+        ("--", .minusMinus),
+        ("..", .dotDot),
+    ]
+
+    private static let singleCharSymbols: [UInt8: Symbol] = [
+        0x26: .amp, // &
+        0x2B: .plus, // +
+        0x2D: .minus, // -
+        0x2A: .star, // *
+        0x2F: .slash, // /
+        0x25: .percent, // %
+        0x21: .bang, // !
+        0x3D: .assign, // =
+        0x3C: .lessThan, // <
+        0x3E: .greaterThan, // >
+        0x2E: .dot, // .
+        0x2C: .comma, // ,
+        0x3B: .semicolon, // ;
+        0x3A: .colon, // :
+        0x28: .lParen, // (
+        0x29: .rParen, // )
+        0x5B: .lBracket, // [
+        0x5D: .rBracket, // ]
+        0x7B: .lBrace, // {
+        0x7D: .rBrace, // }
+        0x40: .at, // @
+        0x23: .hash, // #
+        0x3F: .question, // ?
+    ]
 }

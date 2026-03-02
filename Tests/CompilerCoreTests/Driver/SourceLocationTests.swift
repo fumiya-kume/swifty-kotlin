@@ -1,8 +1,7 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 final class SourceLocationTests: XCTestCase {
-
     // MARK: - TokenID
 
     func testTokenIDDefaultIsInvalid() {
@@ -257,5 +256,4 @@ final class SourceLocationTests: XCTestCase {
         XCTAssertEqual(a, b)
         XCTAssertNotEqual(a, c)
     }
-
 }

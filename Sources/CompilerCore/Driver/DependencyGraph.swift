@@ -6,7 +6,6 @@ import Foundation
 /// a set of symbol names.  When a file changes, every other file that depends on any
 /// symbol provided by the changed file is added to the recompilation set.
 public final class DependencyGraph: Codable {
-
     // MARK: - Storage
 
     /// Symbols provided (defined) by each file path.

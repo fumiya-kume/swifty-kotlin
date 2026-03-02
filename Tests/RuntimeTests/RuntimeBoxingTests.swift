@@ -1,5 +1,5 @@
-import XCTest
 @testable import Runtime
+import XCTest
 
 final class RuntimeBoxingTests: XCTestCase {
     override func setUp() {

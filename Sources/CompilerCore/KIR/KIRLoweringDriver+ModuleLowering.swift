@@ -47,19 +47,21 @@ extension KIRLoweringDriver {
             var declIDs: [KIRDeclID] = []
             for declID in file.topLevelDecls {
                 guard let decl = ast.arena.decl(declID),
-                      let symbol = sema.bindings.declSymbols[declID] else {
+                      let symbol = sema.bindings.declSymbols[declID]
+                else {
                     continue
                 }
 
                 switch decl {
-                case .classDecl(let classDecl):
+                case let .classDecl(classDecl):
                     declIDs.append(contentsOf: lowerTopLevelClassDecl(
                         classDecl,
                         symbol: symbol,
                         shared: shared,
                         compilationCtx: compilationCtx
                     ))
-                case .interfaceDecl(let interfaceDecl):
+
+                case let .interfaceDecl(interfaceDecl):
                     // Interface properties have no backing storage; pass empty list.
                     var ifaceNestedObjects = interfaceDecl.nestedObjects
                     if let companionDeclID = interfaceDecl.companionObject {
@@ -70,7 +72,7 @@ extension KIRLoweringDriver {
                         memberProperties: [],
                         nestedClasses: interfaceDecl.nestedClasses,
                         nestedObjects: ifaceNestedObjects,
-                         shared: shared
+                        shared: shared
                     )
                     let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: directMembers)))
                     declIDs.append(kirID)
@@ -81,19 +83,19 @@ extension KIRLoweringDriver {
                         shared: shared
                     ))
 
-                case .objectDecl(let objectDecl):
+                case let .objectDecl(objectDecl):
                     let (directMembers, allDecls) = memberLowerer.lowerMemberDecls(
                         memberFunctions: objectDecl.memberFunctions,
                         memberProperties: objectDecl.memberProperties,
                         nestedClasses: objectDecl.nestedClasses,
                         nestedObjects: objectDecl.nestedObjects,
-                         shared: shared
+                        shared: shared
                     )
                     let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: directMembers)))
                     declIDs.append(kirID)
                     declIDs.append(contentsOf: allDecls)
 
-                case .funDecl(let function):
+                case let .funDecl(function):
                     ctx.resetScopeForFunction()
                     ctx.beginCallableLoweringScope()
                     let signature = sema.symbols.functionSignature(for: symbol)
@@ -110,28 +112,31 @@ extension KIRLoweringDriver {
                         })
                     }
                     if function.isInline, let signature,
-                       !signature.reifiedTypeParameterIndices.isEmpty {
+                       !signature.reifiedTypeParameterIndices.isEmpty
+                    {
                         let intType = sema.types.make(.primitive(.int, .nonNull))
                         for index in signature.reifiedTypeParameterIndices.sorted() {
                             guard index < signature.typeParameterSymbols.count else { continue }
                             let typeParamSymbol = signature.typeParameterSymbols[index]
-                            let tokenSymbol = SymbolID(rawValue: -20_000 - typeParamSymbol.rawValue)
+                            let tokenSymbol = SyntheticSymbolScheme.reifiedTypeTokenSymbol(for: typeParamSymbol)
                             params.append(KIRParameter(symbol: tokenSymbol, type: intType))
                         }
                     }
                     let returnType = signature?.returnType ?? sema.types.unitType
                     var body: KIRLoweringEmitContext = [.beginBlock]
                     if let receiverExpr = ctx.currentImplicitReceiverExprID,
-                       let receiverSymbol = ctx.currentImplicitReceiverSymbol {
+                       let receiverSymbol = ctx.currentImplicitReceiverSymbol
+                    {
                         body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSymbol)))
                     }
                     switch function.body {
-                    case .block(let exprIDs, _):
+                    case let .block(exprIDs, _):
                         var lastValue: KIRExprID?
                         var terminatedByReturn = false
                         for exprID in exprIDs {
                             if let expr = ast.arena.expr(exprID),
-                               case .returnExpr(let value, _, _) = expr {
+                               case let .returnExpr(value, _, _) = expr
+                            {
                                 if let value {
                                     let lowered = lowerExpr(
                                         value,
@@ -145,7 +150,8 @@ extension KIRLoweringDriver {
                                 break
                             }
                             if let expr = ast.arena.expr(exprID),
-                               case .throwExpr = expr {
+                               case .throwExpr = expr
+                            {
                                 _ = lowerExpr(
                                     exprID,
                                     shared: shared, emit: &body
@@ -170,7 +176,7 @@ extension KIRLoweringDriver {
                                 body.append(.returnUnit)
                             }
                         }
-                    case .expr(let exprID, _):
+                    case let .expr(exprID, _):
                         let value = lowerExpr(
                             exprID,
                             shared: shared, emit: &body
@@ -196,13 +202,14 @@ extension KIRLoweringDriver {
                     )
                     declIDs.append(kirID)
                     if let defaults = ctx.functionDefaultArgumentsBySymbol[symbol],
-                       let sig = signature {
+                       let sig = signature
+                    {
                         let stubID = callSupportLowerer.generateDefaultStubFunction(
                             originalSymbol: symbol,
                             originalName: function.name,
                             signature: sig,
                             defaultExpressions: defaults,
-                             shared: shared
+                            shared: shared
                         )
                         declIDs.append(stubID)
                     }
@@ -210,7 +217,7 @@ extension KIRLoweringDriver {
                     ctx.currentImplicitReceiverExprID = nil
                     ctx.currentImplicitReceiverSymbol = nil
 
-                case .propertyDecl(let propertyDecl):
+                case let .propertyDecl(propertyDecl):
                     let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
                     let isExtensionProperty = propertyDecl.receiverType != nil
                     if !isExtensionProperty {
@@ -220,7 +227,8 @@ extension KIRLoweringDriver {
 
                     // Emit backing field global for properties with custom accessors.
                     if !isExtensionProperty,
-                       let backingFieldSymbol = sema.symbols.backingFieldSymbol(for: symbol) {
+                       let backingFieldSymbol = sema.symbols.backingFieldSymbol(for: symbol)
+                    {
                         let backingFieldType = sema.symbols.propertyType(for: backingFieldSymbol) ?? propType
                         let backingFieldKirID = arena.appendDecl(
                             .global(KIRGlobal(symbol: backingFieldSymbol, type: backingFieldType))
@@ -258,14 +266,16 @@ extension KIRLoweringDriver {
                     // (declaration order is preserved since we iterate topLevelDecls in order).
                     if let initializer = propertyDecl.initializer,
                        propertyDecl.delegateExpression == nil,
-                       !isExtensionProperty {
+                       !isExtensionProperty
+                    {
                         // Emit runtime init when the property is NOT a compile-time
                         // constant, OR when it is mutable (var).  Mutable properties
                         // are never constant-folded at use-sites (ExprLowerer skips
                         // inlining for .mutable), so their globals must be initialised
                         // to the declared value at program start.
                         if propertyConstantInitializers[symbol] == nil
-                            || (sema.symbols.symbol(symbol)?.flags.contains(.mutable) == true) {
+                            || (sema.symbols.symbol(symbol)?.flags.contains(.mutable) == true)
+                        {
                             ctx.resetScopeForFunction()
                             ctx.beginCallableLoweringScope()
                             var initInstructions: KIRLoweringEmitContext = []
@@ -283,7 +293,8 @@ extension KIRLoweringDriver {
 
                     // Create delegate initialization.
                     if propertyDecl.delegateExpression != nil,
-                       !isExtensionProperty {
+                       !isExtensionProperty
+                    {
                         let interner = compilationCtx.interner
                         let delegateType = sema.types.anyType
 

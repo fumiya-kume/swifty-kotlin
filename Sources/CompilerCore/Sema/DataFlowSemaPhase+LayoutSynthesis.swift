@@ -39,7 +39,8 @@ extension DataFlowSemaPhase {
                 continue
             }
             if nominalSymbol.flags.contains(.synthetic),
-               symbols.nominalLayout(for: nominalID) != nil {
+               symbols.nominalLayout(for: nominalID) != nil
+            {
                 continue
             }
 
@@ -57,7 +58,8 @@ extension DataFlowSemaPhase {
             var vtableSlotByKey: [MethodDispatchKey: Int] = [:]
             for methodID in inheritedVtable.keys.sorted(by: { $0.rawValue < $1.rawValue }) {
                 guard let methodSymbol = symbols.symbol(methodID),
-                      let slot = inheritedVtable[methodID] else {
+                      let slot = inheritedVtable[methodID]
+                else {
                     continue
                 }
                 vtableSlotByKey[methodDispatchKey(for: methodSymbol, symbols: symbols)] = slot
@@ -93,12 +95,11 @@ extension DataFlowSemaPhase {
             let declaredItableSize = layoutHint?.declaredItableSize ?? 0
             let itableSize = max(nextItableSlot, declaredItableSize)
 
-            let ownFields: [SemanticSymbol]
-            if nominalSymbol.kind == .interface {
+            let ownFields: [SemanticSymbol] = if nominalSymbol.kind == .interface {
                 // Interfaces have no backing field storage; skip property fields.
-                ownFields = []
+                []
             } else {
-                ownFields = symbols.children(ofFQName: nominalSymbol.fqName)
+                symbols.children(ofFQName: nominalSymbol.fqName)
                     .filter { id in
                         guard let kind = symbols.symbol(id)?.kind else { return false }
                         return kind == .field || kind == .property
@@ -146,9 +147,9 @@ extension DataFlowSemaPhase {
     func isNominalLayoutTargetSymbol(_ kind: SymbolKind) -> Bool {
         switch kind {
         case .class, .interface, .object, .enumClass, .annotationClass:
-            return true
+            true
         default:
-            return false
+            false
         }
     }
 

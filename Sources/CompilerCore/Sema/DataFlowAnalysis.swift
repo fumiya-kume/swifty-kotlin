@@ -65,19 +65,19 @@ public final class DataFlowAnalyzer {
             return ConditionBranch(trueState: base, falseState: base)
         }
         switch conditionExpr {
-        case .binary(let op, let lhsID, let rhsID, _):
+        case let .binary(op, lhsID, rhsID, _):
             return branchOnBinary(
                 op: op, lhsID: lhsID, rhsID: rhsID,
                 base: base, locals: locals,
                 ast: ast, sema: sema, interner: interner
             )
-        case .unaryExpr(.not, let operandID, _):
+        case let .unaryExpr(.not, operandID, _):
             let inner = branchOnCondition(
                 operandID, base: base, locals: locals,
                 ast: ast, sema: sema, interner: interner
             )
             return ConditionBranch(trueState: inner.falseState, falseState: inner.trueState)
-        case .isCheck(let exprID, let typeRefID, let negated, _):
+        case let .isCheck(exprID, typeRefID, negated, _):
             let branch = branchOnIsCheck(
                 exprID: exprID, typeRefID: typeRefID,
                 base: base, locals: locals,
@@ -167,12 +167,12 @@ public final class DataFlowAnalyzer {
         ), isStable else {
             return nil
         }
-        let effectiveType: TypeID
-        if let baseState = base.variables[symbol], baseState.possibleTypes.count == 1,
-           let baseType = baseState.possibleTypes.first {
-            effectiveType = baseType
+        let effectiveType: TypeID = if let baseState = base.variables[symbol], baseState.possibleTypes.count == 1,
+                                       let baseType = baseState.possibleTypes.first
+        {
+            baseType
         } else {
-            effectiveType = currentType
+            currentType
         }
         let nonNullType = makeTypeNonNullable(effectiveType, types: sema.types)
         var trueVars = base.variables
@@ -208,8 +208,9 @@ public final class DataFlowAnalyzer {
             return ConditionBranch(trueState: base, falseState: base)
         }
         guard let typeRef = ast.arena.typeRef(typeRefID),
-              case .named(let path, let argRefs, let nullable) = typeRef,
-              let firstName = path.first else {
+              case let .named(path, argRefs, nullable) = typeRef,
+              let firstName = path.first
+        else {
             return ConditionBranch(trueState: base, falseState: base)
         }
         let targetName = interner.resolve(firstName)
@@ -232,11 +233,10 @@ public final class DataFlowAnalyzer {
                 }
             }.sorted(by: { $0.rawValue < $1.rawValue })
             // Fall back to short-name lookup so that packaged types resolve by simple name (P5-101)
-            let candidates: [SymbolID]
-            if !fqCandidates.isEmpty {
-                candidates = fqCandidates
+            let candidates: [SymbolID] = if !fqCandidates.isEmpty {
+                fqCandidates
             } else {
-                candidates = sema.symbols.lookupByShortName(firstName).filter { symbolID in
+                sema.symbols.lookupByShortName(firstName).filter { symbolID in
                     guard let sym = sema.symbols.symbol(symbolID) else { return false }
                     switch sym.kind {
                     case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
@@ -258,22 +258,22 @@ public final class DataFlowAnalyzer {
             )))
         }
         // Use intersection with previous flow state type for chained is-checks (P5-97)
-        let narrowedType: TypeID
-        if let baseState = base.variables[symbol],
-           baseState.possibleTypes.count == 1,
-           let existingType = baseState.possibleTypes.first {
+        let narrowedType: TypeID = if let baseState = base.variables[symbol],
+                                      baseState.possibleTypes.count == 1,
+                                      let existingType = baseState.possibleTypes.first
+        {
             if sema.types.isSubtype(existingType, targetType) {
                 // Existing flow type is already more specific; keep it.
-                narrowedType = existingType
+                existingType
             } else if sema.types.isSubtype(targetType, existingType) {
                 // New target type is more specific; use it.
-                narrowedType = targetType
+                targetType
             } else {
                 // Types are unrelated; intersect them for chained is-checks.
-                narrowedType = sema.types.make(.intersection([existingType, targetType]))
+                sema.types.make(.intersection([existingType, targetType]))
             }
         } else {
-            narrowedType = targetType
+            targetType
         }
         var trueVars = base.variables
         trueVars[symbol] = VariableFlowState(
@@ -281,12 +281,12 @@ public final class DataFlowAnalyzer {
             nullability: nullable ? .nullable : .nonNull,
             isStable: true
         )
-        let falseType: TypeID
-        if let baseState = base.variables[symbol], baseState.possibleTypes.count == 1,
-           let baseType = baseState.possibleTypes.first {
-            falseType = baseType
+        let falseType: TypeID = if let baseState = base.variables[symbol], baseState.possibleTypes.count == 1,
+                                   let baseType = baseState.possibleTypes.first
+        {
+            baseType
         } else {
-            falseType = currentType
+            currentType
         }
         var falseVars = base.variables
         falseVars[symbol] = VariableFlowState(
@@ -313,7 +313,7 @@ public final class DataFlowAnalyzer {
             return base
         }
         switch conditionExpr {
-        case .nameRef(let name, _):
+        case let .nameRef(name, _):
             if interner.resolve(name) == "null" {
                 var vars = base.variables
                 vars[subjectSymbol] = VariableFlowState(
@@ -324,13 +324,15 @@ public final class DataFlowAnalyzer {
                 return DataFlowState(variables: vars)
             }
             guard let conditionSymbolID = sema.bindings.identifierSymbols[conditionID],
-                  let conditionSymbol = sema.symbols.symbol(conditionSymbolID) else {
+                  let conditionSymbol = sema.symbols.symbol(conditionSymbolID)
+            else {
                 return base
             }
             switch conditionSymbol.kind {
             case .field:
                 guard let ownerID = enumOwnerSymbolID(for: conditionSymbol, symbols: sema.symbols),
-                      nominalSymbolID(of: subjectType, types: sema.types) == ownerID else {
+                      nominalSymbolID(of: subjectType, types: sema.types) == ownerID
+                else {
                     return base
                 }
                 let narrowed = sema.types.make(.classType(ClassType(
@@ -347,7 +349,8 @@ public final class DataFlowAnalyzer {
                 return DataFlowState(variables: vars)
             case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
                 guard let subjectNominal = nominalSymbolID(of: subjectType, types: sema.types),
-                      isNominalSubtype(conditionSymbolID, of: subjectNominal, symbols: sema.symbols) else {
+                      isNominalSubtype(conditionSymbolID, of: subjectNominal, symbols: sema.symbols)
+                else {
                     return base
                 }
                 let narrowed = sema.types.make(.classType(ClassType(
@@ -377,19 +380,21 @@ public final class DataFlowAnalyzer {
                 return DataFlowState(variables: vars)
             }
             return base
-        case .isCheck(let exprID, let typeRefID, let negated, _):
+        case let .isCheck(exprID, typeRefID, negated, _):
             // Only narrow when the isCheck's expr refers to the when subject.
             // This prevents incorrect narrowing for `when(x) { y is String -> ... }`.
             if let checkedSymbol = sema.bindings.identifierSymbols[exprID],
-               checkedSymbol != subjectSymbol {
+               checkedSymbol != subjectSymbol
+            {
                 return base
             }
             guard !negated else {
                 return base
             }
             guard let typeRef = ast.arena.typeRef(typeRefID),
-                  case .named(let path, let argRefs, let nullable) = typeRef,
-                  let firstName = path.first else {
+                  case let .named(path, argRefs, nullable) = typeRef,
+                  let firstName = path.first
+            else {
                 return base
             }
             // P5-101: Handle primitive types in when-subject is-checks
@@ -412,11 +417,10 @@ public final class DataFlowAnalyzer {
                     }
                 }.sorted(by: { $0.rawValue < $1.rawValue })
                 // Fall back to short-name lookup for packaged types (P5-101)
-                let candidates: [SymbolID]
-                if !fqCandidates.isEmpty {
-                    candidates = fqCandidates
+                let candidates: [SymbolID] = if !fqCandidates.isEmpty {
+                    fqCandidates
                 } else {
-                    candidates = sema.symbols.lookupByShortName(firstName).filter { symbolID in
+                    sema.symbols.lookupByShortName(firstName).filter { symbolID in
                         guard let sym = sema.symbols.symbol(symbolID) else { return false }
                         switch sym.kind {
                         case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
@@ -491,7 +495,8 @@ public final class DataFlowAnalyzer {
     ) -> TypeID? {
         guard let flowState = state.variables[symbol],
               flowState.possibleTypes.count == 1,
-              let narrowed = flowState.possibleTypes.first else {
+              let narrowed = flowState.possibleTypes.first
+        else {
             return nil
         }
         return narrowed
@@ -499,7 +504,8 @@ public final class DataFlowAnalyzer {
 
     private func isNullLiteral(_ id: ExprID, ast: ASTModule, interner: StringInterner) -> Bool {
         guard let expr = ast.arena.expr(id),
-              case .nameRef(let name, _) = expr else {
+              case let .nameRef(name, _) = expr
+        else {
             return false
         }
         return interner.resolve(name) == "null"
@@ -510,22 +516,22 @@ public final class DataFlowAnalyzer {
         locals: [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
         ast: ASTModule,
         sema: SemaModule,
-        interner: StringInterner
+        interner _: StringInterner
     ) -> (symbol: SymbolID, type: TypeID, isStable: Bool)? {
         guard let expr = ast.arena.expr(id),
-              case .nameRef(let name, _) = expr,
-              let local = locals[name] else {
+              case let .nameRef(name, _) = expr,
+              let local = locals[name]
+        else {
             return nil
         }
         guard let symbol = sema.symbols.symbol(local.symbol) else {
             return nil
         }
-        let isStable: Bool
-        switch symbol.kind {
+        let isStable: Bool = switch symbol.kind {
         case .valueParameter, .local:
-            isStable = !symbol.flags.contains(.mutable)
+            !symbol.flags.contains(.mutable)
         default:
-            isStable = false
+            false
         }
         return (local.symbol, local.type, isStable)
     }
@@ -533,22 +539,22 @@ public final class DataFlowAnalyzer {
     private func makeTypeNonNullable(_ type: TypeID, types: TypeSystem) -> TypeID {
         switch types.kind(of: type) {
         case .any(.nullable):
-            return types.anyType
-        case .primitive(let primitive, .nullable):
-            return types.make(.primitive(primitive, .nonNull))
-        case .classType(let classType) where classType.nullability == .nullable:
-            return types.make(.classType(ClassType(
+            types.anyType
+        case let .primitive(primitive, .nullable):
+            types.make(.primitive(primitive, .nonNull))
+        case let .classType(classType) where classType.nullability == .nullable:
+            types.make(.classType(ClassType(
                 classSymbol: classType.classSymbol,
                 args: classType.args,
                 nullability: .nonNull
             )))
-        case .typeParam(let typeParam) where typeParam.nullability == .nullable:
-            return types.make(.typeParam(TypeParamType(
+        case let .typeParam(typeParam) where typeParam.nullability == .nullable:
+            types.make(.typeParam(TypeParamType(
                 symbol: typeParam.symbol,
                 nullability: .nonNull
             )))
-        case .functionType(let functionType) where functionType.nullability == .nullable:
-            return types.make(.functionType(FunctionType(
+        case let .functionType(functionType) where functionType.nullability == .nullable:
+            types.make(.functionType(FunctionType(
                 receiver: functionType.receiver,
                 params: functionType.params,
                 returnType: functionType.returnType,
@@ -556,12 +562,12 @@ public final class DataFlowAnalyzer {
                 nullability: .nonNull
             )))
         default:
-            return type
+            type
         }
     }
 
     private func nominalSymbolID(of type: TypeID, types: TypeSystem) -> SymbolID? {
-        if case .classType(let classType) = types.kind(of: type) {
+        if case let .classType(classType) = types.kind(of: type) {
             return classType.classSymbol
         }
         return nil
@@ -591,7 +597,8 @@ public final class DataFlowAnalyzer {
 
     private func enumOwnerSymbolID(for entrySymbol: SemanticSymbol, symbols: SymbolTable) -> SymbolID? {
         guard entrySymbol.kind == .field,
-              entrySymbol.fqName.count >= 2 else {
+              entrySymbol.fqName.count >= 2
+        else {
             return nil
         }
         let ownerFQName = Array(entrySymbol.fqName.dropLast())
@@ -661,7 +668,7 @@ public final class DataFlowAnalyzer {
             return branches.hasTrueCase && branches.hasFalseCase
         case .primitive(.boolean, .nullable):
             return branches.hasTrueCase && branches.hasFalseCase && branches.hasNullCase
-        case .classType(let classType):
+        case let .classType(classType):
             return isClassWhenExhaustive(
                 classType: classType,
                 branches: branches,
@@ -685,11 +692,12 @@ public final class DataFlowAnalyzer {
             return nil
         }
         let kind = sema.types.kind(of: subjectType)
-        guard case .classType(let classType) = kind else {
+        guard case let .classType(classType) = kind else {
             return nil
         }
         guard let classSymbol = sema.symbols.symbol(classType.classSymbol),
-              classSymbol.flags.contains(.sealedType) else {
+              classSymbol.flags.contains(.sealedType)
+        else {
             return nil
         }
         let subtypeNames = sealedSubtypeNames(for: classSymbol, sema: sema)
@@ -763,10 +771,11 @@ public final class DataFlowAnalyzer {
     ) -> [TypeArg] {
         argRefs.map { argRef in
             switch argRef {
-            case .invariant(let innerRef):
+            case let .invariant(innerRef):
                 guard let inner = ast.arena.typeRef(innerRef),
-                      case .named(let innerPath, _, let innerNullable) = inner,
-                      let innerFirst = innerPath.first else {
+                      case let .named(innerPath, _, innerNullable) = inner,
+                      let innerFirst = innerPath.first
+                else {
                     return .star
                 }
                 let innerName = interner.resolve(innerFirst)
@@ -775,10 +784,11 @@ public final class DataFlowAnalyzer {
                     return .invariant(resolved)
                 }
                 return .star
-            case .out(let innerRef):
+            case let .out(innerRef):
                 guard let inner = ast.arena.typeRef(innerRef),
-                      case .named(let innerPath, _, let innerNullable) = inner,
-                      let innerFirst = innerPath.first else {
+                      case let .named(innerPath, _, innerNullable) = inner,
+                      let innerFirst = innerPath.first
+                else {
                     return .star
                 }
                 let innerName = interner.resolve(innerFirst)
@@ -787,10 +797,11 @@ public final class DataFlowAnalyzer {
                     return .out(resolved)
                 }
                 return .star
-            case .in(let innerRef):
+            case let .in(innerRef):
                 guard let inner = ast.arena.typeRef(innerRef),
-                      case .named(let innerPath, _, let innerNullable) = inner,
-                      let innerFirst = innerPath.first else {
+                      case let .named(innerPath, _, innerNullable) = inner,
+                      let innerFirst = innerPath.first
+                else {
                     return .star
                 }
                 let innerName = interner.resolve(innerFirst)
@@ -807,17 +818,17 @@ public final class DataFlowAnalyzer {
 
     private func resolveBuiltinTypeName(_ name: String, types: TypeSystem) -> TypeID? {
         switch name {
-        case "Int":     return types.intType
-        case "Long":    return types.longType
-        case "Float":   return types.floatType
-        case "Double":  return types.doubleType
-        case "Boolean": return types.booleanType
-        case "Char":    return types.charType
-        case "String":  return types.stringType
-        case "Any":     return types.anyType
-        case "Unit":    return types.unitType
-        case "Nothing": return types.nothingType
-        default:        return nil
+        case "Int": types.intType
+        case "Long": types.longType
+        case "Float": types.floatType
+        case "Double": types.doubleType
+        case "Boolean": types.booleanType
+        case "Char": types.charType
+        case "String": types.stringType
+        case "Any": types.anyType
+        case "Unit": types.unitType
+        case "Nothing": types.nothingType
+        default: nil
         }
     }
 
@@ -826,7 +837,8 @@ public final class DataFlowAnalyzer {
         var names: Set<InternedString> = []
         for childID in childIDs {
             guard let child = sema.symbols.symbol(childID),
-                  child.kind == .field else {
+                  child.kind == .field
+            else {
                 continue
             }
             names.insert(child.name)

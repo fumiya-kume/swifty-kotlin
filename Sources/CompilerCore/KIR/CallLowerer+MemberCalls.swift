@@ -4,7 +4,7 @@ extension CallLowerer {
     private static let unresolvedCollectionMemberNames: Set<String> = [
         "size", "get", "contains", "containsKey",
         "isEmpty", "first", "last", "indexOf",
-        "count", "iterator"
+        "count", "iterator",
     ]
 
     func lowerMemberCallExpr(
@@ -19,10 +19,15 @@ extension CallLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
-        lowerMemberLikeCallExpr(
+        let effectiveCalleeName = if sema.bindings.isInvokeOperatorCall(exprID) {
+            interner.intern("invoke")
+        } else {
+            calleeName
+        }
+        return lowerMemberLikeCallExpr(
             exprID,
             receiverExpr: receiverExpr,
-            calleeName: calleeName,
+            calleeName: effectiveCalleeName,
             args: args,
             ast: ast,
             sema: sema,
@@ -47,10 +52,15 @@ extension CallLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
-        lowerMemberLikeCallExpr(
+        let effectiveCalleeName = if sema.bindings.isInvokeOperatorCall(exprID) {
+            interner.intern("invoke")
+        } else {
+            calleeName
+        }
+        return lowerMemberLikeCallExpr(
             exprID,
             receiverExpr: receiverExpr,
-            calleeName: calleeName,
+            calleeName: effectiveCalleeName,
             args: args,
             ast: ast,
             sema: sema,
@@ -114,9 +124,10 @@ extension CallLowerer {
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
 
         // Primitive member function: Int/Long.inv() → kk_op_inv (P5-103)
-        if interner.resolve(calleeName) == "inv",
+        if calleeName == interner.intern("inv"),
            args.isEmpty,
-           shouldLowerPrimitiveInv(receiverExpr: receiverExpr, sema: sema, nullableReceiverAllowed: requireNonNullableReceiverForConstFold) {
+           shouldLowerPrimitiveInv(receiverExpr: receiverExpr, sema: sema, nullableReceiverAllowed: requireNonNullableReceiverForConstFold)
+        {
             instructions.append(.call(
                 symbol: nil,
                 callee: interner.intern("kk_op_inv"),
@@ -188,12 +199,14 @@ extension CallLowerer {
         guard let chosen = callBinding?.chosenCallee,
               let constant = propertyConstantInitializers[chosen],
               let symInfo = sema.symbols.symbol(chosen),
-              symInfo.flags.contains(.constValue) else {
+              symInfo.flags.contains(.constValue)
+        else {
             return nil
         }
         if requireNonNullableReceiver {
             guard let receiverType = sema.bindings.exprTypes[receiverExpr],
-                  receiverType == sema.types.makeNonNullable(receiverType) else {
+                  receiverType == sema.types.makeNonNullable(receiverType)
+            else {
                 return nil
             }
         }
@@ -219,7 +232,7 @@ extension CallLowerer {
 
     private func appendReceiverToMemberArguments(
         _ loweredReceiverID: KIRExprID,
-        receiverExpr: ExprID,
+        receiverExpr _: ExprID,
         calleeName: InternedString,
         chosenCallee: SymbolID?,
         prependReceiverForUnresolvedCollectionCall: Bool,
@@ -229,12 +242,14 @@ extension CallLowerer {
     ) {
         if let chosenCallee,
            let signature = sema.symbols.functionSignature(for: chosenCallee),
-           signature.receiverType != nil {
+           signature.receiverType != nil
+        {
             arguments.insert(loweredReceiverID, at: 0)
             return
         }
         guard chosenCallee == nil,
-              prependReceiverForUnresolvedCollectionCall else {
+              prependReceiverForUnresolvedCollectionCall
+        else {
             return
         }
         let calleeText = interner.resolve(calleeName)
@@ -260,8 +275,9 @@ extension CallLowerer {
     ) {
         var finalArguments = arguments
         if normalized.defaultMask != 0,
-           let chosenCallee {
-            appendMemberReifiedTypeTokens(
+           let chosenCallee
+        {
+            appendReifiedTypeTokens(
                 chosenCallee: chosenCallee,
                 callBinding: callBinding,
                 sema: sema,
@@ -269,7 +285,7 @@ extension CallLowerer {
                 instructions: &instructions,
                 arguments: &finalArguments
             )
-            appendMemberDefaultMask(
+            appendDefaultMaskArgument(
                 normalized.defaultMask,
                 sema: sema,
                 arena: arena,
@@ -290,7 +306,7 @@ extension CallLowerer {
             return
         }
 
-        appendMemberReifiedTypeTokens(
+        appendReifiedTypeTokens(
             chosenCallee: chosenCallee,
             callBinding: callBinding,
             sema: sema,
@@ -308,13 +324,15 @@ extension CallLowerer {
         let receiverTypeForDispatch = sema.bindings.exprTypes[receiverExpr]
         if !isSuperCall,
            let chosenCallee,
-           let dispatchKind = resolveVirtualDispatch(callee: chosenCallee, receiverTypeID: receiverTypeForDispatch, sema: sema) {
+           let dispatchKind = resolveVirtualDispatch(callee: chosenCallee, receiverTypeID: receiverTypeForDispatch, sema: sema)
+        {
             // For virtualCall, the receiver is a separate field, so remove it
             // from finalArguments (it was inserted at index 0 above).
             var vcArguments = finalArguments
             if let signature = sema.symbols.functionSignature(for: chosenCallee),
                signature.receiverType != nil,
-               !vcArguments.isEmpty {
+               !vcArguments.isEmpty
+            {
                 vcArguments.removeFirst()
             }
             instructions.append(.virtualCall(
@@ -340,48 +358,6 @@ extension CallLowerer {
         ))
     }
 
-    private func appendMemberReifiedTypeTokens(
-        chosenCallee: SymbolID?,
-        callBinding: CallBinding?,
-        sema: SemaModule,
-        arena: KIRArena,
-        instructions: inout [KIRInstruction],
-        arguments: inout [KIRExprID]
-    ) {
-        guard let chosenCallee,
-              let callBinding,
-              let signature = sema.symbols.functionSignature(for: chosenCallee),
-              !signature.reifiedTypeParameterIndices.isEmpty else {
-            return
-        }
-
-        let intType = sema.types.make(.primitive(.int, .nonNull))
-        for index in signature.reifiedTypeParameterIndices.sorted() {
-            let concreteType = index < callBinding.substitutedTypeArguments.count
-                ? callBinding.substitutedTypeArguments[index]
-                : sema.types.anyType
-            let tokenExpr = arena.appendExpr(
-                .intLiteral(Int64(concreteType.rawValue)),
-                type: intType
-            )
-            instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(concreteType.rawValue))))
-            arguments.append(tokenExpr)
-        }
-    }
-
-    private func appendMemberDefaultMask(
-        _ defaultMask: Int64,
-        sema: SemaModule,
-        arena: KIRArena,
-        instructions: inout [KIRInstruction],
-        arguments: inout [KIRExprID]
-    ) {
-        let intType = sema.types.make(.primitive(.int, .nonNull))
-        let maskExpr = arena.appendExpr(.intLiteral(defaultMask), type: intType)
-        instructions.append(.constValue(result: maskExpr, value: .intLiteral(defaultMask)))
-        arguments.append(maskExpr)
-    }
-
     private func loweredMemberCalleeName(
         chosenCallee: SymbolID?,
         fallback: InternedString,
@@ -390,12 +366,12 @@ extension CallLowerer {
     ) -> InternedString {
         guard let chosenCallee,
               let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
-              !externalLinkName.isEmpty else {
+              !externalLinkName.isEmpty
+        else {
             return fallback
         }
         return interner.intern(externalLinkName)
     }
-
 
     // MARK: - Member Assignment
 
@@ -449,8 +425,7 @@ extension CallLowerer {
         shared: KIRLoweringSharedContext,
         emit instructions: inout KIRLoweringEmitContext
     ) -> KIRExprID {
-        var oldInstructions = Array(instructions)
-        let result = lowerMemberAssignExpr(
+        lowerMemberAssignExpr(
             exprID,
             receiverExpr: receiverExpr,
             calleeName: calleeName,
@@ -460,10 +435,8 @@ extension CallLowerer {
             arena: shared.arena,
             interner: shared.interner,
             propertyConstantInitializers: shared.propertyConstantInitializers,
-            instructions: &oldInstructions
+            instructions: &instructions.instructions
         )
-        instructions = KIRLoweringEmitContext(oldInstructions)
-        return result
     }
-
+    // swiftlint:disable:next file_length
 }

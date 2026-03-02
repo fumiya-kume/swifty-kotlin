@@ -1,9 +1,8 @@
-import XCTest
-import Foundation
 @testable import CompilerCore
+import Foundation
+import XCTest
 
 final class IncrementalCompilationCacheTests: XCTestCase {
-
     private var tempDir: String!
 
     override func setUp() {
@@ -185,7 +184,7 @@ final class IncrementalCompilationCacheTests: XCTestCase {
         cache2.computeCurrentFingerprints(for: [sourceFile])
         let result = cache2.recompilationSet(allPaths: [sourceFile])
         XCTAssertNotNil(result)
-        XCTAssertTrue(result!.isEmpty)
+        XCTAssertTrue(try XCTUnwrap(result?.isEmpty))
     }
 
     // MARK: - clearCache

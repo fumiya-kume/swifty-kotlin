@@ -1,15 +1,15 @@
 public final class KotlinParser {
-    internal let stream: TokenStream
-    internal let interner: StringInterner
-    internal let diagnostics: DiagnosticEngine
-    internal let arena: SyntaxArena
-    internal var lastConsumedToken: Token?
+    let stream: TokenStream
+    let interner: StringInterner
+    let diagnostics: DiagnosticEngine
+    let arena: SyntaxArena
+    var lastConsumedToken: Token?
 
     public init(tokens: [Token], interner: StringInterner, diagnostics: DiagnosticEngine) {
-        self.stream = TokenStream(tokens)
+        stream = TokenStream(tokens)
         self.interner = interner
         self.diagnostics = diagnostics
-        self.arena = SyntaxArena()
+        arena = SyntaxArena()
     }
 
     public func parseFile() -> (arena: SyntaxArena, root: NodeID) {
@@ -20,6 +20,19 @@ public final class KotlinParser {
 
         var pendingImports: [SyntaxChild] = []
         var importRange = RangeAccumulator()
+        func flushPendingImportsIfNeeded() {
+            guard !pendingImports.isEmpty else {
+                return
+            }
+            let importListNode = arena.appendNode(
+                kind: .importList,
+                range: importRange.value ?? invalidRange,
+                pendingImports
+            )
+            children.append(.node(importListNode))
+            pendingImports.removeAll(keepingCapacity: true)
+            importRange = RangeAccumulator()
+        }
 
         while !stream.atEOF() {
             let token = stream.peek()
@@ -38,7 +51,7 @@ public final class KotlinParser {
                 importRange.append(arena.node(node).range)
                 range.append(arena.node(node).range)
                 continue
-            case .keyword(let keyword) where isDeclarationKeyword(keyword):
+            case let .keyword(keyword) where isDeclarationKeyword(keyword):
                 node = parseDeclaration()
                 if arena.node(node).kind != .propertyDecl {
                     sawNonPropertyDecl = true
@@ -58,42 +71,26 @@ public final class KotlinParser {
                 sawTopLevelStatement = true
             }
 
-            if !pendingImports.isEmpty {
-                let importListNode = arena.appendNode(
-                    kind: .importList,
-                    range: importRange.value ?? invalidRange,
-                    pendingImports
-                )
-                children.append(.node(importListNode))
-                pendingImports.removeAll(keepingCapacity: true)
-                importRange = RangeAccumulator()
-            }
+            flushPendingImportsIfNeeded()
 
             children.append(.node(node))
             range.append(arena.node(node).range)
         }
 
-        if !pendingImports.isEmpty {
-            let importListNode = arena.appendNode(
-                kind: .importList,
-                range: importRange.value ?? invalidRange,
-                pendingImports
-            )
-            children.append(.node(importListNode))
-        }
+        flushPendingImportsIfNeeded()
 
-        let rootKind: SyntaxKind
-        if sawTopLevelStatement && !sawNonPropertyDecl {
-            rootKind = .script
+        let rootKind: SyntaxKind = if sawTopLevelStatement, !sawNonPropertyDecl {
+            .script
         } else {
-            rootKind = .kotlinFile
+            .kotlinFile
         }
 
         return (
             arena: arena,
             root: arena.appendNode(
                 kind: rootKind,
-                range: range.value ?? invalidRange, children)
+                range: range.value ?? invalidRange, children
+            )
         )
     }
 }

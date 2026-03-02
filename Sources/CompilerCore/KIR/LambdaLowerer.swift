@@ -28,7 +28,7 @@ final class LambdaLowerer {
     ) -> KIRExprID {
         let boundType = sema.bindings.exprTypes[exprID]
         let functionType = boundType.flatMap { typeID -> FunctionType? in
-            guard case .functionType(let functionType) = sema.types.kind(of: typeID) else {
+            guard case let .functionType(functionType) = sema.types.kind(of: typeID) else {
                 return nil
             }
             return functionType
@@ -37,7 +37,7 @@ final class LambdaLowerer {
         let lambdaSymbol = driver.ctx.syntheticLambdaSymbol(for: exprID)
         let lambdaName = syntheticLambdaName(for: exprID, interner: interner)
 
-        let lambdaParameterTypes: [TypeID] = params.enumerated().map { index, _ in
+        let lambdaParameterTypes: [TypeID] = params.indices.map { index in
             if let functionType, index < functionType.params.count {
                 return functionType.params[index]
             }
@@ -79,7 +79,7 @@ final class LambdaLowerer {
             ))
         }
 
-        let lambdaParameters: [KIRParameter] = params.enumerated().map { index, _ in
+        let lambdaParameters: [KIRParameter] = params.indices.map { index in
             KIRParameter(
                 symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: index),
                 type: lambdaParameterTypes[index]
@@ -124,7 +124,7 @@ final class LambdaLowerer {
                 KIRFunction(
                     symbol: lambdaSymbol,
                     name: lambdaName,
-                    params: captureBindings.map { $0.param } + lambdaParameters,
+                    params: captureBindings.map(\.param) + lambdaParameters,
                     returnType: lambdaReturnType,
                     body: lambdaBody,
                     isSuspend: functionType?.isSuspend ?? false,
@@ -151,7 +151,7 @@ final class LambdaLowerer {
             lambdaValueExpr,
             symbol: lambdaSymbol,
             callee: lambdaName,
-            captureArguments: captureBindings.map { $0.valueExpr }
+            captureArguments: captureBindings.map(\.valueExpr)
         )
         return lambdaValueExpr
     }
@@ -198,7 +198,7 @@ final class LambdaLowerer {
             callableSymbol = driver.ctx.syntheticLambdaSymbol(for: exprID)
             callableName = syntheticLambdaName(for: exprID, interner: interner)
             let fallbackFunctionType = boundType.flatMap { typeID -> FunctionType? in
-                guard case .functionType(let functionType) = sema.types.kind(of: typeID) else {
+                guard case let .functionType(functionType) = sema.types.kind(of: typeID) else {
                     return nil
                 }
                 return functionType
@@ -288,7 +288,8 @@ final class LambdaLowerer {
         interner: StringInterner
     ) -> InternedString {
         if let externalLinkName = sema.symbols.externalLinkName(for: symbol),
-           !externalLinkName.isEmpty {
+           !externalLinkName.isEmpty
+        {
             return interner.intern(externalLinkName)
         }
         return sema.symbols.symbol(symbol)?.name ?? interner.intern("kk_unknown_callable")
@@ -323,7 +324,8 @@ final class LambdaLowerer {
             for candidateID in sema.symbols.symbols(ofKind: kind) {
                 guard let signature = sema.symbols.functionSignature(for: candidateID),
                       let index = signature.valueParameterSymbols.firstIndex(of: symbol),
-                      index < signature.parameterTypes.count else {
+                      index < signature.parameterTypes.count
+                else {
                     continue
                 }
                 return signature.parameterTypes[index]
@@ -345,20 +347,23 @@ final class LambdaLowerer {
         var candidates: [SymbolID] = []
         if let receiverExpr,
            let receiverType = sema.bindings.exprTypes[receiverExpr],
-           let receiverSymbol = nominalSymbol(for: receiverType, types: sema.types) {
+           let receiverSymbol = nominalSymbol(for: receiverType, types: sema.types)
+        {
             var ownerQueue: [SymbolID] = [receiverSymbol]
             var visitedOwners: Set<SymbolID> = []
             while let owner = ownerQueue.first {
                 ownerQueue.removeFirst()
                 guard visitedOwners.insert(owner).inserted,
-                      let ownerSymbol = sema.symbols.symbol(owner) else {
+                      let ownerSymbol = sema.symbols.symbol(owner)
+                else {
                     continue
                 }
                 let fqName = ownerSymbol.fqName + [memberName]
                 let ownerCandidates = sema.symbols.lookupAll(fqName: fqName).filter { symbolID in
                     guard let symbol = sema.symbols.symbol(symbolID),
                           symbol.kind == .function,
-                          let signature = sema.symbols.functionSignature(for: symbolID) else {
+                          let signature = sema.symbols.functionSignature(for: symbolID)
+                    else {
                         return false
                     }
                     return signature.receiverType != nil
@@ -372,7 +377,8 @@ final class LambdaLowerer {
                     guard let symbol = sema.symbols.symbol(symbolID),
                           symbol.kind == .function,
                           let signature = sema.symbols.functionSignature(for: symbolID),
-                          signature.receiverType != nil else {
+                          signature.receiverType != nil
+                    else {
                         return false
                     }
                     return true
@@ -401,7 +407,7 @@ final class LambdaLowerer {
     }
 
     private func nominalSymbol(for typeID: TypeID, types: TypeSystem) -> SymbolID? {
-        guard case .classType(let classType) = types.kind(of: typeID) else {
+        guard case let .classType(classType) = types.kind(of: typeID) else {
             return nil
         }
         return classType.classSymbol
@@ -426,12 +432,13 @@ final class LambdaLowerer {
             if let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol,
                containsImplicitReceiverReference(in: lambdaBodyExprID, ast: ast),
                canCaptureSymbolForLambda(
-                receiverSymbol,
-                lambdaExprID: lambdaExprID,
-                lambdaParamCount: lambdaParamCount,
-                sema: sema
+                   receiverSymbol,
+                   lambdaExprID: lambdaExprID,
+                   lambdaParamCount: lambdaParamCount,
+                   sema: sema
                ),
-               !captures.contains(receiverSymbol) {
+               !captures.contains(receiverSymbol)
+            {
                 captures.append(receiverSymbol)
             }
             return captures
@@ -472,16 +479,18 @@ final class LambdaLowerer {
         if let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol,
            containsImplicitReceiverReference(in: lambdaBodyExprID, ast: ast),
            canCaptureSymbolForLambda(
-            receiverSymbol,
-            lambdaExprID: lambdaExprID,
-            lambdaParamCount: lambdaParamCount,
-            sema: sema
+               receiverSymbol,
+               lambdaExprID: lambdaExprID,
+               lambdaParamCount: lambdaParamCount,
+               sema: sema
            ),
-           !captures.contains(receiverSymbol) {
+           !captures.contains(receiverSymbol)
+        {
             captures.append(receiverSymbol)
         }
         return captures
     }
+
     func captureValueExpr(
         for symbol: SymbolID,
         sema: SemaModule,
@@ -492,11 +501,13 @@ final class LambdaLowerer {
             return localValue
         }
         if symbol == driver.ctx.currentImplicitReceiverSymbol,
-           let receiverExprID = driver.ctx.currentImplicitReceiverExprID {
+           let receiverExprID = driver.ctx.currentImplicitReceiverExprID
+        {
             return receiverExprID
         }
         guard let semanticSymbol = sema.symbols.symbol(symbol),
-              semanticSymbol.kind == .valueParameter else {
+              semanticSymbol.kind == .valueParameter
+        else {
             return nil
         }
 

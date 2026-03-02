@@ -163,40 +163,38 @@ public final class NameMangler {
         case .unit:
             return "U"
 
-        case .nothing(let nullability):
+        case let .nothing(nullability):
             return applyNullability("N", nullability: nullability)
 
-        case .any(let nullability):
+        case let .any(nullability):
             return applyNullability("A", nullability: nullability)
 
-        case .primitive(let primitive, let nullability):
-            let encoded: String
-            switch primitive {
+        case let .primitive(primitive, nullability):
+            let encoded = switch primitive {
             case .boolean:
-                encoded = "Z"
+                "Z"
             case .char:
-                encoded = "C"
+                "C"
             case .int:
-                encoded = "I"
+                "I"
             case .long:
-                encoded = "J"
+                "J"
             case .float:
-                encoded = "F"
+                "F"
             case .double:
-                encoded = "D"
+                "D"
             case .string:
-                encoded = "Lkotlin_String;"
+                "Lkotlin_String;"
             }
             return applyNullability(encoded, nullability: nullability)
 
-        case .classType(let classType):
-            let className: String
-            if let classSymbol = symbols.symbol(classType.classSymbol) {
-                className = classSymbol.fqName
+        case let .classType(classType):
+            let className: String = if let classSymbol = symbols.symbol(classType.classSymbol) {
+                classSymbol.fqName
                     .map { render(name: $0, nameResolver: nameResolver) }
                     .joined(separator: ".")
             } else {
-                className = "sym\(classType.classSymbol.rawValue)"
+                "sym\(classType.classSymbol.rawValue)"
             }
             var encoded = "L\(className)"
             if !classType.args.isEmpty {
@@ -208,11 +206,11 @@ public final class NameMangler {
             encoded += ";"
             return applyNullability(encoded, nullability: classType.nullability)
 
-        case .typeParam(let typeParam):
+        case let .typeParam(typeParam):
             let encoded = "T\(typeParam.symbol.rawValue)"
             return applyNullability(encoded, nullability: typeParam.nullability)
 
-        case .functionType(let functionType):
+        case let .functionType(functionType):
             var components: [String] = []
             if let receiver = functionType.receiver {
                 components.append("R\(encodeType(receiver, symbols: symbols, types: types, nameResolver: nameResolver))")
@@ -225,7 +223,7 @@ public final class NameMangler {
             let encoded = "\(prefix)\(functionType.params.count)<\(components.joined(separator: ","))>"
             return applyNullability(encoded, nullability: functionType.nullability)
 
-        case .intersection(let parts):
+        case let .intersection(parts):
             let encodedParts = parts.map {
                 encodeType($0, symbols: symbols, types: types, nameResolver: nameResolver)
             }.joined(separator: "&")
@@ -240,14 +238,14 @@ public final class NameMangler {
         nameResolver: ((InternedString) -> String)?
     ) -> String {
         switch arg {
-        case .invariant(let type):
-            return encodeType(type, symbols: symbols, types: types, nameResolver: nameResolver)
-        case .out(let type):
-            return "O<\(encodeType(type, symbols: symbols, types: types, nameResolver: nameResolver))>"
-        case .in(let type):
-            return "N<\(encodeType(type, symbols: symbols, types: types, nameResolver: nameResolver))>"
+        case let .invariant(type):
+            encodeType(type, symbols: symbols, types: types, nameResolver: nameResolver)
+        case let .out(type):
+            "O<\(encodeType(type, symbols: symbols, types: types, nameResolver: nameResolver))>"
+        case let .in(type):
+            "N<\(encodeType(type, symbols: symbols, types: types, nameResolver: nameResolver))>"
         case .star:
-            return "*"
+            "*"
         }
     }
 
@@ -259,8 +257,8 @@ public final class NameMangler {
     }
 
     private func fnv1a32Hex(_ value: String) -> String {
-        let prime: UInt32 = 16777619
-        var hash: UInt32 = 2166136261
+        let prime: UInt32 = 16_777_619
+        var hash: UInt32 = 2_166_136_261
         for byte in value.utf8 {
             hash ^= UInt32(byte)
             hash &*= prime

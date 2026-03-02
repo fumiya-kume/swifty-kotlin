@@ -1,32 +1,31 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 final class DriverTests: XCTestCase {
-
     // MARK: - fallbackDiagnostic
 
-    func testFallbackDiagnosticForLoadError() {
+    func testFallbackDiagnosticForLoadError() throws {
         let error = CompilerPipelineError.loadError
         let result = CompilerDriver.fallbackDiagnostic(for: error)
         XCTAssertNotNil(result)
         XCTAssertEqual(result?.code, "KSWIFTK-PIPELINE-0001")
-        XCTAssertTrue(result!.message.contains("loading input sources"))
+        XCTAssertTrue(try XCTUnwrap(result?.message.contains("loading input sources")))
     }
 
-    func testFallbackDiagnosticForInvalidInput() {
+    func testFallbackDiagnosticForInvalidInput() throws {
         let error = CompilerPipelineError.invalidInput("bad IR")
         let result = CompilerDriver.fallbackDiagnostic(for: error)
         XCTAssertNotNil(result)
         XCTAssertEqual(result?.code, "KSWIFTK-PIPELINE-0002")
-        XCTAssertTrue(result!.message.contains("bad IR"))
+        XCTAssertTrue(try XCTUnwrap(result?.message.contains("bad IR")))
     }
 
-    func testFallbackDiagnosticForOutputUnavailable() {
+    func testFallbackDiagnosticForOutputUnavailable() throws {
         let error = CompilerPipelineError.outputUnavailable
         let result = CompilerDriver.fallbackDiagnostic(for: error)
         XCTAssertNotNil(result)
         XCTAssertEqual(result?.code, "KSWIFTK-PIPELINE-0003")
-        XCTAssertTrue(result!.message.contains("could not produce"))
+        XCTAssertTrue(try XCTUnwrap(result?.message.contains("could not produce")))
     }
 
     func testFallbackDiagnosticReturnsNilForNonPipelineError() {

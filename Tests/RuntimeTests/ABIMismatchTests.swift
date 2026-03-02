@@ -1,9 +1,8 @@
-import XCTest
-@testable import Runtime
 import CompilerCore
+@testable import Runtime
+import XCTest
 
 final class ABIMismatchTests: XCTestCase {
-
     // MARK: - Helpers
 
     private func requireSpec(_ name: String, file: StaticString = #filePath, line: UInt = #line) throws -> RuntimeABIFunctionSpec {
@@ -75,8 +74,8 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testExceptionFunctionCount() {
-        // kk_throwable_new, kk_panic
-        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 2)
+        // kk_throwable_new, kk_throwable_is_cancellation, kk_panic
+        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 3)
     }
 
     func testStringFunctionCount() {
@@ -165,6 +164,13 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(spec.returnType, .opaquePointer)
         XCTAssertEqual(spec.parameters.count, 1)
         XCTAssertEqual(spec.parameters[0].type, .nullableOpaquePointer)
+    }
+
+    func testKKThrowableIsCancellationSignature() throws {
+        let spec = try requireSpec("kk_throwable_is_cancellation")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 1)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
     }
 
     func testKKPanicSignature() throws {
@@ -332,8 +338,8 @@ final class ABIMismatchTests: XCTestCase {
                 spec.returnTypeString,
                 externDecl.returnType,
                 "Return type mismatch for '\(spec.name)': " +
-                "RuntimeABISpec says '\(spec.returnTypeString)' but " +
-                "RuntimeABIExterns says '\(externDecl.returnType)'"
+                    "RuntimeABISpec says '\(spec.returnTypeString)' but " +
+                    "RuntimeABIExterns says '\(externDecl.returnType)'"
             )
         }
     }
@@ -348,8 +354,8 @@ final class ABIMismatchTests: XCTestCase {
                 spec.parameterTypeStrings,
                 externDecl.parameterTypes,
                 "Parameter type mismatch for '\(spec.name)': " +
-                "RuntimeABISpec says \(spec.parameterTypeStrings) but " +
-                "RuntimeABIExterns says \(externDecl.parameterTypes)"
+                    "RuntimeABISpec says \(spec.parameterTypeStrings) but " +
+                    "RuntimeABIExterns says \(externDecl.parameterTypes)"
             )
         }
     }
@@ -364,8 +370,8 @@ final class ABIMismatchTests: XCTestCase {
                 spec.parameters.count,
                 externDecl.parameterTypes.count,
                 "Parameter count mismatch for '\(spec.name)': " +
-                "RuntimeABISpec has \(spec.parameters.count) but " +
-                "RuntimeABIExterns has \(externDecl.parameterTypes.count)"
+                    "RuntimeABISpec has \(spec.parameters.count) but " +
+                    "RuntimeABIExterns has \(externDecl.parameterTypes.count)"
             )
         }
     }

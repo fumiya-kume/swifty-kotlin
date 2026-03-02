@@ -1,7 +1,7 @@
 import Foundation
 
 extension LLVMBackend {
-    struct FrameMapPlan {
+    struct FrameMapPlan: Sendable {
         let parameterSlotBySymbol: [SymbolID: Int]
         let exprSlotByID: [Int32: Int]
         let rootOffsets: [Int32]
@@ -41,7 +41,7 @@ extension LLVMBackend {
         }
 
         let pointerStride = max(1, MemoryLayout<Int>.size)
-        let rootOffsets = (0..<nextSlot).map { slot in
+        let rootOffsets = (0 ..< nextSlot).map { slot in
             Int32(slot * pointerStride)
         }
 
@@ -57,16 +57,16 @@ extension LLVMBackend {
 
         for instruction in function.body {
             switch instruction {
-            case .jumpIfEqual(let lhs, let rhs, _):
+            case let .jumpIfEqual(lhs, rhs, _):
                 ids.insert(lhs)
                 ids.insert(rhs)
-            case .constValue(let result, _):
+            case let .constValue(result, _):
                 ids.insert(result)
-            case .binary(_, let lhs, let rhs, let result):
+            case let .binary(_, lhs, rhs, result):
                 ids.insert(lhs)
                 ids.insert(rhs)
                 ids.insert(result)
-            case .call(_, _, let arguments, let result, _, let thrownResult, _):
+            case let .call(_, _, arguments, result, _, thrownResult, _):
                 for arg in arguments {
                     ids.insert(arg)
                 }
@@ -76,7 +76,7 @@ extension LLVMBackend {
                 if let thrownResult {
                     ids.insert(thrownResult)
                 }
-            case .virtualCall(_, _, let receiver, let arguments, let result, _, let thrownResult, _):
+            case let .virtualCall(_, _, receiver, arguments, result, _, thrownResult, _):
                 ids.insert(receiver)
                 for arg in arguments {
                     ids.insert(arg)
@@ -87,17 +87,17 @@ extension LLVMBackend {
                 if let thrownResult {
                     ids.insert(thrownResult)
                 }
-            case .jumpIfNotNull(let value, _):
+            case let .jumpIfNotNull(value, _):
                 ids.insert(value)
-            case .copy(let from, let to):
+            case let .copy(from, to):
                 ids.insert(from)
                 ids.insert(to)
-            case .rethrow(let value):
+            case let .rethrow(value):
                 ids.insert(value)
-            case .returnIfEqual(let lhs, let rhs):
+            case let .returnIfEqual(lhs, rhs):
                 ids.insert(lhs)
                 ids.insert(rhs)
-            case .returnValue(let value):
+            case let .returnValue(value):
                 ids.insert(value)
             default:
                 continue

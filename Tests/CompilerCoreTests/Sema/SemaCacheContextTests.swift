@@ -1,8 +1,7 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 final class SemaCacheContextTests: XCTestCase {
-
     // MARK: - Helpers
 
     /// Creates a ``CompilationContext`` from source with the `sema-cache` frontend flag enabled.
@@ -250,7 +249,7 @@ final class SemaCacheContextTests: XCTestCase {
         """
 
         // Without cache
-        let ctxNoCache = try makeContextFromSource(source)
+        let ctxNoCache = makeContextFromSource(source)
         try runSema(ctxNoCache)
         let diagsNoCache = ctxNoCache.diagnostics.diagnostics
 

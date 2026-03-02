@@ -62,28 +62,28 @@ final class ExprTypeChecker {
             sema.bindings.bindExprType(id, type: stringType)
             return stringType
 
-        case .stringTemplate(let parts, _):
+        case let .stringTemplate(parts, _):
             for part in parts {
-                if case .expression(let exprID) = part {
+                if case let .expression(exprID) = part {
                     _ = driver.inferExpr(exprID, ctx: ctx, locals: &locals)
                 }
             }
             sema.bindings.bindExprType(id, type: stringType)
             return stringType
 
-        case .nameRef(let name, let nameRange):
+        case let .nameRef(name, nameRange):
             return inferNameRefExpr(id, name: name, nameRange: nameRange, ctx: ctx, locals: &locals)
 
-        case .forExpr(let loopVariable, let iterableExpr, let bodyExpr, let label, let range):
+        case let .forExpr(loopVariable, iterableExpr, bodyExpr, label, range):
             return driver.controlFlowChecker.inferForExpr(id, loopVariable: loopVariable, iterableExpr: iterableExpr, bodyExpr: bodyExpr, label: label, range: range, ctx: ctx, locals: &locals)
 
-        case .whileExpr(let conditionExpr, let bodyExpr, let label, let range):
+        case let .whileExpr(conditionExpr, bodyExpr, label, range):
             return driver.controlFlowChecker.inferWhileExpr(id, conditionExpr: conditionExpr, bodyExpr: bodyExpr, label: label, range: range, ctx: ctx, locals: &locals)
 
-        case .doWhileExpr(let bodyExpr, let conditionExpr, let label, let range):
+        case let .doWhileExpr(bodyExpr, conditionExpr, label, range):
             return driver.controlFlowChecker.inferDoWhileExpr(id, bodyExpr: bodyExpr, conditionExpr: conditionExpr, label: label, range: range, ctx: ctx, locals: &locals)
 
-        case .breakExpr(let label, let range):
+        case let .breakExpr(label, range):
             if ctx.loopDepth == 0 {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0018",
@@ -100,7 +100,7 @@ final class ExprTypeChecker {
             sema.bindings.bindExprType(id, type: sema.types.nothingType)
             return sema.types.nothingType
 
-        case .continueExpr(let label, let range):
+        case let .continueExpr(label, range):
             if ctx.loopDepth == 0 {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0019",
@@ -117,26 +117,26 @@ final class ExprTypeChecker {
             sema.bindings.bindExprType(id, type: sema.types.nothingType)
             return sema.types.nothingType
 
-        case .localDecl(let name, let isMutable, let typeAnnotation, let initializer, let range):
+        case let .localDecl(name, isMutable, typeAnnotation, initializer, range):
             return driver.localDeclChecker.inferLocalDeclExpr(id, name: name, isMutable: isMutable, typeAnnotation: typeAnnotation, initializer: initializer, range: range, ctx: ctx, locals: &locals)
 
-        case .localAssign(let name, let value, let range):
+        case let .localAssign(name, value, range):
             return driver.localDeclChecker.inferLocalAssignExpr(id, name: name, value: value, range: range, ctx: ctx, locals: &locals)
 
-        case .memberAssign(let receiverExpr, _, let valueExpr, let range):
+        case let .memberAssign(receiverExpr, _, valueExpr, _):
             // Type-check the receiver and value, bind as unit-typed expression.
             _ = driver.inferExpr(receiverExpr, ctx: ctx, locals: &locals, expectedType: nil)
             _ = driver.inferExpr(valueExpr, ctx: ctx, locals: &locals, expectedType: nil)
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
 
-        case .indexedAccess(let receiverExpr, let indices, let range):
+        case let .indexedAccess(receiverExpr, indices, range):
             return driver.localDeclChecker.inferIndexedAccessExpr(id, receiverExpr: receiverExpr, indices: indices, range: range, ctx: ctx, locals: &locals)
 
-        case .indexedAssign(let receiverExpr, let indices, let valueExpr, let range):
+        case let .indexedAssign(receiverExpr, indices, valueExpr, range):
             return driver.localDeclChecker.inferIndexedAssignExpr(id, receiverExpr: receiverExpr, indices: indices, valueExpr: valueExpr, range: range, ctx: ctx, locals: &locals)
 
-        case .returnExpr(let value, let label, let range):
+        case let .returnExpr(value, label, range):
             if let label {
                 let labelName = interner.resolve(label)
                 ctx.semaCtx.diagnostics.error(
@@ -172,24 +172,24 @@ final class ExprTypeChecker {
             sema.bindings.bindExprType(id, type: sema.types.nothingType)
             return sema.types.nothingType
 
-        case .ifExpr(let condition, let thenExpr, let elseExpr, _):
+        case let .ifExpr(condition, thenExpr, elseExpr, _):
             return driver.controlFlowChecker.inferIfExpr(id, condition: condition, thenExpr: thenExpr, elseExpr: elseExpr, ctx: ctx, locals: &locals, expectedType: expectedType)
 
-        case .tryExpr(let body, let catchClauses, let finallyExpr, _):
+        case let .tryExpr(body, catchClauses, finallyExpr, _):
             return driver.controlFlowChecker.inferTryExpr(id, body: body, catchClauses: catchClauses, finallyExpr: finallyExpr, ctx: ctx, locals: &locals, expectedType: expectedType)
 
-        case .binary(let op, let lhsID, let rhsID, let range):
+        case let .binary(op, lhsID, rhsID, range):
             return inferBinaryExpr(id, op: op, lhsID: lhsID, rhsID: rhsID, range: range, ctx: ctx, locals: &locals, expectedType: expectedType)
 
-        case .call(let calleeID, let typeArgRefs, let args, let range):
+        case let .call(calleeID, typeArgRefs, args, range):
             let explicitTypeArgs = driver.helpers.resolveExplicitTypeArgs(typeArgRefs, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
             return driver.callChecker.inferCallExpr(id, calleeID: calleeID, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType, explicitTypeArgs: explicitTypeArgs)
 
-        case .memberCall(let receiverID, let calleeName, let typeArgRefs, let args, let range):
+        case let .memberCall(receiverID, calleeName, typeArgRefs, args, range):
             let explicitTypeArgs = driver.helpers.resolveExplicitTypeArgs(typeArgRefs, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
             return driver.callChecker.inferMemberCallExpr(id, receiverID: receiverID, calleeName: calleeName, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType, explicitTypeArgs: explicitTypeArgs)
 
-        case .unaryExpr(let op, let operandID, let range):
+        case let .unaryExpr(op, operandID, range):
             let operandType = driver.inferExpr(operandID, ctx: ctx, locals: &locals)
             let type: TypeID
             switch op {
@@ -207,13 +207,14 @@ final class ExprTypeChecker {
             sema.bindings.bindExprType(id, type: type)
             return type
 
-        case .isCheck(let exprID, let typeRefID, let negated, let range):
+        case let .isCheck(exprID, typeRefID, negated, range):
             _ = driver.inferExpr(exprID, ctx: ctx, locals: &locals)
             // Resolve the target type and validate it (P5-101)
             let targetType = driver.helpers.resolveTypeRef(typeRefID, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
             // Emit erasure warning for generic type checks with non-star type arguments
             if let typeRef = ast.arena.typeRef(typeRefID),
-               case .named(_, let argRefs, _) = typeRef, !argRefs.isEmpty {
+               case let .named(_, argRefs, _) = typeRef, !argRefs.isEmpty
+            {
                 let hasNonStarArg = argRefs.contains { arg in
                     if case .star = arg { return false }
                     return true
@@ -226,84 +227,84 @@ final class ExprTypeChecker {
                     )
                 }
             }
-            let _ = negated
-            let _ = targetType
+            _ = negated
+            _ = targetType
             sema.bindings.bindExprType(id, type: boolType)
             return boolType
 
-        case .asCast(let exprID, let typeRefID, let isSafe, _):
+        case let .asCast(exprID, typeRefID, isSafe, _):
             _ = driver.inferExpr(exprID, ctx: ctx, locals: &locals)
             let targetType = driver.helpers.resolveTypeRef(typeRefID, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
-            let type: TypeID
-            if isSafe {
-                type = sema.types.makeNullable(targetType)
+            let type: TypeID = if isSafe {
+                sema.types.makeNullable(targetType)
             } else {
-                type = targetType
+                targetType
             }
             // Smart cast: after `x as T`, narrow x to intersection of original & T (P5-97/P5-100)
             if !isSafe,
                let castSubjectExpr = ast.arena.expr(exprID),
-               case .nameRef(let castVarName, _) = castSubjectExpr,
+               case let .nameRef(castVarName, _) = castSubjectExpr,
                let castLocal = locals[castVarName],
-               driver.helpers.isStableLocalSymbol(castLocal.symbol, sema: sema) {
-                let refinedType: TypeID
-                if sema.types.isSubtype(castLocal.0, targetType) {
-                    refinedType = castLocal.0  // already a subtype, no need for intersection
+               driver.helpers.isStableLocalSymbol(castLocal.symbol, sema: sema)
+            {
+                let refinedType: TypeID = if sema.types.isSubtype(castLocal.0, targetType) {
+                    castLocal.0 // already a subtype, no need for intersection
                 } else if sema.types.isSubtype(targetType, castLocal.0) {
-                    refinedType = targetType  // target is more specific
+                    targetType // target is more specific
                 } else {
-                    refinedType = sema.types.make(.intersection([castLocal.0, targetType]))
+                    sema.types.make(.intersection([castLocal.0, targetType]))
                 }
                 locals[castVarName] = (refinedType, castLocal.symbol, castLocal.isMutable, castLocal.isInitialized)
             }
             sema.bindings.bindExprType(id, type: type)
             return type
 
-        case .nullAssert(let exprID, _):
+        case let .nullAssert(exprID, _):
             let operandType = driver.inferExpr(exprID, ctx: ctx, locals: &locals)
             let type = sema.types.makeNonNullable(operandType)
             // Smart cast: after `x!!`, narrow x to non-null in subsequent code (P5-66)
             if let assertSubjectExpr = ast.arena.expr(exprID),
-               case .nameRef(let assertVarName, _) = assertSubjectExpr,
+               case let .nameRef(assertVarName, _) = assertSubjectExpr,
                let assertLocal = locals[assertVarName],
-               driver.helpers.isStableLocalSymbol(assertLocal.symbol, sema: sema) {
+               driver.helpers.isStableLocalSymbol(assertLocal.symbol, sema: sema)
+            {
                 locals[assertVarName] = (type, assertLocal.symbol, assertLocal.isMutable, assertLocal.isInitialized)
             }
             sema.bindings.bindExprType(id, type: type)
             return type
 
-        case .safeMemberCall(let receiverID, let calleeName, let typeArgRefs, let args, let range):
+        case let .safeMemberCall(receiverID, calleeName, typeArgRefs, args, range):
             let explicitTypeArgs = driver.helpers.resolveExplicitTypeArgs(typeArgRefs, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
             return driver.callChecker.inferSafeMemberCallExpr(id, receiverID: receiverID, calleeName: calleeName, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType, explicitTypeArgs: explicitTypeArgs)
 
-        case .compoundAssign(let op, let name, let valueExpr, let range):
+        case let .compoundAssign(op, name, valueExpr, range):
             return inferCompoundAssignExpr(id, op: op, name: name, valueExpr: valueExpr, range: range, ctx: ctx, locals: &locals)
 
-        case .indexedCompoundAssign(let op, let receiverExpr, let indices, let valueExpr, let range):
+        case let .indexedCompoundAssign(op, receiverExpr, indices, valueExpr, range):
             return driver.localDeclChecker.inferIndexedCompoundAssignExpr(id, op: op, receiverExpr: receiverExpr, indices: indices, valueExpr: valueExpr, range: range, ctx: ctx, locals: &locals)
 
-        case .whenExpr(let subjectID, let branches, let elseExpr, let range):
+        case let .whenExpr(subjectID, branches, elseExpr, range):
             return driver.controlFlowChecker.inferWhenExpr(id, subjectID: subjectID, branches: branches, elseExpr: elseExpr, range: range, ctx: ctx, locals: &locals, expectedType: expectedType)
 
-        case .throwExpr(let value, _):
+        case let .throwExpr(value, _):
             _ = driver.inferExpr(value, ctx: ctx, locals: &locals, expectedType: nil)
             sema.bindings.bindExprType(id, type: sema.types.nothingType)
             return sema.types.nothingType
 
-        case .lambdaLiteral(let params, let body, _, _):
+        case let .lambdaLiteral(params, body, _, _):
             return inferLambdaLiteralExpr(id, params: params, body: body, ctx: ctx, locals: &locals, expectedType: expectedType)
 
-        case .objectLiteral(let superTypes, _):
+        case let .objectLiteral(superTypes, _):
             let objectType = superTypes.first.map {
                 driver.helpers.resolveTypeRef($0, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
             } ?? sema.types.anyType
             sema.bindings.bindExprType(id, type: objectType)
             return objectType
 
-        case .callableRef(let receiver, let member, let range):
+        case let .callableRef(receiver, member, range):
             return inferCallableRefExpr(id, receiver: receiver, member: member, range: range, ctx: ctx, locals: &locals, expectedType: expectedType)
 
-        case .blockExpr(let statements, let trailingExpr, _):
+        case let .blockExpr(statements, trailingExpr, _):
             var blockLocals = locals
             var reachedNothing = false
             for stmt in statements {
@@ -346,38 +347,39 @@ final class ExprTypeChecker {
             for (name, outerLocal) in locals {
                 if let blockLocal = blockLocals[name],
                    blockLocal.symbol == outerLocal.symbol,
-                   !outerLocal.isInitialized && blockLocal.isInitialized {
+                   !outerLocal.isInitialized, blockLocal.isInitialized
+                {
                     locals[name] = (outerLocal.type, outerLocal.symbol, outerLocal.isMutable, true)
                 }
             }
             sema.bindings.bindExprType(id, type: resultType)
             return resultType
 
-        case .localFunDecl(let name, let valueParams, let returnTypeRef, let body, let range):
+        case let .localFunDecl(name, valueParams, returnTypeRef, body, range):
             return driver.localDeclChecker.inferLocalFunDeclExpr(id, name: name, valueParams: valueParams, returnTypeRef: returnTypeRef, body: body, range: range, ctx: ctx, locals: &locals)
 
-        case .superRef(let range):
+        case let .superRef(range):
             return inferSuperRefExpr(id, range: range, ctx: ctx)
 
-        case .thisRef(let label, let range):
+        case let .thisRef(label, range):
             return inferThisRefExpr(id, label: label, range: range, ctx: ctx)
 
-        case .inExpr(let lhsID, let rhsID, _):
+        case let .inExpr(lhsID, rhsID, _):
             _ = driver.inferExpr(lhsID, ctx: ctx, locals: &locals)
             _ = driver.inferExpr(rhsID, ctx: ctx, locals: &locals)
             sema.bindings.bindExprType(id, type: boolType)
             return boolType
 
-        case .notInExpr(let lhsID, let rhsID, _):
+        case let .notInExpr(lhsID, rhsID, _):
             _ = driver.inferExpr(lhsID, ctx: ctx, locals: &locals)
             _ = driver.inferExpr(rhsID, ctx: ctx, locals: &locals)
             sema.bindings.bindExprType(id, type: boolType)
             return boolType
 
-        case .destructuringDecl(let names, let isMutable, let initializer, let range):
+        case let .destructuringDecl(names, isMutable, initializer, range):
             return driver.controlFlowChecker.inferDestructuringDeclExpr(id, names: names, isMutable: isMutable, initializer: initializer, range: range, ctx: ctx, locals: &locals)
 
-        case .forDestructuringExpr(let names, let iterableExpr, let bodyExpr, let range):
+        case let .forDestructuringExpr(names, iterableExpr, bodyExpr, range):
             return driver.controlFlowChecker.inferForDestructuringExpr(id, names: names, iterableExpr: iterableExpr, bodyExpr: bodyExpr, range: range, ctx: ctx, locals: &locals)
         }
     }

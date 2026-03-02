@@ -1,7 +1,7 @@
 import Foundation
 
 extension BuildASTPhase.ExpressionParser {
-    internal func parseWhenExpression() -> ExprID? {
+    func parseWhenExpression() -> ExprID? {
         guard let whenToken = consume() else {
             return nil
         }
@@ -78,7 +78,7 @@ extension BuildASTPhase.ExpressionParser {
         return astArena.appendExpr(.whenExpr(subject: subject, branches: branches, elseExpr: elseExpr, range: range))
     }
 
-    internal func parseReturnExpression() -> ExprID? {
+    func parseReturnExpression() -> ExprID? {
         guard let returnToken = consume() else {
             return nil
         }
@@ -87,7 +87,8 @@ extension BuildASTPhase.ExpressionParser {
         var end = returnToken.range.end
         if let atToken = current(), atToken.kind == .symbol(.at),
            let labelToken = peek(1),
-           let labelName = identifierFromToken(labelToken) {
+           let labelName = identifierFromToken(labelToken)
+        {
             _ = consume()
             _ = consume()
             label = labelName
@@ -102,7 +103,7 @@ extension BuildASTPhase.ExpressionParser {
         return astArena.appendExpr(.returnExpr(value: value, label: label, range: range))
     }
 
-    internal func parseThrowExpression() -> ExprID? {
+    func parseThrowExpression() -> ExprID? {
         guard let throwToken = consume() else {
             return nil
         }
@@ -114,7 +115,7 @@ extension BuildASTPhase.ExpressionParser {
         return astArena.appendExpr(.throwExpr(value: value, range: range))
     }
 
-    internal func parseForExpression(label: InternedString? = nil, start: SourceLocation? = nil) -> ExprID? {
+    func parseForExpression(label: InternedString? = nil, start: SourceLocation? = nil) -> ExprID? {
         guard let forToken = consume() else {
             return nil
         }
@@ -153,7 +154,8 @@ extension BuildASTPhase.ExpressionParser {
                         _ = consume()
                         while let t = current(),
                               t.kind != .symbol(.comma),
-                              t.kind != .symbol(.rParen) {
+                              t.kind != .symbol(.rParen)
+                        {
                             _ = consume()
                         }
                     }
@@ -162,7 +164,7 @@ extension BuildASTPhase.ExpressionParser {
                 }
             }
 
-            if foundCloseParen && !destructuringNames.isEmpty {
+            if foundCloseParen, !destructuringNames.isEmpty {
                 guard consumeIf(.keyword(.in)) != nil else {
                     index = savedIndex
                     return parseForExpressionFallback(forToken: forToken, label: label, start: start)
@@ -200,14 +202,16 @@ extension BuildASTPhase.ExpressionParser {
         var loopVariable: InternedString?
         if let token = current(),
            token.kind != .keyword(.in),
-           let name = tokenText(token) {
+           let name = tokenText(token)
+        {
             loopVariable = name
             _ = consume()
         }
 
         while let token = current(),
               token.kind != .keyword(.in),
-              token.kind != .symbol(.rParen) {
+              token.kind != .symbol(.rParen)
+        {
             _ = consume()
         }
         _ = consumeIf(.keyword(.in))
@@ -225,7 +229,7 @@ extension BuildASTPhase.ExpressionParser {
         return astArena.appendExpr(.forExpr(loopVariable: loopVariable, iterable: iterable, body: body, label: label, range: range))
     }
 
-    internal func parseWhileExpression(label: InternedString? = nil, start: SourceLocation? = nil) -> ExprID? {
+    func parseWhileExpression(label: InternedString? = nil, start: SourceLocation? = nil) -> ExprID? {
         guard let whileToken = consume() else {
             return nil
         }
@@ -244,7 +248,7 @@ extension BuildASTPhase.ExpressionParser {
         return astArena.appendExpr(.whileExpr(condition: condition, body: body, label: label, range: range))
     }
 
-    internal func parseDoWhileExpression(label: InternedString? = nil, start: SourceLocation? = nil) -> ExprID? {
+    func parseDoWhileExpression(label: InternedString? = nil, start: SourceLocation? = nil) -> ExprID? {
         guard let doToken = consume() else {
             return nil
         }
@@ -254,7 +258,8 @@ extension BuildASTPhase.ExpressionParser {
         guard matches(.keyword(.while)),
               consume() != nil,
               consumeIf(.symbol(.lParen)) != nil,
-              let condition = parseExpression(minPrecedence: 0) else {
+              let condition = parseExpression(minPrecedence: 0)
+        else {
             return nil
         }
         _ = consumeIf(.symbol(.rParen))
@@ -263,7 +268,7 @@ extension BuildASTPhase.ExpressionParser {
         return astArena.appendExpr(.doWhileExpr(body: body, condition: condition, label: label, range: range))
     }
 
-    internal func parseIfExpression() -> ExprID? {
+    func parseIfExpression() -> ExprID? {
         guard let ifToken = consume() else {
             return nil
         }
@@ -293,7 +298,7 @@ extension BuildASTPhase.ExpressionParser {
         return astArena.appendExpr(.ifExpr(condition: condition, thenExpr: thenExpr, elseExpr: elseExpr, range: range))
     }
 
-    internal func parseTryExpression() -> ExprID? {
+    func parseTryExpression() -> ExprID? {
         guard let tryToken = consume() else {
             return nil
         }
@@ -329,19 +334,19 @@ extension BuildASTPhase.ExpressionParser {
         return astArena.appendExpr(.tryExpr(body: bodyExpr, catchClauses: catchClauses, finallyExpr: finallyExpr, range: range))
     }
 
-    internal func parseCatchParameter() -> (paramName: InternedString?, paramTypeName: InternedString?) {
+    func parseCatchParameter() -> (paramName: InternedString?, paramTypeName: InternedString?) {
         guard matches(.symbol(.lParen)) else {
             return (nil, nil)
         }
         _ = consume()
         var paramName: InternedString?
         var paramTypeName: InternedString?
-        if case .identifier(let name) = current()?.kind {
+        if case let .identifier(name) = current()?.kind {
             paramName = name
             _ = consume()
             if matches(.symbol(.colon)) {
                 _ = consume()
-                if case .identifier(let typeName) = current()?.kind {
+                if case let .identifier(typeName) = current()?.kind {
                     paramTypeName = typeName
                     _ = consume()
                 }

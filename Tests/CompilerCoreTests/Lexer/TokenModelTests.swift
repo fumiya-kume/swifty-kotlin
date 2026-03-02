@@ -1,5 +1,5 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 final class TokenModelTests: XCTestCase {
     func testStringInternerReusesIDsAndResolvesInternedValues() {
@@ -39,13 +39,13 @@ final class TokenModelTests: XCTestCase {
         XCTAssertEqual(missing.kind, .missing(expected: .keyword(.fun)))
 
         let backticked = Token(kind: .backtickedIdentifier(interner.intern("myFun")), range: range)
-        guard case .backtickedIdentifier(let name) = backticked.kind else {
+        guard case let .backtickedIdentifier(name) = backticked.kind else {
             return XCTFail("Expected backtickedIdentifier")
         }
         XCTAssertEqual(interner.resolve(name), "myFun")
 
         let charLit = Token(kind: .charLiteral(65), range: range)
-        guard case .charLiteral(let code) = charLit.kind else {
+        guard case let .charLiteral(code) = charLit.kind else {
             return XCTFail("Expected charLiteral")
         }
         XCTAssertEqual(code, 65)

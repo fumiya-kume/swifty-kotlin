@@ -8,8 +8,9 @@ extension BuildASTPhase {
         astArena: ASTArena? = nil
     ) -> [TypeParamDecl] {
         for child in arena.children(of: nodeID) {
-            if case .node(let childID) = child,
-               arena.node(childID).kind == .typeArgs {
+            if case let .node(childID) = child,
+               arena.node(childID).kind == .typeArgs
+            {
                 let tokens = collectTokens(from: childID, in: arena)
                 var result: [TypeParamDecl] = []
                 var angleDepth = 0
@@ -64,20 +65,22 @@ extension BuildASTPhase {
                     }
 
                     guard isTypeLikeNameToken(token.kind),
-                          let name = internedIdentifier(from: token, interner: interner) else {
+                          let name = internedIdentifier(from: token, interner: interner)
+                    else {
                         tokenIndex += 1
                         continue
                     }
-                    if case .keyword(let keyword) = token.kind, isLeadingDeclarationKeyword(keyword) {
+                    if case let .keyword(keyword) = token.kind, isLeadingDeclarationKeyword(keyword) {
                         tokenIndex += 1
                         continue
                     }
 
                     tokenIndex += 1
 
-                    var upperBound: TypeRefID? = nil
+                    var upperBound: TypeRefID?
                     if tokenIndex < tokens.count,
-                       tokens[tokenIndex].kind == .symbol(.colon) {
+                       tokens[tokenIndex].kind == .symbol(.colon)
+                    {
                         tokenIndex += 1
                         var boundTokens: [Token] = []
                         var innerDepth = BracketDepth()
@@ -114,7 +117,7 @@ extension BuildASTPhase {
         astArena: ASTArena
     ) -> [(name: InternedString, bound: TypeRefID)] {
         let tokens = collectTokens(from: nodeID, in: arena)
-        var whereIndex: Int? = nil
+        var whereIndex: Int?
         var depth = BracketDepth()
         for (index, token) in tokens.enumerated() {
             depth.track(token.kind)
@@ -135,7 +138,8 @@ extension BuildASTPhase {
                 break
             }
             guard isTypeLikeNameToken(token.kind),
-                  let name = internedIdentifier(from: token, interner: interner) else {
+                  let name = internedIdentifier(from: token, interner: interner)
+            else {
                 index += 1
                 continue
             }

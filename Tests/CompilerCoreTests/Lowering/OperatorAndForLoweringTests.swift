@@ -1,12 +1,14 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
+// swiftformat:disable trailingCommas
+
+// swiftlint:disable:next type_body_length
 final class OperatorAndForLoweringTests: XCTestCase {
-
     // MARK: - Helper
 
-    private func makeKIRContext(interner: StringInterner) -> KIRContext {
+    private func makeKIRContext(interner: StringInterner, sema: SemaModule? = nil) -> KIRContext {
         let options = CompilerOptions(
             moduleName: "OpForTest",
             inputs: [],
@@ -18,7 +20,8 @@ final class OperatorAndForLoweringTests: XCTestCase {
         return KIRContext(
             diagnostics: DiagnosticEngine(),
             options: options,
-            interner: interner
+            interner: interner,
+            sema: sema
         )
     }
 
@@ -43,12 +46,12 @@ final class OperatorAndForLoweringTests: XCTestCase {
     }
 
     private func calleesInDecl(_ declID: KIRDeclID, module: KIRModule, interner: StringInterner) -> [String] {
-        guard case .function(let fn) = module.arena.decl(declID) else { return [] }
+        guard case let .function(fn) = module.arena.decl(declID) else { return [] }
         return extractCallees(from: fn.body, interner: interner)
     }
 
     private func bodyInDecl(_ declID: KIRDeclID, module: KIRModule) -> [KIRInstruction] {
-        guard case .function(let fn) = module.arena.decl(declID) else { return [] }
+        guard case let .function(fn) = module.arena.decl(declID) else { return [] }
         return fn.body
     }
 
@@ -63,18 +66,62 @@ final class OperatorAndForLoweringTests: XCTestCase {
         let (module, declID) = makeModule(
             body: [
                 .call(symbol: nil, callee: interner.intern("println"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil),
+
                 .returnUnit
             ],
             interner: interner,
             arena: arena
         )
-        let ctx = makeKIRContext(interner: interner)  // no sema
+        let ctx = makeKIRContext(interner: interner) // no sema
 
         try OperatorLoweringPass().run(module: module, ctx: ctx)
 
         let callees = calleesInDecl(declID, module: module, interner: interner)
         // Without type info println stays as-is (no specific typed variant selected)
         XCTAssertTrue(callees.contains("println"), "println should remain when no type info is available")
+    }
+
+    func testOperatorLoweringRewritesCharPrintlnAndPreservesUnitResult() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let types = TypeSystem()
+        let sema = SemaModule(
+            symbols: SymbolTable(),
+            types: types,
+            bindings: BindingTable(),
+            diagnostics: DiagnosticEngine()
+        )
+
+        let arg = arena.appendExpr(.temporary(0), type: types.charType)
+        let result = arena.appendExpr(.temporary(1), type: types.unitType)
+        let (module, declID) = makeModule(
+            body: [
+                // swiftlint:disable:next line_length
+                .call(symbol: nil, callee: interner.intern("println"), arguments: [arg], result: result, canThrow: false, thrownResult: nil),
+
+                .returnUnit
+            ],
+            interner: interner,
+            arena: arena
+        )
+        let ctx = makeKIRContext(interner: interner, sema: sema)
+
+        try OperatorLoweringPass().run(module: module, ctx: ctx)
+
+        let body = bodyInDecl(declID, module: module)
+        XCTAssertGreaterThanOrEqual(body.count, 2)
+
+        guard case let .call(_, loweredCallee, _, loweredResult, _, _, _) = body[0] else {
+            return XCTFail("Expected first lowered instruction to be a call")
+        }
+        XCTAssertEqual(interner.resolve(loweredCallee), "kk_println_char")
+        XCTAssertNil(loweredResult, "Lowered primitive println call should be side-effect only")
+
+        guard case let .constValue(unitResult, value) = body[1] else {
+            return XCTFail("Expected second lowered instruction to synthesize Unit")
+        }
+        XCTAssertEqual(unitResult, result)
+        XCTAssertEqual(value, .unit)
     }
 
     // MARK: - OperatorLoweringPass: binary ops
@@ -88,6 +135,7 @@ final class OperatorAndForLoweringTests: XCTestCase {
         let (module, declID) = makeModule(
             body: [
                 .binary(op: .add, lhs: v0, rhs: v1, result: v2),
+
                 .returnUnit
             ],
             interner: interner,
@@ -117,6 +165,7 @@ final class OperatorAndForLoweringTests: XCTestCase {
         let (module, declID) = makeModule(
             body: [
                 .nullAssert(operand: v0, result: v1),
+
                 .returnUnit
             ],
             interner: interner,
@@ -213,6 +262,7 @@ final class OperatorAndForLoweringTests: XCTestCase {
             body: [
                 .call(symbol: nil, callee: interner.intern("kk_range_iterator"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil),
                 .call(symbol: nil, callee: interner.intern("kk_for_lowered"), arguments: [v1], result: v2, canThrow: false, thrownResult: nil),
+
                 .returnUnit
             ],
             interner: interner,
@@ -242,6 +292,7 @@ final class OperatorAndForLoweringTests: XCTestCase {
             returnType: TypeSystem().unitType,
             body: [
                 .call(symbol: nil, callee: interner.intern("someFunction"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil),
+
                 .returnUnit
             ],
             isSuspend: false,
@@ -327,6 +378,7 @@ final class OperatorAndForLoweringTests: XCTestCase {
                 .beginBlock,
                 .call(symbol: nil, callee: interner.intern("foo"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil),
                 .endBlock,
+
                 .returnUnit
             ],
             interner: interner,
@@ -342,4 +394,6 @@ final class OperatorAndForLoweringTests: XCTestCase {
         XCTAssertFalse(hasBeginBlock, "beginBlock should be removed by NormalizeBlocksPass")
         XCTAssertFalse(hasEndBlock, "endBlock should be removed by NormalizeBlocksPass")
     }
+
+    // swiftformat:enable trailingCommas
 }

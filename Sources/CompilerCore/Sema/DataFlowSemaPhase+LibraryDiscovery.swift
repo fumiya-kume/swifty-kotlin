@@ -78,11 +78,10 @@ extension DataFlowSemaPhase {
             )
             metadataPath = URL(fileURLWithPath: libraryDir).appendingPathComponent("metadata.bin").path
         }
-        let inlineKIRDir: String?
-        if let inlineRelativePath = object["inlineKIRDir"] as? String, !inlineRelativePath.isEmpty {
-            inlineKIRDir = URL(fileURLWithPath: libraryDir).appendingPathComponent(inlineRelativePath).path
+        let inlineKIRDir: String? = if let inlineRelativePath = object["inlineKIRDir"] as? String, !inlineRelativePath.isEmpty {
+            URL(fileURLWithPath: libraryDir).appendingPathComponent(inlineRelativePath).path
         } else {
-            inlineKIRDir = nil
+            nil
         }
 
         isValid = validateManifestPaths(
@@ -215,7 +214,7 @@ extension DataFlowSemaPhase {
 
         // Validate metadata path is within library directory
         let metadataResolved = URL(fileURLWithPath: metadataPath).standardized.path
-        if !metadataResolved.hasPrefix(libraryDirResolved + "/") && metadataResolved != libraryDirResolved {
+        if !metadataResolved.hasPrefix(libraryDirResolved + "/"), metadataResolved != libraryDirResolved {
             diagnostics.error(
                 "KSWIFTK-LIB-0018",
                 "Metadata path '\(metadataPath)' escapes library directory \(libName)",
@@ -237,7 +236,7 @@ extension DataFlowSemaPhase {
                 for relativePath in objectPaths {
                     let fullPath = URL(fileURLWithPath: libraryDir).appendingPathComponent(relativePath).path
                     let resolvedObjPath = URL(fileURLWithPath: fullPath).standardized.path
-                    if !resolvedObjPath.hasPrefix(libraryDirResolved + "/") && resolvedObjPath != libraryDirResolved {
+                    if !resolvedObjPath.hasPrefix(libraryDirResolved + "/"), resolvedObjPath != libraryDirResolved {
                         diagnostics.error(
                             "KSWIFTK-LIB-0018",
                             "Object path '\(relativePath)' escapes library directory \(libName)",
@@ -265,7 +264,7 @@ extension DataFlowSemaPhase {
         // Validate inlineKIRDir path
         if let inlineDir = inlineKIRDir {
             let inlineDirResolved = URL(fileURLWithPath: inlineDir).standardized.path
-            if !inlineDirResolved.hasPrefix(libraryDirResolved + "/") && inlineDirResolved != libraryDirResolved {
+            if !inlineDirResolved.hasPrefix(libraryDirResolved + "/"), inlineDirResolved != libraryDirResolved {
                 diagnostics.error(
                     "KSWIFTK-LIB-0018",
                     "Inline KIR path '\(inlineDir)' escapes library directory \(libName)",

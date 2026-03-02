@@ -1,6 +1,6 @@
 import Dispatch
-import XCTest
 @testable import Runtime
+import XCTest
 
 private typealias RuntimeTestSuspendEntry = @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int
 

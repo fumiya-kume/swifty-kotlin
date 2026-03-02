@@ -19,13 +19,13 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
 
         let intType = sema.types.make(.primitive(.int, .nonNull))
         let existingFunctionSymbols = Set(module.arena.declarations.compactMap { decl -> SymbolID? in
-            guard case .function(let function) = decl else {
+            guard case let .function(function) = decl else {
                 return nil
             }
             return function.symbol
         })
         let nominalSymbols = module.arena.declarations.compactMap { decl -> SymbolID? in
-            guard case .nominalType(let nominal) = decl else {
+            guard case let .nominalType(nominal) = decl else {
                 return nil
             }
             return nominal.symbol
@@ -134,7 +134,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
     }
 
     private func enumEntrySymbols(owner: SemanticSymbol, symbols: SymbolTable) -> [SemanticSymbol] {
-        return symbols.children(ofFQName: owner.fqName)
+        symbols.children(ofFQName: owner.fqName)
             .compactMap { symbols.symbol($0) }
             .filter { $0.kind == .field }
             .sorted(by: { $0.id.rawValue < $1.id.rawValue })
@@ -156,7 +156,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         )
         let body: [KIRInstruction] = [
             .constValue(result: resultExpr, value: .intLiteral(value)),
-            .returnValue(resultExpr)
+            .returnValue(resultExpr),
         ]
         appendSyntheticFunctionIfNeeded(
             name: name,
@@ -204,7 +204,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         )
         let body: [KIRInstruction] = [
             .constValue(result: resultExpr, value: .symbolRef(parameterSymbol)),
-            .returnValue(resultExpr)
+            .returnValue(resultExpr),
         ]
         let signature = FunctionSignature(
             parameterTypes: [receiverType],
@@ -242,7 +242,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         )
         let body: [KIRInstruction] = [
             .constValue(result: resultExpr, value: .stringLiteral(value)),
-            .returnValue(resultExpr)
+            .returnValue(resultExpr),
         ]
         appendSyntheticFunctionIfNeeded(
             name: name,

@@ -2,19 +2,43 @@ import Foundation
 
 public final class ASTArena: @unchecked Sendable {
     private let lock = NSLock()
-    public private(set) var decls: [Decl] = []
-    public private(set) var exprs: [Expr] = []
-    public private(set) var typeRefs: [TypeRef] = []
+    private var _decls: [Decl] = []
+    private var _exprs: [Expr] = []
+    private var _typeRefs: [TypeRef] = []
     /// Maps loop expression IDs (forExpr/whileExpr/doWhileExpr) to their user-defined label.
-    public private(set) var loopLabels: [ExprID: InternedString] = [:]
+    private var _loopLabels: [ExprID: InternedString] = [:]
+
+    public var decls: [Decl] {
+        lock.lock()
+        defer { lock.unlock() }
+        return _decls
+    }
+
+    public var exprs: [Expr] {
+        lock.lock()
+        defer { lock.unlock() }
+        return _exprs
+    }
+
+    public var typeRefs: [TypeRef] {
+        lock.lock()
+        defer { lock.unlock() }
+        return _typeRefs
+    }
+
+    public var loopLabels: [ExprID: InternedString] {
+        lock.lock()
+        defer { lock.unlock() }
+        return _loopLabels
+    }
 
     public init() {}
 
     public func appendDecl(_ decl: Decl) -> DeclID {
         lock.lock()
         defer { lock.unlock() }
-        let id = Int32(decls.count)
-        decls.append(decl)
+        let id = Int32(_decls.count)
+        _decls.append(decl)
         return DeclID(rawValue: id)
     }
 
@@ -22,28 +46,28 @@ public final class ASTArena: @unchecked Sendable {
         let index = Int(id.rawValue)
         lock.lock()
         defer { lock.unlock() }
-        guard decls.indices.contains(index) else { return nil }
-        return decls[index]
+        guard _decls.indices.contains(index) else { return nil }
+        return _decls[index]
     }
 
     public func declarations() -> [Decl] {
         lock.lock()
         defer { lock.unlock() }
-        return decls
+        return _decls
     }
 
     /// The number of declarations in the arena (thread-safe).
     public var declCount: Int {
         lock.lock()
         defer { lock.unlock() }
-        return decls.count
+        return _decls.count
     }
 
     public func appendExpr(_ expr: Expr) -> ExprID {
         lock.lock()
         defer { lock.unlock() }
-        let id = ExprID(rawValue: Int32(exprs.count))
-        exprs.append(expr)
+        let id = ExprID(rawValue: Int32(_exprs.count))
+        _exprs.append(expr)
         return id
     }
 
@@ -51,8 +75,8 @@ public final class ASTArena: @unchecked Sendable {
         let index = Int(id.rawValue)
         lock.lock()
         defer { lock.unlock() }
-        guard exprs.indices.contains(index) else { return nil }
-        return exprs[index]
+        guard _exprs.indices.contains(index) else { return nil }
+        return _exprs[index]
     }
 
     public func exprRange(_ id: ExprID) -> SourceRange? {
@@ -60,51 +84,51 @@ public final class ASTArena: @unchecked Sendable {
             return nil
         }
         switch expr {
-        case .intLiteral(_, let range),
-             .longLiteral(_, let range),
-             .floatLiteral(_, let range),
-             .doubleLiteral(_, let range),
-             .charLiteral(_, let range),
-             .boolLiteral(_, let range),
-             .stringLiteral(_, let range),
-             .nameRef(_, let range),
-             .forExpr(_, _, _, _, let range),
-             .whileExpr(_, _, _, let range),
-             .doWhileExpr(_, _, _, let range),
-             .breakExpr(_, let range),
-             .continueExpr(_, let range),
-             .localDecl(_, _, _, _, let range),
-             .localAssign(_, _, let range),
-             .memberAssign(_, _, _, let range),
-             .indexedAssign(_, _, _, let range),
-             .call(_, _, _, let range),
-             .memberCall(_, _, _, _, let range),
-             .indexedAccess(_, _, let range),
-             .indexedCompoundAssign(_, _, _, _, let range),
-             .binary(_, _, _, let range),
-             .whenExpr(_, _, _, let range),
-             .returnExpr(_, _, let range),
-             .ifExpr(_, _, _, let range),
-             .tryExpr(_, _, _, let range),
-             .unaryExpr(_, _, let range),
-             .isCheck(_, _, _, let range),
-             .asCast(_, _, _, let range),
-             .nullAssert(_, let range),
-             .safeMemberCall(_, _, _, _, let range),
-             .compoundAssign(_, _, _, let range),
-             .stringTemplate(_, let range),
-             .throwExpr(_, let range),
-             .lambdaLiteral(_, _, _, let range),
-             .objectLiteral(_, let range),
-             .callableRef(_, _, let range),
-             .localFunDecl(_, _, _, _, let range),
-             .blockExpr(_, _, let range),
-             .superRef(let range),
-             .thisRef(_, let range),
-             .inExpr(_, _, let range),
-             .notInExpr(_, _, let range),
-             .destructuringDecl(_, _, _, let range),
-             .forDestructuringExpr(_, _, _, let range):
+        case let .intLiteral(_, range),
+             let .longLiteral(_, range),
+             let .floatLiteral(_, range),
+             let .doubleLiteral(_, range),
+             let .charLiteral(_, range),
+             let .boolLiteral(_, range),
+             let .stringLiteral(_, range),
+             let .nameRef(_, range),
+             let .forExpr(_, _, _, _, range),
+             let .whileExpr(_, _, _, range),
+             let .doWhileExpr(_, _, _, range),
+             let .breakExpr(_, range),
+             let .continueExpr(_, range),
+             let .localDecl(_, _, _, _, range),
+             let .localAssign(_, _, range),
+             let .memberAssign(_, _, _, range),
+             let .indexedAssign(_, _, _, range),
+             let .call(_, _, _, range),
+             let .memberCall(_, _, _, _, range),
+             let .indexedAccess(_, _, range),
+             let .indexedCompoundAssign(_, _, _, _, range),
+             let .binary(_, _, _, range),
+             let .whenExpr(_, _, _, range),
+             let .returnExpr(_, _, range),
+             let .ifExpr(_, _, _, range),
+             let .tryExpr(_, _, _, range),
+             let .unaryExpr(_, _, range),
+             let .isCheck(_, _, _, range),
+             let .asCast(_, _, _, range),
+             let .nullAssert(_, range),
+             let .safeMemberCall(_, _, _, _, range),
+             let .compoundAssign(_, _, _, range),
+             let .stringTemplate(_, range),
+             let .throwExpr(_, range),
+             let .lambdaLiteral(_, _, _, range),
+             let .objectLiteral(_, range),
+             let .callableRef(_, _, range),
+             let .localFunDecl(_, _, _, _, range),
+             let .blockExpr(_, _, range),
+             let .superRef(range),
+             let .thisRef(_, range),
+             let .inExpr(_, _, range),
+             let .notInExpr(_, _, range),
+             let .destructuringDecl(_, _, _, range),
+             let .forDestructuringExpr(_, _, _, range):
             return range
         }
     }
@@ -112,20 +136,20 @@ public final class ASTArena: @unchecked Sendable {
     public func setLoopLabel(_ label: InternedString, for exprID: ExprID) {
         lock.lock()
         defer { lock.unlock() }
-        loopLabels[exprID] = label
+        _loopLabels[exprID] = label
     }
 
     public func loopLabel(for exprID: ExprID) -> InternedString? {
         lock.lock()
         defer { lock.unlock() }
-        return loopLabels[exprID]
+        return _loopLabels[exprID]
     }
 
     public func appendTypeRef(_ typeRef: TypeRef) -> TypeRefID {
         lock.lock()
         defer { lock.unlock() }
-        let id = TypeRefID(rawValue: Int32(typeRefs.count))
-        typeRefs.append(typeRef)
+        let id = TypeRefID(rawValue: Int32(_typeRefs.count))
+        _typeRefs.append(typeRef)
         return id
     }
 
@@ -133,8 +157,8 @@ public final class ASTArena: @unchecked Sendable {
         let index = Int(id.rawValue)
         lock.lock()
         defer { lock.unlock() }
-        guard typeRefs.indices.contains(index) else { return nil }
-        return typeRefs[index]
+        guard _typeRefs.indices.contains(index) else { return nil }
+        return _typeRefs[index]
     }
 }
 
@@ -153,7 +177,7 @@ public final class ASTModule {
         self.arena = arena
         self.declarationCount = declarationCount
         self.tokenCount = tokenCount
-        self.sortedFiles = files.sorted(by: { $0.fileID.rawValue < $1.fileID.rawValue })
+        sortedFiles = files.sorted(by: { $0.fileID.rawValue < $1.fileID.rawValue })
     }
 
     public convenience init(declarationCount: Int, tokenCount: Int) {

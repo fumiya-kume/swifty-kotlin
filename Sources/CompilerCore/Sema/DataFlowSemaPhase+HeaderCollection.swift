@@ -19,7 +19,7 @@ extension DataFlowSemaPhase {
 
         let declaration: (kind: SymbolKind, name: InternedString, range: SourceRange?, visibility: Visibility, flags: SymbolFlags)?
         switch decl {
-        case .classDecl(let classDecl):
+        case let .classDecl(classDecl):
             var classFlags = flags(from: classDecl.modifiers)
             if classDecl.modifiers.contains(.value) {
                 classFlags.insert(.valueType)
@@ -31,7 +31,7 @@ extension DataFlowSemaPhase {
                 visibility: visibility(from: classDecl.modifiers),
                 flags: classFlags
             )
-        case .interfaceDecl(let interfaceDecl):
+        case let .interfaceDecl(interfaceDecl):
             declaration = (
                 kind: .interface,
                 name: interfaceDecl.name,
@@ -39,7 +39,7 @@ extension DataFlowSemaPhase {
                 visibility: visibility(from: interfaceDecl.modifiers),
                 flags: flags(from: interfaceDecl.modifiers)
             )
-        case .objectDecl(let objectDecl):
+        case let .objectDecl(objectDecl):
             declaration = (
                 kind: .object,
                 name: objectDecl.name,
@@ -47,7 +47,7 @@ extension DataFlowSemaPhase {
                 visibility: visibility(from: objectDecl.modifiers),
                 flags: flags(from: objectDecl.modifiers)
             )
-        case .funDecl(let funDecl):
+        case let .funDecl(funDecl):
             declaration = (
                 kind: .function,
                 name: funDecl.name,
@@ -55,7 +55,7 @@ extension DataFlowSemaPhase {
                 visibility: visibility(from: funDecl.modifiers),
                 flags: flags(from: funDecl.modifiers)
             )
-        case .propertyDecl(let propertyDecl):
+        case let .propertyDecl(propertyDecl):
             var propertyFlags = flags(from: propertyDecl.modifiers)
             if propertyDecl.isVar {
                 propertyFlags.insert(.mutable)
@@ -67,7 +67,7 @@ extension DataFlowSemaPhase {
                 visibility: visibility(from: propertyDecl.modifiers),
                 flags: propertyFlags
             )
-        case .typeAliasDecl(let typeAliasDecl):
+        case let .typeAliasDecl(typeAliasDecl):
             declaration = (
                 kind: .typeAlias,
                 name: typeAliasDecl.name,
@@ -75,7 +75,7 @@ extension DataFlowSemaPhase {
                 visibility: visibility(from: typeAliasDecl.modifiers),
                 flags: flags(from: typeAliasDecl.modifiers)
             )
-        case .enumEntryDecl(let entry):
+        case let .enumEntryDecl(entry):
             declaration = (
                 kind: .field,
                 name: entry.name,
@@ -106,7 +106,7 @@ extension DataFlowSemaPhase {
         bindings.bindDecl(declID, symbol: symbol)
 
         switch decl {
-        case .classDecl(let classDecl):
+        case let .classDecl(classDecl):
             // Register class type parameters as symbols so member functions
             // can reference them (e.g. `fun get(): T` inside `class Box<T>`).
             let classTypeParamResult = registerNominalTypeParameters(
@@ -228,7 +228,6 @@ extension DataFlowSemaPhase {
                     ),
                     for: secCtorSymbol
                 )
-
             }
 
             // Value class validation: must have exactly one primary constructor parameter
@@ -319,7 +318,7 @@ extension DataFlowSemaPhase {
                 )
             }
 
-        case .interfaceDecl(let interfaceDecl):
+        case let .interfaceDecl(interfaceDecl):
             // Register interface type parameters as symbols
             let ifaceTypeParamResult = registerNominalTypeParameters(
                 interfaceDecl.typeParams,
@@ -389,7 +388,7 @@ extension DataFlowSemaPhase {
                 )
             }
 
-        case .objectDecl(let objectDecl):
+        case let .objectDecl(objectDecl):
             let objectType = types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
             let objectScope = ClassMemberScope(
                 parent: scope,
@@ -423,7 +422,7 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
 
-        case .funDecl(let funDecl):
+        case let .funDecl(funDecl):
             let localNamespaceFQName = fqName + [interner.intern("$\(symbol.rawValue)")]
             let typeParamResult = collectFunctionTypeParameters(
                 funDecl.typeParams,
@@ -452,8 +451,7 @@ extension DataFlowSemaPhase {
                 diagnostics: diagnostics,
                 fallbackType: anyType
             )
-            let returnType: TypeID
-            if let explicit = resolveTypeRef(
+            let returnType: TypeID = if let explicit = resolveTypeRef(
                 funDecl.returnType,
                 ast: ast,
                 symbols: symbols,
@@ -462,13 +460,13 @@ extension DataFlowSemaPhase {
                 localTypeParameters: typeParamResult.localTypeParameters,
                 diagnostics: diagnostics
             ) {
-                returnType = explicit
+                explicit
             } else {
                 switch funDecl.body {
                 case .unit:
-                    returnType = unitType
+                    unitType
                 case .block, .expr:
-                    returnType = anyType
+                    anyType
                 }
             }
             let upperBounds: [TypeID?] = typeParamResult.typeParameterSymbols.map { symbols.typeParameterUpperBound(for: $0) }
@@ -488,7 +486,7 @@ extension DataFlowSemaPhase {
                 for: symbol
             )
 
-        case .propertyDecl(let propertyDecl):
+        case let .propertyDecl(propertyDecl):
             let resolvedType = resolveTypeRef(
                 propertyDecl.type,
                 ast: ast,
@@ -550,57 +548,17 @@ extension DataFlowSemaPhase {
                 }
             }
 
-            // const val validation: must be immutable and have a primitive or String type
-            if propertyDecl.modifiers.contains(.const) {
-                if propertyDecl.isVar {
-                    diagnostics.error(
-                        "KSWIFTK-SEMA-0080",
-                        "'const' modifier is not applicable to 'var'.",
-                        range: propertyDecl.range
-                    )
-                }
-                if propertyDecl.initializer == nil {
-                    diagnostics.error(
-                        "KSWIFTK-SEMA-0081",
-                        "'const val' must have an initializer.",
-                        range: propertyDecl.range
-                    )
-                }
-                if propertyDecl.type != nil {
-                    let isConstCompatible: Bool
-                    switch types.kind(of: resolvedType) {
-                    case .primitive:
-                        isConstCompatible = true
-                    default:
-                        isConstCompatible = false
-                    }
-                    if !isConstCompatible {
-                        diagnostics.error(
-                            "KSWIFTK-SEMA-0082",
-                            "'const val' type must be a primitive type or String.",
-                            range: propertyDecl.range
-                        )
-                    }
-                }
-                // Record the compile-time constant value from the initializer.
-                // When no explicit type annotation is present, also validate that
-                // the initializer is a compile-time constant literal; if not,
-                // reject the declaration since const val requires a constant.
-                if let initExpr = propertyDecl.initializer {
-                    let constCollector = ConstantCollector()
-                    if let constKind = constCollector.literalConstantExpr(initExpr, ast: ast) {
-                        symbols.setConstValueExprKind(constKind, for: symbol)
-                    } else {
-                        diagnostics.error(
-                            "KSWIFTK-SEMA-0083",
-                            "'const val' initializer must be a compile-time constant expression.",
-                            range: propertyDecl.range
-                        )
-                    }
-                }
-            }
+            validateConstPropertyDeclaration(
+                propertyDecl,
+                propertySymbol: symbol,
+                resolvedType: resolvedType,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                diagnostics: diagnostics
+            )
 
-        case .typeAliasDecl(let typeAliasDecl):
+        case let .typeAliasDecl(typeAliasDecl):
             let localTypeParameters = registerTypeAliasTypeParameters(
                 typeAliasDecl.typeParams,
                 aliasSymbol: symbol,
@@ -677,7 +635,8 @@ extension DataFlowSemaPhase {
         )
         for typeParam in typeParams {
             if let boundRef = typeParam.upperBound,
-               let typeParamSym = localTypeParameters[typeParam.name] {
+               let typeParamSym = localTypeParameters[typeParam.name]
+            {
                 if let boundType = resolveTypeRef(
                     boundRef,
                     ast: ast,

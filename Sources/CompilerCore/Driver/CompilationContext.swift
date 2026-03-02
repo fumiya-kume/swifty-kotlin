@@ -26,6 +26,9 @@ public struct FileIR {
     }
 }
 
+/// Concurrency model:
+/// mutable context fields are written on the main pipeline thread between phases,
+/// while parallel phase workers operate on per-phase local data.
 public final class CompilationContext: @unchecked Sendable {
     public let options: CompilerOptions
     public let sourceManager: SourceManager
@@ -34,14 +37,14 @@ public final class CompilationContext: @unchecked Sendable {
 
     public var tokens: [Token] = []
     public var tokensByFile: [(FileID, [Token])] = []
-    public var syntaxTree: SyntaxArena? = nil
-    public var syntaxTreeRoot: NodeID = NodeID()
+    public var syntaxTree: SyntaxArena?
+    public var syntaxTreeRoot: NodeID = .init()
     public var syntaxTrees: [(FileID, SyntaxArena, NodeID)] = []
-    public var ast: ASTModule? = nil
-    public var sema: SemaModule? = nil
-    public var kir: KIRModule? = nil
-    public var generatedObjectPath: String? = nil
-    public var generatedLLVMIRPath: String? = nil
+    public var ast: ASTModule?
+    public var sema: SemaModule?
+    public var kir: KIRModule?
+    public var generatedObjectPath: String?
+    public var generatedLLVMIRPath: String?
 
     /// Per-file intermediate representations keyed by FileID.
     /// Populated unconditionally by LexPhase, ParsePhase, and BuildASTPhase
@@ -50,18 +53,18 @@ public final class CompilationContext: @unchecked Sendable {
 
     /// Path to a pre-compiled runtime stub `.o` that should be linked alongside
     /// the user module object when producing an executable.
-    public var runtimeStubObjectPath: String? = nil
+    public var runtimeStubObjectPath: String?
 
     /// Incremental compilation cache (non-nil when incremental mode is active).
-    public var incrementalCache: IncrementalCompilationCache? = nil
+    public var incrementalCache: IncrementalCompilationCache?
 
     /// Set of file paths that need recompilation in incremental mode.
     /// `nil` means full build (all files).
-    public var incrementalRecompileSet: Set<String>? = nil
+    public var incrementalRecompileSet: Set<String>?
 
     /// Phase timer for recording per-phase wall-clock durations.
     /// Non-nil when the `time-phases` frontend flag is active.
-    public var phaseTimer: PhaseTimer? = nil
+    public var phaseTimer: PhaseTimer?
 
     public init(
         options: CompilerOptions,

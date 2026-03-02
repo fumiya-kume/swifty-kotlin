@@ -1,14 +1,47 @@
 import Foundation
 
-public struct CommandResult {
+public struct CommandResult: Sendable {
     public let exitCode: Int32
     public let stdout: String
     public let stderr: String
 }
 
-public enum CommandRunnerError: Error {
+public enum CommandRunnerError: Error, Sendable {
     case launchFailed(String)
     case nonZeroExit(CommandResult)
+}
+
+private enum CommandOutputStream {
+    case stdout
+    case stderr
+}
+
+private final class LockedCommandOutput: @unchecked Sendable {
+    private let lock = NSLock()
+    private var stdoutData = Data()
+    private var stderrData = Data()
+
+    func store(_ data: Data, for stream: CommandOutputStream) {
+        lock.lock()
+        switch stream {
+        case .stdout:
+            stdoutData = data
+        case .stderr:
+            stderrData = data
+        }
+        lock.unlock()
+    }
+
+    func data(for stream: CommandOutputStream) -> Data {
+        lock.lock()
+        defer { lock.unlock() }
+        switch stream {
+        case .stdout:
+            return stdoutData
+        case .stderr:
+            return stderrData
+        }
+    }
 }
 
 public enum CommandRunner {
@@ -55,10 +88,29 @@ public enum CommandRunner {
         } catch {
             throw CommandRunnerError.launchFailed("Failed to launch \(executable): \(error)")
         }
+        // Drain both pipes before waiting for process termination to avoid
+        // deadlocks when child output exceeds the kernel pipe buffer.
+        let output = LockedCommandOutput()
+        let drainGroup = DispatchGroup()
+
+        drainGroup.enter()
+        DispatchQueue.global().async {
+            defer { drainGroup.leave() }
+            let data = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+            output.store(data, for: .stdout)
+        }
+        drainGroup.enter()
+        DispatchQueue.global().async {
+            defer { drainGroup.leave() }
+            let data = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+            output.store(data, for: .stderr)
+        }
+        drainGroup.wait()
         process.waitUntilExit()
 
-        let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-        let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+        let stdoutData = output.data(for: .stdout)
+        let stderrData = output.data(for: .stderr)
+
         let result = CommandResult(
             exitCode: process.terminationStatus,
             stdout: String(decoding: stdoutData, as: UTF8.self),

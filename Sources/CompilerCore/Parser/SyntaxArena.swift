@@ -45,6 +45,8 @@ public struct SyntaxNode: Equatable {
     public let childCount: Int16
 }
 
+/// Concurrency model:
+/// single-owner lifecycle (`KotlinParser` build, then one AST build task reads it).
 public final class SyntaxArena: @unchecked Sendable {
     public private(set) var nodes: [SyntaxNode] = []
     public private(set) var children: [SyntaxChild] = []
@@ -87,7 +89,7 @@ public final class SyntaxArena: @unchecked Sendable {
 
     public func token(_ id: TokenID) -> Token? {
         let index = Int(id.rawValue)
-        guard index >= 0 && index < tokens.count else { return nil }
+        guard index >= 0, index < tokens.count else { return nil }
         return tokens[index]
     }
 
@@ -102,6 +104,6 @@ public final class SyntaxArena: @unchecked Sendable {
             return []
         }
         let safeEnd = min(end, children.count)
-        return children[start..<safeEnd]
+        return children[start ..< safeEnd]
     }
 }

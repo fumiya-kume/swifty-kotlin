@@ -30,7 +30,7 @@ final class ControlFlowTypeChecker {
                 name: loopVariable,
                 fqName: [
                     ctx.interner.intern("__for_\(id.rawValue)"),
-                    loopVariable
+                    loopVariable,
                 ],
                 declSite: range,
                 visibility: .private,
@@ -126,7 +126,8 @@ final class ControlFlowTypeChecker {
         for (name, local) in locals {
             if !local.isInitialized,
                let bodyLocal = bodyLocals[name], bodyLocal.isInitialized,
-               bodyLocal.symbol == local.symbol {
+               bodyLocal.symbol == local.symbol
+            {
                 locals[name] = (local.type, local.symbol, local.isMutable, true)
             }
         }
@@ -178,7 +179,8 @@ final class ControlFlowTypeChecker {
                    let thenLocal = thenLocals[name], thenLocal.isInitialized,
                    thenLocal.symbol == local.symbol,
                    let elseLocal = elseLocals[name], elseLocal.isInitialized,
-                   elseLocal.symbol == local.symbol {
+                   elseLocal.symbol == local.symbol
+                {
                     locals[name] = (local.type, local.symbol, local.isMutable, true)
                 }
             }
@@ -217,7 +219,7 @@ final class ControlFlowTypeChecker {
                     name: paramName,
                     fqName: [
                         interner.intern("__try_\(id.rawValue)_catch_\(index)"),
-                        paramName
+                        paramName,
                     ],
                     declSite: clause.range,
                     visibility: .internal

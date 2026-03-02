@@ -13,7 +13,7 @@ final class KIRLoweringContext {
     var currentImplicitReceiverExprID: KIRExprID?
     var currentImplicitReceiverSymbol: SymbolID?
     var loopControlStack: [(continueLabel: Int32, breakLabel: Int32, name: InternedString?)] = []
-    var nextLoopLabel: Int32 = 10_000
+    var nextLoopLabel: Int32 = 10000
 
     // MARK: - Module-Level State (accumulated across entire pass)
 
@@ -71,7 +71,7 @@ final class KIRLoweringContext {
         currentImplicitReceiverExprID = nil
         currentImplicitReceiverSymbol = nil
         loopControlStack.removeAll(keepingCapacity: true)
-        nextLoopLabel = 10_000
+        nextLoopLabel = 10000
     }
 
     // MARK: - Label Allocation
@@ -142,7 +142,6 @@ final class KIRLoweringContext {
     }
 
     // MARK: - Reset
-
 
     func registerCompanionInitializer(symbol: SymbolID, name: InternedString) {
         companionInitializerFunctions.append((symbol: symbol, name: name))

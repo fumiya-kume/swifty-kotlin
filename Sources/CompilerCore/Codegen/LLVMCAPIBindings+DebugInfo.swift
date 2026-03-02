@@ -1,16 +1,16 @@
 extension LLVMCAPIBindings {
     var debugInfoAvailable: Bool {
         createDIBuilderFn != nil &&
-        disposeDIBuilderFn != nil &&
-        diBuilderFinalizeFn != nil &&
-        diBuilderCreateFileFn != nil &&
-        diBuilderCreateCompileUnitFn != nil &&
-        diBuilderCreateSubroutineTypeFn != nil &&
-        diBuilderCreateFunctionFn != nil &&
-        setSubprogramFn != nil &&
-        addModuleFlagFn != nil &&
-        valueAsMetadataFn != nil &&
-        int32TypeFn != nil
+            disposeDIBuilderFn != nil &&
+            diBuilderFinalizeFn != nil &&
+            diBuilderCreateFileFn != nil &&
+            diBuilderCreateCompileUnitFn != nil &&
+            diBuilderCreateSubroutineTypeFn != nil &&
+            diBuilderCreateFunctionFn != nil &&
+            setSubprogramFn != nil &&
+            addModuleFlagFn != nil &&
+            valueAsMetadataFn != nil &&
+            int32TypeFn != nil
     }
 
     func createDIBuilder(module: LLVMModuleRef?) -> LLVMDIBuilderRef? {
@@ -156,9 +156,9 @@ extension LLVMCAPIBindings {
 
     var localVariableAvailable: Bool {
         diBuilderCreateBasicTypeFn != nil &&
-        diBuilderCreateParameterVariableFn != nil &&
-        diBuilderInsertDeclareAtEndFn != nil &&
-        diBuilderCreateExpressionFn != nil
+            diBuilderCreateParameterVariableFn != nil &&
+            diBuilderInsertDeclareAtEndFn != nil &&
+            diBuilderCreateExpressionFn != nil
     }
 
     func diBuilderCreateBasicType(
@@ -185,7 +185,7 @@ extension LLVMCAPIBindings {
         guard let diBuilderCreateParameterVariableFn else { return nil }
         return name.withCString { n in
             diBuilderCreateParameterVariableFn(
-                builder, scope, n, name.utf8.count, argNo, file, lineNo, type, 0, 0  // AlwaysPreserve=0, Flags=0
+                builder, scope, n, name.utf8.count, argNo, file, lineNo, type, 0, 0 // AlwaysPreserve=0, Flags=0
             )
         }
     }

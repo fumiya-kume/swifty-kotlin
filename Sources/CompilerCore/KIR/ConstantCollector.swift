@@ -3,7 +3,6 @@ import Foundation
 /// Stateless utility struct for collecting property constant initializers.
 /// No driver reference needed — all methods are pure functions.
 struct ConstantCollector {
-
     func collectPropertyConstantInitializers(
         ast: ASTModule,
         sema: SemaModule,
@@ -30,7 +29,7 @@ struct ConstantCollector {
     ) {
         guard let decl = ast.arena.decl(declID) else { return }
         switch decl {
-        case .propertyDecl(let property):
+        case let .propertyDecl(property):
             guard let symbol = sema.bindings.declSymbols[declID] else { return }
             // Mutable (var) properties must never be constant-folded because
             // their value can change at runtime via assignment.
@@ -71,14 +70,14 @@ struct ConstantCollector {
                     }
                 }
             }
-        case .classDecl(let classDecl):
+        case let .classDecl(classDecl):
             for memberDeclID in classDecl.memberProperties {
                 collectPropertyConstant(memberDeclID, ast: ast, sema: sema, interner: interner, source: source, mapping: &mapping)
             }
             for nestedDeclID in classDecl.nestedClasses + classDecl.nestedObjects {
                 collectPropertyConstant(nestedDeclID, ast: ast, sema: sema, interner: interner, source: source, mapping: &mapping)
             }
-        case .objectDecl(let objectDecl):
+        case let .objectDecl(objectDecl):
             for memberDeclID in objectDecl.memberProperties {
                 collectPropertyConstant(memberDeclID, ast: ast, sema: sema, interner: interner, source: source, mapping: &mapping)
             }
@@ -102,11 +101,12 @@ struct ConstantCollector {
         let pattern = #"(?m)^\s*(?:val|var)\s+\#(escapedPropertyName)\b[^\n]*\n\s*get\s*\(\s*\)\s*=\s*([^\n;]+)"#
         guard let regex = try? NSRegularExpression(pattern: pattern),
               let match = regex.firstMatch(
-                in: source,
-                range: NSRange(source.startIndex..<source.endIndex, in: source)
+                  in: source,
+                  range: NSRange(source.startIndex ..< source.endIndex, in: source)
               ),
               match.numberOfRanges >= 2,
-              let bodyRange = Range(match.range(at: 1), in: source) else {
+              let bodyRange = Range(match.range(at: 1), in: source)
+        else {
             return nil
         }
         let rawBody = source[bodyRange].trimmingCharacters(in: .whitespacesAndNewlines)
@@ -123,14 +123,15 @@ struct ConstantCollector {
         if rawBody.hasPrefix("\""), rawBody.hasSuffix("\""), rawBody.count >= 2 {
             let start = rawBody.index(after: rawBody.startIndex)
             let end = rawBody.index(before: rawBody.endIndex)
-            return .stringLiteral(interner.intern(String(rawBody[start..<end])))
+            return .stringLiteral(interner.intern(String(rawBody[start ..< end])))
         }
         return nil
     }
 
     func literalConstantExpr(property: PropertyDecl, ast: ASTModule) -> KIRExprKind? {
         if let initializer = property.initializer,
-           let literal = literalConstantExpr(initializer, ast: ast) {
+           let literal = literalConstantExpr(initializer, ast: ast)
+        {
             return literal
         }
         if let getter = property.getter {
@@ -141,15 +142,17 @@ struct ConstantCollector {
 
     func literalConstantExpr(getterBody: FunctionBody, ast: ASTModule) -> KIRExprKind? {
         switch getterBody {
-        case .expr(let exprID, _):
+        case let .expr(exprID, _):
             return literalConstantExpr(exprID, ast: ast)
-        case .block(let exprIDs, _):
+        case let .block(exprIDs, _):
             guard let lastExprID = exprIDs.last,
-                  let lastExpr = ast.arena.expr(lastExprID) else {
+                  let lastExpr = ast.arena.expr(lastExprID)
+            else {
                 return nil
             }
-            if case .returnExpr(let valueExprID, _, _) = lastExpr,
-               let valueExprID {
+            if case let .returnExpr(valueExprID, _, _) = lastExpr,
+               let valueExprID
+            {
                 return literalConstantExpr(valueExprID, ast: ast)
             }
             return literalConstantExpr(lastExprID, ast: ast)
@@ -163,21 +166,21 @@ struct ConstantCollector {
             return nil
         }
         switch expr {
-        case .intLiteral(let value, _):
+        case let .intLiteral(value, _):
             return .intLiteral(value)
-        case .longLiteral(let value, _):
+        case let .longLiteral(value, _):
             return .longLiteral(value)
-        case .floatLiteral(let value, _):
+        case let .floatLiteral(value, _):
             return .floatLiteral(value)
-        case .doubleLiteral(let value, _):
+        case let .doubleLiteral(value, _):
             return .doubleLiteral(value)
-        case .charLiteral(let value, _):
+        case let .charLiteral(value, _):
             return .charLiteral(value)
-        case .boolLiteral(let value, _):
+        case let .boolLiteral(value, _):
             return .boolLiteral(value)
-        case .stringLiteral(let value, _):
+        case let .stringLiteral(value, _):
             return .stringLiteral(value)
-        case .unaryExpr(let op, let operand, _):
+        case let .unaryExpr(op, operand, _):
             return literalConstantUnaryExpr(op: op, operand: operand, ast: ast)
         default:
             return nil
@@ -192,13 +195,13 @@ struct ConstantCollector {
         switch op {
         case .unaryMinus:
             switch inner {
-            case .intLiteral(let v):
+            case let .intLiteral(v):
                 return .intLiteral(-v)
-            case .longLiteral(let v):
+            case let .longLiteral(v):
                 return .longLiteral(-v)
-            case .floatLiteral(let v):
+            case let .floatLiteral(v):
                 return .floatLiteral(-v)
-            case .doubleLiteral(let v):
+            case let .doubleLiteral(v):
                 return .doubleLiteral(-v)
             default:
                 return nil
@@ -211,7 +214,7 @@ struct ConstantCollector {
                 return nil
             }
         case .not:
-            if case .boolLiteral(let v) = inner {
+            if case let .boolLiteral(v) = inner {
                 return .boolLiteral(!v)
             }
             return nil

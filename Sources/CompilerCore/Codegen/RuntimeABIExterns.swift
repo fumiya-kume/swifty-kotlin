@@ -13,7 +13,7 @@ public enum RuntimeABIExterns {
     public static let specVersion = "J17"
 
     /// A single extern function declaration for the C preamble.
-    public struct ExternDecl: Equatable {
+    public struct ExternDecl: Equatable, Sendable {
         public let name: String
         public let parameterTypes: [String]
         public let returnType: String
@@ -26,11 +26,10 @@ public enum RuntimeABIExterns {
 
         /// Generates the C extern declaration string.
         public var cExternDeclaration: String {
-            let params: String
-            if parameterTypes.isEmpty {
-                params = "void"
+            let params: String = if parameterTypes.isEmpty {
+                "void"
             } else {
-                params = parameterTypes.joined(separator: ", ")
+                parameterTypes.joined(separator: ", ")
             }
             return "extern \(returnType) \(name)(\(params));"
         }
@@ -62,6 +61,12 @@ public enum RuntimeABIExterns {
         name: "kk_throwable_new",
         parameterTypes: ["void * _Nullable"],
         returnType: "void *"
+    )
+
+    public static let kk_throwable_is_cancellation = ExternDecl(
+        name: "kk_throwable_is_cancellation",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
     )
 
     public static let kk_panic = ExternDecl(
@@ -577,6 +582,7 @@ public enum RuntimeABIExterns {
         kk_write_barrier,
         // Exception
         kk_throwable_new,
+        kk_throwable_is_cancellation,
         kk_panic,
         // String
         kk_string_from_utf8,

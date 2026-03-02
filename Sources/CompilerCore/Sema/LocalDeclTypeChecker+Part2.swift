@@ -1,7 +1,7 @@
 import Foundation
 
-/// Handles local declaration and assignment type inference.
-/// Derived from TypeCheckSemaPhase+InferDecls.swift.
+// Handles local declaration and assignment type inference.
+// Derived from TypeCheckSemaPhase+InferDecls.swift.
 
 extension LocalDeclTypeChecker {
     func inferIndexedCompoundAssignExpr(
@@ -54,7 +54,8 @@ extension LocalDeclTypeChecker {
                 ctx: ctx.semaCtx
             )
             if let chosen = resolved.chosenCallee,
-               let signature = sema.symbols.functionSignature(for: chosen) {
+               let signature = sema.symbols.functionSignature(for: chosen)
+            {
                 // Record the resolved get call so KIR lowering can dispatch correctly
                 sema.bindings.bindCall(
                     id,
@@ -95,14 +96,13 @@ extension LocalDeclTypeChecker {
 
         // Determine the result type of the compound binary operation
         let underlyingOp = driver.helpers.compoundAssignToBinaryOp(op)
-        let resultType: TypeID
-        switch underlyingOp {
+        let resultType: TypeID = switch underlyingOp {
         case .add:
-            resultType = (elementType == stringType || valueType == stringType) ? stringType : elementType
+            (elementType == stringType || valueType == stringType) ? stringType : elementType
         case .subtract, .multiply, .divide, .modulo:
-            resultType = elementType
+            elementType
         default:
-            resultType = elementType
+            elementType
         }
 
         // Emit constraint: value must be compatible with element type
@@ -146,11 +146,10 @@ extension LocalDeclTypeChecker {
         var parameterTypes: [TypeID] = []
         var paramSymbols: [SymbolID] = []
         for param in valueParams {
-            let paramType: TypeID
-            if let typeRefID = param.type {
-                paramType = driver.helpers.resolveTypeRef(typeRefID, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
+            let paramType: TypeID = if let typeRefID = param.type {
+                driver.helpers.resolveTypeRef(typeRefID, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
             } else {
-                paramType = sema.types.anyType
+                sema.types.anyType
             }
             parameterTypes.append(paramType)
             let paramSymbol = sema.symbols.define(
@@ -158,7 +157,7 @@ extension LocalDeclTypeChecker {
                 name: param.name,
                 fqName: [
                     interner.intern("__localfun_\(id.rawValue)"),
-                    param.name
+                    param.name,
                 ],
                 declSite: range,
                 visibility: .private,
@@ -168,11 +167,10 @@ extension LocalDeclTypeChecker {
             paramSymbols.append(paramSymbol)
         }
 
-        let resolvedReturnType: TypeID
-        if let returnTypeRef {
-            resolvedReturnType = driver.helpers.resolveTypeRef(returnTypeRef, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
+        let resolvedReturnType: TypeID = if let returnTypeRef {
+            driver.helpers.resolveTypeRef(returnTypeRef, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
         } else {
-            resolvedReturnType = sema.types.unitType
+            sema.types.unitType
         }
 
         let funSymbol = sema.symbols.define(
@@ -180,7 +178,7 @@ extension LocalDeclTypeChecker {
             name: name,
             fqName: [
                 interner.intern("__localfun_\(id.rawValue)"),
-                name
+                name,
             ],
             declSite: range,
             visibility: .private,
@@ -191,8 +189,8 @@ extension LocalDeclTypeChecker {
             parameterTypes: parameterTypes,
             returnType: resolvedReturnType,
             valueParameterSymbols: paramSymbols,
-            valueParameterHasDefaultValues: valueParams.map { $0.hasDefaultValue },
-            valueParameterIsVararg: valueParams.map { $0.isVararg }
+            valueParameterHasDefaultValues: valueParams.map(\.hasDefaultValue),
+            valueParameterIsVararg: valueParams.map(\.isVararg)
         )
         sema.symbols.setFunctionSignature(signature, for: funSymbol)
 
@@ -209,13 +207,13 @@ extension LocalDeclTypeChecker {
         }
         bodyLocals[name] = (funType, funSymbol, false, true)
         switch body {
-        case .block(let exprs, _):
+        case let .block(exprs, _):
             for (index, expr) in exprs.enumerated() {
                 let isLast = index == exprs.count - 1
                 let expected = isLast ? resolvedReturnType : nil
                 _ = driver.inferExpr(expr, ctx: ctx, locals: &bodyLocals, expectedType: expected)
             }
-        case .expr(let exprID, _):
+        case let .expr(exprID, _):
             _ = driver.inferExpr(exprID, ctx: ctx, locals: &bodyLocals, expectedType: resolvedReturnType)
         case .unit:
             break

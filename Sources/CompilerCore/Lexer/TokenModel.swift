@@ -1,6 +1,6 @@
 import Foundation
 
-public struct InternedString: Hashable {
+public struct InternedString: Hashable, Sendable {
     public let rawValue: Int32
 
     public static let invalid = InternedString(rawValue: -1)
@@ -35,78 +35,78 @@ public final class StringInterner: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         let index = Int(id.rawValue)
-        guard index >= 0 && index < values.count else {
+        guard index >= 0, index < values.count else {
             return ""
         }
         return values[index]
     }
 }
 
-public enum Keyword: String {
+public enum Keyword: String, Sendable {
     case `as`
     case `break`
     case `class`
     case `catch`
     case `continue`
-    case `data`
+    case data
     case `do`
     case `else`
     case `false`
-    case `dynamic`
+    case dynamic
     case `enum`
-    case `external`
+    case external
     case `for`
-    case `fun`
+    case fun
     case `if`
-    case `infix`
+    case infix
     case `in`
     case `is`
     case `import`
-    case `interface`
-    case `finally`
-    case `null`
+    case interface
+    case finally
+    case null
     case `operator`
-    case `object`
-    case `package`
+    case object
+    case package
     case `return`
     case `super`
-    case `this`
+    case this
     case `typealias`
     case `throw`
     case `true`
     case `try`
-    case `val`
+    case val
     case `var`
     case `while`
-    case `when`
-    case `sealed`
-    case `inner`
-    case `reified`
-    case `open`
+    case when
+    case sealed
+    case inner
+    case reified
+    case open
     case `private`
     case `public`
-    case `protected`
+    case protected
     case `internal`
-    case `override`
-    case `final`
-    case `abstract`
-    case `suspend`
-    case `inline`
-    case `expect`
-    case `actual`
-    case `constructor`
-    case `companion`
-    case `annotation`
-    case `const`
-    case `crossinline`
-    case `lateinit`
-    case `noinline`
-    case `tailrec`
-    case `vararg`
+    case override
+    case final
+    case abstract
+    case suspend
+    case inline
+    case expect
+    case actual
+    case constructor
+    case companion
+    case annotation
+    case const
+    case crossinline
+    case lateinit
+    case noinline
+    case tailrec
+    case vararg
     case value
 }
 
-public enum SoftKeyword: String {
+public enum SoftKeyword: String, Sendable {
     case by
     case get
     case set
@@ -119,12 +119,12 @@ public enum SoftKeyword: String {
     case file
     case `where`
     case `init`
-    case `constructor`
-    case `out`
-    case `when`
+    case constructor
+    case out
+    case when
 }
 
-public enum Symbol: String {
+public enum Symbol: String, Sendable {
     case plus = "+"
     case minus = "-"
     case star = "*"
@@ -172,7 +172,7 @@ public enum Symbol: String {
     case hash = "#"
 }
 
-public enum TriviaPiece: Equatable {
+public enum TriviaPiece: Equatable, Sendable {
     case spaces(Int)
     case tabs(Int)
     case newline
@@ -181,7 +181,7 @@ public enum TriviaPiece: Equatable {
     case shebang(String)
 }
 
-public enum TokenKind: Equatable {
+public enum TokenKind: Equatable, Sendable {
     case identifier(InternedString)
     case backtickedIdentifier(InternedString)
     case keyword(Keyword)
@@ -202,7 +202,7 @@ public enum TokenKind: Equatable {
     indirect case missing(expected: TokenKind)
 }
 
-public struct Token: Equatable {
+public struct Token: Equatable, Sendable {
     public let kind: TokenKind
     public let range: SourceRange
     public let leadingTrivia: [TriviaPiece]

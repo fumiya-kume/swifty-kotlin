@@ -1,55 +1,55 @@
-import Foundation
 import Dispatch
+import Foundation
 
-internal func runtimeContinuationState(from continuation: Int) -> RuntimeContinuationState? {
+func runtimeContinuationState(from continuation: Int) -> RuntimeContinuationState? {
     guard let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) else {
         return nil
     }
     return Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
 }
 
-internal func suspendEntryPoint(from rawValue: Int) -> KKSuspendEntryPoint? {
+func suspendEntryPoint(from rawValue: Int) -> KKSuspendEntryPoint? {
     guard rawValue != 0 else {
         return nil
     }
     return unsafeBitCast(rawValue, to: KKSuspendEntryPoint.self)
 }
 
-internal func runtimeArrayBox(from rawValue: Int) -> RuntimeArrayBox? {
+func runtimeArrayBox(from rawValue: Int) -> RuntimeArrayBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }
-    RuntimeStorage.lock.lock()
-    let isObjectPointer = RuntimeStorage.objectPointers.contains(UInt(bitPattern: ptr))
-    RuntimeStorage.lock.unlock()
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
     guard isObjectPointer else {
         return nil
     }
     return tryCast(ptr, to: RuntimeArrayBox.self)
 }
 
-internal func runtimeAllocateThrowable(message: String) -> Int {
+func runtimeAllocateThrowable(message: String) -> Int {
     let throwable = RuntimeThrowableBox(message: message)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(throwable).toOpaque())
-    RuntimeStorage.lock.lock()
-    RuntimeStorage.objectPointers.insert(UInt(bitPattern: ptr))
-    RuntimeStorage.lock.unlock()
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: ptr))
+    }
     return Int(bitPattern: ptr)
 }
 
-internal func tryCast<T: AnyObject>(_ ptr: UnsafeMutableRawPointer, to type: T.Type) -> T? {
+func tryCast<T: AnyObject>(_ ptr: UnsafeMutableRawPointer, to _: T.Type) -> T? {
     let unmanaged = Unmanaged<AnyObject>.fromOpaque(ptr)
     let anyObject = unmanaged.takeUnretainedValue()
     return anyObject as? T
 }
 
-internal func extractString(from ptr: UnsafeMutableRawPointer?) -> String? {
+func extractString(from ptr: UnsafeMutableRawPointer?) -> String? {
     guard let ptr = normalizeNullableRuntimePointer(ptr) else {
         return nil
     }
-    RuntimeStorage.lock.lock()
-    let isObjectPointer = RuntimeStorage.objectPointers.contains(UInt(bitPattern: ptr))
-    RuntimeStorage.lock.unlock()
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
     guard isObjectPointer else {
         return nil
     }
@@ -59,10 +59,10 @@ internal func extractString(from ptr: UnsafeMutableRawPointer?) -> String? {
     return box.value
 }
 
-internal let runtimeNullSentinelInt64 = Int64.min
-internal let runtimeNullSentinelInt = Int(truncatingIfNeeded: runtimeNullSentinelInt64)
+let runtimeNullSentinelInt64 = Int64.min
+let runtimeNullSentinelInt = Int(truncatingIfNeeded: runtimeNullSentinelInt64)
 
-internal func normalizeNullableRuntimePointer(_ ptr: UnsafeMutableRawPointer?) -> UnsafeMutableRawPointer? {
+func normalizeNullableRuntimePointer(_ ptr: UnsafeMutableRawPointer?) -> UnsafeMutableRawPointer? {
     guard let ptr else {
         return nil
     }
@@ -95,10 +95,10 @@ public enum KxMiniRuntime {
     }
 
     public static func launch(_ block: @escaping () -> Void) {
-        DispatchQueue.global().async(execute: block)
+        DispatchQueue.global().async(execute: DispatchWorkItem(block: block))
     }
 
-    public static func `async`(_ block: @escaping () -> UnsafeMutableRawPointer?) -> KKContinuation {
+    public static func async(_ block: @escaping () -> UnsafeMutableRawPointer?) -> KKContinuation {
         KKDispatchContinuation(context: nil) { _ in
             _ = block()
         }

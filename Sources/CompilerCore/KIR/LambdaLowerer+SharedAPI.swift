@@ -10,8 +10,7 @@ extension LambdaLowerer {
         shared: KIRLoweringSharedContext,
         emit instructions: inout KIRLoweringEmitContext
     ) -> KIRExprID {
-        var old = Array(instructions)
-        let result = lowerLambdaLiteralExpr(
+        lowerLambdaLiteralExpr(
             exprID,
             params: params,
             bodyExpr: bodyExpr,
@@ -20,10 +19,8 @@ extension LambdaLowerer {
             arena: shared.arena,
             interner: shared.interner,
             propertyConstantInitializers: shared.propertyConstantInitializers,
-            instructions: &old
+            instructions: &instructions.instructions
         )
-        instructions = KIRLoweringEmitContext(old)
-        return result
     }
 
     func lowerCallableRefExpr(
@@ -33,8 +30,7 @@ extension LambdaLowerer {
         shared: KIRLoweringSharedContext,
         emit instructions: inout KIRLoweringEmitContext
     ) -> KIRExprID {
-        var old = Array(instructions)
-        let result = lowerCallableRefExpr(
+        lowerCallableRefExpr(
             exprID,
             receiverExpr: receiverExpr,
             memberName: memberName,
@@ -43,9 +39,7 @@ extension LambdaLowerer {
             arena: shared.arena,
             interner: shared.interner,
             propertyConstantInitializers: shared.propertyConstantInitializers,
-            instructions: &old
+            instructions: &instructions.instructions
         )
-        instructions = KIRLoweringEmitContext(old)
-        return result
     }
 }

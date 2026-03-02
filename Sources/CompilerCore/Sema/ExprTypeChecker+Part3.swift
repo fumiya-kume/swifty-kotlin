@@ -1,18 +1,19 @@
 import Foundation
 
-/// Handles expression type inference dispatch and specific expression cases.
-/// Derived from TypeCheckSemaPhase+ExprInference.swift and TypeCheckSemaPhase+ExprInferCases.swift.
+// Handles expression type inference dispatch and specific expression cases.
+// Derived from TypeCheckSemaPhase+ExprInference.swift and TypeCheckSemaPhase+ExprInferCases.swift.
 
 extension ExprTypeChecker {
     func applyFlowStateToLocals(
         _ state: DataFlowState,
         locals: inout LocalBindings,
-        sema: SemaModule
+        sema _: SemaModule
     ) {
         for (name, local) in locals {
             guard let varState = state.variables[local.symbol],
                   varState.possibleTypes.count == 1,
-                  let narrowed = varState.possibleTypes.first else {
+                  let narrowed = varState.possibleTypes.first
+            else {
                 continue
             }
             locals[name] = (narrowed, local.symbol, local.isMutable, local.isInitialized)
@@ -45,32 +46,31 @@ extension ExprTypeChecker {
 
         let lhs = driver.inferExpr(lhsID, ctx: ctx, locals: &locals)
         let rhs = driver.inferExpr(rhsID, ctx: ctx, locals: &locals)
-        let lhsIsPrimitive: Bool
-        if case .primitive = sema.types.kind(of: lhs) { lhsIsPrimitive = true } else { lhsIsPrimitive = false }
-        let operatorName = driver.helpers.binaryOperatorFunctionName(for: op, interner: interner)
+        let lhsIsPrimitive = if case .primitive = sema.types.kind(of: lhs) { true } else { false }
+        let operatorName = interner.intern(op.kotlinFunctionName)
         let memberOperatorCandidates = lhsIsPrimitive ? [] : driver.helpers.collectMemberFunctionCandidates(
             named: operatorName,
             receiverType: lhs,
             sema: sema
         )
-        let operatorCandidates: [SymbolID]
-        if !memberOperatorCandidates.isEmpty {
-            operatorCandidates = memberOperatorCandidates
+        let operatorCandidates: [SymbolID] = if !memberOperatorCandidates.isEmpty {
+            memberOperatorCandidates
         } else if !lhsIsPrimitive {
-            operatorCandidates = ctx.cachedScopeLookup(operatorName).filter { candidate in
+            ctx.cachedScopeLookup(operatorName).filter { candidate in
                 guard let symbol = ctx.cachedSymbol(candidate),
                       symbol.kind == .function,
-                      let signature = sema.symbols.functionSignature(for: candidate) else {
+                      let signature = sema.symbols.functionSignature(for: candidate)
+                else {
                     return false
                 }
                 return signature.receiverType != nil
             }
         } else {
-            operatorCandidates = []
+            []
         }
         let lhsIsAny = lhs == sema.types.anyType || lhs == sema.types.nullableAnyType
         let rhsIsAny = rhs == sema.types.anyType || rhs == sema.types.nullableAnyType
-        if !lhsIsPrimitive && !lhsIsAny && !rhsIsAny && operatorCandidates.isEmpty && lhs != sema.types.errorType && rhs != sema.types.errorType {
+        if !lhsIsPrimitive, !lhsIsAny, !rhsIsAny, operatorCandidates.isEmpty, lhs != sema.types.errorType, rhs != sema.types.errorType {
             switch op {
             case .add, .subtract, .multiply, .divide, .modulo:
                 ctx.semaCtx.diagnostics.error(
@@ -97,14 +97,14 @@ extension ExprTypeChecker {
                 ctx: ctx.semaCtx
             )
             if let diagnostic = resolved.diagnostic {
-                if lhs != sema.types.errorType && rhs != sema.types.errorType {
+                if lhs != sema.types.errorType, rhs != sema.types.errorType {
                     ctx.semaCtx.diagnostics.emit(diagnostic)
                 }
                 sema.bindings.bindExprType(id, type: sema.types.errorType)
                 return sema.types.errorType
             }
             guard let chosen = resolved.chosenCallee else {
-                if lhs != sema.types.errorType && rhs != sema.types.errorType {
+                if lhs != sema.types.errorType, rhs != sema.types.errorType {
                     ctx.semaCtx.diagnostics.error(
                         "KSWIFTK-SEMA-0002",
                         "No viable overload found for operator '\(interner.resolve(operatorName))'.",
@@ -118,12 +118,11 @@ extension ExprTypeChecker {
             // compareTo desugaring: comparison operators (<, <=, >, >=) that resolve
             // to a compareTo method should produce Bool, not the compareTo return type (Int).
             // The KIR lowerer will emit: compareTo(a, b) <op> 0
-            let effectiveType: TypeID
-            switch op {
+            let effectiveType: TypeID = switch op {
             case .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
-                effectiveType = boolType
+                boolType
             default:
-                effectiveType = returnType
+                returnType
             }
             sema.bindings.bindExprType(id, type: effectiveType)
             return effectiveType
@@ -192,11 +191,13 @@ extension ExprTypeChecker {
             type = sema.types.lub([nonNullLhs, rhs])
             // Smart cast: `x ?: return` / `x ?: throw` narrows x to non-null (P5-66)
             if let rhsExpr = ast.arena.expr(rhsID),
-               driver.helpers.isTerminatingExpr(rhsExpr) {
+               driver.helpers.isTerminatingExpr(rhsExpr)
+            {
                 if let lhsExpr = ast.arena.expr(lhsID),
-                   case .nameRef(let elvisVarName, _) = lhsExpr,
+                   case let .nameRef(elvisVarName, _) = lhsExpr,
                    let elvisLocal = locals[elvisVarName],
-                   driver.helpers.isStableLocalSymbol(elvisLocal.symbol, sema: sema) {
+                   driver.helpers.isStableLocalSymbol(elvisLocal.symbol, sema: sema)
+                {
                     let nonNullType = sema.types.makeNonNullable(elvisLocal.type)
                     locals[elvisVarName] = (nonNullType, elvisLocal.symbol, elvisLocal.isMutable, elvisLocal.isInitialized)
                 }
@@ -219,5 +220,4 @@ extension ExprTypeChecker {
     }
 
     // MARK: - Compound Assignment
-
 }

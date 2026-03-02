@@ -14,7 +14,7 @@ swift build -c release                   # Release build
 bash Scripts/swift_test.sh                               # Run all tests (parallel by default)
 bash Scripts/swift_test.sh --filter SmokeTests           # Quick smoke tests
 bash Scripts/swift_test.sh --filter GoldenHarnessTests   # Golden (snapshot) tests
-bash Scripts/swift_test.sh --filter CompilerCoreTests.LoweringPassCoverageTests  # Single test class
+bash Scripts/swift_test.sh --filter CompilerCoreTests.LoweringPassRegressionTests  # Single test class
 .build/debug/kswiftc path/to/file.kt -o out  # Run the compiler
 ```
 
@@ -90,15 +90,15 @@ Source files are grouped into subdirectories that mirror the compiler pipeline:
 
 | Directory | Key Test Files | Covers |
 |-----------|---------------|--------|
-| `Lexer/` | `TokenModelTests`, `TokenStreamTests`, `LexerParserCoverageTests` | Tokenization |
+| `Lexer/` | `TokenModelTests`, `TokenStreamTests`, `LexerParserEdgeCaseTests` | Tokenization |
 | `Parser/` | `SyntaxArenaTests` | CST construction |
-| `AST/` | `ASTModelsTests`, `BuildASTCoverageTests`, `BlockExpressionTests` | AST building |
+| `AST/` | `ASTModelsTests`, `BuildASTBodyParsingRegressionTests`, `BlockExpressionTests` | AST building |
 | `Sema/` | `ConstraintSolverTests`, `OverloadResolverTests`, `DataFlowAnalyzerTests`, `TypeSystemTests`, `SymbolTableTests`, etc. | Semantic analysis |
-| `KIR/` | `BuildKIRCoverageTests`, `KIRModelsCoverageTests`, `SuperCallAndQualifiedThisTests` | KIR construction |
-| `Lowering/` | `LoweringPassCoverageTests`, `VirtualDispatchTests` | Desugaring passes |
-| `Codegen/` | `CodegenAndBackendCoverageTests`, `LinkPhaseCoverageTests`, `NameManglerTests` | Code generation & linking |
+| `KIR/` | `BuildKIRRegressionTests`, `KIRModelsBehaviorTests`, `SuperCallAndQualifiedThisTests` | KIR construction |
+| `Lowering/` | `LoweringPassRegressionTests`, `VirtualDispatchTests` | Desugaring passes |
+| `Codegen/` | `CodegenBackendIntegrationTests`, `LinkPhaseIntegrationTests`, `NameManglerTests` | Code generation & linking |
 | `Driver/` | `DriverTests`, `DiagnosticEngineTests`, `SourceLocationTests`, `SourceManagerTests` | Driver & infrastructure |
-| `Integration/` | `SmokeTests`, `CompilerCoreTests`, `GoldenHarnessTests`, `DeepPhaseCoverageTests`, `TestSupport` | End-to-end & cross-cutting |
+| `Integration/` | `SmokeTests`, `CompilerCoreTests`, `GoldenHarnessTests`, `DeepPhasePipelineIntegrationTests`, `TestSupport` | End-to-end & cross-cutting |
 
 - **Golden tests**: `.kt` input files in `Tests/CompilerCoreTests/GoldenCases/{Lexer,Parser,Sema}/`
 - **kotlinc regression tests**: Kotlin files in `Scripts/diff_cases/` compared against official `kotlinc` output

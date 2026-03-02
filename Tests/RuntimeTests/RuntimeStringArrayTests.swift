@@ -1,10 +1,10 @@
-import XCTest
 @testable import Runtime
+import XCTest
 
 #if canImport(Glibc)
-import Glibc
+    import Glibc
 #elseif canImport(Darwin)
-import Darwin
+    import Darwin
 #endif
 
 final class RuntimeStringArrayTests: XCTestCase {
@@ -21,10 +21,10 @@ final class RuntimeStringArrayTests: XCTestCase {
     private func capturePrintln(_ block: () -> Void) -> String {
         let pipe = Pipe()
         let savedFD = dup(STDOUT_FILENO)
-        fflush(stdout)
+        fflush(nil)
         dup2(pipe.fileHandleForWriting.fileDescriptor, STDOUT_FILENO)
         block()
-        fflush(stdout)
+        fflush(nil)
         dup2(savedFD, STDOUT_FILENO)
         close(savedFD)
         pipe.fileHandleForWriting.closeFile()
@@ -129,6 +129,16 @@ final class RuntimeStringArrayTests: XCTestCase {
         XCTAssertNotNil(throwable)
         let output = capturePrintln { kk_println_any(throwable) }
         XCTAssertTrue(output.contains("Throwable"))
+    }
+
+    func testThrowableIsCancellationReturnsFalseForNil() {
+        XCTAssertEqual(kk_throwable_is_cancellation(0), 0)
+    }
+
+    func testThrowableIsCancellationReturnsFalseForRegularThrowable() {
+        let throwable = kk_throwable_new(makeRuntimeString("not cancellation"))
+        let raw = Int(bitPattern: throwable)
+        XCTAssertEqual(kk_throwable_is_cancellation(raw), 0)
     }
 
     // MARK: - kk_array_new

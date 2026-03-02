@@ -1,5 +1,28 @@
 import Foundation
 
+/// Returns (getCallee, setCallee) for a delegate kind. Lazy is read-only so setCallee is nil.
+private func delegateAccessorCallees(
+    kind: StdlibDelegateKind,
+    lazyGetValueName: InternedString,
+    observableGetValueName: InternedString,
+    observableSetValueName: InternedString,
+    vetoableGetValueName: InternedString,
+    vetoableSetValueName: InternedString,
+    customGetValueName: InternedString,
+    customSetValueName: InternedString
+) -> (getCallee: InternedString, setCallee: InternedString?) {
+    switch kind {
+    case .lazy:
+        (lazyGetValueName, nil)
+    case .observable:
+        (observableGetValueName, observableSetValueName)
+    case .vetoable:
+        (vetoableGetValueName, vetoableSetValueName)
+    case .custom:
+        (customGetValueName, customSetValueName)
+    }
+}
+
 /// Delegate kinds recognized by the compiler (P5-80, P5-79).
 enum StdlibDelegateKind: Equatable {
     case lazy
@@ -31,7 +54,6 @@ final class StdlibDelegateLoweringPass: LoweringPass {
         let vetoableCreateName = interner.intern("kk_vetoable_create")
         let vetoableGetValueName = interner.intern("kk_vetoable_get_value")
         let vetoableSetValueName = interner.intern("kk_vetoable_set_value")
-        let customDelegateCreateName = interner.intern("kk_custom_delegate_create")
         let customGetValueName = interner.intern("kk_custom_delegate_get_value")
         let customSetValueName = interner.intern("kk_custom_delegate_set_value")
 
@@ -50,21 +72,23 @@ final class StdlibDelegateLoweringPass: LoweringPass {
             module.arena.transformFunctions { function in
                 let body = function.body
                 for (index, instruction) in body.enumerated() {
-                    guard case .call(_, let callee, _, _, _, _, _) = instruction else {
+                    guard case let .call(_, callee, _, _, _, _, _) = instruction else {
                         continue
                     }
                     let nextIndex = index + 1
                     guard nextIndex < body.count,
-                          case .copy(_, let to) = body[nextIndex],
+                          case let .copy(_, to) = body[nextIndex],
                           let toExpr = module.arena.expr(to),
-                          case .symbolRef(let targetSym) = toExpr,
+                          case let .symbolRef(targetSym) = toExpr,
                           let targetSymInfo = sema.symbols.symbol(targetSym),
-                          targetSymInfo.kind == .field else {
+                          targetSymInfo.kind == .field
+                    else {
                         continue
                     }
                     let fieldName = interner.resolve(targetSymInfo.name)
                     guard fieldName.hasPrefix("$delegate_"),
-                          delegateKindByFieldName[fieldName] == nil else {
+                          delegateKindByFieldName[fieldName] == nil
+                    else {
                         continue
                     }
                     // Try to determine kind from the callee name directly.
@@ -91,7 +115,7 @@ final class StdlibDelegateLoweringPass: LoweringPass {
             loweredBody.reserveCapacity(function.body.count)
 
             for instruction in function.body {
-                guard case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult, let isSuperCall) = instruction else {
+                guard case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall) = instruction else {
                     loweredBody.append(instruction)
                     continue
                 }
@@ -100,14 +124,16 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                 guard callee == propertyAccessName,
                       let sym = symbol,
                       let symInfo = sema?.symbols.symbol(sym),
-                      symInfo.kind == .field else {
+                      symInfo.kind == .field
+                else {
                     loweredBody.append(instruction)
                     continue
                 }
 
                 let symName = interner.resolve(symInfo.name)
                 guard symName.hasPrefix("$delegate_"),
-                      let delegateKind = delegateKindByFieldName[symName] else {
+                      let delegateKind = delegateKindByFieldName[symName]
+                else {
                     loweredBody.append(instruction)
                     continue
                 }
@@ -124,9 +150,10 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                 // (not in the arena expression which is .temporary), so scan
                 // backward through already-lowered instructions to find it.
                 for prev in loweredBody.reversed() {
-                    if case .constValue(let result, let value) = prev,
+                    if case let .constValue(result, value) = prev,
                        result == isSetterExprID,
-                       case .boolLiteral(let v) = value {
+                       case let .boolLiteral(v) = value
+                    {
                         isSetter = v
                         break
                     }
@@ -136,102 +163,36 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                 let delegateRef = module.arena.appendExpr(.symbolRef(sym), type: nil)
                 loweredBody.append(.constValue(result: delegateRef, value: .symbolRef(sym)))
 
-                switch delegateKind {
-                case .lazy:
-                    // lazy delegates are read-only: always emit kk_lazy_get_value.
-                    loweredBody.append(
-                        .call(
-                            symbol: sym,
-                            callee: lazyGetValueName,
-                            arguments: [delegateRef],
-                            result: result,
-                            canThrow: canThrow,
-                            thrownResult: thrownResult,
-                            isSuperCall: isSuperCall
-                        )
-                    )
-
-                case .observable:
-                    if isSetter, arguments.count >= 2 {
-                        loweredBody.append(
-                            .call(
-                                symbol: sym,
-                                callee: observableSetValueName,
-                                arguments: [delegateRef, arguments[1]],
-                                result: result,
-                                canThrow: canThrow,
-                                thrownResult: thrownResult,
-                                isSuperCall: isSuperCall
-                            )
-                        )
-                    } else {
-                        loweredBody.append(
-                            .call(
-                                symbol: sym,
-                                callee: observableGetValueName,
-                                arguments: [delegateRef],
-                                result: result,
-                                canThrow: canThrow,
-                                thrownResult: thrownResult,
-                                isSuperCall: isSuperCall
-                            )
-                        )
-                    }
-
-                case .vetoable:
-                    if isSetter, arguments.count >= 2 {
-                        loweredBody.append(
-                            .call(
-                                symbol: sym,
-                                callee: vetoableSetValueName,
-                                arguments: [delegateRef, arguments[1]],
-                                result: result,
-                                canThrow: canThrow,
-                                thrownResult: thrownResult,
-                                isSuperCall: isSuperCall
-                            )
-                        )
-                    } else {
-                        loweredBody.append(
-                            .call(
-                                symbol: sym,
-                                callee: vetoableGetValueName,
-                                arguments: [delegateRef],
-                                result: result,
-                                canThrow: canThrow,
-                                thrownResult: thrownResult,
-                                isSuperCall: isSuperCall
-                            )
-                        )
-                    }
-
-                case .custom:
-                    if isSetter, arguments.count >= 2 {
-                        loweredBody.append(
-                            .call(
-                                symbol: sym,
-                                callee: customSetValueName,
-                                arguments: [delegateRef, arguments[1]],
-                                result: result,
-                                canThrow: canThrow,
-                                thrownResult: thrownResult,
-                                isSuperCall: isSuperCall
-                            )
-                        )
-                    } else {
-                        loweredBody.append(
-                            .call(
-                                symbol: sym,
-                                callee: customGetValueName,
-                                arguments: [delegateRef],
-                                result: result,
-                                canThrow: canThrow,
-                                thrownResult: thrownResult,
-                                isSuperCall: isSuperCall
-                            )
-                        )
-                    }
+                let (getCallee, setCallee) = delegateAccessorCallees(
+                    kind: delegateKind,
+                    lazyGetValueName: lazyGetValueName,
+                    observableGetValueName: observableGetValueName,
+                    observableSetValueName: observableSetValueName,
+                    vetoableGetValueName: vetoableGetValueName,
+                    vetoableSetValueName: vetoableSetValueName,
+                    customGetValueName: customGetValueName,
+                    customSetValueName: customSetValueName
+                )
+                let accessorCallee: InternedString
+                let callArgs: [KIRExprID]
+                if isSetter, arguments.count >= 2, let setCallee {
+                    accessorCallee = setCallee
+                    callArgs = [delegateRef, arguments[1]]
+                } else {
+                    accessorCallee = getCallee
+                    callArgs = [delegateRef]
                 }
+                loweredBody.append(
+                    .call(
+                        symbol: sym,
+                        callee: accessorCallee,
+                        arguments: callArgs,
+                        result: result,
+                        canThrow: canThrow,
+                        thrownResult: thrownResult,
+                        isSuperCall: isSuperCall
+                    )
+                )
             }
 
             // Second pass: rewrite delegate initialization sequences.
@@ -247,17 +208,19 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                     continue
                 }
 
-                if case .call(_, _, let callArgs, let callResult, _, _, _) = instruction {
+                if case let .call(_, _, callArgs, callResult, _, _, _) = instruction {
                     let nextIndex = index + 1
                     if nextIndex < loweredBody.count,
-                       case .copy(_, let to) = loweredBody[nextIndex],
+                       case let .copy(_, to) = loweredBody[nextIndex],
                        let toExpr = module.arena.expr(to),
-                       case .symbolRef(let targetSym) = toExpr,
+                       case let .symbolRef(targetSym) = toExpr,
                        let targetSymInfo = sema?.symbols.symbol(targetSym),
-                       targetSymInfo.kind == .field {
+                       targetSymInfo.kind == .field
+                    {
                         let targetName = interner.resolve(targetSymInfo.name)
                         if targetName.hasPrefix("$delegate_"),
-                           let kind = delegateKindByFieldName[targetName] {
+                           let kind = delegateKindByFieldName[targetName]
+                        {
                             switch kind {
                             case .lazy:
                                 guard !callArgs.isEmpty else { break }
@@ -289,7 +252,7 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                                 skipNext = true
                                 continue
                             case .observable:
-                                if let callResult {
+                                if callResult != nil {
                                     // Original factory call (Delegates.observable(...))
                                     // is intentionally NOT emitted — synthetic stub only.
                                     // kk_observable_create(initialValue, callbackFnPtr)
@@ -316,7 +279,7 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                                     continue
                                 }
                             case .vetoable:
-                                if let callResult {
+                                if callResult != nil {
                                     // Original factory call (Delegates.vetoable(...))
                                     // is intentionally NOT emitted — synthetic stub only.
                                     // kk_vetoable_create(initialValue, callbackFnPtr)
@@ -362,11 +325,10 @@ final class StdlibDelegateLoweringPass: LoweringPass {
     /// Returns the delegate kind for a known factory function name, or nil.
     private func delegateFactoryKind(_ name: String) -> StdlibDelegateKind? {
         switch name {
-        case "lazy": return .lazy
-        case "observable": return .observable
-        case "vetoable": return .vetoable
-        default: return nil
+        case "lazy": .lazy
+        case "observable": .observable
+        case "vetoable": .vetoable
+        default: nil
         }
     }
-
 }

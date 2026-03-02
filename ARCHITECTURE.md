@@ -108,15 +108,15 @@ LoadSources --> Lex --> Parse --> BuildAST --> SemaPasses --> BuildKIR --> Lower
 ```text
 Tests/
  +-- CompilerCoreTests/
- |    +-- Lexer/          # TokenModelTests, TokenStreamTests, LexerParserCoverageTests
+ |    +-- Lexer/          # TokenModelTests, TokenStreamTests, LexerParserEdgeCaseTests
  |    +-- Parser/         # SyntaxArenaTests
- |    +-- AST/            # ASTModelsTests, BuildASTCoverageTests, BlockExpressionTests
+ |    +-- AST/            # ASTModelsTests, BuildASTBodyParsingRegressionTests, BlockExpressionTests
  |    +-- Sema/           # ConstraintSolverTests, OverloadResolverTests, TypeSystemTests, ...
- |    +-- KIR/            # BuildKIRCoverageTests, KIRModelsCoverageTests, ...
- |    +-- Lowering/       # LoweringPassCoverageTests, VirtualDispatchTests, ...
- |    +-- Codegen/        # CodegenAndBackendCoverageTests, LinkPhaseCoverageTests, NameManglerTests
+ |    +-- KIR/            # BuildKIRRegressionTests, KIRModelsBehaviorTests, ...
+ |    +-- Lowering/       # LoweringPassRegressionTests, VirtualDispatchTests, ...
+ |    +-- Codegen/        # CodegenBackendIntegrationTests, LinkPhaseIntegrationTests, NameManglerTests
  |    +-- Driver/         # DriverTests, DiagnosticEngineTests, SourceLocationTests, ...
- |    +-- Integration/    # SmokeTests, CompilerCoreTests, GoldenHarnessTests, DeepPhaseCoverageTests
+ |    +-- Integration/    # SmokeTests, CompilerCoreTests, GoldenHarnessTests, DeepPhasePipelineIntegrationTests
  |    +-- GoldenCases/    # .kt スナップショットフィクスチャ (Lexer/, Parser/, Sema/)
  +-- RuntimeTests/        # ランタイムユニットテスト
 ```

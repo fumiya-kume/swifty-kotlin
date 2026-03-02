@@ -1,8 +1,8 @@
 import Foundation
 #if canImport(Darwin)
-import Darwin
+    import Darwin
 #elseif canImport(Glibc)
-import Glibc
+    import Glibc
 #endif
 
 extension LLVMCAPIBindings {
@@ -22,7 +22,7 @@ extension LLVMCAPIBindings {
             "libLLVM.dylib",
             "/usr/lib/x86_64-linux-gnu/libLLVM-15.so",
             "/usr/lib/x86_64-linux-gnu/libLLVM.so",
-            "libLLVM.so"
+            "libLLVM.so",
         ])
         return deduplicated(candidates)
     }
@@ -71,7 +71,8 @@ extension LLVMCAPIBindings {
                   let emitToFile = loadSymbol(handle: handle, name: "LLVMTargetMachineEmitToFile", as: LLVMTargetMachineEmitToFileFn.self),
                   let createTargetDataLayout = loadSymbol(handle: handle, name: "LLVMCreateTargetDataLayout", as: LLVMCreateTargetDataLayoutFn.self),
                   let copyStringRepOfTargetData = loadSymbol(handle: handle, name: "LLVMCopyStringRepOfTargetData", as: LLVMCopyStringRepOfTargetDataFn.self),
-                  let disposeTargetData = loadSymbol(handle: handle, name: "LLVMDisposeTargetData", as: LLVMDisposeTargetDataFn.self) else {
+                  let disposeTargetData = loadSymbol(handle: handle, name: "LLVMDisposeTargetData", as: LLVMDisposeTargetDataFn.self)
+            else {
                 dlclose(handle)
                 continue
             }
@@ -172,7 +173,7 @@ extension LLVMCAPIBindings {
         return nil
     }
 
-    internal static func loadSymbol<T>(
+    static func loadSymbol<T>(
         handle: UnsafeMutableRawPointer,
         name: String,
         as type: T.Type
@@ -183,7 +184,7 @@ extension LLVMCAPIBindings {
         return unsafeBitCast(symbol, to: type)
     }
 
-    internal static func deduplicated(_ values: [String]) -> [String] {
+    static func deduplicated(_ values: [String]) -> [String] {
         var seen: Set<String> = []
         var ordered: [String] = []
         for value in values where seen.insert(value).inserted {

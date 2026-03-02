@@ -1,9 +1,8 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 final class CollectionLiteralLoweringTests: XCTestCase {
-
     // MARK: - Helper
 
     private func makeKIRContext(interner: StringInterner) -> KIRContext {
@@ -32,7 +31,7 @@ final class CollectionLiteralLoweringTests: XCTestCase {
             returnType: TypeSystem().unitType,
             body: [
                 .call(symbol: nil, callee: callee, arguments: [v0], result: v1, canThrow: false, thrownResult: nil),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -47,7 +46,7 @@ final class CollectionLiteralLoweringTests: XCTestCase {
     }
 
     private func calleesInDecl(_ declID: KIRDeclID, module: KIRModule, interner: StringInterner) -> [String] {
-        guard case .function(let fn) = module.arena.decl(declID) else { return [] }
+        guard case let .function(fn) = module.arena.decl(declID) else { return [] }
         return extractCallees(from: fn.body, interner: interner)
     }
 
@@ -126,7 +125,7 @@ final class CollectionLiteralLoweringTests: XCTestCase {
             returnType: TypeSystem().unitType,
             body: [
                 .call(symbol: nil, callee: interner.intern("mapOf"), arguments: [v0, v1, v2, v3], result: v3, canThrow: false, thrownResult: nil),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -171,7 +170,7 @@ final class CollectionLiteralLoweringTests: XCTestCase {
             returnType: TypeSystem().unitType,
             body: [
                 .call(symbol: nil, callee: interner.intern("setOf"), arguments: [v0, v1], result: v2, canThrow: false, thrownResult: nil),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -212,7 +211,7 @@ final class CollectionLiteralLoweringTests: XCTestCase {
             params: [],
             returnType: TypeSystem().unitType,
             body: [
-                .call(symbol: nil, callee: interner.intern("listOf"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil)
+                .call(symbol: nil, callee: interner.intern("listOf"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil),
             ],
             isSuspend: false,
             isInline: false

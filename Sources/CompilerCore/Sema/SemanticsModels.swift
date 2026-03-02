@@ -1,4 +1,4 @@
-public struct SymbolID: Hashable {
+public struct SymbolID: Hashable, Sendable {
     public let rawValue: Int32
 
     public static let invalid = SymbolID(rawValue: -1)
@@ -8,10 +8,10 @@ public struct SymbolID: Hashable {
     }
 }
 
-public enum SymbolKind: Hashable {
+public enum SymbolKind: Hashable, Sendable {
     case package
     case `class`
-    case `interface`
+    case interface
     case object
     case enumClass
     case annotationClass
@@ -27,7 +27,7 @@ public enum SymbolKind: Hashable {
     case label
 }
 
-public struct SymbolFlags: OptionSet {
+public struct SymbolFlags: OptionSet, Sendable {
     public let rawValue: UInt32
 
     public init(rawValue: UInt32) {
@@ -49,7 +49,7 @@ public struct SymbolFlags: OptionSet {
     public static let abstractType = SymbolFlags(rawValue: 1 << 12)
 }
 
-public struct SemanticSymbol {
+public struct SemanticSymbol: Sendable {
     public let id: SymbolID
     public let kind: SymbolKind
     public let name: InternedString
@@ -59,7 +59,7 @@ public struct SemanticSymbol {
     public let flags: SymbolFlags
 }
 
-public struct FunctionSignature: Hashable {
+public struct FunctionSignature: Hashable, Sendable {
     public let receiverType: TypeID?
     public let parameterTypes: [TypeID]
     public let returnType: TypeID
@@ -103,7 +103,7 @@ public struct FunctionSignature: Hashable {
     }
 }
 
-public struct NominalLayout: Equatable {
+public struct NominalLayout: Equatable, Sendable {
     public let objectHeaderWords: Int
     public let instanceFieldCount: Int
     public let instanceSizeWords: Int
@@ -144,7 +144,7 @@ public struct NominalLayout: Equatable {
     }
 }
 
-public struct NominalLayoutHint: Equatable {
+public struct NominalLayoutHint: Equatable, Sendable {
     public let declaredFieldCount: Int?
     public let declaredInstanceSizeWords: Int?
     public let declaredVtableSize: Int?
@@ -220,8 +220,13 @@ public final class ClassMemberScope: BaseScope {
         super.init(parent: parent, symbols: symbols)
     }
 
-    public var receiverType: TypeID? { thisType }
-    public var owner: SymbolID { ownerSymbol }
+    public var receiverType: TypeID? {
+        thisType
+    }
+
+    public var owner: SymbolID {
+        ownerSymbol
+    }
 }
 
 public final class FunctionScope: BaseScope {}
@@ -270,7 +275,7 @@ public final class SymbolTable {
 
     public func symbol(_ id: SymbolID) -> SemanticSymbol? {
         let index = Int(id.rawValue)
-        guard index >= 0 && index < symbolsStorage.count else {
+        guard index >= 0, index < symbolsStorage.count else {
             return nil
         }
         return symbolsStorage[index]
@@ -404,10 +409,8 @@ public final class SymbolTable {
 
     public func directSubtypes(of symbol: SymbolID) -> [SymbolID] {
         var result: [SymbolID] = []
-        for (candidate, supertypes) in directSupertypes {
-            if supertypes.contains(symbol) {
-                result.append(candidate)
-            }
+        for (candidate, supertypes) in directSupertypes where supertypes.contains(symbol) {
+            result.append(candidate)
         }
         return result.sorted(by: { $0.rawValue < $1.rawValue })
     }
@@ -507,8 +510,6 @@ public final class SymbolTable {
     public func accessorOwnerProperty(for accessorSymbol: SymbolID) -> SymbolID? {
         accessorOwnerProperties[accessorSymbol]
     }
-
-
 
     public func setTypeParameterUpperBound(_ bound: TypeID, for symbol: SymbolID) {
         typeParameterUpperBoundsMap[symbol] = bound

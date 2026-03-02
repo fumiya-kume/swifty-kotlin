@@ -2,13 +2,14 @@ import Foundation
 
 /// Handles call expression type inference (function calls, member calls, safe member calls).
 /// Derived from TypeCheckSemaPass+InferCallsAndBinary.swift.
-final class CallTypeChecker {
+final class CallTypeChecker { // swiftlint:disable:this type_body_length
     unowned let driver: TypeCheckDriver
 
     init(driver: TypeCheckDriver) {
         self.driver = driver
     }
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func inferCallExpr(
         _ id: ExprID,
         calleeID: ExprID,
@@ -28,11 +29,10 @@ final class CallTypeChecker {
         }
 
         let calleeExpr = ast.arena.expr(calleeID)
-        let calleeName: InternedString?
-        if case .nameRef(let name, _) = calleeExpr {
-            calleeName = name
+        let calleeName: InternedString? = if case let .nameRef(name, _) = calleeExpr {
+            name
         } else {
-            calleeName = nil
+            nil
         }
 
         var candidates: [SymbolID]
@@ -56,7 +56,8 @@ final class CallTypeChecker {
                     return symbol.kind == .class || symbol.kind == .enumClass || symbol.kind == .annotationClass
                 }
                 if let classSym = classSymbols.first,
-                   let classSymbol = ctx.cachedSymbol(classSym) {
+                   let classSymbol = ctx.cachedSymbol(classSym)
+                {
                     // P5-112: Prohibit direct instantiation of abstract classes.
                     if classSymbol.flags.contains(.abstractType) {
                         let className = classSymbol.fqName.map { interner.resolve($0) }.joined(separator: ".")
@@ -120,7 +121,8 @@ final class CallTypeChecker {
         var callableTarget: CallableTarget?
         var callableCalleeType: TypeID?
         if let calleeName,
-           let local = locals[calleeName] {
+           let local = locals[calleeName]
+        {
             if !local.isInitialized {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0031",
@@ -135,14 +137,34 @@ final class CallTypeChecker {
                 callableTarget = .localValue(local.symbol)
                 callableCalleeType = local.type
             }
+        } else if let calleeName {
+            if !ctx.cachedScopeLookup(calleeName).isEmpty {
+                callableCalleeType = driver.inferExpr(
+                    calleeID,
+                    ctx: ctx,
+                    locals: &locals,
+                    expectedType: nil
+                )
+                callableTarget = driver.helpers.callableTargetForCalleeExpr(calleeID, sema: sema)
+            }
         } else if calleeName == nil {
-            let contextualReturnType = expectedType ?? sema.types.anyType
-            let contextualCalleeType = sema.types.make(.functionType(FunctionType(
-                params: argTypes,
-                returnType: contextualReturnType,
-                isSuspend: false,
-                nullability: .nonNull
-            )))
+            let contextualCalleeType: TypeID?
+            if let calleeExpr {
+                switch calleeExpr {
+                case .lambdaLiteral, .callableRef:
+                    let contextualReturnType = expectedType ?? sema.types.anyType
+                    contextualCalleeType = sema.types.make(.functionType(FunctionType(
+                        params: argTypes,
+                        returnType: contextualReturnType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                default:
+                    contextualCalleeType = nil
+                }
+            } else {
+                contextualCalleeType = nil
+            }
             callableCalleeType = driver.inferExpr(
                 calleeID,
                 ctx: ctx,
@@ -152,11 +174,17 @@ final class CallTypeChecker {
             callableTarget = driver.helpers.callableTargetForCalleeExpr(calleeID, sema: sema)
         }
 
+        if callableCalleeType == sema.types.errorType {
+            sema.bindings.bindExprType(id, type: sema.types.errorType)
+            return sema.types.errorType
+        }
+
         if let callableCalleeType,
            let result = inferCallableValueInvocation(
                id, calleeType: callableCalleeType, callableTarget: callableTarget,
                args: args, argTypes: argTypes, range: range, ctx: ctx, expectedType: expectedType
-           ) {
+           )
+        {
             return result
         }
 
@@ -214,7 +242,8 @@ final class CallTypeChecker {
         }
         if let calleeName,
            interner.resolve(calleeName) == "println",
-           args.count <= 1 {
+           args.count <= 1
+        {
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
         }

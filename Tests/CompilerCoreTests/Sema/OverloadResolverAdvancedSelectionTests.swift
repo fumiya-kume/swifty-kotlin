@@ -1,5 +1,5 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 extension OverloadResolverTests {
     /// Named arguments select the correct overload from multiple candidates.
@@ -41,7 +41,7 @@ extension OverloadResolverTests {
             calleeName: interner.intern("overloaded"),
             args: [
                 CallArg(label: interner.intern("x"), type: intType),
-                CallArg(label: interner.intern("y"), type: boolType)
+                CallArg(label: interner.intern("y"), type: boolType),
             ]
         )
         let resolved = resolver.resolveCall(candidates: [fn1, fn2], call: call, expectedType: nil, ctx: ctx)
@@ -78,7 +78,7 @@ extension OverloadResolverTests {
             calleeName: interner.intern("namedDef"),
             args: [
                 CallArg(label: interner.intern("c"), type: stringType),
-                CallArg(label: interner.intern("a"), type: intType)
+                CallArg(label: interner.intern("a"), type: intType),
             ]
         )
         let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
@@ -271,7 +271,7 @@ extension OverloadResolverTests {
             calleeName: interner.intern("midDefault"),
             args: [
                 CallArg(label: interner.intern("first"), type: intType),
-                CallArg(label: interner.intern("last"), type: stringType)
+                CallArg(label: interner.intern("last"), type: stringType),
             ]
         )
         let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
@@ -473,27 +473,26 @@ extension OverloadResolverTests {
         XCTAssertEqual(resolved.parameterMapping, [0: 0, 1: 1])
     }
 
-    /// Extension function with receiver + generic type param.
+    // Extension function with receiver + generic type param.
 
     // MARK: - Advanced Multiple Type Parameters Tests
 
-    /// Multiple type params where one violates its bound.
+    // Multiple type params where one violates its bound.
 
-    /// Multiple type params with expected return type constraint.
+    // Multiple type params with expected return type constraint.
 
-    /// Multiple type params where return type constraint conflicts with argument types.
+    // Multiple type params where return type constraint conflicts with argument types.
 
     // MARK: - Advanced Most Specific Overload Selection Tests
 
-    /// Three candidates, one is most specific (Int < Any, String < Any).
+    // Three candidates, one is most specific (Int < Any, String < Any).
 
-    /// Multi-parameter most specific selection.
+    // Multi-parameter most specific selection.
 
-    /// Three truly ambiguous candidates → ambiguous diagnostic.
+    // Three truly ambiguous candidates → ambiguous diagnostic.
 
-    /// Generic candidate instantiated to same types as concrete → ambiguous
-    /// (resolver compares instantiated parameter types, not generic vs concrete).
+    // Generic candidate instantiated to same types as concrete → ambiguous
+    // (resolver compares instantiated parameter types, not generic vs concrete).
 
-    /// Most specific selection with incompatible parameter counts yields no winner.
-
+    // Most specific selection with incompatible parameter counts yields no winner.
 }

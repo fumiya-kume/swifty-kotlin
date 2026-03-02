@@ -10,7 +10,7 @@ final class InlineLoweringPass: LoweringPass {
 
     func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool {
         for decl in module.arena.declarations {
-            if case .function(let function) = decl, function.isInline {
+            if case let .function(function) = decl, function.isInline {
                 return true
             }
         }
@@ -23,7 +23,7 @@ final class InlineLoweringPass: LoweringPass {
     func run(module: KIRModule, ctx: KIRContext) throws {
         let unitType = ctx.sema?.types.unitType
         var inlineFunctionsBySymbol = Dictionary(uniqueKeysWithValues: module.arena.declarations.compactMap { decl -> (SymbolID, KIRFunction)? in
-            guard case .function(let function) = decl, function.isInline else {
+            guard case let .function(function) = decl, function.isInline else {
                 return nil
             }
             return (function.symbol, function)
@@ -47,18 +47,17 @@ final class InlineLoweringPass: LoweringPass {
                     aliases.removeValue(forKey: defined)
                 }
 
-                guard case .call(let symbol, let callee, let arguments, let result, _, _, _) = instruction else {
+                guard case let .call(symbol, callee, arguments, result, _, _, _) = instruction else {
                     loweredBody.append(instruction)
                     continue
                 }
 
-                let inlineTarget: KIRFunction?
-                if let symbol, let target = inlineFunctionsBySymbol[symbol] {
-                    inlineTarget = target
+                let inlineTarget: KIRFunction? = if let symbol, let target = inlineFunctionsBySymbol[symbol] {
+                    target
                 } else if let byName = inlineFunctionsByName[callee], byName.count == 1 {
-                    inlineTarget = byName[0]
+                    byName[0]
                 } else {
-                    inlineTarget = nil
+                    nil
                 }
 
                 guard let inlineTarget, inlineTarget.symbol != function.symbol else {
@@ -111,11 +110,12 @@ final class InlineLoweringPass: LoweringPass {
         var typeParamTokenValues: [SymbolID: KIRExprID] = [:]
         if let sema = ctx.sema,
            let sig = sema.symbols.functionSignature(for: inlineTarget.symbol),
-           !sig.reifiedTypeParameterIndices.isEmpty {
+           !sig.reifiedTypeParameterIndices.isEmpty
+        {
             for index in sig.reifiedTypeParameterIndices.sorted() {
                 guard index < sig.typeParameterSymbols.count else { continue }
                 let typeParamSymbol = sig.typeParameterSymbols[index]
-                let tokenSymbol = SymbolID(rawValue: -20_000 - typeParamSymbol.rawValue)
+                let tokenSymbol = SyntheticSymbolScheme.reifiedTypeTokenSymbol(for: typeParamSymbol)
                 if let tokenArg = parameterValues[tokenSymbol] {
                     typeParamTokenValues[typeParamSymbol] = tokenArg
                 }
@@ -135,13 +135,13 @@ final class InlineLoweringPass: LoweringPass {
             case .nop:
                 lowered.append(.nop)
 
-            case .label(let id):
+            case let .label(id):
                 lowered.append(.label(id))
 
-            case .jump(let target):
+            case let .jump(target):
                 lowered.append(.jump(target))
 
-            case .jumpIfEqual(let lhs, let rhs, let target):
+            case let .jumpIfEqual(lhs, rhs, target):
                 lowered.append(
                     .jumpIfEqual(
                         lhs: resolveAlias(of: lhs, aliases: localExprMap),
@@ -153,15 +153,15 @@ final class InlineLoweringPass: LoweringPass {
             case .returnUnit:
                 returnedExpr = nil
 
-            case .returnValue(let value):
+            case let .returnValue(value):
                 returnedExpr = resolveAlias(of: value, aliases: localExprMap)
 
-            case .constValue(let result, let value):
-                if case .symbolRef(let symbol) = value, let argument = parameterValues[symbol] {
+            case let .constValue(result, value):
+                if case let .symbolRef(symbol) = value, let argument = parameterValues[symbol] {
                     localExprMap[result] = argument
                     continue
                 }
-                if case .symbolRef(let symbol) = value, let tokenArg = typeParamTokenValues[symbol] {
+                if case let .symbolRef(symbol) = value, let tokenArg = typeParamTokenValues[symbol] {
                     localExprMap[result] = tokenArg
                     continue
                 }
@@ -169,7 +169,7 @@ final class InlineLoweringPass: LoweringPass {
                 localExprMap[result] = loweredResult
                 lowered.append(.constValue(result: loweredResult, value: value))
 
-            case .binary(let op, let lhs, let rhs, let result):
+            case let .binary(op, lhs, rhs, result):
                 let loweredResult = cloneExpr(result, in: module.arena)
                 localExprMap[result] = loweredResult
                 lowered.append(
@@ -181,7 +181,7 @@ final class InlineLoweringPass: LoweringPass {
                     )
                 )
 
-            case .call(let symbol, let callee, let args, let result, let canThrow, let thrownResult, let isSuperCall):
+            case let .call(symbol, callee, args, result, canThrow, thrownResult, isSuperCall):
                 let loweredResult = result.map { expr -> KIRExprID in
                     let cloned = cloneExpr(expr, in: module.arena)
                     localExprMap[expr] = cloned
@@ -204,7 +204,7 @@ final class InlineLoweringPass: LoweringPass {
                     )
                 )
 
-            case .virtualCall(let symbol, let callee, let receiver, let args, let result, let canThrow, let thrownResult, let dispatch):
+            case let .virtualCall(symbol, callee, receiver, args, result, canThrow, thrownResult, dispatch):
                 let loweredResult = result.map { expr -> KIRExprID in
                     let cloned = cloneExpr(expr, in: module.arena)
                     localExprMap[expr] = cloned
@@ -227,7 +227,8 @@ final class InlineLoweringPass: LoweringPass {
                         dispatch: dispatch
                     )
                 )
-            case .returnIfEqual(let lhs, let rhs):
+
+            case let .returnIfEqual(lhs, rhs):
                 lowered.append(
                     .returnIfEqual(
                         lhs: resolveAlias(of: lhs, aliases: localExprMap),
@@ -235,7 +236,7 @@ final class InlineLoweringPass: LoweringPass {
                     )
                 )
 
-            case .jumpIfNotNull(let value, let target):
+            case let .jumpIfNotNull(value, target):
                 lowered.append(
                     .jumpIfNotNull(
                         value: resolveAlias(of: value, aliases: localExprMap),
@@ -243,7 +244,7 @@ final class InlineLoweringPass: LoweringPass {
                     )
                 )
 
-            case .copy(let from, let to):
+            case let .copy(from, to):
                 lowered.append(
                     .copy(
                         from: resolveAlias(of: from, aliases: localExprMap),
@@ -251,7 +252,7 @@ final class InlineLoweringPass: LoweringPass {
                     )
                 )
 
-            case .storeGlobal(let value, let symbol):
+            case let .storeGlobal(value, symbol):
                 lowered.append(
                     .storeGlobal(
                         value: resolveAlias(of: value, aliases: localExprMap),
@@ -259,17 +260,17 @@ final class InlineLoweringPass: LoweringPass {
                     )
                 )
 
-            case .loadGlobal(let result, let symbol):
+            case let .loadGlobal(result, symbol):
                 let loweredResult = cloneExpr(result, in: module.arena)
                 localExprMap[result] = loweredResult
                 lowered.append(.loadGlobal(result: loweredResult, symbol: symbol))
 
-            case .rethrow(let value):
+            case let .rethrow(value):
                 lowered.append(
                     .rethrow(value: resolveAlias(of: value, aliases: localExprMap))
                 )
 
-            case .unary(let op, let operand, let result):
+            case let .unary(op, operand, result):
                 let loweredResult = cloneExpr(result, in: module.arena)
                 localExprMap[result] = loweredResult
                 lowered.append(
@@ -280,7 +281,7 @@ final class InlineLoweringPass: LoweringPass {
                     )
                 )
 
-            case .nullAssert(let operand, let result):
+            case let .nullAssert(operand, result):
                 let loweredResult = cloneExpr(result, in: module.arena)
                 localExprMap[result] = loweredResult
                 lowered.append(
@@ -297,16 +298,16 @@ final class InlineLoweringPass: LoweringPass {
 
     private func rewriteInstruction(_ instruction: KIRInstruction, aliases: [KIRExprID: KIRExprID]) -> KIRInstruction {
         switch instruction {
-        case .binary(let op, let lhs, let rhs, let result):
-            return .binary(
+        case let .binary(op, lhs, rhs, result):
+            .binary(
                 op: op,
                 lhs: resolveAlias(of: lhs, aliases: aliases),
                 rhs: resolveAlias(of: rhs, aliases: aliases),
                 result: result
             )
 
-        case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult, let isSuperCall):
-            return .call(
+        case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall):
+            .call(
                 symbol: symbol,
                 callee: callee,
                 arguments: arguments.map { resolveAlias(of: $0, aliases: aliases) },
@@ -316,8 +317,8 @@ final class InlineLoweringPass: LoweringPass {
                 isSuperCall: isSuperCall
             )
 
-        case .virtualCall(let symbol, let callee, let receiver, let arguments, let result, let canThrow, let thrownResult, let dispatch):
-            return .virtualCall(
+        case let .virtualCall(symbol, callee, receiver, arguments, result, canThrow, thrownResult, dispatch):
+            .virtualCall(
                 symbol: symbol,
                 callee: callee,
                 receiver: resolveAlias(of: receiver, aliases: aliases),
@@ -328,82 +329,82 @@ final class InlineLoweringPass: LoweringPass {
                 dispatch: dispatch
             )
 
-        case .returnValue(let value):
-            return .returnValue(resolveAlias(of: value, aliases: aliases))
+        case let .returnValue(value):
+            .returnValue(resolveAlias(of: value, aliases: aliases))
 
-        case .returnIfEqual(let lhs, let rhs):
-            return .returnIfEqual(
+        case let .returnIfEqual(lhs, rhs):
+            .returnIfEqual(
                 lhs: resolveAlias(of: lhs, aliases: aliases),
                 rhs: resolveAlias(of: rhs, aliases: aliases)
             )
 
-        case .jumpIfEqual(let lhs, let rhs, let target):
-            return .jumpIfEqual(
+        case let .jumpIfEqual(lhs, rhs, target):
+            .jumpIfEqual(
                 lhs: resolveAlias(of: lhs, aliases: aliases),
                 rhs: resolveAlias(of: rhs, aliases: aliases),
                 target: target
             )
 
-        case .jumpIfNotNull(let value, let target):
-            return .jumpIfNotNull(
+        case let .jumpIfNotNull(value, target):
+            .jumpIfNotNull(
                 value: resolveAlias(of: value, aliases: aliases),
                 target: target
             )
 
-        case .copy(let from, let to):
-            return .copy(
+        case let .copy(from, to):
+            .copy(
                 from: resolveAlias(of: from, aliases: aliases),
                 to: resolveAlias(of: to, aliases: aliases)
             )
 
-        case .rethrow(let value):
-            return .rethrow(value: resolveAlias(of: value, aliases: aliases))
+        case let .rethrow(value):
+            .rethrow(value: resolveAlias(of: value, aliases: aliases))
 
-        case .unary(let op, let operand, let result):
-            return .unary(
+        case let .unary(op, operand, result):
+            .unary(
                 op: op,
                 operand: resolveAlias(of: operand, aliases: aliases),
                 result: result
             )
 
-        case .nullAssert(let operand, let result):
-            return .nullAssert(
+        case let .nullAssert(operand, result):
+            .nullAssert(
                 operand: resolveAlias(of: operand, aliases: aliases),
                 result: result
             )
 
-        case .storeGlobal(let value, let symbol):
-            return .storeGlobal(
+        case let .storeGlobal(value, symbol):
+            .storeGlobal(
                 value: resolveAlias(of: value, aliases: aliases),
                 symbol: symbol
             )
 
-        case .loadGlobal(_, _):
-            return instruction
+        case .loadGlobal:
+            instruction
 
         default:
-            return instruction
+            instruction
         }
     }
 
     private func definedResult(in instruction: KIRInstruction) -> KIRExprID? {
         switch instruction {
-        case .constValue(let result, _):
-            return result
-        case .binary(_, _, _, let result):
-            return result
-        case .call(_, _, _, let result, _, _, _):
-            return result
-        case .virtualCall(_, _, _, _, let result, _, _, _):
-            return result
-        case .unary(_, _, let result):
-            return result
-        case .nullAssert(_, let result):
-            return result
-        case .loadGlobal(let result, _):
-            return result
+        case let .constValue(result, _):
+            result
+        case let .binary(_, _, _, result):
+            result
+        case let .call(_, _, _, result, _, _, _):
+            result
+        case let .virtualCall(_, _, _, _, result, _, _, _):
+            result
+        case let .unary(_, _, result):
+            result
+        case let .nullAssert(_, result):
+            result
+        case let .loadGlobal(result, _):
+            result
         default:
-            return nil
+            nil
         }
     }
 

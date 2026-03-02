@@ -132,7 +132,7 @@ extension LLVMCAPIBindings {
         name.withCString { buildSDivFn(builder, lhs, rhs, $0) }
     }
 
-    // Bitwise/shift builder convenience methods (P5-103)
+    /// Bitwise/shift builder convenience methods (P5-103)
     func buildAnd(_ builder: LLVMBuilderRef?, lhs: LLVMValueRef?, rhs: LLVMValueRef?, name: String) -> LLVMValueRef? {
         guard let buildAndFn else { return nil }
         return name.withCString { buildAndFn(builder, lhs, rhs, $0) }

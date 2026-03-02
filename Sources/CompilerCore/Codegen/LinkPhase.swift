@@ -11,7 +11,8 @@ public final class LinkPhase: CompilerPhase {
         }
 
         guard let objectPath = ctx.generatedObjectPath,
-              FileManager.default.fileExists(atPath: objectPath) else {
+              FileManager.default.fileExists(atPath: objectPath)
+        else {
             throw CompilerPipelineError.outputUnavailable
         }
 
@@ -55,7 +56,8 @@ public final class LinkPhase: CompilerPhase {
 
             var linkInputs: [String] = [objectPath, wrapperURL.path]
             if let stubPath = ctx.runtimeStubObjectPath,
-               FileManager.default.fileExists(atPath: stubPath) {
+               FileManager.default.fileExists(atPath: stubPath)
+            {
                 linkInputs.append(stubPath)
             }
             for extraObject in autoLinkedObjects where !linkInputs.contains(extraObject) {
@@ -85,9 +87,9 @@ public final class LinkPhase: CompilerPhase {
         } catch let error as CommandRunnerError {
             let message: String
             switch error {
-            case .launchFailed(let reason):
+            case let .launchFailed(reason):
                 message = "Failed to launch linker: \(reason)"
-            case .nonZeroExit(let result):
+            case let .nonZeroExit(result):
                 let stderr = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
                 message = stderr.isEmpty ? "Linker failed with exit code \(result.exitCode)." : "Linker failed: \(stderr)"
             }
@@ -101,7 +103,7 @@ public final class LinkPhase: CompilerPhase {
 
     private func resolveEntrySymbol(kir: KIRModule, interner: StringInterner) -> String? {
         for decl in kir.arena.declarations {
-            guard case .function(let function) = decl else {
+            guard case let .function(function) = decl else {
                 continue
             }
             if interner.resolve(function.name) == "main" {
@@ -198,7 +200,8 @@ public final class LinkPhase: CompilerPhase {
         let manifestPath = URL(fileURLWithPath: libraryDir).appendingPathComponent("manifest.json").path
         if let data = try? Data(contentsOf: URL(fileURLWithPath: manifestPath)),
            let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-           let manifestObjects = object["objects"] as? [String] {
+           let manifestObjects = object["objects"] as? [String]
+        {
             let libraryDirNormalized = URL(fileURLWithPath: libraryDir).standardized.path
             let mapped = manifestObjects
                 .filter { !$0.isEmpty }

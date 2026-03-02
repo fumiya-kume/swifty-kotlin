@@ -1,8 +1,24 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
+
+private final class CapturedIDBuffer: @unchecked Sendable {
+    private let lock = NSLock()
+    private var storage: [(String, InternedString)] = []
+
+    func append(contentsOf ids: [(String, InternedString)]) {
+        lock.lock()
+        storage.append(contentsOf: ids)
+        lock.unlock()
+    }
+
+    func snapshot() -> [(String, InternedString)] {
+        lock.lock()
+        defer { lock.unlock() }
+        return storage
+    }
+}
 
 final class StringInternerTests: XCTestCase {
-
     // MARK: - InternedString
 
     func testInternedStringInvalidDefault() {
@@ -135,20 +151,17 @@ final class StringInternerTests: XCTestCase {
 
         // Capture IDs returned during concurrent phase so we verify
         // the actual values produced under contention, not re-interned ones.
-        let lock = NSLock()
-        var capturedIDs: [(String, InternedString)] = []
+        let capturedIDs = CapturedIDBuffer()
 
-        for i in 0..<10 {
+        for i in 0 ..< 10 {
             DispatchQueue.global().async {
                 var localIDs: [(String, InternedString)] = []
-                for j in 0..<100 {
+                for j in 0 ..< 100 {
                     let str = "string_\(i)_\(j)"
                     let id = interner.intern(str)
                     localIDs.append((str, id))
                 }
-                lock.lock()
                 capturedIDs.append(contentsOf: localIDs)
-                lock.unlock()
                 expectation.fulfill()
             }
         }
@@ -156,25 +169,22 @@ final class StringInternerTests: XCTestCase {
         wait(for: [expectation], timeout: 10.0)
 
         // Verify IDs captured during the concurrent phase resolve correctly
-        for (str, id) in capturedIDs {
+        for (str, id) in capturedIDs.snapshot() {
             XCTAssertEqual(interner.resolve(id), str)
         }
     }
 
     func testConcurrentResolveDoesNotCrash() {
         let interner = StringInterner()
-        var ids: [InternedString] = []
-        for i in 0..<100 {
-            ids.append(interner.intern("value_\(i)"))
-        }
+        let ids: [InternedString] = (0 ..< 100).map { interner.intern("value_\($0)") }
 
         let expectation = XCTestExpectation(description: "Concurrent resolve")
         expectation.expectedFulfillmentCount = 10
 
-        for _ in 0..<10 {
+        for _ in 0 ..< 10 {
             DispatchQueue.global().async {
                 for id in ids {
-                    let _ = interner.resolve(id)
+                    _ = interner.resolve(id)
                 }
                 expectation.fulfill()
             }

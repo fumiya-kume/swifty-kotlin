@@ -1,5 +1,5 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 extension OverloadResolverTests {
     // MARK: - Unified Generic Type Inference (P5-85 / P5-126)
@@ -370,5 +370,4 @@ extension OverloadResolverTests {
         XCTAssertNil(resolved.diagnostic)
         XCTAssertEqual(resolved.substitutedTypeArguments[TypeVarID(rawValue: 0)], intType)
     }
-
 }

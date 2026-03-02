@@ -1,5 +1,5 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 final class ASTModelsTests: XCTestCase {
     func testIDInitializersSupportDefaultAndExplicitValues() {
@@ -220,7 +220,7 @@ final class ASTModelsTests: XCTestCase {
         let paramTypeRef = arena.appendTypeRef(.named(path: [], args: [], nullable: false))
         let returnTypeRef = arena.appendTypeRef(.named(path: [], args: [], nullable: false))
         let funcTypeID = arena.appendTypeRef(.functionType(params: [paramTypeRef], returnType: returnTypeRef, isSuspend: true, nullable: false))
-        if case .functionType(let params, let ret, let suspend, let nullable) = arena.typeRef(funcTypeID) {
+        if case let .functionType(params, ret, suspend, nullable) = arena.typeRef(funcTypeID) {
             XCTAssertEqual(params.count, 1)
             XCTAssertEqual(ret, returnTypeRef)
             XCTAssertTrue(suspend)
@@ -249,7 +249,7 @@ final class ASTModelsTests: XCTestCase {
         let setter = PropertyAccessorDecl(range: r, kind: .setter, parameterName: name, body: .expr(exprID, r))
         XCTAssertEqual(setter.kind, .setter)
         XCTAssertEqual(setter.parameterName, name)
-        if case .expr(let e, _) = setter.body {
+        if case let .expr(e, _) = setter.body {
             XCTAssertEqual(e, exprID)
         } else {
             XCTFail("Expected .expr body")
@@ -343,8 +343,8 @@ final class ASTModelsTests: XCTestCase {
         let exprID = ExprID(rawValue: 0)
         let name = interner.intern("x")
 
-        let branch = WhenBranch(condition: exprID, body: exprID, range: r)
-        XCTAssertEqual(branch.condition, exprID)
+        let branch = WhenBranch(conditions: [exprID], body: exprID, range: r)
+        XCTAssertEqual(branch.conditions.first, exprID)
         let callArg = CallArgument(label: name, isSpread: true, expr: exprID)
         XCTAssertEqual(callArg.label, name)
         XCTAssertTrue(callArg.isSpread)
@@ -394,7 +394,7 @@ final class ASTModelsTests: XCTestCase {
         XCTAssertEqual(ctorFull.modifiers, [.public])
         XCTAssertEqual(ctorFull.valueParams.count, 1)
         XCTAssertNotNil(ctorFull.delegationCall)
-        if case .block(let exprs, _) = ctorFull.body {
+        if case let .block(exprs, _) = ctorFull.body {
             XCTAssertEqual(exprs.count, 1)
         } else {
             XCTFail("Expected .block body")

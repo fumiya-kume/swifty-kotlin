@@ -5,15 +5,7 @@ import Foundation
 public final class BuildKIRPhase: CompilerPhase {
     public static let name = "BuildKIR"
 
-    /// Exposed for backward-compatible test access to synthetic symbol generation.
-    private lazy var _context = KIRLoweringContext()
-
     public init() {}
-
-    /// Backward-compatible accessor used by existing tests.
-    func syntheticLambdaSymbol(for exprID: ExprID) -> SymbolID {
-        _context.syntheticLambdaSymbol(for: exprID)
-    }
 
     public func run(_ ctx: CompilationContext) throws {
         guard let ast = ctx.ast, let sema = ctx.sema else {
@@ -24,7 +16,7 @@ public final class BuildKIRPhase: CompilerPhase {
         let driver = KIRLoweringDriver(ctx: loweringCtx)
         let module = driver.lowerModule(ast: ast, sema: sema, compilationCtx: ctx)
 
-        if module.functionCount == 0 && !ctx.diagnostics.hasError {
+        if module.functionCount == 0, !ctx.diagnostics.hasError {
             ctx.diagnostics.warning(
                 "KSWIFTK-KIR-0001",
                 "No function declarations found.",

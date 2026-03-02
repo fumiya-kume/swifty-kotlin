@@ -24,7 +24,8 @@ extension DataFlowSemaPhase {
 
         for declID in memberFunctions {
             guard let decl = ast.arena.decl(declID),
-                  case .funDecl(let funDecl) = decl else {
+                  case let .funDecl(funDecl) = decl
+            else {
                 continue
             }
             let memberFQName = ownerFQName + [funDecl.name]
@@ -80,8 +81,7 @@ extension DataFlowSemaPhase {
                 fallbackType: anyType
             )
 
-            let returnType: TypeID
-            if let explicit = resolveTypeRef(
+            let returnType: TypeID = if let explicit = resolveTypeRef(
                 funDecl.returnType,
                 ast: ast,
                 symbols: symbols,
@@ -90,13 +90,13 @@ extension DataFlowSemaPhase {
                 localTypeParameters: mergedLocalTypeParameters,
                 diagnostics: diagnostics
             ) {
-                returnType = explicit
+                explicit
             } else {
                 switch funDecl.body {
                 case .unit:
-                    returnType = unitType
+                    unitType
                 case .block, .expr:
-                    returnType = anyType
+                    anyType
                 }
             }
 
@@ -131,7 +131,8 @@ extension DataFlowSemaPhase {
 
         for declID in memberProperties {
             guard let decl = ast.arena.decl(declID),
-                  case .propertyDecl(let propertyDecl) = decl else {
+                  case let .propertyDecl(propertyDecl) = decl
+            else {
                 continue
             }
             let memberFQName = ownerFQName + [propertyDecl.name]
@@ -170,55 +171,15 @@ extension DataFlowSemaPhase {
             ) ?? types.nullableAnyType
             symbols.setPropertyType(resolvedType, for: memberSymbol)
 
-            // const val validation for member properties
-            if propertyDecl.modifiers.contains(.const) {
-                if propertyDecl.isVar {
-                    diagnostics.error(
-                        "KSWIFTK-SEMA-0080",
-                        "'const' modifier is not applicable to 'var'.",
-                        range: propertyDecl.range
-                    )
-                }
-                if propertyDecl.initializer == nil {
-                    diagnostics.error(
-                        "KSWIFTK-SEMA-0081",
-                        "'const val' must have an initializer.",
-                        range: propertyDecl.range
-                    )
-                }
-                if propertyDecl.type != nil {
-                    let isConstCompatible: Bool
-                    switch types.kind(of: resolvedType) {
-                    case .primitive:
-                        isConstCompatible = true
-                    default:
-                        isConstCompatible = false
-                    }
-                    if !isConstCompatible {
-                        diagnostics.error(
-                            "KSWIFTK-SEMA-0082",
-                            "'const val' type must be a primitive type or String.",
-                            range: propertyDecl.range
-                        )
-                    }
-                }
-                // Record the compile-time constant value from the initializer.
-                // When no explicit type annotation is present, also validate that
-                // the initializer is a compile-time constant literal; if not,
-                // reject the declaration since const val requires a constant.
-                if let initExpr = propertyDecl.initializer {
-                    let constCollector = ConstantCollector()
-                    if let constKind = constCollector.literalConstantExpr(initExpr, ast: ast) {
-                        symbols.setConstValueExprKind(constKind, for: memberSymbol)
-                    } else {
-                        diagnostics.error(
-                            "KSWIFTK-SEMA-0083",
-                            "'const val' initializer must be a compile-time constant expression.",
-                            range: propertyDecl.range
-                        )
-                    }
-                }
-            }
+            validateConstPropertyDeclaration(
+                propertyDecl,
+                propertySymbol: memberSymbol,
+                resolvedType: resolvedType,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                diagnostics: diagnostics
+            )
 
             // Materialize a backing field symbol for properties with custom accessors
             // (Kotlin `field` identifier in getter/setter bodies).
@@ -232,7 +193,7 @@ extension DataFlowSemaPhase {
                 && propertyDecl.initializer == nil
             let needsBackingField = !isGetterOnlyComputed
                 && (propertyDecl.getter != nil || propertyDecl.setter != nil)
-            if needsBackingField && propertyDecl.delegateExpression == nil {
+            if needsBackingField, propertyDecl.delegateExpression == nil {
                 let fieldName = interner.intern("$backing_\(interner.resolve(propertyDecl.name))")
                 let fieldFQName = ownerFQName + [fieldName]
                 let backingFieldSymbol = symbols.define(
@@ -272,7 +233,7 @@ extension DataFlowSemaPhase {
                 continue
             }
             switch decl {
-            case .classDecl(let nestedClass):
+            case let .classDecl(nestedClass):
                 let nestedFQName = ownerFQName + [nestedClass.name]
                 let nestedClassKind = classSymbolKind(for: nestedClass)
                 checkAndReportDuplicateDeclaration(
@@ -443,7 +404,7 @@ extension DataFlowSemaPhase {
                         interner: interner
                     )
                 }
-            case .interfaceDecl(let nestedInterface):
+            case let .interfaceDecl(nestedInterface):
                 let nestedFQName = ownerFQName + [nestedInterface.name]
                 checkAndReportDuplicateDeclaration(
                     newKind: .interface,
@@ -523,7 +484,8 @@ extension DataFlowSemaPhase {
 
         for declID in nestedObjects {
             guard let decl = ast.arena.decl(declID),
-                  case .objectDecl(let nestedObject) = decl else {
+                  case let .objectDecl(nestedObject) = decl
+            else {
                 continue
             }
             let nestedFQName = ownerFQName + [nestedObject.name]
@@ -581,7 +543,7 @@ extension DataFlowSemaPhase {
         }
     }
 
-    /// Collects companion object header: creates the companion symbol, links it to the owner class,
-    /// and registers companion members under the companion's fully qualified name. Resolution of
-    /// `ClassName.memberName` to companion members is handled separately by the call/type checker.
+    // Collects companion object header: creates the companion symbol, links it to the owner class,
+    // and registers companion members under the companion's fully qualified name. Resolution of
+    // `ClassName.memberName` to companion members is handled separately by the call/type checker.
 }

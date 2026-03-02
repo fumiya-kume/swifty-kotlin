@@ -1,6 +1,5 @@
-import XCTest
 @testable import CompilerCore
-
+import XCTest
 
 extension SymbolTableTests {
     func testParentSymbolReturnsNilForUnset() {
@@ -44,7 +43,6 @@ extension SymbolTableTests {
 // MARK: - BindingTable Tests
 
 final class BindingTableTests: XCTestCase {
-
     func testBindExprType() {
         let bindings = BindingTable()
         let types = TypeSystem()
@@ -72,7 +70,7 @@ final class BindingTableTests: XCTestCase {
         )
         bindings.bindCall(expr, binding: binding)
         XCTAssertNotNil(bindings.callBindings[expr])
-        XCTAssertEqual(bindings.callBindings[expr]!.chosenCallee, SymbolID(rawValue: 1))
+        XCTAssertEqual(bindings.callBindings[expr]?.chosenCallee, SymbolID(rawValue: 1))
     }
 
     func testBindDecl() {
@@ -116,7 +114,6 @@ final class BindingTableTests: XCTestCase {
 // MARK: - Scope Tests
 
 final class ScopeTests: XCTestCase {
-
     func testBaseScopeLookupReturnsLocalSymbol() {
         let interner = StringInterner()
         let symbols = SymbolTable()
@@ -225,7 +222,6 @@ final class ScopeTests: XCTestCase {
 // MARK: - SemaModule Tests
 
 final class SemaModuleTests: XCTestCase {
-
     func testSemaModuleInit() {
         let (sema, symbols, types, _) = makeSemaModule()
         XCTAssertTrue(sema.symbols === symbols)
@@ -243,7 +239,6 @@ final class SemaModuleTests: XCTestCase {
 // MARK: - FunctionSignature Tests
 
 final class FunctionSignatureTests: XCTestCase {
-
     func testFunctionSignatureDefaults() {
         let types = TypeSystem()
         let intType = types.make(.primitive(.int, .nonNull))
@@ -287,7 +282,6 @@ final class FunctionSignatureTests: XCTestCase {
 // MARK: - CallBinding Tests
 
 final class CallBindingTests: XCTestCase {
-
     func testCallBindingInit() {
         let types = TypeSystem()
         let intType = types.make(.primitive(.int, .nonNull))

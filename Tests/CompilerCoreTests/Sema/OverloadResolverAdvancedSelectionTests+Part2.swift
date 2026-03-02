@@ -1,6 +1,5 @@
-import XCTest
 @testable import CompilerCore
-
+import XCTest
 
 extension OverloadResolverTests {
     func testResolveCallExtensionFunctionWithGenericParam() {
@@ -65,7 +64,7 @@ extension OverloadResolverTests {
                 returnType: tpTType,
                 valueParameterSymbols: [paramA, paramB],
                 typeParameterSymbols: [tpT, tpU],
-                typeParameterUpperBounds: [types.anyType, boolType]  // U bound to Bool
+                typeParameterUpperBounds: [types.anyType, boolType] // U bound to Bool
             ),
             for: fn
         )
@@ -395,7 +394,7 @@ extension OverloadResolverTests {
             args: [
                 CallArg(label: interner.intern("a"), type: stringType),
                 CallArg(type: intType),
-                CallArg(type: intType)
+                CallArg(type: intType),
             ]
         )
         let resolved = resolver.resolveCall(
@@ -453,7 +452,7 @@ extension OverloadResolverTests {
             calleeName: interner.intern("namedThenNonVararg"),
             args: [
                 CallArg(label: interner.intern("a"), type: intType),
-                CallArg(type: boolType)
+                CallArg(type: boolType),
             ]
         )
         let resolved = resolver.resolveCall(
@@ -466,5 +465,4 @@ extension OverloadResolverTests {
         XCTAssertNil(resolved.chosenCallee)
         XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-SEMA-0002")
     }
-
 }

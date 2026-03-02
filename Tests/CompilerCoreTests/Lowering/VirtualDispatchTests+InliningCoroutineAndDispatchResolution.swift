@@ -1,6 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 extension VirtualDispatchTests {
     // MARK: - 11. InlineLoweringPass: virtualCall alias resolution
@@ -46,7 +46,7 @@ extension VirtualDispatchTests {
                     thrownResult: nil,
                     dispatch: .vtable(slot: 1)
                 ),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: true
@@ -69,7 +69,7 @@ extension VirtualDispatchTests {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -110,7 +110,7 @@ extension VirtualDispatchTests {
             if case .virtualCall = instruction { return true }
             return false
         }
-        guard case .virtualCall(_, _, _, _, _, _, _, let dispatch) = vcInstruction else {
+        guard case let .virtualCall(_, _, _, _, _, _, _, dispatch) = vcInstruction else {
             XCTFail("Expected virtualCall instruction")
             return
         }
@@ -156,7 +156,7 @@ extension VirtualDispatchTests {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -206,7 +206,7 @@ extension VirtualDispatchTests {
 
     // MARK: - 13. Coroutine lowering: extractCallInfo for virtualCall
 
-    func testCoroutineLoweringExtractCallInfoForVirtualCall() throws {
+    func testCoroutineLoweringExtractCallInfoForVirtualCall() {
         let arena = KIRArena()
         let types = TypeSystem()
         let receiverExpr = arena.appendExpr(.temporary(0), type: types.anyType)
@@ -238,7 +238,7 @@ extension VirtualDispatchTests {
         XCTAssertEqual(callInfo?.arguments.first, argExpr)
     }
 
-    func testCoroutineLoweringExtractCallInfoForRegularCall() throws {
+    func testCoroutineLoweringExtractCallInfoForRegularCall() {
         let arena = KIRArena()
         let types = TypeSystem()
         let argExpr = arena.appendExpr(.temporary(0), type: types.anyType)
@@ -261,7 +261,7 @@ extension VirtualDispatchTests {
         XCTAssertEqual(callInfo?.arguments.count, 1)
     }
 
-    func testCoroutineLoweringExtractCallInfoReturnsNilForNonCall() throws {
+    func testCoroutineLoweringExtractCallInfoReturnsNilForNonCall() {
         let pass = CoroutineLoweringPass()
         let callInfo = pass.extractCallInfo(.returnUnit)
         XCTAssertNil(callInfo, "extractCallInfo should return nil for non-call instruction")
@@ -321,7 +321,7 @@ extension VirtualDispatchTests {
                     thrownResult: nil,
                     dispatch: .vtable(slot: 0)
                 ),
-                .returnValue(callResult)
+                .returnValue(callResult),
             ],
             isSuspend: true,
             isInline: false
@@ -351,7 +351,7 @@ extension VirtualDispatchTests {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -382,7 +382,7 @@ extension VirtualDispatchTests {
         // After coroutine lowering, the suspend function should be rewritten.
         // Look for the lowered suspend function (kk_suspend_outerSuspend)
         let allFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
-            guard case .function(let fn) = decl else { return nil }
+            guard case let .function(fn) = decl else { return nil }
             return fn
         }
         let suspendFunction = allFunctions.first { fn in
@@ -404,5 +404,4 @@ extension VirtualDispatchTests {
     }
 
     // MARK: - 15. resolveVirtualDispatch: open class with subtypes -> vtable
-
 }

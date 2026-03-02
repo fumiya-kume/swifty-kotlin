@@ -1,9 +1,8 @@
-import XCTest
-import Foundation
 @testable import CompilerCore
+import Foundation
+import XCTest
 
 final class FileFingerprintTests: XCTestCase {
-
     // MARK: - Init
 
     func testInitStoresProperties() {
@@ -54,8 +53,8 @@ final class FileFingerprintTests: XCTestCase {
         let fp = FileFingerprint.compute(for: tempURL.path)
         XCTAssertNotNil(fp)
         XCTAssertEqual(fp?.path, tempURL.path)
-        XCTAssertFalse(fp!.contentHash.isEmpty)
-        XCTAssertTrue(fp!.mtimeNanos > 0)
+        XCTAssertFalse(try XCTUnwrap(fp?.contentHash.isEmpty))
+        XCTAssertTrue(try XCTUnwrap(fp?.mtimeNanos) > 0)
     }
 
     // MARK: - contentChanged

@@ -50,21 +50,22 @@ extension LLVMBackend {
             case .beginBlock, .endBlock:
                 continue
 
-            case .label(let id):
+            case let .label(id):
                 lines.append("\(labelName(id)):")
 
-            case .jump(let target):
+            case let .jump(target):
                 lines.append("  goto \(labelName(target));")
 
-            case .jumpIfEqual(let lhs, let rhs, let target):
+            case let .jumpIfEqual(lhs, rhs, target):
                 ensureDeclared(lhs, declared: &declared, lines: &lines)
                 ensureDeclared(rhs, declared: &declared, lines: &lines)
                 lines.append("  if (\(varName(lhs)) == \(varName(rhs))) goto \(labelName(target));")
 
-            case .constValue(let result, let value):
+            case let .constValue(result, value):
                 ensureDeclared(result, declared: &declared, lines: &lines)
-                if case .symbolRef(let symbol) = value,
-                   let parameterName = parameterNameBySymbol[symbol] {
+                if case let .symbolRef(symbol) = value,
+                   let parameterName = parameterNameBySymbol[symbol]
+                {
                     lines.append("  \(varName(result)) = \(parameterName);")
                 } else {
                     lines.append(
@@ -73,58 +74,56 @@ extension LLVMBackend {
                 }
                 syncRoot(result)
 
-            case .binary(let op, let lhs, let rhs, let result):
+            case let .binary(op, lhs, rhs, result):
                 ensureDeclared(result, declared: &declared, lines: &lines)
                 ensureDeclared(lhs, declared: &declared, lines: &lines)
                 ensureDeclared(rhs, declared: &declared, lines: &lines)
-                let opText: String
-                switch op {
+                let opText = switch op {
                 case .add:
-                    opText = "+"
+                    "+"
                 case .subtract:
-                    opText = "-"
+                    "-"
                 case .multiply:
-                    opText = "*"
+                    "*"
                 case .divide:
-                    opText = "/"
+                    "/"
                 case .modulo:
-                    opText = "%"
+                    "%"
                 case .equal:
-                    opText = "=="
+                    "=="
                 case .notEqual:
-                    opText = "!="
+                    "!="
                 case .lessThan:
-                    opText = "<"
+                    "<"
                 case .lessOrEqual:
-                    opText = "<="
+                    "<="
                 case .greaterThan:
-                    opText = ">"
+                    ">"
                 case .greaterOrEqual:
-                    opText = ">="
+                    ">="
                 case .logicalAnd:
-                    opText = "&&"
+                    "&&"
                 case .logicalOr:
-                    opText = "||"
+                    "||"
                 }
                 lines.append("  \(varName(result)) = (\(varName(lhs)) \(opText) \(varName(rhs)));")
                 syncRoot(result)
 
-            case .unary(let op, let operand, let result):
+            case let .unary(op, operand, result):
                 ensureDeclared(result, declared: &declared, lines: &lines)
                 ensureDeclared(operand, declared: &declared, lines: &lines)
-                let unaryOpText: String
-                switch op {
+                let unaryOpText = switch op {
                 case .not:
-                    unaryOpText = "!"
+                    "!"
                 case .unaryPlus:
-                    unaryOpText = "+"
+                    "+"
                 case .unaryMinus:
-                    unaryOpText = "-"
+                    "-"
                 }
                 lines.append("  \(varName(result)) = (\(unaryOpText)\(varName(operand)));")
                 syncRoot(result)
 
-            case .nullAssert(let operand, let result):
+            case let .nullAssert(operand, result):
                 ensureDeclared(result, declared: &declared, lines: &lines)
                 ensureDeclared(operand, declared: &declared, lines: &lines)
                 let thrSlot = "thrown_\(callIndex)"
@@ -138,7 +137,7 @@ extension LLVMBackend {
                 lines.append("  }")
                 syncRoot(result)
 
-            case .call(let symbol, let callee, let arguments, let result, let usesThrownChannel, let thrownResult, let isSuperCall):
+            case let .call(symbol, callee, arguments, result, usesThrownChannel, thrownResult, isSuperCall):
                 // super calls always use direct dispatch – when virtual dispatch
                 // is introduced the isSuperCall flag will bypass vtable lookup.
                 _ = isSuperCall
@@ -220,13 +219,12 @@ extension LLVMBackend {
                     let rhs = argVars.count > 1 ? argVars[1] : "0"
                     let cOp = Self.fpOpSymbol(calleeName)
                     let isComparison = calleeName.hasSuffix("eq") || calleeName.hasSuffix("ne") || calleeName.hasSuffix("lt") || calleeName.hasSuffix("le") || calleeName.hasSuffix("gt") || calleeName.hasSuffix("ge")
-                    let expr: String
-                    if calleeName == "kk_op_fmod" {
-                        expr = "kk_float_to_bits(fmodf(kk_bits_to_float(\(lhs)), kk_bits_to_float(\(rhs))))"
+                    let expr = if calleeName == "kk_op_fmod" {
+                        "kk_float_to_bits(fmodf(kk_bits_to_float(\(lhs)), kk_bits_to_float(\(rhs))))"
                     } else if isComparison {
-                        expr = "(intptr_t)(kk_bits_to_float(\(lhs)) \(cOp) kk_bits_to_float(\(rhs)))"
+                        "(intptr_t)(kk_bits_to_float(\(lhs)) \(cOp) kk_bits_to_float(\(rhs)))"
                     } else {
-                        expr = "kk_float_to_bits(kk_bits_to_float(\(lhs)) \(cOp) kk_bits_to_float(\(rhs)))"
+                        "kk_float_to_bits(kk_bits_to_float(\(lhs)) \(cOp) kk_bits_to_float(\(rhs)))"
                     }
                     if let result {
                         lines.append("  \(varName(result)) = \(expr);")
@@ -242,13 +240,12 @@ extension LLVMBackend {
                     let rhs = argVars.count > 1 ? argVars[1] : "0"
                     let cOp = Self.fpOpSymbol(calleeName)
                     let isComparison = calleeName.hasSuffix("eq") || calleeName.hasSuffix("ne") || calleeName.hasSuffix("lt") || calleeName.hasSuffix("le") || calleeName.hasSuffix("gt") || calleeName.hasSuffix("ge")
-                    let expr: String
-                    if calleeName == "kk_op_dmod" {
-                        expr = "kk_double_to_bits(fmod(kk_bits_to_double(\(lhs)), kk_bits_to_double(\(rhs))))"
+                    let expr = if calleeName == "kk_op_dmod" {
+                        "kk_double_to_bits(fmod(kk_bits_to_double(\(lhs)), kk_bits_to_double(\(rhs))))"
                     } else if isComparison {
-                        expr = "(intptr_t)(kk_bits_to_double(\(lhs)) \(cOp) kk_bits_to_double(\(rhs)))"
+                        "(intptr_t)(kk_bits_to_double(\(lhs)) \(cOp) kk_bits_to_double(\(rhs)))"
                     } else {
-                        expr = "kk_double_to_bits(kk_bits_to_double(\(lhs)) \(cOp) kk_bits_to_double(\(rhs)))"
+                        "kk_double_to_bits(kk_bits_to_double(\(lhs)) \(cOp) kk_bits_to_double(\(rhs)))"
                     }
                     if let result {
                         lines.append("  \(varName(result)) = \(expr);")
@@ -307,7 +304,7 @@ extension LLVMBackend {
                     isInternalFunction = false
                 }
                 var callArguments = argVars
-                var thrownSlotName: String? = nil
+                var thrownSlotName: String?
                 if usesThrownChannel {
                     let slot = "thrown_\(callIndex)"
                     callIndex += 1
@@ -343,7 +340,7 @@ extension LLVMBackend {
                     }
                 }
 
-            case .virtualCall(let symbol, let callee, let receiver, let arguments, let result, let usesThrownChannel, let thrownResult, let dispatch):
+            case let .virtualCall(symbol, callee, receiver, arguments, result, usesThrownChannel, thrownResult, dispatch):
                 let calleeName = interner.resolve(callee)
                 ensureDeclared(receiver, declared: &declared, lines: &lines)
                 let argVars = arguments.map { arg -> String in
@@ -358,12 +355,11 @@ extension LLVMBackend {
                     ensureDeclared(thrownResult, declared: &declared, lines: &lines)
                 }
 
-                let lookupExpr: String
-                switch dispatch {
-                case .vtable(let slot):
-                    lookupExpr = "kk_vtable_lookup(\(varName(receiver)), \(slot))"
-                case .itable(let interfaceSlot, let methodSlot):
-                    lookupExpr = "kk_itable_lookup(\(varName(receiver)), \(interfaceSlot), \(methodSlot))"
+                let lookupExpr = switch dispatch {
+                case let .vtable(slot):
+                    "kk_vtable_lookup(\(varName(receiver)), \(slot))"
+                case let .itable(interfaceSlot, methodSlot):
+                    "kk_itable_lookup(\(varName(receiver)), \(interfaceSlot), \(methodSlot))"
                 }
 
                 let target: String
@@ -380,7 +376,7 @@ extension LLVMBackend {
                 lines.append("  KKVTableEntry \(fptr) = \(lookupExpr);")
 
                 var callArguments = [varName(receiver)] + argVars
-                var thrownSlotName: String? = nil
+                var thrownSlotName: String?
                 if usesThrownChannel {
                     let thrSlot = "thrown_\(callIndex)"
                     callIndex += 1
@@ -415,43 +411,44 @@ extension LLVMBackend {
                     }
                 }
 
-            case .jumpIfNotNull(let value, let target):
+            case let .jumpIfNotNull(value, target):
                 ensureDeclared(value, declared: &declared, lines: &lines)
                 lines.append("  if (\(varName(value)) != 0) goto \(labelName(target));")
 
-            case .copy(let from, let to):
+            case let .copy(from, to):
                 ensureDeclared(from, declared: &declared, lines: &lines)
                 // If the copy target is a global symbolRef, write to the global slot
                 // instead of the local register so the store persists.
                 if let targetExpr = arena.expr(to),
-                   case .symbolRef(let targetSymbol) = targetExpr,
-                   let globalSlot = globalValueSymbols[targetSymbol] {
+                   case let .symbolRef(targetSymbol) = targetExpr,
+                   let globalSlot = globalValueSymbols[targetSymbol]
+                {
                     lines.append("  \(globalSlot) = \(varName(from));")
                 } else {
                     ensureDeclared(to, declared: &declared, lines: &lines)
                     lines.append("  \(varName(to)) = \(varName(from));")
                 }
 
-            case .storeGlobal(let value, let symbol):
+            case let .storeGlobal(value, symbol):
                 ensureDeclared(value, declared: &declared, lines: &lines)
                 if let globalName = globalValueSymbols[symbol] {
                     lines.append("  \(globalName) = \(varName(value));")
                 }
 
-            case .loadGlobal(let result, let symbol):
+            case let .loadGlobal(result, symbol):
                 ensureDeclared(result, declared: &declared, lines: &lines)
                 if let globalName = globalValueSymbols[symbol] {
                     lines.append("  \(varName(result)) = \(globalName);")
                 }
                 syncRoot(result)
 
-            case .rethrow(let value):
+            case let .rethrow(value):
                 ensureDeclared(value, declared: &declared, lines: &lines)
                 lines.append("  if (outThrown) { *outThrown = \(varName(value)); }")
                 lines.append("  kk_pop_frame();")
                 lines.append("  return 0;")
 
-            case .returnIfEqual(let lhs, let rhs):
+            case let .returnIfEqual(lhs, rhs):
                 ensureDeclared(lhs, declared: &declared, lines: &lines)
                 ensureDeclared(rhs, declared: &declared, lines: &lines)
                 lines.append("  if (\(varName(lhs)) == \(varName(rhs))) {")
@@ -463,7 +460,7 @@ extension LLVMBackend {
                 lines.append("  kk_pop_frame();")
                 lines.append("  return 0;")
 
-            case .returnValue(let value):
+            case let .returnValue(value):
                 ensureDeclared(value, declared: &declared, lines: &lines)
                 lines.append("  kk_pop_frame();")
                 lines.append("  return \(varName(value));")

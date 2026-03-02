@@ -1,7 +1,9 @@
 package golden.sema
 
-open class Box<T>(val value: T) {
-    fun get(): T = value
+class E
+
+class Box<T> {
+    fun get(): T = throw E()
     fun set(v: T) {}
 }
 

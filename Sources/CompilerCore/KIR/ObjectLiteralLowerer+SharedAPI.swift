@@ -9,16 +9,13 @@ extension ObjectLiteralLowerer {
         shared: KIRLoweringSharedContext,
         emit instructions: inout KIRLoweringEmitContext
     ) -> KIRExprID {
-        var old = Array(instructions)
-        let result = lowerObjectLiteralExpr(
+        lowerObjectLiteralExpr(
             exprID,
             superTypes: superTypes,
             sema: shared.sema,
             arena: shared.arena,
             interner: shared.interner,
-            instructions: &old
+            instructions: &instructions.instructions
         )
-        instructions = KIRLoweringEmitContext(old)
-        return result
     }
 }

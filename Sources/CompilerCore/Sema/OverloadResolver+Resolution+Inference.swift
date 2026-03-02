@@ -54,15 +54,15 @@ extension OverloadResolver {
         ctx: SemaModule
     ) -> Diagnostic? {
         for (index, typeParamSymbol) in signature.typeParameterSymbols.enumerated() {
-            let upperBound: TypeID?
-            if index < signature.typeParameterUpperBounds.count {
-                upperBound = signature.typeParameterUpperBounds[index]
+            let upperBound: TypeID? = if index < signature.typeParameterUpperBounds.count {
+                signature.typeParameterUpperBounds[index]
             } else {
-                upperBound = ctx.symbols.typeParameterUpperBound(for: typeParamSymbol)
+                ctx.symbols.typeParameterUpperBound(for: typeParamSymbol)
             }
             guard let bound = upperBound else { continue }
             guard let typeVar = typeVarBySymbol[typeParamSymbol],
-                  let substitutedType = substitution[typeVar] else {
+                  let substitutedType = substitution[typeVar]
+            else {
                 continue
             }
             if !ctx.types.isSubtype(substitutedType, bound) {
@@ -77,5 +77,4 @@ extension OverloadResolver {
         }
         return nil
     }
-
 }

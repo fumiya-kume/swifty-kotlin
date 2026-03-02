@@ -11,7 +11,6 @@ import Foundation
 ///     <hash>.kirbin     — serialized per-file frontend results (written/read by other components)
 /// ```
 public final class IncrementalCompilationCache {
-
     /// Root directory of the cache.
     public let cachePath: String
 
@@ -43,10 +42,12 @@ public final class IncrementalCompilationCache {
         let depsPath = cachePath + "/deps.json"
 
         if fm.fileExists(atPath: manifestPath),
-           let data = try? Data(contentsOf: URL(fileURLWithPath: manifestPath)) {
+           let data = try? Data(contentsOf: URL(fileURLWithPath: manifestPath))
+        {
             let decoder = JSONDecoder()
             if let manifest = try? decoder.decode(CacheManifest.self, from: data),
-               manifest.version == Self.supportedManifestVersion {
+               manifest.version == Self.supportedManifestVersion
+            {
                 for fp in manifest.fingerprints {
                     previousFingerprints[fp.path] = fp
                 }
@@ -54,7 +55,8 @@ public final class IncrementalCompilationCache {
         }
 
         if fm.fileExists(atPath: depsPath),
-           let data = try? Data(contentsOf: URL(fileURLWithPath: depsPath)) {
+           let data = try? Data(contentsOf: URL(fileURLWithPath: depsPath))
+        {
             if let graph = try? DependencyGraph.deserialize(from: data) {
                 previousDependencyGraph = graph
             }
@@ -66,32 +68,20 @@ public final class IncrementalCompilationCache {
     /// Computes fingerprints for the given input paths and stores them as current.
     public func computeCurrentFingerprints(for paths: [String], sourceManager: SourceManager) {
         for path in paths {
-            // Try to get contents from sourceManager first (already loaded)
-            let fileIDs = sourceManager.fileIDs()
-            var found = false
-            for fileID in fileIDs {
-                if sourceManager.path(of: fileID) == path {
-                    let contents = sourceManager.contents(of: fileID)
-                    let fp = FileFingerprint.compute(for: path, contents: contents)
-                    currentFingerprints[path] = fp
-                    found = true
-                    break
-                }
+            guard let fingerprint = computeCurrentFingerprint(for: path, sourceManager: sourceManager) else {
+                continue
             }
-            if !found {
-                if let fp = FileFingerprint.compute(for: path) {
-                    currentFingerprints[path] = fp
-                }
-            }
+            currentFingerprints[path] = fingerprint
         }
     }
 
     /// Computes fingerprints directly from path list (without SourceManager).
     public func computeCurrentFingerprints(for paths: [String]) {
         for path in paths {
-            if let fp = FileFingerprint.compute(for: path) {
-                currentFingerprints[path] = fp
+            guard let fingerprint = computeCurrentFingerprint(for: path, sourceManager: nil) else {
+                continue
             }
+            currentFingerprints[path] = fingerprint
         }
     }
 
@@ -211,6 +201,14 @@ public final class IncrementalCompilationCache {
         previousFingerprints = [:]
         previousDependencyGraph = nil
         currentFingerprints = [:]
+    }
+
+    private func computeCurrentFingerprint(for path: String, sourceManager: SourceManager?) -> FileFingerprint? {
+        if let sourceManager, let fileID = sourceManager.fileID(forPath: path) {
+            let contents = sourceManager.contents(of: fileID)
+            return FileFingerprint.compute(for: path, contents: contents)
+        }
+        return FileFingerprint.compute(for: path)
     }
 }
 

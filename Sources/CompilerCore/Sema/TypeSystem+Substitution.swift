@@ -1,75 +1,72 @@
-extension TypeSystem {
-    func renderType(_ type: TypeID) -> String {
+public extension TypeSystem {
+    internal func renderType(_ type: TypeID) -> String {
         switch kind(of: type) {
         case .error:
             return "<error>"
         case .unit:
             return "Unit"
-        case .nothing(let nullability):
+        case let .nothing(nullability):
             return nullability == .nullable ? "Nothing?" : "Nothing"
-        case .any(let nullability):
+        case let .any(nullability):
             return nullability == .nullable ? "Any?" : "Any"
-        case .primitive(let primitive, let nullability):
-            let base: String
-            switch primitive {
+        case let .primitive(primitive, nullability):
+            let base = switch primitive {
             case .boolean:
-                base = "Boolean"
+                "Boolean"
             case .char:
-                base = "Char"
+                "Char"
             case .int:
-                base = "Int"
+                "Int"
             case .long:
-                base = "Long"
+                "Long"
             case .float:
-                base = "Float"
+                "Float"
             case .double:
-                base = "Double"
+                "Double"
             case .string:
-                base = "String"
+                "String"
             }
             return nullability == .nullable ? "\(base)?" : base
-        case .classType(let classType):
-            let args: String
-            if classType.args.isEmpty {
-                args = ""
+        case let .classType(classType):
+            let args = if classType.args.isEmpty {
+                ""
             } else {
-                args = "<" + classType.args.map(renderTypeArg).joined(separator: ", ") + ">"
+                "<" + classType.args.map(renderTypeArg).joined(separator: ", ") + ">"
             }
             let nullSuffix = classType.nullability == .nullable ? "?" : ""
             return "Class#\(classType.classSymbol.rawValue)\(args)\(nullSuffix)"
-        case .typeParam(let typeParam):
+        case let .typeParam(typeParam):
             let nullSuffix = typeParam.nullability == .nullable ? "?" : ""
             return "T#\(typeParam.symbol.rawValue)\(nullSuffix)"
-        case .functionType(let functionType):
-            let receiverPrefix: String
-            if let receiver = functionType.receiver {
-                receiverPrefix = "\(renderType(receiver))."
+        case let .functionType(functionType):
+            let receiverPrefix = if let receiver = functionType.receiver {
+                "\(renderType(receiver))."
             } else {
-                receiverPrefix = ""
+                ""
             }
             let suspendPrefix = functionType.isSuspend ? "suspend " : ""
             let params = functionType.params.map(renderType).joined(separator: ", ")
             let nullSuffix = functionType.nullability == .nullable ? "?" : ""
             return "\(suspendPrefix)\(receiverPrefix)(\(params)) -> \(renderType(functionType.returnType))\(nullSuffix)"
-        case .intersection(let parts):
+        case let .intersection(parts):
             return parts.map(renderType).joined(separator: " & ")
         }
     }
 
     private func renderTypeArg(_ arg: TypeArg) -> String {
         switch arg {
-        case .invariant(let type):
-            return renderType(type)
-        case .out(let type):
-            return "out \(renderType(type))"
-        case .in(let type):
-            return "in \(renderType(type))"
+        case let .invariant(type):
+            renderType(type)
+        case let .out(type):
+            "out \(renderType(type))"
+        case let .in(type):
+            "in \(renderType(type))"
         case .star:
-            return "*"
+            "*"
         }
     }
 
-    public func makeTypeVarBySymbol(_ symbols: [SymbolID]) -> [SymbolID: TypeVarID] {
+    func makeTypeVarBySymbol(_ symbols: [SymbolID]) -> [SymbolID: TypeVarID] {
         var mapping: [SymbolID: TypeVarID] = [:]
         for (index, symbol) in symbols.enumerated() {
             mapping[symbol] = TypeVarID(rawValue: Int32(index))
@@ -78,7 +75,7 @@ extension TypeSystem {
     }
 
     /// Result of checking use-site variance projections on a member access.
-    public struct VarianceProjectionResult {
+    struct VarianceProjectionResult {
         /// Substitution for covariant positions (return types).
         /// For `out Number`: T → Number.  For `in Number`: T → Any?.  For `*`: T → Any?.
         public let covariantSubstitution: [TypeVarID: TypeID]
@@ -93,12 +90,12 @@ extension TypeSystem {
     /// - A set of type parameter symbols that are write-forbidden (`out` or `*` projections)
     ///
     /// Returns `nil` if the receiver has no projected type arguments (all invariant).
-    public func buildVarianceProjectionSubstitutions(
+    func buildVarianceProjectionSubstitutions(
         receiverType: TypeID,
         signature: FunctionSignature,
         symbols: SymbolTable
     ) -> VarianceProjectionResult? {
-        guard case .classType(let classType) = kind(of: receiverType) else {
+        guard case let .classType(classType) = kind(of: receiverType) else {
             return nil
         }
         let classSymbol = classType.classSymbol
@@ -111,8 +108,8 @@ extension TypeSystem {
         // Check if any arg is projected (non-invariant with a concrete type or star)
         let hasProjection = classType.args.contains { arg in
             switch arg {
-            case .out, .in, .star: return true
-            case .invariant: return false
+            case .out, .in, .star: true
+            case .invariant: false
             }
         }
         guard hasProjection else { return nil }
@@ -127,9 +124,9 @@ extension TypeSystem {
             guard let typeVar = typeVarBySymbol[tpSymbol] else { continue }
 
             switch arg {
-            case .invariant(let type):
+            case let .invariant(type):
                 covariantSub[typeVar] = type
-            case .out(let type):
+            case let .out(type):
                 covariantSub[typeVar] = type
                 writeForbidden.insert(tpSymbol)
             case .in:
@@ -150,58 +147,57 @@ extension TypeSystem {
 
     /// Check if a member function's parameters use any write-forbidden type parameters.
     /// Returns the index of the first violating parameter, or nil if no violation.
-    public func checkVarianceViolationInParameters(
+    func checkVarianceViolationInParameters(
         signature: FunctionSignature,
         writeForbiddenSymbols: Set<SymbolID>
     ) -> Int? {
         guard !writeForbiddenSymbols.isEmpty else { return nil }
         for (index, paramType) in signature.parameterTypes.enumerated() {
-            for symbol in writeForbiddenSymbols {
-                if typeContainsTypeParam(paramType, symbol: symbol) {
-                    return index
-                }
+            for symbol in writeForbiddenSymbols where typeContainsTypeParam(paramType, symbol: symbol) {
+                return index
             }
         }
         return nil
     }
 
-    public func substituteTypeParameters(
+    func substituteTypeParameters(
         in type: TypeID,
         substitution: [TypeVarID: TypeID],
         typeVarBySymbol: [SymbolID: TypeVarID]
     ) -> TypeID {
         let kind = kind(of: type)
         switch kind {
-        case .typeParam(let typeParam):
+        case let .typeParam(typeParam):
             if let variable = typeVarBySymbol[typeParam.symbol],
-               let concrete = substitution[variable] {
+               let concrete = substitution[variable]
+            {
                 return concrete
             }
             return type
 
-        case .classType(let classType):
+        case let .classType(classType):
             let newArgs: [TypeArg] = classType.args.map { arg in
                 switch arg {
-                case .invariant(let inner):
-                    return .invariant(substituteTypeParameters(
+                case let .invariant(inner):
+                    .invariant(substituteTypeParameters(
                         in: inner,
                         substitution: substitution,
                         typeVarBySymbol: typeVarBySymbol
                     ))
-                case .out(let inner):
-                    return .out(substituteTypeParameters(
+                case let .out(inner):
+                    .out(substituteTypeParameters(
                         in: inner,
                         substitution: substitution,
                         typeVarBySymbol: typeVarBySymbol
                     ))
-                case .in(let inner):
-                    return .in(substituteTypeParameters(
+                case let .in(inner):
+                    .in(substituteTypeParameters(
                         in: inner,
                         substitution: substitution,
                         typeVarBySymbol: typeVarBySymbol
                     ))
                 case .star:
-                    return .star
+                    .star
                 }
             }
             if newArgs == classType.args {
@@ -213,7 +209,7 @@ extension TypeSystem {
                 nullability: classType.nullability
             )))
 
-        case .functionType(let functionType):
+        case let .functionType(functionType):
             let newReceiver = functionType.receiver.map { receiver in
                 substituteTypeParameters(
                     in: receiver,
@@ -233,9 +229,10 @@ extension TypeSystem {
                 substitution: substitution,
                 typeVarBySymbol: typeVarBySymbol
             )
-            if newReceiver == functionType.receiver &&
-                newParams == functionType.params &&
-                newReturn == functionType.returnType {
+            if newReceiver == functionType.receiver,
+               newParams == functionType.params,
+               newReturn == functionType.returnType
+            {
                 return type
             }
             return make(.functionType(FunctionType(
@@ -246,7 +243,7 @@ extension TypeSystem {
                 nullability: functionType.nullability
             )))
 
-        case .intersection(let parts):
+        case let .intersection(parts):
             let newParts = parts.map { part in
                 substituteTypeParameters(
                     in: part,

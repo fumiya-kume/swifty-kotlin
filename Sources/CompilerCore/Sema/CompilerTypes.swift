@@ -33,16 +33,16 @@ public struct TargetTriple: Equatable {
 
     public static func hostDefault() -> TargetTriple {
         #if arch(arm64)
-        let arch = "arm64"
+            let arch = "arm64"
         #elseif arch(x86_64)
-        let arch = "x86_64"
+            let arch = "x86_64"
         #else
-        let arch = "arm64"
+            let arch = "arm64"
         #endif
         #if os(Linux)
-        return TargetTriple(arch: arch, vendor: "unknown", os: "linux-gnu", osVersion: nil)
+            return TargetTriple(arch: arch, vendor: "unknown", os: "linux-gnu", osVersion: nil)
         #else
-        return TargetTriple(arch: arch, vendor: "apple", os: "macosx", osVersion: nil)
+            return TargetTriple(arch: arch, vendor: "apple", os: "macosx", osVersion: nil)
         #endif
     }
 }
@@ -131,7 +131,8 @@ public struct CompilerOptions: Equatable {
         for flag in frontendFlags {
             if flag.hasPrefix("jobs="),
                let n = Int(flag.dropFirst(5)),
-               n >= 1 {
+               n >= 1
+            {
                 return n
             }
         }
@@ -142,59 +143,18 @@ public struct CompilerOptions: Equatable {
     /// `-Xfrontend lazy-thread-safety=SYNCHRONIZED|NONE`.
     /// Defaults to `.synchronized` when the flag is absent.
     public var lazyThreadSafetyMode: LazyDelegateThreadSafetyMode {
-        for flag in frontendFlags {
-            if flag.hasPrefix("lazy-thread-safety=") {
-                let value = String(flag.dropFirst("lazy-thread-safety=".count))
-                    .uppercased()
-                switch value {
-                case "NONE":
-                    return .none
-                case "SYNCHRONIZED":
-                    return .synchronized
-                default:
-                    return .synchronized
-                }
+        for flag in frontendFlags where flag.hasPrefix("lazy-thread-safety=") {
+            let value = String(flag.dropFirst("lazy-thread-safety=".count))
+                .uppercased()
+            switch value {
+            case "NONE":
+                return .none
+            case "SYNCHRONIZED":
+                return .synchronized
+            default:
+                return .synchronized
             }
         }
         return .synchronized
-    }
-
-    @available(*, deprecated, message: "Use debugInfo instead.")
-    public var emitsDebugInfo: Bool {
-        get { debugInfo }
-        set { debugInfo = newValue }
-    }
-
-    @available(*, deprecated, message: "Use init(..., debugInfo: ...) instead.")
-    public init(
-        moduleName: String,
-        inputs: [String],
-        outputPath: String,
-        emit: EmitMode,
-        searchPaths: [String] = [],
-        libraryPaths: [String] = [],
-        linkLibraries: [String] = [],
-        target: TargetTriple,
-        optLevel: OptimizationLevel = .O0,
-        emitsDebugInfo: Bool,
-        frontendFlags: [String] = [],
-        irFlags: [String] = [],
-        runtimeFlags: [String] = []
-    ) {
-        self.init(
-            moduleName: moduleName,
-            inputs: inputs,
-            outputPath: outputPath,
-            emit: emit,
-            searchPaths: searchPaths,
-            libraryPaths: libraryPaths,
-            linkLibraries: linkLibraries,
-            target: target,
-            optLevel: optLevel,
-            debugInfo: emitsDebugInfo,
-            frontendFlags: frontendFlags,
-            irFlags: irFlags,
-            runtimeFlags: runtimeFlags
-        )
     }
 }

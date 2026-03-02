@@ -18,7 +18,7 @@ final class KIRLoweringDriver {
     private(set) lazy var objectLiteralLowerer = ObjectLiteralLowerer(driver: self)
     private(set) lazy var callSupportLowerer = CallSupportLowerer(driver: self)
 
-    // Stateless utilities (no back-reference needed)
+    /// Stateless utilities (no back-reference needed)
     let constantCollector = ConstantCollector()
 
     init(ctx: KIRLoweringContext) {
@@ -36,7 +36,7 @@ final class KIRLoweringDriver {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
-        return exprLowerer.lowerExpr(
+        exprLowerer.lowerExpr(
             exprID,
             ast: ast,
             sema: sema,
@@ -47,17 +47,15 @@ final class KIRLoweringDriver {
         )
     }
 
-
     func lowerExpr(
         _ exprID: ExprID,
         shared: KIRLoweringSharedContext,
         emit instructions: inout KIRLoweringEmitContext
     ) -> KIRExprID {
-        return exprLowerer.lowerExpr(
+        exprLowerer.lowerExpr(
             exprID,
             shared: shared,
             emit: &instructions
         )
     }
-
 }

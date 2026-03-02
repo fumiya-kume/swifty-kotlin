@@ -131,8 +131,8 @@ public final class MetadataEncoder {
                 if lhs.fqName.count != rhs.fqName.count {
                     return lhs.fqName.count < rhs.fqName.count
                 }
-                let lhsRaw = lhs.fqName.map { $0.rawValue }
-                let rhsRaw = rhs.fqName.map { $0.rawValue }
+                let lhsRaw = lhs.fqName.map(\.rawValue)
+                let rhsRaw = rhs.fqName.map(\.rawValue)
                 if lhsRaw != rhsRaw {
                     return lhsRaw.lexicographicallyPrecedes(rhsRaw)
                 }
@@ -156,7 +156,7 @@ public final class MetadataEncoder {
             var typeSignature: String?
             var externalLinkName: String?
 
-            if (symbol.kind == .function || symbol.kind == .constructor), let signature = symbols.functionSignature(for: symbol.id) {
+            if symbol.kind == .function || symbol.kind == .constructor, let signature = symbols.functionSignature(for: symbol.id) {
                 arity = signature.parameterTypes.count
                 isSuspend = signature.isSuspend
                 isInline = symbol.flags.contains(.inlineFunction)
@@ -169,8 +169,9 @@ public final class MetadataEncoder {
                 externalLinkName = functionLinkNames[symbol.id]
             }
 
-            if (symbol.kind == .property || symbol.kind == .field),
-               symbols.propertyType(for: symbol.id) != nil {
+            if symbol.kind == .property || symbol.kind == .field,
+               symbols.propertyType(for: symbol.id) != nil
+            {
                 typeSignature = mangler.mangledSignature(
                     for: symbol,
                     symbols: symbols,
@@ -180,7 +181,8 @@ public final class MetadataEncoder {
             }
 
             if symbol.kind == .typeAlias,
-               symbols.typeAliasUnderlyingType(for: symbol.id) != nil {
+               symbols.typeAliasUnderlyingType(for: symbol.id) != nil
+            {
                 typeSignature = mangler.mangledSignature(
                     for: symbol,
                     symbols: symbols,
@@ -217,7 +219,8 @@ public final class MetadataEncoder {
                     itableSlotsStr = serializedITableSlots
                 }
                 if let superClass = layout.superClass,
-                   let superSymbol = symbols.symbol(superClass) {
+                   let superSymbol = symbols.symbol(superClass)
+                {
                     superFQName = superSymbol.fqName.map { interner.resolve($0) }.joined(separator: ".")
                 }
             }
@@ -228,7 +231,8 @@ public final class MetadataEncoder {
 
             var valueClassUnderlyingTypeSig: String?
             if rawIsValueClass,
-               let underlyingType = symbols.valueClassUnderlyingType(for: symbol.id) {
+               let underlyingType = symbols.valueClassUnderlyingType(for: symbol.id)
+            {
                 valueClassUnderlyingTypeSig = mangler.encodeType(
                     underlyingType,
                     symbols: symbols,
@@ -240,7 +244,7 @@ public final class MetadataEncoder {
             // Only emit valueClass=1 when the underlying type is available;
             // without it, importers cannot resolve/unbox the value class.
             let isValueClass: Bool
-            if rawIsValueClass && valueClassUnderlyingTypeSig == nil {
+            if rawIsValueClass, valueClassUnderlyingTypeSig == nil {
                 assertionFailure(
                     "Value class '\(fqName)' is missing underlying type; omitting valueClass flag from metadata."
                 )
@@ -290,17 +294,18 @@ public final class MetadataEncoder {
         return records
     }
 
-    // Nominal kinds that carry layout information in metadata.
+    /// Nominal kinds that carry layout information in metadata.
     private static let nominalKinds: Set<SymbolKind> = [.class, .interface, .object, .enumClass, .annotationClass]
 
     /// Serialize records to the text-based metadata format.
     public func serialize(_ records: [MetadataRecord]) -> String {
-        var lines: [String] = ["symbols=\(records.count)"]
+        var lines = ["symbols=\(records.count)"]
         for record in records {
             var fields: [String] = [
                 "\(record.kind)",
                 record.mangledName,
-                "fq=\(record.fqName)"
+                "fq=\(record.fqName)",
+                "schema=v1",
             ]
             if record.kind == .function || record.kind == .constructor {
                 fields.append("arity=\(record.arity)")
@@ -480,7 +485,8 @@ public final class MetadataDecoder {
             }
             let parts = line.split(separator: " ").map(String.init)
             guard let kindToken = parts.first,
-                  let kind = symbolKindFromMetadata(kindToken) else {
+                  let kind = symbolKindFromMetadata(kindToken)
+            else {
                 continue
             }
             let mangledName = parts.count > 1 ? parts[1] : ""
@@ -505,6 +511,7 @@ public final class MetadataDecoder {
             var valueClassUnderlyingTypeSig: String?
             var annotations: [MetadataAnnotationRecord] = []
             var sealedSubclassFQNames: [String] = []
+            var schemaVersion: String?
 
             for part in parts.dropFirst() {
                 guard let separatorIndex = part.firstIndex(of: "=") else {
@@ -553,12 +560,20 @@ public final class MetadataDecoder {
                     sealedSubclassFQNames = value.split(separator: ",").map(String.init).filter { !$0.isEmpty }
                 case "annotations":
                     annotations = decodeAnnotations(value)
+                case "schema":
+                    schemaVersion = value
                 default:
                     continue
                 }
             }
 
+            // Backward-compatible schema gate:
+            // - records without schema are treated as legacy v1
+            // - only explicitly non-v1 schema versions are rejected
             guard !fqName.isEmpty else {
+                continue
+            }
+            if let schemaVersion, schemaVersion != "v1" {
                 continue
             }
 
@@ -631,39 +646,6 @@ public final class MetadataDecoder {
     // MARK: - Symbol Kind Mapping
 
     func symbolKindFromMetadata(_ token: String) -> SymbolKind? {
-        switch token {
-        case "package":
-            return .package
-        case "class":
-            return .class
-        case "interface":
-            return .interface
-        case "object":
-            return .object
-        case "enumClass":
-            return .enumClass
-        case "annotationClass":
-            return .annotationClass
-        case "typeAlias":
-            return .typeAlias
-        case "function":
-            return .function
-        case "constructor":
-            return .constructor
-        case "property":
-            return .property
-        case "field":
-            return .field
-        case "typeParameter":
-            return .typeParameter
-        case "valueParameter":
-            return .valueParameter
-        case "local":
-            return .local
-        case "label":
-            return .label
-        default:
-            return nil
-        }
+        symbolKindFromMetadataToken(token)
     }
 }

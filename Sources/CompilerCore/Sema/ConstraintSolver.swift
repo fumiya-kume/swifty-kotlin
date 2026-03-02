@@ -1,4 +1,4 @@
-public struct TypeVarID: Hashable {
+public struct TypeVarID: Hashable, Sendable {
     public let rawValue: Int32
 
     public static let invalid = TypeVarID(rawValue: -1)
@@ -119,24 +119,20 @@ public final class ConstraintSolver {
         }
 
         if !varRelations.isEmpty {
-            for _ in 0..<max(1, vars.count) {
+            for _ in 0 ..< max(1, vars.count) {
                 var changed = false
                 for relation in varRelations {
                     let leftVar = relation.left
                     let rightVar = relation.right
 
                     let rightUpper = upperBounds[rightVar, default: []]
-                    for bound in rightUpper {
-                        if appendUnique(bound, to: &upperBounds[leftVar, default: []]) {
-                            changed = true
-                        }
+                    for bound in rightUpper where appendUnique(bound, to: &upperBounds[leftVar, default: []]) {
+                        changed = true
                     }
 
                     let leftLower = lowerBounds[leftVar, default: []]
-                    for bound in leftLower {
-                        if appendUnique(bound, to: &lowerBounds[rightVar, default: []]) {
-                            changed = true
-                        }
+                    for bound in leftLower where appendUnique(bound, to: &lowerBounds[rightVar, default: []]) {
+                        changed = true
                     }
                 }
                 if !changed {
@@ -149,7 +145,7 @@ public final class ConstraintSolver {
         for variable in vars {
             let lowers = lowerBounds[variable, default: []]
             let uppers = upperBounds[variable, default: []]
-            if lowers.isEmpty && uppers.isEmpty {
+            if lowers.isEmpty, uppers.isEmpty {
                 substitution[variable] = typeSystem.errorType
                 continue
             }
@@ -197,7 +193,8 @@ public final class ConstraintSolver {
 
         for constraint in constraints {
             guard let left = resolve(constraint.left, substitution: substitution),
-                  let right = resolve(constraint.right, substitution: substitution) else {
+                  let right = resolve(constraint.right, substitution: substitution)
+            else {
                 return failureSolution(
                     vars: vars,
                     typeSystem: typeSystem,
@@ -232,14 +229,14 @@ public final class ConstraintSolver {
     private func normalize(_ constraint: VariableConstraint) -> [(left: ConstraintOperand, right: ConstraintOperand, blame: SourceRange?)] {
         switch constraint.kind {
         case .subtype:
-            return [(constraint.left, constraint.right, constraint.blameRange)]
+            [(constraint.left, constraint.right, constraint.blameRange)]
         case .equal:
-            return [
+            [
                 (constraint.left, constraint.right, constraint.blameRange),
-                (constraint.right, constraint.left, constraint.blameRange)
+                (constraint.right, constraint.left, constraint.blameRange),
             ]
         case .supertype:
-            return [(constraint.right, constraint.left, constraint.blameRange)]
+            [(constraint.right, constraint.left, constraint.blameRange)]
         }
     }
 
@@ -251,20 +248,20 @@ public final class ConstraintSolver {
     ) -> Bool {
         switch kind {
         case .subtype:
-            return typeSystem.isSubtype(left, right)
+            typeSystem.isSubtype(left, right)
         case .equal:
-            return typeSystem.isSubtype(left, right) && typeSystem.isSubtype(right, left)
+            typeSystem.isSubtype(left, right) && typeSystem.isSubtype(right, left)
         case .supertype:
-            return typeSystem.isSubtype(right, left)
+            typeSystem.isSubtype(right, left)
         }
     }
 
     private func resolve(_ operand: ConstraintOperand, substitution: [TypeVarID: TypeID]) -> TypeID? {
         switch operand {
-        case .type(let type):
-            return type
-        case .variable(let variable):
-            return substitution[variable]
+        case let .type(type):
+            type
+        case let .variable(variable):
+            substitution[variable]
         }
     }
 
@@ -283,11 +280,11 @@ public final class ConstraintSolver {
     ) -> SourceRange? {
         for relation in relations {
             switch (relation.left, relation.right) {
-            case (.variable(let lhs), _):
+            case let (.variable(lhs), _):
                 if lhs == variable {
                     return relation.blameRange
                 }
-            case (_, .variable(let rhs)):
+            case let (_, .variable(rhs)):
                 if rhs == variable {
                     return relation.blameRange
                 }
@@ -321,11 +318,11 @@ public final class ConstraintSolver {
     func relationOperator(for kind: ConstraintKind) -> String {
         switch kind {
         case .subtype:
-            return "<:"
+            "<:"
         case .equal:
-            return "=="
+            "=="
         case .supertype:
-            return ":>"
+            ":>"
         }
     }
 

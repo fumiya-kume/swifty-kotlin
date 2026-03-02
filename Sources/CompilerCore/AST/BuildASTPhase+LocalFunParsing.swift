@@ -1,20 +1,22 @@
 import Foundation
 
 extension BuildASTPhase {
-    internal func parseLocalFunDeclExpr(
+    func parseLocalFunDeclExpr(
         from statementTokens: [Token],
         interner: StringInterner,
         astArena: ASTArena
     ) -> ExprID? {
         guard let head = statementTokens.first,
-              case .keyword(.fun) = head.kind else {
+              case .keyword(.fun) = head.kind
+        else {
             return nil
         }
 
         guard let nameToken = statementTokens.dropFirst().first(where: { token in
             isTypeLikeNameToken(token.kind)
         }),
-              let name = internedIdentifier(from: nameToken, interner: interner) else {
+            let name = internedIdentifier(from: nameToken, interner: interner)
+        else {
             return nil
         }
 
@@ -28,11 +30,11 @@ extension BuildASTPhase {
         var index = lParenIndex + 1
         while index < statementTokens.count {
             let token = statementTokens[index]
-            if token.kind == .symbol(.rParen) && depth.paren == 0 {
+            if token.kind == .symbol(.rParen), depth.paren == 0 {
                 break
             }
             depth.track(token.kind)
-            if token.kind == .symbol(.comma) && depth.isAtTopLevel {
+            if token.kind == .symbol(.comma), depth.isAtTopLevel {
                 appendValueParameter(from: paramTokens, into: &valueParams, interner: interner, astArena: astArena)
                 paramTokens.removeAll(keepingCapacity: true)
             } else {
@@ -93,7 +95,7 @@ extension BuildASTPhase {
                         break
                     }
                 }
-                if braceDepth >= 1 && !(braceDepth == 1 && token.kind == .symbol(.lBrace)) {
+                if braceDepth >= 1, !(braceDepth == 1 && token.kind == .symbol(.lBrace)) {
                     bodyTokens.append(token)
                 }
                 index += 1
@@ -119,7 +121,8 @@ extension BuildASTPhase {
                 }
                 if !blockExprs.isEmpty,
                    let firstRange = astArena.exprRange(blockExprs.first!),
-                   let lastRange = astArena.exprRange(blockExprs.last!) {
+                   let lastRange = astArena.exprRange(blockExprs.last!)
+                {
                     let bodyRange = SourceRange(start: firstRange.start, end: lastRange.end)
                     body = .block(blockExprs, bodyRange)
                 } else {
@@ -140,14 +143,13 @@ extension BuildASTPhase {
             body = .unit
         }
 
-        let end: SourceLocation
-        switch body {
-        case .block(_, let range):
-            end = range.end
-        case .expr(_, let range):
-            end = range.end
+        let end: SourceLocation = switch body {
+        case let .block(_, range):
+            range.end
+        case let .expr(_, range):
+            range.end
         case .unit:
-            end = statementTokens.last?.range.end ?? head.range.end
+            statementTokens.last?.range.end ?? head.range.end
         }
         let range = SourceRange(start: head.range.start, end: end)
         return astArena.appendExpr(.localFunDecl(

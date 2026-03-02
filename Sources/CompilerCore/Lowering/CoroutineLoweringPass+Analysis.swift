@@ -28,12 +28,13 @@ extension CoroutineLoweringPass {
             let callInfo = extractCallInfo(tailInstruction.instruction)
             guard let callInfo,
                   isSuspendCall(
-                    symbol: callInfo.symbol,
-                    callee: callInfo.callee,
-                    suspendFunctionSymbols: suspendFunctionSymbols,
-                    suspendFunctionNames: suspendFunctionNames,
-                    runtimeSuspendCallNames: runtimeSuspendCallNames
-                  ) else {
+                      symbol: callInfo.symbol,
+                      callee: callInfo.callee,
+                      suspendFunctionSymbols: suspendFunctionSymbols,
+                      suspendFunctionNames: suspendFunctionNames,
+                      runtimeSuspendCallNames: runtimeSuspendCallNames
+                  )
+            else {
                 continue
             }
             let transition = SuspendTransition(
@@ -130,7 +131,7 @@ extension CoroutineLoweringPass {
 
         var labelToInstructionIndex: [Int32: Int] = [:]
         for (index, instruction) in instructions.enumerated() {
-            if case .label(let labelID) = instruction {
+            if case let .label(labelID) = instruction {
                 labelToInstructionIndex[labelID] = index
             }
         }
@@ -140,21 +141,21 @@ extension CoroutineLoweringPass {
             switch instruction {
             case .label:
                 leaders.insert(index)
-            case .jump(let target):
+            case let .jump(target):
                 if let targetIndex = labelToInstructionIndex[target] {
                     leaders.insert(targetIndex)
                 }
                 if index + 1 < instructions.count {
                     leaders.insert(index + 1)
                 }
-            case .jumpIfEqual(_, _, let target):
+            case let .jumpIfEqual(_, _, target):
                 if let targetIndex = labelToInstructionIndex[target] {
                     leaders.insert(targetIndex)
                 }
                 if index + 1 < instructions.count {
                     leaders.insert(index + 1)
                 }
-            case .jumpIfNotNull(_, let target):
+            case let .jumpIfNotNull(_, target):
                 if let targetIndex = labelToInstructionIndex[target] {
                     leaders.insert(targetIndex)
                 }
@@ -185,7 +186,7 @@ extension CoroutineLoweringPass {
 
         var instructionToBlock: [Int: Int] = [:]
         for (blockID, range) in ranges.enumerated() {
-            for instructionIndex in range.start..<range.end {
+            for instructionIndex in range.start ..< range.end {
                 instructionToBlock[instructionIndex] = blockID
             }
         }
@@ -194,31 +195,34 @@ extension CoroutineLoweringPass {
         blocks.reserveCapacity(ranges.count)
 
         for (blockID, range) in ranges.enumerated() {
-            let blockInstructions = (range.start..<range.end).map { index in
+            let blockInstructions = (range.start ..< range.end).map { index in
                 IndexedInstruction(sourceIndex: index, instruction: instructions[index])
             }
             let terminator = blockInstructions.last?.instruction
 
             var successors: [Int] = []
             switch terminator {
-            case .some(.jump(let target)):
+            case let .some(.jump(target)):
                 if let targetInstruction = labelToInstructionIndex[target],
-                   let targetBlock = instructionToBlock[targetInstruction] {
+                   let targetBlock = instructionToBlock[targetInstruction]
+                {
                     successors.append(targetBlock)
                 }
 
-            case .some(.jumpIfEqual(_, _, let target)):
+            case let .some(.jumpIfEqual(_, _, target)):
                 if let targetInstruction = labelToInstructionIndex[target],
-                   let targetBlock = instructionToBlock[targetInstruction] {
+                   let targetBlock = instructionToBlock[targetInstruction]
+                {
                     successors.append(targetBlock)
                 }
                 if blockID + 1 < ranges.count {
                     successors.append(blockID + 1)
                 }
 
-            case .some(.jumpIfNotNull(_, let target)):
+            case let .some(.jumpIfNotNull(_, target)):
                 if let targetInstruction = labelToInstructionIndex[target],
-                   let targetBlock = instructionToBlock[targetInstruction] {
+                   let targetBlock = instructionToBlock[targetInstruction]
+                {
                     successors.append(targetBlock)
                 }
                 if blockID + 1 < ranges.count {
@@ -297,7 +301,7 @@ extension CoroutineLoweringPass {
 
         var labelToInstructionIndex: [Int32: Int] = [:]
         for (index, instruction) in instructions.enumerated() {
-            if case .label(let labelID) = instruction {
+            if case let .label(labelID) = instruction {
                 labelToInstructionIndex[labelID] = index
             }
         }
@@ -361,24 +365,26 @@ extension CoroutineLoweringPass {
     ) -> [Int] {
         let fallthroughSuccessors = index + 1 < totalInstructions ? [index + 1] : []
         switch instruction {
-        case .jump(let target):
+        case let .jump(target):
             guard let targetIndex = labelToInstructionIndex[target] else {
                 return []
             }
             return [targetIndex]
 
-        case .jumpIfEqual(_, _, let target):
+        case let .jumpIfEqual(_, _, target):
             var successors = fallthroughSuccessors
             if let targetIndex = labelToInstructionIndex[target],
-               !successors.contains(targetIndex) {
+               !successors.contains(targetIndex)
+            {
                 successors.append(targetIndex)
             }
             return successors
 
-        case .jumpIfNotNull(_, let target):
+        case let .jumpIfNotNull(_, target):
             var successors = fallthroughSuccessors
             if let targetIndex = labelToInstructionIndex[target],
-               !successors.contains(targetIndex) {
+               !successors.contains(targetIndex)
+            {
                 successors.append(targetIndex)
             }
             return successors
@@ -396,46 +402,46 @@ extension CoroutineLoweringPass {
 
     func usedExprIDs(in instruction: KIRInstruction) -> Set<KIRExprID> {
         switch instruction {
-        case .jumpIfEqual(let lhs, let rhs, _):
-            return Set([lhs, rhs])
-        case .binary(_, let lhs, let rhs, _):
-            return Set([lhs, rhs])
-        case .call(_, _, let arguments, _, _, _, _):
-            return Set(arguments)
-        case .virtualCall(_, _, let receiver, let arguments, _, _, _, _):
-            return Set([receiver] + arguments)
-        case .returnIfEqual(let lhs, let rhs):
-            return Set([lhs, rhs])
-        case .returnValue(let value):
-            return Set([value])
-        case .jumpIfNotNull(let value, _):
-            return Set([value])
-        case .copy(let from, _):
-            return Set([from])
-        case .rethrow(let value):
-            return Set([value])
+        case let .jumpIfEqual(lhs, rhs, _):
+            Set([lhs, rhs])
+        case let .binary(_, lhs, rhs, _):
+            Set([lhs, rhs])
+        case let .call(_, _, arguments, _, _, _, _):
+            Set(arguments)
+        case let .virtualCall(_, _, receiver, arguments, _, _, _, _):
+            Set([receiver] + arguments)
+        case let .returnIfEqual(lhs, rhs):
+            Set([lhs, rhs])
+        case let .returnValue(value):
+            Set([value])
+        case let .jumpIfNotNull(value, _):
+            Set([value])
+        case let .copy(from, _):
+            Set([from])
+        case let .rethrow(value):
+            Set([value])
         default:
-            return []
+            []
         }
     }
 
     func definedExprIDs(in instruction: KIRInstruction) -> Set<KIRExprID> {
         switch instruction {
-        case .constValue(let result, _):
+        case let .constValue(result, _):
             return Set([result])
-        case .binary(_, _, _, let result):
+        case let .binary(_, _, _, result):
             return Set([result])
-        case .call(_, _, _, let result, _, let thrownResult, _):
+        case let .call(_, _, _, result, _, thrownResult, _):
             var ids = Set<KIRExprID>()
             if let result { ids.insert(result) }
             if let thrownResult { ids.insert(thrownResult) }
             return ids
-        case .virtualCall(_, _, _, _, let result, _, let thrownResult, _):
+        case let .virtualCall(_, _, _, _, result, _, thrownResult, _):
             var ids = Set<KIRExprID>()
             if let result { ids.insert(result) }
             if let thrownResult { ids.insert(thrownResult) }
             return ids
-        case .copy(_, let to):
+        case let .copy(_, to):
             return Set([to])
         default:
             return []
@@ -461,7 +467,7 @@ extension CoroutineLoweringPass {
             return []
         }
         var order: [Int] = []
-        var stack: [Int] = [0]
+        var stack = [0]
         var visited: Set<Int> = []
 
         while let blockID = stack.popLast() {
@@ -490,8 +496,8 @@ extension CoroutineLoweringPass {
 
     func extractCallInfo(_ instruction: KIRInstruction) -> CallInfo? {
         switch instruction {
-        case .call(let symbol, let callee, let arguments, let result, let canThrow, _, let isSuperCall):
-            return CallInfo(
+        case let .call(symbol, callee, arguments, result, canThrow, _, isSuperCall):
+            CallInfo(
                 symbol: symbol,
                 callee: callee,
                 arguments: arguments,
@@ -501,8 +507,8 @@ extension CoroutineLoweringPass {
                 isSuperCall: isSuperCall,
                 originalInstruction: instruction
             )
-        case .virtualCall(let symbol, let callee, _, let arguments, let result, let canThrow, _, _):
-            return CallInfo(
+        case let .virtualCall(symbol, callee, _, arguments, result, canThrow, _, _):
+            CallInfo(
                 symbol: symbol,
                 callee: callee,
                 arguments: arguments,
@@ -513,7 +519,7 @@ extension CoroutineLoweringPass {
                 originalInstruction: instruction
             )
         default:
-            return nil
+            nil
         }
     }
 

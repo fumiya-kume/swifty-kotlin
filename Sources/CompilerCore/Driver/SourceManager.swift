@@ -1,5 +1,8 @@
 import Foundation
 
+/// Concurrency model:
+/// `SourceManager` is populated sequentially during `LoadSourcesPhase`,
+/// and treated as read-only after that phase completes.
 public final class SourceManager: @unchecked Sendable {
     private struct FileRecord {
         let path: String
@@ -8,10 +11,26 @@ public final class SourceManager: @unchecked Sendable {
     }
 
     private var files: [FileRecord] = []
+    private var fileIDByPath: [String: FileID] = [:]
 
     public init() {}
 
     public func addFile(path: String, contents: Data) -> FileID {
+        if let existingID = fileIDByPath[path] {
+            let index = Int(existingID.rawValue)
+            guard index >= 0, index < files.count else {
+                return existingID
+            }
+            let existingRecord = files[index]
+            if existingRecord.contents != contents {
+                files[index] = FileRecord(
+                    path: path,
+                    contents: contents,
+                    lineStartOffsets: computeLineStartOffsets(contents: contents)
+                )
+            }
+            return existingID
+        }
         let id = FileID(rawValue: files.count)
         let record = FileRecord(
             path: path,
@@ -19,6 +38,7 @@ public final class SourceManager: @unchecked Sendable {
             lineStartOffsets: computeLineStartOffsets(contents: contents)
         )
         files.append(record)
+        fileIDByPath[path] = id
         return id
     }
 
@@ -41,16 +61,20 @@ public final class SourceManager: @unchecked Sendable {
         return record.path
     }
 
-    internal var fileCount: Int {
+    var fileCount: Int {
         files.count
     }
 
-    internal func containsFile(path: String) -> Bool {
-        files.contains { $0.path == path }
+    func containsFile(path: String) -> Bool {
+        fileIDByPath[path] != nil
     }
 
-    internal func fileIDs() -> [FileID] {
-        return files.enumerated().map { FileID(rawValue: $0.offset) }
+    func fileID(forPath path: String) -> FileID? {
+        fileIDByPath[path]
+    }
+
+    func fileIDs() -> [FileID] {
+        files.indices.map { FileID(rawValue: $0) }
     }
 
     public func lineColumn(of loc: SourceLocation) -> LineColumn {
@@ -61,7 +85,7 @@ public final class SourceManager: @unchecked Sendable {
         let clampedOffset = max(0, min(loc.offset, record.contents.count))
         let lineIndex = lineIndex(for: clampedOffset, in: record.lineStartOffsets)
         let lineStartOffset = record.lineStartOffsets[lineIndex]
-        let lineText = String(decoding: record.contents[lineStartOffset..<clampedOffset], as: UTF8.self)
+        let lineText = String(decoding: record.contents[lineStartOffset ..< clampedOffset], as: UTF8.self)
         let column = lineText.unicodeScalars.count + 1
         return LineColumn(line: lineIndex + 1, column: column)
     }
@@ -74,13 +98,13 @@ public final class SourceManager: @unchecked Sendable {
         let fileSize = record.contents.count
         let start = max(0, min(range.start.offset, fileSize))
         let end = max(start, min(range.end.offset, fileSize))
-        let text = String(decoding: record.contents[start..<end], as: UTF8.self)
+        let text = String(decoding: record.contents[start ..< end], as: UTF8.self)
         return Substring(text)
     }
 
     private func fileRecord(for id: FileID) -> FileRecord? {
         let index = Int(id.rawValue)
-        guard index >= 0 && index < files.count else {
+        guard index >= 0, index < files.count else {
             return nil
         }
         return files[index]
@@ -88,10 +112,8 @@ public final class SourceManager: @unchecked Sendable {
 
     private func computeLineStartOffsets(contents: Data) -> [Int] {
         var lineStarts = [0]
-        for index in 0..<contents.count {
-            if contents[index] == 0x0A {
-                lineStarts.append(index + 1)
-            }
+        for index in 0 ..< contents.count where contents[index] == 0x0A {
+            lineStarts.append(index + 1)
         }
         return lineStarts
     }

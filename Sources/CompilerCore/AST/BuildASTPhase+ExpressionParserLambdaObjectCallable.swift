@@ -1,7 +1,7 @@
 import Foundation
 
 extension BuildASTPhase.ExpressionParser {
-    internal func parseLambdaLiteral(label: InternedString? = nil, start: SourceLocation? = nil) -> ExprID? {
+    func parseLambdaLiteral(label: InternedString? = nil, start: SourceLocation? = nil) -> ExprID? {
         guard matches(.symbol(.lBrace)) else {
             return nil
         }
@@ -47,11 +47,10 @@ extension BuildASTPhase.ExpressionParser {
         if let parsedBody = BuildASTPhase.ExpressionParser(tokens: lambdaBodySlice, interner: interner, astArena: astArena).parse() {
             bodyExpr = parsedBody
         } else {
-            let bodyRange: SourceRange
-            if let first = lambdaBodySlice.first, let last = lambdaBodySlice.last {
-                bodyRange = SourceRange(start: first.range.start, end: last.range.end)
+            let bodyRange = if let first = lambdaBodySlice.first, let last = lambdaBodySlice.last {
+                SourceRange(start: first.range.start, end: last.range.end)
             } else {
-                bodyRange = SourceRange(start: openBrace.range.end, end: openBrace.range.end)
+                SourceRange(start: openBrace.range.end, end: openBrace.range.end)
             }
             bodyExpr = astArena.appendExpr(.blockExpr(statements: [], trailingExpr: nil, range: bodyRange))
         }
@@ -60,7 +59,7 @@ extension BuildASTPhase.ExpressionParser {
         return astArena.appendExpr(.lambdaLiteral(params: params, body: bodyExpr, label: label, range: range))
     }
 
-    internal func parseObjectLiteral() -> ExprID? {
+    func parseObjectLiteral() -> ExprID? {
         guard let objectToken = consume() else {
             return nil
         }
@@ -119,13 +118,14 @@ extension BuildASTPhase.ExpressionParser {
         return astArena.appendExpr(.objectLiteral(superTypes: superTypes, range: range))
     }
 
-    internal func parseCallableReferenceWithoutReceiver() -> ExprID? {
+    func parseCallableReferenceWithoutReceiver() -> ExprID? {
         let savedIndex = index
         guard let opToken = consume() else {
             return nil
         }
         guard let memberToken = current(),
-              let memberName = tokenText(memberToken) else {
+              let memberName = tokenText(memberToken)
+        else {
             index = savedIndex
             return nil
         }
@@ -182,9 +182,9 @@ extension BuildASTPhase.ExpressionParser {
             if let token = segment.first(where: { token in
                 switch token.kind {
                 case .identifier, .backtickedIdentifier:
-                    return true
+                    true
                 default:
-                    return false
+                    false
                 }
             }), let name = identifierFromToken(token) {
                 params.append(name)
@@ -196,7 +196,8 @@ extension BuildASTPhase.ExpressionParser {
     private func stripEnclosingParentheses(from tokens: [Token]) -> [Token] {
         guard tokens.count >= 2,
               tokens.first?.kind == .symbol(.lParen),
-              tokens.last?.kind == .symbol(.rParen) else {
+              tokens.last?.kind == .symbol(.rParen)
+        else {
             return tokens
         }
 

@@ -1,16 +1,15 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 // MARK: - Multi-file compile benchmarks for frontend parallelization (P5-61)
 
 final class FrontendParallelBenchmarkTests: XCTestCase {
-
     // MARK: - Helpers
 
     /// Generate N Kotlin source files with varied declarations.
     private func generateSources(count: Int) -> [String] {
-        (0..<count).map { i in
+        (0 ..< count).map { i in
             """
             package bench\(i)
 
@@ -39,8 +38,8 @@ final class FrontendParallelBenchmarkTests: XCTestCase {
     private func runFrontendTimed(
         sources: [String],
         jobs: Int,
-        file: StaticString = #filePath,
-        line: UInt = #line
+        file _: StaticString = #filePath,
+        line _: UInt = #line
     ) throws -> (ctx: CompilationContext, elapsed: Double) {
         var paths: [String] = []
         let tempDir = FileManager.default.temporaryDirectory
@@ -107,7 +106,7 @@ final class FrontendParallelBenchmarkTests: XCTestCase {
         // Run multiple times with jobs=4 and verify identical AST structure.
         var previousDeclNames: [String]?
 
-        for iteration in 0..<3 {
+        for iteration in 0 ..< 3 {
             let (ctx, _) = try runFrontendTimed(sources: sources, jobs: 4)
             let ast = try XCTUnwrap(ctx.ast, "AST should be non-nil (iteration \(iteration))")
 
@@ -116,10 +115,10 @@ final class FrontendParallelBenchmarkTests: XCTestCase {
                 file.topLevelDecls.compactMap { declID -> String? in
                     guard let decl = ast.arena.decl(declID) else { return nil }
                     switch decl {
-                    case .classDecl(let c): return ctx.interner.resolve(c.name)
-                    case .interfaceDecl(let i): return ctx.interner.resolve(i.name)
-                    case .objectDecl(let o): return ctx.interner.resolve(o.name)
-                    case .funDecl(let f): return ctx.interner.resolve(f.name)
+                    case let .classDecl(c): return ctx.interner.resolve(c.name)
+                    case let .interfaceDecl(i): return ctx.interner.resolve(i.name)
+                    case let .objectDecl(o): return ctx.interner.resolve(o.name)
+                    case let .funDecl(f): return ctx.interner.resolve(f.name)
                     default: return nil
                     }
                 }
@@ -148,7 +147,7 @@ final class FrontendParallelBenchmarkTests: XCTestCase {
 
         var previousDiagCodes: [String]?
 
-        for iteration in 0..<3 {
+        for iteration in 0 ..< 3 {
             let (ctx, _) = try runFrontendTimed(sources: sources, jobs: 4)
 
             let diagCodes = ctx.diagnostics.diagnostics.map(\.code)
@@ -265,20 +264,20 @@ final class FrontendParallelBenchmarkTests: XCTestCase {
             let seqNames = seqFile.topLevelDecls.compactMap { declID -> String? in
                 guard let decl = seqAST.arena.decl(declID) else { return nil }
                 switch decl {
-                case .classDecl(let c): return seqCtx.interner.resolve(c.name)
-                case .interfaceDecl(let i): return seqCtx.interner.resolve(i.name)
-                case .objectDecl(let o): return seqCtx.interner.resolve(o.name)
-                case .funDecl(let f): return seqCtx.interner.resolve(f.name)
+                case let .classDecl(c): return seqCtx.interner.resolve(c.name)
+                case let .interfaceDecl(i): return seqCtx.interner.resolve(i.name)
+                case let .objectDecl(o): return seqCtx.interner.resolve(o.name)
+                case let .funDecl(f): return seqCtx.interner.resolve(f.name)
                 default: return nil
                 }
             }
             let parNames = parFile.topLevelDecls.compactMap { declID -> String? in
                 guard let decl = parAST.arena.decl(declID) else { return nil }
                 switch decl {
-                case .classDecl(let c): return parCtx.interner.resolve(c.name)
-                case .interfaceDecl(let i): return parCtx.interner.resolve(i.name)
-                case .objectDecl(let o): return parCtx.interner.resolve(o.name)
-                case .funDecl(let f): return parCtx.interner.resolve(f.name)
+                case let .classDecl(c): return parCtx.interner.resolve(c.name)
+                case let .interfaceDecl(i): return parCtx.interner.resolve(i.name)
+                case let .objectDecl(o): return parCtx.interner.resolve(o.name)
+                case let .funDecl(f): return parCtx.interner.resolve(f.name)
                 default: return nil
                 }
             }

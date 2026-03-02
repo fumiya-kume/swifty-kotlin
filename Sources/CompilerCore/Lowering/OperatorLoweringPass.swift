@@ -7,12 +7,12 @@ final class OperatorLoweringPass: LoweringPass {
         let printlnCallee = ctx.interner.intern("println")
         let kkPrintlnAnyCallee = ctx.interner.intern("kk_println_any")
         for decl in module.arena.declarations {
-            guard case .function(let function) = decl else { continue }
+            guard case let .function(function) = decl else { continue }
             for instruction in function.body {
                 switch instruction {
                 case .binary, .unary, .nullAssert:
                     return true
-                case .call(_, let callee, _, _, _, _, _):
+                case let .call(_, callee, _, _, _, _, _):
                     if callee == printlnCallee || callee == kkPrintlnAnyCallee {
                         return true
                     }
@@ -24,6 +24,7 @@ final class OperatorLoweringPass: LoweringPass {
         return false
     }
 
+    // swiftlint:disable:next function_body_length
     func run(module: KIRModule, ctx: KIRContext) throws {
         let types = ctx.sema?.types
         let printlnCallee = ctx.interner.intern("println")
@@ -35,15 +36,14 @@ final class OperatorLoweringPass: LoweringPass {
             newBody.reserveCapacity(function.body.count)
             for instruction in function.body {
                 switch instruction {
-                case .binary(let op, let lhs, let rhs, let result):
+                case let .binary(op, lhs, rhs, result):
                     let lhsRank = self.primitiveRank(for: lhs, arena: module.arena, types: types)
                     let rhsRank = self.primitiveRank(for: rhs, arena: module.arena, types: types)
                     let rank = max(lhsRank, rhsRank)
-                    let prefix: String
-                    switch rank {
-                    case 2: prefix = "d"
-                    case 1: prefix = "f"
-                    default: prefix = ""
+                    let prefix = switch rank {
+                    case 2: "d"
+                    case 1: "f"
+                    default: ""
                     }
                     var effectiveLhs = lhs
                     var effectiveRhs = rhs
@@ -67,67 +67,102 @@ final class OperatorLoweringPass: LoweringPass {
                             effectiveRhs = converted
                         }
                     }
-                    let callee: InternedString
-                    switch op {
+                    let callee: InternedString = switch op {
                     case .add:
-                        callee = ctx.interner.intern("kk_op_\(prefix)add")
+                        ctx.interner.intern("kk_op_\(prefix)add")
                     case .subtract:
-                        callee = ctx.interner.intern("kk_op_\(prefix)sub")
+                        ctx.interner.intern("kk_op_\(prefix)sub")
                     case .multiply:
-                        callee = ctx.interner.intern("kk_op_\(prefix)mul")
+                        ctx.interner.intern("kk_op_\(prefix)mul")
                     case .divide:
-                        callee = ctx.interner.intern("kk_op_\(prefix)div")
+                        ctx.interner.intern("kk_op_\(prefix)div")
                     case .modulo:
-                        callee = ctx.interner.intern("kk_op_\(prefix)mod")
+                        ctx.interner.intern("kk_op_\(prefix)mod")
                     case .equal:
-                        callee = ctx.interner.intern("kk_op_\(prefix)eq")
+                        ctx.interner.intern("kk_op_\(prefix)eq")
                     case .notEqual:
-                        callee = ctx.interner.intern("kk_op_\(prefix)ne")
+                        ctx.interner.intern("kk_op_\(prefix)ne")
                     case .lessThan:
-                        callee = ctx.interner.intern("kk_op_\(prefix)lt")
+                        ctx.interner.intern("kk_op_\(prefix)lt")
                     case .lessOrEqual:
-                        callee = ctx.interner.intern("kk_op_\(prefix)le")
+                        ctx.interner.intern("kk_op_\(prefix)le")
                     case .greaterThan:
-                        callee = ctx.interner.intern("kk_op_\(prefix)gt")
+                        ctx.interner.intern("kk_op_\(prefix)gt")
                     case .greaterOrEqual:
-                        callee = ctx.interner.intern("kk_op_\(prefix)ge")
+                        ctx.interner.intern("kk_op_\(prefix)ge")
                     case .logicalAnd:
-                        callee = ctx.interner.intern("kk_op_and")
+                        ctx.interner.intern("kk_op_and")
                     case .logicalOr:
-                        callee = ctx.interner.intern("kk_op_or")
+                        ctx.interner.intern("kk_op_or")
                     }
                     newBody.append(.call(symbol: nil, callee: callee, arguments: [effectiveLhs, effectiveRhs], result: result, canThrow: false, thrownResult: nil))
-                case .unary(let op, let operand, let result):
-                    let callee: InternedString
-                    switch op {
+                case let .unary(op, operand, result):
+                    let callee: InternedString = switch op {
                     case .not:
-                        callee = ctx.interner.intern("kk_op_not")
+                        ctx.interner.intern("kk_op_not")
                     case .unaryPlus:
-                        callee = ctx.interner.intern("kk_op_uplus")
+                        ctx.interner.intern("kk_op_uplus")
                     case .unaryMinus:
-                        callee = ctx.interner.intern("kk_op_uminus")
+                        ctx.interner.intern("kk_op_uminus")
                     }
                     newBody.append(.call(symbol: nil, callee: callee, arguments: [operand], result: result, canThrow: false, thrownResult: nil))
-                case .nullAssert(let operand, let result):
+                case let .nullAssert(operand, result):
                     newBody.append(.call(symbol: nil, callee: ctx.interner.intern("kk_op_notnull"), arguments: [operand], result: result, canThrow: true, thrownResult: nil))
-                case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult, let isSuperCall):
-                    if (callee == printlnCallee || callee == kkPrintlnAnyCallee),
+                case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall):
+                    if callee == printlnCallee || callee == kkPrintlnAnyCallee,
                        arguments.count == 1,
-                       let types {
+                       let types
+                    {
                         let argType = module.arena.exprType(arguments[0])
                         if let argType {
                             switch types.kind(of: argType) {
                             case .primitive(.long, _):
-                                newBody.append(.call(symbol: symbol, callee: ctx.interner.intern("kk_println_long"), arguments: arguments, result: result, canThrow: canThrow, thrownResult: thrownResult, isSuperCall: isSuperCall))
+                                appendPrimitivePrintlnCall(
+                                    to: &newBody,
+                                    symbol: symbol,
+                                    callee: ctx.interner.intern("kk_println_long"),
+                                    arguments: arguments,
+                                    result: result,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult,
+                                    isSuperCall: isSuperCall
+                                )
                                 continue
                             case .primitive(.float, _):
-                                newBody.append(.call(symbol: symbol, callee: ctx.interner.intern("kk_println_float"), arguments: arguments, result: result, canThrow: canThrow, thrownResult: thrownResult, isSuperCall: isSuperCall))
+                                appendPrimitivePrintlnCall(
+                                    to: &newBody,
+                                    symbol: symbol,
+                                    callee: ctx.interner.intern("kk_println_float"),
+                                    arguments: arguments,
+                                    result: result,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult,
+                                    isSuperCall: isSuperCall
+                                )
                                 continue
                             case .primitive(.double, _):
-                                newBody.append(.call(symbol: symbol, callee: ctx.interner.intern("kk_println_double"), arguments: arguments, result: result, canThrow: canThrow, thrownResult: thrownResult, isSuperCall: isSuperCall))
+                                appendPrimitivePrintlnCall(
+                                    to: &newBody,
+                                    symbol: symbol,
+                                    callee: ctx.interner.intern("kk_println_double"),
+                                    arguments: arguments,
+                                    result: result,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult,
+                                    isSuperCall: isSuperCall
+                                )
                                 continue
                             case .primitive(.char, _):
-                                newBody.append(.call(symbol: symbol, callee: ctx.interner.intern("kk_println_char"), arguments: arguments, result: result, canThrow: canThrow, thrownResult: thrownResult, isSuperCall: isSuperCall))
+                                appendPrimitivePrintlnCall(
+                                    to: &newBody,
+                                    symbol: symbol,
+                                    callee: ctx.interner.intern("kk_println_char"),
+                                    arguments: arguments,
+                                    result: result,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult,
+                                    isSuperCall: isSuperCall
+                                )
                                 continue
                             default:
                                 break
@@ -163,5 +198,32 @@ final class OperatorLoweringPass: LoweringPass {
         }
         return interner.intern("kk_int_to_double_bits")
     }
-}
 
+    // swiftlint:disable:next function_parameter_count
+    private func appendPrimitivePrintlnCall(
+        to body: inout [KIRInstruction],
+        symbol: SymbolID?,
+        callee: InternedString,
+        arguments: [KIRExprID],
+        result: KIRExprID?,
+        canThrow: Bool,
+        thrownResult: KIRExprID?,
+        isSuperCall: Bool
+    ) {
+        // Keep the lowered runtime call side-effect only and synthesize Unit explicitly.
+        body.append(
+            .call(
+                symbol: symbol,
+                callee: callee,
+                arguments: arguments,
+                result: nil,
+                canThrow: canThrow,
+                thrownResult: thrownResult,
+                isSuperCall: isSuperCall
+            )
+        )
+        if let result {
+            body.append(.constValue(result: result, value: .unit))
+        }
+    }
+}

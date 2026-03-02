@@ -3,9 +3,9 @@
 #
 # Usage:
 #   bash Scripts/generate_test_case.sh --type <golden-sema|golden-parser|golden-lexer|diff> \
-#       --name <test_name> [--source <inline_kotlin>] [--from-file <path.kt>] [--task <P5-xxx>]
+#       --name <test_name> [--source <inline_kotlin>] [--from-file <path.kt>] [--task <TASK-ID>]
 #
-#   bash Scripts/generate_test_case.sh --from-registry <registry.json> [--task <P5-xxx>] [--category <cat>]
+#   bash Scripts/generate_test_case.sh --from-registry <registry.json> [--task <TASK-ID>] [--category <cat>]
 #
 # Examples:
 #   # Scaffold a single golden-sema test with inline source:
@@ -17,7 +17,7 @@
 #       --from-file Scripts/test_templates/diff/abstract_class.kt
 #
 #   # Generate all pending tests for a specific task from the registry:
-#   bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-100
+#   bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task TYPE-001
 #
 #   # Generate all pending tests for a category:
 #   bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --category expressions
@@ -46,11 +46,11 @@ Single test mode:
   --name <name>         Test file name (without extension)
   --source <kotlin>     Inline Kotlin source (use \\n for newlines)
   --from-file <path>    Path to a .kt template file to copy
-  --task <P5-xxx>       (optional) Associated task ID for documentation
+  --task <TASK-ID>      (optional) Associated task ID for documentation
 
 Registry mode:
   --from-registry <path>  Path to test_case_registry.json
-  --task <P5-xxx>         Generate tests for a specific task
+  --task <TASK-ID>        Generate tests for a specific task
   --category <cat>        Generate tests for a category
 
 Options:

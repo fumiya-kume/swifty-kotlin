@@ -10,7 +10,7 @@ extension BuildASTPhase {
         var stack: [NodeID] = [nodeID]
         while let current = stack.popLast() {
             for child in arena.children(of: current) {
-                guard case .node(let childID) = child else {
+                guard case let .node(childID) = child else {
                     continue
                 }
                 let childNode = arena.node(childID)
@@ -31,8 +31,9 @@ extension BuildASTPhase {
         astArena: ASTArena
     ) -> [TypeAliasDecl] {
         guard let bodyBlockID = arena.children(of: nodeID).compactMap({ child -> NodeID? in
-            guard case .node(let childID) = child,
-                  arena.node(childID).kind == .block else {
+            guard case let .node(childID) = child,
+                  arena.node(childID).kind == .block
+            else {
                 return nil
             }
             return childID
@@ -42,8 +43,9 @@ extension BuildASTPhase {
 
         var aliases: [TypeAliasDecl] = []
         for child in arena.children(of: bodyBlockID) {
-            guard case .node(let childID) = child,
-                  arena.node(childID).kind == .typeAliasDecl else {
+            guard case let .node(childID) = child,
+                  arena.node(childID).kind == .typeAliasDecl
+            else {
                 continue
             }
             aliases.append(makeTypeAliasDecl(from: childID, in: arena, interner: interner, astArena: astArena))
@@ -66,7 +68,7 @@ extension BuildASTPhase {
             guard let name = internedIdentifier(from: token, interner: interner) else {
                 return false
             }
-            if case .keyword(let keyword) = token.kind, isLeadingDeclarationKeyword(keyword) {
+            if case let .keyword(keyword) = token.kind, isLeadingDeclarationKeyword(keyword) {
                 return false
             }
             return name == declName
@@ -126,7 +128,7 @@ extension BuildASTPhase {
         var result: [Token] = []
         var depth = BracketDepth()
         for token in tokens {
-            if depth.angle == 0 && token.kind == .symbol(.lParen) {
+            if depth.angle == 0, token.kind == .symbol(.lParen) {
                 break
             }
             depth.track(token.kind)
@@ -142,8 +144,9 @@ extension BuildASTPhase {
         astArena: ASTArena
     ) -> (functions: [DeclID], properties: [DeclID], nestedClasses: [DeclID], nestedObjects: [DeclID], companionObject: DeclID?) {
         guard let bodyBlockID = arena.children(of: nodeID).compactMap({ child -> NodeID? in
-            guard case .node(let childID) = child,
-                  arena.node(childID).kind == .block else {
+            guard case let .node(childID) = child,
+                  arena.node(childID).kind == .block
+            else {
                 return nil
             }
             return childID
@@ -158,7 +161,7 @@ extension BuildASTPhase {
         var companionObject: DeclID?
 
         for child in arena.children(of: bodyBlockID) {
-            guard case .node(let childID) = child else {
+            guard case let .node(childID) = child else {
                 continue
             }
             let childNode = arena.node(childID)

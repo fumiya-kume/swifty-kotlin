@@ -12,7 +12,7 @@ extension DataFlowSemaPhase {
     ) {
         guard let decl = ast.arena.decl(declID) else { return }
         switch decl {
-        case .funDecl(let funDecl):
+        case let .funDecl(funDecl):
             var seenNames: Set<InternedString> = []
             for valueParam in funDecl.valueParams {
                 if seenNames.contains(valueParam.name) {
@@ -27,13 +27,14 @@ extension DataFlowSemaPhase {
 
             if let symbol = bindings.declSymbols[declID],
                let signature = symbols.functionSignature(for: symbol),
-               case .expr = funDecl.body {
+               case .expr = funDecl.body
+            {
                 // Bind a synthetic expression type for expression-body functions.
                 let expr = ExprID(rawValue: declID.rawValue)
                 bindings.bindExprType(expr, type: signature.returnType)
             }
 
-        case .propertyDecl(let propertyDecl):
+        case let .propertyDecl(propertyDecl):
             if let symbol = bindings.declSymbols[declID] {
                 let expr = ExprID(rawValue: declID.rawValue)
                 bindings.bindIdentifier(expr, symbol: symbol)
@@ -66,7 +67,7 @@ extension DataFlowSemaPhase {
         }
 
         switch typeRef {
-        case .named(let path, let argRefs, let nullable):
+        case let .named(path, argRefs, nullable):
             let nullability: Nullability = nullable ? .nullable : .nonNull
 
             guard let shortName = path.last else {
@@ -140,7 +141,7 @@ extension DataFlowSemaPhase {
             )
             return types.errorType
 
-        case .functionType(let paramRefIDs, let returnRefID, let isSuspend, let nullable):
+        case let .functionType(paramRefIDs, returnRefID, isSuspend, nullable):
             let nullability: Nullability = nullable ? .nullable : .nonNull
             var paramTypes: [TypeID] = []
             for paramRef in paramRefIDs {
@@ -173,7 +174,7 @@ extension DataFlowSemaPhase {
                 nullability: nullability
             )))
 
-        case .intersection(let partRefs):
+        case let .intersection(partRefs):
             let partTypes = partRefs.compactMap {
                 resolveTypeRef(
                     $0,
@@ -203,7 +204,7 @@ extension DataFlowSemaPhase {
         result.reserveCapacity(argRefs.count)
         for argRef in argRefs {
             switch argRef {
-            case .invariant(let innerRef):
+            case let .invariant(innerRef):
                 let resolved = resolveTypeRef(
                     innerRef,
                     ast: ast,
@@ -214,7 +215,7 @@ extension DataFlowSemaPhase {
                     diagnostics: diagnostics
                 ) ?? types.errorType
                 result.append(.invariant(resolved))
-            case .out(let innerRef):
+            case let .out(innerRef):
                 let resolved = resolveTypeRef(
                     innerRef,
                     ast: ast,
@@ -225,7 +226,7 @@ extension DataFlowSemaPhase {
                     diagnostics: diagnostics
                 ) ?? types.errorType
                 result.append(.out(resolved))
-            case .in(let innerRef):
+            case let .in(innerRef):
                 let resolved = resolveTypeRef(
                     innerRef,
                     ast: ast,
@@ -245,13 +246,13 @@ extension DataFlowSemaPhase {
 
     private func applyNullability(_ typeID: TypeID, types: TypeSystem) -> TypeID {
         switch types.kind(of: typeID) {
-        case .primitive(let p, _):
+        case let .primitive(p, _):
             return types.make(.primitive(p, .nullable))
-        case .classType(let ct):
+        case let .classType(ct):
             return types.make(.classType(ClassType(classSymbol: ct.classSymbol, args: ct.args, nullability: .nullable)))
-        case .typeParam(let tp):
+        case let .typeParam(tp):
             return types.make(.typeParam(TypeParamType(symbol: tp.symbol, nullability: .nullable)))
-        case .functionType(let ft):
+        case let .functionType(ft):
             return types.make(.functionType(FunctionType(receiver: ft.receiver, params: ft.params, returnType: ft.returnType, isSuspend: ft.isSuspend, nullability: .nullable)))
         case .any, .unit, .nothing:
             let nullable = types.makeNullable(typeID)
@@ -307,9 +308,10 @@ extension DataFlowSemaPhase {
             types: types,
             diagnostics: diagnostics
         )
-        if case .classType(let classType) = types.kind(of: expanded),
+        if case let .classType(classType) = types.kind(of: expanded),
            let targetSymbol = symbols.symbol(classType.classSymbol),
-           targetSymbol.kind == .typeAlias {
+           targetSymbol.kind == .typeAlias
+        {
             var newVisited = visited
             newVisited.insert(symbolID)
             let chainArgs = classType.args
@@ -379,17 +381,16 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable
     ) -> TypeID {
         switch types.kind(of: typeID) {
-        case .typeParam(let tp):
+        case let .typeParam(tp):
             if let replacement = argSubstitution[tp.symbol] {
                 // In non-arg positions, extract the TypeID from the TypeArg.
                 // For .star, expand to the wildcard upper bound (Any?) since
                 // leaving the type parameter unsubstituted would create dangling references.
-                let replacementType: TypeID
-                switch replacement {
-                case .invariant(let inner), .out(let inner), .in(let inner):
-                    replacementType = inner
+                let replacementType: TypeID = switch replacement {
+                case let .invariant(inner), let .out(inner), let .in(inner):
+                    inner
                 case .star:
-                    replacementType = types.nullableAnyType
+                    types.nullableAnyType
                 }
                 if tp.nullability == .nullable {
                     return applyNullability(replacementType, types: types)
@@ -397,19 +398,19 @@ extension DataFlowSemaPhase {
                 return replacementType
             }
             return typeID
-        case .classType(let ct):
+        case let .classType(ct):
             let newArgs = ct.args.map { arg -> TypeArg in
                 substituteArg(arg, argSubstitution: argSubstitution, types: types, symbols: symbols)
             }
             return types.make(.classType(ClassType(classSymbol: ct.classSymbol, args: newArgs, nullability: ct.nullability)))
-        case .functionType(let ft):
+        case let .functionType(ft):
             let newReceiver = ft.receiver.map { applySubstitution($0, argSubstitution: argSubstitution, types: types, symbols: symbols) }
             let newParams = ft.params.map { applySubstitution($0, argSubstitution: argSubstitution, types: types, symbols: symbols) }
             let newReturn = applySubstitution(ft.returnType, argSubstitution: argSubstitution, types: types, symbols: symbols)
             return types.make(.functionType(FunctionType(receiver: newReceiver, params: newParams, returnType: newReturn, isSuspend: ft.isSuspend, nullability: ft.nullability)))
         case .primitive, .any, .unit, .nothing, .error:
             return typeID
-        case .intersection(let parts):
+        case let .intersection(parts):
             let newParts = parts.map { applySubstitution($0, argSubstitution: argSubstitution, types: types, symbols: symbols) }
             return types.make(.intersection(newParts))
         }
@@ -428,20 +429,22 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable
     ) -> TypeArg {
         switch arg {
-        case .invariant(let inner):
+        case let .invariant(inner):
             // If the inner type is a bare type parameter with a substitution,
             // replace the entire arg with the use-site TypeArg (preserving projection).
-            if case .typeParam(let tp) = types.kind(of: inner),
-               let replacement = argSubstitution[tp.symbol] {
+            if case let .typeParam(tp) = types.kind(of: inner),
+               let replacement = argSubstitution[tp.symbol]
+            {
                 if tp.nullability == .nullable {
                     return applyNullabilityToArg(replacement, types: types)
                 }
                 return replacement
             }
             return .invariant(applySubstitution(inner, argSubstitution: argSubstitution, types: types, symbols: symbols))
-        case .out(let inner):
-            if case .typeParam(let tp) = types.kind(of: inner),
-               let replacement = argSubstitution[tp.symbol] {
+        case let .out(inner):
+            if case let .typeParam(tp) = types.kind(of: inner),
+               let replacement = argSubstitution[tp.symbol]
+            {
                 // Declaration-site has `.out`; if use-site is `.star`, star wins.
                 if case .star = replacement { return .star }
                 let innerType = typeArgInnerType(replacement)
@@ -449,9 +452,10 @@ extension DataFlowSemaPhase {
                 return .out(resolved)
             }
             return .out(applySubstitution(inner, argSubstitution: argSubstitution, types: types, symbols: symbols))
-        case .in(let inner):
-            if case .typeParam(let tp) = types.kind(of: inner),
-               let replacement = argSubstitution[tp.symbol] {
+        case let .in(inner):
+            if case let .typeParam(tp) = types.kind(of: inner),
+               let replacement = argSubstitution[tp.symbol]
+            {
                 if case .star = replacement { return .star }
                 let innerType = typeArgInnerType(replacement)
                 let resolved = tp.nullability == .nullable ? applyNullability(innerType, types: types) : innerType
@@ -465,21 +469,21 @@ extension DataFlowSemaPhase {
 
     private func applyNullabilityToArg(_ arg: TypeArg, types: TypeSystem) -> TypeArg {
         switch arg {
-        case .invariant(let inner):
-            return .invariant(applyNullability(inner, types: types))
-        case .out(let inner):
-            return .out(applyNullability(inner, types: types))
-        case .in(let inner):
-            return .in(applyNullability(inner, types: types))
+        case let .invariant(inner):
+            .invariant(applyNullability(inner, types: types))
+        case let .out(inner):
+            .out(applyNullability(inner, types: types))
+        case let .in(inner):
+            .in(applyNullability(inner, types: types))
         case .star:
-            return .star
+            .star
         }
     }
 
     private func typeArgInnerType(_ arg: TypeArg) -> TypeID {
         switch arg {
-        case .invariant(let inner), .out(let inner), .in(let inner):
-            return inner
+        case let .invariant(inner), let .out(inner), let .in(inner):
+            inner
         case .star:
             fatalError("typeArgInnerType called on .star")
         }

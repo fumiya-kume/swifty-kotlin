@@ -1,5 +1,66 @@
 import Foundation
 
+/// Lock-protected cache for pre-compiled runtime stub objects.
+private final class RuntimeStubCache: @unchecked Sendable {
+    private let lock = NSLock()
+    private var cache: [String: String] = [:]
+
+    func getOrInsert(triple: String, context: StubCompilationContext) -> String? {
+        lock.lock()
+        if let cached = cache[triple], FileManager.default.fileExists(atPath: cached) {
+            lock.unlock()
+            return cached
+        }
+        lock.unlock()
+
+        guard let compiled = Self.compileStub(context: context) else {
+            return nil
+        }
+
+        lock.lock()
+        defer { lock.unlock() }
+        if let cached = cache[triple], FileManager.default.fileExists(atPath: cached) {
+            return cached
+        }
+        cache[triple] = compiled
+        return compiled
+    }
+
+    private static func compileStub(context: StubCompilationContext) -> String? {
+        try? FileManager.default.createDirectory(at: context.stubDir, withIntermediateDirectories: true)
+
+        let stubSource = context.stubDir.appendingPathComponent("kk_runtime_\(context.cacheKey).c")
+        let stubObject = context.stubDir.appendingPathComponent("kk_runtime_\(context.cacheKey).o")
+
+        if FileManager.default.fileExists(atPath: stubObject.path) {
+            return stubObject.path
+        }
+        do {
+            try context.source.write(to: stubSource, atomically: true, encoding: .utf8)
+            let clangPath = CommandRunner.resolveExecutable("clang", fallback: "/usr/bin/clang")
+            var args = ["-x", "c", "-std=c11", "-c", stubSource.path, "-o", stubObject.path]
+            args.append(contentsOf: context.clangTargetArgs)
+            _ = try CommandRunner.run(
+                executable: clangPath,
+                arguments: args,
+                phaseTimer: nil,
+                subPhaseName: "Codegen/clang-stub"
+            )
+            return stubObject.path
+        } catch {
+            return nil
+        }
+    }
+}
+
+/// Immutable context for compiling a runtime stub.
+private struct StubCompilationContext: Sendable {
+    let source: String
+    let cacheKey: String
+    let clangTargetArgs: [String]
+    let stubDir: URL
+}
+
 public struct RuntimeLinkInfo {
     public let libraryPaths: [String]
     public let libraries: [String]
@@ -22,9 +83,8 @@ public final class LLVMBackend {
     var phaseTimer: PhaseTimer?
 
     /// Process-wide cache for the pre-compiled runtime stub object.
-    /// Key: target triple string, Value: path to the cached .o file.
-    private static var runtimeStubCache: [String: String] = [:]
-    private static let runtimeStubLock = NSLock()
+    /// Protected by a lock for Swift 6 concurrency compliance in synchronous APIs.
+    private static let stubCache = RuntimeStubCache()
 
     public init(
         target: TargetTriple,
@@ -38,27 +98,12 @@ public final class LLVMBackend {
         self.diagnostics = diagnostics
     }
 
-    @available(*, deprecated, message: "Use init(target:optLevel:debugInfo:diagnostics:) instead.")
-    public convenience init(
-        target: TargetTriple,
-        optLevel: OptimizationLevel,
-        emitsDebugInfo: Bool,
-        diagnostics: DiagnosticEngine
-    ) {
-        self.init(
-            target: target,
-            optLevel: optLevel,
-            debugInfo: emitsDebugInfo,
-            diagnostics: diagnostics
-        )
-    }
-
     public func emitObject(
         module: KIRModule,
-        runtime: RuntimeLinkInfo,
+        runtime _: RuntimeLinkInfo,
         outputObjectPath: String,
         interner: StringInterner,
-        sourceManager: SourceManager? = nil
+        sourceManager _: SourceManager? = nil
     ) throws {
         try compileWithClang(
             module: module, interner: interner,
@@ -72,15 +117,15 @@ public final class LLVMBackend {
     /// Returns the path to the cached runtime stub `.o` if available,
     /// for use by the link phase as an additional link input.
     public func runtimeStubPath() -> String? {
-        return cachedRuntimeStubPath()
+        cachedRuntimeStubPath()
     }
 
     public func emitLLVMIR(
         module: KIRModule,
-        runtime: RuntimeLinkInfo,
+        runtime _: RuntimeLinkInfo,
         outputIRPath: String,
         interner: StringInterner,
-        sourceManager: SourceManager? = nil
+        sourceManager _: SourceManager? = nil
     ) throws {
         try compileWithClang(
             module: module, interner: interner,
@@ -98,42 +143,16 @@ public final class LLVMBackend {
         let triple = targetTripleString()
         let source = cRuntimePreamble().joined(separator: "\n")
         let cacheKey = Self.stableFNV1a64Hex(triple + "_" + Self.stableFNV1a64Hex(source))
-
-        Self.runtimeStubLock.lock()
-        defer { Self.runtimeStubLock.unlock() }
-
-        if let cached = Self.runtimeStubCache[triple],
-           FileManager.default.fileExists(atPath: cached) {
-            return cached
-        }
-
         let stubDir = FileManager.default.temporaryDirectory
             .appendingPathComponent("kswiftk_rt_stubs")
-        try? FileManager.default.createDirectory(at: stubDir, withIntermediateDirectories: true)
+        let context = StubCompilationContext(
+            source: source,
+            cacheKey: cacheKey,
+            clangTargetArgs: clangTargetArgs(),
+            stubDir: stubDir
+        )
 
-        let stubSource = stubDir.appendingPathComponent("kk_runtime_\(cacheKey).c")
-        let stubObject = stubDir.appendingPathComponent("kk_runtime_\(cacheKey).o")
-
-        if FileManager.default.fileExists(atPath: stubObject.path) {
-            Self.runtimeStubCache[triple] = stubObject.path
-            return stubObject.path
-        }
-        do {
-            try source.write(to: stubSource, atomically: true, encoding: .utf8)
-            let clangPath = CommandRunner.resolveExecutable("clang", fallback: "/usr/bin/clang")
-            var args = ["-x", "c", "-std=c11", "-c", stubSource.path, "-o", stubObject.path]
-            args.append(contentsOf: clangTargetArgs())
-            _ = try CommandRunner.run(
-                executable: clangPath,
-                arguments: args,
-                phaseTimer: phaseTimer,
-                subPhaseName: "Codegen/clang-stub"
-            )
-            Self.runtimeStubCache[triple] = stubObject.path
-            return stubObject.path
-        } catch {
-            return nil
-        }
+        return Self.stubCache.getOrInsert(triple: triple, context: context)
     }
 
     private func compileWithClang(
@@ -193,10 +212,10 @@ public final class LLVMBackend {
     }
 
     static func stableFNV1a64Hex(_ value: String) -> String {
-        var hash: UInt64 = 0xcbf29ce484222325
+        var hash: UInt64 = 0xCBF2_9CE4_8422_2325
         for byte in value.utf8 {
             hash ^= UInt64(byte)
-            hash &*= 0x100000001b3
+            hash &*= 0x100_0000_01B3
         }
         return String(hash, radix: 16)
     }
@@ -230,12 +249,12 @@ public final class LLVMBackend {
 
     static let floatBuiltinOps: Set<String> = [
         "kk_op_fadd", "kk_op_fsub", "kk_op_fmul", "kk_op_fdiv", "kk_op_fmod",
-        "kk_op_feq", "kk_op_fne", "kk_op_flt", "kk_op_fle", "kk_op_fgt", "kk_op_fge"
+        "kk_op_feq", "kk_op_fne", "kk_op_flt", "kk_op_fle", "kk_op_fgt", "kk_op_fge",
     ]
 
     static let doubleBuiltinOps: Set<String> = [
         "kk_op_dadd", "kk_op_dsub", "kk_op_dmul", "kk_op_ddiv", "kk_op_dmod",
-        "kk_op_deq", "kk_op_dne", "kk_op_dlt", "kk_op_dle", "kk_op_dgt", "kk_op_dge"
+        "kk_op_deq", "kk_op_dne", "kk_op_dlt", "kk_op_dle", "kk_op_dgt", "kk_op_dge",
     ]
 
     public static func cFunctionSymbol(for function: KIRFunction, interner: StringInterner) -> String {
@@ -254,13 +273,13 @@ public final class LLVMBackend {
 
     private func emitCModule(module: KIRModule, interner: StringInterner, useExternRuntime: Bool = false) -> String {
         let functions: [KIRFunction] = module.arena.declarations.compactMap { decl in
-            guard case .function(let function) = decl else {
+            guard case let .function(function) = decl else {
                 return nil
             }
             return function
         }
         let globals: [KIRGlobal] = module.arena.declarations.compactMap { decl in
-            guard case .global(let global) = decl else {
+            guard case let .global(global) = decl else {
                 return nil
             }
             return global
@@ -278,11 +297,10 @@ public final class LLVMBackend {
         }
         let externalCallees = collectExternalCallees(module: module, interner: interner, functionSymbols: functionSymbols)
 
-        var lines: [String]
-        if useExternRuntime {
-            lines = cRuntimeExternDeclarations()
+        var lines: [String] = if useExternRuntime {
+            cRuntimeExternDeclarations()
         } else {
-            lines = cRuntimePreamble()
+            cRuntimePreamble()
         }
 
         for global in globals {
@@ -374,7 +392,7 @@ public final class LLVMBackend {
 
     private func functionPrototype(function: KIRFunction, interner: StringInterner) -> String {
         let symbol = Self.cFunctionSymbol(for: function, interner: interner)
-        var parameters = function.params.enumerated().map { index, _ in
+        var parameters = function.params.indices.map { index in
             "intptr_t p\(index)"
         }
         parameters.append("intptr_t* outThrown")
@@ -450,22 +468,21 @@ public final class LLVMBackend {
             "kk_op_inv",
             "kk_op_shl",
             "kk_op_shr",
-            "kk_op_ushr"
+            "kk_op_ushr",
         ]
 
         for decl in module.arena.declarations {
-            guard case .function(let function) = decl else {
+            guard case let .function(function) = decl else {
                 continue
             }
             for instruction in function.body {
-                let calleeInfo: (symbol: SymbolID?, callee: InternedString)?
-                switch instruction {
-                case .call(let symbol, let callee, _, _, _, _, _):
-                    calleeInfo = (symbol, callee)
-                case .virtualCall(let symbol, let callee, _, _, _, _, _, _):
-                    calleeInfo = (symbol, callee)
+                let calleeInfo: (symbol: SymbolID?, callee: InternedString)? = switch instruction {
+                case let .call(symbol, callee, _, _, _, _, _):
+                    (symbol, callee)
+                case let .virtualCall(symbol, callee, _, _, _, _, _, _):
+                    (symbol, callee)
                 default:
-                    calleeInfo = nil
+                    nil
                 }
                 guard let calleeInfo else {
                     continue
@@ -507,9 +524,9 @@ public final class LLVMBackend {
 
     private func reportBackendError(code: String, message: String, error: CommandRunnerError) {
         switch error {
-        case .launchFailed(let reason):
+        case let .launchFailed(reason):
             diagnostics.error(code, "\(message). \(reason)", range: nil)
-        case .nonZeroExit(let result):
+        case let .nonZeroExit(result):
             let stderr = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
             if stderr.isEmpty {
                 diagnostics.error(code, "\(message). exit=\(result.exitCode)", range: nil)

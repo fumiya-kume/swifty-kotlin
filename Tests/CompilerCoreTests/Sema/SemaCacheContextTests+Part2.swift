@@ -1,6 +1,5 @@
-import XCTest
 @testable import CompilerCore
-
+import XCTest
 
 extension SemaCacheContextTests {
     func testDifferentialVerificationUnresolvedFunction() throws {
@@ -10,7 +9,7 @@ extension SemaCacheContextTests {
         }
         """
 
-        let ctxNoCache = try makeContextFromSource(source)
+        let ctxNoCache = makeContextFromSource(source)
         try runSema(ctxNoCache)
         let diagsNoCache = ctxNoCache.diagnostics.diagnostics
 
@@ -36,7 +35,7 @@ extension SemaCacheContextTests {
         }
         """
 
-        let ctxNoCache = try makeContextFromSource(source)
+        let ctxNoCache = makeContextFromSource(source)
         try runSema(ctxNoCache)
         let diagsNoCache = ctxNoCache.diagnostics.diagnostics
 
@@ -60,7 +59,7 @@ extension SemaCacheContextTests {
         }
         """
 
-        let ctxNoCache = try makeContextFromSource(source)
+        let ctxNoCache = makeContextFromSource(source)
         try runSema(ctxNoCache)
         let diagsNoCache = ctxNoCache.diagnostics.diagnostics
 
@@ -85,7 +84,7 @@ extension SemaCacheContextTests {
         }
         """
 
-        let ctxNoCache = try makeContextFromSource(source)
+        let ctxNoCache = makeContextFromSource(source)
         try runSema(ctxNoCache)
         let diagsNoCache = ctxNoCache.diagnostics.diagnostics
 
@@ -151,7 +150,7 @@ extension SemaCacheContextTests {
         }
         """
 
-        let ctxNoCache = try makeContextFromSource(source)
+        let ctxNoCache = makeContextFromSource(source)
         try runSema(ctxNoCache)
         let diagsNoCache = ctxNoCache.diagnostics.diagnostics
 
@@ -176,7 +175,7 @@ extension SemaCacheContextTests {
         }
         """
 
-        let ctxNoCache = try makeContextFromSource(source)
+        let ctxNoCache = makeContextFromSource(source)
         try runSema(ctxNoCache)
         let diagsNoCache = ctxNoCache.diagnostics.diagnostics
 
@@ -240,7 +239,7 @@ extension SemaCacheContextTests {
         }
         """
 
-        let ctxNoCache = try makeContextFromSource(source)
+        let ctxNoCache = makeContextFromSource(source)
         try runSema(ctxNoCache)
         let diagsNoCache = ctxNoCache.diagnostics.diagnostics
 

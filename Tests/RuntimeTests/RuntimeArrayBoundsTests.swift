@@ -1,5 +1,5 @@
-import XCTest
 @testable import Runtime
+import XCTest
 
 final class RuntimeArrayBoundsTests: XCTestCase {
     override func setUp() {

@@ -21,13 +21,13 @@ extension TypeSystem {
                 return true
             case .primitive(_, .nullable):
                 return true
-            case .classType(let ct) where ct.nullability == .nullable:
+            case let .classType(ct) where ct.nullability == .nullable:
                 return true
-            case .typeParam(let tp) where tp.nullability == .nullable:
+            case let .typeParam(tp) where tp.nullability == .nullable:
                 return true
-            case .functionType(let ft) where ft.nullability == .nullable:
+            case let .functionType(ft) where ft.nullability == .nullable:
                 return true
-            case .intersection(let parts):
+            case let .intersection(parts):
                 return parts.allSatisfy { isSubtype(subtype, $0) }
             default:
                 return false
@@ -36,11 +36,11 @@ extension TypeSystem {
         // Subtype of intersection: C <: A & B if C <: all parts
         // (must come before LHS decomposition so that intersection-vs-intersection
         //  decomposes the RHS first, allowing each part to then match via LHS rule)
-        if case .intersection(let parts) = rhs {
+        if case let .intersection(parts) = rhs {
             return parts.allSatisfy { isSubtype(subtype, $0) }
         }
         // Intersection as subtype: A & B <: C if any part <: C
-        if case .intersection(let parts) = lhs {
+        if case let .intersection(parts) = lhs {
             return parts.contains { isSubtype($0, supertype) }
         }
         if case .error = lhs {
@@ -56,13 +56,13 @@ extension TypeSystem {
             switch lhs {
             case .any(.nonNull), .unit, .nothing(.nonNull):
                 return true
-            case .primitive(_, let nullability):
+            case let .primitive(_, nullability):
                 return nullability == .nonNull
-            case .classType(let classType):
+            case let .classType(classType):
                 return classType.nullability == .nonNull
-            case .functionType(let functionType):
+            case let .functionType(functionType):
                 return functionType.nullability == .nonNull
-            case .typeParam(let typeParam):
+            case let .typeParam(typeParam):
                 return typeParam.nullability == .nonNull
             case .intersection:
                 return isSubtype(subtype, supertype)
@@ -100,7 +100,7 @@ extension TypeSystem {
                 for: leftClass.classSymbol,
                 arity: leftClass.args.count
             )
-            for index in 0..<leftClass.args.count {
+            for index in 0 ..< leftClass.args.count {
                 let lhsProjection = composedProjection(
                     declarationVariance: declarationVariances[index],
                     useSite: leftClass.args[index]
@@ -132,14 +132,12 @@ extension TypeSystem {
             } else if leftFunction.receiver != nil || rightFunction.receiver != nil {
                 return false
             }
-            for (leftParam, rightParam) in zip(leftFunction.params, rightFunction.params) {
-                if !isSubtype(rightParam, leftParam) {
-                    return false
-                }
+            for (leftParam, rightParam) in zip(leftFunction.params, rightFunction.params) where !isSubtype(rightParam, leftParam) {
+                return false
             }
             return isSubtype(leftFunction.returnType, rightFunction.returnType)
 
-        case (.any(let leftNullability), .any(let rightNullability)):
+        case let (.any(leftNullability), .any(rightNullability)):
             return nullabilitySubtype(leftNullability, rightNullability)
 
         default:
@@ -155,13 +153,12 @@ extension TypeSystem {
             if hasNullableNothing { return nullableNothingType }
             return hasNothing ? nothingType : errorType
         }
-        let result: TypeID
-        if filtered.dropFirst().allSatisfy({ $0 == first }) {
-            result = first
+        let result: TypeID = if filtered.dropFirst().allSatisfy({ $0 == first }) {
+            first
         } else if filtered.allSatisfy({ isSubtype($0, nullableAnyType) }) {
-            result = nullableAnyType
+            nullableAnyType
         } else {
-            result = anyType
+            anyType
         }
         // If any input was Nothing? (null literal), the result must be nullable
         if hasNullableNothing {
@@ -171,7 +168,7 @@ extension TypeSystem {
             // (b) makeNullable is a genuine no-op (e.g. Unit) — fall back to Any?
             if nullable == result {
                 if isSubtype(nullableNothingType, result) {
-                    return result  // already nullable, Nothing? <: result
+                    return result // already nullable, Nothing? <: result
                 }
                 return nullableAnyType
             }
@@ -191,7 +188,7 @@ extension TypeSystem {
         if types.contains(where: { if case .nothing = kind(of: $0) { return true }; return false }) {
             // Only return Nothing? if it is a valid lower bound (subtype of all inputs).
             // glb([Nothing?, Int]) → Nothing (non-null), since Nothing? is NOT <: Int.
-            if hasNullableNothing && types.allSatisfy({ isSubtype(nullableNothingType, $0) }) {
+            if hasNullableNothing, types.allSatisfy({ isSubtype(nullableNothingType, $0) }) {
                 return nullableNothingType
             }
             return nothingType
@@ -199,21 +196,11 @@ extension TypeSystem {
         return make(.intersection(types))
     }
 
-    @available(*, deprecated, message: "Use lub(_:) instead.")
-    public func leastUpperBound(_ types: [TypeID]) -> TypeID {
-        lub(types)
-    }
-
-    @available(*, deprecated, message: "Use glb(_:) instead.")
-    public func greatestLowerBound(_ types: [TypeID]) -> TypeID {
-        glb(types)
-    }
-
-    internal func nullabilitySubtype(_ lhs: Nullability, _ rhs: Nullability) -> Bool {
+    func nullabilitySubtype(_ lhs: Nullability, _ rhs: Nullability) -> Bool {
         lhs == rhs || (lhs == .nonNull && rhs == .nullable)
     }
 
-    internal func isNominalSubtypeSymbol(_ candidate: SymbolID, of base: SymbolID) -> Bool {
+    func isNominalSubtypeSymbol(_ candidate: SymbolID, of base: SymbolID) -> Bool {
         if candidate == base {
             return true
         }
@@ -231,7 +218,7 @@ extension TypeSystem {
         return false
     }
 
-    internal enum Projection {
+    enum Projection {
         case invariant(TypeID)
         case out(TypeID)
         case `in`(TypeID)
@@ -239,7 +226,7 @@ extension TypeSystem {
         case invalid
     }
 
-    internal func normalizedNominalVariances(for symbol: SymbolID, arity: Int) -> [TypeVariance] {
+    func normalizedNominalVariances(for symbol: SymbolID, arity: Int) -> [TypeVariance] {
         let stored = nominalTypeParameterVariances(for: symbol)
         if stored.count >= arity {
             return Array(stored.prefix(arity))
@@ -250,53 +237,53 @@ extension TypeSystem {
         return stored + Array(repeating: .invariant, count: arity - stored.count)
     }
 
-    internal func composedProjection(
+    func composedProjection(
         declarationVariance: TypeVariance,
         useSite: TypeArg
     ) -> Projection {
         switch declarationVariance {
         case .invariant:
-            return projection(from: useSite)
+            projection(from: useSite)
         case .out:
             switch useSite {
-            case .invariant(let type):
-                return .out(type)
-            case .out(let type):
-                return .out(type)
+            case let .invariant(type):
+                .out(type)
+            case let .out(type):
+                .out(type)
             case .star:
-                return .star
+                .star
             case .in:
-                return .invalid
+                .invalid
             }
         case .in:
             switch useSite {
-            case .invariant(let type):
-                return .in(type)
-            case .in(let type):
+            case let .invariant(type):
+                .in(type)
+            case let .in(type):
                 // in × in = out (double contravariance = covariance)
-                return .out(type)
+                .out(type)
             case .star:
-                return .star
+                .star
             case .out:
-                return .invalid
+                .invalid
             }
         }
     }
 
-    internal func projection(from arg: TypeArg) -> Projection {
+    func projection(from arg: TypeArg) -> Projection {
         switch arg {
-        case .invariant(let type):
-            return .invariant(type)
-        case .out(let type):
-            return .out(type)
-        case .in(let type):
-            return .in(type)
+        case let .invariant(type):
+            .invariant(type)
+        case let .out(type):
+            .out(type)
+        case let .in(type):
+            .in(type)
         case .star:
-            return .star
+            .star
         }
     }
 
-    internal func isProjectionSubtype(_ lhs: Projection, _ rhs: Projection) -> Bool {
+    func isProjectionSubtype(_ lhs: Projection, _ rhs: Projection) -> Bool {
         if case .star = rhs { return true }
         if case .invalid = rhs { return false }
         if case .invalid = lhs { return false }

@@ -1,7 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
-
 
 extension CompilerCoreTests {
     func testImportAliasBuildASTPreservesAliasField() throws {
@@ -14,9 +13,9 @@ extension CompilerCoreTests {
             package app
             import lib.helper as h
             fun use() = h(1)
-            """
+            """,
         ]
-        let ctx = try makeContextFromSources(sources)
+        let ctx = makeContextFromSources(sources)
         try runFrontend(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -26,7 +25,7 @@ extension CompilerCoreTests {
         let aliasedImport = try XCTUnwrap(appFile.imports.first(where: { importDecl in
             importDecl.alias != nil
         }))
-        XCTAssertEqual(ctx.interner.resolve(aliasedImport.alias!), "h")
+        XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(aliasedImport.alias)), "h")
         XCTAssertEqual(aliasedImport.path.map { ctx.interner.resolve($0) }, ["lib", "helper"])
     }
 
@@ -40,9 +39,9 @@ extension CompilerCoreTests {
             package app
             import lib.helper
             fun use() = helper(1)
-            """
+            """,
         ]
-        let ctx = try makeContextFromSources(sources)
+        let ctx = makeContextFromSources(sources)
         try runFrontend(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -61,7 +60,7 @@ extension CompilerCoreTests {
             return add(1)
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -71,9 +70,10 @@ extension CompilerCoreTests {
             return false
         })
         let addCallExprID = try XCTUnwrap(firstExprID(in: ast) { _, expr in
-            guard case .call(let calleeExprID, _, _, _) = expr,
+            guard case let .call(calleeExprID, _, _, _) = expr,
                   let calleeExpr = ast.arena.expr(calleeExprID),
-                  case .nameRef(let calleeName, _) = calleeExpr else {
+                  case let .nameRef(calleeName, _) = calleeExpr
+            else {
                 return false
             }
             return ctx.interner.resolve(calleeName) == "add"
@@ -81,7 +81,7 @@ extension CompilerCoreTests {
 
         let lambdaType = try XCTUnwrap(sema.bindings.exprTypes[lambdaExprID])
         let intType = sema.types.make(.primitive(.int, .nonNull))
-        guard case .functionType(let functionType) = sema.types.kind(of: lambdaType) else {
+        guard case let .functionType(functionType) = sema.types.kind(of: lambdaType) else {
             XCTFail("Lambda should infer function type.")
             return
         }
@@ -103,7 +103,7 @@ extension CompilerCoreTests {
             return ref(1)
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -113,9 +113,10 @@ extension CompilerCoreTests {
             return false
         })
         let refCallExprID = try XCTUnwrap(firstExprID(in: ast) { _, expr in
-            guard case .call(let calleeExprID, _, _, _) = expr,
+            guard case let .call(calleeExprID, _, _, _) = expr,
                   let calleeExpr = ast.arena.expr(calleeExprID),
-                  case .nameRef(let calleeName, _) = calleeExpr else {
+                  case let .nameRef(calleeName, _) = calleeExpr
+            else {
                 return false
             }
             return ctx.interner.resolve(calleeName) == "ref"
@@ -130,7 +131,7 @@ extension CompilerCoreTests {
 
         let refType = try XCTUnwrap(sema.bindings.exprTypes[callableRefExprID])
         let intType = sema.types.make(.primitive(.int, .nonNull))
-        guard case .functionType(let functionType) = sema.types.kind(of: refType) else {
+        guard case let .functionType(functionType) = sema.types.kind(of: refType) else {
             XCTFail("Callable reference should infer function type.")
             return
         }
@@ -147,7 +148,7 @@ extension CompilerCoreTests {
             return ref()
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         let ast = try XCTUnwrap(ctx.ast)
@@ -168,7 +169,7 @@ extension CompilerCoreTests {
 
         let callableType = try XCTUnwrap(sema.bindings.exprTypes[callableRefExprID])
         let intType = sema.types.make(.primitive(.int, .nonNull))
-        guard case .functionType(let functionType) = sema.types.kind(of: callableType) else {
+        guard case let .functionType(functionType) = sema.types.kind(of: callableType) else {
             XCTFail("Bound callable reference should infer function type.")
             return
         }
@@ -185,7 +186,7 @@ extension CompilerCoreTests {
             return ref(1)
         }
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -203,7 +204,8 @@ extension CompilerCoreTests {
                   ctx.interner.resolve(symbol.name) == "target",
                   let signature = sema.symbols.functionSignature(for: symbol.id),
                   signature.parameterTypes.count == 1,
-                  signature.parameterTypes[0] == intType else {
+                  signature.parameterTypes[0] == intType
+            else {
                 return false
             }
             return true
@@ -219,7 +221,7 @@ extension CompilerCoreTests {
         fun target(x: Int): Int = x + 1
         fun use(): Int = (::target)(1)
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
@@ -234,14 +236,16 @@ extension CompilerCoreTests {
                   ctx.interner.resolve(symbol.name) == "target",
                   let signature = sema.symbols.functionSignature(for: symbol.id),
                   signature.parameterTypes.count == 1,
-                  signature.parameterTypes[0] == intType else {
+                  signature.parameterTypes[0] == intType
+            else {
                 return false
             }
             return true
         })?.id)
         let callExprID = try XCTUnwrap(firstExprID(in: ast) { _, expr in
-            guard case .call(let calleeExprID, _, _, _) = expr,
-                  let calleeExpr = ast.arena.expr(calleeExprID) else {
+            guard case let .call(calleeExprID, _, _, _) = expr,
+                  let calleeExpr = ast.arena.expr(calleeExprID)
+            else {
                 return false
             }
             if case .callableRef = calleeExpr {
@@ -260,7 +264,7 @@ extension CompilerCoreTests {
         let source = """
         fun apply(f: (Int) -> Int, x: Int): Int = f(x)
         """
-        let ctx = try makeContextFromSource(source)
+        let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0023", in: ctx)
@@ -269,9 +273,10 @@ extension CompilerCoreTests {
         let ast = try XCTUnwrap(ctx.ast)
         let sema = try XCTUnwrap(ctx.sema)
         let callExprID = try XCTUnwrap(firstExprID(in: ast) { _, expr in
-            guard case .call(let calleeExprID, _, _, _) = expr,
+            guard case let .call(calleeExprID, _, _, _) = expr,
                   let calleeExpr = ast.arena.expr(calleeExprID),
-                  case .nameRef(let calleeName, _) = calleeExpr else {
+                  case let .nameRef(calleeName, _) = calleeExpr
+            else {
                 return false
             }
             return ctx.interner.resolve(calleeName) == "f"
@@ -284,7 +289,7 @@ extension CompilerCoreTests {
         XCTAssertEqual(callableCallBinding.parameterMapping, [0: 0])
 
         let intType = sema.types.make(.primitive(.int, .nonNull))
-        guard case .functionType(let functionType) = sema.types.kind(of: callableCallBinding.functionType) else {
+        guard case let .functionType(functionType) = sema.types.kind(of: callableCallBinding.functionType) else {
             XCTFail("Callable value call binding should store function type.")
             return
         }
@@ -315,11 +320,11 @@ extension CompilerCoreTests {
             let data = try Data(contentsOf: outputURL)
             XCTAssertGreaterThanOrEqual(data.count, 4)
             #if os(Linux)
-            // ELF magic number
-            XCTAssertEqual(Array(data.prefix(4)), [0x7F, 0x45, 0x4C, 0x46])
+                // ELF magic number
+                XCTAssertEqual(Array(data.prefix(4)), [0x7F, 0x45, 0x4C, 0x46])
             #else
-            // Mach-O magic number
-            XCTAssertEqual(Array(data.prefix(4)), [0xCF, 0xFA, 0xED, 0xFE])
+                // Mach-O magic number
+                XCTAssertEqual(Array(data.prefix(4)), [0xCF, 0xFA, 0xED, 0xFE])
             #endif
         }
     }
@@ -345,5 +350,4 @@ extension CompilerCoreTests {
             XCTAssertEqual(exitCode, 1)
         }
     }
-
 }

@@ -1,5 +1,5 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 final class OverloadResolverTests: XCTestCase {
     func makeEnv() -> (resolver: OverloadResolver, types: TypeSystem, symbols: SymbolTable, interner: StringInterner, ctx: SemaModule) {

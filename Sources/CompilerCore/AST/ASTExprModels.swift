@@ -40,27 +40,27 @@ public enum BinaryOp: Equatable {
     /// The Kotlin operator function name for this binary operator (e.g. "plus", "compareTo").
     public var kotlinFunctionName: String {
         switch self {
-        case .add:          return "plus"
-        case .subtract:     return "minus"
-        case .multiply:     return "times"
-        case .divide:       return "div"
-        case .modulo:       return "rem"
-        case .equal:        return "equals"
-        case .notEqual:     return "equals"
-        case .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual: return "compareTo"
-        case .logicalAnd:   return "and"
-        case .logicalOr:    return "or"
-        case .elvis:        return "elvis"
-        case .rangeTo:      return "rangeTo"
-        case .rangeUntil:   return "rangeUntil"
-        case .downTo:       return "downTo"
-        case .step:         return "step"
-        case .bitwiseAnd:   return "and"
-        case .bitwiseOr:    return "or"
-        case .bitwiseXor:   return "xor"
-        case .shl:          return "shl"
-        case .shr:          return "shr"
-        case .ushr:         return "ushr"
+        case .add: "plus"
+        case .subtract: "minus"
+        case .multiply: "times"
+        case .divide: "div"
+        case .modulo: "rem"
+        case .equal: "equals"
+        case .notEqual: "equals"
+        case .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual: "compareTo"
+        case .logicalAnd: "and"
+        case .logicalOr: "or"
+        case .elvis: "elvis"
+        case .rangeTo: "rangeTo"
+        case .rangeUntil: "rangeUntil"
+        case .downTo: "downTo"
+        case .step: "step"
+        case .bitwiseAnd: "and"
+        case .bitwiseOr: "or"
+        case .bitwiseXor: "xor"
+        case .shl: "shl"
+        case .shr: "shr"
+        case .ushr: "ushr"
         }
     }
 }
@@ -88,18 +88,6 @@ public struct WhenBranch: Equatable {
         self.conditions = conditions
         self.body = body
         self.range = range
-    }
-
-    /// Convenience: single-condition branch (backward compat helper).
-    public init(condition: ExprID?, body: ExprID, range: SourceRange) {
-        self.conditions = condition.map { [$0] } ?? []
-        self.body = body
-        self.range = range
-    }
-
-    /// Backward-compat accessor: returns the first condition, or nil for else branches.
-    public var condition: ExprID? {
-        conditions.first
     }
 }
 

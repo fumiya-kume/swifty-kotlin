@@ -1,7 +1,7 @@
 import Foundation
 
-/// Handles control flow expression type inference (for, while, do-while, if, try, when).
-/// Derived from TypeCheckSemaPhase+InferControlFlow.swift.
+// Handles control flow expression type inference (for, while, do-while, if, try, when).
+// Derived from TypeCheckSemaPhase+InferControlFlow.swift.
 
 extension ControlFlowTypeChecker {
     func inferDestructuringDeclExpr(
@@ -37,20 +37,23 @@ extension ControlFlowTypeChecker {
 
             let componentType: TypeID
             if let candidate = candidates.first,
-               let signature = sema.symbols.functionSignature(for: candidate) {
+               let signature = sema.symbols.functionSignature(for: candidate)
+            {
                 componentType = signature.returnType
             } else {
                 // Fallback: try to find componentN via scope lookup
                 let scopeCandidates = sema.symbols.lookupAll(fqName: [componentName]).filter { symbolID in
                     guard let symbol = sema.symbols.symbol(symbolID),
                           symbol.kind == .function,
-                          let sig = sema.symbols.functionSignature(for: symbolID) else {
+                          let sig = sema.symbols.functionSignature(for: symbolID)
+                    else {
                         return false
                     }
                     return sig.receiverType != nil
                 }
                 if let candidate = scopeCandidates.first,
-                   let signature = sema.symbols.functionSignature(for: candidate) {
+                   let signature = sema.symbols.functionSignature(for: candidate)
+                {
                     componentType = signature.returnType
                 } else {
                     componentType = sema.types.anyType
@@ -63,7 +66,7 @@ extension ControlFlowTypeChecker {
                 name: name,
                 fqName: [
                     interner.intern("__destructuring_\(id.rawValue)"),
-                    name
+                    name,
                 ],
                 declSite: range,
                 visibility: .private,
@@ -109,12 +112,12 @@ extension ControlFlowTypeChecker {
                 sema: sema
             )
 
-            let componentType: TypeID
-            if let candidate = candidates.first,
-               let signature = sema.symbols.functionSignature(for: candidate) {
-                componentType = signature.returnType
+            let componentType: TypeID = if let candidate = candidates.first,
+                                           let signature = sema.symbols.functionSignature(for: candidate)
+            {
+                signature.returnType
             } else {
-                componentType = sema.types.anyType
+                sema.types.anyType
             }
 
             let symbol = sema.symbols.define(
@@ -122,7 +125,7 @@ extension ControlFlowTypeChecker {
                 name: name,
                 fqName: [
                     interner.intern("__for_destructuring_\(id.rawValue)"),
-                    name
+                    name,
                 ],
                 declSite: range,
                 visibility: .private,
@@ -145,7 +148,7 @@ extension ControlFlowTypeChecker {
     static func isRangeExpression(_ exprID: ExprID, ast: ASTModule) -> Bool {
         guard let expr = ast.arena.expr(exprID) else { return false }
         switch expr {
-        case .binary(let op, _, _, _):
+        case let .binary(op, _, _, _):
             switch op {
             case .rangeTo, .rangeUntil, .downTo, .step:
                 return true

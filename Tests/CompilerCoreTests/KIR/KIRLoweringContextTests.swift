@@ -1,8 +1,7 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 final class KIRLoweringContextTests: XCTestCase {
-
     var ctx: KIRLoweringContext!
 
     override func setUp() {
@@ -17,7 +16,7 @@ final class KIRLoweringContextTests: XCTestCase {
         ctx.currentImplicitReceiverExprID = KIRExprID(rawValue: 5)
         ctx.currentImplicitReceiverSymbol = SymbolID(rawValue: 2)
         ctx.loopControlStack = [(continueLabel: 100, breakLabel: 200, name: nil)]
-        ctx.nextLoopLabel = 20_000
+        ctx.nextLoopLabel = 20000
 
         let snapshot = ctx.saveScope()
 
@@ -28,7 +27,7 @@ final class KIRLoweringContextTests: XCTestCase {
         XCTAssertEqual(snapshot.loopControlStack[0].continueLabel, 100)
         XCTAssertEqual(snapshot.loopControlStack[0].breakLabel, 200)
         XCTAssertNil(snapshot.loopControlStack[0].name)
-        XCTAssertEqual(snapshot.nextLoopLabel, 20_000)
+        XCTAssertEqual(snapshot.nextLoopLabel, 20000)
     }
 
     func testRestoreScopeRevertsAllScopeProperties() {
@@ -37,7 +36,7 @@ final class KIRLoweringContextTests: XCTestCase {
         ctx.currentImplicitReceiverExprID = KIRExprID(rawValue: 7)
         ctx.currentImplicitReceiverSymbol = SymbolID(rawValue: 3)
         ctx.loopControlStack = [(continueLabel: 1, breakLabel: 2, name: nil)]
-        ctx.nextLoopLabel = 50_000
+        ctx.nextLoopLabel = 50000
 
         ctx.restoreScope(snapshot)
 
@@ -45,12 +44,12 @@ final class KIRLoweringContextTests: XCTestCase {
         XCTAssertNil(ctx.currentImplicitReceiverExprID)
         XCTAssertNil(ctx.currentImplicitReceiverSymbol)
         XCTAssertTrue(ctx.loopControlStack.isEmpty)
-        XCTAssertEqual(ctx.nextLoopLabel, 10_000)
+        XCTAssertEqual(ctx.nextLoopLabel, 10000)
     }
 
     func testRestoreScopePreservesSnapshotValues() {
         ctx.localValuesBySymbol[SymbolID(rawValue: 1)] = KIRExprID(rawValue: 42)
-        ctx.nextLoopLabel = 15_000
+        ctx.nextLoopLabel = 15000
         let snapshot = ctx.saveScope()
 
         ctx.resetScopeForFunction()
@@ -58,42 +57,42 @@ final class KIRLoweringContextTests: XCTestCase {
 
         ctx.restoreScope(snapshot)
         XCTAssertEqual(ctx.localValuesBySymbol[SymbolID(rawValue: 1)], KIRExprID(rawValue: 42))
-        XCTAssertEqual(ctx.nextLoopLabel, 15_000)
+        XCTAssertEqual(ctx.nextLoopLabel, 15000)
     }
 
     // MARK: - Scope Management: withNewScope
 
     func testWithNewScopeResetsAndRestoresAfterBlock() throws {
         ctx.localValuesBySymbol[SymbolID(rawValue: 5)] = KIRExprID(rawValue: 5)
-        ctx.nextLoopLabel = 20_000
+        ctx.nextLoopLabel = 20000
 
         try ctx.withNewScope {
             XCTAssertTrue(ctx.localValuesBySymbol.isEmpty, "Scope inside block should be reset")
-            XCTAssertEqual(ctx.nextLoopLabel, 10_000, "Label should reset inside block")
+            XCTAssertEqual(ctx.nextLoopLabel, 10000, "Label should reset inside block")
             ctx.localValuesBySymbol[SymbolID(rawValue: 9)] = KIRExprID(rawValue: 9)
         }
 
         XCTAssertEqual(ctx.localValuesBySymbol[SymbolID(rawValue: 5)], KIRExprID(rawValue: 5),
                        "Original localValues should be restored")
         XCTAssertNil(ctx.localValuesBySymbol[SymbolID(rawValue: 9)], "Inner scope changes should not leak")
-        XCTAssertEqual(ctx.nextLoopLabel, 20_000, "Label should be restored after block")
+        XCTAssertEqual(ctx.nextLoopLabel, 20000, "Label should be restored after block")
     }
 
     func testNestedWithNewScopeRestoresCorrectly() throws {
-        ctx.nextLoopLabel = 30_000
+        ctx.nextLoopLabel = 30000
 
         try ctx.withNewScope {
-            XCTAssertEqual(ctx.nextLoopLabel, 10_000)
-            ctx.nextLoopLabel = 40_000
+            XCTAssertEqual(ctx.nextLoopLabel, 10000)
+            ctx.nextLoopLabel = 40000
 
             try ctx.withNewScope {
-                XCTAssertEqual(ctx.nextLoopLabel, 10_000)
+                XCTAssertEqual(ctx.nextLoopLabel, 10000)
             }
 
-            XCTAssertEqual(ctx.nextLoopLabel, 40_000, "Inner withNewScope should restore to outer value")
+            XCTAssertEqual(ctx.nextLoopLabel, 40000, "Inner withNewScope should restore to outer value")
         }
 
-        XCTAssertEqual(ctx.nextLoopLabel, 30_000, "Outer withNewScope should restore to original value")
+        XCTAssertEqual(ctx.nextLoopLabel, 30000, "Outer withNewScope should restore to original value")
     }
 
     func testWithNewScopeRethrowsErrors() {
@@ -110,7 +109,7 @@ final class KIRLoweringContextTests: XCTestCase {
         ctx.currentImplicitReceiverExprID = KIRExprID(rawValue: 3)
         ctx.currentImplicitReceiverSymbol = SymbolID(rawValue: 2)
         ctx.loopControlStack = [(continueLabel: 10, breakLabel: 20, name: nil), (continueLabel: 30, breakLabel: 40, name: nil)]
-        ctx.nextLoopLabel = 99_999
+        ctx.nextLoopLabel = 99999
 
         ctx.resetScopeForFunction()
 
@@ -118,31 +117,31 @@ final class KIRLoweringContextTests: XCTestCase {
         XCTAssertNil(ctx.currentImplicitReceiverExprID)
         XCTAssertNil(ctx.currentImplicitReceiverSymbol)
         XCTAssertTrue(ctx.loopControlStack.isEmpty)
-        XCTAssertEqual(ctx.nextLoopLabel, 10_000)
+        XCTAssertEqual(ctx.nextLoopLabel, 10000)
     }
 
     // MARK: - Label Allocation
 
     func testMakeLoopLabelStartsAt10000() {
-        XCTAssertEqual(ctx.makeLoopLabel(), 10_000)
+        XCTAssertEqual(ctx.makeLoopLabel(), 10000)
     }
 
     func testMakeLoopLabelIncrements() {
         let first = ctx.makeLoopLabel()
         let second = ctx.makeLoopLabel()
         let third = ctx.makeLoopLabel()
-        XCTAssertEqual(first, 10_000)
-        XCTAssertEqual(second, 10_001)
-        XCTAssertEqual(third, 10_002)
+        XCTAssertEqual(first, 10000)
+        XCTAssertEqual(second, 10001)
+        XCTAssertEqual(third, 10002)
     }
 
     func testMakeLoopLabelResetsAfterResetScope() {
         _ = ctx.makeLoopLabel()
         _ = ctx.makeLoopLabel()
-        XCTAssertEqual(ctx.nextLoopLabel, 10_002)
+        XCTAssertEqual(ctx.nextLoopLabel, 10002)
 
         ctx.resetScopeForFunction()
-        XCTAssertEqual(ctx.makeLoopLabel(), 10_000)
+        XCTAssertEqual(ctx.makeLoopLabel(), 10000)
     }
 
     func testLabelAllocationInsideWithNewScopeResetsTo10000() throws {
@@ -154,8 +153,8 @@ final class KIRLoweringContextTests: XCTestCase {
             labelInsideScope = ctx.makeLoopLabel()
         }
 
-        XCTAssertEqual(labelInsideScope, 10_000, "Labels inside withNewScope should start at 10000")
-        XCTAssertEqual(ctx.nextLoopLabel, 10_002, "Labels should be restored after withNewScope")
+        XCTAssertEqual(labelInsideScope, 10000, "Labels inside withNewScope should start at 10000")
+        XCTAssertEqual(ctx.nextLoopLabel, 10002, "Labels should be restored after withNewScope")
     }
 
     // MARK: - Callable Lowering Scope

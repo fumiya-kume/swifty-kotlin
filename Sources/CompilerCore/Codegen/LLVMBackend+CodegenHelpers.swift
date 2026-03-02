@@ -23,24 +23,24 @@ extension LLVMBackend {
         globalValueSymbols: [SymbolID: String]
     ) -> String {
         switch value {
-        case .intLiteral(let number):
+        case let .intLiteral(number):
             return "\(number)"
-        case .longLiteral(let number):
+        case let .longLiteral(number):
             return "\(number)"
-        case .floatLiteral(let value):
+        case let .floatLiteral(value):
             return "kk_float_to_bits(\(formatCFloat(value))f)"
-        case .doubleLiteral(let value):
+        case let .doubleLiteral(value):
             return "kk_double_to_bits(\(formatCDouble(value)))"
-        case .charLiteral(let scalar):
+        case let .charLiteral(scalar):
             return "\(scalar)"
-        case .boolLiteral(let bool):
+        case let .boolLiteral(bool):
             return bool ? "1" : "0"
-        case .stringLiteral(let interned):
+        case let .stringLiteral(interned):
             let text = interner.resolve(interned)
             let escaped = cStringLiteral(text)
             let byteCount = text.utf8.count
             return "(intptr_t)kk_string_from_utf8((const uint8_t*)\(escaped), \(byteCount))"
-        case .symbolRef(let symbol):
+        case let .symbolRef(symbol):
             if let functionSymbol = functionSymbols[symbol] {
                 return "(intptr_t)\(functionSymbol)"
             }
@@ -48,7 +48,7 @@ extension LLVMBackend {
                 return globalSymbol
             }
             return "0"
-        case .temporary(let index):
+        case let .temporary(index):
             return "\(index)"
         case .null:
             return "KK_NULL_SENTINEL"

@@ -1,6 +1,6 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 final class SmokeTests: XCTestCase {
     func testSmokeDriverKirDumpSucceedsForMinimalProgram() throws {
@@ -134,11 +134,11 @@ final class SmokeTests: XCTestCase {
             let data = try Data(contentsOf: URL(fileURLWithPath: objectPath))
             XCTAssertGreaterThanOrEqual(data.count, 4)
             #if os(Linux)
-            // ELF magic number
-            XCTAssertEqual(Array(data.prefix(4)), [0x7F, 0x45, 0x4C, 0x46])
+                // ELF magic number
+                XCTAssertEqual(Array(data.prefix(4)), [0x7F, 0x45, 0x4C, 0x46])
             #else
-            // Mach-O magic number
-            XCTAssertEqual(Array(data.prefix(4)), [0xCF, 0xFA, 0xED, 0xFE])
+                // Mach-O magic number
+                XCTAssertEqual(Array(data.prefix(4)), [0xCF, 0xFA, 0xED, 0xFE])
             #endif
         }
     }
@@ -166,5 +166,4 @@ final class SmokeTests: XCTestCase {
             irFlags: irFlags
         )
     }
-
 }

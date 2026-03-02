@@ -2,7 +2,6 @@ import Foundation
 import XCTest
 
 final class JscpdConfigTests: XCTestCase {
-
     /// Walks up from the test source file to locate the project root (the
     /// directory containing Package.swift).
     private func projectRootURL() -> URL {
@@ -157,7 +156,8 @@ final class JscpdConfigTests: XCTestCase {
             if !line.isEmpty,
                line.hasPrefix("  "),
                !line.hasPrefix("    "),
-               line.trimmingCharacters(in: .whitespaces).hasSuffix(":") {
+               line.trimmingCharacters(in: .whitespaces).hasSuffix(":")
+            {
                 break
             }
             blockLines.append(line)

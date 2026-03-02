@@ -22,7 +22,7 @@ extension KIRLoweringDriver {
             memberProperties: classDecl.memberProperties,
             nestedClasses: classDecl.nestedClasses,
             nestedObjects: allNestedObjects,
-             shared: shared
+            shared: shared
         )
         let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: directMembers)))
         declIDs.append(kirID)
@@ -32,7 +32,7 @@ extension KIRLoweringDriver {
             ownerSymbol: symbol,
             shared: shared
         ))
-        
+
         let ctorFQName = (sema.symbols.symbol(symbol)?.fqName ?? []) + [compilationCtx.interner.intern("<init>")]
         let ctorSymbols = sema.symbols.lookupAll(
             fqName: ctorFQName
@@ -43,34 +43,36 @@ extension KIRLoweringDriver {
             }
             ctx.resetScopeForFunction()
             ctx.beginCallableLoweringScope()
-        
+
             let receiverSymbol = callSupportLowerer.syntheticReceiverParameterSymbol(functionSymbol: ctorSymbol)
             var params = [KIRParameter(symbol: receiverSymbol, type: signature.returnType)]
             ctx.currentImplicitReceiverSymbol = receiverSymbol
             ctx.currentImplicitReceiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: signature.returnType)
-        
+
             params.append(contentsOf: zip(signature.valueParameterSymbols, signature.parameterTypes).map { pair in
                 KIRParameter(symbol: pair.0, type: pair.1)
             })
             let returnType = signature.returnType
             var body: KIRLoweringEmitContext = [.beginBlock]
-        
+
             if let receiverExpr = ctx.currentImplicitReceiverExprID,
-               let receiverSym = ctx.currentImplicitReceiverSymbol {
+               let receiverSym = ctx.currentImplicitReceiverSymbol
+            {
                 body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
             }
-        
+
             let isSecondary = sema.symbols.symbol(ctorSymbol)?.declSite != classDecl.range
-        
+
             if !isSecondary {
                 // Emit member property initializers as field stores.
                 for propDeclID in classDecl.memberProperties {
                     guard let propDecl = ast.arena.decl(propDeclID),
-                          case .propertyDecl(let prop) = propDecl,
-                          let propSymbol = sema.bindings.declSymbols[propDeclID] else {
+                          case let .propertyDecl(prop) = propDecl,
+                          let propSymbol = sema.bindings.declSymbols[propDeclID]
+                    else {
                         continue
                     }
-        
+
                     // Handle delegated property initialisation:
                     // lower the delegate expression and store it in
                     // the $delegate_ storage field.  If the delegate
@@ -83,7 +85,7 @@ extension KIRLoweringDriver {
                             delegateExpr,
                             shared: shared, emit: &body
                         )
-        
+
                         // Check whether the delegate type defines a
                         // provideDelegate operator.  Only emit the call
                         // when it is actually available; otherwise store
@@ -95,7 +97,7 @@ extension KIRLoweringDriver {
                             // Look up provideDelegate on the delegate's nominal type.
                             let typeKind = sema.types.kind(of: delegateType)
                             switch typeKind {
-                            case .classType(let ct):
+                            case let .classType(ct):
                                 guard let sym = sema.symbols.symbol(ct.classSymbol) else { return false }
                                 let memberSymbols = sema.symbols.children(ofFQName: sym.fqName)
                                 return memberSymbols.contains { memberID in
@@ -107,7 +109,7 @@ extension KIRLoweringDriver {
                                 return false
                             }
                         }()
-        
+
                         let valueToStore: KIRExprID
                         if hasProvideDelegate, let storageSym = delegateStorageSym {
                             // First, store the raw delegate value so we
@@ -115,7 +117,7 @@ extension KIRLoweringDriver {
                             let delegateType = sema.types.anyType
                             let tempFieldRef = arena.appendExpr(.symbolRef(storageSym), type: delegateType)
                             body.append(.copy(from: delegateValue, to: tempFieldRef))
-        
+
                             let propertyName = sema.symbols.symbol(propSymbol)?.name ?? compilationCtx.interner.intern("")
                             let thisRefExprID: KIRExprID
                             if let receiver = ctx.currentImplicitReceiverExprID {
@@ -152,7 +154,7 @@ extension KIRLoweringDriver {
                             // expression value directly.
                             valueToStore = delegateValue
                         }
-        
+
                         if let storageSym = delegateStorageSym {
                             let delegateType = sema.types.anyType
                             let fieldRef = arena.appendExpr(.symbolRef(storageSym), type: delegateType)
@@ -160,7 +162,7 @@ extension KIRLoweringDriver {
                         }
                         continue
                     }
-        
+
                     guard let initExpr = prop.initializer else {
                         continue
                     }
@@ -173,17 +175,17 @@ extension KIRLoweringDriver {
                     let fieldRef = arena.appendExpr(.symbolRef(targetSymbol), type: propType)
                     body.append(.copy(from: initValue, to: fieldRef))
                 }
-        
+
                 for initBlock in classDecl.initBlocks {
                     switch initBlock {
-                    case .block(let exprIDs, _):
+                    case let .block(exprIDs, _):
                         for exprID in exprIDs {
                             _ = lowerExpr(
                                 exprID,
                                 shared: shared, emit: &body
                             )
                         }
-                    case .expr(let exprID, _):
+                    case let .expr(exprID, _):
                         _ = lowerExpr(
                             exprID,
                             shared: shared, emit: &body
@@ -193,7 +195,7 @@ extension KIRLoweringDriver {
                     }
                 }
             }
-        
+
             if isSecondary {
                 for secondaryCtor in classDecl.secondaryConstructors {
                     guard secondaryCtor.range == sema.symbols.symbol(ctorSymbol)?.declSite else {
@@ -240,14 +242,14 @@ extension KIRLoweringDriver {
                         }
                     }
                     switch secondaryCtor.body {
-                    case .block(let exprIDs, _):
+                    case let .block(exprIDs, _):
                         for exprID in exprIDs {
                             _ = lowerExpr(
                                 exprID,
                                 shared: shared, emit: &body
                             )
                         }
-                    case .expr(let exprID, _):
+                    case let .expr(exprID, _):
                         _ = lowerExpr(
                             exprID,
                             shared: shared, emit: &body
@@ -258,14 +260,14 @@ extension KIRLoweringDriver {
                     break
                 }
             }
-        
+
             if let receiver = ctx.currentImplicitReceiverExprID {
                 body.append(.returnValue(receiver))
             } else {
                 body.append(.returnUnit)
             }
             body.append(.endBlock)
-        
+
             let ctorKirID = arena.appendDecl(
                 .function(
                     KIRFunction(
@@ -287,13 +289,12 @@ extension KIRLoweringDriver {
                     originalName: classDecl.name,
                     signature: signature,
                     defaultExpressions: defaults,
-                     shared: shared
+                    shared: shared
                 )
                 declIDs.append(stubID)
             }
             declIDs.append(contentsOf: ctx.drainGeneratedCallableDecls())
         }
-        
 
         return declIDs
     }
@@ -305,8 +306,9 @@ extension KIRLoweringDriver {
     ) -> [KIRDeclID] {
         guard let companionDeclID,
               let decl = shared.ast.arena.decl(companionDeclID),
-              case .objectDecl(let companionDecl) = decl,
-              let companionSymbol = shared.sema.bindings.declSymbols[companionDeclID] else {
+              case let .objectDecl(companionDecl) = decl,
+              let companionSymbol = shared.sema.bindings.declSymbols[companionDeclID]
+        else {
             return []
         }
 
@@ -336,8 +338,9 @@ extension KIRLoweringDriver {
         // Property initializers run before init blocks, in declaration order.
         for propertyDeclID in companionDecl.memberProperties {
             guard let propertyDecl = ast.arena.decl(propertyDeclID),
-                  case .propertyDecl(let property) = propertyDecl,
-                  let propertySymbol = sema.bindings.declSymbols[propertyDeclID] else {
+                  case let .propertyDecl(property) = propertyDecl,
+                  let propertySymbol = sema.bindings.declSymbols[propertyDeclID]
+            else {
                 continue
             }
             // Delegate-specific initialization is handled separately.
@@ -361,7 +364,7 @@ extension KIRLoweringDriver {
 
         for initBlock in companionDecl.initBlocks {
             switch initBlock {
-            case .block(let exprIDs, _):
+            case let .block(exprIDs, _):
                 for exprID in exprIDs {
                     _ = lowerExpr(
                         exprID,
@@ -369,7 +372,7 @@ extension KIRLoweringDriver {
                         emit: &body
                     )
                 }
-            case .expr(let exprID, _):
+            case let .expr(exprID, _):
                 _ = lowerExpr(
                     exprID,
                     shared: shared,

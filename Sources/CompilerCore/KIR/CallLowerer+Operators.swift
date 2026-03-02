@@ -40,23 +40,22 @@ extension CallLowerer {
         // Detect whether this is a compareTo-desugared comparison operator.
         // If so, the call binding targets compareTo (returns Int) and we must
         // wrap the result with a comparison against 0 to produce Bool.
-        let isCompareToDesugaring: Bool
-        switch op {
+        let isCompareToDesugaring: Bool = switch op {
         case .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
-            isCompareToDesugaring = sema.bindings.callBindings[exprID] != nil
+            sema.bindings.callBindings[exprID] != nil
         default:
-            isCompareToDesugaring = false
+            false
         }
         if let callBinding = sema.bindings.callBindings[exprID],
            let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee),
-           signature.receiverType != nil {
+           signature.receiverType != nil
+        {
             // For compareTo desugaring, the call result is Int, not Bool.
             // We allocate a separate temporary for the compareTo call result.
-            let callResult: KIRExprID
-            if isCompareToDesugaring {
-                callResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+            let callResult: KIRExprID = if isCompareToDesugaring {
+                arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
             } else {
-                callResult = result
+                result
             }
             let normalizedResult = driver.callSupportLowerer.normalizedCallArguments(
                 providedArguments: [rhsID],
@@ -102,14 +101,14 @@ extension CallLowerer {
                     thrownResult: nil
                 ))
             } else {
-                let loweredCalleeName: InternedString
-                if let externalLinkName = sema.symbols.externalLinkName(for: callBinding.chosenCallee),
-                   !externalLinkName.isEmpty {
-                    loweredCalleeName = interner.intern(externalLinkName)
+                let loweredCalleeName: InternedString = if let externalLinkName = sema.symbols.externalLinkName(for: callBinding.chosenCallee),
+                                                           !externalLinkName.isEmpty
+                {
+                    interner.intern(externalLinkName)
                 } else if let symbol = sema.symbols.symbol(callBinding.chosenCallee) {
-                    loweredCalleeName = symbol.name
+                    symbol.name
                 } else {
-                    loweredCalleeName = driver.callSupportLowerer.binaryOperatorFunctionName(for: op, interner: interner)
+                    interner.intern(op.kotlinFunctionName)
                 }
                 instructions.append(.call(
                     symbol: callBinding.chosenCallee,
@@ -126,9 +125,9 @@ extension CallLowerer {
                 instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                 let cmpOp: KIRBinaryOp
                 switch op {
-                case .lessThan:     cmpOp = .lessThan
-                case .lessOrEqual:  cmpOp = .lessOrEqual
-                case .greaterThan:  cmpOp = .greaterThan
+                case .lessThan: cmpOp = .lessThan
+                case .lessOrEqual: cmpOp = .lessOrEqual
+                case .greaterThan: cmpOp = .greaterThan
                 case .greaterOrEqual: cmpOp = .greaterOrEqual
                 default: fatalError("Unreachable: isCompareToDesugaring should only be true for comparison operators")
                 }
@@ -156,7 +155,7 @@ extension CallLowerer {
         let rhsType = sema.bindings.exprTypes[rhs]
         let nullableStringType = sema.types.make(.primitive(.string, .nullable))
         let isStringOperand = (lhsType == stringType || lhsType == nullableStringType)
-                           && (rhsType == stringType || rhsType == nullableStringType)
+            && (rhsType == stringType || rhsType == nullableStringType)
         if isStringOperand {
             switch op {
             case .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
@@ -173,9 +172,9 @@ extension CallLowerer {
                 instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                 let cmpOp: KIRBinaryOp
                 switch op {
-                case .lessThan:      cmpOp = .lessThan
-                case .lessOrEqual:   cmpOp = .lessOrEqual
-                case .greaterThan:   cmpOp = .greaterThan
+                case .lessThan: cmpOp = .lessThan
+                case .lessOrEqual: cmpOp = .lessOrEqual
+                case .greaterThan: cmpOp = .greaterThan
                 case .greaterOrEqual: cmpOp = .greaterOrEqual
                 default: fatalError("Unreachable: unexpected comparison operator for string operands")
                 }
@@ -388,7 +387,7 @@ extension CallLowerer {
     }
 
     func lowerIndexedAssignExpr(
-        _ exprID: ExprID,
+        _: ExprID,
         receiverExpr: ExprID,
         indices: [ExprID],
         valueExpr: ExprID,
@@ -499,7 +498,8 @@ extension CallLowerer {
         // Step 2: apply binary op
         let opResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
         guard let expr = ast.arena.expr(exprID),
-              case .indexedCompoundAssign(let op, _, _, _, _) = expr else {
+              case let .indexedCompoundAssign(op, _, _, _, _) = expr
+        else {
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
@@ -516,37 +516,31 @@ extension CallLowerer {
         let receiverBoundType = sema.bindings.exprTypes[receiverExpr]
         let isStringElement: Bool = {
             guard let recvType = receiverBoundType,
-                  case .classType(let classType) = sema.types.kind(of: recvType) else {
+                  case let .classType(classType) = sema.types.kind(of: recvType)
+            else {
                 return false
             }
             // Prefer the explicit element type from type arguments, if present.
             if let firstArg = classType.args.first {
-                let elementType: TypeID?
-                switch firstArg {
-                case .invariant(let t), .out(let t), .in(let t): elementType = t
-                case .star: elementType = nil
+                let elementType: TypeID? = switch firstArg {
+                case let .invariant(t), let .out(t), let .in(t): t
+                case .star: nil
                 }
                 if let elementType {
                     return elementType == stringType
                 }
             }
-            // Fallback: support legacy non-generic StringArray by name only.
-            if let symbol = sema.symbols.symbol(classType.classSymbol) {
-                let name = interner.resolve(symbol.name)
-                return name == "StringArray"
-            }
             return false
         }()
-        let opName: String
-        if op == .plusAssign, isStringElement {
-            opName = "kk_string_concat"
+        let opName = if op == .plusAssign, isStringElement {
+            "kk_string_concat"
         } else {
             switch op {
-            case .plusAssign: opName = "kk_op_add"
-            case .minusAssign: opName = "kk_op_sub"
-            case .timesAssign: opName = "kk_op_mul"
-            case .divAssign: opName = "kk_op_div"
-            case .modAssign: opName = "kk_op_mod"
+            case .plusAssign: "kk_op_add"
+            case .minusAssign: "kk_op_sub"
+            case .timesAssign: "kk_op_mul"
+            case .divAssign: "kk_op_div"
+            case .modAssign: "kk_op_mod"
             }
         }
         instructions.append(.call(

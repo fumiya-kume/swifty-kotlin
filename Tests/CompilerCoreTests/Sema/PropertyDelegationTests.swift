@@ -1,11 +1,10 @@
+@testable import CompilerCore
 import Foundation
 import XCTest
-@testable import CompilerCore
 
 // MARK: - SymbolTable Delegate Storage Tests
 
 final class DelegateStorageSymbolTableTests: XCTestCase {
-
     func testSetAndGetDelegateStorageSymbol() {
         let interner = StringInterner()
         let symbols = SymbolTable()
@@ -61,7 +60,6 @@ final class DelegateStorageSymbolTableTests: XCTestCase {
 // MARK: - Sema Delegate Type Checking Tests
 
 final class SemaDelegateTypeCheckTests: XCTestCase {
-
     func testDelegatedPropertyCreatesStorageSymbolDuringHeaderCollection() throws {
         let source = """
         class MyDelegate {
@@ -91,7 +89,8 @@ final class SemaDelegateTypeCheckTests: XCTestCase {
 
             // The storage symbol should be a field.
             if let storageSymID = delegateStorageSymbols.first,
-               let storageSym = sema.symbols.symbol(storageSymID) {
+               let storageSym = sema.symbols.symbol(storageSymID)
+            {
                 XCTAssertEqual(storageSym.kind, .field)
                 XCTAssertEqual(storageSym.visibility, .private)
             }
@@ -205,7 +204,7 @@ final class SemaDelegateTypeCheckTests: XCTestCase {
             if let xSymbol = xSymbols.first {
                 // The delegate type is recorded under a synthetic symbol offset:
                 // -(symbol.rawValue + 50_000)
-                let syntheticID = SymbolID(rawValue: -(xSymbol.rawValue + 50_000))
+                let syntheticID = SymbolID(rawValue: -(xSymbol.rawValue + 50000))
                 let delegateType = sema.symbols.propertyType(for: syntheticID)
                 XCTAssertNotNil(delegateType, "Delegate type should be recorded on synthetic symbol")
             }
@@ -216,7 +215,6 @@ final class SemaDelegateTypeCheckTests: XCTestCase {
 // MARK: - KIR Delegate Accessor Synthesis Tests
 
 final class KIRDelegateAccessorTests: XCTestCase {
-
     func testDelegatedValSynthesizesGetterWithGetValueCall() throws {
         let source = """
         class MyDelegate {
@@ -235,7 +233,7 @@ final class KIRDelegateAccessorTests: XCTestCase {
 
             // Check that a getter function was synthesized with a getValue call.
             let getterFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let fn) = decl else { return nil }
+                guard case let .function(fn) = decl else { return nil }
                 let name = interner.resolve(fn.name)
                 guard name == "get" else { return nil }
                 let callees = extractCallees(from: fn.body, interner: interner)
@@ -246,7 +244,7 @@ final class KIRDelegateAccessorTests: XCTestCase {
             // Verify the getValue call has exactly 2 arguments (thisRef, kProperty).
             if let getter = getterFunctions.first {
                 let getValueCalls = getter.body.compactMap { instruction -> [KIRExprID]? in
-                    guard case .call(_, let callee, let args, _, _, _, _) = instruction,
+                    guard case let .call(_, callee, args, _, _, _, _) = instruction,
                           interner.resolve(callee) == "getValue" else { return nil }
                     return args
                 }
@@ -277,7 +275,7 @@ final class KIRDelegateAccessorTests: XCTestCase {
 
             // Check that a setter function was synthesized with a setValue call.
             let setterFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let fn) = decl else { return nil }
+                guard case let .function(fn) = decl else { return nil }
                 let name = interner.resolve(fn.name)
                 guard name == "set" else { return nil }
                 let callees = extractCallees(from: fn.body, interner: interner)
@@ -288,7 +286,7 @@ final class KIRDelegateAccessorTests: XCTestCase {
             // Verify the setValue call has exactly 3 arguments (thisRef, kProperty, value).
             if let setter = setterFunctions.first {
                 let setValueCalls = setter.body.compactMap { instruction -> [KIRExprID]? in
-                    guard case .call(_, let callee, let args, _, _, _, _) = instruction,
+                    guard case let .call(_, callee, args, _, _, _, _) = instruction,
                           interner.resolve(callee) == "setValue" else { return nil }
                     return args
                 }
@@ -318,7 +316,7 @@ final class KIRDelegateAccessorTests: XCTestCase {
 
             // There should be no setter function with setValue for a val property.
             let setterWithSetValue = module.arena.declarations.contains { decl in
-                guard case .function(let fn) = decl else { return false }
+                guard case let .function(fn) = decl else { return false }
                 let name = interner.resolve(fn.name)
                 guard name == "set" else { return false }
                 let callees = extractCallees(from: fn.body, interner: interner)
@@ -347,7 +345,7 @@ final class KIRDelegateAccessorTests: XCTestCase {
 
             // Check that a $delegate_x global was emitted.
             let delegateGlobals = module.arena.declarations.compactMap { decl -> KIRGlobal? in
-                guard case .global(let g) = decl else { return nil }
+                guard case let .global(g) = decl else { return nil }
                 guard let sym = sema.symbols.symbol(g.symbol) else { return nil }
                 return interner.resolve(sym.name).hasPrefix("$delegate_") ? g : nil
             }
@@ -374,7 +372,7 @@ final class KIRDelegateAccessorTests: XCTestCase {
 
             // Find the getter and check that getValue's symbol is the delegate storage.
             let getterFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case .function(let fn) = decl else { return nil }
+                guard case let .function(fn) = decl else { return nil }
                 let name = interner.resolve(fn.name)
                 guard name == "get" else { return nil }
                 let callees = extractCallees(from: fn.body, interner: interner)
@@ -383,7 +381,7 @@ final class KIRDelegateAccessorTests: XCTestCase {
 
             if let getter = getterFunctions.first {
                 let getValueCallSymbols = getter.body.compactMap { instruction -> SymbolID? in
-                    guard case .call(let sym, let callee, _, _, _, _, _) = instruction,
+                    guard case let .call(sym, callee, _, _, _, _, _) = instruction,
                           interner.resolve(callee) == "getValue" else { return nil }
                     return sym
                 }
@@ -405,5 +403,4 @@ final class KIRDelegateAccessorTests: XCTestCase {
 
 // MARK: - Constructor Delegate Initialization Tests
 
-final class ConstructorDelegateInitTests: XCTestCase {
-}
+final class ConstructorDelegateInitTests: XCTestCase {}

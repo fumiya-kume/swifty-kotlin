@@ -131,7 +131,8 @@ public final class CodegenPhase: CompilerPhase {
     }
 
     private func makeBackend(ctx: CompilationContext) -> any CodegenBackend {
-        let selection = selectedBackend(irFlags: ctx.options.irFlags, diagnostics: ctx.diagnostics)
+        let selection = selectedBackend(irFlags: ctx.options.irFlags, target: ctx.options.target,
+                                        diagnostics: ctx.diagnostics)
         switch selection.kind {
         case .syntheticC:
             let backend = LLVMBackend(
@@ -153,7 +154,9 @@ public final class CodegenPhase: CompilerPhase {
         }
     }
 
-    private func selectedBackend(irFlags: [String], diagnostics: DiagnosticEngine) -> BackendSelection {
+    private func selectedBackend(
+        irFlags: [String], target: TargetTriple, diagnostics: DiagnosticEngine
+    ) -> BackendSelection {
         var requestedBackend: String?
         var isStrictMode = false
 
@@ -174,10 +177,9 @@ public final class CodegenPhase: CompilerPhase {
         }
 
         guard let requestedBackend else {
-            if LLVMCAPIBindings.load()?.smokeTestContextLifecycle() == true {
-                return BackendSelection(kind: .llvmCAPI, isStrictMode: isStrictMode)
-            }
-            return BackendSelection(kind: .syntheticC, isStrictMode: false)
+            return llvmCapiBackendUsableForDefaultSelection(target: target)
+                ? BackendSelection(kind: .llvmCAPI, isStrictMode: isStrictMode)
+                : BackendSelection(kind: .syntheticC, isStrictMode: false)
         }
 
         switch requestedBackend {
@@ -186,11 +188,9 @@ public final class CodegenPhase: CompilerPhase {
         case "llvm-c-api", "llvm-capi":
             return BackendSelection(kind: .llvmCAPI, isStrictMode: isStrictMode)
         default:
-            diagnostics.warning(
-                "KSWIFTK-BACKEND-1002",
-                "Unknown backend '\(requestedBackend)'; falling back to synthetic C backend.",
-                range: nil
-            )
+            diagnostics.warning("KSWIFTK-BACKEND-1002",
+                                "Unknown backend '\(requestedBackend)'; falling back to synthetic C backend.",
+                                range: nil)
             return BackendSelection(kind: .syntheticC, isStrictMode: false)
         }
     }
@@ -198,11 +198,11 @@ public final class CodegenPhase: CompilerPhase {
     private func parseStrictModeFlag(_ value: String) -> Bool? {
         switch value.lowercased() {
         case "1", "true", "yes", "on":
-            return true
+            true
         case "0", "false", "no", "off":
-            return false
+            false
         default:
-            return nil
+            nil
         }
     }
 
@@ -216,7 +216,7 @@ public final class CodegenPhase: CompilerPhase {
         }
         let mangler = NameMangler()
         for decl in module.arena.declarations {
-            guard case .function(let function) = decl, function.isInline else {
+            guard case let .function(function) = decl, function.isInline else {
                 continue
             }
             guard let symbol = sema.symbols.symbol(function.symbol) else {
@@ -255,84 +255,83 @@ public final class CodegenPhase: CompilerPhase {
             return "beginBlock"
         case .endBlock:
             return "endBlock"
-        case .label(let id):
+        case let .label(id):
             return "label id=\(id)"
-        case .jump(let target):
+        case let .jump(target):
             return "jump target=\(target)"
-        case .jumpIfEqual(let lhs, let rhs, let target):
+        case let .jumpIfEqual(lhs, rhs, target):
             return "jumpIfEqual lhs=\(lhs.rawValue) rhs=\(rhs.rawValue) target=\(target)"
-        case .constValue(let result, let value):
+        case let .constValue(result, value):
             return "const result=\(result.rawValue) value=\(serializeInlineExprKind(value, interner: interner))"
-        case .binary(let op, let lhs, let rhs, let result):
+        case let .binary(op, lhs, rhs, result):
             return "binary op=\(op) lhs=\(lhs.rawValue) rhs=\(rhs.rawValue) result=\(result.rawValue)"
         case .returnUnit:
             return "returnUnit"
-        case .returnValue(let value):
+        case let .returnValue(value):
             return "returnValue value=\(value.rawValue)"
-        case .returnIfEqual(let lhs, let rhs):
+        case let .returnIfEqual(lhs, rhs):
             return "returnIfEqual lhs=\(lhs.rawValue) rhs=\(rhs.rawValue)"
-        case .unary(let op, let operand, let result):
+        case let .unary(op, operand, result):
             return "unary op=\(op) operand=\(operand.rawValue) result=\(result.rawValue)"
-        case .nullAssert(let operand, let result):
+        case let .nullAssert(operand, result):
             return "nullAssert operand=\(operand.rawValue) result=\(result.rawValue)"
-        case .call(let symbol, let callee, let arguments, let result, let canThrow, let thrownResult, let isSuperCall):
+        case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall):
             let args = arguments.map { String($0.rawValue) }.joined(separator: ",")
             let symbolValue = symbol.map { String($0.rawValue) } ?? "_"
             let resultValue = result.map { String($0.rawValue) } ?? "_"
             let thrownResultValue = thrownResult.map { String($0.rawValue) } ?? "_"
             let calleeName = base64Encode(interner.resolve(callee))
             return "call symbol=\(symbolValue) calleeB64=\(calleeName) args=[\(args)] result=\(resultValue) canThrow=\(canThrow ? 1 : 0) thrownResult=\(thrownResultValue) isSuperCall=\(isSuperCall ? 1 : 0)"
-        case .virtualCall(let symbol, let callee, let receiver, let arguments, let result, let canThrow, let thrownResult, let dispatch):
+        case let .virtualCall(symbol, callee, receiver, arguments, result, canThrow, thrownResult, dispatch):
             let args = arguments.map { String($0.rawValue) }.joined(separator: ",")
             let symbolValue = symbol.map { String($0.rawValue) } ?? "_"
             let resultValue = result.map { String($0.rawValue) } ?? "_"
             let thrownResultValue = thrownResult.map { String($0.rawValue) } ?? "_"
             let calleeName = base64Encode(interner.resolve(callee))
-            let dispatchStr: String
-            switch dispatch {
-            case .vtable(let slot):
-                dispatchStr = "vtable:\(slot)"
-            case .itable(let interfaceSlot, let methodSlot):
-                dispatchStr = "itable:\(interfaceSlot):\(methodSlot)"
+            let dispatchStr = switch dispatch {
+            case let .vtable(slot):
+                "vtable:\(slot)"
+            case let .itable(interfaceSlot, methodSlot):
+                "itable:\(interfaceSlot):\(methodSlot)"
             }
             return "virtualCall symbol=\(symbolValue) calleeB64=\(calleeName) receiver=\(receiver.rawValue) args=[\(args)] result=\(resultValue) canThrow=\(canThrow ? 1 : 0) thrownResult=\(thrownResultValue) dispatch=\(dispatchStr)"
-        case .jumpIfNotNull(let value, let target):
+        case let .jumpIfNotNull(value, target):
             return "jumpIfNotNull value=\(value.rawValue) target=\(target)"
-        case .copy(let from, let to):
+        case let .copy(from, to):
             return "copy from=\(from.rawValue) to=\(to.rawValue)"
-        case .storeGlobal(let value, let symbol):
+        case let .storeGlobal(value, symbol):
             return "storeGlobal value=\(value.rawValue) symbol=\(symbol.rawValue)"
-        case .loadGlobal(let result, let symbol):
+        case let .loadGlobal(result, symbol):
             return "loadGlobal result=\(result.rawValue) symbol=\(symbol.rawValue)"
-        case .rethrow(let value):
+        case let .rethrow(value):
             return "rethrow value=\(value.rawValue)"
         }
     }
 
     private func serializeInlineExprKind(_ value: KIRExprKind, interner: StringInterner) -> String {
         switch value {
-        case .intLiteral(let intValue):
-            return "int:\(intValue)"
-        case .longLiteral(let longValue):
-            return "long:\(longValue)"
-        case .floatLiteral(let floatValue):
-            return "float:\(floatValue)"
-        case .doubleLiteral(let doubleValue):
-            return "double:\(doubleValue)"
-        case .charLiteral(let charValue):
-            return "char:\(charValue)"
-        case .boolLiteral(let boolValue):
-            return "bool:\(boolValue ? 1 : 0)"
-        case .stringLiteral(let text):
-            return "stringB64:\(base64Encode(interner.resolve(text)))"
-        case .symbolRef(let symbol):
-            return "symbol:\(symbol.rawValue)"
-        case .temporary(let raw):
-            return "temp:\(raw)"
+        case let .intLiteral(intValue):
+            "int:\(intValue)"
+        case let .longLiteral(longValue):
+            "long:\(longValue)"
+        case let .floatLiteral(floatValue):
+            "float:\(floatValue)"
+        case let .doubleLiteral(doubleValue):
+            "double:\(doubleValue)"
+        case let .charLiteral(charValue):
+            "char:\(charValue)"
+        case let .boolLiteral(boolValue):
+            "bool:\(boolValue ? 1 : 0)"
+        case let .stringLiteral(text):
+            "stringB64:\(base64Encode(interner.resolve(text)))"
+        case let .symbolRef(symbol):
+            "symbol:\(symbol.rawValue)"
+        case let .temporary(raw):
+            "temp:\(raw)"
         case .null:
-            return "null"
+            "null"
         case .unit:
-            return "unit"
+            "unit"
         }
     }
 
@@ -354,7 +353,7 @@ public final class CodegenPhase: CompilerPhase {
         let functionLinkNamesBySymbol: [SymbolID: String] = {
             guard let kir = ctx.kir else { return [:] }
             return kir.arena.declarations.reduce(into: [:]) { partial, decl in
-                guard case .function(let function) = decl else {
+                guard case let .function(function) = decl else {
                     return
                 }
                 partial[function.symbol] = LLVMBackend.cFunctionSymbol(for: function, interner: ctx.interner)

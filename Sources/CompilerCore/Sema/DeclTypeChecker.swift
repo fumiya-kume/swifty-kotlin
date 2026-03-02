@@ -21,10 +21,10 @@ final class DeclTypeChecker {
         case .unit:
             return ctx.sema.types.unitType
 
-        case .expr(let exprID, _):
+        case let .expr(exprID, _):
             return driver.inferExpr(exprID, ctx: ctx, locals: &locals, expectedType: expectedType)
 
-        case .block(let exprIDs, _):
+        case let .block(exprIDs, _):
             var last = ctx.sema.types.unitType
             var reachedNothing = false
             for exprID in exprIDs {
@@ -42,13 +42,12 @@ final class DeclTypeChecker {
                 // Pass expectedType to return expressions (so the return value is
                 // checked against the function return type) and to the last expression
                 // (which determines the block's result type for expression-body inference).
-                let exprExpectedType: TypeID?
-                if let expr = ctx.ast.arena.expr(exprID), case .returnExpr = expr {
-                    exprExpectedType = expectedType
+                let exprExpectedType: TypeID? = if let expr = ctx.ast.arena.expr(exprID), case .returnExpr = expr {
+                    expectedType
                 } else if exprID == exprIDs.last {
-                    exprExpectedType = expectedType
+                    expectedType
                 } else {
-                    exprExpectedType = nil
+                    nil
                 }
                 last = driver.inferExpr(exprID, ctx: ctx, locals: &locals, expectedType: exprExpectedType)
                 if last == ctx.sema.types.nothingType {
@@ -119,7 +118,7 @@ final class DeclTypeChecker {
 
             // Record the delegate type on the property symbol so the KIR
             // lowering phase can synthesise getValue/setValue calls.
-            sema.symbols.setPropertyType(delegateType, for: SymbolID(rawValue: -(symbol.rawValue + 50_000)))
+            sema.symbols.setPropertyType(delegateType, for: SymbolID(rawValue: -(symbol.rawValue + 50000)))
 
             // Resolve getValue operator on the delegate type to infer the
             // property type from its return type (Kotlin spec J12).
@@ -133,7 +132,8 @@ final class DeclTypeChecker {
                 return sym.flags.contains(.operatorFunction)
             }
             if let getValueSymbol = getValueCandidates.first,
-               let getValueSig = sema.symbols.functionSignature(for: getValueSymbol) {
+               let getValueSig = sema.symbols.functionSignature(for: getValueSymbol)
+            {
                 // Use getValue return type to infer the property type when
                 // no explicit type annotation is provided.
                 if inferredPropertyType == nil {
@@ -158,7 +158,7 @@ final class DeclTypeChecker {
                     guard let sym = sema.symbols.symbol(candidateID) else { return false }
                     return sym.flags.contains(.operatorFunction)
                 }
-                _ = setValueCandidates  // Validate existence; diagnostic emitted elsewhere if needed.
+                _ = setValueCandidates // Validate existence; diagnostic emitted elsewhere if needed.
             }
 
             // Check for provideDelegate operator on the delegate type.
@@ -171,7 +171,7 @@ final class DeclTypeChecker {
                 guard let sym = sema.symbols.symbol(candidateID) else { return false }
                 return sym.flags.contains(.operatorFunction)
             }
-            _ = provideDelegateCandidates  // Track for KIR lowering provideDelegate insertion.
+            _ = provideDelegateCandidates // Track for KIR lowering provideDelegate insertion.
         }
 
         let finalPropertyType = inferredPropertyType ?? sema.types.nullableAnyType
@@ -189,7 +189,7 @@ final class DeclTypeChecker {
             let fieldSymbol = sema.symbols.backingFieldSymbol(for: symbol) ?? symbol
             setterLocals[interner.intern("field")] = (finalPropertyType, fieldSymbol, true, true)
             let parameterName = setter.parameterName ?? interner.intern("value")
-            let setterValueSymbol = SymbolID(rawValue: -(symbol.rawValue + 40_000))
+            let setterValueSymbol = SyntheticSymbolScheme.semaSetterValueSymbol(for: symbol)
             setterLocals[parameterName] = (finalPropertyType, setterValueSymbol, true, true)
             let setterType = inferFunctionBodyType(
                 setter.body, ctx: ctx, locals: &setterLocals,
@@ -227,7 +227,8 @@ final class DeclTypeChecker {
             let ctorSymbols = sema.symbols.symbols(atDeclSite: ctor.range).compactMap { sema.symbols.symbol($0) }.filter { $0.kind == .constructor }
             let currentCtorSymbolID = ctorSymbols.first?.id
             if let ctorSymbol = ctorSymbols.first,
-               let signature = sema.symbols.functionSignature(for: ctorSymbol.id) {
+               let signature = sema.symbols.functionSignature(for: ctorSymbol.id)
+            {
                 for (index, paramSymbol) in signature.valueParameterSymbols.enumerated() {
                     guard let param = sema.symbols.symbol(paramSymbol) else { continue }
                     let type = index < signature.parameterTypes.count ? signature.parameterTypes[index] : sema.types.anyType
@@ -235,7 +236,7 @@ final class DeclTypeChecker {
                 }
             }
 
-            if ctor.delegationCall == nil && hasPrimaryConstructor {
+            if ctor.delegationCall == nil, hasPrimaryConstructor {
                 sema.diagnostics.error(
                     "KSWIFTK-SEMA-0054",
                     "Secondary constructor must delegate to another constructor via this() or super().",
@@ -254,7 +255,8 @@ final class DeclTypeChecker {
                 switch delegation.kind {
                 case .this:
                     if let owner = ownerSymbol,
-                       let ownerSym = sema.symbols.symbol(owner) {
+                       let ownerSym = sema.symbols.symbol(owner)
+                    {
                         delegationTargetFQName = ownerSym.fqName + [ctx.interner.intern("<init>")]
                     } else {
                         delegationTargetFQName = []
@@ -267,7 +269,8 @@ final class DeclTypeChecker {
                             return kind == .class || kind == .enumClass
                         }
                         if let superclass = classSupertypes.first,
-                           let superSym = sema.symbols.symbol(superclass) {
+                           let superSym = sema.symbols.symbol(superclass)
+                        {
                             delegationTargetFQName = superSym.fqName + [ctx.interner.intern("<init>")]
                         } else {
                             delegationTargetFQName = []
@@ -369,9 +372,8 @@ final class DeclTypeChecker {
         // - Allow Nothing for .expr bodies (e.g. `fun f() = throw ...`) and for
         //   .block bodies ending with throw or a Nothing-returning call, since
         //   these genuinely diverge.
-        let skipSignatureUpdate: Bool
-        if bodyType == sema.types.errorType {
-            skipSignatureUpdate = true
+        let skipSignatureUpdate = if bodyType == sema.types.errorType {
+            true
         } else if bodyType == sema.types.nothingType {
             switch function.body {
             case .block:
@@ -381,17 +383,17 @@ final class DeclTypeChecker {
                 // (return/break/continue), throw, compound expressions where all
                 // branches return, etc. Return value type checking is already
                 // handled at the returnExpr level, so skipping here is safe.
-                skipSignatureUpdate = true
+                true
             case .expr, .unit:
                 // Expression-body functions (e.g. `fun f() = throw ...`) should
                 // infer Nothing when the expression genuinely evaluates to Nothing.
-                skipSignatureUpdate = false
+                false
             }
         } else {
-            skipSignatureUpdate = false
+            false
         }
 
-        if function.returnType == nil && !skipSignatureUpdate {
+        if function.returnType == nil, !skipSignatureUpdate {
             sema.symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: signature.receiverType,

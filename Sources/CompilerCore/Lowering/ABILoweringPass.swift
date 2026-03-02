@@ -95,6 +95,7 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_int_to_double_bits"),
             ctx.interner.intern("kk_float_to_double_bits"),
             ctx.interner.intern("kk_any_to_string"),
+            ctx.interner.intern("kk_throwable_is_cancellation"),
             ctx.interner.intern("kk_op_elvis"),
             ctx.interner.intern("kk_lazy_create"),
             ctx.interner.intern("kk_lazy_get_value"),
@@ -134,7 +135,7 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_op_inv"),
             ctx.interner.intern("kk_op_shl"),
             ctx.interner.intern("kk_op_shr"),
-            ctx.interner.intern("kk_op_ushr")
+            ctx.interner.intern("kk_op_ushr"),
         ]
 
         let boxIntCallee = ctx.interner.intern("kk_box_int")
@@ -156,7 +157,7 @@ final class ABILoweringPass: LoweringPass {
         var signatureByName: [InternedString: FunctionSignature] = [:]
         if let symbols {
             for decl in module.arena.declarations {
-                guard case .function(let fn) = decl else { continue }
+                guard case let .function(fn) = decl else { continue }
                 if let sig = symbols.functionSignature(for: fn.symbol) {
                     signatureByName[fn.name] = sig
                 }
@@ -173,101 +174,50 @@ final class ABILoweringPass: LoweringPass {
             var idx = 0
             while idx < function.body.count {
                 let instruction = function.body[idx]
-                if case .virtualCall(let vcSymbol, let vcCallee, let vcReceiver, let vcArguments, let vcResult, _, let vcThrownResult, let vcDispatch) = instruction {
+                if case let .virtualCall(vcSymbol, vcCallee, vcReceiver, vcArguments, vcResult, _, vcThrownResult, vcDispatch) = instruction {
                     let vcCanThrow = !nonThrowingCallees.contains(vcCallee)
-
-                    var vcBoxedArguments = vcArguments
-                    if let types {
-                        var vcSignature: FunctionSignature?
-                        if let symbols, let vcSymbol {
-                            vcSignature = symbols.functionSignature(for: vcSymbol)
-                        }
-                        if vcSignature == nil {
-                            vcSignature = signatureByName[vcCallee]
-                        }
-                        if let vcSignature {
-                            let parameterTypes = vcSignature.parameterTypes
-                            let varargFlags = vcSignature.valueParameterIsVararg
-                            for argIndex in vcArguments.indices {
-                                guard argIndex < parameterTypes.count else {
-                                    continue
-                                }
-                                if argIndex < varargFlags.count && varargFlags[argIndex] {
-                                    continue
-                                }
-                                let paramType = parameterTypes[argIndex]
-                                let argType = intrinsicArgType(vcArguments[argIndex], arena: module.arena, types: types)
-                                guard let argType else {
-                                    continue
-                                }
-                                if let boxCallee = boxingCallee(
-                                    argType: argType,
-                                    paramType: paramType,
-                                    types: types,
-                                    boxIntCallee: boxIntCallee,
-                                    boxBoolCallee: boxBoolCallee,
-                                    boxLongCallee: boxLongCallee,
-                                    boxFloatCallee: boxFloatCallee,
-                                    boxDoubleCallee: boxDoubleCallee,
-                                    boxCharCallee: boxCharCallee,
-                                    symbols: symbols
-                                ) {
-                                    let boxedResult = module.arena.appendExpr(
-                                        .temporary(Int32(module.arena.expressions.count)),
-                                        type: paramType
-                                    )
-                                    newBody.append(.call(
-                                        symbol: nil,
-                                        callee: boxCallee,
-                                        arguments: [vcArguments[argIndex]],
-                                        result: boxedResult,
-                                        canThrow: false,
-                                        thrownResult: nil
-                                    ))
-                                    vcBoxedArguments[argIndex] = boxedResult
-                                }
-                            }
-                        }
+                    var vcSignature: FunctionSignature?
+                    if let symbols, let vcSymbol {
+                        vcSignature = symbols.functionSignature(for: vcSymbol)
                     }
-
-                    var vcUnboxCallee: InternedString?
-                    var vcReturnType: TypeID?
-                    if let types, let vcResult {
-                        var returnType: TypeID?
-                        if let vcSymbol {
-                            returnType = returnTypeForCall(
-                                callSymbol: vcSymbol,
-                                symbols: symbols
-                            )
-                        }
-                        if returnType == nil {
-                            returnType = signatureByName[vcCallee]?.returnType
-                        }
-                        if let returnType {
-                            let returnKind = resolveValueClassKind(types.kind(of: returnType), types: types, symbols: symbols)
-                            let resultType = module.arena.exprType(vcResult)
-                            if let resultType {
-                                let resultKind = resolveValueClassKind(types.kind(of: resultType), types: types, symbols: symbols)
-                                if needsUnboxing(sourceKind: returnKind, targetKind: resultKind, symbols: symbols) {
-                                    vcUnboxCallee = unboxingCallee(
-                                        sourceKind: returnKind,
-                                        targetKind: resultKind,
-                                        unboxIntCallee: unboxIntCallee,
-                                        unboxBoolCallee: unboxBoolCallee,
-                                        unboxLongCallee: unboxLongCallee,
-                                        unboxFloatCallee: unboxFloatCallee,
-                                        unboxDoubleCallee: unboxDoubleCallee,
-                                        unboxCharCallee: unboxCharCallee,
-                                        types: types,
-                                        symbols: symbols
-                                    )
-                                    vcReturnType = returnType
-                                }
-                            }
-                        }
+                    if vcSignature == nil {
+                        vcSignature = signatureByName[vcCallee]
                     }
-
-                    if let vcUnboxCallee, let vcReturnType, let vcResult {
+                    let vcBoxedArguments: [KIRExprID] = if let vcSignature, let types {
+                        applyArgumentBoxing(
+                            arguments: vcArguments,
+                            signature: vcSignature,
+                            receiverOffset: 0,
+                            module: module,
+                            types: types,
+                            symbols: symbols,
+                            boxIntCallee: boxIntCallee,
+                            boxBoolCallee: boxBoolCallee,
+                            boxLongCallee: boxLongCallee,
+                            boxFloatCallee: boxFloatCallee,
+                            boxDoubleCallee: boxDoubleCallee,
+                            boxCharCallee: boxCharCallee,
+                            newBody: &newBody
+                        )
+                    } else {
+                        vcArguments
+                    }
+                    let vcUnbox = resolveUnboxForCall(
+                        callSymbol: vcSymbol,
+                        callee: vcCallee,
+                        result: vcResult,
+                        signatureByName: signatureByName,
+                        module: module,
+                        types: types,
+                        symbols: symbols,
+                        unboxIntCallee: unboxIntCallee,
+                        unboxBoolCallee: unboxBoolCallee,
+                        unboxLongCallee: unboxLongCallee,
+                        unboxFloatCallee: unboxFloatCallee,
+                        unboxDoubleCallee: unboxDoubleCallee,
+                        unboxCharCallee: unboxCharCallee
+                    )
+                    if let (vcUnboxCallee, vcReturnType) = vcUnbox, let vcResult {
                         let tempResult = module.arena.appendExpr(
                             .temporary(Int32(module.arena.expressions.count)),
                             type: vcReturnType
@@ -285,7 +235,8 @@ final class ABILoweringPass: LoweringPass {
                         if vcThrownResult != nil {
                             let nextIdx = idx + 1
                             if nextIdx < function.body.count,
-                               case .jumpIfNotNull = function.body[nextIdx] {
+                               case .jumpIfNotNull = function.body[nextIdx]
+                            {
                                 newBody.append(function.body[nextIdx])
                                 idx += 1
                             }
@@ -315,22 +266,22 @@ final class ABILoweringPass: LoweringPass {
                 }
 
                 // Handle returnValue: box primitive if function returns Any/Any?
-                if case .returnValue(let value) = instruction, let types {
+                if case let .returnValue(value) = instruction, let types {
                     if let functionReturnKind, isAnyOrNullableAny(functionReturnKind) || isNonValueClassReference(functionReturnKind, symbols: symbols) {
                         let valueType = intrinsicArgType(value, arena: module.arena, types: types)
                         if let valueType {
-                                let resolvedValueKind = resolveValueClassKind(
-                                    types.kind(of: valueType), types: types, symbols: symbols
-                                )
-                                if let boxCallee = boxCalleeForPrimitive(
-                                    resolvedValueKind,
-                                    boxIntCallee: boxIntCallee,
-                                    boxBoolCallee: boxBoolCallee,
-                                    boxLongCallee: boxLongCallee,
-                                    boxFloatCallee: boxFloatCallee,
-                                    boxDoubleCallee: boxDoubleCallee,
-                                    boxCharCallee: boxCharCallee
-                                ) {
+                            let resolvedValueKind = resolveValueClassKind(
+                                types.kind(of: valueType), types: types, symbols: symbols
+                            )
+                            if let boxCallee = boxCalleeForPrimitive(
+                                resolvedValueKind,
+                                boxIntCallee: boxIntCallee,
+                                boxBoolCallee: boxBoolCallee,
+                                boxLongCallee: boxLongCallee,
+                                boxFloatCallee: boxFloatCallee,
+                                boxDoubleCallee: boxDoubleCallee,
+                                boxCharCallee: boxCharCallee
+                            ) {
                                 let boxedResult = module.arena.appendExpr(
                                     .temporary(Int32(module.arena.expressions.count)),
                                     type: function.returnType
@@ -355,7 +306,7 @@ final class ABILoweringPass: LoweringPass {
                 }
 
                 // Handle copy: insert boxing/unboxing at type boundaries
-                if case .copy(let from, let to) = instruction, let types {
+                if case let .copy(from, to) = instruction, let types {
                     let fromType = intrinsicArgType(from, arena: module.arena, types: types)
                     let toType = module.arena.exprType(to)
                     if let fromType, let toType {
@@ -418,124 +369,66 @@ final class ABILoweringPass: LoweringPass {
                     continue
                 }
 
-                guard case .call(let callSymbol, let callee, let arguments, let result, _, let thrownResult, let isSuperCall) = instruction else {
+                guard case let .call(callSymbol, callee, arguments, result, _, thrownResult, isSuperCall) = instruction else {
                     newBody.append(instruction)
                     idx += 1
                     continue
                 }
 
-                // Synthetic property accessor symbols (getter: -12_000 - propSym,
-                // setter: -13_000 - propSym) are always non-throwing.
-                // Derive the property symbol from the call symbol and verify it is
-                // a valid non-negative index, bounded above by the -20_000 reified
-                // type parameter range to avoid false positives.
+                // Synthetic property accessor symbols are always non-throwing.
+                // Preserve historical classification via SyntheticSymbolScheme.
                 let isSyntheticAccessor: Bool = {
                     guard let s = callSymbol else { return false }
-                    let raw = s.rawValue
-                    // Accepted range: (-20_000, -12_000].
-                    // Bounded below by the -20_000 reified type parameter range.
-                    guard raw <= -12_000 && raw > -20_000 else { return false }
-                    return true
+                    return SyntheticSymbolScheme.isLikelySyntheticPropertyAccessor(s)
                 }()
                 let canThrow = !isSyntheticAccessor && !nonThrowingCallees.contains(callee)
 
-                var boxedArguments = arguments
-                if let types {
-                    var signature: FunctionSignature?
-                    if let symbols, let callSymbol {
-                        signature = symbols.functionSignature(for: callSymbol)
-                    }
-                    if signature == nil {
-                        signature = signatureByName[callee]
-                    }
-                    if let signature {
-                        let parameterTypes = signature.parameterTypes
-                        let receiverOffset = signature.receiverType != nil ? 1 : 0
-                        let varargFlags = signature.valueParameterIsVararg
-                        for argIndex in arguments.indices {
-                            let paramIndex = argIndex - receiverOffset
-                            guard paramIndex >= 0 && paramIndex < parameterTypes.count else {
-                                continue
-                            }
-                            // Skip boxing for vararg parameters: the argument is
-                            // already a packed array produced by BuildKIRPhase, so
-                            // the element-level paramType does not apply.
-                            if paramIndex < varargFlags.count && varargFlags[paramIndex] {
-                                continue
-                            }
-                            let paramType = parameterTypes[paramIndex]
-                            let argType = intrinsicArgType(arguments[argIndex], arena: module.arena, types: types)
-                            guard let argType else {
-                                continue
-                            }
-                            if let boxCallee = boxingCallee(
-                                argType: argType,
-                                paramType: paramType,
-                                types: types,
-                                boxIntCallee: boxIntCallee,
-                                boxBoolCallee: boxBoolCallee,
-                                boxLongCallee: boxLongCallee,
-                                boxFloatCallee: boxFloatCallee,
-                                boxDoubleCallee: boxDoubleCallee,
-                                boxCharCallee: boxCharCallee,
-                                symbols: symbols
-                            ) {
-                                let boxedResult = module.arena.appendExpr(
-                                    .temporary(Int32(module.arena.expressions.count)),
-                                    type: paramType
-                                )
-                                newBody.append(.call(
-                                    symbol: nil,
-                                    callee: boxCallee,
-                                    arguments: [arguments[argIndex]],
-                                    result: boxedResult,
-                                    canThrow: false,
-                                    thrownResult: nil
-                                ))
-                                boxedArguments[argIndex] = boxedResult
-                            }
-                        }
-                    }
+                var signature: FunctionSignature?
+                if let symbols, let callSymbol {
+                    signature = symbols.functionSignature(for: callSymbol)
+                }
+                if signature == nil {
+                    signature = signatureByName[callee]
+                }
+                let boxedArguments: [KIRExprID]
+                if let signature, let types {
+                    let receiverOffset = signature.receiverType != nil ? 1 : 0
+                    boxedArguments = applyArgumentBoxing(
+                        arguments: arguments,
+                        signature: signature,
+                        receiverOffset: receiverOffset,
+                        module: module,
+                        types: types,
+                        symbols: symbols,
+                        boxIntCallee: boxIntCallee,
+                        boxBoolCallee: boxBoolCallee,
+                        boxLongCallee: boxLongCallee,
+                        boxFloatCallee: boxFloatCallee,
+                        boxDoubleCallee: boxDoubleCallee,
+                        boxCharCallee: boxCharCallee,
+                        newBody: &newBody
+                    )
+                } else {
+                    boxedArguments = arguments
                 }
 
-                var resolvedUnboxCallee: InternedString?
-                var resolvedReturnType: TypeID?
-                if let types, let result {
-                    var returnType: TypeID?
-                    if let callSymbol {
-                        returnType = returnTypeForCall(
-                            callSymbol: callSymbol,
-                            symbols: symbols
-                        )
-                    }
-                    if returnType == nil {
-                        returnType = signatureByName[callee]?.returnType
-                    }
-                    if let returnType {
-                        let returnKind = resolveValueClassKind(types.kind(of: returnType), types: types, symbols: symbols)
-                        let resultType = module.arena.exprType(result)
-                        if let resultType {
-                            let resultKind = resolveValueClassKind(types.kind(of: resultType), types: types, symbols: symbols)
-                            if needsUnboxing(sourceKind: returnKind, targetKind: resultKind, symbols: symbols) {
-                                resolvedUnboxCallee = unboxingCallee(
-                                    sourceKind: returnKind,
-                                    targetKind: resultKind,
-                                    unboxIntCallee: unboxIntCallee,
-                                    unboxBoolCallee: unboxBoolCallee,
-                                    unboxLongCallee: unboxLongCallee,
-                                    unboxFloatCallee: unboxFloatCallee,
-                                    unboxDoubleCallee: unboxDoubleCallee,
-                                    unboxCharCallee: unboxCharCallee,
-                                    types: types,
-                                    symbols: symbols
-                                )
-                                resolvedReturnType = returnType
-                            }
-                        }
-                    }
-                }
+                let resolvedUnbox = resolveUnboxForCall(
+                    callSymbol: callSymbol,
+                    callee: callee,
+                    result: result,
+                    signatureByName: signatureByName,
+                    module: module,
+                    types: types,
+                    symbols: symbols,
+                    unboxIntCallee: unboxIntCallee,
+                    unboxBoolCallee: unboxBoolCallee,
+                    unboxLongCallee: unboxLongCallee,
+                    unboxFloatCallee: unboxFloatCallee,
+                    unboxDoubleCallee: unboxDoubleCallee,
+                    unboxCharCallee: unboxCharCallee
+                )
 
-                if let resolvedUnboxCallee, let resolvedReturnType, let result {
+                if let (resolvedUnboxCallee, resolvedReturnType) = resolvedUnbox, let result {
                     let tempResult = module.arena.appendExpr(
                         .temporary(Int32(module.arena.expressions.count)),
                         type: resolvedReturnType
@@ -552,7 +445,8 @@ final class ABILoweringPass: LoweringPass {
                     if thrownResult != nil {
                         let nextIdx = idx + 1
                         if nextIdx < function.body.count,
-                           case .jumpIfNotNull = function.body[nextIdx] {
+                           case .jumpIfNotNull = function.body[nextIdx]
+                        {
                             newBody.append(function.body[nextIdx])
                             idx += 1
                         }
@@ -585,6 +479,115 @@ final class ABILoweringPass: LoweringPass {
         module.recordLowering(Self.name)
     }
 
+    private func applyArgumentBoxing(
+        arguments: [KIRExprID],
+        signature: FunctionSignature,
+        receiverOffset: Int,
+        module: KIRModule,
+        types: TypeSystem,
+        symbols: SymbolTable?,
+        boxIntCallee: InternedString,
+        boxBoolCallee: InternedString,
+        boxLongCallee: InternedString,
+        boxFloatCallee: InternedString,
+        boxDoubleCallee: InternedString,
+        boxCharCallee: InternedString,
+        newBody: inout [KIRInstruction]
+    ) -> [KIRExprID] {
+        var boxedArguments = arguments
+        let parameterTypes = signature.parameterTypes
+        let varargFlags = signature.valueParameterIsVararg
+        for argIndex in arguments.indices {
+            let paramIndex = argIndex - receiverOffset
+            guard paramIndex >= 0, paramIndex < parameterTypes.count else {
+                continue
+            }
+            if paramIndex < varargFlags.count, varargFlags[paramIndex] {
+                continue
+            }
+            let paramType = parameterTypes[paramIndex]
+            let argType = intrinsicArgType(arguments[argIndex], arena: module.arena, types: types)
+            guard let argType else {
+                continue
+            }
+            if let boxCallee = boxingCallee(
+                argType: argType,
+                paramType: paramType,
+                types: types,
+                boxIntCallee: boxIntCallee,
+                boxBoolCallee: boxBoolCallee,
+                boxLongCallee: boxLongCallee,
+                boxFloatCallee: boxFloatCallee,
+                boxDoubleCallee: boxDoubleCallee,
+                boxCharCallee: boxCharCallee,
+                symbols: symbols
+            ) {
+                let boxedResult = module.arena.appendExpr(
+                    .temporary(Int32(module.arena.expressions.count)),
+                    type: paramType
+                )
+                newBody.append(.call(
+                    symbol: nil,
+                    callee: boxCallee,
+                    arguments: [arguments[argIndex]],
+                    result: boxedResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                boxedArguments[argIndex] = boxedResult
+            }
+        }
+        return boxedArguments
+    }
+
+    private func resolveUnboxForCall(
+        callSymbol: SymbolID?,
+        callee: InternedString,
+        result: KIRExprID?,
+        signatureByName: [InternedString: FunctionSignature],
+        module: KIRModule,
+        types: TypeSystem?,
+        symbols: SymbolTable?,
+        unboxIntCallee: InternedString,
+        unboxBoolCallee: InternedString,
+        unboxLongCallee: InternedString,
+        unboxFloatCallee: InternedString,
+        unboxDoubleCallee: InternedString,
+        unboxCharCallee: InternedString
+    ) -> (InternedString, TypeID)? {
+        guard let types, let result else { return nil }
+        var returnType: TypeID?
+        if let callSymbol {
+            returnType = returnTypeForCall(callSymbol: callSymbol, symbols: symbols)
+        }
+        if returnType == nil {
+            returnType = signatureByName[callee]?.returnType
+        }
+        guard let returnType else { return nil }
+        let returnKind = resolveValueClassKind(types.kind(of: returnType), types: types, symbols: symbols)
+        let resultType = module.arena.exprType(result)
+        guard let resultType else { return nil }
+        let resultKind = resolveValueClassKind(types.kind(of: resultType), types: types, symbols: symbols)
+        guard needsUnboxing(sourceKind: returnKind, targetKind: resultKind, symbols: symbols) else {
+            return nil
+        }
+        guard let unboxCallee = unboxingCallee(
+            sourceKind: returnKind,
+            targetKind: resultKind,
+            unboxIntCallee: unboxIntCallee,
+            unboxBoolCallee: unboxBoolCallee,
+            unboxLongCallee: unboxLongCallee,
+            unboxFloatCallee: unboxFloatCallee,
+            unboxDoubleCallee: unboxDoubleCallee,
+            unboxCharCallee: unboxCharCallee,
+            types: types,
+            symbols: symbols
+        ) else {
+            return nil
+        }
+        return (unboxCallee, returnType)
+    }
+
     /// Resolves a value class type to its underlying primitive type kind.
     /// If the type is a value class with a primitive underlying type, returns
     /// the underlying type's kind. Otherwise returns the original kind.
@@ -594,12 +597,13 @@ final class ABILoweringPass: LoweringPass {
         symbols: SymbolTable?
     ) -> TypeKind {
         guard let symbols else { return kind }
-        if case .classType(let ct) = kind {
+        if case let .classType(ct) = kind {
             // Do not resolve nullable value class types — they are boxed at the ABI level.
             guard ct.nullability == .nonNull else { return kind }
             let sym = symbols.symbol(ct.classSymbol)
             if let sym, sym.flags.contains(.valueType),
-               let underlyingType = symbols.valueClassUnderlyingType(for: ct.classSymbol) {
+               let underlyingType = symbols.valueClassUnderlyingType(for: ct.classSymbol)
+            {
                 return types.kind(of: underlyingType)
             }
         }
@@ -627,13 +631,14 @@ final class ABILoweringPass: LoweringPass {
             if isAnyOrNullableAny(paramKind) {
                 return true
             }
-            if case .classType(let ct) = paramKind {
+            if case let .classType(ct) = paramKind {
                 // If we know this is a non-null value class, do not treat it as a boxing boundary.
                 // Nullable value class types (e.g. Meter?) are boxed at ABI level and ARE boundaries.
                 if let symbols,
                    let sym = symbols.symbol(ct.classSymbol),
                    sym.flags.contains(.valueType),
-                   ct.nullability == .nonNull {
+                   ct.nullability == .nonNull
+                {
                     return false
                 }
                 // Otherwise, any non-value-class reference type is a boxing boundary.
@@ -643,9 +648,10 @@ final class ABILoweringPass: LoweringPass {
         }()
 
         guard isReferenceBoxingBoundary else {
-            if case .primitive(let paramPrimitive, .nullable) = paramKind,
-               case .primitive(let argPrimitive, .nonNull) = argKind,
-               paramPrimitive == argPrimitive {
+            if case let .primitive(paramPrimitive, .nullable) = paramKind,
+               case let .primitive(argPrimitive, .nonNull) = argKind,
+               paramPrimitive == argPrimitive
+            {
                 switch argPrimitive {
                 case .int:
                     return boxIntCallee
@@ -696,11 +702,10 @@ final class ABILoweringPass: LoweringPass {
         types: TypeSystem? = nil,
         symbols: SymbolTable? = nil
     ) -> InternedString? {
-        let resolvedTargetKind: TypeKind
-        if let types, let symbols {
-            resolvedTargetKind = resolveValueClassKind(targetKind, types: types, symbols: symbols)
+        let resolvedTargetKind: TypeKind = if let types, let symbols {
+            resolveValueClassKind(targetKind, types: types, symbols: symbols)
         } else {
-            resolvedTargetKind = targetKind
+            targetKind
         }
         guard needsUnboxing(sourceKind: sourceKind, targetKind: resolvedTargetKind, symbols: symbols) else {
             return nil
@@ -763,11 +768,12 @@ final class ABILoweringPass: LoweringPass {
     /// Value class arguments need boxing when passed to such types.
     /// Nullable value class types (e.g. Meter?) ARE boxing boundaries since they are boxed at ABI level.
     private func isNonValueClassReference(_ kind: TypeKind, symbols: SymbolTable?) -> Bool {
-        if case .classType(let ct) = kind {
+        if case let .classType(ct) = kind {
             if let symbols,
                let sym = symbols.symbol(ct.classSymbol),
                sym.flags.contains(.valueType),
-               ct.nullability == .nonNull {
+               ct.nullability == .nonNull
+            {
                 return false
             }
             return true
@@ -798,9 +804,10 @@ final class ABILoweringPass: LoweringPass {
             }
             return false
         }
-        if case .primitive(let sourcePrimitive, .nullable) = sourceKind,
-           case .primitive(let targetPrimitive, .nonNull) = targetKind,
-           sourcePrimitive == targetPrimitive {
+        if case let .primitive(sourcePrimitive, .nullable) = sourceKind,
+           case let .primitive(targetPrimitive, .nonNull) = targetKind,
+           sourcePrimitive == targetPrimitive
+        {
             return true
         }
         return false
@@ -809,9 +816,10 @@ final class ABILoweringPass: LoweringPass {
     /// Determines whether a copy from sourceKind to targetKind requires boxing.
     /// Boxing is needed when a non-null primitive is copied to a nullable primitive slot.
     private func needsBoxingForCopy(sourceKind: TypeKind, targetKind: TypeKind) -> Bool {
-        if case .primitive(let sourcePrimitive, .nonNull) = sourceKind,
-           case .primitive(let targetPrimitive, .nullable) = targetKind,
-           sourcePrimitive == targetPrimitive {
+        if case let .primitive(sourcePrimitive, .nonNull) = sourceKind,
+           case let .primitive(targetPrimitive, .nullable) = targetKind,
+           sourcePrimitive == targetPrimitive
+        {
             return true
         }
         return false
@@ -830,19 +838,19 @@ final class ABILoweringPass: LoweringPass {
     ) -> InternedString? {
         switch kind {
         case .primitive(.int, .nonNull):
-            return boxIntCallee
+            boxIntCallee
         case .primitive(.long, .nonNull):
-            return boxLongCallee
+            boxLongCallee
         case .primitive(.boolean, .nonNull):
-            return boxBoolCallee
+            boxBoolCallee
         case .primitive(.float, .nonNull):
-            return boxFloatCallee
+            boxFloatCallee
         case .primitive(.double, .nonNull):
-            return boxDoubleCallee
+            boxDoubleCallee
         case .primitive(.char, .nonNull):
-            return boxCharCallee
+            boxCharCallee
         default:
-            return nil
+            nil
         }
     }
 

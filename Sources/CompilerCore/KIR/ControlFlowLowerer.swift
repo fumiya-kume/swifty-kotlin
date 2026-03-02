@@ -14,6 +14,7 @@ final class ControlFlowLowerer {
     func isTerminatedExpr(_ exprID: KIRExprID, arena: KIRArena, sema: SemaModule) -> Bool {
         arena.exprType(exprID) == sema.types.nothingType
     }
+
     func lowerForExpr(
         _ exprID: ExprID,
         iterableExpr: ExprID,
@@ -106,7 +107,7 @@ final class ControlFlowLowerer {
     }
 
     func lowerWhileExpr(
-        _ exprID: ExprID,
+        _: ExprID,
         conditionExpr: ExprID,
         bodyExpr: ExprID,
         label: InternedString? = nil,
@@ -155,7 +156,7 @@ final class ControlFlowLowerer {
     }
 
     func lowerDoWhileExpr(
-        _ exprID: ExprID,
+        _: ExprID,
         bodyExpr: ExprID,
         conditionExpr: ExprID,
         label: InternedString? = nil,
@@ -271,7 +272,7 @@ final class ControlFlowLowerer {
         }
         instructions.append(.label(endLabel))
         // If both branches terminate, propagate Nothing type to the result
-        if thenTerminated && elseTerminated {
+        if thenTerminated, elseTerminated {
             arena.setExprType(sema.types.nothingType, for: result)
         }
         return result
@@ -461,7 +462,7 @@ final class ControlFlowLowerer {
         return tryResult
     }
 
-    private func appendThrowAwareInstructions(
+    func appendThrowAwareInstructions(
         _ loweredInstructions: [KIRInstruction],
         exceptionSlot: KIRExprID,
         exceptionTypeSlot: KIRExprID,
@@ -473,7 +474,7 @@ final class ControlFlowLowerer {
         let intType = sema.types.make(.primitive(.int, .nonNull))
         for instruction in loweredInstructions {
             switch instruction {
-            case .call(let symbol, let callee, let arguments, let result, _, let thrownResult, let isSuperCall)
+            case let .call(symbol, callee, arguments, result, _, thrownResult, isSuperCall)
                 where thrownResult == nil:
                 instructions.append(.call(
                     symbol: symbol,
@@ -488,7 +489,7 @@ final class ControlFlowLowerer {
                 instructions.append(.constValue(result: unknownTypeToken, value: .intLiteral(0)))
                 instructions.append(.copy(from: unknownTypeToken, to: exceptionTypeSlot))
                 instructions.append(.jumpIfNotNull(value: exceptionSlot, target: thrownTarget))
-            case .virtualCall(let symbol, let callee, let receiver, let arguments, let result, _, let thrownResult, let dispatch)
+            case let .virtualCall(symbol, callee, receiver, arguments, result, _, thrownResult, dispatch)
                 where thrownResult == nil:
                 instructions.append(.virtualCall(
                     symbol: symbol,
@@ -504,7 +505,7 @@ final class ControlFlowLowerer {
                 instructions.append(.constValue(result: unknownTypeToken, value: .intLiteral(0)))
                 instructions.append(.copy(from: unknownTypeToken, to: exceptionTypeSlot))
                 instructions.append(.jumpIfNotNull(value: exceptionSlot, target: thrownTarget))
-            case .rethrow(let value):
+            case let .rethrow(value):
                 instructions.append(.copy(from: value, to: exceptionSlot))
                 let tokenValue = Int64((arena.exprType(value) ?? sema.types.anyType).rawValue)
                 let thrownTypeToken = arena.appendExpr(.intLiteral(tokenValue), type: intType)
@@ -589,7 +590,7 @@ final class ControlFlowLowerer {
             // Look up the symbol first so we can use the per-component type
             let candidates = sema.symbols.lookupAll(fqName: [
                 interner.intern("__for_destructuring_\(exprID.rawValue)"),
-                name
+                name,
             ])
             let componentType = candidates.first.flatMap { sema.symbols.propertyType(for: $0) } ?? sema.types.anyType
             let componentResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: componentType)
@@ -785,7 +786,7 @@ final class ControlFlowLowerer {
         }
         instructions.append(.label(endLabel))
         // Propagate Nothing type when all branches (including else) terminate
-        if allBranchesTerminated && elseTerminated {
+        if allBranchesTerminated, elseTerminated {
             arena.setExprType(sema.types.nothingType, for: result)
         }
         return result

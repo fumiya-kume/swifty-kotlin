@@ -1,5 +1,5 @@
-import XCTest
 @testable import Runtime
+import XCTest
 
 private struct FrameMapDescriptorC {
     let rootCount: UInt32

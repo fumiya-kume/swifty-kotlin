@@ -1,8 +1,7 @@
-import XCTest
 @testable import CompilerCore
+import XCTest
 
 final class SymbolTableTests: XCTestCase {
-
     // MARK: - Define & Symbol
 
     func testDefineReturnsUniqueIDs() {
@@ -32,7 +31,7 @@ final class SymbolTableTests: XCTestCase {
         XCTAssertNil(symbols.symbol(SymbolID(rawValue: 999)))
     }
 
-    func testSymbolPreservesFields() {
+    func testSymbolPreservesFields() throws {
         let interner = StringInterner()
         let symbols = SymbolTable()
         let range = makeRange(start: 0, end: 5)
@@ -44,7 +43,7 @@ final class SymbolTableTests: XCTestCase {
             visibility: .private,
             flags: .mutable
         )
-        let sym = symbols.symbol(id)!
+        let sym = try XCTUnwrap(symbols.symbol(id))
         XCTAssertEqual(sym.kind, .property)
         XCTAssertEqual(sym.name, interner.intern("x"))
         XCTAssertEqual(sym.fqName, [interner.intern("pkg"), interner.intern("x")])
@@ -149,7 +148,7 @@ final class SymbolTableTests: XCTestCase {
 
     // MARK: - Function Signatures
 
-    func testSetAndGetFunctionSignature() {
+    func testSetAndGetFunctionSignature() throws {
         let interner = StringInterner()
         let symbols = SymbolTable()
         let types = TypeSystem()
@@ -157,7 +156,7 @@ final class SymbolTableTests: XCTestCase {
         let intType = types.make(.primitive(.int, .nonNull))
         let sig = FunctionSignature(parameterTypes: [intType], returnType: intType)
         symbols.setFunctionSignature(sig, for: id)
-        let retrieved = symbols.functionSignature(for: id)!
+        let retrieved = try XCTUnwrap(symbols.functionSignature(for: id))
         XCTAssertEqual(retrieved.parameterTypes, [intType])
         XCTAssertEqual(retrieved.returnType, intType)
     }

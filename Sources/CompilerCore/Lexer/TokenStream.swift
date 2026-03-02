@@ -36,7 +36,7 @@ public final class TokenStream {
     }
 
     public func atEOF() -> Bool {
-        return peek().kind == .eof
+        peek().kind == .eof
     }
 
     public func consumeIf(_ predicate: (Token) -> Bool) -> Token? {

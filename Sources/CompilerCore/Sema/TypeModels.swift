@@ -1,4 +1,4 @@
-public struct TypeID: Hashable {
+public struct TypeID: Hashable, Sendable {
     public let rawValue: Int32
 
     public static let invalid = TypeID(rawValue: -1)
@@ -8,7 +8,7 @@ public struct TypeID: Hashable {
     }
 }
 
-public enum PrimitiveType: String, Hashable {
+public enum PrimitiveType: String, Hashable, Sendable {
     case boolean
     case char
     case int
@@ -18,12 +18,12 @@ public enum PrimitiveType: String, Hashable {
     case string
 }
 
-public enum Nullability: Hashable {
+public enum Nullability: Hashable, Sendable {
     case nonNull
     case nullable
 }
 
-public struct ClassType: Hashable {
+public struct ClassType: Hashable, Sendable {
     public let classSymbol: SymbolID
     public let args: [TypeArg]
     public let nullability: Nullability
@@ -35,20 +35,20 @@ public struct ClassType: Hashable {
     }
 }
 
-public enum TypeVariance: Hashable {
+public enum TypeVariance: Hashable, Sendable {
     case invariant
     case out
     case `in`
 }
 
-public enum TypeArg: Hashable {
+public enum TypeArg: Hashable, Sendable {
     case invariant(TypeID)
     case out(TypeID)
     case `in`(TypeID)
     case star
 }
 
-public struct TypeParamType: Hashable {
+public struct TypeParamType: Hashable, Sendable {
     public let symbol: SymbolID
     public let nullability: Nullability
 
@@ -58,7 +58,7 @@ public struct TypeParamType: Hashable {
     }
 }
 
-public struct FunctionType: Hashable {
+public struct FunctionType: Hashable, Sendable {
     public let receiver: TypeID?
     public let params: [TypeID]
     public let returnType: TypeID
