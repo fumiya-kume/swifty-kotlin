@@ -413,13 +413,17 @@ extension DataFlowSemaPhase {
                     symbols: symbols,
                     diagnostics: diagnostics
                 )
+                var nestedFlags = flags(from: nestedInterface.modifiers)
+                if nestedInterface.isFunInterface {
+                    nestedFlags.insert(.funInterface)
+                }
                 let nestedSymbol = symbols.define(
                     kind: .interface,
                     name: nestedInterface.name,
                     fqName: nestedFQName,
                     declSite: nestedInterface.range,
                     visibility: visibility(from: nestedInterface.modifiers),
-                    flags: flags(from: nestedInterface.modifiers)
+                    flags: nestedFlags
                 )
                 bindings.bindDecl(declID, symbol: nestedSymbol)
                 symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)
