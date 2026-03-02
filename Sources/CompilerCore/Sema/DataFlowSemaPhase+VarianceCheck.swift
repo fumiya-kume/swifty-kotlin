@@ -142,14 +142,6 @@ extension DataFlowSemaPhase {
         return classDecl.isInner
     }
 
-    private func buildVarianceMap(typeParams: [TypeParamDecl]) -> [InternedString: TypeVariance] {
-        var varianceMap: [InternedString: TypeVariance] = [:]
-        for typeParam in typeParams where typeParam.variance != .invariant {
-            varianceMap[typeParam.name] = typeParam.variance
-        }
-        return varianceMap
-    }
-
     private func validateFunctionVariance(
         _ funDecl: FunDecl,
         varianceMap: [InternedString: TypeVariance],
