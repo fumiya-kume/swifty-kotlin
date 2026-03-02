@@ -44,6 +44,45 @@ extension ExprTypeChecker {
         let charType = sema.types.charType
         let stringType = sema.types.stringType
 
+        if op == .logicalAnd || op == .logicalOr {
+            let lhs = driver.inferExpr(lhsID, ctx: ctx, locals: &locals)
+            driver.emitSubtypeConstraint(
+                left: lhs,
+                right: boolType,
+                range: ast.arena.exprRange(lhsID) ?? range,
+                solver: ConstraintSolver(),
+                sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+            let lhsBranch = ctx.dataFlow.branchOnCondition(
+                lhsID,
+                base: ctx.flowState,
+                locals: locals,
+                ast: ast,
+                sema: sema,
+                interner: interner,
+                scope: ctx.scope
+            )
+            let rhsState = op == .logicalAnd ? lhsBranch.trueState : lhsBranch.falseState
+            var rhsLocals = locals
+            applyFlowStateToLocals(rhsState, locals: &rhsLocals, sema: sema)
+            let rhs = driver.inferExpr(
+                rhsID,
+                ctx: ctx.copying(flowState: rhsState),
+                locals: &rhsLocals
+            )
+            driver.emitSubtypeConstraint(
+                left: rhs,
+                right: boolType,
+                range: ast.arena.exprRange(rhsID) ?? range,
+                solver: ConstraintSolver(),
+                sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+            sema.bindings.bindExprType(id, type: boolType)
+            return boolType
+        }
+
         let lhs = driver.inferExpr(lhsID, ctx: ctx, locals: &locals)
         let rhs = driver.inferExpr(rhsID, ctx: ctx, locals: &locals)
         let lhsIsPrimitive = if case .primitive = sema.types.kind(of: lhs) { true } else { false }

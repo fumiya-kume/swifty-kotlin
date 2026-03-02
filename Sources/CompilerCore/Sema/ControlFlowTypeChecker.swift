@@ -76,7 +76,7 @@ final class ControlFlowTypeChecker {
         // Smart cast: apply condition branching to the while body (P5-66)
         let branch = ctx.dataFlow.branchOnCondition(
             conditionExpr, base: ctx.flowState, locals: locals,
-            ast: ast, sema: sema, interner: interner
+            ast: ast, sema: sema, interner: interner, scope: ctx.scope
         )
         var bodyLocals = locals
         driver.exprChecker.applyFlowStateToLocals(branch.trueState, locals: &bodyLocals, sema: sema)
@@ -161,7 +161,7 @@ final class ControlFlowTypeChecker {
         }
         let branch = ctx.dataFlow.branchOnCondition(
             condition, base: ctx.flowState, locals: locals,
-            ast: ast, sema: sema, interner: interner
+            ast: ast, sema: sema, interner: interner, scope: ctx.scope
         )
         var thenLocals = locals
         driver.exprChecker.applyFlowStateToLocals(branch.trueState, locals: &thenLocals, sema: sema)

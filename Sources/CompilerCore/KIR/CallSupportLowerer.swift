@@ -116,6 +116,7 @@ final class CallSupportLowerer {
 
         let scopeSnapshot = driver.ctx.saveScope()
         driver.ctx.resetScopeForFunction()
+        driver.ctx.currentFunctionSymbol = originalSymbol
 
         var params: [KIRParameter] = []
         if let receiverType = signature.receiverType {

@@ -29,6 +29,8 @@ Cases:
 - `intersection_definitely_non_null.kt`: `T & Any`（definitely non-null）での通常呼び出しと safe-call の parity
 - `star_projection.kt`: use-site star projection（`Box<*>`）の型解決 parity
 - `generic_typealias.kt`: 循環 typealias（`A = B`, `B = A`）の compile-error parity
+- `is_type_check.kt`: `is` / `!is` と `&&` / `||` の smart-cast 伝播 parity
+- `is_type_check_non_reified_error.kt`: non-reified 型パラメータへの `is` チェック compile-error parity
 - `try_expression.kt`: `try` 式 + `finally` 実行順の parity
 
-The set intentionally includes both successful programs and one compile-error case.
+The set intentionally includes both successful programs and compile-error cases.

@@ -44,7 +44,8 @@ extension BuildKIRRegressionTests {
             XCTFail("Expected hidden type token argument to be lowered as int literal.")
             return
         }
-        XCTAssertEqual(tokenLiteral, Int64(intType.rawValue))
+        let sema = try XCTUnwrap(ctx.sema)
+        XCTAssertEqual(tokenLiteral, RuntimeTypeCheckToken.encode(type: intType, sema: sema))
     }
 
     func testVarargMultiplePositionalArgsPackedToArrayInKIR() throws {

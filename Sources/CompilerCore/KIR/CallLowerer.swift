@@ -240,11 +240,12 @@ final class CallLowerer {
             let concreteType = index < callBinding.substitutedTypeArguments.count
                 ? callBinding.substitutedTypeArguments[index]
                 : sema.types.anyType
+            let encodedToken = RuntimeTypeCheckToken.encode(type: concreteType, sema: sema)
             let tokenExpr = arena.appendExpr(
-                .intLiteral(Int64(concreteType.rawValue)),
+                .intLiteral(encodedToken),
                 type: intType
             )
-            instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(concreteType.rawValue))))
+            instructions.append(.constValue(result: tokenExpr, value: .intLiteral(encodedToken)))
             arguments.append(tokenExpr)
         }
     }

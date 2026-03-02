@@ -139,6 +139,22 @@ extension CallLowerer {
             return result
         }
 
+        if args.isEmpty, interner.resolve(calleeName) == "length" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_length"),
+                    arguments: [loweredReceiverID],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
         let isSuperCall = sema.bindings.isSuperCallExpr(exprID)
         let callBinding = sema.bindings.callBindings[exprID]
         let chosen = callBinding?.chosenCallee

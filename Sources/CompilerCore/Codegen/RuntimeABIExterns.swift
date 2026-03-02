@@ -10,7 +10,7 @@ import Foundation
 /// The build-time ABI reconciliation tests (in RuntimeTests) verify that
 /// these declarations match the Runtime module's `RuntimeABISpec`.
 public enum RuntimeABIExterns {
-    public static let specVersion = "J17"
+    public static let specVersion = "J18"
 
     /// A single extern function declaration for the C preamble.
     public struct ExternDecl: Equatable, Sendable {
@@ -92,6 +92,12 @@ public enum RuntimeABIExterns {
     public static let kk_string_compareTo = ExternDecl(
         name: "kk_string_compareTo",
         parameterTypes: ["void * _Nullable", "void * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_length = ExternDecl(
+        name: "kk_string_length",
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -451,6 +457,14 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // MARK: - TypeCheck Operators
+
+    public static let kk_op_is = ExternDecl(
+        name: "kk_op_is",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - Range/Progression (P5-68)
 
     public static let kk_op_rangeTo = ExternDecl(
@@ -588,6 +602,7 @@ public enum RuntimeABIExterns {
         kk_string_from_utf8,
         kk_string_concat,
         kk_string_compareTo,
+        kk_string_length,
         // Println
         kk_println_any,
         // GC
@@ -654,6 +669,8 @@ public enum RuntimeABIExterns {
         kk_array_get,
         kk_array_set,
         kk_vararg_spread_concat,
+        // TypeCheck Operators
+        kk_op_is,
         // Range/Progression
         kk_op_rangeTo,
         kk_op_rangeUntil,

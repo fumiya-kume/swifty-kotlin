@@ -182,11 +182,11 @@ final class ExprTypeChecker {
             return inferBinaryExpr(id, op: op, lhsID: lhsID, rhsID: rhsID, range: range, ctx: ctx, locals: &locals, expectedType: expectedType)
 
         case let .call(calleeID, typeArgRefs, args, range):
-            let explicitTypeArgs = driver.helpers.resolveExplicitTypeArgs(typeArgRefs, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
+            let explicitTypeArgs = driver.helpers.resolveExplicitTypeArgs(typeArgRefs, ast: ast, sema: sema, interner: interner, scope: ctx.scope, diagnostics: ctx.semaCtx.diagnostics)
             return driver.callChecker.inferCallExpr(id, calleeID: calleeID, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType, explicitTypeArgs: explicitTypeArgs)
 
         case let .memberCall(receiverID, calleeName, typeArgRefs, args, range):
-            let explicitTypeArgs = driver.helpers.resolveExplicitTypeArgs(typeArgRefs, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
+            let explicitTypeArgs = driver.helpers.resolveExplicitTypeArgs(typeArgRefs, ast: ast, sema: sema, interner: interner, scope: ctx.scope, diagnostics: ctx.semaCtx.diagnostics)
             return driver.callChecker.inferMemberCallExpr(id, receiverID: receiverID, calleeName: calleeName, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType, explicitTypeArgs: explicitTypeArgs)
 
         case let .unaryExpr(op, operandID, range):
@@ -210,7 +210,24 @@ final class ExprTypeChecker {
         case let .isCheck(exprID, typeRefID, negated, range):
             _ = driver.inferExpr(exprID, ctx: ctx, locals: &locals)
             // Resolve the target type and validate it (P5-101)
-            let targetType = driver.helpers.resolveTypeRef(typeRefID, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
+            let targetType = driver.helpers.resolveTypeRef(
+                typeRefID,
+                ast: ast,
+                sema: sema,
+                interner: interner,
+                scope: ctx.scope,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+            if case let .typeParam(typeParam) = sema.types.kind(of: targetType),
+               let typeParameterSymbol = sema.symbols.symbol(typeParam.symbol),
+               !typeParameterSymbol.flags.contains(.reifiedTypeParameter)
+            {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0084",
+                    "Cannot check for instance of non-reified type parameter '\(interner.resolve(typeParameterSymbol.name))'.",
+                    range: range
+                )
+            }
             // Emit erasure warning for generic type checks with non-star type arguments
             if let typeRef = ast.arena.typeRef(typeRefID),
                case let .named(_, argRefs, _) = typeRef, !argRefs.isEmpty
@@ -234,7 +251,14 @@ final class ExprTypeChecker {
 
         case let .asCast(exprID, typeRefID, isSafe, _):
             _ = driver.inferExpr(exprID, ctx: ctx, locals: &locals)
-            let targetType = driver.helpers.resolveTypeRef(typeRefID, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
+            let targetType = driver.helpers.resolveTypeRef(
+                typeRefID,
+                ast: ast,
+                sema: sema,
+                interner: interner,
+                scope: ctx.scope,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
             let type: TypeID = if isSafe {
                 sema.types.makeNullable(targetType)
             } else {
@@ -274,7 +298,7 @@ final class ExprTypeChecker {
             return type
 
         case let .safeMemberCall(receiverID, calleeName, typeArgRefs, args, range):
-            let explicitTypeArgs = driver.helpers.resolveExplicitTypeArgs(typeArgRefs, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
+            let explicitTypeArgs = driver.helpers.resolveExplicitTypeArgs(typeArgRefs, ast: ast, sema: sema, interner: interner, scope: ctx.scope, diagnostics: ctx.semaCtx.diagnostics)
             return driver.callChecker.inferSafeMemberCallExpr(id, receiverID: receiverID, calleeName: calleeName, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType, explicitTypeArgs: explicitTypeArgs)
 
         case let .compoundAssign(op, name, valueExpr, range):

@@ -23,6 +23,16 @@ public func kk_panic(_ cstr: UnsafePointer<CChar>) -> Never {
 
 let runtimePanicDiagnosticCode = "KSWIFTK-RUNTIME-0001"
 
+private enum RuntimeTypeTokenEncoding {
+    static let baseMask = 0xFF
+    static let nullableBit = 0x100
+    static let anyBase = 1
+    static let stringBase = 2
+    static let intBase = 3
+    static let booleanBase = 4
+    static let nullBase = 5
+}
+
 func runtimePanicMessage(fromCString cstr: UnsafePointer<CChar>) -> String {
     let message = String(cString: cstr)
     return "KSwiftK panic [\(runtimePanicDiagnosticCode)]: \(message)"
@@ -60,6 +70,83 @@ public func kk_string_compareTo(_ a: UnsafeMutableRawPointer?, _ b: UnsafeMutabl
     if lhs < rhs { return -1 }
     if lhs > rhs { return 1 }
     return 0
+}
+
+@_cdecl("kk_string_length")
+public func kk_string_length(_ strRaw: Int) -> Int {
+    if strRaw == runtimeNullSentinelInt {
+        return runtimeNullSentinelInt
+    }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: strRaw) else {
+        return runtimeNullSentinelInt
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObjectPointer, let stringBox = tryCast(ptr, to: RuntimeStringBox.self) else {
+        return runtimeNullSentinelInt
+    }
+    return stringBox.value.count
+}
+
+@_cdecl("kk_op_is")
+public func kk_op_is(_ value: Int, _ typeToken: Int) -> Int {
+    let base = typeToken & RuntimeTypeTokenEncoding.baseMask
+    let isNullableTarget = (typeToken & RuntimeTypeTokenEncoding.nullableBit) != 0
+
+    if value == runtimeNullSentinelInt {
+        if isNullableTarget || base == RuntimeTypeTokenEncoding.nullBase {
+            return 1
+        }
+        return 0
+    }
+
+    switch base {
+    case RuntimeTypeTokenEncoding.anyBase:
+        return 1
+
+    case RuntimeTypeTokenEncoding.stringBase:
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
+            return 0
+        }
+        let isObjectPointer = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        guard isObjectPointer else {
+            return 0
+        }
+        return tryCast(ptr, to: RuntimeStringBox.self) == nil ? 0 : 1
+
+    case RuntimeTypeTokenEncoding.intBase:
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
+            return 1
+        }
+        let isObjectPointer = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        if !isObjectPointer {
+            return 1
+        }
+        return tryCast(ptr, to: RuntimeIntBox.self) == nil ? 0 : 1
+
+    case RuntimeTypeTokenEncoding.booleanBase:
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
+            return (value == 0 || value == 1) ? 1 : 0
+        }
+        let isObjectPointer = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        if !isObjectPointer {
+            return (value == 0 || value == 1) ? 1 : 0
+        }
+        return tryCast(ptr, to: RuntimeBoolBox.self) == nil ? 0 : 1
+
+    case RuntimeTypeTokenEncoding.nullBase:
+        return 0
+
+    default:
+        return 0
+    }
 }
 
 @_cdecl("kk_array_new")

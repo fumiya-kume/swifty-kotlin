@@ -77,14 +77,14 @@
 
 #### ⚙️ Expressions / Operators
 
-- [ ] EXPR-001: `is` / `!is` 型検査と smart cast を完全実装する（spec.md J9/J10）
-  - [ ] Parser/AST に `typeCheckExpr`（`expr is Type` / `expr !is Type`）ノードを追加する
-  - [ ] `is` チェック後の then branch で変数型を narrowed type に smart cast する（既存実装済み 連携）
-  - [ ] `!is` チェック後の else branch でも narrow を適用する
-  - [ ] ジェネリクス型（`x is List<*>`）の reified 制限と erasure 警告を実装する
-  - [ ] `is` check を `&&` / `||` と組み合わせた場合の smart cast 伝播を実装する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task EXPR-001`
-  - **完了条件**: `if (x is String) x.length` が smart cast で動作し、`x !is String` branch で元の型になる
+- [x] EXPR-001: `is` / `!is` 型検査と smart cast を完全実装する（spec.md J9/J10）
+  - [x] Parser/AST に `typeCheckExpr`（`expr is Type` / `expr !is Type`）ノードを追加する
+  - [x] `is` チェック後の then branch で変数型を narrowed type に smart cast する（既存実装済み 連携）
+  - [x] `!is` チェック後の else branch でも narrow を適用する
+  - [x] ジェネリクス型（`x is List<*>`）の reified 制限と erasure 警告を実装する
+  - [x] `is` check を `&&` / `||` と組み合わせた場合の smart cast 伝播を実装する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task EXPR-001`（2026-03-02: golden `Tests/CompilerCoreTests/GoldenCases/Sema/is_type_check.kt` を更新、diff cases `Scripts/diff_cases/is_type_check.kt` と `Scripts/diff_cases/is_type_check_non_reified_error.kt` を追加）
+  - **完了条件**: `if (x is String) x.length` が smart cast で動作し、`x !is String` branch で元の型になる（`Tests/CompilerCoreTests/GoldenCases/Sema/is_type_check.kt` と `Tests/CompilerCoreTests/Sema/DataFlowAndSemaRegressionTests+Part4.swift` で確認）
 
 
 - [ ] EXPR-002: 演算子の優先順位テーブルを Kotlin 仕様完全準拠で実装する（spec.md J5）

@@ -288,6 +288,30 @@ extension DataFlowAndSemaRegressionTests {
         }
     }
 
+    func testIsCheckWithNonReifiedTypeParameterEmitsDiagnostic() throws {
+        let source = """
+        fun <T> f(x: Any): Boolean = x is T
+        fun main(): Int = 0
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertHasDiagnostic("KSWIFTK-SEMA-0084", in: ctx)
+        }
+    }
+
+    func testIsCheckWithReifiedTypeParameterDoesNotEmitNonReifiedDiagnostic() throws {
+        let source = """
+        inline fun <reified T> f(x: Any): Boolean = x is T
+        fun main(): Int = if (f<Int>(1)) 1 else 0
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0084", in: ctx)
+        }
+    }
+
     // MARK: - Const property validation
 
     func testConstValRejectsNullablePrimitiveTypeAnnotation() throws {

@@ -59,7 +59,8 @@ public final class DataFlowAnalyzer {
         locals: [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
         ast: ASTModule,
         sema: SemaModule,
-        interner: StringInterner
+        interner: StringInterner,
+        scope: Scope
     ) -> ConditionBranch {
         guard let conditionExpr = ast.arena.expr(conditionID) else {
             return ConditionBranch(trueState: base, falseState: base)
@@ -69,19 +70,19 @@ public final class DataFlowAnalyzer {
             return branchOnBinary(
                 op: op, lhsID: lhsID, rhsID: rhsID,
                 base: base, locals: locals,
-                ast: ast, sema: sema, interner: interner
+                ast: ast, sema: sema, interner: interner, scope: scope
             )
         case let .unaryExpr(.not, operandID, _):
             let inner = branchOnCondition(
                 operandID, base: base, locals: locals,
-                ast: ast, sema: sema, interner: interner
+                ast: ast, sema: sema, interner: interner, scope: scope
             )
             return ConditionBranch(trueState: inner.falseState, falseState: inner.trueState)
         case let .isCheck(exprID, typeRefID, negated, _):
             let branch = branchOnIsCheck(
                 exprID: exprID, typeRefID: typeRefID,
                 base: base, locals: locals,
-                ast: ast, sema: sema, interner: interner
+                ast: ast, sema: sema, interner: interner, scope: scope
             )
             if negated {
                 return ConditionBranch(trueState: branch.falseState, falseState: branch.trueState)
@@ -100,7 +101,8 @@ public final class DataFlowAnalyzer {
         locals: [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
         ast: ASTModule,
         sema: SemaModule,
-        interner: StringInterner
+        interner: StringInterner,
+        scope: Scope
     ) -> ConditionBranch {
         switch op {
         case .equal, .notEqual:
@@ -119,11 +121,11 @@ public final class DataFlowAnalyzer {
         case .logicalAnd:
             let left = branchOnCondition(
                 lhsID, base: base, locals: locals,
-                ast: ast, sema: sema, interner: interner
+                ast: ast, sema: sema, interner: interner, scope: scope
             )
             let right = branchOnCondition(
                 rhsID, base: left.trueState, locals: locals,
-                ast: ast, sema: sema, interner: interner
+                ast: ast, sema: sema, interner: interner, scope: scope
             )
             let trueState = right.trueState
             let falseState = merge(left.falseState, right.falseState)
@@ -131,11 +133,11 @@ public final class DataFlowAnalyzer {
         case .logicalOr:
             let left = branchOnCondition(
                 lhsID, base: base, locals: locals,
-                ast: ast, sema: sema, interner: interner
+                ast: ast, sema: sema, interner: interner, scope: scope
             )
             let right = branchOnCondition(
                 rhsID, base: left.falseState, locals: locals,
-                ast: ast, sema: sema, interner: interner
+                ast: ast, sema: sema, interner: interner, scope: scope
             )
             let trueState = merge(left.trueState, right.trueState)
             let falseState = right.falseState
@@ -200,63 +202,24 @@ public final class DataFlowAnalyzer {
         locals: [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
         ast: ASTModule,
         sema: SemaModule,
-        interner: StringInterner
+        interner: StringInterner,
+        scope: Scope
     ) -> ConditionBranch {
         guard let (symbol, currentType, isStable) = resolveLocalVariable(
             exprID, locals: locals, ast: ast, sema: sema, interner: interner
         ), isStable else {
             return ConditionBranch(trueState: base, falseState: base)
         }
-        guard let typeRef = ast.arena.typeRef(typeRefID),
-              case let .named(path, argRefs, nullable) = typeRef,
-              let firstName = path.first
-        else {
+        guard let targetType = resolveIsCheckTargetType(
+            typeRefID: typeRefID,
+            scope: scope,
+            ast: ast,
+            sema: sema,
+            interner: interner
+        ) else {
             return ConditionBranch(trueState: base, falseState: base)
         }
-        let targetName = interner.resolve(firstName)
-        // P5-101: Handle primitive types (String, Int, Boolean, etc.) in is-checks
-        let targetType: TypeID
-        if let primitiveType = resolveBuiltinTypeName(targetName, types: sema.types) {
-            if nullable {
-                targetType = sema.types.makeNullable(primitiveType)
-            } else {
-                targetType = primitiveType
-            }
-        } else {
-            let fqCandidates = sema.symbols.lookupAll(fqName: [firstName]).filter { symbolID in
-                guard let sym = sema.symbols.symbol(symbolID) else { return false }
-                switch sym.kind {
-                case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
-                    return true
-                default:
-                    return false
-                }
-            }.sorted(by: { $0.rawValue < $1.rawValue })
-            // Fall back to short-name lookup so that packaged types resolve by simple name (P5-101)
-            let candidates: [SymbolID] = if !fqCandidates.isEmpty {
-                fqCandidates
-            } else {
-                sema.symbols.lookupByShortName(firstName).filter { symbolID in
-                    guard let sym = sema.symbols.symbol(symbolID) else { return false }
-                    switch sym.kind {
-                    case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
-                        return true
-                    default:
-                        return false
-                    }
-                }.sorted(by: { $0.rawValue < $1.rawValue })
-            }
-            guard let targetSymbolID = candidates.first else {
-                return ConditionBranch(trueState: base, falseState: base)
-            }
-            // Resolve type arguments for the narrowed type (P5-101: generics support)
-            let resolvedArgs: [TypeArg] = resolveTypeArgRefs(argRefs, ast: ast, interner: interner, types: sema.types)
-            targetType = sema.types.make(.classType(ClassType(
-                classSymbol: targetSymbolID,
-                args: resolvedArgs,
-                nullability: nullable ? .nullable : .nonNull
-            )))
-        }
+        let targetNullability = sema.types.nullability(of: targetType)
         // Use intersection with previous flow state type for chained is-checks (P5-97)
         let narrowedType: TypeID = if let baseState = base.variables[symbol],
                                       baseState.possibleTypes.count == 1,
@@ -278,7 +241,7 @@ public final class DataFlowAnalyzer {
         var trueVars = base.variables
         trueVars[symbol] = VariableFlowState(
             possibleTypes: [narrowedType],
-            nullability: nullable ? .nullable : .nonNull,
+            nullability: targetNullability,
             isStable: true
         )
         let falseType: TypeID = if let baseState = base.variables[symbol], baseState.possibleTypes.count == 1,
@@ -307,7 +270,8 @@ public final class DataFlowAnalyzer {
         base: DataFlowState,
         ast: ASTModule,
         sema: SemaModule,
-        interner: StringInterner
+        interner: StringInterner,
+        scope: Scope
     ) -> DataFlowState {
         guard let conditionExpr = ast.arena.expr(conditionID) else {
             return base
@@ -391,60 +355,20 @@ public final class DataFlowAnalyzer {
             guard !negated else {
                 return base
             }
-            guard let typeRef = ast.arena.typeRef(typeRefID),
-                  case let .named(path, argRefs, nullable) = typeRef,
-                  let firstName = path.first
-            else {
+            guard let narrowed = resolveIsCheckTargetType(
+                typeRefID: typeRefID,
+                scope: scope,
+                ast: ast,
+                sema: sema,
+                interner: interner
+            ) else {
                 return base
             }
-            // P5-101: Handle primitive types in when-subject is-checks
-            let targetName = interner.resolve(firstName)
-            let narrowed: TypeID
-            if let primitiveType = resolveBuiltinTypeName(targetName, types: sema.types) {
-                if nullable {
-                    narrowed = sema.types.makeNullable(primitiveType)
-                } else {
-                    narrowed = primitiveType
-                }
-            } else {
-                let fqCandidates = sema.symbols.lookupAll(fqName: [firstName]).filter { symbolID in
-                    guard let sym = sema.symbols.symbol(symbolID) else { return false }
-                    switch sym.kind {
-                    case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
-                        return true
-                    default:
-                        return false
-                    }
-                }.sorted(by: { $0.rawValue < $1.rawValue })
-                // Fall back to short-name lookup for packaged types (P5-101)
-                let candidates: [SymbolID] = if !fqCandidates.isEmpty {
-                    fqCandidates
-                } else {
-                    sema.symbols.lookupByShortName(firstName).filter { symbolID in
-                        guard let sym = sema.symbols.symbol(symbolID) else { return false }
-                        switch sym.kind {
-                        case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
-                            return true
-                        default:
-                            return false
-                        }
-                    }.sorted(by: { $0.rawValue < $1.rawValue })
-                }
-                guard let targetSymbolID = candidates.first else {
-                    return base
-                }
-                // Resolve type arguments for consistency with branchOnIsCheck (P5-101)
-                let resolvedArgs: [TypeArg] = resolveTypeArgRefs(argRefs, ast: ast, interner: interner, types: sema.types)
-                narrowed = sema.types.make(.classType(ClassType(
-                    classSymbol: targetSymbolID,
-                    args: resolvedArgs,
-                    nullability: nullable ? .nullable : .nonNull
-                )))
-            }
+            let narrowedNullability = sema.types.nullability(of: narrowed)
             var vars = base.variables
             vars[subjectSymbol] = VariableFlowState(
                 possibleTypes: [narrowed],
-                nullability: nullable ? .nullable : .nonNull,
+                nullability: narrowedNullability,
                 isStable: true
             )
             return DataFlowState(variables: vars)
@@ -763,6 +687,76 @@ public final class DataFlowAnalyzer {
 
     /// Resolve TypeArgRef array into TypeArg array, mapping builtin type names to their TypeIDs.
     /// Shared by branchOnIsCheck and branchOnWhenSubject for consistent generic type arg resolution (P5-101).
+    private func resolveIsCheckTargetType(
+        typeRefID: TypeRefID,
+        scope: Scope,
+        ast: ASTModule,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID? {
+        guard let typeRef = ast.arena.typeRef(typeRefID),
+              case let .named(path, argRefs, nullable) = typeRef,
+              let firstName = path.first
+        else {
+            return nil
+        }
+
+        let nullability: Nullability = nullable ? .nullable : .nonNull
+        if let typeParameterSymbol = resolveTypeParameterSymbol(firstName, scope: scope, sema: sema),
+           let typeParameter = sema.symbols.symbol(typeParameterSymbol),
+           typeParameter.flags.contains(.reifiedTypeParameter)
+        {
+            return sema.types.make(.typeParam(TypeParamType(symbol: typeParameterSymbol, nullability: nullability)))
+        }
+
+        let targetName = interner.resolve(firstName)
+        if let primitiveType = resolveBuiltinTypeName(targetName, types: sema.types) {
+            return nullability == .nullable ? sema.types.makeNullable(primitiveType) : primitiveType
+        }
+
+        let fqCandidates = sema.symbols.lookupAll(fqName: [firstName]).filter { symbolID in
+            guard let sym = sema.symbols.symbol(symbolID) else { return false }
+            switch sym.kind {
+            case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
+                return true
+            default:
+                return false
+            }
+        }.sorted(by: { $0.rawValue < $1.rawValue })
+        let candidates: [SymbolID] = if !fqCandidates.isEmpty {
+            fqCandidates
+        } else {
+            sema.symbols.lookupByShortName(firstName).filter { symbolID in
+                guard let sym = sema.symbols.symbol(symbolID) else { return false }
+                switch sym.kind {
+                case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
+                    return true
+                default:
+                    return false
+                }
+            }.sorted(by: { $0.rawValue < $1.rawValue })
+        }
+        guard let targetSymbolID = candidates.first else {
+            return nil
+        }
+        let resolvedArgs: [TypeArg] = resolveTypeArgRefs(argRefs, ast: ast, interner: interner, types: sema.types)
+        return sema.types.make(.classType(ClassType(
+            classSymbol: targetSymbolID,
+            args: resolvedArgs,
+            nullability: nullability
+        )))
+    }
+
+    private func resolveTypeParameterSymbol(
+        _ name: InternedString,
+        scope: Scope,
+        sema: SemaModule
+    ) -> SymbolID? {
+        scope.lookup(name).first { symbolID in
+            sema.symbols.symbol(symbolID)?.kind == .typeParameter
+        }
+    }
+
     private func resolveTypeArgRefs(
         _ argRefs: [TypeArgRef],
         ast: ASTModule,

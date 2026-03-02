@@ -66,7 +66,7 @@ public struct RuntimeABIFunctionSpec: Equatable, Sendable {
 }
 
 public enum RuntimeABISpec {
-    public static let specVersion = "J17"
+    public static let specVersion = "J18"
 
     public static let memoryFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
@@ -146,6 +146,14 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "a", type: .nullableOpaquePointer),
                 RuntimeABIParameter(name: "b", type: .nullableOpaquePointer),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_length",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "String"
@@ -643,6 +651,18 @@ public enum RuntimeABISpec {
         ),
     ]
 
+    public static let operatorFunctions: [RuntimeABIFunctionSpec] = [
+        RuntimeABIFunctionSpec(
+            name: "kk_op_is",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "typeToken", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+    ]
+
     /// Range/Progression (P5-68)
     public static let rangeFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
@@ -833,6 +853,7 @@ public enum RuntimeABISpec {
             + coroutineFunctions
             + boxingFunctions
             + arrayFunctions
+            + operatorFunctions
             + rangeFunctions
             + delegateFunctions
             + bitwiseFunctions

@@ -86,7 +86,7 @@ extension ControlFlowTypeChecker {
                             subjectType: subjectType,
                             conditionID: cond,
                             base: ctx.flowState,
-                            ast: ast, sema: sema, interner: interner
+                            ast: ast, sema: sema, interner: interner, scope: ctx.scope
                         )
                         branchCtx = ctx.copying(flowState: branchFlowState)
                         if let narrowedType = ctx.dataFlow.resolvedTypeFromFlowState(
@@ -202,7 +202,7 @@ extension ControlFlowTypeChecker {
                     }
                     let condBranch = ctx.dataFlow.branchOnCondition(
                         cond, base: cumulativeFalseState, locals: branchLocals,
-                        ast: ast, sema: sema, interner: interner
+                        ast: ast, sema: sema, interner: interner, scope: ctx.scope
                     )
                     trueStates.append(condBranch.trueState)
                     // Chain false-state: branch is false only when ALL conditions are false

@@ -12,6 +12,7 @@ final class KIRLoweringContext {
     var localValuesBySymbol: [SymbolID: KIRExprID] = [:]
     var currentImplicitReceiverExprID: KIRExprID?
     var currentImplicitReceiverSymbol: SymbolID?
+    var currentFunctionSymbol: SymbolID?
     var loopControlStack: [(continueLabel: Int32, breakLabel: Int32, name: InternedString?)] = []
     var nextLoopLabel: Int32 = 10000
 
@@ -35,6 +36,7 @@ final class KIRLoweringContext {
         let localValuesBySymbol: [SymbolID: KIRExprID]
         let currentImplicitReceiverExprID: KIRExprID?
         let currentImplicitReceiverSymbol: SymbolID?
+        let currentFunctionSymbol: SymbolID?
         let loopControlStack: [(continueLabel: Int32, breakLabel: Int32, name: InternedString?)]
         let nextLoopLabel: Int32
     }
@@ -44,6 +46,7 @@ final class KIRLoweringContext {
             localValuesBySymbol: localValuesBySymbol,
             currentImplicitReceiverExprID: currentImplicitReceiverExprID,
             currentImplicitReceiverSymbol: currentImplicitReceiverSymbol,
+            currentFunctionSymbol: currentFunctionSymbol,
             loopControlStack: loopControlStack,
             nextLoopLabel: nextLoopLabel
         )
@@ -53,6 +56,7 @@ final class KIRLoweringContext {
         localValuesBySymbol = snapshot.localValuesBySymbol
         currentImplicitReceiverExprID = snapshot.currentImplicitReceiverExprID
         currentImplicitReceiverSymbol = snapshot.currentImplicitReceiverSymbol
+        currentFunctionSymbol = snapshot.currentFunctionSymbol
         loopControlStack = snapshot.loopControlStack
         nextLoopLabel = snapshot.nextLoopLabel
     }
@@ -70,6 +74,7 @@ final class KIRLoweringContext {
         localValuesBySymbol.removeAll(keepingCapacity: true)
         currentImplicitReceiverExprID = nil
         currentImplicitReceiverSymbol = nil
+        currentFunctionSymbol = nil
         loopControlStack.removeAll(keepingCapacity: true)
         nextLoopLabel = 10000
     }

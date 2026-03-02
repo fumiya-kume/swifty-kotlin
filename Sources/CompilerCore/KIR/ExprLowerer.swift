@@ -689,7 +689,7 @@ final class ExprLowerer {
                 return result
             }
 
-        case let .isCheck(exprToCheck, _, _, _):
+        case let .isCheck(exprToCheck, typeRefID, negated, _):
             let operandID = lowerExpr(
                 exprToCheck,
                 ast: ast,
@@ -699,16 +699,31 @@ final class ExprLowerer {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? boolType)
+            let typeToken = lowerIsCheckTypeTokenExpr(
+                typeRefID: typeRefID,
+                ast: ast,
+                sema: sema,
+                interner: interner,
+                arena: arena,
+                instructions: &instructions
+            )
+            let isResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? boolType)
             instructions.append(.call(
                 symbol: nil,
                 callee: interner.intern("kk_op_is"),
-                arguments: [operandID],
-                result: result,
+                arguments: [operandID, typeToken],
+                result: isResult,
                 canThrow: false,
                 thrownResult: nil
             ))
-            return result
+            guard negated else {
+                return isResult
+            }
+            let falseValue = arena.appendExpr(.boolLiteral(false), type: boolType)
+            instructions.append(.constValue(result: falseValue, value: .boolLiteral(false)))
+            let negatedResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? boolType)
+            instructions.append(.binary(op: .equal, lhs: isResult, rhs: falseValue, result: negatedResult))
+            return negatedResult
 
         case let .asCast(exprToCast, _, _, _):
             let operandID = lowerExpr(
@@ -1008,5 +1023,76 @@ final class ExprLowerer {
                 instructions: &instructions
             )
         }
+    }
+
+    private func lowerIsCheckTypeTokenExpr(
+        typeRefID: TypeRefID,
+        ast: ASTModule,
+        sema: SemaModule,
+        interner: StringInterner,
+        arena: KIRArena,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+
+        func emitLiteral(_ literal: Int64) -> KIRExprID {
+            let tokenExpr = arena.appendExpr(.intLiteral(literal), type: intType)
+            instructions.append(.constValue(result: tokenExpr, value: .intLiteral(literal)))
+            return tokenExpr
+        }
+
+        guard let typeRef = ast.arena.typeRef(typeRefID) else {
+            return emitLiteral(RuntimeTypeCheckToken.unknownBase)
+        }
+
+        switch typeRef {
+        case let .named(path, _, nullable):
+            guard let first = path.first else {
+                return emitLiteral(RuntimeTypeCheckToken.unknownBase)
+            }
+            if path.count == 1,
+               let tokenSymbol = reifiedTypeTokenSymbol(for: first, sema: sema)
+            {
+                let tokenExpr = arena.appendExpr(.symbolRef(tokenSymbol), type: intType)
+                instructions.append(.constValue(result: tokenExpr, value: .symbolRef(tokenSymbol)))
+                return tokenExpr
+            }
+            let literal = RuntimeTypeCheckToken.encodeBuiltinTypeName(interner.resolve(first), nullable: nullable)
+                ?? RuntimeTypeCheckToken.encode(base: RuntimeTypeCheckToken.unknownBase, nullable: nullable)
+            return emitLiteral(literal)
+
+        case let .functionType(_, _, _, nullable):
+            return emitLiteral(
+                RuntimeTypeCheckToken.encode(
+                    base: RuntimeTypeCheckToken.unknownBase,
+                    nullable: nullable
+                )
+            )
+
+        case .intersection:
+            return emitLiteral(RuntimeTypeCheckToken.unknownBase)
+        }
+    }
+
+    private func reifiedTypeTokenSymbol(
+        for typeName: InternedString,
+        sema: SemaModule
+    ) -> SymbolID? {
+        guard let currentFunctionSymbol = driver.ctx.currentFunctionSymbol,
+              let signature = sema.symbols.functionSignature(for: currentFunctionSymbol)
+        else {
+            return nil
+        }
+        for typeParameterSymbol in signature.typeParameterSymbols {
+            guard let symbol = sema.symbols.symbol(typeParameterSymbol),
+                  symbol.kind == .typeParameter,
+                  symbol.name == typeName,
+                  symbol.flags.contains(.reifiedTypeParameter)
+            else {
+                continue
+            }
+            return SyntheticSymbolScheme.reifiedTypeTokenSymbol(for: typeParameterSymbol)
+        }
+        return nil
     }
 }
