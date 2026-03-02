@@ -260,8 +260,14 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
                 // Prefer the expected type from context (e.g. a type annotation
                 // on the receiving variable) so that `val list: List<String?> =
                 // listOf(...)` propagates the full generic type.
+                // Only use expectedType if it is a generic ClassType (i.e. a
+                // collection type like List<String?>), not a primitive or
+                // unrelated type like Int.
                 let collectionType: TypeID
-                if let expectedType, expectedType != sema.types.errorType {
+                if let expectedType, expectedType != sema.types.errorType,
+                   case let .classType(ct) = sema.types.kind(of: expectedType),
+                   !ct.args.isEmpty
+                {
                     collectionType = expectedType
                 } else if !argTypes.isEmpty {
                     // Infer element type from arguments via LUB so that
