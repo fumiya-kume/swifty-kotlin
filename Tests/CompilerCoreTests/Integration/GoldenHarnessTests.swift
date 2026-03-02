@@ -252,5 +252,4 @@ final class GoldenHarnessTests: XCTestCase {
         }
         return "_"
     }
-
 }
