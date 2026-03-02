@@ -624,7 +624,7 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable,
         diagnostics: DiagnosticEngine,
         interner: StringInterner,
-        memberKindLabel: String
+        memberKindLabel _: String
     ) {
         let parentMember = findInheritedMember(
             named: memberName,
@@ -674,7 +674,7 @@ extension DataFlowSemaPhase {
             let children = symbols.children(ofFQName: currentSym.fqName)
             for childID in children {
                 guard let childSym = symbols.symbol(childID) else { continue }
-                if (childSym.kind == .function || childSym.kind == .property) && childSym.name == memberName {
+                if childSym.kind == .function || childSym.kind == .property, childSym.name == memberName {
                     return InheritedMember(
                         memberID: childID,
                         ownerID: current,
