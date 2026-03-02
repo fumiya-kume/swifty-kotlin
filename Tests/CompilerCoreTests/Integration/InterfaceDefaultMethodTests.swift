@@ -11,7 +11,6 @@ import XCTest
 /// 5. Lowered to KIR without errors
 /// 6. Dispatched correctly through itable when receiver is interface-typed
 final class InterfaceDefaultMethodTests: XCTestCase {
-
     // MARK: - Sema: default methods are not abstract
 
     func testInterfaceDefaultMethodNotMarkedAbstract() throws {
@@ -26,7 +25,8 @@ final class InterfaceDefaultMethodTests: XCTestCase {
         XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }))
 
         // The greet function should NOT have the abstractType flag
-        let greetSymbols = ctx.sema!.symbols.allSymbols().filter {
+        let sema = try XCTUnwrap(ctx.sema)
+        let greetSymbols = sema.symbols.allSymbols().filter {
             $0.kind == .function && ctx.interner.resolve($0.name) == "greet"
         }
         XCTAssertEqual(greetSymbols.count, 1)
@@ -45,7 +45,8 @@ final class InterfaceDefaultMethodTests: XCTestCase {
 
         XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }))
 
-        let greetSymbols = ctx.sema!.symbols.allSymbols().filter {
+        let sema = try XCTUnwrap(ctx.sema)
+        let greetSymbols = sema.symbols.allSymbols().filter {
             $0.kind == .function && ctx.interner.resolve($0.name) == "greet"
         }
         XCTAssertEqual(greetSymbols.count, 1)
