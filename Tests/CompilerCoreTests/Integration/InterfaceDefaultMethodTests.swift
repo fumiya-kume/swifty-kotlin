@@ -1,5 +1,4 @@
 @testable import CompilerCore
-import Foundation
 import XCTest
 
 /// Tests for interface default methods (CLASS-003 / P5-113).
