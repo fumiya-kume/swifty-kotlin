@@ -551,4 +551,5 @@ public final class LLVMBackend {
         }
     }
 }
+
 // swiftlint:enable file_length type_body_length
