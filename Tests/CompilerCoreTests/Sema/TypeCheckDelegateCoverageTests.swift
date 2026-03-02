@@ -59,7 +59,7 @@ final class TypeCheckDelegateCoverageTests: XCTestCase {
 
         let inferred = fixture.driver.localDeclChecker.inferIndexedCompoundAssignExpr(
             targetExpr,
-            op: .plusAssign,
+            assignOp: .plusAssign,
             receiverExpr: receiverExpr,
             indices: [indexExpr],
             valueExpr: valueExpr,
@@ -115,7 +115,7 @@ final class TypeCheckDelegateCoverageTests: XCTestCase {
         )
         let inferredOK = fixture.driver.localDeclChecker.inferIndexedCompoundAssignExpr(
             targetOK,
-            op: .plusAssign,
+            assignOp: .plusAssign,
             receiverExpr: receiverExpr,
             indices: [i0],
             valueExpr: valueExpr,
@@ -136,7 +136,7 @@ final class TypeCheckDelegateCoverageTests: XCTestCase {
         )
         let inferredError = fixture.driver.localDeclChecker.inferIndexedCompoundAssignExpr(
             targetError,
-            op: .plusAssign,
+            assignOp: .plusAssign,
             receiverExpr: receiverExpr,
             indices: [i0, i1],
             valueExpr: valueExpr,

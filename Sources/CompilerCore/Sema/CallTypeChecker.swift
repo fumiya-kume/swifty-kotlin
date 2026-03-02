@@ -265,8 +265,8 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
                 // unrelated type like Int.
                 let collectionType: TypeID
                 if let expectedType, expectedType != sema.types.errorType,
-                   case let .classType(ct) = sema.types.kind(of: expectedType),
-                   !ct.args.isEmpty
+                   case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
+                   !expectedClassType.args.isEmpty
                 {
                     collectionType = expectedType
                 } else if !argTypes.isEmpty {

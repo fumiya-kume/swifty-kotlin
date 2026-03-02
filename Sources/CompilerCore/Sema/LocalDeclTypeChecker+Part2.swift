@@ -6,7 +6,7 @@ import Foundation
 extension LocalDeclTypeChecker {
     func inferIndexedCompoundAssignExpr(
         _ id: ExprID,
-        op: CompoundAssignOp,
+        assignOp: CompoundAssignOp,
         receiverExpr: ExprID,
         indices: [ExprID],
         valueExpr: ExprID,
@@ -43,7 +43,7 @@ extension LocalDeclTypeChecker {
         }
 
         let resultType = compoundOpResultType(
-            op: op, elementType: elementType, valueType: valueType, sema: sema
+            assignOp: assignOp, elementType: elementType, valueType: valueType, sema: sema
         )
         driver.emitSubtypeConstraint(
             left: valueType, right: elementType,
@@ -107,13 +107,13 @@ extension LocalDeclTypeChecker {
 
     /// Compute the result type for a compound binary operation on an indexed element.
     private func compoundOpResultType(
-        op: CompoundAssignOp,
+        assignOp: CompoundAssignOp,
         elementType: TypeID,
         valueType: TypeID,
         sema: SemaModule
     ) -> TypeID {
         let stringType = sema.types.stringType
-        let underlyingOp = driver.helpers.compoundAssignToBinaryOp(op)
+        let underlyingOp = driver.helpers.compoundAssignToBinaryOp(assignOp)
         return switch underlyingOp {
         case .add:
             (elementType == stringType || valueType == stringType) ? stringType : elementType

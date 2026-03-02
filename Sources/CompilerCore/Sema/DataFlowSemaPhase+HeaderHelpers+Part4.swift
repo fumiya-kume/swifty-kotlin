@@ -86,42 +86,23 @@ extension DataFlowSemaPhase {
         )))
         symbols.setPropertyType(delegatesType, for: delegatesSymbol)
 
-        registerDelegatesMemberFunction(
-            named: "observable", on: delegatesSymbol, delegatesType: delegatesType,
-            returnType: rwPropertyType, anyType: anyType,
-            symbols: symbols, interner: interner
-        )
-        registerDelegatesMemberFunction(
-            named: "vetoable", on: delegatesSymbol, delegatesType: delegatesType,
-            returnType: rwPropertyType, anyType: anyType,
-            symbols: symbols, interner: interner
-        )
-    }
-
-    /// Register a single member function on the Delegates object.
-    private func registerDelegatesMemberFunction(
-        named name: String,
-        on delegatesSymbol: SymbolID,
-        delegatesType: TypeID,
-        returnType: TypeID,
-        anyType: TypeID,
-        symbols: SymbolTable,
-        interner: StringInterner
-    ) {
-        let internedName = interner.intern(name)
         guard let ownerSym = symbols.symbol(delegatesSymbol) else { return }
-        let fqName = ownerSym.fqName + [internedName]
-        guard symbols.lookup(fqName: fqName) == nil else { return }
-        let funcSymbol = symbols.define(
-            kind: .function, name: internedName, fqName: fqName,
-            declSite: nil, visibility: .public, flags: [.synthetic]
-        )
-        symbols.setParentSymbol(delegatesSymbol, for: funcSymbol)
-        symbols.setFunctionSignature(
-            FunctionSignature(
-                receiverType: delegatesType, parameterTypes: [anyType], returnType: returnType
-            ),
-            for: funcSymbol
-        )
+
+        for memberName in ["observable", "vetoable"] {
+            let internedName = interner.intern(memberName)
+            let fqName = ownerSym.fqName + [internedName]
+            guard symbols.lookup(fqName: fqName) == nil else { continue }
+            let funcSymbol = symbols.define(
+                kind: .function, name: internedName, fqName: fqName,
+                declSite: nil, visibility: .public, flags: [.synthetic]
+            )
+            symbols.setParentSymbol(delegatesSymbol, for: funcSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: delegatesType, parameterTypes: [anyType], returnType: rwPropertyType
+                ),
+                for: funcSymbol
+            )
+        }
     }
 }
