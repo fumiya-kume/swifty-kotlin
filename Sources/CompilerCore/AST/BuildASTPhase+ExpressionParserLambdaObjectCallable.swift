@@ -42,33 +42,17 @@ extension BuildASTPhase.ExpressionParser {
         let paramTokens = Array(bodyTokens[..<arrowIndex])
         let lambdaBodySlice = bodyTokens[(arrowIndex + 1)...]
 
-        // Check for lambda destructuring: { (a, b) -> body }
-        // In Kotlin, parenthesized params in a lambda mean destructuring of a single parameter.
-        if let destructuringResult = parseLambdaDestructuringLiteral(
-            paramTokens: paramTokens,
-            bodySlice: lambdaBodySlice,
-            openBrace: openBrace,
-            end: end,
-            label: label,
-            start: start
-        ) {
-            return destructuringResult
+        // Detect lambda destructuring: { (a, b) -> body }
+        if let names = extractDestructuringNames(from: paramTokens), names.count >= 2 {
+            let range = SourceRange(start: start ?? openBrace.range.start, end: end)
+            return buildDestructuringLambda(
+                names: names, bodySlice: lambdaBodySlice,
+                fallbackStart: openBrace.range.end, range: range, label: label
+            )
         }
 
         let params = parseLambdaParamNames(from: paramTokens)
-
-        let bodyExpr: ExprID
-        if let parsedBody = BuildASTPhase.ExpressionParser(tokens: lambdaBodySlice, interner: interner, astArena: astArena).parse() {
-            bodyExpr = parsedBody
-        } else {
-            let bodyRange = if let first = lambdaBodySlice.first, let last = lambdaBodySlice.last {
-                SourceRange(start: first.range.start, end: last.range.end)
-            } else {
-                SourceRange(start: openBrace.range.end, end: openBrace.range.end)
-            }
-            bodyExpr = astArena.appendExpr(.blockExpr(statements: [], trailingExpr: nil, range: bodyRange))
-        }
-
+        let bodyExpr = parseLambdaBody(bodySlice: lambdaBodySlice, fallbackStart: openBrace.range.end)
         let range = SourceRange(start: start ?? openBrace.range.start, end: end)
         return astArena.appendExpr(.lambdaLiteral(params: params, body: bodyExpr, label: label, range: range))
     }
@@ -232,46 +216,37 @@ extension BuildASTPhase.ExpressionParser {
         return Array(tokens.dropFirst().dropLast())
     }
 
-    /// Detect and parse lambda destructuring: `{ (a, b) -> body }`
-    /// In Kotlin, a parenthesized parameter list in a lambda means the single parameter
-    /// is destructured via componentN(). This desugars to:
-    ///   `{ __destructured_N -> val (a, b) = __destructured_N; body }`
-    // swiftlint:disable:next function_body_length
-    private func parseLambdaDestructuringLiteral(
-        paramTokens: [Token],
-        bodySlice: ArraySlice<Token>,
-        openBrace: Token,
-        end: SourceLocation,
-        label: InternedString?,
-        start: SourceLocation?
-    ) -> ExprID? {
-        // Must start with `(` and end with `)` to be destructuring
-        guard paramTokens.count >= 3,
-              paramTokens.first?.kind == .symbol(.lParen),
-              paramTokens.last?.kind == .symbol(.rParen)
-        else {
-            return nil
-        }
+    // MARK: - Lambda Destructuring Helpers
 
-        // Verify the parens are balanced and enclosing
+    // Checks whether paramTokens form a `(name, name, ...)` destructuring pattern.
+    // Returns the extracted names (nil for underscore), or nil when not destructuring.
+    private func extractDestructuringNames(from paramTokens: [Token]) -> [InternedString?]? {
+        guard hasBalancedEnclosingParens(paramTokens) else { return nil }
+        let innerTokens = Array(paramTokens.dropFirst().dropLast())
+        let names = parseDestructuringNames(from: innerTokens)
+        return names.count >= 2 ? names : nil
+    }
+
+    private func hasBalancedEnclosingParens(_ tokens: [Token]) -> Bool {
+        guard tokens.count >= 3,
+              tokens.first?.kind == .symbol(.lParen),
+              tokens.last?.kind == .symbol(.rParen)
+        else { return false }
         var depth = 0
-        for (idx, token) in paramTokens.enumerated() {
+        for (idx, token) in tokens.enumerated() {
             switch token.kind {
-            case .symbol(.lParen):
-                depth += 1
+            case .symbol(.lParen): depth += 1
             case .symbol(.rParen):
                 depth -= 1
-                if depth == 0, idx != paramTokens.count - 1 {
-                    // Closing paren is not at the end — not a simple destructuring
-                    return nil
-                }
-            default:
-                break
+                if depth == 0, idx != tokens.count - 1 { return false }
+            default: break
             }
         }
+        return true
+    }
 
-        // Parse the names inside the parens
-        let innerTokens = Array(paramTokens.dropFirst().dropLast())
+    // swiftlint:disable:next cyclomatic_complexity
+    private func parseDestructuringNames(from innerTokens: [Token]) -> [InternedString?] {
         var names: [InternedString?] = []
         var idx = 0
         while idx < innerTokens.count {
@@ -282,80 +257,71 @@ extension BuildASTPhase.ExpressionParser {
                 continue
             case let .identifier(name):
                 let nameStr = interner.resolve(name)
-                if nameStr == "_" {
-                    names.append(nil)
-                } else {
-                    names.append(name)
-                }
+                names.append(nameStr == "_" ? nil : name)
                 idx += 1
             case let .backtickedIdentifier(name):
                 names.append(name)
                 idx += 1
             default:
-                // Skip type annotations (`: Type`) after variable names
-                if token.kind == .symbol(.colon) {
-                    idx += 1
-                    var typeDepth = BuildASTPhase.BracketDepth()
-                    while idx < innerTokens.count {
-                        let t = innerTokens[idx]
-                        if typeDepth.isAtTopLevel, t.kind == .symbol(.comma) {
-                            break
-                        }
-                        typeDepth.track(t.kind)
-                        idx += 1
-                    }
-                    continue
-                }
-                idx += 1
+                idx = skipTypeAnnotationIfPresent(innerTokens, from: idx)
             }
         }
+        return names
+    }
 
-        // Need at least 2 names for destructuring to make sense
-        guard names.count >= 2 else {
-            return nil
+    private func skipTypeAnnotationIfPresent(_ tokens: [Token], from startIdx: Int) -> Int {
+        var idx = startIdx
+        guard idx < tokens.count, tokens[idx].kind == .symbol(.colon) else {
+            return idx + 1
         }
-
-        // Parse the original body expression
-        let parsedBody: ExprID
-        if let body = BuildASTPhase.ExpressionParser(tokens: bodySlice, interner: interner, astArena: astArena).parse() {
-            parsedBody = body
-        } else {
-            let bodyRange = if let first = bodySlice.first, let last = bodySlice.last {
-                SourceRange(start: first.range.start, end: last.range.end)
-            } else {
-                SourceRange(start: openBrace.range.end, end: openBrace.range.end)
-            }
-            parsedBody = astArena.appendExpr(.blockExpr(statements: [], trailingExpr: nil, range: bodyRange))
+        idx += 1
+        var typeDepth = BuildASTPhase.BracketDepth()
+        while idx < tokens.count {
+            let current = tokens[idx]
+            if typeDepth.isAtTopLevel, current.kind == .symbol(.comma) { break }
+            typeDepth.track(current.kind)
+            idx += 1
         }
+        return idx
+    }
 
-        let range = SourceRange(start: start ?? openBrace.range.start, end: end)
-
-        // Create a synthetic parameter name for the single destructured parameter
-        let syntheticParamName = interner.intern("__destructured_0")
-
-        // Create a nameRef for the synthetic parameter to use as the destructuring initializer
-        let nameRefExpr = astArena.appendExpr(.nameRef(syntheticParamName, range))
-
-        // Create a destructuringDecl: val (a, b) = __destructured_0
+    private func buildDestructuringLambda(
+        names: [InternedString?],
+        bodySlice: ArraySlice<Token>,
+        fallbackStart: SourceLocation,
+        range: SourceRange,
+        label: InternedString?
+    ) -> ExprID {
+        let parsedBody = parseLambdaBody(bodySlice: bodySlice, fallbackStart: fallbackStart)
+        let syntheticParam = interner.intern("__destructured_0")
+        let nameRefExpr = astArena.appendExpr(.nameRef(syntheticParam, range))
         let destructuringExpr = astArena.appendExpr(.destructuringDecl(
-            names: names,
-            isMutable: false,
-            initializer: nameRefExpr,
-            range: range
+            names: names, isMutable: false, initializer: nameRefExpr, range: range
         ))
-
-        // Wrap: destructuringDecl + original body in a blockExpr
         let wrappedBody = astArena.appendExpr(.blockExpr(
-            statements: [destructuringExpr],
-            trailingExpr: parsedBody,
-            range: range
+            statements: [destructuringExpr], trailingExpr: parsedBody, range: range
         ))
-
         return astArena.appendExpr(.lambdaLiteral(
-            params: [syntheticParamName],
-            body: wrappedBody,
-            label: label,
-            range: range
+            params: [syntheticParam], body: wrappedBody, label: label, range: range
+        ))
+    }
+
+    private func parseLambdaBody(
+        bodySlice: ArraySlice<Token>,
+        fallbackStart: SourceLocation
+    ) -> ExprID {
+        if let parsed = BuildASTPhase.ExpressionParser(
+            tokens: bodySlice, interner: interner, astArena: astArena
+        ).parse() {
+            return parsed
+        }
+        let bodyRange = if let first = bodySlice.first, let last = bodySlice.last {
+            SourceRange(start: first.range.start, end: last.range.end)
+        } else {
+            SourceRange(start: fallbackStart, end: fallbackStart)
+        }
+        return astArena.appendExpr(.blockExpr(
+            statements: [], trailingExpr: nil, range: bodyRange
         ))
     }
 
