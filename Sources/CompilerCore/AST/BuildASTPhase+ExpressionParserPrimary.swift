@@ -99,6 +99,7 @@ extension BuildASTPhase.ExpressionParser {
         }
     }
 
+    // swiftlint:disable:next cyclomatic_complexity
     private func parsePrimaryIdentifier(_ token: Token) -> ExprID? {
         let name: InternedString
         switch token.kind {
