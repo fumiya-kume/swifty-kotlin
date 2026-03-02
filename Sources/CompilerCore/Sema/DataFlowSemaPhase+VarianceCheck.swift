@@ -49,39 +49,58 @@ extension DataFlowSemaPhase {
 
     // MARK: - Declaration dispatch
 
-    private func validateVarianceForDecl(declID: DeclID, env: VarianceCheckEnv) {
+    private func validateVarianceForDecl(
+        declID: DeclID, env: VarianceCheckEnv,
+        outerVarianceMap: [InternedString: TypeVariance] = [:]
+    ) {
         guard let decl = env.ast.arena.decl(declID) else { return }
         switch decl {
         case let .classDecl(classDecl):
-            validateVarianceForClassDecl(classDecl, env: env)
+            validateVarianceForClassDecl(classDecl, env: env, outerVarianceMap: outerVarianceMap)
         case let .interfaceDecl(interfaceDecl):
-            validateVarianceForInterfaceDecl(interfaceDecl, env: env)
+            validateVarianceForInterfaceDecl(interfaceDecl, env: env, outerVarianceMap: outerVarianceMap)
         default:
             break
         }
     }
 
-    private func validateVarianceForClassDecl(_ classDecl: ClassDecl, env: VarianceCheckEnv) {
-        let varianceMap = buildVarianceMap(typeParams: classDecl.typeParams)
+    private func validateVarianceForClassDecl(
+        _ classDecl: ClassDecl, env: VarianceCheckEnv,
+        outerVarianceMap: [InternedString: TypeVariance] = [:]
+    ) {
+        var varianceMap = outerVarianceMap
+        for typeParam in classDecl.typeParams where typeParam.variance != .invariant {
+            varianceMap[typeParam.name] = typeParam.variance
+        }
         guard !varianceMap.isEmpty else { return }
 
         validateMemberFunctions(classDecl.memberFunctions, varianceMap: varianceMap, env: env)
         validateMemberProperties(classDecl.memberProperties, varianceMap: varianceMap, env: env)
 
         for nestedDeclID in classDecl.nestedClasses {
-            validateVarianceForDecl(declID: nestedDeclID, env: env)
+            let nestedIsInner = nestedClassIsInner(nestedDeclID, env: env)
+            let outerMap = nestedIsInner ? varianceMap : [:]
+            validateVarianceForDecl(declID: nestedDeclID, env: env, outerVarianceMap: outerMap)
         }
     }
 
-    private func validateVarianceForInterfaceDecl(_ iface: InterfaceDecl, env: VarianceCheckEnv) {
-        let varianceMap = buildVarianceMap(typeParams: iface.typeParams)
+    private func validateVarianceForInterfaceDecl(
+        _ iface: InterfaceDecl, env: VarianceCheckEnv,
+        outerVarianceMap: [InternedString: TypeVariance] = [:]
+    ) {
+        var varianceMap = outerVarianceMap
+        for typeParam in iface.typeParams where typeParam.variance != .invariant {
+            varianceMap[typeParam.name] = typeParam.variance
+        }
         guard !varianceMap.isEmpty else { return }
 
         validateMemberFunctions(iface.memberFunctions, varianceMap: varianceMap, env: env)
         validateMemberProperties(iface.memberProperties, varianceMap: varianceMap, env: env)
 
         for nestedDeclID in iface.nestedClasses {
-            validateVarianceForDecl(declID: nestedDeclID, env: env)
+            let nestedIsInner = nestedClassIsInner(nestedDeclID, env: env)
+            let outerMap = nestedIsInner ? varianceMap : [:]
+            validateVarianceForDecl(declID: nestedDeclID, env: env, outerVarianceMap: outerMap)
         }
     }
 
@@ -116,6 +135,12 @@ extension DataFlowSemaPhase {
     }
 
     // MARK: - Helpers
+
+    private func nestedClassIsInner(_ declID: DeclID, env: VarianceCheckEnv) -> Bool {
+        guard let decl = env.ast.arena.decl(declID),
+              case let .classDecl(classDecl) = decl else { return false }
+        return classDecl.isInner
+    }
 
     private func buildVarianceMap(typeParams: [TypeParamDecl]) -> [InternedString: TypeVariance] {
         var varianceMap: [InternedString: TypeVariance] = [:]
@@ -191,7 +216,7 @@ extension DataFlowSemaPhase {
         env: VarianceCheckEnv,
         memberRange: SourceRange
     ) {
-        if let name = path.last, let declaredVariance = varianceMap[name] {
+        if path.count == 1, let name = path.first, let declaredVariance = varianceMap[name] {
             emitVarianceViolation(paramName: env.interner.resolve(name),
                                   declaredVariance: declaredVariance,
                                   position: position, diagnostics: env.diagnostics, range: memberRange)
