@@ -233,5 +233,4 @@ final class CompanionObjectTests: XCTestCase {
 
         XCTAssertFalse(ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }))
     }
-
 }
