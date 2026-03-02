@@ -118,10 +118,6 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_custom_delegate_create"),
             ctx.interner.intern("kk_custom_delegate_get_value"),
             ctx.interner.intern("kk_custom_delegate_set_value"),
-            // KProperty stub (PROP-007)
-            ctx.interner.intern("kk_kproperty_stub_create"),
-            ctx.interner.intern("kk_kproperty_stub_name"),
-            ctx.interner.intern("kk_kproperty_stub_return_type"),
             ctx.interner.intern("kk_list_of"),
             ctx.interner.intern("kk_list_size"),
             ctx.interner.intern("kk_list_get"),
@@ -151,7 +147,7 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_op_shr"),
             ctx.interner.intern("kk_op_ushr"),
             ctx.interner.intern("kk_int_toString_radix"),
-        ]
+        ].union(Self.kPropertyStubCallees(ctx.interner))
 
         let boxIntCallee = ctx.interner.intern("kk_box_int")
         let boxBoolCallee = ctx.interner.intern("kk_box_bool")

@@ -126,32 +126,10 @@ extension KIRLoweringDriver {
                                 thisRefExprID = arena.appendExpr(.null, type: sema.types.nullableAnyType)
                                 body.append(.constValue(result: thisRefExprID, value: .null))
                             }
-                            // Build a KProperty<*> stub via kk_kproperty_stub_create(name, returnType).
-                            let propType = sema.symbols.propertyType(for: propSymbol) ?? sema.types.anyType
-                            let propertyNameExprID = arena.appendExpr(
-                                .stringLiteral(propertyName),
-                                type: sema.types.make(.primitive(.string, .nonNull))
-                            )
-                            body.append(.constValue(result: propertyNameExprID, value: .stringLiteral(propertyName)))
-                            let returnTypeSig = compilationCtx.interner.intern(sema.types.renderType(propType))
-                            let returnTypeExprID = arena.appendExpr(
-                                .stringLiteral(returnTypeSig),
-                                type: sema.types.make(.primitive(.string, .nonNull))
-                            )
-                            body.append(.constValue(result: returnTypeExprID, value: .stringLiteral(returnTypeSig)))
-                            let kPropertyExprID = arena.appendExpr(
-                                .temporary(Int32(arena.expressions.count)),
-                                type: sema.types.anyType
-                            )
-                            body.append(
-                                .call(
-                                    symbol: nil,
-                                    callee: compilationCtx.interner.intern("kk_kproperty_stub_create"),
-                                    arguments: [propertyNameExprID, returnTypeExprID],
-                                    result: kPropertyExprID,
-                                    canThrow: false,
-                                    thrownResult: nil
-                                )
+                            let kPropertyExprID = emitKPropertyStubCreate(
+                                propertyName: propertyName,
+                                propertyType: sema.symbols.propertyType(for: propSymbol) ?? sema.types.anyType,
+                                shared: shared, emit: &body
                             )
                             let provideDelegateResult = arena.appendExpr(
                                 .temporary(Int32(arena.expressions.count)),
