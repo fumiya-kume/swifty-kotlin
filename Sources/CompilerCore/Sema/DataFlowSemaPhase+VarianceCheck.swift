@@ -69,8 +69,12 @@ extension DataFlowSemaPhase {
         outerVarianceMap: [InternedString: TypeVariance] = [:]
     ) {
         var varianceMap = outerVarianceMap
-        for typeParam in classDecl.typeParams where typeParam.variance != .invariant {
-            varianceMap[typeParam.name] = typeParam.variance
+        for typeParam in classDecl.typeParams {
+            if typeParam.variance != .invariant {
+                varianceMap[typeParam.name] = typeParam.variance
+            } else {
+                varianceMap.removeValue(forKey: typeParam.name)
+            }
         }
         guard !varianceMap.isEmpty else { return }
 
@@ -89,8 +93,12 @@ extension DataFlowSemaPhase {
         outerVarianceMap: [InternedString: TypeVariance] = [:]
     ) {
         var varianceMap = outerVarianceMap
-        for typeParam in iface.typeParams where typeParam.variance != .invariant {
-            varianceMap[typeParam.name] = typeParam.variance
+        for typeParam in iface.typeParams {
+            if typeParam.variance != .invariant {
+                varianceMap[typeParam.name] = typeParam.variance
+            } else {
+                varianceMap.removeValue(forKey: typeParam.name)
+            }
         }
         guard !varianceMap.isEmpty else { return }
 
