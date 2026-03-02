@@ -15,7 +15,7 @@ symbol s13 kind=function fq=golden.sema.Shape.area vis=public flags=abstractType
 symbol s14 kind=class fq=golden.sema.Circle vis=public flags=_
 symbol s15 kind=constructor fq=golden.sema.Circle.<init> vis=public flags=_ sig=recv=Class#14 params=[Double] ret=Class#14 suspend=0 defaults=[0] vararg=[0]
 symbol s16 kind=valueParameter fq=golden.sema.Circle.<init>.$15.radius vis=private flags=_
-symbol s17 kind=function fq=golden.sema.Circle.area vis=public flags=_ sig=recv=Class#14 params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s17 kind=function fq=golden.sema.Circle.area vis=public flags=overrideMember sig=recv=Class#14 params=[] ret=Double suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
   decl d1 class Shape sym=s11
   decl d3 class Circle sym=s14

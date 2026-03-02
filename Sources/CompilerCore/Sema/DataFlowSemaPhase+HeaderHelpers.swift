@@ -71,6 +71,12 @@ extension DataFlowSemaPhase {
         if modifiers.contains(.abstract) {
             value.insert(.abstractType)
         }
+        if modifiers.contains(.open) {
+            value.insert(.openType)
+        }
+        if modifiers.contains(.override) {
+            value.insert(.overrideMember)
+        }
         return value
     }
 

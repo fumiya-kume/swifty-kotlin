@@ -448,6 +448,8 @@ final class GoldenHarnessTests: XCTestCase {
         if flags.contains(.operatorFunction) { names.append("operatorFunction") }
         if flags.contains(.constValue) { names.append("constValue") }
         if flags.contains(.abstractType) { names.append("abstractType") }
+        if flags.contains(.openType) { names.append("openType") }
+        if flags.contains(.overrideMember) { names.append("overrideMember") }
         return names.joined(separator: "|")
     }
 

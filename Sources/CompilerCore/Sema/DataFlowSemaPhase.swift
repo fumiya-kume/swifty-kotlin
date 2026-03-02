@@ -83,6 +83,13 @@ public final class DataFlowSemaPhase: CompilerPhase {
             diagnostics: ctx.diagnostics,
             interner: ctx.interner
         )
+        validateOpenFinalOverride(
+            ast: ast,
+            symbols: symbols,
+            bindings: bindings,
+            diagnostics: ctx.diagnostics,
+            interner: ctx.interner
+        )
         validateConstructorDelegation(
             ast: ast,
             symbols: symbols,
