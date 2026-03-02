@@ -781,7 +781,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_lazy_is_initialized",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr)
+                RuntimeABIParameter(name: "handle", type: .intptr),
             ],
             returnType: .intptr,
             section: "Delegate"

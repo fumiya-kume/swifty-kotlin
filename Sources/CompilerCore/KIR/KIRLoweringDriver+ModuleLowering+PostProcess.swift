@@ -122,7 +122,8 @@ extension KIRLoweringDriver {
 
         for instruction in body {
             if case let .loadGlobal(res, sym) = instruction,
-               let storageSym = storageMap[sym] {
+               let storageSym = storageMap[sym]
+            {
                 emitGetValue(
                     result: res, storageSym: storageSym, propSym: sym,
                     kindMap: kindMap, names: names,
@@ -133,7 +134,8 @@ extension KIRLoweringDriver {
 
             if case let .constValue(res, value) = instruction,
                case let .symbolRef(sym) = value,
-               let storageSym = storageMap[sym] {
+               let storageSym = storageMap[sym]
+            {
                 if copyTargetExprs.contains(res) {
                     targets[res] = sym
                     result.append(instruction)
@@ -149,7 +151,8 @@ extension KIRLoweringDriver {
 
             if case let .copy(fromExpr, toExpr) = instruction,
                let propSym = targets.removeValue(forKey: toExpr),
-               let storageSym = storageMap[propSym] {
+               let storageSym = storageMap[propSym]
+            {
                 if kindMap[propSym] == .lazy {
                     result.append(instruction)
                     continue
@@ -338,7 +341,8 @@ extension KIRLoweringDriver {
         let sema = shared.sema
         let arena = shared.arena
         guard let exprID = delegateExpr,
-              let expr = ast.arena.expr(exprID) else {
+              let expr = ast.arena.expr(exprID)
+        else {
             let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.anyType)
             instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             return zeroExpr

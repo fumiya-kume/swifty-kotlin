@@ -373,5 +373,4 @@ final class DelegatePropertyKIRTests: XCTestCase {
                           "Explicit type annotation should still use lazy get_value")
         }
     }
-
 }
