@@ -157,7 +157,16 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         ),
-        // Array size
+        // Array
+        RuntimeABIFunctionSpec(
+            name: "kk_array_of",
+            parameters: [
+                RuntimeABIParameter(name: "elements", type: .intptr),
+                RuntimeABIParameter(name: "count", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_array_size",
             parameters: [
