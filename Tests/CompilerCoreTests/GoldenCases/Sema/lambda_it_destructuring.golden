@@ -11,6 +11,7 @@ symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public fla
 symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
 symbol s11 kind=function fq=golden.sema.useIt vis=public flags=_ sig=recv=_ params=[] ret=<error> suspend=0 defaults=[] vararg=[]
 symbol s12 kind=function fq=golden.sema.useDestructuring vis=public flags=_ sig=recv=_ params=[] ret=<error> suspend=0 defaults=[] vararg=[]
+symbol s13 kind=local fq=__destructuring_20.num vis=private flags=_ type=Any
 file f0 package=golden.sema
   decl d0 fun useIt suspend=0 inline=0 sym=s11
   decl d1 fun useDestructuring suspend=0 inline=0 sym=s12
@@ -19,13 +20,22 @@ expr e1 int(1) type=Int
 expr e2 int(2) type=Int
 expr e3 int(3) type=Int
 expr e4 call callee=e0 args=[_:e1,_:e2,_:e3] type=Any
-expr e5 memberCall recv=e4 callee=map args=[] type=Any
-expr e6 name(listOf) type=_
-expr e7 int(1) type=Int
-expr e8 string(a) type=String
-expr e9 memberCall recv=e7 callee=to args=[_:e8] type=<error>
-expr e10 int(2) type=Int
-expr e11 string(b) type=String
-expr e12 memberCall recv=e10 callee=to args=[_:e11] type=<error>
-expr e13 call callee=e6 args=[_:e9,_:e12] type=Any
-expr e14 memberCall recv=e13 callee=map args=[] type=Any
+expr e5 name(it) type=Any ref=s-1002048
+expr e6 int(2) type=Int
+expr e7 binary(multiply) lhs=e5 rhs=e6 type=Int
+expr e8 lambda params=[] body=e7 type=(Any) -> Any
+expr e9 memberCall recv=e4 callee=map args=[_:e8] type=Any
+expr e10 name(listOf) type=_
+expr e11 int(1) type=Int
+expr e12 string(a) type=String
+expr e13 memberCall recv=e11 callee=to args=[_:e12] type=<error>
+expr e14 int(2) type=Int
+expr e15 string(b) type=String
+expr e16 memberCall recv=e14 callee=to args=[_:e15] type=<error>
+expr e17 call callee=e10 args=[_:e13,_:e16] type=Any
+expr e18 name(num) type=Any ref=s13
+expr e19 name(__destructured_0) type=Any ref=s-1005632
+expr e20 destructuringDecl names=[num,_] mutable=0 init=e19 type=Unit
+expr e21 blockExpr stmts=[e20] trailing=e18 type=Any
+expr e22 lambda params=[__destructured_0] body=e21 type=(Any) -> Any
+expr e23 memberCall recv=e17 callee=map args=[_:e22] type=Any

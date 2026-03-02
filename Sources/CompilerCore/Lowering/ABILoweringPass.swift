@@ -127,14 +127,9 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_list_iterator_hasNext"),
             ctx.interner.intern("kk_list_iterator_next"),
             ctx.interner.intern("kk_list_to_string"),
-            // Higher-order collection functions (FUNC-003)
-            ctx.interner.intern("kk_list_map"),
-            ctx.interner.intern("kk_list_filter"),
-            ctx.interner.intern("kk_list_forEach"),
-            ctx.interner.intern("kk_list_flatMap"),
-            ctx.interner.intern("kk_list_any"),
-            ctx.interner.intern("kk_list_none"),
-            ctx.interner.intern("kk_list_all"),
+            // NOTE: kk_list_map/filter/forEach/flatMap/any/none/all are NOT
+            // non-throwing — the lambda argument can throw, so they need an
+            // outThrown slot allocated by the ABI lowering pass.
             ctx.interner.intern("kk_map_of"),
             ctx.interner.intern("kk_map_size"),
             ctx.interner.intern("kk_map_get"),

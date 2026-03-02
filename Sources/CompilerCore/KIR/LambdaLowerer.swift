@@ -47,7 +47,7 @@ final class LambdaLowerer {
             params.count
         }
 
-        let lambdaParameterTypes: [TypeID] = (0..<effectiveParamCount).map { index in
+        let lambdaParameterTypes: [TypeID] = (0 ..< effectiveParamCount).map { index in
             if let functionType, index < functionType.params.count {
                 return functionType.params[index]
             }
@@ -89,7 +89,7 @@ final class LambdaLowerer {
             ))
         }
 
-        let lambdaParameters: [KIRParameter] = (0..<effectiveParamCount).map { index in
+        let lambdaParameters: [KIRParameter] = (0 ..< effectiveParamCount).map { index in
             KIRParameter(
                 symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: index),
                 type: lambdaParameterTypes[index]

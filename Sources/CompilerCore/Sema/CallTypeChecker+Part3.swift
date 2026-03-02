@@ -22,7 +22,19 @@ extension CallTypeChecker {
         let interner = ctx.interner
 
         let receiverType = driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
-        let argTypes = args.map { driver.inferExpr($0.expr, ctx: ctx, locals: &locals) }
+        // Defer inference of lambda arguments for collection HOFs so that the
+        // contextual function type (and thus implicit `it`) is available.
+        let collectionHOFNames: Set<String> = ["map", "filter", "forEach", "flatMap", "any", "none", "all"]
+        let isCollectionHOF = collectionHOFNames.contains(interner.resolve(calleeName))
+        let argTypes = args.map { arg -> TypeID in
+            if isCollectionHOF,
+               let argExpr = ast.arena.expr(arg.expr),
+               case .lambdaLiteral = argExpr
+            {
+                return sema.types.anyType // placeholder; re-inferred later with expected type
+            }
+            return driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
+        }
         let lookupReceiverType = safeCall ? sema.types.makeNonNullable(receiverType) : receiverType
 
         // Primitive member function: Int/Long.inv() → same type (P5-103)

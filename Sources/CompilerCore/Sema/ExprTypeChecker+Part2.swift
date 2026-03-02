@@ -264,14 +264,13 @@ extension ExprTypeChecker {
         // Implicit `it` parameter: when a no-arrow lambda has zero explicit params
         // and the expected function type has exactly one parameter, synthesise an
         // `it` binding so the body can reference it.
-        let effectiveParams: [InternedString]
-        if params.isEmpty,
-           let expectedFunctionType,
-           expectedFunctionType.params.count == 1
+        let effectiveParams: [InternedString] = if params.isEmpty,
+            let expectedFunctionType,
+            expectedFunctionType.params.count == 1
         {
-            effectiveParams = [ctx.interner.intern("it")]
+            [ctx.interner.intern("it")]
         } else {
-            effectiveParams = params
+            params
         }
 
         let parameterTypes: [TypeID] = if let expectedFunctionType,

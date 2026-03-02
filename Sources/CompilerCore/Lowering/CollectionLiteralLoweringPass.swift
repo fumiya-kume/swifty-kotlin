@@ -89,6 +89,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
         let allName = interner.intern("all")
 
         // println support
+        let printlnName = interner.intern("println")
         let kkPrintlnAnyName = interner.intern("kk_println_any")
         let kkAnyToStringName = interner.intern("kk_any_to_string")
 
@@ -591,8 +592,8 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                         }
                     }
 
-                    // --- Rewrite kk_println_any / kk_any_to_string on list/map → kk_list_to_string / kk_map_to_string ---
-                    if callee == kkPrintlnAnyName, arguments.count == 1 {
+                    // --- Rewrite println / kk_println_any / kk_any_to_string on list/map → kk_list_to_string / kk_map_to_string ---
+                    if (callee == kkPrintlnAnyName || callee == printlnName), arguments.count == 1 {
                         let argID = arguments[0]
                         if listExprIDs.contains(argID.rawValue) {
                             let strResult = module.arena.appendExpr(

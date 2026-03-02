@@ -108,6 +108,13 @@ extension BuildASTPhase.ExpressionParser {
                 let close = consumeIf(.symbol(.rParen))
                 memberEndRange = close?.range ?? open.range
             }
+            // Trailing lambda: attach `{ ... }` as the last argument (Kotlin grammar).
+            if matches(.symbol(.lBrace)),
+               let trailingLambda = parseLambdaLiteral()
+            {
+                args.append(CallArgument(expr: trailingLambda))
+                memberEndRange = astArena.exprRange(trailingLambda) ?? memberEndRange
+            }
             let range = mergeRanges(astArena.exprRange(expr), memberEndRange, fallback: dotToken.range)
             if isSafeDot {
                 expr = astArena.appendExpr(.safeMemberCall(
