@@ -239,45 +239,4 @@ extension DeclTypeChecker {
         }
     }
 
-    func buildClassMemberScope(
-        ownerSymbol: SymbolID,
-        ownerType: TypeID,
-        memberFunctions: [DeclID],
-        memberProperties: [DeclID],
-        nestedClasses: [DeclID],
-        nestedObjects: [DeclID],
-        ctx: TypeInferenceContext
-    ) -> ClassMemberScope {
-        let sema = ctx.sema
-        let classScope = ClassMemberScope(
-            parent: ctx.scope,
-            symbols: sema.symbols,
-            ownerSymbol: ownerSymbol,
-            thisType: ownerType
-        )
-
-        for declID in memberFunctions + memberProperties + nestedClasses + nestedObjects {
-            if let symbol = sema.bindings.declSymbols[declID] {
-                classScope.insert(symbol)
-            }
-        }
-
-        // Make companion properties available as unqualified names inside the
-        // owning class/interface scope (e.g. `MAX_COUNT` instead of
-        // `Companion.MAX_COUNT`).
-        if let companionSymbol = sema.symbols.companionObjectSymbol(for: ownerSymbol),
-           let companion = sema.symbols.symbol(companionSymbol)
-        {
-            for memberSymbol in sema.symbols.children(ofFQName: companion.fqName) {
-                guard let member = sema.symbols.symbol(memberSymbol),
-                      member.kind == .property || member.kind == .field
-                else {
-                    continue
-                }
-                classScope.insert(memberSymbol)
-            }
-        }
-
-        return classScope
-    }
 }
