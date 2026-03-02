@@ -98,22 +98,21 @@ extension CallLowerer {
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             if nonNullReceiverType == intType || nonNullReceiverType == longType {
                 let rhsType = sema.types.makeNonNullable(sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType)
-                let primitiveCallee: InternedString?
-                switch interner.resolve(effectiveCalleeName) {
+                let primitiveCallee = switch interner.resolve(effectiveCalleeName) {
                 case "and":
-                    primitiveCallee = (rhsType == intType || rhsType == longType) ? interner.intern("kk_bitwise_and") : nil
+                    (rhsType == intType || rhsType == longType) ? interner.intern("kk_bitwise_and") : nil
                 case "or":
-                    primitiveCallee = (rhsType == intType || rhsType == longType) ? interner.intern("kk_bitwise_or") : nil
+                    (rhsType == intType || rhsType == longType) ? interner.intern("kk_bitwise_or") : nil
                 case "xor":
-                    primitiveCallee = (rhsType == intType || rhsType == longType) ? interner.intern("kk_bitwise_xor") : nil
+                    (rhsType == intType || rhsType == longType) ? interner.intern("kk_bitwise_xor") : nil
                 case "shl":
-                    primitiveCallee = rhsType == intType ? interner.intern("kk_op_shl") : nil
+                    rhsType == intType ? interner.intern("kk_op_shl") : nil
                 case "shr":
-                    primitiveCallee = rhsType == intType ? interner.intern("kk_op_shr") : nil
+                    rhsType == intType ? interner.intern("kk_op_shr") : nil
                 case "ushr":
-                    primitiveCallee = rhsType == intType ? interner.intern("kk_op_ushr") : nil
+                    rhsType == intType ? interner.intern("kk_op_ushr") : nil
                 default:
-                    primitiveCallee = nil
+                    nil
                 }
                 if let primitiveCallee {
                     instructions.append(.call(
