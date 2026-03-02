@@ -51,10 +51,10 @@ extension ControlFlowTypeChecker {
             var hasFalseCase = false
             var allBranchLocals: [LocalBindings] = []
             let subjectNominalSymbol = driver.helpers.nominalSymbol(of: subjectType, types: sema.types)
-            /// Tracks all condition "keys" seen across the entire when expression
-            /// for cross-branch duplicate detection.  A key is a string that
-            /// uniquely identifies a condition value (e.g. "int:42", "bool:true",
-            /// "name:Red", "null", "is:TypeName").
+            // Tracks all condition "keys" seen across the entire when expression
+            // for cross-branch duplicate detection.  A key is a string that
+            // uniquely identifies a condition value (e.g. "int:42", "bool:true",
+            // "name:Red", "null", "is:TypeName").
             var allSeenConditionKeys: Set<String> = []
 
             func isNullCondition(_ conditionID: ExprID) -> Bool {
@@ -168,8 +168,8 @@ extension ControlFlowTypeChecker {
                 var branchCtx = ctx
                 var trueFlowStates: [DataFlowState] = []
                 var cumulativeFalseState = ctx.flowState
-                /// Track condition keys within this single branch for
-                /// intra-branch duplicate detection.
+                // Track condition keys within this single branch for
+                // intra-branch duplicate detection.
                 var branchConditionKeys: Set<String> = []
 
                 // Type-check and collect coverage for all branch conditions.

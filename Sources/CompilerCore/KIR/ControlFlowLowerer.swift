@@ -906,7 +906,7 @@ final class ControlFlowLowerer {
                 return "sym:\(symbolID.rawValue)"
             }
             return "name:\(resolved)"
-        case .memberCall(_, let calleeName, _, let args, _):
+        case let .memberCall(_, calleeName, _, args, _):
             if args.isEmpty,
                let symbolID = sema.bindings.identifierSymbols[conditionID]
             {
