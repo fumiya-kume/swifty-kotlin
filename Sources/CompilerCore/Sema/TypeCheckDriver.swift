@@ -68,6 +68,7 @@ final class TypeCheckDriver {
 
     // MARK: - Module-Level Type Checking
 
+    // swiftlint:disable:next function_body_length
     func typeCheckModule(fileScopes: [Int32: FileScope], files: [ASTFile]) {
         let checker = VisibilityChecker(symbols: sema.symbols)
 
@@ -82,6 +83,7 @@ final class TypeCheckDriver {
                 implicitReceiverType: nil,
                 loopDepth: 0,
                 loopLabelStack: [],
+                lambdaLabelStack: [],
                 exportBlockLocalsForExpr: nil,
                 flowState: DataFlowState(),
                 currentFileID: file.fileID,
