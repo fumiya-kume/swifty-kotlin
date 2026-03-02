@@ -103,7 +103,7 @@ extension DataFlowSemaPhase {
         }
         guard interfaceSupertypes.count >= 2 else { return [:] }
 
-        var providers: [InternedString: [SymbolID]] = [:]
+        var providers: [InternedString: Set<SymbolID>] = [:]
         for interfaceID in interfaceSupertypes {
             guard let ifaceSym = symbols.symbol(interfaceID) else { continue }
             for childID in symbols.children(ofFQName: ifaceSym.fqName) {
@@ -111,10 +111,11 @@ extension DataFlowSemaPhase {
                       childSym.kind == .function,
                       !childSym.flags.contains(.abstractType)
                 else { continue }
-                providers[childSym.name, default: []].append(interfaceID)
+                providers[childSym.name, default: []].insert(interfaceID)
             }
         }
         return providers.filter { $0.value.count >= 2 }
+            .mapValues { Array($0) }
     }
 
     // swiftlint:disable:next function_parameter_count

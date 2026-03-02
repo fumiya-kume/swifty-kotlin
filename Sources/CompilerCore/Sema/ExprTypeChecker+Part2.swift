@@ -445,7 +445,7 @@ extension ExprTypeChecker {
         )
     }
 
-    /// Resolves `super<InterfaceName>` — only direct supertypes are valid per Kotlin spec.
+    /// Resolves `super<T>` — only direct supertypes (interfaces and classes) are valid per Kotlin spec.
     private func resolveQualifiedSuper(
         id: ExprID,
         qualifier: InternedString,
@@ -457,7 +457,8 @@ extension ExprTypeChecker {
         let supertypes = sema.symbols.directSupertypes(for: classSymbol)
         for superID in supertypes {
             guard let superSym = ctx.cachedSymbol(superID) else { continue }
-            if superSym.kind == .interface, superSym.name == qualifier {
+            let isValidKind = superSym.kind == .interface || superSym.kind == .class || superSym.kind == .enumClass
+            if isValidKind, superSym.name == qualifier {
                 let ifaceType = sema.types.make(.classType(ClassType(classSymbol: superID)))
                 sema.bindings.bindExprType(id, type: ifaceType)
                 return ifaceType
@@ -466,7 +467,7 @@ extension ExprTypeChecker {
         let qualifierStr = ctx.interner.resolve(qualifier)
         ctx.semaCtx.diagnostics.error(
             "KSWIFTK-SEMA-0054",
-            "No interface '\(qualifierStr)' found in direct supertypes for qualified 'super'.",
+            "No type '\(qualifierStr)' found in direct supertypes for qualified 'super'.",
             range: range
         )
         sema.bindings.bindExprType(id, type: sema.types.errorType)
