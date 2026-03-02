@@ -255,14 +255,10 @@ extension ExprTypeChecker {
         // and return type can be inferred from it.
         let samConversion: Bool
         let expectedFunctionType: FunctionType?
-        if let expectedType,
-           case let .functionType(functionType) = sema.types.kind(of: expectedType)
-        {
+        if let expectedType, case let .functionType(functionType) = sema.types.kind(of: expectedType) {
             expectedFunctionType = functionType
             samConversion = false
-        } else if let expectedType,
-                  let samFT = driver.helpers.samFunctionType(for: expectedType, sema: sema)
-        {
+        } else if let expectedType, let samFT = driver.helpers.samFunctionType(for: expectedType, sema: sema) {
             expectedFunctionType = samFT
             samConversion = true
         } else {
