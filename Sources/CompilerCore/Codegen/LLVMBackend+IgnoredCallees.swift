@@ -98,6 +98,78 @@ extension LLVMBackend {
         "kk_array_size",
         "kk_array_of",
     ]
+
+    func collectExternalCallees(
+        module: KIRModule,
+        interner: StringInterner,
+        functionSymbols: [SymbolID: String]
+    ) -> [String] {
+        var callees: Set<String> = []
+
+        for decl in module.arena.declarations {
+            guard case let .function(function) = decl else {
+                continue
+            }
+            for instruction in function.body {
+                let calleeInfo: (symbol: SymbolID?, callee: InternedString)? = switch instruction {
+                case let .call(symbol, callee, _, _, _, _, _):
+                    (symbol, callee)
+                case let .virtualCall(symbol, callee, _, _, _, _, _, _):
+                    (symbol, callee)
+                default:
+                    nil
+                }
+                guard let calleeInfo else {
+                    continue
+                }
+                if let symbol = calleeInfo.symbol, functionSymbols[symbol] != nil {
+                    continue
+                }
+
+                let calleeName = interner.resolve(calleeInfo.callee)
+                guard !calleeName.isEmpty else {
+                    continue
+                }
+                if LLVMBackend.builtinOps[calleeName] != nil {
+                    continue
+                }
+                if LLVMBackend.unaryBuiltinOps[calleeName] != nil || calleeName == "kk_op_ushr" {
+                    continue
+                }
+                if LLVMBackend.floatBuiltinOps.contains(calleeName) || LLVMBackend.doubleBuiltinOps.contains(calleeName) {
+                    continue
+                }
+                if Self.ignoredExternalCallees.contains(calleeName) {
+                    continue
+                }
+                callees.insert(calleeName)
+            }
+        }
+
+        return callees.sorted()
+    }
+
+    func clangTargetArgs() -> [String] {
+        var triple = "\(target.arch)-\(target.vendor)-\(target.os)"
+        if let version = target.osVersion, !version.isEmpty {
+            triple += version
+        }
+        return ["-target", triple]
+    }
+
+    func reportBackendError(code: String, message: String, error: CommandRunnerError) {
+        switch error {
+        case let .launchFailed(reason):
+            diagnostics.error(code, "\(message). \(reason)", range: nil)
+        case let .nonZeroExit(result):
+            let stderr = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
+            if stderr.isEmpty {
+                diagnostics.error(code, "\(message). exit=\(result.exitCode)", range: nil)
+            } else {
+                diagnostics.error(code, "\(message). \(stderr)", range: nil)
+            }
+        }
+    }
 }
 
 // swiftlint:enable trailing_comma
