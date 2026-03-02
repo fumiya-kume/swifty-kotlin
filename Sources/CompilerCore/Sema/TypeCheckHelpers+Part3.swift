@@ -64,7 +64,8 @@ extension TypeCheckHelpers {
     ) -> TypeID? {
         guard case let .classType(classType) = sema.types.kind(of: expanded),
               let targetSymbol = sema.symbols.symbol(classType.classSymbol),
-              targetSymbol.kind == .typeAlias else {
+              targetSymbol.kind == .typeAlias
+        else {
             return expanded
         }
         var newVisited = visited

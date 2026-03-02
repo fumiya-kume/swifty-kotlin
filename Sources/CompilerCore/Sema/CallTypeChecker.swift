@@ -264,10 +264,12 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
                 let collectionType: TypeID
                 if let expectedType, expectedType != sema.types.errorType,
                    case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
-                   !expectedClassType.args.isEmpty {
+                   !expectedClassType.args.isEmpty
+                {
                     collectionType = expectedType
                 } else if !argTypes.isEmpty,
-                          name == "listOf" || name == "listOfNotNull" || name == "emptyList" {
+                          name == "listOf" || name == "listOfNotNull" || name == "emptyList"
+                {
                     // Infer element type from arguments via LUB so that
                     // `listOf("a", null)` produces List<String?>.
                     // Only apply List<E> wrapping for list-like factories;
@@ -277,7 +279,7 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
                     let listFQName: [InternedString] = [
                         interner.intern("kotlin"),
                         interner.intern("collections"),
-                        interner.intern("List")
+                        interner.intern("List"),
                     ]
                     if let listSymbol = sema.symbols.lookup(fqName: listFQName) {
                         collectionType = sema.types.make(.classType(ClassType(
