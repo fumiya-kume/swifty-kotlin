@@ -171,5 +171,4 @@ final class LocalDeclTypeChecker {
         sema.bindings.bindExprType(id, type: sema.types.errorType)
         return sema.types.errorType
     }
-
 }
