@@ -64,8 +64,8 @@ extension KIRLoweringDriver {
         return kPropertyExprID
     }
 
-    /// Emits the full provideDelegate flow for top-level properties: store raw delegate,
-    /// build thisRef + KProperty stub, call provideDelegate, wrap result in kk_custom_delegate_create.
+    // Emits the full provideDelegate flow for top-level properties: store raw delegate,
+    // build thisRef + KProperty stub, call provideDelegate, wrap result in kk_custom_delegate_create.
     // swiftlint:disable:next function_parameter_count
     func emitProvideDelegateInit(
         delegateObjExpr: KIRExprID,
@@ -153,7 +153,7 @@ extension ABILoweringPass {
         [
             interner.intern("kk_kproperty_stub_create"),
             interner.intern("kk_kproperty_stub_name"),
-            interner.intern("kk_kproperty_stub_return_type"),
+            interner.intern("kk_kproperty_stub_return_type")
         ]
     }
 }
