@@ -298,8 +298,14 @@ extension BuildKIRRegressionTests {
             let module = try XCTUnwrap(ctx.kir)
             let body = try findKIRFunctionBody(named: "use", in: module, interner: ctx.interner)
             let callees = extractCallees(from: body, interner: ctx.interner)
-            XCTAssertTrue(callees.contains("transform"), "Expected property callee name 'transform', got: \(callees)")
-            XCTAssertFalse(callees.contains("invoke"), "Function-typed property calls must not be rewritten to 'invoke'.")
+            XCTAssertTrue(
+                callees.contains("transform"),
+                "Expected property callee name 'transform', got: \(callees)"
+            )
+            XCTAssertFalse(
+                callees.contains("invoke"),
+                "Function-typed property calls must not be rewritten to 'invoke'."
+            )
         }
     }
 }
