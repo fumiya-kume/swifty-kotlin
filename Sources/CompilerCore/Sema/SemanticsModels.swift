@@ -642,6 +642,11 @@ public final class BindingTable {
     public private(set) var invokeOperatorCallExprs: Set<ExprID> = []
     public private(set) var collectionExprIDs: Set<ExprID> = []
     public private(set) var collectionSymbolIDs: Set<SymbolID> = []
+    /// Maps expression IDs to their compile-time constant values when the
+    /// expression references a `const val` property.  This allows downstream
+    /// passes (KIR lowering, codegen) to fold constant references without
+    /// re-querying the symbol table.
+    public private(set) var constExprValues: [ExprID: KIRExprKind] = [:]
 
     public init() {}
 
@@ -756,6 +761,18 @@ public final class BindingTable {
 
     public func isInvokeOperatorCall(_ expr: ExprID) -> Bool {
         invokeOperatorCallExprs.contains(expr)
+    }
+
+    /// Record the compile-time constant value for an expression that
+    /// references a `const val` property.  Called during type-check when
+    /// a name-ref resolves to a symbol carrying `.constValue`.
+    public func bindConstExprValue(_ expr: ExprID, value: KIRExprKind) {
+        constExprValues[expr] = value
+    }
+
+    /// Retrieve the compile-time constant value for an expression, if any.
+    public func constExprValue(for expr: ExprID) -> KIRExprKind? {
+        constExprValues[expr]
     }
 }
 
