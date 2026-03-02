@@ -18,10 +18,13 @@ symbol s16 kind=function fq=golden.sema.classify vis=public flags=_ sig=recv=_ p
 symbol s17 kind=valueParameter fq=golden.sema.classify.$16.x vis=private flags=_
 symbol s18 kind=function fq=golden.sema.classifyColor vis=public flags=_ sig=recv=_ params=[Class#11] ret=String suspend=0 defaults=[0] vararg=[0]
 symbol s19 kind=valueParameter fq=golden.sema.classifyColor.$18.c vis=private flags=_
+symbol s20 kind=function fq=golden.sema.classifyBool vis=public flags=_ sig=recv=_ params=[Boolean] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s21 kind=valueParameter fq=golden.sema.classifyBool.$20.b vis=private flags=_
 file f0 package=golden.sema
   decl d0 class Color sym=s11
   decl d1 fun classify suspend=0 inline=0 sym=s16
   decl d2 fun classifyColor suspend=0 inline=0 sym=s18
+  decl d3 fun classifyBool suspend=0 inline=0 sym=s20
 expr e0 name(x) type=Int ref=s17
 expr e1 int(1) type=Int
 expr e2 int(2) type=Int
@@ -42,3 +45,8 @@ expr e16 name(Color) type=Any ref=s11
 expr e17 memberCall recv=e16 callee=Blue args=[] type=Class#11 ref=s15
 expr e18 string(cold) type=String
 expr e19 when subject=e10 branches=[e12,e14->e15,e17->e18] else=_ type=String
+expr e20 name(b) type=Boolean ref=s21
+expr e21 bool(true) type=Boolean
+expr e22 bool(false) type=Boolean
+expr e23 string(always) type=String
+expr e24 when subject=e20 branches=[e21,e22->e23] else=_ type=String

@@ -681,12 +681,16 @@ final class ControlFlowLowerer {
             if branch.conditions.count > 1 {
                 // Multiple conditions: build an OR-chain that jumps to the body label
                 // as soon as any condition is true.
+                // CTRL-001: Deduplicate conditions to avoid redundant comparisons.
+                let deduplicatedConditions = deduplicateWhenConditions(
+                    branch.conditions, ast: ast, sema: sema, interner: interner
+                )
                 let bodyLabel: Int32 = driver.ctx.makeLoopLabel()
                 // Hoist the true constant outside the loop so it's reused for all non-last conditions.
                 let hoistedTrueID = arena.appendExpr(.boolLiteral(true), type: boolType)
                 instructions.append(.constValue(result: hoistedTrueID, value: .boolLiteral(true)))
 
-                for (condIdx, conditionExprID) in branch.conditions.enumerated() {
+                for (condIdx, conditionExprID) in deduplicatedConditions.enumerated() {
                     let matchesID = lowerWhenConditionMatch(
                         conditionExprID: conditionExprID,
                         subjectExprID: subject,
@@ -699,7 +703,7 @@ final class ControlFlowLowerer {
                         propertyConstantInitializers: propertyConstantInitializers,
                         instructions: &instructions
                     )
-                    let isLastCondition = condIdx == branch.conditions.count - 1
+                    let isLastCondition = condIdx == deduplicatedConditions.count - 1
                     if isLastCondition {
                         // Last condition: if false, jump to next branch
                         instructions.append(.jumpIfEqual(lhs: matchesID, rhs: falseID, target: nextBranchLabels[index]))
@@ -840,6 +844,83 @@ final class ControlFlowLowerer {
         }
 
         return conditionValueID
+    }
+
+    /// CTRL-001: Deduplicate when-branch conditions at the KIR level to avoid
+    /// emitting redundant comparisons in an OR-chain.  Keeps the first occurrence
+    /// of each canonically-equal condition and drops subsequent duplicates.
+    private func deduplicateWhenConditions(
+        _ conditions: [ExprID],
+        ast: ASTModule,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> [ExprID] {
+        var seen: Set<String> = []
+        var result: [ExprID] = []
+        for cond in conditions {
+            if let key = conditionKeyForKIR(cond, ast: ast, sema: sema, interner: interner) {
+                if seen.insert(key).inserted {
+                    result.append(cond)
+                }
+                // else: skip duplicate
+            } else {
+                // Cannot compute a canonical key — keep the condition to be safe.
+                result.append(cond)
+            }
+        }
+        return result
+    }
+
+    /// Returns a canonical string key for a when-branch condition expression,
+    /// used for deduplication.  Mirrors the Sema-level `conditionKey` helper.
+    private func conditionKeyForKIR(
+        _ conditionID: ExprID,
+        ast: ASTModule,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> String? {
+        guard let conditionExpr = ast.arena.expr(conditionID) else {
+            return nil
+        }
+        switch conditionExpr {
+        case let .intLiteral(value, _):
+            return "int:\(value)"
+        case let .longLiteral(value, _):
+            return "long:\(value)"
+        case let .doubleLiteral(value, _):
+            return "double:\(value)"
+        case let .floatLiteral(value, _):
+            return "float:\(value)"
+        case let .charLiteral(value, _):
+            return "char:\(value)"
+        case let .boolLiteral(value, _):
+            return "bool:\(value)"
+        case let .stringLiteral(value, _):
+            return "string:\(interner.resolve(value))"
+        case let .nameRef(name, _):
+            let resolved = interner.resolve(name)
+            if resolved == "null" {
+                return "null"
+            }
+            if let symbolID = sema.bindings.identifierSymbols[conditionID] {
+                return "sym:\(symbolID.rawValue)"
+            }
+            return "name:\(resolved)"
+        case .memberCall(_, let calleeName, _, let args, _):
+            if args.isEmpty,
+               let symbolID = sema.bindings.identifierSymbols[conditionID]
+            {
+                return "sym:\(symbolID.rawValue)"
+            }
+            return "member:\(interner.resolve(calleeName))"
+        case let .isCheck(_, typeRefID, negated, _):
+            if let targetType = sema.bindings.isCheckTargetType(for: conditionID) {
+                return "is:\(negated ? "!" : "")\(targetType.rawValue)"
+            }
+            return "is:\(negated ? "!" : "")\(typeRefID.rawValue)"
+        default:
+            return nil
+        }
     }
 
     private func isSameWhenSubjectExpression(
