@@ -988,12 +988,12 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase {
 
         let expectedGetterSymbol = SymbolID(rawValue: -12000 - computedPropertySymbol.id.rawValue)
         let getterSymbols = module.arena.declarations.compactMap { decl -> SymbolID? in
-            guard case let .function(fn) = decl,
-                  interner.resolve(fn.name) == "get"
+            guard case let .function(func_) = decl,
+                  interner.resolve(func_.name) == "get"
             else {
                 return nil
             }
-            return fn.symbol
+            return func_.symbol
         }
         XCTAssertTrue(getterSymbols.contains(expectedGetterSymbol),
                       "Getter accessor symbol for computed property should be emitted. expected=\(expectedGetterSymbol), actual=\(getterSymbols)")
@@ -1028,17 +1028,19 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase {
         // the property symbol via SyntheticSymbolScheme.
         let getName = interner.intern("get")
         let getterFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
-            guard case let .function(fn) = decl,
-                  fn.name == getName
+            guard case let .function(func_) = decl,
+                  func_.name == getName
             else {
                 return nil
             }
-            return fn
+            return func_
         }
 
         // There should be at least two getter accessors — one per class.
-        XCTAssertGreaterThanOrEqual(getterFunctions.count, 2,
-                                    "Both base and override computed property should emit getter accessors, found: \(getterFunctions.count)")
+        XCTAssertGreaterThanOrEqual(
+            getterFunctions.count, 2,
+            "Both base and override should emit getter accessors, found: \(getterFunctions.count)"
+        )
 
         // Neither base nor derived "label" property should have a KIRGlobal.
         let labelName = interner.intern("label")
@@ -1108,25 +1110,35 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase {
         // function emitted.
         let getName = interner.intern("get")
         let getterFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
-            guard case let .function(fn) = decl,
-                  fn.name == getName
+            guard case let .function(func_) = decl,
+                  func_.name == getName
             else {
                 return nil
             }
-            return fn
+            return func_
         }
-        XCTAssertGreaterThanOrEqual(getterFunctions.count, 1,
-                                    "Should have at least 1 getter accessor (for label)")
+        XCTAssertGreaterThanOrEqual(
+            getterFunctions.count, 1,
+            "Should have at least 1 getter accessor (for label)"
+        )
     }
 
     /// Verifies that a top-level getter-only computed property does not emit
-    /// a KIRGlobal, matching the member property behavior (PROP-003).
+    /// a KIRGlobal and that reads of a non-literal getter body are lowered
+    /// to getter accessor calls (not loadGlobal) by PropertyLoweringPass.
     func testTopLevelGetterOnlyComputedPropertyEmitsNoGlobal() throws {
+        // Use a non-literal getter body (`= stored`) so the constant
+        // collector does NOT inline the value.  This forces ExprLowerer
+        // to emit .loadGlobal which PropertyLoweringPass must rewrite.
         let source = """
         package test
 
-        val computed: String get() = "hello"
         var stored: Int = 42
+        val computed: Int get() = stored
+
+        fun readComputed(): Int {
+            return computed
+        }
         """
         let ctx = makeContextFromSource(source)
         try runToLowering(ctx)
@@ -1150,8 +1162,10 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase {
         let computedGlobals = globalSymbols.filter { sym in
             ctx.sema?.symbols.symbol(sym)?.name == computedName
         }
-        XCTAssertTrue(computedGlobals.isEmpty,
-                      "Top-level getter-only computed property should NOT have a KIRGlobal, found: \(computedGlobals)")
+        XCTAssertTrue(
+            computedGlobals.isEmpty,
+            "Top-level getter-only computed property should NOT have a KIRGlobal"
+        )
 
         // Top-level "stored" SHOULD have a KIRGlobal.
         let storedName = interner.intern("stored")
@@ -1160,6 +1174,51 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase {
         }
         XCTAssertFalse(storedGlobals.isEmpty,
                        "Top-level stored property should have a KIRGlobal")
+
+        // Verify that readComputed() was lowered so that the read of
+        // "computed" became a getter accessor call (not loadGlobal).
+        let sema = try XCTUnwrap(ctx.sema)
+        let computedPropSym = try XCTUnwrap(
+            sema.symbols.allSymbols().first(where: {
+                $0.kind == .property && $0.name == computedName
+            }),
+            "computed property symbol not found"
+        )
+        let getterSym = SyntheticSymbolScheme
+            .propertyGetterAccessorSymbol(for: computedPropSym.id)
+
+        // Find readComputed and check its body for a getter call.
+        let readName = interner.intern("readComputed")
+        let readerFn = module.arena.declarations.compactMap {
+            decl -> KIRFunction? in
+            guard case let .function(func_) = decl,
+                  func_.name == readName else { return nil }
+            return func_
+        }.first
+        let reader = try XCTUnwrap(readerFn, "readComputed not found")
+
+        let hasGetterCall = reader.body.contains { inst in
+            if case let .call(symbol, _, _, _, _, _, _) = inst {
+                return symbol == getterSym
+            }
+            return false
+        }
+        XCTAssertTrue(
+            hasGetterCall,
+            "Read of top-level computed property should lower to getter call"
+        )
+
+        // Verify no loadGlobal remains for the computed symbol.
+        let hasLoadGlobal = reader.body.contains { inst in
+            if case let .loadGlobal(_, sym) = inst {
+                return sym == computedPropSym.id
+            }
+            return false
+        }
+        XCTAssertFalse(
+            hasLoadGlobal,
+            "loadGlobal for computed property should be rewritten"
+        )
     }
 
     private func makeContext(

@@ -57,6 +57,28 @@ final class PropertyLoweringPass: LoweringPass {
 
             for instruction in function.body {
                 guard case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall) = instruction else {
+                    // Rewrite loadGlobal for getter-only computed properties
+                    // into a getter call.  ExprLowerer emits loadGlobal for
+                    // top-level property references; without this rewrite the
+                    // backend would look for a non-existent global slot.
+                    if case let .loadGlobal(lgResult, sym) = instruction,
+                       computedPropertySymbols.contains(sym)
+                    {
+                        let getterSymbol = SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: sym)
+                        if function.symbol != getterSymbol {
+                            loweredBody.append(
+                                .call(
+                                    symbol: getterSymbol,
+                                    callee: getterName,
+                                    arguments: [],
+                                    result: lgResult,
+                                    canThrow: false,
+                                    thrownResult: nil
+                                )
+                            )
+                            continue
+                        }
+                    }
                     // Rewrite constValue(.symbolRef(propSym)) for getter-only
                     // computed properties into a getter call so that each
                     // access invokes the getter body rather than loading a
