@@ -184,12 +184,30 @@ extension KotlinParser {
             children.append(.node(parseBlock()))
         } else {
             parseTail(inBlock: false, into: &children, range: &range)
+            // In Kotlin, `get()`/`set()` accessors on the next line are part of
+            // the property declaration.  After parseTail stops at a newline,
+            // absorb trailing accessor lines so the AST builder can extract them.
+            while isPropertyAccessorStart(stream.peek()) {
+                parseTail(inBlock: false, into: &children, range: &range)
+            }
         }
 
         return arena.appendNode(
             kind: .propertyDecl,
             range: range.value ?? invalidRange, children
         )
+    }
+
+    /// Returns `true` when `token` looks like the start of a property accessor
+    /// (`get(` or `set(`).  Used to absorb newline-separated accessor lines
+    /// into the property declaration CST node.
+    private func isPropertyAccessorStart(_ token: Token) -> Bool {
+        switch token.kind {
+        case .softKeyword(.get), .softKeyword(.set):
+            return stream.peek(1).kind == .symbol(.lParen)
+        default:
+            return false
+        }
     }
 
     func parseTypeAliasDeclaration(

@@ -179,9 +179,17 @@ extension BuildASTPhase {
             }
         }
 
+        let receiverType = declarationPropertyReceiverType(from: nodeID, in: arena, interner: interner, astArena: astArena)
+        let propertyName: InternedString
+        if receiverType != nil {
+            propertyName = declarationPropertyNameAfterDot(from: nodeID, in: arena, interner: interner)
+        } else {
+            propertyName = declarationName(from: nodeID, in: arena, interner: interner)
+        }
+
         return PropertyDecl(
             range: node.range,
-            name: declarationName(from: nodeID, in: arena, interner: interner),
+            name: propertyName,
             modifiers: declarationModifiers(from: nodeID, in: arena),
             type: declarationPropertyType(from: nodeID, in: arena, interner: interner, astArena: astArena),
             isVar: declarationIsVar(from: nodeID, in: arena),
@@ -189,7 +197,8 @@ extension BuildASTPhase {
             getter: accessors.getter,
             setter: accessors.setter,
             delegateExpression: delegateExpr,
-            delegateBody: delegateBody
+            delegateBody: delegateBody,
+            receiverType: receiverType
         )
     }
 

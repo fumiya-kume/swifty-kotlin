@@ -88,6 +88,15 @@ final class DeclTypeChecker {
             }
         }
 
+        // For extension properties, set the implicit receiver type so that
+        // `this` resolves correctly inside getter/setter bodies.
+        let accessorCtx: TypeInferenceContext
+        if let receiverType = sema.symbols.extensionPropertyReceiverType(for: symbol) {
+            accessorCtx = ctx.copying(implicitReceiverType: receiverType)
+        } else {
+            accessorCtx = ctx
+        }
+
         if let getter = property.getter {
             var getterLocals: LocalBindings = [:]
             if let fieldType = inferredPropertyType {
@@ -95,7 +104,7 @@ final class DeclTypeChecker {
                 getterLocals[interner.intern("field")] = (fieldType, fieldSymbol, true, true)
             }
             let getterType = inferFunctionBodyType(
-                getter.body, ctx: ctx, locals: &getterLocals,
+                getter.body, ctx: accessorCtx, locals: &getterLocals,
                 expectedType: inferredPropertyType
             )
             if let declaredType = inferredPropertyType {
@@ -192,7 +201,7 @@ final class DeclTypeChecker {
             let setterValueSymbol = SyntheticSymbolScheme.semaSetterValueSymbol(for: symbol)
             setterLocals[parameterName] = (finalPropertyType, setterValueSymbol, true, true)
             let setterType = inferFunctionBodyType(
-                setter.body, ctx: ctx, locals: &setterLocals,
+                setter.body, ctx: accessorCtx, locals: &setterLocals,
                 expectedType: sema.types.unitType
             )
             driver.emitSubtypeConstraint(

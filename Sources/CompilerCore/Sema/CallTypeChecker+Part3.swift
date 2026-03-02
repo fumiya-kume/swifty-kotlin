@@ -24,7 +24,6 @@ extension CallTypeChecker {
         let receiverType = driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
         let argTypes = args.map { driver.inferExpr($0.expr, ctx: ctx, locals: &locals) }
         let lookupReceiverType = safeCall ? sema.types.makeNonNullable(receiverType) : receiverType
-
         // Primitive member function: Int/Long.inv() → same type (P5-103)
         if interner.resolve(calleeName) == "inv",
            args.isEmpty
