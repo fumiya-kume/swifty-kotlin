@@ -1,7 +1,7 @@
 import Foundation
 
 extension BuildASTPhase.ExpressionParser {
-    // swiftlint:disable:next cyclomatic_complexity
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func parsePrimary() -> ExprID? {
         guard let token = current() else {
             return nil
@@ -102,14 +102,13 @@ extension BuildASTPhase.ExpressionParser {
     private func parsePrimaryIdentifier(_ token: Token) -> ExprID? {
         let name: InternedString
         switch token.kind {
-        case let .identifier(n): name = n
-        case let .backtickedIdentifier(n): name = n
+        case let .identifier(ident): name = ident
+        case let .backtickedIdentifier(ident): name = ident
         default: return nil
         }
 
-        if let atToken = peek(1), atToken.kind == .symbol(.at),
-           let nextToken = peek(2)
-        {
+        let hasAt = peek(1).map { $0.kind == .symbol(.at) } ?? false
+        if hasAt, let nextToken = peek(2) {
             switch nextToken.kind {
             case .keyword(.for), .keyword(.while), .keyword(.do), .symbol(.lBrace):
                 let savedIndex = index
@@ -146,10 +145,9 @@ extension BuildASTPhase.ExpressionParser {
         _ = consume()
         var label: InternedString?
         var end = token.range.end
-        if let atToken = current(), atToken.kind == .symbol(.at),
-           let labelToken = peek(1),
-           let labelName = identifierFromToken(labelToken)
-        {
+        let isAtSymbol = current().map { $0.kind == .symbol(.at) } ?? false
+        if isAtSymbol, let labelToken = peek(1),
+           let labelName = identifierFromToken(labelToken) {
             _ = consume()
             _ = consume()
             label = labelName
@@ -188,10 +186,9 @@ extension BuildASTPhase.ExpressionParser {
 
     private func parsePrimaryThis(_ token: Token) -> ExprID {
         _ = consume()
-        if let atToken = current(), atToken.kind == .symbol(.at),
-           let labelToken = peek(1),
-           let labelName = identifierFromToken(labelToken)
-        {
+        let isThisAtSymbol = current().map { $0.kind == .symbol(.at) } ?? false
+        if isThisAtSymbol, let labelToken = peek(1),
+           let labelName = identifierFromToken(labelToken) {
             _ = consume()
             _ = consume()
             let endRange = labelToken.range

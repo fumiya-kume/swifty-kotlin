@@ -146,6 +146,7 @@ extension KIRLowererPart2CoverageTests {
         )
         fixture.bindings.bindExprType(whenExprID, type: intType)
 
+        // swiftlint:disable trailing_comma
         var lowered = KIRLoweringEmitContext([
             .call(
                 symbol: nil,
@@ -155,8 +156,8 @@ extension KIRLowererPart2CoverageTests {
                 canThrow: false,
                 thrownResult: nil
             ),
-            // swiftlint:disable:next trailing_comma
         ])
+        // swiftlint:enable trailing_comma
         let exceptionSlot = fixture.kirArena.appendExpr(.temporary(3), type: fixture.types.anyType)
         let exceptionTypeSlot = fixture.kirArena.appendExpr(.temporary(4), type: intType)
         var emitted = KIRLoweringEmitContext()
