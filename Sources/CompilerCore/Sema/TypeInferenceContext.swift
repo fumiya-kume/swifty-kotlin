@@ -12,6 +12,9 @@ struct TypeInferenceContext {
     var implicitReceiverType: TypeID?
     var loopDepth: Int
     var loopLabelStack: [InternedString]
+    /// Stack of labels attached to enclosing lambda literals.
+    /// Used by `return@label` to verify that the label references a valid lambda.
+    var lambdaLabelStack: [InternedString]
     /// When set, the specified block expression exports its local bindings to
     /// the outer locals map. Used for do-while body-to-condition visibility.
     var exportBlockLocalsForExpr: ExprID?
@@ -45,6 +48,16 @@ struct TypeInferenceContext {
         loopLabelStack.contains(label)
     }
 
+    func withLambdaLabel(_ label: InternedString) -> TypeInferenceContext {
+        var copy = self
+        copy.lambdaLabelStack = lambdaLabelStack + [label]
+        return copy
+    }
+
+    func hasLambdaLabel(_ label: InternedString) -> Bool {
+        lambdaLabelStack.contains(label)
+    }
+
     func with(flowState newState: DataFlowState) -> TypeInferenceContext {
         var copy = self; copy.flowState = newState; return copy
     }
@@ -58,6 +71,7 @@ struct TypeInferenceContext {
         implicitReceiverType: TypeID?? = nil,
         loopDepth: Int? = nil,
         loopLabelStack: [InternedString]? = nil,
+        lambdaLabelStack: [InternedString]? = nil,
         exportBlockLocalsForExpr: ExprID?? = nil,
         flowState: DataFlowState? = nil,
         enclosingClassSymbol: SymbolID?? = nil,
@@ -68,6 +82,7 @@ struct TypeInferenceContext {
         if let implicitReceiverType { copy.implicitReceiverType = implicitReceiverType }
         if let loopDepth { copy.loopDepth = loopDepth }
         if let loopLabelStack { copy.loopLabelStack = loopLabelStack }
+        if let lambdaLabelStack { copy.lambdaLabelStack = lambdaLabelStack }
         if let exportBlockLocalsForExpr { copy.exportBlockLocalsForExpr = exportBlockLocalsForExpr }
         if let flowState { copy.flowState = flowState }
         if let enclosingClassSymbol { copy.enclosingClassSymbol = enclosingClassSymbol }

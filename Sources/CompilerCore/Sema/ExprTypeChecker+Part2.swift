@@ -214,6 +214,7 @@ extension ExprTypeChecker {
         _ id: ExprID,
         params: [InternedString],
         body: ExprID,
+        label: InternedString? = nil,
         ctx: TypeInferenceContext,
         locals: inout LocalBindings,
         expectedType: TypeID?
@@ -247,9 +248,14 @@ extension ExprTypeChecker {
             )
         }
 
+        let bodyCtx: TypeInferenceContext = if let label {
+            ctx.withLambdaLabel(label)
+        } else {
+            ctx
+        }
         let inferredBodyType = driver.inferExpr(
             body,
-            ctx: ctx,
+            ctx: bodyCtx,
             locals: &lambdaLocals,
             expectedType: expectedFunctionType?.returnType
         )

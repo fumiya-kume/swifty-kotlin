@@ -82,6 +82,7 @@ final class TypeCheckDriver {
                 implicitReceiverType: nil,
                 loopDepth: 0,
                 loopLabelStack: [],
+                lambdaLabelStack: [],
                 exportBlockLocalsForExpr: nil,
                 flowState: DataFlowState(),
                 currentFileID: file.fileID,
