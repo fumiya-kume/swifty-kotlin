@@ -1,15 +1,12 @@
 import Foundation
 
 extension DataFlowSemaPhase {
-    /// Validates declaration-site variance constraints for all classes and interfaces.
-    ///
-    /// Kotlin rules:
-    /// - `out T` (covariant): T may only appear in **out** positions (return types, val property types).
-    ///   Appearing in **in** positions (function parameters, var property setter) is illegal.
-    /// - `in T` (contravariant): T may only appear in **in** positions (function parameters).
-    ///   Appearing in **out** positions (return types, val/var property types) is illegal.
-    /// - **Private members are exempt** from variance checks (Kotlin spec).
-    /// - Constructor parameters are exempt from variance checks.
+    // Validates declaration-site variance constraints for all classes and interfaces.
+    // Kotlin rules:
+    // - `out T` (covariant): T may only appear in out positions (return types, val property types).
+    // - `in T` (contravariant): T may only appear in in positions (function parameters).
+    // - Private members are exempt from variance checks (Kotlin spec).
+    // - Constructor parameters are exempt from variance checks.
     // swiftlint:disable:next function_parameter_count
     func validateDeclarationSiteVariance(
         ast: ASTModule,
@@ -163,7 +160,6 @@ extension DataFlowSemaPhase {
 
     // MARK: - Type reference variance checking
 
-    // swiftlint:disable:next function_parameter_count
     private func checkTypeRefVariance(
         _ typeRefID: TypeRefID,
         position: VariancePosition,
