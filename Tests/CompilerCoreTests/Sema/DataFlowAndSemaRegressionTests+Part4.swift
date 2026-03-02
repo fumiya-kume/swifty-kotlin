@@ -287,4 +287,42 @@ extension DataFlowAndSemaRegressionTests {
             assertNoDiagnostic("KSWIFTK-SEMA-0080", in: ctx)
         }
     }
+
+    // MARK: - Const property validation
+
+    func testConstValRejectsNullablePrimitiveTypeAnnotation() throws {
+        let source = """
+        const val maybeInt: Int? = 1
+        fun main(): Int = 0
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertHasDiagnostic("KSWIFTK-SEMA-0082", in: ctx)
+        }
+    }
+
+    func testConstValRejectsNullableStringTypeAnnotation() throws {
+        let source = """
+        const val maybeName: String? = "ok"
+        fun main(): Int = 0
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertHasDiagnostic("KSWIFTK-SEMA-0082", in: ctx)
+        }
+    }
+
+    func testConstValAcceptsNonNullableStringTypeAnnotation() throws {
+        let source = """
+        const val name: String = "ok"
+        fun main(): Int = 0
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0082", in: ctx)
+        }
+    }
 }

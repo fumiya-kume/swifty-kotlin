@@ -30,8 +30,8 @@ extension DataFlowSemaPhase {
         }
         if propertyDecl.type != nil {
             let isConstCompatible = switch types.kind(of: resolvedType) {
-            case .primitive:
-                true
+            case let .primitive(_, nullability):
+                nullability == .nonNull
             default:
                 false
             }

@@ -1,4 +1,4 @@
-class E
+class E : RuntimeException()
 
 fun throwOrValue(flag: Boolean): String {
     val x: String = if (flag) "ok" else throw E()

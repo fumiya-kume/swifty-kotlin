@@ -17,6 +17,18 @@ public final class SourceManager: @unchecked Sendable {
 
     public func addFile(path: String, contents: Data) -> FileID {
         if let existingID = fileIDByPath[path] {
+            let index = Int(existingID.rawValue)
+            guard index >= 0, index < files.count else {
+                return existingID
+            }
+            let existingRecord = files[index]
+            if existingRecord.contents != contents {
+                files[index] = FileRecord(
+                    path: path,
+                    contents: contents,
+                    lineStartOffsets: computeLineStartOffsets(contents: contents)
+                )
+            }
             return existingID
         }
         let id = FileID(rawValue: files.count)

@@ -161,13 +161,25 @@ final class LibraryMetadataSerializationRoundTripTests: XCTestCase {
         XCTAssertTrue(decoded[0].isSealedClass)
     }
 
-    func testMetadataDecoderRejectsRecordsWithoutSchema() {
+    func testMetadataDecoderAcceptsLegacyRecordsWithoutSchema() {
         let legacy = """
         symbols=1
         class _kk_ext_C fq=ext.C fields=0 layoutWords=3 vtable=0 itable=0
         """
         let decoder = MetadataDecoder()
         let decoded = decoder.decode(legacy)
+        XCTAssertEqual(decoded.count, 1)
+        XCTAssertEqual(decoded[0].kind, .class)
+        XCTAssertEqual(decoded[0].fqName, "ext.C")
+    }
+
+    func testMetadataDecoderRejectsRecordsWithUnsupportedSchema() {
+        let future = """
+        symbols=1
+        class _kk_ext_C fq=ext.C schema=v2 fields=0 layoutWords=3 vtable=0 itable=0
+        """
+        let decoder = MetadataDecoder()
+        let decoded = decoder.decode(future)
         XCTAssertEqual(decoded.count, 0)
     }
 

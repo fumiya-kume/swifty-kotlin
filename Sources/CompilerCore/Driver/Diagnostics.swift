@@ -84,12 +84,12 @@ public final class DiagnosticEngine: @unchecked Sendable {
     public func sortBySourceLocation() {
         lock.lock()
         defer { lock.unlock() }
-        _diagnostics.sort(by: diagnosticsOrder(lhs:rhs:))
+        _diagnostics.sort { diagnosticsOrder(lhs: $0, rhs: $1) }
     }
 
     public func render(_ sourceManager: SourceManager) -> String {
         lock.lock()
-        let ordered = _diagnostics.sorted(by: diagnosticsOrder(lhs:rhs:))
+        let ordered = _diagnostics.sorted { diagnosticsOrder(lhs: $0, rhs: $1) }
         lock.unlock()
         return ordered.map { formatDiagnostic($0, sourceManager: sourceManager) }.joined(separator: "\n")
     }

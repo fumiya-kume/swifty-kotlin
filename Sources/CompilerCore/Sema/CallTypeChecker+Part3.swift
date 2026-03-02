@@ -202,8 +202,8 @@ extension CallTypeChecker {
         let (visible, invisible) = ctx.filterByVisibility(allCandidates)
         let candidates = visible
         if candidates.isEmpty {
-            // For zero-arg member calls, try member property/field lookup.
-            // This handles `receiver.property` syntax (e.g. `this@Outer.x`).
+            // For non-empty-arg member calls, try member property/field lookup.
+            // This handles callable property syntax (e.g. `receiver.f(...)`).
             // Skip this for class-name receivers — only companion members are
             // accessible via `ClassName.member`, not instance properties.
             if !isClassNameReceiver,
@@ -239,7 +239,6 @@ extension CallTypeChecker {
                         expectedType: expectedType
                     ) {
                         let finalType = safeCall ? sema.types.makeNullable(callableResult) : callableResult
-                        sema.bindings.markInvokeOperatorCall(id)
                         sema.bindings.bindExprType(id, type: finalType)
                         return finalType
                     }

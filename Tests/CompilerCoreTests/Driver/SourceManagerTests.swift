@@ -23,6 +23,31 @@ final class SourceManagerTests: XCTestCase {
         }
     }
 
+    func testAddFileWithSamePathAndSameContentsReusesExistingRecord() {
+        let manager = SourceManager()
+        let original = Data("line1\nline2".utf8)
+        let id0 = manager.addFile(path: "dup.kt", contents: original)
+        let id1 = manager.addFile(path: "dup.kt", contents: original)
+
+        XCTAssertEqual(id0, id1)
+        XCTAssertEqual(manager.fileCount, 1)
+        XCTAssertEqual(String(decoding: manager.contents(of: id0), as: UTF8.self), "line1\nline2")
+    }
+
+    func testAddFileWithSamePathAndDifferentContentsUpdatesRecordInPlace() {
+        let manager = SourceManager()
+        let id = manager.addFile(path: "dup.kt", contents: Data("old\ntext".utf8))
+        let reusedID = manager.addFile(path: "dup.kt", contents: Data("new\ncontent\n".utf8))
+
+        XCTAssertEqual(id, reusedID)
+        XCTAssertEqual(manager.fileCount, 1)
+        XCTAssertEqual(String(decoding: manager.contents(of: id), as: UTF8.self), "new\ncontent\n")
+        XCTAssertEqual(
+            manager.lineColumn(of: SourceLocation(file: id, offset: 12)),
+            LineColumn(line: 3, column: 1)
+        )
+    }
+
     func testInvalidFileIDUsesSafeFallbacks() {
         let manager = SourceManager()
         let invalid = FileID(rawValue: 999)

@@ -567,8 +567,13 @@ public final class MetadataDecoder {
                 }
             }
 
-            // Strict schema gate: only v1 records are accepted.
-            guard schemaVersion == "v1", !fqName.isEmpty else {
+            // Backward-compatible schema gate:
+            // - records without schema are treated as legacy v1
+            // - only explicitly non-v1 schema versions are rejected
+            guard !fqName.isEmpty else {
+                continue
+            }
+            if let schemaVersion, schemaVersion != "v1" {
                 continue
             }
 

@@ -283,4 +283,23 @@ extension BuildKIRRegressionTests {
             XCTAssertFalse(deadCopyAfterReturn, "No dead copy should follow a returnValue instruction in a terminated branch")
         }
     }
+
+    func testFunctionTypedMemberPropertyCallKeepsPropertyCalleeName() throws {
+        let source = """
+        class Holder {
+            val transform: (Int) -> Int = { it + 1 }
+        }
+        fun use(h: Holder): Int = h.transform(5)
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "use", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: body, interner: ctx.interner)
+            XCTAssertTrue(callees.contains("transform"), "Expected property callee name 'transform', got: \(callees)")
+            XCTAssertFalse(callees.contains("invoke"), "Function-typed property calls must not be rewritten to 'invoke'.")
+        }
+    }
 }
