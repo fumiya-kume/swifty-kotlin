@@ -99,6 +99,17 @@ extension CallLowerer {
         ) {
             return foldedConst
         }
+        if let staticMemberValue = tryLowerClassNameMemberValueExpr(
+            exprID,
+            receiverExpr: receiverExpr,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            instructions: &instructions
+        ) {
+            return staticMemberValue
+        }
 
         let boundType = sema.bindings.exprTypes[exprID]
         let loweredReceiverID = driver.lowerExpr(
@@ -219,6 +230,76 @@ extension CallLowerer {
             arguments: finalArguments
         )
         return result
+    }
+
+    private func tryLowerClassNameMemberValueExpr(
+        _ exprID: ExprID,
+        receiverExpr: ExprID,
+        args: [CallArgument],
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        guard args.isEmpty,
+              sema.bindings.callBindings[exprID] == nil,
+              let receiverExprNode = ast.arena.expr(receiverExpr),
+              case .nameRef = receiverExprNode,
+              let receiverSymbolID = sema.bindings.identifierSymbol(for: receiverExpr),
+              let receiverSymbol = sema.symbols.symbol(receiverSymbolID)
+        else {
+            return nil
+        }
+        guard receiverSymbol.kind == .class || receiverSymbol.kind == .interface || receiverSymbol.kind == .enumClass,
+              let valueSymbolID = sema.bindings.identifierSymbol(for: exprID),
+              let valueSymbol = sema.symbols.symbol(valueSymbolID)
+        else {
+            return nil
+        }
+
+        switch valueSymbol.kind {
+        case .field:
+            guard isEnumEntryField(valueSymbolID, sema: sema) else {
+                return nil
+            }
+            let valueType = sema.bindings.exprTypes[exprID]
+                ?? sema.symbols.propertyType(for: valueSymbolID)
+                ?? sema.types.anyType
+            let valueID = arena.appendExpr(.symbolRef(valueSymbolID), type: valueType)
+            instructions.append(.constValue(result: valueID, value: .symbolRef(valueSymbolID)))
+            return valueID
+
+        case .object:
+            let valueType = sema.bindings.exprTypes[exprID] ?? sema.types.make(.classType(ClassType(
+                classSymbol: valueSymbolID,
+                args: [],
+                nullability: .nonNull
+            )))
+            let valueID = arena.appendExpr(.symbolRef(valueSymbolID), type: valueType)
+            instructions.append(.constValue(result: valueID, value: .symbolRef(valueSymbolID)))
+            return valueID
+
+        default:
+            return nil
+        }
+    }
+
+    private func isEnumEntryField(_ fieldSymbol: SymbolID, sema: SemaModule) -> Bool {
+        if let parentSymbol = sema.symbols.parentSymbol(for: fieldSymbol),
+           sema.symbols.symbol(parentSymbol)?.kind == .enumClass
+        {
+            return true
+        }
+        guard let field = sema.symbols.symbol(fieldSymbol),
+              field.kind == .field,
+              field.fqName.count >= 2
+        else {
+            return false
+        }
+        let ownerFQName = Array(field.fqName.dropLast())
+        return sema.symbols.lookupAll(fqName: ownerFQName).contains { candidate in
+            sema.symbols.symbol(candidate)?.kind == .enumClass
+        }
     }
 
     private func tryFoldConstMemberProperty(

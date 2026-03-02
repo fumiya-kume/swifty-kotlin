@@ -65,6 +65,46 @@ extension ControlFlowTypeChecker {
                 guard let conditionExpr = ast.arena.expr(conditionID) else {
                     return
                 }
+
+                func recordResolvedConditionSymbol(_ conditionSymbolID: SymbolID, fallbackName: InternedString?) {
+                    guard let conditionSymbol = sema.symbols.symbol(conditionSymbolID) else {
+                        if let fallbackName {
+                            covered.insert(fallbackName)
+                        }
+                        return
+                    }
+                    switch conditionSymbol.kind {
+                    case .field:
+                        if let ownerID = driver.helpers.enumOwnerSymbol(for: conditionSymbol, symbols: sema.symbols),
+                           ownerID == subjectNominalSymbol
+                        {
+                            covered.insert(conditionSymbol.name)
+                        } else if let fallbackName {
+                            covered.insert(fallbackName)
+                        } else {
+                            covered.insert(conditionSymbol.name)
+                        }
+
+                    case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
+                        if let subjectNominalSymbol,
+                           driver.helpers.isNominalSubtype(conditionSymbolID, of: subjectNominalSymbol, symbols: sema.symbols)
+                        {
+                            covered.insert(conditionSymbol.name)
+                        } else if let fallbackName {
+                            covered.insert(fallbackName)
+                        } else {
+                            covered.insert(conditionSymbol.name)
+                        }
+
+                    default:
+                        if let fallbackName {
+                            covered.insert(fallbackName)
+                        } else {
+                            covered.insert(conditionSymbol.name)
+                        }
+                    }
+                }
+
                 switch conditionExpr {
                 case .boolLiteral(true, _):
                     if conditionType == boolType {
@@ -83,36 +123,21 @@ extension ControlFlowTypeChecker {
                         hasNullCase = true
                         return
                     }
-
-                    guard let conditionSymbolID = sema.bindings.identifierSymbols[conditionID],
-                          let conditionSymbol = sema.symbols.symbol(conditionSymbolID)
-                    else {
+                    guard let conditionSymbolID = sema.bindings.identifierSymbols[conditionID] else {
                         covered.insert(name)
                         return
                     }
+                    recordResolvedConditionSymbol(conditionSymbolID, fallbackName: name)
 
-                    switch conditionSymbol.kind {
-                    case .field:
-                        if let ownerID = driver.helpers.enumOwnerSymbol(for: conditionSymbol, symbols: sema.symbols),
-                           ownerID == subjectNominalSymbol
-                        {
-                            covered.insert(conditionSymbol.name)
-                        } else {
-                            covered.insert(name)
-                        }
-
-                    case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
-                        if let subjectNominalSymbol,
-                           driver.helpers.isNominalSubtype(conditionSymbolID, of: subjectNominalSymbol, symbols: sema.symbols)
-                        {
-                            covered.insert(conditionSymbol.name)
-                        } else {
-                            covered.insert(name)
-                        }
-
-                    default:
-                        covered.insert(name)
+                case let .memberCall(_, calleeName, _, args, _):
+                    guard args.isEmpty else {
+                        break
                     }
+                    guard let conditionSymbolID = sema.bindings.identifierSymbols[conditionID] else {
+                        covered.insert(calleeName)
+                        return
+                    }
+                    recordResolvedConditionSymbol(conditionSymbolID, fallbackName: calleeName)
 
                 case let .isCheck(checkedExprID, _, negated, _):
                     guard !negated,

@@ -276,20 +276,9 @@ public final class DataFlowAnalyzer {
         guard let conditionExpr = ast.arena.expr(conditionID) else {
             return base
         }
-        switch conditionExpr {
-        case let .nameRef(name, _):
-            if interner.resolve(name) == "null" {
-                var vars = base.variables
-                vars[subjectSymbol] = VariableFlowState(
-                    possibleTypes: [subjectType],
-                    nullability: .nullable,
-                    isStable: true
-                )
-                return DataFlowState(variables: vars)
-            }
-            guard let conditionSymbolID = sema.bindings.identifierSymbols[conditionID],
-                  let conditionSymbol = sema.symbols.symbol(conditionSymbolID)
-            else {
+
+        func narrowedStateForConditionSymbol(_ conditionSymbolID: SymbolID) -> DataFlowState {
+            guard let conditionSymbol = sema.symbols.symbol(conditionSymbolID) else {
                 return base
             }
             switch conditionSymbol.kind {
@@ -332,6 +321,30 @@ public final class DataFlowAnalyzer {
             default:
                 return base
             }
+        }
+
+        switch conditionExpr {
+        case let .nameRef(name, _):
+            if interner.resolve(name) == "null" {
+                var vars = base.variables
+                vars[subjectSymbol] = VariableFlowState(
+                    possibleTypes: [subjectType],
+                    nullability: .nullable,
+                    isStable: true
+                )
+                return DataFlowState(variables: vars)
+            }
+            guard let conditionSymbolID = sema.bindings.identifierSymbols[conditionID] else {
+                return base
+            }
+            return narrowedStateForConditionSymbol(conditionSymbolID)
+        case let .memberCall(_, _, _, args, _):
+            guard args.isEmpty,
+                  let conditionSymbolID = sema.bindings.identifierSymbols[conditionID]
+            else {
+                return base
+            }
+            return narrowedStateForConditionSymbol(conditionSymbolID)
         case .boolLiteral:
             if case .primitive(.boolean, _) = sema.types.kind(of: subjectType) {
                 let narrowed = sema.types.make(.primitive(.boolean, .nonNull))

@@ -12,9 +12,12 @@ symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flag
 symbol s11 kind=enumClass fq=golden.sema.Color vis=public flags=_
 symbol s12 kind=constructor fq=golden.sema.Color.<init> vis=public flags=_ sig=recv=Class#11 params=[] ret=Class#11 suspend=0 defaults=[] vararg=[]
 symbol s13 kind=field fq=golden.sema.Color.RED vis=public flags=_ type=Class#11
-symbol s14 kind=enumClass fq=golden.sema.Direction vis=public flags=_
-symbol s15 kind=constructor fq=golden.sema.Direction.<init> vis=public flags=_ sig=recv=Class#14 params=[] ret=Class#14 suspend=0 defaults=[] vararg=[]
-symbol s16 kind=field fq=golden.sema.Direction.NORTH vis=public flags=_ type=Class#14
+symbol s14 kind=field fq=golden.sema.Color.GREEN vis=public flags=_ type=Class#11
+symbol s15 kind=field fq=golden.sema.Color.BLUE vis=public flags=_ type=Class#11
+symbol s16 kind=enumClass fq=golden.sema.Direction vis=public flags=_
+symbol s17 kind=constructor fq=golden.sema.Direction.<init> vis=public flags=_ sig=recv=Class#16 params=[] ret=Class#16 suspend=0 defaults=[] vararg=[]
+symbol s18 kind=field fq=golden.sema.Direction.NORTH vis=public flags=_ type=Class#16
+symbol s19 kind=field fq=golden.sema.Direction.SOUTH vis=public flags=_ type=Class#16
 file f0 package=golden.sema
   decl d0 class Color sym=s11
-  decl d1 class Direction sym=s14
+  decl d1 class Direction sym=s16

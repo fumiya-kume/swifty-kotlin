@@ -15,11 +15,68 @@ extension BuildASTPhase {
                 }
                 let childNode = arena.node(childID)
                 if childNode.kind == .enumEntry {
-                    entries.append(makeEnumEntryDecl(from: childID, in: arena, interner: interner))
+                    let expanded = declarationEnumEntries(
+                        fromEnumEntryNode: childID,
+                        in: arena,
+                        interner: interner
+                    )
+                    if expanded.isEmpty {
+                        entries.append(makeEnumEntryDecl(from: childID, in: arena, interner: interner))
+                    } else {
+                        entries.append(contentsOf: expanded)
+                    }
                 } else {
                     stack.append(childID)
                 }
             }
+        }
+        return entries
+    }
+
+    private func declarationEnumEntries(
+        fromEnumEntryNode nodeID: NodeID,
+        in arena: SyntaxArena,
+        interner: StringInterner
+    ) -> [EnumEntryDecl] {
+        let tokens = collectTokens(from: nodeID, in: arena)
+        guard !tokens.isEmpty else {
+            return []
+        }
+
+        var segments: [[Token]] = []
+        var current: [Token] = []
+        var depth = BracketDepth()
+
+        for token in tokens {
+            if depth.isAtTopLevel,
+               token.kind == .symbol(.comma) || token.kind == .symbol(.semicolon)
+            {
+                if !current.isEmpty {
+                    segments.append(current)
+                    current.removeAll(keepingCapacity: true)
+                }
+                continue
+            }
+            depth.track(token.kind)
+            current.append(token)
+        }
+        if !current.isEmpty {
+            segments.append(current)
+        }
+
+        var entries: [EnumEntryDecl] = []
+        entries.reserveCapacity(segments.count)
+        for segment in segments {
+            guard let nameToken = segment.first(where: { token in
+                internedIdentifier(from: token, interner: interner) != nil
+            }), let name = internedIdentifier(from: nameToken, interner: interner) else {
+                continue
+            }
+            let end = segment.last?.range.end ?? nameToken.range.end
+            entries.append(EnumEntryDecl(
+                range: SourceRange(start: nameToken.range.start, end: end),
+                name: name
+            ))
         }
         return entries
     }

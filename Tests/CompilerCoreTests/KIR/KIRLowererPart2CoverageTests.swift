@@ -497,6 +497,96 @@ final class KIRLowererPart2CoverageTests: XCTestCase {
         // Keep compiler warnings away for mutable local that needs to be var.
         lowered.instructions.append(.nop)
     }
+
+    func testCallLowererPart2LowersClassNameMemberValuesAsDirectSymbolRefs() {
+        let fixture = makeDirectKIRFixture()
+        let range = makeRange()
+
+        let colorSym = defineSymbol(in: fixture, kind: .enumClass, fqName: ["Color"])
+        let colorType = fixture.types.make(.classType(ClassType(classSymbol: colorSym, args: [], nullability: .nonNull)))
+        let redSym = defineSymbol(in: fixture, kind: .field, fqName: ["Color", "Red"])
+        fixture.symbols.setPropertyType(colorType, for: redSym)
+
+        let colorRef = fixture.astArena.appendExpr(.nameRef(fixture.interner.intern("Color"), range))
+        fixture.bindings.bindIdentifier(colorRef, symbol: colorSym)
+        fixture.bindings.bindExprType(colorRef, type: colorType)
+
+        let redAccess = fixture.astArena.appendExpr(.memberCall(
+            receiver: colorRef,
+            callee: fixture.interner.intern("Red"),
+            typeArgs: [],
+            args: [],
+            range: range
+        ))
+        fixture.bindings.bindIdentifier(redAccess, symbol: redSym)
+        fixture.bindings.bindExprType(redAccess, type: colorType)
+
+        var enumInstructions: [KIRInstruction] = []
+        _ = fixture.driver.lowerExpr(
+            redAccess,
+            ast: fixture.ast,
+            sema: fixture.sema,
+            arena: fixture.kirArena,
+            interner: fixture.interner,
+            propertyConstantInitializers: [:],
+            instructions: &enumInstructions
+        )
+        XCTAssertTrue(enumInstructions.contains { instruction in
+            if case let .constValue(_, .symbolRef(symbol)) = instruction {
+                return symbol == redSym
+            }
+            return false
+        })
+        XCTAssertFalse(enumInstructions.contains { instruction in
+            if case .call = instruction {
+                return true
+            }
+            return false
+        })
+
+        let exprSym = defineSymbol(in: fixture, kind: .class, fqName: ["Expr"])
+        let exprType = fixture.types.make(.classType(ClassType(classSymbol: exprSym, args: [], nullability: .nonNull)))
+        let nestedObjectSym = defineSymbol(in: fixture, kind: .object, fqName: ["Expr", "A"])
+        fixture.symbols.setParentSymbol(exprSym, for: nestedObjectSym)
+        let nestedObjectType = fixture.types.make(.classType(ClassType(classSymbol: nestedObjectSym, args: [], nullability: .nonNull)))
+
+        let exprRef = fixture.astArena.appendExpr(.nameRef(fixture.interner.intern("Expr"), range))
+        fixture.bindings.bindIdentifier(exprRef, symbol: exprSym)
+        fixture.bindings.bindExprType(exprRef, type: exprType)
+
+        let objectAccess = fixture.astArena.appendExpr(.memberCall(
+            receiver: exprRef,
+            callee: fixture.interner.intern("A"),
+            typeArgs: [],
+            args: [],
+            range: range
+        ))
+        fixture.bindings.bindIdentifier(objectAccess, symbol: nestedObjectSym)
+        fixture.bindings.bindExprType(objectAccess, type: nestedObjectType)
+
+        var objectInstructions: [KIRInstruction] = []
+        _ = fixture.driver.lowerExpr(
+            objectAccess,
+            ast: fixture.ast,
+            sema: fixture.sema,
+            arena: fixture.kirArena,
+            interner: fixture.interner,
+            propertyConstantInitializers: [:],
+            instructions: &objectInstructions
+        )
+        XCTAssertTrue(objectInstructions.contains { instruction in
+            if case let .constValue(_, .symbolRef(symbol)) = instruction {
+                return symbol == nestedObjectSym
+            }
+            return false
+        })
+        XCTAssertFalse(objectInstructions.contains { instruction in
+            if case .call = instruction {
+                return true
+            }
+            return false
+        })
+    }
 }
 
 private struct DirectKIRFixture {
