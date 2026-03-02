@@ -32,29 +32,33 @@ private func whenConditionKeyFromExpr(
     sema: SemaModule,
     interner: StringInterner
 ) -> String? {
+    if let literalKey = literalConditionKey(expr, interner: interner) {
+        return literalKey
+    }
     switch expr {
-    case let .intLiteral(value, _):
-        "int:\(value)"
-    case let .longLiteral(value, _):
-        "long:\(value)"
-    case let .doubleLiteral(value, _):
-        "double:\(value)"
-    case let .floatLiteral(value, _):
-        "float:\(value)"
-    case let .charLiteral(value, _):
-        "char:\(value)"
-    case let .boolLiteral(value, _):
-        "bool:\(value)"
-    case let .stringLiteral(value, _):
-        "string:\(interner.resolve(value))"
     case let .nameRef(name, _):
-        nameRefKey(name: name, conditionID: conditionID, sema: sema, interner: interner)
+        return nameRefKey(name: name, conditionID: conditionID, sema: sema, interner: interner)
     case let .memberCall(_, calleeName, _, args, _):
-        memberCallKey(calleeName: calleeName, args: args, conditionID: conditionID, sema: sema, interner: interner)
+        return memberCallKey(calleeName: calleeName, args: args, conditionID: conditionID, sema: sema, interner: interner)
     case let .isCheck(_, typeRefID, negated, _):
-        isCheckKey(typeRefID: typeRefID, negated: negated, conditionID: conditionID, sema: sema)
+        return isCheckKey(typeRefID: typeRefID, negated: negated, conditionID: conditionID, sema: sema)
     default:
-        nil
+        return nil
+    }
+}
+
+/// Returns a canonical key for literal expression types, or `nil` if
+/// the expression is not a literal.
+private func literalConditionKey(_ expr: Expr, interner: StringInterner) -> String? {
+    switch expr {
+    case let .intLiteral(value, _): "int:\(value)"
+    case let .longLiteral(value, _): "long:\(value)"
+    case let .doubleLiteral(value, _): "double:\(value)"
+    case let .floatLiteral(value, _): "float:\(value)"
+    case let .charLiteral(value, _): "char:\(value)"
+    case let .boolLiteral(value, _): "bool:\(value)"
+    case let .stringLiteral(value, _): "string:\(interner.resolve(value))"
+    default: nil
     }
 }
 
