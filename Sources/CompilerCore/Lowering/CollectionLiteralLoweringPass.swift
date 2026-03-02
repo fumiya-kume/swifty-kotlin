@@ -1,18 +1,18 @@
 // swiftlint:disable file_length
 import Foundation
 
-// swiftlint:disable type_body_length
-/// Rewrites `listOf(...)`, `mapOf(...)`, `arrayOf(...)` and related collection
-/// factory calls into runtime ABI calls (`kk_list_of`, `kk_map_of`, etc.).
-///
-/// Also rewrites collection member accesses (`.size`, `.get()`, `.contains()`)
-/// and iterator patterns (`kk_range_iterator`/`kk_range_hasNext`/`kk_range_next`)
-/// on collection-typed expressions to their collection-specific equivalents.
-///
-/// Must run **before** `ForLoweringPass` so that for-loop desugaring emits
-/// generic `kk_range_*` calls which this pass can then specialize for collections.
-/// In practice this pass runs **after** `ForLoweringPass` and rewrites the
-/// already-emitted `kk_range_*` calls to `kk_list_*` equivalents.
+// Rewrites `listOf(...)`, `mapOf(...)`, `arrayOf(...)` and related collection
+// factory calls into runtime ABI calls (`kk_list_of`, `kk_map_of`, etc.).
+//
+// Also rewrites collection member accesses (`.size`, `.get()`, `.contains()`)
+// and iterator patterns (`kk_range_iterator`/`kk_range_hasNext`/`kk_range_next`)
+// on collection-typed expressions to their collection-specific equivalents.
+//
+// Must run **before** `ForLoweringPass` so that for-loop desugaring emits
+// generic `kk_range_*` calls which this pass can then specialize for collections.
+// In practice this pass runs **after** `ForLoweringPass` and rewrites the
+// already-emitted `kk_range_*` calls to `kk_list_*` equivalents.
+// swiftlint:disable:next type_body_length
 final class CollectionLiteralLoweringPass: LoweringPass {
     static let name = "CollectionLiteralLowering"
 
@@ -703,4 +703,3 @@ final class CollectionLiteralLoweringPass: LoweringPass {
         module.recordLowering(Self.name)
     }
 }
-// swiftlint:enable type_body_length
