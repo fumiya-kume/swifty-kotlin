@@ -29,13 +29,14 @@ final class LambdaLowerer {
         let boundType = sema.bindings.exprTypes[exprID]
         // For SAM-converted lambdas, the bound type is the interface type.
         // Use the stored underlying function type instead.
-        let effectiveFuncTypeID: TypeID? = if sema.bindings.isSamConversion(exprID),
-            let samFuncType = sema.bindings.samUnderlyingFunctionType(for: exprID)
-        {
-            samFuncType
-        } else {
-            boundType
-        }
+        let effectiveFuncTypeID: TypeID? = {
+            if sema.bindings.isSamConversion(exprID),
+               let samFuncType = sema.bindings.samUnderlyingFunctionType(for: exprID)
+            {
+                return samFuncType
+            }
+            return boundType
+        }()
         let functionType = effectiveFuncTypeID.flatMap { typeID -> FunctionType? in
             guard case let .functionType(functionType) = sema.types.kind(of: typeID) else {
                 return nil
