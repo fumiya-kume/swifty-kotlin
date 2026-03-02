@@ -381,7 +381,6 @@ public final class SymbolTable {
     public func setFunctionSignature(_ signature: FunctionSignature, for symbol: SymbolID) {
         functionSignatures[symbol] = signature
     }
-
     public func functionSignature(for symbol: SymbolID) -> FunctionSignature? {
         functionSignatures[symbol]
     }
@@ -389,7 +388,6 @@ public final class SymbolTable {
     public func setPropertyType(_ type: TypeID, for symbol: SymbolID) {
         propertyTypes[symbol] = type
     }
-
     public func propertyType(for symbol: SymbolID) -> TypeID? {
         propertyTypes[symbol]
     }
@@ -397,7 +395,6 @@ public final class SymbolTable {
     public func setDirectSupertypes(_ supertypes: [SymbolID], for symbol: SymbolID) {
         directSupertypes[symbol] = supertypes
     }
-
     public func directSupertypes(for symbol: SymbolID) -> [SymbolID] {
         directSupertypes[symbol] ?? []
     }
@@ -405,7 +402,6 @@ public final class SymbolTable {
     public func setSupertypeTypeArgs(_ args: [TypeArg], for child: SymbolID, supertype parent: SymbolID) {
         supertypeTypeArgsMap[child, default: [:]][parent] = args
     }
-
     public func supertypeTypeArgs(for child: SymbolID, supertype parent: SymbolID) -> [TypeArg] {
         supertypeTypeArgsMap[child]?[parent] ?? []
     }
