@@ -18,7 +18,8 @@ extension KIRLoweringDriver {
         let returnType = signature?.returnType ?? sema.types.unitType
         var body: KIRLoweringEmitContext = [.beginBlock]
         if let receiverExpr = ctx.currentImplicitReceiverExprID,
-           let recvSym = ctx.currentImplicitReceiverSymbol {
+           let recvSym = ctx.currentImplicitReceiverSymbol
+        {
             body.append(.constValue(result: receiverExpr, value: .symbolRef(recvSym)))
         }
         lowerFunDeclBody(function, shared: shared, body: &body)
