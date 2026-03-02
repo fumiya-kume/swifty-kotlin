@@ -121,24 +121,22 @@ public func kk_list_iterator_next(_ iterRaw: Int) -> Int {
 /// - Parameter listRaw: Opaque handle to a `RuntimeListBox`.
 /// - Returns: Opaque handle (Int) to a `RuntimeStringBox` containing the string.
 @_cdecl("kk_list_to_string")
-public func kk_list_to_string(_ listRaw: Int) -> Int {
+public func kk_list_to_string(_ listRaw: Int) -> UnsafeMutableRawPointer {
     guard let list = runtimeListBox(from: listRaw) else {
         let str = "[]"
         let utf8 = Array(str.utf8)
-        let ptr = utf8.withUnsafeBufferPointer { buf in
+        return utf8.withUnsafeBufferPointer { buf in
             kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
         }
-        return Int(bitPattern: ptr)
     }
     let parts = list.elements.map { elem -> String in
         runtimeElementToString(elem)
     }
     let str = "[" + parts.joined(separator: ", ") + "]"
     let utf8 = Array(str.utf8)
-    let ptr = utf8.withUnsafeBufferPointer { buf in
+    return utf8.withUnsafeBufferPointer { buf in
         kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
     }
-    return Int(bitPattern: ptr)
 }
 
 // MARK: - Map Functions (STDLIB-001)
@@ -272,14 +270,13 @@ public func kk_map_iterator_next(_ iterRaw: Int) -> Int {
 /// - Parameter mapRaw: Opaque handle to a `RuntimeMapBox`.
 /// - Returns: Opaque handle (Int) to a `RuntimeStringBox` containing the string.
 @_cdecl("kk_map_to_string")
-public func kk_map_to_string(_ mapRaw: Int) -> Int {
+public func kk_map_to_string(_ mapRaw: Int) -> UnsafeMutableRawPointer {
     guard let map = runtimeMapBox(from: mapRaw) else {
         let str = "{}"
         let utf8 = Array(str.utf8)
-        let ptr = utf8.withUnsafeBufferPointer { buf in
+        return utf8.withUnsafeBufferPointer { buf in
             kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
         }
-        return Int(bitPattern: ptr)
     }
     let parts = zip(map.keys, map.values).map { key, value -> String in
         let keyStr = runtimeElementToString(key)
@@ -288,10 +285,9 @@ public func kk_map_to_string(_ mapRaw: Int) -> Int {
     }
     let str = "{" + parts.joined(separator: ", ") + "}"
     let utf8 = Array(str.utf8)
-    let ptr = utf8.withUnsafeBufferPointer { buf in
+    return utf8.withUnsafeBufferPointer { buf in
         kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
     }
-    return Int(bitPattern: ptr)
 }
 
 // MARK: - Array Size (STDLIB-001)

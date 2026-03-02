@@ -77,7 +77,7 @@ public extension RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "listRaw", type: .intptr),
             ],
-            returnType: .intptr,
+            returnType: .opaquePointer,
             section: "Collection"
         ),
         // Map
@@ -130,7 +130,7 @@ public extension RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "mapRaw", type: .intptr),
             ],
-            returnType: .intptr,
+            returnType: .opaquePointer,
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(

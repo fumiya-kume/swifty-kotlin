@@ -680,7 +680,7 @@ public enum RuntimeABIExterns {
     public static let kk_list_to_string = ExternDecl(
         name: "kk_list_to_string",
         parameterTypes: ["intptr_t"],
-        returnType: "intptr_t"
+        returnType: "void *"
     )
 
     public static let kk_map_of = ExternDecl(
@@ -716,7 +716,7 @@ public enum RuntimeABIExterns {
     public static let kk_map_to_string = ExternDecl(
         name: "kk_map_to_string",
         parameterTypes: ["intptr_t"],
-        returnType: "intptr_t"
+        returnType: "void *"
     )
 
     public static let kk_map_iterator = ExternDecl(
