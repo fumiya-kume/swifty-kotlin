@@ -360,11 +360,17 @@ final class DeclTypeChecker {
         }
         let functionCtx = ctx.copying(scope: functionScope, implicitReceiverType: signature.receiverType)
 
-        // Abstract methods (interface functions without a body) have .unit as their
-        // body sentinel. Skip body type inference and the subtype constraint for
-        // these declarations – there is no body expression whose type needs to be
-        // checked against the declared return type.
-        guard function.body != .unit else {
+        // Abstract methods (interface/abstract-class functions without a body) use
+        // .unit as their body sentinel. Skip body type inference and the subtype
+        // constraint for these declarations – there is no body expression whose
+        // type needs to be checked against the declared return type.
+        // We gate on the abstractType flag so that only legally bodyless functions
+        // are skipped; a non-abstract function missing its body will still hit the
+        // Unit <: ReturnType constraint and produce a diagnostic.
+        if function.body == .unit,
+           let sym = sema.symbols.symbol(symbol),
+           sym.flags.contains(.abstractType)
+        {
             return
         }
 
