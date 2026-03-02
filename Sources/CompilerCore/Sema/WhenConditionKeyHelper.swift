@@ -2,10 +2,10 @@ import Foundation
 
 // MARK: - When Condition Key Helper
 
-// Returns a canonical string key for a when-branch condition expression,
-// used for detecting duplicate conditions (Sema) and deduplicating
-// OR-chain comparisons (KIR).  Returns `nil` for conditions that
-// cannot be reliably compared (e.g. arbitrary expressions).
+/// Returns a canonical string key for a when-branch condition expression,
+/// used for detecting duplicate conditions (Sema) and deduplicating
+/// OR-chain comparisons (KIR).  Returns `nil` for conditions that
+/// cannot be reliably compared (e.g. arbitrary expressions).
 func whenConditionKey(
     for conditionID: ExprID,
     ast: ASTModule,
@@ -23,9 +23,9 @@ func whenConditionKey(
     )
 }
 
-// Computes a canonical key from an already-resolved expression node.
-// Split out to keep the switch statement in its own function so that
-// the top-level helper stays below the cyclomatic-complexity threshold.
+/// Computes a canonical key from an already-resolved expression node.
+/// Split out to keep the switch statement in its own function so that
+/// the top-level helper stays below the cyclomatic-complexity threshold.
 private func whenConditionKeyFromExpr(
     _ expr: Expr,
     conditionID: ExprID,
@@ -34,27 +34,27 @@ private func whenConditionKeyFromExpr(
 ) -> String? {
     switch expr {
     case let .intLiteral(value, _):
-        return "int:\(value)"
+        "int:\(value)"
     case let .longLiteral(value, _):
-        return "long:\(value)"
+        "long:\(value)"
     case let .doubleLiteral(value, _):
-        return "double:\(value)"
+        "double:\(value)"
     case let .floatLiteral(value, _):
-        return "float:\(value)"
+        "float:\(value)"
     case let .charLiteral(value, _):
-        return "char:\(value)"
+        "char:\(value)"
     case let .boolLiteral(value, _):
-        return "bool:\(value)"
+        "bool:\(value)"
     case let .stringLiteral(value, _):
-        return "string:\(interner.resolve(value))"
+        "string:\(interner.resolve(value))"
     case let .nameRef(name, _):
-        return nameRefKey(name: name, conditionID: conditionID, sema: sema, interner: interner)
+        nameRefKey(name: name, conditionID: conditionID, sema: sema, interner: interner)
     case let .memberCall(_, calleeName, _, args, _):
-        return memberCallKey(calleeName: calleeName, args: args, conditionID: conditionID, sema: sema, interner: interner)
+        memberCallKey(calleeName: calleeName, args: args, conditionID: conditionID, sema: sema, interner: interner)
     case let .isCheck(_, typeRefID, negated, _):
-        return isCheckKey(typeRefID: typeRefID, negated: negated, conditionID: conditionID, sema: sema)
+        isCheckKey(typeRefID: typeRefID, negated: negated, conditionID: conditionID, sema: sema)
     default:
-        return nil
+        nil
     }
 }
 
@@ -75,11 +75,11 @@ private func nameRefKey(
 }
 
 private func memberCallKey(
-    calleeName: InternedString,
+    calleeName _: InternedString,
     args: [CallArgument],
     conditionID: ExprID,
     sema: SemaModule,
-    interner: StringInterner
+    interner _: StringInterner
 ) -> String? {
     // Only produce a key for argument-less enum-style member references.
     // When args are non-empty the call may return different values for
@@ -106,8 +106,8 @@ private func isCheckKey(
 
 // MARK: - Deduplication Helper
 
-// Removes duplicate conditions from a when-branch condition list,
-// keeping the first occurrence of each canonically-equal condition.
+/// Removes duplicate conditions from a when-branch condition list,
+/// keeping the first occurrence of each canonically-equal condition.
 func deduplicateWhenConditions(
     _ conditions: [ExprID],
     ast: ASTModule,
