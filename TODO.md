@@ -64,13 +64,13 @@
   - **完了条件**: `val list: MutableList<out Number>` で `.add(...)` が型エラー、`.get(0)` が `Number` になる
 
 
-- [ ] TYPE-004: typealias の generic alias・循環検出・展開深度制限を完全実装する（spec.md J6/J8）
-  - [ ] `typealias Func<T> = (T) -> T` のような generic typealias を Sema で展開する
-  - [ ] 循環 alias（`typealias A = B; typealias B = A`）を detect し `KSWIFTK-SEMA-ALIAS-CYCLE` を出す
-  - [ ] alias 展開後の型が variance 制約を壊さないことを検証する
-  - [ ] recursive type の展開に最大深度制限（例: 32 段）を設けてループを防ぐ
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task TYPE-004`
-  - **完了条件**: `typealias Predicate<T> = (T) -> Boolean` が call-site で正しく展開され型チェックが通る
+- [x] TYPE-004: typealias の generic alias・循環検出・展開深度制限を完全実装する（spec.md J6/J8）
+  - [x] `typealias Func<T> = (T) -> T` のような generic typealias を Sema で展開する
+  - [x] 循環 alias（`typealias A = B; typealias B = A`）を detect し `KSWIFTK-SEMA-ALIAS-CYCLE` を出す
+  - [x] alias 展開後の型が variance 制約を壊さないことを検証する
+  - [x] recursive type の展開に最大深度制限（例: 32 段）を設けてループを防ぐ
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task TYPE-004`（2026-03-02: diff case `Scripts/diff_cases/generic_typealias.kt` を追加）
+  - **完了条件**: `typealias Predicate<T> = (T) -> Boolean` が call-site で正しく展開され型チェックが通る（`GoldenCases/Sema/generic_typealias.kt` で確認）
 
 ---
 

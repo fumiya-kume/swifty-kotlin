@@ -107,6 +107,11 @@
           "type": "golden-sema",
           "name": "generic_typealias",
           "template": "Scripts/test_templates/sema/generic_typealias.kt"
+        },
+        {
+          "type": "diff",
+          "name": "generic_typealias",
+          "template": "Scripts/test_templates/diff/generic_typealias.kt"
         }
       ]
     },

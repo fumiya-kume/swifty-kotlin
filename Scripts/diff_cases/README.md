@@ -28,6 +28,7 @@ Cases:
 - `nothing_return_throw.kt`: `Nothing` 分岐の parity（`if` 内 `throw` / `return` による分岐合流）
 - `intersection_definitely_non_null.kt`: `T & Any`（definitely non-null）での通常呼び出しと safe-call の parity
 - `star_projection.kt`: use-site star projection（`Box<*>`）の型解決 parity
+- `generic_typealias.kt`: 循環 typealias（`A = B`, `B = A`）の compile-error parity
 - `try_expression.kt`: `try` 式 + `finally` 実行順の parity
 
 The set intentionally includes both successful programs and one compile-error case.
