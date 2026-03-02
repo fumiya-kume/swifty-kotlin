@@ -553,7 +553,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     if callee == mapName || callee == filterName || callee == forEachName
                         || callee == flatMapName || callee == anyName || callee == noneName
                         || callee == allName
-                    {
+                    { // swiftlint:disable:this opening_brace
                         // args = [receiver, lambdaFnPtr]
                         if arguments.count == 2 {
                             let receiverID = arguments[0]
@@ -592,7 +592,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                         }
                     }
 
-                    // --- Rewrite println / kk_println_any / kk_any_to_string on list/map → kk_list_to_string / kk_map_to_string ---
+                    // Rewrite println on list/map → kk_list_to_string / kk_map_to_string
                     if callee == kkPrintlnAnyName || callee == printlnName, arguments.count == 1 {
                         let argID = arguments[0]
                         if listExprIDs.contains(argID.rawValue) {

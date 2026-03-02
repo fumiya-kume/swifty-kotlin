@@ -6,7 +6,7 @@ extension CallLowerer {
         "isEmpty", "first", "last", "indexOf",
         "count", "iterator",
         "map", "filter", "forEach", "flatMap",
-        "any", "none", "all",
+        "any", "none", "all", // swiftlint:disable:this trailing_comma
     ]
 
     func lowerMemberCallExpr(

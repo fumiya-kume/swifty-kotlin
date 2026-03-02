@@ -103,7 +103,7 @@ extension BuildASTPhase.ExpressionParser {
             }
             if matches(.symbol(.lParen)),
                let open = consume()
-            {
+            { // swiftlint:disable:this opening_brace
                 args = parseCallArguments()
                 let close = consumeIf(.symbol(.rParen))
                 memberEndRange = close?.range ?? open.range
@@ -111,7 +111,7 @@ extension BuildASTPhase.ExpressionParser {
             // Trailing lambda: attach `{ ... }` as the last argument (Kotlin grammar).
             if matches(.symbol(.lBrace)),
                let trailingLambda = parseLambdaLiteral()
-            {
+            { // swiftlint:disable:this opening_brace
                 args.append(CallArgument(expr: trailingLambda))
                 memberEndRange = astArena.exprRange(trailingLambda) ?? memberEndRange
             }

@@ -491,7 +491,7 @@ public final class LLVMBackend {
             "kk_list_flatMap",
             "kk_list_any",
             "kk_list_none",
-            "kk_list_all",
+            "kk_list_all", // swiftlint:disable:this trailing_comma
         ]
 
         for decl in module.arena.declarations {
