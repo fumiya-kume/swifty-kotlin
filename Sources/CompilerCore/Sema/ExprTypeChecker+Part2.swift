@@ -265,8 +265,8 @@ extension ExprTypeChecker {
         // and the expected function type has exactly one parameter, synthesise an
         // `it` binding so the body can reference it.
         let effectiveParams: [InternedString] = if params.isEmpty,
-            let expectedFunctionType,
-            expectedFunctionType.params.count == 1
+                                                   let expectedFunctionType,
+                                                   expectedFunctionType.params.count == 1
         {
             [ctx.interner.intern("it")]
         } else {

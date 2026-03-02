@@ -593,7 +593,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     }
 
                     // --- Rewrite println / kk_println_any / kk_any_to_string on list/map → kk_list_to_string / kk_map_to_string ---
-                    if (callee == kkPrintlnAnyName || callee == printlnName), arguments.count == 1 {
+                    if callee == kkPrintlnAnyName || callee == printlnName, arguments.count == 1 {
                         let argID = arguments[0]
                         if listExprIDs.contains(argID.rawValue) {
                             let strResult = module.arena.appendExpr(
