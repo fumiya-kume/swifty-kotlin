@@ -12,3 +12,7 @@ fun classifyColor(c: Color): String = when (c) {
     Color.Red, Color.Green -> "warm"
     Color.Blue -> "cold"
 }
+
+fun classifyBool(b: Boolean): String = when (b) {
+    true, false -> "always"
+}

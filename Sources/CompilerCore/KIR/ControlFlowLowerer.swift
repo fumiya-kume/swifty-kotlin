@@ -681,12 +681,16 @@ final class ControlFlowLowerer {
             if branch.conditions.count > 1 {
                 // Multiple conditions: build an OR-chain that jumps to the body label
                 // as soon as any condition is true.
+                // CTRL-001: Deduplicate conditions to avoid redundant comparisons.
+                let deduplicatedConditions = deduplicateWhenConditions(
+                    branch.conditions, ast: ast, sema: sema, interner: interner
+                )
                 let bodyLabel: Int32 = driver.ctx.makeLoopLabel()
                 // Hoist the true constant outside the loop so it's reused for all non-last conditions.
                 let hoistedTrueID = arena.appendExpr(.boolLiteral(true), type: boolType)
                 instructions.append(.constValue(result: hoistedTrueID, value: .boolLiteral(true)))
 
-                for (condIdx, conditionExprID) in branch.conditions.enumerated() {
+                for (condIdx, conditionExprID) in deduplicatedConditions.enumerated() {
                     let matchesID = lowerWhenConditionMatch(
                         conditionExprID: conditionExprID,
                         subjectExprID: subject,
@@ -699,7 +703,7 @@ final class ControlFlowLowerer {
                         propertyConstantInitializers: propertyConstantInitializers,
                         instructions: &instructions
                     )
-                    let isLastCondition = condIdx == branch.conditions.count - 1
+                    let isLastCondition = condIdx == deduplicatedConditions.count - 1
                     if isLastCondition {
                         // Last condition: if false, jump to next branch
                         instructions.append(.jumpIfEqual(lhs: matchesID, rhs: falseID, target: nextBranchLabels[index]))
