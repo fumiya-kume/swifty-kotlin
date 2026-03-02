@@ -257,8 +257,22 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
                  "setOf", "mutableSetOf", "emptySet",
                  "listOfNotNull":
                 sema.bindings.markCollectionExpr(id)
-                sema.bindings.bindExprType(id, type: sema.types.anyType)
-                return sema.types.anyType
+                // Prefer the expected type from context (e.g. a type annotation
+                // on the receiving variable) so that `val list: List<String?> =
+                // listOf(...)` propagates the full generic type.
+                let collectionType: TypeID
+                if let expectedType, expectedType != sema.types.errorType {
+                    collectionType = expectedType
+                } else if !argTypes.isEmpty {
+                    // Infer element type from arguments via LUB so that
+                    // `listOf("a", null)` produces a nullable element type.
+                    let elementType = sema.types.lub(argTypes)
+                    collectionType = elementType
+                } else {
+                    collectionType = sema.types.anyType
+                }
+                sema.bindings.bindExprType(id, type: collectionType)
+                return collectionType
             default:
                 break
             }

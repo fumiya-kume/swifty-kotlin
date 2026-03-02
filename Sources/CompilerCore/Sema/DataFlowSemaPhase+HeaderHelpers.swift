@@ -488,5 +488,150 @@ extension DataFlowSemaPhase {
                 for: vetoableSymbol
             )
         }
+
+        // ------------------------------------------------------------------
+        // Register `kotlin.collections.List<E>` interface stub.
+        // Kotlin declaration: interface List<out E> { operator fun get(index: Int): E; ... }
+        // ------------------------------------------------------------------
+        let kotlinCollectionsPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("collections")]
+        if symbols.lookup(fqName: kotlinCollectionsPkg) == nil {
+            _ = symbols.define(
+                kind: .package,
+                name: interner.intern("collections"),
+                fqName: kotlinCollectionsPkg,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+
+        let listName = interner.intern("List")
+        let listFQName = kotlinCollectionsPkg + [listName]
+        let listInterfaceSymbol: SymbolID = if let existing = symbols.lookup(fqName: listFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .interface,
+                name: listName,
+                fqName: listFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+
+        // Define type parameter E for List<E>
+        let listTypeParamName = interner.intern("E")
+        let listTypeParamFQName = listFQName + [listTypeParamName]
+        let listTypeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: listTypeParamName,
+            fqName: listTypeParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let listTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: listTypeParamSymbol, nullability: .nonNull
+        )))
+
+        // Register operator fun get(index: Int): E on List<E>
+        let listGetName = interner.intern("get")
+        let listGetFQName = listFQName + [listGetName]
+        if symbols.lookup(fqName: listGetFQName) == nil {
+            let listReceiverType = types.make(.classType(ClassType(
+                classSymbol: listInterfaceSymbol,
+                args: [.out(listTypeParamType)],
+                nullability: .nonNull
+            )))
+            let listGetSymbol = symbols.define(
+                kind: .function,
+                name: listGetName,
+                fqName: listGetFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .operatorFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: listGetSymbol)
+            let intType = types.intType
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: listReceiverType,
+                    parameterTypes: [intType],
+                    returnType: listTypeParamType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: listGetSymbol
+            )
+        }
+
+        // ------------------------------------------------------------------
+        // Register `kotlin.collections.MutableList<E>` interface stub.
+        // Kotlin declaration: interface MutableList<E> : List<E> {
+        //     operator fun set(index: Int, element: E): E; ...
+        // }
+        // ------------------------------------------------------------------
+        let mutableListName = interner.intern("MutableList")
+        let mutableListFQName = kotlinCollectionsPkg + [mutableListName]
+        let mutableListInterfaceSymbol: SymbolID = if let existing = symbols.lookup(fqName: mutableListFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .interface,
+                name: mutableListName,
+                fqName: mutableListFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        // MutableList extends List
+        symbols.setDirectSupertypes([listInterfaceSymbol], for: mutableListInterfaceSymbol)
+
+        // Define type parameter E for MutableList<E>
+        let mlTypeParamFQName = mutableListFQName + [listTypeParamName]
+        let mlTypeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: listTypeParamName,
+            fqName: mlTypeParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let mlTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: mlTypeParamSymbol, nullability: .nonNull
+        )))
+
+        // Register operator fun set(index: Int, element: E): E on MutableList<E>
+        let mlSetName = interner.intern("set")
+        let mlSetFQName = mutableListFQName + [mlSetName]
+        if symbols.lookup(fqName: mlSetFQName) == nil {
+            let mlReceiverType = types.make(.classType(ClassType(
+                classSymbol: mutableListInterfaceSymbol,
+                args: [.invariant(mlTypeParamType)],
+                nullability: .nonNull
+            )))
+            let mlSetSymbol = symbols.define(
+                kind: .function,
+                name: mlSetName,
+                fqName: mlSetFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .operatorFunction]
+            )
+            symbols.setParentSymbol(mutableListInterfaceSymbol, for: mlSetSymbol)
+            let intType = types.intType
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: mlReceiverType,
+                    parameterTypes: [intType, mlTypeParamType],
+                    returnType: mlTypeParamType,
+                    typeParameterSymbols: [mlTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: mlSetSymbol
+            )
+        }
     }
 }

@@ -63,6 +63,16 @@ struct TypeCheckHelpers {
         case "IntArray":
             return sema.types.intType
         default:
+            // For generic collection types (e.g. List<String?>, MutableList<Int>),
+            // extract the first type argument as the element type.
+            if !classType.args.isEmpty {
+                switch classType.args[0] {
+                case let .invariant(inner), let .out(inner), let .in(inner):
+                    return inner
+                case .star:
+                    return sema.types.nullableAnyType
+                }
+            }
             return nil
         }
     }

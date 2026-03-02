@@ -9,11 +9,18 @@ symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=
 symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
 symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
 symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
-symbol s11 kind=class fq=golden.sema.Widget vis=public flags=_
-symbol s12 kind=constructor fq=golden.sema.Widget.<init> vis=public flags=_ sig=recv=Class#11 params=[] ret=Class#11 suspend=0 defaults=[] vararg=[]
-symbol s13 kind=property fq=golden.sema.Widget.computed vis=public flags=_ type=String
-symbol s14 kind=property fq=golden.sema.Widget.backed vis=public flags=mutable type=Int
+symbol s11 kind=package fq=kotlin.collections vis=public flags=synthetic
+symbol s12 kind=interface fq=kotlin.collections.List vis=public flags=synthetic
+symbol s13 kind=typeParameter fq=kotlin.collections.List.E vis=private flags=_
+symbol s14 kind=function fq=kotlin.collections.List.get vis=public flags=synthetic|operatorFunction sig=recv=Class#12<out T#13> params=[Int] ret=T#13 suspend=0 defaults=[] vararg=[]
+symbol s15 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
+symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
+symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
+symbol s18 kind=class fq=golden.sema.Widget vis=public flags=_
+symbol s19 kind=constructor fq=golden.sema.Widget.<init> vis=public flags=_ sig=recv=Class#18 params=[] ret=Class#18 suspend=0 defaults=[] vararg=[]
+symbol s20 kind=property fq=golden.sema.Widget.computed vis=public flags=_ type=String
+symbol s21 kind=property fq=golden.sema.Widget.backed vis=public flags=mutable type=Int
 file f0 package=golden.sema
-  decl d2 class Widget sym=s11
-expr e0 string(hello) type=String ref=s13
-expr e1 int(0) type=Int ref=s14
+  decl d2 class Widget sym=s18
+expr e0 string(hello) type=String ref=s20
+expr e1 int(0) type=Int ref=s21

@@ -9,15 +9,22 @@ symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=
 symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
 symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
 symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
-symbol s11 kind=enumClass fq=golden.sema.Color vis=public flags=_
-symbol s12 kind=constructor fq=golden.sema.Color.<init> vis=public flags=_ sig=recv=Class#11 params=[] ret=Class#11 suspend=0 defaults=[] vararg=[]
-symbol s13 kind=field fq=golden.sema.Color.RED vis=public flags=_ type=Class#11
-symbol s14 kind=field fq=golden.sema.Color.GREEN vis=public flags=_ type=Class#11
-symbol s15 kind=field fq=golden.sema.Color.BLUE vis=public flags=_ type=Class#11
-symbol s16 kind=enumClass fq=golden.sema.Direction vis=public flags=_
-symbol s17 kind=constructor fq=golden.sema.Direction.<init> vis=public flags=_ sig=recv=Class#16 params=[] ret=Class#16 suspend=0 defaults=[] vararg=[]
-symbol s18 kind=field fq=golden.sema.Direction.NORTH vis=public flags=_ type=Class#16
-symbol s19 kind=field fq=golden.sema.Direction.SOUTH vis=public flags=_ type=Class#16
+symbol s11 kind=package fq=kotlin.collections vis=public flags=synthetic
+symbol s12 kind=interface fq=kotlin.collections.List vis=public flags=synthetic
+symbol s13 kind=typeParameter fq=kotlin.collections.List.E vis=private flags=_
+symbol s14 kind=function fq=kotlin.collections.List.get vis=public flags=synthetic|operatorFunction sig=recv=Class#12<out T#13> params=[Int] ret=T#13 suspend=0 defaults=[] vararg=[]
+symbol s15 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
+symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
+symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
+symbol s18 kind=enumClass fq=golden.sema.Color vis=public flags=_
+symbol s19 kind=constructor fq=golden.sema.Color.<init> vis=public flags=_ sig=recv=Class#18 params=[] ret=Class#18 suspend=0 defaults=[] vararg=[]
+symbol s20 kind=field fq=golden.sema.Color.RED vis=public flags=_ type=Class#18
+symbol s21 kind=field fq=golden.sema.Color.GREEN vis=public flags=_ type=Class#18
+symbol s22 kind=field fq=golden.sema.Color.BLUE vis=public flags=_ type=Class#18
+symbol s23 kind=enumClass fq=golden.sema.Direction vis=public flags=_
+symbol s24 kind=constructor fq=golden.sema.Direction.<init> vis=public flags=_ sig=recv=Class#23 params=[] ret=Class#23 suspend=0 defaults=[] vararg=[]
+symbol s25 kind=field fq=golden.sema.Direction.NORTH vis=public flags=_ type=Class#23
+symbol s26 kind=field fq=golden.sema.Direction.SOUTH vis=public flags=_ type=Class#23
 file f0 package=golden.sema
-  decl d0 class Color sym=s11
-  decl d1 class Direction sym=s16
+  decl d0 class Color sym=s18
+  decl d1 class Direction sym=s23

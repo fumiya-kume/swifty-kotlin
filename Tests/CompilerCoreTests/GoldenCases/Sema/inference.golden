@@ -9,29 +9,36 @@ symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=
 symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
 symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
 symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
-symbol s11 kind=function fq=choose vis=public flags=_ sig=recv=_ params=[Boolean,Int,Int] ret=Int suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s12 kind=valueParameter fq=choose.$11.flag vis=private flags=_
-symbol s13 kind=valueParameter fq=choose.$11.left vis=private flags=_
-symbol s14 kind=valueParameter fq=choose.$11.right vis=private flags=_
-symbol s15 kind=function fq=useWhen vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s16 kind=valueParameter fq=useWhen.$15.v vis=private flags=_
+symbol s11 kind=package fq=kotlin.collections vis=public flags=synthetic
+symbol s12 kind=interface fq=kotlin.collections.List vis=public flags=synthetic
+symbol s13 kind=typeParameter fq=kotlin.collections.List.E vis=private flags=_
+symbol s14 kind=function fq=kotlin.collections.List.get vis=public flags=synthetic|operatorFunction sig=recv=Class#12<out T#13> params=[Int] ret=T#13 suspend=0 defaults=[] vararg=[]
+symbol s15 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
+symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
+symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
+symbol s18 kind=function fq=choose vis=public flags=_ sig=recv=_ params=[Boolean,Int,Int] ret=Int suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s19 kind=valueParameter fq=choose.$18.flag vis=private flags=_
+symbol s20 kind=valueParameter fq=choose.$18.left vis=private flags=_
+symbol s21 kind=valueParameter fq=choose.$18.right vis=private flags=_
+symbol s22 kind=function fq=useWhen vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s23 kind=valueParameter fq=useWhen.$22.v vis=private flags=_
 file f0 package=_
-  decl d0 fun choose suspend=0 inline=0 sym=s11
-  decl d1 fun useWhen suspend=0 inline=0 sym=s15
-expr e0 name(flag) type=Boolean ref=s12
-expr e1 name(left) type=Int ref=s13
-expr e2 name(right) type=Int ref=s14
+  decl d0 fun choose suspend=0 inline=0 sym=s18
+  decl d1 fun useWhen suspend=0 inline=0 sym=s22
+expr e0 name(flag) type=Boolean ref=s19
+expr e1 name(left) type=Int ref=s20
+expr e2 name(right) type=Int ref=s21
 expr e3 if cond=e0 then=e1 else=e2 type=Int
-expr e4 name(v) type=Int ref=s16
+expr e4 name(v) type=Int ref=s23
 expr e5 int(1) type=Int
 expr e6 name(choose) type=_
 expr e7 bool(true) type=Boolean
-expr e8 name(v) type=Int ref=s16
+expr e8 name(v) type=Int ref=s23
 expr e9 int(0) type=Int
-expr e10 call callee=e6 args=[_:e7,_:e8,_:e9] type=Int call=s11 map=[0->0,1->1,2->2] targs=[]
+expr e10 call callee=e6 args=[_:e7,_:e8,_:e9] type=Int call=s18 map=[0->0,1->1,2->2] targs=[]
 expr e11 name(choose) type=_
 expr e12 bool(false) type=Boolean
 expr e13 int(0) type=Int
-expr e14 name(v) type=Int ref=s16
-expr e15 call callee=e11 args=[_:e12,_:e13,_:e14] type=Int call=s11 map=[0->0,1->1,2->2] targs=[]
+expr e14 name(v) type=Int ref=s23
+expr e15 call callee=e11 args=[_:e12,_:e13,_:e14] type=Int call=s18 map=[0->0,1->1,2->2] targs=[]
 expr e16 when subject=e4 branches=[e5->e10] else=e15 type=Int
