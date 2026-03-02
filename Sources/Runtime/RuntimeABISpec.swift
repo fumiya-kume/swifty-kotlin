@@ -1,4 +1,4 @@
-// swiftlint:disable file_length type_body_length
+// swiftlint:disable file_length type_body_length trailing_comma
 public enum RuntimeABICType: String, Equatable, Sendable {
     case void
     case uint32 = "uint32_t"
@@ -351,7 +351,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_kxmini_async_await",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr)
+                RuntimeABIParameter(name: "handle", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -501,7 +501,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_channel_close",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr)
+                RuntimeABIParameter(name: "handle", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -774,7 +774,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_lazy_get_value",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr)
+                RuntimeABIParameter(name: "handle", type: .intptr),
             ],
             returnType: .intptr,
             section: "Delegate"
@@ -782,7 +782,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_lazy_is_initialized",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr)
+                RuntimeABIParameter(name: "handle", type: .intptr),
             ],
             returnType: .intptr,
             section: "Delegate"
@@ -800,7 +800,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_observable_get_value",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr)
+                RuntimeABIParameter(name: "handle", type: .intptr),
             ],
             returnType: .intptr,
             section: "Delegate"
@@ -827,7 +827,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_vetoable_get_value",
             parameters: [
-                RuntimeABIParameter(name: "handle", type: .intptr)
+                RuntimeABIParameter(name: "handle", type: .intptr),
             ],
             returnType: .intptr,
             section: "Delegate"
