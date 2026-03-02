@@ -988,12 +988,12 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase {
 
         let expectedGetterSymbol = SymbolID(rawValue: -12000 - computedPropertySymbol.id.rawValue)
         let getterSymbols = module.arena.declarations.compactMap { decl -> SymbolID? in
-            guard case let .function(func_) = decl,
-                  interner.resolve(func_.name) == "get"
+            guard case let .function(kirFunc) = decl,
+                  interner.resolve(kirFunc.name) == "get"
             else {
                 return nil
             }
-            return func_.symbol
+            return kirFunc.symbol
         }
         XCTAssertTrue(getterSymbols.contains(expectedGetterSymbol),
                       "Getter accessor symbol for computed property should be emitted. expected=\(expectedGetterSymbol), actual=\(getterSymbols)")
@@ -1028,12 +1028,12 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase {
         // the property symbol via SyntheticSymbolScheme.
         let getName = interner.intern("get")
         let getterFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
-            guard case let .function(func_) = decl,
-                  func_.name == getName
+            guard case let .function(kirFunc) = decl,
+                  kirFunc.name == getName
             else {
                 return nil
             }
-            return func_
+            return kirFunc
         }
 
         // There should be at least two getter accessors — one per class.
@@ -1110,12 +1110,12 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase {
         // function emitted.
         let getName = interner.intern("get")
         let getterFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
-            guard case let .function(func_) = decl,
-                  func_.name == getName
+            guard case let .function(kirFunc) = decl,
+                  kirFunc.name == getName
             else {
                 return nil
             }
-            return func_
+            return kirFunc
         }
         XCTAssertGreaterThanOrEqual(
             getterFunctions.count, 1,
@@ -1126,6 +1126,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase {
     /// Verifies that a top-level getter-only computed property does not emit
     /// a KIRGlobal and that reads of a non-literal getter body are lowered
     /// to getter accessor calls (not loadGlobal) by PropertyLoweringPass.
+    // swiftlint:disable:next function_body_length
     func testTopLevelGetterOnlyComputedPropertyEmitsNoGlobal() throws {
         // Use a non-literal getter body (`= stored`) so the constant
         // collector does NOT inline the value.  This forces ExprLowerer
@@ -1189,11 +1190,10 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase {
 
         // Find readComputed and check its body for a getter call.
         let readName = interner.intern("readComputed")
-        let readerFn = module.arena.declarations.compactMap {
-            decl -> KIRFunction? in
-            guard case let .function(func_) = decl,
-                  func_.name == readName else { return nil }
-            return func_
+        let readerFn = module.arena.declarations.compactMap { decl -> KIRFunction? in
+            guard case let .function(kirFunc) = decl,
+                  kirFunc.name == readName else { return nil }
+            return kirFunc
         }.first
         let reader = try XCTUnwrap(readerFn, "readComputed not found")
 

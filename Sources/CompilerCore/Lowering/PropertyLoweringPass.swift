@@ -6,6 +6,7 @@ final class PropertyLoweringPass: LoweringPass {
     /// Lazily built reverse map from backing field symbol to its owning property symbol.
     private var backingFieldToPropertyMap: [SymbolID: SymbolID]?
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func run(module: KIRModule, ctx: KIRContext) throws {
         let getterName = ctx.interner.intern("get")
         let setterName = ctx.interner.intern("set")
@@ -63,7 +64,7 @@ final class PropertyLoweringPass: LoweringPass {
                     // backend would look for a non-existent global slot.
                     if case let .loadGlobal(lgResult, sym) = instruction,
                        computedPropertySymbols.contains(sym)
-                    {
+                    { // swiftlint:disable:this opening_brace
                         let getterSymbol = SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: sym)
                         if function.symbol != getterSymbol {
                             loweredBody.append(
@@ -86,7 +87,7 @@ final class PropertyLoweringPass: LoweringPass {
                     if case let .constValue(cvResult, value) = instruction,
                        case let .symbolRef(sym) = value,
                        computedPropertySymbols.contains(sym)
-                    {
+                    { // swiftlint:disable:this opening_brace
                         // Skip rewriting if we are inside the getter accessor
                         // for this property to avoid infinite recursion.
                         let getterSymbol = SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: sym)
@@ -109,7 +110,7 @@ final class PropertyLoweringPass: LoweringPass {
                     // field symbol.
                     if case let .copy(from, to) = instruction,
                        let sema = ctx.sema
-                    {
+                    { // swiftlint:disable:this opening_brace
                         let toExpr = module.arena.expr(to)
                         if case let .symbolRef(targetSym) = toExpr,
                            sema.symbols.symbol(targetSym)?.kind == .backingField
