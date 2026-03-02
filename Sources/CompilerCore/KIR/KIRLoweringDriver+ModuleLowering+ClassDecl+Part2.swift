@@ -56,11 +56,10 @@ extension KIRLoweringDriver {
     ) -> KIRLoweringEmitContext {
         let sema = shared.sema
         var body: KIRLoweringEmitContext = [.beginBlock]
-        // swiftlint:disable:next opening_brace
-        if let receiverExpr = ctx.currentImplicitReceiverExprID,
-           let receiverSym = ctx.currentImplicitReceiverSymbol
-        {
-            body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
+        if let receiverExpr = ctx.currentImplicitReceiverExprID {
+            if let receiverSym = ctx.currentImplicitReceiverSymbol {
+                body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
+            }
         }
         let isSecondary = sema.symbols.symbol(ctorSymbol)?.declSite != classDecl.range
         if !isSecondary {

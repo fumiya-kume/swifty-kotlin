@@ -299,11 +299,11 @@ extension BuildASTPhase {
                 let headerTokens = collectDirectTokens(from: childID, in: arena).filter { token in
                     token.kind != .symbol(.semicolon)
                 }
-                if let firstToken = headerTokens.first,
-                   firstToken.kind == .softKeyword(.`init`)
-                {
-                    order.append(.initBlock(initBlockIndex))
-                    initBlockIndex += 1
+                if let firstToken = headerTokens.first {
+                    if firstToken.kind == .softKeyword(.`init`) {
+                        order.append(.initBlock(initBlockIndex))
+                        initBlockIndex += 1
+                    }
                 }
             }
         }
