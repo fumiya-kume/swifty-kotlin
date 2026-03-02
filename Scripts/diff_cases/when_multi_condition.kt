@@ -16,9 +16,16 @@ fun duplicateHitCount(x: Int): Int {
     return hits
 }
 
+fun classifyBool(b: Boolean): String = when (b) {
+    true, false -> "always"
+}
+
 fun main() {
     println(classifyInt(1))
+    println(classifyInt(2))
     println(classifyInt(5))
     println(duplicateHitCount(1))
     println(duplicateHitCount(3))
+    println(classifyBool(true))
+    println(classifyBool(false))
 }

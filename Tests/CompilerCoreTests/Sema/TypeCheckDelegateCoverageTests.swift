@@ -385,7 +385,7 @@ private struct TypeCheckFixture {
             scope: scope,
             implicitReceiverType: nil,
             loopDepth: 0,
-            loopLabelStack: [],
+            loopLabelStack: [], lambdaLabelStack: [],
             exportBlockLocalsForExpr: nil,
             flowState: DataFlowState(),
             currentFileID: FileID(rawValue: 0),

@@ -51,6 +51,11 @@ extension ControlFlowTypeChecker {
             var hasFalseCase = false
             var allBranchLocals: [LocalBindings] = []
             let subjectNominalSymbol = driver.helpers.nominalSymbol(of: subjectType, types: sema.types)
+            // Tracks all condition "keys" seen across the entire when expression
+            // for cross-branch duplicate detection.  A key is a string that
+            // uniquely identifies a condition value (e.g. "int:42", "bool:true",
+            // "name:Red", "null", "is:TypeName").
+            var allSeenConditionKeys: Set<String> = []
 
             func isNullCondition(_ conditionID: ExprID) -> Bool {
                 guard let conditionExpr = ast.arena.expr(conditionID),
@@ -163,6 +168,9 @@ extension ControlFlowTypeChecker {
                 var branchCtx = ctx
                 var trueFlowStates: [DataFlowState] = []
                 var cumulativeFalseState = ctx.flowState
+                // Track condition keys within this single branch for
+                // intra-branch duplicate detection.
+                var branchConditionKeys: Set<String> = []
 
                 // Type-check and collect coverage for all branch conditions.
                 for cond in branch.conditions {
@@ -173,6 +181,24 @@ extension ControlFlowTypeChecker {
                         isNullBranch = true
                     }
                     recordCoverage(for: cond, conditionType: condType)
+
+                    // CTRL-001: Detect duplicate conditions within a branch
+                    // and across branches for diagnostic purposes.
+                    if let key = whenConditionKey(for: cond, ast: ast, sema: sema, interner: interner) {
+                        if !branchConditionKeys.insert(key).inserted {
+                            ctx.semaCtx.diagnostics.warning(
+                                "KSWIFTK-SEMA-0072",
+                                "Duplicate condition in when branch.",
+                                range: ast.arena.exprRange(cond)
+                            )
+                        } else if !allSeenConditionKeys.insert(key).inserted {
+                            ctx.semaCtx.diagnostics.warning(
+                                "KSWIFTK-SEMA-0073",
+                                "Condition already covered by a previous when branch.",
+                                range: ast.arena.exprRange(cond)
+                            )
+                        }
+                    }
 
                     if let subjectLocalBinding, subjectLocalBinding.isStable {
                         let trueState = ctx.dataFlow.branchOnWhenSubject(

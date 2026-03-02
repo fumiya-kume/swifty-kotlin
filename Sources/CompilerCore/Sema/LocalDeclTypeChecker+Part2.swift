@@ -201,7 +201,8 @@ extension LocalDeclTypeChecker {
             nullability: .nonNull
         )))
 
-        var bodyLocals = locals
+        // Local functions introduce a new scope for control flow: reset loop/lambda stacks.
+        var bodyLocals = locals; let bodyCtx = ctx.copying(loopDepth: 0, loopLabelStack: [], lambdaLabelStack: [])
         for (i, param) in valueParams.enumerated() {
             bodyLocals[param.name] = (parameterTypes[i], paramSymbols[i], false, true)
         }
@@ -211,10 +212,10 @@ extension LocalDeclTypeChecker {
             for (index, expr) in exprs.enumerated() {
                 let isLast = index == exprs.count - 1
                 let expected = isLast ? resolvedReturnType : nil
-                _ = driver.inferExpr(expr, ctx: ctx, locals: &bodyLocals, expectedType: expected)
+                _ = driver.inferExpr(expr, ctx: bodyCtx, locals: &bodyLocals, expectedType: expected)
             }
         case let .expr(exprID, _):
-            _ = driver.inferExpr(exprID, ctx: ctx, locals: &bodyLocals, expectedType: resolvedReturnType)
+            _ = driver.inferExpr(exprID, ctx: bodyCtx, locals: &bodyLocals, expectedType: resolvedReturnType)
         case .unit:
             break
         }
