@@ -999,6 +999,169 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase {
                       "Getter accessor symbol for computed property should be emitted. expected=\(expectedGetterSymbol), actual=\(getterSymbols)")
     }
 
+    /// Verifies that getter-only computed property overrides emit getter
+    /// accessor functions for both base and derived classes (vtable-ready).
+    func testGetterOnlyComputedPropertyOverrideEmitsAccessors() throws {
+        let source = """
+        package test
+
+        open class Base {
+            open val label: String get() = "base"
+        }
+
+        class Derived : Base() {
+            override val label: String get() = "derived"
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runToLowering(ctx)
+
+        guard let module = ctx.kir else {
+            XCTFail("KIR module not available")
+            return
+        }
+
+        let interner = ctx.interner
+
+        // Both Base and Derived should have getter accessor functions for
+        // the "label" property.  The getter accessor symbol is derived from
+        // the property symbol via SyntheticSymbolScheme.
+        let getName = interner.intern("get")
+        let getterFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
+            guard case let .function(fn) = decl,
+                  fn.name == getName
+            else {
+                return nil
+            }
+            return fn
+        }
+
+        // There should be at least two getter accessors — one per class.
+        XCTAssertGreaterThanOrEqual(getterFunctions.count, 2,
+            "Both base and override computed property should emit getter accessors, found: \(getterFunctions.count)")
+
+        // Neither base nor derived "label" property should have a KIRGlobal.
+        let labelName = interner.intern("label")
+        var globalSymbols: [SymbolID] = []
+        for decl in module.arena.declarations {
+            if case let .global(global) = decl {
+                globalSymbols.append(global.symbol)
+            }
+        }
+        let labelGlobals = globalSymbols.filter { sym in
+            ctx.sema?.symbols.symbol(sym)?.name == labelName
+        }
+        XCTAssertTrue(labelGlobals.isEmpty,
+            "Getter-only computed property override should NOT have a KIRGlobal, found: \(labelGlobals)")
+    }
+
+    /// Verifies that a class with both custom getter and setter emits accessor
+    /// functions AND a backing field, while a getter-only computed property
+    /// emits only the getter accessor with no backing storage.
+    func testCustomGetterSetterPropertyEmitsAccessorsAndBackingField() throws {
+        let source = """
+        package test
+
+        class Counter {
+            var count: Int = 0
+                get() = field
+                set(value) { field = value }
+
+            val label: String get() = "Count"
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runToLowering(ctx)
+
+        guard let module = ctx.kir else {
+            XCTFail("KIR module not available")
+            return
+        }
+
+        let interner = ctx.interner
+
+        // Collect globals.
+        var globalSymbols: [SymbolID] = []
+        for decl in module.arena.declarations {
+            if case let .global(global) = decl {
+                globalSymbols.append(global.symbol)
+            }
+        }
+
+        // "count" SHOULD have a KIRGlobal (has backing field).
+        let countName = interner.intern("count")
+        let countGlobals = globalSymbols.filter { sym in
+            ctx.sema?.symbols.symbol(sym)?.name == countName
+        }
+        XCTAssertFalse(countGlobals.isEmpty,
+            "Var property with custom getter/setter should have a KIRGlobal")
+
+        // "label" should NOT have a KIRGlobal (getter-only computed).
+        let labelName = interner.intern("label")
+        let labelGlobals = globalSymbols.filter { sym in
+            ctx.sema?.symbols.symbol(sym)?.name == labelName
+        }
+        XCTAssertTrue(labelGlobals.isEmpty,
+            "Getter-only computed property should NOT have a KIRGlobal, found: \(labelGlobals)")
+
+        // The "label" computed property should have a getter accessor
+        // function emitted.
+        let getName = interner.intern("get")
+        let getterFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
+            guard case let .function(fn) = decl,
+                  fn.name == getName
+            else {
+                return nil
+            }
+            return fn
+        }
+        XCTAssertGreaterThanOrEqual(getterFunctions.count, 1,
+            "Should have at least 1 getter accessor (for label)")
+    }
+
+    /// Verifies that a top-level getter-only computed property does not emit
+    /// a KIRGlobal, matching the member property behavior (PROP-003).
+    func testTopLevelGetterOnlyComputedPropertyEmitsNoGlobal() throws {
+        let source = """
+        package test
+
+        val computed: String get() = "hello"
+        var stored: Int = 42
+        """
+        let ctx = makeContextFromSource(source)
+        try runToLowering(ctx)
+
+        guard let module = ctx.kir else {
+            XCTFail("KIR module not available")
+            return
+        }
+
+        let interner = ctx.interner
+
+        var globalSymbols: [SymbolID] = []
+        for decl in module.arena.declarations {
+            if case let .global(global) = decl {
+                globalSymbols.append(global.symbol)
+            }
+        }
+
+        // Top-level "computed" should NOT have a KIRGlobal.
+        let computedName = interner.intern("computed")
+        let computedGlobals = globalSymbols.filter { sym in
+            ctx.sema?.symbols.symbol(sym)?.name == computedName
+        }
+        XCTAssertTrue(computedGlobals.isEmpty,
+            "Top-level getter-only computed property should NOT have a KIRGlobal, found: \(computedGlobals)")
+
+        // Top-level "stored" SHOULD have a KIRGlobal.
+        let storedName = interner.intern("stored")
+        let storedGlobals = globalSymbols.filter { sym in
+            ctx.sema?.symbols.symbol(sym)?.name == storedName
+        }
+        XCTAssertFalse(storedGlobals.isEmpty,
+            "Top-level stored property should have a KIRGlobal")
+    }
+
     private func makeContext(
         interner: StringInterner,
         moduleName: String,

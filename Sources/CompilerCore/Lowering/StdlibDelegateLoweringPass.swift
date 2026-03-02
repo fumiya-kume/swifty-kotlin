@@ -1,28 +1,5 @@
 import Foundation
 
-/// Returns (getCallee, setCallee) for a delegate kind. Lazy is read-only so setCallee is nil.
-private func delegateAccessorCallees(
-    kind: StdlibDelegateKind,
-    lazyGetValueName: InternedString,
-    observableGetValueName: InternedString,
-    observableSetValueName: InternedString,
-    vetoableGetValueName: InternedString,
-    vetoableSetValueName: InternedString,
-    customGetValueName: InternedString,
-    customSetValueName: InternedString
-) -> (getCallee: InternedString, setCallee: InternedString?) {
-    switch kind {
-    case .lazy:
-        (lazyGetValueName, nil)
-    case .observable:
-        (observableGetValueName, observableSetValueName)
-    case .vetoable:
-        (vetoableGetValueName, vetoableSetValueName)
-    case .custom:
-        (customGetValueName, customSetValueName)
-    }
-}
-
 /// Delegate kinds recognized by the compiler (P5-80, P5-79).
 enum StdlibDelegateKind: Equatable {
     case lazy
@@ -32,30 +9,21 @@ enum StdlibDelegateKind: Equatable {
     case custom
 }
 
-/// Rewrites delegate property accesses for known stdlib delegates
-/// (`lazy`, `Delegates.observable`, `Delegates.vetoable`) into direct
-/// runtime calls, replacing the generic `kk_property_access` emitted by
-/// `PropertyLoweringPass`.
+/// Rewrites delegate property initialization sequences for known stdlib
+/// delegates (`lazy`, `Delegates.observable`, `Delegates.vetoable`) into
+/// direct runtime calls.
 ///
-/// Must run **after** `PropertyLoweringPass` so that `getValue`/`setValue`
-/// have already been rewritten to `kk_property_access`.
+/// Must run **after** `PropertyLoweringPass` so that delegate accessor
+/// calls have already been rewritten to direct getter/setter dispatches.
 final class StdlibDelegateLoweringPass: LoweringPass {
     static let name = "StdlibDelegateLowering"
 
     func run(module: KIRModule, ctx: KIRContext) throws {
         let interner = ctx.interner
         let sema = ctx.sema
-        let propertyAccessName = interner.intern("kk_property_access")
         let lazyCreateName = interner.intern("kk_lazy_create")
-        let lazyGetValueName = interner.intern("kk_lazy_get_value")
         let observableCreateName = interner.intern("kk_observable_create")
-        let observableGetValueName = interner.intern("kk_observable_get_value")
-        let observableSetValueName = interner.intern("kk_observable_set_value")
         let vetoableCreateName = interner.intern("kk_vetoable_create")
-        let vetoableGetValueName = interner.intern("kk_vetoable_get_value")
-        let vetoableSetValueName = interner.intern("kk_vetoable_set_value")
-        let customGetValueName = interner.intern("kk_custom_delegate_get_value")
-        let customSetValueName = interner.intern("kk_custom_delegate_set_value")
 
         let lazyThreadSafetyModeValue = Int64(ctx.options.lazyThreadSafetyMode.rawValue)
 
@@ -111,98 +79,15 @@ final class StdlibDelegateLoweringPass: LoweringPass {
 
         module.arena.transformFunctions { function in
             var updated = function
-            var loweredBody: [KIRInstruction] = []
-            loweredBody.reserveCapacity(function.body.count)
 
-            for instruction in function.body {
-                guard case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall) = instruction else {
-                    loweredBody.append(instruction)
-                    continue
-                }
-
-                // Only rewrite kk_property_access calls on $delegate_ fields.
-                guard callee == propertyAccessName,
-                      let sym = symbol,
-                      let symInfo = sema?.symbols.symbol(sym),
-                      symInfo.kind == .field
-                else {
-                    loweredBody.append(instruction)
-                    continue
-                }
-
-                let symName = interner.resolve(symInfo.name)
-                guard symName.hasPrefix("$delegate_"),
-                      let delegateKind = delegateKindByFieldName[symName]
-                else {
-                    loweredBody.append(instruction)
-                    continue
-                }
-
-                // arguments[0] = isSetter flag (constValue bool).
-                guard arguments.count >= 1 else {
-                    loweredBody.append(instruction)
-                    continue
-                }
-
-                let isSetterExprID = arguments[0]
-                var isSetter = false
-                // The accessor-kind bool is stored in a .constValue instruction
-                // (not in the arena expression which is .temporary), so scan
-                // backward through already-lowered instructions to find it.
-                for prev in loweredBody.reversed() {
-                    if case let .constValue(result, value) = prev,
-                       result == isSetterExprID,
-                       case let .boolLiteral(v) = value
-                    {
-                        isSetter = v
-                        break
-                    }
-                }
-
-                // Build a symbol ref for the delegate handle.
-                let delegateRef = module.arena.appendExpr(.symbolRef(sym), type: nil)
-                loweredBody.append(.constValue(result: delegateRef, value: .symbolRef(sym)))
-
-                let (getCallee, setCallee) = delegateAccessorCallees(
-                    kind: delegateKind,
-                    lazyGetValueName: lazyGetValueName,
-                    observableGetValueName: observableGetValueName,
-                    observableSetValueName: observableSetValueName,
-                    vetoableGetValueName: vetoableGetValueName,
-                    vetoableSetValueName: vetoableSetValueName,
-                    customGetValueName: customGetValueName,
-                    customSetValueName: customSetValueName
-                )
-                let accessorCallee: InternedString
-                let callArgs: [KIRExprID]
-                if isSetter, arguments.count >= 2, let setCallee {
-                    accessorCallee = setCallee
-                    callArgs = [delegateRef, arguments[1]]
-                } else {
-                    accessorCallee = getCallee
-                    callArgs = [delegateRef]
-                }
-                loweredBody.append(
-                    .call(
-                        symbol: sym,
-                        callee: accessorCallee,
-                        arguments: callArgs,
-                        result: result,
-                        canThrow: canThrow,
-                        thrownResult: thrownResult,
-                        isSuperCall: isSuperCall
-                    )
-                )
-            }
-
-            // Second pass: rewrite delegate initialization sequences.
+            // Rewrite delegate initialization sequences.
             // Look for copy to $delegate_ fields preceded by a call, and wrap
             // with the appropriate kk_*_create runtime call.
             var finalBody: [KIRInstruction] = []
-            finalBody.reserveCapacity(loweredBody.count)
+            finalBody.reserveCapacity(function.body.count)
             var skipNext = false
 
-            for (index, instruction) in loweredBody.enumerated() {
+            for (index, instruction) in function.body.enumerated() {
                 if skipNext {
                     skipNext = false
                     continue
@@ -210,8 +95,8 @@ final class StdlibDelegateLoweringPass: LoweringPass {
 
                 if case let .call(_, _, callArgs, callResult, _, _, _) = instruction {
                     let nextIndex = index + 1
-                    if nextIndex < loweredBody.count,
-                       case let .copy(_, to) = loweredBody[nextIndex],
+                    if nextIndex < function.body.count,
+                       case let .copy(_, to) = function.body[nextIndex],
                        let toExpr = module.arena.expr(to),
                        case let .symbolRef(targetSym) = toExpr,
                        let targetSymInfo = sema?.symbols.symbol(targetSym),
