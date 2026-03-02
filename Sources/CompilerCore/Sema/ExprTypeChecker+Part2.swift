@@ -432,60 +432,75 @@ extension ExprTypeChecker {
             sema.bindings.bindExprType(id, type: sema.types.errorType)
             return sema.types.errorType
         }
-        if let classSymbol = driver.helpers.nominalSymbol(of: receiverType, types: sema.types) {
-            // If there is a qualified super<InterfaceName>, resolve to that interface type
-            if let qualifier = interfaceQualifier {
-                let supertypes = sema.symbols.directSupertypes(for: classSymbol)
-                for superID in supertypes {
-                    guard let superSym = ctx.cachedSymbol(superID) else { continue }
-                    if superSym.kind == .interface, superSym.name == qualifier {
-                        let ifaceType = sema.types.make(.classType(ClassType(classSymbol: superID)))
-                        sema.bindings.bindExprType(id, type: ifaceType)
-                        return ifaceType
-                    }
-                }
-                // Also check transitive supertypes
-                var visited: Set<SymbolID> = [classSymbol]
-                var queue = Array(supertypes)
-                while !queue.isEmpty {
-                    let current = queue.removeFirst()
-                    guard visited.insert(current).inserted else { continue }
-                    guard let sym = ctx.cachedSymbol(current) else { continue }
-                    if sym.kind == .interface, sym.name == qualifier {
-                        let ifaceType = sema.types.make(.classType(ClassType(classSymbol: current)))
-                        sema.bindings.bindExprType(id, type: ifaceType)
-                        return ifaceType
-                    }
-                    queue.append(contentsOf: sema.symbols.directSupertypes(for: current))
-                }
-                let qualifierStr = ctx.interner.resolve(qualifier)
-                ctx.semaCtx.diagnostics.error(
-                    "KSWIFTK-SEMA-0054",
-                    "No interface '\(qualifierStr)' found in supertypes for qualified 'super'.",
-                    range: range
-                )
-                sema.bindings.bindExprType(id, type: sema.types.errorType)
-                return sema.types.errorType
-            }
-            let supertypes = sema.symbols.directSupertypes(for: classSymbol)
-            let classSupertypes = supertypes.filter {
-                let kind = ctx.cachedSymbol($0)?.kind
-                return kind == .class || kind == .enumClass
-            }
-            if let superclass = classSupertypes.first {
-                let superType = sema.types.make(.classType(ClassType(classSymbol: superclass)))
-                sema.bindings.bindExprType(id, type: superType)
-                return superType
-            }
-            // If no superclass but has interfaces, return receiver type for super calls on interfaces
-            let interfaceSupertypes = supertypes.filter {
-                ctx.cachedSymbol($0)?.kind == .interface
-            }
-            if !interfaceSupertypes.isEmpty {
-                sema.bindings.bindExprType(id, type: receiverType)
-                return receiverType
+        guard let classSymbol = driver.helpers.nominalSymbol(of: receiverType, types: sema.types) else {
+            return emitNoSuperclass(id: id, range: range, ctx: ctx)
+        }
+        if let qualifier = interfaceQualifier {
+            return resolveQualifiedSuper(
+                id: id, qualifier: qualifier, classSymbol: classSymbol, range: range, ctx: ctx
+            )
+        }
+        return resolveUnqualifiedSuper(
+            id: id, classSymbol: classSymbol, receiverType: receiverType, range: range, ctx: ctx
+        )
+    }
+
+    /// Resolves `super<InterfaceName>` — only direct supertypes are valid per Kotlin spec.
+    private func resolveQualifiedSuper(
+        id: ExprID,
+        qualifier: InternedString,
+        classSymbol: SymbolID,
+        range: SourceRange,
+        ctx: TypeInferenceContext
+    ) -> TypeID {
+        let sema = ctx.sema
+        let supertypes = sema.symbols.directSupertypes(for: classSymbol)
+        for superID in supertypes {
+            guard let superSym = ctx.cachedSymbol(superID) else { continue }
+            if superSym.kind == .interface, superSym.name == qualifier {
+                let ifaceType = sema.types.make(.classType(ClassType(classSymbol: superID)))
+                sema.bindings.bindExprType(id, type: ifaceType)
+                return ifaceType
             }
         }
+        let qualifierStr = ctx.interner.resolve(qualifier)
+        ctx.semaCtx.diagnostics.error(
+            "KSWIFTK-SEMA-0054",
+            "No interface '\(qualifierStr)' found in direct supertypes for qualified 'super'.",
+            range: range
+        )
+        sema.bindings.bindExprType(id, type: sema.types.errorType)
+        return sema.types.errorType
+    }
+
+    private func resolveUnqualifiedSuper(
+        id: ExprID,
+        classSymbol: SymbolID,
+        receiverType: TypeID,
+        range: SourceRange,
+        ctx: TypeInferenceContext
+    ) -> TypeID {
+        let sema = ctx.sema
+        let supertypes = sema.symbols.directSupertypes(for: classSymbol)
+        let classSupertypes = supertypes.filter {
+            let kind = ctx.cachedSymbol($0)?.kind
+            return kind == .class || kind == .enumClass
+        }
+        if let superclass = classSupertypes.first {
+            let superType = sema.types.make(.classType(ClassType(classSymbol: superclass)))
+            sema.bindings.bindExprType(id, type: superType)
+            return superType
+        }
+        let hasInterfaces = supertypes.contains { ctx.cachedSymbol($0)?.kind == .interface }
+        if hasInterfaces {
+            sema.bindings.bindExprType(id, type: receiverType)
+            return receiverType
+        }
+        return emitNoSuperclass(id: id, range: range, ctx: ctx)
+    }
+
+    private func emitNoSuperclass(id: ExprID, range: SourceRange, ctx: TypeInferenceContext) -> TypeID {
+        let sema = ctx.sema
         ctx.semaCtx.diagnostics.error(
             "KSWIFTK-SEMA-0052",
             "Class has no superclass.",
