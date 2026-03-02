@@ -135,11 +135,12 @@ extension TypeCheckHelpers {
         ast: ASTModule,
         sema: SemaModule,
         interner: StringInterner,
+        scope: Scope? = nil,
         diagnostics: DiagnosticEngine? = nil
     ) -> [TypeID] {
         guard !typeArgRefs.isEmpty else { return [] }
         return typeArgRefs.map { typeRefID in
-            resolveTypeRef(typeRefID, ast: ast, sema: sema, interner: interner, diagnostics: diagnostics)
+            resolveTypeRef(typeRefID, ast: ast, sema: sema, interner: interner, scope: scope, diagnostics: diagnostics)
         }
     }
 

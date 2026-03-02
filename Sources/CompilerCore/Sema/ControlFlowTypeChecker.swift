@@ -76,7 +76,7 @@ final class ControlFlowTypeChecker {
         // Smart cast: apply condition branching to the while body (P5-66)
         let branch = ctx.dataFlow.branchOnCondition(
             conditionExpr, base: ctx.flowState, locals: locals,
-            ast: ast, sema: sema, interner: interner
+            ast: ast, sema: sema, interner: interner, scope: ctx.scope
         )
         var bodyLocals = locals
         driver.exprChecker.applyFlowStateToLocals(branch.trueState, locals: &bodyLocals, sema: sema)
@@ -108,9 +108,14 @@ final class ControlFlowTypeChecker {
         var newLabelStack = ctx.loopLabelStack
         if let label { newLabelStack.append(label) }
         var bodyLocals = locals
+        let bodyCtx = ctx.copying(
+            loopDepth: ctx.loopDepth + 1,
+            loopLabelStack: newLabelStack,
+            exportBlockLocalsForExpr: bodyExpr
+        )
         _ = driver.inferExpr(
             bodyExpr,
-            ctx: ctx.copying(loopDepth: ctx.loopDepth + 1, loopLabelStack: newLabelStack),
+            ctx: bodyCtx,
             locals: &bodyLocals,
             expectedType: nil
         )
@@ -161,7 +166,7 @@ final class ControlFlowTypeChecker {
         }
         let branch = ctx.dataFlow.branchOnCondition(
             condition, base: ctx.flowState, locals: locals,
-            ast: ast, sema: sema, interner: interner
+            ast: ast, sema: sema, interner: interner, scope: ctx.scope
         )
         var thenLocals = locals
         driver.exprChecker.applyFlowStateToLocals(branch.trueState, locals: &thenLocals, sema: sema)
@@ -202,11 +207,19 @@ final class ControlFlowTypeChecker {
     ) -> TypeID {
         let sema = ctx.sema
         let interner = ctx.interner
+        let preTryLocals = locals
         var branchTypes: [TypeID] = []
-        var tryBodyLocals = locals
-        branchTypes.append(driver.inferExpr(body, ctx: ctx, locals: &tryBodyLocals, expectedType: expectedType))
+        var normalCompletionLocals: [LocalBindings] = []
+
+        var tryBodyLocals = preTryLocals
+        let tryBodyType = driver.inferExpr(body, ctx: ctx, locals: &tryBodyLocals, expectedType: expectedType)
+        branchTypes.append(tryBodyType)
+        if tryBodyType != sema.types.nothingType {
+            normalCompletionLocals.append(tryBodyLocals)
+        }
+
         for (index, clause) in catchClauses.enumerated() {
-            var catchLocals = locals
+            var catchLocals = preTryLocals
             let catchParamType = resolveCatchClauseParameterType(
                 clause.paramTypeName,
                 sema: sema,
@@ -232,11 +245,39 @@ final class ControlFlowTypeChecker {
                 clause.body,
                 binding: CatchClauseBinding(parameterSymbol: catchParamSymbol, parameterType: catchParamType)
             )
-            branchTypes.append(driver.inferExpr(clause.body, ctx: ctx, locals: &catchLocals, expectedType: expectedType))
+            let catchType = driver.inferExpr(clause.body, ctx: ctx, locals: &catchLocals, expectedType: expectedType)
+            branchTypes.append(catchType)
+            if catchType != sema.types.nothingType {
+                normalCompletionLocals.append(catchLocals)
+            }
         }
+
         if let finallyExpr {
-            _ = driver.inferExpr(finallyExpr, ctx: ctx, locals: &locals, expectedType: nil)
+            // Finally is always checked for side effects, but it does not participate in try-expr type inference.
+            var finallyLocals = locals
+            _ = driver.inferExpr(finallyExpr, ctx: ctx, locals: &finallyLocals, expectedType: nil)
+            locals = finallyLocals
         }
+
+        if !normalCompletionLocals.isEmpty {
+            for (name, local) in preTryLocals where !local.isInitialized {
+                let initializedInAllNormalBranches = normalCompletionLocals.allSatisfy { branchLocals in
+                    guard let branchLocal = branchLocals[name], branchLocal.symbol == local.symbol else {
+                        return false
+                    }
+                    return branchLocal.isInitialized
+                }
+                guard initializedInAllNormalBranches else {
+                    continue
+                }
+                if let current = locals[name], current.symbol == local.symbol {
+                    locals[name] = (current.type, current.symbol, current.isMutable, true)
+                } else {
+                    locals[name] = (local.type, local.symbol, local.isMutable, true)
+                }
+            }
+        }
+
         let resolvedType = sema.types.lub(branchTypes)
         sema.bindings.bindExprType(id, type: resolvedType)
         return resolvedType

@@ -26,10 +26,9 @@ file f0 package=_
   decl d3 class Bird sym=s17
   decl d4 fun describeAnimal suspend=0 inline=0 sym=s19
 expr e0 name(a) type=Class#11 ref=s20
-expr e1 name(is) type=<error>
-expr e2 name(Dog) type=Any ref=s13
-expr e3 string(dog) type=_
-expr e4 isCheck expr=e3 type=t5 type=_
-expr e5 string(cat) type=String
-expr e6 when subject=e0 branches=[e1->e2] else=e5 type=Any?
-expr e7 return value=e6 type=Nothing
+expr e1 isCheck expr=e0 type=t5 type=Boolean
+expr e2 string(dog) type=String
+expr e3 isCheck expr=e0 type=t6 type=Boolean
+expr e4 string(cat) type=String
+expr e5 when subject=e0 branches=[e1->e2,e3->e4] else=_ type=String
+expr e6 return value=e5 type=Nothing

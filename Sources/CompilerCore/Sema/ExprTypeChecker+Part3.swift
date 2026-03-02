@@ -44,6 +44,45 @@ extension ExprTypeChecker {
         let charType = sema.types.charType
         let stringType = sema.types.stringType
 
+        if op == .logicalAnd || op == .logicalOr {
+            let lhs = driver.inferExpr(lhsID, ctx: ctx, locals: &locals)
+            driver.emitSubtypeConstraint(
+                left: lhs,
+                right: boolType,
+                range: ast.arena.exprRange(lhsID) ?? range,
+                solver: ConstraintSolver(),
+                sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+            let lhsBranch = ctx.dataFlow.branchOnCondition(
+                lhsID,
+                base: ctx.flowState,
+                locals: locals,
+                ast: ast,
+                sema: sema,
+                interner: interner,
+                scope: ctx.scope
+            )
+            let rhsState = op == .logicalAnd ? lhsBranch.trueState : lhsBranch.falseState
+            var rhsLocals = locals
+            applyFlowStateToLocals(rhsState, locals: &rhsLocals, sema: sema)
+            let rhs = driver.inferExpr(
+                rhsID,
+                ctx: ctx.copying(flowState: rhsState),
+                locals: &rhsLocals
+            )
+            driver.emitSubtypeConstraint(
+                left: rhs,
+                right: boolType,
+                range: ast.arena.exprRange(rhsID) ?? range,
+                solver: ConstraintSolver(),
+                sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+            sema.bindings.bindExprType(id, type: boolType)
+            return boolType
+        }
+
         let lhs = driver.inferExpr(lhsID, ctx: ctx, locals: &locals)
         let rhs = driver.inferExpr(rhsID, ctx: ctx, locals: &locals)
         let lhsIsPrimitive = if case .primitive = sema.types.kind(of: lhs) { true } else { false }
@@ -204,16 +243,8 @@ extension ExprTypeChecker {
             }
         case .rangeTo, .rangeUntil, .downTo, .step:
             type = sema.types.intType
-        case .bitwiseAnd, .bitwiseOr, .bitwiseXor:
-            if lhs == longType || rhs == longType {
-                type = longType
-            } else {
-                type = intType
-            }
-        case .shl, .shr, .ushr:
-            // Shift operators: result type depends only on the left operand.
-            // The shift amount (rhs) is always Int in Kotlin.
-            type = lhs == longType ? longType : intType
+        case .bitwiseAnd, .bitwiseOr, .bitwiseXor, .shl, .shr, .ushr:
+            preconditionFailure("Bitwise/shift binary operators must be parsed as infix member calls")
         }
         sema.bindings.bindExprType(id, type: type)
         return type

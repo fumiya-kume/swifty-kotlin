@@ -98,6 +98,7 @@ extension KIRLoweringDriver {
                 case let .funDecl(function):
                     ctx.resetScopeForFunction()
                     ctx.beginCallableLoweringScope()
+                    ctx.currentFunctionSymbol = symbol
                     let signature = sema.symbols.functionSignature(for: symbol)
                     var params: [KIRParameter] = []
                     if let signature {
@@ -216,6 +217,7 @@ extension KIRLoweringDriver {
                     declIDs.append(contentsOf: ctx.drainGeneratedCallableDecls())
                     ctx.currentImplicitReceiverExprID = nil
                     ctx.currentImplicitReceiverSymbol = nil
+                    ctx.currentFunctionSymbol = nil
 
                 case let .propertyDecl(propertyDecl):
                     let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType

@@ -60,11 +60,20 @@ final class RuntimeThrowableBox {
     }
 }
 
-final class RuntimeArrayBox {
+class RuntimeArrayBox {
     var elements: [Int]
 
     init(length: Int) {
         elements = Array(repeating: 0, count: max(0, length))
+    }
+}
+
+final class RuntimeObjectBox: RuntimeArrayBox {
+    let classID: Int64
+
+    init(length: Int, classID: Int64) {
+        self.classID = classID
+        super.init(length: length)
     }
 }
 

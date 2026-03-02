@@ -12,6 +12,13 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_op_mod"),
             ctx.interner.intern("kk_op_eq"),
             ctx.interner.intern("kk_string_concat"),
+            ctx.interner.intern("kk_string_length"),
+            ctx.interner.intern("kk_op_is"),
+            ctx.interner.intern("kk_op_safe_cast"),
+            ctx.interner.intern("kk_op_contains"),
+            ctx.interner.intern("kk_op_not"),
+            ctx.interner.intern("kk_op_uplus"),
+            ctx.interner.intern("kk_op_uminus"),
 
             ctx.interner.intern("kk_for_lowered"),
             ctx.interner.intern("kk_range_iterator"),
@@ -52,7 +59,10 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_coroutine_scope_register_child"),
             ctx.interner.intern("kk_job_join"),
             ctx.interner.intern("kk_array_new"),
+            ctx.interner.intern("kk_object_new"),
             ctx.interner.intern("kk_vararg_spread_concat"),
+            ctx.interner.intern("kk_type_register_super"),
+            ctx.interner.intern("kk_type_register_iface"),
             ctx.interner.intern("kk_box_int"),
             ctx.interner.intern("kk_box_bool"),
             ctx.interner.intern("kk_box_long"),
@@ -136,6 +146,7 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_op_shl"),
             ctx.interner.intern("kk_op_shr"),
             ctx.interner.intern("kk_op_ushr"),
+            ctx.interner.intern("kk_int_toString_radix"),
         ]
 
         let boxIntCallee = ctx.interner.intern("kk_box_int")

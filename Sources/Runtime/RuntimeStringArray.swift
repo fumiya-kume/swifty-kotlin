@@ -23,6 +23,19 @@ public func kk_panic(_ cstr: UnsafePointer<CChar>) -> Never {
 
 let runtimePanicDiagnosticCode = "KSWIFTK-RUNTIME-0001"
 
+private enum RuntimeTypeTokenEncoding {
+    static let baseMask: Int64 = 0xFF
+    static let nullableBit: Int64 = 0x100
+    static let payloadShift: Int64 = 9
+    static let payloadMask: Int64 = (1 << 55) - 1
+    static let anyBase: Int64 = 1
+    static let stringBase: Int64 = 2
+    static let intBase: Int64 = 3
+    static let booleanBase: Int64 = 4
+    static let nullBase: Int64 = 5
+    static let nominalBase: Int64 = 6
+}
+
 func runtimePanicMessage(fromCString cstr: UnsafePointer<CChar>) -> String {
     let message = String(cString: cstr)
     return "KSwiftK panic [\(runtimePanicDiagnosticCode)]: \(message)"
@@ -39,6 +52,16 @@ public func kk_string_from_utf8(_ ptr: UnsafePointer<UInt8>, _ len: Int32) -> Un
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return opaque
+}
+
+@_cdecl("kk_int_toString_radix")
+public func kk_int_toString_radix(_ value: Int, _ radix: Int) -> UnsafeMutableRawPointer {
+    let clampedRadix = max(2, min(36, radix))
+    let str = String(value, radix: clampedRadix)
+    let utf8 = Array(str.utf8)
+    return utf8.withUnsafeBufferPointer { buf in
+        kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
+    }
 }
 
 @_cdecl("kk_string_concat")
@@ -62,6 +85,114 @@ public func kk_string_compareTo(_ a: UnsafeMutableRawPointer?, _ b: UnsafeMutabl
     return 0
 }
 
+@_cdecl("kk_string_length")
+public func kk_string_length(_ strRaw: Int) -> Int {
+    if strRaw == runtimeNullSentinelInt {
+        return runtimeNullSentinelInt
+    }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: strRaw) else {
+        return runtimeNullSentinelInt
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObjectPointer, let stringBox = tryCast(ptr, to: RuntimeStringBox.self) else {
+        return runtimeNullSentinelInt
+    }
+    return stringBox.value.utf8.count
+}
+
+@_cdecl("kk_op_is")
+public func kk_op_is(_ value: Int, _ typeToken: Int) -> Int {
+    let token = Int64(truncatingIfNeeded: typeToken)
+    let base = token & RuntimeTypeTokenEncoding.baseMask
+    let isNullableTarget = (token & RuntimeTypeTokenEncoding.nullableBit) != 0
+    let payload = (token >> RuntimeTypeTokenEncoding.payloadShift) & RuntimeTypeTokenEncoding.payloadMask
+
+    if value == runtimeNullSentinelInt {
+        if isNullableTarget || base == RuntimeTypeTokenEncoding.nullBase {
+            return 1
+        }
+        return 0
+    }
+
+    switch base {
+    case RuntimeTypeTokenEncoding.anyBase:
+        return 1
+
+    case RuntimeTypeTokenEncoding.stringBase:
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
+            return 0
+        }
+        let isObjectPointer = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        guard isObjectPointer else {
+            return 0
+        }
+        return tryCast(ptr, to: RuntimeStringBox.self) == nil ? 0 : 1
+
+    case RuntimeTypeTokenEncoding.intBase:
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
+            return 1
+        }
+        let isObjectPointer = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        if !isObjectPointer {
+            return 1
+        }
+        return tryCast(ptr, to: RuntimeIntBox.self) == nil ? 0 : 1
+
+    case RuntimeTypeTokenEncoding.booleanBase:
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
+            return (value == 0 || value == 1) ? 1 : 0
+        }
+        let isObjectPointer = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        if !isObjectPointer {
+            return (value == 0 || value == 1) ? 1 : 0
+        }
+        return tryCast(ptr, to: RuntimeBoolBox.self) == nil ? 0 : 1
+
+    case RuntimeTypeTokenEncoding.nullBase:
+        return 0
+
+    case RuntimeTypeTokenEncoding.nominalBase:
+        guard let sourceTypeID = runtimeObjectTypeID(rawValue: value) else {
+            return 0
+        }
+        return runtimeIsAssignable(sourceTypeID: sourceTypeID, targetTypeID: payload) ? 1 : 0
+
+    default:
+        return 0
+    }
+}
+
+@_cdecl("kk_op_cast")
+public func kk_op_cast(_ value: Int, _ typeToken: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    if kk_op_is(value, typeToken) != 0 {
+        return value
+    }
+    outThrown?.pointee = runtimeAllocateThrowable(message: "ClassCastException")
+    return 0
+}
+
+@_cdecl("kk_op_safe_cast")
+public func kk_op_safe_cast(_ value: Int, _ typeToken: Int) -> Int {
+    kk_op_is(value, typeToken) != 0 ? value : runtimeNullSentinelInt
+}
+
+@_cdecl("kk_op_contains")
+public func kk_op_contains(_ container: Int, _ element: Int) -> Int {
+    guard let array = runtimeArrayBox(from: container) else {
+        return 0
+    }
+    return array.elements.contains(element) ? 1 : 0
+}
+
 @_cdecl("kk_array_new")
 public func kk_array_new(_ length: Int) -> Int {
     let box = RuntimeArrayBox(length: length)
@@ -70,6 +201,30 @@ public func kk_array_new(_ length: Int) -> Int {
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return Int(bitPattern: opaque)
+}
+
+@_cdecl("kk_object_new")
+public func kk_object_new(_ length: Int, _ classId: Int) -> Int {
+    let box = RuntimeObjectBox(length: length, classID: Int64(classId))
+    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    runtimeStorage.withLock { state in
+        let key = UInt(bitPattern: opaque)
+        state.objectPointers.insert(key)
+        state.objectTypeByPointer[key] = Int64(classId)
+    }
+    return Int(bitPattern: opaque)
+}
+
+@_cdecl("kk_type_register_super")
+public func kk_type_register_super(_ childTypeId: Int, _ superTypeId: Int) -> Int {
+    runtimeRegisterTypeEdge(childTypeID: Int64(childTypeId), parentTypeID: Int64(superTypeId))
+    return 0
+}
+
+@_cdecl("kk_type_register_iface")
+public func kk_type_register_iface(_ childTypeId: Int, _ ifaceTypeId: Int) -> Int {
+    runtimeRegisterTypeEdge(childTypeID: Int64(childTypeId), parentTypeID: Int64(ifaceTypeId))
+    return 0
 }
 
 @_cdecl("kk_array_get")

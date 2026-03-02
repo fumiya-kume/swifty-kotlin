@@ -79,8 +79,8 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testStringFunctionCount() {
-        // kk_string_from_utf8, kk_string_concat, kk_string_compareTo
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 3)
+        // kk_string_from_utf8, kk_string_concat, kk_string_compareTo, kk_string_length
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 4)
     }
 
     func testPrintlnFunctionCount() {
@@ -107,14 +107,14 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testArrayFunctionCount() {
-        // kk_array_new, kk_array_get, kk_array_set, kk_vararg_spread_concat
-        XCTAssertEqual(RuntimeABISpec.arrayFunctions.count, 4)
+        // kk_array_new, kk_object_new, kk_array_get, kk_array_set, kk_vararg_spread_concat
+        XCTAssertEqual(RuntimeABISpec.arrayFunctions.count, 5)
     }
 
     func testBitwiseFunctionCount() {
         // kk_bitwise_and, kk_bitwise_or, kk_bitwise_xor, kk_op_inv,
-        // kk_op_shl, kk_op_shr, kk_op_ushr
-        XCTAssertEqual(RuntimeABISpec.bitwiseFunctions.count, 7)
+        // kk_op_shl, kk_op_shr, kk_op_ushr, kk_int_toString_radix
+        XCTAssertEqual(RuntimeABISpec.bitwiseFunctions.count, 8)
     }
 
     func testTotalFunctionCount() {
@@ -126,6 +126,7 @@ final class ABIMismatchTests: XCTestCase {
             + RuntimeABISpec.coroutineFunctions.count
             + RuntimeABISpec.boxingFunctions.count
             + RuntimeABISpec.arrayFunctions.count
+            + RuntimeABISpec.operatorFunctions.count
             + RuntimeABISpec.rangeFunctions.count
             + RuntimeABISpec.delegateFunctions.count
             + RuntimeABISpec.bitwiseFunctions.count
@@ -201,6 +202,21 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(spec.returnType, .void)
         XCTAssertEqual(spec.parameters.count, 1)
         XCTAssertEqual(spec.parameters[0].type, .nullableOpaquePointer)
+    }
+
+    func testKKStringLengthSignature() throws {
+        let spec = try requireSpec("kk_string_length")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 1)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+    }
+
+    func testKKOpIsSignature() throws {
+        let spec = try requireSpec("kk_op_is")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 2)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
     }
 
     func testKKCoroutineSuspendedSignature() throws {
@@ -279,6 +295,7 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertTrue(header.contains("Coroutine"))
         XCTAssertTrue(header.contains("Boxing"))
         XCTAssertTrue(header.contains("Array"))
+        XCTAssertTrue(header.contains("TypeCheck"))
         XCTAssertTrue(header.contains("Bitwise"))
     }
 

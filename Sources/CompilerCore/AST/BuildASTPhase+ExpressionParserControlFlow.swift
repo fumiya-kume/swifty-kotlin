@@ -29,11 +29,13 @@ extension BuildASTPhase.ExpressionParser {
 
             let branchStart = token.range.start
             var conditions: [ExprID] = []
+            var isElseBranch = false
             if token.kind == .keyword(.else) {
                 _ = consume()
+                isElseBranch = true
             } else {
                 // Parse first condition
-                if let firstCond = parseExpression(minPrecedence: 0) {
+                if let firstCond = parseWhenBranchCondition(subject: subject) {
                     conditions.append(firstCond)
                 }
                 // Parse additional comma-separated conditions (before ->)
@@ -43,7 +45,7 @@ extension BuildASTPhase.ExpressionParser {
                     if matches(.symbol(.arrow)) {
                         break
                     }
-                    if let nextCond = parseExpression(minPrecedence: 0) {
+                    if let nextCond = parseWhenBranchCondition(subject: subject) {
                         conditions.append(nextCond)
                     } else {
                         break
@@ -52,7 +54,7 @@ extension BuildASTPhase.ExpressionParser {
             }
 
             _ = consumeIf(.symbol(.arrow))
-            let body = parseExpression(minPrecedence: 0)
+            let body = parseWhenBranchBodyExpression()
             while matches(.symbol(.semicolon)) || matches(.symbol(.comma)) {
                 _ = consume()
             }
@@ -60,15 +62,15 @@ extension BuildASTPhase.ExpressionParser {
             if let body {
                 let branchRange = SourceRange(start: branchStart, end: astArena.exprRange(body)?.end ?? branchStart)
                 let branch = WhenBranch(conditions: conditions, body: body, range: branchRange)
-                if conditions.isEmpty {
+                if isElseBranch {
                     elseExpr = body
-                } else {
+                } else if !conditions.isEmpty {
                     branches.append(branch)
                 }
                 end = branchRange.end
             }
 
-            // プログレスガード: トークンが消費されなかった場合は強制消費して無限ループを回避
+            // Progress guard: force token consumption to avoid infinite loops.
             if index == loopStart {
                 _ = consume()
             }
@@ -76,6 +78,170 @@ extension BuildASTPhase.ExpressionParser {
 
         let range = SourceRange(start: whenToken.range.start, end: end)
         return astArena.appendExpr(.whenExpr(subject: subject, branches: branches, elseExpr: elseExpr, range: range))
+    }
+
+    private func parseWhenBranchCondition(subject: ExprID?) -> ExprID? {
+        if let subject,
+           let token = current()
+        {
+            if token.kind == .keyword(.is) {
+                _ = consume()
+                guard let typeRef = parseTypeReference(token.range) else {
+                    return nil
+                }
+                let conditionRange = mergeRanges(astArena.exprRange(subject), nil, fallback: token.range)
+                return astArena.appendExpr(.isCheck(expr: subject, type: typeRef, negated: false, range: conditionRange))
+            }
+            if token.kind == .symbol(.bang),
+               let isToken = peek(1),
+               isToken.kind == .keyword(.is)
+            {
+                _ = consume() // !
+                _ = consume() // is
+                guard let typeRef = parseTypeReference(token.range) else {
+                    return nil
+                }
+                let conditionRange = mergeRanges(astArena.exprRange(subject), nil, fallback: token.range)
+                return astArena.appendExpr(.isCheck(expr: subject, type: typeRef, negated: true, range: conditionRange))
+            }
+        }
+        return parseExpression(minPrecedence: 0)
+    }
+
+    private func parseWhenBranchBodyExpression() -> ExprID? {
+        let startIndex = index
+        guard startIndex < tokens.endIndex else {
+            return nil
+        }
+
+        let endIndex = findWhenBranchBodyEnd(startIndex: startIndex)
+        guard endIndex > startIndex else {
+            return nil
+        }
+
+        let parser = BuildASTPhase.ExpressionParser(
+            tokens: tokens[startIndex ..< endIndex],
+            interner: interner,
+            astArena: astArena
+        )
+        guard let body = parser.parse() else {
+            return nil
+        }
+
+        let consumedCount = parser.index - parser.tokens.startIndex
+        if consumedCount > 0 {
+            index = startIndex + consumedCount
+        }
+        return body
+    }
+
+    private func findWhenBranchBodyEnd(startIndex: Int) -> Int {
+        var scan = startIndex
+        var parenDepth = 0
+        var bracketDepth = 0
+        var braceDepth = 0
+
+        while scan < tokens.endIndex {
+            let token = tokens[scan]
+            if parenDepth == 0, bracketDepth == 0, braceDepth == 0 {
+                if token.kind == .symbol(.semicolon) || token.kind == .symbol(.rBrace) {
+                    return scan
+                }
+                if scan > startIndex,
+                   hasLeadingNewline(token),
+                   startsWhenBranchHeader(at: scan)
+                {
+                    return scan
+                }
+            }
+
+            switch token.kind {
+            case .symbol(.lParen):
+                parenDepth += 1
+            case .symbol(.rParen):
+                parenDepth = max(0, parenDepth - 1)
+            case .symbol(.lBracket):
+                bracketDepth += 1
+            case .symbol(.rBracket):
+                bracketDepth = max(0, bracketDepth - 1)
+            case .symbol(.lBrace):
+                braceDepth += 1
+            case .symbol(.rBrace):
+                braceDepth = max(0, braceDepth - 1)
+            default:
+                break
+            }
+
+            scan += 1
+        }
+
+        return scan
+    }
+
+    private func startsWhenBranchHeader(at startIndex: Int) -> Bool {
+        guard startIndex < tokens.endIndex else {
+            return false
+        }
+
+        if tokens[startIndex].kind == .keyword(.else) {
+            return startIndex + 1 < tokens.endIndex && tokens[startIndex + 1].kind == .symbol(.arrow)
+        }
+
+        var scan = startIndex
+        var parenDepth = 0
+        var bracketDepth = 0
+        var braceDepth = 0
+        var sawToken = false
+
+        while scan < tokens.endIndex {
+            let token = tokens[scan]
+
+            if parenDepth == 0, bracketDepth == 0, braceDepth == 0 {
+                if scan > startIndex,
+                   hasLeadingNewline(token)
+                {
+                    return false
+                }
+
+                if token.kind == .symbol(.arrow) {
+                    return sawToken
+                }
+                if token.kind == .symbol(.semicolon) || token.kind == .symbol(.rBrace) {
+                    return false
+                }
+            }
+
+            switch token.kind {
+            case .symbol(.lParen):
+                parenDepth += 1
+            case .symbol(.rParen):
+                parenDepth = max(0, parenDepth - 1)
+            case .symbol(.lBracket):
+                bracketDepth += 1
+            case .symbol(.rBracket):
+                bracketDepth = max(0, bracketDepth - 1)
+            case .symbol(.lBrace):
+                braceDepth += 1
+            case .symbol(.rBrace):
+                braceDepth = max(0, braceDepth - 1)
+            default:
+                break
+            }
+
+            sawToken = true
+            scan += 1
+        }
+
+        return false
+    }
+
+    private func hasLeadingNewline(_ token: Token) -> Bool {
+        token.leadingTrivia.contains { piece in
+            if case .newline = piece {
+                return true
+            }
+            return false
+        }
     }
 
     func parseReturnExpression() -> ExprID? {
@@ -252,7 +418,30 @@ extension BuildASTPhase.ExpressionParser {
         guard let doToken = consume() else {
             return nil
         }
-        guard let body = parseExpression(minPrecedence: 0) else {
+        let bodyStartIndex = index
+
+        var body = parseExpression(minPrecedence: 0)
+
+        if !matches(.keyword(.while)),
+           let whileIndex = findDoWhileConditionKeyword(startingAt: bodyStartIndex),
+           bodyStartIndex < whileIndex,
+           whileIndex >= index
+        {
+            let bodyTokens = tokens[bodyStartIndex ..< whileIndex]
+            if let reparsedBody = parseDoWhileBodyExpression(from: bodyTokens) {
+                body = reparsedBody
+                index = whileIndex
+            }
+        }
+
+        if body != nil, bodyStartIndex < index {
+            let consumedBodyTokens = tokens[bodyStartIndex ..< index]
+            if let normalizedBody = parseDoWhileBodyExpression(from: consumedBodyTokens) {
+                body = normalizedBody
+            }
+        }
+
+        guard let body else {
             return nil
         }
         guard matches(.keyword(.while)),
@@ -266,6 +455,40 @@ extension BuildASTPhase.ExpressionParser {
         let end = astArena.exprRange(condition)?.end ?? astArena.exprRange(body)?.end ?? doToken.range.end
         let range = SourceRange(start: start ?? doToken.range.start, end: end)
         return astArena.appendExpr(.doWhileExpr(body: body, condition: condition, label: label, range: range))
+    }
+
+    /// Parses a do-while body from the consumed token slice, preferring local
+    /// declaration/assignment forms before falling back to expression parsing.
+    private func parseDoWhileBodyExpression(from bodyTokens: ArraySlice<Token>) -> ExprID? {
+        let sanitized = bodyTokens.filter { $0.kind != .symbol(.semicolon) }
+        guard !sanitized.isEmpty else {
+            return nil
+        }
+        if let localDecl = parseLocalDeclFromSlice(sanitized[...]) {
+            return localDecl
+        }
+        if let localAssign = parseLocalAssignFromSlice(sanitized[...]) {
+            return localAssign
+        }
+        return BuildASTPhase.ExpressionParser(tokens: sanitized[...], interner: interner, astArena: astArena).parse()
+    }
+
+    /// Finds the top-level `while` keyword that starts the condition part of
+    /// a do-while expression.
+    private func findDoWhileConditionKeyword(startingAt startIndex: Int) -> Int? {
+        var scan = startIndex
+        var depth = BuildASTPhase.BracketDepth()
+        var sawBodyToken = false
+        while scan < tokens.endIndex {
+            let token = tokens[scan]
+            if token.kind == .keyword(.while), depth.isAtTopLevel, sawBodyToken {
+                return scan
+            }
+            depth.track(token.kind)
+            sawBodyToken = true
+            scan += 1
+        }
+        return nil
     }
 
     func parseIfExpression() -> ExprID? {

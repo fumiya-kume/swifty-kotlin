@@ -32,11 +32,13 @@ node kotlinFile f0:0..193
               tok symbol()) f0:79..80
             node block f0:81..135
               tok symbol({) f0:81..82
-              node statement f0:95..102
-                tok intLiteral(1) f0:95..96
+              node whenEntry f0:95..102
+                node whenConditionList f0:95..96
+                  node whenCondition f0:95..96
+                    tok intLiteral(1) f0:95..96
                 tok symbol(->) f0:97..99
                 tok intLiteral(10) f0:100..102
-              node statement f0:115..125
+              node whenEntry f0:115..125
                 tok keyword(else) f0:115..119
                 tok symbol(->) f0:120..122
                 tok intLiteral(20) f0:123..125

@@ -151,6 +151,89 @@ extension DataFlowAndSemaRegressionTests {
         }
     }
 
+    func testTryCatchExpressionMatchesCompletionCriteriaExample() throws {
+        let source = """
+        fun f(): String {
+            val x: String = try {
+                "ok"
+            } catch (e: Exception) {
+                "err"
+            }
+            return x
+        }
+
+        fun main() = f()
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0031", in: ctx)
+        }
+    }
+
+    func testTryCatchDefiniteInitializationMergesNormalBranches() throws {
+        let source = """
+        class Handled
+
+        fun f(flag: Boolean): Int {
+            var x: Int
+            try {
+                if (flag) throw Handled()
+                x = 1
+            } catch (e: Handled) {
+                x = 2
+            }
+            return x
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0031", in: ctx)
+        }
+    }
+
+    func testTryPartialCatchRethrowMergesOnlyNormalPaths() throws {
+        let source = """
+        class Handled
+        class Unhandled
+
+        fun f(flag: Boolean): Int {
+            var x: Int
+            try {
+                if (flag) throw Handled() else throw Unhandled()
+            } catch (e: Handled) {
+                x = 7
+            }
+            return x
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0031", in: ctx)
+        }
+    }
+
+    func testTryFinallyReturnValueDoesNotPolluteTypeInference() throws {
+        let source = """
+        fun f(): String {
+            val x: String = try {
+                "ok"
+            } finally {
+                123
+            }
+            return x
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+        }
+    }
+
     // MARK: - ExprInference: uninitialized variable use
 
     func testUninitializedVariableUseEmitsDiagnostic() throws {
@@ -285,6 +368,30 @@ extension DataFlowAndSemaRegressionTests {
             let ctx = makeCompilationContext(inputs: [path])
             try runSema(ctx)
             assertNoDiagnostic("KSWIFTK-SEMA-0080", in: ctx)
+        }
+    }
+
+    func testIsCheckWithNonReifiedTypeParameterEmitsDiagnostic() throws {
+        let source = """
+        fun <T> f(x: Any): Boolean = x is T
+        fun main(): Int = 0
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertHasDiagnostic("KSWIFTK-SEMA-0084", in: ctx)
+        }
+    }
+
+    func testIsCheckWithReifiedTypeParameterDoesNotEmitNonReifiedDiagnostic() throws {
+        let source = """
+        inline fun <reified T> f(x: Any): Boolean = x is T
+        fun main(): Int = if (f<Int>(1)) 1 else 0
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0084", in: ctx)
         }
     }
 

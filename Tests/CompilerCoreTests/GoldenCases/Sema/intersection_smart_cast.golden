@@ -31,7 +31,7 @@ file f0 package=golden.sema
   decl d7 fun safeValue suspend=0 inline=0 sym=s21
 expr e0 name(x) type=Any ref=s16
 expr e1 isCheck expr=e0 type=t4 type=Boolean
-expr e2 name(x) type=Any ref=s16
+expr e2 name(x) type=Class#11 ref=s16
 expr e3 isCheck expr=e2 type=t5 type=Boolean
 expr e4 binary(logicalAnd) lhs=e1 rhs=e3 type=Boolean
 expr e5 name(x) type=Class#11 & Class#13 ref=s16

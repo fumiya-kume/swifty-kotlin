@@ -77,22 +77,12 @@
 
 #### ⚙️ Expressions / Operators
 
-- [ ] EXPR-001: `is` / `!is` 型検査と smart cast を完全実装する（spec.md J9/J10）
-  - [ ] Parser/AST に `typeCheckExpr`（`expr is Type` / `expr !is Type`）ノードを追加する
-  - [ ] `is` チェック後の then branch で変数型を narrowed type に smart cast する（既存実装済み 連携）
-  - [ ] `!is` チェック後の else branch でも narrow を適用する
-  - [ ] ジェネリクス型（`x is List<*>`）の reified 制限と erasure 警告を実装する
-  - [ ] `is` check を `&&` / `||` と組み合わせた場合の smart cast 伝播を実装する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task EXPR-001`
-  - **完了条件**: `if (x is String) x.length` が smart cast で動作し、`x !is String` branch で元の型になる
-
-
-- [ ] EXPR-002: 演算子の優先順位テーブルを Kotlin 仕様完全準拠で実装する（spec.md J5）
-  - [ ] Kotlin 仕様の 16 優先順位レベル（postfix > prefix > type_rhs > multiplicative > additive > range > infix > Elvis > named checks > comparison > equality > conjunction > disjunction > spread > assignment）を Parser に実装する
-  - [ ] infix 関数呼び出し（`a shl b`・`a or b`）を中置演算子として正しい優先順位で解析する
-  - [ ] `!!` の postfix 優先順位（`.` より低くないこと）を確認する
-  - [ ] `a + b * c - d / e` 等の混在式が正しい AST 木を生成することを golden で固定する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task EXPR-002`
+- [x] EXPR-002: 演算子の優先順位テーブルを Kotlin 仕様完全準拠で実装する（spec.md J5）
+  - [x] Kotlin 仕様の 16 優先順位レベル（postfix > prefix > type_rhs > multiplicative > additive > range > infix > Elvis > named checks > comparison > equality > conjunction > disjunction > spread > assignment）を Parser に実装する
+  - [x] infix 関数呼び出し（`a shl b`・`a or b`）を中置演算子として正しい優先順位で解析する
+  - [x] `!!` の postfix 優先順位（`.` より低くないこと）を確認する
+  - [x] `a + b * c - d / e` 等の混在式が正しい AST 木を生成することを golden で固定する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task EXPR-002`（2026-03-02: parser golden `GoldenCases/Parser/operator_precedence.kt` を追加）
   - **完了条件**: `1 + 2 * 3 == 7`・`true || false && false == true` が `kotlinc` と同一に評価される
 
 
@@ -126,20 +116,20 @@
   - **完了条件**: `when (x) { 1, 2 -> "few"; else -> "many" }` が `kotlinc` と同一動作する
 
 
-- [ ] CTRL-002: `try` を式として使う場合の型推論と `finally` 影響を実装する（spec.md J6/J11）
-  - [ ] `val x = try { ... } catch { ... }` の型を `try`/`catch` 最終式の LUB で推論する
-  - [ ] `finally` ブロックの戻り値が型推論を汚染しない（`Unit` 扱い）ことを保証する
-  - [ ] `catch` ブランチが複数ある場合の各ブランチ型合流を実装する
-  - [ ] some exception type のみ catch し残りを再 throw する制御フロー型推論を実装する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CTRL-002`（2026-03-02: diff case `Scripts/diff_cases/try_expression.kt` を追加）
+- [x] CTRL-002: `try` を式として使う場合の型推論と `finally` 影響を実装する（spec.md J6/J11）
+  - [x] `val x = try { ... } catch { ... }` の型を `try`/`catch` 最終式の LUB で推論する
+  - [x] `finally` ブロックの戻り値が型推論を汚染しない（`Unit` 扱い）ことを保証する
+  - [x] `catch` ブランチが複数ある場合の各ブランチ型合流を実装する
+  - [x] some exception type のみ catch し残りを再 throw する制御フロー型推論を実装する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CTRL-002`（2026-03-02: diff case `Scripts/diff_cases/try_expression.kt` を追加）
   - **完了条件**: `val x: String = try { "ok" } catch (e: Exception) { "err" }` が型エラーなしでコンパイルされる
 
 
-- [ ] CTRL-003: `do-while` の condition スコープと `break`/`continue`・初回実行を完全実装する（spec.md J5/J6）
-  - [ ] `do { body } while (cond)` のパースで condition が body スコープ外であることを保証する
-  - [ ] `do-while` 内の `break` / `continue` を正しい label ターゲットに接続する
-  - [ ] do-while の初回実行保証（condition が false でも body が 1 回実行）を codegen で保証する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CTRL-003`
+- [x] CTRL-003: `do-while` の condition スコープと `break`/`continue`・初回実行を完全実装する（spec.md J5/J6）
+  - [x] `do { body } while (cond)` のパースで condition が body スコープ外であることを保証する
+  - [x] `do-while` 内の `break` / `continue` を正しい label ターゲットに接続する
+  - [x] do-while の初回実行保証（condition が false でも body が 1 回実行）を codegen で保証する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CTRL-003`（2026-03-02: diff case `Scripts/diff_cases/do_while_label_break.kt` を拡張）
   - **完了条件**: `do { ... } while (false)` が body を 1 回実行し、`break` が正しくループを脱出する
 
 ---
@@ -312,7 +302,7 @@
 - [ ] FUNC-002: infix 関数宣言（`infix fun`）の構文と解決を実装する（spec.md J9）
   - [ ] `infix fun T.foo(arg: Type)` を parser/AST で infix function として保持する
   - [ ] `a foo b` 形式の中置呼び出しを Sema で receiver + infix function 呼び出しへ解決する
-  - [ ] infix 関数の優先順位を通常関数呼び出しより低く、`||`/`&&` より高く設定する（EXPR-002 連携）
+  - [x] infix 関数の優先順位を通常関数呼び出しより低く、`||`/`&&` より高く設定する（EXPR-002 連携）
   - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task FUNC-002`
   - **完了条件**: `1 to "one"` が `Pair(1, "one")` に、カスタム infix 関数が正しい優先順位で評価される
 

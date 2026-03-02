@@ -10,7 +10,7 @@ import Foundation
 /// The build-time ABI reconciliation tests (in RuntimeTests) verify that
 /// these declarations match the Runtime module's `RuntimeABISpec`.
 public enum RuntimeABIExterns {
-    public static let specVersion = "J17"
+    public static let specVersion = "J19"
 
     /// A single extern function declaration for the C preamble.
     public struct ExternDecl: Equatable, Sendable {
@@ -92,6 +92,12 @@ public enum RuntimeABIExterns {
     public static let kk_string_compareTo = ExternDecl(
         name: "kk_string_compareTo",
         parameterTypes: ["void * _Nullable", "void * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_length = ExternDecl(
+        name: "kk_string_length",
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -433,6 +439,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_object_new = ExternDecl(
+        name: "kk_object_new",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_array_get = ExternDecl(
         name: "kk_array_get",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
@@ -447,6 +459,44 @@ public enum RuntimeABIExterns {
 
     public static let kk_vararg_spread_concat = ExternDecl(
         name: "kk_vararg_spread_concat",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // MARK: - TypeCheck Operators
+
+    public static let kk_type_register_super = ExternDecl(
+        name: "kk_type_register_super",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_type_register_iface = ExternDecl(
+        name: "kk_type_register_iface",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_op_is = ExternDecl(
+        name: "kk_op_is",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_op_cast = ExternDecl(
+        name: "kk_op_cast",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_op_safe_cast = ExternDecl(
+        name: "kk_op_safe_cast",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_op_contains = ExternDecl(
+        name: "kk_op_contains",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
@@ -571,6 +621,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_int_toString_radix = ExternDecl(
+        name: "kk_int_toString_radix",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "void *"
+    )
+
     // MARK: - All Functions (canonical list)
 
     /// All runtime extern declarations, ordered by section.
@@ -588,6 +644,7 @@ public enum RuntimeABIExterns {
         kk_string_from_utf8,
         kk_string_concat,
         kk_string_compareTo,
+        kk_string_length,
         // Println
         kk_println_any,
         // GC
@@ -651,9 +708,17 @@ public enum RuntimeABIExterns {
         kk_unbox_bool,
         // Array
         kk_array_new,
+        kk_object_new,
         kk_array_get,
         kk_array_set,
         kk_vararg_spread_concat,
+        // TypeCheck Operators
+        kk_type_register_super,
+        kk_type_register_iface,
+        kk_op_is,
+        kk_op_cast,
+        kk_op_safe_cast,
+        kk_op_contains,
         // Range/Progression
         kk_op_rangeTo,
         kk_op_rangeUntil,
@@ -676,6 +741,7 @@ public enum RuntimeABIExterns {
         kk_op_shl,
         kk_op_shr,
         kk_op_ushr,
+        kk_int_toString_radix,
     ]
 
     /// Look up an extern declaration by symbol name.

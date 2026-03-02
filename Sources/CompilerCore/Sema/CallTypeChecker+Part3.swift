@@ -39,6 +39,57 @@ extension CallTypeChecker {
             }
         }
 
+        // Primitive infix member functions: Int/Long.and|or|xor|shl|shr|ushr (EXPR-003)
+        if args.count == 1 {
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let longType = sema.types.make(.primitive(.long, .nonNull))
+            let receiverForCheck = safeCall
+                ? sema.types.makeNonNullable(lookupReceiverType)
+                : lookupReceiverType
+            let rhsType = sema.types.makeNonNullable(argTypes[0])
+            let isPrimitiveReceiver = receiverForCheck == intType || receiverForCheck == longType
+            switch interner.resolve(calleeName) {
+            case "and", "or", "xor":
+                if isPrimitiveReceiver,
+                   rhsType == intType || rhsType == longType
+                {
+                    let resultType = (receiverForCheck == longType || rhsType == longType) ? longType : intType
+                    let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            case "shl", "shr", "ushr":
+                if isPrimitiveReceiver,
+                   rhsType == intType
+                {
+                    let finalType = safeCall ? sema.types.makeNullable(receiverForCheck) : receiverForCheck
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            default:
+                break
+            }
+        }
+
+        // Primitive member function: Int/Long.toString(radix: Int) → String (EXPR-003)
+        if interner.resolve(calleeName) == "toString",
+           args.count == 1
+        {
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let longType = sema.types.make(.primitive(.long, .nonNull))
+            let stringType = sema.types.make(.primitive(.string, .nonNull))
+            let receiverForCheck = safeCall
+                ? sema.types.makeNonNullable(lookupReceiverType)
+                : lookupReceiverType
+            if receiverForCheck == intType || receiverForCheck == longType,
+               argTypes[0] == intType
+            {
+                let finalType = safeCall ? sema.types.makeNullable(stringType) : stringType
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            }
+        }
+
         var isSuperCall = false
         var supertypeSymbols: Set<SymbolID> = []
         if !safeCall {
@@ -65,14 +116,20 @@ extension CallTypeChecker {
         // a class/interface/enumClass symbol, only companion members should be
         // accessible (not instance methods).  This prevents `Foo.instanceMethod()`
         // from resolving when there is no companion with that name.
-        let isClassNameReceiver: Bool = {
+        let classNameReceiverNominalSymbol: SymbolID? = {
             guard let receiverSymbolID = sema.bindings.identifierSymbol(for: receiverID),
                   let receiverSymbol = sema.symbols.symbol(receiverSymbolID)
             else {
-                return false
+                return nil
             }
-            return receiverSymbol.kind == .class || receiverSymbol.kind == .interface || receiverSymbol.kind == .enumClass
+            switch receiverSymbol.kind {
+            case .class, .interface, .enumClass:
+                return receiverSymbolID
+            default:
+                return nil
+            }
         }()
+        let isClassNameReceiver = classNameReceiverNominalSymbol != nil
 
         // Track the companion type so we can pass it (not the owner class type)
         // as the implicit receiver when resolving the call.
@@ -202,6 +259,43 @@ extension CallTypeChecker {
         let (visible, invisible) = ctx.filterByVisibility(allCandidates)
         let candidates = visible
         if candidates.isEmpty {
+            if isClassNameReceiver,
+               args.isEmpty,
+               let classNameReceiverNominalSymbol,
+               let staticMember = resolveClassNameMemberValue(
+                   ownerNominalSymbol: classNameReceiverNominalSymbol,
+                   memberName: calleeName,
+                   sema: sema
+               )
+            {
+                if let memberSymbol = sema.symbols.symbol(staticMember.symbol),
+                   !ctx.visibilityChecker.isAccessible(
+                       memberSymbol,
+                       fromFile: ctx.currentFileID,
+                       enclosingClass: ctx.enclosingClassSymbol
+                   )
+                {
+                    // swiftlint:disable:next line_length
+                    driver.helpers.emitVisibilityError(for: memberSymbol, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
+                sema.bindings.bindIdentifier(id, symbol: staticMember.symbol)
+                sema.bindings.bindExprType(id, type: staticMember.type)
+                return staticMember.type
+            }
+            if args.isEmpty,
+               interner.resolve(calleeName) == "length"
+            {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType) {
+                    let resultType = sema.types.intType
+                    let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            }
             // For non-empty-arg member calls, try member property/field lookup.
             // This handles callable property syntax (e.g. `receiver.f(...)`).
             // Skip this for class-name receivers — only companion members are
@@ -498,6 +592,39 @@ extension CallTypeChecker {
         let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
         sema.bindings.bindExprType(id, type: finalType)
         return finalType
+    }
+
+    private func resolveClassNameMemberValue(
+        ownerNominalSymbol: SymbolID,
+        memberName: InternedString,
+        sema: SemaModule
+    ) -> (symbol: SymbolID, type: TypeID)? {
+        guard let owner = sema.symbols.symbol(ownerNominalSymbol) else {
+            return nil
+        }
+        let memberFQName = owner.fqName + [memberName]
+        let candidates = sema.symbols.lookupAll(fqName: memberFQName).sorted(by: { $0.rawValue < $1.rawValue })
+        for candidate in candidates {
+            guard let candidateSymbol = sema.symbols.symbol(candidate) else {
+                continue
+            }
+            switch candidateSymbol.kind {
+            case .field:
+                if let fieldType = sema.symbols.propertyType(for: candidate) {
+                    return (candidate, fieldType)
+                }
+            case .object:
+                let objectType = sema.types.make(.classType(ClassType(
+                    classSymbol: candidate,
+                    args: [],
+                    nullability: .nonNull
+                )))
+                return (candidate, objectType)
+            default:
+                continue
+            }
+        }
+        return nil
     }
 
     private func makeProjectionViolationDiagnostic(

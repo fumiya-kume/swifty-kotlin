@@ -124,6 +124,7 @@ struct TypeCheckHelpers {
         ast: ASTModule,
         sema: SemaModule,
         interner: StringInterner,
+        scope: Scope? = nil,
         diagnostics: DiagnosticEngine? = nil
     ) -> TypeID {
         guard let typeRef = ast.arena.typeRef(typeRefID) else {
@@ -138,6 +139,12 @@ struct TypeCheckHelpers {
             let nullability: Nullability = nullable ? .nullable : .nonNull
             if let builtin = resolveBuiltinTypeName(name, nullability: nullability, types: sema.types) {
                 return builtin
+            }
+            if path.count == 1,
+               let scope,
+               let typeParameterSymbol = resolveTypeParameterSymbol(firstName, scope: scope, sema: sema)
+            {
+                return sema.types.make(.typeParam(TypeParamType(symbol: typeParameterSymbol, nullability: nullability)))
             }
             do {
                 let fqCandidates = sema.symbols.lookupAll(fqName: [firstName]).filter { symbolID in
@@ -168,7 +175,7 @@ struct TypeCheckHelpers {
                 if let symbolID = candidates.first {
                     let resolvedArgs = resolveTypeArgRefsForTypeCheck(
                         argRefs, ast: ast, sema: sema, interner: interner,
-                        diagnostics: diagnostics
+                        scope: scope, diagnostics: diagnostics
                     )
                     // Expand typealias at call-site
                     if let sym = sema.symbols.symbol(symbolID), sym.kind == .typeAlias {
@@ -203,8 +210,8 @@ struct TypeCheckHelpers {
 
         case let .functionType(paramRefIDs, returnRefID, isSuspend, nullable):
             let nullability: Nullability = nullable ? .nullable : .nonNull
-            let paramTypes = paramRefIDs.map { resolveTypeRef($0, ast: ast, sema: sema, interner: interner, diagnostics: diagnostics) }
-            let returnType = resolveTypeRef(returnRefID, ast: ast, sema: sema, interner: interner, diagnostics: diagnostics)
+            let paramTypes = paramRefIDs.map { resolveTypeRef($0, ast: ast, sema: sema, interner: interner, scope: scope, diagnostics: diagnostics) }
+            let returnType = resolveTypeRef(returnRefID, ast: ast, sema: sema, interner: interner, scope: scope, diagnostics: diagnostics)
             return sema.types.make(.functionType(FunctionType(
                 params: paramTypes,
                 returnType: returnType,
@@ -213,7 +220,7 @@ struct TypeCheckHelpers {
             )))
 
         case let .intersection(partRefs):
-            let partTypes = partRefs.map { resolveTypeRef($0, ast: ast, sema: sema, interner: interner, diagnostics: diagnostics) }
+            let partTypes = partRefs.map { resolveTypeRef($0, ast: ast, sema: sema, interner: interner, scope: scope, diagnostics: diagnostics) }
             return sema.types.make(.intersection(partTypes))
         }
     }
@@ -223,19 +230,30 @@ struct TypeCheckHelpers {
         ast: ASTModule,
         sema: SemaModule,
         interner: StringInterner,
+        scope: Scope? = nil,
         diagnostics: DiagnosticEngine? = nil
     ) -> [TypeArg] {
         argRefs.map { argRef in
             switch argRef {
             case let .invariant(innerRef):
-                .invariant(resolveTypeRef(innerRef, ast: ast, sema: sema, interner: interner, diagnostics: diagnostics))
+                .invariant(resolveTypeRef(innerRef, ast: ast, sema: sema, interner: interner, scope: scope, diagnostics: diagnostics))
             case let .out(innerRef):
-                .out(resolveTypeRef(innerRef, ast: ast, sema: sema, interner: interner, diagnostics: diagnostics))
+                .out(resolveTypeRef(innerRef, ast: ast, sema: sema, interner: interner, scope: scope, diagnostics: diagnostics))
             case let .in(innerRef):
-                .in(resolveTypeRef(innerRef, ast: ast, sema: sema, interner: interner, diagnostics: diagnostics))
+                .in(resolveTypeRef(innerRef, ast: ast, sema: sema, interner: interner, scope: scope, diagnostics: diagnostics))
             case .star:
                 .star
             }
+        }
+    }
+
+    private func resolveTypeParameterSymbol(
+        _ name: InternedString,
+        scope: Scope,
+        sema: SemaModule
+    ) -> SymbolID? {
+        scope.lookup(name).first { symbolID in
+            sema.symbols.symbol(symbolID)?.kind == .typeParameter
         }
     }
 

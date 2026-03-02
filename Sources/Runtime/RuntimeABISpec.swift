@@ -66,7 +66,7 @@ public struct RuntimeABIFunctionSpec: Equatable, Sendable {
 }
 
 public enum RuntimeABISpec {
-    public static let specVersion = "J17"
+    public static let specVersion = "J19"
 
     public static let memoryFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
@@ -146,6 +146,14 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "a", type: .nullableOpaquePointer),
                 RuntimeABIParameter(name: "b", type: .nullableOpaquePointer),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_length",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "String"
@@ -612,6 +620,15 @@ public enum RuntimeABISpec {
             section: "Array"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_object_new",
+            parameters: [
+                RuntimeABIParameter(name: "length", type: .intptr),
+                RuntimeABIParameter(name: "classId", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Array"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_array_get",
             parameters: [
                 RuntimeABIParameter(name: "arrayRaw", type: .intptr),
@@ -640,6 +657,64 @@ public enum RuntimeABISpec {
             ],
             returnType: .intptr,
             section: "Array"
+        ),
+    ]
+
+    public static let operatorFunctions: [RuntimeABIFunctionSpec] = [
+        RuntimeABIFunctionSpec(
+            name: "kk_type_register_super",
+            parameters: [
+                RuntimeABIParameter(name: "childTypeId", type: .intptr),
+                RuntimeABIParameter(name: "superTypeId", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_type_register_iface",
+            parameters: [
+                RuntimeABIParameter(name: "childTypeId", type: .intptr),
+                RuntimeABIParameter(name: "ifaceTypeId", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_op_is",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "typeToken", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_op_cast",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "typeToken", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_op_safe_cast",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "typeToken", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_op_contains",
+            parameters: [
+                RuntimeABIParameter(name: "container", type: .intptr),
+                RuntimeABIParameter(name: "element", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
         ),
     ]
 
@@ -822,6 +897,15 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Bitwise"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_int_toString_radix",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "radix", type: .intptr),
+            ],
+            returnType: .opaquePointer,
+            section: "Bitwise"
+        ),
     ]
 
     public static let allFunctions: [RuntimeABIFunctionSpec] =
@@ -833,6 +917,7 @@ public enum RuntimeABISpec {
             + coroutineFunctions
             + boxingFunctions
             + arrayFunctions
+            + operatorFunctions
             + rangeFunctions
             + delegateFunctions
             + bitwiseFunctions

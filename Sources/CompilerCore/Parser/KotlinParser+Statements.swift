@@ -144,7 +144,6 @@ extension KotlinParser {
 
     /// Parse a structured `when` expression: `when [(subject)] { branches }`
     func parseWhenStatement(inBlock: Bool) -> NodeID {
-        _ = inBlock
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
 
@@ -158,9 +157,9 @@ extension KotlinParser {
             range.append(arena.node(subjectGroup).range)
         }
 
-        // Parse body block
+        // Parse body as a structured when block so branch conditions remain explicit in CST.
         if case .symbol(.lBrace) = stream.peek().kind {
-            let body = parseBlock()
+            let body = parseWhenBody(inBlock: inBlock)
             children.append(.node(body))
             range.append(arena.node(body).range)
         }
@@ -214,7 +213,8 @@ extension KotlinParser {
             into: &children,
             range: &range,
             stopBeforeElse: stopBeforeElse,
-            stopBeforeCatchFinally: false
+            stopBeforeCatchFinally: false,
+            stopBeforeTopLevelComma: false
         )
     }
 
@@ -230,7 +230,8 @@ extension KotlinParser {
             into: &children,
             range: &range,
             stopBeforeElse: false,
-            stopBeforeCatchFinally: true
+            stopBeforeCatchFinally: true,
+            stopBeforeTopLevelComma: false
         )
     }
 
@@ -241,7 +242,8 @@ extension KotlinParser {
         into children: inout [SyntaxChild],
         range: inout RangeAccumulator,
         stopBeforeElse: Bool,
-        stopBeforeCatchFinally: Bool
+        stopBeforeCatchFinally: Bool,
+        stopBeforeTopLevelComma: Bool
     ) {
         let token = stream.peek()
         switch token.kind {
@@ -271,7 +273,8 @@ extension KotlinParser {
                 into: &children,
                 range: &range,
                 stopBeforeElse: stopBeforeElse,
-                stopBeforeCatchFinally: stopBeforeCatchFinally
+                stopBeforeCatchFinally: stopBeforeCatchFinally,
+                stopBeforeTopLevelComma: stopBeforeTopLevelComma
             )
         }
     }
@@ -283,7 +286,8 @@ extension KotlinParser {
         into children: inout [SyntaxChild],
         range: inout RangeAccumulator,
         stopBeforeElse: Bool,
-        stopBeforeCatchFinally: Bool
+        stopBeforeCatchFinally: Bool,
+        stopBeforeTopLevelComma: Bool
     ) {
         var parenDepth = 0
         var bracketDepth = 0
@@ -293,6 +297,8 @@ extension KotlinParser {
             if shouldStopStatementBefore(token, inBlock: inBlock) { break }
             if stopBeforeElse, parenDepth == 0, bracketDepth == 0,
                token.kind == .keyword(.else) { break }
+            if stopBeforeTopLevelComma, parenDepth == 0, bracketDepth == 0,
+               token.kind == .symbol(.comma) { break }
             if stopBeforeCatchFinally, parenDepth == 0, bracketDepth == 0 {
                 if case .keyword(.catch) = token.kind { break }
                 if case .keyword(.finally) = token.kind { break }
@@ -326,6 +332,141 @@ extension KotlinParser {
             }
             if !inBlock, hasLeadingNewline(stream.peek()) { break }
         }
+    }
+
+    // MARK: - when Entry Parsing
+
+    private func parseWhenBody(inBlock: Bool) -> NodeID {
+        var children: [SyntaxChild] = []
+        var range = RangeAccumulator()
+        guard consumeIfSymbol(.lBrace, into: &children, range: &range) else {
+            return arena.appendNode(kind: .block, range: range.value ?? invalidRange, children)
+        }
+
+        while !stream.atEOF() {
+            let token = stream.peek()
+            if case .symbol(.rBrace) = token.kind {
+                _ = consumeToken(into: &children, range: &range)
+                break
+            }
+            if token.kind == .symbol(.semicolon) || token.kind == .symbol(.comma) {
+                _ = consumeToken(into: &children, range: &range)
+                continue
+            }
+
+            let entry = parseWhenEntry(inBlock: inBlock)
+            children.append(.node(entry))
+            range.append(arena.node(entry).range)
+
+            while stream.peek().kind == .symbol(.semicolon) || stream.peek().kind == .symbol(.comma) {
+                _ = consumeToken(into: &children, range: &range)
+            }
+        }
+
+        return arena.appendNode(kind: .block, range: range.value ?? invalidRange, children)
+    }
+
+    private func parseWhenEntry(inBlock: Bool) -> NodeID {
+        var children: [SyntaxChild] = []
+        var range = RangeAccumulator()
+
+        if stream.peek().kind == .keyword(.else) {
+            _ = consumeToken(into: &children, range: &range)
+        } else {
+            let conditionList = parseWhenConditionList()
+            children.append(.node(conditionList))
+            range.append(arena.node(conditionList).range)
+        }
+
+        consumeIf(
+            expected: .symbol(.arrow),
+            into: &children,
+            range: &range,
+            code: "KSWIFTK-PARSE-0010"
+        )
+
+        appendControlFlowBody(
+            inBlock: inBlock,
+            into: &children,
+            range: &range,
+            stopBeforeElse: false,
+            stopBeforeCatchFinally: false,
+            stopBeforeTopLevelComma: true
+        )
+
+        return arena.appendNode(kind: .whenEntry, range: range.value ?? invalidRange, children)
+    }
+
+    private func parseWhenConditionList() -> NodeID {
+        var children: [SyntaxChild] = []
+        var range = RangeAccumulator()
+
+        while !stream.atEOF() {
+            let token = stream.peek()
+            if token.kind == .symbol(.arrow) || token.kind == .symbol(.rBrace) {
+                break
+            }
+
+            let condition = parseWhenCondition()
+            children.append(.node(condition))
+            range.append(arena.node(condition).range)
+
+            if stream.peek().kind == .symbol(.comma) {
+                _ = consumeToken(into: &children, range: &range)
+                if stream.peek().kind == .symbol(.arrow) {
+                    break
+                }
+                continue
+            }
+            break
+        }
+
+        return arena.appendNode(kind: .whenConditionList, range: range.value ?? invalidRange, children)
+    }
+
+    private func parseWhenCondition() -> NodeID {
+        var children: [SyntaxChild] = []
+        var range = RangeAccumulator()
+        var parenDepth = 0
+        var bracketDepth = 0
+
+        while !stream.atEOF() {
+            let token = stream.peek()
+            if parenDepth == 0, bracketDepth == 0 {
+                if token.kind == .symbol(.comma) || token.kind == .symbol(.arrow) || token.kind == .symbol(.rBrace) {
+                    break
+                }
+                if hasLeadingNewline(token), !children.isEmpty {
+                    break
+                }
+            }
+
+            _ = consumeToken(into: &children, range: &range)
+            switch token.kind {
+            case .symbol(.lParen):
+                parenDepth += 1
+            case .symbol(.rParen):
+                parenDepth = max(0, parenDepth - 1)
+            case .symbol(.lBracket):
+                bracketDepth += 1
+            case .symbol(.rBracket):
+                bracketDepth = max(0, bracketDepth - 1)
+            default:
+                break
+            }
+        }
+
+        if children.isEmpty {
+            insertMissingToken(
+                expected: .identifier(.invalid),
+                into: &children,
+                range: &range,
+                code: "KSWIFTK-PARSE-0011",
+                message: "Expected when branch condition."
+            )
+        }
+
+        return arena.appendNode(kind: .whenCondition, range: range.value ?? invalidRange, children)
     }
 
     // MARK: - Statement Classification (for non-dispatched cases)
@@ -390,7 +531,7 @@ extension KotlinParser {
             appendLoopBody(into: &children, range: &range)
 
         case .keyword(.do):
-            appendLoopBody(into: &children, range: &range)
+            appendDoWhileBody(into: &children, range: &range)
             if case .keyword(.while) = stream.peek().kind {
                 _ = consumeToken(into: &children, range: &range)
                 if case .symbol(.lParen) = stream.peek().kind {
@@ -421,6 +562,84 @@ extension KotlinParser {
         if stream.index == before, !stream.atEOF() {
             _ = consumeToken(into: &children, range: &range)
         }
+    }
+
+    /// Appends a `do` loop body while keeping the trailing `while (...)`
+    /// condition outside of the body node.
+    func appendDoWhileBody(into children: inout [SyntaxChild], range: inout RangeAccumulator) {
+        if case .symbol(.lBrace) = stream.peek().kind {
+            let block = parseBlock()
+            children.append(.node(block))
+            range.append(arena.node(block).range)
+            return
+        }
+
+        var bodyChildren: [SyntaxChild] = []
+        var bodyRange = RangeAccumulator()
+        var parenDepth = 0
+        var bracketDepth = 0
+        var braceDepth = 0
+
+        while !stream.atEOF() {
+            let token = stream.peek()
+            let atTopLevel = parenDepth == 0 && bracketDepth == 0 && braceDepth == 0
+            if atTopLevel, !bodyChildren.isEmpty,
+               token.kind == .keyword(.while)
+            {
+                break
+            }
+            if shouldStopStatementBefore(token, inBlock: true) {
+                break
+            }
+            if atTopLevel,
+               !bodyChildren.isEmpty,
+               hasLeadingNewline(token),
+               shouldSplitStatementOnNewline(token.kind)
+            {
+                break
+            }
+
+            _ = consumeToken(into: &bodyChildren, range: &bodyRange)
+            switch token.kind {
+            case .symbol(.lParen):
+                parenDepth += 1
+            case .symbol(.rParen):
+                parenDepth = max(0, parenDepth - 1)
+            case .symbol(.lBracket):
+                bracketDepth += 1
+            case .symbol(.rBracket):
+                bracketDepth = max(0, bracketDepth - 1)
+            case .symbol(.lBrace):
+                braceDepth += 1
+            case .symbol(.rBrace):
+                braceDepth = max(0, braceDepth - 1)
+            default:
+                break
+            }
+
+            if token.kind == .symbol(.semicolon), atTopLevel {
+                break
+            }
+        }
+
+        if bodyChildren.isEmpty {
+            let before = stream.index
+            let body = parseStatement(inBlock: true)
+            children.append(.node(body))
+            range.append(arena.node(body).range)
+            if stream.index == before, !stream.atEOF() {
+                _ = consumeToken(into: &children, range: &range)
+            }
+            return
+        }
+
+        let bodyNode = arena.appendNode(
+            kind: .statement,
+            range: bodyRange.value ?? invalidRange,
+            bodyChildren
+        )
+        children.append(.node(bodyNode))
+        range.append(arena.node(bodyNode).range)
     }
 
     func shouldSplitStatementOnNewline(_ kind: TokenKind) -> Bool {

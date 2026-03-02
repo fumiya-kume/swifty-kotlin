@@ -226,14 +226,20 @@ final class DeclTypeChecker {
             var locals: LocalBindings = [:]
             let ctorSymbols = sema.symbols.symbols(atDeclSite: ctor.range).compactMap { sema.symbols.symbol($0) }.filter { $0.kind == .constructor }
             let currentCtorSymbolID = ctorSymbols.first?.id
+            let constructorScope = FunctionScope(parent: ctx.scope, symbols: sema.symbols)
+            var constructorCtx = ctx.copying(scope: constructorScope)
             if let ctorSymbol = ctorSymbols.first,
                let signature = sema.symbols.functionSignature(for: ctorSymbol.id)
             {
+                for typeParameterSymbol in signature.typeParameterSymbols {
+                    constructorScope.insert(typeParameterSymbol)
+                }
                 for (index, paramSymbol) in signature.valueParameterSymbols.enumerated() {
                     guard let param = sema.symbols.symbol(paramSymbol) else { continue }
                     let type = index < signature.parameterTypes.count ? signature.parameterTypes[index] : sema.types.anyType
                     locals[param.name] = (type, paramSymbol, false, true)
                 }
+                constructorCtx = ctx.copying(scope: constructorScope)
             }
 
             if ctor.delegationCall == nil, hasPrimaryConstructor {
@@ -247,7 +253,7 @@ final class DeclTypeChecker {
             if let delegation = ctor.delegationCall {
                 var argTypes: [CallArg] = []
                 for arg in delegation.args {
-                    let argType = driver.inferExpr(arg.expr, ctx: ctx, locals: &locals, expectedType: nil)
+                    let argType = driver.inferExpr(arg.expr, ctx: constructorCtx, locals: &locals, expectedType: nil)
                     argTypes.append(CallArg(label: arg.label, isSpread: arg.isSpread, type: argType))
                 }
 
@@ -319,7 +325,7 @@ final class DeclTypeChecker {
                     )
                 }
             }
-            _ = inferFunctionBodyType(ctor.body, ctx: ctx, locals: &locals, expectedType: nil)
+            _ = inferFunctionBodyType(ctor.body, ctx: constructorCtx, locals: &locals, expectedType: nil)
         }
     }
 
@@ -348,7 +354,11 @@ final class DeclTypeChecker {
             locals[param.name] = (type, paramSymbol, false, true)
         }
 
-        let functionCtx = ctx.copying(implicitReceiverType: signature.receiverType)
+        let functionScope = FunctionScope(parent: ctx.scope, symbols: sema.symbols)
+        for typeParameterSymbol in signature.typeParameterSymbols {
+            functionScope.insert(typeParameterSymbol)
+        }
+        let functionCtx = ctx.copying(scope: functionScope, implicitReceiverType: signature.receiverType)
         let bodyType = inferFunctionBodyType(
             function.body,
             ctx: functionCtx,

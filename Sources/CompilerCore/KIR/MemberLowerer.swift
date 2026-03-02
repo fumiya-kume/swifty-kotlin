@@ -32,6 +32,7 @@ final class MemberLowerer {
             }
             driver.ctx.resetScopeForFunction()
             driver.ctx.beginCallableLoweringScope()
+            driver.ctx.currentFunctionSymbol = symbol
 
             let signature = sema.symbols.functionSignature(for: symbol)
             var params: [KIRParameter] = []
@@ -155,6 +156,7 @@ final class MemberLowerer {
             allDecls.append(contentsOf: driver.ctx.drainGeneratedCallableDecls())
             driver.ctx.currentImplicitReceiverExprID = nil
             driver.ctx.currentImplicitReceiverSymbol = nil
+            driver.ctx.currentFunctionSymbol = nil
         }
 
         for declID in memberProperties {

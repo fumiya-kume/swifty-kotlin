@@ -687,8 +687,11 @@ final class ControlFlowLowerer {
                 instructions.append(.constValue(result: hoistedTrueID, value: .boolLiteral(true)))
 
                 for (condIdx, conditionExprID) in branch.conditions.enumerated() {
-                    let conditionValueID = driver.lowerExpr(
-                        conditionExprID,
+                    let matchesID = lowerWhenConditionMatch(
+                        conditionExprID: conditionExprID,
+                        subjectExprID: subject,
+                        loweredSubjectID: subjectID,
+                        falseID: falseID,
                         ast: ast,
                         sema: sema,
                         arena: arena,
@@ -696,18 +699,6 @@ final class ControlFlowLowerer {
                         propertyConstantInitializers: propertyConstantInitializers,
                         instructions: &instructions
                     )
-                    let matchesID: KIRExprID
-                    if let subjectID {
-                        matchesID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
-                        instructions.append(.binary(
-                            op: .equal,
-                            lhs: subjectID,
-                            rhs: conditionValueID,
-                            result: matchesID
-                        ))
-                    } else {
-                        matchesID = conditionValueID
-                    }
                     let isLastCondition = condIdx == branch.conditions.count - 1
                     if isLastCondition {
                         // Last condition: if false, jump to next branch
@@ -722,8 +713,11 @@ final class ControlFlowLowerer {
             } else if !branch.conditions.isEmpty {
                 // Single condition: no OR-chain, just evaluate and branch on false.
                 let conditionExprID = branch.conditions[0]
-                let conditionValueID = driver.lowerExpr(
-                    conditionExprID,
+                let matchesID = lowerWhenConditionMatch(
+                    conditionExprID: conditionExprID,
+                    subjectExprID: subject,
+                    loweredSubjectID: subjectID,
+                    falseID: falseID,
                     ast: ast,
                     sema: sema,
                     arena: arena,
@@ -731,18 +725,6 @@ final class ControlFlowLowerer {
                     propertyConstantInitializers: propertyConstantInitializers,
                     instructions: &instructions
                 )
-                let matchesID: KIRExprID
-                if let subjectID {
-                    matchesID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
-                    instructions.append(.binary(
-                        op: .equal,
-                        lhs: subjectID,
-                        rhs: conditionValueID,
-                        result: matchesID
-                    ))
-                } else {
-                    matchesID = conditionValueID
-                }
                 instructions.append(.jumpIfEqual(lhs: matchesID, rhs: falseID, target: nextBranchLabels[index]))
             }
 
@@ -790,5 +772,92 @@ final class ControlFlowLowerer {
             arena.setExprType(sema.types.nothingType, for: result)
         }
         return result
+    }
+
+    private func lowerWhenConditionMatch(
+        conditionExprID: ExprID,
+        subjectExprID: ExprID?,
+        loweredSubjectID: KIRExprID?,
+        falseID: KIRExprID,
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+        if let loweredSubjectID,
+           let conditionExpr = ast.arena.expr(conditionExprID),
+           case let .isCheck(checkedExprID, _, negated, _) = conditionExpr,
+           isSameWhenSubjectExpression(checkedExprID, subjectExprID: subjectExprID, sema: sema)
+        {
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let typeTokenLiteral: Int64 = if let targetType = sema.bindings.isCheckTargetType(for: conditionExprID) {
+                RuntimeTypeCheckToken.encode(type: targetType, sema: sema, interner: interner)
+            } else {
+                RuntimeTypeCheckToken.unknownBase
+            }
+            let typeToken = arena.appendExpr(.intLiteral(typeTokenLiteral), type: intType)
+            instructions.append(.constValue(result: typeToken, value: .intLiteral(typeTokenLiteral)))
+
+            let isResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_op_is"),
+                arguments: [loweredSubjectID, typeToken],
+                result: isResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            guard negated else {
+                return isResult
+            }
+            let negatedResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
+            instructions.append(.binary(op: .equal, lhs: isResult, rhs: falseID, result: negatedResult))
+            return negatedResult
+        }
+
+        let conditionValueID = driver.lowerExpr(
+            conditionExprID,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+
+        if let loweredSubjectID {
+            let matchesID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
+            instructions.append(.binary(
+                op: .equal,
+                lhs: loweredSubjectID,
+                rhs: conditionValueID,
+                result: matchesID
+            ))
+            return matchesID
+        }
+
+        return conditionValueID
+    }
+
+    private func isSameWhenSubjectExpression(
+        _ checkedExprID: ExprID,
+        subjectExprID: ExprID?,
+        sema: SemaModule
+    ) -> Bool {
+        guard let subjectExprID else {
+            return false
+        }
+        if checkedExprID == subjectExprID {
+            return true
+        }
+        guard let checkedSymbolID = sema.bindings.identifierSymbols[checkedExprID],
+              let subjectSymbolID = sema.bindings.identifierSymbols[subjectExprID]
+        else {
+            return false
+        }
+        return checkedSymbolID == subjectSymbolID
     }
 }

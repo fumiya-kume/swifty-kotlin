@@ -244,6 +244,9 @@ public final class LLVMBackend {
 
     /// Unary builtin ops: function name → C prefix operator (P5-103)
     static let unaryBuiltinOps: [String: String] = [
+        "kk_op_not": "!",
+        "kk_op_uplus": "+",
+        "kk_op_uminus": "-",
         "kk_op_inv": "~",
     ]
 
@@ -410,8 +413,10 @@ public final class LLVMBackend {
             "kk_println_any",
             "kk_string_concat",
             "kk_string_compareTo",
+            "kk_string_length",
             "kk_any_to_string",
             "kk_string_from_utf8",
+            "kk_op_is",
 
             "kk_coroutine_suspended",
             "kk_coroutine_continuation_new",
@@ -453,6 +458,12 @@ public final class LLVMBackend {
             "delay",
             "kk_op_notnull",
             "kk_op_elvis",
+            "kk_op_cast",
+            "kk_op_safe_cast",
+            "kk_op_contains",
+            "kk_object_new",
+            "kk_type_register_super",
+            "kk_type_register_iface",
             "kk_lazy_create",
             "kk_lazy_get_value",
             "kk_observable_create",
@@ -469,6 +480,7 @@ public final class LLVMBackend {
             "kk_op_shl",
             "kk_op_shr",
             "kk_op_ushr",
+            "kk_int_toString_radix",
         ]
 
         for decl in module.arena.declarations {

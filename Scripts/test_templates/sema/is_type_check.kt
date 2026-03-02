@@ -17,3 +17,18 @@ fun combinedCondition(v: Any): String {
     }
     return ""
 }
+
+fun smartCastAfterNegatedIs(v: Any): Int {
+    if (v !is String) {
+        return 0
+    } else {
+        return v.length
+    }
+}
+
+fun combinedOrCondition(v: Any): String {
+    if (v !is String || v.length == 0) {
+        return ""
+    }
+    return v
+}

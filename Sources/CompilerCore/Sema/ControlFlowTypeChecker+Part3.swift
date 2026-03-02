@@ -50,60 +50,202 @@ extension ControlFlowTypeChecker {
             var hasTrueCase = false
             var hasFalseCase = false
             var allBranchLocals: [LocalBindings] = []
-            for branch in branches {
-                var isNullBranch = false
-                // Type-check and collect coverage for ALL conditions in this branch (OR semantics)
-                for cond in branch.conditions {
-                    let condType = driver.inferExpr(cond, ctx: ctx, locals: &locals)
-                    if let condExpr = ast.arena.expr(cond) {
-                        switch condExpr {
-                        case .boolLiteral(true, _):
-                            if condType == boolType { hasTrueCase = true }
-                            covered.insert(interner.intern("true"))
-                        case .boolLiteral(false, _):
-                            if condType == boolType { hasFalseCase = true }
-                            covered.insert(interner.intern("false"))
-                        case let .nameRef(name, _):
-                            if interner.resolve(name) == "null" {
-                                hasNullCase = true
-                                isNullBranch = true
-                            } else {
-                                covered.insert(name)
-                            }
-                        default:
-                            break
+            let subjectNominalSymbol = driver.helpers.nominalSymbol(of: subjectType, types: sema.types)
+
+            func isNullCondition(_ conditionID: ExprID) -> Bool {
+                guard let conditionExpr = ast.arena.expr(conditionID),
+                      case let .nameRef(name, _) = conditionExpr
+                else {
+                    return false
+                }
+                return interner.resolve(name) == "null"
+            }
+
+            func recordCoverage(for conditionID: ExprID, conditionType: TypeID) {
+                guard let conditionExpr = ast.arena.expr(conditionID) else {
+                    return
+                }
+
+                func recordResolvedConditionSymbol(_ conditionSymbolID: SymbolID, fallbackName: InternedString?) {
+                    guard let conditionSymbol = sema.symbols.symbol(conditionSymbolID) else {
+                        if let fallbackName {
+                            covered.insert(fallbackName)
+                        }
+                        return
+                    }
+                    switch conditionSymbol.kind {
+                    case .field:
+                        if let ownerID = driver.helpers.enumOwnerSymbol(for: conditionSymbol, symbols: sema.symbols),
+                           ownerID == subjectNominalSymbol
+                        {
+                            covered.insert(conditionSymbol.name)
+                        } else if let fallbackName {
+                            covered.insert(fallbackName)
+                        } else {
+                            covered.insert(conditionSymbol.name)
+                        }
+
+                    case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
+                        if let subjectNominalSymbol,
+                           driver.helpers.isNominalSubtype(conditionSymbolID, of: subjectNominalSymbol, symbols: sema.symbols)
+                        {
+                            covered.insert(conditionSymbol.name)
+                        } else if let fallbackName {
+                            covered.insert(fallbackName)
+                        } else {
+                            covered.insert(conditionSymbol.name)
+                        }
+
+                    default:
+                        if let fallbackName {
+                            covered.insert(fallbackName)
+                        } else {
+                            covered.insert(conditionSymbol.name)
                         }
                     }
                 }
+
+                switch conditionExpr {
+                case .boolLiteral(true, _):
+                    if conditionType == boolType {
+                        hasTrueCase = true
+                    }
+                    covered.insert(interner.intern("true"))
+
+                case .boolLiteral(false, _):
+                    if conditionType == boolType {
+                        hasFalseCase = true
+                    }
+                    covered.insert(interner.intern("false"))
+
+                case let .nameRef(name, _):
+                    if interner.resolve(name) == "null" {
+                        hasNullCase = true
+                        return
+                    }
+                    guard let conditionSymbolID = sema.bindings.identifierSymbols[conditionID] else {
+                        covered.insert(name)
+                        return
+                    }
+                    recordResolvedConditionSymbol(conditionSymbolID, fallbackName: name)
+
+                case let .memberCall(_, calleeName, _, args, _):
+                    guard args.isEmpty else {
+                        break
+                    }
+                    guard let conditionSymbolID = sema.bindings.identifierSymbols[conditionID] else {
+                        covered.insert(calleeName)
+                        return
+                    }
+                    recordResolvedConditionSymbol(conditionSymbolID, fallbackName: calleeName)
+
+                case let .isCheck(checkedExprID, _, negated, _):
+                    guard !negated,
+                          let subjectLocalBinding,
+                          let checkedSymbolID = sema.bindings.identifierSymbols[checkedExprID],
+                          checkedSymbolID == subjectLocalBinding.symbol,
+                          let targetType = sema.bindings.isCheckTargetType(for: conditionID),
+                          let targetNominal = driver.helpers.nominalSymbol(of: targetType, types: sema.types),
+                          let targetSymbol = sema.symbols.symbol(targetNominal)
+                    else {
+                        return
+                    }
+                    covered.insert(targetSymbol.name)
+
+                default:
+                    break
+                }
+            }
+
+            for branch in branches {
+                var isNullBranch = false
                 var branchLocals = locals
                 var branchCtx = ctx
-                if let subjectLocalBinding, subjectLocalBinding.isStable {
-                    // Known limitation: Currently only the first condition contributes to flow-state narrowing for subject-ful `when` branches.
-                    //                  Extend this to support all conditions in the branch (OR semantics) for more precise narrowing.
-                    if let cond = branch.conditions.first {
-                        let branchFlowState = ctx.dataFlow.branchOnWhenSubject(
+                var trueFlowStates: [DataFlowState] = []
+                var cumulativeFalseState = ctx.flowState
+
+                // Type-check and collect coverage for all branch conditions.
+                for cond in branch.conditions {
+                    let conditionCtx = ctx.copying(flowState: cumulativeFalseState)
+                    let condType = driver.inferExpr(cond, ctx: conditionCtx, locals: &branchLocals)
+                    if isNullCondition(cond) {
+                        hasNullCase = true
+                        isNullBranch = true
+                    }
+                    recordCoverage(for: cond, conditionType: condType)
+
+                    if let subjectLocalBinding, subjectLocalBinding.isStable {
+                        let trueState = ctx.dataFlow.branchOnWhenSubject(
                             subjectSymbol: subjectLocalBinding.symbol,
                             subjectType: subjectType,
                             conditionID: cond,
-                            base: ctx.flowState,
-                            ast: ast, sema: sema, interner: interner
+                            base: cumulativeFalseState,
+                            ast: ast,
+                            sema: sema,
+                            interner: interner,
+                            scope: ctx.scope
                         )
-                        branchCtx = ctx.copying(flowState: branchFlowState)
-                        if let narrowedType = ctx.dataFlow.resolvedTypeFromFlowState(
-                            branchFlowState, symbol: subjectLocalBinding.symbol
-                        ) {
-                            branchLocals[subjectLocalBinding.name] = (
-                                narrowedType, subjectLocalBinding.symbol, subjectLocalBinding.isMutable, true
-                            )
-                        } else if hasExplicitNullBranch, !isNullBranch {
-                            let nonNullState = ctx.dataFlow.whenNonNullBranchState(
+                        trueFlowStates.append(trueState)
+
+                        if isNullCondition(cond) {
+                            cumulativeFalseState = ctx.dataFlow.whenNonNullBranchState(
                                 subjectSymbol: subjectLocalBinding.symbol,
                                 subjectType: subjectLocalBinding.type,
-                                base: ctx.flowState, sema: sema
+                                base: cumulativeFalseState,
+                                sema: sema
                             )
-                            branchCtx = ctx.copying(flowState: nonNullState)
-                            driver.exprChecker.applyFlowStateToLocals(nonNullState, locals: &branchLocals, sema: sema)
                         }
+                    }
+                }
+
+                if let subjectLocalBinding, subjectLocalBinding.isStable {
+                    if let firstTrueState = trueFlowStates.first {
+                        var branchFlowState = firstTrueState
+                        for trueState in trueFlowStates.dropFirst() {
+                            branchFlowState = ctx.dataFlow.merge(branchFlowState, trueState)
+                        }
+
+                        if hasExplicitNullBranch, !isNullBranch,
+                           ctx.dataFlow.resolvedTypeFromFlowState(
+                               branchFlowState,
+                               symbol: subjectLocalBinding.symbol
+                           ) == nil
+                        {
+                            branchFlowState = ctx.dataFlow.whenNonNullBranchState(
+                                subjectSymbol: subjectLocalBinding.symbol,
+                                subjectType: subjectLocalBinding.type,
+                                base: branchFlowState,
+                                sema: sema
+                            )
+                        }
+
+                        branchCtx = ctx.copying(flowState: branchFlowState)
+                        driver.exprChecker.applyFlowStateToLocals(
+                            branchFlowState,
+                            locals: &branchLocals,
+                            sema: sema
+                        )
+
+                        if let narrowedType = ctx.dataFlow.resolvedTypeFromFlowState(
+                            branchFlowState,
+                            symbol: subjectLocalBinding.symbol
+                        ) {
+                            branchLocals[subjectLocalBinding.name] = (
+                                narrowedType,
+                                subjectLocalBinding.symbol,
+                                subjectLocalBinding.isMutable,
+                                true
+                            )
+                        }
+                    } else if hasExplicitNullBranch, !isNullBranch {
+                        let nonNullState = ctx.dataFlow.whenNonNullBranchState(
+                            subjectSymbol: subjectLocalBinding.symbol,
+                            subjectType: subjectLocalBinding.type,
+                            base: ctx.flowState,
+                            sema: sema
+                        )
+                        branchCtx = ctx.copying(flowState: nonNullState)
+                        driver.exprChecker.applyFlowStateToLocals(nonNullState, locals: &branchLocals, sema: sema)
                     }
                 }
                 branchTypes.append(
@@ -202,7 +344,7 @@ extension ControlFlowTypeChecker {
                     }
                     let condBranch = ctx.dataFlow.branchOnCondition(
                         cond, base: cumulativeFalseState, locals: branchLocals,
-                        ast: ast, sema: sema, interner: interner
+                        ast: ast, sema: sema, interner: interner, scope: ctx.scope
                     )
                     trueStates.append(condBranch.trueState)
                     // Chain false-state: branch is false only when ALL conditions are false

@@ -90,6 +90,65 @@ extension CallLowerer {
             }
         }
 
+        // Primitive infix member functions: Int/Long.and|or|xor|shl|shr|ushr (EXPR-003)
+        if args.count == 1 {
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let longType = sema.types.make(.primitive(.long, .nonNull))
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if nonNullReceiverType == intType || nonNullReceiverType == longType {
+                let rhsType = sema.types.makeNonNullable(sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType)
+                let primitiveCallee: InternedString? = switch interner.resolve(effectiveCalleeName) {
+                case "and":
+                    (rhsType == intType || rhsType == longType) ? interner.intern("kk_bitwise_and") : nil
+                case "or":
+                    (rhsType == intType || rhsType == longType) ? interner.intern("kk_bitwise_or") : nil
+                case "xor":
+                    (rhsType == intType || rhsType == longType) ? interner.intern("kk_bitwise_xor") : nil
+                case "shl":
+                    rhsType == intType ? interner.intern("kk_op_shl") : nil
+                case "shr":
+                    rhsType == intType ? interner.intern("kk_op_shr") : nil
+                case "ushr":
+                    rhsType == intType ? interner.intern("kk_op_ushr") : nil
+                default:
+                    nil
+                }
+                if let primitiveCallee {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: primitiveCallee,
+                        arguments: [loweredReceiverID, loweredArgIDs[0]],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+        }
+
+        // Primitive member function: Int/Long.toString(radix: Int) → kk_int_toString_radix (EXPR-003)
+        if interner.resolve(effectiveCalleeName) == "toString",
+           args.count == 1
+        {
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let longType = sema.types.make(.primitive(.long, .nonNull))
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if nonNullReceiverType == intType || nonNullReceiverType == longType {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_int_toString_radix"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0]],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
         let isSuperCall = sema.bindings.isSuperCallExpr(exprID)
         let callBinding = sema.bindings.callBindings[exprID]
         let chosen = callBinding?.chosenCallee
@@ -117,6 +176,7 @@ extension CallLowerer {
                 chosenCallee: chosen,
                 callBinding: callBinding,
                 sema: sema,
+                interner: interner,
                 arena: arena,
                 instructions: &instructions.instructions,
                 arguments: &finalArguments
@@ -144,6 +204,7 @@ extension CallLowerer {
                 chosenCallee: chosen,
                 callBinding: callBinding,
                 sema: sema,
+                interner: interner,
                 arena: arena,
                 instructions: &instructions.instructions,
                 arguments: &finalArguments
