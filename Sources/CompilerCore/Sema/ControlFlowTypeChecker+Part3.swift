@@ -184,7 +184,7 @@ extension ControlFlowTypeChecker {
 
                     // CTRL-001: Detect duplicate conditions within a branch
                     // and across branches for diagnostic purposes.
-                    if let key = conditionKey(for: cond, ast: ast, sema: sema, interner: interner) {
+                    if let key = whenConditionKey(for: cond, ast: ast, sema: sema, interner: interner) {
                         if !branchConditionKeys.insert(key).inserted {
                             ctx.semaCtx.diagnostics.warning(
                                 "KSWIFTK-SEMA-0072",
@@ -445,63 +445,6 @@ extension ControlFlowTypeChecker {
             let type = sema.types.lub(branchTypes)
             sema.bindings.bindExprType(id, type: type)
             return type
-        }
-    }
-
-    // MARK: - When Condition Duplicate Detection
-
-    /// Returns a canonical string key for a when-branch condition expression,
-    /// used for detecting duplicate conditions within and across branches.
-    /// Returns `nil` for conditions that cannot be reliably compared (e.g.
-    /// arbitrary expressions in subject-less when).
-    private func conditionKey(
-        for conditionID: ExprID,
-        ast: ASTModule,
-        sema: SemaModule,
-        interner: StringInterner
-    ) -> String? {
-        guard let conditionExpr = ast.arena.expr(conditionID) else {
-            return nil
-        }
-        switch conditionExpr {
-        case let .intLiteral(value, _):
-            return "int:\(value)"
-        case let .longLiteral(value, _):
-            return "long:\(value)"
-        case let .doubleLiteral(value, _):
-            return "double:\(value)"
-        case let .floatLiteral(value, _):
-            return "float:\(value)"
-        case let .charLiteral(value, _):
-            return "char:\(value)"
-        case let .boolLiteral(value, _):
-            return "bool:\(value)"
-        case let .stringLiteral(value, _):
-            return "string:\(interner.resolve(value))"
-        case let .nameRef(name, _):
-            let resolved = interner.resolve(name)
-            if resolved == "null" {
-                return "null"
-            }
-            // Use resolved symbol ID when available for enum entries
-            if let symbolID = sema.bindings.identifierSymbols[conditionID] {
-                return "sym:\(symbolID.rawValue)"
-            }
-            return "name:\(resolved)"
-        case let .memberCall(_, calleeName, _, args, _):
-            if args.isEmpty,
-               let symbolID = sema.bindings.identifierSymbols[conditionID]
-            {
-                return "sym:\(symbolID.rawValue)"
-            }
-            return "member:\(interner.resolve(calleeName))"
-        case let .isCheck(_, typeRefID, negated, _):
-            if let targetType = sema.bindings.isCheckTargetType(for: conditionID) {
-                return "is:\(negated ? "!" : "")\(targetType.rawValue)"
-            }
-            return "is:\(negated ? "!" : "")\(typeRefID.rawValue)"
-        default:
-            return nil
         }
     }
 
