@@ -73,8 +73,8 @@ extension DataFlowSemaPhase {
 
         registerListGetOperator(
             symbols: symbols, types: types, interner: interner,
-            listFQName: listFQName, listInterfaceSymbol: listInterfaceSymbol,
-            listTypeParamSymbol: listTypeParamSymbol, listTypeParamType: listTypeParamType
+            listFQName: listFQName,
+            listInterface: (listInterfaceSymbol, listTypeParamSymbol, listTypeParamType)
         )
         return listInterfaceSymbol
     }
@@ -85,10 +85,11 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner,
         listFQName: [InternedString],
-        listInterfaceSymbol: SymbolID,
-        listTypeParamSymbol: SymbolID,
-        listTypeParamType: TypeID
+        listInterface: (symbol: SymbolID, typeParamSymbol: SymbolID, typeParamType: TypeID)
     ) {
+        let listInterfaceSymbol = listInterface.symbol
+        let listTypeParamSymbol = listInterface.typeParamSymbol
+        let listTypeParamType = listInterface.typeParamType
         let listGetName = interner.intern("get")
         let listGetFQName = listFQName + [listGetName]
         guard symbols.lookup(fqName: listGetFQName) == nil else { return }
@@ -161,8 +162,7 @@ extension DataFlowSemaPhase {
         registerMutableListSetOperator(
             symbols: symbols, types: types, interner: interner,
             mutableListFQName: mutableListFQName,
-            mutableListInterfaceSymbol: mutableListInterfaceSymbol,
-            mlTypeParamSymbol: mlTypeParamSymbol, mlTypeParamType: mlTypeParamType
+            mutableListInterface: (mutableListInterfaceSymbol, mlTypeParamSymbol, mlTypeParamType)
         )
     }
 
@@ -172,10 +172,11 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner,
         mutableListFQName: [InternedString],
-        mutableListInterfaceSymbol: SymbolID,
-        mlTypeParamSymbol: SymbolID,
-        mlTypeParamType: TypeID
+        mutableListInterface: (symbol: SymbolID, typeParamSymbol: SymbolID, typeParamType: TypeID)
     ) {
+        let mutableListInterfaceSymbol = mutableListInterface.symbol
+        let mlTypeParamSymbol = mutableListInterface.typeParamSymbol
+        let mlTypeParamType = mutableListInterface.typeParamType
         let mlSetName = interner.intern("set")
         let mlSetFQName = mutableListFQName + [mlSetName]
         guard symbols.lookup(fqName: mlSetFQName) == nil else { return }

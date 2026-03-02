@@ -47,16 +47,17 @@ extension TypeCheckHelpers {
             expanded, aliasSymbol: symbolID, typeArgs: typeArgs,
             sema: sema, diagnostics: diagnostics
         )
+        var chainVisited = visited
+        chainVisited.insert(symbolID)
         return resolveChainedAlias(
-            expanded, symbolID: symbolID, sema: sema,
-            visited: visited, depth: depth, diagnostics: diagnostics
+            expanded, sema: sema,
+            visited: chainVisited, depth: depth, diagnostics: diagnostics
         )
     }
 
     /// If the expanded type is itself a typealias, recursively resolve it.
     private func resolveChainedAlias(
         _ expanded: TypeID,
-        symbolID: SymbolID,
         sema: SemaModule,
         visited: Set<SymbolID>,
         depth: Int,
@@ -68,11 +69,9 @@ extension TypeCheckHelpers {
         else {
             return expanded
         }
-        var newVisited = visited
-        newVisited.insert(symbolID)
         if let resolved = expandTypeAlias(
             classType.classSymbol, typeArgs: classType.args, sema: sema,
-            visited: newVisited, depth: depth + 1, diagnostics: diagnostics
+            visited: visited, depth: depth + 1, diagnostics: diagnostics
         ) {
             if classType.nullability == .nullable {
                 return applyNullabilityForTypeCheck(resolved, types: sema.types)
