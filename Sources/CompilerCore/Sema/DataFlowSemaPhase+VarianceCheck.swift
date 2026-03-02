@@ -10,6 +10,7 @@ extension DataFlowSemaPhase {
     ///   Appearing in **out** positions (return types, val/var property types) is illegal.
     /// - **Private members are exempt** from variance checks (Kotlin spec).
     /// - Constructor parameters are exempt from variance checks.
+    // swiftlint:disable:next function_parameter_count
     func validateDeclarationSiteVariance(
         ast: ASTModule,
         symbols: SymbolTable,
@@ -18,174 +19,13 @@ extension DataFlowSemaPhase {
         diagnostics: DiagnosticEngine,
         interner: StringInterner
     ) {
+        let env = VarianceCheckEnv(ast: ast, symbols: symbols, bindings: bindings,
+                                   diagnostics: diagnostics, interner: interner)
         for file in ast.sortedFiles {
             for declID in file.topLevelDecls {
-                validateVarianceForDecl(
-                    declID: declID,
-                    ast: ast,
-                    symbols: symbols,
-                    bindings: bindings,
-                    diagnostics: diagnostics,
-                    interner: interner
-                )
+                validateVarianceForDecl(declID: declID, env: env)
             }
         }
-    }
-
-    private func validateVarianceForDecl(
-        declID: DeclID,
-        ast: ASTModule,
-        symbols: SymbolTable,
-        bindings: BindingTable,
-        diagnostics: DiagnosticEngine,
-        interner: StringInterner
-    ) {
-        guard let decl = ast.arena.decl(declID) else { return }
-
-        switch decl {
-        case let .classDecl(classDecl):
-            validateVarianceForClassDecl(
-                classDecl,
-                ast: ast,
-                symbols: symbols,
-                bindings: bindings,
-                diagnostics: diagnostics,
-                interner: interner
-            )
-        case let .interfaceDecl(interfaceDecl):
-            validateVarianceForInterfaceDecl(
-                interfaceDecl,
-                ast: ast,
-                symbols: symbols,
-                bindings: bindings,
-                diagnostics: diagnostics,
-                interner: interner
-            )
-        default:
-            break
-        }
-    }
-
-    // swiftlint:disable:next function_parameter_count
-    private func validateVarianceForClassDecl(
-        _ classDecl: ClassDecl,
-        ast: ASTModule,
-        symbols: SymbolTable,
-        bindings: BindingTable,
-        diagnostics: DiagnosticEngine,
-        interner: StringInterner
-    ) {
-        let varianceMap = buildVarianceMap(typeParams: classDecl.typeParams)
-        guard !varianceMap.isEmpty else { return }
-
-        for funDeclID in classDecl.memberFunctions {
-            guard let funDecl = ast.arena.decl(funDeclID),
-                  case let .funDecl(fun) = funDecl
-            else { continue }
-            if fun.modifiers.contains(.private) { continue }
-
-            validateFunctionVariance(
-                fun,
-                varianceMap: varianceMap,
-                ast: ast,
-                diagnostics: diagnostics,
-                interner: interner
-            )
-        }
-
-        for propDeclID in classDecl.memberProperties {
-            guard let propDecl = ast.arena.decl(propDeclID),
-                  case let .propertyDecl(prop) = propDecl
-            else { continue }
-            if prop.modifiers.contains(.private) { continue }
-
-            validatePropertyVariance(
-                prop,
-                varianceMap: varianceMap,
-                ast: ast,
-                diagnostics: diagnostics,
-                interner: interner
-            )
-        }
-
-        for nestedDeclID in classDecl.nestedClasses {
-            validateVarianceForDecl(
-                declID: nestedDeclID,
-                ast: ast,
-                symbols: symbols,
-                bindings: bindings,
-                diagnostics: diagnostics,
-                interner: interner
-            )
-        }
-    }
-
-    // swiftlint:disable:next function_parameter_count
-    private func validateVarianceForInterfaceDecl(
-        _ interfaceDecl: InterfaceDecl,
-        ast: ASTModule,
-        symbols: SymbolTable,
-        bindings: BindingTable,
-        diagnostics: DiagnosticEngine,
-        interner: StringInterner
-    ) {
-        let varianceMap = buildVarianceMap(typeParams: interfaceDecl.typeParams)
-        guard !varianceMap.isEmpty else { return }
-
-        for funDeclID in interfaceDecl.memberFunctions {
-            guard let funDecl = ast.arena.decl(funDeclID),
-                  case let .funDecl(fun) = funDecl
-            else { continue }
-            if fun.modifiers.contains(.private) { continue }
-
-            validateFunctionVariance(
-                fun,
-                varianceMap: varianceMap,
-                ast: ast,
-                diagnostics: diagnostics,
-                interner: interner
-            )
-        }
-
-        for propDeclID in interfaceDecl.memberProperties {
-            guard let propDecl = ast.arena.decl(propDeclID),
-                  case let .propertyDecl(prop) = propDecl
-            else { continue }
-            if prop.modifiers.contains(.private) { continue }
-
-            validatePropertyVariance(
-                prop,
-                varianceMap: varianceMap,
-                ast: ast,
-                diagnostics: diagnostics,
-                interner: interner
-            )
-        }
-
-        for nestedDeclID in interfaceDecl.nestedClasses {
-            validateVarianceForDecl(
-                declID: nestedDeclID,
-                ast: ast,
-                symbols: symbols,
-                bindings: bindings,
-                diagnostics: diagnostics,
-                interner: interner
-            )
-        }
-    }
-
-    /// Builds a map from type parameter name to its declared variance for parameters
-    /// that have non-invariant variance (`out` or `in`).
-    private func buildVarianceMap(
-        typeParams: [TypeParamDecl]
-    ) -> [InternedString: TypeVariance] {
-        var varianceMap: [InternedString: TypeVariance] = [:]
-        for typeParam in typeParams {
-            if typeParam.variance != .invariant {
-                varianceMap[typeParam.name] = typeParam.variance
-            }
-        }
-        return varianceMap
     }
 
     /// Represents the expected position for variance checking.
@@ -193,206 +33,212 @@ extension DataFlowSemaPhase {
         /// Covariant position: return types, val property types, out type args
         case out
         /// Contravariant position: function parameters, in type args
-        case `in`
+        case contravariant
 
-        /// Flips the position (used for contravariant nesting).
         var flipped: VariancePosition {
             switch self {
-            case .out: .in
-            case .in: .out
+            case .out: .contravariant
+            case .contravariant: .out
             }
         }
+    }
+
+    /// Bundles the immutable context needed by every variance-check helper.
+    private struct VarianceCheckEnv {
+        let ast: ASTModule
+        let symbols: SymbolTable
+        let bindings: BindingTable
+        let diagnostics: DiagnosticEngine
+        let interner: StringInterner
+    }
+
+    // MARK: - Declaration dispatch
+
+    private func validateVarianceForDecl(declID: DeclID, env: VarianceCheckEnv) {
+        guard let decl = env.ast.arena.decl(declID) else { return }
+        switch decl {
+        case let .classDecl(classDecl):
+            validateVarianceForClassDecl(classDecl, env: env)
+        case let .interfaceDecl(interfaceDecl):
+            validateVarianceForInterfaceDecl(interfaceDecl, env: env)
+        default:
+            break
+        }
+    }
+
+    private func validateVarianceForClassDecl(_ classDecl: ClassDecl, env: VarianceCheckEnv) {
+        let varianceMap = buildVarianceMap(typeParams: classDecl.typeParams)
+        guard !varianceMap.isEmpty else { return }
+
+        validateMemberFunctions(classDecl.memberFunctions, varianceMap: varianceMap, env: env)
+        validateMemberProperties(classDecl.memberProperties, varianceMap: varianceMap, env: env)
+
+        for nestedDeclID in classDecl.nestedClasses {
+            validateVarianceForDecl(declID: nestedDeclID, env: env)
+        }
+    }
+
+    private func validateVarianceForInterfaceDecl(_ iface: InterfaceDecl, env: VarianceCheckEnv) {
+        let varianceMap = buildVarianceMap(typeParams: iface.typeParams)
+        guard !varianceMap.isEmpty else { return }
+
+        validateMemberFunctions(iface.memberFunctions, varianceMap: varianceMap, env: env)
+        validateMemberProperties(iface.memberProperties, varianceMap: varianceMap, env: env)
+
+        for nestedDeclID in iface.nestedClasses {
+            validateVarianceForDecl(declID: nestedDeclID, env: env)
+        }
+    }
+
+    // MARK: - Member iteration
+
+    private func validateMemberFunctions(
+        _ funDeclIDs: [DeclID],
+        varianceMap: [InternedString: TypeVariance],
+        env: VarianceCheckEnv
+    ) {
+        for funDeclID in funDeclIDs {
+            guard let funDecl = env.ast.arena.decl(funDeclID),
+                  case let .funDecl(fun) = funDecl,
+                  !fun.modifiers.contains(.private)
+            else { continue }
+            validateFunctionVariance(fun, varianceMap: varianceMap, env: env)
+        }
+    }
+
+    private func validateMemberProperties(
+        _ propDeclIDs: [DeclID],
+        varianceMap: [InternedString: TypeVariance],
+        env: VarianceCheckEnv
+    ) {
+        for propDeclID in propDeclIDs {
+            guard let propDecl = env.ast.arena.decl(propDeclID),
+                  case let .propertyDecl(prop) = propDecl,
+                  !prop.modifiers.contains(.private)
+            else { continue }
+            validatePropertyVariance(prop, varianceMap: varianceMap, env: env)
+        }
+    }
+
+    // MARK: - Helpers
+
+    private func buildVarianceMap(typeParams: [TypeParamDecl]) -> [InternedString: TypeVariance] {
+        var varianceMap: [InternedString: TypeVariance] = [:]
+        for typeParam in typeParams where typeParam.variance != .invariant {
+            varianceMap[typeParam.name] = typeParam.variance
+        }
+        return varianceMap
     }
 
     private func validateFunctionVariance(
         _ funDecl: FunDecl,
         varianceMap: [InternedString: TypeVariance],
-        ast: ASTModule,
-        diagnostics: DiagnosticEngine,
-        interner: StringInterner
+        env: VarianceCheckEnv
     ) {
-        // Check parameters (in position)
         for valueParam in funDecl.valueParams {
             if let typeRefID = valueParam.type {
-                checkTypeRefVariance(
-                    typeRefID: typeRefID,
-                    position: .in,
-                    varianceMap: varianceMap,
-                    ast: ast,
-                    diagnostics: diagnostics,
-                    interner: interner,
-                    memberRange: funDecl.range
-                )
+                checkTypeRefVariance(typeRefID, position: .contravariant,
+                                     varianceMap: varianceMap, env: env, memberRange: funDecl.range)
             }
         }
-
-        // Check return type (out position)
         if let returnTypeRef = funDecl.returnType {
-            checkTypeRefVariance(
-                typeRefID: returnTypeRef,
-                position: .out,
-                varianceMap: varianceMap,
-                ast: ast,
-                diagnostics: diagnostics,
-                interner: interner,
-                memberRange: funDecl.range
-            )
+            checkTypeRefVariance(returnTypeRef, position: .out,
+                                 varianceMap: varianceMap, env: env, memberRange: funDecl.range)
         }
     }
 
     private func validatePropertyVariance(
         _ propertyDecl: PropertyDecl,
         varianceMap: [InternedString: TypeVariance],
-        ast: ASTModule,
-        diagnostics: DiagnosticEngine,
-        interner: StringInterner
+        env: VarianceCheckEnv
     ) {
         guard let typeRefID = propertyDecl.type else { return }
-
         if propertyDecl.isVar {
-            // var properties: the type is in both in and out positions
-            checkTypeRefVariance(
-                typeRefID: typeRefID,
-                position: .in,
-                varianceMap: varianceMap,
-                ast: ast,
-                diagnostics: diagnostics,
-                interner: interner,
-                memberRange: propertyDecl.range
-            )
-            checkTypeRefVariance(
-                typeRefID: typeRefID,
-                position: .out,
-                varianceMap: varianceMap,
-                ast: ast,
-                diagnostics: diagnostics,
-                interner: interner,
-                memberRange: propertyDecl.range
-            )
-        } else {
-            // val properties: the type is only in out position (read-only)
-            checkTypeRefVariance(
-                typeRefID: typeRefID,
-                position: .out,
-                varianceMap: varianceMap,
-                ast: ast,
-                diagnostics: diagnostics,
-                interner: interner,
-                memberRange: propertyDecl.range
-            )
+            checkTypeRefVariance(typeRefID, position: .contravariant,
+                                 varianceMap: varianceMap, env: env, memberRange: propertyDecl.range)
         }
+        checkTypeRefVariance(typeRefID, position: .out,
+                             varianceMap: varianceMap, env: env, memberRange: propertyDecl.range)
     }
 
-    /// Checks a type reference for variance violations.
-    ///
-    /// - `out T` in an `in` position → error
-    /// - `in T` in an `out` position → error
+    // MARK: - Type reference variance checking
+
     // swiftlint:disable:next function_parameter_count
     private func checkTypeRefVariance(
-        typeRefID: TypeRefID,
+        _ typeRefID: TypeRefID,
         position: VariancePosition,
         varianceMap: [InternedString: TypeVariance],
-        ast: ASTModule,
-        diagnostics: DiagnosticEngine,
-        interner: StringInterner,
+        env: VarianceCheckEnv,
         memberRange: SourceRange
     ) {
-        guard let typeRef = ast.arena.typeRef(typeRefID) else { return }
-
+        guard let typeRef = env.ast.arena.typeRef(typeRefID) else { return }
         switch typeRef {
         case let .named(path, typeArgs, _):
-            // For a named type, check if the last path component is a type parameter
-            // with declared variance. Single-element paths are the typical case for
-            // type parameter references like `T`.
-            if let name = path.last, let declaredVariance = varianceMap[name] {
-                let resolvedName = interner.resolve(name)
-                checkVarianceViolation(
-                    paramName: resolvedName,
-                    declaredVariance: declaredVariance,
-                    position: position,
-                    diagnostics: diagnostics,
-                    range: memberRange
-                )
-            }
-
-            // Recurse into type arguments
-            for typeArg in typeArgs {
-                switch typeArg {
-                case let .invariant(innerRefID):
-                    checkTypeRefVariance(
-                        typeRefID: innerRefID,
-                        position: position,
-                        varianceMap: varianceMap,
-                        ast: ast,
-                        diagnostics: diagnostics,
-                        interner: interner,
-                        memberRange: memberRange
-                    )
-                case let .out(innerRefID):
-                    checkTypeRefVariance(
-                        typeRefID: innerRefID,
-                        position: position,
-                        varianceMap: varianceMap,
-                        ast: ast,
-                        diagnostics: diagnostics,
-                        interner: interner,
-                        memberRange: memberRange
-                    )
-                case let .in(innerRefID):
-                    checkTypeRefVariance(
-                        typeRefID: innerRefID,
-                        position: position.flipped,
-                        varianceMap: varianceMap,
-                        ast: ast,
-                        diagnostics: diagnostics,
-                        interner: interner,
-                        memberRange: memberRange
-                    )
-                case .star:
-                    break
-                }
-            }
-
+            checkNamedTypeVariance(path: path, typeArgs: typeArgs, position: position,
+                                   varianceMap: varianceMap, env: env, memberRange: memberRange)
         case let .functionType(paramTypeRefs, returnTypeRef, _, _):
-            // Function type parameters are in contravariant position
-            for paramRef in paramTypeRefs {
-                checkTypeRefVariance(
-                    typeRefID: paramRef,
-                    position: position.flipped,
-                    varianceMap: varianceMap,
-                    ast: ast,
-                    diagnostics: diagnostics,
-                    interner: interner,
-                    memberRange: memberRange
-                )
-            }
-            // Function return type is in covariant position
-            checkTypeRefVariance(
-                typeRefID: returnTypeRef,
-                position: position,
-                varianceMap: varianceMap,
-                ast: ast,
-                diagnostics: diagnostics,
-                interner: interner,
-                memberRange: memberRange
-            )
-
+            checkFunctionTypeVariance(params: paramTypeRefs, ret: returnTypeRef,
+                                      position: position, varianceMap: varianceMap,
+                                      env: env, memberRange: memberRange)
         case let .intersection(parts):
             for partRef in parts {
-                checkTypeRefVariance(
-                    typeRefID: partRef,
-                    position: position,
-                    varianceMap: varianceMap,
-                    ast: ast,
-                    diagnostics: diagnostics,
-                    interner: interner,
-                    memberRange: memberRange
-                )
+                checkTypeRefVariance(partRef, position: position,
+                                     varianceMap: varianceMap, env: env, memberRange: memberRange)
             }
         }
     }
 
-    private func checkVarianceViolation(
+    // swiftlint:disable:next function_parameter_count
+    private func checkNamedTypeVariance(
+        path: [InternedString],
+        typeArgs: [TypeArgRef],
+        position: VariancePosition,
+        varianceMap: [InternedString: TypeVariance],
+        env: VarianceCheckEnv,
+        memberRange: SourceRange
+    ) {
+        if let name = path.last, let declaredVariance = varianceMap[name] {
+            emitVarianceViolation(paramName: env.interner.resolve(name),
+                                  declaredVariance: declaredVariance,
+                                  position: position, diagnostics: env.diagnostics, range: memberRange)
+        }
+        for typeArg in typeArgs {
+            let (innerRefID, innerPosition) = typeArgProjection(typeArg, position: position)
+            guard let refID = innerRefID else { continue }
+            checkTypeRefVariance(refID, position: innerPosition,
+                                 varianceMap: varianceMap, env: env, memberRange: memberRange)
+        }
+    }
+
+    private func typeArgProjection(
+        _ typeArg: TypeArgRef, position: VariancePosition
+    ) -> (TypeRefID?, VariancePosition) {
+        switch typeArg {
+        case let .invariant(ref): (ref, position)
+        case let .out(ref): (ref, position)
+        case let .in(ref): (ref, position.flipped)
+        case .star: (nil, position)
+        }
+    }
+
+    // swiftlint:disable:next function_parameter_count
+    private func checkFunctionTypeVariance(
+        params: [TypeRefID],
+        ret: TypeRefID,
+        position: VariancePosition,
+        varianceMap: [InternedString: TypeVariance],
+        env: VarianceCheckEnv,
+        memberRange: SourceRange
+    ) {
+        for paramRef in params {
+            checkTypeRefVariance(paramRef, position: position.flipped,
+                                 varianceMap: varianceMap, env: env, memberRange: memberRange)
+        }
+        checkTypeRefVariance(ret, position: position,
+                             varianceMap: varianceMap, env: env, memberRange: memberRange)
+    }
+
+    private func emitVarianceViolation(
         paramName: String,
         declaredVariance: TypeVariance,
         position: VariancePosition,
@@ -400,7 +246,7 @@ extension DataFlowSemaPhase {
         range: SourceRange?
     ) {
         switch (declaredVariance, position) {
-        case (.out, .in):
+        case (.out, .contravariant):
             diagnostics.error(
                 "KSWIFTK-SEMA-VARIANCE",
                 "Type parameter \(paramName) is declared as 'out' but occurs in 'in' position",
