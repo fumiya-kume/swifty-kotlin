@@ -91,28 +91,28 @@ extension DataFlowSemaPhase {
     ) -> OFODeclInfo? {
         switch decl {
         case let .classDecl(d):
-            return OFODeclInfo(
+            OFODeclInfo(
                 memberFunctions: d.memberFunctions,
                 memberProperties: d.memberProperties,
                 nestedClasses: d.nestedClasses,
                 declRange: d.range
             )
         case let .objectDecl(d):
-            return OFODeclInfo(
+            OFODeclInfo(
                 memberFunctions: d.memberFunctions,
                 memberProperties: d.memberProperties,
                 nestedClasses: d.nestedClasses,
                 declRange: d.range
             )
         case let .interfaceDecl(d):
-            return OFODeclInfo(
+            OFODeclInfo(
                 memberFunctions: [],
                 memberProperties: [],
                 nestedClasses: d.nestedClasses,
                 declRange: nil
             )
         default:
-            return nil
+            nil
         }
     }
 
@@ -192,19 +192,19 @@ extension DataFlowSemaPhase {
     ) -> MemberMeta? {
         switch decl {
         case let .funDecl(d):
-            return MemberMeta(
+            MemberMeta(
                 name: d.name,
                 range: d.range,
                 hasOverride: d.modifiers.contains(.override)
             )
         case let .propertyDecl(d):
-            return MemberMeta(
+            MemberMeta(
                 name: d.name,
                 range: d.range,
                 hasOverride: d.modifiers.contains(.override)
             )
         default:
-            return nil
+            nil
         }
     }
 
