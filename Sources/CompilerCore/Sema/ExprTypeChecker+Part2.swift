@@ -274,7 +274,7 @@ extension ExprTypeChecker {
         }
 
         let parameterTypes: [TypeID] = if let expectedFunctionType,
-                                           expectedFunctionType.params.count == effectiveParams.count
+                                          expectedFunctionType.params.count == effectiveParams.count
         {
             expectedFunctionType.params
         } else {
