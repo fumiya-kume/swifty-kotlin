@@ -16,9 +16,19 @@ symbol s14 kind=constructor fq=golden.sema.FormalGreeter.<init> vis=public flags
 symbol s15 kind=function fq=golden.sema.FormalGreeter.greet vis=public flags=overrideMember sig=recv=Class#13 params=[] ret=String suspend=0 defaults=[] vararg=[]
 symbol s16 kind=class fq=golden.sema.DefaultGreeter vis=public flags=_
 symbol s17 kind=constructor fq=golden.sema.DefaultGreeter.<init> vis=public flags=_ sig=recv=Class#16 params=[] ret=Class#16 suspend=0 defaults=[] vararg=[]
+symbol s18 kind=interface fq=golden.sema.Animal vis=public flags=_
+symbol s19 kind=function fq=golden.sema.Animal.name vis=public flags=abstractType sig=recv=Class#18 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s20 kind=function fq=golden.sema.Animal.sound vis=public flags=_ sig=recv=Class#18 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s21 kind=class fq=golden.sema.Dog vis=public flags=_
+symbol s22 kind=constructor fq=golden.sema.Dog.<init> vis=public flags=_ sig=recv=Class#21 params=[] ret=Class#21 suspend=0 defaults=[] vararg=[]
+symbol s23 kind=function fq=golden.sema.Dog.name vis=public flags=overrideMember sig=recv=Class#21 params=[] ret=String suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
   decl d1 interface Greeter sym=s11
   decl d3 class FormalGreeter sym=s13
   decl d4 class DefaultGreeter sym=s16
+  decl d7 interface Animal sym=s18
+  decl d9 class Dog sym=s21
 expr e0 string(Hello) type=String
 expr e1 string(Good day) type=String
+expr e2 string(...) type=String
+expr e3 string(Dog) type=String
