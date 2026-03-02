@@ -64,19 +64,27 @@ extension ExprTypeChecker {
             return sema.types.unitType
         }
 
-        // Fall back to top-level property lookup for compound assignments like `counter += 1`
-        // where `counter` is a top-level var.
+        // Fall back to scope-visible property lookup for compound assignments
+        // like `counter += 1` where `counter` is a top-level var or a member
+        // property accessed via implicit receiver (inside a class/object
+        // member function).
         let allCandidateIDs = ctx.cachedScopeLookup(name)
         let (visibleIDs, _) = ctx.filterByVisibility(allCandidateIDs)
         let candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
-        // Only match top-level properties, not class member properties.
-        // Top-level properties have no parentSymbol set (nil) or parent is a package.
-        // Class member properties always have parentSymbol set to a class/object/interface.
+        let hasImplicitReceiver = ctx.implicitReceiverType != nil
         if let propSymbol = candidates.first(where: { sym in
             guard sym.kind == .property else { return false }
             guard let parentID = sema.symbols.parentSymbol(for: sym.id),
                   let parentSym = sema.symbols.symbol(parentID) else { return true }
-            return parentSym.kind == .package
+            // Accept top-level properties (parent is package) and member
+            // properties when inside a class/object member function context.
+            if parentSym.kind == .package { return true }
+            if hasImplicitReceiver {
+                return parentSym.kind == .class
+                    || parentSym.kind == .object
+                    || parentSym.kind == .interface
+            }
+            return false
         }) {
             sema.bindings.bindIdentifier(id, symbol: propSymbol.id)
             let propType = sema.symbols.propertyType(for: propSymbol.id) ?? sema.types.anyType
