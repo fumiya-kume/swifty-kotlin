@@ -1,6 +1,7 @@
 import Foundation
 
 extension BuildASTPhase.ExpressionParser {
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func parseLambdaLiteral(label: InternedString? = nil, start: SourceLocation? = nil) -> ExprID? {
         guard matches(.symbol(.lBrace)) else {
             return nil

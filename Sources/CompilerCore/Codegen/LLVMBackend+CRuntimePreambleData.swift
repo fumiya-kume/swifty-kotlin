@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 
 extension LLVMBackend {
@@ -1108,6 +1109,7 @@ extension LLVMBackend {
         "static intptr_t kk_maybe_unbox(intptr_t val) {",
         "  if (val > -(intptr_t)0x100000000LL && val < (intptr_t)0x100000000LL) return val;",
         "  KKBoxedValue* box = (KKBoxedValue*)(void*)val;",
+        // swiftlint:disable:next line_length
         "  if (box && (box->tag == KK_BOX_TAG_INT || box->tag == KK_BOX_TAG_LONG || box->tag == KK_BOX_TAG_BOOL)) return box->value;",
         "  return val;",
         "}",
@@ -1220,10 +1222,12 @@ extension LLVMBackend {
         "  size_t pos = 0;",
         "  out[pos++] = '[';",
         "  for (intptr_t i = 0; i < list->length; i++) {",
+        // swiftlint:disable:next line_length
         "    if (i > 0) { while (pos + 2 >= cap) { cap *= 2; char* tmp = (char*)realloc(out, cap); if (!tmp) { free(out); return (intptr_t)kk_string_from_utf8((const uint8_t*)\"[]\", 2); } out = tmp; } out[pos++] = ','; out[pos++] = ' '; }",
         "    char elem[64];",
         "    kk_format_element(list->elements[i], elem, sizeof(elem));",
         "    size_t elen = strlen(elem);",
+        // swiftlint:disable:next line_length
         "    while (pos + elen + 2 >= cap) { cap *= 2; char* tmp = (char*)realloc(out, cap); if (!tmp) { free(out); return (intptr_t)kk_string_from_utf8((const uint8_t*)\"[]\", 2); } out = tmp; }",
         "    memcpy(out + pos, elem, elen); pos += elen;",
         "  }",
@@ -1291,11 +1295,13 @@ extension LLVMBackend {
         "  size_t pos = 0;",
         "  out[pos++] = '{';",
         "  for (intptr_t i = 0; i < map->size; i++) {",
+        // swiftlint:disable:next line_length
         "    if (i > 0) { while (pos + 2 >= cap) { cap *= 2; char* tmp = (char*)realloc(out, cap); if (!tmp) { free(out); return (intptr_t)kk_string_from_utf8((const uint8_t*)\"{}\", 2); } out = tmp; } out[pos++] = ','; out[pos++] = ' '; }",
         "    char k[64], v[64];",
         "    kk_format_element(map->keys[i], k, sizeof(k));",
         "    kk_format_element(map->values[i], v, sizeof(v));",
         "    size_t klen = strlen(k), vlen = strlen(v);",
+        // swiftlint:disable:next line_length
         "    while (pos + klen + vlen + 4 >= cap) { cap *= 2; char* tmp = (char*)realloc(out, cap); if (!tmp) { free(out); return (intptr_t)kk_string_from_utf8((const uint8_t*)\"{}\", 2); } out = tmp; }",
         "    memcpy(out + pos, k, klen); pos += klen;",
         "    out[pos++] = '=';",

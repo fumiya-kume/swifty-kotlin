@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 
 /// Rewrites `listOf(...)`, `mapOf(...)`, `arrayOf(...)` and related collection
@@ -11,9 +12,11 @@ import Foundation
 /// generic `kk_range_*` calls which this pass can then specialize for collections.
 /// In practice this pass runs **after** `ForLoweringPass` and rewrites the
 /// already-emitted `kk_range_*` calls to `kk_list_*` equivalents.
+// swiftlint:disable:next type_body_length
 final class CollectionLiteralLoweringPass: LoweringPass {
     static let name = "CollectionLiteralLowering"
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func run(module: KIRModule, ctx: KIRContext) throws {
         let interner = ctx.interner
 
