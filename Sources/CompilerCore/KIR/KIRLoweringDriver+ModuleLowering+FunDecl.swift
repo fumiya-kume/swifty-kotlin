@@ -14,6 +14,40 @@ extension KIRLoweringDriver {
         ctx.beginCallableLoweringScope()
         ctx.currentFunctionSymbol = symbol
         let signature = sema.symbols.functionSignature(for: symbol)
+        let params = buildFunDeclParams(function, symbol: symbol, signature: signature, shared: shared)
+        let returnType = signature?.returnType ?? sema.types.unitType
+        var body: KIRLoweringEmitContext = [.beginBlock]
+        if let receiverExpr = ctx.currentImplicitReceiverExprID,
+           let recvSym = ctx.currentImplicitReceiverSymbol {
+            body.append(.constValue(result: receiverExpr, value: .symbolRef(recvSym)))
+        }
+        lowerFunDeclBody(function, shared: shared, body: &body)
+        body.append(.endBlock)
+        let kirID = arena.appendDecl(.function(KIRFunction(
+            symbol: symbol, name: function.name, params: params,
+            returnType: returnType, body: body,
+            isSuspend: function.isSuspend, isInline: function.isInline,
+            sourceRange: function.range
+        )))
+        var declIDs: [KIRDeclID] = [kirID]
+        appendDefaultStub(symbol: symbol, function: function, signature: signature, shared: shared, declIDs: &declIDs)
+        declIDs.append(contentsOf: ctx.drainGeneratedCallableDecls())
+        ctx.currentImplicitReceiverExprID = nil
+        ctx.currentImplicitReceiverSymbol = nil
+        ctx.currentFunctionSymbol = nil
+        return declIDs
+    }
+
+    // MARK: - Parameter building
+
+    private func buildFunDeclParams(
+        _ function: FunDecl,
+        symbol: SymbolID,
+        signature: FunctionSignature?,
+        shared: KIRLoweringSharedContext
+    ) -> [KIRParameter] {
+        let sema = shared.sema
+        let arena = shared.arena
         var params: [KIRParameter] = []
         if let signature {
             if let receiverType = signature.receiverType {
@@ -26,9 +60,7 @@ extension KIRLoweringDriver {
                 KIRParameter(symbol: pair.0, type: pair.1)
             })
         }
-        if function.isInline, let signature,
-           !signature.reifiedTypeParameterIndices.isEmpty
-        {
+        if function.isInline, let signature, !signature.reifiedTypeParameterIndices.isEmpty {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             for index in signature.reifiedTypeParameterIndices.sorted() {
                 guard index < signature.typeParameterSymbols.count else { continue }
@@ -37,112 +69,83 @@ extension KIRLoweringDriver {
                 params.append(KIRParameter(symbol: tokenSymbol, type: intType))
             }
         }
-        let returnType = signature?.returnType ?? sema.types.unitType
-        var body: KIRLoweringEmitContext = [.beginBlock]
-        if let receiverExpr = ctx.currentImplicitReceiverExprID,
-           let receiverSymbol = ctx.currentImplicitReceiverSymbol
-        {
-            body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSymbol)))
-        }
-        lowerFunDeclBody(function, shared: shared, body: &body)
-        body.append(.endBlock)
-        let kirID = arena.appendDecl(
-            .function(
-                KIRFunction(
-                    symbol: symbol,
-                    name: function.name,
-                    params: params,
-                    returnType: returnType,
-                    body: body,
-                    isSuspend: function.isSuspend,
-                    isInline: function.isInline,
-                    sourceRange: function.range
-                )
-            )
-        )
-        var declIDs: [KIRDeclID] = [kirID]
-        if let defaults = ctx.functionDefaultArgumentsBySymbol[symbol],
-           let sig = signature
-        {
+        return params
+    }
+
+    // MARK: - Default stub
+
+    private func appendDefaultStub(
+        symbol: SymbolID,
+        function: FunDecl,
+        signature: FunctionSignature?,
+        shared: KIRLoweringSharedContext,
+        declIDs: inout [KIRDeclID]
+    ) {
+        if let defaults = ctx.functionDefaultArgumentsBySymbol[symbol], let sig = signature {
             let stubID = callSupportLowerer.generateDefaultStubFunction(
-                originalSymbol: symbol,
-                originalName: function.name,
-                signature: sig,
-                defaultExpressions: defaults,
-                shared: shared
+                originalSymbol: symbol, originalName: function.name,
+                signature: sig, defaultExpressions: defaults, shared: shared
             )
             declIDs.append(stubID)
         }
-        declIDs.append(contentsOf: ctx.drainGeneratedCallableDecls())
-        ctx.currentImplicitReceiverExprID = nil
-        ctx.currentImplicitReceiverSymbol = nil
-        ctx.currentFunctionSymbol = nil
-        return declIDs
     }
+
+    // MARK: - Body lowering
 
     private func lowerFunDeclBody(
         _ function: FunDecl,
         shared: KIRLoweringSharedContext,
         body: inout KIRLoweringEmitContext
     ) {
-        let ast = shared.ast
-        let sema = shared.sema
-        let arena = shared.arena
-
         switch function.body {
         case let .block(exprIDs, _):
-            var lastValue: KIRExprID?
-            var terminatedByReturn = false
-            for exprID in exprIDs {
-                if let expr = ast.arena.expr(exprID),
-                   case let .returnExpr(value, _, _) = expr
-                {
-                    if let value {
-                        let lowered = lowerExpr(
-                            value,
-                            shared: shared, emit: &body
-                        )
-                        body.append(.returnValue(lowered))
-                    } else {
-                        body.append(.returnUnit)
-                    }
-                    terminatedByReturn = true
-                    break
-                }
-                if let expr = ast.arena.expr(exprID),
-                   case .throwExpr = expr
-                {
-                    _ = lowerExpr(
-                        exprID,
-                        shared: shared, emit: &body
-                    )
-                    terminatedByReturn = true
-                    break
-                }
-                lastValue = lowerExpr(
-                    exprID,
-                    shared: shared, emit: &body
-                )
-                if let lastValue, controlFlowLowerer.isTerminatedExpr(lastValue, arena: arena, sema: sema) {
-                    terminatedByReturn = true
-                    break
-                }
-            }
-            if !terminatedByReturn {
-                if let lastValue {
-                    body.append(.returnValue(lastValue))
-                } else {
-                    body.append(.returnUnit)
-                }
-            }
+            lowerFunDeclBlockBody(exprIDs: exprIDs, shared: shared, body: &body)
         case let .expr(exprID, _):
-            let value = lowerExpr(
-                exprID,
-                shared: shared, emit: &body
-            )
+            let value = lowerExpr(exprID, shared: shared, emit: &body)
             body.append(.returnValue(value))
         case .unit:
             body.append(.returnUnit)
+        }
+    }
+
+    private func lowerFunDeclBlockBody(
+        exprIDs: [ExprID],
+        shared: KIRLoweringSharedContext,
+        body: inout KIRLoweringEmitContext
+    ) {
+        let ast = shared.ast
+        let sema = shared.sema
+        let arena = shared.arena
+        var lastValue: KIRExprID?
+        var terminatedByReturn = false
+        for exprID in exprIDs {
+            if let expr = ast.arena.expr(exprID), case let .returnExpr(value, _, _) = expr {
+                if let value {
+                    let lowered = lowerExpr(value, shared: shared, emit: &body)
+                    body.append(.returnValue(lowered))
+                } else {
+                    body.append(.returnUnit)
+                }
+                terminatedByReturn = true
+                break
+            }
+            if let expr = ast.arena.expr(exprID), case .throwExpr = expr {
+                _ = lowerExpr(exprID, shared: shared, emit: &body)
+                terminatedByReturn = true
+                break
+            }
+            lastValue = lowerExpr(exprID, shared: shared, emit: &body)
+            if let lastValue, controlFlowLowerer.isTerminatedExpr(lastValue, arena: arena, sema: sema) {
+                terminatedByReturn = true
+                break
+            }
+        }
+        if !terminatedByReturn {
+            if let lastValue {
+                body.append(.returnValue(lastValue))
+            } else {
+                body.append(.returnUnit)
+            }
         }
     }
 }
