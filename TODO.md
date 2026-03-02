@@ -46,12 +46,12 @@
   - **完了条件**: `val x: Int = if (cond) 1 else throw E()` が型エラーなしで `Int` と推論され、到達不能行が診断される
 
 
-- [ ] TYPE-002: intersection type（`T & U`）と captured type を型システムに追加する（spec.md J8）
-  - [ ] `TypeRef` に intersection 型（`A & B`）構文を Parser/AST で追加する（`T & Any` definitelyNonNull を含む）
-  - [ ] `inferExpr` で smart cast 後の refinement 型を intersection として表現できるようにする
-  - [ ] intersection 型のサブタイプ規則（`A & B <: A`、`A & B <: B`）を `TypeSystem.isSubtype` に追加する
-  - [ ] `T & Any`（definitely non-nullable）の型推論と `?.` 解決への影響を実装する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task TYPE-002`
+- [x] TYPE-002: intersection type（`T & U`）と captured type を型システムに追加する（spec.md J8）
+  - [x] `TypeRef` に intersection 型（`A & B`）構文を Parser/AST で追加する（`T & Any` definitelyNonNull を含む）
+  - [x] `inferExpr` で smart cast 後の refinement 型を intersection として表現できるようにする
+  - [x] intersection 型のサブタイプ規則（`A & B <: A`、`A & B <: B`）を `TypeSystem.isSubtype` に追加する
+  - [x] `T & Any`（definitely non-nullable）の型推論と `?.` 解決への影響を実装する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task TYPE-002`
   - **完了条件**: `fun <T> foo(x: T & Any)` の引数が non-null として扱われ、smart cast が不要になる
 
 

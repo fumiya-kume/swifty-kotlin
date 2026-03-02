@@ -73,6 +73,11 @@
           "type": "golden-sema",
           "name": "intersection_smart_cast",
           "template": "Scripts/test_templates/sema/intersection_smart_cast.kt"
+        },
+        {
+          "type": "diff",
+          "name": "intersection_definitely_non_null",
+          "template": "Scripts/test_templates/diff/intersection_definitely_non_null.kt"
         }
       ]
     },

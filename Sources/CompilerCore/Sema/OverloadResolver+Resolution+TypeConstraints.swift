@@ -164,6 +164,10 @@ extension OverloadResolver {
         switch typeSystem.kind(of: type) {
         case let .typeParam(typeParam):
             return typeVarBySymbol[typeParam.symbol] != nil
+        case let .intersection(parts):
+            return parts.contains {
+                containsTypeVariable($0, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem)
+            }
         case let .classType(classType):
             return classType.args.contains { arg in
                 switch arg {
@@ -221,6 +225,24 @@ extension OverloadResolver {
                 right: .variable(variable),
                 blameRange: blameRange
             )]
+        }
+
+        // Case 1.5: supertype is an intersection. Decompose into all parts:
+        // `A <: (B & C)` => `A <: B` and `A <: C`.
+        if case let .intersection(parts) = supertypeKind {
+            var result: [VariableConstraint] = []
+            for part in parts {
+                result.append(contentsOf: decomposeSubtypeConstraint(
+                    subtype: subtype,
+                    supertype: part,
+                    typeVarBySymbol: typeVarBySymbol,
+                    typeSystem: typeSystem,
+                    blameRange: blameRange
+                ))
+            }
+            if !result.isEmpty {
+                return result
+            }
         }
 
         // Case 2: supertype is a class type with type args containing type variables.

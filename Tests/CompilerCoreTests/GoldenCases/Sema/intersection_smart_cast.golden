@@ -15,10 +15,20 @@ symbol s13 kind=interface fq=golden.sema.B vis=public flags=_
 symbol s14 kind=function fq=golden.sema.B.b vis=public flags=abstractType sig=recv=Class#13 params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s15 kind=function fq=golden.sema.intersect vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
 symbol s16 kind=valueParameter fq=golden.sema.intersect.$15.x vis=private flags=_
+symbol s17 kind=function fq=golden.sema.idTag vis=public flags=_ sig=recv=Any params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s18 kind=function fq=golden.sema.directValue vis=public flags=_ sig=recv=_ params=[T#19 & Any] ret=Int suspend=0 defaults=[0] vararg=[0] bounds=[Any?]
+symbol s19 kind=typeParameter fq=golden.sema.directValue.$18.T vis=private flags=_
+symbol s20 kind=valueParameter fq=golden.sema.directValue.$18.x vis=private flags=_
+symbol s21 kind=function fq=golden.sema.safeValue vis=public flags=_ sig=recv=_ params=[T#22 & Any] ret=Int? suspend=0 defaults=[0] vararg=[0] bounds=[Any?]
+symbol s22 kind=typeParameter fq=golden.sema.safeValue.$21.T vis=private flags=_
+symbol s23 kind=valueParameter fq=golden.sema.safeValue.$21.x vis=private flags=_
 file f0 package=golden.sema
   decl d1 interface A sym=s11
   decl d3 interface B sym=s13
   decl d4 fun intersect suspend=0 inline=0 sym=s15
+  decl d5 fun idTag suspend=0 inline=0 sym=s17
+  decl d6 fun directValue suspend=0 inline=0 sym=s18
+  decl d7 fun safeValue suspend=0 inline=0 sym=s21
 expr e0 name(x) type=Any ref=s16
 expr e1 isCheck expr=e0 type=t4 type=Boolean
 expr e2 name(x) type=Any ref=s16
@@ -35,3 +45,8 @@ expr e12 blockExpr stmts=[] trailing=e11 type=Nothing
 expr e13 if cond=e4 then=e12 else=_ type=Unit
 expr e14 string(unknown) type=String
 expr e15 return value=e14 type=Nothing
+expr e16 int(7) type=Int
+expr e17 name(x) type=T#19 & Any ref=s20
+expr e18 memberCall recv=e17 callee=idTag args=[] type=Int call=s17 map=[] targs=[]
+expr e19 name(x) type=T#22 & Any ref=s23
+expr e20 safeMemberCall recv=e19 callee=idTag args=[] type=Int? call=s17 map=[] targs=[]
