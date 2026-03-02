@@ -6,7 +6,7 @@ import Foundation
 extension LocalDeclTypeChecker {
     func inferIndexedCompoundAssignExpr(
         _ id: ExprID,
-        assignOp: CompoundAssignOp,
+        op: CompoundAssignOp,
         receiverExpr: ExprID,
         indices: [ExprID],
         valueExpr: ExprID,
@@ -43,7 +43,7 @@ extension LocalDeclTypeChecker {
         }
 
         let resultType = compoundOpResultType(
-            assignOp: assignOp, elementType: elementType, valueType: valueType, sema: sema
+            assignOp: op, elementType: elementType, valueType: valueType, sema: sema
         )
         driver.emitSubtypeConstraint(
             left: valueType, right: elementType,

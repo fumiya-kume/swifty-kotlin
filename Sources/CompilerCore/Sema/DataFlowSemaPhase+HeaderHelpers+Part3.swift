@@ -74,22 +74,24 @@ extension DataFlowSemaPhase {
         registerListGetOperator(
             symbols: symbols, types: types, interner: interner,
             listFQName: listFQName,
-            listInterface: (listInterfaceSymbol, listTypeParamSymbol, listTypeParamType)
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            listTypeParamType: listTypeParamType
         )
         return listInterfaceSymbol
     }
 
     /// Register `operator fun get(index: Int): E` on the List interface.
+    // swiftlint:disable:next function_parameter_count
     private func registerListGetOperator(
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
         listFQName: [InternedString],
-        listInterface: (symbol: SymbolID, typeParamSymbol: SymbolID, typeParamType: TypeID)
+        listInterfaceSymbol: SymbolID,
+        listTypeParamSymbol: SymbolID,
+        listTypeParamType: TypeID
     ) {
-        let listInterfaceSymbol = listInterface.symbol
-        let listTypeParamSymbol = listInterface.typeParamSymbol
-        let listTypeParamType = listInterface.typeParamType
         let listGetName = interner.intern("get")
         let listGetFQName = listFQName + [listGetName]
         guard symbols.lookup(fqName: listGetFQName) == nil else { return }
@@ -162,21 +164,23 @@ extension DataFlowSemaPhase {
         registerMutableListSetOperator(
             symbols: symbols, types: types, interner: interner,
             mutableListFQName: mutableListFQName,
-            mutableListInterface: (mutableListInterfaceSymbol, mlTypeParamSymbol, mlTypeParamType)
+            mutableListInterfaceSymbol: mutableListInterfaceSymbol,
+            mlTypeParamSymbol: mlTypeParamSymbol,
+            mlTypeParamType: mlTypeParamType
         )
     }
 
     /// Register `operator fun set(index: Int, element: E): E` on MutableList.
+    // swiftlint:disable:next function_parameter_count
     private func registerMutableListSetOperator(
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
         mutableListFQName: [InternedString],
-        mutableListInterface: (symbol: SymbolID, typeParamSymbol: SymbolID, typeParamType: TypeID)
+        mutableListInterfaceSymbol: SymbolID,
+        mlTypeParamSymbol: SymbolID,
+        mlTypeParamType: TypeID
     ) {
-        let mutableListInterfaceSymbol = mutableListInterface.symbol
-        let mlTypeParamSymbol = mutableListInterface.typeParamSymbol
-        let mlTypeParamType = mutableListInterface.typeParamType
         let mlSetName = interner.intern("set")
         let mlSetFQName = mutableListFQName + [mlSetName]
         guard symbols.lookup(fqName: mlSetFQName) == nil else { return }
