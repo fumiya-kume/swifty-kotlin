@@ -3,6 +3,7 @@ import Foundation
 extension KIRLoweringDriver {
     /// Lower a top-level property declaration into KIR declarations, collecting
     /// any initialisation instructions and delegate storage mappings.
+    // swiftlint:disable:next function_parameter_count
     func lowerTopLevelPropertyDecl(
         _ propertyDecl: PropertyDecl,
         symbol: SymbolID,
@@ -22,7 +23,10 @@ extension KIRLoweringDriver {
             declIDs.append(kirID)
         }
 
-        emitBackingFieldIfNeeded(symbol: symbol, propType: propType, isExtension: isExtensionProperty, shared: shared, declIDs: &declIDs)
+        emitBackingFieldIfNeeded(
+            symbol: symbol, propType: propType, isExtension: isExtensionProperty,
+            shared: shared, declIDs: &declIDs
+        )
         lowerPropertyAccessors(
             propertyDecl, symbol: symbol, propType: propType,
             shared: shared, declIDs: &declIDs
@@ -101,6 +105,7 @@ extension KIRLoweringDriver {
 
     // MARK: - Property Initializer
 
+    // swiftlint:disable:next function_parameter_count
     private func lowerPropertyInitializer(
         _ propertyDecl: PropertyDecl,
         symbol: SymbolID,
@@ -135,6 +140,7 @@ extension KIRLoweringDriver {
 
     // MARK: - Delegate Property
 
+    // swiftlint:disable:next function_parameter_count
     private func lowerPropertyDelegate(
         _ propertyDecl: PropertyDecl,
         symbol: SymbolID,
@@ -195,6 +201,7 @@ extension KIRLoweringDriver {
         return storageSymbol
     }
 
+    // swiftlint:disable:next function_parameter_count
     private func emitDelegateAccessorsIfCustom(
         delegateKind: StdlibDelegateKind,
         propertyDecl: PropertyDecl,
@@ -221,6 +228,7 @@ extension KIRLoweringDriver {
 
     // MARK: - Delegate init instructions
 
+    // swiftlint:disable:next function_parameter_count
     private func emitDelegateInitInstructions(
         delegateKind: StdlibDelegateKind,
         propertyDecl: PropertyDecl,
@@ -259,6 +267,7 @@ extension KIRLoweringDriver {
         }
     }
 
+    // swiftlint:disable:next function_parameter_count
     private func emitLazyDelegateInit(
         propertyDecl: PropertyDecl,
         symbol: SymbolID,
@@ -286,6 +295,7 @@ extension KIRLoweringDriver {
         initInstructions.append(.storeGlobal(value: createResult, symbol: delegateStorageSymbol))
     }
 
+    // swiftlint:disable:next function_parameter_count
     private func emitCallbackDelegateInit(
         runtimeFnName: String,
         propertyDecl: PropertyDecl,
