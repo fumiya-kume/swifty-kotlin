@@ -1,6 +1,7 @@
+// swiftlint:disable identifier_name trailing_comma
+
 // MARK: - Collection Extern Declarations (STDLIB-001)
 
-// swiftlint:disable identifier_name
 public extension RuntimeABIExterns {
     static let collectionExterns: [ExternDecl] = [
         kk_list_of,
@@ -21,7 +22,7 @@ public extension RuntimeABIExterns {
         kk_map_iterator,
         kk_map_iterator_hasNext,
         kk_map_iterator_next,
-        kk_array_size
+        kk_array_size,
     ]
 
     static let kk_list_of = ExternDecl(
@@ -138,4 +139,5 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 }
-// swiftlint:enable identifier_name
+
+// swiftlint:enable identifier_name trailing_comma

@@ -1,3 +1,5 @@
+// swiftlint:disable trailing_comma
+
 // MARK: - Ignored External Callees
 
 extension LLVMBackend {
@@ -94,6 +96,8 @@ extension LLVMBackend {
         "kk_map_iterator_hasNext",
         "kk_map_iterator_next",
         "kk_array_size",
-        "kk_array_of"
+        "kk_array_of",
     ]
 }
+
+// swiftlint:enable trailing_comma
