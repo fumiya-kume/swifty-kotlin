@@ -260,12 +260,28 @@ extension ExprTypeChecker {
 
         var lambdaLocals = locals
         let outerSymbols = Set(locals.values.map(\.symbol))
-        let parameterTypes: [TypeID] = if let expectedFunctionType, expectedFunctionType.params.count == params.count {
+
+        // Implicit `it` parameter: when a no-arrow lambda has zero explicit params
+        // and the expected function type has exactly one parameter, synthesise an
+        // `it` binding so the body can reference it.
+        let effectiveParams: [InternedString]
+        if params.isEmpty,
+           let expectedFunctionType,
+           expectedFunctionType.params.count == 1
+        {
+            effectiveParams = [ctx.interner.intern("it")]
+        } else {
+            effectiveParams = params
+        }
+
+        let parameterTypes: [TypeID] = if let expectedFunctionType,
+                                           expectedFunctionType.params.count == effectiveParams.count
+        {
             expectedFunctionType.params
         } else {
-            Array(repeating: sema.types.anyType, count: params.count)
+            Array(repeating: sema.types.anyType, count: effectiveParams.count)
         }
-        for (offset, param) in params.enumerated() {
+        for (offset, param) in effectiveParams.enumerated() {
             let syntheticSymbol = SymbolID(rawValue: Int32(clamping: Int64(-1_000_000) - Int64(id.rawValue) * 256 - Int64(offset)))
             let parameterType = offset < parameterTypes.count ? parameterTypes[offset] : sema.types.anyType
             lambdaLocals[param] = (

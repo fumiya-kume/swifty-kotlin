@@ -37,7 +37,17 @@ final class LambdaLowerer {
         let lambdaSymbol = driver.ctx.syntheticLambdaSymbol(for: exprID)
         let lambdaName = syntheticLambdaName(for: exprID, interner: interner)
 
-        let lambdaParameterTypes: [TypeID] = params.indices.map { index in
+        // Effective parameter count: when the AST has zero explicit params but
+        // the bound function type declares parameters (implicit `it`), use the
+        // function-type parameter count so that the generated KIR function
+        // receives the expected arguments.
+        let effectiveParamCount: Int = if params.isEmpty, let functionType, !functionType.params.isEmpty {
+            functionType.params.count
+        } else {
+            params.count
+        }
+
+        let lambdaParameterTypes: [TypeID] = (0..<effectiveParamCount).map { index in
             if let functionType, index < functionType.params.count {
                 return functionType.params[index]
             }
@@ -49,7 +59,7 @@ final class LambdaLowerer {
 
         let captureSymbols = computeCaptureSymbolsForLambda(
             lambdaExprID: exprID,
-            lambdaParamCount: params.count,
+            lambdaParamCount: effectiveParamCount,
             lambdaBodyExprID: bodyExpr,
             ast: ast,
             sema: sema
@@ -79,7 +89,7 @@ final class LambdaLowerer {
             ))
         }
 
-        let lambdaParameters: [KIRParameter] = params.indices.map { index in
+        let lambdaParameters: [KIRParameter] = (0..<effectiveParamCount).map { index in
             KIRParameter(
                 symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: index),
                 type: lambdaParameterTypes[index]

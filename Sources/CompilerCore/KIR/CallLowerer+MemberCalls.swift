@@ -5,6 +5,8 @@ extension CallLowerer {
         "size", "get", "contains", "containsKey",
         "isEmpty", "first", "last", "indexOf",
         "count", "iterator",
+        "map", "filter", "forEach", "flatMap",
+        "any", "none", "all",
     ]
 
     func lowerMemberCallExpr(

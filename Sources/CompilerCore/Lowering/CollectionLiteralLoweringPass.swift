@@ -42,6 +42,14 @@ final class CollectionLiteralLoweringPass: LoweringPass {
         let kkListIteratorHasNextName = interner.intern("kk_list_iterator_hasNext")
         let kkListIteratorNextName = interner.intern("kk_list_iterator_next")
         let kkListToStringName = interner.intern("kk_list_to_string")
+        // Higher-order collection function ABI names (FUNC-003)
+        let kkListMapName = interner.intern("kk_list_map")
+        let kkListFilterName = interner.intern("kk_list_filter")
+        let kkListForEachName = interner.intern("kk_list_forEach")
+        let kkListFlatMapName = interner.intern("kk_list_flatMap")
+        let kkListAnyName = interner.intern("kk_list_any")
+        let kkListNoneName = interner.intern("kk_list_none")
+        let kkListAllName = interner.intern("kk_list_all")
 
         let kkMapOfName = interner.intern("kk_map_of")
         let kkMapSizeName = interner.intern("kk_map_size")
@@ -71,6 +79,14 @@ final class CollectionLiteralLoweringPass: LoweringPass {
         let containsKeyName = interner.intern("containsKey")
         let isEmptyName = interner.intern("isEmpty")
         let countName = interner.intern("count")
+        // Higher-order collection member names (FUNC-003)
+        let mapName = interner.intern("map")
+        let filterName = interner.intern("filter")
+        let forEachName = interner.intern("forEach")
+        let flatMapName = interner.intern("flatMap")
+        let anyName = interner.intern("any")
+        let noneName = interner.intern("none")
+        let allName = interner.intern("all")
 
         // println support
         let kkPrintlnAnyName = interner.intern("kk_println_any")
@@ -527,6 +543,49 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                                     canThrow: false,
                                     thrownResult: nil
                                 ))
+                                continue
+                            }
+                        }
+                    }
+
+                    // --- Rewrite higher-order collection member calls (FUNC-003) ---
+                    if callee == mapName || callee == filterName || callee == forEachName
+                        || callee == flatMapName || callee == anyName || callee == noneName
+                        || callee == allName
+                    {
+                        // args = [receiver, lambdaFnPtr]
+                        if arguments.count == 2 {
+                            let receiverID = arguments[0]
+                            if listExprIDs.contains(receiverID.rawValue) {
+                                let kkName: InternedString = switch callee {
+                                case mapName: kkListMapName
+                                case filterName: kkListFilterName
+                                case forEachName: kkListForEachName
+                                case flatMapName: kkListFlatMapName
+                                case anyName: kkListAnyName
+                                case noneName: kkListNoneName
+                                case allName: kkListAllName
+                                default: callee
+                                }
+                                let needsListTag = callee == mapName || callee == flatMapName || callee == filterName
+                                let hofResult = module.arena.appendExpr(
+                                    .temporary(Int32(module.arena.expressions.count)), type: nil
+                                )
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: kkName,
+                                    arguments: arguments,
+                                    result: hofResult,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult
+                                ))
+                                if needsListTag, let result {
+                                    listExprIDs.insert(result.rawValue)
+                                    listExprIDs.insert(hofResult.rawValue)
+                                }
+                                if let result {
+                                    loweredBody.append(.copy(from: hofResult, to: result))
+                                }
                                 continue
                             }
                         }

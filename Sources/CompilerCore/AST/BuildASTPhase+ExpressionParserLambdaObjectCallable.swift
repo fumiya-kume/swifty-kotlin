@@ -34,27 +34,40 @@ extension BuildASTPhase.ExpressionParser {
             }
         }
 
-        guard depth == 0, let arrowIndex = lambdaArrowIndex(in: bodyTokens) else {
+        guard depth == 0 else {
             index = savedIndex
             return nil
         }
 
-        let paramTokens = Array(bodyTokens[..<arrowIndex])
-        let lambdaBodySlice = bodyTokens[(arrowIndex + 1)...]
+        if let arrowIndex = lambdaArrowIndex(in: bodyTokens) {
+            let paramTokens = Array(bodyTokens[..<arrowIndex])
+            let lambdaBodySlice = bodyTokens[(arrowIndex + 1)...]
 
-        // Detect lambda destructuring: { (a, b) -> body }
-        if let names = extractDestructuringNames(from: paramTokens), names.count >= 2 {
+            // Detect lambda destructuring: { (a, b) -> body }
+            if let names = extractDestructuringNames(from: paramTokens), names.count >= 2 {
+                let range = SourceRange(start: start ?? openBrace.range.start, end: end)
+                return buildDestructuringLambda(
+                    names: names, bodySlice: lambdaBodySlice,
+                    fallbackStart: openBrace.range.end, range: range, label: label
+                )
+            }
+
+            let params = parseLambdaParamNames(from: paramTokens)
+            let bodyExpr = parseLambdaBody(bodySlice: lambdaBodySlice, fallbackStart: openBrace.range.end)
             let range = SourceRange(start: start ?? openBrace.range.start, end: end)
-            return buildDestructuringLambda(
-                names: names, bodySlice: lambdaBodySlice,
-                fallbackStart: openBrace.range.end, range: range, label: label
-            )
+            return astArena.appendExpr(.lambdaLiteral(params: params, body: bodyExpr, label: label, range: range))
         }
 
-        let params = parseLambdaParamNames(from: paramTokens)
-        let bodyExpr = parseLambdaBody(bodySlice: lambdaBodySlice, fallbackStart: openBrace.range.end)
-        let range = SourceRange(start: start ?? openBrace.range.start, end: end)
-        return astArena.appendExpr(.lambdaLiteral(params: params, body: bodyExpr, label: label, range: range))
+        // No-arrow lambda: { body } — check if body references `it` at the top level.
+        // If so, emit a lambdaLiteral with empty params; Sema will inject implicit `it`.
+        if containsImplicitItReference(in: bodyTokens) {
+            let bodyExpr = parseLambdaBody(bodySlice: bodyTokens[...], fallbackStart: openBrace.range.end)
+            let range = SourceRange(start: start ?? openBrace.range.start, end: end)
+            return astArena.appendExpr(.lambdaLiteral(params: [], body: bodyExpr, label: label, range: range))
+        }
+
+        index = savedIndex
+        return nil
     }
 
     func parseObjectLiteral() -> ExprID? {
@@ -322,6 +335,26 @@ extension BuildASTPhase.ExpressionParser {
         return astArena.appendExpr(.blockExpr(
             statements: [], trailingExpr: nil, range: bodyRange
         ))
+    }
+
+    /// Scans body tokens for a top-level reference to `it` — the implicit single-parameter name
+    /// used by Kotlin's no-arrow lambda syntax (`{ it * 2 }`).
+    private func containsImplicitItReference(in tokens: [Token]) -> Bool {
+        var depth = BuildASTPhase.BracketDepth()
+        for token in tokens {
+            // Only consider identifiers at the top brace level; nested lambdas
+            // define their own `it` so we must not look inside them.
+            if depth.isAtTopLevel {
+                switch token.kind {
+                case let .identifier(name) where interner.resolve(name) == "it":
+                    return true
+                default:
+                    break
+                }
+            }
+            depth.track(token.kind)
+        }
+        return false
     }
 
     private func isPotentialLambdaParameterList(_ tokens: [Token]) -> Bool {

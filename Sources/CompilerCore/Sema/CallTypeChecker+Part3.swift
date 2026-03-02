@@ -441,16 +441,43 @@ extension CallTypeChecker {
                     "size", "get", "contains", "containsKey",
                     "isEmpty", "first", "last", "indexOf",
                     "count", "iterator",
+                    "map", "filter", "forEach", "flatMap",
+                    "any", "none", "all",
                 ]
                 if collectionMembers.contains(memberName) {
                     let resultType: TypeID = switch memberName {
                     case "size", "count", "indexOf":
                         sema.types.make(.primitive(.int, .nonNull))
-                    case "isEmpty", "contains", "containsKey":
+                    case "isEmpty", "contains", "containsKey",
+                         "any", "none", "all":
                         sema.types.make(.primitive(.boolean, .nonNull))
+                    case "forEach":
+                        sema.types.unitType
                     default:
                         sema.types.anyType
                     }
+                    // For higher-order collection functions, provide contextual
+                    // function type for the trailing lambda argument so that Sema
+                    // can infer the implicit `it` parameter type.
+                    if ["map", "filter", "forEach", "flatMap", "any", "none", "all"].contains(memberName),
+                       args.count == 1
+                    {
+                        let lambdaReturnType: TypeID = switch memberName {
+                        case "filter", "any", "none", "all":
+                            sema.types.make(.primitive(.boolean, .nonNull))
+                        default:
+                            sema.types.anyType
+                        }
+                        let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                            params: [sema.types.anyType],
+                            returnType: lambdaReturnType,
+                            isSuspend: false,
+                            nullability: .nonNull
+                        )))
+                        // Re-infer the lambda argument with the contextual function type.
+                        _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                    }
+                    sema.bindings.markCollectionExpr(id)
                     let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
