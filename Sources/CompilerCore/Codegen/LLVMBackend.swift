@@ -471,6 +471,7 @@ public final class LLVMBackend {
             "kk_op_shl",
             "kk_op_shr",
             "kk_op_ushr",
+            "kk_int_toString_radix"
         ]
 
         for decl in module.arena.declarations {
