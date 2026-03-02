@@ -259,8 +259,10 @@ extension KIRLoweringDriver {
             )
         case .custom:
             emitCustomDelegateInit(
-                propertyDecl: propertyDecl, delegateStorageSymbol: delegateStorageSymbol,
-                delegateType: delegateType, shared: shared, initInstructions: &initInstructions
+                propertyDecl: propertyDecl, symbol: symbol,
+                delegateStorageSymbol: delegateStorageSymbol,
+                delegateType: delegateType, shared: shared,
+                compilationCtx: compilationCtx, initInstructions: &initInstructions
             )
         }
     }
@@ -321,22 +323,31 @@ extension KIRLoweringDriver {
         initInstructions.append(.storeGlobal(value: createResult, symbol: delegateStorageSymbol))
     }
 
+    // swiftlint:disable:next function_parameter_count
     private func emitCustomDelegateInit(
         propertyDecl: PropertyDecl,
+        symbol: SymbolID,
         delegateStorageSymbol: SymbolID,
         delegateType: TypeID,
         shared: KIRLoweringSharedContext,
+        compilationCtx _: CompilationContext,
         initInstructions: inout KIRLoweringEmitContext
     ) {
-        let arena = shared.arena
-        let interner = shared.interner
+        let sema = shared.sema
         let delegateObjExpr = lowerExpr(propertyDecl.delegateExpression!, shared: shared, emit: &initInstructions)
-        let createResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: delegateType)
-        initInstructions.append(.call(
-            symbol: nil, callee: interner.intern("kk_custom_delegate_create"),
-            arguments: [delegateObjExpr],
-            result: createResult, canThrow: false, thrownResult: nil
-        ))
-        initInstructions.append(.storeGlobal(value: createResult, symbol: delegateStorageSymbol))
+        let delegateExprType = sema.bindings.exprType(for: propertyDecl.delegateExpression!)
+        if checkHasProvideDelegate(delegateExprType: delegateExprType, shared: shared) {
+            emitProvideDelegateInit(
+                delegateObjExpr: delegateObjExpr, symbol: symbol,
+                delegateStorageSymbol: delegateStorageSymbol, delegateType: delegateType,
+                shared: shared, emit: &initInstructions
+            )
+        } else {
+            emitSimpleDelegateInit(
+                delegateObjExpr: delegateObjExpr,
+                delegateStorageSymbol: delegateStorageSymbol, delegateType: delegateType,
+                shared: shared, emit: &initInstructions
+            )
+        }
     }
 }

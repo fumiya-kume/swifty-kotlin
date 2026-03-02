@@ -919,7 +919,7 @@ public enum RuntimeABISpec {
             + arrayFunctions
             + operatorFunctions
             + rangeFunctions
-            + delegateFunctions
+            + kPropertyStubFunctions + delegateFunctions
             + bitwiseFunctions
 
     public static func generateCHeader() -> String {

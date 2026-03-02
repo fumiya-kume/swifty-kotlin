@@ -293,14 +293,15 @@ extension KIRLoweringDriver {
     ) {
         let delegateStorageSym = sema.symbols.delegateStorageSymbol(for: propSymbol)
         let delegateValue = lowerExpr(delegateExpr, shared: shared, emit: &body)
-        let hasProvideDelegate = checkProvideDelegate(
-            delegateExpr: delegateExpr, sema: sema, compilationCtx: compilationCtx
+        let delegateExprType = sema.bindings.exprType(for: delegateExpr)
+        let hasProvideDelegate = checkHasProvideDelegate(
+            delegateExprType: delegateExprType, shared: shared
         )
         let valueToStore: KIRExprID = if hasProvideDelegate, let storageSym = delegateStorageSym {
             emitProvideDelegateCall(
                 delegateValue: delegateValue, storageSym: storageSym,
                 propSymbol: propSymbol, sema: sema, arena: arena,
-                compilationCtx: compilationCtx, body: &body
+                compilationCtx: compilationCtx, shared: shared, body: &body
             )
         } else {
             delegateValue
@@ -309,30 +310,6 @@ extension KIRLoweringDriver {
             let delegateType = sema.types.anyType
             let fieldRef = arena.appendExpr(.symbolRef(storageSym), type: delegateType)
             body.append(.copy(from: valueToStore, to: fieldRef))
-        }
-    }
-
-    /// Checks whether the delegate type exposes a `provideDelegate` operator.
-    private func checkProvideDelegate(
-        delegateExpr: ExprID,
-        sema: SemaModule,
-        compilationCtx: CompilationContext
-    ) -> Bool {
-        let delegateExprType = sema.bindings.exprType(for: delegateExpr)
-        let provideDelegateName = compilationCtx.interner.intern("provideDelegate")
-        guard let delegateType = delegateExprType else { return false }
-        let typeKind = sema.types.kind(of: delegateType)
-        switch typeKind {
-        case let .classType(classType):
-            guard let sym = sema.symbols.symbol(classType.classSymbol) else { return false }
-            let memberSymbols = sema.symbols.children(ofFQName: sym.fqName)
-            return memberSymbols.contains { memberID in
-                guard let member = sema.symbols.symbol(memberID) else { return false }
-                return member.name == provideDelegateName
-                    && member.kind == .function
-            }
-        default:
-            return false
         }
     }
 
@@ -345,6 +322,7 @@ extension KIRLoweringDriver {
         sema: SemaModule,
         arena: KIRArena,
         compilationCtx: CompilationContext,
+        shared: KIRLoweringSharedContext,
         body: inout KIRLoweringEmitContext
     ) -> KIRExprID {
         let delegateType = sema.types.anyType
@@ -360,11 +338,11 @@ extension KIRLoweringDriver {
             body.append(.constValue(result: nullExpr, value: .null))
             thisRefExprID = nullExpr
         }
-        let kPropertyExprID = arena.appendExpr(
-            .stringLiteral(propertyName),
-            type: sema.types.make(.primitive(.string, .nonNull))
+        let kPropertyExprID = emitKPropertyStubCreate(
+            propertyName: propertyName,
+            propertyType: sema.symbols.propertyType(for: propSymbol) ?? sema.types.anyType,
+            shared: shared, emit: &body
         )
-        body.append(.constValue(result: kPropertyExprID, value: .stringLiteral(propertyName)))
         let provideDelegateName = compilationCtx.interner.intern("provideDelegate")
         let provideDelegateResult = arena.appendExpr(
             .temporary(Int32(arena.expressions.count)),

@@ -47,31 +47,39 @@ extension DataFlowSemaPhase {
 
     func flags(from modifiers: Modifiers) -> SymbolFlags {
         var value: SymbolFlags = []
-        if modifiers.contains(.suspend) {
-            value.insert(.suspendFunction)
-        }
-        if modifiers.contains(.inline) {
-            value.insert(.inlineFunction)
-        }
-        if modifiers.contains(.sealed) {
-            value.insert(.sealedType)
-        }
-        if modifiers.contains(.data) {
-            value.insert(.dataType)
-        }
-        if modifiers.contains(.inner) {
-            value.insert(.innerClass)
-        }
-        if modifiers.contains(.operator) {
-            value.insert(.operatorFunction)
-        }
-        if modifiers.contains(.const) {
-            value.insert(.constValue)
-        }
-        if modifiers.contains(.abstract) {
-            value.insert(.abstractType)
-        }
+        insertFunctionFlags(modifiers, into: &value)
+        insertTypeFlags(modifiers, into: &value)
+        insertMemberFlags(modifiers, into: &value)
         return value
+    }
+
+    private func insertFunctionFlags(
+        _ modifiers: Modifiers,
+        into value: inout SymbolFlags
+    ) {
+        if modifiers.contains(.suspend) { value.insert(.suspendFunction) }
+        if modifiers.contains(.inline) { value.insert(.inlineFunction) }
+        if modifiers.contains(.operator) { value.insert(.operatorFunction) }
+    }
+
+    private func insertTypeFlags(
+        _ modifiers: Modifiers,
+        into value: inout SymbolFlags
+    ) {
+        if modifiers.contains(.sealed) { value.insert(.sealedType) }
+        if modifiers.contains(.data) { value.insert(.dataType) }
+        if modifiers.contains(.inner) { value.insert(.innerClass) }
+        if modifiers.contains(.abstract) { value.insert(.abstractType) }
+        if modifiers.contains(.open) { value.insert(.openType) }
+    }
+
+    private func insertMemberFlags(
+        _ modifiers: Modifiers,
+        into value: inout SymbolFlags
+    ) {
+        if modifiers.contains(.const) { value.insert(.constValue) }
+        if modifiers.contains(.override) { value.insert(.overrideMember) }
+        if modifiers.contains(.final) { value.insert(.finalMember) }
     }
 
     func hasDeclarationConflict(newKind: SymbolKind, existing: [SemanticSymbol]) -> Bool {
