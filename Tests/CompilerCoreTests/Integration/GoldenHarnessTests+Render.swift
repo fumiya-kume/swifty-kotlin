@@ -156,7 +156,8 @@ extension GoldenHarnessTests {
         case let .destructuringDecl(names, isMutable, initializer, _):
             let renderedNames = names.map { $0.map { interner.resolve($0) } ?? "_" }
                 .joined(separator: ",")
-            return "destructuringDecl names=[\(renderedNames)] mutable=\(isMutable ? 1 : 0) init=e\(initializer.rawValue)"
+            let mutStr = "mutable=\(isMutable ? 1 : 0)"
+            return "destructuringDecl names=[\(renderedNames)] \(mutStr) init=e\(initializer.rawValue)"
         case let .forDestructuringExpr(names, iterable, body, _):
             let renderedNames = names.map { $0.map { interner.resolve($0) } ?? "_" }
                 .joined(separator: ",")
@@ -196,9 +197,9 @@ extension GoldenHarnessTests {
         let vararg = signature.valueParameterIsVararg.map { $0 ? "1" : "0" }.joined(separator: ",")
         var result = "recv=\(receiver) params=[\(parameters)] ret=\(returnType)"
         result += " suspend=\(signature.isSuspend ? 1 : 0) defaults=[\(defaults)] vararg=[\(vararg)]"
-        if !signature.typeParameterUpperBounds.isEmpty,
-           signature.typeParameterUpperBounds.contains(where: { $0 != nil })
-        {
+        let hasBounds = !signature.typeParameterUpperBounds.isEmpty
+            && signature.typeParameterUpperBounds.contains(where: { $0 != nil })
+        if hasBounds {
             let bounds = signature.typeParameterUpperBounds.map { bound in
                 bound.map { types.renderType($0) } ?? "_"
             }.joined(separator: ",")
