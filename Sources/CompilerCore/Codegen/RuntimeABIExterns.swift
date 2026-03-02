@@ -531,18 +531,21 @@ public enum RuntimeABIExterns {
 
     // KProperty stub (PROP-007)
 
+    // swiftlint:disable:next identifier_name
     public static let kk_kproperty_stub_create = ExternDecl(
         name: "kk_kproperty_stub_create",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
+    // swiftlint:disable:next identifier_name
     public static let kk_kproperty_stub_name = ExternDecl(
         name: "kk_kproperty_stub_name",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
+    // swiftlint:disable:next identifier_name
     public static let kk_kproperty_stub_return_type = ExternDecl(
         name: "kk_kproperty_stub_return_type",
         parameterTypes: ["intptr_t"],

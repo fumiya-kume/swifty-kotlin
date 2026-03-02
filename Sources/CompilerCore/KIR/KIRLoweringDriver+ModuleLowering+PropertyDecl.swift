@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 
 extension KIRLoweringDriver {
@@ -323,7 +324,7 @@ extension KIRLoweringDriver {
         initInstructions.append(.storeGlobal(value: createResult, symbol: delegateStorageSymbol))
     }
 
-    // swiftlint:disable:next function_parameter_count
+    // swiftlint:disable:next function_parameter_count function_body_length
     private func emitCustomDelegateInit(
         propertyDecl: PropertyDecl,
         symbol: SymbolID,
@@ -345,8 +346,8 @@ extension KIRLoweringDriver {
             guard let delType = delegateExprType else { return false }
             let typeKind = sema.types.kind(of: delType)
             switch typeKind {
-            case let .classType(ct):
-                guard let sym = sema.symbols.symbol(ct.classSymbol) else { return false }
+            case let .classType(classType):
+                guard let sym = sema.symbols.symbol(classType.classSymbol) else { return false }
                 let memberSymbols = sema.symbols.children(ofFQName: sym.fqName)
                 return memberSymbols.contains { memberID in
                     guard let member = sema.symbols.symbol(memberID) else { return false }
