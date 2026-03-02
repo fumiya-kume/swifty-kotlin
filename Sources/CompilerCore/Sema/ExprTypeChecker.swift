@@ -137,11 +137,11 @@ final class ExprTypeChecker {
             return driver.localDeclChecker.inferIndexedAssignExpr(id, receiverExpr: receiverExpr, indices: indices, valueExpr: valueExpr, range: range, ctx: ctx, locals: &locals)
 
         case let .returnExpr(value, label, range):
-            if let label, !ctx.hasLambdaLabel(label), !ctx.hasLoopLabel(label) {
+            if let label, !ctx.hasLambdaLabel(label) {
                 let labelName = interner.resolve(label)
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0042",
-                    "'return@\(labelName)' does not reference a valid enclosing lambda or loop.",
+                    "'return@\(labelName)' does not reference a valid enclosing lambda.",
                     range: range
                 )
             }
@@ -318,7 +318,10 @@ final class ExprTypeChecker {
             return sema.types.nothingType
 
         case let .lambdaLiteral(params, body, label, _):
-            return inferLambdaLiteralExpr(id, params: params, body: body, label: label, ctx: ctx, locals: &locals, expectedType: expectedType)
+            return inferLambdaLiteralExpr(
+                id, params: params, body: body, label: label,
+                ctx: ctx, locals: &locals, expectedType: expectedType
+            )
 
         case let .objectLiteral(superTypes, _):
             let objectType = superTypes.first.map {

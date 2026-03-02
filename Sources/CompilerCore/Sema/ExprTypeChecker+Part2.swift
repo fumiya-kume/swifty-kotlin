@@ -210,6 +210,7 @@ extension ExprTypeChecker {
         return resolvedType
     }
 
+    // swiftlint:disable:next function_body_length
     func inferLambdaLiteralExpr(
         _ id: ExprID,
         params: [InternedString],
