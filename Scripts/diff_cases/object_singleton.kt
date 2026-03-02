@@ -1,6 +1,6 @@
 object Counter {
-    var n = 0
-    fun increment() { n++ }
+    var n: Int = 0
+    fun increment() { n = n + 1 }
 }
 
 fun main() {
