@@ -335,7 +335,8 @@ extension ExprTypeChecker {
         // ── T::class  — reified type-parameter class reference ──────────
         if interner.resolve(member) == "class",
            let receiver,
-           case let .nameRef(receiverName, _) = ast.arena.expr(receiver) {
+           case let .nameRef(receiverName, _) = ast.arena.expr(receiver)
+        {
             if let result = inferClassRefExpr(
                 id, receiver: receiver, receiverName: receiverName,
                 range: range, ctx: ctx, locals: &locals
@@ -489,7 +490,7 @@ extension ExprTypeChecker {
         for candidateID in allCandidateIDs {
             guard let sym = ctx.cachedSymbol(candidateID),
                   sym.kind == .class || sym.kind == .interface
-                      || sym.kind == .object || sym.kind == .enumClass
+                  || sym.kind == .object || sym.kind == .enumClass
             else { continue }
             let classType = sema.types.make(.classType(ClassType(classSymbol: sym.id)))
             sema.bindings.bindClassRefTargetType(id, type: classType)
