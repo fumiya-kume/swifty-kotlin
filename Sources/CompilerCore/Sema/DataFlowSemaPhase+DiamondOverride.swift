@@ -145,6 +145,7 @@ extension DataFlowSemaPhase {
             let ifaceSet = implementations.values.reduce(into: Set<SymbolID>()) { acc, ids in
                 acc.formUnion(ids)
             }
+            guard ifaceSet.count >= 2 else { continue }
             conflicts[methodName] = ifaceSet
         }
 
