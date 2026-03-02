@@ -238,5 +238,4 @@ extension DeclTypeChecker {
             )
         }
     }
-
 }
