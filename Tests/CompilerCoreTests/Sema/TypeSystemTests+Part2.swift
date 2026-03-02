@@ -369,4 +369,15 @@ extension TypeSystemTests {
             XCTFail("Expected .invalid from in + out")
         }
     }
+
+    func testComposedProjectionInWithInReturnsOut() {
+        let ts = TypeSystem()
+        let intType = ts.make(.primitive(.int, .nonNull))
+        let result = ts.composedProjection(declarationVariance: .in, useSite: .in(intType))
+        if case let .out(t) = result {
+            XCTAssertEqual(t, intType)
+        } else {
+            XCTFail("Expected .out from in + in")
+        }
+    }
 }

@@ -1,9 +1,28 @@
 package golden.sema
 
-fun readOnly(list: MutableList<out Number>): Number = list[0]
+class E
 
-fun writeOnly(list: MutableList<in Int>) {
-    list.add(42)
+class Box<T> {
+    fun get(): T = throw E()
+    fun set(v: T) {}
 }
 
-fun starProjection(list: List<*>): Any? = list[0]
+fun readOnly(box: Box<out Any>): Any = box.get()
+
+fun writeBlocked(box: Box<out Any>) {
+    box.set(42)
+}
+
+fun writeOnly(box: Box<in Int>) {
+    box.set(42)
+}
+
+fun starRead(box: Box<*>): Any? = box.get()
+
+fun starReadInferred(box: Box<*>) {
+    val x = box.get()
+}
+
+fun starWrite(box: Box<*>) {
+    box.set(42)
+}

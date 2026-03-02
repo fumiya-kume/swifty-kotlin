@@ -55,12 +55,12 @@
   - **完了条件**: `fun <T> foo(x: T & Any)` の引数が non-null として扱われ、smart cast が不要になる
 
 
-- [ ] TYPE-003: 型投影（`out T` / `in T` / `*`）の use-site variance を完全実装する（spec.md J8）
-  - [ ] `TypeRef` の use-site `out`/`in`/`*` を covariant/contravariant/bivariant projection として保持する
-  - [ ] star projection `*` を `out Any?` として扱い、write を禁止・read を `Any?` として型付けする
-  - [ ] use-site variance と declaration-site variance の合成規則（in×in=out 等）を `TypeSystem` に実装する
-  - [ ] variance 違反のメンバアクセスに `KSWIFTK-SEMA-VAR-*` 診断を出す
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task TYPE-003`（2026-03-02: diff case `Scripts/diff_cases/star_projection.kt` を追加）
+- [x] TYPE-003: 型投影（`out T` / `in T` / `*`）の use-site variance を完全実装する（spec.md J8）
+  - [x] `TypeRef` の use-site `out`/`in`/`*` を covariant/contravariant/bivariant projection として保持する
+  - [x] star projection `*` を `out Any?` として扱い、write を禁止・read を `Any?` として型付けする
+  - [x] use-site variance と declaration-site variance の合成規則（in×in=out 等）を `TypeSystem` に実装する
+  - [x] variance 違反のメンバアクセスに `KSWIFTK-SEMA-VAR-*` 診断を出す
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task TYPE-003`（2026-03-02: diff case `Scripts/diff_cases/star_projection.kt` を追加）
   - **完了条件**: `val list: MutableList<out Number>` で `.add(...)` が型エラー、`.get(0)` が `Number` になる
 
 
