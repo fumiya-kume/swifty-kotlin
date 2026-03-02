@@ -2,7 +2,7 @@
 
 // MARK: - Collection Extern Declarations (STDLIB-001)
 
-extension RuntimeABIExterns {
+public extension RuntimeABIExterns {
     static let collectionExterns: [ExternDecl] = [
         kk_list_of,
         kk_list_size,
@@ -25,115 +25,115 @@ extension RuntimeABIExterns {
         kk_array_size,
     ]
 
-    public static let kk_list_of = ExternDecl(
+    static let kk_list_of = ExternDecl(
         name: "kk_list_of",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
-    public static let kk_list_size = ExternDecl(
+    static let kk_list_size = ExternDecl(
         name: "kk_list_size",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
-    public static let kk_list_get = ExternDecl(
+    static let kk_list_get = ExternDecl(
         name: "kk_list_get",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
-    public static let kk_list_contains = ExternDecl(
+    static let kk_list_contains = ExternDecl(
         name: "kk_list_contains",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
-    public static let kk_list_is_empty = ExternDecl(
+    static let kk_list_is_empty = ExternDecl(
         name: "kk_list_is_empty",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
-    public static let kk_list_iterator = ExternDecl(
+    static let kk_list_iterator = ExternDecl(
         name: "kk_list_iterator",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
-    public static let kk_list_iterator_hasNext = ExternDecl(
+    static let kk_list_iterator_hasNext = ExternDecl(
         name: "kk_list_iterator_hasNext",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
-    public static let kk_list_iterator_next = ExternDecl(
+    static let kk_list_iterator_next = ExternDecl(
         name: "kk_list_iterator_next",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
-    public static let kk_list_to_string = ExternDecl(
+    static let kk_list_to_string = ExternDecl(
         name: "kk_list_to_string",
         parameterTypes: ["intptr_t"],
         returnType: "void *"
     )
 
-    public static let kk_map_of = ExternDecl(
+    static let kk_map_of = ExternDecl(
         name: "kk_map_of",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
-    public static let kk_map_size = ExternDecl(
+    static let kk_map_size = ExternDecl(
         name: "kk_map_size",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
-    public static let kk_map_get = ExternDecl(
+    static let kk_map_get = ExternDecl(
         name: "kk_map_get",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
-    public static let kk_map_contains_key = ExternDecl(
+    static let kk_map_contains_key = ExternDecl(
         name: "kk_map_contains_key",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
-    public static let kk_map_is_empty = ExternDecl(
+    static let kk_map_is_empty = ExternDecl(
         name: "kk_map_is_empty",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
-    public static let kk_map_to_string = ExternDecl(
+    static let kk_map_to_string = ExternDecl(
         name: "kk_map_to_string",
         parameterTypes: ["intptr_t"],
         returnType: "void *"
     )
 
-    public static let kk_map_iterator = ExternDecl(
+    static let kk_map_iterator = ExternDecl(
         name: "kk_map_iterator",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
-    public static let kk_map_iterator_hasNext = ExternDecl(
+    static let kk_map_iterator_hasNext = ExternDecl(
         name: "kk_map_iterator_hasNext",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
-    public static let kk_map_iterator_next = ExternDecl(
+    static let kk_map_iterator_next = ExternDecl(
         name: "kk_map_iterator_next",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
-    public static let kk_array_size = ExternDecl(
+    static let kk_array_size = ExternDecl(
         name: "kk_array_size",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
