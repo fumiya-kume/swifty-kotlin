@@ -28,6 +28,10 @@ extension DataFlowSemaPhase {
                 range: propertyDecl.range
             )
         }
+        // When we have an explicit type annotation, validate that the resolved
+        // type is a non-null primitive or String.  For inferred types the
+        // header phase still has `Any?` as a placeholder, so we only run the
+        // check when a concrete annotated type is available.
         if propertyDecl.type != nil {
             let isConstCompatible = switch types.kind(of: resolvedType) {
             case let .primitive(_, nullability):
