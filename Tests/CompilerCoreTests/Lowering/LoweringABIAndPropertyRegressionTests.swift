@@ -2,7 +2,7 @@
 import Foundation
 import XCTest
 
-final class LoweringABIAndPropertyRegressionTests: XCTestCase {
+final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:disable:this type_body_length
     // MARK: - ABI Boxing/Unboxing Tests
 
     func testABILoweringBoxesIntArgumentForAnyParameter() throws {
@@ -1256,4 +1256,5 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase {
         try LoweringPhase().run(ctx)
         return ctx
     }
+    // swiftlint:disable:next file_length
 }
