@@ -92,30 +92,64 @@ extension DataFlowSemaPhase {
     }
 
     /// Collects conflicting default method names across direct interface supertypes.
-    /// Returns a map from method name to the list of interface symbols that provide a default.
+    ///
+    /// This considers transitive interface inheritance: if a direct interface supertype inherits
+    /// a default method from a parent interface, it still counts as providing that default.
+    ///
+    /// To avoid false positives (e.g. two direct supertypes inheriting the same default method
+    /// from a common ancestor), we group by the *implementation symbol* (the function symbol ID)
+    /// rather than only the direct interface ID.
     private func collectDiamondConflicts(
         for symbol: SymbolID,
         symbols: SymbolTable
     ) -> [InternedString: [SymbolID]] {
         let directSupertypes = symbols.directSupertypes(for: symbol)
-        let interfaceSupertypes = directSupertypes.filter {
-            symbols.symbol($0)?.kind == .interface
-        }
+        let interfaceSupertypes = directSupertypes
+            .filter { symbols.symbol($0)?.kind == .interface }
+            .sorted(by: { $0.rawValue < $1.rawValue })
+
         guard interfaceSupertypes.count >= 2 else { return [:] }
 
-        var providers: [InternedString: Set<SymbolID>] = [:]
-        for interfaceID in interfaceSupertypes {
-            guard let ifaceSym = symbols.symbol(interfaceID) else { continue }
-            for childID in symbols.children(ofFQName: ifaceSym.fqName) {
-                guard let childSym = symbols.symbol(childID),
-                      childSym.kind == .function,
-                      !childSym.flags.contains(.abstractType)
-                else { continue }
-                providers[childSym.name, default: []].insert(interfaceID)
+        // methodName -> implFunctionSymbolID -> providingDirectInterfaceIDs
+        var providersByName: [InternedString: [SymbolID: Set<SymbolID>]] = [:]
+
+        for directInterfaceID in interfaceSupertypes {
+            var visited: Set<SymbolID> = []
+            var queue: [SymbolID] = [directInterfaceID]
+
+            while !queue.isEmpty {
+                let currentInterfaceID = queue.removeFirst()
+                guard visited.insert(currentInterfaceID).inserted else { continue }
+                guard let ifaceSym = symbols.symbol(currentInterfaceID) else { continue }
+
+                for childID in symbols.children(ofFQName: ifaceSym.fqName) {
+                    guard let childSym = symbols.symbol(childID),
+                          childSym.kind == .function,
+                          !childSym.flags.contains(.abstractType)
+                    else { continue }
+
+                    providersByName[childSym.name, default: [:]][childID, default: []]
+                        .insert(directInterfaceID)
+                }
+
+                let parentInterfaces = symbols.directSupertypes(for: currentInterfaceID)
+                    .filter { symbols.symbol($0)?.kind == .interface }
+                    .sorted(by: { $0.rawValue < $1.rawValue })
+
+                queue.append(contentsOf: parentInterfaces)
             }
         }
-        return providers.filter { $0.value.count >= 2 }
-            .mapValues { Array($0) }
+
+        var conflicts: [InternedString: Set<SymbolID>] = [:]
+        for (methodName, implementations) in providersByName where implementations.keys.count >= 2 {
+            let ifaceSet = implementations.values.reduce(into: Set<SymbolID>()) { acc, ids in
+                acc.formUnion(ids)
+            }
+            conflicts[methodName] = ifaceSet
+        }
+
+        return conflicts
+            .mapValues { $0.sorted(by: { $0.rawValue < $1.rawValue }) }
     }
 
     // swiftlint:disable:next function_parameter_count
@@ -130,7 +164,10 @@ extension DataFlowSemaPhase {
     ) {
         let declRange = extractDeclRange(decl)
         let className = symbolInfo.fqName.map { interner.resolve($0) }.joined(separator: ".")
-        for (methodName, providerIDs) in conflicts where !overriddenNames.contains(methodName) {
+        for methodName in conflicts.keys.sorted(by: { $0.rawValue < $1.rawValue }) {
+            guard let providerIDs = conflicts[methodName], !overriddenNames.contains(methodName) else {
+                continue
+            }
             let memberName = interner.resolve(methodName)
             let ifaceNames = providerIDs.compactMap { symbols.symbol($0) }
                 .map { $0.fqName.map { interner.resolve($0) }.joined(separator: ".") }
