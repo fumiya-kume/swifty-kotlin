@@ -230,6 +230,7 @@ extension KIRLoweringDriver {
             shared: shared, emit: &body
         )
         let fieldRef = arena.appendExpr(.symbolRef(targetSymbol), type: propType)
+        body.append(.constValue(result: fieldRef, value: .symbolRef(targetSymbol)))
         body.append(.copy(from: initValue, to: fieldRef))
     }
 
