@@ -150,6 +150,43 @@ extension CallLowerer {
             return result
         }
 
+        // Primitive infix member functions: Int/Long.and|or|xor|shl|shr|ushr (EXPR-003)
+        if args.count == 1,
+           shouldLowerPrimitiveInv(receiverExpr: receiverExpr, sema: sema, nullableReceiverAllowed: requireNonNullableReceiverForConstFold)
+        {
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let longType = sema.types.make(.primitive(.long, .nonNull))
+            let rhsType = sema.types.makeNonNullable(sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType)
+            let primitiveCallee: InternedString?
+            switch interner.resolve(calleeName) {
+            case "and":
+                primitiveCallee = (rhsType == intType || rhsType == longType) ? interner.intern("kk_bitwise_and") : nil
+            case "or":
+                primitiveCallee = (rhsType == intType || rhsType == longType) ? interner.intern("kk_bitwise_or") : nil
+            case "xor":
+                primitiveCallee = (rhsType == intType || rhsType == longType) ? interner.intern("kk_bitwise_xor") : nil
+            case "shl":
+                primitiveCallee = rhsType == intType ? interner.intern("kk_op_shl") : nil
+            case "shr":
+                primitiveCallee = rhsType == intType ? interner.intern("kk_op_shr") : nil
+            case "ushr":
+                primitiveCallee = rhsType == intType ? interner.intern("kk_op_ushr") : nil
+            default:
+                primitiveCallee = nil
+            }
+            if let primitiveCallee {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: primitiveCallee,
+                    arguments: [loweredReceiverID, loweredArgIDs[0]],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
         // Primitive member function: Int/Long.toString(radix: Int) → kk_int_toString_radix (EXPR-003)
         if calleeName == interner.intern("toString"),
            args.count == 1

@@ -243,16 +243,8 @@ extension ExprTypeChecker {
             }
         case .rangeTo, .rangeUntil, .downTo, .step:
             type = sema.types.intType
-        case .bitwiseAnd, .bitwiseOr, .bitwiseXor:
-            if lhs == longType || rhs == longType {
-                type = longType
-            } else {
-                type = intType
-            }
-        case .shl, .shr, .ushr:
-            // Shift operators: result type depends only on the left operand.
-            // The shift amount (rhs) is always Int in Kotlin.
-            type = lhs == longType ? longType : intType
+        case .bitwiseAnd, .bitwiseOr, .bitwiseXor, .shl, .shr, .ushr:
+            preconditionFailure("Bitwise/shift binary operators must be parsed as infix member calls")
         }
         sema.bindings.bindExprType(id, type: type)
         return type

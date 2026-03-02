@@ -39,6 +39,38 @@ extension CallTypeChecker {
             }
         }
 
+        // Primitive infix member functions: Int/Long.and|or|xor|shl|shr|ushr (EXPR-003)
+        if args.count == 1 {
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let longType = sema.types.make(.primitive(.long, .nonNull))
+            let receiverForCheck = safeCall
+                ? sema.types.makeNonNullable(lookupReceiverType)
+                : lookupReceiverType
+            let rhsType = sema.types.makeNonNullable(argTypes[0])
+            let isPrimitiveReceiver = receiverForCheck == intType || receiverForCheck == longType
+            switch interner.resolve(calleeName) {
+            case "and", "or", "xor":
+                if isPrimitiveReceiver,
+                   rhsType == intType || rhsType == longType
+                {
+                    let resultType = (receiverForCheck == longType || rhsType == longType) ? longType : intType
+                    let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            case "shl", "shr", "ushr":
+                if isPrimitiveReceiver,
+                   rhsType == intType
+                {
+                    let finalType = safeCall ? sema.types.makeNullable(receiverForCheck) : receiverForCheck
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            default:
+                break
+            }
+        }
+
         // Primitive member function: Int/Long.toString(radix: Int) → String (EXPR-003)
         if interner.resolve(calleeName) == "toString",
            args.count == 1

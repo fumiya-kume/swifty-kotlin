@@ -276,66 +276,8 @@ extension CallLowerer {
                 thrownResult: nil
             ))
             return result
-        case .bitwiseAnd:
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_bitwise_and"),
-                arguments: [lhsID, rhsID],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-        case .bitwiseOr:
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_bitwise_or"),
-                arguments: [lhsID, rhsID],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-        case .bitwiseXor:
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_bitwise_xor"),
-                arguments: [lhsID, rhsID],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-        case .shl:
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_op_shl"),
-                arguments: [lhsID, rhsID],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-        case .shr:
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_op_shr"),
-                arguments: [lhsID, rhsID],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-        case .ushr:
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_op_ushr"),
-                arguments: [lhsID, rhsID],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
+        case .bitwiseAnd, .bitwiseOr, .bitwiseXor, .shl, .shr, .ushr:
+            preconditionFailure("Bitwise/shift binary operators must be lowered through member-call special handling")
         }
         instructions.append(.binary(op: kirOp, lhs: lhsID, rhs: rhsID, result: result))
         return result
