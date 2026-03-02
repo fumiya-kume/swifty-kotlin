@@ -63,8 +63,8 @@ extension GoldenHarnessTests {
         case let .indexedAccess(receiver, indices, _):
             let idxStr = indices.map { "e\($0.rawValue)" }.joined(separator: ",")
             return "indexedAccess receiver=e\(receiver.rawValue) indices=[\(idxStr)]"
-        case let .binary(op, lhs, rhs, _):
-            return "binary(\(op)) lhs=e\(lhs.rawValue) rhs=e\(rhs.rawValue)"
+        case let .binary(oper, lhs, rhs, _):
+            return "binary(\(oper)) lhs=e\(lhs.rawValue) rhs=e\(rhs.rawValue)"
         case let .whenExpr(subject, branches, elseExpr, _):
             return renderWhenExpr(
                 subject: subject, branches: branches,
@@ -81,8 +81,8 @@ extension GoldenHarnessTests {
             let catches = catchClauses.map { "e\($0.body.rawValue)" }.joined(separator: ",")
             let renderedFinally = finallyExpr.map { "e\($0.rawValue)" } ?? "_"
             return "try body=e\(body.rawValue) catches=[\(catches)] finally=\(renderedFinally)"
-        case let .unaryExpr(op, operand, _):
-            return "unary(\(op)) operand=e\(operand.rawValue)"
+        case let .unaryExpr(oper, operand, _):
+            return "unary(\(oper)) operand=e\(operand.rawValue)"
         case let .isCheck(expr, type, negated, _):
             return "isCheck\(negated ? "!" : "") expr=e\(expr.rawValue) type=t\(type.rawValue)"
         case let .asCast(expr, type, isSafe, _):
@@ -95,11 +95,12 @@ extension GoldenHarnessTests {
                 return "\(label):e\(arg.expr.rawValue)"
             }.joined(separator: ",")
             return "safeMemberCall recv=e\(receiver.rawValue) callee=\(interner.resolve(callee)) args=[\(renderedArgs)]"
-        case let .compoundAssign(op, name, value, _):
-            return "compoundAssign(\(op)) name=\(interner.resolve(name)) value=e\(value.rawValue)"
-        case let .indexedCompoundAssign(op, receiver, indices, value, _):
+        case let .compoundAssign(oper, name, value, _):
+            return "compoundAssign(\(oper)) name=\(interner.resolve(name)) value=e\(value.rawValue)"
+        case let .indexedCompoundAssign(oper, receiver, indices, value, _):
             let idxStr = indices.map { "e\($0.rawValue)" }.joined(separator: ",")
-            return "indexedCompoundAssign(\(op)) receiver=e\(receiver.rawValue) indices=[\(idxStr)] value=e\(value.rawValue)"
+            let recv = "receiver=e\(receiver.rawValue)"
+            return "indexedCompoundAssign(\(oper)) \(recv) indices=[\(idxStr)] value=e\(value.rawValue)"
         case let .stringTemplate(parts, _):
             let rendered = parts.map { part -> String in
                 switch part {
@@ -153,10 +154,12 @@ extension GoldenHarnessTests {
         case let .notInExpr(lhs, rhs, _):
             return "notInExpr lhs=e\(lhs.rawValue) rhs=e\(rhs.rawValue)"
         case let .destructuringDecl(names, isMutable, initializer, _):
-            let renderedNames = names.map { $0.map { interner.resolve($0) } ?? "_" }.joined(separator: ",")
+            let renderedNames = names.map { $0.map { interner.resolve($0) } ?? "_" }
+                .joined(separator: ",")
             return "destructuringDecl names=[\(renderedNames)] mutable=\(isMutable ? 1 : 0) init=e\(initializer.rawValue)"
         case let .forDestructuringExpr(names, iterable, body, _):
-            let renderedNames = names.map { $0.map { interner.resolve($0) } ?? "_" }.joined(separator: ",")
+            let renderedNames = names.map { $0.map { interner.resolve($0) } ?? "_" }
+                .joined(separator: ",")
             return "forDestructuring names=[\(renderedNames)] iterable=e\(iterable.rawValue) body=e\(body.rawValue)"
         case let .memberAssign(receiver, callee, value, _):
             return "memberAssign recv=e\(receiver.rawValue) callee=\(interner.resolve(callee)) value=e\(value.rawValue)"
@@ -191,10 +194,10 @@ extension GoldenHarnessTests {
         let returnType = types.renderType(signature.returnType)
         let defaults = signature.valueParameterHasDefaultValues.map { $0 ? "1" : "0" }.joined(separator: ",")
         let vararg = signature.valueParameterIsVararg.map { $0 ? "1" : "0" }.joined(separator: ",")
-        var result = "recv=\(receiver) params=[\(parameters)] ret=\(returnType) suspend=\(signature.isSuspend ? 1 : 0) defaults=[\(defaults)] vararg=[\(vararg)]"
+        var result = "recv=\(receiver) params=[\(parameters)] ret=\(returnType)"
+        result += " suspend=\(signature.isSuspend ? 1 : 0) defaults=[\(defaults)] vararg=[\(vararg)]"
         if !signature.typeParameterUpperBounds.isEmpty,
-           signature.typeParameterUpperBounds.contains(where: { $0 != nil })
-        {
+           signature.typeParameterUpperBounds.contains(where: { $0 != nil }) {
             let bounds = signature.typeParameterUpperBounds.map { bound in
                 bound.map { types.renderType($0) } ?? "_"
             }.joined(separator: ",")
@@ -203,6 +206,7 @@ extension GoldenHarnessTests {
         return result
     }
 
+    // swiftlint:disable:next cyclomatic_complexity
     func renderSymbolFlags(_ flags: SymbolFlags) -> String {
         if flags.isEmpty {
             return "_"
