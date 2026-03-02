@@ -563,25 +563,16 @@ extension DataFlowSemaPhase {
 
     /// Collects default (non-abstract) methods from transitive super-interfaces.
     private func collectTransitiveDefaultMethods(
-        interfaceID: SymbolID,
-        symbols: SymbolTable,
-        providers: inout [InternedString: [SymbolID]],
-        visitedInterfaces: Set<SymbolID>
+        interfaceID _: SymbolID,
+        symbols _: SymbolTable,
+        providers _: inout [InternedString: [SymbolID]],
+        visitedInterfaces _: Set<SymbolID>
     ) {
-        let supers = symbols.directSupertypes(for: interfaceID)
-        for superID in supers {
-            guard !visitedInterfaces.contains(superID),
-                  let superSym = symbols.symbol(superID),
-                  superSym.kind == .interface
-            else {
-                continue
-            }
-            // Don't add transitively — the conflict only applies for the
-            // direct interfaces the class lists. The providers are already
-            // tracked at the direct-interface level (interfaceID is one of the
-            // class's direct supertypes). Transitive defaults are inherited
-            // through the direct interface.
-        }
+        // Don't add transitively — the conflict only applies for the
+        // direct interfaces the class lists. The providers are already
+        // tracked at the direct-interface level (interfaceID is one of the
+        // class's direct supertypes). Transitive defaults are inherited
+        // through the direct interface.
     }
 
     // P5-78: Validate that direct subclasses of sealed types are in the same package.
