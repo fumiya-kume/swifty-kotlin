@@ -45,6 +45,18 @@ public struct ConstructorDecl {
     }
 }
 
+/// Represents a member in the class body initialization sequence.
+/// Used to guarantee Kotlin's declaration-order execution of property
+/// initializers and `init` blocks.
+public enum ClassBodyInitMember: Equatable {
+    /// A property initializer; the associated value is the index into
+    /// `ClassDecl.memberProperties`.
+    case property(Int)
+    /// An `init { }` block; the associated value is the index into
+    /// `ClassDecl.initBlocks`.
+    case initBlock(Int)
+}
+
 public struct ClassDecl {
     public let range: SourceRange
     public let name: InternedString
@@ -59,6 +71,10 @@ public struct ClassDecl {
     public let nestedTypeAliases: [TypeAliasDecl]
     public let enumEntries: [EnumEntryDecl]
     public let initBlocks: [FunctionBody]
+    /// Declaration-order sequence of property initializers and `init` blocks.
+    /// Kotlin guarantees that these execute top-to-bottom in the order they
+    /// appear in the class body (spec.md J7).
+    public let classBodyInitOrder: [ClassBodyInitMember]
     public let secondaryConstructors: [ConstructorDecl]
     public let memberFunctions: [DeclID]
     public let memberProperties: [DeclID]
@@ -80,6 +96,7 @@ public struct ClassDecl {
         nestedTypeAliases: [TypeAliasDecl] = [],
         enumEntries: [EnumEntryDecl] = [],
         initBlocks: [FunctionBody] = [],
+        classBodyInitOrder: [ClassBodyInitMember] = [],
         secondaryConstructors: [ConstructorDecl] = [],
         memberFunctions: [DeclID] = [],
         memberProperties: [DeclID] = [],
@@ -98,6 +115,7 @@ public struct ClassDecl {
         self.nestedTypeAliases = nestedTypeAliases
         self.enumEntries = enumEntries
         self.initBlocks = initBlocks
+        self.classBodyInitOrder = classBodyInitOrder
         self.secondaryConstructors = secondaryConstructors
         self.memberFunctions = memberFunctions
         self.memberProperties = memberProperties
