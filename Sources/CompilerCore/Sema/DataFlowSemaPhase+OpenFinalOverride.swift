@@ -283,8 +283,7 @@ extension DataFlowSemaPhase {
         if sym.flags.contains(.openType) { return true }
         if sym.flags.contains(.abstractType) { return true }
         // An override member is implicitly open unless marked final.
-        if sym.flags.contains(.overrideMember),
-           !sym.flags.contains(.finalMember) {
+        if sym.flags.contains(.overrideMember), !sym.flags.contains(.finalMember) {
             return true
         }
         return false
