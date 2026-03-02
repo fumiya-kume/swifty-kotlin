@@ -335,52 +335,12 @@ extension ExprTypeChecker {
         // ── T::class  — reified type-parameter class reference ──────────
         if interner.resolve(member) == "class",
            let receiver,
-           case let .nameRef(receiverName, _) = ast.arena.expr(receiver)
-        {
-            // Look up whether the receiver name refers to a type parameter.
-            let allCandidateIDs = ctx.cachedScopeLookup(receiverName)
-            var foundTypeParam: SemanticSymbol?
-            for candidateID in allCandidateIDs {
-                if let sym = ctx.cachedSymbol(candidateID), sym.kind == .typeParameter {
-                    foundTypeParam = sym
-                    break
-                }
-            }
-            if let typeParamSymbol = foundTypeParam {
-                if !typeParamSymbol.flags.contains(.reifiedTypeParameter) {
-                    ctx.semaCtx.diagnostics.error(
-                        "KSWIFTK-SEMA-REIFIED",
-                        "Cannot use 'T::class' on non-reified type parameter '\(interner.resolve(typeParamSymbol.name))'.",
-                        range: range
-                    )
-                    sema.bindings.bindExprType(id, type: sema.types.errorType)
-                    return sema.types.errorType
-                }
-                let resolvedType = sema.types.make(.typeParam(TypeParamType(symbol: typeParamSymbol.id)))
-                sema.bindings.bindClassRefTargetType(id, type: resolvedType)
-                // Bind expression type as anyType (KClass stub placeholder)
-                sema.bindings.bindExprType(id, type: sema.types.anyType)
-                // Infer receiver so downstream passes see it
-                _ = driver.inferExpr(receiver, ctx: ctx, locals: &locals, expectedType: nil)
-                return sema.types.anyType
-            }
-            // If the receiver name refers to a concrete class (e.g. Int::class),
-            // resolve it as a class reference.
-            var foundClassSym: SemanticSymbol?
-            for candidateID in allCandidateIDs {
-                if let sym = ctx.cachedSymbol(candidateID),
-                   sym.kind == .class || sym.kind == .interface || sym.kind == .object || sym.kind == .enumClass
-                {
-                    foundClassSym = sym
-                    break
-                }
-            }
-            if let classCandidateSymbol = foundClassSym {
-                let classType = sema.types.make(.classType(ClassType(classSymbol: classCandidateSymbol.id)))
-                sema.bindings.bindClassRefTargetType(id, type: classType)
-                sema.bindings.bindExprType(id, type: sema.types.anyType)
-                _ = driver.inferExpr(receiver, ctx: ctx, locals: &locals, expectedType: nil)
-                return sema.types.anyType
+           case let .nameRef(receiverName, _) = ast.arena.expr(receiver) {
+            if let result = inferClassRefExpr(
+                id, receiver: receiver, receiverName: receiverName,
+                range: range, ctx: ctx, locals: &locals
+            ) {
+                return result
             }
         }
 
@@ -492,6 +452,52 @@ extension ExprTypeChecker {
         sema.bindings.bindCaptureSymbols(id, symbols: fallbackCaptures)
         sema.bindings.bindExprType(id, type: fallbackType)
         return fallbackType
+    }
+
+    /// Helper: handles `T::class` / `SomeType::class` callable-ref expressions.
+    /// Returns the inferred type if matched, or `nil` to fall through.
+    private func inferClassRefExpr(
+        _ id: ExprID,
+        receiver: ExprID,
+        receiverName: InternedString,
+        range: SourceRange,
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> TypeID? {
+        let sema = ctx.sema
+        let interner = ctx.interner
+        let allCandidateIDs = ctx.cachedScopeLookup(receiverName)
+        for candidateID in allCandidateIDs {
+            guard let sym = ctx.cachedSymbol(candidateID),
+                  sym.kind == .typeParameter else { continue }
+            if !sym.flags.contains(.reifiedTypeParameter) {
+                let name = interner.resolve(sym.name)
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-REIFIED",
+                    "Cannot use 'T::class' on non-reified type parameter '\(name)'.",
+                    range: range
+                )
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
+            let resolved = sema.types.make(.typeParam(TypeParamType(symbol: sym.id)))
+            sema.bindings.bindClassRefTargetType(id, type: resolved)
+            sema.bindings.bindExprType(id, type: sema.types.anyType)
+            _ = driver.inferExpr(receiver, ctx: ctx, locals: &locals, expectedType: nil)
+            return sema.types.anyType
+        }
+        for candidateID in allCandidateIDs {
+            guard let sym = ctx.cachedSymbol(candidateID),
+                  sym.kind == .class || sym.kind == .interface
+                      || sym.kind == .object || sym.kind == .enumClass
+            else { continue }
+            let classType = sema.types.make(.classType(ClassType(classSymbol: sym.id)))
+            sema.bindings.bindClassRefTargetType(id, type: classType)
+            sema.bindings.bindExprType(id, type: sema.types.anyType)
+            _ = driver.inferExpr(receiver, ctx: ctx, locals: &locals, expectedType: nil)
+            return sema.types.anyType
+        }
+        return nil
     }
 
     func inferSuperRefExpr(
