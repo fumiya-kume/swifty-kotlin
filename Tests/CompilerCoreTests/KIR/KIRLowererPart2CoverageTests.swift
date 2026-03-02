@@ -168,7 +168,7 @@ final class KIRLowererPart2CoverageTests: XCTestCase {
                     forDestructuringExpr,
                     memberAssignExpr,
                     fixture.astArena.appendExpr(.thisRef(label: nil, range)),
-                    fixture.astArena.appendExpr(.superRef(interfaceQualifier: nil, range))
+                    fixture.astArena.appendExpr(.superRef(interfaceQualifier: nil, range)),
                 ],
                 trailingExpr: rhs,
                 range: range
