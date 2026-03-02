@@ -1,0 +1,24 @@
+symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s1 kind=package fq=kotlin vis=public flags=synthetic
+symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
+symbol s4 kind=interface fq=kotlin.properties.ReadWriteProperty vis=public flags=synthetic
+symbol s5 kind=interface fq=kotlin.properties.ReadOnlyProperty vis=public flags=synthetic
+symbol s6 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=_ params=[Any,() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
+symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s11 kind=class fq=golden.sema.Base vis=public flags=openType
+symbol s12 kind=constructor fq=golden.sema.Base.<init> vis=public flags=_ sig=recv=Class#11 params=[] ret=Class#11 suspend=0 defaults=[] vararg=[]
+symbol s13 kind=function fq=golden.sema.Base.foo vis=public flags=openType sig=recv=Class#11 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s14 kind=function fq=golden.sema.Base.bar vis=public flags=_ sig=recv=Class#11 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s15 kind=class fq=golden.sema.Derived vis=public flags=_
+symbol s16 kind=constructor fq=golden.sema.Derived.<init> vis=public flags=_ sig=recv=Class#15 params=[] ret=Class#15 suspend=0 defaults=[] vararg=[]
+symbol s17 kind=function fq=golden.sema.Derived.foo vis=public flags=overrideMember sig=recv=Class#15 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+file f0 package=golden.sema
+  decl d2 class Base sym=s11
+  decl d4 class Derived sym=s15
+expr e0 int(1) type=Int
+expr e1 int(2) type=Int
+expr e2 int(10) type=Int

@@ -13,7 +13,7 @@ symbol s11 kind=interface fq=golden.sema.Greeter vis=public flags=_
 symbol s12 kind=function fq=golden.sema.Greeter.greet vis=public flags=_ sig=recv=Class#11 params=[] ret=String suspend=0 defaults=[] vararg=[]
 symbol s13 kind=class fq=golden.sema.FormalGreeter vis=public flags=_
 symbol s14 kind=constructor fq=golden.sema.FormalGreeter.<init> vis=public flags=_ sig=recv=Class#13 params=[] ret=Class#13 suspend=0 defaults=[] vararg=[]
-symbol s15 kind=function fq=golden.sema.FormalGreeter.greet vis=public flags=_ sig=recv=Class#13 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s15 kind=function fq=golden.sema.FormalGreeter.greet vis=public flags=overrideMember sig=recv=Class#13 params=[] ret=String suspend=0 defaults=[] vararg=[]
 symbol s16 kind=class fq=golden.sema.DefaultGreeter vis=public flags=_
 symbol s17 kind=constructor fq=golden.sema.DefaultGreeter.<init> vis=public flags=_ sig=recv=Class#16 params=[] ret=Class#16 suspend=0 defaults=[] vararg=[]
 symbol s18 kind=interface fq=golden.sema.Animal vis=public flags=_

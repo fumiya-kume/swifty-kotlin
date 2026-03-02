@@ -12,7 +12,7 @@ symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flag
 symbol s11 kind=class fq=Temperature vis=public flags=_
 symbol s12 kind=constructor fq=Temperature.<init> vis=public flags=_ sig=recv=Class#11 params=[Int] ret=Class#11 suspend=0 defaults=[0] vararg=[0]
 symbol s13 kind=valueParameter fq=Temperature.<init>.$12.degrees vis=private flags=_
-symbol s14 kind=function fq=Temperature.compareTo vis=public flags=_ sig=recv=Class#11 params=[Class#11] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s14 kind=function fq=Temperature.compareTo vis=public flags=overrideMember sig=recv=Class#11 params=[Class#11] ret=Int suspend=0 defaults=[0] vararg=[0]
 symbol s15 kind=valueParameter fq=Temperature.compareTo.$14.other vis=private flags=_
 symbol s16 kind=function fq=stringCompareLt vis=public flags=_ sig=recv=_ params=[String,String] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
 symbol s17 kind=valueParameter fq=stringCompareLt.$16.a vis=private flags=_
