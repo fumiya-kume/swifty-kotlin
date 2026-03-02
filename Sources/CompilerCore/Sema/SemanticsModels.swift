@@ -630,6 +630,8 @@ public final class BindingTable {
     public private(set) var callBindings: [ExprID: CallBinding] = [:]
     public private(set) var callableTargets: [ExprID: CallableTarget] = [:]
     public private(set) var callableValueCalls: [ExprID: CallableValueCallBinding] = [:]
+    public private(set) var isCheckTargetTypes: [ExprID: TypeID] = [:]
+    public private(set) var castTargetTypes: [ExprID: TypeID] = [:]
     public private(set) var catchClauseBindings: [ExprID: CatchClauseBinding] = [:]
     public private(set) var captureSymbolsByExpr: [ExprID: [SymbolID]] = [:]
     public private(set) var declSymbols: [DeclID: SymbolID] = [:]
@@ -658,6 +660,14 @@ public final class BindingTable {
 
     public func bindCallableValueCall(_ expr: ExprID, binding: CallableValueCallBinding) {
         callableValueCalls[expr] = binding
+    }
+
+    public func bindIsCheckTargetType(_ expr: ExprID, type: TypeID) {
+        isCheckTargetTypes[expr] = type
+    }
+
+    public func bindCastTargetType(_ expr: ExprID, type: TypeID) {
+        castTargetTypes[expr] = type
     }
 
     public func bindCatchClause(_ catchBodyExpr: ExprID, binding: CatchClauseBinding) {
@@ -715,6 +725,14 @@ public final class BindingTable {
 
     public func callableValueCallBinding(for expr: ExprID) -> CallableValueCallBinding? {
         callableValueCalls[expr]
+    }
+
+    public func isCheckTargetType(for expr: ExprID) -> TypeID? {
+        isCheckTargetTypes[expr]
+    }
+
+    public func castTargetType(for expr: ExprID) -> TypeID? {
+        castTargetTypes[expr]
     }
 
     public func catchClauseBinding(for catchBodyExpr: ExprID) -> CatchClauseBinding? {

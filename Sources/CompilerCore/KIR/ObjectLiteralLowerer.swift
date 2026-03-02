@@ -79,13 +79,15 @@ final class ObjectLiteralLowerer {
         let intType = sema.types.make(.primitive(.int, .nonNull))
         let storageSlotCount = max(1, superTypeCount)
         let slotCountExpr = arena.appendExpr(.intLiteral(Int64(storageSlotCount)), type: intType)
+        let classIDExpr = arena.appendExpr(.intLiteral(0), type: intType)
         let objectEntityExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: objectValueType)
         var body: [KIRInstruction] = [.beginBlock]
         body.append(.constValue(result: slotCountExpr, value: .intLiteral(Int64(storageSlotCount))))
+        body.append(.constValue(result: classIDExpr, value: .intLiteral(0)))
         body.append(.call(
             symbol: nil,
-            callee: interner.intern("kk_array_new"),
-            arguments: [slotCountExpr],
+            callee: interner.intern("kk_object_new"),
+            arguments: [slotCountExpr, classIDExpr],
             result: objectEntityExpr,
             canThrow: false,
             thrownResult: nil

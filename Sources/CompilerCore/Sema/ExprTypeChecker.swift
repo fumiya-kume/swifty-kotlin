@@ -244,6 +244,7 @@ final class ExprTypeChecker {
                     )
                 }
             }
+            sema.bindings.bindIsCheckTargetType(id, type: targetType)
             _ = negated
             _ = targetType
             sema.bindings.bindExprType(id, type: boolType)
@@ -264,6 +265,7 @@ final class ExprTypeChecker {
             } else {
                 targetType
             }
+            sema.bindings.bindCastTargetType(id, type: targetType)
             // Smart cast: after `x as T`, narrow x to intersection of original & T (P5-97/P5-100)
             if !isSafe,
                let castSubjectExpr = ast.arena.expr(exprID),

@@ -321,7 +321,7 @@ extension BuildKIRRegressionTests {
                     return false
                 }
                 let calleeName = ctx.interner.resolve(loweredCallee)
-                return calleeName == "kk_alloc" || calleeName == "kk_array_new"
+                return calleeName == "kk_alloc" || calleeName == "kk_array_new" || calleeName == "kk_object_new"
             }
             XCTAssertTrue(
                 hasAllocationRuntimeCall,

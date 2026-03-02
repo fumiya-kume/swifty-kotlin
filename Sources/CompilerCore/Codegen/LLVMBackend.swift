@@ -244,6 +244,9 @@ public final class LLVMBackend {
 
     /// Unary builtin ops: function name → C prefix operator (P5-103)
     static let unaryBuiltinOps: [String: String] = [
+        "kk_op_not": "!",
+        "kk_op_uplus": "+",
+        "kk_op_uminus": "-",
         "kk_op_inv": "~",
     ]
 
@@ -455,6 +458,12 @@ public final class LLVMBackend {
             "delay",
             "kk_op_notnull",
             "kk_op_elvis",
+            "kk_op_cast",
+            "kk_op_safe_cast",
+            "kk_op_contains",
+            "kk_object_new",
+            "kk_type_register_super",
+            "kk_type_register_iface",
             "kk_lazy_create",
             "kk_lazy_get_value",
             "kk_observable_create",

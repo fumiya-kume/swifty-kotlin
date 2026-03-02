@@ -699,14 +699,24 @@ final class ExprLowerer {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
-            let typeToken = lowerIsCheckTypeTokenExpr(
-                typeRefID: typeRefID,
-                ast: ast,
-                sema: sema,
-                interner: interner,
-                arena: arena,
-                instructions: &instructions
-            )
+            let typeToken: KIRExprID = if let targetType = sema.bindings.isCheckTargetType(for: exprID) {
+                lowerTypeCheckTokenExpr(
+                    targetType: targetType,
+                    sema: sema,
+                    interner: interner,
+                    arena: arena,
+                    instructions: &instructions
+                )
+            } else {
+                lowerIsCheckTypeTokenExpr(
+                    typeRefID: typeRefID,
+                    ast: ast,
+                    sema: sema,
+                    interner: interner,
+                    arena: arena,
+                    instructions: &instructions
+                )
+            }
             let isResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? boolType)
             instructions.append(.call(
                 symbol: nil,
@@ -725,7 +735,7 @@ final class ExprLowerer {
             instructions.append(.binary(op: .equal, lhs: isResult, rhs: falseValue, result: negatedResult))
             return negatedResult
 
-        case let .asCast(exprToCast, _, _, _):
+        case let .asCast(exprToCast, typeRefID, isSafe, _):
             let operandID = lowerExpr(
                 exprToCast,
                 ast: ast,
@@ -735,13 +745,31 @@ final class ExprLowerer {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
+            let typeToken: KIRExprID = if let targetType = sema.bindings.castTargetType(for: exprID) {
+                lowerTypeCheckTokenExpr(
+                    targetType: targetType,
+                    sema: sema,
+                    interner: interner,
+                    arena: arena,
+                    instructions: &instructions
+                )
+            } else {
+                lowerIsCheckTypeTokenExpr(
+                    typeRefID: typeRefID,
+                    ast: ast,
+                    sema: sema,
+                    interner: interner,
+                    arena: arena,
+                    instructions: &instructions
+                )
+            }
             let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
             instructions.append(.call(
                 symbol: nil,
-                callee: interner.intern("kk_op_cast"),
-                arguments: [operandID],
+                callee: interner.intern(isSafe ? "kk_op_safe_cast" : "kk_op_cast"),
+                arguments: [operandID, typeToken],
                 result: result,
-                canThrow: false,
+                canThrow: !isSafe,
                 thrownResult: nil
             ))
             return result
@@ -964,7 +992,9 @@ final class ExprLowerer {
                 thrownResult: nil
             ))
             let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? boolType)
-            instructions.append(.unary(op: .not, operand: containsResult, result: result))
+            let falseValue = arena.appendExpr(.boolLiteral(false), type: boolType)
+            instructions.append(.constValue(result: falseValue, value: .boolLiteral(false)))
+            instructions.append(.binary(op: .equal, lhs: containsResult, rhs: falseValue, result: result))
             return result
 
         case let .destructuringDecl(names, _, initializer, _):
@@ -1057,6 +1087,19 @@ final class ExprLowerer {
                 instructions.append(.constValue(result: tokenExpr, value: .symbolRef(tokenSymbol)))
                 return tokenExpr
             }
+            if let symbol = sema.symbols.lookup(fqName: path),
+               let nominal = sema.symbols.symbol(symbol),
+               nominal.kind == .class || nominal.kind == .interface || nominal.kind == .object || nominal.kind == .enumClass
+            {
+                let nominalTypeID = RuntimeTypeCheckToken.stableNominalTypeID(symbol: symbol, sema: sema, interner: interner)
+                return emitLiteral(
+                    RuntimeTypeCheckToken.encode(
+                        base: RuntimeTypeCheckToken.nominalBase,
+                        nullable: nullable,
+                        payload: nominalTypeID
+                    )
+                )
+            }
             let literal = RuntimeTypeCheckToken.encodeBuiltinTypeName(interner.resolve(last), nullable: nullable)
                 ?? RuntimeTypeCheckToken.encode(base: RuntimeTypeCheckToken.unknownBase, nullable: nullable)
             return emitLiteral(literal)
@@ -1072,6 +1115,20 @@ final class ExprLowerer {
         case .intersection:
             return emitLiteral(RuntimeTypeCheckToken.unknownBase)
         }
+    }
+
+    private func lowerTypeCheckTokenExpr(
+        targetType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner,
+        arena: KIRArena,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+        let encoded = RuntimeTypeCheckToken.encode(type: targetType, sema: sema, interner: interner)
+        let tokenExpr = arena.appendExpr(.intLiteral(encoded), type: intType)
+        instructions.append(.constValue(result: tokenExpr, value: .intLiteral(encoded)))
+        return tokenExpr
     }
 
     private func reifiedTypeTokenSymbol(

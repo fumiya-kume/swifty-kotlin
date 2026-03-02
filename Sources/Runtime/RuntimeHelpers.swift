@@ -28,6 +28,63 @@ func runtimeArrayBox(from rawValue: Int) -> RuntimeArrayBox? {
     return tryCast(ptr, to: RuntimeArrayBox.self)
 }
 
+func runtimeRegisterObjectType(rawValue: Int, classID: Int64) {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue), classID != 0 else {
+        return
+    }
+    runtimeStorage.withLock { state in
+        state.objectTypeByPointer[UInt(bitPattern: ptr)] = classID
+    }
+}
+
+func runtimeObjectTypeID(rawValue: Int) -> Int64? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
+        return nil
+    }
+    return runtimeStorage.withLock { state in
+        state.objectTypeByPointer[UInt(bitPattern: ptr)]
+    }
+}
+
+func runtimeRegisterTypeEdge(childTypeID: Int64, parentTypeID: Int64) {
+    guard childTypeID != 0, parentTypeID != 0 else {
+        return
+    }
+    runtimeStorage.withLock { state in
+        var parents = state.typeParents[childTypeID] ?? []
+        parents.insert(parentTypeID)
+        state.typeParents[childTypeID] = parents
+    }
+}
+
+func runtimeIsAssignable(sourceTypeID: Int64, targetTypeID: Int64) -> Bool {
+    guard sourceTypeID != 0, targetTypeID != 0 else {
+        return false
+    }
+    if sourceTypeID == targetTypeID {
+        return true
+    }
+    return runtimeStorage.withLock { state in
+        var visited: Set<Int64> = [sourceTypeID]
+        var queue: [Int64] = [sourceTypeID]
+        var index = 0
+        while index < queue.count {
+            let current = queue[index]
+            index += 1
+            if current == targetTypeID {
+                return true
+            }
+            guard let parents = state.typeParents[current] else {
+                continue
+            }
+            for parent in parents where visited.insert(parent).inserted {
+                queue.append(parent)
+            }
+        }
+        return false
+    }
+}
+
 func runtimeAllocateThrowable(message: String) -> Int {
     let throwable = RuntimeThrowableBox(message: message)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(throwable).toOpaque())

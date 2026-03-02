@@ -107,8 +107,8 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testArrayFunctionCount() {
-        // kk_array_new, kk_array_get, kk_array_set, kk_vararg_spread_concat
-        XCTAssertEqual(RuntimeABISpec.arrayFunctions.count, 4)
+        // kk_array_new, kk_object_new, kk_array_get, kk_array_set, kk_vararg_spread_concat
+        XCTAssertEqual(RuntimeABISpec.arrayFunctions.count, 5)
     }
 
     func testBitwiseFunctionCount() {

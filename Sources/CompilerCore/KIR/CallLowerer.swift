@@ -105,22 +105,64 @@ final class CallLowerer {
             let allocType = boundType ?? sema.types.anyType
             let intType = sema.types.make(.primitive(.int, .nonNull))
             var slotCount: Int64 = 1
+            var ownerNominalSymbol: SymbolID?
             if let parentClassID = sema.symbols.parentSymbol(for: chosen),
                let layout = sema.symbols.nominalLayout(for: parentClassID)
             {
+                ownerNominalSymbol = parentClassID
                 slotCount = Int64(max(layout.instanceSizeWords, 1))
             }
             let slotCountExpr = arena.appendExpr(.intLiteral(slotCount), type: intType)
             instructions.append(.constValue(result: slotCountExpr, value: .intLiteral(slotCount)))
+            let classIDValue: Int64 = if let ownerNominalSymbol {
+                RuntimeTypeCheckToken.stableNominalTypeID(symbol: ownerNominalSymbol, sema: sema, interner: interner)
+            } else {
+                0
+            }
+            let classIDExpr = arena.appendExpr(.intLiteral(classIDValue), type: intType)
+            instructions.append(.constValue(result: classIDExpr, value: .intLiteral(classIDValue)))
             let allocatedObj = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: allocType)
             instructions.append(.call(
                 symbol: nil,
-                callee: interner.intern("kk_array_new"),
-                arguments: [slotCountExpr],
+                callee: interner.intern("kk_object_new"),
+                arguments: [slotCountExpr, classIDExpr],
                 result: allocatedObj,
                 canThrow: false,
                 thrownResult: nil
             ))
+            if let ownerNominalSymbol {
+                let childTypeID = RuntimeTypeCheckToken.stableNominalTypeID(
+                    symbol: ownerNominalSymbol,
+                    sema: sema,
+                    interner: interner
+                )
+                let childExpr = arena.appendExpr(.intLiteral(childTypeID), type: intType)
+                instructions.append(.constValue(result: childExpr, value: .intLiteral(childTypeID)))
+                for superSymbol in sema.symbols.directSupertypes(for: ownerNominalSymbol) {
+                    let parentTypeID = RuntimeTypeCheckToken.stableNominalTypeID(
+                        symbol: superSymbol,
+                        sema: sema,
+                        interner: interner
+                    )
+                    let parentExpr = arena.appendExpr(.intLiteral(parentTypeID), type: intType)
+                    instructions.append(.constValue(result: parentExpr, value: .intLiteral(parentTypeID)))
+                    let registerResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+                    let superKind = sema.symbols.symbol(superSymbol)?.kind
+                    let registerCallee: InternedString = if superKind == .interface {
+                        interner.intern("kk_type_register_iface")
+                    } else {
+                        interner.intern("kk_type_register_super")
+                    }
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: registerCallee,
+                        arguments: [childExpr, parentExpr],
+                        result: registerResult,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                }
+            }
             finalArgIDs.insert(allocatedObj, at: 0)
         } else if let chosen,
                   let signature = sema.symbols.functionSignature(for: chosen),
@@ -161,6 +203,7 @@ final class CallLowerer {
                 chosenCallee: chosen,
                 callBinding: callBinding,
                 sema: sema,
+                interner: interner,
                 arena: arena,
                 instructions: &instructions,
                 arguments: &finalArgIDs
@@ -187,6 +230,7 @@ final class CallLowerer {
                 chosenCallee: chosen,
                 callBinding: callBinding,
                 sema: sema,
+                interner: interner,
                 arena: arena,
                 instructions: &instructions,
                 arguments: &finalArgIDs
@@ -223,6 +267,7 @@ final class CallLowerer {
         chosenCallee: SymbolID?,
         callBinding: CallBinding?,
         sema: SemaModule,
+        interner: StringInterner,
         arena: KIRArena,
         instructions: inout [KIRInstruction],
         arguments: inout [KIRExprID]
@@ -240,7 +285,7 @@ final class CallLowerer {
             let concreteType = index < callBinding.substitutedTypeArguments.count
                 ? callBinding.substitutedTypeArguments[index]
                 : sema.types.anyType
-            let encodedToken = RuntimeTypeCheckToken.encode(type: concreteType, sema: sema)
+            let encodedToken = RuntimeTypeCheckToken.encode(type: concreteType, sema: sema, interner: interner)
             let tokenExpr = arena.appendExpr(
                 .intLiteral(encodedToken),
                 type: intType

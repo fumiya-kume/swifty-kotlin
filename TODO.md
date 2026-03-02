@@ -77,12 +77,12 @@
 
 #### ⚙️ Expressions / Operators
 
-- [ ] EXPR-002: 演算子の優先順位テーブルを Kotlin 仕様完全準拠で実装する（spec.md J5）
-  - [ ] Kotlin 仕様の 16 優先順位レベル（postfix > prefix > type_rhs > multiplicative > additive > range > infix > Elvis > named checks > comparison > equality > conjunction > disjunction > spread > assignment）を Parser に実装する
-  - [ ] infix 関数呼び出し（`a shl b`・`a or b`）を中置演算子として正しい優先順位で解析する
-  - [ ] `!!` の postfix 優先順位（`.` より低くないこと）を確認する
-  - [ ] `a + b * c - d / e` 等の混在式が正しい AST 木を生成することを golden で固定する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task EXPR-002`
+- [x] EXPR-002: 演算子の優先順位テーブルを Kotlin 仕様完全準拠で実装する（spec.md J5）
+  - [x] Kotlin 仕様の 16 優先順位レベル（postfix > prefix > type_rhs > multiplicative > additive > range > infix > Elvis > named checks > comparison > equality > conjunction > disjunction > spread > assignment）を Parser に実装する
+  - [x] infix 関数呼び出し（`a shl b`・`a or b`）を中置演算子として正しい優先順位で解析する
+  - [x] `!!` の postfix 優先順位（`.` より低くないこと）を確認する
+  - [x] `a + b * c - d / e` 等の混在式が正しい AST 木を生成することを golden で固定する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task EXPR-002`（2026-03-02: parser golden `GoldenCases/Parser/operator_precedence.kt` を追加）
   - **完了条件**: `1 + 2 * 3 == 7`・`true || false && false == true` が `kotlinc` と同一に評価される
 
 
@@ -302,7 +302,7 @@
 - [ ] FUNC-002: infix 関数宣言（`infix fun`）の構文と解決を実装する（spec.md J9）
   - [ ] `infix fun T.foo(arg: Type)` を parser/AST で infix function として保持する
   - [ ] `a foo b` 形式の中置呼び出しを Sema で receiver + infix function 呼び出しへ解決する
-  - [ ] infix 関数の優先順位を通常関数呼び出しより低く、`||`/`&&` より高く設定する（EXPR-002 連携）
+  - [x] infix 関数の優先順位を通常関数呼び出しより低く、`||`/`&&` より高く設定する（EXPR-002 連携）
   - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task FUNC-002`
   - **完了条件**: `1 to "one"` が `Pair(1, "one")` に、カスタム infix 関数が正しい優先順位で評価される
 

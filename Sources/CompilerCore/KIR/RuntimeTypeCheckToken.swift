@@ -12,12 +12,21 @@ enum RuntimeTypeCheckToken {
     static let intBase: Int64 = 3
     static let booleanBase: Int64 = 4
     static let nullBase: Int64 = 5
+    static let nominalBase: Int64 = 6
 
     static let baseMask: Int64 = 0xFF
     static let nullableFlag: Int64 = 1 << 8
+    static let payloadShift: Int64 = 9
+    static let payloadMask: Int64 = (1 << 55) - 1
 
-    static func encode(base: Int64, nullable: Bool) -> Int64 {
-        nullable ? (base | nullableFlag) : base
+    static func encode(base: Int64, nullable: Bool, payload: Int64 = 0) -> Int64 {
+        var token = base & baseMask
+        if nullable {
+            token |= nullableFlag
+        }
+        let normalizedPayload = payload & payloadMask
+        token |= (normalizedPayload << payloadShift)
+        return token
     }
 
     static func encodeBuiltinTypeName(_ name: String, nullable: Bool) -> Int64? {
@@ -37,7 +46,7 @@ enum RuntimeTypeCheckToken {
         }
     }
 
-    static func encode(type: TypeID, sema: SemaModule) -> Int64 {
+    static func encode(type: TypeID, sema: SemaModule, interner: StringInterner) -> Int64 {
         let nullable = sema.types.nullability(of: type) == .nullable
         switch sema.types.kind(of: type) {
         case .any:
@@ -50,10 +59,30 @@ enum RuntimeTypeCheckToken {
             return encode(base: booleanBase, nullable: nullable)
         case .nothing:
             return nullable ? nullBase : unknownBase
+        case let .classType(classType):
+            let nominalTypeID = stableNominalTypeID(symbol: classType.classSymbol, sema: sema, interner: interner)
+            return encode(base: nominalBase, nullable: nullable, payload: nominalTypeID)
         default:
-            // Unsupported nominal/compound RTTI currently falls back to
-            // unknown token. Nullable unknown keeps null-matching behavior.
+            // Unsupported compound RTTI currently falls back to unknown token.
+            // Nullable unknown keeps null-matching behavior.
             return encode(base: unknownBase, nullable: nullable)
         }
+    }
+
+    static func stableNominalTypeID(symbol: SymbolID, sema: SemaModule, interner: StringInterner) -> Int64 {
+        guard let semanticSymbol = sema.symbols.symbol(symbol) else {
+            return 0
+        }
+        let fqName = semanticSymbol.fqName.map { interner.resolve($0) }.joined(separator: ".")
+        guard !fqName.isEmpty else {
+            return 0
+        }
+        var hash: UInt64 = 0xCBF2_9CE4_8422_2325
+        for byte in fqName.utf8 {
+            hash ^= UInt64(byte)
+            hash &*= 0x100_0000_01B3
+        }
+        let payload = Int64(bitPattern: hash) & payloadMask
+        return payload == 0 ? 1 : payload
     }
 }

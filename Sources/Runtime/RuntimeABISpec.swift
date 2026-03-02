@@ -66,7 +66,7 @@ public struct RuntimeABIFunctionSpec: Equatable, Sendable {
 }
 
 public enum RuntimeABISpec {
-    public static let specVersion = "J18"
+    public static let specVersion = "J19"
 
     public static let memoryFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
@@ -620,6 +620,15 @@ public enum RuntimeABISpec {
             section: "Array"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_object_new",
+            parameters: [
+                RuntimeABIParameter(name: "length", type: .intptr),
+                RuntimeABIParameter(name: "classId", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Array"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_array_get",
             parameters: [
                 RuntimeABIParameter(name: "arrayRaw", type: .intptr),
@@ -653,10 +662,56 @@ public enum RuntimeABISpec {
 
     public static let operatorFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
+            name: "kk_type_register_super",
+            parameters: [
+                RuntimeABIParameter(name: "childTypeId", type: .intptr),
+                RuntimeABIParameter(name: "superTypeId", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_type_register_iface",
+            parameters: [
+                RuntimeABIParameter(name: "childTypeId", type: .intptr),
+                RuntimeABIParameter(name: "ifaceTypeId", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_op_is",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),
                 RuntimeABIParameter(name: "typeToken", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_op_cast",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "typeToken", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_op_safe_cast",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "typeToken", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_op_contains",
+            parameters: [
+                RuntimeABIParameter(name: "container", type: .intptr),
+                RuntimeABIParameter(name: "element", type: .intptr),
             ],
             returnType: .intptr,
             section: "TypeCheck"

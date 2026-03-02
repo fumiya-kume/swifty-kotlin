@@ -76,7 +76,7 @@ extension CallLowerer {
                     let concreteType = index < callBinding.substitutedTypeArguments.count
                         ? callBinding.substitutedTypeArguments[index]
                         : sema.types.anyType
-                    let encodedToken = RuntimeTypeCheckToken.encode(type: concreteType, sema: sema)
+                    let encodedToken = RuntimeTypeCheckToken.encode(type: concreteType, sema: sema, interner: interner)
                     let tokenExpr = arena.appendExpr(
                         .intLiteral(encodedToken),
                         type: intType

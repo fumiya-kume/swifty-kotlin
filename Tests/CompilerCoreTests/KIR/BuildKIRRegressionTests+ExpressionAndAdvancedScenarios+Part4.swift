@@ -45,7 +45,7 @@ extension BuildKIRRegressionTests {
             return
         }
         let sema = try XCTUnwrap(ctx.sema)
-        XCTAssertEqual(tokenLiteral, RuntimeTypeCheckToken.encode(type: intType, sema: sema))
+        XCTAssertEqual(tokenLiteral, RuntimeTypeCheckToken.encode(type: intType, sema: sema, interner: ctx.interner))
     }
 
     func testVarargMultiplePositionalArgsPackedToArrayInKIR() throws {

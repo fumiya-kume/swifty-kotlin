@@ -318,6 +318,7 @@ extension CallLowerer {
                 chosenCallee: chosenCallee,
                 callBinding: callBinding,
                 sema: sema,
+                interner: interner,
                 arena: arena,
                 instructions: &instructions,
                 arguments: &finalArguments
@@ -347,6 +348,7 @@ extension CallLowerer {
             chosenCallee: chosenCallee,
             callBinding: callBinding,
             sema: sema,
+            interner: interner,
             arena: arena,
             instructions: &instructions,
             arguments: &finalArguments
