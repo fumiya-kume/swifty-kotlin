@@ -530,6 +530,7 @@ public enum RuntimeABIExterns {
     // MARK: - Delegate
 
     // KProperty stub (PROP-007)
+
     public static let kk_kproperty_stub_create = ExternDecl(
         name: "kk_kproperty_stub_create",
         parameterTypes: ["intptr_t", "intptr_t"],

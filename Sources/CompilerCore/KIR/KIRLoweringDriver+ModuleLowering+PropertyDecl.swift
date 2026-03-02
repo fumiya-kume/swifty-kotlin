@@ -330,7 +330,7 @@ extension KIRLoweringDriver {
         delegateStorageSymbol: SymbolID,
         delegateType: TypeID,
         shared: KIRLoweringSharedContext,
-        compilationCtx: CompilationContext,
+        compilationCtx _: CompilationContext,
         initInstructions: inout KIRLoweringEmitContext
     ) {
         let arena = shared.arena

@@ -5,8 +5,8 @@ import Foundation
 /// Minimal KProperty<*> stub carrying property name and return type.
 /// Used as the `property` argument for `provideDelegate`, `getValue`, and `setValue`.
 final class RuntimeKPropertyStub {
-    let name: Int  // intptr_t to a KKString (property name)
-    let returnType: Int  // intptr_t to a KKString (return type signature)
+    let name: Int // intptr_t to a KKString (property name)
+    let returnType: Int // intptr_t to a KKString (return type signature)
 
     init(name: Int, returnType: Int) {
         self.name = name
