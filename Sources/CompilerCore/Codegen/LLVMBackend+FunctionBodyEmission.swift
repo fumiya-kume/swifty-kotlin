@@ -294,6 +294,19 @@ extension LLVMBackend {
                     continue
                 }
 
+                if calleeName == "kk_int_toString_radix" {
+                    let value = argVars.count > 0 ? argVars[0] : "0"
+                    let radix = argVars.count > 1 ? argVars[1] : "10"
+                    let expr = "(intptr_t)kk_int_toString_radix(\(value), \(radix))"
+                    if let result {
+                        lines.append("  \(varName(result)) = \(expr);")
+                        syncRoot(result)
+                    } else {
+                        lines.append("  (void)\(expr);")
+                    }
+                    continue
+                }
+
                 let target: String
                 let isInternalFunction: Bool
                 if let symbol, let resolved = functionSymbols[symbol] {
