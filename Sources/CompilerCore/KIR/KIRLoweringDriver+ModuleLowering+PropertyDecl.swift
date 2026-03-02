@@ -322,6 +322,7 @@ extension KIRLoweringDriver {
         initInstructions.append(.storeGlobal(value: createResult, symbol: delegateStorageSymbol))
     }
 
+    // swiftlint:disable:next function_parameter_count
     private func emitCustomDelegateInit(
         propertyDecl: PropertyDecl,
         symbol: SymbolID,
