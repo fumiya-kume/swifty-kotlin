@@ -39,7 +39,10 @@ private func whenConditionKeyFromExpr(
     case let .nameRef(name, _):
         return nameRefKey(name: name, conditionID: conditionID, sema: sema, interner: interner)
     case let .memberCall(_, calleeName, _, args, _):
-        return memberCallKey(calleeName: calleeName, args: args, conditionID: conditionID, sema: sema, interner: interner)
+        return memberCallKey(
+            calleeName: calleeName, args: args,
+            conditionID: conditionID, sema: sema, interner: interner
+        )
     case let .isCheck(_, typeRefID, negated, _):
         return isCheckKey(typeRefID: typeRefID, negated: negated, conditionID: conditionID, sema: sema)
     default:
