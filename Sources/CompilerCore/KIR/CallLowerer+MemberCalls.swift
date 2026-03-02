@@ -24,6 +24,10 @@ extension CallLowerer {
         } else {
             calleeName
         }
+        if let objProp = tryLowerObjectMemberPropertyRead(
+            exprID, args: args, sema: sema, arena: arena,
+            instructions: &instructions
+        ) { return objProp }
         return lowerMemberLikeCallExpr(
             exprID,
             receiverExpr: receiverExpr,
@@ -109,13 +113,6 @@ extension CallLowerer {
             instructions: &instructions
         ) {
             return staticMemberValue
-        }
-
-        if let objPropValue = tryLowerObjectMemberPropertyRead(
-            exprID, args: args, sema: sema, arena: arena,
-            instructions: &instructions
-        ) {
-            return objPropValue
         }
 
         let boundType = sema.bindings.exprTypes[exprID]
