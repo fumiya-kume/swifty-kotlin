@@ -381,6 +381,7 @@ public final class SymbolTable {
     public func setFunctionSignature(_ signature: FunctionSignature, for symbol: SymbolID) {
         functionSignatures[symbol] = signature
     }
+
     public func functionSignature(for symbol: SymbolID) -> FunctionSignature? {
         functionSignatures[symbol]
     }
@@ -388,6 +389,7 @@ public final class SymbolTable {
     public func setPropertyType(_ type: TypeID, for symbol: SymbolID) {
         propertyTypes[symbol] = type
     }
+
     public func propertyType(for symbol: SymbolID) -> TypeID? {
         propertyTypes[symbol]
     }
@@ -395,6 +397,7 @@ public final class SymbolTable {
     public func setDirectSupertypes(_ supertypes: [SymbolID], for symbol: SymbolID) {
         directSupertypes[symbol] = supertypes
     }
+
     public func directSupertypes(for symbol: SymbolID) -> [SymbolID] {
         directSupertypes[symbol] ?? []
     }
@@ -402,6 +405,7 @@ public final class SymbolTable {
     public func setSupertypeTypeArgs(_ args: [TypeArg], for child: SymbolID, supertype parent: SymbolID) {
         supertypeTypeArgsMap[child, default: [:]][parent] = args
     }
+
     public func supertypeTypeArgs(for child: SymbolID, supertype parent: SymbolID) -> [TypeArg] {
         supertypeTypeArgsMap[child]?[parent] ?? []
     }
@@ -581,45 +585,6 @@ public final class SymbolTable {
     /// Returns all symbol IDs declared at the given source range.
     public func symbols(atDeclSite site: SourceRange) -> [SymbolID] {
         byDeclSite[site] ?? []
-    }
-}
-
-public struct CallBinding {
-    public let chosenCallee: SymbolID
-    public let substitutedTypeArguments: [TypeID]
-    public let parameterMapping: [Int: Int]
-
-    public init(chosenCallee: SymbolID, substitutedTypeArguments: [TypeID], parameterMapping: [Int: Int]) {
-        self.chosenCallee = chosenCallee
-        self.substitutedTypeArguments = substitutedTypeArguments
-        self.parameterMapping = parameterMapping
-    }
-}
-
-public enum CallableTarget: Equatable {
-    case symbol(SymbolID)
-    case localValue(SymbolID)
-}
-
-public struct CallableValueCallBinding {
-    public let target: CallableTarget?
-    public let functionType: TypeID
-    public let parameterMapping: [Int: Int]
-
-    public init(target: CallableTarget?, functionType: TypeID, parameterMapping: [Int: Int]) {
-        self.target = target
-        self.functionType = functionType
-        self.parameterMapping = parameterMapping
-    }
-}
-
-public struct CatchClauseBinding: Equatable {
-    public let parameterSymbol: SymbolID
-    public let parameterType: TypeID
-
-    public init(parameterSymbol: SymbolID = .invalid, parameterType: TypeID) {
-        self.parameterSymbol = parameterSymbol
-        self.parameterType = parameterType
     }
 }
 
