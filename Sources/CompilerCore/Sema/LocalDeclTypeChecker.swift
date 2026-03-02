@@ -160,5 +160,4 @@ final class LocalDeclTypeChecker {
         ctx.sema.bindings.bindExprType(id, type: ctx.sema.types.errorType)
         return ctx.sema.types.errorType
     }
-
 }
