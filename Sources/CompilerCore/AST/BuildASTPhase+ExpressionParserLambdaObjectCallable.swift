@@ -218,8 +218,8 @@ extension BuildASTPhase.ExpressionParser {
 
     // MARK: - Lambda Destructuring Helpers
 
-    // Checks whether paramTokens form a `(name, name, ...)` destructuring pattern.
-    // Returns the extracted names (nil for underscore), or nil when not destructuring.
+    /// Checks whether paramTokens form a `(name, name, ...)` destructuring pattern.
+    /// Returns the extracted names (nil for underscore), or nil when not destructuring.
     private func extractDestructuringNames(from paramTokens: [Token]) -> [InternedString?]? {
         guard hasBalancedEnclosingParens(paramTokens) else { return nil }
         let innerTokens = Array(paramTokens.dropFirst().dropLast())
