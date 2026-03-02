@@ -71,20 +71,12 @@ extension ExprTypeChecker {
         let allCandidateIDs = ctx.cachedScopeLookup(name)
         let (visibleIDs, _) = ctx.filterByVisibility(allCandidateIDs)
         let candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
-        let hasImplicitReceiver = ctx.implicitReceiverType != nil
         if let propSymbol = candidates.first(where: { sym in
             guard sym.kind == .property else { return false }
             guard let parentID = sema.symbols.parentSymbol(for: sym.id),
                   let parentSym = sema.symbols.symbol(parentID) else { return true }
-            // Accept top-level properties (parent is package) and member
-            // properties when inside a class/object member function context.
-            if parentSym.kind == .package { return true }
-            if hasImplicitReceiver {
-                return parentSym.kind == .class
-                    || parentSym.kind == .object
-                    || parentSym.kind == .interface
-            }
-            return false
+            return parentSym.kind == .package || (ctx.implicitReceiverType != nil
+                && (parentSym.kind == .class || parentSym.kind == .object || parentSym.kind == .interface))
         }) {
             sema.bindings.bindIdentifier(id, symbol: propSymbol.id)
             let propType = sema.symbols.propertyType(for: propSymbol.id) ?? sema.types.anyType

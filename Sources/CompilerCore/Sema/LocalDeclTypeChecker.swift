@@ -1,8 +1,7 @@
 import Foundation
 
-// Handles local declaration and assignment type inference.
-// Derived from TypeCheckSemaPass+InferDecls.swift.
-// swiftlint:disable:next type_body_length
+/// Handles local declaration and assignment type inference.
+/// Derived from TypeCheckSemaPass+InferDecls.swift.
 final class LocalDeclTypeChecker {
     unowned let driver: TypeCheckDriver
 
@@ -74,7 +73,6 @@ final class LocalDeclTypeChecker {
         return sema.types.unitType
     }
 
-    // swiftlint:disable:next function_body_length
     func inferLocalAssignExpr(
         _ id: ExprID,
         name: InternedString,
@@ -83,12 +81,11 @@ final class LocalDeclTypeChecker {
         ctx: TypeInferenceContext,
         locals: inout LocalBindings
     ) -> TypeID {
-        let sema = ctx.sema
         let interner = ctx.interner
 
         let valueType = driver.inferExpr(value, ctx: ctx, locals: &locals, expectedType: nil)
         if let local = locals[name] {
-            sema.bindings.bindIdentifier(id, symbol: local.symbol)
+            ctx.sema.bindings.bindIdentifier(id, symbol: local.symbol)
             if !local.isMutable, local.isInitialized {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0014",
@@ -101,13 +98,13 @@ final class LocalDeclTypeChecker {
                     right: local.type,
                     range: range,
                     solver: ConstraintSolver(),
-                    sema: sema,
+                    sema: ctx.sema,
                     diagnostics: ctx.semaCtx.diagnostics
                 )
                 locals[name] = (local.type, local.symbol, local.isMutable, true)
             }
-            sema.bindings.bindExprType(id, type: sema.types.unitType)
-            return sema.types.unitType
+            ctx.sema.bindings.bindExprType(id, type: ctx.sema.types.unitType)
+            return ctx.sema.types.unitType
         }
 
         // Fall back to scope-visible property lookup for assignments like
@@ -117,21 +114,15 @@ final class LocalDeclTypeChecker {
         let allCandidateIDs = ctx.cachedScopeLookup(name)
         let (visibleIDs, _) = ctx.filterByVisibility(allCandidateIDs)
         let candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
-        let hasImplicitReceiver = ctx.implicitReceiverType != nil
         if let propSymbol = candidates.first(where: { sym in
             guard sym.kind == .property else { return false }
-            guard let parentID = sema.symbols.parentSymbol(for: sym.id),
-                  let parentSym = sema.symbols.symbol(parentID) else { return true }
-            if parentSym.kind == .package { return true }
-            if hasImplicitReceiver {
-                return parentSym.kind == .class
-                    || parentSym.kind == .object
-                    || parentSym.kind == .interface
-            }
-            return false
+            guard let parentID = ctx.sema.symbols.parentSymbol(for: sym.id),
+                  let parentSym = ctx.sema.symbols.symbol(parentID) else { return true }
+            return parentSym.kind == .package || (ctx.implicitReceiverType != nil
+                && (parentSym.kind == .class || parentSym.kind == .object || parentSym.kind == .interface))
         }) {
-            sema.bindings.bindIdentifier(id, symbol: propSymbol.id)
-            let propType = sema.symbols.propertyType(for: propSymbol.id) ?? sema.types.anyType
+            ctx.sema.bindings.bindIdentifier(id, symbol: propSymbol.id)
+            let propType = ctx.sema.symbols.propertyType(for: propSymbol.id) ?? ctx.sema.types.anyType
             if !propSymbol.flags.contains(.mutable) {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0014",
@@ -144,12 +135,12 @@ final class LocalDeclTypeChecker {
                     right: propType,
                     range: range,
                     solver: ConstraintSolver(),
-                    sema: sema,
+                    sema: ctx.sema,
                     diagnostics: ctx.semaCtx.diagnostics
                 )
             }
-            sema.bindings.bindExprType(id, type: sema.types.unitType)
-            return sema.types.unitType
+            ctx.sema.bindings.bindExprType(id, type: ctx.sema.types.unitType)
+            return ctx.sema.types.unitType
         }
 
         ctx.semaCtx.diagnostics.error(
@@ -157,8 +148,8 @@ final class LocalDeclTypeChecker {
             "Unresolved local variable '\(interner.resolve(name))'.",
             range: range
         )
-        sema.bindings.bindExprType(id, type: sema.types.errorType)
-        return sema.types.errorType
+        ctx.sema.bindings.bindExprType(id, type: ctx.sema.types.errorType)
+        return ctx.sema.types.errorType
     }
 
     func inferIndexedAccessExpr(
