@@ -1,9 +1,9 @@
 import Foundation
 
 extension KIRLoweringDriver {
+    // swiftlint:disable:next function_parameter_count
     /// Lower a top-level property declaration into KIR declarations, collecting
     /// any initialisation instructions and delegate storage mappings.
-    // swiftlint:disable:next function_parameter_count
     func lowerTopLevelPropertyDecl(
         _ propertyDecl: PropertyDecl,
         symbol: SymbolID,

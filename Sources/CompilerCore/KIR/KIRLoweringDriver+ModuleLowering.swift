@@ -11,11 +11,7 @@ extension KIRLoweringDriver {
 
         let arena = KIRArena()
         var files: [KIRFile] = []
-        var sourceByFileID: [Int32: String] = [:]
-        for file in ast.files {
-            let contents = compilationCtx.sourceManager.contents(of: file.fileID)
-            sourceByFileID[file.fileID.rawValue] = String(data: contents, encoding: .utf8) ?? ""
-        }
+        let sourceByFileID = buildSourceByFileID(ast: ast, compilationCtx: compilationCtx)
         let propertyConstantInitializers = constantCollector.collectPropertyConstantInitializers(
             ast: ast,
             sema: sema,
@@ -68,6 +64,17 @@ extension KIRLoweringDriver {
             delegateStorageSymbolByPropertySymbol: delegateStorageSymbolByPropertySymbol
         )
         return KIRModule(files: files, arena: arena)
+    }
+
+    private func buildSourceByFileID(
+        ast: ASTModule, compilationCtx: CompilationContext
+    ) -> [Int32: String] {
+        var result: [Int32: String] = [:]
+        for file in ast.files {
+            let contents = compilationCtx.sourceManager.contents(of: file.fileID)
+            result[file.fileID.rawValue] = String(data: contents, encoding: .utf8) ?? ""
+        }
+        return result
     }
 
     // MARK: - Per-file top-level declaration lowering
