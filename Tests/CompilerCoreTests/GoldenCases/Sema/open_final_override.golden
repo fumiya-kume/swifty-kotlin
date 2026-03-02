@@ -9,16 +9,16 @@ symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=
 symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
 symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
 symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
-symbol s11 kind=interface fq=golden.sema.Greeter vis=public flags=_
-symbol s12 kind=function fq=golden.sema.Greeter.greet vis=public flags=_ sig=recv=Class#11 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s13 kind=class fq=golden.sema.FormalGreeter vis=public flags=_
-symbol s14 kind=constructor fq=golden.sema.FormalGreeter.<init> vis=public flags=_ sig=recv=Class#13 params=[] ret=Class#13 suspend=0 defaults=[] vararg=[]
-symbol s15 kind=function fq=golden.sema.FormalGreeter.greet vis=public flags=overrideMember sig=recv=Class#13 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s16 kind=class fq=golden.sema.DefaultGreeter vis=public flags=_
-symbol s17 kind=constructor fq=golden.sema.DefaultGreeter.<init> vis=public flags=_ sig=recv=Class#16 params=[] ret=Class#16 suspend=0 defaults=[] vararg=[]
+symbol s11 kind=class fq=golden.sema.Base vis=public flags=openType
+symbol s12 kind=constructor fq=golden.sema.Base.<init> vis=public flags=_ sig=recv=Class#11 params=[] ret=Class#11 suspend=0 defaults=[] vararg=[]
+symbol s13 kind=function fq=golden.sema.Base.foo vis=public flags=openType sig=recv=Class#11 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s14 kind=function fq=golden.sema.Base.bar vis=public flags=_ sig=recv=Class#11 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s15 kind=class fq=golden.sema.Derived vis=public flags=_
+symbol s16 kind=constructor fq=golden.sema.Derived.<init> vis=public flags=_ sig=recv=Class#15 params=[] ret=Class#15 suspend=0 defaults=[] vararg=[]
+symbol s17 kind=function fq=golden.sema.Derived.foo vis=public flags=overrideMember sig=recv=Class#15 params=[] ret=Int suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d1 interface Greeter sym=s11
-  decl d3 class FormalGreeter sym=s13
-  decl d4 class DefaultGreeter sym=s16
-expr e0 string(Hello) type=String
-expr e1 string(Good day) type=String
+  decl d2 class Base sym=s11
+  decl d4 class Derived sym=s15
+expr e0 int(1) type=Int
+expr e1 int(2) type=Int
+expr e2 int(10) type=Int

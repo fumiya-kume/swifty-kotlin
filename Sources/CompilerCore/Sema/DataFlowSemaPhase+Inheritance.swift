@@ -368,7 +368,7 @@ extension DataFlowSemaPhase {
     }
 
     /// Collects the set of member names that this class provides via `override`.
-    private func collectOverriddenMemberNames(
+    func collectOverriddenMemberNames(
         for _: SymbolID,
         decl: Decl,
         ast: ASTModule,
