@@ -1,7 +1,7 @@
 import Foundation
 
-/// Handles local declaration and assignment type inference.
-/// Derived from TypeCheckSemaPass+InferDecls.swift.
+// Handles local declaration and assignment type inference.
+// Derived from TypeCheckSemaPass+InferDecls.swift.
 // swiftlint:disable:next type_body_length
 final class LocalDeclTypeChecker {
     unowned let driver: TypeCheckDriver
