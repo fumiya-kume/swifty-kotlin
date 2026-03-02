@@ -45,7 +45,9 @@ extension DataFlowSemaPhase {
             bindings: bindings, diagnostics: diagnostics, interner: interner
         )
 
-        guard symbolInfo.kind == .class || symbolInfo.kind == .object else {
+        guard symbolInfo.kind == .class || symbolInfo.kind == .object,
+              !symbolInfo.flags.contains(.abstractType)
+        else {
             return
         }
 
