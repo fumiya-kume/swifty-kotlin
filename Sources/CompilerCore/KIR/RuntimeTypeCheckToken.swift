@@ -23,17 +23,17 @@ enum RuntimeTypeCheckToken {
     static func encodeBuiltinTypeName(_ name: String, nullable: Bool) -> Int64? {
         switch name {
         case "Any":
-            return encode(base: anyBase, nullable: nullable)
+            encode(base: anyBase, nullable: nullable)
         case "String":
-            return encode(base: stringBase, nullable: nullable)
+            encode(base: stringBase, nullable: nullable)
         case "Int":
-            return encode(base: intBase, nullable: nullable)
+            encode(base: intBase, nullable: nullable)
         case "Boolean":
-            return encode(base: booleanBase, nullable: nullable)
+            encode(base: booleanBase, nullable: nullable)
         case "Nothing":
-            return nullable ? nullBase : unknownBase
+            nullable ? nullBase : unknownBase
         default:
-            return nil
+            nil
         }
     }
 
