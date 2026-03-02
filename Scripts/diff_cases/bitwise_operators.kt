@@ -6,4 +6,7 @@ fun main() {
     println(1 shl 3)
     println(16 shr 2)
     println(16 ushr 2)
+    println((255 and 15).toString(16))
+    println(255.toString(16))
+    println(1.toString(2))
 }

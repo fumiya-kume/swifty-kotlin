@@ -127,6 +127,7 @@ extension LLVMBackend {
         "extern intptr_t kk_op_shl(intptr_t a, intptr_t b);",
         "extern intptr_t kk_op_shr(intptr_t a, intptr_t b);",
         "extern intptr_t kk_op_ushr(intptr_t a, intptr_t b);",
+        "extern void* kk_int_toString_radix(intptr_t value, intptr_t radix);",
         "/* Collection literal runtime (P5-84) */",
         "extern intptr_t kk_list_of(intptr_t arrayRaw, intptr_t count);",
         "extern intptr_t kk_list_size(intptr_t listRaw);",

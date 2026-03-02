@@ -90,6 +90,27 @@ extension CallLowerer {
             }
         }
 
+        // Primitive member function: Int/Long.toString(radix: Int) → kk_int_toString_radix (EXPR-003)
+        if interner.resolve(effectiveCalleeName) == "toString",
+           args.count == 1
+        {
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let longType = sema.types.make(.primitive(.long, .nonNull))
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if nonNullReceiverType == intType || nonNullReceiverType == longType {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_int_toString_radix"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0]],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
         let isSuperCall = sema.bindings.isSuperCallExpr(exprID)
         let callBinding = sema.bindings.callBindings[exprID]
         let chosen = callBinding?.chosenCallee

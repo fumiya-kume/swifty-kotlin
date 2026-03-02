@@ -842,6 +842,15 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Bitwise"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_int_toString_radix",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "radix", type: .intptr),
+            ],
+            returnType: .opaquePointer,
+            section: "Bitwise"
+        ),
     ]
 
     public static let allFunctions: [RuntimeABIFunctionSpec] =

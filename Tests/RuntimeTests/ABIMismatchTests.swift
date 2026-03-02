@@ -113,8 +113,8 @@ final class ABIMismatchTests: XCTestCase {
 
     func testBitwiseFunctionCount() {
         // kk_bitwise_and, kk_bitwise_or, kk_bitwise_xor, kk_op_inv,
-        // kk_op_shl, kk_op_shr, kk_op_ushr
-        XCTAssertEqual(RuntimeABISpec.bitwiseFunctions.count, 7)
+        // kk_op_shl, kk_op_shr, kk_op_ushr, kk_int_toString_radix
+        XCTAssertEqual(RuntimeABISpec.bitwiseFunctions.count, 8)
     }
 
     func testTotalFunctionCount() {

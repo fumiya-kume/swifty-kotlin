@@ -585,6 +585,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_int_toString_radix = ExternDecl(
+        name: "kk_int_toString_radix",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "void *"
+    )
+
     // MARK: - All Functions (canonical list)
 
     /// All runtime extern declarations, ordered by section.
@@ -693,6 +699,7 @@ public enum RuntimeABIExterns {
         kk_op_shl,
         kk_op_shr,
         kk_op_ushr,
+        kk_int_toString_radix,
     ]
 
     /// Look up an extern declaration by symbol name.
