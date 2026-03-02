@@ -142,7 +142,6 @@ public func kk_list_to_string(_ listRaw: Int) -> Int {
 }
 
 // MARK: - Map Functions (STDLIB-001)
-
 /// Creates a new immutable map from parallel key and value arrays.
 /// - Parameters:
 ///   - keysArrayRaw: intptr_t handle to a RuntimeArrayBox containing the keys.
@@ -190,8 +189,9 @@ public func kk_map_get(_ mapRaw: Int, _ key: Int) -> Int {
     guard let map = runtimeMapBox(from: mapRaw) else {
         return runtimeNullSentinelInt
     }
-    for (i, k) in map.keys.enumerated() where k == key {
-        return map.values[i]
+    for (idx, mapKey) in map.keys.enumerated() where mapKey == key {
+        guard idx < map.values.count else { return runtimeNullSentinelInt }
+        return map.values[idx]
     }
     return runtimeNullSentinelInt
 }
@@ -258,7 +258,7 @@ public func kk_map_iterator_next(_ iterRaw: Int) -> Int {
     guard let iter = runtimeMapIteratorBox(from: iterRaw) else {
         return 0
     }
-    guard iter.index < iter.keys.count else {
+    guard iter.index < iter.keys.count, iter.index < iter.values.count else {
         return 0
     }
     let value = iter.values[iter.index]
@@ -293,7 +293,6 @@ public func kk_map_to_string(_ mapRaw: Int) -> Int {
 }
 
 // MARK: - Array Size (STDLIB-001)
-
 /// Returns the size of an array.
 /// - Parameter arrayRaw: Opaque handle to a `RuntimeArrayBox`.
 /// - Returns: The number of elements in the array.
@@ -306,7 +305,6 @@ public func kk_array_size(_ arrayRaw: Int) -> Int {
 }
 
 // MARK: - Helper Functions
-
 /// Extracts a `RuntimeListBox` from an opaque handle.
 func runtimeListBox(from rawValue: Int) -> RuntimeListBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
