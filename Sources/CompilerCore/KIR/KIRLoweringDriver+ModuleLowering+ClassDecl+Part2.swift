@@ -296,15 +296,14 @@ extension KIRLoweringDriver {
         let hasProvideDelegate = checkProvideDelegate(
             delegateExpr: delegateExpr, sema: sema, compilationCtx: compilationCtx
         )
-        let valueToStore: KIRExprID
-        if hasProvideDelegate, let storageSym = delegateStorageSym {
-            valueToStore = emitProvideDelegateCall(
+        let valueToStore: KIRExprID = if hasProvideDelegate, let storageSym = delegateStorageSym {
+            emitProvideDelegateCall(
                 delegateValue: delegateValue, storageSym: storageSym,
                 propSymbol: propSymbol, sema: sema, arena: arena,
                 compilationCtx: compilationCtx, body: &body
             )
         } else {
-            valueToStore = delegateValue
+            delegateValue
         }
         if let storageSym = delegateStorageSym {
             let delegateType = sema.types.anyType
@@ -357,8 +356,9 @@ extension KIRLoweringDriver {
         if let receiver = ctx.currentImplicitReceiverExprID {
             thisRefExprID = receiver
         } else {
-            thisRefExprID = arena.appendExpr(.null, type: sema.types.nullableAnyType)
-            body.append(.constValue(result: thisRefExprID, value: .null))
+            let nullExpr = arena.appendExpr(.null, type: sema.types.nullableAnyType)
+            body.append(.constValue(result: nullExpr, value: .null))
+            thisRefExprID = nullExpr
         }
         let kPropertyExprID = arena.appendExpr(
             .stringLiteral(propertyName),
@@ -378,5 +378,4 @@ extension KIRLoweringDriver {
         ))
         return provideDelegateResult
     }
-
 }
