@@ -328,5 +328,4 @@ public final class LLVMBackend {
         parameters.append("intptr_t* outThrown")
         return "intptr_t \(symbol)(\(parameters.joined(separator: ", ")))"
     }
-
 }
