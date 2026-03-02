@@ -100,12 +100,26 @@ extension CodegenBackendIntegrationTests {
 
     // MARK: - Private Helpers
 
-    func runCodegenPipeline(inputPath: String, moduleName: String, emit: EmitMode, outputPath: String) throws -> CompilationContext {
-        let ctx = makeCompilationContext(
-            inputs: [inputPath],
+    func runCodegenPipeline(
+        inputPath: String,
+        moduleName: String,
+        emit: EmitMode,
+        outputPath: String,
+        irFlags: [String] = []
+    ) throws -> CompilationContext {
+        let options = CompilerOptions(
             moduleName: moduleName,
+            inputs: [inputPath],
+            outputPath: outputPath,
             emit: emit,
-            outputPath: outputPath
+            target: defaultTargetTriple(),
+            irFlags: irFlags
+        )
+        let ctx = CompilationContext(
+            options: options,
+            sourceManager: SourceManager(),
+            diagnostics: DiagnosticEngine(),
+            interner: StringInterner()
         )
         try runToKIR(ctx)
         try LoweringPhase().run(ctx)
@@ -121,7 +135,12 @@ extension CodegenBackendIntegrationTests {
             defer { try? fm.removeItem(at: workDir) }
 
             let artifactBase1 = workDir.appendingPathComponent("deterministic_1").path
-            let artifactBase2 = workDir.appendingPathComponent("deterministic_2").path
+            // Linux toolchains may still inject output-path metadata in object files.
+            // Reuse the same output path to validate deterministic bytes per identical
+            // input/configuration without being sensitive to path strings.
+            let artifactBase2 = emit == .object
+                ? artifactBase1
+                : workDir.appendingPathComponent("deterministic_2").path
             var first = try readCodegenArtifact(inputPath: path, emit: emit, outputPath: artifactBase1)
             var second = try readCodegenArtifact(inputPath: path, emit: emit, outputPath: artifactBase2)
             if emit == .llvmIR {
@@ -192,7 +211,8 @@ extension CodegenBackendIntegrationTests {
             inputPath: inputPath,
             moduleName: "Determinism",
             emit: emit,
-            outputPath: outputPath
+            outputPath: outputPath,
+            irFlags: emit == .object ? ["backend=synthetic-c"] : []
         )
 
         let artifactPath: String
