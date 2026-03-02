@@ -206,6 +206,13 @@ extension ExprTypeChecker {
             }
             return nil
         } ?? sema.types.anyType
+        // Propagate compile-time constant value for `const val` references
+        // so downstream passes can fold without re-querying the symbol table.
+        if let first = candidates.first, first.flags.contains(.constValue) {
+            if let constKind = sema.symbols.constValueExprKind(for: first.id) {
+                sema.bindings.bindConstExprValue(id, value: constKind)
+            }
+        }
         sema.bindings.bindExprType(id, type: resolvedType)
         return resolvedType
     }
