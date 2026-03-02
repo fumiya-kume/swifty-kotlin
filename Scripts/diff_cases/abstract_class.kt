@@ -1,33 +1,28 @@
-abstract class Shape {
-    abstract fun area(): Double
-    abstract val name: String
-    fun description(): String = name
+abstract class A {
+    abstract fun f()
 }
 
-class Circle(val radius: Double) : Shape() {
-    override fun area(): Double = 3.14 * radius * radius
-    override val name: String = "circle"
+class B : A() {
+    override fun f() = println("B.f")
 }
 
 abstract class Animal {
-    abstract fun speak(): String
+    abstract fun speak()
 }
 
 abstract class Pet : Animal() {
-    abstract fun petName(): String
+    abstract fun name()
 }
 
 class Dog : Pet() {
-    override fun speak(): String = "woof"
-    override fun petName(): String = "buddy"
+    override fun speak() = println("woof")
+    override fun name() = println("dog")
 }
 
 fun main() {
-    val c = Circle(5.0)
-    println(c.area())
-    println(c.name)
-    println(c.description())
+    val b = B()
+    b.f()
     val d = Dog()
-    println(d.speak())
-    println(d.petName())
+    d.speak()
+    d.name()
 }
