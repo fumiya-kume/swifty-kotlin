@@ -153,7 +153,7 @@ extension KIRLoweringDriver {
                         // Rewrite copy(from: val, to: delegateRef) → setValue call.
                         // This handles assignment to observable/vetoable delegate-backed properties.
                         if case let .copy(fromExpr, toExpr) = instruction,
-                           let propertySym = delegateTargetExprs[toExpr],
+                           let propertySym = delegateTargetExprs.removeValue(forKey: toExpr),
                            let delegateStorageSymbol = delegateStorageSymbolByPropertySymbol[propertySym]
                         {
                             let kind = delegateKindByPropertySymbol[propertySym]
@@ -176,7 +176,7 @@ extension KIRLoweringDriver {
                             case .custom, nil:
                                 customSetValueName
                             case .lazy:
-                                customSetValueName // unreachable: guarded above
+                                preconditionFailure("lazy delegate setValue is not supported")
                             }
                             let setResult = arena.appendExpr(
                                 .temporary(Int32(arena.expressions.count)),
