@@ -30,19 +30,20 @@ extension DeclTypeChecker {
             let currentCtorSymbolID = ctorSymbols.first?.id
             let constructorScope = FunctionScope(parent: ctx.scope, symbols: sema.symbols)
             var constructorCtx = ctx.copying(scope: constructorScope)
-            if let ctorSymbol = ctorSymbols.first,
-               let signature = sema.symbols.functionSignature(for: ctorSymbol.id) {
-                for typeParameterSymbol in signature.typeParameterSymbols {
-                    constructorScope.insert(typeParameterSymbol)
+            if let ctorSymbol = ctorSymbols.first {
+                if let signature = sema.symbols.functionSignature(for: ctorSymbol.id) {
+                    for typeParameterSymbol in signature.typeParameterSymbols {
+                        constructorScope.insert(typeParameterSymbol)
+                    }
+                    for (index, paramSymbol) in signature.valueParameterSymbols.enumerated() {
+                        guard let param = sema.symbols.symbol(paramSymbol) else { continue }
+                        let type = index < signature.parameterTypes.count
+                            ? signature.parameterTypes[index]
+                            : sema.types.anyType
+                        locals[param.name] = (type, paramSymbol, false, true)
+                    }
+                    constructorCtx = ctx.copying(scope: constructorScope)
                 }
-                for (index, paramSymbol) in signature.valueParameterSymbols.enumerated() {
-                    guard let param = sema.symbols.symbol(paramSymbol) else { continue }
-                    let type = index < signature.parameterTypes.count
-                        ? signature.parameterTypes[index]
-                        : sema.types.anyType
-                    locals[param.name] = (type, paramSymbol, false, true)
-                }
-                constructorCtx = ctx.copying(scope: constructorScope)
             }
 
             if ctor.delegationCall == nil, hasPrimaryConstructor {
@@ -124,9 +125,10 @@ extension DeclTypeChecker {
         let sema = ctx.sema
         switch delegation.kind {
         case .this:
-            if let owner = ownerSymbol,
-               let ownerSym = sema.symbols.symbol(owner) {
-                return ownerSym.fqName + [ctx.interner.intern("<init>")]
+            if let owner = ownerSymbol {
+                if let ownerSym = sema.symbols.symbol(owner) {
+                    return ownerSym.fqName + [ctx.interner.intern("<init>")]
+                }
             }
             return []
         case .super_:
@@ -136,9 +138,10 @@ extension DeclTypeChecker {
                 let kind = sema.symbols.symbol($0)?.kind
                 return kind == .class || kind == .enumClass
             }
-            if let superclass = classSupertypes.first,
-               let superSym = sema.symbols.symbol(superclass) {
-                return superSym.fqName + [ctx.interner.intern("<init>")]
+            if let superclass = classSupertypes.first {
+                if let superSym = sema.symbols.symbol(superclass) {
+                    return superSym.fqName + [ctx.interner.intern("<init>")]
+                }
             }
             return []
         }
