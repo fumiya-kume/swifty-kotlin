@@ -436,11 +436,12 @@ final class GoldenHarnessTests: XCTestCase {
         let allFlags: [(SymbolFlags, String)] = [
             (.suspendFunction, "suspendFunction"), (.inlineFunction, "inlineFunction"),
             (.mutable, "mutable"), (.synthetic, "synthetic"), (.static, "static"),
-            (.sealedType, "sealedType"), (.dataType, "dataType"), (.innerClass, "innerClass"),
-            (.valueType, "valueType"), (.operatorFunction, "operatorFunction"),
-            (.constValue, "constValue"), (.abstractType, "abstractType"),
-            (.openType, "openType"), (.overrideMember, "overrideMember"),
-            (.finalMember, "finalMember"),
+            (.sealedType, "sealedType"), (.dataType, "dataType"),
+            (.reifiedTypeParameter, "reifiedTypeParameter"),
+            (.innerClass, "innerClass"), (.valueType, "valueType"),
+            (.operatorFunction, "operatorFunction"), (.constValue, "constValue"),
+            (.abstractType, "abstractType"), (.openType, "openType"),
+            (.overrideMember, "overrideMember"), (.finalMember, "finalMember"),
         ]
         return allFlags.filter { flags.contains($0.0) }.map(\.1).joined(separator: "|")
     }
