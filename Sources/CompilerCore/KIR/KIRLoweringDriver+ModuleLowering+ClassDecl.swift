@@ -38,91 +38,69 @@ extension KIRLoweringDriver {
             fqName: ctorFQName
         )
         for ctorSymbol in ctorSymbols {
-            guard let signature = sema.symbols.functionSignature(for: ctorSymbol) else {
-                continue
-            }
-            ctx.resetScopeForFunction()
-            ctx.beginCallableLoweringScope()
-
-            let receiverSymbol = callSupportLowerer.syntheticReceiverParameterSymbol(functionSymbol: ctorSymbol)
-            var params = [KIRParameter(symbol: receiverSymbol, type: signature.returnType)]
-            ctx.currentImplicitReceiverSymbol = receiverSymbol
-            ctx.currentImplicitReceiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: signature.returnType)
-
-            params.append(contentsOf: zip(signature.valueParameterSymbols, signature.parameterTypes).map { pair in
-                KIRParameter(symbol: pair.0, type: pair.1)
-            })
-            let returnType = signature.returnType
-            var body: KIRLoweringEmitContext = [.beginBlock]
-
-            if let receiverExpr = ctx.currentImplicitReceiverExprID,
-               let receiverSym = ctx.currentImplicitReceiverSymbol
-            {
-                body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
-            }
-
-            let isSecondary = sema.symbols.symbol(ctorSymbol)?.declSite != classDecl.range
-
-            if !isSecondary {
-                // Emit member property initializers and init blocks in
-                // declaration order (top-to-bottom), matching Kotlin's
-                // guaranteed initialization order (spec.md J7 / CLASS-007).
-                emitClassBodyInitializers(
-                    classDecl: classDecl,
-                    shared: shared,
-                    compilationCtx: compilationCtx,
-                    body: &body
-                )
-            }
-
-            if isSecondary {
-                emitSecondaryConstructorBody(
-                    classDecl: classDecl,
-                    ctorSymbol: ctorSymbol,
-                    ctorFQName: ctorFQName,
-                    ownerSymbol: symbol,
-                    shared: shared,
-                    compilationCtx: compilationCtx,
-                    body: &body
-                )
-            }
-
-            if let receiver = ctx.currentImplicitReceiverExprID {
-                body.append(.returnValue(receiver))
-            } else {
-                body.append(.returnUnit)
-            }
-            body.append(.endBlock)
-
-            let ctorKirID = arena.appendDecl(
-                .function(
-                    KIRFunction(
-                        symbol: ctorSymbol,
-                        name: classDecl.name,
-                        params: params,
-                        returnType: returnType,
-                        body: body,
-                        isSuspend: false,
-                        isInline: false
-                    )
-                )
-            )
-            declIDs.append(ctorKirID)
-            // Generate default argument stub for constructors with defaults.
-            if let defaults = ctx.functionDefaultArgumentsBySymbol[ctorSymbol] {
-                let stubID = callSupportLowerer.generateDefaultStubFunction(
-                    originalSymbol: ctorSymbol,
-                    originalName: classDecl.name,
-                    signature: signature,
-                    defaultExpressions: defaults,
-                    shared: shared
-                )
-                declIDs.append(stubID)
-            }
-            declIDs.append(contentsOf: ctx.drainGeneratedCallableDecls())
+            declIDs.append(contentsOf: lowerConstructor(
+                ctorSymbol: ctorSymbol,
+                ctorFQName: ctorFQName,
+                classDecl: classDecl,
+                ownerSymbol: symbol,
+                shared: shared,
+                compilationCtx: compilationCtx
+            ))
         }
 
         return declIDs
+    }
+
+    /// Emits a constructor delegation call (`this(...)` or `super(...)`).
+    // swiftlint:disable:next function_parameter_count
+    func emitDelegationCall(
+        delegation: ConstructorDelegationCall,
+        ctorFQName: [InternedString],
+        ownerSymbol: SymbolID,
+        sema: SemaModule,
+        arena: KIRArena,
+        compilationCtx: CompilationContext,
+        shared: KIRLoweringSharedContext,
+        body: inout KIRLoweringEmitContext
+    ) {
+        let delegationTarget: [InternedString]
+        switch delegation.kind {
+        case .this:
+            delegationTarget = ctorFQName
+        case .super_:
+            let supertypes = sema.symbols.directSupertypes(for: ownerSymbol)
+            let classSupertypes = supertypes.filter {
+                let kind = sema.symbols.symbol($0)?.kind
+                return kind == .class || kind == .enumClass
+            }
+            if let superclass = classSupertypes.first {
+                let superFQ = sema.symbols.symbol(superclass)?.fqName ?? []
+                delegationTarget = superFQ + [compilationCtx.interner.intern("<init>")]
+            } else {
+                delegationTarget = []
+            }
+        }
+        guard !delegationTarget.isEmpty else { return }
+        var argIDs: [KIRExprID] = []
+        if let receiver = ctx.currentImplicitReceiverExprID {
+            argIDs.append(receiver)
+        }
+        for arg in delegation.args {
+            let lowered = lowerExpr(arg.expr, shared: shared, emit: &body)
+            argIDs.append(lowered)
+        }
+        let delegationResultID = arena.appendExpr(
+            .temporary(Int32(arena.expressions.count)),
+            type: sema.types.unitType
+        )
+        body.append(.call(
+            symbol: sema.symbols.lookupAll(fqName: delegationTarget).first,
+            callee: compilationCtx.interner.intern("<init>"),
+            arguments: argIDs,
+            result: delegationResultID,
+            canThrow: false,
+            thrownResult: nil
+        ))
     }
 
     func synthesizeCompanionInitializerIfNeeded(

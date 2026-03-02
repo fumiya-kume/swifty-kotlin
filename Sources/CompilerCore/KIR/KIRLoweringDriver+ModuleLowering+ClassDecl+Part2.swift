@@ -1,8 +1,122 @@
 import Foundation
 
-// MARK: - Declaration-order class body initializer emission (CLASS-007)
-
 extension KIRLoweringDriver {
+    // MARK: - Constructor lowering
+
+    /// Lowers a single constructor (primary or secondary) into KIR declarations.
+    // swiftlint:disable:next function_parameter_count
+    func lowerConstructor(
+        ctorSymbol: SymbolID,
+        ctorFQName: [InternedString],
+        classDecl: ClassDecl,
+        ownerSymbol: SymbolID,
+        shared: KIRLoweringSharedContext,
+        compilationCtx: CompilationContext
+    ) -> [KIRDeclID] {
+        let sema = shared.sema
+        let arena = shared.arena
+        guard let signature = sema.symbols.functionSignature(for: ctorSymbol) else {
+            return []
+        }
+        ctx.resetScopeForFunction()
+        ctx.beginCallableLoweringScope()
+
+        let receiverSymbol = callSupportLowerer.syntheticReceiverParameterSymbol(functionSymbol: ctorSymbol)
+        var params = [KIRParameter(symbol: receiverSymbol, type: signature.returnType)]
+        ctx.currentImplicitReceiverSymbol = receiverSymbol
+        ctx.currentImplicitReceiverExprID = arena.appendExpr(
+            .symbolRef(receiverSymbol), type: signature.returnType
+        )
+        params.append(contentsOf: zip(signature.valueParameterSymbols, signature.parameterTypes).map { pair in
+            KIRParameter(symbol: pair.0, type: pair.1)
+        })
+
+        let body = buildConstructorBody(
+            ctorSymbol: ctorSymbol, ctorFQName: ctorFQName,
+            classDecl: classDecl, ownerSymbol: ownerSymbol,
+            shared: shared, compilationCtx: compilationCtx
+        )
+
+        return finalizeConstructorDecl(
+            ctorSymbol: ctorSymbol, classDecl: classDecl,
+            params: params, returnType: signature.returnType,
+            body: body, signature: signature, shared: shared
+        )
+    }
+
+    /// Builds the constructor body instructions for a primary or secondary constructor.
+    // swiftlint:disable:next function_parameter_count
+    private func buildConstructorBody(
+        ctorSymbol: SymbolID,
+        ctorFQName: [InternedString],
+        classDecl: ClassDecl,
+        ownerSymbol: SymbolID,
+        shared: KIRLoweringSharedContext,
+        compilationCtx: CompilationContext
+    ) -> KIRLoweringEmitContext {
+        let sema = shared.sema
+        var body: KIRLoweringEmitContext = [.beginBlock]
+        if let receiverExpr = ctx.currentImplicitReceiverExprID,
+           let receiverSym = ctx.currentImplicitReceiverSymbol
+        {
+            body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
+        }
+        let isSecondary = sema.symbols.symbol(ctorSymbol)?.declSite != classDecl.range
+        if !isSecondary {
+            emitClassBodyInitializers(
+                classDecl: classDecl, shared: shared,
+                compilationCtx: compilationCtx, body: &body
+            )
+        }
+        if isSecondary {
+            emitSecondaryConstructorBody(
+                classDecl: classDecl, ctorSymbol: ctorSymbol,
+                ctorFQName: ctorFQName, ownerSymbol: ownerSymbol,
+                shared: shared, compilationCtx: compilationCtx, body: &body
+            )
+        }
+        if let receiver = ctx.currentImplicitReceiverExprID {
+            body.append(.returnValue(receiver))
+        } else {
+            body.append(.returnUnit)
+        }
+        body.append(.endBlock)
+        return body
+    }
+
+    /// Creates the KIR function declaration and default-argument stub for a constructor.
+    // swiftlint:disable:next function_parameter_count
+    private func finalizeConstructorDecl(
+        ctorSymbol: SymbolID,
+        classDecl: ClassDecl,
+        params: [KIRParameter],
+        returnType: TypeID,
+        body: KIRLoweringEmitContext,
+        signature: FunctionSignature,
+        shared: KIRLoweringSharedContext
+    ) -> [KIRDeclID] {
+        let arena = shared.arena
+        var declIDs: [KIRDeclID] = []
+        let ctorKirID = arena.appendDecl(
+            .function(KIRFunction(
+                symbol: ctorSymbol, name: classDecl.name,
+                params: params, returnType: returnType,
+                body: body, isSuspend: false, isInline: false
+            ))
+        )
+        declIDs.append(ctorKirID)
+        if let defaults = ctx.functionDefaultArgumentsBySymbol[ctorSymbol] {
+            let stubID = callSupportLowerer.generateDefaultStubFunction(
+                originalSymbol: ctorSymbol, originalName: classDecl.name,
+                signature: signature, defaultExpressions: defaults,
+                shared: shared
+            )
+            declIDs.append(stubID)
+        }
+        declIDs.append(contentsOf: ctx.drainGeneratedCallableDecls())
+        return declIDs
+    }
+
     /// Emits property initializers and `init { }` blocks in the order they
     /// appear in the class body, matching Kotlin's guaranteed top-to-bottom
     /// initialization semantics.
@@ -71,7 +185,6 @@ extension KIRLoweringDriver {
 
     /// Emits a single member property initializer (including delegate
     /// properties) as a field store in the constructor body.
-    // swiftlint:disable:next function_body_length cyclomatic_complexity
     func emitPropertyInitializer(
         propDeclID: DeclID,
         shared: KIRLoweringSharedContext,
@@ -166,60 +279,9 @@ extension KIRLoweringDriver {
         }
     }
 
-    /// Emits a constructor delegation call (`this(...)` or `super(...)`).
-    // swiftlint:disable:next function_parameter_count
-    private func emitDelegationCall(
-        delegation: ConstructorDelegationCall,
-        ctorFQName: [InternedString],
-        ownerSymbol: SymbolID,
-        sema: SemaModule,
-        arena: KIRArena,
-        compilationCtx: CompilationContext,
-        shared: KIRLoweringSharedContext,
-        body: inout KIRLoweringEmitContext
-    ) {
-        let delegationTarget: [InternedString]
-        switch delegation.kind {
-        case .this:
-            delegationTarget = ctorFQName
-        case .super_:
-            let supertypes = sema.symbols.directSupertypes(for: ownerSymbol)
-            let classSupertypes = supertypes.filter {
-                let kind = sema.symbols.symbol($0)?.kind
-                return kind == .class || kind == .enumClass
-            }
-            if let superclass = classSupertypes.first {
-                delegationTarget = (sema.symbols.symbol(superclass)?.fqName ?? []) + [compilationCtx.interner.intern("<init>")]
-            } else {
-                delegationTarget = []
-            }
-        }
-        guard !delegationTarget.isEmpty else { return }
-        var argIDs: [KIRExprID] = []
-        if let receiver = ctx.currentImplicitReceiverExprID {
-            argIDs.append(receiver)
-        }
-        for arg in delegation.args {
-            let lowered = lowerExpr(arg.expr, shared: shared, emit: &body)
-            argIDs.append(lowered)
-        }
-        let delegationResultID = arena.appendExpr(
-            .temporary(Int32(arena.expressions.count)),
-            type: sema.types.unitType
-        )
-        body.append(.call(
-            symbol: sema.symbols.lookupAll(fqName: delegationTarget).first,
-            callee: compilationCtx.interner.intern("<init>"),
-            arguments: argIDs,
-            result: delegationResultID,
-            canThrow: false,
-            thrownResult: nil
-        ))
-    }
-
     /// Emits a delegated property initializer, handling `provideDelegate`
     /// when available on the delegate type.
-    // swiftlint:disable:next function_body_length function_parameter_count
+    // swiftlint:disable:next function_parameter_count
     private func emitDelegatePropertyInitializer(
         delegateExpr: ExprID,
         propSymbol: SymbolID,
@@ -230,72 +292,91 @@ extension KIRLoweringDriver {
         body: inout KIRLoweringEmitContext
     ) {
         let delegateStorageSym = sema.symbols.delegateStorageSymbol(for: propSymbol)
-        let delegateValue = lowerExpr(
-            delegateExpr,
-            shared: shared, emit: &body
+        let delegateValue = lowerExpr(delegateExpr, shared: shared, emit: &body)
+        let hasProvideDelegate = checkProvideDelegate(
+            delegateExpr: delegateExpr, sema: sema, compilationCtx: compilationCtx
         )
-
-        let delegateExprType = sema.bindings.exprType(for: delegateExpr)
-        let provideDelegateName = compilationCtx.interner.intern("provideDelegate")
-        let hasProvideDelegate: Bool = {
-            guard let delegateType = delegateExprType else { return false }
-            let typeKind = sema.types.kind(of: delegateType)
-            switch typeKind {
-            case let .classType(ct):
-                guard let sym = sema.symbols.symbol(ct.classSymbol) else { return false }
-                let memberSymbols = sema.symbols.children(ofFQName: sym.fqName)
-                return memberSymbols.contains { memberID in
-                    guard let member = sema.symbols.symbol(memberID) else { return false }
-                    return member.name == provideDelegateName
-                        && member.kind == .function
-                }
-            default:
-                return false
-            }
-        }()
-
         let valueToStore: KIRExprID
         if hasProvideDelegate, let storageSym = delegateStorageSym {
-            let delegateType = sema.types.anyType
-            let tempFieldRef = arena.appendExpr(.symbolRef(storageSym), type: delegateType)
-            body.append(.copy(from: delegateValue, to: tempFieldRef))
-
-            let propertyName = sema.symbols.symbol(propSymbol)?.name ?? compilationCtx.interner.intern("")
-            let thisRefExprID: KIRExprID
-            if let receiver = ctx.currentImplicitReceiverExprID {
-                thisRefExprID = receiver
-            } else {
-                thisRefExprID = arena.appendExpr(.null, type: sema.types.nullableAnyType)
-                body.append(.constValue(result: thisRefExprID, value: .null))
-            }
-            let kPropertyExprID = arena.appendExpr(
-                .stringLiteral(propertyName),
-                type: sema.types.make(.primitive(.string, .nonNull))
+            valueToStore = emitProvideDelegateCall(
+                delegateValue: delegateValue, storageSym: storageSym,
+                propSymbol: propSymbol, sema: sema, arena: arena,
+                compilationCtx: compilationCtx, body: &body
             )
-            body.append(.constValue(result: kPropertyExprID, value: .stringLiteral(propertyName)))
-            let provideDelegateResult = arena.appendExpr(
-                .temporary(Int32(arena.expressions.count)),
-                type: sema.types.anyType
-            )
-            body.append(
-                .call(
-                    symbol: storageSym,
-                    callee: provideDelegateName,
-                    arguments: [thisRefExprID, kPropertyExprID],
-                    result: provideDelegateResult,
-                    canThrow: false,
-                    thrownResult: nil
-                )
-            )
-            valueToStore = provideDelegateResult
         } else {
             valueToStore = delegateValue
         }
-
         if let storageSym = delegateStorageSym {
             let delegateType = sema.types.anyType
             let fieldRef = arena.appendExpr(.symbolRef(storageSym), type: delegateType)
             body.append(.copy(from: valueToStore, to: fieldRef))
         }
     }
+
+    /// Checks whether the delegate type exposes a `provideDelegate` operator.
+    private func checkProvideDelegate(
+        delegateExpr: ExprID,
+        sema: SemaModule,
+        compilationCtx: CompilationContext
+    ) -> Bool {
+        let delegateExprType = sema.bindings.exprType(for: delegateExpr)
+        let provideDelegateName = compilationCtx.interner.intern("provideDelegate")
+        guard let delegateType = delegateExprType else { return false }
+        let typeKind = sema.types.kind(of: delegateType)
+        switch typeKind {
+        case let .classType(classType):
+            guard let sym = sema.symbols.symbol(classType.classSymbol) else { return false }
+            let memberSymbols = sema.symbols.children(ofFQName: sym.fqName)
+            return memberSymbols.contains { memberID in
+                guard let member = sema.symbols.symbol(memberID) else { return false }
+                return member.name == provideDelegateName
+                    && member.kind == .function
+            }
+        default:
+            return false
+        }
+    }
+
+    /// Wraps a delegate value in a `provideDelegate` call.
+    // swiftlint:disable:next function_parameter_count
+    private func emitProvideDelegateCall(
+        delegateValue: KIRExprID,
+        storageSym: SymbolID,
+        propSymbol: SymbolID,
+        sema: SemaModule,
+        arena: KIRArena,
+        compilationCtx: CompilationContext,
+        body: inout KIRLoweringEmitContext
+    ) -> KIRExprID {
+        let delegateType = sema.types.anyType
+        let tempFieldRef = arena.appendExpr(.symbolRef(storageSym), type: delegateType)
+        body.append(.copy(from: delegateValue, to: tempFieldRef))
+        let propertyName = sema.symbols.symbol(propSymbol)?.name
+            ?? compilationCtx.interner.intern("")
+        let thisRefExprID: KIRExprID
+        if let receiver = ctx.currentImplicitReceiverExprID {
+            thisRefExprID = receiver
+        } else {
+            thisRefExprID = arena.appendExpr(.null, type: sema.types.nullableAnyType)
+            body.append(.constValue(result: thisRefExprID, value: .null))
+        }
+        let kPropertyExprID = arena.appendExpr(
+            .stringLiteral(propertyName),
+            type: sema.types.make(.primitive(.string, .nonNull))
+        )
+        body.append(.constValue(result: kPropertyExprID, value: .stringLiteral(propertyName)))
+        let provideDelegateName = compilationCtx.interner.intern("provideDelegate")
+        let provideDelegateResult = arena.appendExpr(
+            .temporary(Int32(arena.expressions.count)),
+            type: sema.types.anyType
+        )
+        body.append(.call(
+            symbol: storageSym, callee: provideDelegateName,
+            arguments: [thisRefExprID, kPropertyExprID],
+            result: provideDelegateResult,
+            canThrow: false, thrownResult: nil
+        ))
+        return provideDelegateResult
+    }
+
 }
