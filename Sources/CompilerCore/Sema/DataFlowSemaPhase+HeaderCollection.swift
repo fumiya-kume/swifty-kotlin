@@ -548,6 +548,31 @@ extension DataFlowSemaPhase {
                 }
             }
 
+            // Materialize a backing field symbol for top-level properties with
+            // custom accessors (mirrors member property backing field logic).
+            // Simple properties with only an initializer don't need a separate
+            // backing field — the property symbol IS the storage.
+            // Getter-only computed properties never need a backing field.
+            let isGetterOnlyComputed = propertyDecl.getter != nil
+                && propertyDecl.setter == nil
+                && propertyDecl.initializer == nil
+            let needsBackingField = !isGetterOnlyComputed
+                && (propertyDecl.getter != nil || propertyDecl.setter != nil)
+            if needsBackingField, propertyDecl.delegateExpression == nil {
+                let fieldName = interner.intern("$backing_\(interner.resolve(propertyDecl.name))")
+                let fieldFQName = fqName.dropLast() + [fieldName]
+                let backingFieldSymbol = symbols.define(
+                    kind: .backingField,
+                    name: fieldName,
+                    fqName: Array(fieldFQName),
+                    declSite: propertyDecl.range,
+                    visibility: .private,
+                    flags: propertyDecl.isVar ? [.mutable] : []
+                )
+                symbols.setPropertyType(resolvedType, for: backingFieldSymbol)
+                symbols.setBackingFieldSymbol(backingFieldSymbol, for: symbol)
+            }
+
             validateConstPropertyDeclaration(
                 propertyDecl,
                 propertySymbol: symbol,

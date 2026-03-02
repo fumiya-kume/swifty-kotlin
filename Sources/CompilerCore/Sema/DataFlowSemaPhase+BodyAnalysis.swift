@@ -81,6 +81,14 @@ extension DataFlowSemaPhase {
             switch interner.resolve(shortName) {
             case "Int":
                 return types.make(.primitive(.int, nullability))
+            case "Long":
+                return types.make(.primitive(.long, nullability))
+            case "Float":
+                return types.make(.primitive(.float, nullability))
+            case "Double":
+                return types.make(.primitive(.double, nullability))
+            case "Char":
+                return types.make(.primitive(.char, nullability))
             case "Boolean":
                 return types.make(.primitive(.boolean, nullability))
             case "String":
