@@ -1,6 +1,7 @@
-// swiftlint:disable file_length type_body_length
+// swiftlint:disable file_length
 import Foundation
 
+// swiftlint:disable type_body_length
 /// Rewrites `listOf(...)`, `mapOf(...)`, `arrayOf(...)` and related collection
 /// factory calls into runtime ABI calls (`kk_list_of`, `kk_map_of`, etc.).
 ///
@@ -702,3 +703,4 @@ final class CollectionLiteralLoweringPass: LoweringPass {
         module.recordLowering(Self.name)
     }
 }
+// swiftlint:enable type_body_length
