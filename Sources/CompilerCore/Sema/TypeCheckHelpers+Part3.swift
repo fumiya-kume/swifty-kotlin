@@ -7,7 +7,6 @@ extension TypeCheckHelpers {
     /// Maximum depth for recursive typealias expansion to prevent infinite loops.
     static let maxAliasExpansionDepth = 32
 
-    // swiftlint:disable:next function_body_length
     /// Expand a typealias symbol to its underlying type, substituting type arguments.
     /// Handles generic aliases, cycle detection, and depth limiting.
     func expandTypeAlias(
@@ -48,29 +47,38 @@ extension TypeCheckHelpers {
             expanded, aliasSymbol: symbolID, typeArgs: typeArgs,
             sema: sema, diagnostics: diagnostics
         )
-        if case let .classType(classType) = sema.types.kind(of: expanded),
-           let targetSymbol = sema.symbols.symbol(classType.classSymbol),
-           targetSymbol.kind == .typeAlias
-        {
-            var newVisited = visited
-            newVisited.insert(symbolID)
-            let chainArgs = classType.args
-            if let resolved = expandTypeAlias(
-                classType.classSymbol,
-                typeArgs: chainArgs,
-                sema: sema,
-                visited: newVisited,
-                depth: depth + 1,
-                diagnostics: diagnostics
-            ) {
-                if classType.nullability == .nullable {
-                    return applyNullabilityForTypeCheck(resolved, types: sema.types)
-                }
-                return resolved
-            }
-            return nil
+        return resolveChainedAlias(
+            expanded, symbolID: symbolID, sema: sema,
+            visited: visited, depth: depth, diagnostics: diagnostics
+        )
+    }
+
+    /// If the expanded type is itself a typealias, recursively resolve it.
+    private func resolveChainedAlias(
+        _ expanded: TypeID,
+        symbolID: SymbolID,
+        sema: SemaModule,
+        visited: Set<SymbolID>,
+        depth: Int,
+        diagnostics: DiagnosticEngine?
+    ) -> TypeID? {
+        guard case let .classType(classType) = sema.types.kind(of: expanded),
+              let targetSymbol = sema.symbols.symbol(classType.classSymbol),
+              targetSymbol.kind == .typeAlias else {
+            return expanded
         }
-        return expanded
+        var newVisited = visited
+        newVisited.insert(symbolID)
+        if let resolved = expandTypeAlias(
+            classType.classSymbol, typeArgs: classType.args, sema: sema,
+            visited: newVisited, depth: depth + 1, diagnostics: diagnostics
+        ) {
+            if classType.nullability == .nullable {
+                return applyNullabilityForTypeCheck(resolved, types: sema.types)
+            }
+            return resolved
+        }
+        return nil
     }
 
     /// Substitute type alias type parameters with provided type arguments.

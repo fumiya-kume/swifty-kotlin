@@ -4,7 +4,6 @@ import Foundation
 // Split from DataFlowSemaPhase+HeaderHelpers.swift to stay within file-length limits.
 
 extension DataFlowSemaPhase {
-    // swiftlint:disable:next function_body_length
     func registerSyntheticCollectionStubs(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -72,38 +71,51 @@ extension DataFlowSemaPhase {
             symbol: listTypeParamSymbol, nullability: .nonNull
         )))
 
-        // Register operator fun get(index: Int): E on List<E>
+        registerListGetOperator(
+            symbols: symbols, types: types, interner: interner,
+            listFQName: listFQName, listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol, listTypeParamType: listTypeParamType
+        )
+        return listInterfaceSymbol
+    }
+
+    /// Register `operator fun get(index: Int): E` on the List interface.
+    private func registerListGetOperator(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        listFQName: [InternedString],
+        listInterfaceSymbol: SymbolID,
+        listTypeParamSymbol: SymbolID,
+        listTypeParamType: TypeID
+    ) {
         let listGetName = interner.intern("get")
         let listGetFQName = listFQName + [listGetName]
-        if symbols.lookup(fqName: listGetFQName) == nil {
-            let listReceiverType = types.make(.classType(ClassType(
-                classSymbol: listInterfaceSymbol,
-                args: [.out(listTypeParamType)],
-                nullability: .nonNull
-            )))
-            let listGetSymbol = symbols.define(
-                kind: .function,
-                name: listGetName,
-                fqName: listGetFQName,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic, .operatorFunction]
-            )
-            symbols.setParentSymbol(listInterfaceSymbol, for: listGetSymbol)
-            let intType = types.intType
-            symbols.setFunctionSignature(
-                FunctionSignature(
-                    receiverType: listReceiverType,
-                    parameterTypes: [intType],
-                    returnType: listTypeParamType,
-                    typeParameterSymbols: [listTypeParamSymbol],
-                    classTypeParameterCount: 1
-                ),
-                for: listGetSymbol
-            )
-        }
-
-        return listInterfaceSymbol
+        guard symbols.lookup(fqName: listGetFQName) == nil else { return }
+        let listReceiverType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+        let listGetSymbol = symbols.define(
+            kind: .function,
+            name: listGetName,
+            fqName: listGetFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(listInterfaceSymbol, for: listGetSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: listReceiverType,
+                parameterTypes: [types.intType],
+                returnType: listTypeParamType,
+                typeParameterSymbols: [listTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: listGetSymbol
+        )
     }
 
     /// Register `kotlin.collections.MutableList<E>` interface stub with `operator fun set(index: Int, element: E): E`.
@@ -146,35 +158,50 @@ extension DataFlowSemaPhase {
             symbol: mlTypeParamSymbol, nullability: .nonNull
         )))
 
-        // Register operator fun set(index: Int, element: E): E on MutableList<E>
+        registerMutableListSetOperator(
+            symbols: symbols, types: types, interner: interner,
+            mutableListFQName: mutableListFQName,
+            mutableListInterfaceSymbol: mutableListInterfaceSymbol,
+            mlTypeParamSymbol: mlTypeParamSymbol, mlTypeParamType: mlTypeParamType
+        )
+    }
+
+    /// Register `operator fun set(index: Int, element: E): E` on MutableList.
+    private func registerMutableListSetOperator(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        mutableListFQName: [InternedString],
+        mutableListInterfaceSymbol: SymbolID,
+        mlTypeParamSymbol: SymbolID,
+        mlTypeParamType: TypeID
+    ) {
         let mlSetName = interner.intern("set")
         let mlSetFQName = mutableListFQName + [mlSetName]
-        if symbols.lookup(fqName: mlSetFQName) == nil {
-            let mlReceiverType = types.make(.classType(ClassType(
-                classSymbol: mutableListInterfaceSymbol,
-                args: [.invariant(mlTypeParamType)],
-                nullability: .nonNull
-            )))
-            let mlSetSymbol = symbols.define(
-                kind: .function,
-                name: mlSetName,
-                fqName: mlSetFQName,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic, .operatorFunction]
-            )
-            symbols.setParentSymbol(mutableListInterfaceSymbol, for: mlSetSymbol)
-            let intType = types.intType
-            symbols.setFunctionSignature(
-                FunctionSignature(
-                    receiverType: mlReceiverType,
-                    parameterTypes: [intType, mlTypeParamType],
-                    returnType: mlTypeParamType,
-                    typeParameterSymbols: [mlTypeParamSymbol],
-                    classTypeParameterCount: 1
-                ),
-                for: mlSetSymbol
-            )
-        }
+        guard symbols.lookup(fqName: mlSetFQName) == nil else { return }
+        let mlReceiverType = types.make(.classType(ClassType(
+            classSymbol: mutableListInterfaceSymbol,
+            args: [.invariant(mlTypeParamType)],
+            nullability: .nonNull
+        )))
+        let mlSetSymbol = symbols.define(
+            kind: .function,
+            name: mlSetName,
+            fqName: mlSetFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(mutableListInterfaceSymbol, for: mlSetSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: mlReceiverType,
+                parameterTypes: [types.intType, mlTypeParamType],
+                returnType: mlTypeParamType,
+                typeParameterSymbols: [mlTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: mlSetSymbol
+        )
     }
 }

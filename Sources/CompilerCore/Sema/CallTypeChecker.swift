@@ -55,9 +55,7 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
                     guard let symbol = ctx.cachedSymbol(candidate) else { return false }
                     return symbol.kind == .class || symbol.kind == .enumClass || symbol.kind == .annotationClass
                 }
-                if let classSym = classSymbols.first,
-                   let classSymbol = ctx.cachedSymbol(classSym)
-                {
+                if let classSym = classSymbols.first, let classSymbol = ctx.cachedSymbol(classSym) {
                     // P5-112: Prohibit direct instantiation of abstract classes.
                     if classSymbol.flags.contains(.abstractType) {
                         let className = classSymbol.fqName.map { interner.resolve($0) }.joined(separator: ".")
@@ -266,8 +264,7 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
                 let collectionType: TypeID
                 if let expectedType, expectedType != sema.types.errorType,
                    case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
-                   !expectedClassType.args.isEmpty
-                {
+                   !expectedClassType.args.isEmpty {
                     collectionType = expectedType
                 } else if !argTypes.isEmpty {
                     // Infer element type from arguments via LUB so that
@@ -279,7 +276,7 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
                     let listFQName: [InternedString] = [
                         interner.intern("kotlin"),
                         interner.intern("collections"),
-                        interner.intern("List"),
+                        interner.intern("List")
                     ]
                     if let listSymbol = sema.symbols.lookup(fqName: listFQName) {
                         collectionType = sema.types.make(.classType(ClassType(
