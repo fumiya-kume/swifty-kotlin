@@ -52,24 +52,24 @@ public func kk_list_get(_ listRaw: Int, _ index: Int) -> Int {
 /// - Parameters:
 ///   - listRaw: Opaque handle to a `RuntimeListBox`.
 ///   - element: The element to search for.
-/// - Returns: 1 if the list contains the element, 0 otherwise.
+/// - Returns: Boxed boolean handle via `kk_box_bool`.
 @_cdecl("kk_list_contains")
 public func kk_list_contains(_ listRaw: Int, _ element: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
-        return 0
+        return kk_box_bool(0)
     }
-    return list.elements.contains(element) ? 1 : 0
+    return kk_box_bool(list.elements.contains(element) ? 1 : 0)
 }
 
 /// Checks if a list is empty.
 /// - Parameter listRaw: Opaque handle to a `RuntimeListBox`.
-/// - Returns: 1 if the list is empty, 0 otherwise.
+/// - Returns: Boxed boolean handle via `kk_box_bool`.
 @_cdecl("kk_list_is_empty")
 public func kk_list_is_empty(_ listRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
-        return 1
+        return kk_box_bool(1)
     }
-    return list.elements.isEmpty ? 1 : 0
+    return kk_box_bool(list.elements.isEmpty ? 1 : 0)
 }
 
 /// Creates an iterator over a list.
@@ -198,24 +198,24 @@ public func kk_map_get(_ mapRaw: Int, _ key: Int) -> Int {
 /// - Parameters:
 ///   - mapRaw: Opaque handle to a `RuntimeMapBox`.
 ///   - key: The key to search for.
-/// - Returns: 1 if the map contains the key, 0 otherwise.
+/// - Returns: Boxed boolean handle via `kk_box_bool`.
 @_cdecl("kk_map_contains_key")
 public func kk_map_contains_key(_ mapRaw: Int, _ key: Int) -> Int {
     guard let map = runtimeMapBox(from: mapRaw) else {
-        return 0
+        return kk_box_bool(0)
     }
-    return map.keys.contains(key) ? 1 : 0
+    return kk_box_bool(map.keys.contains(key) ? 1 : 0)
 }
 
 /// Checks if a map is empty.
 /// - Parameter mapRaw: Opaque handle to a `RuntimeMapBox`.
-/// - Returns: 1 if the map is empty, 0 otherwise.
+/// - Returns: Boxed boolean handle via `kk_box_bool`.
 @_cdecl("kk_map_is_empty")
 public func kk_map_is_empty(_ mapRaw: Int) -> Int {
     guard let map = runtimeMapBox(from: mapRaw) else {
-        return 1
+        return kk_box_bool(1)
     }
-    return map.keys.isEmpty ? 1 : 0
+    return kk_box_bool(map.keys.isEmpty ? 1 : 0)
 }
 
 /// Creates an iterator over a map's entries.
