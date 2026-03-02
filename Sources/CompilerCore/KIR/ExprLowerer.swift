@@ -1047,17 +1047,17 @@ final class ExprLowerer {
 
         switch typeRef {
         case let .named(path, _, nullable):
-            guard let first = path.first else {
+            guard let last = path.last else {
                 return emitLiteral(RuntimeTypeCheckToken.unknownBase)
             }
             if path.count == 1,
-               let tokenSymbol = reifiedTypeTokenSymbol(for: first, sema: sema)
+               let tokenSymbol = reifiedTypeTokenSymbol(for: last, sema: sema)
             {
                 let tokenExpr = arena.appendExpr(.symbolRef(tokenSymbol), type: intType)
                 instructions.append(.constValue(result: tokenExpr, value: .symbolRef(tokenSymbol)))
                 return tokenExpr
             }
-            let literal = RuntimeTypeCheckToken.encodeBuiltinTypeName(interner.resolve(first), nullable: nullable)
+            let literal = RuntimeTypeCheckToken.encodeBuiltinTypeName(interner.resolve(last), nullable: nullable)
                 ?? RuntimeTypeCheckToken.encode(base: RuntimeTypeCheckToken.unknownBase, nullable: nullable)
             return emitLiteral(literal)
 

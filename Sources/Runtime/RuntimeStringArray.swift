@@ -96,7 +96,7 @@ public func kk_string_length(_ strRaw: Int) -> Int {
     guard isObjectPointer, let stringBox = tryCast(ptr, to: RuntimeStringBox.self) else {
         return runtimeNullSentinelInt
     }
-    return stringBox.value.count
+    return stringBox.value.utf8.count
 }
 
 @_cdecl("kk_op_is")

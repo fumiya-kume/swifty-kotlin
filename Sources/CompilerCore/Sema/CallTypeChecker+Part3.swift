@@ -45,8 +45,10 @@ extension CallTypeChecker {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let stringType = sema.types.make(.primitive(.string, .nonNull))
-            let nonNullReceiver = sema.types.makeNonNullable(lookupReceiverType)
-            if nonNullReceiver == intType || nonNullReceiver == longType,
+            let receiverForCheck = safeCall
+                ? sema.types.makeNonNullable(lookupReceiverType)
+                : lookupReceiverType
+            if receiverForCheck == intType || receiverForCheck == longType,
                argTypes[0] == intType {
                 let finalType = safeCall ? sema.types.makeNullable(stringType) : stringType
                 sema.bindings.bindExprType(id, type: finalType)
@@ -220,8 +222,10 @@ extension CallTypeChecker {
             if args.isEmpty,
                interner.resolve(calleeName) == "length"
             {
-                let nonNullReceiverType = sema.types.makeNonNullable(lookupReceiverType)
-                if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType) {
                     let resultType = sema.types.intType
                     let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                     sema.bindings.bindExprType(id, type: finalType)
