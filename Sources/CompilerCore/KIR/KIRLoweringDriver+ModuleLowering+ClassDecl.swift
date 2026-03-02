@@ -51,7 +51,7 @@ extension KIRLoweringDriver {
         return declIDs
     }
 
-    /// Emits a constructor delegation call (`this(...)` or `super(...)`).
+    // Emits a constructor delegation call (this(...) or super(...)).
     // swiftlint:disable:next function_parameter_count
     func emitDelegationCall(
         delegation: ConstructorDelegationCall,
