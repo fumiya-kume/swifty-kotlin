@@ -18,6 +18,9 @@ public enum SyntaxKind: Equatable {
     case tryExpr
     case ifExpr
     case whenExpr
+    case whenEntry
+    case whenConditionList
+    case whenCondition
     case callExpr
     case binaryExpr
     case unaryExpr

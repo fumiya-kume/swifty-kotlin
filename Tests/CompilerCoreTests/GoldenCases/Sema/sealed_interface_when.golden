@@ -25,12 +25,11 @@ file f0 package=_
   decl d3 class Multiply sym=s16
   decl d4 fun eval suspend=0 inline=0 sym=s18
 expr e0 name(e) type=Class#11 ref=s19
-expr e1 name(is) type=<error>
-expr e2 name(Literal) type=Any ref=s12
-expr e3 string(literal) type=_
-expr e4 isCheck expr=e3 type=t5 type=_
-expr e5 string(add) type=_
-expr e6 isCheck expr=e5 type=t6 type=_
-expr e7 string(multiply) type=String
-expr e8 when subject=e0 branches=[e1->e2] else=e7 type=Any?
-expr e9 return value=e8 type=Nothing
+expr e1 isCheck expr=e0 type=t5 type=Boolean
+expr e2 string(literal) type=String
+expr e3 isCheck expr=e0 type=t6 type=Boolean
+expr e4 string(add) type=String
+expr e5 isCheck expr=e0 type=t7 type=Boolean
+expr e6 string(multiply) type=String
+expr e7 when subject=e0 branches=[e1->e2,e3->e4,e5->e6] else=_ type=String
+expr e8 return value=e7 type=Nothing

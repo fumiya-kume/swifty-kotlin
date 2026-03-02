@@ -92,6 +92,20 @@ final class CompilerCoreTests: XCTestCase {
         assertNoDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
     }
 
+    func testWhenExhaustivenessAcceptsEnumWithGroupedBranches() throws {
+        let source = """
+        enum class Color { Red, Green, Blue }
+        fun pick(color: Color) = when (color) {
+            Red, Green -> 1
+            Blue -> 2
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
+    }
+
     func testWhenExhaustivenessAcceptsSealedWithAllDirectSubtypes() throws {
         let source = """
         sealed class Expr
@@ -109,6 +123,52 @@ final class CompilerCoreTests: XCTestCase {
 
         assertNoDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
         assertNoDiagnostic("KSWIFTK-SEMA-0071", in: ctx)
+    }
+
+    func testSealedInterfaceWhenGroupedIsBranchesAreExhaustive() throws {
+        let source = """
+        sealed interface Expr
+        class Literal : Expr
+        class Add : Expr
+        class Multiply : Expr
+
+        fun eval(e: Expr): String {
+            when (e) {
+                is Literal, is Add -> "few"
+                is Multiply -> "mul"
+            }
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0004", in: ctx)
+        assertNoDiagnostic("KSWIFTK-SEMA-0071", in: ctx)
+    }
+
+    func testSealedInterfaceWhenGroupedIsBranchesReportMissingSubtype() throws {
+        let source = """
+        sealed interface Expr
+        class Literal : Expr
+        class Add : Expr
+        class Multiply : Expr
+
+        fun eval(e: Expr): String {
+            when (e) {
+                is Literal, is Add -> "few"
+            }
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertHasDiagnostic("KSWIFTK-SEMA-0071", in: ctx)
+        let sealedDiag = ctx.diagnostics.diagnostics.first { $0.code == "KSWIFTK-SEMA-0071" }
+        XCTAssertNotNil(sealedDiag)
+        XCTAssertTrue(
+            sealedDiag?.message.contains("Multiply") == true,
+            "Expected diagnostic message to mention missing subtype 'Multiply'"
+        )
     }
 
     func testWhenExhaustivenessDiagnosticForSealedMissingSubtype() throws {
