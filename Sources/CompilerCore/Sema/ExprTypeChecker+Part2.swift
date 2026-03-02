@@ -318,6 +318,7 @@ extension ExprTypeChecker {
         return inferredFunctionType
     }
 
+    // swiftlint:disable:next cyclomatic_complexity
     func inferCallableRefExpr(
         _ id: ExprID,
         receiver: ExprID?,
@@ -457,6 +458,7 @@ extension ExprTypeChecker {
 
     /// Helper: handles `T::class` / `SomeType::class` callable-ref expressions.
     /// Returns the inferred type if matched, or `nil` to fall through.
+    // swiftlint:disable:next function_parameter_count
     private func inferClassRefExpr(
         _ id: ExprID,
         receiver: ExprID,
