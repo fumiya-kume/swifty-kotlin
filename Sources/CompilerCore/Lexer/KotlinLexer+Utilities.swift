@@ -75,33 +75,6 @@ extension KotlinLexer {
         guard escapeStart < bytes.count, bytes[escapeStart] == 0x75 else {
             return nil
         }
-        let next = escapeStart + 1
-        guard next < bytes.count else { return nil }
-
-        if bytes[next] == 0x7B {
-            var cursor = next + 1
-            var values: [Int] = []
-            while cursor < bytes.count && bytes[cursor] != 0x7D {
-                guard let value = hexValue(of: bytes[cursor]) else {
-                    return nil
-                }
-                values.append(value)
-                cursor += 1
-                if values.count > 6 {
-                    return nil
-                }
-            }
-            guard !values.isEmpty && cursor < bytes.count else { return nil }
-
-            let scalar = values.reduce(0) { acc, value in
-                (acc << 4) | UInt32(value)
-            }
-            if scalar > 0x10FFFF || (0xD800 ... 0xDFFF).contains(scalar) {
-                return nil
-            }
-            return (scalar: scalar, length: cursor - escapeStart + 1)
-        }
-
         guard escapeStart + 4 < bytes.count else {
             return nil
         }

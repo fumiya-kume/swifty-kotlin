@@ -26,11 +26,11 @@
 
 #### 🔤 Lexer / Literals
 
-- [ ] LEX-001: Char リテラルのエスケープシーケンス全網羅と Unicode escape を実装する（spec.md J4）
-  - [ ] `\t` / `\n` / `\r` / `\\` / `\'` / `\"` / `\$` の 7 種を Lexer で正しい Char コードに変換する
-  - [ ] `\uXXXX` Unicode エスケープを Lexer で 4 桁 hex → UTF-16 コードポイントへ変換する
-  - [ ] 不正なエスケープシーケンス（`\q` 等）に対して `KSWIFTK-LEX-*` 診断を出す
-  - [ ] Char 算術（`'a' + 1`・`'z' - 'a'`）の型推論と runtime 演算を実装する
+- [x] LEX-001: Char リテラルのエスケープシーケンス全網羅と Unicode escape を実装する（spec.md J4）
+  - [x] `\t` / `\n` / `\r` / `\\` / `\'` / `\"` / `\$` の 7 種を Lexer で正しい Char コードに変換する
+  - [x] `\uXXXX` Unicode エスケープを Lexer で 4 桁 hex → UTF-16 コードポイントへ変換する
+  - [x] 不正なエスケープシーケンス（`\q` 等）に対して `KSWIFTK-LEX-*` 診断を出す
+  - [x] Char 算術（`'a' + 1`・`'z' - 'a'`）の型推論と runtime 演算を実装する
   - [x] Char エスケープ・Unicode escape の diff/golden ケースを追加する（`Scripts/diff_cases/char_escape.kt` / `GoldenCases/Lexer/char_literals.kt`）
   - **完了条件**: `'\u0041'` が `'A'` と同一 Char 値になり、不正エスケープが診断される
 

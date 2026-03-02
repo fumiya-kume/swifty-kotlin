@@ -315,6 +315,33 @@ extension LexerParserEdgeCaseTests {
         XCTAssertTrue(codes.contains("KSWIFTK-LEX-0003"))
     }
 
+    func testCharLiteralSupportsSingleNonASCIIScalar() {
+        let source = "'あ'"
+        let result = lex(source)
+        let charValues = result.tokens.compactMap { token -> UInt32? in
+            if case let .charLiteral(value) = token.kind { return value }
+            return nil
+        }
+        XCTAssertEqual(charValues, [0x3042])
+        XCTAssertFalse(result.diagnostics.hasError)
+    }
+
+    func testCharLiteralEmptyAndMultipleCharactersEmitLex0003() {
+        let source = "'' 'ab'"
+        let result = lex(source)
+        let codeCounts = Dictionary(grouping: result.diagnostics.diagnostics, by: \.code).mapValues(\.count)
+        XCTAssertEqual(codeCounts["KSWIFTK-LEX-0003"], 2)
+        XCTAssertNil(codeCounts["KSWIFTK-LEX-0002"])
+    }
+
+    func testCharLiteralUnicodeEscapeRequiresUXXXXForm() {
+        let source = "'\\u{0041}' '\\u12G4'"
+        let result = lex(source)
+        let codeCounts = Dictionary(grouping: result.diagnostics.diagnostics, by: \.code).mapValues(\.count)
+        XCTAssertEqual(codeCounts["KSWIFTK-LEX-0003"], 2)
+        XCTAssertNil(codeCounts["KSWIFTK-LEX-0002"])
+    }
+
     func testCharArithmeticTypeInference() throws {
         let source = """
         fun test() {

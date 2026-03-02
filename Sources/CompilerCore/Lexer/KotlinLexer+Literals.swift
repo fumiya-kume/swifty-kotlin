@@ -247,6 +247,16 @@ extension KotlinLexer {
         }
 
         var value: UInt32 = 0
+        var emittedContentError = false
+        if bytes[offset] == 0x27 {
+            diagnostics.error(
+                "KSWIFTK-LEX-0003",
+                "Empty character literal.",
+                range: makeRange(start: start, end: min(start + 2, bytes.count))
+            )
+            offset += 1
+            return Token(kind: .charLiteral(0), range: makeRange(start: start, end: offset), leadingTrivia: leadingTrivia)
+        }
         if bytes[offset] == 0x5C {
             if offset + 1 >= bytes.count {
                 diagnostics.error(
@@ -262,13 +272,14 @@ extension KotlinLexer {
                     value = unicode.scalar
                     offset += 1 + unicode.length
                 } else {
-                    let missingEnd = min(offset + 12, bytes.count)
+                    let missingEnd = min(offset + 6, bytes.count)
                     diagnostics.error(
                         "KSWIFTK-LEX-0003",
                         "Invalid unicode escape in character literal.",
-                        range: makeRange(start: start, end: missingEnd)
+                        range: makeRange(start: offset, end: missingEnd)
                     )
                     offset += 2
+                    emittedContentError = true
                 }
             } else if let scalar = scalarValue(forEscape: escape) {
                 value = scalar
@@ -280,28 +291,130 @@ extension KotlinLexer {
                     range: makeRange(start: offset, end: min(offset + 2, bytes.count))
                 )
                 offset += 2
+                emittedContentError = true
             }
         } else {
-            value = UInt32(bytes[offset])
-            offset += 1
+            if let decoded = decodeUTF8Scalar(at: offset) {
+                value = decoded.scalar
+                offset += decoded.length
+            } else {
+                diagnostics.error(
+                    "KSWIFTK-LEX-0003",
+                    "Invalid UTF-8 sequence in character literal.",
+                    range: makeRange(start: offset, end: min(offset + 1, bytes.count))
+                )
+                offset += 1
+                emittedContentError = true
+            }
         }
 
-        if offset >= bytes.count || bytes[offset] != 0x27 {
+        if offset >= bytes.count {
+            diagnostics.error(
+                "KSWIFTK-LEX-0002",
+                "Unterminated character literal.",
+                range: makeRange(start: start, end: bytes.count)
+            )
+            return Token(kind: .charLiteral(value), range: makeRange(start: start, end: bytes.count), leadingTrivia: leadingTrivia)
+        }
+
+        if bytes[offset] == 0x27 {
+            offset += 1
+            return Token(kind: .charLiteral(value), range: makeRange(start: start, end: offset), leadingTrivia: leadingTrivia)
+        }
+
+        if bytes[offset] == 0x0A || bytes[offset] == 0x0D {
+            diagnostics.error(
+                "KSWIFTK-LEX-0002",
+                "Unterminated character literal.",
+                range: makeRange(start: start, end: offset)
+            )
+            return Token(kind: .charLiteral(value), range: makeRange(start: start, end: offset), leadingTrivia: leadingTrivia)
+        }
+
+        if !emittedContentError {
+            diagnostics.error(
+                "KSWIFTK-LEX-0003",
+                "Character literal must contain exactly one character.",
+                range: makeRange(start: start, end: min(offset + 1, bytes.count))
+            )
+        }
+
+        let closed = consumeUntilCharacterLiteralClosingQuote()
+        if !closed {
             diagnostics.error(
                 "KSWIFTK-LEX-0002",
                 "Unterminated character literal.",
                 range: makeRange(start: start, end: min(offset + 1, bytes.count))
             )
-            while offset < bytes.count, bytes[offset] != 0x27 {
+        }
+        return Token(kind: .charLiteral(value), range: makeRange(start: start, end: offset), leadingTrivia: leadingTrivia)
+    }
+
+    private func consumeUntilCharacterLiteralClosingQuote() -> Bool {
+        while offset < bytes.count {
+            let current = bytes[offset]
+            if current == 0x27 {
                 offset += 1
+                return true
             }
-            if offset < bytes.count {
-                offset += 1
+            if current == 0x0A || current == 0x0D {
+                return false
             }
-            return Token(kind: .charLiteral(value), range: makeRange(start: start, end: min(offset, bytes.count)), leadingTrivia: leadingTrivia)
+            offset += 1
+        }
+        return false
+    }
+
+    private func decodeUTF8Scalar(at start: Int) -> (scalar: UInt32, length: Int)? {
+        guard start < bytes.count else {
+            return nil
+        }
+        let leading = bytes[start]
+        if leading < 0x80 {
+            return (UInt32(leading), 1)
         }
 
-        offset += 1
-        return Token(kind: .charLiteral(value), range: makeRange(start: start, end: offset), leadingTrivia: leadingTrivia)
+        let length: Int
+        var scalar: UInt32
+        switch leading {
+        case 0xC2 ... 0xDF:
+            length = 2
+            scalar = UInt32(leading & 0x1F)
+        case 0xE0 ... 0xEF:
+            length = 3
+            scalar = UInt32(leading & 0x0F)
+        case 0xF0 ... 0xF4:
+            length = 4
+            scalar = UInt32(leading & 0x07)
+        default:
+            return nil
+        }
+
+        guard start + length <= bytes.count else {
+            return nil
+        }
+
+        for index in 1 ..< length {
+            let next = bytes[start + index]
+            guard (next & 0xC0) == 0x80 else {
+                return nil
+            }
+            scalar = (scalar << 6) | UInt32(next & 0x3F)
+        }
+
+        if length == 2, scalar < 0x80 {
+            return nil
+        }
+        if length == 3, scalar < 0x800 {
+            return nil
+        }
+        if length == 4, scalar < 0x10000 {
+            return nil
+        }
+        if scalar > 0x10FFFF || (0xD800 ... 0xDFFF).contains(scalar) {
+            return nil
+        }
+
+        return (scalar, length)
     }
 }
