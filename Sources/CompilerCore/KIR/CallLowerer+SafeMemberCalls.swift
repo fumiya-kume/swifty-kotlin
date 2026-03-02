@@ -98,7 +98,7 @@ extension CallLowerer {
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             if nonNullReceiverType == intType || nonNullReceiverType == longType {
                 let rhsType = sema.types.makeNonNullable(sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType)
-                let primitiveCallee = switch interner.resolve(effectiveCalleeName) {
+                let primitiveCallee: InternedString? = switch interner.resolve(effectiveCalleeName) {
                 case "and":
                     (rhsType == intType || rhsType == longType) ? interner.intern("kk_bitwise_and") : nil
                 case "or":
