@@ -266,5 +266,4 @@ struct TypeCheckHelpers {
             sema.symbols.symbol(symbolID)?.kind == .typeParameter
         }
     }
-
 }

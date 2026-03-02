@@ -272,8 +272,24 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
                 } else if !argTypes.isEmpty {
                     // Infer element type from arguments via LUB so that
                     // `listOf("a", null)` produces a nullable element type.
+                    // Wrap the element type in List<E> if the synthetic
+                    // List interface symbol is available, otherwise fall
+                    // back to anyType.
                     let elementType = sema.types.lub(argTypes)
-                    collectionType = elementType
+                    let listFQName: [InternedString] = [
+                        interner.intern("kotlin"),
+                        interner.intern("collections"),
+                        interner.intern("List"),
+                    ]
+                    if let listSymbol = sema.symbols.lookup(fqName: listFQName) {
+                        collectionType = sema.types.make(.classType(ClassType(
+                            classSymbol: listSymbol,
+                            args: [.invariant(elementType)],
+                            nullability: .nonNull
+                        )))
+                    } else {
+                        collectionType = sema.types.anyType
+                    }
                 } else {
                     collectionType = sema.types.anyType
                 }
