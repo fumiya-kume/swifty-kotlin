@@ -550,10 +550,8 @@ extension CallLowerer {
         ))
     }
 
-    /// Returns a `.virtualCall` instruction when the callee should be
-    /// dispatched virtually, or `nil` when a plain `.call` is appropriate.
-    /// Callees with an `externalLinkName` (C runtime functions such as
-    /// `kk_array_get`) are never dispatched virtually.
+    // Callees with an externalLinkName (C runtime functions such as
+    // kk_array_get) are never dispatched virtually.
     // swiftlint:disable:next function_parameter_count
     private func tryEmitVirtualDispatch(
         chosenCallee: SymbolID?,
