@@ -459,6 +459,26 @@ extension DataFlowSemaPhase {
                 diagnostics: diagnostics,
                 interner: interner
             )
+            if objectDecl.modifiers.contains(.data) {
+                collectSyntheticDataObjectToString(
+                    ownerSymbol: symbol,
+                    ownerFQName: fqName,
+                    objectType: objectType,
+                    symbols: symbols,
+                    types: types,
+                    scope: objectScope,
+                    interner: interner
+                )
+                collectSyntheticDataObjectEquals(
+                    ownerSymbol: symbol,
+                    ownerFQName: fqName,
+                    objectType: objectType,
+                    symbols: symbols,
+                    types: types,
+                    scope: objectScope,
+                    interner: interner
+                )
+            }
 
         case let .funDecl(funDecl):
             let localNamespaceFQName = fqName + [interner.intern("$\(symbol.rawValue)")]

@@ -133,6 +133,95 @@ extension DataFlowSemaPhase {
         }
     }
 
+    /// Registers synthetic `toString(): String` for data object so member resolution finds it.
+    func collectSyntheticDataObjectToString(
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        objectType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        scope: Scope,
+        interner: StringInterner
+    ) {
+        let toStringName = interner.intern("toString")
+        let toStringFQName = ownerFQName + [toStringName]
+        let hasUserDeclaredToString = symbols.lookupAll(fqName: toStringFQName).contains { id in
+            symbols.symbol(id).map { !$0.flags.contains(.synthetic) } ?? false
+        }
+        guard !hasUserDeclaredToString else {
+            return
+        }
+        let stringType = types.make(.primitive(.string, .nonNull))
+        let funcSymbol = symbols.define(
+            kind: .function,
+            name: toStringName,
+            fqName: toStringFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: funcSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: objectType,
+                parameterTypes: [],
+                returnType: stringType,
+                isSuspend: false,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: [],
+                typeParameterSymbols: []
+            ),
+            for: funcSymbol
+        )
+        scope.insert(funcSymbol)
+    }
+
+    /// Registers synthetic `equals(other: Any?): Boolean` for data object (identity comparison).
+    func collectSyntheticDataObjectEquals(
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        objectType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        scope: Scope,
+        interner: StringInterner
+    ) {
+        let equalsName = interner.intern("equals")
+        let equalsFQName = ownerFQName + [equalsName]
+        let hasUserDeclaredEquals = symbols.lookupAll(fqName: equalsFQName).contains { id in
+            symbols.symbol(id).map { !$0.flags.contains(.synthetic) } ?? false
+        }
+        guard !hasUserDeclaredEquals else {
+            return
+        }
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let nullableAnyType = types.nullableAnyType
+        let funcSymbol = symbols.define(
+            kind: .function,
+            name: equalsName,
+            fqName: equalsFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: funcSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: objectType,
+                parameterTypes: [nullableAnyType],
+                returnType: boolType,
+                isSuspend: false,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: [],
+                typeParameterSymbols: []
+            ),
+            for: funcSymbol
+        )
+        scope.insert(funcSymbol)
+    }
+
     /// Collects value parameters into parallel arrays of types, symbols, default-value flags,
     /// and vararg flags.  Shared by constructor and function header collection.
     func collectValueParameters(
