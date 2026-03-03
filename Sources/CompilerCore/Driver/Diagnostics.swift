@@ -1,11 +1,11 @@
+import Foundation
+
 public enum DiagnosticSeverity: Sendable {
     case error
     case warning
     case note
     case info
 }
-
-import Foundation
 
 public struct Diagnostic: Equatable {
     public let severity: DiagnosticSeverity
@@ -32,6 +32,7 @@ public struct Diagnostic: Equatable {
     }
 }
 
+// swiftlint:disable:next type_body_length
 public final class DiagnosticEngine: @unchecked Sendable {
     private let lock = NSLock()
     private var _diagnostics: [Diagnostic] = []
@@ -127,6 +128,19 @@ public final class DiagnosticEngine: @unchecked Sendable {
         }
     }
 
+    public func printDiagnostics(
+        format: DiagnosticsFormat,
+        to stderr: Bool = true,
+        from sourceManager: SourceManager
+    ) {
+        switch format {
+        case .json:
+            printDiagnosticsJSON(to: stderr, from: sourceManager)
+        case .text:
+            printDiagnostics(to: stderr, from: sourceManager)
+        }
+    }
+
     private func formatDiagnostic(_ diagnostic: Diagnostic, sourceManager: SourceManager) -> String {
         let severityLabel = label(for: diagnostic.severity)
         if let range = diagnostic.primaryRange {
@@ -216,9 +230,12 @@ public final class DiagnosticEngine: @unchecked Sendable {
     ///                        "code", "source", "message", "codeActions" } ] }
     /// ```
     public func renderJSON(_ sourceManager: SourceManager) -> String {
-        lock.lock()
-        let ordered = _diagnostics.sorted { diagnosticsOrder(lhs: $0, rhs: $1) }
-        lock.unlock()
+        let diagnosticsSnapshot: [Diagnostic] = {
+            lock.lock()
+            defer { lock.unlock() }
+            return _diagnostics
+        }()
+        let ordered = diagnosticsSnapshot.sorted { diagnosticsOrder(lhs: $0, rhs: $1) }
 
         var entries: [String] = []
         for diag in ordered {
@@ -298,12 +315,30 @@ public final class DiagnosticEngine: @unchecked Sendable {
     }
 
     private func escapeJSON(_ value: String) -> String {
-        var escaped = value
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "\"", with: "\\\"")
-            .replacingOccurrences(of: "\n", with: "\\n")
-            .replacingOccurrences(of: "\r", with: "\\r")
-            .replacingOccurrences(of: "\t", with: "\\t")
-        return "\"\(escaped)\""
+        var result = "\""
+        for scalar in value.unicodeScalars {
+            switch scalar {
+            case "\"":
+                result += "\\\""
+            case "\\":
+                result += "\\\\"
+            case "\u{8}":
+                result += "\\b"
+            case "\u{C}":
+                result += "\\f"
+            case "\n":
+                result += "\\n"
+            case "\r":
+                result += "\\r"
+            case "\t":
+                result += "\\t"
+            case let s where s.value < 0x20:
+                result += String(format: "\\u%04X", s.value)
+            default:
+                result += String(scalar)
+            }
+        }
+        result += "\""
+        return result
     }
 }

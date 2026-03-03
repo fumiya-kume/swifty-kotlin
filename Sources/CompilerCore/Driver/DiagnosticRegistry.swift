@@ -76,18 +76,14 @@ public enum DiagnosticRegistry {
             pass: "LEX",
             defaultSeverity: .error,
             summary: "Unterminated string literal.",
-            codeActions: [
-                DiagnosticCodeAction(title: "Close string literal with matching quote"),
-            ]
+            codeActions: [DiagnosticCodeAction(title: "Close string literal with matching quote")]
         ),
         DiagnosticDescriptor(
             code: "KSWIFTK-LEX-0002",
             pass: "LEX",
             defaultSeverity: .error,
             summary: "Unexpected character in input.",
-            codeActions: [
-                DiagnosticCodeAction(title: "Remove unexpected character"),
-            ]
+            codeActions: [DiagnosticCodeAction(title: "Remove unexpected character")]
         ),
         DiagnosticDescriptor(
             code: "KSWIFTK-LEX-0003",
@@ -123,9 +119,7 @@ public enum DiagnosticRegistry {
             pass: "PARSE",
             defaultSeverity: .error,
             summary: "Expected declaration name.",
-            codeActions: [
-                DiagnosticCodeAction(title: "Insert placeholder name"),
-            ]
+            codeActions: [DiagnosticCodeAction(title: "Insert placeholder name")]
         ),
         DiagnosticDescriptor(
             code: "KSWIFTK-PARSE-0003",
@@ -167,7 +161,6 @@ public enum DiagnosticRegistry {
 
     // MARK: - Semantic analysis pass (SEMA)
 
-    // swiftlint:disable:next function_body_length
     static let semaDescriptors: [DiagnosticDescriptor] = [
         DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-0002",
@@ -186,18 +179,14 @@ public enum DiagnosticRegistry {
             pass: "SEMA",
             defaultSeverity: .error,
             summary: "Return type mismatch.",
-            codeActions: [
-                DiagnosticCodeAction(title: "Change return type annotation to match expression"),
-            ]
+            codeActions: [DiagnosticCodeAction(title: "Change return type annotation to match expression")]
         ),
         DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-0005",
             pass: "SEMA",
             defaultSeverity: .error,
             summary: "Missing return type annotation.",
-            codeActions: [
-                DiagnosticCodeAction(title: "Add explicit return type annotation"),
-            ]
+            codeActions: [DiagnosticCodeAction(title: "Add explicit return type annotation")]
         ),
         DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-0013",
@@ -210,9 +199,7 @@ public enum DiagnosticRegistry {
             pass: "SEMA",
             defaultSeverity: .error,
             summary: "Type mismatch in assignment or initialization.",
-            codeActions: [
-                DiagnosticCodeAction(title: "Add explicit type cast"),
-            ]
+            codeActions: [DiagnosticCodeAction(title: "Add explicit type cast")]
         ),
         DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-0018",
@@ -237,9 +224,7 @@ public enum DiagnosticRegistry {
             pass: "SEMA",
             defaultSeverity: .error,
             summary: "Unresolved reference.",
-            codeActions: [
-                DiagnosticCodeAction(title: "Check spelling or add import for symbol"),
-            ]
+            codeActions: [DiagnosticCodeAction(title: "Check spelling or add import for symbol")]
         ),
         DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-0023",
@@ -282,18 +267,14 @@ public enum DiagnosticRegistry {
             pass: "SEMA",
             defaultSeverity: .error,
             summary: "Cannot access private member.",
-            codeActions: [
-                DiagnosticCodeAction(title: "Change visibility to 'internal'"),
-            ]
+            codeActions: [DiagnosticCodeAction(title: "Change visibility to 'internal'")]
         ),
         DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-0041",
             pass: "SEMA",
             defaultSeverity: .error,
             summary: "Cannot access protected member.",
-            codeActions: [
-                DiagnosticCodeAction(title: "Change visibility to 'public'"),
-            ]
+            codeActions: [DiagnosticCodeAction(title: "Change visibility to 'public'")]
         ),
         DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-0042",
@@ -366,9 +347,7 @@ public enum DiagnosticRegistry {
             pass: "SEMA",
             defaultSeverity: .error,
             summary: "Const property not initialized with compile-time constant.",
-            codeActions: [
-                DiagnosticCodeAction(title: "Remove 'const' modifier"),
-            ]
+            codeActions: [DiagnosticCodeAction(title: "Remove 'const' modifier")]
         ),
         DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-0081",
@@ -417,27 +396,21 @@ public enum DiagnosticRegistry {
             pass: "SEMA",
             defaultSeverity: .error,
             summary: "Diamond inheritance conflict requires explicit override.",
-            codeActions: [
-                DiagnosticCodeAction(title: "Add explicit override to resolve diamond conflict"),
-            ]
+            codeActions: [DiagnosticCodeAction(title: "Add explicit override to resolve diamond conflict")]
         ),
         DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-FIELD",
             pass: "SEMA",
             defaultSeverity: .error,
             summary: "Unresolved member access.",
-            codeActions: [
-                DiagnosticCodeAction(title: "Check member name spelling"),
-            ]
+            codeActions: [DiagnosticCodeAction(title: "Check member name spelling")]
         ),
         DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-FINAL",
             pass: "SEMA",
             defaultSeverity: .error,
             summary: "Cannot override final member.",
-            codeActions: [
-                DiagnosticCodeAction(title: "Remove 'final' modifier from base declaration"),
-            ]
+            codeActions: [DiagnosticCodeAction(title: "Remove 'final' modifier from base declaration")]
         ),
         DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-INFER",
@@ -450,9 +423,7 @@ public enum DiagnosticRegistry {
             pass: "SEMA",
             defaultSeverity: .error,
             summary: "Missing 'override' keyword on overriding member.",
-            codeActions: [
-                DiagnosticCodeAction(title: "Add 'override' keyword"),
-            ]
+            codeActions: [DiagnosticCodeAction(title: "Add 'override' keyword")]
         ),
         DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-REIFIED",

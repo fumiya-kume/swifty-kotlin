@@ -17,6 +17,8 @@ func printCLIError(_ error: CLIParseError) {
         print("Unsupported optimization level: \(value)")
     case let .invalidTargetTriple(value):
         print("Invalid target triple: \(value)")
+    case let .unsupportedDiagnosticsFormat(value):
+        print("Unsupported diagnostics format: \(value)")
     case let .unknownOption(option):
         print("Unknown option: \(option)")
     }

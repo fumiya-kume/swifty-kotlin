@@ -7,6 +7,7 @@ enum CLIParseError: Error, Equatable {
     case unsupportedEmitMode(String)
     case unsupportedOptimizationLevel(String)
     case invalidTargetTriple(String)
+    case unsupportedDiagnosticsFormat(String)
     case unknownOption(String)
     case noInputFiles
 }
@@ -29,6 +30,7 @@ enum CLIParser {
       -g                     Emit debug info
     """
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     static func parse(args: [String]) throws -> CompilerOptions {
         var inputPaths: [String] = []
         var outputPath = "./a.out"
@@ -89,9 +91,10 @@ enum CLIParser {
                 try runtimeFlags.append(requireValue(option: arg, args: args, index: &index))
             case "-Xdiagnostics":
                 let value = try requireValue(option: arg, args: args, index: &index)
-                if let fmt = DiagnosticsFormat(rawValue: value) {
-                    diagnosticsFormat = fmt
+                guard let fmt = DiagnosticsFormat(rawValue: value) else {
+                    throw CLIParseError.unsupportedDiagnosticsFormat(value)
                 }
+                diagnosticsFormat = fmt
             case "-I":
                 try searchPaths.append(requireValue(option: arg, args: args, index: &index))
             case "-L":
