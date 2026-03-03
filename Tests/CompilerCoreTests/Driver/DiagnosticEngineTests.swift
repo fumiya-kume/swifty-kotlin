@@ -331,7 +331,8 @@ final class DiagnosticEngineTests: XCTestCase {
         let json = engine.renderJSON(sm)
         // E-1 should appear before E-2 in the output.
         guard let idx1 = json.range(of: "E-1")?.lowerBound,
-              let idx2 = json.range(of: "E-2")?.lowerBound else {
+              let idx2 = json.range(of: "E-2")?.lowerBound
+        else {
             XCTFail("Both diagnostics should appear in JSON")
             return
         }
@@ -370,7 +371,7 @@ final class DiagnosticEngineTests: XCTestCase {
             "\"line\"", "\"character\"",
             "\"severity\"", "\"severityLabel\"",
             "\"code\"", "\"source\"", "\"message\"",
-            "\"codeActions\""
+            "\"codeActions\"",
         ]
         for field in requiredFields {
             XCTAssertTrue(json.contains(field), "JSON should contain field: \(field)")
