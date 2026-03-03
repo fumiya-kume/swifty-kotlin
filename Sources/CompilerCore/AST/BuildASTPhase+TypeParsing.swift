@@ -164,25 +164,26 @@ extension BuildASTPhase {
             return nil
         }
 
-        // Look for a dot after the val/var keyword, skipping angle brackets for generic
-        // receiver types (e.g. `val List<Int>.head`).
-        var dotIndex: Int?
+        // Look for the last top-level dot after the val/var keyword, skipping angle brackets
+        // for generic receiver types (e.g. `val List<Int>.head`). This handles qualified
+        // receiver types like `val kotlin.String.firstChar: Char` correctly.
+        var lastDotIndex: Int?
         var depth = BracketDepth()
         for index in (valVarIndex + 1) ..< tokens.count {
             let token = tokens[index]
             depth.track(token.kind)
-            if depth.angle == 0, token.kind == .symbol(.dot) {
-                dotIndex = index
-                break
-            }
-            // Stop if we see a colon, assign, or brace before any dot — not an extension property.
             if depth.angle == 0 {
-                if token.kind == .symbol(.colon) || token.kind == .symbol(.assign) || token.kind == .symbol(.lBrace) {
-                    return nil
+                if token.kind == .symbol(.dot) {
+                    lastDotIndex = index
+                } else if token.kind == .symbol(.colon)
+                    || token.kind == .symbol(.assign)
+                    || token.kind == .symbol(.lBrace)
+                {
+                    break
                 }
             }
         }
-        guard let dotIndex else {
+        guard let dotIndex = lastDotIndex else {
             return nil
         }
 
@@ -210,18 +211,25 @@ extension BuildASTPhase {
             return declarationName(from: nodeID, in: arena, interner: interner)
         }
 
-        // Find the dot.
+        // Find the last top-level dot before `:`, `=`, or `{`.
+        // This handles qualified receiver types like `val kotlin.String.firstChar: Char`.
         var depth = BracketDepth()
-        var dotIndex: Int?
+        var lastDotIndex: Int?
         for index in (valVarIndex + 1) ..< tokens.count {
             let token = tokens[index]
             depth.track(token.kind)
-            if depth.angle == 0, token.kind == .symbol(.dot) {
-                dotIndex = index
-                break
+            if depth.angle == 0 {
+                if token.kind == .symbol(.dot) {
+                    lastDotIndex = index
+                } else if token.kind == .symbol(.colon)
+                    || token.kind == .symbol(.assign)
+                    || token.kind == .symbol(.lBrace)
+                {
+                    break
+                }
             }
         }
-        guard let dotIndex, dotIndex + 1 < tokens.count else {
+        guard let dotIndex = lastDotIndex, dotIndex + 1 < tokens.count else {
             return declarationName(from: nodeID, in: arena, interner: interner)
         }
 

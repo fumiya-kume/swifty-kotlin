@@ -199,12 +199,41 @@ extension KotlinParser {
     }
 
     /// Returns `true` when `token` looks like the start of a property accessor
-    /// (`get(` or `set(`).  Used to absorb newline-separated accessor lines
-    /// into the property declaration CST node.
+    /// (`get()` or `set(...)` followed by `=` or `{`). Used to absorb
+    /// newline-separated accessor lines into the property declaration CST node.
     private func isPropertyAccessorStart(_ token: Token) -> Bool {
         switch token.kind {
         case .softKeyword(.get), .softKeyword(.set):
-            stream.peek(1).kind == .symbol(.lParen)
+            guard stream.peek(1).kind == .symbol(.lParen) else {
+                return false
+            }
+            // Walk forward to find the matching `)`, then require `=` or `{`.
+            var offset = 1
+            var parenDepth = 0
+            let maxLookahead = 64
+            while offset <= maxLookahead {
+                let nextToken = stream.peek(offset)
+                switch nextToken.kind {
+                case .symbol(.lParen):
+                    parenDepth += 1
+                case .symbol(.rParen):
+                    parenDepth -= 1
+                    if parenDepth == 0 {
+                        let afterParen = stream.peek(offset + 1)
+                        switch afterParen.kind {
+                        case .symbol(.assign), .symbol(.lBrace):
+                            return true
+                        default:
+                            return false
+                        }
+                    }
+                default:
+                    break
+                }
+                if parenDepth < 0 { return false }
+                offset += 1
+            }
+            return false
         default:
             false
         }
