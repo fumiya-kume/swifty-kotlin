@@ -1,4 +1,3 @@
-// swiftlint:disable file_length type_body_length
 import Foundation
 
 public final class LLVMBackend {
@@ -267,5 +266,3 @@ public final class LLVMBackend {
         return lines.joined(separator: "\n")
     }
 }
-
-// swiftlint:enable file_length type_body_length
