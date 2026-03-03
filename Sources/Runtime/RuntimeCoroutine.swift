@@ -916,6 +916,66 @@ func runtimeJoinChild(_ handle: Int) -> Int {
     return 0
 }
 
+// MARK: - Cancellation ABI (CORO-002 / spec.md J17)
+
+/// Cancel a job handle from user code (e.g. `job.cancel()`).
+@_cdecl("kk_job_cancel")
+public func kk_job_cancel(_ jobHandle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: jobHandle) else {
+        return 0
+    }
+    let obj = Unmanaged<AnyObject>.fromOpaque(ptr).takeUnretainedValue()
+    if let job = obj as? RuntimeJobHandle {
+        job.cancel()
+    } else if let task = obj as? RuntimeAsyncTask {
+        task.cancel()
+    }
+    return 0
+}
+
+/// Check if the coroutine associated with `continuation` has been cancelled.
+/// If cancelled, allocates a CancellationException, writes it to `outThrown`,
+/// and returns 1. Otherwise returns 0 with outThrown untouched.
+@_cdecl("kk_coroutine_check_cancellation")
+public func kk_coroutine_check_cancellation(_ continuation: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let state = runtimeContinuationState(from: continuation),
+          let job = state.jobHandle,
+          job.cancellationSnapshot()
+    else {
+        return 0
+    }
+    let cancellation = runtimeAllocateCancellationException()
+    outThrown?.pointee = cancellation
+    return 1
+}
+
+/// Directly cancel a continuation (sets isCancelled on its linked job handle).
+@_cdecl("kk_coroutine_cancel")
+public func kk_coroutine_cancel(_ continuation: Int) {
+    guard let state = runtimeContinuationState(from: continuation),
+          let job = state.jobHandle
+    else {
+        return
+    }
+    job.cancel()
+}
+
+/// Returns 1 if the given throwable raw pointer is a CancellationException, 0 otherwise.
+@_cdecl("kk_is_cancellation_exception")
+public func kk_is_cancellation_exception(_ throwableRaw: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: throwableRaw) else {
+        return 0
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObjectPointer else {
+        return 0
+    }
+    let obj = Unmanaged<AnyObject>.fromOpaque(ptr).takeUnretainedValue()
+    return obj is RuntimeCancellationBox ? 1 : 0
+}
+
 // MARK: - Suspend Entry Loop
 
 func runSuspendEntryLoop(entryPointRaw: Int, functionID: Int, jobHandle: RuntimeJobHandle? = nil) -> Int {

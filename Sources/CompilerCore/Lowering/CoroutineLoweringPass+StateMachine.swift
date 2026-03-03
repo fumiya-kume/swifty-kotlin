@@ -25,6 +25,7 @@ extension CoroutineLoweringPass {
         let setCompletionCallee = interner.intern("kk_coroutine_state_set_completion")
         let getCompletionCallee = interner.intern("kk_coroutine_state_get_completion")
         let suspendedProvider = interner.intern("kk_coroutine_suspended")
+        let checkCancellationCallee = interner.intern("kk_coroutine_check_cancellation")
         let sourceDelayCallee = interner.intern("delay")
         let stateBlocks = suspendPlan.stateBlocks
         let transitionsByResumeLabel = suspendPlan.transitionsByResumeLabel
@@ -120,6 +121,29 @@ extension CoroutineLoweringPass {
                         )
                     )
                 }
+
+                // CORO-002: Check cancellation after resuming from suspension point.
+                // If cancelled, kk_coroutine_check_cancellation writes a CancellationException
+                // into outThrown and returns 1. We emit a thrownResult so the downstream
+                // exception handling can propagate it.
+                let cancelCheckResult = module.arena.appendExpr(
+                    .temporary(Int32(module.arena.expressions.count)),
+                    type: intType
+                )
+                let cancelThrownResult = module.arena.appendExpr(
+                    .temporary(Int32(module.arena.expressions.count)),
+                    type: intType
+                )
+                lowered.append(
+                    .call(
+                        symbol: nil,
+                        callee: checkCancellationCallee,
+                        arguments: [continuationExpr],
+                        result: cancelCheckResult,
+                        canThrow: true,
+                        thrownResult: cancelThrownResult
+                    )
+                )
             }
             let nextResumeLabel = stateBlocks.indices.contains(index + 1)
                 ? stateBlocks[index + 1].resumeLabel
