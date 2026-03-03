@@ -90,8 +90,8 @@ extension CodegenBackendIntegrationTests {
             symbol: sym, name: interner.intern("test"), params: [],
             returnType: types.unitType,
             body: [.constValue(result: expr0, value: .intLiteral(1)), .returnValue(expr0)],
-            instructionLocations: [sourceRange, sourceRange],
-            isSuspend: false, isInline: false
+            isSuspend: false, isInline: false,
+            instructionLocations: [sourceRange, sourceRange]
         )
         _ = arena.appendDecl(.function(function))
 
