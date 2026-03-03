@@ -90,7 +90,7 @@ extension BuildASTPhase {
             // Merge into the previous non-control-flow group.
             if !isCF,
                let first = filtered.first,
-               (first.kind == .symbol(.dot) || first.kind == .symbol(.questionDot)),
+               first.kind == .symbol(.dot) || first.kind == .symbol(.questionDot),
                let lastIdx = rawGroups.indices.last,
                !controlFlowFlags[lastIdx]
             { // swiftlint:disable:this opening_brace
