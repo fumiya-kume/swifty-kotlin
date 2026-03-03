@@ -70,12 +70,11 @@ extension DeclTypeChecker {
                 else { return false }
                 return sym.flags.contains(.operatorFunction)
             }
-        // swiftlint:disable:next opening_brace
         if let getValueSymbol = getValueCandidates.first,
            let getValueSig = sema.symbols.functionSignature(
                for: getValueSymbol
            ), result == nil
-        {
+        { // swiftlint:disable:this opening_brace
             result = getValueSig.returnType
         }
         if result == nil {
