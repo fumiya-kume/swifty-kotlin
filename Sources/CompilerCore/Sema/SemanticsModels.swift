@@ -52,6 +52,8 @@ public struct SymbolFlags: OptionSet, Sendable {
     public static let overrideMember = SymbolFlags(rawValue: 1 << 14)
     public static let finalMember = SymbolFlags(rawValue: 1 << 15)
     public static let funInterface = SymbolFlags(rawValue: 1 << 16)
+    public static let expectDeclaration = SymbolFlags(rawValue: 1 << 17)
+    public static let actualDeclaration = SymbolFlags(rawValue: 1 << 18)
 }
 
 public struct SemanticSymbol: Sendable {
@@ -268,6 +270,7 @@ public final class SymbolTable {
     private var sealedSubclassesStorage: [SymbolID: [SymbolID]] = [:]
     private var constValueExprKinds: [SymbolID: KIRExprKind] = [:]
     private var delegateHasProvideDelegate: Set<SymbolID> = []
+    private var expectActualLinks: [SymbolID: SymbolID] = [:]
 
     public init() {}
 
@@ -308,8 +311,12 @@ public final class SymbolTable {
         flags: SymbolFlags = []
     ) -> SymbolID {
         if let existing = byFQName[fqName], !existing.isEmpty {
-            let existingKinds = existing.compactMap { symbol($0)?.kind }
-            if canCoexistAsOverload(kind: kind, existingKinds: existingKinds) {
+            let existingSymbols = existing.compactMap { symbol($0) }
+            let existingKinds = existingSymbols.map(\.kind)
+
+            let shouldCoexist = canCoexistAsOverload(kind: kind, existingKinds: existingKinds)
+                || canCoexistAsExpectActual(kind: kind, flags: flags, existingSymbols: existingSymbols)
+            if shouldCoexist {
                 return appendNewSymbol(
                     kind: kind,
                     name: name,
@@ -375,6 +382,35 @@ public final class SymbolTable {
             return false
         }
         return existingNonPackageKinds.allSatisfy { isOverloadable($0) }
+    }
+
+    private func canCoexistAsExpectActual(
+        kind: SymbolKind,
+        flags: SymbolFlags,
+        existingSymbols: [SemanticSymbol]
+    ) -> Bool {
+        // For Kotlin MPP, allow one `expect` + one `actual` symbol with the same FQ name.
+        // This is required for non-overloadable kinds like properties and classes.
+        let isNewExpect = flags.contains(.expectDeclaration)
+        let isNewActual = flags.contains(.actualDeclaration)
+        guard isNewExpect || isNewActual, !(isNewExpect && isNewActual) else {
+            return false
+        }
+
+        let oppositeFlag: SymbolFlags = isNewExpect ? .actualDeclaration : .expectDeclaration
+        let sameFlag: SymbolFlags = isNewExpect ? .expectDeclaration : .actualDeclaration
+
+        let sameKindExisting = existingSymbols.filter { $0.kind == kind }
+        let hasOpposite = sameKindExisting.contains { $0.flags.contains(oppositeFlag) }
+        let hasSame = sameKindExisting.contains { $0.flags.contains(sameFlag) }
+
+        // Only permit coexistence when we're pairing an `expect` with an `actual`.
+        // If a non-MPP symbol already exists at this name+kind, treat it as a conflict.
+        let hasNonMPP = sameKindExisting.contains { sym in
+            !sym.flags.contains(.expectDeclaration) && !sym.flags.contains(.actualDeclaration)
+        }
+
+        return hasOpposite && !hasSame && !hasNonMPP
     }
 
     private func isOverloadable(_ kind: SymbolKind) -> Bool {
@@ -581,6 +617,16 @@ public final class SymbolTable {
     /// Returns whether the delegate type of the given property defines a `provideDelegate` operator.
     public func hasProvideDelegate(for property: SymbolID) -> Bool {
         delegateHasProvideDelegate.contains(property)
+    }
+
+    /// Link an `expect` declaration to its matching `actual` declaration.
+    public func setExpectActualLink(expect: SymbolID, actual: SymbolID) {
+        expectActualLinks[expect] = actual
+    }
+
+    /// Returns the `actual` symbol linked to the given `expect` symbol, if any.
+    public func actualSymbol(for expect: SymbolID) -> SymbolID? {
+        expectActualLinks[expect]
     }
 
     // MARK: - Indexed queries

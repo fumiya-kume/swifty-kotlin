@@ -89,6 +89,8 @@ extension DataFlowSemaPhase {
                 isDataClass: metadataRecord.isDataClass,
                 isSealedClass: metadataRecord.isSealedClass,
                 isValueClass: metadataRecord.isValueClass,
+                isExpect: metadataRecord.isExpect,
+                isActual: metadataRecord.isActual,
                 valueClassUnderlyingTypeSig: metadataRecord.valueClassUnderlyingTypeSig,
                 annotations: metadataRecord.annotations,
                 sealedSubclassFQNames: sealedSubclassFQNames
