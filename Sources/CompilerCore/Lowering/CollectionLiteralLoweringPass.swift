@@ -112,6 +112,64 @@ final class CollectionLiteralLoweringPass: LoweringPass {
             arrayOfName, intArrayOfName, longArrayOfName,
         ]
 
+        // Builder DSL names (STDLIB-002)
+        let buildStringName = interner.intern("buildString")
+        let buildListName = interner.intern("buildList")
+        let buildMapName = interner.intern("buildMap")
+        let kkBuildStringName = interner.intern("kk_build_string")
+        let kkBuildListName = interner.intern("kk_build_list")
+        let kkBuildMapName = interner.intern("kk_build_map")
+        let builderDSLNames: Set<InternedString> = [buildStringName, buildListName, buildMapName]
+
+        // Builder member function names (STDLIB-002)
+        let appendName = interner.intern("append")
+        let addName = interner.intern("add")
+        let putName = interner.intern("put")
+        let kkStringBuilderAppendName = interner.intern("kk_string_builder_append")
+        let kkMutableListAddName = interner.intern("kk_mutable_list_add")
+        let kkMutableMapPutName = interner.intern("kk_mutable_map_put")
+
+        // Pre-scan: collect function names that are builder lambda bodies (STDLIB-002).
+        // We find buildString/buildList/buildMap calls, trace their lambda argument
+        // expression IDs back to constValue(.symbolRef(...)) instructions, then resolve
+        // the corresponding lambda function names. Maps function name → builder callee
+        // name so we only rewrite the correct member functions per builder kind.
+        var builderLambdaKinds: [InternedString: InternedString] = [:]
+        for decl in module.arena.declarations {
+            guard case let .function(function) = decl else { continue }
+            // Collect exprID → symbolID mappings from constValue(.symbolRef(...))
+            var exprSymbolMap: [Int32: SymbolID] = [:]
+            // Collect lambda argument exprIDs and their builder callee from DSL calls
+            var builderLambdaArgEntries: [(argID: Int32, callee: InternedString)] = []
+            for instruction in function.body {
+                switch instruction {
+                case let .constValue(result, .symbolRef(symbol)):
+                    exprSymbolMap[result.rawValue] = symbol
+                case let .call(_, callee, arguments, _, _, _, _):
+                    if builderDSLNames.contains(callee), !arguments.isEmpty {
+                        builderLambdaArgEntries.append((argID: arguments[0].rawValue, callee: callee))
+                    }
+                default:
+                    break
+                }
+            }
+            // Resolve lambda argument exprIDs to function names with builder kind
+            for entry in builderLambdaArgEntries {
+                if let symbol = exprSymbolMap[entry.argID] {
+                    // Lambda function name follows kk_lambda_{exprID} convention
+                    let lambdaName = interner.intern("kk_lambda_\(entry.argID)")
+                    builderLambdaKinds[lambdaName] = entry.callee
+                    // Also try the symbol-based lookup for robustness
+                    for innerDecl in module.arena.declarations {
+                        if case let .function(funcDecl) = innerDecl, funcDecl.symbol == symbol {
+                            builderLambdaKinds[funcDecl.name] = entry.callee
+                            break
+                        }
+                    }
+                }
+            }
+        }
+
         module.arena.transformFunctions { function in
             var updated = function
 
@@ -299,6 +357,64 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                             ))
                         }
                         continue
+                    }
+
+                    // --- Rewrite buildString/buildList/buildMap → kk_build_* (STDLIB-002) ---
+                    if builderDSLNames.contains(callee) {
+                        let kkCallee: InternedString = switch callee {
+                        case buildStringName: kkBuildStringName
+                        case buildListName: kkBuildListName
+                        case buildMapName: kkBuildMapName
+                        default: callee
+                        }
+                        let builderResult = module.arena.appendExpr(
+                            .temporary(Int32(module.arena.expressions.count)), type: nil
+                        )
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkCallee,
+                            arguments: arguments,
+                            result: builderResult,
+                            canThrow: canThrow,
+                            thrownResult: thrownResult
+                        ))
+                        if callee == buildListName, let result {
+                            listExprIDs.insert(result.rawValue)
+                            listExprIDs.insert(builderResult.rawValue)
+                        }
+                        if callee == buildMapName, let result {
+                            mapExprIDs.insert(result.rawValue)
+                            mapExprIDs.insert(builderResult.rawValue)
+                        }
+                        if let result {
+                            loweredBody.append(.copy(from: builderResult, to: result))
+                        }
+                        continue
+                    }
+
+                    // --- Rewrite builder member functions (STDLIB-002) ---
+                    // Only rewrite append/add/put inside builder lambda functions
+                    // matching the correct builder kind to avoid cross-kind rewrites.
+                    if let builderCallee = builderLambdaKinds[function.name] {
+                        var rewrittenCallee: InternedString?
+                        if builderCallee == buildStringName, callee == appendName, arguments.count == 1 {
+                            rewrittenCallee = kkStringBuilderAppendName
+                        } else if builderCallee == buildListName, callee == addName, arguments.count == 1 {
+                            rewrittenCallee = kkMutableListAddName
+                        } else if builderCallee == buildMapName, callee == putName, arguments.count == 2 {
+                            rewrittenCallee = kkMutableMapPutName
+                        }
+                        if let target = rewrittenCallee {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: target,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: canThrow,
+                                thrownResult: thrownResult
+                            ))
+                            continue
+                        }
                     }
 
                     // --- Rewrite arrayOf → kk_array_of ---

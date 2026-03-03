@@ -173,6 +173,13 @@ extension LLVMBackend {
         "extern intptr_t kk_map_iterator_next(intptr_t iterRaw);",
         "extern intptr_t kk_array_of(intptr_t arrayRaw, intptr_t count);",
         "extern intptr_t kk_array_size(intptr_t arrayRaw);",
+        "/* Builder DSL functions (STDLIB-002) */",
+        "extern intptr_t kk_build_string(intptr_t fnPtr, intptr_t* outThrown);",
+        "extern intptr_t kk_build_list(intptr_t fnPtr, intptr_t* outThrown);",
+        "extern intptr_t kk_build_map(intptr_t fnPtr, intptr_t* outThrown);",
+        "extern intptr_t kk_string_builder_append(intptr_t strRaw);",
+        "extern intptr_t kk_mutable_list_add(intptr_t elem);",
+        "extern intptr_t kk_mutable_map_put(intptr_t key, intptr_t value);",
         "",
     ]
 }
