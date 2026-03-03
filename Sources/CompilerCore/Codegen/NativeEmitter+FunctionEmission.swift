@@ -378,8 +378,10 @@ extension NativeEmitter {
                 var instrLine: UInt32 = 0
                 var instrCol: UInt32 = 0
                 // Try per-instruction source location first, then fall back to
-                // function-level source range.
-                if instructionIndex < function.instructionLocations.count,
+                // function-level source range. Only use per-instruction locations
+                // when the parallel array is in sync with body (same count).
+                if function.instructionLocations.count == function.body.count,
+                   instructionIndex < function.instructionLocations.count,
                    let instrRange = function.instructionLocations[instructionIndex],
                    let sm = sourceManager
                 {
@@ -468,7 +470,8 @@ extension NativeEmitter {
                 { // swiftlint:disable:this opening_brace
                     let varName = "local_\(localSymbol.rawValue)"
                     var varLine: UInt32 = 0
-                    if instructionIndex < function.instructionLocations.count,
+                    if function.instructionLocations.count == function.body.count,
+                       instructionIndex < function.instructionLocations.count,
                        let instrRange = function.instructionLocations[instructionIndex],
                        let srcMgr = sourceManager
                     { // swiftlint:disable:this opening_brace
@@ -477,7 +480,8 @@ extension NativeEmitter {
                         varLine = UInt32(srcMgr.lineColumn(of: sourceRange.start).line)
                     }
                     let varDIFile: LLVMCAPIBindings.LLVMMetadataRef? = {
-                        if instructionIndex < function.instructionLocations.count,
+                        if function.instructionLocations.count == function.body.count,
+                           instructionIndex < function.instructionLocations.count,
                            let instrRange = function.instructionLocations[instructionIndex]
                         { // swiftlint:disable:this opening_brace
                             return diContext.diFiles[instrRange.start.file] ?? diContext.file
