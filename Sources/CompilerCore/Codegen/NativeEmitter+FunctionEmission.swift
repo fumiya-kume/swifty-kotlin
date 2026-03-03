@@ -450,7 +450,64 @@ extension NativeEmitter {
                 bindings.positionBuilder(builder, at: continueBlock)
 
             case let .constValue(result, value):
-                values[result.rawValue] = valueForConstant(value, expressionRawID: result.rawValue)
+                let constLLVMValue = valueForConstant(value, expressionRawID: result.rawValue)
+                values[result.rawValue] = constLLVMValue
+
+                // Emit DIAutoVariable + dbg.declare for local variable bindings
+                // when debug info is active. We detect local variables by looking
+                // for symbolRef values that have a corresponding symbol name.
+                if let diContext,
+                   let subprogram = diContext.subprograms[function.symbol],
+                   let int64DIType = diContext.int64DIType,
+                   bindings.localVariableAvailable,
+                   bindings.debugLocationAvailable,
+                   case let .symbolRef(localSymbol) = value,
+                   !parameterValues.keys.contains(localSymbol)
+                {
+                    let varName = "local_\(localSymbol.rawValue)"
+                    var varLine: UInt32 = 0
+                    if instructionIndex < function.instructionLocations.count,
+                       let instrRange = function.instructionLocations[instructionIndex],
+                       let sm = sourceManager
+                    {
+                        varLine = UInt32(sm.lineColumn(of: instrRange.start).line)
+                    } else if let sourceRange = function.sourceRange, let sm = sourceManager {
+                        varLine = UInt32(sm.lineColumn(of: sourceRange.start).line)
+                    }
+                    let varDIFile: LLVMCAPIBindings.LLVMMetadataRef? = {
+                        if instructionIndex < function.instructionLocations.count,
+                           let instrRange = function.instructionLocations[instructionIndex]
+                        {
+                            return diContext.diFiles[instrRange.start.file] ?? diContext.file
+                        }
+                        return diContext.file
+                    }()
+                    if let diVar = bindings.diBuilderCreateAutoVariable(
+                        diContext.diBuilder,
+                        scope: subprogram,
+                        name: varName,
+                        file: varDIFile,
+                        lineNo: varLine,
+                        type: int64DIType
+                    ) {
+                        let emptyExpr = bindings.diBuilderCreateExpression(diContext.diBuilder)
+                        if let localAlloca = bindings.buildAlloca(builder, type: int64Type, name: "dbg_\(varName)") {
+                            _ = bindings.buildStore(builder, value: constLLVMValue, pointer: localAlloca)
+                            if let debugLoc = bindings.createDebugLocation(
+                                context: context, line: varLine, column: 0, scope: subprogram
+                            ) {
+                                _ = bindings.diBuilderInsertDeclareAtEnd(
+                                    diContext.diBuilder,
+                                    storage: localAlloca,
+                                    varInfo: diVar,
+                                    expr: emptyExpr,
+                                    debugLoc: debugLoc,
+                                    block: currentBlock
+                                )
+                            }
+                        }
+                    }
+                }
 
             case let .binary(op, lhs, rhs, result):
                 let lhsValue = resolveValue(lhs)

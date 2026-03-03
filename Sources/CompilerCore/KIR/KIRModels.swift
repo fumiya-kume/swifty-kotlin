@@ -234,7 +234,9 @@ public final class KIRArena {
                 continue
             }
             let transformed = transform(function)
-            if transformed.body != function.body {
+            if transformed.body != function.body
+                || transformed.instructionLocations != function.instructionLocations
+            {
                 declarations[index] = .function(transformed)
             }
         }

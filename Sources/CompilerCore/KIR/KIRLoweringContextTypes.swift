@@ -13,17 +13,29 @@ struct KIRLoweringEmitContext: RandomAccessCollection, MutableCollection, RangeR
     typealias Index = Array<KIRInstruction>.Index
 
     var instructions: [KIRInstruction]
+    /// Per-instruction source locations, parallel to ``instructions``.
+    /// `nil` entries mean "same as function-level location".
+    var instructionLocations: [SourceRange?]
+    /// The current source range to associate with newly appended instructions.
+    /// Set this before appending instructions to propagate source locations.
+    var currentSourceRange: SourceRange?
 
     init(_ instructions: [KIRInstruction] = []) {
         self.instructions = instructions
+        self.instructionLocations = Array(repeating: nil, count: instructions.count)
+        self.currentSourceRange = nil
     }
 
     init() {
         instructions = []
+        instructionLocations = []
+        currentSourceRange = nil
     }
 
     init(arrayLiteral elements: KIRInstruction...) {
         instructions = elements
+        instructionLocations = Array(repeating: nil, count: elements.count)
+        currentSourceRange = nil
     }
 
     var startIndex: Index {
@@ -49,6 +61,18 @@ struct KIRLoweringEmitContext: RandomAccessCollection, MutableCollection, RangeR
 
     mutating func replaceSubrange<C: Collection>(_ subrange: Range<Index>, with newElements: C) where KIRInstruction == C.Element {
         instructions.replaceSubrange(subrange, with: newElements)
+        // Pad instructionLocations to match new instruction count.
+        let locationRange = subrange.clamped(to: instructionLocations.startIndex ..< instructionLocations.endIndex)
+        let newLocations = Array(repeating: currentSourceRange, count: newElements.count)
+        if locationRange.isEmpty {
+            // Subrange is beyond current locations; pad and append.
+            while instructionLocations.count < subrange.lowerBound {
+                instructionLocations.append(nil)
+            }
+            instructionLocations.append(contentsOf: newLocations)
+        } else {
+            instructionLocations.replaceSubrange(locationRange, with: newLocations)
+        }
     }
 }
 
@@ -71,7 +95,8 @@ extension KIRFunction {
             body: body.instructions,
             isSuspend: isSuspend,
             isInline: isInline,
-            sourceRange: sourceRange
+            sourceRange: sourceRange,
+            instructionLocations: body.instructionLocations
         )
     }
 }
