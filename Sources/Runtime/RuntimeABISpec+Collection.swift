@@ -180,6 +180,7 @@ public extension RuntimeABISpec {
             name: "kk_build_string",
             parameters: [
                 RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Collection"
@@ -188,6 +189,7 @@ public extension RuntimeABISpec {
             name: "kk_build_list",
             parameters: [
                 RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Collection"
@@ -196,6 +198,7 @@ public extension RuntimeABISpec {
             name: "kk_build_map",
             parameters: [
                 RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Collection"

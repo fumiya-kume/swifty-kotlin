@@ -155,19 +155,19 @@ public extension RuntimeABIExterns {
     /// Builder DSL (STDLIB-002)
     static let kk_build_string = ExternDecl(
         name: "kk_build_string",
-        parameterTypes: ["intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
     static let kk_build_list = ExternDecl(
         name: "kk_build_list",
-        parameterTypes: ["intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
     static let kk_build_map = ExternDecl(
         name: "kk_build_map",
-        parameterTypes: ["intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
