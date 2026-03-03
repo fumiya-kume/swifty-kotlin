@@ -1,4 +1,4 @@
-// swiftlint:disable file_length
+// swiftlint:disable file_length type_body_length
 import Foundation
 
 /// Lock-protected cache for pre-compiled runtime stub objects.
@@ -74,7 +74,6 @@ public struct RuntimeLinkInfo {
     }
 }
 
-// swiftlint:disable:next type_body_length
 public final class LLVMBackend {
     let target: TargetTriple
     let optLevel: OptimizationLevel
@@ -469,6 +468,7 @@ public final class LLVMBackend {
             "kk_type_register_iface",
             "kk_lazy_create",
             "kk_lazy_get_value",
+            "kk_lazy_is_initialized",
             "kk_observable_create",
             "kk_observable_get_value",
             "kk_observable_set_value",
@@ -562,3 +562,5 @@ public final class LLVMBackend {
         }
     }
 }
+
+// swiftlint:enable file_length type_body_length

@@ -16,7 +16,16 @@ extension KIRLoweringDriver {
         var declIDs: [KIRDeclID] = []
         let propType = sema.symbols.propertyType(for: symbol) ?? sema.types.anyType
         let isExtensionProperty = propertyDecl.receiverType != nil
-        if !isExtensionProperty {
+
+        // Getter-only computed properties (`val x: T get() = expr`) have no
+        // storage — skip emitting a KIRGlobal so no backing field is generated
+        // in codegen.  The getter accessor function alone is sufficient.
+        let isGetterOnlyComputed = propertyDecl.getter != nil
+            && propertyDecl.setter == nil
+            && propertyDecl.initializer == nil
+            && propertyDecl.delegateExpression == nil
+
+        if !isExtensionProperty, !isGetterOnlyComputed {
             let kirID = arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: propType)))
             declIDs.append(kirID)
         }

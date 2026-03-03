@@ -265,6 +265,7 @@ public final class SymbolTable {
     private var valueClassUnderlyingTypes: [SymbolID: TypeID] = [:]
     private var sealedSubclassesStorage: [SymbolID: [SymbolID]] = [:]
     private var constValueExprKinds: [SymbolID: KIRExprKind] = [:]
+    private var delegateHasProvideDelegate: Set<SymbolID> = []
 
     public init() {}
 
@@ -570,6 +571,16 @@ public final class SymbolTable {
         sealedSubclassesStorage[symbol]
     }
 
+    /// Mark a property symbol as having a delegate with a `provideDelegate` operator.
+    public func setHasProvideDelegate(for property: SymbolID) {
+        delegateHasProvideDelegate.insert(property)
+    }
+
+    /// Returns whether the delegate type of the given property defines a `provideDelegate` operator.
+    public func hasProvideDelegate(for property: SymbolID) -> Bool {
+        delegateHasProvideDelegate.contains(property)
+    }
+
     // MARK: - Indexed queries
 
     /// Returns all symbol IDs of a given kind.
@@ -603,6 +614,10 @@ public final class BindingTable {
     public private(set) var invokeOperatorCallExprs: Set<ExprID> = []
     public private(set) var collectionExprIDs: Set<ExprID> = []
     public private(set) var collectionSymbolIDs: Set<SymbolID> = []
+    /// Maps `T::class` callable-ref expression IDs to the resolved type that
+    /// `T` refers to.  Used by KIR lowering to emit the correct type token
+    /// and name hint for `T::class.simpleName` / `.qualifiedName`.
+    public private(set) var classRefTargetTypes: [ExprID: TypeID] = [:]
     /// Maps expression IDs to their compile-time constant values when the
     /// expression references a `const val` property.  This allows downstream
     /// passes (KIR lowering, codegen) to fold constant references without
@@ -674,6 +689,14 @@ public final class BindingTable {
 
     public func isCollectionSymbol(_ symbol: SymbolID) -> Bool {
         collectionSymbolIDs.contains(symbol)
+    }
+
+    public func bindClassRefTargetType(_ expr: ExprID, type: TypeID) {
+        classRefTargetTypes[expr] = type
+    }
+
+    public func classRefTargetType(for expr: ExprID) -> TypeID? {
+        classRefTargetTypes[expr]
     }
 
     public func exprType(for expr: ExprID) -> TypeID? {

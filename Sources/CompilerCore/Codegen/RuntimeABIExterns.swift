@@ -1,3 +1,4 @@
+// swiftlint:disable file_length type_body_length
 import Foundation
 
 /// Canonical C ABI extern declarations for the KSwiftK runtime.
@@ -477,6 +478,18 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_type_token_simple_name = ExternDecl(
+        name: "kk_type_token_simple_name",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_type_token_qualified_name = ExternDecl(
+        name: "kk_type_token_qualified_name",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_op_is = ExternDecl(
         name: "kk_op_is",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -537,6 +550,13 @@ public enum RuntimeABIExterns {
 
     public static let kk_lazy_get_value = ExternDecl(
         name: "kk_lazy_get_value",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // swiftlint:disable:next identifier_name
+    public static let kk_lazy_is_initialized = ExternDecl(
+        name: "kk_lazy_is_initialized",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
@@ -715,6 +735,8 @@ public enum RuntimeABIExterns {
         // TypeCheck Operators
         kk_type_register_super,
         kk_type_register_iface,
+        kk_type_token_simple_name,
+        kk_type_token_qualified_name,
         kk_op_is,
         kk_op_cast,
         kk_op_safe_cast,
@@ -728,6 +750,7 @@ public enum RuntimeABIExterns {
         // Delegate
         kk_lazy_create,
         kk_lazy_get_value,
+        kk_lazy_is_initialized,
         kk_observable_create,
         kk_observable_get_value,
         kk_observable_set_value,
@@ -750,3 +773,5 @@ public enum RuntimeABIExterns {
         allExterns.first { $0.name == name }
     }
 }
+
+// swiftlint:enable file_length type_body_length

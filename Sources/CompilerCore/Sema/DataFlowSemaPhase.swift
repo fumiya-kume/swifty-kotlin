@@ -98,6 +98,10 @@ public final class DataFlowSemaPhase: CompilerPhase {
             diagnostics: ctx.diagnostics, interner: ctx.interner
         )
         validateConstructorDelegation(ast: ast, symbols: symbols, diagnostics: ctx.diagnostics)
+        validateDeclarationSiteVariance(
+            ast: ast, symbols: symbols, bindings: bindings,
+            types: types, diagnostics: ctx.diagnostics, interner: ctx.interner
+        )
         synthesizeNominalLayouts(symbols: symbols)
     }
 
