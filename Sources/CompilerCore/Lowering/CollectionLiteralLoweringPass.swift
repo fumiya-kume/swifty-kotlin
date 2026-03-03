@@ -248,6 +248,30 @@ final class CollectionLiteralLoweringPass: LoweringPass {
             var loweredBody: [KIRInstruction] = []
             loweredBody.reserveCapacity(function.body.count + 32)
 
+            // SEQ_DIAG: dump Phase 1 results and all instructions for sequence debugging
+            let fnName = interner.resolve(function.name)
+            if fnName.contains("main") || fnName.contains("script") {
+                fputs("SEQ_DIAG_P2: fn=\(fnName) listIDs=\(listExprIDs.sorted()) seqIDs=\(sequenceExprIDs.sorted())\n", stderr)
+                for (idx, inst) in function.body.enumerated() {
+                    switch inst {
+                    case let .call(sym, cal, args, res, _, _, _):
+                        let calStr = interner.resolve(cal)
+                        let resVal = res.map { "\($0.rawValue)" } ?? "nil"
+                        let argVals = args.map { "\($0.rawValue)" }
+                        fputs("SEQ_DIAG_P2:  [\(idx)] .call sym=\(sym?.rawValue ?? -1) callee=\(calStr) args=\(argVals) res=\(resVal)\n", stderr)
+                    case let .virtualCall(sym, cal, recv, args, res, _, _, _):
+                        let calStr = interner.resolve(cal)
+                        let resVal = res.map { "\($0.rawValue)" } ?? "nil"
+                        let argVals = args.map { "\($0.rawValue)" }
+                        fputs("SEQ_DIAG_P2:  [\(idx)] .virtualCall sym=\(sym?.rawValue ?? -1) callee=\(calStr) recv=\(recv.rawValue) args=\(argVals) res=\(resVal)\n", stderr)
+                    case let .copy(from, to):
+                        fputs("SEQ_DIAG_P2:  [\(idx)] .copy from=\(from.rawValue) to=\(to.rawValue)\n", stderr)
+                    default:
+                        break
+                    }
+                }
+            }
+
             for instruction in function.body {
                 switch instruction {
                 case let .call(_, callee, arguments, result, canThrow, thrownResult, _):
