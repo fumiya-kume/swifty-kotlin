@@ -85,6 +85,7 @@ private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
     for step in seq.steps {
         if let source = extractSourceElements(from: step) {
             elements = source
+            break
         }
     }
 
