@@ -18,6 +18,9 @@ public struct Diagnostic: Equatable {
 public final class DiagnosticEngine: @unchecked Sendable {
     private let lock = NSLock()
     private var _diagnostics: [Diagnostic] = []
+    /// Diagnostic codes suppressed at specific source ranges via `@Suppress` annotations.
+    /// Key = diagnostic code, Value = set of source ranges where the code is suppressed.
+    private var suppressions: [String: [SourceRange]] = [:]
 
     public var diagnostics: [Diagnostic] {
         lock.lock()
@@ -27,9 +30,23 @@ public final class DiagnosticEngine: @unchecked Sendable {
 
     public init() {}
 
+    /// Register a @Suppress annotation: suppress the given diagnostic code for any
+    /// diagnostic whose primary range overlaps or is contained within `range`.
+    public func addSuppression(code: String, range: SourceRange) {
+        lock.lock()
+        defer { lock.unlock() }
+        suppressions[code, default: []].append(range)
+    }
+
     public func emit(_ diagnostic: Diagnostic) {
         lock.lock()
         defer { lock.unlock() }
+        // Check if this diagnostic is suppressed by a @Suppress annotation.
+        if let ranges = suppressions[diagnostic.code], let diagRange = diagnostic.primaryRange {
+            for suppressRange in ranges where suppressRange.contains(diagRange) {
+                return // Suppressed — do not emit.
+            }
+        }
         _diagnostics.append(diagnostic)
     }
 

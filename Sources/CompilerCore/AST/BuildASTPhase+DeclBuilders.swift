@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 
 extension BuildASTPhase {
@@ -20,10 +21,12 @@ extension BuildASTPhase {
         let whereClauses = declarationWhereClauses(from: nodeID, in: arena, interner: interner, astArena: astArena)
         let typeParams = applyWhereClauses(rawTypeParams, whereClauses: whereClauses)
         let modifiers = declarationModifiers(from: nodeID, in: arena)
+        let annotations = declarationAnnotations(from: nodeID, in: arena, interner: interner)
         return ClassDecl(
             range: node.range,
             name: declarationName(from: nodeID, in: arena, interner: interner),
             modifiers: modifiers,
+            annotations: annotations,
             isInner: modifiers.contains(.inner),
             typeParams: typeParams,
             primaryConstructorParams: declarationValueParameters(from: nodeID, in: arena, interner: interner, astArena: astArena),
@@ -101,10 +104,12 @@ extension BuildASTPhase {
         let typeParams = applyWhereClauses(rawTypeParams, whereClauses: whereClauses)
         let members = declarationMemberDecls(from: nodeID, in: arena, interner: interner, astArena: astArena)
         let modifiers = declarationModifiers(from: nodeID, in: arena)
+        let annotations = declarationAnnotations(from: nodeID, in: arena, interner: interner)
         return InterfaceDecl(
             range: node.range,
             name: declarationName(from: nodeID, in: arena, interner: interner),
             modifiers: modifiers,
+            annotations: annotations,
             isFunInterface: modifiers.contains(.funModifier),
             typeParams: typeParams,
             superTypes: declarationSuperTypes(from: nodeID, in: arena, interner: interner, astArena: astArena),
@@ -120,11 +125,13 @@ extension BuildASTPhase {
     func makeObjectDecl(from nodeID: NodeID, in arena: SyntaxArena, interner: StringInterner, astArena: ASTArena) -> ObjectDecl {
         let node = arena.node(nodeID)
         let modifiers = declarationModifiers(from: nodeID, in: arena)
+        let annotations = declarationAnnotations(from: nodeID, in: arena, interner: interner)
         let members = declarationMemberDecls(from: nodeID, in: arena, interner: interner, astArena: astArena)
         return ObjectDecl(
             range: node.range,
             name: declarationName(from: nodeID, in: arena, interner: interner),
             modifiers: modifiers,
+            annotations: annotations,
             superTypes: declarationSuperTypes(from: nodeID, in: arena, interner: interner, astArena: astArena),
             nestedTypeAliases: declarationNestedTypeAliases(from: nodeID, in: arena, interner: interner, astArena: astArena),
             initBlocks: declarationInitBlocks(from: nodeID, in: arena, interner: interner, astArena: astArena),
@@ -148,10 +155,12 @@ extension BuildASTPhase {
         let rawTypeParams = declarationTypeParameters(from: nodeID, in: arena, interner: interner, astArena: astArena)
         let whereClauses = declarationWhereClauses(from: nodeID, in: arena, interner: interner, astArena: astArena)
         let typeParams = applyWhereClauses(rawTypeParams, whereClauses: whereClauses)
+        let annotations = declarationAnnotations(from: nodeID, in: arena, interner: interner)
         return FunDecl(
             range: node.range,
             name: functionName,
             modifiers: modifiers,
+            annotations: annotations,
             typeParams: typeParams,
             receiverType: receiverType,
             valueParams: valueParams,
@@ -182,6 +191,8 @@ extension BuildASTPhase {
             }
         }
 
+        let modifiers = declarationModifiers(from: nodeID, in: arena)
+        let annotations = declarationAnnotations(from: nodeID, in: arena, interner: interner)
         let receiverType = declarationPropertyReceiverType(
             from: nodeID, in: arena, interner: interner, astArena: astArena
         )
@@ -190,11 +201,11 @@ extension BuildASTPhase {
         } else {
             declarationName(from: nodeID, in: arena, interner: interner)
         }
-
         return PropertyDecl(
             range: node.range,
             name: propertyName,
-            modifiers: declarationModifiers(from: nodeID, in: arena),
+            modifiers: modifiers,
+            annotations: annotations,
             type: declarationPropertyType(from: nodeID, in: arena, interner: interner, astArena: astArena),
             isVar: declarationIsVar(from: nodeID, in: arena),
             initializer: declarationPropertyInitializer(from: nodeID, in: arena, interner: interner, astArena: astArena),
