@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 6.2
 import PackageDescription
 
 let package = Package(
@@ -43,8 +43,14 @@ let package = Package(
         ),
         .testTarget(
             name: "RuntimeTests",
-            dependencies: ["Runtime"],
+            dependencies: ["Runtime", "CompilerCore"],
             path: "Tests/RuntimeTests"
+        ),
+        .testTarget(
+            name: "KSwiftKCLITests",
+            dependencies: ["KSwiftKCLI", "CompilerCore"],
+            path: "Tests/KSwiftKCLITests"
         )
-    ]
+    ],
+    swiftLanguageModes: [.v6]
 )

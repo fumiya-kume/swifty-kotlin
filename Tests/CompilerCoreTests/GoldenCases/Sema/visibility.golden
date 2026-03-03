@@ -1,0 +1,31 @@
+symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s1 kind=package fq=kotlin vis=public flags=synthetic
+symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
+symbol s4 kind=interface fq=kotlin.properties.ReadWriteProperty vis=public flags=synthetic
+symbol s5 kind=interface fq=kotlin.properties.ReadOnlyProperty vis=public flags=synthetic
+symbol s6 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=_ params=[Any,() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
+symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s11 kind=function fq=golden.sema.publicFun vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s12 kind=function fq=golden.sema.internalFun vis=internal flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s13 kind=function fq=golden.sema.privateFun vis=private flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s14 kind=function fq=golden.sema.useAll vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+file f0 package=golden.sema
+  decl d0 fun publicFun suspend=0 inline=0 sym=s11
+  decl d1 fun internalFun suspend=0 inline=0 sym=s12
+  decl d2 fun privateFun suspend=0 inline=0 sym=s13
+  decl d3 fun useAll suspend=0 inline=0 sym=s14
+expr e0 int(1) type=Int
+expr e1 int(2) type=Int
+expr e2 int(3) type=Int
+expr e3 name(publicFun) type=Int
+expr e4 call callee=e3 args=[] type=Int call=s11 map=[] targs=[]
+expr e5 name(internalFun) type=_
+expr e6 call callee=e5 args=[] type=Int call=s12 map=[] targs=[]
+expr e7 binary(add) lhs=e4 rhs=e6 type=Int
+expr e8 name(privateFun) type=_
+expr e9 call callee=e8 args=[] type=Int call=s13 map=[] targs=[]
+expr e10 binary(add) lhs=e7 rhs=e9 type=Int

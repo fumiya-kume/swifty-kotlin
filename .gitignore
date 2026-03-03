@@ -4,3 +4,8 @@ a.out
 *.o
 firebase-debug.log
 .DS_Store
+.build-codex-run/
+.bench_results/
+.claude/settings.local.json
+.runnerctl/
+*.profraw

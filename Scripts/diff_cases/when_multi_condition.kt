@@ -1,0 +1,31 @@
+fun classifyInt(x: Int): String = when (x) {
+    1, 2, 3 -> "few"
+    else -> "many"
+}
+
+fun duplicateHitCount(x: Int): Int {
+    var hits = 0
+    when (x) {
+        1, 1, 2 -> {
+            hits = hits + 1
+        }
+        else -> {
+            hits = hits + 10
+        }
+    }
+    return hits
+}
+
+fun classifyBool(b: Boolean): String = when (b) {
+    true, false -> "always"
+}
+
+fun main() {
+    println(classifyInt(1))
+    println(classifyInt(2))
+    println(classifyInt(5))
+    println(duplicateHitCount(1))
+    println(duplicateHitCount(3))
+    println(classifyBool(true))
+    println(classifyBool(false))
+}

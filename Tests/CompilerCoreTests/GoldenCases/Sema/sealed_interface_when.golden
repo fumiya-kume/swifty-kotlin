@@ -1,0 +1,35 @@
+symbol s0 kind=package fq=_root_ vis=public flags=_
+symbol s1 kind=package fq=kotlin vis=public flags=synthetic
+symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
+symbol s4 kind=interface fq=kotlin.properties.ReadWriteProperty vis=public flags=synthetic
+symbol s5 kind=interface fq=kotlin.properties.ReadOnlyProperty vis=public flags=synthetic
+symbol s6 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=_ params=[Any,() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
+symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s11 kind=interface fq=Expr vis=public flags=sealedType
+symbol s12 kind=class fq=Literal vis=public flags=_
+symbol s13 kind=constructor fq=Literal.<init> vis=public flags=_ sig=recv=Class#12 params=[] ret=Class#12 suspend=0 defaults=[] vararg=[]
+symbol s14 kind=class fq=Add vis=public flags=_
+symbol s15 kind=constructor fq=Add.<init> vis=public flags=_ sig=recv=Class#14 params=[] ret=Class#14 suspend=0 defaults=[] vararg=[]
+symbol s16 kind=class fq=Multiply vis=public flags=_
+symbol s17 kind=constructor fq=Multiply.<init> vis=public flags=_ sig=recv=Class#16 params=[] ret=Class#16 suspend=0 defaults=[] vararg=[]
+symbol s18 kind=function fq=eval vis=public flags=_ sig=recv=_ params=[Class#11] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s19 kind=valueParameter fq=eval.$18.e vis=private flags=_
+file f0 package=_
+  decl d0 interface Expr sym=s11
+  decl d1 class Literal sym=s12
+  decl d2 class Add sym=s14
+  decl d3 class Multiply sym=s16
+  decl d4 fun eval suspend=0 inline=0 sym=s18
+expr e0 name(e) type=Class#11 ref=s19
+expr e1 isCheck expr=e0 type=t5 type=Boolean
+expr e2 string(literal) type=String
+expr e3 isCheck expr=e0 type=t6 type=Boolean
+expr e4 string(add) type=String
+expr e5 isCheck expr=e0 type=t7 type=Boolean
+expr e6 string(multiply) type=String
+expr e7 when subject=e0 branches=[e1->e2,e3->e4,e5->e6] else=_ type=String
+expr e8 return value=e7 type=Nothing

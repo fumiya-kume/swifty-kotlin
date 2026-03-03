@@ -23,5 +23,16 @@ Cases:
 - `val_reassign_error.kt`: local `val` 再代入の compile-error parity
 - `zero_null_print.kt`: `println(0)` と `println(null)` の表示分離
 - `type_error.kt`: compile-error parity case
+- `invoke_operator.kt`: `operator fun invoke` による `obj(args)` 呼び出し（top-level property / object / 式結果）
+- `char_escape.kt`: Char escape / Unicode escape の runtime parity（`'\n'`, `'\t'`, `'\\'`, `'\u0041'`）
+- `nothing_return_throw.kt`: `Nothing` 分岐の parity（`if` 内 `throw` / `return` による分岐合流）
+- `intersection_definitely_non_null.kt`: `T & Any`（definitely non-null）での通常呼び出しと safe-call の parity
+- `star_projection.kt`: use-site star projection（`Box<*>`）の型解決 parity
+- `generic_typealias.kt`: 循環 typealias（`A = B`, `B = A`）の compile-error parity
+- `is_type_check.kt`: `is` / `!is` と `&&` / `||` の smart-cast 伝播 parity
+- `is_type_check_non_reified_error.kt`: non-reified 型パラメータへの `is` チェック compile-error parity
+- `try_expression.kt`: `try` 式（multi-catch / partial catch / `finally` 実行順）の parity
+- `interface_default_method.kt`: interface default method（body あり fun）の default 実装呼び出しと concrete override の共存 parity
+- `abstract_class.kt`: abstract class / abstract member の制約と override 強制（abstract fun, multi-level inheritance chain）
 
-The set intentionally includes both successful programs and one compile-error case.
+The set intentionally includes both successful programs and compile-error cases.

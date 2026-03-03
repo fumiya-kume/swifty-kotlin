@@ -1,0 +1,10 @@
+{
+  "threshold": 5,
+  "reporters": ["console"],
+  "format": ["swift"],
+  "minLines": 5,
+  "minTokens": 50,
+  "path": ["Sources/"],
+  "absolute": false,
+  "gitignore": true
+}

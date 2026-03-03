@@ -1,0 +1,44 @@
+symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s1 kind=package fq=kotlin vis=public flags=synthetic
+symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
+symbol s4 kind=interface fq=kotlin.properties.ReadWriteProperty vis=public flags=synthetic
+symbol s5 kind=interface fq=kotlin.properties.ReadOnlyProperty vis=public flags=synthetic
+symbol s6 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=_ params=[Any,() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
+symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s11 kind=class fq=golden.sema.Animal vis=public flags=openType
+symbol s12 kind=constructor fq=golden.sema.Animal.<init> vis=public flags=_ sig=recv=Class#11 params=[] ret=Class#11 suspend=0 defaults=[] vararg=[]
+symbol s13 kind=class fq=golden.sema.Dog vis=public flags=_
+symbol s14 kind=constructor fq=golden.sema.Dog.<init> vis=public flags=_ sig=recv=Class#13 params=[] ret=Class#13 suspend=0 defaults=[] vararg=[]
+symbol s15 kind=function fq=golden.sema.accept vis=public flags=_ sig=recv=_ params=[T#16] ret=T#16 suspend=0 defaults=[0] vararg=[0] bounds=[Class#11]
+symbol s16 kind=typeParameter fq=golden.sema.accept.$15.T vis=private flags=_
+symbol s17 kind=valueParameter fq=golden.sema.accept.$15.x vis=private flags=_
+symbol s18 kind=function fq=golden.sema.callValid vis=public flags=_ sig=recv=_ params=[] ret=Class#11 suspend=0 defaults=[] vararg=[]
+symbol s19 kind=function fq=golden.sema.unbounded vis=public flags=_ sig=recv=_ params=[T#20] ret=T#20 suspend=0 defaults=[0] vararg=[0]
+symbol s20 kind=typeParameter fq=golden.sema.unbounded.$19.T vis=private flags=_
+symbol s21 kind=valueParameter fq=golden.sema.unbounded.$19.x vis=private flags=_
+symbol s22 kind=function fq=golden.sema.callUnbounded vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s23 kind=function fq=golden.sema.acceptWhere vis=public flags=_ sig=recv=_ params=[T#24] ret=T#24 suspend=0 defaults=[0] vararg=[0] bounds=[Class#11]
+symbol s24 kind=typeParameter fq=golden.sema.acceptWhere.$23.T vis=private flags=_
+symbol s25 kind=valueParameter fq=golden.sema.acceptWhere.$23.x vis=private flags=_
+file f0 package=golden.sema
+  decl d0 class Animal sym=s11
+  decl d1 class Dog sym=s13
+  decl d2 fun accept suspend=0 inline=0 sym=s15
+  decl d3 fun callValid suspend=0 inline=0 sym=s18
+  decl d4 fun unbounded suspend=0 inline=0 sym=s19
+  decl d5 fun callUnbounded suspend=0 inline=0 sym=s22
+  decl d6 fun acceptWhere suspend=0 inline=0 sym=s23
+expr e0 name(x) type=T#16 ref=s17
+expr e1 name(accept) type=_
+expr e2 name(Dog) type=T#16
+expr e3 call callee=e2 args=[] type=Class#13 call=s14 map=[] targs=[]
+expr e4 call callee=e1 args=[_:e3] type=Class#13 call=s15 map=[0->0] targs=[Class#13]
+expr e5 name(x) type=T#20 ref=s21
+expr e6 name(unbounded) type=T#24
+expr e7 int(42) type=Int
+expr e8 call callee=e6 args=[_:e7] type=Int call=s19 map=[0->0] targs=[Int]
+expr e9 name(x) type=T#24 ref=s25

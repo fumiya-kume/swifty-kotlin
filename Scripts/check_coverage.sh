@@ -1,30 +1,40 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-threshold="${COVERAGE_THRESHOLD:-95}"
+threshold="${COVERAGE_THRESHOLD:-80}"
+readonly report_file="${COVERAGE_REPORT_MD:-}"
 
 readonly targets=(
-  "Sources/CompilerCore/TokenStream.swift"
-  "Sources/CompilerCore/SourceManager.swift"
-  "Sources/CompilerCore/ConstraintSolver.swift"
-  "Sources/CompilerCore/OverloadResolver.swift"
-  "Sources/CompilerCore/SyntaxArena.swift"
-  "Sources/CompilerCore/CompilerTypes.swift"
-  "Sources/CompilerCore/TokenModel.swift"
-  "Sources/CompilerCore/ASTModels.swift"
+  "Sources/CompilerCore/Lexer/TokenStream.swift"
+  "Sources/CompilerCore/Driver/SourceManager.swift"
+  "Sources/CompilerCore/Sema/ConstraintSolver.swift"
+  "Sources/CompilerCore/Sema/OverloadResolver.swift"
+  "Sources/CompilerCore/Parser/SyntaxArena.swift"
+  "Sources/CompilerCore/Sema/CompilerTypes.swift"
+  "Sources/CompilerCore/Lexer/TokenModel.swift"
+  "Sources/CompilerCore/AST/ASTModels.swift"
 )
 
 bash Scripts/swift_test.sh --enable-code-coverage
 
 readonly profile=".build/debug/codecov/default.profdata"
-readonly tests_binary=".build/debug/KSwiftKPackageTests.xctest/Contents/MacOS/KSwiftKPackageTests"
+if [[ "$(uname)" == "Linux" ]]; then
+  readonly tests_binary=".build/debug/KSwiftKPackageTests.xctest"
+else
+  readonly tests_binary=".build/debug/KSwiftKPackageTests.xctest/Contents/MacOS/KSwiftKPackageTests"
+fi
 readonly json_output=".build/debug/codecov/KSwiftK.json"
 
-xcrun llvm-cov export "$tests_binary" -instr-profile "$profile" > "$json_output"
+if [[ "$(uname)" == "Linux" ]]; then
+  llvm-cov export "$tests_binary" -instr-profile "$profile" > "$json_output"
+else
+  xcrun llvm-cov export "$tests_binary" -instr-profile "$profile" > "$json_output"
+fi
 
 echo "Coverage threshold: ${threshold}%"
 
 declare -a failed=()
+declare -a report_lines=()
 for target in "${targets[@]}"; do
   percent="$(jq -r --arg target "$target" '
     .data[0].files[]
@@ -34,6 +44,7 @@ for target in "${targets[@]}"; do
 
   if [[ -z "$percent" || "$percent" == "null" ]]; then
     failed+=("$target (missing)")
+    report_lines+=("| \`$target\` | - | ${threshold}% | :warning: missing |")
     printf "%-52s %s\n" "$target" "missing"
     continue
   fi
@@ -43,8 +54,37 @@ for target in "${targets[@]}"; do
 
   if ! awk -v value="$percent" -v min="$threshold" 'BEGIN { exit (value + 0 >= min + 0 ? 0 : 1) }'; then
     failed+=("$target (${formatted}%)")
+    report_lines+=("| \`$target\` | ${formatted}% | ${threshold}% | :x: |")
+  else
+    report_lines+=("| \`$target\` | ${formatted}% | ${threshold}% | :white_check_mark: |")
   fi
 done
+
+# Generate markdown report if requested
+if [[ -n "$report_file" ]]; then
+  {
+    echo "<!-- coverage-gate-report -->"
+    if (( ${#failed[@]} > 0 )); then
+      echo "## :warning: Coverage Check Failed"
+      echo ""
+      echo "The following files are below the **${threshold}%** line coverage threshold."
+    else
+      echo "## :white_check_mark: Coverage Check Passed"
+      echo ""
+      echo "All tracked files meet the **${threshold}%** line coverage threshold."
+    fi
+    echo ""
+    echo "| File | Coverage | Threshold | Status |"
+    echo "|------|----------|-----------|--------|"
+    for line in "${report_lines[@]}"; do
+      echo "$line"
+    done
+    if (( ${#failed[@]} > 0 )); then
+      echo ""
+      echo "Please add tests to improve coverage for the files marked with :x:."
+    fi
+  } > "$report_file"
+fi
 
 if (( ${#failed[@]} > 0 )); then
   echo

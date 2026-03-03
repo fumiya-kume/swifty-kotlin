@@ -1,0 +1,40 @@
+symbol s0 kind=package fq=_root_ vis=public flags=_
+symbol s1 kind=package fq=kotlin vis=public flags=synthetic
+symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
+symbol s4 kind=interface fq=kotlin.properties.ReadWriteProperty vis=public flags=synthetic
+symbol s5 kind=interface fq=kotlin.properties.ReadOnlyProperty vis=public flags=synthetic
+symbol s6 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=_ params=[Any,() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
+symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s11 kind=class fq=Point vis=public flags=_
+symbol s12 kind=constructor fq=Point.<init> vis=public flags=_ sig=recv=Class#11 params=[Int,Int] ret=Class#11 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s13 kind=valueParameter fq=Point.<init>.$12.x vis=private flags=_
+symbol s14 kind=valueParameter fq=Point.<init>.$12.y vis=private flags=_
+symbol s15 kind=class fq=Named vis=public flags=_
+symbol s16 kind=constructor fq=Named.<init> vis=public flags=_ sig=recv=Class#15 params=[String] ret=Class#15 suspend=0 defaults=[0] vararg=[0]
+symbol s17 kind=valueParameter fq=Named.<init>.$16.name vis=private flags=_
+symbol s18 kind=constructor fq=Named.<init> vis=public flags=_ sig=recv=Class#15 params=[] ret=Class#15 suspend=0 defaults=[] vararg=[]
+symbol s19 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s20 kind=local fq=__local_5.p vis=private flags=_
+symbol s21 kind=local fq=__local_9.n vis=private flags=_
+symbol s22 kind=local fq=__local_12.d vis=private flags=_
+file f0 package=_
+  decl d0 class Point sym=s11
+  decl d1 class Named sym=s15
+  decl d2 fun main suspend=0 inline=0 sym=s19
+expr e0 string(default) type=String
+expr e1 name(Point) type=_
+expr e2 int(1) type=Int
+expr e3 int(2) type=Int
+expr e4 call callee=e1 args=[_:e2,_:e3] type=Class#11 call=s12 map=[0->0,1->1] targs=[]
+expr e5 localDecl p mutable=0 type=_ init=e4 type=Unit ref=s20
+expr e6 name(Named) type=_
+expr e7 string(hello) type=String
+expr e8 call callee=e6 args=[_:e7] type=Class#15 call=s16 map=[0->0] targs=[]
+expr e9 localDecl n mutable=0 type=_ init=e8 type=Unit ref=s21
+expr e10 name(Named) type=_
+expr e11 call callee=e10 args=[] type=Class#15 call=s18 map=[] targs=[]
+expr e12 localDecl d mutable=0 type=_ init=e11 type=Unit ref=s22

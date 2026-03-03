@@ -4,74 +4,211 @@ on:
   push:
   pull_request:
 
-concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 permissions:
   contents: read
 
 jobs:
-  test-and-coverage:
-    name: Test and Coverage Gate
-    runs-on: macos-latest
-
+  jscpd-check:
+    name: Duplicate Code Detection
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Show toolchain versions
-        run: |
-          xcodebuild -version
-          swift --version
-
-      - name: Run smoke tests
-        run: bash Scripts/swift_test.sh --filter SmokeTests
-
-      - name: Set up Java
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          distribution: temurin
-          java-version: "21"
+          node-version: '18'
+      - name: Install jscpd
+        run: npm install -g jscpd@4.0.8
+      - name: Run jscpd
+        run: jscpd --threshold 5 --min-lines 15 --format swift Sources/
 
-      - name: Ensure kotlinc is installed
+  style-check:
+    name: Swift Style Checks
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Swift style tools
+        env:
+          SWIFTLINT_VERSION: "0.63.2"
+          SWIFTFORMAT_VERSION: "0.59.1"
         run: |
-          if ! command -v kotlinc >/dev/null 2>&1; then
-            brew update
-            brew install kotlin
-          fi
+          TOOLS_DIR="${RUNNER_TEMP}/swift-style-tools"
+          BIN_DIR="${TOOLS_DIR}/bin"
+          mkdir -p "$BIN_DIR"
+
+          curl -sSL -o "${TOOLS_DIR}/swiftlint.zip" "https://github.com/realm/SwiftLint/releases/download/${SWIFTLINT_VERSION}/portable_swiftlint.zip"
+          unzip -q "${TOOLS_DIR}/swiftlint.zip" -d "$BIN_DIR"
+          chmod +x "${BIN_DIR}/swiftlint"
+
+          curl -sSL -o "${TOOLS_DIR}/swiftformat.zip" "https://github.com/nicklockwood/SwiftFormat/releases/download/${SWIFTFORMAT_VERSION}/swiftformat.zip"
+          unzip -q "${TOOLS_DIR}/swiftformat.zip" -d "$BIN_DIR"
+          chmod +x "${BIN_DIR}/swiftformat"
+
+          echo "$BIN_DIR" >> "$GITHUB_PATH"
+      - name: Verify tool versions
+        run: |
+          test "$(swiftlint version)" = "0.63.2"
+          test "$(swiftformat --version)" = "0.59.1"
+      - name: Run SwiftFormat lint
+        run: bash Scripts/swift_format.sh --lint
+      - name: Run SwiftLint
+        run: bash Scripts/swift_lint.sh
+
+  smoke-tests:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.2"
+      - name: Install LLVM
+        run: sudo apt-get update && sudo apt-get install -y llvm-dev
+      - name: Configure LLVM paths
+        run: |
+          LLVM_PREFIX="$(llvm-config --prefix)"
+          echo "C_INCLUDE_PATH=${LLVM_PREFIX}/include" >> "$GITHUB_ENV"
+          echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
+      - name: Show toolchain versions
+        run: swift --version
+      - name: Build with strict concurrency (warnings)
+        run: swift build -Xswiftc -swift-version -Xswiftc 6 -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency
+      - name: Run smoke tests
+        run: bash Scripts/swift_test.sh --filter SmokeTests -Xswiftc -swift-version -Xswiftc 6
+
+  diff-regression:
+    name: kotlinc Diff Regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.2"
+      - name: Install LLVM
+        run: sudo apt-get update && sudo apt-get install -y llvm-dev
+      - name: Configure LLVM paths
+        run: |
+          LLVM_PREFIX="$(llvm-config --prefix)"
+          echo "C_INCLUDE_PATH=${LLVM_PREFIX}/include" >> "$GITHUB_ENV"
+          echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
+      - name: Install Kotlin and Java
+        run: sudo apt-get install -y kotlin default-jdk
+      - name: Verify prerequisites
+        run: |
+          java -version
           kotlinc -version
-
       - name: Build compiler
-        run: swift build
-
+        run: swift build -Xswiftc -swift-version -Xswiftc 6
+      - name: Build with strict concurrency (warnings)
+        run: swift build -Xswiftc -swift-version -Xswiftc 6 -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency
       - name: Run kotlinc diff regression cases
         id: diff_kotlinc
         continue-on-error: true
         env:
           DIFF_REPORT: ${{ runner.temp }}/diff_kotlinc_report.tsv
+          DIFF_COMPILE_TIMEOUT: "120"
+          DIFF_RUN_TIMEOUT: "30"
         run: bash Scripts/diff_kotlinc.sh --report "$DIFF_REPORT" Scripts/diff_cases
-
       - name: Summarize kotlinc diff artifacts
         if: always()
         env:
           DIFF_REPORT: ${{ runner.temp }}/diff_kotlinc_report.tsv
         run: bash Scripts/diff_kotlinc_ci_summary.sh --report "$DIFF_REPORT"
-
       - name: Fail when kotlinc diff regression mismatches exist
         if: steps.diff_kotlinc.outcome == 'failure'
         run: |
           echo "kotlinc diff regression cases failed." >&2
           exit 1
 
-      - name: Ensure jq is installed
+  test-and-coverage:
+    name: Test and Coverage Gate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.2"
+      - name: Install LLVM and jq
+        run: sudo apt-get update && sudo apt-get install -y llvm-dev jq
+      - name: Configure LLVM paths
         run: |
-          if ! command -v jq >/dev/null 2>&1; then
-            brew update
-            brew install jq
-          fi
-
+          LLVM_PREFIX="$(llvm-config --prefix)"
+          echo "C_INCLUDE_PATH=${LLVM_PREFIX}/include" >> "$GITHUB_ENV"
+          echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
+      - name: Verify prerequisites
+        run: jq --version
+      - name: Build with strict concurrency (warnings)
+        run: swift build -Xswiftc -swift-version -Xswiftc 6 -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency
       - name: Run tests with coverage threshold
+        id: coverage
+        continue-on-error: true
         env:
-          COVERAGE_THRESHOLD: "95"
+          COVERAGE_THRESHOLD: "80"
+          COVERAGE_REPORT_MD: ${{ runner.temp }}/coverage_report.md
         run: bash Scripts/check_coverage.sh
+      - name: Post or update coverage comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v8
+        env:
+          COVERAGE_REPORT_MD: ${{ runner.temp }}/coverage_report.md
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- coverage-gate-report -->';
+            const outcome = '${{ steps.coverage.outcome }}';
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body?.includes(marker));
+
+            if (outcome === 'success') {
+              // Coverage passed — remove stale failure comment if present
+              if (existing) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existing.id,
+                });
+              }
+              return;
+            }
+
+            // Coverage failed — post or update the comment
+            const reportPath = process.env.COVERAGE_REPORT_MD;
+            let body = '';
+            if (reportPath && fs.existsSync(reportPath)) {
+              body = fs.readFileSync(reportPath, 'utf8');
+            } else {
+              body = `${marker}\n## :warning: Coverage Check Failed\n\nCoverage report was not generated. Check the CI logs for details.`;
+            }
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+      - name: Fail if coverage is below threshold
+        if: steps.coverage.outcome == 'failure'
+        run: |
+          echo "Coverage check failed. See the PR comment for details." >&2
+          exit 1

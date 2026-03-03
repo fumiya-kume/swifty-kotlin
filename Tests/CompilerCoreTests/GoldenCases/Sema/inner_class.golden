@@ -1,0 +1,43 @@
+symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s1 kind=package fq=kotlin vis=public flags=synthetic
+symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
+symbol s4 kind=interface fq=kotlin.properties.ReadWriteProperty vis=public flags=synthetic
+symbol s5 kind=interface fq=kotlin.properties.ReadOnlyProperty vis=public flags=synthetic
+symbol s6 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=_ params=[Any,() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
+symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s11 kind=class fq=golden.sema.Outer vis=public flags=_
+symbol s12 kind=constructor fq=golden.sema.Outer.<init> vis=public flags=_ sig=recv=Class#11 params=[Int] ret=Class#11 suspend=0 defaults=[0] vararg=[0]
+symbol s13 kind=valueParameter fq=golden.sema.Outer.<init>.$12.x vis=private flags=_
+symbol s14 kind=property fq=golden.sema.Outer.y vis=public flags=_ type=Int
+symbol s15 kind=class fq=golden.sema.Outer.Inner vis=public flags=innerClass
+symbol s16 kind=constructor fq=golden.sema.Outer.Inner.<init> vis=public flags=_ sig=recv=Class#15 params=[] ret=Class#15 suspend=0 defaults=[] vararg=[]
+symbol s17 kind=function fq=golden.sema.Outer.Inner.getY vis=public flags=_ sig=recv=Class#15 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s18 kind=class fq=golden.sema.Outer.Nested vis=public flags=_
+symbol s19 kind=constructor fq=golden.sema.Outer.Nested.<init> vis=public flags=_ sig=recv=Class#18 params=[] ret=Class#18 suspend=0 defaults=[] vararg=[]
+symbol s20 kind=function fq=golden.sema.Outer.Nested.tryAccess vis=public flags=_ sig=recv=Class#18 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s21 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s22 kind=local fq=__local_8.outer vis=private flags=_
+symbol s23 kind=local fq=__local_11.inner vis=private flags=_
+symbol s24 kind=local fq=__local_14.result vis=private flags=_
+file f0 package=golden.sema
+  decl d5 class Outer sym=s11
+  decl d6 fun main suspend=0 inline=0 sym=s21
+expr e0 name(x) type=Int ref=s14
+expr e1 this@Outer type=Class#11
+expr e2 memberCall recv=e1 callee=y args=[] type=Int ref=s14
+expr e3 this@Outer type=<error>
+expr e4 memberCall recv=e3 callee=y args=[] type=<error>
+expr e5 name(Outer) type=_
+expr e6 int(42) type=Int
+expr e7 call callee=e5 args=[_:e6] type=Class#11 call=s12 map=[0->0] targs=[]
+expr e8 localDecl outer mutable=0 type=_ init=e7 type=Unit ref=s22
+expr e9 name(outer) type=Class#11 ref=s22
+expr e10 memberCall recv=e9 callee=Inner args=[] type=Class#15 call=s16 map=[] targs=[]
+expr e11 localDecl inner mutable=0 type=_ init=e10 type=Unit ref=s23
+expr e12 name(inner) type=Class#15 ref=s23
+expr e13 memberCall recv=e12 callee=getY args=[] type=Int call=s17 map=[] targs=[]
+expr e14 localDecl result mutable=0 type=_ init=e13 type=Unit ref=s24

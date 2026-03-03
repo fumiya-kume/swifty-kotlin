@@ -1,0 +1,34 @@
+symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s1 kind=package fq=kotlin vis=public flags=synthetic
+symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
+symbol s4 kind=interface fq=kotlin.properties.ReadWriteProperty vis=public flags=synthetic
+symbol s5 kind=interface fq=kotlin.properties.ReadOnlyProperty vis=public flags=synthetic
+symbol s6 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=_ params=[Any,() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
+symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s11 kind=class fq=golden.sema.Counter vis=public flags=_
+symbol s12 kind=constructor fq=golden.sema.Counter.<init> vis=public flags=_ sig=recv=Class#11 params=[Int] ret=Class#11 suspend=0 defaults=[0] vararg=[0]
+symbol s13 kind=valueParameter fq=golden.sema.Counter.<init>.$12.initial vis=private flags=_
+symbol s14 kind=function fq=golden.sema.Counter.increment vis=public flags=_ sig=recv=Class#11 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s15 kind=function fq=golden.sema.Counter.get vis=public flags=_ sig=recv=Class#11 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s16 kind=property fq=golden.sema.Counter.count vis=public flags=mutable type=Int
+symbol s17 kind=property fq=golden.sema.Counter.label vis=public flags=_ type=String
+symbol s18 kind=object fq=golden.sema.Singleton vis=public flags=_
+symbol s19 kind=function fq=golden.sema.Singleton.greet vis=public flags=_ sig=recv=Class#18 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s20 kind=property fq=golden.sema.Singleton.name vis=public flags=_ type=String
+file f0 package=golden.sema
+  decl d4 class Counter sym=s11
+  decl d7 object Singleton sym=s18
+expr e0 name(initial) type=Int ref=s16
+expr e1 string(counter) type=String ref=s17
+expr e2 name(count) type=_
+expr e3 name(count) type=Int ref=s16
+expr e4 int(1) type=Int
+expr e5 binary(add) lhs=e3 rhs=e4 type=String ref=s20
+expr e6 localAssign count value=e5 type=Unit ref=s16
+expr e7 name(count) type=Int ref=s16
+expr e8 string(singleton) type=String
+expr e9 string(hello) type=String
