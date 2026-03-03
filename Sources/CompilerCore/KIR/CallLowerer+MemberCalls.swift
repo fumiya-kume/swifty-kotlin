@@ -464,6 +464,7 @@ extension CallLowerer {
         }
     }
 
+    // swiftlint:disable:next function_body_length
     private func emitMemberCallInstruction(
         normalized: NormalizedCallResult,
         callBinding: CallBinding?,
@@ -553,6 +554,7 @@ extension CallLowerer {
     /// dispatched virtually, or `nil` when a plain `.call` is appropriate.
     /// Callees with an `externalLinkName` (C runtime functions such as
     /// `kk_array_get`) are never dispatched virtually.
+    // swiftlint:disable:next function_parameter_count
     private func tryEmitVirtualDispatch(
         chosenCallee: SymbolID?,
         calleeName: InternedString,
