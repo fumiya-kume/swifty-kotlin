@@ -114,22 +114,14 @@ public struct KIRFunction: Sendable {
     public var body: [KIRInstruction]
     public let isSuspend: Bool
     public let isInline: Bool
-    /// Source range of the function declaration in the original source file.
-    public let sourceRange: SourceRange?
-    /// Per-instruction source locations, parallel to ``body``.
-    /// `nil` entries mean "same as function-level location".
-    public var instructionLocations: [SourceRange?]
+    public let sourceRange: SourceRange? // function-level source location
+    public var instructionLocations: [SourceRange?] // per-instruction source locations, parallel to body
 
     public init(
-        symbol: SymbolID,
-        name: InternedString,
-        params: [KIRParameter],
-        returnType: TypeID,
-        body: [KIRInstruction],
-        isSuspend: Bool,
-        isInline: Bool,
-        sourceRange: SourceRange? = nil,
-        instructionLocations: [SourceRange?] = []
+        symbol: SymbolID, name: InternedString, params: [KIRParameter],
+        returnType: TypeID, body: [KIRInstruction],
+        isSuspend: Bool, isInline: Bool,
+        sourceRange: SourceRange? = nil, instructionLocations: [SourceRange?] = []
     ) {
         self.symbol = symbol
         self.name = name
@@ -234,11 +226,9 @@ public final class KIRArena {
                 continue
             }
             let transformed = transform(function)
-            if transformed.body != function.body
+            let changed = transformed.body != function.body
                 || transformed.instructionLocations != function.instructionLocations
-            {
-                declarations[index] = .function(transformed)
-            }
+            if changed { declarations[index] = .function(transformed) }
         }
     }
 }

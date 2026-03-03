@@ -10,10 +10,9 @@ extension ExprLowerer {
         // source locations with all newly emitted instructions afterwards.
         let beforeCount = instructions.instructions.count
 
-        // Look up the source range for this expression from the AST.
-        let exprRange: SourceRange? = shared.ast.arena.expr(exprID).flatMap { expr in
-            ExprSourceRange.range(of: expr)
-        }
+        // Look up the source range for this expression from the AST arena,
+        // which already provides a range-extraction helper for all Expr cases.
+        let exprRange = shared.ast.arena.exprRange(exprID)
 
         let result = lowerExpr(
             exprID,
@@ -37,61 +36,5 @@ extension ExprLowerer {
         }
 
         return result
-    }
-}
-
-/// Helper to extract the ``SourceRange`` from an ``Expr`` value without a
-/// giant switch in the call-site. Every ``Expr`` case carries a range as its
-/// last associated value (or named `range:`).
-enum ExprSourceRange {
-    // swiftlint:disable:next cyclomatic_complexity
-    static func range(of expr: Expr) -> SourceRange? {
-        switch expr {
-        case let .intLiteral(_, range): range
-        case let .longLiteral(_, range): range
-        case let .floatLiteral(_, range): range
-        case let .doubleLiteral(_, range): range
-        case let .charLiteral(_, range): range
-        case let .boolLiteral(_, range): range
-        case let .stringLiteral(_, range): range
-        case let .stringTemplate(_, range: range): range
-        case let .nameRef(_, range): range
-        case let .forExpr(_, _, _, _, range: range): range
-        case let .whileExpr(_, _, _, range: range): range
-        case let .doWhileExpr(_, _, _, range: range): range
-        case let .breakExpr(_, range: range): range
-        case let .continueExpr(_, range: range): range
-        case let .localDecl(_, _, _, _, range: range): range
-        case let .localAssign(_, _, range: range): range
-        case let .memberAssign(_, _, _, range: range): range
-        case let .indexedAssign(_, _, _, range: range): range
-        case let .call(_, _, _, range: range): range
-        case let .memberCall(_, _, _, _, range: range): range
-        case let .indexedAccess(_, _, range: range): range
-        case let .binary(_, _, _, range: range): range
-        case let .whenExpr(_, _, _, range: range): range
-        case let .returnExpr(_, _, range: range): range
-        case let .ifExpr(_, _, _, range: range): range
-        case let .tryExpr(_, _, _, range: range): range
-        case let .unaryExpr(_, _, range: range): range
-        case let .isCheck(_, _, _, range: range): range
-        case let .asCast(_, _, _, range: range): range
-        case let .nullAssert(_, range: range): range
-        case let .safeMemberCall(_, _, _, _, range: range): range
-        case let .compoundAssign(_, _, _, range: range): range
-        case let .indexedCompoundAssign(_, _, _, _, range: range): range
-        case let .throwExpr(_, range: range): range
-        case let .lambdaLiteral(_, _, _, range: range): range
-        case let .objectLiteral(_, range: range): range
-        case let .callableRef(_, _, range: range): range
-        case let .localFunDecl(_, _, _, _, range: range): range
-        case let .blockExpr(_, _, range: range): range
-        case let .superRef(_, range): range
-        case let .thisRef(_, range): range
-        case let .inExpr(_, _, range: range): range
-        case let .notInExpr(_, _, range: range): range
-        case let .destructuringDecl(_, _, _, range: range): range
-        case let .forDestructuringExpr(_, _, _, range: range): range
-        }
     }
 }
