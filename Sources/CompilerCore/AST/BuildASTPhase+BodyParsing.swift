@@ -51,11 +51,11 @@ extension BuildASTPhase {
         return .expr(exprID, range)
     }
 
-    // Gather per-CST-statement token arrays from a block, merging
-    // dot-continuation lines into the previous group.
-    // The Kotlin CST parser may split `expr\n  .member()` into
-    // separate statement nodes, but `.member()` is a continuation
-    // of the previous expression, not a standalone statement.
+    /// Gather per-CST-statement token arrays from a block, merging
+    /// dot-continuation lines into the previous group.
+    /// The Kotlin CST parser may split `expr\n  .member()` into
+    /// separate statement nodes, but `.member()` is a continuation
+    /// of the previous expression, not a standalone statement.
     private func collectBlockStatementGroups( // swiftlint:disable:this function_body_length
         from blockNodeID: NodeID,
         in arena: SyntaxArena
