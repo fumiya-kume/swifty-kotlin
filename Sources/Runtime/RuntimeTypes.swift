@@ -141,6 +141,35 @@ final class RuntimeMapIteratorBox {
     }
 }
 
+// MARK: - Sequence Types (STDLIB-003)
+
+/// Represents a lazy operation in a sequence chain.
+/// Each step stores its kind (source, map, filter, take) and a function pointer
+/// for map/filter transformations. Lazy semantics: no evaluation until terminal.
+enum SequenceStepKind {
+    case source(elements: [Int])
+    case mapStep(fnPtr: Int)
+    case filterStep(fnPtr: Int)
+    case takeStep(count: Int)
+    case builder(elements: [Int])
+}
+
+/// Runtime box for `Sequence<T>`.
+/// Stores a chain of lazy steps that are only evaluated on terminal operations.
+final class RuntimeSequenceBox {
+    var steps: [SequenceStepKind]
+
+    init(steps: [SequenceStepKind]) {
+        self.steps = steps
+    }
+}
+
+/// Runtime box for the `sequence { yield(x) }` builder.
+/// Accumulates yielded elements during builder block execution.
+final class RuntimeSequenceBuilderBox {
+    var elements: [Int] = []
+}
+
 // MARK: - Stdlib Delegate Types (P5-80)
 
 /// Thread-safety mode for `lazy` delegate.

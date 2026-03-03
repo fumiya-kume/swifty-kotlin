@@ -54,6 +54,15 @@ final class CollectionLiteralLoweringPass: LoweringPass {
         let kkListNoneName = interner.intern("kk_list_none")
         let kkListAllName = interner.intern("kk_list_all")
 
+        // Sequence ABI names (STDLIB-003)
+        let kkSequenceFromListName = interner.intern("kk_sequence_from_list")
+        let kkSequenceMapName = interner.intern("kk_sequence_map")
+        let kkSequenceFilterName = interner.intern("kk_sequence_filter")
+        let kkSequenceTakeName = interner.intern("kk_sequence_take")
+        let kkSequenceToListName = interner.intern("kk_sequence_to_list")
+        let kkSequenceBuilderBuildName = interner.intern("kk_sequence_builder_build")
+        let kkSequenceBuilderYieldName = interner.intern("kk_sequence_builder_yield")
+
         let kkMapOfName = interner.intern("kk_map_of")
         let kkMapSizeName = interner.intern("kk_map_size")
         let kkMapGetName = interner.intern("kk_map_get")
@@ -91,6 +100,13 @@ final class CollectionLiteralLoweringPass: LoweringPass {
         let noneName = interner.intern("none")
         let allName = interner.intern("all")
 
+        // Sequence member names (STDLIB-003)
+        let asSequenceName = interner.intern("asSequence")
+        let toListName = interner.intern("toList")
+        let takeName = interner.intern("take")
+        let sequenceName = interner.intern("sequence")
+        let yieldName = interner.intern("yield")
+
         // println support
         let printlnName = interner.intern("println")
         let kkPrintlnAnyName = interner.intern("kk_println_any")
@@ -119,6 +135,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
             var listExprIDs: Set<Int32> = []
             var mapExprIDs: Set<Int32> = []
             var arrayExprIDs: Set<Int32> = []
+            var sequenceExprIDs: Set<Int32> = []
 
             for instruction in function.body {
                 switch instruction {
@@ -139,6 +156,9 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     }
                     if arrayExprIDs.contains(from.rawValue) {
                         arrayExprIDs.insert(to.rawValue)
+                    }
+                    if sequenceExprIDs.contains(from.rawValue) {
+                        sequenceExprIDs.insert(to.rawValue)
                     }
                 default:
                     break
@@ -552,6 +572,110 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                         }
                     }
 
+                    // --- Rewrite sequence member calls (STDLIB-003) ---
+                    // asSequence() on list → kk_sequence_from_list
+                    if callee == asSequenceName, arguments.count == 1 {
+                        let receiverID = arguments[0]
+                        if listExprIDs.contains(receiverID.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkSequenceFromListName,
+                                arguments: [receiverID],
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            continue
+                        }
+                    }
+
+                    // map/filter on sequence → kk_sequence_map/kk_sequence_filter
+                    if (callee == mapName || callee == filterName), arguments.count == 2 {
+                        let receiverID = arguments[0]
+                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                            let kkName = callee == mapName ? kkSequenceMapName : kkSequenceFilterName
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkName,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            continue
+                        }
+                    }
+
+                    // take(n) on sequence → kk_sequence_take
+                    if callee == takeName, arguments.count == 2 {
+                        let receiverID = arguments[0]
+                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkSequenceTakeName,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            continue
+                        }
+                    }
+
+                    // toList() on sequence → kk_sequence_to_list
+                    if callee == toListName, arguments.count == 1 {
+                        let receiverID = arguments[0]
+                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                            let toListResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkSequenceToListName,
+                                arguments: [receiverID],
+                                result: toListResult,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result {
+                                listExprIDs.insert(result.rawValue)
+                                listExprIDs.insert(toListResult.rawValue)
+                                loweredBody.append(.copy(from: toListResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+
+                    // sequence { ... } builder → kk_sequence_builder_build
+                    if callee == sequenceName, arguments.count == 1 {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkSequenceBuilderBuildName,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: canThrow,
+                            thrownResult: thrownResult
+                        ))
+                        if let result { sequenceExprIDs.insert(result.rawValue) }
+                        continue
+                    }
+
+                    // yield(value) inside sequence builder → kk_sequence_builder_yield
+                    if callee == yieldName, arguments.count == 2 {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkSequenceBuilderYieldName,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        continue
+                    }
+
                     // --- Rewrite higher-order collection member calls (FUNC-003) ---
                     if callee == mapName || callee == filterName || callee == forEachName
                         || callee == flatMapName || callee == anyName || callee == noneName
@@ -683,6 +807,9 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     }
                     if arrayExprIDs.contains(from.rawValue) {
                         arrayExprIDs.insert(to.rawValue)
+                    }
+                    if sequenceExprIDs.contains(from.rawValue) {
+                        sequenceExprIDs.insert(to.rawValue)
                     }
                     if listIteratorExprIDs.contains(from.rawValue) {
                         listIteratorExprIDs.insert(to.rawValue)
