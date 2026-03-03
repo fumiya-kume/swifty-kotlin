@@ -66,7 +66,7 @@ lldb ./hello
 
 ### 4. Set breakpoints and run
 
-```
+```text
 (lldb) breakpoint set --file hello.kt --line 3
 Breakpoint 1: where = hello`add + XX
 (lldb) run
@@ -81,7 +81,7 @@ Process XXXXX stopped
 
 ### 5. Inspect variables and step
 
-```
+```text
 (lldb) frame variable
 (Int) a = 40
 (Int) b = 2

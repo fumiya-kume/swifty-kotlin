@@ -100,7 +100,7 @@ extension CodegenBackendIntegrationTests {
             return updated
         }
 
-        if case let .function(transformed) = arena.decl(KIRDeclID(rawValue: 0)) {
+        if case let .function(transformed)? = arena.decl(KIRDeclID(rawValue: 0)) {
             XCTAssertEqual(transformed.instructionLocations.count, 2)
             XCTAssertNil(transformed.instructionLocations[0])
             XCTAssertNil(transformed.instructionLocations[1])

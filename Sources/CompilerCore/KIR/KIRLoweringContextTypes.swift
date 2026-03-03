@@ -61,17 +61,21 @@ struct KIRLoweringEmitContext: RandomAccessCollection, MutableCollection, RangeR
 
     mutating func replaceSubrange<C: Collection>(_ subrange: Range<Index>, with newElements: C) where KIRInstruction == C.Element {
         instructions.replaceSubrange(subrange, with: newElements)
-        // Pad instructionLocations to match new instruction count.
-        let locationRange = subrange.clamped(to: instructionLocations.startIndex ..< instructionLocations.endIndex)
+        // Keep instructionLocations in sync with the same structural edit.
+        if instructionLocations.count < subrange.upperBound {
+            instructionLocations.append(
+                contentsOf: repeatElement(nil, count: subrange.upperBound - instructionLocations.count)
+            )
+        }
         let newLocations = Array(repeating: currentSourceRange, count: newElements.count)
-        if locationRange.isEmpty {
-            // Subrange is beyond current locations; pad and append.
-            while instructionLocations.count < subrange.lowerBound {
-                instructionLocations.append(nil)
-            }
-            instructionLocations.append(contentsOf: newLocations)
-        } else {
-            instructionLocations.replaceSubrange(locationRange, with: newLocations)
+        instructionLocations.replaceSubrange(subrange, with: newLocations)
+        // Final safety sync.
+        if instructionLocations.count < instructions.count {
+            instructionLocations.append(
+                contentsOf: repeatElement(nil, count: instructions.count - instructionLocations.count)
+            )
+        } else if instructionLocations.count > instructions.count {
+            instructionLocations.removeLast(instructionLocations.count - instructions.count)
         }
     }
 }
