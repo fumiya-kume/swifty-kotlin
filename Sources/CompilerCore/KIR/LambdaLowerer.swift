@@ -28,7 +28,17 @@ final class LambdaLowerer {
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
         let boundType = sema.bindings.exprTypes[exprID]
-        let functionType = boundType.flatMap { typeID -> FunctionType? in
+        // For SAM-converted lambdas, the bound type is the interface type.
+        // Use the stored underlying function type instead.
+        let effectiveFuncTypeID: TypeID? = {
+            if sema.bindings.isSamConversion(exprID),
+               let samFuncType = sema.bindings.samUnderlyingFunctionType(for: exprID)
+            { // swiftlint:disable:this opening_brace
+                return samFuncType
+            }
+            return boundType
+        }()
+        let functionType = effectiveFuncTypeID.flatMap { typeID -> FunctionType? in
             guard case let .functionType(functionType) = sema.types.kind(of: typeID) else {
                 return nil
             }
@@ -145,7 +155,10 @@ final class LambdaLowerer {
         )
         driver.ctx.pendingGeneratedCallableDeclIDs.append(lambdaDecl)
 
-        let lambdaValueType = boundType
+        // For SAM-converted lambdas, use the function type (not the interface
+        // type) so the KIR callable value machinery dispatches correctly.
+        let lambdaValueType = effectiveFuncTypeID
+            ?? boundType
             ?? sema.types.make(
                 .functionType(
                     FunctionType(

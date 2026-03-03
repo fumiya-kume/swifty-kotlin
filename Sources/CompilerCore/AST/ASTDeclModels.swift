@@ -129,6 +129,9 @@ public struct InterfaceDecl {
     public let range: SourceRange
     public let name: InternedString
     public let modifiers: Modifiers
+    /// `true` when declared with `fun interface` — marks this as a functional
+    /// interface eligible for SAM (Single Abstract Method) conversion.
+    public let isFunInterface: Bool
     public let typeParams: [TypeParamDecl]
     public let superTypes: [TypeRefID]
     public let nestedTypeAliases: [TypeAliasDecl]
@@ -143,6 +146,7 @@ public struct InterfaceDecl {
         range: SourceRange,
         name: InternedString,
         modifiers: Modifiers,
+        isFunInterface: Bool = false,
         typeParams: [TypeParamDecl] = [],
         superTypes: [TypeRefID] = [],
         nestedTypeAliases: [TypeAliasDecl] = [],
@@ -155,6 +159,7 @@ public struct InterfaceDecl {
         self.range = range
         self.name = name
         self.modifiers = modifiers
+        self.isFunInterface = isFunInterface
         self.typeParams = typeParams
         self.superTypes = superTypes
         self.nestedTypeAliases = nestedTypeAliases
