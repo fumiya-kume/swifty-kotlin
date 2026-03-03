@@ -45,7 +45,20 @@ extension CallTypeChecker {
         }
 
         let receiverType = driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
-        let argTypes = args.map { driver.inferExpr($0.expr, ctx: ctx, locals: &locals) }
+        // Defer inference of lambda arguments for collection HOFs so that the
+        // contextual function type (and thus implicit `it`) is available.
+        let collectionHOFNames: Set<String> = ["map", "filter", "forEach", "flatMap", "any", "none", "all"]
+        let isCollectionHOF = collectionHOFNames.contains(interner.resolve(calleeName))
+            && sema.bindings.isCollectionExpr(receiverID)
+        let argTypes = args.map { arg -> TypeID in
+            if isCollectionHOF,
+               let argExpr = ast.arena.expr(arg.expr),
+               case .lambdaLiteral = argExpr
+            { // swiftlint:disable:this opening_brace
+                return sema.types.anyType // placeholder; re-inferred later with expected type
+            }
+            return driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
+        }
         let lookupReceiverType = safeCall ? sema.types.makeNonNullable(receiverType) : receiverType
 
         // Primitive member function: Int/Long.inv() → same type (P5-103)
@@ -464,16 +477,43 @@ extension CallTypeChecker {
                     "size", "get", "contains", "containsKey",
                     "isEmpty", "first", "last", "indexOf",
                     "count", "iterator",
+                    "map", "filter", "forEach", "flatMap",
+                    "any", "none", "all", // swiftlint:disable:this trailing_comma
                 ]
                 if collectionMembers.contains(memberName) {
                     let resultType: TypeID = switch memberName {
                     case "size", "count", "indexOf":
                         sema.types.make(.primitive(.int, .nonNull))
-                    case "isEmpty", "contains", "containsKey":
+                    case "isEmpty", "contains", "containsKey",
+                         "any", "none", "all":
                         sema.types.make(.primitive(.boolean, .nonNull))
+                    case "forEach":
+                        sema.types.unitType
                     default:
                         sema.types.anyType
                     }
+                    // For higher-order collection functions, provide contextual
+                    // function type for the trailing lambda argument so that Sema
+                    // can infer the implicit `it` parameter type.
+                    if ["map", "filter", "forEach", "flatMap", "any", "none", "all"].contains(memberName),
+                       args.count == 1
+                    { // swiftlint:disable:this opening_brace
+                        let lambdaReturnType: TypeID = switch memberName {
+                        case "filter", "any", "none", "all":
+                            sema.types.make(.primitive(.boolean, .nonNull))
+                        default:
+                            sema.types.anyType
+                        }
+                        let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                            params: [sema.types.anyType],
+                            returnType: lambdaReturnType,
+                            isSuspend: false,
+                            nullability: .nonNull
+                        )))
+                        // Re-infer the lambda argument with the contextual function type.
+                        _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                    }
+                    sema.bindings.markCollectionExpr(id)
                     let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
