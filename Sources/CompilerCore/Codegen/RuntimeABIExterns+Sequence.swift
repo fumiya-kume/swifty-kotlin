@@ -1,4 +1,4 @@
-// swiftlint:disable trailing_comma
+// swiftlint:disable identifier_name trailing_comma
 
 // MARK: - Sequence Extern Declarations (STDLIB-003)
 
@@ -63,4 +63,4 @@ public extension RuntimeABIExterns {
     )
 }
 
-// swiftlint:enable trailing_comma
+// swiftlint:enable identifier_name trailing_comma
