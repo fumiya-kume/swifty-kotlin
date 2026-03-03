@@ -9,20 +9,27 @@ symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=
 symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
 symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
 symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
-symbol s11 kind=property fq=golden.sema.doubled vis=public flags=_ type=Int
-symbol s12 kind=function fq=golden.sema.doubled.$get vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s13 kind=property fq=golden.sema.isPositive vis=public flags=_ type=Boolean
-symbol s14 kind=function fq=golden.sema.isPositive.$get vis=public flags=synthetic sig=recv=Int params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s15 kind=function fq=golden.sema.useExtProp vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s11 kind=package fq=kotlin.collections vis=public flags=synthetic
+symbol s12 kind=interface fq=kotlin.collections.List vis=public flags=synthetic
+symbol s13 kind=typeParameter fq=kotlin.collections.List.E vis=private flags=_
+symbol s14 kind=function fq=kotlin.collections.List.get vis=public flags=synthetic|operatorFunction sig=recv=Class#12<out T#13> params=[Int] ret=T#13 suspend=0 defaults=[] vararg=[]
+symbol s15 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
+symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
+symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
+symbol s18 kind=property fq=golden.sema.doubled vis=public flags=_ type=Int
+symbol s19 kind=function fq=golden.sema.doubled.$get vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s20 kind=property fq=golden.sema.isPositive vis=public flags=_ type=Boolean
+symbol s21 kind=function fq=golden.sema.isPositive.$get vis=public flags=synthetic sig=recv=Int params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s22 kind=function fq=golden.sema.useExtProp vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 property doubled var=0 sym=s11
-  decl d1 property isPositive var=0 sym=s13
-  decl d2 fun useExtProp suspend=0 inline=0 sym=s15
-expr e0 this type=Int ref=s11
-expr e1 int(2) type=Boolean ref=s13
+  decl d0 property doubled var=0 sym=s18
+  decl d1 property isPositive var=0 sym=s20
+  decl d2 fun useExtProp suspend=0 inline=0 sym=s22
+expr e0 this type=Int ref=s18
+expr e1 int(2) type=Boolean ref=s20
 expr e2 binary(multiply) lhs=e0 rhs=e1 type=Int
 expr e3 this type=Int
 expr e4 int(0) type=Int
 expr e5 binary(greaterThan) lhs=e3 rhs=e4 type=Boolean
 expr e6 int(5) type=Int
-expr e7 memberCall recv=e6 callee=doubled args=[] type=Int call=s12 map=[] targs=[]
+expr e7 memberCall recv=e6 callee=doubled args=[] type=Int call=s19 map=[] targs=[]
