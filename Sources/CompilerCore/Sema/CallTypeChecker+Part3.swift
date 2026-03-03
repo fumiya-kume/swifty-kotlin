@@ -477,7 +477,8 @@ extension CallTypeChecker {
                     "isEmpty", "first", "last", "indexOf",
                     "count", "iterator",
                     "map", "filter", "forEach", "flatMap",
-                    "any", "none", "all", // swiftlint:disable:this trailing_comma
+                    "any", "none", "all",
+                    "asSequence", "toList", "take", // swiftlint:disable:this trailing_comma
                 ]
                 if collectionMembers.contains(memberName) {
                     let resultType: TypeID = switch memberName {
@@ -488,6 +489,9 @@ extension CallTypeChecker {
                         sema.types.make(.primitive(.boolean, .nonNull))
                     case "forEach":
                         sema.types.unitType
+                    case "asSequence", "toList", "take",
+                         "map", "filter", "flatMap":
+                        sema.types.anyType
                     default:
                         sema.types.anyType
                     }
