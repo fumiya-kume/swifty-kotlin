@@ -689,6 +689,19 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     }
 
                     // --- Rewrite sequence member calls (STDLIB-003) ---
+                    // DEBUG: trace sequence-related calls
+                    do {
+                        let cn = interner.resolve(callee)
+                        if cn == "asSequence" || cn == "map" || cn == "filter" || cn == "toList"
+                            || cn == "kk_sequence_from_list" || cn == "kk_sequence_to_list"
+                        {
+                            // swiftlint:disable:next line_length
+                            print("SEQ_DIAG: callee=\(cn) args=\(arguments.count) result=\(result?.rawValue as Any) listIDs=\(listExprIDs) seqIDs=\(sequenceExprIDs)")
+                            if !arguments.isEmpty {
+                                print("SEQ_DIAG:   arg0.rawValue=\(arguments[0].rawValue)")
+                            }
+                        }
+                    }
                     // asSequence() on list → kk_sequence_from_list
                     if callee == asSequenceName, arguments.count == 1 {
                         let receiverID = arguments[0]
