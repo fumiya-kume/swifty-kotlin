@@ -32,7 +32,8 @@ final class LambdaLowerer {
         // Use the stored underlying function type instead.
         let effectiveFuncTypeID: TypeID? = {
             if sema.bindings.isSamConversion(exprID),
-               let samFuncType = sema.bindings.samUnderlyingFunctionType(for: exprID) {
+               let samFuncType = sema.bindings.samUnderlyingFunctionType(for: exprID)
+            {
                 return samFuncType
             }
             return boundType
@@ -269,5 +270,4 @@ final class LambdaLowerer {
         )
         return callableExpr
     }
-
 }

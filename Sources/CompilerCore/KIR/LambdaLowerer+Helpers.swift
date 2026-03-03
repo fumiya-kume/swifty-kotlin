@@ -185,7 +185,8 @@ extension LambdaLowerer {
                    lambdaParamCount: lambdaParamCount,
                    sema: sema
                ),
-               !captures.contains(receiverSymbol) {
+               !captures.contains(receiverSymbol)
+            {
                 captures.append(receiverSymbol)
             }
             return captures
@@ -231,7 +232,8 @@ extension LambdaLowerer {
                lambdaParamCount: lambdaParamCount,
                sema: sema
            ),
-           !captures.contains(receiverSymbol) {
+           !captures.contains(receiverSymbol)
+        {
             captures.append(receiverSymbol)
         }
         return captures
@@ -247,7 +249,8 @@ extension LambdaLowerer {
             return localValue
         }
         if symbol == driver.ctx.currentImplicitReceiverSymbol,
-           let receiverExprID = driver.ctx.currentImplicitReceiverExprID {
+           let receiverExprID = driver.ctx.currentImplicitReceiverExprID
+        {
             return receiverExprID
         }
         guard let semanticSymbol = sema.symbols.symbol(symbol),
