@@ -6,8 +6,8 @@ extension TypeCheckHelpers {
     /// Maximum depth for recursive typealias expansion to prevent infinite loops.
     static let maxAliasExpansionDepth = 32
 
-    /// Expand a typealias symbol to its underlying type, substituting type arguments.
-    /// Handles generic aliases, cycle detection, and depth limiting.
+    // Expand a typealias symbol to its underlying type, substituting type arguments.
+    // Handles generic aliases, cycle detection, and depth limiting.
     // swiftlint:disable:next function_body_length
     func expandTypeAlias(
         _ symbolID: SymbolID,
@@ -114,7 +114,7 @@ extension TypeCheckHelpers {
         return applyAliasSubstitution(typeID, argSubstitution: argSubstitution, sema: sema)
     }
 
-    /// Recursively apply type argument substitution to a type.
+    // Recursively apply type argument substitution to a type.
     // swiftlint:disable:next cyclomatic_complexity
     func applyAliasSubstitution(
         _ typeID: TypeID,
