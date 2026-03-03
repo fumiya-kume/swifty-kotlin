@@ -194,6 +194,12 @@ extension KotlinParser {
             children.append(.node(parseBlock()))
         } else {
             parseTail(inBlock: false, into: &children, range: &range)
+            // In Kotlin, `get()`/`set()` accessors on the next line are part of
+            // the property declaration.  After parseTail stops at a newline,
+            // absorb trailing accessor lines so the AST builder can extract them.
+            while isPropertyAccessorStart(stream.peek()) {
+                parseTail(inBlock: false, into: &children, range: &range)
+            }
         }
 
         return arena.appendNode(

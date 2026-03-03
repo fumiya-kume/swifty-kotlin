@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Dispatch
 @testable import Runtime
 import XCTest
@@ -7,7 +8,36 @@ private typealias RuntimeTestSuspendEntry = @convention(c) (Int, UnsafeMutablePo
 private let runtimeKxMiniDelayFunctionID = 9101
 private let runtimeKxMiniLaunchFunctionID = 9102
 private let runtimeKxMiniAsyncFunctionID = 9103
+private let runtimeKxMiniCancelFunctionID = 9104
 private let runtimeKxMiniLaunchSignal = DispatchSemaphore(value: 0)
+private let runtimeCancelLoopIterations = RuntimeAtomicInt(0)
+private let runtimeCancelLoopStopped = DispatchSemaphore(value: 0)
+
+private final class RuntimeAtomicInt: @unchecked Sendable {
+    private var _value: Int
+    private let lock = NSLock()
+    init(_ value: Int) {
+        _value = value
+    }
+
+    var value: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return _value
+    }
+
+    func set(_ newValue: Int) {
+        lock.lock()
+        _value = newValue
+        lock.unlock()
+    }
+
+    func increment() {
+        lock.lock()
+        _value += 1
+        lock.unlock()
+    }
+}
 
 @_cdecl("runtime_test_suspend_with_delay")
 func runtime_test_suspend_with_delay(_ continuation: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
@@ -40,6 +70,30 @@ func runtime_test_suspend_with_arg(_ continuation: Int, _ outThrown: UnsafeMutab
     return kk_coroutine_state_exit(continuation, Int(arg) + 10)
 }
 
+@_cdecl("runtime_test_suspend_cancel_loop")
+func runtime_test_suspend_cancel_loop(_ continuation: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    let label = kk_coroutine_state_enter(continuation, runtimeKxMiniCancelFunctionID)
+    if label == 0 {
+        runtimeCancelLoopIterations.increment()
+        _ = kk_coroutine_state_set_label(continuation, 1)
+        let cancelled = kk_coroutine_check_cancellation(continuation, outThrown)
+        if cancelled != 0 {
+            return 0
+        }
+        return kk_kxmini_delay(5, continuation)
+    }
+    // Resumed after delay — check cancellation again
+    let cancelled = kk_coroutine_check_cancellation(continuation, outThrown)
+    if cancelled != 0 {
+        return 0
+    }
+    // Loop: increment iteration counter, set label to 1 and delay again
+    runtimeCancelLoopIterations.increment()
+    _ = kk_coroutine_state_set_label(continuation, 1)
+    return kk_kxmini_delay(5, continuation)
+}
+
+// swiftlint:disable:next type_body_length
 final class RuntimeCoroutineStateTests: XCTestCase {
     override func setUp() {
         super.setUp()
@@ -331,5 +385,75 @@ final class RuntimeCoroutineStateTests: XCTestCase {
 
         // Outer scope wait should pop outer
         XCTAssertEqual(kk_coroutine_scope_wait(outerScope), 0)
+    }
+
+    // MARK: - CORO-002: Cancellation Tests
+
+    func testCheckCancellationReturnsZeroWhenNotCancelled() {
+        let continuation = kk_coroutine_continuation_new(42)
+        defer { _ = kk_coroutine_state_exit(continuation, 0) }
+        var outThrown = 0
+        let result = kk_coroutine_check_cancellation(continuation, &outThrown)
+        XCTAssertEqual(result, 0, "Should return 0 when not cancelled")
+        XCTAssertEqual(outThrown, 0, "outThrown should be 0 when not cancelled")
+    }
+
+    func testCheckCancellationReturnsCancellationExceptionWhenCancelled() {
+        let continuation = kk_coroutine_continuation_new(42)
+        defer { _ = kk_coroutine_state_exit(continuation, 0) }
+        // Link a job handle so kk_coroutine_cancel and kk_coroutine_check_cancellation work
+        let job = RuntimeJobHandle()
+        if let state = runtimeContinuationState(from: continuation) {
+            state.jobHandle = job
+            job.continuationState = state
+        }
+        kk_coroutine_cancel(continuation)
+        var outThrown = 0
+        let result = kk_coroutine_check_cancellation(continuation, &outThrown)
+        XCTAssertEqual(result, 1, "Should return 1 when cancelled")
+        XCTAssertNotEqual(outThrown, 0, "outThrown should be set to CancellationException")
+        XCTAssertEqual(kk_is_cancellation_exception(outThrown), 1, "Should be a CancellationException")
+    }
+
+    func testIsCancellationExceptionReturnsFalseForRegularThrowable() {
+        let throwablePtr = kk_throwable_new(nil)
+        let throwableInt = Int(bitPattern: throwablePtr)
+        let result = kk_is_cancellation_exception(throwableInt)
+        XCTAssertEqual(result, 0, "Regular throwable should not be CancellationException")
+    }
+
+    func testJobCancelStopsLaunchedCoroutine() {
+        runtimeCancelLoopIterations.set(0)
+        let entryRaw = unsafeBitCast(
+            runtime_test_suspend_cancel_loop as RuntimeTestSuspendEntry,
+            to: Int.self
+        )
+        let jobHandle = kk_kxmini_launch(entryRaw, runtimeKxMiniCancelFunctionID)
+        XCTAssertNotEqual(jobHandle, 0, "Launch should return a job handle")
+
+        // Wait until the coroutine has started (bounded polling)
+        for _ in 0 ..< 200 where runtimeCancelLoopIterations.value == 0 {
+            Thread.sleep(forTimeInterval: 0.01)
+        }
+        XCTAssertGreaterThan(runtimeCancelLoopIterations.value, 0, "Coroutine should have started")
+
+        // Cancel the job
+        _ = kk_job_cancel(jobHandle)
+
+        // Join the job — should complete promptly after cancellation
+        let startTime = DispatchTime.now()
+        _ = kk_job_join(jobHandle)
+        let elapsed = Double(DispatchTime.now().uptimeNanoseconds - startTime.uptimeNanoseconds) / 1_000_000_000
+        XCTAssertLessThan(elapsed, 2.0, "Coroutine should stop promptly after cancel")
+    }
+
+    func testLaunchReturnsJobHandle() {
+        let entryRaw = unsafeBitCast(
+            runtime_test_suspend_launch as RuntimeTestSuspendEntry,
+            to: Int.self
+        )
+        let jobHandle = kk_kxmini_launch(entryRaw, runtimeKxMiniLaunchFunctionID)
+        XCTAssertNotEqual(jobHandle, 0, "Launch should return a non-zero job handle")
+        XCTAssertEqual(runtimeKxMiniLaunchSignal.wait(timeout: .now() + .seconds(1)), .success)
     }
 }

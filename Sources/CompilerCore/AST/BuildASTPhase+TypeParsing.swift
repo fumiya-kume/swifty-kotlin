@@ -147,6 +147,100 @@ extension BuildASTPhase {
         return parseTypeRef(from: typeTokens, interner: interner, astArena: astArena)
     }
 
+    /// Extracts the receiver type for extension properties (e.g. `val String.firstChar: Char`).
+    /// Returns the TypeRefID for `String`, or `nil` for regular properties.
+    func declarationPropertyReceiverType(
+        from nodeID: NodeID,
+        in arena: SyntaxArena,
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> TypeRefID? {
+        let tokens = propertyHeadTokens(from: nodeID, in: arena)
+
+        // Find the val/var keyword index.
+        guard let valVarIndex = tokens.firstIndex(where: {
+            $0.kind == .keyword(.val) || $0.kind == .keyword(.var)
+        }) else {
+            return nil
+        }
+
+        // Look for the last top-level dot after the val/var keyword, skipping angle brackets
+        // for generic receiver types (e.g. `val List<Int>.head`). This handles qualified
+        // receiver types like `val kotlin.String.firstChar: Char` correctly.
+        var lastDotIndex: Int?
+        var depth = BracketDepth()
+        for index in (valVarIndex + 1) ..< tokens.count {
+            let token = tokens[index]
+            depth.track(token.kind)
+            if depth.angle == 0 {
+                if token.kind == .symbol(.dot) {
+                    lastDotIndex = index
+                } else if token.kind == .symbol(.colon)
+                    || token.kind == .symbol(.assign)
+                    || token.kind == .symbol(.lBrace)
+                { // swiftlint:disable:this opening_brace
+                    break
+                }
+            }
+        }
+        guard let dotIndex = lastDotIndex else {
+            return nil
+        }
+
+        // The receiver type tokens are between val/var and the dot.
+        let receiverTokens = Array(tokens[(valVarIndex + 1) ..< dotIndex])
+        guard !receiverTokens.isEmpty else {
+            return nil
+        }
+        return parseTypeRef(from: receiverTokens, interner: interner, astArena: astArena)
+    }
+
+    /// Extracts the property name after the dot for extension properties
+    /// (e.g. returns "firstChar" for `val String.firstChar: Char`).
+    func declarationPropertyNameAfterDot(
+        from nodeID: NodeID,
+        in arena: SyntaxArena,
+        interner: StringInterner
+    ) -> InternedString {
+        let tokens = propertyHeadTokens(from: nodeID, in: arena)
+
+        // Find the val/var keyword index.
+        guard let valVarIndex = tokens.firstIndex(where: {
+            $0.kind == .keyword(.val) || $0.kind == .keyword(.var)
+        }) else {
+            return declarationName(from: nodeID, in: arena, interner: interner)
+        }
+
+        // Find the last top-level dot before `:`, `=`, or `{`.
+        // This handles qualified receiver types like `val kotlin.String.firstChar: Char`.
+        var depth = BracketDepth()
+        var lastDotIndex: Int?
+        for index in (valVarIndex + 1) ..< tokens.count {
+            let token = tokens[index]
+            depth.track(token.kind)
+            if depth.angle == 0 {
+                if token.kind == .symbol(.dot) {
+                    lastDotIndex = index
+                } else if token.kind == .symbol(.colon)
+                    || token.kind == .symbol(.assign)
+                    || token.kind == .symbol(.lBrace)
+                { // swiftlint:disable:this opening_brace
+                    break
+                }
+            }
+        }
+        guard let dotIndex = lastDotIndex, dotIndex + 1 < tokens.count else {
+            return declarationName(from: nodeID, in: arena, interner: interner)
+        }
+
+        // The property name is the identifier right after the dot.
+        let nameToken = tokens[dotIndex + 1]
+        if let name = internedIdentifier(from: nameToken, interner: interner) {
+            return name
+        }
+        return declarationName(from: nodeID, in: arena, interner: interner)
+    }
+
     func declarationPropertyType(
         from nodeID: NodeID,
         in arena: SyntaxArena,
