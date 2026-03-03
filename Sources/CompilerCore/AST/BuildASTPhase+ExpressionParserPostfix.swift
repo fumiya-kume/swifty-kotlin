@@ -1,6 +1,7 @@
 import Foundation
 
 extension BuildASTPhase.ExpressionParser {
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func parsePostfixOrPrimary() -> ExprID? {
         guard var expr = parsePrimary() else {
             return nil
@@ -103,10 +104,17 @@ extension BuildASTPhase.ExpressionParser {
             }
             if matches(.symbol(.lParen)),
                let open = consume()
-            {
+            { // swiftlint:disable:this opening_brace
                 args = parseCallArguments()
                 let close = consumeIf(.symbol(.rParen))
                 memberEndRange = close?.range ?? open.range
+            }
+            // Trailing lambda: attach `{ ... }` as the last argument (Kotlin grammar).
+            if matches(.symbol(.lBrace)),
+               let trailingLambda = parseLambdaLiteral()
+            { // swiftlint:disable:this opening_brace
+                args.append(CallArgument(expr: trailingLambda))
+                memberEndRange = astArena.exprRange(trailingLambda) ?? memberEndRange
             }
             let range = mergeRanges(astArena.exprRange(expr), memberEndRange, fallback: dotToken.range)
             if isSafeDot {

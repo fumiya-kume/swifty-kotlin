@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 
 final class ABILoweringPass: LoweringPass {
@@ -127,6 +128,9 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_list_iterator_hasNext"),
             ctx.interner.intern("kk_list_iterator_next"),
             ctx.interner.intern("kk_list_to_string"),
+            // NOTE: kk_list_map/filter/forEach/flatMap/any/none/all are NOT
+            // non-throwing — the lambda argument can throw, so they need an
+            // outThrown slot allocated by the ABI lowering pass.
             ctx.interner.intern("kk_map_of"),
             ctx.interner.intern("kk_map_size"),
             ctx.interner.intern("kk_map_get"),
