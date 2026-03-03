@@ -168,6 +168,103 @@ private final class RuntimeAsyncTask {
     }
 }
 
+// MARK: - Structured Concurrency: CoroutineScope / Job
+
+private final class RuntimeJob {
+    private let lock = NSLock()
+    private let completionSemaphore = DispatchSemaphore(value: 0)
+    private var isCompleted = false
+    private var isCancelled = false
+    private var result: Int = 0
+    private weak var parentScope: RuntimeCoroutineScope?
+
+    init(parentScope: RuntimeCoroutineScope?) {
+        self.parentScope = parentScope
+    }
+
+    func complete(with value: Int) {
+        lock.lock()
+        guard !isCompleted else {
+            lock.unlock()
+            return
+        }
+        result = value
+        isCompleted = true
+        lock.unlock()
+        completionSemaphore.signal()
+    }
+
+    func join() -> Int {
+        lock.lock()
+        if isCompleted {
+            let value = result
+            lock.unlock()
+            return value
+        }
+        lock.unlock()
+        completionSemaphore.wait()
+        lock.lock()
+        let value = result
+        lock.unlock()
+        return value
+    }
+
+    func cancel() {
+        lock.lock()
+        isCancelled = true
+        lock.unlock()
+    }
+
+    func checkCancelled() -> Bool {
+        lock.lock()
+        let cancelled = isCancelled
+        lock.unlock()
+        if cancelled { return true }
+        if let scope = parentScope {
+            return scope.checkCancelled()
+        }
+        return false
+    }
+}
+
+private final class RuntimeCoroutineScope {
+    private let lock = NSLock()
+    private var children: [RuntimeJob] = []
+    private var isCancelled = false
+
+    func registerChild(_ job: RuntimeJob) {
+        lock.lock()
+        children.append(job)
+        lock.unlock()
+    }
+
+    func cancel() {
+        lock.lock()
+        isCancelled = true
+        let currentChildren = children
+        lock.unlock()
+        for child in currentChildren {
+            child.cancel()
+        }
+    }
+
+    func checkCancelled() -> Bool {
+        lock.lock()
+        let cancelled = isCancelled
+        lock.unlock()
+        return cancelled
+    }
+
+    func joinAll() {
+        lock.lock()
+        let snapshot = children
+        lock.unlock()
+        for child in snapshot {
+            _ = child.join()
+        }
+    }
+}
+
 private struct HeapObjectRecord {
     let pointer: UnsafeMutableRawPointer
     let byteCount: Int
@@ -566,6 +663,156 @@ public func kk_kxmini_delay(_ milliseconds: Int, _ continuation: Int) -> Int {
     }
     state.scheduleDelay(milliseconds: milliseconds)
     return Int(bitPattern: kk_coroutine_suspended())
+}
+
+// MARK: - Structured Concurrency C ABI
+
+@_cdecl("kk_coroutine_scope_new")
+public func kk_coroutine_scope_new() -> Int {
+    let scope = RuntimeCoroutineScope()
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(scope).toOpaque())
+    RuntimeStorage.lock.lock()
+    RuntimeStorage.objectPointers.insert(UInt(bitPattern: ptr))
+    RuntimeStorage.lock.unlock()
+    return Int(bitPattern: ptr)
+}
+
+@_cdecl("kk_coroutine_scope_cancel")
+public func kk_coroutine_scope_cancel(_ scopeHandle: Int) -> Int {
+    guard let scopePtr = UnsafeMutableRawPointer(bitPattern: scopeHandle) else {
+        return 0
+    }
+    let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(scopePtr).takeUnretainedValue()
+    scope.cancel()
+    return 0
+}
+
+@_cdecl("kk_coroutine_scope_join_all")
+public func kk_coroutine_scope_join_all(_ scopeHandle: Int) -> Int {
+    guard let scopePtr = UnsafeMutableRawPointer(bitPattern: scopeHandle) else {
+        return 0
+    }
+    let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(scopePtr).takeUnretainedValue()
+    scope.joinAll()
+    return 0
+}
+
+@_cdecl("kk_coroutine_scope_release")
+public func kk_coroutine_scope_release(_ scopeHandle: Int) -> Int {
+    guard let scopePtr = UnsafeMutableRawPointer(bitPattern: scopeHandle) else {
+        return 0
+    }
+    RuntimeStorage.lock.lock()
+    RuntimeStorage.objectPointers.remove(UInt(bitPattern: scopePtr))
+    RuntimeStorage.lock.unlock()
+    Unmanaged<RuntimeCoroutineScope>.fromOpaque(scopePtr).release()
+    return 0
+}
+
+@_cdecl("kk_coroutine_scope_is_cancelled")
+public func kk_coroutine_scope_is_cancelled(_ scopeHandle: Int) -> Int {
+    guard let scopePtr = UnsafeMutableRawPointer(bitPattern: scopeHandle) else {
+        return 0
+    }
+    let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(scopePtr).takeUnretainedValue()
+    return scope.checkCancelled() ? 1 : 0
+}
+
+@_cdecl("kk_job_new")
+public func kk_job_new(_ scopeHandle: Int) -> Int {
+    let scope: RuntimeCoroutineScope?
+    if let scopePtr = UnsafeMutableRawPointer(bitPattern: scopeHandle) {
+        scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(scopePtr).takeUnretainedValue()
+    } else {
+        scope = nil
+    }
+    let job = RuntimeJob(parentScope: scope)
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(job).toOpaque())
+    RuntimeStorage.lock.lock()
+    RuntimeStorage.objectPointers.insert(UInt(bitPattern: ptr))
+    RuntimeStorage.lock.unlock()
+    scope?.registerChild(job)
+    return Int(bitPattern: ptr)
+}
+
+@_cdecl("kk_job_join")
+public func kk_job_join(_ jobHandle: Int) -> Int {
+    guard let jobPtr = UnsafeMutableRawPointer(bitPattern: jobHandle) else {
+        return 0
+    }
+    let job = Unmanaged<RuntimeJob>.fromOpaque(jobPtr).takeUnretainedValue()
+    return job.join()
+}
+
+@_cdecl("kk_job_complete")
+public func kk_job_complete(_ jobHandle: Int, _ value: Int) -> Int {
+    guard let jobPtr = UnsafeMutableRawPointer(bitPattern: jobHandle) else {
+        return 0
+    }
+    let job = Unmanaged<RuntimeJob>.fromOpaque(jobPtr).takeUnretainedValue()
+    job.complete(with: value)
+    return 0
+}
+
+@_cdecl("kk_job_cancel")
+public func kk_job_cancel(_ jobHandle: Int) -> Int {
+    guard let jobPtr = UnsafeMutableRawPointer(bitPattern: jobHandle) else {
+        return 0
+    }
+    let job = Unmanaged<RuntimeJob>.fromOpaque(jobPtr).takeUnretainedValue()
+    job.cancel()
+    return 0
+}
+
+@_cdecl("kk_job_is_cancelled")
+public func kk_job_is_cancelled(_ jobHandle: Int) -> Int {
+    guard let jobPtr = UnsafeMutableRawPointer(bitPattern: jobHandle) else {
+        return 0
+    }
+    let job = Unmanaged<RuntimeJob>.fromOpaque(jobPtr).takeUnretainedValue()
+    return job.checkCancelled() ? 1 : 0
+}
+
+@_cdecl("kk_scoped_launch")
+public func kk_scoped_launch(_ scopeHandle: Int, _ entryPointRaw: Int, _ functionID: Int) -> Int {
+    let scope: RuntimeCoroutineScope?
+    if let scopePtr = UnsafeMutableRawPointer(bitPattern: scopeHandle) {
+        scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(scopePtr).takeUnretainedValue()
+    } else {
+        scope = nil
+    }
+    let job = RuntimeJob(parentScope: scope)
+    let jobPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(job).toOpaque())
+    RuntimeStorage.lock.lock()
+    RuntimeStorage.objectPointers.insert(UInt(bitPattern: jobPtr))
+    RuntimeStorage.lock.unlock()
+    scope?.registerChild(job)
+    KxMiniRuntime.launch {
+        let result = runSuspendEntryLoop(entryPointRaw: entryPointRaw, functionID: functionID)
+        job.complete(with: result)
+    }
+    return Int(bitPattern: jobPtr)
+}
+
+@_cdecl("kk_scoped_async")
+public func kk_scoped_async(_ scopeHandle: Int, _ entryPointRaw: Int, _ functionID: Int) -> Int {
+    let scope: RuntimeCoroutineScope?
+    if let scopePtr = UnsafeMutableRawPointer(bitPattern: scopeHandle) {
+        scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(scopePtr).takeUnretainedValue()
+    } else {
+        scope = nil
+    }
+    let job = RuntimeJob(parentScope: scope)
+    let jobPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(job).toOpaque())
+    RuntimeStorage.lock.lock()
+    RuntimeStorage.objectPointers.insert(UInt(bitPattern: jobPtr))
+    RuntimeStorage.lock.unlock()
+    scope?.registerChild(job)
+    KxMiniRuntime.launch {
+        let result = runSuspendEntryLoop(entryPointRaw: entryPointRaw, functionID: functionID)
+        job.complete(with: result)
+    }
+    return Int(bitPattern: jobPtr)
 }
 
 private func runtimeContinuationState(from continuation: Int) -> RuntimeContinuationState? {

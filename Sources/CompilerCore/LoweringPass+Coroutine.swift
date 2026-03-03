@@ -27,6 +27,18 @@ final class CoroutineLoweringPass: LoweringPass {
             kxMiniAsyncCallee: runtimeAsyncCallee
         ]
 
+        // Structured concurrency callees
+        let coroutineScopeCallee = ctx.interner.intern("coroutineScope")
+        let runtimeScopeNewCallee = ctx.interner.intern("kk_coroutine_scope_new")
+        let runtimeScopeJoinAllCallee = ctx.interner.intern("kk_coroutine_scope_join_all")
+        let runtimeScopeReleaseCallee = ctx.interner.intern("kk_coroutine_scope_release")
+        let runtimeScopedLaunchCallee = ctx.interner.intern("kk_scoped_launch")
+        let runtimeScopedAsyncCallee = ctx.interner.intern("kk_scoped_async")
+        let scopedLauncherRuntimeCallees: [InternedString: InternedString] = [
+            kxMiniLaunchCallee: runtimeScopedLaunchCallee,
+            kxMiniAsyncCallee: runtimeScopedAsyncCallee
+        ]
+
         let suspendFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
             guard case .function(let function) = decl, function.isSuspend else {
                 return nil
@@ -154,9 +166,155 @@ final class CoroutineLoweringPass: LoweringPass {
             var updated = function
             var loweredBody: [KIRInstruction] = []
             loweredBody.reserveCapacity(function.body.count)
+            // Track active scope handle for structured concurrency
+            var activeScopeExpr: KIRExprID?
             for instruction in function.body {
                 guard case .call(let symbol, let callee, let arguments, let result, let canThrow) = instruction else {
                     loweredBody.append(instruction)
+                    continue
+                }
+
+                // Handle coroutineScope { block } — wrap with scope lifecycle
+                if symbol == nil, callee == coroutineScopeCallee {
+                    guard arguments.count == 1 else {
+                        loweredBody.append(instruction)
+                        continue
+                    }
+                    guard let argumentExpr = module.arena.expr(arguments[0]),
+                          case .symbolRef(let referencedSymbol) = argumentExpr,
+                          let loweredTarget = loweredBySymbol[referencedSymbol] else {
+                        loweredBody.append(instruction)
+                        continue
+                    }
+
+                    // 1. Create scope: kk_coroutine_scope_new()
+                    let scopeExpr = module.arena.appendExpr(
+                        .temporary(Int32(module.arena.expressions.count)),
+                        type: intType
+                    )
+                    loweredBody.append(
+                        .call(
+                            symbol: nil,
+                            callee: runtimeScopeNewCallee,
+                            arguments: [],
+                            result: scopeExpr,
+                            canThrow: false
+                        )
+                    )
+                    let previousScope = activeScopeExpr
+                    activeScopeExpr = scopeExpr
+
+                    // 2. Run the block via run_blocking with the lowered entry
+                    let entryPointExpr = module.arena.appendExpr(
+                        .temporary(Int32(module.arena.expressions.count)),
+                        type: intType
+                    )
+                    loweredBody.append(
+                        .constValue(
+                            result: entryPointExpr,
+                            value: .symbolRef(loweredTarget.symbol)
+                        )
+                    )
+                    let entryFunctionID = module.arena.appendExpr(
+                        .temporary(Int32(module.arena.expressions.count)),
+                        type: intType
+                    )
+                    loweredBody.append(
+                        .constValue(
+                            result: entryFunctionID,
+                            value: .intLiteral(Int64(loweredTarget.symbol.rawValue))
+                        )
+                    )
+                    loweredBody.append(
+                        .call(
+                            symbol: nil,
+                            callee: runtimeRunBlockingCallee,
+                            arguments: [entryPointExpr, entryFunctionID],
+                            result: result,
+                            canThrow: canThrow
+                        )
+                    )
+
+                    // 3. Join all children: kk_coroutine_scope_join_all(scope)
+                    let joinResult = module.arena.appendExpr(
+                        .temporary(Int32(module.arena.expressions.count)),
+                        type: intType
+                    )
+                    loweredBody.append(
+                        .call(
+                            symbol: nil,
+                            callee: runtimeScopeJoinAllCallee,
+                            arguments: [scopeExpr],
+                            result: joinResult,
+                            canThrow: false
+                        )
+                    )
+
+                    // 4. Release scope: kk_coroutine_scope_release(scope)
+                    let releaseResult = module.arena.appendExpr(
+                        .temporary(Int32(module.arena.expressions.count)),
+                        type: intType
+                    )
+                    loweredBody.append(
+                        .call(
+                            symbol: nil,
+                            callee: runtimeScopeReleaseCallee,
+                            arguments: [scopeExpr],
+                            result: releaseResult,
+                            canThrow: false
+                        )
+                    )
+                    activeScopeExpr = previousScope
+                    continue
+                }
+
+                // Handle scoped launch/async — use kk_scoped_launch/kk_scoped_async when inside a scope
+                if symbol == nil, activeScopeExpr != nil,
+                   let scopedRuntimeCallee = scopedLauncherRuntimeCallees[callee] {
+                    guard arguments.count == 1 else {
+                        loweredBody.append(instruction)
+                        continue
+                    }
+                    guard let argumentExpr = module.arena.expr(arguments[0]),
+                          case .symbolRef(let referencedSymbol) = argumentExpr,
+                          let loweredTarget = loweredBySymbol[referencedSymbol] else {
+                        loweredBody.append(instruction)
+                        continue
+                    }
+                    guard suspendFunctionArityBySymbol[referencedSymbol] == 0 else {
+                        loweredBody.append(instruction)
+                        continue
+                    }
+
+                    let entryPointExpr = module.arena.appendExpr(
+                        .temporary(Int32(module.arena.expressions.count)),
+                        type: intType
+                    )
+                    loweredBody.append(
+                        .constValue(
+                            result: entryPointExpr,
+                            value: .symbolRef(loweredTarget.symbol)
+                        )
+                    )
+                    let entryFunctionID = module.arena.appendExpr(
+                        .temporary(Int32(module.arena.expressions.count)),
+                        type: intType
+                    )
+                    loweredBody.append(
+                        .constValue(
+                            result: entryFunctionID,
+                            value: .intLiteral(Int64(loweredTarget.symbol.rawValue))
+                        )
+                    )
+                    loweredBody.append(
+                        .call(
+                            symbol: nil,
+                            callee: scopedRuntimeCallee,
+                            arguments: [activeScopeExpr!, entryPointExpr, entryFunctionID],
+                            result: result,
+                            canThrow: canThrow
+                        )
+                    )
                     continue
                 }
 
