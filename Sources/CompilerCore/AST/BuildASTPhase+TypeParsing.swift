@@ -178,7 +178,7 @@ extension BuildASTPhase {
                 } else if token.kind == .symbol(.colon)
                     || token.kind == .symbol(.assign)
                     || token.kind == .symbol(.lBrace)
-                {
+                { // swiftlint:disable:this opening_brace
                     break
                 }
             }
@@ -224,7 +224,7 @@ extension BuildASTPhase {
                 } else if token.kind == .symbol(.colon)
                     || token.kind == .symbol(.assign)
                     || token.kind == .symbol(.lBrace)
-                {
+                { // swiftlint:disable:this opening_brace
                     break
                 }
             }

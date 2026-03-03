@@ -204,38 +204,47 @@ extension KotlinParser {
     private func isPropertyAccessorStart(_ token: Token) -> Bool {
         switch token.kind {
         case .softKeyword(.get), .softKeyword(.set):
-            guard stream.peek(1).kind == .symbol(.lParen) else {
-                return false
-            }
-            // Walk forward to find the matching `)`, then require `=` or `{`.
-            var offset = 1
-            var parenDepth = 0
-            let maxLookahead = 64
-            while offset <= maxLookahead {
-                let nextToken = stream.peek(offset)
-                switch nextToken.kind {
-                case .symbol(.lParen):
-                    parenDepth += 1
-                case .symbol(.rParen):
-                    parenDepth -= 1
-                    if parenDepth == 0 {
-                        let afterParen = stream.peek(offset + 1)
-                        switch afterParen.kind {
-                        case .symbol(.assign), .symbol(.lBrace):
-                            return true
-                        default:
-                            return false
-                        }
-                    }
-                default:
-                    break
-                }
-                if parenDepth < 0 { return false }
-                offset += 1
-            }
-            return false
+            return isAccessorHeaderFollowedByBody()
         default:
-            false
+            return false
+        }
+    }
+
+    /// Checks whether the tokens starting at `stream.peek(1)` form a
+    /// well-formed accessor header `(...)` followed by `=` or `{`.
+    private func isAccessorHeaderFollowedByBody() -> Bool {
+        guard stream.peek(1).kind == .symbol(.lParen) else {
+            return false
+        }
+        var offset = 1
+        var parenDepth = 0
+        let maxLookahead = 64
+        while offset <= maxLookahead {
+            let nextToken = stream.peek(offset)
+            switch nextToken.kind {
+            case .symbol(.lParen):
+                parenDepth += 1
+            case .symbol(.rParen):
+                parenDepth -= 1
+                if parenDepth == 0 {
+                    return isAccessorBodyStart(stream.peek(offset + 1))
+                }
+            default:
+                break
+            }
+            if parenDepth < 0 { return false }
+            offset += 1
+        }
+        return false
+    }
+
+    /// Returns `true` when the given token can begin an accessor body (`=` or `{`).
+    private func isAccessorBodyStart(_ token: Token) -> Bool {
+        switch token.kind {
+        case .symbol(.assign), .symbol(.lBrace):
+            return true
+        default:
+            return false
         }
     }
 
