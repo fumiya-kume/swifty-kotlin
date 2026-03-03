@@ -58,6 +58,16 @@ extension BuildASTPhase {
         astArena: ASTArena
     ) -> [ExprID] {
         var result: [ExprID] = []
+
+        // -- Phase 1: gather per-CST-statement token arrays,
+        //    merging dot-continuation lines into the previous group.
+        //    The Kotlin CST parser may split `expr\n  .member()` into
+        //    separate statement nodes, but `.member()` is a continuation
+        //    of the previous expression, not a standalone statement. --
+        var rawGroups: [[Token]] = []
+        var filteredGroups: [[Token]] = []
+        var controlFlowFlags: [Bool] = []
+
         for child in arena.children(of: blockNodeID) {
             guard case let .node(nodeID) = child else {
                 continue
@@ -67,16 +77,41 @@ extension BuildASTPhase {
                 continue
             }
 
+            let rawTokens = collectTokens(from: nodeID, in: arena)
+            let filtered = rawTokens.filter { $0.kind != .symbol(.semicolon) }
+            guard !filtered.isEmpty else {
+                continue
+            }
+
+            let isCF = isControlFlowExprKind(node.kind)
+
+            // If the first token is `.` or `?.`, this is a continuation of the
+            // previous expression (e.g. `listOf(1,2,3)\n  .map { ... }`).
+            // Merge into the previous non-control-flow group.
+            if !isCF,
+               let first = filtered.first,
+               (first.kind == .symbol(.dot) || first.kind == .symbol(.questionDot)),
+               let lastIdx = rawGroups.indices.last,
+               !controlFlowFlags[lastIdx]
+            { // swiftlint:disable:this opening_brace
+                rawGroups[lastIdx].append(contentsOf: rawTokens)
+                filteredGroups[lastIdx].append(contentsOf: filtered)
+                continue
+            }
+
+            rawGroups.append(rawTokens)
+            filteredGroups.append(filtered)
+            controlFlowFlags.append(isCF)
+        }
+
+        // -- Phase 2: parse each (potentially merged) token group. --
+        for i in rawGroups.indices {
+            let rawTokens = rawGroups[i]
+            let statementTokens = filteredGroups[i]
+
             // CST-aware fast path: for structured control flow nodes,
             // skip local decl/assign probing and parse directly as expressions.
-            if isControlFlowExprKind(node.kind) {
-                let rawTokens = collectTokens(from: nodeID, in: arena)
-                let statementTokens = rawTokens.filter { token in
-                    token.kind != .symbol(.semicolon)
-                }
-                guard !statementTokens.isEmpty else {
-                    continue
-                }
+            if controlFlowFlags[i] {
                 let parser = ExpressionParser(tokens: statementTokens, interner: interner, astArena: astArena)
                 if let exprID = parser.parse() {
                     result.append(exprID)
@@ -84,13 +119,6 @@ extension BuildASTPhase {
                 continue
             }
 
-            let rawTokens = collectTokens(from: nodeID, in: arena)
-            let statementTokens = rawTokens.filter { token in
-                token.kind != .symbol(.semicolon)
-            }
-            guard !statementTokens.isEmpty else {
-                continue
-            }
             if let localFunDeclExpr = parseLocalFunDeclExpr(
                 from: rawTokens,
                 interner: interner,

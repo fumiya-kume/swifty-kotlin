@@ -251,29 +251,6 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                 }
             }
 
-            // DIAG: unconditional dump of all callees per function
-            do {
-                var calleeInfo: [String] = []
-                for instr in function.body {
-                    switch instr {
-                    case let .call(sym, cal, args, res, _, _, _):
-                        let cn = interner.resolve(cal)
-                        let rr = res.map { String($0.rawValue) } ?? "nil"
-                        calleeInfo.append(".call(\(cn),a\(args.count),r\(rr),s\(sym != nil))")
-                    case let .virtualCall(_, cal, recv, args, res, _, _, _):
-                        let cn = interner.resolve(cal)
-                        let rr = res.map { String($0.rawValue) } ?? "nil"
-                        calleeInfo.append(".vc(\(cn),rv\(recv.rawValue),a\(args.count),r\(rr))")
-                    default:
-                        break
-                    }
-                }
-                if !calleeInfo.isEmpty {
-                    let line = "[CLP] f=\(interner.resolve(function.name)) seq=\(sequenceExprIDs.sorted()) list=\(listExprIDs.sorted()) calls=[\(calleeInfo.joined(separator: ","))]\n"
-                    FileHandle.standardError.write(Data(line.utf8))
-                }
-            }
-
             // Phase 2: Rewrite instructions
             var listIteratorExprIDs: Set<Int32> = []
             var mapIteratorExprIDs: Set<Int32> = []
