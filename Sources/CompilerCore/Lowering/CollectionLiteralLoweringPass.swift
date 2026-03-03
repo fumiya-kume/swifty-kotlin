@@ -591,7 +591,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     }
 
                     // map/filter on sequence → kk_sequence_map/kk_sequence_filter
-                    if (callee == mapName || callee == filterName), arguments.count == 2 {
+                    if callee == mapName || callee == filterName, arguments.count == 2 {
                         let receiverID = arguments[0]
                         if sequenceExprIDs.contains(receiverID.rawValue) {
                             let kkName = callee == mapName ? kkSequenceMapName : kkSequenceFilterName

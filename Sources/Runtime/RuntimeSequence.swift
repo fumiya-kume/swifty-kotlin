@@ -67,7 +67,7 @@ private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
             var mapped: [Int] = []
             mapped.reserveCapacity(elements.count)
             for elem in elements {
-                var thrown: Int = 0
+                var thrown = 0
                 let result = fn(elem, &thrown)
                 if thrown != 0 { break }
                 // Unbox if needed (matching kk_maybe_unbox behavior)
@@ -78,7 +78,7 @@ private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
             let fn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
             var filtered: [Int] = []
             for elem in elements {
-                var thrown: Int = 0
+                var thrown = 0
                 let result = fn(elem, &thrown)
                 if thrown != 0 { break }
                 if maybeUnbox(result) != 0 {
@@ -123,11 +123,10 @@ private func maybeUnbox(_ value: Int) -> Int {
 /// - Returns: Opaque handle to a `RuntimeSequenceBox`.
 @_cdecl("kk_sequence_from_list")
 public func kk_sequence_from_list(_ listRaw: Int) -> Int {
-    let elements: [Int]
-    if let list = runtimeListBox(from: listRaw) {
-        elements = list.elements
+    let elements = if let list = runtimeListBox(from: listRaw) {
+        list.elements
     } else {
-        elements = []
+        [Int]()
     }
     let seq = RuntimeSequenceBox(steps: [.source(elements: elements)])
     return registerRuntimeObject(seq)
@@ -239,7 +238,7 @@ public func kk_sequence_builder_build(_ fnPtr: Int) -> Int {
 
     // Call the builder block with the builder handle
     let fn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
-    var thrown: Int = 0
+    var thrown = 0
     _ = fn(builderHandle, &thrown)
 
     let seq = RuntimeSequenceBox(steps: [.builder(elements: builder.elements)])
