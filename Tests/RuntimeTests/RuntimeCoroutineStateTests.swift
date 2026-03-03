@@ -18,6 +18,7 @@ private final class RuntimeAtomicInt: @unchecked Sendable {
     init(_ value: Int) {
         _value = value
     }
+
     var value: Int {
         lock.lock()
         defer { lock.unlock() }
