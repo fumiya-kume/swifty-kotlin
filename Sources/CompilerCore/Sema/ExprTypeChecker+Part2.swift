@@ -250,12 +250,20 @@ extension ExprTypeChecker {
         // Extract label from the lambda literal AST node for labeled lambda support
         let label: InternedString? = if case let .lambdaLiteral(_, _, lbl, _) = ast.arena.expr(id) { lbl } else { nil }
 
-        let expectedFunctionType: FunctionType? = if let expectedType,
-                                                     case let .functionType(functionType) = sema.types.kind(of: expectedType)
-        {
-            functionType
+        // SAM conversion: when the expected type is a functional interface,
+        // extract the SAM method's function type so the lambda's parameters
+        // and return type can be inferred from it.
+        let samConversion: Bool
+        let expectedFunctionType: FunctionType?
+        if let expectedType, case let .functionType(functionType) = sema.types.kind(of: expectedType) {
+            expectedFunctionType = functionType
+            samConversion = false
+        } else if let expectedType, let samFT = driver.helpers.samFunctionType(for: expectedType, sema: sema) {
+            expectedFunctionType = samFT
+            samConversion = true
         } else {
-            nil
+            expectedFunctionType = nil
+            samConversion = false
         }
 
         var lambdaLocals = locals
@@ -309,6 +317,27 @@ extension ExprTypeChecker {
             outerSymbols: outerSymbols
         )
         sema.bindings.bindCaptureSymbols(id, symbols: captures)
+
+        // SAM conversion: bind the lambda to the interface type, but also
+        // store the underlying function type so KIR lowering can generate
+        // the correct callable.
+        if samConversion, let expectedType, let expectedFunctionType {
+            driver.emitSubtypeConstraint(
+                left: inferredBodyType,
+                right: expectedFunctionType.returnType,
+                range: ast.arena.exprRange(body),
+                solver: ConstraintSolver(),
+                sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+            // Mark this expression as a SAM conversion so KIR can handle it.
+            sema.bindings.markSamConversion(id)
+            // Store the underlying function type for KIR lowering.
+            let underlyingFuncType = sema.types.make(.functionType(expectedFunctionType))
+            sema.bindings.bindSamUnderlyingFunctionType(id, type: underlyingFuncType)
+            sema.bindings.bindExprType(id, type: expectedType)
+            return expectedType
+        }
 
         if let expectedType, let expectedFunctionType {
             driver.emitSubtypeConstraint(

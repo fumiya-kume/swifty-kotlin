@@ -230,6 +230,7 @@ extension GoldenHarnessTests {
         if flags.contains(.openType) { names.append("openType") }
         if flags.contains(.overrideMember) { names.append("overrideMember") }
         if flags.contains(.finalMember) { names.append("finalMember") }
+        if flags.contains(.funInterface) { names.append("funInterface") }
         return names.joined(separator: "|")
     }
 
