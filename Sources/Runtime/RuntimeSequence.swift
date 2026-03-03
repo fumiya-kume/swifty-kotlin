@@ -56,7 +56,7 @@ private func applyMapStep(_ elements: [Int], fnPtr: Int) -> [Int] {
     for elem in elements {
         var thrown = 0
         let result = lambda(elem, &thrown)
-        if thrown != 0 { break }
+        if thrown != 0 { return [] }
         mapped.append(maybeUnbox(result))
     }
     return mapped
@@ -69,7 +69,7 @@ private func applyFilterStep(_ elements: [Int], fnPtr: Int) -> [Int] {
     for elem in elements {
         var thrown = 0
         let result = predicate(elem, &thrown)
-        if thrown != 0 { break }
+        if thrown != 0 { return [] }
         if maybeUnbox(result) != 0 {
             filtered.append(elem)
         }
