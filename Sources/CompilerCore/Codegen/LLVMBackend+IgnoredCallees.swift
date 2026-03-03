@@ -103,6 +103,14 @@ extension LLVMBackend {
         "kk_map_iterator_next",
         "kk_array_size",
         "kk_array_of",
+        // Higher-order collection functions (FUNC-003)
+        "kk_list_map",
+        "kk_list_filter",
+        "kk_list_forEach",
+        "kk_list_flatMap",
+        "kk_list_any",
+        "kk_list_none",
+        "kk_list_all",
     ]
 
     func collectExternalCallees(
