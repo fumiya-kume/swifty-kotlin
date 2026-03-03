@@ -299,8 +299,8 @@ public func kk_map_to_string(_ mapRaw: Int) -> UnsafeMutableRawPointer {
 ///   - count: Number of elements in the array.
 /// - Returns: Opaque handle (Int) to the array (passed through).
 @_cdecl("kk_array_of")
-public func kk_array_of(_ arrayRaw: Int, _ count: Int) -> Int {
-    return arrayRaw
+public func kk_array_of(_ arrayRaw: Int, _: Int) -> Int {
+    arrayRaw
 }
 
 /// Returns the size of an array.
