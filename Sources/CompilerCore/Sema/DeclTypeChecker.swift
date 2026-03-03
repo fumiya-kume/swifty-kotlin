@@ -69,7 +69,6 @@ final class DeclTypeChecker {
         diagnostics: DiagnosticEngine
     ) {
         let sema = ctx.sema
-        let interner = ctx.interner
         var inferredPropertyType: TypeID? = property.type != nil
             ? sema.symbols.propertyType(for: symbol)
             : nil
@@ -132,7 +131,6 @@ final class DeclTypeChecker {
             )
         }
     }
-
 
     // MARK: - Init Block & Secondary Constructor Type Checking (from +DeclTypeCheck.swift)
 
@@ -259,6 +257,5 @@ final class DeclTypeChecker {
             _ = inferFunctionBodyType(ctor.body, ctx: constructorCtx, locals: &locals, expectedType: nil)
         }
     }
-
 
 }
