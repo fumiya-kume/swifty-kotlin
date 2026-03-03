@@ -311,8 +311,12 @@ public final class SymbolTable {
         flags: SymbolFlags = []
     ) -> SymbolID {
         if let existing = byFQName[fqName], !existing.isEmpty {
-            let existingKinds = existing.compactMap { symbol($0)?.kind }
-            if canCoexistAsOverload(kind: kind, existingKinds: existingKinds) {
+            let existingSymbols = existing.compactMap { symbol($0) }
+            let existingKinds = existingSymbols.map { $0.kind }
+
+            if canCoexistAsOverload(kind: kind, existingKinds: existingKinds)
+                || canCoexistAsExpectActual(kind: kind, flags: flags, existingSymbols: existingSymbols)
+            {
                 return appendNewSymbol(
                     kind: kind,
                     name: name,
@@ -378,6 +382,35 @@ public final class SymbolTable {
             return false
         }
         return existingNonPackageKinds.allSatisfy { isOverloadable($0) }
+    }
+
+    private func canCoexistAsExpectActual(
+        kind: SymbolKind,
+        flags: SymbolFlags,
+        existingSymbols: [SemanticSymbol]
+    ) -> Bool {
+        // For Kotlin MPP, allow one `expect` + one `actual` symbol with the same FQ name.
+        // This is required for non-overloadable kinds like properties and classes.
+        let isNewExpect = flags.contains(.expectDeclaration)
+        let isNewActual = flags.contains(.actualDeclaration)
+        guard (isNewExpect || isNewActual) && !(isNewExpect && isNewActual) else {
+            return false
+        }
+
+        let oppositeFlag: SymbolFlags = isNewExpect ? .actualDeclaration : .expectDeclaration
+        let sameFlag: SymbolFlags = isNewExpect ? .expectDeclaration : .actualDeclaration
+
+        let sameKindExisting = existingSymbols.filter { $0.kind == kind }
+        let hasOpposite = sameKindExisting.contains { $0.flags.contains(oppositeFlag) }
+        let hasSame = sameKindExisting.contains { $0.flags.contains(sameFlag) }
+
+        // Only permit coexistence when we're pairing an `expect` with an `actual`.
+        // If a non-MPP symbol already exists at this name+kind, treat it as a conflict.
+        let hasNonMPP = sameKindExisting.contains { sym in
+            !sym.flags.contains(.expectDeclaration) && !sym.flags.contains(.actualDeclaration)
+        }
+
+        return hasOpposite && !hasSame && !hasNonMPP
     }
 
     private func isOverloadable(_ kind: SymbolKind) -> Bool {

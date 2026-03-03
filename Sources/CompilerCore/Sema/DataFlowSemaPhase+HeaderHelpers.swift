@@ -110,13 +110,17 @@ extension DataFlowSemaPhase {
         newFlags: SymbolFlags = []
     ) {
         let existing = symbols.lookupAll(fqName: fqName).compactMap { symbols.symbol($0) }
-        // Allow expect/actual pair: an expect and an actual with the same FQ name coexist.
+        // Allow expect/actual pair: an expect and an actual with the same FQ name coexist,
+        // but only when exactly one opposite-flag symbol of the same kind exists and no
+        // same-flag duplicate is already present.
         if newFlags.contains(.expectDeclaration) || newFlags.contains(.actualDeclaration) {
             let isNewExpect = newFlags.contains(.expectDeclaration)
-            let hasMatchingCounterpart = existing.contains { sym in
-                isNewExpect ? sym.flags.contains(.actualDeclaration) : sym.flags.contains(.expectDeclaration)
-            }
-            if hasMatchingCounterpart {
+            let oppositeFlag: SymbolFlags = isNewExpect ? .actualDeclaration : .expectDeclaration
+            let sameFlag: SymbolFlags = isNewExpect ? .expectDeclaration : .actualDeclaration
+            let sameKindExisting = existing.filter { $0.kind == newKind }
+            let hasSameFlagDuplicate = sameKindExisting.contains { $0.flags.contains(sameFlag) }
+            let hasOppositeCounterpart = sameKindExisting.contains { $0.flags.contains(oppositeFlag) }
+            if hasOppositeCounterpart && !hasSameFlagDuplicate {
                 return
             }
         }

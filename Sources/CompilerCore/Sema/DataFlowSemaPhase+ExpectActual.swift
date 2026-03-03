@@ -23,15 +23,27 @@ extension DataFlowSemaPhase {
                 .filter { $0.kind == expectSym.kind && $0.flags.contains(.actualDeclaration) }
                 .sorted(by: { $0.id.rawValue < $1.id.rawValue })
 
-            guard let actualSym = candidates.first,
-                  areExpectActualCompatible(expect: expectSym, actual: actualSym, symbols: symbols)
-            else {
-                let rendered = expectSym.fqName
-                    .map { interner.resolve($0) }
-                    .joined(separator: ".")
+            let compatibleCandidates = candidates.filter { actual in
+                areExpectActualCompatible(expect: expectSym, actual: actual, symbols: symbols)
+            }
+
+            let rendered = expectSym.fqName
+                .map { interner.resolve($0) }
+                .joined(separator: ".")
+
+            guard let actualSym = compatibleCandidates.first else {
                 diagnostics.error(
                     "KSWIFTK-MPP-UNRESOLVED",
                     "Missing matching 'actual' declaration for expect symbol '\(rendered)'.",
+                    range: expectSym.declSite
+                )
+                continue
+            }
+
+            if compatibleCandidates.count > 1 {
+                diagnostics.error(
+                    "KSWIFTK-MPP-AMBIGUOUS",
+                    "Multiple matching 'actual' declarations found for expect symbol '\(rendered)'.",
                     range: expectSym.declSite
                 )
                 continue
