@@ -51,101 +51,86 @@ extension BuildASTPhase {
         return .expr(exprID, range)
     }
 
-    /// Gather per-CST-statement token arrays from a block, merging
-    /// dot-continuation lines into the previous group.
-    /// The Kotlin CST parser may split `expr\n  .member()` into
-    /// separate statement nodes, but `.member()` is a continuation
-    /// of the previous expression, not a standalone statement.
-    private func collectBlockStatementGroups( // swiftlint:disable:this function_body_length
-        from blockNodeID: NodeID,
-        in arena: SyntaxArena
-    ) -> [(raw: [Token], filtered: [Token], isControlFlow: Bool)] {
-        var groups: [(raw: [Token], filtered: [Token], isControlFlow: Bool)] = []
-
-        for child in arena.children(of: blockNodeID) {
-            guard case let .node(nodeID) = child else {
-                continue
-            }
-            let node = arena.node(nodeID)
-            guard isStatementLikeKind(node.kind) else {
-                continue
-            }
-
-            let rawTokens = collectTokens(from: nodeID, in: arena)
-            let filtered = rawTokens.filter { $0.kind != .symbol(.semicolon) }
-            guard !filtered.isEmpty else {
-                continue
-            }
-
-            let isCF = isControlFlowExprKind(node.kind)
-
-            // If the first token is `.` or `?.`, merge into the previous group.
-            if !isCF,
-               let first = filtered.first,
-               first.kind == .symbol(.dot) || first.kind == .symbol(.questionDot),
-               let lastIdx = groups.indices.last,
-               !groups[lastIdx].isControlFlow
-            { // swiftlint:disable:this opening_brace
-                groups[lastIdx].raw.append(contentsOf: rawTokens)
-                groups[lastIdx].filtered.append(contentsOf: filtered)
-                continue
-            }
-
-            groups.append((raw: rawTokens, filtered: filtered, isControlFlow: isCF))
-        }
-        return groups
-    }
-
     func blockExpressions(
         from blockNodeID: NodeID,
         in arena: SyntaxArena,
         interner: StringInterner,
         astArena: ASTArena
     ) -> [ExprID] {
-        let groups = collectBlockStatementGroups(from: blockNodeID, in: arena)
+        // Phase 1 – gather per-CST-statement token arrays, merging
+        // dot-continuation lines into the previous group.
+        // The Kotlin CST parser may split `expr\n  .member()` into
+        // separate statement nodes, but `.member()` is a continuation
+        // of the previous expression, not a standalone statement.
+        var rawGroups: [[Token]] = []
+        var filteredGroups: [[Token]] = []
+        collectBlockStatementGroups(from: blockNodeID, in: arena,
+                                    rawGroups: &rawGroups, filteredGroups: &filteredGroups)
+
+        // Phase 2 – parse each (potentially merged) token group.
         var result: [ExprID] = []
-
-        for group in groups {
-            // CST-aware fast path: for structured control flow nodes,
-            // skip local decl/assign probing and parse directly as expressions.
-            if group.isControlFlow {
-                let parser = ExpressionParser(tokens: group.filtered, interner: interner, astArena: astArena)
-                if let exprID = parser.parse() {
-                    result.append(exprID)
-                }
-                continue
-            }
-
-            if let localFunDeclExpr = parseLocalFunDeclExpr(
-                from: group.raw,
-                interner: interner,
-                astArena: astArena
+        for idx in rawGroups.indices {
+            if let exprID = parseStatementGroup(
+                raw: rawGroups[idx], filtered: filteredGroups[idx],
+                interner: interner, astArena: astArena
             ) {
-                result.append(localFunDeclExpr)
-                continue
-            }
-            if let localDeclExpr = parseLocalDeclarationExpr(
-                from: group.filtered,
-                interner: interner,
-                astArena: astArena
-            ) {
-                result.append(localDeclExpr)
-                continue
-            }
-            if let localAssignExpr = parseLocalAssignmentExpr(
-                from: group.filtered,
-                interner: interner,
-                astArena: astArena
-            ) {
-                result.append(localAssignExpr)
-                continue
-            }
-            let parser = ExpressionParser(tokens: group.filtered, interner: interner, astArena: astArena)
-            if let exprID = parser.parse() {
                 result.append(exprID)
             }
         }
         return result
+    }
+
+    /// Collect token groups from CST block children, merging dot-continuation
+    /// lines (`.member()`) into the previous statement group.
+    private func collectBlockStatementGroups(
+        from blockNodeID: NodeID,
+        in arena: SyntaxArena,
+        rawGroups: inout [[Token]],
+        filteredGroups: inout [[Token]]
+    ) {
+        for child in arena.children(of: blockNodeID) {
+            guard case let .node(nodeID) = child else { continue }
+            let node = arena.node(nodeID)
+            guard isStatementLikeKind(node.kind) else { continue }
+
+            let rawTokens = collectTokens(from: nodeID, in: arena)
+            let filtered = rawTokens.filter { $0.kind != .symbol(.semicolon) }
+            guard !filtered.isEmpty else { continue }
+
+            // If the first token is `.` or `?.`, merge into the previous group.
+            if let first = filtered.first,
+               first.kind == .symbol(.dot) || first.kind == .symbol(.questionDot),
+               !rawGroups.isEmpty
+            {
+                rawGroups[rawGroups.count - 1].append(contentsOf: rawTokens)
+                filteredGroups[filteredGroups.count - 1].append(contentsOf: filtered)
+                continue
+            }
+
+            rawGroups.append(rawTokens)
+            filteredGroups.append(filtered)
+        }
+    }
+
+    /// Parse a single (possibly merged) statement token group, trying local
+    /// fun-decl, local-decl, local-assign, then generic expression.
+    private func parseStatementGroup(
+        raw: [Token],
+        filtered: [Token],
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> ExprID? {
+        if let expr = parseLocalFunDeclExpr(from: raw, interner: interner, astArena: astArena) {
+            return expr
+        }
+        if let expr = parseLocalDeclarationExpr(from: filtered, interner: interner, astArena: astArena) {
+            return expr
+        }
+        if let expr = parseLocalAssignmentExpr(from: filtered, interner: interner, astArena: astArena) {
+            return expr
+        }
+        let parser = ExpressionParser(tokens: filtered, interner: interner, astArena: astArena)
+        return parser.parse()
     }
 
     func splitTokensIntoStatements(_ tokens: [Token]) -> [[Token]] {
