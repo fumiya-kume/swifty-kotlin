@@ -131,6 +131,47 @@ final class CollectionLiteralLoweringPass: LoweringPass {
         let kkMutableListAddName = interner.intern("kk_mutable_list_add")
         let kkMutableMapPutName = interner.intern("kk_mutable_map_put")
 
+        // Pre-scan: collect function names that are builder lambda bodies (STDLIB-002).
+        // We find buildString/buildList/buildMap calls, trace their lambda argument
+        // expression IDs back to constValue(.symbolRef(...)) instructions, then resolve
+        // the corresponding lambda function names. Only those functions should have
+        // append/add/put rewritten to builder runtime calls.
+        var builderLambdaFunctionNames: Set<InternedString> = []
+        for decl in module.arena.declarations {
+            guard case let .function(function) = decl else { continue }
+            // Collect exprID → symbolID mappings from constValue(.symbolRef(...))
+            var exprSymbolMap: [Int32: SymbolID] = [:]
+            // Collect lambda argument exprIDs from builder DSL calls
+            var builderLambdaArgIDs: [Int32] = []
+            for instruction in function.body {
+                switch instruction {
+                case let .constValue(result, .symbolRef(symbol)):
+                    exprSymbolMap[result.rawValue] = symbol
+                case let .call(_, callee, arguments, _, _, _, _):
+                    if builderDSLNames.contains(callee), !arguments.isEmpty {
+                        builderLambdaArgIDs.append(arguments[0].rawValue)
+                    }
+                default:
+                    break
+                }
+            }
+            // Resolve lambda argument exprIDs to function names
+            for argID in builderLambdaArgIDs {
+                if let symbol = exprSymbolMap[argID] {
+                    // Lambda function name follows kk_lambda_{exprID} convention
+                    let lambdaName = interner.intern("kk_lambda_\(argID)")
+                    builderLambdaFunctionNames.insert(lambdaName)
+                    // Also try the symbol-based lookup for robustness
+                    for innerDecl in module.arena.declarations {
+                        if case let .function(fn) = innerDecl, fn.symbol == symbol {
+                            builderLambdaFunctionNames.insert(fn.name)
+                            break
+                        }
+                    }
+                }
+            }
+        }
+
         module.arena.transformFunctions { function in
             var updated = function
 
@@ -354,10 +395,10 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     }
 
                     // --- Rewrite builder member functions (STDLIB-002) ---
-                    // append(arg) → kk_string_builder_append(arg)
-                    // add(arg) → kk_mutable_list_add(arg)
-                    // put(key, value) → kk_mutable_map_put(key, value)
-                    if callee == appendName, arguments.count == 1 {
+                    // Only rewrite append/add/put inside builder lambda functions
+                    // to avoid incorrectly rewriting user-defined functions with same names.
+                    if builderLambdaFunctionNames.contains(function.name),
+                       callee == appendName, arguments.count == 1 {
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: kkStringBuilderAppendName,
@@ -368,7 +409,8 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                         ))
                         continue
                     }
-                    if callee == addName, arguments.count == 1 {
+                    if builderLambdaFunctionNames.contains(function.name),
+                       callee == addName, arguments.count == 1 {
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: kkMutableListAddName,
@@ -379,7 +421,8 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                         ))
                         continue
                     }
-                    if callee == putName, arguments.count == 2 {
+                    if builderLambdaFunctionNames.contains(function.name),
+                       callee == putName, arguments.count == 2 {
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: kkMutableMapPutName,
