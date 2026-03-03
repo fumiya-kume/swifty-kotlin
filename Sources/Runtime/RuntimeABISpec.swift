@@ -1,3 +1,4 @@
+// swiftlint:disable file_length type_body_length trailing_comma
 public enum RuntimeABICType: String, Equatable, Sendable {
     case void
     case uint32 = "uint32_t"
@@ -680,6 +681,26 @@ public enum RuntimeABISpec {
             section: "TypeCheck"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_type_token_simple_name",
+            parameters: [
+                RuntimeABIParameter(name: "typeToken", type: .intptr),
+                // swiftlint:disable:next trailing_comma
+                RuntimeABIParameter(name: "nameHint", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_type_token_qualified_name",
+            parameters: [
+                RuntimeABIParameter(name: "typeToken", type: .intptr),
+                // swiftlint:disable:next trailing_comma
+                RuntimeABIParameter(name: "nameHint", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_op_is",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),
@@ -772,6 +793,14 @@ public enum RuntimeABISpec {
         ),
         RuntimeABIFunctionSpec(
             name: "kk_lazy_get_value",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_lazy_is_initialized",
             parameters: [
                 RuntimeABIParameter(name: "handle", type: .intptr),
             ],
@@ -953,3 +982,5 @@ public enum RuntimeABISpec {
         return lines.joined(separator: "\n")
     }
 }
+
+// swiftlint:enable file_length type_body_length trailing_comma

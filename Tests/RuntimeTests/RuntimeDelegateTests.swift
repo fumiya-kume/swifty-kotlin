@@ -159,12 +159,12 @@ final class RuntimeDelegateTests: XCTestCase {
         let fnPtr = unsafeBitCast(lazyCountingInitCConv, to: Int.self)
         let handle = kk_lazy_create(fnPtr, 1) // SYNCHRONIZED
 
-        let v1 = kk_lazy_get_value(handle)
-        XCTAssertEqual(v1, 99)
+        let firstRead = kk_lazy_get_value(handle)
+        XCTAssertEqual(firstRead, 99)
         XCTAssertEqual(gDelegateState.lazyCallCountSnapshot(), 1)
 
-        let v2 = kk_lazy_get_value(handle)
-        XCTAssertEqual(v2, 99)
+        let secondRead = kk_lazy_get_value(handle)
+        XCTAssertEqual(secondRead, 99)
         XCTAssertEqual(gDelegateState.lazyCallCountSnapshot(), 1, "Initializer should only be called once")
     }
 
@@ -179,6 +179,25 @@ final class RuntimeDelegateTests: XCTestCase {
     func testLazyGetValueWithInvalidHandleReturnsZero() {
         let value = kk_lazy_get_value(0)
         XCTAssertEqual(value, 0)
+    }
+
+    func testLazyIsInitializedReturnsFalseBeforeAccess() {
+        let fnPtr = unsafeBitCast(lazySimple42, to: Int.self)
+        let handle = kk_lazy_create(fnPtr, 1)
+        XCTAssertEqual(kk_lazy_is_initialized(handle), 0,
+                       "Lazy should not be initialized before first access")
+    }
+
+    func testLazyIsInitializedReturnsTrueAfterAccess() {
+        let fnPtr = unsafeBitCast(lazySimple42, to: Int.self)
+        let handle = kk_lazy_create(fnPtr, 1)
+        _ = kk_lazy_get_value(handle)
+        XCTAssertNotEqual(kk_lazy_is_initialized(handle), 0,
+                          "Lazy should be initialized after first access")
+    }
+
+    func testLazyIsInitializedWithInvalidHandleReturnsZero() {
+        XCTAssertEqual(kk_lazy_is_initialized(0), 0)
     }
 
     // MARK: - Observable Delegate Tests

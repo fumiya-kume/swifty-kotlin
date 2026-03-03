@@ -61,6 +61,7 @@ extension LLVMBackend {
         "kk_type_register_iface",
         "kk_lazy_create",
         "kk_lazy_get_value",
+        "kk_lazy_is_initialized",
         "kk_observable_create",
         "kk_observable_get_value",
         "kk_observable_set_value",
