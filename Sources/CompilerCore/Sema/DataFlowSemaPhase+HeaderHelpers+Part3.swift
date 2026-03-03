@@ -108,6 +108,7 @@ extension DataFlowSemaPhase {
             flags: [.synthetic, .operatorFunction]
         )
         symbols.setParentSymbol(listInterfaceSymbol, for: listGetSymbol)
+        symbols.setExternalLinkName("kk_array_get", for: listGetSymbol)
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: listReceiverType,
@@ -196,6 +197,7 @@ extension DataFlowSemaPhase {
             flags: [.synthetic, .operatorFunction]
         )
         symbols.setParentSymbol(mutableListInterfaceSymbol, for: mlSetSymbol)
+        symbols.setExternalLinkName("kk_array_set", for: mlSetSymbol)
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: mlReceiverType,
