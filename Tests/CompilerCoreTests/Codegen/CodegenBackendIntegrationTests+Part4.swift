@@ -383,7 +383,7 @@ extension CodegenBackendIntegrationTests {
 
         let sym = SymbolID(rawValue: 4300)
         let e0 = arena.appendExpr(.intLiteral(1))
-        let e1 = arena.appendExpr(.intLiteral(2))
+        _ = arena.appendExpr(.intLiteral(2))
 
         let sourceRange = SourceRange(
             start: SourceLocation(file: FileID(rawValue: 0), offset: 10),

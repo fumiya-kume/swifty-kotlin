@@ -22,8 +22,8 @@ struct KIRLoweringEmitContext: RandomAccessCollection, MutableCollection, RangeR
 
     init(_ instructions: [KIRInstruction] = []) {
         self.instructions = instructions
-        self.instructionLocations = Array(repeating: nil, count: instructions.count)
-        self.currentSourceRange = nil
+        instructionLocations = Array(repeating: nil, count: instructions.count)
+        currentSourceRange = nil
     }
 
     init() {
