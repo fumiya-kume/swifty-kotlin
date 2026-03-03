@@ -55,6 +55,7 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
                 // Infer the lambda argument with the builder receiver as implicit `this`.
                 var builderCtx = ctx.with(implicitReceiverType: receiverType)
                 builderCtx.isBuilderLambdaScope = true
+                builderCtx.builderKind = builderKind
                 _ = driver.inferExpr(args[0].expr, ctx: builderCtx, locals: &locals)
                 sema.bindings.markBuilderDSLExpr(id, kind: builderKind)
                 sema.bindings.markCollectionExpr(id)
@@ -282,11 +283,13 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
         // Builder DSL member functions (STDLIB-002).
         // Inside builder lambdas, unqualified `append`/`add`/`put` resolve as
         // implicit-receiver member calls that return Unit.
-        if let calleeName, ctx.isBuilderLambdaScope {
+        if let calleeName, ctx.isBuilderLambdaScope, let activeBuilderKind = ctx.builderKind {
             let name = interner.resolve(calleeName)
-            let isBuilderMember = (name == "append" && args.count == 1)
-                || (name == "add" && args.count == 1)
-                || (name == "put" && args.count == 2)
+            let isBuilderMember: Bool = switch activeBuilderKind {
+            case .buildString: name == "append" && args.count == 1
+            case .buildList: name == "add" && args.count == 1
+            case .buildMap: name == "put" && args.count == 2
+            }
             if isBuilderMember {
                 sema.bindings.bindExprType(id, type: sema.types.unitType)
                 return sema.types.unitType

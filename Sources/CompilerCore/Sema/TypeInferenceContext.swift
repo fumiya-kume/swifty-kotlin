@@ -26,6 +26,9 @@ struct TypeInferenceContext {
     /// When true, the current scope is a builder DSL lambda body (STDLIB-002).
     /// Used to scope `append`/`add`/`put` fallback resolution.
     var isBuilderLambdaScope: Bool = false
+    /// The specific builder kind for this scope (STDLIB-002).
+    /// Used to restrict member function resolution to the correct kind.
+    var builderKind: BuilderDSLKind?
     /// Sema cache context for hot-path caching.  `nil` when caching is disabled.
     let semaCacheContext: SemaCacheContext?
 

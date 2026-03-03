@@ -1429,7 +1429,7 @@ extension LLVMBackend {
         "    if (!tmpK) return 0;",
         "    mm->keys = tmpK;",
         "    intptr_t* tmpV = (intptr_t*)realloc(mm->values, (size_t)newCap * sizeof(intptr_t));",
-        "    if (!tmpV) return 0;",
+        "    if (!tmpV) { mm->cap = newCap; return 0; }",
         "    mm->values = tmpV; mm->cap = newCap;",
         "  }",
         "  mm->keys[mm->len] = key; mm->values[mm->len] = value; mm->len++;",
