@@ -197,7 +197,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
 
             for instruction in function.body {
                 switch instruction {
-                case let .call(_, callee, _, result, _, _, _):
+                case let .call(_, callee, arguments, result, _, _, _):
                     if listFactoryNames.contains(callee) || callee == kkListOfName {
                         if let result { listExprIDs.insert(result.rawValue) }
                     } else if mapFactoryNames.contains(callee) || callee == kkMapOfName {
@@ -205,21 +205,35 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     } else if arrayOfFactoryNames.contains(callee) {
                         if let result { arrayExprIDs.insert(result.rawValue) }
                     }
+                    // Track .call sequence operations where receiver is arguments[0]
+                    // (sema collection fallback emits .call with receiver prepended).
+                    if callee == asSequenceName, arguments.count == 1 {
+                        if listExprIDs.contains(arguments[0].rawValue) {
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                        }
+                    } else if callee == toListName, arguments.count == 1 {
+                        if sequenceExprIDs.contains(arguments[0].rawValue) {
+                            if let result { listExprIDs.insert(result.rawValue) }
+                        }
+                    } else if callee == mapName || callee == filterName || callee == takeName {
+                        if !arguments.isEmpty,
+                           sequenceExprIDs.contains(arguments[0].rawValue)
+                        {
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                        }
+                    }
                 // Phase 1 also scans .virtualCall for collection member calls
                 // that the sema resolved to a symbol (STDLIB-003).
                 case let .virtualCall(_, callee, receiver, _, result, _, _, _):
                     if callee == asSequenceName {
-                        // asSequence() on a list → track result as sequence
                         if listExprIDs.contains(receiver.rawValue) {
                             if let result { sequenceExprIDs.insert(result.rawValue) }
                         }
                     } else if callee == toListName {
-                        // toList() on a sequence → track result as list
                         if sequenceExprIDs.contains(receiver.rawValue) {
                             if let result { listExprIDs.insert(result.rawValue) }
                         }
                     } else if callee == mapName || callee == filterName || callee == takeName {
-                        // map/filter/take on a sequence → track result as sequence
                         if sequenceExprIDs.contains(receiver.rawValue) {
                             if let result { sequenceExprIDs.insert(result.rawValue) }
                         }
@@ -247,30 +261,6 @@ final class CollectionLiteralLoweringPass: LoweringPass {
             var mapIteratorExprIDs: Set<Int32> = []
             var loweredBody: [KIRInstruction] = []
             loweredBody.reserveCapacity(function.body.count + 32)
-
-            // SEQ_DIAG: dump Phase 1 results and all instructions for sequence debugging
-            let fnName = interner.resolve(function.name)
-            if fnName.contains("main") || fnName.contains("script") {
-                fputs("SEQ_DIAG_P2: fn=\(fnName) listIDs=\(listExprIDs.sorted()) seqIDs=\(sequenceExprIDs.sorted())\n", stderr)
-                for (idx, inst) in function.body.enumerated() {
-                    switch inst {
-                    case let .call(sym, cal, args, res, _, _, _):
-                        let calStr = interner.resolve(cal)
-                        let resVal = res.map { "\($0.rawValue)" } ?? "nil"
-                        let argVals = args.map { "\($0.rawValue)" }
-                        fputs("SEQ_DIAG_P2:  [\(idx)] .call sym=\(sym?.rawValue ?? -1) callee=\(calStr) args=\(argVals) res=\(resVal)\n", stderr)
-                    case let .virtualCall(sym, cal, recv, args, res, _, _, _):
-                        let calStr = interner.resolve(cal)
-                        let resVal = res.map { "\($0.rawValue)" } ?? "nil"
-                        let argVals = args.map { "\($0.rawValue)" }
-                        fputs("SEQ_DIAG_P2:  [\(idx)] .virtualCall sym=\(sym?.rawValue ?? -1) callee=\(calStr) recv=\(recv.rawValue) args=\(argVals) res=\(resVal)\n", stderr)
-                    case let .copy(from, to):
-                        fputs("SEQ_DIAG_P2:  [\(idx)] .copy from=\(from.rawValue) to=\(to.rawValue)\n", stderr)
-                    default:
-                        break
-                    }
-                }
-            }
 
             for instruction in function.body {
                 switch instruction {
@@ -961,7 +951,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                 // When the sema resolves collection member calls to a concrete
                 // symbol, the CallLowerer emits .virtualCall instead of .call.
                 // Handle those here so the sequence chain is properly rewritten.
-                case let .virtualCall(_, callee, receiver, arguments, result, _, _, _):
+                case let .virtualCall(_, callee, receiver, arguments, result, origCanThrow, origThrownResult, _):
                     // asSequence() on list → kk_sequence_from_list
                     if callee == asSequenceName, arguments.isEmpty {
                         if listExprIDs.contains(receiver.rawValue) {
@@ -1064,8 +1054,8 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                                     callee: kkName,
                                     arguments: [receiver] + arguments,
                                     result: hofResult,
-                                    canThrow: false,
-                                    thrownResult: nil
+                                    canThrow: origCanThrow,
+                                    thrownResult: origThrownResult
                                 ))
                                 if needsListTag, let result {
                                     listExprIDs.insert(result.rawValue)
