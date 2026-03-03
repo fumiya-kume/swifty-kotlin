@@ -159,7 +159,7 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_sequence_to_list"),
             ctx.interner.intern("kk_sequence_builder_create"),
             ctx.interner.intern("kk_sequence_builder_yield"),
-            ctx.interner.intern("kk_sequence_builder_build"),
+            ctx.interner.intern("kk_sequence_builder_build")
         ]).union(Self.kPropertyStubCallees(ctx.interner))
 
         let boxIntCallee = ctx.interner.intern("kk_box_int")
