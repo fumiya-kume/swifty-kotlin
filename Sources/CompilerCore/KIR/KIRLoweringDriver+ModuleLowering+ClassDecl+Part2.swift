@@ -63,6 +63,11 @@ extension KIRLoweringDriver {
         }
         let isSecondary = sema.symbols.symbol(ctorSymbol)?.declSite != classDecl.range
         if !isSecondary {
+            emitClassDelegationInitializers(
+                classDecl: classDecl, ownerSymbol: ownerSymbol,
+                receiverID: ctx.currentImplicitReceiverExprID!,
+                shared: shared, compilationCtx: compilationCtx, body: &body
+            )
             emitClassBodyInitializers(
                 classDecl: classDecl, shared: shared,
                 compilationCtx: compilationCtx, body: &body
@@ -115,6 +120,43 @@ extension KIRLoweringDriver {
         }
         declIDs.append(contentsOf: ctx.drainGeneratedCallableDecls())
         return declIDs
+    }
+
+    /// CLASS-008: Emits delegate field initialization for `: Interface by expr`.
+    private func emitClassDelegationInitializers(
+        classDecl: ClassDecl,
+        ownerSymbol: SymbolID,
+        receiverID: KIRExprID,
+        shared: KIRLoweringSharedContext,
+        compilationCtx: CompilationContext,
+        body: inout KIRLoweringEmitContext
+    ) {
+        let sema = shared.sema
+        let arena = shared.arena
+        for interfaceSymbol in sema.symbols.delegatedInterfaces(forClass: ownerSymbol) {
+            guard let delegateExpr = sema.symbols.classDelegationExpr(forClass: ownerSymbol, interface: interfaceSymbol),
+                  let fieldSymbol = sema.symbols.classDelegationField(forClass: ownerSymbol, interface: interfaceSymbol)
+            else {
+                continue
+            }
+            let delegateValue = lowerExpr(delegateExpr, shared: shared, emit: &body)
+            
+            let offset = shared.sema.symbols.nominalLayout(for: ownerSymbol)?.fieldOffsets[fieldSymbol] ?? 0
+            let offsetExpr = arena.appendExpr(.intLiteral(Int64(offset)), type: shared.sema.types.intType)
+            body.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(offset))))
+
+            let unusedResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: shared.sema.types.anyType)
+            let thrownResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: shared.sema.types.anyType)
+            body.append(.call(
+                symbol: nil,
+                callee: compilationCtx.interner.intern("kk_array_set"),
+                arguments: [receiverID, offsetExpr, delegateValue],
+                result: unusedResult,
+                canThrow: true,
+                thrownResult: thrownResult,
+                isSuperCall: false
+            ))
+        }
     }
 
     /// Emits property initializers and `init { }` blocks in the order they
