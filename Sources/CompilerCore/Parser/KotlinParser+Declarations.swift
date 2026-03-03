@@ -204,9 +204,9 @@ extension KotlinParser {
     private func isPropertyAccessorStart(_ token: Token) -> Bool {
         switch token.kind {
         case .softKeyword(.get), .softKeyword(.set):
-            return isAccessorHeaderFollowedByBody()
+            isAccessorHeaderFollowedByBody()
         default:
-            return false
+            false
         }
     }
 
@@ -242,9 +242,9 @@ extension KotlinParser {
     private func isAccessorBodyStart(_ token: Token) -> Bool {
         switch token.kind {
         case .symbol(.assign), .symbol(.lBrace):
-            return true
+            true
         default:
-            return false
+            false
         }
     }
 
