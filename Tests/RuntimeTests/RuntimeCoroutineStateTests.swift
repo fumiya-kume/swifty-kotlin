@@ -15,17 +15,21 @@ private let runtimeCancelLoopStopped = DispatchSemaphore(value: 0)
 private final class RuntimeAtomicInt: @unchecked Sendable {
     private var _value: Int
     private let lock = NSLock()
-    init(_ value: Int) { self._value = value }
+    init(_ value: Int) {
+        _value = value
+    }
     var value: Int {
         lock.lock()
         defer { lock.unlock() }
         return _value
     }
+
     func set(_ newValue: Int) {
         lock.lock()
         _value = newValue
         lock.unlock()
     }
+
     func increment() {
         lock.lock()
         _value += 1
@@ -387,7 +391,7 @@ final class RuntimeCoroutineStateTests: XCTestCase {
     func testCheckCancellationReturnsZeroWhenNotCancelled() {
         let continuation = kk_coroutine_continuation_new(42)
         defer { _ = kk_coroutine_state_exit(continuation, 0) }
-        var outThrown: Int = 0
+        var outThrown = 0
         let result = kk_coroutine_check_cancellation(continuation, &outThrown)
         XCTAssertEqual(result, 0, "Should return 0 when not cancelled")
         XCTAssertEqual(outThrown, 0, "outThrown should be 0 when not cancelled")
@@ -397,7 +401,7 @@ final class RuntimeCoroutineStateTests: XCTestCase {
         let continuation = kk_coroutine_continuation_new(42)
         defer { _ = kk_coroutine_state_exit(continuation, 0) }
         kk_coroutine_cancel(continuation)
-        var outThrown: Int = 0
+        var outThrown = 0
         let result = kk_coroutine_check_cancellation(continuation, &outThrown)
         XCTAssertEqual(result, 1, "Should return 1 when cancelled")
         XCTAssertNotEqual(outThrown, 0, "outThrown should be set to CancellationException")
@@ -405,8 +409,9 @@ final class RuntimeCoroutineStateTests: XCTestCase {
     }
 
     func testIsCancellationExceptionReturnsFalseForRegularThrowable() {
-        let throwable = kk_throwable_new(0)
-        let result = kk_is_cancellation_exception(throwable)
+        let throwablePtr = kk_throwable_new(nil)
+        let throwableInt = Int(bitPattern: throwablePtr)
+        let result = kk_is_cancellation_exception(throwableInt)
         XCTAssertEqual(result, 0, "Regular throwable should not be CancellationException")
     }
 
@@ -420,7 +425,7 @@ final class RuntimeCoroutineStateTests: XCTestCase {
         XCTAssertNotEqual(jobHandle, 0, "Launch should return a job handle")
 
         // Wait until the coroutine has started (bounded polling)
-        for _ in 0..<200 where runtimeCancelLoopIterations.value == 0 {
+        for _ in 0 ..< 200 where runtimeCancelLoopIterations.value == 0 {
             Thread.sleep(forTimeInterval: 0.01)
         }
         XCTAssertGreaterThan(runtimeCancelLoopIterations.value, 0, "Coroutine should have started")
