@@ -1,6 +1,7 @@
 import Foundation
 
 extension CoroutineLoweringPass {
+    // swiftlint:disable:next function_body_length
     func lowerSuspendBodyToStateMachineSkeleton(
         originalBody: [KIRInstruction],
         continuationParameterSymbol: SymbolID,
@@ -124,13 +125,9 @@ extension CoroutineLoweringPass {
 
                 // CORO-002: Check cancellation after resuming from suspension point.
                 // If cancelled, kk_coroutine_check_cancellation writes a CancellationException
-                // into outThrown and returns 1. We emit a thrownResult so the downstream
-                // exception handling can propagate it.
+                // into outThrown and returns 1. We use thrownResult: nil so that codegen
+                // auto-generates the early-return propagation on non-zero thrown.
                 let cancelCheckResult = module.arena.appendExpr(
-                    .temporary(Int32(module.arena.expressions.count)),
-                    type: intType
-                )
-                let cancelThrownResult = module.arena.appendExpr(
                     .temporary(Int32(module.arena.expressions.count)),
                     type: intType
                 )
@@ -141,7 +138,7 @@ extension CoroutineLoweringPass {
                         arguments: [continuationExpr],
                         result: cancelCheckResult,
                         canThrow: true,
-                        thrownResult: cancelThrownResult
+                        thrownResult: nil
                     )
                 )
             }

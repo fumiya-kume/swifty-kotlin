@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Dispatch
 @testable import Runtime
 import XCTest
@@ -77,16 +78,14 @@ func runtime_test_suspend_cancel_loop(_ continuation: Int, _ outThrown: UnsafeMu
         _ = kk_coroutine_state_set_label(continuation, 1)
         let cancelled = kk_coroutine_check_cancellation(continuation, outThrown)
         if cancelled != 0 {
-            runtimeCancelLoopStopped.signal()
-            return 0
+            return kk_coroutine_state_exit(continuation, 0)
         }
         return kk_kxmini_delay(5, continuation)
     }
     // Resumed after delay — check cancellation again
     let cancelled = kk_coroutine_check_cancellation(continuation, outThrown)
     if cancelled != 0 {
-        runtimeCancelLoopStopped.signal()
-        return 0
+        return kk_coroutine_state_exit(continuation, 0)
     }
     // Loop: increment iteration counter, set label to 1 and delay again
     runtimeCancelLoopIterations.increment()
@@ -94,6 +93,7 @@ func runtime_test_suspend_cancel_loop(_ continuation: Int, _ outThrown: UnsafeMu
     return kk_kxmini_delay(5, continuation)
 }
 
+// swiftlint:disable:next type_body_length
 final class RuntimeCoroutineStateTests: XCTestCase {
     override func setUp() {
         super.setUp()
@@ -401,6 +401,12 @@ final class RuntimeCoroutineStateTests: XCTestCase {
     func testCheckCancellationReturnsCancellationExceptionWhenCancelled() {
         let continuation = kk_coroutine_continuation_new(42)
         defer { _ = kk_coroutine_state_exit(continuation, 0) }
+        // Link a job handle so kk_coroutine_cancel and kk_coroutine_check_cancellation work
+        let job = RuntimeJobHandle()
+        if let state = runtimeContinuationState(from: continuation) {
+            state.jobHandle = job
+            job.continuationState = state
+        }
         kk_coroutine_cancel(continuation)
         var outThrown = 0
         let result = kk_coroutine_check_cancellation(continuation, &outThrown)
@@ -434,9 +440,11 @@ final class RuntimeCoroutineStateTests: XCTestCase {
         // Cancel the job
         _ = kk_job_cancel(jobHandle)
 
-        // Wait for the coroutine to stop
-        let stopResult = runtimeCancelLoopStopped.wait(timeout: .now() + .seconds(2))
-        XCTAssertEqual(stopResult, .success, "Coroutine should stop after cancel")
+        // Join the job — should complete promptly after cancellation
+        let startTime = DispatchTime.now()
+        _ = kk_job_join(jobHandle)
+        let elapsed = Double(DispatchTime.now().uptimeNanoseconds - startTime.uptimeNanoseconds) / 1_000_000_000
+        XCTAssertLessThan(elapsed, 2.0, "Coroutine should stop promptly after cancel")
     }
 
     func testLaunchReturnsJobHandle() {

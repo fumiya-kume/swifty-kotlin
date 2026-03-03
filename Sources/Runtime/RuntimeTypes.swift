@@ -60,7 +60,7 @@ final class RuntimeThrowableBox {
     }
 }
 
-/// Subclass of RuntimeThrowableBox used to identify CancellationException at runtime.
+/// Distinct type used to identify CancellationException at runtime.
 /// The runtime checks `is RuntimeCancellationBox` to distinguish cancellation from
 /// regular throwables (CORO-002 / spec.md J17).
 final class RuntimeCancellationBox {

@@ -408,24 +408,28 @@ public enum RuntimeABIExterns {
 
     // MARK: - Cancellation (CORO-002)
 
+    // swiftlint:disable:next identifier_name
     public static let kk_coroutine_check_cancellation = ExternDecl(
         name: "kk_coroutine_check_cancellation",
-        parameterTypes: ["intptr_t", "intptr_t *"],
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
+    // swiftlint:disable:next identifier_name
     public static let kk_is_cancellation_exception = ExternDecl(
         name: "kk_is_cancellation_exception",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
+    // swiftlint:disable:next identifier_name
     public static let kk_job_cancel = ExternDecl(
         name: "kk_job_cancel",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
+    // swiftlint:disable:next identifier_name
     public static let kk_coroutine_cancel = ExternDecl(
         name: "kk_coroutine_cancel",
         parameterTypes: ["intptr_t"],
