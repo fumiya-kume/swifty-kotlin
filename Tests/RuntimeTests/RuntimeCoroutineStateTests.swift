@@ -78,14 +78,14 @@ func runtime_test_suspend_cancel_loop(_ continuation: Int, _ outThrown: UnsafeMu
         _ = kk_coroutine_state_set_label(continuation, 1)
         let cancelled = kk_coroutine_check_cancellation(continuation, outThrown)
         if cancelled != 0 {
-            return kk_coroutine_state_exit(continuation, 0)
+            return 0
         }
         return kk_kxmini_delay(5, continuation)
     }
     // Resumed after delay — check cancellation again
     let cancelled = kk_coroutine_check_cancellation(continuation, outThrown)
     if cancelled != 0 {
-        return kk_coroutine_state_exit(continuation, 0)
+        return 0
     }
     // Loop: increment iteration counter, set label to 1 and delay again
     runtimeCancelLoopIterations.increment()
