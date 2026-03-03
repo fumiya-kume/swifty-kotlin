@@ -1348,6 +1348,7 @@ extension LLVMBackend {
         "  return arr->length;",
         "}",
         "/* --- Sequence runtime (STDLIB-003) --- */",
+        // swiftlint:disable:next line_length
         "typedef struct { intptr_t kind; intptr_t fnPtr; intptr_t count; intptr_t srcLen; intptr_t* srcElems; } KKSeqStep;",
         "typedef struct { intptr_t stepCount; KKSeqStep* steps; } KKSequence;",
         "__attribute__((weak)) intptr_t kk_sequence_from_list(intptr_t listRaw) {",
@@ -1463,7 +1464,6 @@ extension LLVMBackend {
         "  b->elements[b->elemCount++] = value;",
         "  return 0;",
         "}",
-        // swiftlint:disable:next line_length
         "__attribute__((weak)) intptr_t kk_sequence_builder_build(intptr_t fnPtr) {",
         "  KKSeqBuilder* b = (KKSeqBuilder*)(void*)kk_sequence_builder_create();",
         "  if (!b) return 0;",
