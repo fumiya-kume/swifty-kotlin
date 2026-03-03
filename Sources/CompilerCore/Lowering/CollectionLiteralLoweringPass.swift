@@ -120,7 +120,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
         let kkBuildListName = interner.intern("kk_build_list")
         let kkBuildMapName = interner.intern("kk_build_map")
         let builderDSLNames: Set<InternedString> = [
-            buildStringName, buildListName, buildMapName,
+            buildStringName, buildListName, buildMapName
         ]
 
         // Builder member function names (STDLIB-002)
@@ -163,8 +163,8 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     builderLambdaFunctionNames.insert(lambdaName)
                     // Also try the symbol-based lookup for robustness
                     for innerDecl in module.arena.declarations {
-                        if case let .function(fn) = innerDecl, fn.symbol == symbol {
-                            builderLambdaFunctionNames.insert(fn.name)
+                        if case let .function(func_decl) = innerDecl, func_decl.symbol == symbol {
+                            builderLambdaFunctionNames.insert(func_decl.name)
                             break
                         }
                     }
