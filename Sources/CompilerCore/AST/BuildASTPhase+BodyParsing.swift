@@ -51,22 +51,16 @@ extension BuildASTPhase {
         return .expr(exprID, range)
     }
 
-    func blockExpressions(
+    // Gather per-CST-statement token arrays from a block, merging
+    // dot-continuation lines into the previous group.
+    // The Kotlin CST parser may split `expr\n  .member()` into
+    // separate statement nodes, but `.member()` is a continuation
+    // of the previous expression, not a standalone statement.
+    private func collectBlockStatementGroups( // swiftlint:disable:this function_body_length
         from blockNodeID: NodeID,
-        in arena: SyntaxArena,
-        interner: StringInterner,
-        astArena: ASTArena
-    ) -> [ExprID] {
-        var result: [ExprID] = []
-
-        // -- Phase 1: gather per-CST-statement token arrays,
-        //    merging dot-continuation lines into the previous group.
-        //    The Kotlin CST parser may split `expr\n  .member()` into
-        //    separate statement nodes, but `.member()` is a continuation
-        //    of the previous expression, not a standalone statement. --
-        var rawGroups: [[Token]] = []
-        var filteredGroups: [[Token]] = []
-        var controlFlowFlags: [Bool] = []
+        in arena: SyntaxArena
+    ) -> [(raw: [Token], filtered: [Token], isControlFlow: Bool)] {
+        var groups: [(raw: [Token], filtered: [Token], isControlFlow: Bool)] = []
 
         for child in arena.children(of: blockNodeID) {
             guard case let .node(nodeID) = child else {
@@ -85,34 +79,37 @@ extension BuildASTPhase {
 
             let isCF = isControlFlowExprKind(node.kind)
 
-            // If the first token is `.` or `?.`, this is a continuation of the
-            // previous expression (e.g. `listOf(1,2,3)\n  .map { ... }`).
-            // Merge into the previous non-control-flow group.
+            // If the first token is `.` or `?.`, merge into the previous group.
             if !isCF,
                let first = filtered.first,
                first.kind == .symbol(.dot) || first.kind == .symbol(.questionDot),
-               let lastIdx = rawGroups.indices.last,
-               !controlFlowFlags[lastIdx]
+               let lastIdx = groups.indices.last,
+               !groups[lastIdx].isControlFlow
             { // swiftlint:disable:this opening_brace
-                rawGroups[lastIdx].append(contentsOf: rawTokens)
-                filteredGroups[lastIdx].append(contentsOf: filtered)
+                groups[lastIdx].raw.append(contentsOf: rawTokens)
+                groups[lastIdx].filtered.append(contentsOf: filtered)
                 continue
             }
 
-            rawGroups.append(rawTokens)
-            filteredGroups.append(filtered)
-            controlFlowFlags.append(isCF)
+            groups.append((raw: rawTokens, filtered: filtered, isControlFlow: isCF))
         }
+        return groups
+    }
 
-        // -- Phase 2: parse each (potentially merged) token group. --
-        for i in rawGroups.indices {
-            let rawTokens = rawGroups[i]
-            let statementTokens = filteredGroups[i]
+    func blockExpressions(
+        from blockNodeID: NodeID,
+        in arena: SyntaxArena,
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> [ExprID] {
+        let groups = collectBlockStatementGroups(from: blockNodeID, in: arena)
+        var result: [ExprID] = []
 
+        for group in groups {
             // CST-aware fast path: for structured control flow nodes,
             // skip local decl/assign probing and parse directly as expressions.
-            if controlFlowFlags[i] {
-                let parser = ExpressionParser(tokens: statementTokens, interner: interner, astArena: astArena)
+            if group.isControlFlow {
+                let parser = ExpressionParser(tokens: group.filtered, interner: interner, astArena: astArena)
                 if let exprID = parser.parse() {
                     result.append(exprID)
                 }
@@ -120,7 +117,7 @@ extension BuildASTPhase {
             }
 
             if let localFunDeclExpr = parseLocalFunDeclExpr(
-                from: rawTokens,
+                from: group.raw,
                 interner: interner,
                 astArena: astArena
             ) {
@@ -128,7 +125,7 @@ extension BuildASTPhase {
                 continue
             }
             if let localDeclExpr = parseLocalDeclarationExpr(
-                from: statementTokens,
+                from: group.filtered,
                 interner: interner,
                 astArena: astArena
             ) {
@@ -136,14 +133,14 @@ extension BuildASTPhase {
                 continue
             }
             if let localAssignExpr = parseLocalAssignmentExpr(
-                from: statementTokens,
+                from: group.filtered,
                 interner: interner,
                 astArena: astArena
             ) {
                 result.append(localAssignExpr)
                 continue
             }
-            let parser = ExpressionParser(tokens: statementTokens, interner: interner, astArena: astArena)
+            let parser = ExpressionParser(tokens: group.filtered, interner: interner, astArena: astArena)
             if let exprID = parser.parse() {
                 result.append(exprID)
             }
