@@ -529,8 +529,14 @@ extension CallLowerer {
             sema: sema,
             interner: interner
         )
+        // When an externalLinkName is set (e.g. kk_array_get), the callee is a
+        // C runtime function and must be emitted as a plain .call, not a
+        // virtual dispatch.  Skip the virtualCall path in that case.
+        let hasExternalLink = chosenCallee.flatMap { sema.symbols.externalLinkName(for: $0) }
+            .map { !$0.isEmpty } ?? false
         let receiverTypeForDispatch = sema.bindings.exprTypes[receiverExpr]
         if !isSuperCall,
+           !hasExternalLink,
            let chosenCallee,
            let dispatchKind = resolveVirtualDispatch(callee: chosenCallee, receiverTypeID: receiverTypeForDispatch, sema: sema)
         {
