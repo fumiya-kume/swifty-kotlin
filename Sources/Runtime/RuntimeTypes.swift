@@ -93,6 +93,54 @@ final class RuntimeBoolBox {
     }
 }
 
+// MARK: - Collection Types (STDLIB-001)
+
+/// Runtime box for `listOf(...)` / `mutableListOf(...)`.
+/// Stores elements as an array of `Int` (opaque intptr_t values).
+final class RuntimeListBox {
+    let elements: [Int]
+
+    init(elements: [Int]) {
+        self.elements = elements
+    }
+}
+
+/// Runtime box for `mapOf(...)` / `mutableMapOf(...)`.
+/// Stores keys and values as parallel arrays of `Int` (opaque intptr_t values).
+final class RuntimeMapBox {
+    let keys: [Int]
+    let values: [Int]
+
+    init(keys: [Int], values: [Int]) {
+        self.keys = keys
+        self.values = values
+    }
+}
+
+/// Iterator box for `List` iteration via `for (x in list)`.
+final class RuntimeListIteratorBox {
+    let elements: [Int]
+    var index: Int
+
+    init(elements: [Int]) {
+        self.elements = elements
+        index = 0
+    }
+}
+
+/// Iterator box for `Map` iteration via `for (entry in map)`.
+final class RuntimeMapIteratorBox {
+    let keys: [Int]
+    let values: [Int]
+    var index: Int
+
+    init(keys: [Int], values: [Int]) {
+        self.keys = keys
+        self.values = values
+        index = 0
+    }
+}
+
 // MARK: - Stdlib Delegate Types (P5-80)
 
 /// Thread-safety mode for `lazy` delegate.

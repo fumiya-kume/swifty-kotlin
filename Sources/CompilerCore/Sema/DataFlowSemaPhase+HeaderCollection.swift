@@ -1,6 +1,8 @@
+// swiftlint:disable file_length
 import Foundation
 
 extension DataFlowSemaPhase {
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func collectHeader(
         declID: DeclID,
         file: ASTFile,
@@ -32,12 +34,16 @@ extension DataFlowSemaPhase {
                 flags: classFlags
             )
         case let .interfaceDecl(interfaceDecl):
+            var interfaceFlags = flags(from: interfaceDecl.modifiers)
+            if interfaceDecl.isFunInterface {
+                interfaceFlags.insert(.funInterface)
+            }
             declaration = (
                 kind: .interface,
                 name: interfaceDecl.name,
                 range: interfaceDecl.range,
                 visibility: visibility(from: interfaceDecl.modifiers),
-                flags: flags(from: interfaceDecl.modifiers)
+                flags: interfaceFlags
             )
         case let .objectDecl(objectDecl):
             declaration = (

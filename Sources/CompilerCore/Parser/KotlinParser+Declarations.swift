@@ -1,4 +1,5 @@
 extension KotlinParser {
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func parseDeclaration() -> NodeID {
         var modifierChildren: [SyntaxChild] = []
         var modifierRange = RangeAccumulator()
@@ -26,6 +27,15 @@ extension KotlinParser {
                 leadingRange: modifierRange.value
             )
         case .keyword(.fun):
+            // `fun interface` — consume `fun` as a modifier and parse as interface decl
+            if stream.peek(1).kind == .keyword(.interface) {
+                _ = consumeToken(into: &modifierChildren, range: &modifierRange)
+                return parseNamedDeclaration(
+                    kind: .interfaceDecl,
+                    leadingChildren: modifierChildren,
+                    leadingRange: modifierRange.value
+                )
+            }
             return parseFunctionDeclaration(leadingChildren: modifierChildren, leadingRange: modifierRange.value)
         case .keyword(.val), .keyword(.var):
             return parsePropertyDeclaration(leadingChildren: modifierChildren, leadingRange: modifierRange.value)

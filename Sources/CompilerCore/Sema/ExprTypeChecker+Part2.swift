@@ -250,22 +250,45 @@ extension ExprTypeChecker {
         // Extract label from the lambda literal AST node for labeled lambda support
         let label: InternedString? = if case let .lambdaLiteral(_, _, lbl, _) = ast.arena.expr(id) { lbl } else { nil }
 
-        let expectedFunctionType: FunctionType? = if let expectedType,
-                                                     case let .functionType(functionType) = sema.types.kind(of: expectedType)
-        {
-            functionType
+        // SAM conversion: when the expected type is a functional interface,
+        // extract the SAM method's function type so the lambda's parameters
+        // and return type can be inferred from it.
+        let samConversion: Bool
+        let expectedFunctionType: FunctionType?
+        if let expectedType, case let .functionType(functionType) = sema.types.kind(of: expectedType) {
+            expectedFunctionType = functionType
+            samConversion = false
+        } else if let expectedType, let samFT = driver.helpers.samFunctionType(for: expectedType, sema: sema) {
+            expectedFunctionType = samFT
+            samConversion = true
         } else {
-            nil
+            expectedFunctionType = nil
+            samConversion = false
         }
 
         var lambdaLocals = locals
         let outerSymbols = Set(locals.values.map(\.symbol))
-        let parameterTypes: [TypeID] = if let expectedFunctionType, expectedFunctionType.params.count == params.count {
+
+        // Implicit `it` parameter: when a no-arrow lambda has zero explicit params
+        // and the expected function type has exactly one parameter, synthesise an
+        // `it` binding so the body can reference it.
+        let effectiveParams: [InternedString] = if params.isEmpty,
+                                                   let expectedFunctionType,
+                                                   expectedFunctionType.params.count == 1
+        { // swiftlint:disable:this opening_brace
+            [ctx.interner.intern("it")]
+        } else {
+            params
+        }
+
+        let parameterTypes: [TypeID] = if let expectedFunctionType,
+                                          expectedFunctionType.params.count == effectiveParams.count
+        { // swiftlint:disable:this opening_brace
             expectedFunctionType.params
         } else {
-            Array(repeating: sema.types.anyType, count: params.count)
+            Array(repeating: sema.types.anyType, count: effectiveParams.count)
         }
-        for (offset, param) in params.enumerated() {
+        for (offset, param) in effectiveParams.enumerated() {
             let syntheticSymbol = SymbolID(rawValue: Int32(clamping: Int64(-1_000_000) - Int64(id.rawValue) * 256 - Int64(offset)))
             let parameterType = offset < parameterTypes.count ? parameterTypes[offset] : sema.types.anyType
             lambdaLocals[param] = (
@@ -294,6 +317,27 @@ extension ExprTypeChecker {
             outerSymbols: outerSymbols
         )
         sema.bindings.bindCaptureSymbols(id, symbols: captures)
+
+        // SAM conversion: bind the lambda to the interface type, but also
+        // store the underlying function type so KIR lowering can generate
+        // the correct callable.
+        if samConversion, let expectedType, let expectedFunctionType {
+            driver.emitSubtypeConstraint(
+                left: inferredBodyType,
+                right: expectedFunctionType.returnType,
+                range: ast.arena.exprRange(body),
+                solver: ConstraintSolver(),
+                sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+            // Mark this expression as a SAM conversion so KIR can handle it.
+            sema.bindings.markSamConversion(id)
+            // Store the underlying function type for KIR lowering.
+            let underlyingFuncType = sema.types.make(.functionType(expectedFunctionType))
+            sema.bindings.bindSamUnderlyingFunctionType(id, type: underlyingFuncType)
+            sema.bindings.bindExprType(id, type: expectedType)
+            return expectedType
+        }
 
         if let expectedType, let expectedFunctionType {
             driver.emitSubtypeConstraint(

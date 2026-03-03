@@ -100,10 +100,12 @@ extension BuildASTPhase {
         let whereClauses = declarationWhereClauses(from: nodeID, in: arena, interner: interner, astArena: astArena)
         let typeParams = applyWhereClauses(rawTypeParams, whereClauses: whereClauses)
         let members = declarationMemberDecls(from: nodeID, in: arena, interner: interner, astArena: astArena)
+        let modifiers = declarationModifiers(from: nodeID, in: arena)
         return InterfaceDecl(
             range: node.range,
             name: declarationName(from: nodeID, in: arena, interner: interner),
-            modifiers: declarationModifiers(from: nodeID, in: arena),
+            modifiers: modifiers,
+            isFunInterface: modifiers.contains(.funModifier),
             typeParams: typeParams,
             superTypes: declarationSuperTypes(from: nodeID, in: arena, interner: interner, astArena: astArena),
             nestedTypeAliases: declarationNestedTypeAliases(from: nodeID, in: arena, interner: interner, astArena: astArena),
