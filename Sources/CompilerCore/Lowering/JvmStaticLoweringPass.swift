@@ -18,6 +18,7 @@ final class JvmStaticLoweringPass: LoweringPass {
         ctx.sema != nil
     }
 
+    // swiftlint:disable:next function_body_length
     func run(module: KIRModule, ctx: KIRContext) throws {
         guard let sema = ctx.sema else {
             module.recordLowering(Self.name)

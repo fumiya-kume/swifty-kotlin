@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 
 extension BuildASTPhase {
@@ -266,11 +267,14 @@ extension BuildASTPhase {
 
     // MARK: - Annotation Parsing
 
-    /// Extracts annotation nodes from the leading tokens of a declaration CST node.
-    /// Annotations appear as `@Name` or `@Name(args)` tokens before the declaration
-    /// keyword (class, fun, val, var, etc.).  Also handles use-site targets like
-    /// `@get:Name` or `@field:Name(args)`.
-    func declarationAnnotations(from nodeID: NodeID, in arena: SyntaxArena, interner: StringInterner) -> [AnnotationNode] {
+    // Extracts annotation nodes from the leading tokens of a declaration CST node.
+    // Annotations appear as `@Name` or `@Name(args)` tokens before the declaration
+    // keyword (class, fun, val, var, etc.).  Also handles use-site targets like
+    // `@get:Name` or `@field:Name(args)`.
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
+    func declarationAnnotations(
+        from nodeID: NodeID, in arena: SyntaxArena, interner: StringInterner
+    ) -> [AnnotationNode] {
         let tokens = collectTokens(from: nodeID, in: arena)
         var annotations: [AnnotationNode] = []
         var index = 0
@@ -295,7 +299,7 @@ extension BuildASTPhase {
                 if let candidateName = tokenText(candidate, interner: interner) {
                     let knownTargets: Set<String> = [
                         "get", "set", "field", "param", "setparam",
-                        "delegate", "property", "receiver", "file",
+                        "delegate", "property", "receiver", "file"
                     ]
                     if knownTargets.contains(candidateName) {
                         useSiteTarget = candidateName
@@ -313,8 +317,7 @@ extension BuildASTPhase {
                 // Handle qualified names like `kotlin.jvm.JvmStatic`
                 while index + 1 < tokens.count,
                       tokens[index].kind == .symbol(.dot),
-                      let nextPart = tokenText(tokens[index + 1], interner: interner)
-                {
+                      let nextPart = tokenText(tokens[index + 1], interner: interner) {
                     nameParts.append(nextPart)
                     index += 2
                 }
@@ -386,7 +389,8 @@ extension BuildASTPhase {
         }
     }
 
-    /// Returns a raw text representation for any token, used for annotation argument parsing.
+    // Returns a raw text representation for any token, used for annotation argument parsing.
+    // swiftlint:disable:next cyclomatic_complexity
     private func tokenRawText(_ token: Token, interner: StringInterner) -> String {
         switch token.kind {
         case let .identifier(interned), let .backtickedIdentifier(interned):

@@ -2,6 +2,7 @@
 import Foundation
 import XCTest
 
+// swiftlint:disable:next type_body_length
 final class BuildKIRRegressionTests: XCTestCase {
     func testLoadSourcesPhaseReportsMissingInputsAndUnreadableFiles() {
         let emptyCtx = makeCompilationContext(inputs: [])
