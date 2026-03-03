@@ -120,7 +120,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
         let kkBuildListName = interner.intern("kk_build_list")
         let kkBuildMapName = interner.intern("kk_build_map")
         let builderDSLNames: Set<InternedString> = [
-            buildStringName, buildListName, buildMapName
+            buildStringName, buildListName, buildMapName,
         ]
 
         // Builder member function names (STDLIB-002)
