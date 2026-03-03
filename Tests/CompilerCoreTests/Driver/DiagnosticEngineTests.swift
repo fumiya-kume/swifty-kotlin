@@ -372,7 +372,7 @@ final class DiagnosticEngineTests: XCTestCase {
             "\"line\"", "\"character\"",
             "\"severity\"", "\"severityLabel\"",
             "\"code\"", "\"source\"", "\"message\"",
-            "\"codeActions\""
+            "\"codeActions\"", // swiftlint:disable:this trailing_comma
         ]
         for field in requiredFields {
             XCTAssertTrue(json.contains(field), "JSON should contain field: \(field)")
