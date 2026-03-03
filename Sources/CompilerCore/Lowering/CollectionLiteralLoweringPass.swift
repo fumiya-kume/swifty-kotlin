@@ -397,8 +397,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     // matching the correct builder kind to avoid cross-kind rewrites.
                     if let lambdaBuilderCallee = builderLambdaKinds[function.name] {
                         if lambdaBuilderCallee == buildStringName,
-                           callee == appendName, arguments.count == 1
-                        {
+                           callee == appendName, arguments.count == 1 {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: kkStringBuilderAppendName,
@@ -410,8 +409,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                             continue
                         }
                         if lambdaBuilderCallee == buildListName,
-                           callee == addName, arguments.count == 1
-                        {
+                           callee == addName, arguments.count == 1 {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: kkMutableListAddName,
@@ -423,8 +421,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                             continue
                         }
                         if lambdaBuilderCallee == buildMapName,
-                           callee == putName, arguments.count == 2
-                        {
+                           callee == putName, arguments.count == 2 {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: kkMutableMapPutName,
