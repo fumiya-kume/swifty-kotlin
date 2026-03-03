@@ -284,10 +284,10 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
         // implicit-receiver member calls that return Unit.
         if let calleeName, ctx.isBuilderLambdaScope {
             let name = interner.resolve(calleeName)
-            if (name == "append" && args.count == 1)
+            let isBuilderMember = (name == "append" && args.count == 1)
                 || (name == "add" && args.count == 1)
                 || (name == "put" && args.count == 2)
-            {
+            if isBuilderMember {
                 sema.bindings.bindExprType(id, type: sema.types.unitType)
                 return sema.types.unitType
             }
