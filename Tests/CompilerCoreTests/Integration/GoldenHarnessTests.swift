@@ -7,6 +7,7 @@ final class GoldenHarnessTests: XCTestCase {
         case lexer = "Lexer"
         case parser = "Parser"
         case sema = "Sema"
+        case diagnostics = "Diagnostics"
     }
 
     func testLexerGolden() throws {
@@ -109,6 +110,26 @@ final class GoldenHarnessTests: XCTestCase {
             }
 
             return lines.joined(separator: "\n") + "\n"
+        }
+    }
+
+    func testDiagnosticsGolden() throws {
+        try runGoldenSuite(.diagnostics) { sourcePath in
+            let ctx = makeCompilationContext(inputs: [sourcePath], moduleName: "GoldenDiag", emit: .kirDump)
+            // Run through sema, ignoring errors (we want the diagnostics).
+            do {
+                try runFrontend(ctx)
+                try SemaPhase().run(ctx)
+            } catch {
+                // Compilation errors are expected for diagnostic test cases.
+            }
+            // Normalize absolute file paths to just the filename for deterministic golden comparison.
+            let json = ctx.diagnostics.renderJSON(ctx.sourceManager)
+            let normalized = json.replacingOccurrences(
+                of: sourcePath,
+                with: URL(fileURLWithPath: sourcePath).lastPathComponent
+            )
+            return normalized + "\n"
         }
     }
 

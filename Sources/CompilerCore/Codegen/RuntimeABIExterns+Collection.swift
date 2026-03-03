@@ -24,6 +24,12 @@ public extension RuntimeABIExterns {
         kk_map_iterator_next,
         kk_array_of,
         kk_array_size,
+        kk_build_string,
+        kk_build_list,
+        kk_build_map,
+        kk_string_builder_append,
+        kk_mutable_list_add,
+        kk_mutable_map_put,
     ]
 
     static let kk_list_of = ExternDecl(
@@ -143,6 +149,43 @@ public extension RuntimeABIExterns {
     static let kk_array_size = ExternDecl(
         name: "kk_array_size",
         parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    /// Builder DSL (STDLIB-002)
+    static let kk_build_string = ExternDecl(
+        name: "kk_build_string",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_build_list = ExternDecl(
+        name: "kk_build_list",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_build_map = ExternDecl(
+        name: "kk_build_map",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_string_builder_append = ExternDecl(
+        name: "kk_string_builder_append",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_mutable_list_add = ExternDecl(
+        name: "kk_mutable_list_add",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_mutable_map_put = ExternDecl(
+        name: "kk_mutable_map_put",
+        parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 }

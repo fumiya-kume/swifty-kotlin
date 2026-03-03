@@ -1,3 +1,20 @@
+// swiftlint:disable file_length
+/// Represents a single annotation usage in Kotlin source code, e.g. `@Suppress("UNCHECKED_CAST")`.
+public struct AnnotationNode {
+    /// The simple or qualified name of the annotation (e.g. "Suppress", "kotlin.Deprecated").
+    public let name: String
+    /// Serialized argument values extracted from the annotation's parenthesized argument list.
+    public let arguments: [String]
+    /// Optional use-site target (e.g. "get", "set", "field", "param").
+    public let useSiteTarget: String?
+
+    public init(name: String, arguments: [String] = [], useSiteTarget: String? = nil) {
+        self.name = name
+        self.arguments = arguments
+        self.useSiteTarget = useSiteTarget
+    }
+}
+
 public struct ASTFile {
     public let fileID: FileID
     public let packageFQName: [InternedString]
@@ -61,6 +78,7 @@ public struct ClassDecl {
     public let range: SourceRange
     public let name: InternedString
     public let modifiers: Modifiers
+    public let annotations: [AnnotationNode]
     public let isInner: Bool
     public let typeParams: [TypeParamDecl]
     public let primaryConstructorParams: [ValueParamDecl]
@@ -88,6 +106,7 @@ public struct ClassDecl {
         range: SourceRange,
         name: InternedString,
         modifiers: Modifiers,
+        annotations: [AnnotationNode] = [],
         isInner: Bool = false,
         typeParams: [TypeParamDecl] = [],
         primaryConstructorParams: [ValueParamDecl] = [],
@@ -107,6 +126,7 @@ public struct ClassDecl {
         self.range = range
         self.name = name
         self.modifiers = modifiers
+        self.annotations = annotations
         self.isInner = isInner
         self.typeParams = typeParams
         self.primaryConstructorParams = primaryConstructorParams
@@ -129,6 +149,7 @@ public struct InterfaceDecl {
     public let range: SourceRange
     public let name: InternedString
     public let modifiers: Modifiers
+    public let annotations: [AnnotationNode]
     /// `true` when declared with `fun interface` — marks this as a functional
     /// interface eligible for SAM (Single Abstract Method) conversion.
     public let isFunInterface: Bool
@@ -146,6 +167,7 @@ public struct InterfaceDecl {
         range: SourceRange,
         name: InternedString,
         modifiers: Modifiers,
+        annotations: [AnnotationNode] = [],
         isFunInterface: Bool = false,
         typeParams: [TypeParamDecl] = [],
         superTypes: [TypeRefID] = [],
@@ -159,6 +181,7 @@ public struct InterfaceDecl {
         self.range = range
         self.name = name
         self.modifiers = modifiers
+        self.annotations = annotations
         self.isFunInterface = isFunInterface
         self.typeParams = typeParams
         self.superTypes = superTypes
@@ -175,6 +198,7 @@ public struct ObjectDecl {
     public let range: SourceRange
     public let name: InternedString
     public let modifiers: Modifiers
+    public let annotations: [AnnotationNode]
     public let superTypes: [TypeRefID]
     public let nestedTypeAliases: [TypeAliasDecl]
     public let initBlocks: [FunctionBody]
@@ -187,6 +211,7 @@ public struct ObjectDecl {
         range: SourceRange,
         name: InternedString,
         modifiers: Modifiers,
+        annotations: [AnnotationNode] = [],
         superTypes: [TypeRefID] = [],
         nestedTypeAliases: [TypeAliasDecl] = [],
         initBlocks: [FunctionBody] = [],
@@ -198,6 +223,7 @@ public struct ObjectDecl {
         self.range = range
         self.name = name
         self.modifiers = modifiers
+        self.annotations = annotations
         self.superTypes = superTypes
         self.nestedTypeAliases = nestedTypeAliases
         self.initBlocks = initBlocks
@@ -214,6 +240,7 @@ public struct FunDecl {
     public let range: SourceRange
     public let name: InternedString
     public let modifiers: Modifiers
+    public let annotations: [AnnotationNode]
     public let typeParams: [TypeParamDecl]
     public let receiverType: TypeRefID?
     public let valueParams: [ValueParamDecl]
@@ -226,6 +253,7 @@ public struct FunDecl {
         range: SourceRange,
         name: InternedString,
         modifiers: Modifiers,
+        annotations: [AnnotationNode] = [],
         typeParams: [TypeParamDecl] = [],
         receiverType: TypeRefID? = nil,
         valueParams: [ValueParamDecl] = [],
@@ -237,6 +265,7 @@ public struct FunDecl {
         self.range = range
         self.name = name
         self.modifiers = modifiers
+        self.annotations = annotations
         self.typeParams = typeParams
         self.receiverType = receiverType
         self.valueParams = valueParams
@@ -281,6 +310,7 @@ public struct PropertyDecl {
     public let range: SourceRange
     public let name: InternedString
     public let modifiers: Modifiers
+    public let annotations: [AnnotationNode]
     public let type: TypeRefID?
     public let isVar: Bool
     public let initializer: ExprID?
@@ -299,6 +329,7 @@ public struct PropertyDecl {
         range: SourceRange,
         name: InternedString,
         modifiers: Modifiers,
+        annotations: [AnnotationNode] = [],
         type: TypeRefID?,
         isVar: Bool = false,
         initializer: ExprID? = nil,
@@ -311,6 +342,7 @@ public struct PropertyDecl {
         self.range = range
         self.name = name
         self.modifiers = modifiers
+        self.annotations = annotations
         self.type = type
         self.isVar = isVar
         self.initializer = initializer

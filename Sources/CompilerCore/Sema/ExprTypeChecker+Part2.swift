@@ -197,6 +197,14 @@ extension ExprTypeChecker {
         }
         if let first = candidates.first {
             sema.bindings.bindIdentifier(id, symbol: first.id)
+            // ANNO-001: Check for @Deprecated annotation on the resolved symbol.
+            driver.helpers.checkDeprecation(
+                for: first.id,
+                sema: sema,
+                interner: interner,
+                range: nameRange,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
         }
         let resolvedType = candidates.first.flatMap { symbol in
             if let signature = sema.symbols.functionSignature(for: symbol.id) {

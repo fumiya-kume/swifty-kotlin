@@ -12,8 +12,7 @@ public func kk_throwable_new(_ message: UnsafeMutableRawPointer?) -> UnsafeMutab
 
 @_cdecl("kk_throwable_is_cancellation")
 public func kk_throwable_is_cancellation(_ throwableRaw: Int) -> Int {
-    _ = throwableRaw
-    return 0
+    kk_is_cancellation_exception(throwableRaw)
 }
 
 @_cdecl("kk_panic")

@@ -80,6 +80,8 @@ extension DataFlowSemaPhase {
         if modifiers.contains(.const) { value.insert(.constValue) }
         if modifiers.contains(.override) { value.insert(.overrideMember) }
         if modifiers.contains(.final) { value.insert(.finalMember) }
+        if modifiers.contains(.expect) { value.insert(.expectDeclaration) }
+        if modifiers.contains(.actual) { value.insert(.actualDeclaration) }
     }
 
     func hasDeclarationConflict(newKind: SymbolKind, existing: [SemanticSymbol]) -> Bool {
@@ -98,14 +100,30 @@ extension DataFlowSemaPhase {
 
     /// Checks for a duplicate declaration conflict at the given fully-qualified name and
     /// emits the standard KSWIFTK-SEMA-0001 diagnostic when a conflict is detected.
+    /// An `expect` and `actual` pair sharing the same FQ name is NOT a conflict.
     func checkAndReportDuplicateDeclaration(
         newKind: SymbolKind,
         fqName: [InternedString],
         range: SourceRange?,
         symbols: SymbolTable,
-        diagnostics: DiagnosticEngine
+        diagnostics: DiagnosticEngine,
+        newFlags: SymbolFlags = []
     ) {
         let existing = symbols.lookupAll(fqName: fqName).compactMap { symbols.symbol($0) }
+        // Allow expect/actual pair: an expect and an actual with the same FQ name coexist,
+        // but only when exactly one opposite-flag symbol of the same kind exists and no
+        // same-flag duplicate is already present.
+        if newFlags.contains(.expectDeclaration) || newFlags.contains(.actualDeclaration) {
+            let isNewExpect = newFlags.contains(.expectDeclaration)
+            let oppositeFlag: SymbolFlags = isNewExpect ? .actualDeclaration : .expectDeclaration
+            let sameFlag: SymbolFlags = isNewExpect ? .expectDeclaration : .actualDeclaration
+            let sameKindExisting = existing.filter { $0.kind == newKind }
+            let hasSameFlagDuplicate = sameKindExisting.contains { $0.flags.contains(sameFlag) }
+            let hasOppositeCounterpart = sameKindExisting.contains { $0.flags.contains(oppositeFlag) }
+            if hasOppositeCounterpart, !hasSameFlagDuplicate {
+                return
+            }
+        }
         if hasDeclarationConflict(newKind: newKind, existing: existing) {
             diagnostics.error(
                 "KSWIFTK-SEMA-0001",
