@@ -198,13 +198,8 @@ final class CollectionLiteralLoweringPass: LoweringPass {
             for instruction in function.body {
                 switch instruction {
                 case let .call(_, callee, arguments, result, _, _, _):
-                    let calleStr = interner.resolve(callee)
-                    fputs("[P1] .call callee=\(calleStr) args=\(arguments.count) result=\(result?.rawValue as Any)\n", stderr)
                     if listFactoryNames.contains(callee) || callee == kkListOfName {
-                        if let result {
-                            listExprIDs.insert(result.rawValue)
-                            fputs("[P1]   -> listExprIDs += \(result.rawValue)\n", stderr)
-                        }
+                        if let result { listExprIDs.insert(result.rawValue) }
                     } else if mapFactoryNames.contains(callee) || callee == kkMapOfName {
                         if let result { mapExprIDs.insert(result.rawValue) }
                     } else if arrayOfFactoryNames.contains(callee) {
@@ -213,31 +208,21 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     // Track .call sequence operations where receiver is arguments[0]
                     // (sema collection fallback emits .call with receiver prepended).
                     if callee == asSequenceName, arguments.count == 1 {
-                        fputs("[P1]   asSequence: arg0=\(arguments[0].rawValue) inList=\(listExprIDs.contains(arguments[0].rawValue))\n", stderr)
                         if listExprIDs.contains(arguments[0].rawValue) {
-                            if let result {
-                                sequenceExprIDs.insert(result.rawValue)
-                                fputs("[P1]   -> sequenceExprIDs += \(result.rawValue)\n", stderr)
-                            }
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
                         }
                     } else if callee == toListName, arguments.count == 1 {
-                        fputs("[P1]   toList: arg0=\(arguments[0].rawValue) inSeq=\(sequenceExprIDs.contains(arguments[0].rawValue))\n", stderr)
                         if sequenceExprIDs.contains(arguments[0].rawValue) {
                             if let result { listExprIDs.insert(result.rawValue) }
                         }
                     } else if callee == mapName || callee == filterName || callee == takeName {
-                        if !arguments.isEmpty {
-                            fputs("[P1]   \(calleStr): arg0=\(arguments[0].rawValue) inSeq=\(sequenceExprIDs.contains(arguments[0].rawValue))\n", stderr)
-                        }
                         if !arguments.isEmpty, sequenceExprIDs.contains(arguments[0].rawValue) {
                             if let result { sequenceExprIDs.insert(result.rawValue) }
                         }
                     }
                 // Phase 1 also scans .virtualCall for collection member calls
                 // that the sema resolved to a symbol (STDLIB-003).
-                case let .virtualCall(_, callee, receiver, arguments, result, _, _, _):
-                    let vcCalleStr = interner.resolve(callee)
-                    fputs("[P1] .virtualCall callee=\(vcCalleStr) receiver=\(receiver.rawValue) args=\(arguments.count) result=\(result?.rawValue as Any)\n", stderr)
+                case let .virtualCall(_, callee, receiver, _, result, _, _, _):
                     if callee == asSequenceName {
                         if listExprIDs.contains(receiver.rawValue) {
                             if let result { sequenceExprIDs.insert(result.rawValue) }
