@@ -832,6 +832,10 @@ public final class DataFlowAnalyzer {
         case "Boolean": types.booleanType
         case "Char": types.charType
         case "String": types.stringType
+        case "UInt": types.uintType
+        case "ULong": types.ulongType
+        case "UByte": types.ubyteType
+        case "UShort": types.ushortType
         case "Any": types.anyType
         case "Unit": types.unitType
         case "Nothing": types.nothingType

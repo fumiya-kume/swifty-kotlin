@@ -65,6 +65,8 @@ public enum KIRUnaryOp: Equatable, Sendable {
 public enum KIRExprKind: Equatable, Sendable {
     case intLiteral(Int64)
     case longLiteral(Int64)
+    case uintLiteral(UInt64)
+    case ulongLiteral(UInt64)
     case floatLiteral(Double)
     case doubleLiteral(Double)
     case charLiteral(UInt32)

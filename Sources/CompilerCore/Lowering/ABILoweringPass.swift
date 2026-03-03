@@ -11,6 +11,21 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_op_mul"),
             ctx.interner.intern("kk_op_div"),
             ctx.interner.intern("kk_op_mod"),
+            ctx.interner.intern("kk_op_udiv"),
+            ctx.interner.intern("kk_op_urem"),
+            ctx.interner.intern("kk_op_ult"),
+            ctx.interner.intern("kk_op_ule"),
+            ctx.interner.intern("kk_op_ugt"),
+            ctx.interner.intern("kk_op_uge"),
+            ctx.interner.intern("kk_uint_to_int"),
+            ctx.interner.intern("kk_ulong_to_int"),
+            ctx.interner.intern("kk_int_to_uint"),
+            ctx.interner.intern("kk_long_to_uint"),
+            ctx.interner.intern("kk_int_to_long"),
+            ctx.interner.intern("kk_uint_to_long"),
+            ctx.interner.intern("kk_int_to_ulong"),
+            ctx.interner.intern("kk_long_to_ulong"),
+            ctx.interner.intern("kk_uint_to_ulong"),
             ctx.interner.intern("kk_op_eq"),
             ctx.interner.intern("kk_string_concat"),
             ctx.interner.intern("kk_string_length"),
@@ -764,6 +779,10 @@ final class ABILoweringPass: LoweringPass {
                 return types.make(.primitive(.int, .nonNull))
             case .longLiteral:
                 return types.make(.primitive(.long, .nonNull))
+            case .uintLiteral:
+                return types.make(.primitive(.uint, .nonNull))
+            case .ulongLiteral:
+                return types.make(.primitive(.ulong, .nonNull))
             case .floatLiteral:
                 return types.make(.primitive(.float, .nonNull))
             case .doubleLiteral:

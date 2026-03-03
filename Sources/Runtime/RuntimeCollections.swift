@@ -313,3 +313,64 @@ public func kk_array_size(_ arrayRaw: Int) -> Int {
     }
     return array.elements.count
 }
+
+// MARK: - Pair Functions (FUNC-002)
+
+/// Creates a new Pair from two elements.
+/// - Parameters:
+///   - first: The first element of the pair.
+///   - second: The second element of the pair.
+/// - Returns: Opaque handle (Int) to a `RuntimeArrayBox` containing 2 elements.
+@_cdecl("kk_pair_new")
+public func kk_pair_new(_ first: Int, _ second: Int) -> Int {
+    let box = RuntimeArrayBox(length: 2)
+    box.elements[0] = first
+    box.elements[1] = second
+    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
+    return Int(bitPattern: opaque)
+}
+
+/// Returns the first element of a Pair.
+/// - Parameter pairRaw: Opaque handle to a Pair (2-element RuntimeArrayBox).
+/// - Returns: The first element.
+@_cdecl("kk_pair_first")
+public func kk_pair_first(_ pairRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: pairRaw),
+          array.elements.count >= 2 else { return 0 }
+    return array.elements[0]
+}
+
+/// Returns the second element of a Pair.
+/// - Parameter pairRaw: Opaque handle to a Pair (2-element RuntimeArrayBox).
+/// - Returns: The second element.
+@_cdecl("kk_pair_second")
+public func kk_pair_second(_ pairRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: pairRaw),
+          array.elements.count >= 2 else { return 0 }
+    return array.elements[1]
+}
+
+/// Converts a Pair to its string representation (e.g. "(1, one)").
+/// - Parameter pairRaw: Opaque handle to a Pair (2-element RuntimeArrayBox).
+/// - Returns: Opaque handle to a RuntimeStringBox containing the string.
+@_cdecl("kk_pair_to_string")
+public func kk_pair_to_string(_ pairRaw: Int) -> UnsafeMutableRawPointer {
+    guard let array = runtimeArrayBox(from: pairRaw),
+          array.elements.count >= 2 else {
+        let str = "(null, null)"
+        let utf8 = Array(str.utf8)
+        return utf8.withUnsafeBufferPointer { buf in
+            kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
+        }
+    }
+    let firstStr = runtimeElementToString(array.elements[0])
+    let secondStr = runtimeElementToString(array.elements[1])
+    let str = "(\(firstStr), \(secondStr))"
+    let utf8 = Array(str.utf8)
+    return utf8.withUnsafeBufferPointer { buf in
+        kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
+    }
+}

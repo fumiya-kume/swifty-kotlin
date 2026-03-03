@@ -8,7 +8,7 @@ extension BuildASTPhase.ExpressionParser {
         }
 
         switch token.kind {
-        case .intLiteral, .longLiteral, .floatLiteral, .doubleLiteral, .charLiteral:
+        case .intLiteral, .longLiteral, .uintLiteral, .ulongLiteral, .floatLiteral, .doubleLiteral, .charLiteral:
             return parsePrimaryNumericOrChar(token)
         case .keyword(.true):
             _ = consume()
@@ -77,6 +77,14 @@ extension BuildASTPhase.ExpressionParser {
             let stripped = text.filter { $0.isNumber || $0 == "-" }
             let value = Int64(stripped) ?? 0
             return astArena.appendExpr(.longLiteral(value, token.range))
+        case let .uintLiteral(text):
+            _ = consume()
+            let value = parseUnsignedLiteral(text)
+            return astArena.appendExpr(.uintLiteral(value, token.range))
+        case let .ulongLiteral(text):
+            _ = consume()
+            let value = parseUnsignedLiteral(text)
+            return astArena.appendExpr(.ulongLiteral(value, token.range))
         case let .floatLiteral(text):
             _ = consume()
             let stripped = String(text.dropLast()).replacingOccurrences(of: "_", with: "")
@@ -97,6 +105,25 @@ extension BuildASTPhase.ExpressionParser {
         default:
             return nil
         }
+    }
+
+    /// Parses unsigned literal text (e.g. "42u", "0xFFuL") to UInt64.
+    private func parseUnsignedLiteral(_ text: String) -> UInt64 {
+        var numPart = text.replacingOccurrences(of: "_", with: "")
+        // Strip trailing u/U and uL/UL
+        if numPart.uppercased().hasSuffix("UL") {
+            numPart = String(numPart.dropLast(2))
+        } else if numPart.last == "u" || numPart.last == "U" {
+            numPart = String(numPart.dropLast())
+        }
+        let lower = numPart.lowercased()
+        if lower.hasPrefix("0x") {
+            return UInt64(numPart.dropFirst(2).filter { $0.isHexDigit }, radix: 16) ?? 0
+        }
+        if lower.hasPrefix("0b") {
+            return UInt64(numPart.dropFirst(2).filter { $0 == "0" || $0 == "1" }, radix: 2) ?? 0
+        }
+        return UInt64(numPart.filter { $0.isNumber }, radix: 10) ?? 0
     }
 
     // swiftlint:disable:next cyclomatic_complexity

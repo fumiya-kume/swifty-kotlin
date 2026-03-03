@@ -19,6 +19,14 @@ public extension TypeSystem {
                 "Int"
             case .long:
                 "Long"
+            case .uint:
+                "UInt"
+            case .ulong:
+                "ULong"
+            case .ubyte:
+                "UByte"
+            case .ushort:
+                "UShort"
             case .float:
                 "Float"
             case .double:

@@ -40,6 +40,18 @@ final class ExprLowerer {
             instructions.append(.constValue(result: id, value: .longLiteral(value)))
             return id
 
+        case let .uintLiteral(value, _):
+            let uintType = sema.types.make(.primitive(.uint, .nonNull))
+            let id = arena.appendExpr(.uintLiteral(value), type: boundType ?? uintType)
+            instructions.append(.constValue(result: id, value: .uintLiteral(value)))
+            return id
+
+        case let .ulongLiteral(value, _):
+            let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
+            let id = arena.appendExpr(.ulongLiteral(value), type: boundType ?? ulongType)
+            instructions.append(.constValue(result: id, value: .ulongLiteral(value)))
+            return id
+
         case let .floatLiteral(value, _):
             let floatType = sema.types.make(.primitive(.float, .nonNull))
             let id = arena.appendExpr(.floatLiteral(value), type: boundType ?? floatType)

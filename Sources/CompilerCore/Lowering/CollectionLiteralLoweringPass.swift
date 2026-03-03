@@ -112,6 +112,10 @@ final class CollectionLiteralLoweringPass: LoweringPass {
         let kkPrintlnAnyName = interner.intern("kk_println_any")
         let kkAnyToStringName = interner.intern("kk_any_to_string")
 
+        // Pair / `to` infix (FUNC-002)
+        let toName = interner.intern("to")
+        let kkPairNewName = interner.intern("kk_pair_new")
+
         // Set of all list-factory callee names
         let listFactoryNames: Set<InternedString> = [
             listOfName, mutableListOfName, emptyListName, listOfNotNullName,
@@ -463,6 +467,19 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                             ))
                             continue
                         }
+                    }
+
+                    // --- Rewrite `to` infix → kk_pair_new (FUNC-002) ---
+                    if callee == toName, arguments.count == 2 {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkPairNewName,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        continue
                     }
 
                     // --- Rewrite arrayOf → kk_array_of ---

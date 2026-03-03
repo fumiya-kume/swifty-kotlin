@@ -129,6 +129,11 @@ if ! command -v "$JAVA_BIN" >/dev/null 2>&1; then
   exit 1
 fi
 
+should_skip_case() {
+  local kt_file="$1"
+  head -5 "$kt_file" 2>/dev/null | grep -q '// SKIP-DIFF' || return 1
+}
+
 collect_cases() {
   local path="$1"
   if [[ -f "$path" ]]; then
@@ -276,8 +281,17 @@ run_case() {
 
 TOTAL=0
 FAILED=0
+SKIPPED=0
 while IFS= read -r test_case; do
   [[ -z "$test_case" ]] && continue
+  if should_skip_case "$test_case"; then
+    echo "SKIP $test_case (// SKIP-DIFF)"
+    SKIPPED=$((SKIPPED + 1))
+    if [[ -n "$REPORT_PATH" ]]; then
+      printf '%s\tSKIP\t\n' "$test_case" >>"$REPORT_PATH"
+    fi
+    continue
+  fi
   TOTAL=$((TOTAL + 1))
   echo "CASE $TOTAL: $test_case"
   status="PASS"
@@ -290,12 +304,12 @@ while IFS= read -r test_case; do
   fi
 done < <(collect_cases "$TARGET")
 
-if [[ $TOTAL -eq 0 ]]; then
+if [[ $TOTAL -eq 0 && $SKIPPED -eq 0 ]]; then
   echo "No .kt files found." >&2
   exit 1
 fi
 
-echo "Summary: total=$TOTAL failed=$FAILED passed=$((TOTAL - FAILED))"
+echo "Summary: total=$TOTAL failed=$FAILED passed=$((TOTAL - FAILED)) skipped=$SKIPPED"
 if [[ $FAILED -ne 0 ]]; then
   exit 1
 fi

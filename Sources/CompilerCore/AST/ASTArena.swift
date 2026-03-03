@@ -86,6 +86,8 @@ public final class ASTArena: @unchecked Sendable {
         switch expr {
         case let .intLiteral(_, range),
              let .longLiteral(_, range),
+             let .uintLiteral(_, range),
+             let .ulongLiteral(_, range),
              let .floatLiteral(_, range),
              let .doubleLiteral(_, range),
              let .charLiteral(_, range),

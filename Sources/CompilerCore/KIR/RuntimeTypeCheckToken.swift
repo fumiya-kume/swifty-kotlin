@@ -13,6 +13,8 @@ enum RuntimeTypeCheckToken {
     static let booleanBase: Int64 = 4
     static let nullBase: Int64 = 5
     static let nominalBase: Int64 = 6
+    static let uintBase: Int64 = 7
+    static let ulongBase: Int64 = 8
 
     static let baseMask: Int64 = 0xFF
     static let nullableFlag: Int64 = 1 << 8
@@ -37,6 +39,10 @@ enum RuntimeTypeCheckToken {
             encode(base: stringBase, nullable: nullable)
         case "Int":
             encode(base: intBase, nullable: nullable)
+        case "UInt":
+            encode(base: uintBase, nullable: nullable)
+        case "ULong":
+            encode(base: ulongBase, nullable: nullable)
         case "Boolean":
             encode(base: booleanBase, nullable: nullable)
         case "Nothing":
@@ -55,6 +61,10 @@ enum RuntimeTypeCheckToken {
             return encode(base: stringBase, nullable: nullable)
         case .primitive(.int, _):
             return encode(base: intBase, nullable: nullable)
+        case .primitive(.uint, _):
+            return encode(base: uintBase, nullable: nullable)
+        case .primitive(.ulong, _):
+            return encode(base: ulongBase, nullable: nullable)
         case .primitive(.boolean, _):
             return encode(base: booleanBase, nullable: nullable)
         case .nothing:
@@ -81,6 +91,14 @@ enum RuntimeTypeCheckToken {
             return "Int"
         case .primitive(.long, _):
             return "Long"
+        case .primitive(.uint, _):
+            return "UInt"
+        case .primitive(.ulong, _):
+            return "ULong"
+        case .primitive(.ubyte, _):
+            return "UByte"
+        case .primitive(.ushort, _):
+            return "UShort"
         case .primitive(.boolean, _):
             return "Boolean"
         case .primitive(.char, _):
