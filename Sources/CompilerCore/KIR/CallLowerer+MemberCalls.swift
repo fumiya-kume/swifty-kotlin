@@ -464,6 +464,7 @@ extension CallLowerer {
         }
     }
 
+    // swiftlint:disable:next function_body_length
     private func emitMemberCallInstruction(
         normalized: NormalizedCallResult,
         callBinding: CallBinding?,
@@ -523,47 +524,69 @@ extension CallLowerer {
             arguments: &finalArguments
         )
 
-        let loweredMemberCalleeName = loweredMemberCalleeName(
+        let loweredCallee = loweredMemberCalleeName(
             chosenCallee: chosenCallee,
             fallback: calleeName,
             sema: sema,
             interner: interner
         )
-        let receiverTypeForDispatch = sema.bindings.exprTypes[receiverExpr]
-        if !isSuperCall,
-           let chosenCallee,
-           let dispatchKind = resolveVirtualDispatch(callee: chosenCallee, receiverTypeID: receiverTypeForDispatch, sema: sema)
-        {
-            // For virtualCall, the receiver is a separate field, so remove it
-            // from finalArguments (it was inserted at index 0 above).
-            var vcArguments = finalArguments
-            if let signature = sema.symbols.functionSignature(for: chosenCallee),
-               signature.receiverType != nil,
-               !vcArguments.isEmpty
-            {
-                vcArguments.removeFirst()
-            }
-            instructions.append(.virtualCall(
-                symbol: chosenCallee,
-                callee: loweredMemberCalleeName,
-                receiver: loweredReceiverID,
-                arguments: vcArguments,
-                result: result,
-                canThrow: false,
-                thrownResult: nil,
-                dispatch: dispatchKind
-            ))
+        if let inst = tryEmitVirtualDispatch(
+            chosenCallee: chosenCallee, calleeName: loweredCallee,
+            receiverExpr: receiverExpr, loweredReceiverID: loweredReceiverID,
+            isSuperCall: isSuperCall, finalArguments: finalArguments,
+            result: result, sema: sema
+        ) {
+            instructions.append(inst)
             return
         }
         instructions.append(.call(
             symbol: chosenCallee,
-            callee: loweredMemberCalleeName,
+            callee: loweredCallee,
             arguments: finalArguments,
             result: result,
             canThrow: false,
             thrownResult: nil,
             isSuperCall: isSuperCall
         ))
+    }
+
+    // Callees with an externalLinkName (C runtime functions such as
+    // kk_array_get) are never dispatched virtually.
+    // swiftlint:disable:next function_parameter_count
+    private func tryEmitVirtualDispatch(
+        chosenCallee: SymbolID?,
+        calleeName: InternedString,
+        receiverExpr: ExprID,
+        loweredReceiverID: KIRExprID,
+        isSuperCall: Bool,
+        finalArguments: [KIRExprID],
+        result: KIRExprID,
+        sema: SemaModule
+    ) -> KIRInstruction? {
+        guard !isSuperCall, let chosenCallee else { return nil }
+        let hasExternalLink = sema.symbols.externalLinkName(for: chosenCallee)
+            .map { !$0.isEmpty } ?? false
+        guard !hasExternalLink else { return nil }
+        let receiverTypeForDispatch = sema.bindings.exprTypes[receiverExpr]
+        guard let dispatchKind = resolveVirtualDispatch(
+            callee: chosenCallee, receiverTypeID: receiverTypeForDispatch, sema: sema
+        ) else { return nil }
+        var vcArguments = finalArguments
+        if let sig = sema.symbols.functionSignature(for: chosenCallee),
+           sig.receiverType != nil, !vcArguments.isEmpty
+        {
+            vcArguments.removeFirst()
+        }
+        return .virtualCall(
+            symbol: chosenCallee,
+            callee: calleeName,
+            receiver: loweredReceiverID,
+            arguments: vcArguments,
+            result: result,
+            canThrow: false,
+            thrownResult: nil,
+            dispatch: dispatchKind
+        )
     }
 
     private func loweredMemberCalleeName(

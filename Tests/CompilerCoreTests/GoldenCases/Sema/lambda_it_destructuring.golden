@@ -9,17 +9,24 @@ symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=
 symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
 symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
 symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
-symbol s11 kind=function fq=golden.sema.useIt vis=public flags=_ sig=recv=_ params=[] ret=<error> suspend=0 defaults=[] vararg=[]
-symbol s12 kind=function fq=golden.sema.useDestructuring vis=public flags=_ sig=recv=_ params=[] ret=<error> suspend=0 defaults=[] vararg=[]
-symbol s13 kind=local fq=__destructuring_20.num vis=private flags=_ type=Any
+symbol s11 kind=package fq=kotlin.collections vis=public flags=synthetic
+symbol s12 kind=interface fq=kotlin.collections.List vis=public flags=synthetic
+symbol s13 kind=typeParameter fq=kotlin.collections.List.E vis=private flags=_
+symbol s14 kind=function fq=kotlin.collections.List.get vis=public flags=synthetic|operatorFunction sig=recv=Class#12<out T#13> params=[Int] ret=T#13 suspend=0 defaults=[] vararg=[]
+symbol s15 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
+symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
+symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
+symbol s18 kind=function fq=golden.sema.useIt vis=public flags=_ sig=recv=_ params=[] ret=Class#12<Int> suspend=0 defaults=[] vararg=[]
+symbol s19 kind=function fq=golden.sema.useDestructuring vis=public flags=_ sig=recv=_ params=[] ret=Class#12<Int> suspend=0 defaults=[] vararg=[]
+symbol s20 kind=local fq=__destructuring_20.num vis=private flags=_ type=Any
 file f0 package=golden.sema
-  decl d0 fun useIt suspend=0 inline=0 sym=s11
-  decl d1 fun useDestructuring suspend=0 inline=0 sym=s12
-expr e0 name(listOf) type=<error>
+  decl d0 fun useIt suspend=0 inline=0 sym=s18
+  decl d1 fun useDestructuring suspend=0 inline=0 sym=s19
+expr e0 name(listOf) type=Class#12<Int>
 expr e1 int(1) type=Int
 expr e2 int(2) type=Int
 expr e3 int(3) type=Int
-expr e4 call callee=e0 args=[_:e1,_:e2,_:e3] type=Any
+expr e4 call callee=e0 args=[_:e1,_:e2,_:e3] type=Class#12<Int>
 expr e5 name(it) type=Any ref=s-1002048
 expr e6 int(2) type=Int
 expr e7 binary(multiply) lhs=e5 rhs=e6 type=Int
@@ -32,8 +39,8 @@ expr e13 memberCall recv=e11 callee=to args=[_:e12] type=<error>
 expr e14 int(2) type=Int
 expr e15 string(b) type=String
 expr e16 memberCall recv=e14 callee=to args=[_:e15] type=<error>
-expr e17 call callee=e10 args=[_:e13,_:e16] type=Any
-expr e18 name(num) type=Any ref=s13
+expr e17 call callee=e10 args=[_:e13,_:e16] type=Class#12<<error>>
+expr e18 name(num) type=Any ref=s20
 expr e19 name(__destructured_0) type=Any ref=s-1005632
 expr e20 destructuringDecl names=[num,_] mutable=0 init=e19 type=Unit
 expr e21 blockExpr stmts=[e20] trailing=e18 type=Any

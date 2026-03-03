@@ -9,41 +9,48 @@ symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=
 symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
 symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
 symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
-symbol s11 kind=class fq=Point vis=public flags=dataType
-symbol s12 kind=constructor fq=Point.<init> vis=public flags=_ sig=recv=Class#11 params=[Int,Int] ret=Class#11 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s13 kind=valueParameter fq=Point.<init>.$12.x vis=private flags=_
-symbol s14 kind=valueParameter fq=Point.<init>.$12.y vis=private flags=_
-symbol s15 kind=function fq=basicDestructuring vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s16 kind=function fq=destructuringWithUnderscore vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s17 kind=local fq=__local_4.p vis=private flags=_
-symbol s18 kind=local fq=__destructuring_6.a vis=private flags=_ type=Any
-symbol s19 kind=local fq=__destructuring_6.b vis=private flags=_ type=Any
-symbol s20 kind=local fq=__local_17.p vis=private flags=_
-symbol s21 kind=local fq=__destructuring_19.second vis=private flags=_ type=Any
+symbol s11 kind=package fq=kotlin.collections vis=public flags=synthetic
+symbol s12 kind=interface fq=kotlin.collections.List vis=public flags=synthetic
+symbol s13 kind=typeParameter fq=kotlin.collections.List.E vis=private flags=_
+symbol s14 kind=function fq=kotlin.collections.List.get vis=public flags=synthetic|operatorFunction sig=recv=Class#12<out T#13> params=[Int] ret=T#13 suspend=0 defaults=[] vararg=[]
+symbol s15 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
+symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
+symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
+symbol s18 kind=class fq=Point vis=public flags=dataType
+symbol s19 kind=constructor fq=Point.<init> vis=public flags=_ sig=recv=Class#18 params=[Int,Int] ret=Class#18 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s20 kind=valueParameter fq=Point.<init>.$19.x vis=private flags=_
+symbol s21 kind=valueParameter fq=Point.<init>.$19.y vis=private flags=_
+symbol s22 kind=function fq=basicDestructuring vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s23 kind=function fq=destructuringWithUnderscore vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s24 kind=local fq=__local_4.p vis=private flags=_
+symbol s25 kind=local fq=__destructuring_6.a vis=private flags=_ type=Any
+symbol s26 kind=local fq=__destructuring_6.b vis=private flags=_ type=Any
+symbol s27 kind=local fq=__local_17.p vis=private flags=_
+symbol s28 kind=local fq=__destructuring_19.second vis=private flags=_ type=Any
 file f0 package=_
-  decl d0 class Point sym=s11
-  decl d1 fun basicDestructuring suspend=0 inline=0 sym=s15
-  decl d2 fun destructuringWithUnderscore suspend=0 inline=0 sym=s16
+  decl d0 class Point sym=s18
+  decl d1 fun basicDestructuring suspend=0 inline=0 sym=s22
+  decl d2 fun destructuringWithUnderscore suspend=0 inline=0 sym=s23
 expr e0 name(Point) type=_
 expr e1 int(1) type=Int
 expr e2 int(2) type=Int
-expr e3 call callee=e0 args=[_:e1,_:e2] type=Class#11 call=s12 map=[0->0,1->1] targs=[]
-expr e4 localDecl p mutable=0 type=_ init=e3 type=Unit ref=s17
-expr e5 name(p) type=Class#11 ref=s17
+expr e3 call callee=e0 args=[_:e1,_:e2] type=Class#18 call=s19 map=[0->0,1->1] targs=[]
+expr e4 localDecl p mutable=0 type=_ init=e3 type=Unit ref=s24
+expr e5 name(p) type=Class#18 ref=s24
 expr e6 destructuringDecl names=[a,b] mutable=0 init=e5 type=Unit
 expr e7 name(println) type=_
-expr e8 name(a) type=Any ref=s18
+expr e8 name(a) type=Any ref=s25
 expr e9 call callee=e7 args=[_:e8] type=Unit
 expr e10 name(println) type=_
-expr e11 name(b) type=Any ref=s19
+expr e11 name(b) type=Any ref=s26
 expr e12 call callee=e10 args=[_:e11] type=Unit
 expr e13 name(Point) type=_
 expr e14 int(3) type=Int
 expr e15 int(4) type=Int
-expr e16 call callee=e13 args=[_:e14,_:e15] type=Class#11 call=s12 map=[0->0,1->1] targs=[]
-expr e17 localDecl p mutable=0 type=_ init=e16 type=Unit ref=s20
-expr e18 name(p) type=Class#11 ref=s20
+expr e16 call callee=e13 args=[_:e14,_:e15] type=Class#18 call=s19 map=[0->0,1->1] targs=[]
+expr e17 localDecl p mutable=0 type=_ init=e16 type=Unit ref=s27
+expr e18 name(p) type=Class#18 ref=s27
 expr e19 destructuringDecl names=[_,second] mutable=0 init=e18 type=Unit
 expr e20 name(println) type=_
-expr e21 name(second) type=Any ref=s21
+expr e21 name(second) type=Any ref=s28
 expr e22 call callee=e20 args=[_:e21] type=Unit

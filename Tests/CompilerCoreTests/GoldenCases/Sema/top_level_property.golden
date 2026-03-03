@@ -9,17 +9,24 @@ symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=
 symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
 symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
 symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
-symbol s11 kind=property fq=golden.sema.pi vis=public flags=_ type=Double
-symbol s12 kind=property fq=golden.sema.counter vis=public flags=mutable type=Int
-symbol s13 kind=function fq=golden.sema.increment vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s11 kind=package fq=kotlin.collections vis=public flags=synthetic
+symbol s12 kind=interface fq=kotlin.collections.List vis=public flags=synthetic
+symbol s13 kind=typeParameter fq=kotlin.collections.List.E vis=private flags=_
+symbol s14 kind=function fq=kotlin.collections.List.get vis=public flags=synthetic|operatorFunction sig=recv=Class#12<out T#13> params=[Int] ret=T#13 suspend=0 defaults=[] vararg=[]
+symbol s15 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
+symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
+symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
+symbol s18 kind=property fq=golden.sema.pi vis=public flags=_ type=Double
+symbol s19 kind=property fq=golden.sema.counter vis=public flags=mutable type=Int
+symbol s20 kind=function fq=golden.sema.increment vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 property pi var=0 sym=s11
-  decl d1 property counter var=1 sym=s12
-  decl d2 fun increment suspend=0 inline=0 sym=s13
-expr e0 double(3.14) type=Double ref=s11
-expr e1 int(0) type=Int ref=s12
+  decl d0 property pi var=0 sym=s18
+  decl d1 property counter var=1 sym=s19
+  decl d2 fun increment suspend=0 inline=0 sym=s20
+expr e0 double(3.14) type=Double ref=s18
+expr e1 int(0) type=Int ref=s19
 expr e2 name(counter) type=_
-expr e3 name(counter) type=Int ref=s12
+expr e3 name(counter) type=Int ref=s19
 expr e4 int(1) type=Int
 expr e5 binary(add) lhs=e3 rhs=e4 type=Int
-expr e6 localAssign counter value=e5 type=Unit ref=s12
+expr e6 localAssign counter value=e5 type=Unit ref=s19

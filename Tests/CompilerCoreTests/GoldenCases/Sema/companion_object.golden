@@ -9,25 +9,32 @@ symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=
 symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
 symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
 symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
-symbol s11 kind=class fq=golden.sema.Foo vis=public flags=_
-symbol s12 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#11 params=[Int] ret=Class#11 suspend=0 defaults=[0] vararg=[0]
-symbol s13 kind=valueParameter fq=golden.sema.Foo.<init>.$12.x vis=private flags=_
-symbol s14 kind=object fq=golden.sema.Foo.Companion vis=public flags=_
-symbol s15 kind=function fq=golden.sema.Foo.Companion.create vis=public flags=_ sig=recv=Class#14 params=[] ret=Class#11 suspend=0 defaults=[] vararg=[]
-symbol s16 kind=property fq=golden.sema.Foo.Companion.MAX_COUNT vis=public flags=constValue type=Int
-symbol s17 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s18 kind=local fq=__local_6.f vis=private flags=_
-symbol s19 kind=local fq=__local_9.m vis=private flags=_
+symbol s11 kind=package fq=kotlin.collections vis=public flags=synthetic
+symbol s12 kind=interface fq=kotlin.collections.List vis=public flags=synthetic
+symbol s13 kind=typeParameter fq=kotlin.collections.List.E vis=private flags=_
+symbol s14 kind=function fq=kotlin.collections.List.get vis=public flags=synthetic|operatorFunction sig=recv=Class#12<out T#13> params=[Int] ret=T#13 suspend=0 defaults=[] vararg=[]
+symbol s15 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
+symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
+symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
+symbol s18 kind=class fq=golden.sema.Foo vis=public flags=_
+symbol s19 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#18 params=[Int] ret=Class#18 suspend=0 defaults=[0] vararg=[0]
+symbol s20 kind=valueParameter fq=golden.sema.Foo.<init>.$19.x vis=private flags=_
+symbol s21 kind=object fq=golden.sema.Foo.Companion vis=public flags=_
+symbol s22 kind=function fq=golden.sema.Foo.Companion.create vis=public flags=_ sig=recv=Class#21 params=[] ret=Class#18 suspend=0 defaults=[] vararg=[]
+symbol s23 kind=property fq=golden.sema.Foo.Companion.MAX_COUNT vis=public flags=constValue type=Int
+symbol s24 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s25 kind=local fq=__local_6.f vis=private flags=_
+symbol s26 kind=local fq=__local_9.m vis=private flags=_
 file f0 package=golden.sema
-  decl d3 class Foo sym=s11
-  decl d4 fun main suspend=0 inline=0 sym=s17
-expr e0 int(100) type=Int ref=s16
+  decl d3 class Foo sym=s18
+  decl d4 fun main suspend=0 inline=0 sym=s24
+expr e0 int(100) type=Int ref=s23
 expr e1 name(Foo) type=_
 expr e2 int(0) type=Int
-expr e3 call callee=e1 args=[_:e2] type=Class#11 call=s12 map=[0->0] targs=[]
-expr e4 name(Foo) type=Class#14 ref=s11
-expr e5 memberCall recv=e4 callee=create args=[] type=Class#11 call=s15 map=[] targs=[]
-expr e6 localDecl f mutable=0 type=t3 init=e5 type=Unit ref=s18
-expr e7 name(Foo) type=Class#14 ref=s11
-expr e8 memberCall recv=e7 callee=MAX_COUNT args=[] type=Int ref=s16
-expr e9 localDecl m mutable=0 type=t4 init=e8 type=Unit ref=s19
+expr e3 call callee=e1 args=[_:e2] type=Class#18 call=s19 map=[0->0] targs=[]
+expr e4 name(Foo) type=Class#21 ref=s18
+expr e5 memberCall recv=e4 callee=create args=[] type=Class#18 call=s22 map=[] targs=[]
+expr e6 localDecl f mutable=0 type=t3 init=e5 type=Unit ref=s25
+expr e7 name(Foo) type=Class#21 ref=s18
+expr e8 memberCall recv=e7 callee=MAX_COUNT args=[] type=Int ref=s23
+expr e9 localDecl m mutable=0 type=t4 init=e8 type=Unit ref=s26

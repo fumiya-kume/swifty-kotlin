@@ -9,11 +9,18 @@ symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=
 symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
 symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
 symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
-symbol s11 kind=function fq=golden.sema.platform vis=public flags=expectDeclaration sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s12 kind=function fq=golden.sema.platform vis=public flags=actualDeclaration sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s13 kind=function fq=golden.sema.unresolved vis=public flags=expectDeclaration sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s11 kind=package fq=kotlin.collections vis=public flags=synthetic
+symbol s12 kind=interface fq=kotlin.collections.List vis=public flags=synthetic
+symbol s13 kind=typeParameter fq=kotlin.collections.List.E vis=private flags=_
+symbol s14 kind=function fq=kotlin.collections.List.get vis=public flags=synthetic|operatorFunction sig=recv=Class#12<out T#13> params=[Int] ret=T#13 suspend=0 defaults=[] vararg=[]
+symbol s15 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
+symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
+symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
+symbol s18 kind=function fq=golden.sema.platform vis=public flags=expectDeclaration sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s19 kind=function fq=golden.sema.platform vis=public flags=actualDeclaration sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s20 kind=function fq=golden.sema.unresolved vis=public flags=expectDeclaration sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 fun platform suspend=0 inline=0 sym=s11
-  decl d1 fun platform suspend=0 inline=0 sym=s12
-  decl d2 fun unresolved suspend=0 inline=0 sym=s13
+  decl d0 fun platform suspend=0 inline=0 sym=s18
+  decl d1 fun platform suspend=0 inline=0 sym=s19
+  decl d2 fun unresolved suspend=0 inline=0 sym=s20
 expr e0 string(ok) type=String

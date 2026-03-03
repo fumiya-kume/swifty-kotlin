@@ -66,8 +66,17 @@ extension LocalDeclTypeChecker {
                     )
                 )
                 sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
-                sema.bindings.bindExprType(id, type: signature.returnType)
-                return signature.returnType
+                // Substitute type parameters in the return type so that
+                // generic get() calls (e.g. List<String?>.get()) return
+                // the concrete element type (String?) instead of T.
+                let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
+                let returnType = sema.types.substituteTypeParameters(
+                    in: signature.returnType,
+                    substitution: resolved.substitutedTypeArguments,
+                    typeVarBySymbol: typeVarBySymbol
+                )
+                sema.bindings.bindExprType(id, type: returnType)
+                return returnType
             }
         }
 

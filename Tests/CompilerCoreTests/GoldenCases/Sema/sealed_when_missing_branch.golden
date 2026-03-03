@@ -9,23 +9,30 @@ symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=
 symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
 symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
 symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
-symbol s11 kind=class fq=Animal vis=public flags=sealedType
-symbol s12 kind=constructor fq=Animal.<init> vis=public flags=_ sig=recv=Class#11 params=[] ret=Class#11 suspend=0 defaults=[] vararg=[]
-symbol s13 kind=class fq=Dog vis=public flags=_
-symbol s14 kind=constructor fq=Dog.<init> vis=public flags=_ sig=recv=Class#13 params=[] ret=Class#13 suspend=0 defaults=[] vararg=[]
-symbol s15 kind=class fq=Cat vis=public flags=_
-symbol s16 kind=constructor fq=Cat.<init> vis=public flags=_ sig=recv=Class#15 params=[] ret=Class#15 suspend=0 defaults=[] vararg=[]
-symbol s17 kind=class fq=Bird vis=public flags=_
-symbol s18 kind=constructor fq=Bird.<init> vis=public flags=_ sig=recv=Class#17 params=[] ret=Class#17 suspend=0 defaults=[] vararg=[]
-symbol s19 kind=function fq=describeAnimal vis=public flags=_ sig=recv=_ params=[Class#11] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s20 kind=valueParameter fq=describeAnimal.$19.a vis=private flags=_
+symbol s11 kind=package fq=kotlin.collections vis=public flags=synthetic
+symbol s12 kind=interface fq=kotlin.collections.List vis=public flags=synthetic
+symbol s13 kind=typeParameter fq=kotlin.collections.List.E vis=private flags=_
+symbol s14 kind=function fq=kotlin.collections.List.get vis=public flags=synthetic|operatorFunction sig=recv=Class#12<out T#13> params=[Int] ret=T#13 suspend=0 defaults=[] vararg=[]
+symbol s15 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
+symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
+symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
+symbol s18 kind=class fq=Animal vis=public flags=sealedType
+symbol s19 kind=constructor fq=Animal.<init> vis=public flags=_ sig=recv=Class#18 params=[] ret=Class#18 suspend=0 defaults=[] vararg=[]
+symbol s20 kind=class fq=Dog vis=public flags=_
+symbol s21 kind=constructor fq=Dog.<init> vis=public flags=_ sig=recv=Class#20 params=[] ret=Class#20 suspend=0 defaults=[] vararg=[]
+symbol s22 kind=class fq=Cat vis=public flags=_
+symbol s23 kind=constructor fq=Cat.<init> vis=public flags=_ sig=recv=Class#22 params=[] ret=Class#22 suspend=0 defaults=[] vararg=[]
+symbol s24 kind=class fq=Bird vis=public flags=_
+symbol s25 kind=constructor fq=Bird.<init> vis=public flags=_ sig=recv=Class#24 params=[] ret=Class#24 suspend=0 defaults=[] vararg=[]
+symbol s26 kind=function fq=describeAnimal vis=public flags=_ sig=recv=_ params=[Class#18] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s27 kind=valueParameter fq=describeAnimal.$26.a vis=private flags=_
 file f0 package=_
-  decl d0 class Animal sym=s11
-  decl d1 class Dog sym=s13
-  decl d2 class Cat sym=s15
-  decl d3 class Bird sym=s17
-  decl d4 fun describeAnimal suspend=0 inline=0 sym=s19
-expr e0 name(a) type=Class#11 ref=s20
+  decl d0 class Animal sym=s18
+  decl d1 class Dog sym=s20
+  decl d2 class Cat sym=s22
+  decl d3 class Bird sym=s24
+  decl d4 fun describeAnimal suspend=0 inline=0 sym=s26
+expr e0 name(a) type=Class#18 ref=s27
 expr e1 isCheck expr=e0 type=t5 type=Boolean
 expr e2 string(dog) type=String
 expr e3 isCheck expr=e0 type=t6 type=Boolean

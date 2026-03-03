@@ -88,9 +88,7 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
                     guard let symbol = ctx.cachedSymbol(candidate) else { return false }
                     return symbol.kind == .class || symbol.kind == .enumClass || symbol.kind == .annotationClass
                 }
-                if let classSym = classSymbols.first,
-                   let classSymbol = ctx.cachedSymbol(classSym)
-                {
+                if let classSym = classSymbols.first, let classSymbol = ctx.cachedSymbol(classSym) {
                     // P5-112: Prohibit direct instantiation of abstract classes.
                     if classSymbol.flags.contains(.abstractType) {
                         let className = classSymbol.fqName.map { interner.resolve($0) }.joined(separator: ".")
@@ -313,8 +311,46 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
                  "setOf", "mutableSetOf", "emptySet",
                  "listOfNotNull":
                 sema.bindings.markCollectionExpr(id)
-                sema.bindings.bindExprType(id, type: sema.types.anyType)
-                return sema.types.anyType
+                // Prefer the expected type from context (e.g. a type annotation
+                // on the receiving variable) so that `val list: List<String?> =
+                // listOf(...)` propagates the full generic type.
+                // Only use expectedType if it is a generic ClassType (i.e. a
+                // collection type like List<String?>), not a primitive or
+                // unrelated type like Int.
+                let collectionType: TypeID
+                if let expectedType, expectedType != sema.types.errorType,
+                   case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
+                   !expectedClassType.args.isEmpty
+                { // swiftlint:disable:this opening_brace
+                    collectionType = expectedType
+                } else if !argTypes.isEmpty,
+                          name == "listOf" || name == "listOfNotNull" || name == "emptyList"
+                { // swiftlint:disable:this opening_brace
+                    // Infer element type from arguments via LUB so that
+                    // `listOf("a", null)` produces List<String?>.
+                    // Only apply List<E> wrapping for list-like factories;
+                    // other collection types (Set, Map, etc.) fall back to
+                    // anyType until their synthetic stubs are registered.
+                    let elementType = sema.types.lub(argTypes)
+                    let listFQName: [InternedString] = [
+                        interner.intern("kotlin"),
+                        interner.intern("collections"),
+                        interner.intern("List"), // swiftlint:disable:this trailing_comma
+                    ]
+                    if let listSymbol = sema.symbols.lookup(fqName: listFQName) {
+                        collectionType = sema.types.make(.classType(ClassType(
+                            classSymbol: listSymbol,
+                            args: [.invariant(elementType)],
+                            nullability: .nonNull
+                        )))
+                    } else {
+                        collectionType = sema.types.anyType
+                    }
+                } else {
+                    collectionType = sema.types.anyType
+                }
+                sema.bindings.bindExprType(id, type: collectionType)
+                return collectionType
             default:
                 break
             }

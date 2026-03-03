@@ -277,234 +277,52 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner
     ) {
-        let anyType = types.anyType
+        let kotlinPkg = ensureKotlinPackage(symbols: symbols, interner: interner)
+        let kotlinPropertiesPkg = ensureKotlinPropertiesPackage(symbols: symbols, interner: interner)
+        registerSyntheticPropertyInterfaceStubs(
+            symbols: symbols, types: types, interner: interner,
+            kotlinPkg: kotlinPkg, kotlinPropertiesPkg: kotlinPropertiesPkg
+        )
+        registerSyntheticCollectionStubs(symbols: symbols, types: types, interner: interner)
+    }
 
-        // Ensure the "kotlin" package exists.
+    /// Look up or define a synthetic interface symbol in the given package.
+    func ensureInterfaceSymbol(
+        named name: String,
+        in pkg: [InternedString],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> SymbolID {
+        let internedName = interner.intern(name)
+        let fqName = pkg + [internedName]
+        if let existing = symbols.lookup(fqName: fqName) {
+            return existing
+        }
+        return symbols.define(
+            kind: .interface, name: internedName, fqName: fqName,
+            declSite: nil, visibility: .public, flags: [.synthetic]
+        )
+    }
+
+    private func ensureKotlinPackage(symbols: SymbolTable, interner: StringInterner) -> [InternedString] {
         let kotlinPkg: [InternedString] = [interner.intern("kotlin")]
         if symbols.lookup(fqName: kotlinPkg) == nil {
             _ = symbols.define(
-                kind: .package,
-                name: interner.intern("kotlin"),
-                fqName: kotlinPkg,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic]
+                kind: .package, name: interner.intern("kotlin"), fqName: kotlinPkg,
+                declSite: nil, visibility: .public, flags: [.synthetic]
             )
         }
+        return kotlinPkg
+    }
 
-        // Ensure the "kotlin.properties" package exists.
+    private func ensureKotlinPropertiesPackage(symbols: SymbolTable, interner: StringInterner) -> [InternedString] {
         let kotlinPropertiesPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("properties")]
         if symbols.lookup(fqName: kotlinPropertiesPkg) == nil {
             _ = symbols.define(
-                kind: .package,
-                name: interner.intern("properties"),
-                fqName: kotlinPropertiesPkg,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic]
+                kind: .package, name: interner.intern("properties"), fqName: kotlinPropertiesPkg,
+                declSite: nil, visibility: .public, flags: [.synthetic]
             )
         }
-
-        // ------------------------------------------------------------------
-        // Register `kotlin.properties.Lazy<T>` interface stub.
-        // Kotlin declaration: interface Lazy<out T> { val value: T; fun isInitialized(): Boolean }
-        // ------------------------------------------------------------------
-        let lazyInterfaceName = interner.intern("Lazy")
-        let lazyInterfaceFQName = kotlinPropertiesPkg + [lazyInterfaceName]
-        let lazyInterfaceSymbol: SymbolID = if let existing = symbols.lookup(fqName: lazyInterfaceFQName) {
-            existing
-        } else {
-            symbols.define(
-                kind: .interface,
-                name: lazyInterfaceName,
-                fqName: lazyInterfaceFQName,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic]
-            )
-        }
-        let lazyInterfaceType = types.make(.classType(ClassType(
-            classSymbol: lazyInterfaceSymbol, args: [], nullability: .nonNull
-        )))
-
-        // ------------------------------------------------------------------
-        // Register `kotlin.properties.ReadWriteProperty<T, V>` interface stub.
-        // Kotlin declaration: interface ReadWriteProperty<in T, V> {
-        //     operator fun getValue(...): V
-        //     operator fun setValue(..., value: V)
-        // }
-        // ------------------------------------------------------------------
-        let rwPropertyName = interner.intern("ReadWriteProperty")
-        let rwPropertyFQName = kotlinPropertiesPkg + [rwPropertyName]
-        let rwPropertySymbol: SymbolID = if let existing = symbols.lookup(fqName: rwPropertyFQName) {
-            existing
-        } else {
-            symbols.define(
-                kind: .interface,
-                name: rwPropertyName,
-                fqName: rwPropertyFQName,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic]
-            )
-        }
-        let rwPropertyType = types.make(.classType(ClassType(
-            classSymbol: rwPropertySymbol, args: [], nullability: .nonNull
-        )))
-
-        // ------------------------------------------------------------------
-        // Register `kotlin.properties.ReadOnlyProperty<in T, out V>` interface stub.
-        // Kotlin declaration: interface ReadOnlyProperty<in T, out V> {
-        //     operator fun getValue(...): V
-        // }
-        // ------------------------------------------------------------------
-        let roPropertyName = interner.intern("ReadOnlyProperty")
-        let roPropertyFQName = kotlinPropertiesPkg + [roPropertyName]
-        if symbols.lookup(fqName: roPropertyFQName) == nil {
-            _ = symbols.define(
-                kind: .interface,
-                name: roPropertyName,
-                fqName: roPropertyFQName,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic]
-            )
-        }
-
-        // ------------------------------------------------------------------
-        // Register `lazy` as a top-level function in the kotlin package.
-        // Kotlin signature: fun <T> lazy(initializer: () -> T): Lazy<T>
-        // ------------------------------------------------------------------
-        let lazyName = interner.intern("lazy")
-        let lazyFQName = kotlinPkg + [lazyName]
-        if symbols.lookup(fqName: lazyFQName) == nil {
-            let lazySymbol = symbols.define(
-                kind: .function,
-                name: lazyName,
-                fqName: lazyFQName,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic]
-            )
-            // One parameter: the initializer lambda () -> T, returns Lazy<T> (erased to Any)
-            let initializerType = types.make(.functionType(FunctionType(
-                params: [],
-                returnType: anyType,
-                isSuspend: false,
-                nullability: .nonNull
-            )))
-            symbols.setFunctionSignature(
-                FunctionSignature(
-                    parameterTypes: [initializerType],
-                    returnType: lazyInterfaceType
-                ),
-                for: lazySymbol
-            )
-        }
-
-        // Also register `lazy` with explicit thread-safety mode overload.
-        // Kotlin signature: fun <T> lazy(mode: LazyThreadSafetyMode, initializer: () -> T): Lazy<T>
-        let lazyModeFQName = kotlinPkg + [lazyName, interner.intern("mode")]
-        if symbols.lookup(fqName: lazyModeFQName) == nil {
-            let lazyModeSymbol = symbols.define(
-                kind: .function,
-                name: lazyName,
-                fqName: lazyModeFQName,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic]
-            )
-            let initializerType = types.make(.functionType(FunctionType(
-                params: [],
-                returnType: anyType,
-                isSuspend: false,
-                nullability: .nonNull
-            )))
-            symbols.setFunctionSignature(
-                FunctionSignature(
-                    parameterTypes: [anyType, initializerType],
-                    returnType: lazyInterfaceType
-                ),
-                for: lazyModeSymbol
-            )
-        }
-
-        // ------------------------------------------------------------------
-        // Register `Delegates` as an object in kotlin.properties.
-        // ------------------------------------------------------------------
-        let delegatesName = interner.intern("Delegates")
-        let delegatesFQName = kotlinPropertiesPkg + [delegatesName]
-        let delegatesSymbol: SymbolID = if let existing = symbols.lookup(fqName: delegatesFQName) {
-            existing
-        } else {
-            symbols.define(
-                kind: .object,
-                name: delegatesName,
-                fqName: delegatesFQName,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic]
-            )
-        }
-        let delegatesType = types.make(.classType(ClassType(classSymbol: delegatesSymbol, args: [], nullability: .nonNull)))
-        // Set property type so inferNameRefExpr resolves `Delegates` to classType
-        // (object symbols need an explicit property type for name-ref resolution).
-        symbols.setPropertyType(delegatesType, for: delegatesSymbol)
-
-        // ------------------------------------------------------------------
-        // Register `observable` as a member function of Delegates.
-        // Kotlin signature: fun <T> observable(initialValue: T, onChange: ...): ReadWriteProperty<Any?, T>
-        // NOTE: The callback lambda is parsed as a separate block by
-        // propertyHeadTokens and is NOT included in the call arguments.
-        // The sema stub therefore takes only 1 parameter (initialValue).
-        // ------------------------------------------------------------------
-        let observableName = interner.intern("observable")
-        let observableFQName = delegatesFQName + [observableName]
-        if symbols.lookup(fqName: observableFQName) == nil {
-            let observableSymbol = symbols.define(
-                kind: .function,
-                name: observableName,
-                fqName: observableFQName,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic]
-            )
-            symbols.setParentSymbol(delegatesSymbol, for: observableSymbol)
-            symbols.setFunctionSignature(
-                FunctionSignature(
-                    receiverType: delegatesType,
-                    parameterTypes: [anyType],
-                    returnType: rwPropertyType
-                ),
-                for: observableSymbol
-            )
-        }
-
-        // ------------------------------------------------------------------
-        // Register `vetoable` as a member function of Delegates.
-        // Kotlin signature: fun <T> vetoable(initialValue: T, onChange: ...): ReadWriteProperty<Any?, T>
-        // NOTE: Same as observable — callback lambda is a separate block.
-        // ------------------------------------------------------------------
-        let vetoableName = interner.intern("vetoable")
-        let vetoableFQName = delegatesFQName + [vetoableName]
-        if symbols.lookup(fqName: vetoableFQName) == nil {
-            let vetoableSymbol = symbols.define(
-                kind: .function,
-                name: vetoableName,
-                fqName: vetoableFQName,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic]
-            )
-            symbols.setParentSymbol(delegatesSymbol, for: vetoableSymbol)
-            symbols.setFunctionSignature(
-                FunctionSignature(
-                    receiverType: delegatesType,
-                    parameterTypes: [anyType],
-                    returnType: rwPropertyType
-                ),
-                for: vetoableSymbol
-            )
-        }
+        return kotlinPropertiesPkg
     }
 }
