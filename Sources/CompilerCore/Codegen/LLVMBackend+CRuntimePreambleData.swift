@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 
 extension LLVMBackend {
@@ -964,6 +965,11 @@ extension LLVMBackend {
         "  }",
         "  return box->value;",
         "}",
+        "__attribute__((weak)) intptr_t kk_lazy_is_initialized(intptr_t handle) {",
+        "  KKLazyBox* box = (KKLazyBox*)(void*)handle;",
+        "  if (!box) return 0;",
+        "  return box->initialized;",
+        "}",
         "typedef struct { intptr_t currentValue; intptr_t callbackFnPtr; } KKObservableBox;",
         "__attribute__((weak)) intptr_t kk_observable_create(intptr_t initialValue, intptr_t callbackFnPtr) {",
         "  KKObservableBox* box = (KKObservableBox*)malloc(sizeof(KKObservableBox));",
@@ -1268,3 +1274,5 @@ extension LLVMBackend {
         "",
     ]
 }
+
+// swiftlint:enable file_length

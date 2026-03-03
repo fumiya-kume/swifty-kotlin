@@ -1,5 +1,68 @@
 import Foundation
 
+// MARK: - KProperty Stub (PROP-007)
+
+/// Minimal KProperty<*> stub carrying property name and return type.
+/// Used as the `property` argument for `provideDelegate`, `getValue`, and `setValue`.
+final class RuntimeKPropertyStub {
+    let name: Int // intptr_t to a KKString (property name)
+    let returnType: Int // intptr_t to a KKString (return type signature)
+
+    init(name: Int, returnType: Int) {
+        self.name = name
+        self.returnType = returnType
+    }
+}
+
+/// Creates a minimal KProperty<*> stub with name and returnType strings.
+/// - Parameters:
+///   - nameStr: intptr_t pointing to the property name KKString.
+///   - returnTypeStr: intptr_t pointing to the return type signature KKString.
+/// - Returns: Opaque handle (Int) to the `RuntimeKPropertyStub`.
+@_cdecl("kk_kproperty_stub_create")
+public func kk_kproperty_stub_create(_ nameStr: Int, _ returnTypeStr: Int) -> Int {
+    let stub = RuntimeKPropertyStub(name: nameStr, returnType: returnTypeStr)
+    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(stub).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
+    return Int(bitPattern: opaque)
+}
+
+/// Returns the name field of a KProperty stub.
+/// - Parameter handle: Opaque handle returned by `kk_kproperty_stub_create`.
+/// - Returns: The property name intptr_t (KKString pointer), or 0 if invalid.
+@_cdecl("kk_kproperty_stub_name")
+public func kk_kproperty_stub_name(_ handle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
+        return 0
+    }
+    let isObj = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObj, let stub = tryCast(ptr, to: RuntimeKPropertyStub.self) else {
+        return 0
+    }
+    return stub.name
+}
+
+/// Returns the returnType field of a KProperty stub.
+/// - Parameter handle: Opaque handle returned by `kk_kproperty_stub_create`.
+/// - Returns: The return type intptr_t (KKString pointer), or 0 if invalid.
+@_cdecl("kk_kproperty_stub_return_type")
+public func kk_kproperty_stub_return_type(_ handle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
+        return 0
+    }
+    let isObj = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObj, let stub = tryCast(ptr, to: RuntimeKPropertyStub.self) else {
+        return 0
+    }
+    return stub.returnType
+}
+
 // MARK: - Lazy Delegate (P5-80)
 
 /// Creates a new lazy delegate instance.
@@ -33,6 +96,23 @@ public func kk_lazy_get_value(_ handle: Int) -> Int {
         return 0
     }
     return box.getValue()
+}
+
+/// Returns whether the lazy delegate has been initialized.
+/// - Parameter handle: Opaque handle returned by `kk_lazy_create`.
+/// - Returns: 1 if initialized, 0 otherwise.
+@_cdecl("kk_lazy_is_initialized")
+public func kk_lazy_is_initialized(_ handle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
+        return 0
+    }
+    let isObj = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObj, let box = tryCast(ptr, to: RuntimeLazyBox.self) else {
+        return 0
+    }
+    return box.isInitialized ? 1 : 0
 }
 
 // MARK: - Observable Delegate (P5-80)

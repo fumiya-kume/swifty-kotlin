@@ -133,6 +133,7 @@ final class DeclTypeChecker {
         }
     }
 
+
     // MARK: - Init Block & Secondary Constructor Type Checking (from +DeclTypeCheck.swift)
 
     func typeCheckInitBlocks(
@@ -258,5 +259,6 @@ final class DeclTypeChecker {
             _ = inferFunctionBodyType(ctor.body, ctx: constructorCtx, locals: &locals, expectedType: nil)
         }
     }
+
 
 }

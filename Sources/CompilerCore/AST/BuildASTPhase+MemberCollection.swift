@@ -255,6 +255,61 @@ extension BuildASTPhase {
         return (functions, properties, nestedClasses, nestedObjects, companionObject)
     }
 
+    /// Walks the class body block and records the declaration-order sequence
+    /// of property initializers and `init { }` blocks.  The returned array
+    /// contains `.property(i)` / `.initBlock(j)` entries whose indices
+    /// correspond to the positions in `ClassDecl.memberProperties` and
+    /// `ClassDecl.initBlocks` respectively.
+    func declarationClassBodyInitOrder(
+        from nodeID: NodeID,
+        in arena: SyntaxArena,
+        interner _: StringInterner
+    ) -> [ClassBodyInitMember] {
+        guard let bodyBlockID = arena.children(of: nodeID).compactMap({ child -> NodeID? in
+            guard case let .node(childID) = child,
+                  arena.node(childID).kind == .block
+            else {
+                return nil
+            }
+            return childID
+        }).first else {
+            return []
+        }
+
+        var order: [ClassBodyInitMember] = []
+        var propertyIndex = 0
+        var initBlockIndex = 0
+
+        for child in arena.children(of: bodyBlockID) {
+            guard case let .node(childID) = child else {
+                continue
+            }
+            let childNode = arena.node(childID)
+
+            if childNode.kind == .propertyDecl {
+                order.append(.property(propertyIndex))
+                propertyIndex += 1
+                continue
+            }
+
+            // Init blocks appear as statement-like nodes whose first direct
+            // token is the `init` soft keyword (same logic used by
+            // `declarationInitBlocks`).
+            if isStatementLikeKind(childNode.kind) {
+                let headerTokens = collectDirectTokens(from: childID, in: arena).filter { token in
+                    token.kind != .symbol(.semicolon)
+                }
+                if let firstToken = headerTokens.first {
+                    if firstToken.kind == .softKeyword(.`init`) {
+                        order.append(.initBlock(initBlockIndex))
+                        initBlockIndex += 1
+                    }
+                }
+            }
+        }
+        return order
+    }
+
     func declarationDelegateExpression(
         from nodeID: NodeID,
         in arena: SyntaxArena,

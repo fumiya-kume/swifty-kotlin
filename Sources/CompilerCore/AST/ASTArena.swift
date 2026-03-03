@@ -123,7 +123,7 @@ public final class ASTArena: @unchecked Sendable {
              let .callableRef(_, _, range),
              let .localFunDecl(_, _, _, _, range),
              let .blockExpr(_, _, range),
-             let .superRef(range),
+             let .superRef(_, range),
              let .thisRef(_, range),
              let .inExpr(_, _, range),
              let .notInExpr(_, _, range),

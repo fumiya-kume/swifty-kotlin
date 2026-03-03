@@ -98,14 +98,18 @@ extension DeclTypeChecker {
 
         // Check provideDelegate operator.
         let provideDelegateName = interner.intern("provideDelegate")
-        _ = driver.helpers.collectMemberFunctionCandidates(
-            named: provideDelegateName,
-            receiverType: delegateType,
-            sema: sema
-        ).filter { candidateID in
-            guard let sym = sema.symbols.symbol(candidateID)
-            else { return false }
-            return sym.flags.contains(.operatorFunction)
+        let provideDelegateCandidates = driver.helpers
+            .collectMemberFunctionCandidates(
+                named: provideDelegateName,
+                receiverType: delegateType,
+                sema: sema
+            ).filter { candidateID in
+                guard let sym = sema.symbols.symbol(candidateID)
+                else { return false }
+                return sym.flags.contains(.operatorFunction)
+            }
+        if !provideDelegateCandidates.isEmpty {
+            sema.symbols.setHasProvideDelegate(for: symbol)
         }
 
         return result

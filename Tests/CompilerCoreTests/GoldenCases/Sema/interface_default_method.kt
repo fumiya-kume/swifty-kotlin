@@ -9,3 +9,12 @@ class FormalGreeter : Greeter {
 }
 
 class DefaultGreeter : Greeter
+
+interface Animal {
+    fun name(): String
+    fun sound(): String = "..."
+}
+
+class Dog : Animal {
+    override fun name(): String = "Dog"
+}

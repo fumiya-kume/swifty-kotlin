@@ -41,20 +41,18 @@ extension BuildASTPhase.ExpressionParser {
 
         let paramTokens = Array(bodyTokens[..<arrowIndex])
         let lambdaBodySlice = bodyTokens[(arrowIndex + 1)...]
-        let params = parseLambdaParamNames(from: paramTokens)
 
-        let bodyExpr: ExprID
-        if let parsedBody = BuildASTPhase.ExpressionParser(tokens: lambdaBodySlice, interner: interner, astArena: astArena).parse() {
-            bodyExpr = parsedBody
-        } else {
-            let bodyRange = if let first = lambdaBodySlice.first, let last = lambdaBodySlice.last {
-                SourceRange(start: first.range.start, end: last.range.end)
-            } else {
-                SourceRange(start: openBrace.range.end, end: openBrace.range.end)
-            }
-            bodyExpr = astArena.appendExpr(.blockExpr(statements: [], trailingExpr: nil, range: bodyRange))
+        // Detect lambda destructuring: { (a, b) -> body }
+        if let names = extractDestructuringNames(from: paramTokens), names.count >= 2 {
+            let range = SourceRange(start: start ?? openBrace.range.start, end: end)
+            return buildDestructuringLambda(
+                names: names, bodySlice: lambdaBodySlice,
+                fallbackStart: openBrace.range.end, range: range, label: label
+            )
         }
 
+        let params = parseLambdaParamNames(from: paramTokens)
+        let bodyExpr = parseLambdaBody(bodySlice: lambdaBodySlice, fallbackStart: openBrace.range.end)
         let range = SourceRange(start: start ?? openBrace.range.start, end: end)
         return astArena.appendExpr(.lambdaLiteral(params: params, body: bodyExpr, label: label, range: range))
     }
@@ -216,6 +214,114 @@ extension BuildASTPhase.ExpressionParser {
             }
         }
         return Array(tokens.dropFirst().dropLast())
+    }
+
+    // MARK: - Lambda Destructuring Helpers
+
+    /// Checks whether paramTokens form a `(name, name, ...)` destructuring pattern.
+    /// Returns the extracted names (nil for underscore), or nil when not destructuring.
+    private func extractDestructuringNames(from paramTokens: [Token]) -> [InternedString?]? {
+        guard hasBalancedEnclosingParens(paramTokens) else { return nil }
+        let innerTokens = Array(paramTokens.dropFirst().dropLast())
+        let names = parseDestructuringNames(from: innerTokens)
+        return names.count >= 2 ? names : nil
+    }
+
+    private func hasBalancedEnclosingParens(_ tokens: [Token]) -> Bool {
+        guard tokens.count >= 3,
+              tokens.first?.kind == .symbol(.lParen),
+              tokens.last?.kind == .symbol(.rParen)
+        else { return false }
+        var depth = 0
+        for (idx, token) in tokens.enumerated() {
+            switch token.kind {
+            case .symbol(.lParen): depth += 1
+            case .symbol(.rParen):
+                depth -= 1
+                if depth == 0, idx != tokens.count - 1 { return false }
+            default: break
+            }
+        }
+        return true
+    }
+
+    private func parseDestructuringNames(from innerTokens: [Token]) -> [InternedString?] {
+        var names: [InternedString?] = []
+        var idx = 0
+        while idx < innerTokens.count {
+            let token = innerTokens[idx]
+            switch token.kind {
+            case .symbol(.comma):
+                idx += 1
+                continue
+            case let .identifier(name):
+                let nameStr = interner.resolve(name)
+                names.append(nameStr == "_" ? nil : name)
+                idx += 1
+            case let .backtickedIdentifier(name):
+                names.append(name)
+                idx += 1
+            default:
+                idx = skipTypeAnnotationIfPresent(innerTokens, from: idx)
+            }
+        }
+        return names
+    }
+
+    private func skipTypeAnnotationIfPresent(_ tokens: [Token], from startIdx: Int) -> Int {
+        var idx = startIdx
+        guard idx < tokens.count, tokens[idx].kind == .symbol(.colon) else {
+            return idx + 1
+        }
+        idx += 1
+        var typeDepth = BuildASTPhase.BracketDepth()
+        while idx < tokens.count {
+            let current = tokens[idx]
+            if typeDepth.isAtTopLevel, current.kind == .symbol(.comma) { break }
+            typeDepth.track(current.kind)
+            idx += 1
+        }
+        return idx
+    }
+
+    private func buildDestructuringLambda(
+        names: [InternedString?],
+        bodySlice: ArraySlice<Token>,
+        fallbackStart: SourceLocation,
+        range: SourceRange,
+        label: InternedString?
+    ) -> ExprID {
+        let parsedBody = parseLambdaBody(bodySlice: bodySlice, fallbackStart: fallbackStart)
+        let syntheticParam = interner.intern("__destructured_0")
+        let nameRefExpr = astArena.appendExpr(.nameRef(syntheticParam, range))
+        let destructuringExpr = astArena.appendExpr(.destructuringDecl(
+            names: names, isMutable: false, initializer: nameRefExpr, range: range
+        ))
+        let wrappedBody = astArena.appendExpr(.blockExpr(
+            statements: [destructuringExpr], trailingExpr: parsedBody, range: range
+        ))
+        return astArena.appendExpr(.lambdaLiteral(
+            params: [syntheticParam], body: wrappedBody, label: label, range: range
+        ))
+    }
+
+    private func parseLambdaBody(
+        bodySlice: ArraySlice<Token>,
+        fallbackStart: SourceLocation
+    ) -> ExprID {
+        if let parsed = BuildASTPhase.ExpressionParser(
+            tokens: bodySlice, interner: interner, astArena: astArena
+        ).parse() {
+            return parsed
+        }
+        let bodyRange = if let first = bodySlice.first, let last = bodySlice.last {
+            SourceRange(start: first.range.start, end: last.range.end)
+        } else {
+            SourceRange(start: fallbackStart, end: fallbackStart)
+        }
+        return astArena.appendExpr(.blockExpr(
+            statements: [], trailingExpr: nil, range: bodyRange
+        ))
     }
 
     private func isPotentialLambdaParameterList(_ tokens: [Token]) -> Bool {

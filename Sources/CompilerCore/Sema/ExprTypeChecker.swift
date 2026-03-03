@@ -389,8 +389,8 @@ final class ExprTypeChecker {
         case let .localFunDecl(name, valueParams, returnTypeRef, body, range):
             return driver.localDeclChecker.inferLocalFunDeclExpr(id, name: name, valueParams: valueParams, returnTypeRef: returnTypeRef, body: body, range: range, ctx: ctx, locals: &locals)
 
-        case let .superRef(range):
-            return inferSuperRefExpr(id, range: range, ctx: ctx)
+        case let .superRef(interfaceQualifier, range):
+            return inferSuperRefExpr(id, interfaceQualifier: interfaceQualifier, range: range, ctx: ctx)
 
         case let .thisRef(label, range):
             return inferThisRefExpr(id, label: label, range: range, ctx: ctx)

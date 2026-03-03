@@ -47,6 +47,9 @@ public struct SymbolFlags: OptionSet, Sendable {
     public static let operatorFunction = SymbolFlags(rawValue: 1 << 10)
     public static let constValue = SymbolFlags(rawValue: 1 << 11)
     public static let abstractType = SymbolFlags(rawValue: 1 << 12)
+    public static let openType = SymbolFlags(rawValue: 1 << 13)
+    public static let overrideMember = SymbolFlags(rawValue: 1 << 14)
+    public static let finalMember = SymbolFlags(rawValue: 1 << 15)
 }
 
 public struct SemanticSymbol: Sendable {
@@ -262,6 +265,7 @@ public final class SymbolTable {
     private var valueClassUnderlyingTypes: [SymbolID: TypeID] = [:]
     private var sealedSubclassesStorage: [SymbolID: [SymbolID]] = [:]
     private var constValueExprKinds: [SymbolID: KIRExprKind] = [:]
+    private var delegateHasProvideDelegate: Set<SymbolID> = []
 
     public init() {}
 
@@ -567,6 +571,16 @@ public final class SymbolTable {
         sealedSubclassesStorage[symbol]
     }
 
+    /// Mark a property symbol as having a delegate with a `provideDelegate` operator.
+    public func setHasProvideDelegate(for property: SymbolID) {
+        delegateHasProvideDelegate.insert(property)
+    }
+
+    /// Returns whether the delegate type of the given property defines a `provideDelegate` operator.
+    public func hasProvideDelegate(for property: SymbolID) -> Bool {
+        delegateHasProvideDelegate.contains(property)
+    }
+
     // MARK: - Indexed queries
 
     /// Returns all symbol IDs of a given kind.
@@ -585,45 +599,6 @@ public final class SymbolTable {
     }
 }
 
-public struct CallBinding {
-    public let chosenCallee: SymbolID
-    public let substitutedTypeArguments: [TypeID]
-    public let parameterMapping: [Int: Int]
-
-    public init(chosenCallee: SymbolID, substitutedTypeArguments: [TypeID], parameterMapping: [Int: Int]) {
-        self.chosenCallee = chosenCallee
-        self.substitutedTypeArguments = substitutedTypeArguments
-        self.parameterMapping = parameterMapping
-    }
-}
-
-public enum CallableTarget: Equatable {
-    case symbol(SymbolID)
-    case localValue(SymbolID)
-}
-
-public struct CallableValueCallBinding {
-    public let target: CallableTarget?
-    public let functionType: TypeID
-    public let parameterMapping: [Int: Int]
-
-    public init(target: CallableTarget?, functionType: TypeID, parameterMapping: [Int: Int]) {
-        self.target = target
-        self.functionType = functionType
-        self.parameterMapping = parameterMapping
-    }
-}
-
-public struct CatchClauseBinding: Equatable {
-    public let parameterSymbol: SymbolID
-    public let parameterType: TypeID
-
-    public init(parameterSymbol: SymbolID = .invalid, parameterType: TypeID) {
-        self.parameterSymbol = parameterSymbol
-        self.parameterType = parameterType
-    }
-}
-
 public final class BindingTable {
     public private(set) var exprTypes: [ExprID: TypeID] = [:]
     public private(set) var identifierSymbols: [ExprID: SymbolID] = [:]
@@ -639,6 +614,10 @@ public final class BindingTable {
     public private(set) var invokeOperatorCallExprs: Set<ExprID> = []
     public private(set) var collectionExprIDs: Set<ExprID> = []
     public private(set) var collectionSymbolIDs: Set<SymbolID> = []
+    /// Maps `T::class` callable-ref expression IDs to the resolved type that
+    /// `T` refers to.  Used by KIR lowering to emit the correct type token
+    /// and name hint for `T::class.simpleName` / `.qualifiedName`.
+    public private(set) var classRefTargetTypes: [ExprID: TypeID] = [:]
     /// Maps expression IDs to their compile-time constant values when the
     /// expression references a `const val` property.  This allows downstream
     /// passes (KIR lowering, codegen) to fold constant references without
@@ -710,6 +689,14 @@ public final class BindingTable {
 
     public func isCollectionSymbol(_ symbol: SymbolID) -> Bool {
         collectionSymbolIDs.contains(symbol)
+    }
+
+    public func bindClassRefTargetType(_ expr: ExprID, type: TypeID) {
+        classRefTargetTypes[expr] = type
+    }
+
+    public func classRefTargetType(for expr: ExprID) -> TypeID? {
+        classRefTargetTypes[expr]
     }
 
     public func exprType(for expr: ExprID) -> TypeID? {
