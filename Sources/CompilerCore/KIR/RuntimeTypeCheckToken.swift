@@ -69,6 +69,38 @@ enum RuntimeTypeCheckToken {
         }
     }
 
+    /// Returns the simple (unqualified) type name for a given `TypeID`, or `nil`
+    /// when the type is not representable as a Kotlin class name.
+    static func simpleName(of type: TypeID, sema: SemaModule, interner: StringInterner) -> String? {
+        switch sema.types.kind(of: type) {
+        case .any:
+            return "Any"
+        case .primitive(.string, _):
+            return "String"
+        case .primitive(.int, _):
+            return "Int"
+        case .primitive(.long, _):
+            return "Long"
+        case .primitive(.boolean, _):
+            return "Boolean"
+        case .primitive(.char, _):
+            return "Char"
+        case .primitive(.float, _):
+            return "Float"
+        case .primitive(.double, _):
+            return "Double"
+        case .nothing:
+            return "Nothing"
+        case let .classType(classType):
+            guard let symbol = sema.symbols.symbol(classType.classSymbol) else {
+                return nil
+            }
+            return interner.resolve(symbol.name)
+        default:
+            return nil
+        }
+    }
+
     static func stableNominalTypeID(symbol: SymbolID, sema: SemaModule, interner: StringInterner) -> Int64 {
         guard let semanticSymbol = sema.symbols.symbol(symbol) else {
             return 0

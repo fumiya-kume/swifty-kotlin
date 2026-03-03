@@ -615,6 +615,10 @@ public final class BindingTable {
     public private(set) var invokeOperatorCallExprs: Set<ExprID> = []
     public private(set) var collectionExprIDs: Set<ExprID> = []
     public private(set) var collectionSymbolIDs: Set<SymbolID> = []
+    /// Maps `T::class` callable-ref expression IDs to the resolved type that
+    /// `T` refers to.  Used by KIR lowering to emit the correct type token
+    /// and name hint for `T::class.simpleName` / `.qualifiedName`.
+    public private(set) var classRefTargetTypes: [ExprID: TypeID] = [:]
     /// Maps expression IDs to their compile-time constant values when the
     /// expression references a `const val` property.  This allows downstream
     /// passes (KIR lowering, codegen) to fold constant references without
@@ -691,6 +695,14 @@ public final class BindingTable {
 
     public func isCollectionSymbol(_ symbol: SymbolID) -> Bool {
         collectionSymbolIDs.contains(symbol)
+    }
+
+    public func bindClassRefTargetType(_ expr: ExprID, type: TypeID) {
+        classRefTargetTypes[expr] = type
+    }
+
+    public func classRefTargetType(for expr: ExprID) -> TypeID? {
+        classRefTargetTypes[expr]
     }
 
     public func exprType(for expr: ExprID) -> TypeID? {

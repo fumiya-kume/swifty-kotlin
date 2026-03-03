@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-03-02
+最終更新: 2026-03-03
 
 ## 運用ルール
 
@@ -86,20 +86,20 @@
   - **完了条件**: `1 + 2 * 3 == 7`・`true || false && false == true` が `kotlinc` と同一に評価される
 
 
-- [ ] EXPR-003: bitwise / shift 演算子（`and`/`or`/`xor`/`inv`/`shl`/`shr`/`ushr`）を infix 関数として実装する（spec.md J9）
-  - [ ] `Int`/`Long` の `and`/`or`/`xor`/`inv`/`shl`/`shr`/`ushr` を stdlib infix 関数として stub 実装する
-  - [ ] Sema で infix 関数呼び出し構文（`a shl 3`）を overload resolver に通す
-  - [ ] bit 演算の結果型推論（`Int and Int → Int`）を実装する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task EXPR-003`
+- [x] EXPR-003: bitwise / shift 演算子（`and`/`or`/`xor`/`inv`/`shl`/`shr`/`ushr`）を infix 関数として実装する（spec.md J9）
+  - [x] `Int`/`Long` の `and`/`or`/`xor`/`inv`/`shl`/`shr`/`ushr` を stdlib infix 関数として stub 実装する
+  - [x] Sema で infix 関数呼び出し構文（`a shl 3`）を overload resolver に通す
+  - [x] bit 演算の結果型推論（`Int and Int → Int`）を実装する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task EXPR-003`
   - **完了条件**: `(0xFF and 0x0F).toString(16)` が `kotlinc` と同一出力（`"f"`）になる
 
 
-- [ ] EXPR-004: `@Label` / `return@label` / `break@label` / `continue@label` を完全実装する（spec.md J5/J6）
-  - [ ] Parser/AST で `@Label` prefix を関数リテラル・ループ・`return`/`break`/`continue` に付与できるようにする
-  - [ ] Sema で label scope を管理し、`return@label` が lambda/fun のいずれを対象にするか解決する
-  - [ ] `break@outer` / `continue@outer` を nested loop の外側ループ制御フローへ接続する
-  - [ ] `return@label` がラムダ内から外側関数へ non-local return する場合の lowering を実装する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task EXPR-004`（2026-03-02: parser golden `GoldenCases/Parser/labeled_control_flow.kt` を追加）
+- [x] EXPR-004: `@Label` / `return@label` / `break@label` / `continue@label` を完全実装する（spec.md J5/J6）
+  - [x] Parser/AST で `@Label` prefix を関数リテラル・ループ・`return`/`break`/`continue` に付与できるようにする
+  - [x] Sema で label scope を管理し、`return@label` が lambda/fun のいずれを対象にするか解決する
+  - [x] `break@outer` / `continue@outer` を nested loop の外側ループ制御フローへ接続する
+  - [x] `return@label` がラムダ内から外側関数へ non-local return する場合の lowering を実装する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task EXPR-004`（2026-03-02: parser golden `GoldenCases/Parser/labeled_control_flow.kt` を追加）
   - **完了条件**: `outer@ for (...) { for (...) { break@outer } }` が外側ループを抜け `kotlinc` と一致
 
 ---
@@ -107,12 +107,12 @@
 
 #### 🔀 Control Flow
 
-- [ ] CTRL-001: `when` の複数条件ブランチ（`,` 区切り）と exhaustive 診断精度を強化する（spec.md J5/J6）
-  - [ ] `when` branch の condition として `,` 区切り複数値（`1, 2, 3 -> ...`）を Parser/AST で保持する
-  - [ ] Sema で複数条件を OR 結合として型検査し、exhaustiveness に反映する
-  - [ ] KIR lowering で複数条件を OR jump として展開し、重複ヒットを排除する
-  - [ ] sealed/enum × 複数条件の exhaustiveness 診断精度を向上する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CTRL-001`
+- [x] CTRL-001: `when` の複数条件ブランチ（`,` 区切り）と exhaustive 診断精度を強化する（spec.md J5/J6）
+  - [x] `when` branch の condition として `,` 区切り複数値（`1, 2, 3 -> ...`）を Parser/AST で保持する
+  - [x] Sema で複数条件を OR 結合として型検査し、exhaustiveness に反映する
+  - [x] KIR lowering で複数条件を OR jump として展開し、重複ヒットを排除する
+  - [x] sealed/enum × 複数条件の exhaustiveness 診断精度を向上する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CTRL-001`
   - **完了条件**: `when (x) { 1, 2 -> "few"; else -> "many" }` が `kotlinc` と同一動作する
 
 
@@ -139,27 +139,27 @@
 
 #### 📋 Declarations
 
-- [ ] DECL-001: top-level property の backing field・getter/setter・初期化順序を front-to-back で実装する（spec.md J6/J7）
-  - [ ] top-level `val`/`var` を property シンボルとして扱い、getter/setter ABI を生成する
-  - [ ] top-level property の初期化順序（宣言順・依存あり）を global initializer で保証する
-  - [ ] top-level `var` への setter を通した代入（`Pkg.x = 1`）を解決する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task DECL-001`
+- [x] DECL-001: top-level property の backing field・getter/setter・初期化順序を front-to-back で実装する（spec.md J6/J7）
+  - [x] top-level `val`/`var` を property シンボルとして扱い、getter/setter ABI を生成する
+  - [x] top-level property の初期化順序（宣言順・依存あり）を global initializer で保証する
+  - [x] top-level `var` への setter を通した代入（`Pkg.x = 1`）を解決する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task DECL-001`
   - **完了条件**: top-level `val pi = 3.14` と `var counter = 0` が `kotlinc` と同一動作する
 
 
-- [ ] DECL-002: `const val` のコンパイル時定数畳み込みを実装する（spec.md J6/J7）
-  - [ ] `const val` を宣言時に型チェックし、primitive/String 限定であることを検証する
-  - [ ] `const val` を参照する式を Sema/KIR で定数値に畳み込み、実 getter 呼び出しを省く
-  - [ ] annotation 引数に `const val` を使えることを Sema で検証する（既存実装済み 連携）
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task DECL-002`
+- [x] DECL-002: `const val` のコンパイル時定数畳み込みを実装する（spec.md J6/J7）
+  - [x] `const val` を宣言時に型チェックし、primitive/String 限定であることを検証する
+  - [x] `const val` を参照する式を Sema/KIR で定数値に畳み込み、実 getter 呼び出しを省く
+  - [x] annotation 引数に `const val` を使えることを Sema で検証する（既存実装済み 連携）
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task DECL-002`
   - **完了条件**: `const val MAX = 100; if (x > MAX) ...` が `if (x > 100)` と同等にコンパイルされる
 
 
-- [ ] DECL-003: `object` declaration（singleton）の lazy 初期化と init block 実行順序を実装する（spec.md J6/J7）
-  - [ ] `object Foo { ... }` を one-time lazy init singleton としてシンボル化し、global initializer guard を生成する
-  - [ ] object への最初のアクセス時に初期化が走り、2 回目以降はキャッシュを返すことを保証する
-  - [ ] object body の init block 実行順序（property initializer → init block）を codegen で保証する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task DECL-003`
+- [x] DECL-003: `object` declaration（singleton）の lazy 初期化と init block 実行順序を実装する（spec.md J6/J7）
+  - [x] `object Foo { ... }` を one-time lazy init singleton としてシンボル化し、global initializer guard を生成する
+  - [x] object への最初のアクセス時に初期化が走り、2 回目以降はキャッシュを返すことを保証する
+  - [x] object body の init block 実行順序（property initializer → init block）を codegen で保証する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task DECL-003`
   - **完了条件**: `object Counter { var n = 0 }` が singleton 保証で動作し、`kotlinc` と同一出力になる
 
 ---
@@ -167,44 +167,44 @@
 
 #### 🏗️ Class / Object
 
-- [ ] CLASS-001: `companion object` を最上位シングルトンとして front-to-back で実装する（spec.md J6/J7）
-  - [ ] Parser/AST に `companionObjectDecl`（`companion object [Name] { ... }`）を追加し、`ClassDecl` に保持する
-  - [ ] Sema で companion を owner class と同一 FQName スコープに配置し、unqualified な companion member 参照を解決する
-  - [ ] companion object を global singleton としてシンボル化し、lazy 初期化パターン（またはスタティック初期化相当）を lowering で生成する
-  - [ ] `ClassName.memberName` 形式の companion member 参照を member call lowering へ接続する
-  - [ ] `companion object` の `const val`・factory 関数を含む diff/golden ケースを追加する
+- [x] CLASS-001: `companion object` を最上位シングルトンとして front-to-back で実装する（spec.md J6/J7）
+  - [x] Parser/AST に `companionObjectDecl`（`companion object [Name] { ... }`）を追加し、`ClassDecl` に保持する
+  - [x] Sema で companion を owner class と同一 FQName スコープに配置し、unqualified な companion member 参照を解決する
+  - [x] companion object を global singleton としてシンボル化し、lazy 初期化パターン（またはスタティック初期化相当）を lowering で生成する
+  - [x] `ClassName.memberName` 形式の companion member 参照を member call lowering へ接続する
+  - [x] `companion object` の `const val`・factory 関数を含む diff/golden ケースを追加する
   - **完了条件**: `Foo.create()` のような companion factory が動作し、companion singleton が一度だけ初期化される
 
 
-- [ ] CLASS-002: abstract class / abstract member の制約と override 強制を実装する（spec.md J6/J7）
-  - [ ] `abstract class` / `abstract fun` / `abstract val` を Sema で認識し、インスタンス化禁止を診断する
-  - [ ] concrete subclass がすべての abstract member を override しない場合に `KSWIFTK-SEMA-ABSTRACT` を出す
-  - [ ] `abstract class` への direct `super.foo()` 呼び出しを禁止し診断する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CLASS-002`
+- [x] CLASS-002: abstract class / abstract member の制約と override 強制を実装する（spec.md J6/J7）
+  - [x] `abstract class` / `abstract fun` / `abstract val` を Sema で認識し、インスタンス化禁止を診断する
+  - [x] concrete subclass がすべての abstract member を override しない場合に `KSWIFTK-SEMA-ABSTRACT` を出す
+  - [x] `abstract class` への direct `super.foo()` 呼び出しを禁止し診断する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CLASS-002`
   - **完了条件**: `abstract class A { abstract fun f() }; class B : A() { override fun f() = 1 }` が正しくコンパイルされる
 
 
-- [ ] CLASS-003: `interface` default method（body あり fun in interface）を front-to-back で実装する（spec.md J6/J7/J13.2）
-  - [ ] interface body 内に body を持つ fun 宣言を Parser/AST/Sema で保持する
-  - [ ] concrete class が override しない場合に interface default 実装を itable 経由で dispatch する
-  - [ ] default method と concrete override の共存を vtable/itable で正しく表現する（既存実装済み 連携）
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CLASS-003`
+- [x] CLASS-003: `interface` default method（body あり fun in interface）を front-to-back で実装する（spec.md J6/J7/J13.2）
+  - [x] interface body 内に body を持つ fun 宣言を Parser/AST/Sema で保持する
+  - [x] concrete class が override しない場合に interface default 実装を itable 経由で dispatch する
+  - [x] default method と concrete override の共存を vtable/itable で正しく表現する（既存実装済み 連携）
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CLASS-003`
   - **完了条件**: interface default method が override されない場合に default 実装が呼ばれる
 
 
-- [ ] CLASS-004: 多重インターフェース実装と diamond override の解決規則を実装する（spec.md J7/J13.2）
-  - [ ] class が複数 interface を実装する場合の itable 割当ロジックを拡張する（slot conflict 解決）
-  - [ ] 同名 default method を複数 interface が持つ場合に override を強制し `KSWIFTK-SEMA-DIAMOND` を出す
-  - [ ] `super<InterfaceName>.method()` で特定 interface の default 実装を明示呼び出しできる
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CLASS-004`
+- [x] CLASS-004: 多重インターフェース実装と diamond override の解決規則を実装する（spec.md J7/J13.2）
+  - [x] class が複数 interface を実装する場合の itable 割当ロジックを拡張する（slot conflict 解決）
+  - [x] 同名 default method を複数 interface が持つ場合に override を強制し `KSWIFTK-SEMA-DIAMOND` を出す
+  - [x] `super<InterfaceName>.method()` で特定 interface の default 実装を明示呼び出しできる
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CLASS-004`
   - **完了条件**: `class C : A, B` で両方に同名 default method があると `override` を強制し診断が出る
 
 
-- [ ] CLASS-005: `open` / `final` / `override` 修飾子の継承制約を完全実装する（spec.md J6/J7）
-  - [ ] `final` class または `final fun` を override しようとした場合に `KSWIFTK-SEMA-FINAL` を出す
-  - [ ] `open` でない class への subclass 化を診断する（Kotlin はデフォルト `final`）
-  - [ ] `override` 修飾子なしで親の関数を隠蔽した場合に Error/Warning を出す
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CLASS-005`
+- [x] CLASS-005: `open` / `final` / `override` 修飾子の継承制約を完全実装する（spec.md J6/J7）
+  - [x] `final` class または `final fun` を override しようとした場合に `KSWIFTK-SEMA-FINAL` を出す
+  - [x] `open` でない class への subclass 化を診断する（Kotlin はデフォルト `final`）
+  - [x] `override` 修飾子なしで親の関数を隠蔽した場合に Error/Warning を出す
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CLASS-005`
   - **完了条件**: non-open class の継承は診断され、`open class` の継承と override が `kotlinc` と一致する
 
 
@@ -216,11 +216,11 @@
   - **完了条件**: `data object None` が `None == None` → `true`、`None.toString()` → `"None"` を返す
 
 
-- [ ] CLASS-007: constructor の `init` block と primary constructor property の初期化順序を保証する（spec.md J7）
-  - [ ] primary constructor の `val`/`var` パラメータを property として宣言と同時に初期化する
-  - [ ] class body 内の property 初期化と `init { }` block の実行を宣言順（上から下）で保証する
-  - [ ] secondary constructor が `this(...)` で primary を必ず委譲（または `super(...)` 委譲）することを検証する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CLASS-007`
+- [x] CLASS-007: constructor の `init` block と primary constructor property の初期化順序を保証する（spec.md J7）
+  - [x] primary constructor の `val`/`var` パラメータを property として宣言と同時に初期化する
+  - [x] class body 内の property 初期化と `init { }` block の実行を宣言順（上から下）で保証する
+  - [x] secondary constructor が `this(...)` で primary を必ず委譲（または `super(...)` 委譲）することを検証する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CLASS-007`
   - **完了条件**: `class A { val x = f(); init { println(x) }; val y = x + 1 }` が宣言順で初期化される
 
 ---
@@ -228,62 +228,62 @@
 
 #### 🏠 Properties / Delegates
 
-- [ ] PROP-001: property delegation（`by`）を `getValue`/`setValue`/`provideDelegate` operator へ fully desugar する（spec.md J7/J9/J12）
-  - [ ] Parser/AST で `val x by delegate` 構文を `PropertyDecl.delegateExpr` として保持する
-  - [ ] Sema で delegate 型の `getValue`/`setValue` operator 候補を overload resolver に通し、型を推論する
-  - [ ] `provideDelegate` が定義されている場合は初期化時に呼び出しを挿入する
-  - [ ] PropertyLowering で `val x by d` を `private val _x = d.provideDelegate(...)`, `get() = _x.getValue(...)` へ展開する
-  - [ ] `by lazy { }` / `by observable(...)` / カスタム delegate の diff/golden ケースを追加する
+- [x] PROP-001: property delegation（`by`）を `getValue`/`setValue`/`provideDelegate` operator へ fully desugar する（spec.md J7/J9/J12）
+  - [x] Parser/AST で `val x by delegate` 構文を `PropertyDecl.delegateExpr` として保持する
+  - [x] Sema で delegate 型の `getValue`/`setValue` operator 候補を overload resolver に通し、型を推論する
+  - [x] `provideDelegate` が定義されている場合は初期化時に呼び出しを挿入する
+  - [x] PropertyLowering で `val x by d` を `private val _x = d.provideDelegate(...)`, `get() = _x.getValue(...)` へ展開する
+  - [x] `by lazy { }` / `by observable(...)` / カスタム delegate の diff/golden ケースを追加する
   - **完了条件**: `val x by lazy { 42 }` が遅延初期化として動作し、`kotlinc` と同一出力になる
 
 
-- [ ] PROP-002: `lazy` / `observable` / `vetoable` 標準 delegates を stdlib stub として接続する（spec.md J7）
-  - [ ] runtime/stdlib stub に `kotlin.properties.Lazy<T>` / `ReadWriteProperty<T, V>` の C ABI インターフェースを追加する
-  - [ ] `lazy { }` の thread-safety モード（`SYNCHRONIZED` / `NONE`）を compiler option で選択できるようにする
-  - [ ] `observable` / `vetoable` を callback 付き delegate として lowering 経路に接続する
-  - [ ] stdlib delegate を使った diff/golden ケース（`lazy`/`observable`）を追加する
+- [x] PROP-002: `lazy` / `observable` / `vetoable` 標準 delegates を stdlib stub として接続する（spec.md J7）
+  - [x] runtime/stdlib stub に `kotlin.properties.Lazy<T>` / `ReadWriteProperty<T, V>` の C ABI インターフェースを追加する
+  - [x] `lazy { }` の thread-safety モード（`SYNCHRONIZED` / `NONE`）を compiler option で選択できるようにする
+  - [x] `observable` / `vetoable` を callback 付き delegate として lowering 経路に接続する
+  - [x] stdlib delegate を使った diff/golden ケース（`lazy`/`observable`）を追加する
   - **完了条件**: `by lazy`・`by Delegates.observable` が機能し、初期化・callback の順序が `kotlinc` と一致する
 
 
-- [ ] PROP-003: computed property（getter-only）の backing field なし合成を完成させる（spec.md J7/J12）
-  - [ ] PropertyLowering で `val x: Int get() = expr` 形式をバッキングフィールドなしの getter 呼び出しに lowering する
-  - [ ] `var` property の custom getter/setter を accessor kind 引数なしの直接 call に整理し、`kk_property_access` 依存を解消する
-  - [ ] getter-only property が override される場合の vtable slot 割当を確認する
-  - [ ] getter/setter 双方にカスタム実装を持つ property の diff/golden ケースを追加する
+- [x] PROP-003: computed property（getter-only）の backing field なし合成を完成させる（spec.md J7/J12）
+  - [x] PropertyLowering で `val x: Int get() = expr` 形式をバッキングフィールドなしの getter 呼び出しに lowering する
+  - [x] `var` property の custom getter/setter を accessor kind 引数なしの直接 call に整理し、`kk_property_access` 依存を解消する
+  - [x] getter-only property が override される場合の vtable slot 割当を確認する
+  - [x] getter/setter 双方にカスタム実装を持つ property の diff/golden ケースを追加する
   - **完了条件**: `val computed: String get() = "hello"` が毎回呼び出され、backing field が生成されないことを codegen で確認できる
 
 
-- [ ] PROP-004: destructuring declaration（`val (a, b) = pair`）と `componentN` 解決を実装する（spec.md J5/J6/J9）
-  - [ ] Parser/AST に `destructuringDecl`（`val (a, b, ...) = expr`）ノードを追加する
-  - [ ] Sema で RHS の型から `component1()`〜`componentN()` を overload 解決し、各変数の型を推論する
-  - [ ] `data class` の componentN 合成（既存実装済み）と連携し、for ループ内 destructuring（`for ((k, v) in map)`）を展開する
-  - [ ] アンダースコア（`val (a, _, c) = triple`）で不要な component を skip する
-  - [ ] lambda 引数の destructuring（`pairs.map { (a, b) -> a + b }`）を lambda body で展開する
-  - [ ] destructuring の diff/golden ケース（data class・Map.Entry・lambda）を追加する
+- [x] PROP-004: destructuring declaration（`val (a, b) = pair`）と `componentN` 解決を実装する（spec.md J5/J6/J9）
+  - [x] Parser/AST に `destructuringDecl`（`val (a, b, ...) = expr`）ノードを追加する
+  - [x] Sema で RHS の型から `component1()`〜`componentN()` を overload 解決し、各変数の型を推論する
+  - [x] `data class` の componentN 合成（既存実装済み）と連携し、for ループ内 destructuring（`for ((k, v) in map)`）を展開する
+  - [x] アンダースコア（`val (a, _, c) = triple`）で不要な component を skip する
+  - [x] lambda 引数の destructuring（`pairs.map { (a, b) -> a + b }`）を lambda body で展開する
+  - [x] destructuring の diff/golden ケース（data class・Map.Entry・lambda）を追加する
   - **完了条件**: `val (x, y) = Point(1, 2)` が `component1()`/`component2()` 呼び出しに展開され動作する
 
 
-- [ ] PROP-005: extension property を型システム・member dispatch に統合する（spec.md J7/J9）
-  - [ ] `val String.firstChar: Char get() = this[0]` を extension property シンボルとして Sema に登録する
-  - [ ] extension property の `get`/`set` を extension function として ABI lowering する
-  - [ ] extension property を import・overload resolver で解決し、member property より低い優先順位を保つ
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task PROP-005`
+- [x] PROP-005: extension property を型システム・member dispatch に統合する（spec.md J7/J9）
+  - [x] `val String.firstChar: Char get() = this[0]` を extension property シンボルとして Sema に登録する
+  - [x] extension property の `get`/`set` を extension function として ABI lowering する
+  - [x] extension property を import・overload resolver で解決し、member property より低い優先順位を保つ
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task PROP-005`
   - **完了条件**: `val String.firstChar get() = this[0]` が `"hello".firstChar` で `'h'` を返す
 
 
-- [ ] PROP-006: getter/setter 内で backing field を参照する `field` キーワードを実装する（spec.md J7）
-  - [ ] getter/setter body 内で `field` を backing field への参照として Sema で解決する
-  - [ ] `field` への代入（setter 内）と読み取り（getter 内）を backing field load/store IR に lowering する
-  - [ ] `field` を getter/setter 外で使うと `KSWIFTK-SEMA-FIELD` 診断を出す
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task PROP-006`
+- [x] PROP-006: getter/setter 内で backing field を参照する `field` キーワードを実装する（spec.md J7）
+  - [x] getter/setter body 内で `field` を backing field への参照として Sema で解決する
+  - [x] `field` への代入（setter 内）と読み取り（getter 内）を backing field load/store IR に lowering する
+  - [x] `field` を getter/setter 外で使うと `KSWIFTK-SEMA-FIELD` 診断を出す
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task PROP-006`
   - **完了条件**: `var x: Int = 0; set(v) { field = if (v < 0) 0 else v }` が setter で field に正しく書き込む
 
 
-- [ ] PROP-007: `provideDelegate` operator と `KProperty<*>` stub を完全連携させる（spec.md J7/J9）
-  - [ ] property 初期化時に `provideDelegate(thisRef, property)` を自動呼び出しし、delegate オブジェクトをキャッシュする
-  - [ ] `thisRef` 引数（property が属する receiver）と `property` 引数（`KProperty<*>` stub）を lowering で渡す
-  - [ ] `KProperty<*>` stub（name/returnType 最小）を metadata 経由で compiler から参照できる形で定義する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task PROP-007`
+- [x] PROP-007: `provideDelegate` operator と `KProperty<*>` stub を完全連携させる（spec.md J7/J9）
+  - [x] property 初期化時に `provideDelegate(thisRef, property)` を自動呼び出しし、delegate オブジェクトをキャッシュする
+  - [x] `thisRef` 引数（property が属する receiver）と `property` 引数（`KProperty<*>` stub）を lowering で渡す
+  - [x] `KProperty<*>` stub（name/returnType 最小）を metadata 経由で compiler から参照できる形で定義する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task PROP-007`
   - **完了条件**: `operator fun provideDelegate(...)` が property 初期化時に呼ばれ `getValue` が使用される
 
 ---

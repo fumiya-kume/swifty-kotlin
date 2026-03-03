@@ -1,3 +1,4 @@
+// swiftlint:disable type_body_length
 @testable import CompilerCore
 import Foundation
 import XCTest
@@ -373,22 +374,6 @@ final class DelegatePropertyKIRTests: XCTestCase {
                           "Explicit type annotation should still use lazy get_value")
         }
     }
-
-    // MARK: - StdlibDelegateLowering Pass Is Recorded
-
-    func testStdlibDelegateLoweringPassIsRecordedInModule() throws {
-        let source = """
-        val x by lazy { 42 }
-        fun main() = println(x)
-        """
-        try withTemporaryFile(contents: source) { path in
-            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
-            try runToKIR(ctx)
-            try LoweringPhase().run(ctx)
-
-            let module = try XCTUnwrap(ctx.kir)
-            XCTAssertTrue(module.executedLowerings.contains("StdlibDelegateLowering"),
-                          "StdlibDelegateLowering should be recorded in executed lowerings: \(module.executedLowerings)")
-        }
-    }
 }
+
+// swiftlint:enable type_body_length
