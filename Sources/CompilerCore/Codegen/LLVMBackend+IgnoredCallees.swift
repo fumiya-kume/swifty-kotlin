@@ -111,6 +111,15 @@ extension LLVMBackend {
         "kk_list_any",
         "kk_list_none",
         "kk_list_all",
+        // Sequence (STDLIB-003)
+        "kk_sequence_from_list",
+        "kk_sequence_map",
+        "kk_sequence_filter",
+        "kk_sequence_take",
+        "kk_sequence_to_list",
+        "kk_sequence_builder_create",
+        "kk_sequence_builder_yield",
+        "kk_sequence_builder_build",
         // Builder DSL (STDLIB-002)
         "kk_build_string",
         "kk_build_list",

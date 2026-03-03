@@ -983,6 +983,7 @@ public enum RuntimeABISpec {
             + kPropertyStubFunctions + delegateFunctions
             + bitwiseFunctions
             + collectionFunctions
+            + sequenceFunctions
 
     public static func generateCHeader() -> String {
         var lines: [String] = []

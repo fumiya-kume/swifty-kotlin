@@ -151,6 +151,15 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_op_shr"),
             ctx.interner.intern("kk_op_ushr"),
             ctx.interner.intern("kk_int_toString_radix"),
+            // Sequence (STDLIB-003) — these are non-throwing extern C functions.
+            ctx.interner.intern("kk_sequence_from_list"),
+            ctx.interner.intern("kk_sequence_map"),
+            ctx.interner.intern("kk_sequence_filter"),
+            ctx.interner.intern("kk_sequence_take"),
+            ctx.interner.intern("kk_sequence_to_list"),
+            ctx.interner.intern("kk_sequence_builder_create"),
+            ctx.interner.intern("kk_sequence_builder_yield"),
+            ctx.interner.intern("kk_sequence_builder_build"),
         ]).union(Self.kPropertyStubCallees(ctx.interner))
 
         let boxIntCallee = ctx.interner.intern("kk_box_int")

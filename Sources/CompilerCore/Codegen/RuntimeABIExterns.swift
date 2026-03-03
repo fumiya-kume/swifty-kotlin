@@ -801,7 +801,7 @@ public enum RuntimeABIExterns {
         kk_op_shr,
         kk_op_ushr,
         kk_int_toString_radix,
-    ] + collectionExterns
+    ] + collectionExterns + sequenceExterns
 
     /// Look up an extern declaration by symbol name.
     public static func externDecl(named name: String) -> ExternDecl? {

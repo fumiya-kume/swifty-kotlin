@@ -54,6 +54,15 @@ final class CollectionLiteralLoweringPass: LoweringPass {
         let kkListNoneName = interner.intern("kk_list_none")
         let kkListAllName = interner.intern("kk_list_all")
 
+        // Sequence ABI names (STDLIB-003)
+        let kkSequenceFromListName = interner.intern("kk_sequence_from_list")
+        let kkSequenceMapName = interner.intern("kk_sequence_map")
+        let kkSequenceFilterName = interner.intern("kk_sequence_filter")
+        let kkSequenceTakeName = interner.intern("kk_sequence_take")
+        let kkSequenceToListName = interner.intern("kk_sequence_to_list")
+        let kkSequenceBuilderBuildName = interner.intern("kk_sequence_builder_build")
+        let kkSequenceBuilderYieldName = interner.intern("kk_sequence_builder_yield")
+
         let kkMapOfName = interner.intern("kk_map_of")
         let kkMapSizeName = interner.intern("kk_map_size")
         let kkMapGetName = interner.intern("kk_map_get")
@@ -90,6 +99,13 @@ final class CollectionLiteralLoweringPass: LoweringPass {
         let anyName = interner.intern("any")
         let noneName = interner.intern("none")
         let allName = interner.intern("all")
+
+        // Sequence member names (STDLIB-003)
+        let asSequenceName = interner.intern("asSequence")
+        let toListName = interner.intern("toList")
+        let takeName = interner.intern("take")
+        let sequenceName = interner.intern("sequence")
+        let yieldName = interner.intern("yield")
 
         // println support
         let printlnName = interner.intern("println")
@@ -177,16 +193,45 @@ final class CollectionLiteralLoweringPass: LoweringPass {
             var listExprIDs: Set<Int32> = []
             var mapExprIDs: Set<Int32> = []
             var arrayExprIDs: Set<Int32> = []
+            var sequenceExprIDs: Set<Int32> = []
 
             for instruction in function.body {
                 switch instruction {
-                case let .call(_, callee, _, result, _, _, _):
+                case let .call(_, callee, arguments, result, _, _, _):
                     if listFactoryNames.contains(callee) || callee == kkListOfName {
                         if let result { listExprIDs.insert(result.rawValue) }
                     } else if mapFactoryNames.contains(callee) || callee == kkMapOfName {
                         if let result { mapExprIDs.insert(result.rawValue) }
                     } else if arrayOfFactoryNames.contains(callee) {
                         if let result { arrayExprIDs.insert(result.rawValue) }
+                    }
+                    // Track .call sequence operations where receiver is arguments[0]
+                    // (sema collection fallback emits .call with receiver prepended).
+                    // No listExprIDs guard: sema restricts asSequence to collections.
+                    if callee == asSequenceName, arguments.count == 1 {
+                        if let result { sequenceExprIDs.insert(result.rawValue) }
+                    } else if callee == toListName, arguments.count == 1 {
+                        if sequenceExprIDs.contains(arguments[0].rawValue) {
+                            if let result { listExprIDs.insert(result.rawValue) }
+                        }
+                    } else if callee == mapName || callee == filterName || callee == takeName {
+                        if !arguments.isEmpty, sequenceExprIDs.contains(arguments[0].rawValue) {
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                        }
+                    }
+                // Phase 1 also scans .virtualCall for collection member calls
+                // that the sema resolved to a symbol (STDLIB-003).
+                case let .virtualCall(_, callee, receiver, _, result, _, _, _):
+                    if callee == asSequenceName {
+                        if let result { sequenceExprIDs.insert(result.rawValue) }
+                    } else if callee == toListName {
+                        if sequenceExprIDs.contains(receiver.rawValue) {
+                            if let result { listExprIDs.insert(result.rawValue) }
+                        }
+                    } else if callee == mapName || callee == filterName || callee == takeName {
+                        if sequenceExprIDs.contains(receiver.rawValue) {
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                        }
                     }
                 case let .copy(from, to):
                     if listExprIDs.contains(from.rawValue) {
@@ -197,6 +242,9 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     }
                     if arrayExprIDs.contains(from.rawValue) {
                         arrayExprIDs.insert(to.rawValue)
+                    }
+                    if sequenceExprIDs.contains(from.rawValue) {
+                        sequenceExprIDs.insert(to.rawValue)
                     }
                 default:
                     break
@@ -668,6 +716,110 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                         }
                     }
 
+                    // --- Rewrite sequence member calls (STDLIB-003) ---
+                    // asSequence() on collection → kk_sequence_from_list
+                    // Sema already restricts asSequence to collection expressions,
+                    // so we rewrite unconditionally (no listExprIDs guard needed).
+                    if callee == asSequenceName, arguments.count == 1 {
+                        let receiverID = arguments[0]
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkSequenceFromListName,
+                            arguments: [receiverID],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        if let result { sequenceExprIDs.insert(result.rawValue) }
+                        continue
+                    }
+
+                    // map/filter on sequence → kk_sequence_map/kk_sequence_filter
+                    if callee == mapName || callee == filterName, arguments.count == 2 {
+                        let receiverID = arguments[0]
+                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                            let kkName = callee == mapName ? kkSequenceMapName : kkSequenceFilterName
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkName,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            continue
+                        }
+                    }
+
+                    // take(n) on sequence → kk_sequence_take
+                    if callee == takeName, arguments.count == 2 {
+                        let receiverID = arguments[0]
+                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkSequenceTakeName,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            continue
+                        }
+                    }
+
+                    // toList() on sequence → kk_sequence_to_list
+                    if callee == toListName, arguments.count == 1 {
+                        let receiverID = arguments[0]
+                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                            let toListResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkSequenceToListName,
+                                arguments: [receiverID],
+                                result: toListResult,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result {
+                                listExprIDs.insert(result.rawValue)
+                                listExprIDs.insert(toListResult.rawValue)
+                                loweredBody.append(.copy(from: toListResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+
+                    // sequence { ... } builder → kk_sequence_builder_build
+                    if callee == sequenceName, arguments.count == 1 {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkSequenceBuilderBuildName,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: canThrow,
+                            thrownResult: thrownResult
+                        ))
+                        if let result { sequenceExprIDs.insert(result.rawValue) }
+                        continue
+                    }
+
+                    // yield(value) inside sequence builder → kk_sequence_builder_yield
+                    if callee == yieldName, arguments.count == 2 {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkSequenceBuilderYieldName,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        continue
+                    }
+
                     // --- Rewrite higher-order collection member calls (FUNC-003) ---
                     if callee == mapName || callee == filterName || callee == forEachName
                         || callee == flatMapName || callee == anyName || callee == noneName
@@ -789,6 +941,183 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     // Default: keep instruction as-is
                     loweredBody.append(instruction)
 
+                // --- Rewrite .virtualCall sequence member calls (STDLIB-003) ---
+                // When the sema resolves collection member calls to a concrete
+                // symbol, the CallLowerer emits .virtualCall instead of .call.
+                // Handle those here so the sequence chain is properly rewritten.
+                case let .virtualCall(_, callee, receiver, arguments, result, origCanThrow, origThrownResult, _):
+                    // asSequence() on collection → kk_sequence_from_list
+                    // Sema restricts asSequence to collection expressions;
+                    // rewrite unconditionally (no listExprIDs guard needed).
+                    if callee == asSequenceName, arguments.isEmpty {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkSequenceFromListName,
+                            arguments: [receiver],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        if let result { sequenceExprIDs.insert(result.rawValue) }
+                        continue
+                    }
+
+                    // map/filter on sequence → kk_sequence_map/kk_sequence_filter
+                    if callee == mapName || callee == filterName, arguments.count == 1 {
+                        if sequenceExprIDs.contains(receiver.rawValue) {
+                            let kkName = callee == mapName
+                                ? kkSequenceMapName : kkSequenceFilterName
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkName,
+                                arguments: [receiver] + arguments,
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            continue
+                        }
+                    }
+
+                    // take(n) on sequence → kk_sequence_take
+                    if callee == takeName, arguments.count == 1 {
+                        if sequenceExprIDs.contains(receiver.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkSequenceTakeName,
+                                arguments: [receiver] + arguments,
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            continue
+                        }
+                    }
+
+                    // toList() on sequence → kk_sequence_to_list
+                    if callee == toListName, arguments.isEmpty {
+                        if sequenceExprIDs.contains(receiver.rawValue) {
+                            let toListResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkSequenceToListName,
+                                arguments: [receiver],
+                                result: toListResult,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result {
+                                listExprIDs.insert(result.rawValue)
+                                listExprIDs.insert(toListResult.rawValue)
+                                loweredBody.append(.copy(from: toListResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+
+                    // Also handle higher-order collection calls that may come
+                    // through as .virtualCall (map/filter/forEach on lists).
+                    if callee == mapName || callee == filterName || callee == forEachName
+                        || callee == flatMapName || callee == anyName || callee == noneName
+                        || callee == allName
+                    { // swiftlint:disable:this opening_brace
+                        if arguments.count == 1 {
+                            if listExprIDs.contains(receiver.rawValue) {
+                                let kkName: InternedString = switch callee {
+                                case mapName: kkListMapName
+                                case filterName: kkListFilterName
+                                case forEachName: kkListForEachName
+                                case flatMapName: kkListFlatMapName
+                                case anyName: kkListAnyName
+                                case noneName: kkListNoneName
+                                case allName: kkListAllName
+                                default: callee
+                                }
+                                let needsListTag = callee == mapName
+                                    || callee == flatMapName || callee == filterName
+                                let hofResult = module.arena.appendExpr(
+                                    .temporary(Int32(module.arena.expressions.count)),
+                                    type: nil
+                                )
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: kkName,
+                                    arguments: [receiver] + arguments,
+                                    result: hofResult,
+                                    canThrow: origCanThrow,
+                                    thrownResult: origThrownResult
+                                ))
+                                if needsListTag, let result {
+                                    listExprIDs.insert(result.rawValue)
+                                    listExprIDs.insert(hofResult.rawValue)
+                                }
+                                if let result {
+                                    loweredBody.append(.copy(from: hofResult, to: result))
+                                }
+                                continue
+                            }
+                        }
+                    }
+
+                    // Also handle collection member calls (size, get, etc.)
+                    // that may arrive as .virtualCall.
+                    if callee == sizeName || callee == countName {
+                        if listExprIDs.contains(receiver.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkListSizeName,
+                                arguments: [receiver],
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            continue
+                        }
+                        if mapExprIDs.contains(receiver.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkMapSizeName,
+                                arguments: [receiver],
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            continue
+                        }
+                    }
+
+                    if callee == isEmptyName {
+                        if listExprIDs.contains(receiver.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkListIsEmptyName,
+                                arguments: [receiver],
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            continue
+                        }
+                        if mapExprIDs.contains(receiver.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkMapIsEmptyName,
+                                arguments: [receiver],
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            continue
+                        }
+                    }
+
+                    // Default: keep .virtualCall as-is
+                    loweredBody.append(instruction)
+
                 case let .copy(from, to):
                     // Track copies of collection expressions
                     if listExprIDs.contains(from.rawValue) {
@@ -799,6 +1128,9 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     }
                     if arrayExprIDs.contains(from.rawValue) {
                         arrayExprIDs.insert(to.rawValue)
+                    }
+                    if sequenceExprIDs.contains(from.rawValue) {
+                        sequenceExprIDs.insert(to.rawValue)
                     }
                     if listIteratorExprIDs.contains(from.rawValue) {
                         listIteratorExprIDs.insert(to.rawValue)

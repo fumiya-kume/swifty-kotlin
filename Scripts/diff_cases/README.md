@@ -34,5 +34,6 @@ Cases:
 - `try_expression.kt`: `try` 式（multi-catch / partial catch / `finally` 実行順）の parity
 - `interface_default_method.kt`: interface default method（body あり fun）の default 実装呼び出しと concrete override の共存 parity
 - `abstract_class.kt`: abstract class / abstract member の制約と override 強制（abstract fun, multi-level inheritance chain）
+- `sequence_lazy.kt`: `Sequence<T>` lazy evaluation chain（`asSequence` → `map` → `filter` → `toList`）の parity
 
 The set intentionally includes both successful programs and compile-error cases.
