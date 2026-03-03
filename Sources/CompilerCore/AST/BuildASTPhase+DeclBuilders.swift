@@ -192,9 +192,17 @@ extension BuildASTPhase {
 
         let modifiers = declarationModifiers(from: nodeID, in: arena)
         let annotations = declarationAnnotations(from: nodeID, in: arena, interner: interner)
+        let receiverType = declarationPropertyReceiverType(
+            from: nodeID, in: arena, interner: interner, astArena: astArena
+        )
+        let propertyName: InternedString = if receiverType != nil {
+            declarationPropertyNameAfterDot(from: nodeID, in: arena, interner: interner)
+        } else {
+            declarationName(from: nodeID, in: arena, interner: interner)
+        }
         return PropertyDecl(
             range: node.range,
-            name: declarationName(from: nodeID, in: arena, interner: interner),
+            name: propertyName,
             modifiers: modifiers,
             annotations: annotations,
             type: declarationPropertyType(from: nodeID, in: arena, interner: interner, astArena: astArena),
@@ -203,7 +211,8 @@ extension BuildASTPhase {
             getter: accessors.getter,
             setter: accessors.setter,
             delegateExpression: delegateExpr,
-            delegateBody: delegateBody
+            delegateBody: delegateBody,
+            receiverType: receiverType
         )
     }
 

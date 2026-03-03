@@ -443,11 +443,10 @@ struct TypeCheckHelpers {
     ) {
         let annotations = sema.symbols.annotations(for: symbolID)
         for ann in annotations where ann.annotationFQName == "Deprecated" || ann.annotationFQName == "kotlin.Deprecated" {
-            let symbolName: String
-            if let sym = sema.symbols.symbol(symbolID) {
-                symbolName = sym.fqName.map { interner.resolve($0) }.joined(separator: ".")
+            let symbolName = if let sym = sema.symbols.symbol(symbolID) {
+                sym.fqName.map { interner.resolve($0) }.joined(separator: ".")
             } else {
-                symbolName = "<unknown>"
+                "<unknown>"
             }
             // Extract the deprecation message (first positional argument, if any).
             let message = ann.arguments.first.map { arg in

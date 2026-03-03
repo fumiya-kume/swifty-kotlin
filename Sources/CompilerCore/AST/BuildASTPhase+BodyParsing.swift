@@ -293,8 +293,10 @@ extension BuildASTPhase {
             if index + 1 < tokens.count, tokens[index + 1].kind == .symbol(.colon) {
                 let candidate = tokens[index]
                 if let candidateName = tokenText(candidate, interner: interner) {
-                    let knownTargets: Set<String> = ["get", "set", "field", "param", "setparam",
-                                                      "delegate", "property", "receiver", "file"]
+                    let knownTargets: Set<String> = [
+                        "get", "set", "field", "param", "setparam",
+                        "delegate", "property", "receiver", "file",
+                    ]
                     if knownTargets.contains(candidateName) {
                         useSiteTarget = candidateName
                         index += 2 // skip target name and colon
@@ -311,7 +313,8 @@ extension BuildASTPhase {
                 // Handle qualified names like `kotlin.jvm.JvmStatic`
                 while index + 1 < tokens.count,
                       tokens[index].kind == .symbol(.dot),
-                      let nextPart = tokenText(tokens[index + 1], interner: interner) {
+                      let nextPart = tokenText(tokens[index + 1], interner: interner)
+                {
                     nameParts.append(nextPart)
                     index += 2
                 }
@@ -371,15 +374,15 @@ extension BuildASTPhase {
     private func tokenText(_ token: Token, interner: StringInterner) -> String? {
         switch token.kind {
         case let .identifier(interned):
-            return interner.resolve(interned)
+            interner.resolve(interned)
         case let .backtickedIdentifier(interned):
-            return interner.resolve(interned)
+            interner.resolve(interned)
         case let .keyword(keyword):
-            return keyword.rawValue
+            keyword.rawValue
         case let .softKeyword(soft):
-            return soft.rawValue
+            soft.rawValue
         default:
-            return nil
+            nil
         }
     }
 
@@ -387,35 +390,35 @@ extension BuildASTPhase {
     private func tokenRawText(_ token: Token, interner: StringInterner) -> String {
         switch token.kind {
         case let .identifier(interned), let .backtickedIdentifier(interned):
-            return interner.resolve(interned)
+            interner.resolve(interned)
         case let .keyword(keyword):
-            return keyword.rawValue
+            keyword.rawValue
         case let .softKeyword(soft):
-            return soft.rawValue
+            soft.rawValue
         case let .stringSegment(interned):
-            return "\"\(interner.resolve(interned))\""
+            "\"\(interner.resolve(interned))\""
         case .stringQuote:
-            return "\""
+            "\""
         case let .intLiteral(value):
-            return "\(value)"
+            "\(value)"
         case let .longLiteral(value):
-            return "\(value)"
+            "\(value)"
         case let .floatLiteral(value):
-            return "\(value)"
+            "\(value)"
         case let .doubleLiteral(value):
-            return "\(value)"
+            "\(value)"
         case let .charLiteral(value):
-            return "'\(value)'"
+            "'\(value)'"
         case .keyword(.true):
-            return "true"
+            "true"
         case .keyword(.false):
-            return "false"
+            "false"
         case .symbol(.assign):
-            return "="
+            "="
         case .symbol(.dot):
-            return "."
+            "."
         default:
-            return ""
+            ""
         }
     }
 
@@ -425,9 +428,9 @@ extension BuildASTPhase {
         case .keyword(.class), .keyword(.object), .keyword(.interface),
              .keyword(.fun), .keyword(.val), .keyword(.var),
              .keyword(.typealias), .keyword(.enum), .keyword(.companion):
-            return true
+            true
         default:
-            return false
+            false
         }
     }
 

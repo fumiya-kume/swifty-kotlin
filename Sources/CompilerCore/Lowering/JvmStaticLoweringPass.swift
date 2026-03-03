@@ -55,7 +55,7 @@ final class JvmStaticLoweringPass: LoweringPass {
             // Find the enclosing class that owns the companion object.
             guard let grandparentSymbol = symbols.parentSymbol(for: parentSymbol),
                   let grandparentInfo = symbols.symbol(grandparentSymbol),
-                  (grandparentInfo.kind == .class || grandparentInfo.kind == .interface)
+                  grandparentInfo.kind == .class || grandparentInfo.kind == .interface
             else {
                 continue
             }
