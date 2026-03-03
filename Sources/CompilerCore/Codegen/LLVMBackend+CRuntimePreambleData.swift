@@ -1415,7 +1415,8 @@ extension LLVMBackend {
         "  KKSequence* seq = (KKSequence*)(void*)seqRaw;",
         "  if (!seq) { fprintf(stderr, \"[SEQ] to_list: seq is NULL\\n\"); return kk_list_of(0, 0); }",
         "  fprintf(stderr, \"[SEQ] to_list: stepCount=%ld\\n\", (long)seq->stepCount);",
-        "  for (intptr_t d = 0; d < seq->stepCount; d++) fprintf(stderr, \"[SEQ]   step[%ld] kind=%ld fnPtr=%ld\\n\", (long)d, (long)seq->steps[d].kind, (long)seq->steps[d].fnPtr);",
+        // swiftlint:disable:next line_length
+        "  for (intptr_t d = 0; d < seq->stepCount; d++) fprintf(stderr, \"[SEQ]   step[%ld] kind=%ld fn=%ld\\n\", (long)d, (long)seq->steps[d].kind, (long)seq->steps[d].fnPtr);",
         "  /* Gather source elements */",
         "  intptr_t len = 0; intptr_t* elems = NULL;",
         "  for (intptr_t i = 0; i < seq->stepCount; i++) {",
