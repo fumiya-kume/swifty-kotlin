@@ -8,6 +8,7 @@ extension TypeCheckHelpers {
 
     /// Expand a typealias symbol to its underlying type, substituting type arguments.
     /// Handles generic aliases, cycle detection, and depth limiting.
+    // swiftlint:disable:next function_body_length
     func expandTypeAlias(
         _ symbolID: SymbolID,
         typeArgs: [TypeArg],
@@ -54,7 +55,7 @@ extension TypeCheckHelpers {
         if case let .classType(classType) = sema.types.kind(of: expanded),
            let targetSymbol = sema.symbols.symbol(classType.classSymbol),
            targetSymbol.kind == .typeAlias
-        {
+        { // swiftlint:disable:this opening_brace
             var newVisited = visited
             newVisited.insert(symbolID)
             let chainArgs = classType.args
@@ -114,6 +115,7 @@ extension TypeCheckHelpers {
     }
 
     /// Recursively apply type argument substitution to a type.
+    // swiftlint:disable:next cyclomatic_complexity
     func applyAliasSubstitution(
         _ typeID: TypeID,
         argSubstitution: [SymbolID: TypeArg],
@@ -121,44 +123,44 @@ extension TypeCheckHelpers {
     ) -> TypeID {
         let types = sema.types
         switch types.kind(of: typeID) {
-        case let .typeParam(tp):
-            if let replacement = argSubstitution[tp.symbol] {
+        case let .typeParam(typeParam):
+            if let replacement = argSubstitution[typeParam.symbol] {
                 let replacementType: TypeID = switch replacement {
                 case let .invariant(inner), let .out(inner), let .in(inner):
                     inner
                 case .star:
                     types.nullableAnyType
                 }
-                if tp.nullability == .nullable {
+                if typeParam.nullability == .nullable {
                     return applyNullabilityForTypeCheck(replacementType, types: types)
                 }
                 return replacementType
             }
             return typeID
-        case let .classType(ct):
-            let newArgs = ct.args.map { arg -> TypeArg in
+        case let .classType(clsType):
+            let newArgs = clsType.args.map { arg -> TypeArg in
                 substituteAliasArg(arg, argSubstitution: argSubstitution, sema: sema)
             }
-            if newArgs == ct.args { return typeID }
+            if newArgs == clsType.args { return typeID }
             return types.make(.classType(ClassType(
-                classSymbol: ct.classSymbol, args: newArgs, nullability: ct.nullability
+                classSymbol: clsType.classSymbol, args: newArgs, nullability: clsType.nullability
             )))
-        case let .functionType(ft):
-            let newReceiver = ft.receiver.map {
+        case let .functionType(fnType):
+            let newReceiver = fnType.receiver.map {
                 applyAliasSubstitution($0, argSubstitution: argSubstitution, sema: sema)
             }
-            let newParams = ft.params.map {
+            let newParams = fnType.params.map {
                 applyAliasSubstitution($0, argSubstitution: argSubstitution, sema: sema)
             }
             let newReturn = applyAliasSubstitution(
-                ft.returnType, argSubstitution: argSubstitution, sema: sema
+                fnType.returnType, argSubstitution: argSubstitution, sema: sema
             )
-            if newReceiver == ft.receiver, newParams == ft.params, newReturn == ft.returnType {
+            if newReceiver == fnType.receiver, newParams == fnType.params, newReturn == fnType.returnType {
                 return typeID
             }
             return types.make(.functionType(FunctionType(
                 receiver: newReceiver, params: newParams, returnType: newReturn,
-                isSuspend: ft.isSuspend, nullability: ft.nullability
+                isSuspend: fnType.isSuspend, nullability: fnType.nullability
             )))
         case let .intersection(parts):
             let newParts = parts.map {
