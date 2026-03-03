@@ -312,7 +312,7 @@ public final class SymbolTable {
     ) -> SymbolID {
         if let existing = byFQName[fqName], !existing.isEmpty {
             let existingSymbols = existing.compactMap { symbol($0) }
-            let existingKinds = existingSymbols.map { $0.kind }
+            let existingKinds = existingSymbols.map(\.kind)
 
             if canCoexistAsOverload(kind: kind, existingKinds: existingKinds)
                 || canCoexistAsExpectActual(kind: kind, flags: flags, existingSymbols: existingSymbols)
@@ -393,7 +393,7 @@ public final class SymbolTable {
         // This is required for non-overloadable kinds like properties and classes.
         let isNewExpect = flags.contains(.expectDeclaration)
         let isNewActual = flags.contains(.actualDeclaration)
-        guard (isNewExpect || isNewActual) && !(isNewExpect && isNewActual) else {
+        guard isNewExpect || isNewActual, !(isNewExpect && isNewActual) else {
             return false
         }
 

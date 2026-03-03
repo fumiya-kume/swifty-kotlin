@@ -120,7 +120,7 @@ extension DataFlowSemaPhase {
             let sameKindExisting = existing.filter { $0.kind == newKind }
             let hasSameFlagDuplicate = sameKindExisting.contains { $0.flags.contains(sameFlag) }
             let hasOppositeCounterpart = sameKindExisting.contains { $0.flags.contains(oppositeFlag) }
-            if hasOppositeCounterpart && !hasSameFlagDuplicate {
+            if hasOppositeCounterpart, !hasSameFlagDuplicate {
                 return
             }
         }
