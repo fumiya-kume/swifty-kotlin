@@ -98,10 +98,10 @@ extension BuildASTPhase {
             guard !filtered.isEmpty else { continue }
 
             // If the first token is `.` or `?.`, merge into the previous group.
-            if let first = filtered.first,
-               first.kind == .symbol(.dot) || first.kind == .symbol(.questionDot),
-               !rawGroups.isEmpty
-            {
+            let isDotContinuation = filtered.first.map {
+                $0.kind == .symbol(.dot) || $0.kind == .symbol(.questionDot)
+            } ?? false
+            if isDotContinuation, !rawGroups.isEmpty {
                 rawGroups[rawGroups.count - 1].append(contentsOf: rawTokens)
                 filteredGroups[filteredGroups.count - 1].append(contentsOf: filtered)
                 continue
