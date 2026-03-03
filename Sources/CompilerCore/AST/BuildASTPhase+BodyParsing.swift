@@ -299,7 +299,7 @@ extension BuildASTPhase {
                 if let candidateName = tokenText(candidate, interner: interner) {
                     let knownTargets: Set<String> = [
                         "get", "set", "field", "param", "setparam",
-                        "delegate", "property", "receiver", "file"
+                        "delegate", "property", "receiver", "file", // swiftlint:disable:this trailing_comma
                     ]
                     if knownTargets.contains(candidateName) {
                         useSiteTarget = candidateName
@@ -317,7 +317,8 @@ extension BuildASTPhase {
                 // Handle qualified names like `kotlin.jvm.JvmStatic`
                 while index + 1 < tokens.count,
                       tokens[index].kind == .symbol(.dot),
-                      let nextPart = tokenText(tokens[index + 1], interner: interner) {
+                      let nextPart = tokenText(tokens[index + 1], interner: interner)
+                { // swiftlint:disable:this opening_brace
                     nameParts.append(nextPart)
                     index += 2
                 }
