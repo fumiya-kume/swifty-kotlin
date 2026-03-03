@@ -314,10 +314,9 @@ public final class SymbolTable {
             let existingSymbols = existing.compactMap { symbol($0) }
             let existingKinds = existingSymbols.map(\.kind)
 
-            // swiftlint:disable:next opening_brace
-            if canCoexistAsOverload(kind: kind, existingKinds: existingKinds)
+            let shouldCoexist = canCoexistAsOverload(kind: kind, existingKinds: existingKinds)
                 || canCoexistAsExpectActual(kind: kind, flags: flags, existingSymbols: existingSymbols)
-            {
+            if shouldCoexist {
                 return appendNewSymbol(
                     kind: kind,
                     name: name,
