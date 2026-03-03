@@ -60,6 +60,7 @@ final class DeclTypeChecker {
 
     // MARK: - Property Type Checking (from +DeclTypeCheck.swift)
 
+    // swiftlint:disable:next function_body_length
     func typeCheckPropertyDecl(
         _ property: PropertyDecl,
         symbol: SymbolID,
@@ -68,8 +69,9 @@ final class DeclTypeChecker {
         diagnostics: DiagnosticEngine
     ) {
         let sema = ctx.sema
-        let interner = ctx.interner
-        var inferredPropertyType: TypeID? = property.type != nil ? sema.symbols.propertyType(for: symbol) : nil
+        var inferredPropertyType: TypeID? = property.type != nil
+            ? sema.symbols.propertyType(for: symbol)
+            : nil
 
         if let initializer = property.initializer {
             var locals: LocalBindings = [:]
@@ -88,121 +90,44 @@ final class DeclTypeChecker {
             }
         }
 
+        // For extension properties, set the implicit receiver type so
+        // that `this` resolves correctly inside getter/setter bodies.
+        let extRecv = sema.symbols
+            .extensionPropertyReceiverType(for: symbol)
+        let accessorCtx: TypeInferenceContext = if let extRecv {
+            ctx.copying(implicitReceiverType: extRecv)
+        } else {
+            ctx
+        }
+
         if let getter = property.getter {
-            var getterLocals: LocalBindings = [:]
-            if let fieldType = inferredPropertyType {
-                let fieldSymbol = sema.symbols.backingFieldSymbol(for: symbol) ?? symbol
-                getterLocals[interner.intern("field")] = (fieldType, fieldSymbol, true, true)
-            }
-            let getterType = inferFunctionBodyType(
-                getter.body, ctx: ctx, locals: &getterLocals,
-                expectedType: inferredPropertyType
+            inferredPropertyType = typeCheckGetter(
+                getter, symbol: symbol,
+                inferredPropertyType: inferredPropertyType,
+                accessorCtx: accessorCtx, solver: solver,
+                diagnostics: diagnostics
             )
-            if let declaredType = inferredPropertyType {
-                driver.emitSubtypeConstraint(
-                    left: getterType, right: declaredType,
-                    range: getter.range, solver: solver,
-                    sema: sema, diagnostics: diagnostics
-                )
-            } else {
-                inferredPropertyType = getterType
-            }
         }
 
         if let delegateExpr = property.delegateExpression {
-            var delegateLocals: LocalBindings = [:]
-            let delegateType = driver.inferExpr(
-                delegateExpr, ctx: ctx, locals: &delegateLocals,
-                expectedType: nil
+            inferredPropertyType = typeCheckDelegate(
+                delegateExpr, property: property,
+                symbol: symbol,
+                inferredPropertyType: inferredPropertyType,
+                ctx: ctx
             )
-
-            // Record the delegate type on the property symbol so the KIR
-            // lowering phase can synthesise getValue/setValue calls.
-            sema.symbols.setPropertyType(delegateType, for: SymbolID(rawValue: -(symbol.rawValue + 50000)))
-
-            // Resolve getValue operator on the delegate type to infer the
-            // property type from its return type (Kotlin spec J12).
-            let getValueName = interner.intern("getValue")
-            let getValueCandidates = driver.helpers.collectMemberFunctionCandidates(
-                named: getValueName,
-                receiverType: delegateType,
-                sema: sema
-            ).filter { candidateID in
-                guard let sym = sema.symbols.symbol(candidateID) else { return false }
-                return sym.flags.contains(.operatorFunction)
-            }
-            if let getValueSymbol = getValueCandidates.first,
-               let getValueSig = sema.symbols.functionSignature(for: getValueSymbol)
-            {
-                // Use getValue return type to infer the property type when
-                // no explicit type annotation is provided.
-                if inferredPropertyType == nil {
-                    inferredPropertyType = getValueSig.returnType
-                }
-            }
-
-            // Fallback: if no getValue was resolved and no explicit type,
-            // use Any? as the property type.
-            if inferredPropertyType == nil {
-                inferredPropertyType = sema.types.nullableAnyType
-            }
-
-            // For var properties, also check that setValue operator exists.
-            if property.isVar {
-                let setValueName = interner.intern("setValue")
-                let setValueCandidates = driver.helpers.collectMemberFunctionCandidates(
-                    named: setValueName,
-                    receiverType: delegateType,
-                    sema: sema
-                ).filter { candidateID in
-                    guard let sym = sema.symbols.symbol(candidateID) else { return false }
-                    return sym.flags.contains(.operatorFunction)
-                }
-                _ = setValueCandidates // Validate existence; diagnostic emitted elsewhere if needed.
-            }
-
-            // Check for provideDelegate operator on the delegate type.
-            let provideDelegateName = interner.intern("provideDelegate")
-            let provideDelegateCandidates = driver.helpers.collectMemberFunctionCandidates(
-                named: provideDelegateName,
-                receiverType: delegateType,
-                sema: sema
-            ).filter { candidateID in
-                guard let sym = sema.symbols.symbol(candidateID) else { return false }
-                return sym.flags.contains(.operatorFunction)
-            }
-            // Record provideDelegate availability so the KIR lowering phase
-            // can emit the provideDelegate call for top-level properties.
-            if !provideDelegateCandidates.isEmpty {
-                sema.symbols.setHasProvideDelegate(for: symbol)
-            }
         }
 
-        let finalPropertyType = inferredPropertyType ?? sema.types.nullableAnyType
+        let finalPropertyType = inferredPropertyType
+            ?? sema.types.nullableAnyType
         sema.symbols.setPropertyType(finalPropertyType, for: symbol)
 
         if let setter = property.setter {
-            if !property.isVar {
-                diagnostics.error(
-                    "KSWIFTK-SEMA-0005",
-                    "Setter is not allowed for read-only property.",
-                    range: setter.range
-                )
-            }
-            var setterLocals: LocalBindings = [:]
-            let fieldSymbol = sema.symbols.backingFieldSymbol(for: symbol) ?? symbol
-            setterLocals[interner.intern("field")] = (finalPropertyType, fieldSymbol, true, true)
-            let parameterName = setter.parameterName ?? interner.intern("value")
-            let setterValueSymbol = SyntheticSymbolScheme.semaSetterValueSymbol(for: symbol)
-            setterLocals[parameterName] = (finalPropertyType, setterValueSymbol, true, true)
-            let setterType = inferFunctionBodyType(
-                setter.body, ctx: ctx, locals: &setterLocals,
-                expectedType: sema.types.unitType
-            )
-            driver.emitSubtypeConstraint(
-                left: setterType, right: sema.types.unitType,
-                range: setter.range, solver: solver,
-                sema: sema, diagnostics: diagnostics
+            typeCheckSetter(
+                setter, property: property, symbol: symbol,
+                finalPropertyType: finalPropertyType,
+                accessorCtx: accessorCtx, solver: solver,
+                diagnostics: diagnostics
             )
         }
     }

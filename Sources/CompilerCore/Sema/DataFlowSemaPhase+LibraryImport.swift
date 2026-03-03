@@ -72,6 +72,12 @@ extension DataFlowSemaPhase {
                 if record.isValueClass {
                     flags.insert(.valueType)
                 }
+                if record.isExpect {
+                    flags.insert(.expectDeclaration)
+                }
+                if record.isActual {
+                    flags.insert(.actualDeclaration)
+                }
                 let symbol = symbols.define(
                     kind: record.kind,
                     name: name,
@@ -317,6 +323,8 @@ extension DataFlowSemaPhase {
         let isDataClass: Bool
         let isSealedClass: Bool
         let isValueClass: Bool
+        let isExpect: Bool
+        let isActual: Bool
         let valueClassUnderlyingTypeSig: String?
         let annotations: [MetadataAnnotationRecord]
         let sealedSubclassFQNames: [[InternedString]]

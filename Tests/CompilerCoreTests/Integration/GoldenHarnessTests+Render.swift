@@ -231,6 +231,8 @@ extension GoldenHarnessTests {
         if flags.contains(.overrideMember) { names.append("overrideMember") }
         if flags.contains(.finalMember) { names.append("finalMember") }
         if flags.contains(.funInterface) { names.append("funInterface") }
+        if flags.contains(.expectDeclaration) { names.append("expectDeclaration") }
+        if flags.contains(.actualDeclaration) { names.append("actualDeclaration") }
         return names.joined(separator: "|")
     }
 

@@ -1,6 +1,7 @@
 import Foundation
 
 extension CoroutineLoweringPass {
+    // swiftlint:disable:next function_body_length
     func lowerSuspendBodyToStateMachineSkeleton(
         originalBody: [KIRInstruction],
         continuationParameterSymbol: SymbolID,
@@ -25,6 +26,7 @@ extension CoroutineLoweringPass {
         let setCompletionCallee = interner.intern("kk_coroutine_state_set_completion")
         let getCompletionCallee = interner.intern("kk_coroutine_state_get_completion")
         let suspendedProvider = interner.intern("kk_coroutine_suspended")
+        let checkCancellationCallee = interner.intern("kk_coroutine_check_cancellation")
         let sourceDelayCallee = interner.intern("delay")
         let stateBlocks = suspendPlan.stateBlocks
         let transitionsByResumeLabel = suspendPlan.transitionsByResumeLabel
@@ -120,6 +122,25 @@ extension CoroutineLoweringPass {
                         )
                     )
                 }
+
+                // CORO-002: Check cancellation after resuming from suspension point.
+                // If cancelled, kk_coroutine_check_cancellation writes a CancellationException
+                // into outThrown and returns 1. We use thrownResult: nil so that codegen
+                // auto-generates the early-return propagation on non-zero thrown.
+                let cancelCheckResult = module.arena.appendExpr(
+                    .temporary(Int32(module.arena.expressions.count)),
+                    type: intType
+                )
+                lowered.append(
+                    .call(
+                        symbol: nil,
+                        callee: checkCancellationCallee,
+                        arguments: [continuationExpr],
+                        result: cancelCheckResult,
+                        canThrow: true,
+                        thrownResult: nil
+                    )
+                )
             }
             let nextResumeLabel = stateBlocks.indices.contains(index + 1)
                 ? stateBlocks[index + 1].resumeLabel

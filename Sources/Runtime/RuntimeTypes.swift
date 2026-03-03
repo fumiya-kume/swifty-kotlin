@@ -60,6 +60,17 @@ final class RuntimeThrowableBox {
     }
 }
 
+/// Distinct type used to identify CancellationException at runtime.
+/// The runtime checks `is RuntimeCancellationBox` to distinguish cancellation from
+/// regular throwables (CORO-002 / spec.md J17).
+final class RuntimeCancellationBox {
+    let message: String
+
+    init(message: String = "CancellationException") {
+        self.message = message
+    }
+}
+
 class RuntimeArrayBox {
     var elements: [Int]
 

@@ -1,5 +1,6 @@
 import Foundation
 
+// swiftlint:disable:next type_body_length
 public final class CompilerDriver {
     private struct PreparedRunContext {
         let context: CompilationContext
@@ -191,7 +192,7 @@ public final class CompilerDriver {
         }
 
         if printDiagnostics {
-            ctx.diagnostics.printDiagnostics(from: ctx.sourceManager)
+            ctx.diagnostics.printDiagnostics(format: ctx.options.diagnosticsFormat, from: ctx.sourceManager)
         }
 
         if timePhasesEnabled, let timer = ctx.phaseTimer {

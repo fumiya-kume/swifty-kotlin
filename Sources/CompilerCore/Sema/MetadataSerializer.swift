@@ -40,6 +40,10 @@ public struct MetadataRecord {
     // P5-78: sealed subclass FQ names for cross-module exhaustiveness
     public let sealedSubclassFQNames: [String]
 
+    // MPP-001: expect/actual declaration flags
+    public let isExpect: Bool
+    public let isActual: Bool
+
     public init(
         kind: SymbolKind,
         mangledName: String = "",
@@ -62,7 +66,9 @@ public struct MetadataRecord {
         annotations: [MetadataAnnotationRecord] = [],
         isValueClass: Bool = false,
         valueClassUnderlyingTypeSig: String? = nil,
-        sealedSubclassFQNames: [String] = []
+        sealedSubclassFQNames: [String] = [],
+        isExpect: Bool = false,
+        isActual: Bool = false
     ) {
         self.kind = kind
         self.mangledName = mangledName
@@ -86,6 +92,8 @@ public struct MetadataRecord {
         self.isValueClass = isValueClass
         self.valueClassUnderlyingTypeSig = valueClassUnderlyingTypeSig
         self.sealedSubclassFQNames = sealedSubclassFQNames
+        self.isExpect = isExpect
+        self.isActual = isActual
     }
 }
 
@@ -227,6 +235,8 @@ public final class MetadataEncoder {
 
             let isDataClass = symbol.flags.contains(.dataType)
             let isSealedClass = symbol.flags.contains(.sealedType)
+            let isExpect = symbol.flags.contains(.expectDeclaration)
+            let isActual = symbol.flags.contains(.actualDeclaration)
             let rawIsValueClass = symbol.flags.contains(.valueType)
 
             var valueClassUnderlyingTypeSig: String?
@@ -288,7 +298,9 @@ public final class MetadataEncoder {
                 annotations: annotationEntries,
                 isValueClass: isValueClass,
                 valueClassUnderlyingTypeSig: valueClassUnderlyingTypeSig,
-                sealedSubclassFQNames: sealedSubclassFQNames
+                sealedSubclassFQNames: sealedSubclassFQNames,
+                isExpect: isExpect,
+                isActual: isActual
             ))
         }
         return records
@@ -368,6 +380,12 @@ public final class MetadataEncoder {
             }
             if !record.sealedSubclassFQNames.isEmpty {
                 fields.append("sealedSubs=\(record.sealedSubclassFQNames.joined(separator: ","))")
+            }
+            if record.isExpect {
+                fields.append("expect=1")
+            }
+            if record.isActual {
+                fields.append("actual=1")
             }
             if !record.annotations.isEmpty {
                 fields.append("annotations=\(encodeAnnotations(record.annotations))")
@@ -511,6 +529,8 @@ public final class MetadataDecoder {
             var valueClassUnderlyingTypeSig: String?
             var annotations: [MetadataAnnotationRecord] = []
             var sealedSubclassFQNames: [String] = []
+            var isExpect = false
+            var isActual = false
             var schemaVersion: String?
 
             for part in parts.dropFirst() {
@@ -560,6 +580,10 @@ public final class MetadataDecoder {
                     sealedSubclassFQNames = value.split(separator: ",").map(String.init).filter { !$0.isEmpty }
                 case "annotations":
                     annotations = decodeAnnotations(value)
+                case "expect":
+                    isExpect = value == "1" || value == "true"
+                case "actual":
+                    isActual = value == "1" || value == "true"
                 case "schema":
                     schemaVersion = value
                 default:
@@ -599,7 +623,9 @@ public final class MetadataDecoder {
                 annotations: annotations,
                 isValueClass: isValueClass,
                 valueClassUnderlyingTypeSig: valueClassUnderlyingTypeSig,
-                sealedSubclassFQNames: sealedSubclassFQNames
+                sealedSubclassFQNames: sealedSubclassFQNames,
+                isExpect: isExpect,
+                isActual: isActual
             ))
         }
         return records

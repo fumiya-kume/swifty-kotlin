@@ -97,6 +97,12 @@ public final class DataFlowSemaPhase: CompilerPhase {
             ast: ast, symbols: symbols, bindings: bindings,
             diagnostics: ctx.diagnostics, interner: ctx.interner
         )
+        validateExpectActualMatching(
+            ast: ast,
+            symbols: symbols,
+            diagnostics: ctx.diagnostics,
+            interner: ctx.interner
+        )
         validateConstructorDelegation(ast: ast, symbols: symbols, diagnostics: ctx.diagnostics)
         validateDeclarationSiteVariance(
             ast: ast, symbols: symbols, bindings: bindings,

@@ -27,6 +27,13 @@ public struct CallableValueCallBinding {
     }
 }
 
+/// Identifies the kind of builder DSL function (STDLIB-002).
+public enum BuilderDSLKind: Equatable {
+    case buildString
+    case buildList
+    case buildMap
+}
+
 public struct CatchClauseBinding: Equatable {
     public let parameterSymbol: SymbolID
     public let parameterType: TypeID

@@ -31,6 +31,11 @@ extension LLVMBackend {
         "kk_kxmini_async",
         "kk_kxmini_async_await",
         "kk_kxmini_delay",
+        // CORO-002: Cancellation ABI
+        "kk_coroutine_check_cancellation",
+        "kk_is_cancellation_exception",
+        "kk_job_cancel",
+        "kk_coroutine_cancel",
         "kk_array_new",
         "kk_array_get",
         "kk_array_set",
@@ -115,6 +120,13 @@ extension LLVMBackend {
         "kk_sequence_builder_create",
         "kk_sequence_builder_yield",
         "kk_sequence_builder_build",
+        // Builder DSL (STDLIB-002)
+        "kk_build_string",
+        "kk_build_list",
+        "kk_build_map",
+        "kk_string_builder_append",
+        "kk_mutable_list_add",
+        "kk_mutable_map_put",
     ]
 
     func collectExternalCallees(
