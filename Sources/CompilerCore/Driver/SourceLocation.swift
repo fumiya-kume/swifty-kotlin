@@ -60,6 +60,13 @@ public struct SourceRange: Hashable, Sendable {
         self.start = start
         self.end = end
     }
+
+    /// Returns `true` if `other` is entirely contained within this range
+    /// (same file, and offsets within bounds).
+    public func contains(_ other: SourceRange) -> Bool {
+        guard start.file == other.start.file else { return false }
+        return start.offset <= other.start.offset && other.end.offset <= end.offset
+    }
 }
 
 public struct LineColumn: Equatable, Sendable {

@@ -113,6 +113,14 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
                 sema.bindings.bindExprType(id, type: sema.types.errorType)
                 return sema.types.errorType
             }
+            // ANNO-001: Check for @Deprecated annotation on the resolved callee.
+            driver.helpers.checkDeprecation(
+                for: chosen,
+                sema: sema,
+                interner: interner,
+                range: range,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
             let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
             sema.bindings.bindExprType(id, type: returnType)
             return returnType
