@@ -1,3 +1,4 @@
+// swiftlint:disable file_length type_body_length
 import Foundation
 
 /// Canonical C ABI extern declarations for the KSwiftK runtime.
@@ -541,6 +542,13 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // swiftlint:disable:next identifier_name
+    public static let kk_lazy_is_initialized = ExternDecl(
+        name: "kk_lazy_is_initialized",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_observable_create = ExternDecl(
         name: "kk_observable_create",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -728,6 +736,7 @@ public enum RuntimeABIExterns {
         // Delegate
         kk_lazy_create,
         kk_lazy_get_value,
+        kk_lazy_is_initialized,
         kk_observable_create,
         kk_observable_get_value,
         kk_observable_set_value,
@@ -750,3 +759,5 @@ public enum RuntimeABIExterns {
         allExterns.first { $0.name == name }
     }
 }
+
+// swiftlint:enable file_length type_body_length
