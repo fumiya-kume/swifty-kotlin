@@ -80,6 +80,8 @@ extension DataFlowSemaPhase {
         if modifiers.contains(.const) { value.insert(.constValue) }
         if modifiers.contains(.override) { value.insert(.overrideMember) }
         if modifiers.contains(.final) { value.insert(.finalMember) }
+        if modifiers.contains(.expect) { value.insert(.expectDeclaration) }
+        if modifiers.contains(.actual) { value.insert(.actualDeclaration) }
     }
 
     func hasDeclarationConflict(newKind: SymbolKind, existing: [SemanticSymbol]) -> Bool {
@@ -98,14 +100,26 @@ extension DataFlowSemaPhase {
 
     /// Checks for a duplicate declaration conflict at the given fully-qualified name and
     /// emits the standard KSWIFTK-SEMA-0001 diagnostic when a conflict is detected.
+    /// An `expect` and `actual` pair sharing the same FQ name is NOT a conflict.
     func checkAndReportDuplicateDeclaration(
         newKind: SymbolKind,
         fqName: [InternedString],
         range: SourceRange?,
         symbols: SymbolTable,
-        diagnostics: DiagnosticEngine
+        diagnostics: DiagnosticEngine,
+        newFlags: SymbolFlags = []
     ) {
         let existing = symbols.lookupAll(fqName: fqName).compactMap { symbols.symbol($0) }
+        // Allow expect/actual pair: an expect and an actual with the same FQ name coexist.
+        if newFlags.contains(.expectDeclaration) || newFlags.contains(.actualDeclaration) {
+            let isNewExpect = newFlags.contains(.expectDeclaration)
+            let hasMatchingCounterpart = existing.contains { sym in
+                isNewExpect ? sym.flags.contains(.actualDeclaration) : sym.flags.contains(.expectDeclaration)
+            }
+            if hasMatchingCounterpart {
+                return
+            }
+        }
         if hasDeclarationConflict(newKind: newKind, existing: existing) {
             diagnostics.error(
                 "KSWIFTK-SEMA-0001",

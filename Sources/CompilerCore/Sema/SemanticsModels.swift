@@ -52,6 +52,8 @@ public struct SymbolFlags: OptionSet, Sendable {
     public static let overrideMember = SymbolFlags(rawValue: 1 << 14)
     public static let finalMember = SymbolFlags(rawValue: 1 << 15)
     public static let funInterface = SymbolFlags(rawValue: 1 << 16)
+    public static let expectDeclaration = SymbolFlags(rawValue: 1 << 17)
+    public static let actualDeclaration = SymbolFlags(rawValue: 1 << 18)
 }
 
 public struct SemanticSymbol: Sendable {
@@ -268,6 +270,7 @@ public final class SymbolTable {
     private var sealedSubclassesStorage: [SymbolID: [SymbolID]] = [:]
     private var constValueExprKinds: [SymbolID: KIRExprKind] = [:]
     private var delegateHasProvideDelegate: Set<SymbolID> = []
+    private var expectActualLinks: [SymbolID: SymbolID] = [:]
 
     public init() {}
 
@@ -581,6 +584,16 @@ public final class SymbolTable {
     /// Returns whether the delegate type of the given property defines a `provideDelegate` operator.
     public func hasProvideDelegate(for property: SymbolID) -> Bool {
         delegateHasProvideDelegate.contains(property)
+    }
+
+    /// Link an `expect` declaration to its matching `actual` declaration.
+    public func setExpectActualLink(expect: SymbolID, actual: SymbolID) {
+        expectActualLinks[expect] = actual
+    }
+
+    /// Returns the `actual` symbol linked to the given `expect` symbol, if any.
+    public func actualSymbol(for expect: SymbolID) -> SymbolID? {
+        expectActualLinks[expect]
     }
 
     // MARK: - Indexed queries

@@ -31,14 +31,15 @@ extension DataFlowSemaPhase {
                 continue
             }
             let memberFQName = ownerFQName + [funDecl.name]
+            var memberFlags = flags(from: funDecl.modifiers)
             checkAndReportDuplicateDeclaration(
                 newKind: .function,
                 fqName: memberFQName,
                 range: funDecl.range,
                 symbols: symbols,
-                diagnostics: diagnostics
+                diagnostics: diagnostics,
+                newFlags: memberFlags
             )
-            var memberFlags = flags(from: funDecl.modifiers)
             // Kotlin: interface functions without a body are implicitly abstract.
             if symbols.symbol(ownerSymbol)?.kind == .interface, funDecl.body == .unit {
                 memberFlags.insert(.abstractType)
@@ -138,14 +139,15 @@ extension DataFlowSemaPhase {
                 continue
             }
             let memberFQName = ownerFQName + [propertyDecl.name]
+            var propertyFlags = flags(from: propertyDecl.modifiers)
             checkAndReportDuplicateDeclaration(
                 newKind: .property,
                 fqName: memberFQName,
                 range: propertyDecl.range,
                 symbols: symbols,
-                diagnostics: diagnostics
+                diagnostics: diagnostics,
+                newFlags: propertyFlags
             )
-            var propertyFlags = flags(from: propertyDecl.modifiers)
             if propertyDecl.isVar {
                 propertyFlags.insert(.mutable)
             }
@@ -243,7 +245,8 @@ extension DataFlowSemaPhase {
                     fqName: nestedFQName,
                     range: nestedClass.range,
                     symbols: symbols,
-                    diagnostics: diagnostics
+                    diagnostics: diagnostics,
+                    newFlags: flags(from: nestedClass.modifiers)
                 )
                 let nestedSymbol = symbols.define(
                     kind: nestedClassKind,
@@ -413,7 +416,8 @@ extension DataFlowSemaPhase {
                     fqName: nestedFQName,
                     range: nestedInterface.range,
                     symbols: symbols,
-                    diagnostics: diagnostics
+                    diagnostics: diagnostics,
+                    newFlags: flags(from: nestedInterface.modifiers)
                 )
                 var nestedFlags = flags(from: nestedInterface.modifiers)
                 if nestedInterface.isFunInterface {
@@ -500,7 +504,8 @@ extension DataFlowSemaPhase {
                 fqName: nestedFQName,
                 range: nestedObject.range,
                 symbols: symbols,
-                diagnostics: diagnostics
+                diagnostics: diagnostics,
+                newFlags: flags(from: nestedObject.modifiers)
             )
             let nestedSymbol = symbols.define(
                 kind: .object,

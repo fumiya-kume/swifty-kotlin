@@ -1,0 +1,19 @@
+symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s1 kind=package fq=kotlin vis=public flags=synthetic
+symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
+symbol s4 kind=interface fq=kotlin.properties.ReadWriteProperty vis=public flags=synthetic
+symbol s5 kind=interface fq=kotlin.properties.ReadOnlyProperty vis=public flags=synthetic
+symbol s6 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=_ params=[Any,() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
+symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s11 kind=function fq=golden.sema.platform vis=public flags= sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s12 kind=function fq=golden.sema.platform vis=public flags= sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s13 kind=function fq=golden.sema.unresolved vis=public flags= sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+file f0 package=golden.sema
+  decl d0 fun platform suspend=0 inline=0 sym=s11
+  decl d1 fun platform suspend=0 inline=0 sym=s12
+  decl d2 fun unresolved suspend=0 inline=0 sym=s13
+expr e0 string(ok) type=String

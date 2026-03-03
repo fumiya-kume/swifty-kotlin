@@ -98,7 +98,8 @@ extension DataFlowSemaPhase {
             fqName: fqName,
             range: declaration.range,
             symbols: symbols,
-            diagnostics: diagnostics
+            diagnostics: diagnostics,
+            newFlags: declaration.flags
         )
         let symbol = symbols.define(
             kind: declaration.kind,

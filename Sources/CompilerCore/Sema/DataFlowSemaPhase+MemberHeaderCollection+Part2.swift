@@ -92,7 +92,8 @@ extension DataFlowSemaPhase {
                 fqName: aliasFQName,
                 range: alias.range,
                 symbols: symbols,
-                diagnostics: diagnostics
+                diagnostics: diagnostics,
+                newFlags: flags(from: alias.modifiers)
             )
             let aliasSymbol = symbols.define(
                 kind: .typeAlias,
