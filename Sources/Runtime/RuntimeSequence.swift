@@ -39,53 +39,64 @@ private func registerRuntimeObject(_ box: AnyObject) -> Int {
     return Int(bitPattern: opaque)
 }
 
+/// Extracts source elements from a sequence step, if applicable.
+private func extractSourceElements(from step: SequenceStepKind) -> [Int]? {
+    switch step {
+    case let .source(sourceElements): return sourceElements
+    case let .builder(builderElements): return builderElements
+    default: return nil
+    }
+}
+
+/// Applies a map transformation to elements using the given function pointer.
+private func applyMapStep(_ elements: [Int], fnPtr: Int) -> [Int] {
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var mapped: [Int] = []
+    mapped.reserveCapacity(elements.count)
+    for elem in elements {
+        var thrown = 0
+        let result = lambda(elem, &thrown)
+        if thrown != 0 { break }
+        mapped.append(maybeUnbox(result))
+    }
+    return mapped
+}
+
+/// Applies a filter transformation to elements using the given function pointer.
+private func applyFilterStep(_ elements: [Int], fnPtr: Int) -> [Int] {
+    let predicate = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var filtered: [Int] = []
+    for elem in elements {
+        var thrown = 0
+        let result = predicate(elem, &thrown)
+        if thrown != 0 { break }
+        if maybeUnbox(result) != 0 {
+            filtered.append(elem)
+        }
+    }
+    return filtered
+}
+
 /// Evaluates the lazy sequence chain and returns the materialized elements.
 /// This is the core of lazy semantics: steps are only executed here.
 private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
+    // Find the source elements
     var elements: [Int] = []
-
-    // Find the source step
     for step in seq.steps {
-        switch step {
-        case let .source(sourceElements):
-            elements = sourceElements
-        case let .builder(builderElements):
-            elements = builderElements
-        default:
-            break
+        if let source = extractSourceElements(from: step) {
+            elements = source
         }
     }
 
-    // Apply transformations in order
+    // Apply transformation steps in order
     for step in seq.steps {
         switch step {
         case .source, .builder:
-            // Already handled above
             break
         case let .mapStep(fnPtr):
-            let fn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
-            var mapped: [Int] = []
-            mapped.reserveCapacity(elements.count)
-            for elem in elements {
-                var thrown = 0
-                let result = fn(elem, &thrown)
-                if thrown != 0 { break }
-                // Unbox if needed (matching kk_maybe_unbox behavior)
-                mapped.append(maybeUnbox(result))
-            }
-            elements = mapped
+            elements = applyMapStep(elements, fnPtr: fnPtr)
         case let .filterStep(fnPtr):
-            let fn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
-            var filtered: [Int] = []
-            for elem in elements {
-                var thrown = 0
-                let result = fn(elem, &thrown)
-                if thrown != 0 { break }
-                if maybeUnbox(result) != 0 {
-                    filtered.append(elem)
-                }
-            }
-            elements = filtered
+            elements = applyFilterStep(elements, fnPtr: fnPtr)
         case let .takeStep(count):
             if count >= 0, count < elements.count {
                 elements = Array(elements.prefix(count))
@@ -237,9 +248,9 @@ public func kk_sequence_builder_build(_ fnPtr: Int) -> Int {
     let builderHandle = registerRuntimeObject(builder)
 
     // Call the builder block with the builder handle
-    let fn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    let builderBlock = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var thrown = 0
-    _ = fn(builderHandle, &thrown)
+    _ = builderBlock(builderHandle, &thrown)
 
     let seq = RuntimeSequenceBox(steps: [.builder(elements: builder.elements)])
     return registerRuntimeObject(seq)
