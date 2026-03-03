@@ -6,7 +6,7 @@ import Foundation
 
 extension DataFlowSemaPhase {
     func validateExpectActualMatching(
-        ast: ASTModule,
+        ast _: ASTModule,
         symbols: SymbolTable,
         diagnostics: DiagnosticEngine,
         interner: StringInterner
