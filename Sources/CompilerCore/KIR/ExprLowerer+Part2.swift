@@ -44,53 +44,54 @@ extension ExprLowerer {
 /// giant switch in the call-site. Every ``Expr`` case carries a range as its
 /// last associated value (or named `range:`).
 enum ExprSourceRange {
+    // swiftlint:disable:next cyclomatic_complexity
     static func range(of expr: Expr) -> SourceRange? {
         switch expr {
-        case let .intLiteral(_, r): r
-        case let .longLiteral(_, r): r
-        case let .floatLiteral(_, r): r
-        case let .doubleLiteral(_, r): r
-        case let .charLiteral(_, r): r
-        case let .boolLiteral(_, r): r
-        case let .stringLiteral(_, r): r
-        case let .stringTemplate(_, range: r): r
-        case let .nameRef(_, r): r
-        case let .forExpr(_, _, _, _, range: r): r
-        case let .whileExpr(_, _, _, range: r): r
-        case let .doWhileExpr(_, _, _, range: r): r
-        case let .breakExpr(_, range: r): r
-        case let .continueExpr(_, range: r): r
-        case let .localDecl(_, _, _, _, range: r): r
-        case let .localAssign(_, _, range: r): r
-        case let .memberAssign(_, _, _, range: r): r
-        case let .indexedAssign(_, _, _, range: r): r
-        case let .call(_, _, _, range: r): r
-        case let .memberCall(_, _, _, _, range: r): r
-        case let .indexedAccess(_, _, range: r): r
-        case let .binary(_, _, _, range: r): r
-        case let .whenExpr(_, _, _, range: r): r
-        case let .returnExpr(_, _, range: r): r
-        case let .ifExpr(_, _, _, range: r): r
-        case let .tryExpr(_, _, _, range: r): r
-        case let .unaryExpr(_, _, range: r): r
-        case let .isCheck(_, _, _, range: r): r
-        case let .asCast(_, _, _, range: r): r
-        case let .nullAssert(_, range: r): r
-        case let .safeMemberCall(_, _, _, _, range: r): r
-        case let .compoundAssign(_, _, _, range: r): r
-        case let .indexedCompoundAssign(_, _, _, _, range: r): r
-        case let .throwExpr(_, range: r): r
-        case let .lambdaLiteral(_, _, _, range: r): r
-        case let .objectLiteral(_, range: r): r
-        case let .callableRef(_, _, range: r): r
-        case let .localFunDecl(_, _, _, _, range: r): r
-        case let .blockExpr(_, _, range: r): r
-        case let .superRef(_, r): r
-        case let .thisRef(_, r): r
-        case let .inExpr(_, _, range: r): r
-        case let .notInExpr(_, _, range: r): r
-        case let .destructuringDecl(_, _, _, range: r): r
-        case let .forDestructuringExpr(_, _, _, range: r): r
+        case let .intLiteral(_, range): range
+        case let .longLiteral(_, range): range
+        case let .floatLiteral(_, range): range
+        case let .doubleLiteral(_, range): range
+        case let .charLiteral(_, range): range
+        case let .boolLiteral(_, range): range
+        case let .stringLiteral(_, range): range
+        case let .stringTemplate(_, range: range): range
+        case let .nameRef(_, range): range
+        case let .forExpr(_, _, _, _, range: range): range
+        case let .whileExpr(_, _, _, range: range): range
+        case let .doWhileExpr(_, _, _, range: range): range
+        case let .breakExpr(_, range: range): range
+        case let .continueExpr(_, range: range): range
+        case let .localDecl(_, _, _, _, range: range): range
+        case let .localAssign(_, _, range: range): range
+        case let .memberAssign(_, _, _, range: range): range
+        case let .indexedAssign(_, _, _, range: range): range
+        case let .call(_, _, _, range: range): range
+        case let .memberCall(_, _, _, _, range: range): range
+        case let .indexedAccess(_, _, range: range): range
+        case let .binary(_, _, _, range: range): range
+        case let .whenExpr(_, _, _, range: range): range
+        case let .returnExpr(_, _, range: range): range
+        case let .ifExpr(_, _, _, range: range): range
+        case let .tryExpr(_, _, _, range: range): range
+        case let .unaryExpr(_, _, range: range): range
+        case let .isCheck(_, _, _, range: range): range
+        case let .asCast(_, _, _, range: range): range
+        case let .nullAssert(_, range: range): range
+        case let .safeMemberCall(_, _, _, _, range: range): range
+        case let .compoundAssign(_, _, _, range: range): range
+        case let .indexedCompoundAssign(_, _, _, _, range: range): range
+        case let .throwExpr(_, range: range): range
+        case let .lambdaLiteral(_, _, _, range: range): range
+        case let .objectLiteral(_, range: range): range
+        case let .callableRef(_, _, range: range): range
+        case let .localFunDecl(_, _, _, _, range: range): range
+        case let .blockExpr(_, _, range: range): range
+        case let .superRef(_, range): range
+        case let .thisRef(_, range): range
+        case let .inExpr(_, _, range: range): range
+        case let .notInExpr(_, _, range: range): range
+        case let .destructuringDecl(_, _, _, range: range): range
+        case let .forDestructuringExpr(_, _, _, range: range): range
         }
     }
 }
