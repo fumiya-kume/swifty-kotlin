@@ -130,10 +130,12 @@ public extension TypeSystem {
                 covariantSub[typeVar] = type
                 writeForbidden.insert(tpSymbol)
             case .in:
-                let upperBound = symbols.typeParameterUpperBound(for: tpSymbol) ?? nullableAnyType
+                let upperBounds = symbols.typeParameterUpperBounds(for: tpSymbol)
+                let upperBound = upperBounds.first ?? nullableAnyType
                 covariantSub[typeVar] = upperBound
             case .star:
-                let upperBound = symbols.typeParameterUpperBound(for: tpSymbol) ?? nullableAnyType
+                let upperBounds = symbols.typeParameterUpperBounds(for: tpSymbol)
+                let upperBound = upperBounds.first ?? nullableAnyType
                 covariantSub[typeVar] = upperBound
                 writeForbidden.insert(tpSymbol)
             }

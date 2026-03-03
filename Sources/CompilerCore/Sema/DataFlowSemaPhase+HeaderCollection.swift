@@ -507,7 +507,7 @@ extension DataFlowSemaPhase {
                     anyType
                 }
             }
-            let upperBounds: [TypeID?] = typeParamResult.typeParameterSymbols.map { symbols.typeParameterUpperBound(for: $0) }
+            let upperBounds: [TypeID?] = typeParamResult.typeParameterSymbols.map { symbols.typeParameterUpperBounds(for: $0).first }
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: receiverType,

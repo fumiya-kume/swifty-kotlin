@@ -262,7 +262,7 @@ public final class SymbolTable {
     private var extensionPropertyReceiverTypes: [SymbolID: TypeID] = [:]
     private var extensionPropertyGetterAccessors: [SymbolID: SymbolID] = [:]
     private var extensionPropertySetterAccessors: [SymbolID: SymbolID] = [:]
-    private var typeParameterUpperBoundsMap: [SymbolID: TypeID] = [:]
+    private var typeParameterUpperBoundsMap: [SymbolID: [TypeID]] = [:]
     private var sourceFileIDs: [SymbolID: FileID] = [:]
     private var annotationsStorage: [SymbolID: [MetadataAnnotationRecord]] = [:]
     private var companionObjectSymbols: [SymbolID: SymbolID] = [:]
@@ -554,11 +554,19 @@ public final class SymbolTable {
     }
 
     public func setTypeParameterUpperBound(_ bound: TypeID, for symbol: SymbolID) {
-        typeParameterUpperBoundsMap[symbol] = bound
+        typeParameterUpperBoundsMap[symbol] = [bound]
+    }
+
+    public func setTypeParameterUpperBounds(_ bounds: [TypeID], for symbol: SymbolID) {
+        typeParameterUpperBoundsMap[symbol] = bounds
     }
 
     public func typeParameterUpperBound(for symbol: SymbolID) -> TypeID? {
-        typeParameterUpperBoundsMap[symbol]
+        typeParameterUpperBoundsMap[symbol]?.first
+    }
+
+    public func typeParameterUpperBounds(for symbol: SymbolID) -> [TypeID] {
+        typeParameterUpperBoundsMap[symbol] ?? []
     }
 
     public func setSourceFileID(_ fileID: FileID, for symbol: SymbolID) {

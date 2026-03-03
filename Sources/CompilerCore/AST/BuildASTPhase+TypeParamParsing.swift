@@ -177,15 +177,16 @@ extension BuildASTPhase {
     ) -> [TypeParamDecl] {
         guard !whereClauses.isEmpty else { return typeParams }
         return typeParams.map { param in
-            if param.upperBound != nil { return param }
-            guard let clause = whereClauses.first(where: { $0.name == param.name }) else {
+            if !param.upperBounds.isEmpty { return param }
+            let paramClauses = whereClauses.filter { $0.name == param.name }
+            guard !paramClauses.isEmpty else {
                 return param
             }
             return TypeParamDecl(
                 name: param.name,
                 variance: param.variance,
                 isReified: param.isReified,
-                upperBound: clause.bound
+                upperBounds: paramClauses.map { $0.bound }
             )
         }
     }

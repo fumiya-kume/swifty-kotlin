@@ -54,25 +54,30 @@ extension OverloadResolver {
         ctx: SemaModule
     ) -> Diagnostic? {
         for (index, typeParamSymbol) in signature.typeParameterSymbols.enumerated() {
-            let upperBound: TypeID? = if index < signature.typeParameterUpperBounds.count {
-                signature.typeParameterUpperBounds[index]
+            // Get all upper bounds for this type parameter
+            let upperBounds: [TypeID] = if index < signature.typeParameterUpperBounds.count {
+                signature.typeParameterUpperBounds.compactMap { $0 }
             } else {
-                ctx.symbols.typeParameterUpperBound(for: typeParamSymbol)
+                ctx.symbols.typeParameterUpperBounds(for: typeParamSymbol)
             }
-            guard let bound = upperBound else { continue }
+            
             guard let typeVar = typeVarBySymbol[typeParamSymbol],
                   let substitutedType = substitution[typeVar]
             else {
                 continue
             }
-            if !ctx.types.isSubtype(substitutedType, bound) {
-                return Diagnostic(
-                    severity: .error,
-                    code: "KSWIFTK-SEMA-0030",
-                    message: "Type argument does not satisfy upper bound constraint.",
-                    primaryRange: range,
-                    secondaryRanges: []
-                )
+            
+            // Check all upper bounds
+            for bound in upperBounds {
+                if !ctx.types.isSubtype(substitutedType, bound) {
+                    return Diagnostic(
+                        severity: .error,
+                        code: "KSWIFTK-SEMA-BOUND",
+                        message: "Type argument does not satisfy upper bound constraint.",
+                        primaryRange: range,
+                        secondaryRanges: []
+                    )
+                }
             }
         }
         return nil
