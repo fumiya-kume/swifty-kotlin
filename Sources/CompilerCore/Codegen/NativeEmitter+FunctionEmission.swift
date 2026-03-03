@@ -497,8 +497,15 @@ extension NativeEmitter {
                         type: int64DIType
                     ) {
                         let emptyExpr = bindings.diBuilderCreateExpression(diContext.diBuilder)
-                        if let localAlloca = bindings.buildAlloca(builder, type: int64Type, name: "dbg_\(varName)") {
-                            _ = bindings.buildStore(builder, value: constLLVMValue, pointer: localAlloca)
+                        // Use the copy-target alloca if one exists (the copy instruction
+                        // will store the real value there), otherwise fall back to a
+                        // dedicated debug alloca with the current (possibly zero) value.
+                        let localAlloca = copyTargetAllocas[result.rawValue]
+                            ?? bindings.buildAlloca(builder, type: int64Type, name: "dbg_\(varName)")
+                        if let localAlloca {
+                            if copyTargetAllocas[result.rawValue] == nil {
+                                _ = bindings.buildStore(builder, value: constLLVMValue, pointer: localAlloca)
+                            }
                             if let debugLoc = bindings.createDebugLocation(
                                 context: context, line: varLine, column: 0, scope: subprogram
                             ) {
