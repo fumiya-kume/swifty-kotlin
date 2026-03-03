@@ -574,6 +574,40 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Coroutine"
         ),
+        // Cancellation (CORO-002)
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_check_cancellation",
+            parameters: [
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_is_cancellation_exception",
+            parameters: [
+                RuntimeABIParameter(name: "throwableRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_job_cancel",
+            parameters: [
+                RuntimeABIParameter(name: "jobHandle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_cancel",
+            parameters: [
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+            ],
+            returnType: .void,
+            section: "Coroutine"
+        ),
     ]
 
     public static let boxingFunctions: [RuntimeABIFunctionSpec] = [

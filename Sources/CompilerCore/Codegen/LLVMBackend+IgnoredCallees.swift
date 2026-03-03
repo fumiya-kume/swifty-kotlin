@@ -31,6 +31,11 @@ extension LLVMBackend {
         "kk_kxmini_async",
         "kk_kxmini_async_await",
         "kk_kxmini_delay",
+        // CORO-002: Cancellation ABI
+        "kk_coroutine_check_cancellation",
+        "kk_is_cancellation_exception",
+        "kk_job_cancel",
+        "kk_coroutine_cancel",
         "kk_array_new",
         "kk_array_get",
         "kk_array_set",
