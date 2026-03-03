@@ -216,9 +216,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                             if let result { listExprIDs.insert(result.rawValue) }
                         }
                     } else if callee == mapName || callee == filterName || callee == takeName {
-                        if !arguments.isEmpty,
-                           sequenceExprIDs.contains(arguments[0].rawValue)
-                        {
+                        if !arguments.isEmpty, sequenceExprIDs.contains(arguments[0].rawValue) {
                             if let result { sequenceExprIDs.insert(result.rawValue) }
                         }
                     }
