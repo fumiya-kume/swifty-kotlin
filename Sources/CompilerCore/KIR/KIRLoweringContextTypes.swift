@@ -13,17 +13,29 @@ struct KIRLoweringEmitContext: RandomAccessCollection, MutableCollection, RangeR
     typealias Index = Array<KIRInstruction>.Index
 
     var instructions: [KIRInstruction]
+    /// Per-instruction source locations, parallel to ``instructions``.
+    /// `nil` entries mean "same as function-level location".
+    var instructionLocations: [SourceRange?]
+    /// The current source range to associate with newly appended instructions.
+    /// Set this before appending instructions to propagate source locations.
+    var currentSourceRange: SourceRange?
 
     init(_ instructions: [KIRInstruction] = []) {
         self.instructions = instructions
+        instructionLocations = Array(repeating: nil, count: instructions.count)
+        currentSourceRange = nil
     }
 
     init() {
         instructions = []
+        instructionLocations = []
+        currentSourceRange = nil
     }
 
     init(arrayLiteral elements: KIRInstruction...) {
         instructions = elements
+        instructionLocations = Array(repeating: nil, count: elements.count)
+        currentSourceRange = nil
     }
 
     var startIndex: Index {
@@ -49,6 +61,22 @@ struct KIRLoweringEmitContext: RandomAccessCollection, MutableCollection, RangeR
 
     mutating func replaceSubrange<C: Collection>(_ subrange: Range<Index>, with newElements: C) where KIRInstruction == C.Element {
         instructions.replaceSubrange(subrange, with: newElements)
+        // Keep instructionLocations in sync with the same structural edit.
+        if instructionLocations.count < subrange.upperBound {
+            instructionLocations.append(
+                contentsOf: repeatElement(nil, count: subrange.upperBound - instructionLocations.count)
+            )
+        }
+        let newLocations = Array(repeating: currentSourceRange, count: newElements.count)
+        instructionLocations.replaceSubrange(subrange, with: newLocations)
+        // Final safety sync.
+        if instructionLocations.count < instructions.count {
+            instructionLocations.append(
+                contentsOf: repeatElement(nil, count: instructions.count - instructionLocations.count)
+            )
+        } else if instructionLocations.count > instructions.count {
+            instructionLocations.removeLast(instructionLocations.count - instructions.count)
+        }
     }
 }
 
@@ -71,7 +99,8 @@ extension KIRFunction {
             body: body.instructions,
             isSuspend: isSuspend,
             isInline: isInline,
-            sourceRange: sourceRange
+            sourceRange: sourceRange,
+            instructionLocations: body.instructionLocations
         )
     }
 }

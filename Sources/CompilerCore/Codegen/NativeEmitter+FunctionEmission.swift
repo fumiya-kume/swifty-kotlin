@@ -1,6 +1,8 @@
+// swiftlint:disable file_length
 import Foundation
 
 extension NativeEmitter {
+    // swiftlint:disable:next function_body_length cyclomatic_complexity
     func emitFunctionBody(
         function: KIRFunction,
         llvmFunction: LLVMFunction,
@@ -376,8 +378,10 @@ extension NativeEmitter {
                 var instrLine: UInt32 = 0
                 var instrCol: UInt32 = 0
                 // Try per-instruction source location first, then fall back to
-                // function-level source range.
-                if instructionIndex < function.instructionLocations.count,
+                // function-level source range. Only use per-instruction locations
+                // when the parallel array is in sync with body (same count).
+                if function.instructionLocations.count == function.body.count,
+                   instructionIndex < function.instructionLocations.count,
                    let instrRange = function.instructionLocations[instructionIndex],
                    let sm = sourceManager
                 {
@@ -450,7 +454,73 @@ extension NativeEmitter {
                 bindings.positionBuilder(builder, at: continueBlock)
 
             case let .constValue(result, value):
-                values[result.rawValue] = valueForConstant(value, expressionRawID: result.rawValue)
+                let constLLVMValue = valueForConstant(value, expressionRawID: result.rawValue)
+                values[result.rawValue] = constLLVMValue
+
+                // Emit DIAutoVariable + dbg.declare for local variable bindings
+                // when debug info is active. We detect local variables by looking
+                // for symbolRef values that have a corresponding symbol name.
+                if let diContext,
+                   let subprogram = diContext.subprograms[function.symbol],
+                   let int64DIType = diContext.int64DIType,
+                   bindings.localVariableAvailable,
+                   bindings.debugLocationAvailable,
+                   case let .symbolRef(localSymbol) = value,
+                   !parameterValues.keys.contains(localSymbol)
+                { // swiftlint:disable:this opening_brace
+                    let varName = "local_\(localSymbol.rawValue)"
+                    var varLine: UInt32 = 0
+                    if function.instructionLocations.count == function.body.count,
+                       instructionIndex < function.instructionLocations.count,
+                       let instrRange = function.instructionLocations[instructionIndex],
+                       let srcMgr = sourceManager
+                    { // swiftlint:disable:this opening_brace
+                        varLine = UInt32(srcMgr.lineColumn(of: instrRange.start).line)
+                    } else if let sourceRange = function.sourceRange, let srcMgr = sourceManager {
+                        varLine = UInt32(srcMgr.lineColumn(of: sourceRange.start).line)
+                    }
+                    let varDIFile: LLVMCAPIBindings.LLVMMetadataRef? = {
+                        if function.instructionLocations.count == function.body.count,
+                           instructionIndex < function.instructionLocations.count,
+                           let instrRange = function.instructionLocations[instructionIndex]
+                        { // swiftlint:disable:this opening_brace
+                            return diContext.diFiles[instrRange.start.file] ?? diContext.file
+                        }
+                        return diContext.file
+                    }()
+                    if let diVar = bindings.diBuilderCreateAutoVariable(
+                        diContext.diBuilder,
+                        scope: subprogram,
+                        name: varName,
+                        file: varDIFile,
+                        lineNo: varLine,
+                        type: int64DIType
+                    ) {
+                        let emptyExpr = bindings.diBuilderCreateExpression(diContext.diBuilder)
+                        // Use the copy-target alloca if one exists (the copy instruction
+                        // will store the real value there), otherwise fall back to a
+                        // dedicated debug alloca with the current (possibly zero) value.
+                        let localAlloca = copyTargetAllocas[result.rawValue]
+                            ?? bindings.buildAlloca(builder, type: int64Type, name: "dbg_\(varName)")
+                        if let localAlloca {
+                            if copyTargetAllocas[result.rawValue] == nil {
+                                _ = bindings.buildStore(builder, value: constLLVMValue, pointer: localAlloca)
+                            }
+                            if let debugLoc = bindings.createDebugLocation(
+                                context: context, line: varLine, column: 0, scope: subprogram
+                            ) {
+                                _ = bindings.diBuilderInsertDeclareAtEnd(
+                                    diContext.diBuilder,
+                                    storage: localAlloca,
+                                    varInfo: diVar,
+                                    expr: emptyExpr,
+                                    debugLoc: debugLoc,
+                                    block: currentBlock
+                                )
+                            }
+                        }
+                    }
+                }
 
             case let .binary(op, lhs, rhs, result):
                 let lhsValue = resolveValue(lhs)
