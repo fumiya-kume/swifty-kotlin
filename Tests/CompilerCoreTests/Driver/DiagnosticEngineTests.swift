@@ -233,4 +233,204 @@ final class DiagnosticEngineTests: XCTestCase {
         XCTAssertEqual(d.secondaryRanges.count, 1)
         XCTAssertEqual(d.secondaryRanges[0], range2)
     }
+
+    // MARK: - JSON Rendering
+
+    func testRenderJSONEmptyDiagnostics() {
+        let engine = DiagnosticEngine()
+        let sm = SourceManager()
+        let json = engine.renderJSON(sm)
+        XCTAssertTrue(json.contains("\"version\": 1"))
+        XCTAssertTrue(json.contains("\"diagnostics\": ["))
+    }
+
+    func testRenderJSONSingleErrorWithRange() {
+        let sm = SourceManager()
+        let fileID = sm.addFile(path: "test.kt", contents: Data("line1\nline2\n".utf8))
+        let range = SourceRange(
+            start: SourceLocation(file: fileID, offset: 6),
+            end: SourceLocation(file: fileID, offset: 11)
+        )
+        let engine = DiagnosticEngine()
+        engine.error("KSWIFTK-SEMA-0014", "Type mismatch", range: range)
+        let json = engine.renderJSON(sm)
+
+        XCTAssertTrue(json.contains("\"version\": 1"))
+        XCTAssertTrue(json.contains("\"file\": \"test.kt\""))
+        XCTAssertTrue(json.contains("\"severity\": 1"))
+        XCTAssertTrue(json.contains("\"severityLabel\": \"error\""))
+        XCTAssertTrue(json.contains("\"code\": \"KSWIFTK-SEMA-0014\""))
+        XCTAssertTrue(json.contains("\"source\": \"kswiftk\""))
+        XCTAssertTrue(json.contains("\"message\": \"Type mismatch\""))
+        // LSP uses 0-based lines: line1 is 0, line2 is 1
+        XCTAssertTrue(json.contains("\"line\": 1"))
+    }
+
+    func testRenderJSONWarningHasSeverityTwo() {
+        let engine = DiagnosticEngine()
+        engine.warning("KSWIFTK-SEMA-0001", "unused var", range: nil)
+        let sm = SourceManager()
+        let json = engine.renderJSON(sm)
+        XCTAssertTrue(json.contains("\"severity\": 2"))
+        XCTAssertTrue(json.contains("\"severityLabel\": \"warning\""))
+    }
+
+    func testRenderJSONNoteHasSeverityThree() {
+        let engine = DiagnosticEngine()
+        engine.note("KSWIFTK-SEMA-0002", "see also", range: nil)
+        let sm = SourceManager()
+        let json = engine.renderJSON(sm)
+        XCTAssertTrue(json.contains("\"severity\": 3"))
+        XCTAssertTrue(json.contains("\"severityLabel\": \"note\""))
+    }
+
+    func testRenderJSONInfoHasSeverityFour() {
+        let engine = DiagnosticEngine()
+        engine.info("KSWIFTK-SEMA-0003", "hint", range: nil)
+        let sm = SourceManager()
+        let json = engine.renderJSON(sm)
+        XCTAssertTrue(json.contains("\"severity\": 4"))
+        XCTAssertTrue(json.contains("\"severityLabel\": \"info\""))
+    }
+
+    func testRenderJSONCodeActionsFromRegistry() {
+        let engine = DiagnosticEngine()
+        // KSWIFTK-SEMA-0014 has a registry codeAction: "Add explicit type cast"
+        engine.error("KSWIFTK-SEMA-0014", "Type mismatch", range: nil)
+        let sm = SourceManager()
+        let json = engine.renderJSON(sm)
+        XCTAssertTrue(json.contains("\"codeActions\""))
+        XCTAssertTrue(json.contains("\"title\": \"Add explicit type cast\""))
+        XCTAssertTrue(json.contains("\"kind\": \"quickfix\""))
+    }
+
+    func testRenderJSONExplicitCodeActionOverridesRegistry() {
+        let engine = DiagnosticEngine()
+        let action = DiagnosticCodeAction(title: "Custom fix", kind: "quickfix")
+        engine.error("KSWIFTK-SEMA-0014", "Type mismatch", range: nil, codeActions: [action])
+        let sm = SourceManager()
+        let json = engine.renderJSON(sm)
+        XCTAssertTrue(json.contains("\"title\": \"Custom fix\""))
+        // Should NOT contain the registry default when explicit actions are provided.
+        XCTAssertFalse(json.contains("\"title\": \"Add explicit type cast\""))
+    }
+
+    func testRenderJSONMultipleDiagnosticsSorted() {
+        let sm = SourceManager()
+        let fileID = sm.addFile(path: "multi.kt", contents: Data("aaa\nbbb\nccc\n".utf8))
+        let engine = DiagnosticEngine()
+        // Emit in reverse order to verify sorting.
+        engine.error("E-2", "second", range: SourceRange(
+            start: SourceLocation(file: fileID, offset: 4),
+            end: SourceLocation(file: fileID, offset: 7)
+        ))
+        engine.error("E-1", "first", range: SourceRange(
+            start: SourceLocation(file: fileID, offset: 0),
+            end: SourceLocation(file: fileID, offset: 3)
+        ))
+        let json = engine.renderJSON(sm)
+        // E-1 should appear before E-2 in the output.
+        guard let idx1 = json.range(of: "E-1")?.lowerBound,
+              let idx2 = json.range(of: "E-2")?.lowerBound else {
+            XCTFail("Both diagnostics should appear in JSON")
+            return
+        }
+        XCTAssertTrue(idx1 < idx2)
+    }
+
+    func testRenderJSONEscapesSpecialCharacters() {
+        let engine = DiagnosticEngine()
+        engine.error("E-ESC", "msg with \"quotes\" and \\backslash", range: nil)
+        let sm = SourceManager()
+        let json = engine.renderJSON(sm)
+        XCTAssertTrue(json.contains("\\\"quotes\\\""))
+        XCTAssertTrue(json.contains("\\\\backslash"))
+    }
+
+    func testRenderJSONSchemaVersionStability() {
+        // Golden schema test: verify the top-level structure is stable.
+        let sm = SourceManager()
+        let fileID = sm.addFile(path: "schema.kt", contents: Data("val x = 1\n".utf8))
+        let engine = DiagnosticEngine()
+        engine.error(
+            "KSWIFTK-SEMA-0022",
+            "Unresolved reference: foo",
+            range: SourceRange(
+                start: SourceLocation(file: fileID, offset: 0),
+                end: SourceLocation(file: fileID, offset: 3)
+            )
+        )
+
+        let json = engine.renderJSON(sm)
+
+        // Verify all required LSP schema fields are present.
+        let requiredFields = [
+            "\"version\"", "\"diagnostics\"", "\"file\"",
+            "\"range\"", "\"start\"", "\"end\"",
+            "\"line\"", "\"character\"",
+            "\"severity\"", "\"severityLabel\"",
+            "\"code\"", "\"source\"", "\"message\"",
+            "\"codeActions\""
+        ]
+        for field in requiredFields {
+            XCTAssertTrue(json.contains(field), "JSON should contain field: \(field)")
+        }
+    }
+
+    // MARK: - DiagnosticRegistry
+
+    func testDiagnosticRegistryLookupKnownCode() {
+        let descriptor = DiagnosticRegistry.lookup("KSWIFTK-SEMA-0014")
+        XCTAssertNotNil(descriptor)
+        XCTAssertEqual(descriptor?.code, "KSWIFTK-SEMA-0014")
+        XCTAssertEqual(descriptor?.pass, "SEMA")
+    }
+
+    func testDiagnosticRegistryLookupUnknownCode() {
+        let descriptor = DiagnosticRegistry.lookup("KSWIFTK-DOES-NOT-EXIST")
+        XCTAssertNil(descriptor)
+    }
+
+    func testDiagnosticRegistryAllDescriptorsHaveKSWIFTKPrefix() {
+        for descriptor in DiagnosticRegistry.allDescriptors {
+            XCTAssertTrue(
+                descriptor.code.hasPrefix("KSWIFTK-"),
+                "Descriptor code \(descriptor.code) should start with KSWIFTK-"
+            )
+        }
+    }
+
+    func testDiagnosticRegistryHasMinimumTenCodeActions() {
+        let withActions = DiagnosticRegistry.allDescriptors.filter { !$0.codeActions.isEmpty }
+        XCTAssertGreaterThanOrEqual(
+            withActions.count, 10,
+            "Registry should have at least 10 diagnostics with codeActions"
+        )
+    }
+
+    // MARK: - DiagnosticsFormat
+
+    func testDiagnosticsFormatRawValues() {
+        XCTAssertEqual(DiagnosticsFormat(rawValue: "text"), .text)
+        XCTAssertEqual(DiagnosticsFormat(rawValue: "json"), .json)
+        XCTAssertNil(DiagnosticsFormat(rawValue: "xml"))
+    }
+
+    // MARK: - codeActions on Diagnostic
+
+    func testDiagnosticCodeActionsDefaultToEmpty() {
+        let d = Diagnostic(severity: .error, code: "E", message: "m", primaryRange: nil, secondaryRanges: [])
+        XCTAssertTrue(d.codeActions.isEmpty)
+    }
+
+    func testDiagnosticCodeActionsCanBeProvided() {
+        let action = DiagnosticCodeAction(title: "Fix it", kind: "quickfix")
+        let d = Diagnostic(
+            severity: .error, code: "E", message: "m",
+            primaryRange: nil, secondaryRanges: [],
+            codeActions: [action]
+        )
+        XCTAssertEqual(d.codeActions.count, 1)
+        XCTAssertEqual(d.codeActions[0].title, "Fix it")
+    }
 }

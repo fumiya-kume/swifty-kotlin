@@ -25,6 +25,7 @@ enum CLIParser {
       -Xfrontend <flag>      Frontend feature flag (e.g. time-phases)
       -Xir <flag>            IR/lowering feature flag (e.g. backend=llvm-c-api, backend-strict=true)
       -Xruntime <flag>       Runtime feature flag
+      -Xdiagnostics <format> Diagnostic output format (text|json)
       -g                     Emit debug info
     """
 
@@ -41,6 +42,7 @@ enum CLIParser {
         var frontendFlags: [String] = []
         var irFlags: [String] = []
         var runtimeFlags: [String] = []
+        var diagnosticsFormat: DiagnosticsFormat = .text
         var target = TargetTriple.hostDefault()
 
         if args.isEmpty {
@@ -85,6 +87,11 @@ enum CLIParser {
                 try irFlags.append(requireValue(option: arg, args: args, index: &index))
             case "-Xruntime":
                 try runtimeFlags.append(requireValue(option: arg, args: args, index: &index))
+            case "-Xdiagnostics":
+                let value = try requireValue(option: arg, args: args, index: &index)
+                if let fmt = DiagnosticsFormat(rawValue: value) {
+                    diagnosticsFormat = fmt
+                }
             case "-I":
                 try searchPaths.append(requireValue(option: arg, args: args, index: &index))
             case "-L":
@@ -120,7 +127,8 @@ enum CLIParser {
             debugInfo: debugInfo,
             frontendFlags: frontendFlags,
             irFlags: irFlags,
-            runtimeFlags: runtimeFlags
+            runtimeFlags: runtimeFlags,
+            diagnosticsFormat: diagnosticsFormat
         )
     }
 

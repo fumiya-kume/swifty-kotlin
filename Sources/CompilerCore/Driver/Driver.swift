@@ -191,7 +191,12 @@ public final class CompilerDriver {
         }
 
         if printDiagnostics {
-            ctx.diagnostics.printDiagnostics(from: ctx.sourceManager)
+            switch ctx.options.diagnosticsFormat {
+            case .json:
+                ctx.diagnostics.printDiagnosticsJSON(from: ctx.sourceManager)
+            case .text:
+                ctx.diagnostics.printDiagnostics(from: ctx.sourceManager)
+            }
         }
 
         if timePhasesEnabled, let timer = ctx.phaseTimer {
