@@ -24,15 +24,46 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
         let sema = ctx.sema
         let interner = ctx.interner
 
-        let argTypes = args.map { argument in
-            driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
-        }
-
         let calleeExpr = ast.arena.expr(calleeID)
         let calleeName: InternedString? = if case let .nameRef(name, _) = calleeExpr {
             name
         } else {
             nil
+        }
+
+        // --- Builder DSL functions (STDLIB-002) ---
+        // Must intercept BEFORE eager arg inference so the lambda argument
+        // is inferred with the correct implicit receiver type.
+        if let calleeName, args.count == 1 {
+            let name = interner.resolve(calleeName)
+            let builderKind: BuilderDSLKind? = switch name {
+            case "buildString": .buildString
+            case "buildList": .buildList
+            case "buildMap": .buildMap
+            default: nil
+            }
+            if let builderKind {
+                // Determine the receiver type for the builder lambda.
+                // buildString → StringBuilder (treated as Any for member dispatch)
+                // buildList → MutableList (treated as Any)
+                // buildMap → MutableMap (treated as Any)
+                let receiverType = sema.types.anyType
+                let returnType: TypeID = switch builderKind {
+                case .buildString: sema.types.stringType
+                case .buildList, .buildMap: sema.types.anyType
+                }
+                // Infer the lambda argument with the builder receiver as implicit `this`.
+                let builderCtx = ctx.with(implicitReceiverType: receiverType)
+                _ = driver.inferExpr(args[0].expr, ctx: builderCtx, locals: &locals)
+                sema.bindings.markBuilderDSLExpr(id, kind: builderKind)
+                sema.bindings.markCollectionExpr(id)
+                sema.bindings.bindExprType(id, type: returnType)
+                return returnType
+            }
+        }
+
+        let argTypes = args.map { argument in
+            driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
         }
 
         var candidates: [SymbolID]
@@ -246,6 +277,19 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
         {
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
+        }
+        // Builder DSL member functions (STDLIB-002).
+        // Inside builder lambdas, unqualified `append`/`add`/`put` resolve as
+        // implicit-receiver member calls that return Unit.
+        if let calleeName, ctx.implicitReceiverType != nil {
+            let name = interner.resolve(calleeName)
+            if (name == "append" && args.count == 1)
+                || (name == "add" && args.count == 1)
+                || (name == "put" && args.count == 2)
+            {
+                sema.bindings.bindExprType(id, type: sema.types.unitType)
+                return sema.types.unitType
+            }
         }
         // Collection literal factory functions (P5-84).
         if let calleeName {

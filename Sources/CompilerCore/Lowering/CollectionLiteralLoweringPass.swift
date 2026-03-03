@@ -112,6 +112,25 @@ final class CollectionLiteralLoweringPass: LoweringPass {
             arrayOfName, intArrayOfName, longArrayOfName,
         ]
 
+        // Builder DSL names (STDLIB-002)
+        let buildStringName = interner.intern("buildString")
+        let buildListName = interner.intern("buildList")
+        let buildMapName = interner.intern("buildMap")
+        let kkBuildStringName = interner.intern("kk_build_string")
+        let kkBuildListName = interner.intern("kk_build_list")
+        let kkBuildMapName = interner.intern("kk_build_map")
+        let builderDSLNames: Set<InternedString> = [
+            buildStringName, buildListName, buildMapName,
+        ]
+
+        // Builder member function names (STDLIB-002)
+        let appendName = interner.intern("append")
+        let addName = interner.intern("add")
+        let putName = interner.intern("put")
+        let kkStringBuilderAppendName = interner.intern("kk_string_builder_append")
+        let kkMutableListAddName = interner.intern("kk_mutable_list_add")
+        let kkMutableMapPutName = interner.intern("kk_mutable_map_put")
+
         module.arena.transformFunctions { function in
             var updated = function
 
@@ -298,6 +317,77 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                                 thrownResult: nil
                             ))
                         }
+                        continue
+                    }
+
+                    // --- Rewrite buildString/buildList/buildMap → kk_build_* (STDLIB-002) ---
+                    if builderDSLNames.contains(callee) {
+                        let kkCallee: InternedString = switch callee {
+                        case buildStringName: kkBuildStringName
+                        case buildListName: kkBuildListName
+                        case buildMapName: kkBuildMapName
+                        default: callee
+                        }
+                        let builderResult = module.arena.appendExpr(
+                            .temporary(Int32(module.arena.expressions.count)), type: nil
+                        )
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkCallee,
+                            arguments: arguments,
+                            result: builderResult,
+                            canThrow: canThrow,
+                            thrownResult: thrownResult
+                        ))
+                        if callee == buildListName, let result {
+                            listExprIDs.insert(result.rawValue)
+                            listExprIDs.insert(builderResult.rawValue)
+                        }
+                        if callee == buildMapName, let result {
+                            mapExprIDs.insert(result.rawValue)
+                            mapExprIDs.insert(builderResult.rawValue)
+                        }
+                        if let result {
+                            loweredBody.append(.copy(from: builderResult, to: result))
+                        }
+                        continue
+                    }
+
+                    // --- Rewrite builder member functions (STDLIB-002) ---
+                    // append(arg) → kk_string_builder_append(arg)
+                    // add(arg) → kk_mutable_list_add(arg)
+                    // put(key, value) → kk_mutable_map_put(key, value)
+                    if callee == appendName, arguments.count == 1 {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkStringBuilderAppendName,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: canThrow,
+                            thrownResult: thrownResult
+                        ))
+                        continue
+                    }
+                    if callee == addName, arguments.count == 1 {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkMutableListAddName,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: canThrow,
+                            thrownResult: thrownResult
+                        ))
+                        continue
+                    }
+                    if callee == putName, arguments.count == 2 {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkMutableMapPutName,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: canThrow,
+                            thrownResult: thrownResult
+                        ))
                         continue
                     }
 

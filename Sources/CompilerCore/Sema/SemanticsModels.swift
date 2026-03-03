@@ -630,6 +630,10 @@ public final class BindingTable {
     /// Maps SAM-converted lambda expressions to their underlying function type,
     /// so KIR lowering can generate the correct callable signature.
     public private(set) var samUnderlyingFunctionTypes: [ExprID: TypeID] = [:]
+    /// Tracks call expressions that are builder DSL calls (buildString/buildList/buildMap).
+    public private(set) var builderDSLExprIDs: Set<ExprID> = []
+    /// Maps builder DSL call expression IDs to their builder kind.
+    public private(set) var builderDSLKinds: [ExprID: BuilderDSLKind] = [:]
 
     public init() {}
 
@@ -785,6 +789,22 @@ public final class BindingTable {
     /// Retrieve the underlying function type for a SAM-converted lambda.
     public func samUnderlyingFunctionType(for expr: ExprID) -> TypeID? {
         samUnderlyingFunctionTypes[expr]
+    }
+
+    /// Mark a call expression as a builder DSL call (buildString/buildList/buildMap).
+    public func markBuilderDSLExpr(_ expr: ExprID, kind: BuilderDSLKind) {
+        builderDSLExprIDs.insert(expr)
+        builderDSLKinds[expr] = kind
+    }
+
+    /// Whether the given expression is a builder DSL call.
+    public func isBuilderDSLExpr(_ expr: ExprID) -> Bool {
+        builderDSLExprIDs.contains(expr)
+    }
+
+    /// Retrieve the builder DSL kind for a builder call expression.
+    public func builderDSLKind(for expr: ExprID) -> BuilderDSLKind? {
+        builderDSLKinds[expr]
     }
 }
 

@@ -106,6 +106,13 @@ extension LLVMBackend {
         "kk_list_any",
         "kk_list_none",
         "kk_list_all",
+        // Builder DSL (STDLIB-002)
+        "kk_build_string",
+        "kk_build_list",
+        "kk_build_map",
+        "kk_string_builder_append",
+        "kk_mutable_list_add",
+        "kk_mutable_map_put",
     ]
 
     func collectExternalCallees(
