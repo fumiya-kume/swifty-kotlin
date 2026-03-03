@@ -251,6 +251,36 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                 }
             }
 
+            // DIAG: dump Phase 1 results for functions with sequence operations
+            if !sequenceExprIDs.isEmpty {
+                let funcName = interner.resolve(function.name)
+                var diagLines: [String] = ["[SEQDIAG] func=\(funcName) seqIDs=\(sequenceExprIDs.sorted()) listIDs=\(listExprIDs.sorted())"]
+                for (idx, instr) in function.body.enumerated() {
+                    switch instr {
+                    case let .call(sym, cal, args, res, _, _, _):
+                        let cn = interner.resolve(cal)
+                        let rr = res.map { String($0.rawValue) } ?? "nil"
+                        let aa = args.map { String($0.rawValue) }
+                        let ss = sym.map { String($0.rawValue) } ?? "nil"
+                        diagLines.append("  [\(idx)] .call sym=\(ss) callee=\(cn) args=\(aa) res=\(rr)")
+                    case let .virtualCall(sym, cal, recv, args, res, _, _, disp):
+                        let cn = interner.resolve(cal)
+                        let rr = res.map { String($0.rawValue) } ?? "nil"
+                        let aa = args.map { String($0.rawValue) }
+                        let ss = sym.map { String($0.rawValue) } ?? "nil"
+                        diagLines.append("  [\(idx)] .virtualCall sym=\(ss) callee=\(cn) recv=\(recv.rawValue) args=\(aa) res=\(rr) disp=\(disp)")
+                    case let .copy(from, to):
+                        diagLines.append("  [\(idx)] .copy from=\(from.rawValue) to=\(to.rawValue)")
+                    case let .constValue(res, val):
+                        diagLines.append("  [\(idx)] .constValue res=\(res.rawValue)")
+                    default:
+                        break
+                    }
+                }
+                let diagStr = diagLines.joined(separator: "\n") + "\n"
+                FileHandle.standardError.write(Data(diagStr.utf8))
+            }
+
             // Phase 2: Rewrite instructions
             var listIteratorExprIDs: Set<Int32> = []
             var mapIteratorExprIDs: Set<Int32> = []
