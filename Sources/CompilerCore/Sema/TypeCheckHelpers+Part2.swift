@@ -391,5 +391,4 @@ extension TypeCheckHelpers {
             symbols.symbol(symbolID)?.kind == .enumClass
         })
     }
-
 }
