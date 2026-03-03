@@ -251,34 +251,27 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                 }
             }
 
-            // DIAG: dump Phase 1 results for functions with sequence operations
-            if !sequenceExprIDs.isEmpty {
-                let funcName = interner.resolve(function.name)
-                var diagLines: [String] = ["[SEQDIAG] func=\(funcName) seqIDs=\(sequenceExprIDs.sorted()) listIDs=\(listExprIDs.sorted())"]
-                for (idx, instr) in function.body.enumerated() {
+            // DIAG: unconditional dump of all callees per function
+            do {
+                var calleeInfo: [String] = []
+                for instr in function.body {
                     switch instr {
                     case let .call(sym, cal, args, res, _, _, _):
                         let cn = interner.resolve(cal)
                         let rr = res.map { String($0.rawValue) } ?? "nil"
-                        let aa = args.map { String($0.rawValue) }
-                        let ss = sym.map { String($0.rawValue) } ?? "nil"
-                        diagLines.append("  [\(idx)] .call sym=\(ss) callee=\(cn) args=\(aa) res=\(rr)")
-                    case let .virtualCall(sym, cal, recv, args, res, _, _, disp):
+                        calleeInfo.append(".call(\(cn),a\(args.count),r\(rr),s\(sym != nil))")
+                    case let .virtualCall(_, cal, recv, args, res, _, _, _):
                         let cn = interner.resolve(cal)
                         let rr = res.map { String($0.rawValue) } ?? "nil"
-                        let aa = args.map { String($0.rawValue) }
-                        let ss = sym.map { String($0.rawValue) } ?? "nil"
-                        diagLines.append("  [\(idx)] .virtualCall sym=\(ss) callee=\(cn) recv=\(recv.rawValue) args=\(aa) res=\(rr) disp=\(disp)")
-                    case let .copy(from, to):
-                        diagLines.append("  [\(idx)] .copy from=\(from.rawValue) to=\(to.rawValue)")
-                    case let .constValue(res, val):
-                        diagLines.append("  [\(idx)] .constValue res=\(res.rawValue)")
+                        calleeInfo.append(".vc(\(cn),rv\(recv.rawValue),a\(args.count),r\(rr))")
                     default:
                         break
                     }
                 }
-                let diagStr = diagLines.joined(separator: "\n") + "\n"
-                FileHandle.standardError.write(Data(diagStr.utf8))
+                if !calleeInfo.isEmpty {
+                    let line = "[CLP] f=\(interner.resolve(function.name)) seq=\(sequenceExprIDs.sorted()) list=\(listExprIDs.sorted()) calls=[\(calleeInfo.joined(separator: ","))]\n"
+                    FileHandle.standardError.write(Data(line.utf8))
+                }
             }
 
             // Phase 2: Rewrite instructions
