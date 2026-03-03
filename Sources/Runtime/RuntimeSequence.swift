@@ -42,9 +42,9 @@ private func registerRuntimeObject(_ box: AnyObject) -> Int {
 /// Extracts source elements from a sequence step, if applicable.
 private func extractSourceElements(from step: SequenceStepKind) -> [Int]? {
     switch step {
-    case let .source(sourceElements): return sourceElements
-    case let .builder(builderElements): return builderElements
-    default: return nil
+    case let .source(sourceElements): sourceElements
+    case let .builder(builderElements): builderElements
+    default: nil
     }
 }
 
