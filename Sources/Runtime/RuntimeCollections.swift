@@ -288,7 +288,20 @@ public func kk_map_to_string(_ mapRaw: Int) -> UnsafeMutableRawPointer {
     }
 }
 
-// MARK: - Array Size (STDLIB-001)
+// MARK: - Array Functions (STDLIB-001)
+
+/// Creates a new array from existing elements (identity/tagging operation).
+/// The array is already allocated by `kk_array_new`; this function simply
+/// returns the handle so that the Swift runtime handles it consistently
+/// instead of falling through to the C preamble stub.
+/// - Parameters:
+///   - arrayRaw: Opaque handle to a `RuntimeArrayBox` containing the elements.
+///   - count: Number of elements in the array.
+/// - Returns: Opaque handle (Int) to the array (passed through).
+@_cdecl("kk_array_of")
+public func kk_array_of(_ arrayRaw: Int, _ count: Int) -> Int {
+    return arrayRaw
+}
 
 /// Returns the size of an array.
 /// - Parameter arrayRaw: Opaque handle to a `RuntimeArrayBox`.
