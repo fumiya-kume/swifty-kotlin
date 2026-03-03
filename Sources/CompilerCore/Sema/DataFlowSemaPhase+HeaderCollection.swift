@@ -113,11 +113,11 @@ extension DataFlowSemaPhase {
 
         // ANNO-001: Collect annotations from AST declarations and store on SymbolTable.
         let astAnnotations: [AnnotationNode] = switch decl {
-        case let .classDecl(cd): cd.annotations
-        case let .interfaceDecl(id): id.annotations
-        case let .objectDecl(od): od.annotations
-        case let .funDecl(fd): fd.annotations
-        case let .propertyDecl(pd): pd.annotations
+        case let .classDecl(classDecl): classDecl.annotations
+        case let .interfaceDecl(ifaceDecl): ifaceDecl.annotations
+        case let .objectDecl(objectDecl): objectDecl.annotations
+        case let .funDecl(funDecl): funDecl.annotations
+        case let .propertyDecl(propDecl): propDecl.annotations
         default: []
         }
         if !astAnnotations.isEmpty {

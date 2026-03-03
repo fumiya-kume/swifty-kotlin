@@ -43,10 +43,8 @@ public final class DiagnosticEngine: @unchecked Sendable {
         defer { lock.unlock() }
         // Check if this diagnostic is suppressed by a @Suppress annotation.
         if let ranges = suppressions[diagnostic.code], let diagRange = diagnostic.primaryRange {
-            for suppressRange in ranges {
-                if suppressRange.contains(diagRange) {
-                    return // Suppressed — do not emit.
-                }
+            for suppressRange in ranges where suppressRange.contains(diagRange) {
+                return // Suppressed — do not emit.
             }
         }
         _diagnostics.append(diagnostic)
