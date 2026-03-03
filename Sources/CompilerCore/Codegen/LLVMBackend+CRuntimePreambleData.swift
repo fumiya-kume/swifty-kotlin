@@ -1371,7 +1371,7 @@ extension LLVMBackend {
         "__attribute__((weak)) intptr_t kk_build_string(intptr_t fnPtr, intptr_t* outThrown) {",
         "  if (kk_sb_depth >= 16) return (intptr_t)kk_string_from_utf8((const uint8_t*)\"\", 0);",
         "  KKStringBuilder* sb = &kk_sb_stack[kk_sb_depth++];",
-        "  sb->buf = (char*)malloc(64); sb->len = 0; sb->cap = 64;",
+        "  sb->buf = (char*)malloc(64); sb->len = 0; sb->cap = sb->buf ? 64 : 0;",
         "  KKLambda0 fn = (KKLambda0)(void*)fnPtr;",
         "  intptr_t thrown = 0;",
         "  fn(&thrown);",
