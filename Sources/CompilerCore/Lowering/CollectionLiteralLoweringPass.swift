@@ -395,36 +395,19 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     // --- Rewrite builder member functions (STDLIB-002) ---
                     // Only rewrite append/add/put inside builder lambda functions
                     // matching the correct builder kind to avoid cross-kind rewrites.
-                    if let lambdaBuilderCallee = builderLambdaKinds[function.name] {
-                        if lambdaBuilderCallee == buildStringName,
-                           callee == appendName, arguments.count == 1 {
-                            loweredBody.append(.call(
-                                symbol: nil,
-                                callee: kkStringBuilderAppendName,
-                                arguments: arguments,
-                                result: result,
-                                canThrow: canThrow,
-                                thrownResult: thrownResult
-                            ))
-                            continue
+                    if let builderCallee = builderLambdaKinds[function.name] {
+                        var rewrittenCallee: InternedString?
+                        if builderCallee == buildStringName, callee == appendName, arguments.count == 1 {
+                            rewrittenCallee = kkStringBuilderAppendName
+                        } else if builderCallee == buildListName, callee == addName, arguments.count == 1 {
+                            rewrittenCallee = kkMutableListAddName
+                        } else if builderCallee == buildMapName, callee == putName, arguments.count == 2 {
+                            rewrittenCallee = kkMutableMapPutName
                         }
-                        if lambdaBuilderCallee == buildListName,
-                           callee == addName, arguments.count == 1 {
+                        if let target = rewrittenCallee {
                             loweredBody.append(.call(
                                 symbol: nil,
-                                callee: kkMutableListAddName,
-                                arguments: arguments,
-                                result: result,
-                                canThrow: canThrow,
-                                thrownResult: thrownResult
-                            ))
-                            continue
-                        }
-                        if lambdaBuilderCallee == buildMapName,
-                           callee == putName, arguments.count == 2 {
-                            loweredBody.append(.call(
-                                symbol: nil,
-                                callee: kkMutableMapPutName,
+                                callee: target,
                                 arguments: arguments,
                                 result: result,
                                 canThrow: canThrow,
