@@ -207,10 +207,9 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     }
                     // Track .call sequence operations where receiver is arguments[0]
                     // (sema collection fallback emits .call with receiver prepended).
+                    // No listExprIDs guard: sema restricts asSequence to collections.
                     if callee == asSequenceName, arguments.count == 1 {
-                        if listExprIDs.contains(arguments[0].rawValue) {
-                            if let result { sequenceExprIDs.insert(result.rawValue) }
-                        }
+                        if let result { sequenceExprIDs.insert(result.rawValue) }
                     } else if callee == toListName, arguments.count == 1 {
                         if sequenceExprIDs.contains(arguments[0].rawValue) {
                             if let result { listExprIDs.insert(result.rawValue) }
@@ -224,9 +223,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                 // that the sema resolved to a symbol (STDLIB-003).
                 case let .virtualCall(_, callee, receiver, _, result, _, _, _):
                     if callee == asSequenceName {
-                        if listExprIDs.contains(receiver.rawValue) {
-                            if let result { sequenceExprIDs.insert(result.rawValue) }
-                        }
+                        if let result { sequenceExprIDs.insert(result.rawValue) }
                     } else if callee == toListName {
                         if sequenceExprIDs.contains(receiver.rawValue) {
                             if let result { listExprIDs.insert(result.rawValue) }
@@ -720,22 +717,21 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     }
 
                     // --- Rewrite sequence member calls (STDLIB-003) ---
-                    // asSequence() on list → kk_sequence_from_list
-                    // (Only matches .call; .virtualCall handled in separate case below)
+                    // asSequence() on collection → kk_sequence_from_list
+                    // Sema already restricts asSequence to collection expressions,
+                    // so we rewrite unconditionally (no listExprIDs guard needed).
                     if callee == asSequenceName, arguments.count == 1 {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) {
-                            loweredBody.append(.call(
-                                symbol: nil,
-                                callee: kkSequenceFromListName,
-                                arguments: [receiverID],
-                                result: result,
-                                canThrow: false,
-                                thrownResult: nil
-                            ))
-                            if let result { sequenceExprIDs.insert(result.rawValue) }
-                            continue
-                        }
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkSequenceFromListName,
+                            arguments: [receiverID],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        if let result { sequenceExprIDs.insert(result.rawValue) }
+                        continue
                     }
 
                     // map/filter on sequence → kk_sequence_map/kk_sequence_filter
@@ -950,20 +946,20 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                 // symbol, the CallLowerer emits .virtualCall instead of .call.
                 // Handle those here so the sequence chain is properly rewritten.
                 case let .virtualCall(_, callee, receiver, arguments, result, origCanThrow, origThrownResult, _):
-                    // asSequence() on list → kk_sequence_from_list
+                    // asSequence() on collection → kk_sequence_from_list
+                    // Sema restricts asSequence to collection expressions;
+                    // rewrite unconditionally (no listExprIDs guard needed).
                     if callee == asSequenceName, arguments.isEmpty {
-                        if listExprIDs.contains(receiver.rawValue) {
-                            loweredBody.append(.call(
-                                symbol: nil,
-                                callee: kkSequenceFromListName,
-                                arguments: [receiver],
-                                result: result,
-                                canThrow: false,
-                                thrownResult: nil
-                            ))
-                            if let result { sequenceExprIDs.insert(result.rawValue) }
-                            continue
-                        }
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkSequenceFromListName,
+                            arguments: [receiver],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        if let result { sequenceExprIDs.insert(result.rawValue) }
+                        continue
                     }
 
                     // map/filter on sequence → kk_sequence_map/kk_sequence_filter
