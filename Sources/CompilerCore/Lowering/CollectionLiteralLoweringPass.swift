@@ -1,19 +1,22 @@
+// swiftlint:disable file_length
 import Foundation
 
-/// Rewrites `listOf(...)`, `mapOf(...)`, `arrayOf(...)` and related collection
-/// factory calls into runtime ABI calls (`kk_list_of`, `kk_map_of`, etc.).
-///
-/// Also rewrites collection member accesses (`.size`, `.get()`, `.contains()`)
-/// and iterator patterns (`kk_range_iterator`/`kk_range_hasNext`/`kk_range_next`)
-/// on collection-typed expressions to their collection-specific equivalents.
-///
-/// Must run **before** `ForLoweringPass` so that for-loop desugaring emits
-/// generic `kk_range_*` calls which this pass can then specialize for collections.
-/// In practice this pass runs **after** `ForLoweringPass` and rewrites the
-/// already-emitted `kk_range_*` calls to `kk_list_*` equivalents.
+// Rewrites `listOf(...)`, `mapOf(...)`, `arrayOf(...)` and related collection
+// factory calls into runtime ABI calls (`kk_list_of`, `kk_map_of`, etc.).
+//
+// Also rewrites collection member accesses (`.size`, `.get()`, `.contains()`)
+// and iterator patterns (`kk_range_iterator`/`kk_range_hasNext`/`kk_range_next`)
+// on collection-typed expressions to their collection-specific equivalents.
+//
+// Must run **before** `ForLoweringPass` so that for-loop desugaring emits
+// generic `kk_range_*` calls which this pass can then specialize for collections.
+// In practice this pass runs **after** `ForLoweringPass` and rewrites the
+// already-emitted `kk_range_*` calls to `kk_list_*` equivalents.
+// swiftlint:disable:next type_body_length
 final class CollectionLiteralLoweringPass: LoweringPass {
     static let name = "CollectionLiteralLowering"
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func run(module: KIRModule, ctx: KIRContext) throws {
         let interner = ctx.interner
 
@@ -42,6 +45,14 @@ final class CollectionLiteralLoweringPass: LoweringPass {
         let kkListIteratorHasNextName = interner.intern("kk_list_iterator_hasNext")
         let kkListIteratorNextName = interner.intern("kk_list_iterator_next")
         let kkListToStringName = interner.intern("kk_list_to_string")
+        // Higher-order collection function ABI names (FUNC-003)
+        let kkListMapName = interner.intern("kk_list_map")
+        let kkListFilterName = interner.intern("kk_list_filter")
+        let kkListForEachName = interner.intern("kk_list_forEach")
+        let kkListFlatMapName = interner.intern("kk_list_flatMap")
+        let kkListAnyName = interner.intern("kk_list_any")
+        let kkListNoneName = interner.intern("kk_list_none")
+        let kkListAllName = interner.intern("kk_list_all")
 
         let kkMapOfName = interner.intern("kk_map_of")
         let kkMapSizeName = interner.intern("kk_map_size")
@@ -71,8 +82,17 @@ final class CollectionLiteralLoweringPass: LoweringPass {
         let containsKeyName = interner.intern("containsKey")
         let isEmptyName = interner.intern("isEmpty")
         let countName = interner.intern("count")
+        // Higher-order collection member names (FUNC-003)
+        let mapName = interner.intern("map")
+        let filterName = interner.intern("filter")
+        let forEachName = interner.intern("forEach")
+        let flatMapName = interner.intern("flatMap")
+        let anyName = interner.intern("any")
+        let noneName = interner.intern("none")
+        let allName = interner.intern("all")
 
         // println support
+        let printlnName = interner.intern("println")
         let kkPrintlnAnyName = interner.intern("kk_println_any")
         let kkAnyToStringName = interner.intern("kk_any_to_string")
 
@@ -532,8 +552,51 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                         }
                     }
 
-                    // --- Rewrite kk_println_any / kk_any_to_string on list/map → kk_list_to_string / kk_map_to_string ---
-                    if callee == kkPrintlnAnyName, arguments.count == 1 {
+                    // --- Rewrite higher-order collection member calls (FUNC-003) ---
+                    if callee == mapName || callee == filterName || callee == forEachName
+                        || callee == flatMapName || callee == anyName || callee == noneName
+                        || callee == allName
+                    { // swiftlint:disable:this opening_brace
+                        // args = [receiver, lambdaFnPtr]
+                        if arguments.count == 2 {
+                            let receiverID = arguments[0]
+                            if listExprIDs.contains(receiverID.rawValue) {
+                                let kkName: InternedString = switch callee {
+                                case mapName: kkListMapName
+                                case filterName: kkListFilterName
+                                case forEachName: kkListForEachName
+                                case flatMapName: kkListFlatMapName
+                                case anyName: kkListAnyName
+                                case noneName: kkListNoneName
+                                case allName: kkListAllName
+                                default: callee
+                                }
+                                let needsListTag = callee == mapName || callee == flatMapName || callee == filterName
+                                let hofResult = module.arena.appendExpr(
+                                    .temporary(Int32(module.arena.expressions.count)), type: nil
+                                )
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: kkName,
+                                    arguments: arguments,
+                                    result: hofResult,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult
+                                ))
+                                if needsListTag, let result {
+                                    listExprIDs.insert(result.rawValue)
+                                    listExprIDs.insert(hofResult.rawValue)
+                                }
+                                if let result {
+                                    loweredBody.append(.copy(from: hofResult, to: result))
+                                }
+                                continue
+                            }
+                        }
+                    }
+
+                    // Rewrite println on list/map → kk_list_to_string / kk_map_to_string
+                    if callee == kkPrintlnAnyName || callee == printlnName, arguments.count == 1 {
                         let argID = arguments[0]
                         if listExprIDs.contains(argID.rawValue) {
                             let strResult = module.arena.appendExpr(

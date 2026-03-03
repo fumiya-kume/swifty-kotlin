@@ -5,6 +5,8 @@ extension CallLowerer {
         "size", "get", "contains", "containsKey",
         "isEmpty", "first", "last", "indexOf",
         "count", "iterator",
+        "map", "filter", "forEach", "flatMap",
+        "any", "none", "all", // swiftlint:disable:this trailing_comma
     ]
 
     func lowerMemberCallExpr(
@@ -19,6 +21,28 @@ extension CallLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
+        // ── T::class.simpleName / T::class.qualifiedName ──────────────
+        if case let .callableRef(classRefReceiver, refMember, _) = ast.arena.expr(receiverExpr),
+           interner.resolve(refMember) == "class",
+           let classRefTargetType = sema.bindings.classRefTargetType(for: receiverExpr)
+        {
+            let callee = interner.resolve(calleeName)
+            if callee == "simpleName" || callee == "qualifiedName" {
+                return lowerClassRefPropertyAccess(
+                    exprID,
+                    classRefExprID: receiverExpr,
+                    classRefReceiver: classRefReceiver,
+                    classRefTargetType: classRefTargetType,
+                    propertyName: callee,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    instructions: &instructions
+                )
+            }
+        }
+
         let effectiveCalleeName = if sema.bindings.isInvokeOperatorCall(exprID) {
             interner.intern("invoke")
         } else {
@@ -622,5 +646,75 @@ extension CallLowerer {
             instructions: &instructions.instructions
         )
     }
+
+    /// Lowers `T::class.simpleName` / `T::class.qualifiedName` to a call to
+    /// the runtime function `kk_type_token_simple_name` (or `_qualified_name`).
+    ///
+    /// Two arguments are passed to the runtime:
+    /// 1. The type token (Int64) — for reified type parameters this is the
+    ///    synthetic token symbol injected by `InlineLoweringPass`; for concrete
+    ///    types it is computed at compile-time.
+    /// 2. A name-hint string pointer — the compiler emits the simple name as a
+    ///    string literal so the runtime can use it directly for nominal types
+    ///    whose hash-based token is lossy.
+    private func lowerClassRefPropertyAccess(
+        _: ExprID,
+        classRefExprID _: ExprID,
+        classRefReceiver _: ExprID?,
+        classRefTargetType: TypeID,
+        propertyName: String,
+        ast _: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+        let stringType = sema.types.make(.primitive(.string, .nonNull))
+        let nullableStringType = sema.types.makeNullable(stringType)
+
+        // 1. Emit the type token.
+        let tokenExpr: KIRExprID
+        if case let .typeParam(typeParam) = sema.types.kind(of: classRefTargetType) {
+            // Reified type parameter — look up the synthetic token symbol.
+            let tokenSymbol = SyntheticSymbolScheme.reifiedTypeTokenSymbol(for: typeParam.symbol)
+            tokenExpr = arena.appendExpr(.symbolRef(tokenSymbol), type: intType)
+            instructions.append(.constValue(result: tokenExpr, value: .symbolRef(tokenSymbol)))
+        } else {
+            // Concrete type — encode the type token at compile time.
+            let encoded = RuntimeTypeCheckToken.encode(type: classRefTargetType, sema: sema, interner: interner)
+            tokenExpr = arena.appendExpr(.intLiteral(encoded), type: intType)
+            instructions.append(.constValue(result: tokenExpr, value: .intLiteral(encoded)))
+        }
+
+        // 2. Emit the name-hint string.
+        let nameHintExpr: KIRExprID
+        if let name = RuntimeTypeCheckToken.simpleName(of: classRefTargetType, sema: sema, interner: interner) {
+            let internedName = interner.intern(name)
+            nameHintExpr = arena.appendExpr(.stringLiteral(internedName), type: stringType)
+            instructions.append(.constValue(result: nameHintExpr, value: .stringLiteral(internedName)))
+        } else {
+            // No name available — pass 0 (null sentinel) so the runtime falls
+            // back to token-based decoding.
+            nameHintExpr = arena.appendExpr(.intLiteral(0), type: intType)
+            instructions.append(.constValue(result: nameHintExpr, value: .intLiteral(0)))
+        }
+
+        // 3. Emit the runtime call.
+        let runtimeFuncName = propertyName == "qualifiedName"
+            ? "kk_type_token_qualified_name"
+            : "kk_type_token_simple_name"
+        let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: nullableStringType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern(runtimeFuncName),
+            arguments: [tokenExpr, nameHintExpr],
+            result: result,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        return result
+    }
+
     // swiftlint:disable:next file_length
 }

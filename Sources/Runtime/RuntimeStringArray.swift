@@ -215,6 +215,47 @@ public func kk_object_new(_ length: Int, _ classId: Int) -> Int {
     return Int(bitPattern: opaque)
 }
 
+/// Returns the simple name of the type encoded in the given type token as a
+/// runtime string pointer.  For builtin types the name is derived from the
+/// token base; for nominal types the compiler supplies a `nameHint` string
+/// pointer that is returned directly (the hint carries the simple name that
+/// was known at compile-time after inline expansion).
+@_cdecl("kk_type_token_simple_name")
+public func kk_type_token_simple_name(_ typeToken: Int, _ nameHint: Int) -> Int {
+    // If a compiler-provided name hint is available, use it directly.
+    if nameHint != 0, nameHint != runtimeNullSentinelInt {
+        return nameHint
+    }
+    let token = Int64(truncatingIfNeeded: typeToken)
+    let base = token & RuntimeTypeTokenEncoding.baseMask
+    let name = switch base {
+    case RuntimeTypeTokenEncoding.anyBase:
+        "Any"
+    case RuntimeTypeTokenEncoding.stringBase:
+        "String"
+    case RuntimeTypeTokenEncoding.intBase:
+        "Int"
+    case RuntimeTypeTokenEncoding.booleanBase:
+        "Boolean"
+    case RuntimeTypeTokenEncoding.nullBase:
+        "Nothing"
+    default:
+        "Unknown"
+    }
+    let utf8 = Array(name.utf8)
+    return utf8.withUnsafeBufferPointer { buf in
+        Int(bitPattern: kk_string_from_utf8(buf.baseAddress!, Int32(buf.count)))
+    }
+}
+
+/// Returns the qualified name of the type encoded in the given type token.
+/// Behaves identically to `kk_type_token_simple_name` for now; a future
+/// implementation may distinguish package-qualified names for nominal types.
+@_cdecl("kk_type_token_qualified_name")
+public func kk_type_token_qualified_name(_ typeToken: Int, _ nameHint: Int) -> Int {
+    kk_type_token_simple_name(typeToken, nameHint)
+}
+
 @_cdecl("kk_type_register_super")
 public func kk_type_register_super(_ childTypeId: Int, _ superTypeId: Int) -> Int {
     runtimeRegisterTypeEdge(childTypeID: Int64(childTypeId), parentTypeID: Int64(superTypeId))

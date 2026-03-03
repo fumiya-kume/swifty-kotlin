@@ -260,12 +260,27 @@ extension ExprTypeChecker {
 
         var lambdaLocals = locals
         let outerSymbols = Set(locals.values.map(\.symbol))
-        let parameterTypes: [TypeID] = if let expectedFunctionType, expectedFunctionType.params.count == params.count {
+
+        // Implicit `it` parameter: when a no-arrow lambda has zero explicit params
+        // and the expected function type has exactly one parameter, synthesise an
+        // `it` binding so the body can reference it.
+        let effectiveParams: [InternedString] = if params.isEmpty,
+                                                   let expectedFunctionType,
+                                                   expectedFunctionType.params.count == 1
+        { // swiftlint:disable:this opening_brace
+            [ctx.interner.intern("it")]
+        } else {
+            params
+        }
+
+        let parameterTypes: [TypeID] = if let expectedFunctionType,
+                                          expectedFunctionType.params.count == effectiveParams.count
+        { // swiftlint:disable:this opening_brace
             expectedFunctionType.params
         } else {
-            Array(repeating: sema.types.anyType, count: params.count)
+            Array(repeating: sema.types.anyType, count: effectiveParams.count)
         }
-        for (offset, param) in params.enumerated() {
+        for (offset, param) in effectiveParams.enumerated() {
             let syntheticSymbol = SymbolID(rawValue: Int32(clamping: Int64(-1_000_000) - Int64(id.rawValue) * 256 - Int64(offset)))
             let parameterType = offset < parameterTypes.count ? parameterTypes[offset] : sema.types.anyType
             lambdaLocals[param] = (
@@ -318,6 +333,7 @@ extension ExprTypeChecker {
         return inferredFunctionType
     }
 
+    // swiftlint:disable:next cyclomatic_complexity
     func inferCallableRefExpr(
         _ id: ExprID,
         receiver: ExprID?,
@@ -329,7 +345,21 @@ extension ExprTypeChecker {
     ) -> TypeID {
         let ast = ctx.ast
         let sema = ctx.sema
+        let interner = ctx.interner
         let outerSymbols = Set(locals.values.map(\.symbol))
+
+        // ── T::class  — reified type-parameter class reference ──────────
+        if interner.resolve(member) == "class",
+           let receiver,
+           case let .nameRef(receiverName, _) = ast.arena.expr(receiver)
+        { // swiftlint:disable:this opening_brace
+            if let result = inferClassRefExpr(
+                id, receiver: receiver, receiverName: receiverName,
+                range: range, ctx: ctx, locals: &locals
+            ) {
+                return result
+            }
+        }
 
         let receiverType: TypeID? = if let receiver {
             driver.inferExpr(receiver, ctx: ctx, locals: &locals, expectedType: nil)
@@ -439,6 +469,52 @@ extension ExprTypeChecker {
         sema.bindings.bindCaptureSymbols(id, symbols: fallbackCaptures)
         sema.bindings.bindExprType(id, type: fallbackType)
         return fallbackType
+    }
+
+    /// Helper: handles `T::class` / `SomeType::class` callable-ref expressions.
+    /// Returns the inferred type if matched, or `nil` to fall through.
+    private func inferClassRefExpr( // swiftlint:disable:this function_parameter_count
+        _ id: ExprID,
+        receiver: ExprID,
+        receiverName: InternedString,
+        range: SourceRange,
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> TypeID? {
+        let sema = ctx.sema
+        let interner = ctx.interner
+        let allCandidateIDs = ctx.cachedScopeLookup(receiverName)
+        for candidateID in allCandidateIDs {
+            guard let sym = ctx.cachedSymbol(candidateID),
+                  sym.kind == .typeParameter else { continue }
+            if !sym.flags.contains(.reifiedTypeParameter) {
+                let name = interner.resolve(sym.name)
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-REIFIED",
+                    "Cannot use 'T::class' on non-reified type parameter '\(name)'.",
+                    range: range
+                )
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
+            let resolved = sema.types.make(.typeParam(TypeParamType(symbol: sym.id)))
+            sema.bindings.bindClassRefTargetType(id, type: resolved)
+            sema.bindings.bindExprType(id, type: sema.types.anyType)
+            _ = driver.inferExpr(receiver, ctx: ctx, locals: &locals, expectedType: nil)
+            return sema.types.anyType
+        }
+        for candidateID in allCandidateIDs {
+            guard let sym = ctx.cachedSymbol(candidateID),
+                  sym.kind == .class || sym.kind == .interface
+                  || sym.kind == .object || sym.kind == .enumClass
+            else { continue }
+            let classType = sema.types.make(.classType(ClassType(classSymbol: sym.id)))
+            sema.bindings.bindClassRefTargetType(id, type: classType)
+            sema.bindings.bindExprType(id, type: sema.types.anyType)
+            _ = driver.inferExpr(receiver, ctx: ctx, locals: &locals, expectedType: nil)
+            return sema.types.anyType
+        }
+        return nil
     }
 
     func inferSuperRefExpr(
