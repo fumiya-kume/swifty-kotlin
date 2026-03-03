@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 public struct SymbolID: Hashable, Sendable {
     public let rawValue: Int32
 

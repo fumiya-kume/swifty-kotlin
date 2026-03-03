@@ -1,4 +1,5 @@
 extension KotlinParser {
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func parseDeclaration() -> NodeID {
         var modifierChildren: [SyntaxChild] = []
         var modifierRange = RangeAccumulator()

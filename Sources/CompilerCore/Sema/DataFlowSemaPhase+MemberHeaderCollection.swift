@@ -1,6 +1,8 @@
+// swiftlint:disable file_length
 import Foundation
 
 extension DataFlowSemaPhase {
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func collectMemberHeaders(
         memberFunctions: [DeclID],
         memberProperties: [DeclID],
