@@ -179,7 +179,9 @@ extension BuildASTPhase {
             }
         }
 
-        let receiverType = declarationPropertyReceiverType(from: nodeID, in: arena, interner: interner, astArena: astArena)
+        let receiverType = declarationPropertyReceiverType(
+            from: nodeID, in: arena, interner: interner, astArena: astArena
+        )
         let propertyName: InternedString = if receiverType != nil {
             declarationPropertyNameAfterDot(from: nodeID, in: arena, interner: interner)
         } else {

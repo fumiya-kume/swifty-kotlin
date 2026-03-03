@@ -1,6 +1,6 @@
-val String.firstChar: Char
-    get() = this[0]
+val Int.doubled: Int
+    get() = this * 2
 
 fun main() {
-    println("hello".firstChar)
+    println(5.doubled)
 }

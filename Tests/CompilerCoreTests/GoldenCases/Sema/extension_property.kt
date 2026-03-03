@@ -1,9 +1,9 @@
 package golden.sema
 
-val String.firstChar: Char
-    get() = this[0]
+val Int.doubled: Int
+    get() = this * 2
 
-val String.lastChar: Char
-    get() = this[this.length - 1]
+val Int.isPositive: Boolean
+    get() = this > 0
 
-fun useExtProp(): Char = "hello".firstChar
+fun useExtProp(): Int = 5.doubled
