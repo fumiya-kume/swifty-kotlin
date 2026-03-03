@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "diagnostics": [
+    {
+      "file": "visibility_error.kt",
+      "range": {
+        "start": { "line": 6, "character": 12 },
+        "end": { "line": 6, "character": 20 }
+      },
+      "severity": 1,
+      "severityLabel": "error",
+      "code": "KSWIFTK-SEMA-0040",
+      "source": "kswiftk",
+      "message": "Cannot access 'secret': it is private.",
+      "codeActions": [{ "title": "Change visibility to 'internal'", "kind": "quickfix" }]
+    }
+  ]
+}

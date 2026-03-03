@@ -70,6 +70,14 @@ public enum LazyDelegateThreadSafetyMode: Int, Equatable {
     case none = 0
 }
 
+/// Format for diagnostic output.
+public enum DiagnosticsFormat: String, Equatable {
+    /// Default human-readable text format.
+    case text
+    /// JSON format conforming to the LSP diagnostic schema.
+    case json
+}
+
 public struct CompilerOptions: Equatable {
     public var moduleName: String
     public var inputs: [String]
@@ -84,6 +92,7 @@ public struct CompilerOptions: Equatable {
     public var frontendFlags: [String]
     public var irFlags: [String]
     public var runtimeFlags: [String]
+    public var diagnosticsFormat: DiagnosticsFormat
 
     /// Path to the incremental compilation cache directory, if any.
     /// Incremental compilation is enabled when either this is non-nil or the
@@ -105,7 +114,8 @@ public struct CompilerOptions: Equatable {
         frontendFlags: [String] = [],
         irFlags: [String] = [],
         runtimeFlags: [String] = [],
-        incrementalCachePath: String? = nil
+        incrementalCachePath: String? = nil,
+        diagnosticsFormat: DiagnosticsFormat = .text
     ) {
         self.moduleName = moduleName
         self.inputs = inputs
@@ -121,6 +131,7 @@ public struct CompilerOptions: Equatable {
         self.irFlags = irFlags
         self.runtimeFlags = runtimeFlags
         self.incrementalCachePath = incrementalCachePath
+        self.diagnosticsFormat = diagnosticsFormat
     }
 
     /// The number of frontend parallel jobs parsed from `-Xfrontend jobs=N`.
