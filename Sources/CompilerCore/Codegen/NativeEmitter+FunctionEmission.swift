@@ -910,7 +910,8 @@ extension NativeEmitter {
                 // LLVM global variable so the write persists across reads.
                 if let targetExpr = module.arena.expr(to),
                    case let .symbolRef(targetSymbol) = targetExpr,
-                   let globalPtr = globalVariables[targetSymbol] {
+                   let globalPtr = globalVariables[targetSymbol]
+                {
                     _ = bindings.buildStore(builder, value: copySource, pointer: globalPtr)
                 } else if let alloca = copyTargetAllocas[to.rawValue] {
                     _ = bindings.buildStore(builder, value: copySource, pointer: alloca)
