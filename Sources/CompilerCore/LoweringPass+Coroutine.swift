@@ -596,6 +596,7 @@ final class CoroutineLoweringPass: LoweringPass {
         let setCompletionCallee = interner.intern("kk_coroutine_state_set_completion")
         let getCompletionCallee = interner.intern("kk_coroutine_state_get_completion")
         let suspendedProvider = interner.intern("kk_coroutine_suspended")
+        let checkCancellationCallee = interner.intern("kk_coroutine_check_cancellation")
         let sourceDelayCallee = interner.intern("delay")
         let stateBlocks = suspendPlan.stateBlocks
         let transitionsByResumeLabel = suspendPlan.transitionsByResumeLabel
@@ -688,6 +689,21 @@ final class CoroutineLoweringPass: LoweringPass {
                         )
                     )
                 }
+
+                // CORO-002: Check cancellation at suspension point resume
+                let cancellationCheckResult = module.arena.appendExpr(
+                    .temporary(Int32(module.arena.expressions.count)),
+                    type: intType
+                )
+                lowered.append(
+                    .call(
+                        symbol: nil,
+                        callee: checkCancellationCallee,
+                        arguments: [continuationExpr],
+                        result: cancellationCheckResult,
+                        canThrow: true
+                    )
+                )
             }
             let nextResumeLabel = stateBlocks.indices.contains(index + 1)
                 ? stateBlocks[index + 1].resumeLabel

@@ -74,6 +74,7 @@ private final class RuntimeContinuationState {
     var label: Int64
     var completion: Int64
     var spillSlots: [Int64: Int64]
+    private(set) var isCancelled: Bool
     private let stateLock = NSLock()
     private let resumeSemaphore = DispatchSemaphore(value: 0)
     private var delayTimers: [ObjectIdentifier: DispatchSourceTimer]
@@ -89,7 +90,21 @@ private final class RuntimeContinuationState {
         self.label = label
         self.completion = completion
         self.spillSlots = spillSlots
+        self.isCancelled = false
         self.delayTimers = delayTimers
+    }
+
+    func cancel() {
+        stateLock.lock()
+        isCancelled = true
+        let timers = Array(delayTimers.values)
+        delayTimers.removeAll(keepingCapacity: false)
+        stateLock.unlock()
+        for timer in timers {
+            timer.setEventHandler(handler: nil)
+            timer.cancel()
+        }
+        resumeSemaphore.signal()
     }
 
     deinit {
@@ -131,6 +146,23 @@ private final class RuntimeContinuationState {
         let timers = Array(delayTimers.values)
         delayTimers.removeAll(keepingCapacity: false)
         return timers
+    }
+}
+
+private final class RuntimeJobHandle {
+    let continuationState: RuntimeContinuationState?
+    private let lock = NSLock()
+    private var isCancelledFlag = false
+
+    init(continuationState: RuntimeContinuationState?) {
+        self.continuationState = continuationState
+    }
+
+    func cancel() {
+        lock.lock()
+        isCancelledFlag = true
+        lock.unlock()
+        continuationState?.cancel()
     }
 }
 
@@ -533,10 +565,25 @@ public func kk_kxmini_run_blocking(_ entryPointRaw: Int, _ functionID: Int) -> I
 
 @_cdecl("kk_kxmini_launch")
 public func kk_kxmini_launch(_ entryPointRaw: Int, _ functionID: Int) -> Int {
-    KxMiniRuntime.launch {
-        _ = runSuspendEntryLoop(entryPointRaw: entryPointRaw, functionID: functionID)
+    let continuation = kk_coroutine_continuation_new(functionID)
+    guard let state = runtimeContinuationState(from: continuation) else {
+        KxMiniRuntime.launch {
+            _ = runSuspendEntryLoop(entryPointRaw: entryPointRaw, functionID: functionID)
+        }
+        return 0
     }
-    return 0
+    let job = RuntimeJobHandle(continuationState: state)
+    let jobPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(job).toOpaque())
+    RuntimeStorage.lock.lock()
+    RuntimeStorage.objectPointers.insert(UInt(bitPattern: jobPtr))
+    RuntimeStorage.lock.unlock()
+    KxMiniRuntime.launch {
+        _ = runSuspendEntryLoopWithContinuation(
+            entryPointRaw: entryPointRaw,
+            continuation: continuation
+        )
+    }
+    return Int(bitPattern: jobPtr)
 }
 
 @_cdecl("kk_kxmini_async")
@@ -559,10 +606,51 @@ public func kk_kxmini_async_await(_ handle: Int) -> Int {
     return task.awaitResult()
 }
 
+@_cdecl("kk_job_cancel")
+public func kk_job_cancel(_ handle: Int) {
+    guard let handlePtr = UnsafeMutableRawPointer(bitPattern: handle) else {
+        return
+    }
+    RuntimeStorage.lock.lock()
+    let isObjectPointer = RuntimeStorage.objectPointers.contains(UInt(bitPattern: handlePtr))
+    RuntimeStorage.lock.unlock()
+    guard isObjectPointer else {
+        return
+    }
+    guard let job = tryCast(handlePtr, to: RuntimeJobHandle.self) else {
+        return
+    }
+    job.cancel()
+}
+
+@_cdecl("kk_coroutine_check_cancellation")
+public func kk_coroutine_check_cancellation(_ continuation: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let state = runtimeContinuationState(from: continuation) else {
+        return 0
+    }
+    if state.isCancelled {
+        outThrown?.pointee = runtimeAllocateCancellationException()
+        return 1
+    }
+    return 0
+}
+
+@_cdecl("kk_coroutine_cancel")
+public func kk_coroutine_cancel(_ continuation: Int) {
+    guard let state = runtimeContinuationState(from: continuation) else {
+        return
+    }
+    state.cancel()
+}
+
 @_cdecl("kk_kxmini_delay")
 public func kk_kxmini_delay(_ milliseconds: Int, _ continuation: Int) -> Int {
     guard let state = runtimeContinuationState(from: continuation) else {
         return 0
+    }
+    if state.isCancelled {
+        return Int(bitPattern: kk_coroutine_suspended())
     }
     state.scheduleDelay(milliseconds: milliseconds)
     return Int(bitPattern: kk_coroutine_suspended())
@@ -604,12 +692,41 @@ private func runtimeAllocateThrowable(message: String) -> Int {
     return Int(bitPattern: ptr)
 }
 
+private func runtimeAllocateCancellationException() -> Int {
+    runtimeAllocateThrowable(message: "CancellationException")
+}
+
+@_cdecl("kk_is_cancellation_exception")
+public func kk_is_cancellation_exception(_ throwableRaw: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: throwableRaw) else {
+        return 0
+    }
+    RuntimeStorage.lock.lock()
+    let isObjectPointer = RuntimeStorage.objectPointers.contains(UInt(bitPattern: ptr))
+    RuntimeStorage.lock.unlock()
+    guard isObjectPointer else {
+        return 0
+    }
+    guard let throwable = tryCast(ptr, to: RuntimeThrowableBox.self) else {
+        return 0
+    }
+    return throwable.message == "CancellationException" ? 1 : 0
+}
+
 private func runSuspendEntryLoop(entryPointRaw: Int, functionID: Int) -> Int {
-    guard let entryPoint = suspendEntryPoint(from: entryPointRaw) else {
+    guard suspendEntryPoint(from: entryPointRaw) != nil else {
         return 0
     }
 
     let continuation = kk_coroutine_continuation_new(functionID)
+    return runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
+}
+
+private func runSuspendEntryLoopWithContinuation(entryPointRaw: Int, continuation: Int) -> Int {
+    guard let entryPoint = suspendEntryPoint(from: entryPointRaw) else {
+        return 0
+    }
+
     let suspendedToken = Int(bitPattern: kk_coroutine_suspended())
     var outThrown: Int = 0
 
