@@ -689,17 +689,11 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     }
 
                     // --- Rewrite sequence member calls (STDLIB-003) ---
-                    // DEBUG: trace sequence-related calls (stderr for CI visibility)
+                    // DEBUG: dump ALL callee names in this function to stderr
                     do {
                         let cn = interner.resolve(callee)
-                        if cn == "asSequence" || cn == "toList" {
-                            let msg = "SEQ_DIAG: callee=\(cn) args=\(arguments.count) listIDs=\(listExprIDs) seqIDs=\(sequenceExprIDs)\n"
-                            FileHandle.standardError.write(Data(msg.utf8))
-                            for (idx, arg) in arguments.enumerated() {
-                                let amsg = "SEQ_DIAG:   arg[\(idx)].rawValue=\(arg.rawValue)\n"
-                                FileHandle.standardError.write(Data(amsg.utf8))
-                            }
-                        }
+                        let msg = "SEQ_DIAG2: fn=\(interner.resolve(function.name)) callee=\(cn) nargs=\(arguments.count) listIDs=\(listExprIDs)\n"
+                        FileHandle.standardError.write(Data(msg.utf8))
                     }
                     // asSequence() on list → kk_sequence_from_list
                     if callee == asSequenceName, arguments.count == 1 {
