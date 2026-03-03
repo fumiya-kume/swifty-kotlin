@@ -1,4 +1,4 @@
-// swiftlint:disable file_length type_body_length
+// swiftlint:disable file_length type_body_length trailing_comma
 import Foundation
 
 /// Describes a single code action (quick-fix) that an LSP client can offer to the user.
@@ -675,4 +675,4 @@ public enum DiagnosticRegistry {
             + iceDescriptors
 }
 
-// swiftlint:enable file_length type_body_length
+// swiftlint:enable file_length type_body_length trailing_comma

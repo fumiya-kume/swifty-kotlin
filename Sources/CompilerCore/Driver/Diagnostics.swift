@@ -51,7 +51,9 @@ public final class DiagnosticEngine: @unchecked Sendable {
         _diagnostics.append(diagnostic)
     }
 
-    public func error(_ code: String, _ message: String, range: SourceRange?, codeActions: [DiagnosticCodeAction] = []) {
+    public func error(
+        _ code: String, _ message: String, range: SourceRange?, codeActions: [DiagnosticCodeAction] = []
+    ) {
         emit(Diagnostic(
             severity: .error,
             code: code,
@@ -62,7 +64,9 @@ public final class DiagnosticEngine: @unchecked Sendable {
         ))
     }
 
-    public func warning(_ code: String, _ message: String, range: SourceRange?, codeActions: [DiagnosticCodeAction] = []) {
+    public func warning(
+        _ code: String, _ message: String, range: SourceRange?, codeActions: [DiagnosticCodeAction] = []
+    ) {
         emit(Diagnostic(
             severity: .warning,
             code: code,
@@ -73,7 +77,9 @@ public final class DiagnosticEngine: @unchecked Sendable {
         ))
     }
 
-    public func note(_ code: String, _ message: String, range: SourceRange?, codeActions: [DiagnosticCodeAction] = []) {
+    public func note(
+        _ code: String, _ message: String, range: SourceRange?, codeActions: [DiagnosticCodeAction] = []
+    ) {
         emit(Diagnostic(
             severity: .note,
             code: code,
@@ -84,7 +90,9 @@ public final class DiagnosticEngine: @unchecked Sendable {
         ))
     }
 
-    public func info(_ code: String, _ message: String, range: SourceRange?, codeActions: [DiagnosticCodeAction] = []) {
+    public func info(
+        _ code: String, _ message: String, range: SourceRange?, codeActions: [DiagnosticCodeAction] = []
+    ) {
         emit(Diagnostic(
             severity: .info,
             code: code,
@@ -332,8 +340,8 @@ public final class DiagnosticEngine: @unchecked Sendable {
                 result += "\\r"
             case "\t":
                 result += "\\t"
-            case let s where s.value < 0x20:
-                result += String(format: "\\u%04X", s.value)
+            case let scalar where scalar.value < 0x20:
+                result += String(format: "\\u%04X", scalar.value)
             default:
                 result += String(scalar)
             }
