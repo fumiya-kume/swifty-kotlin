@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-03-03
+最終更新: 2026-03-03（CLASS-008 / TYPE-005 / STDLIB-004〜006 / CORO-003 を追加）
 
 ## 運用ルール
 
@@ -71,6 +71,15 @@
   - [x] recursive type の展開に最大深度制限（例: 32 段）を設けてループを防ぐ
   - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task TYPE-004`（2026-03-02: diff case `Scripts/diff_cases/generic_typealias.kt` を追加）
   - **完了条件**: `typealias Predicate<T> = (T) -> Boolean` が call-site で正しく展開され型チェックが通る（`GoldenCases/Sema/generic_typealias.kt` で確認）
+
+
+- [ ] TYPE-005: 符号なし整数型（`UInt`/`ULong`/`UByte`/`UShort`）の演算・型変換・stdlib を完全実装する（spec.md J8）
+  - [ ] `UInt`/`ULong`/`UByte`/`UShort` を distinct な primitive 型として TypeSystem に登録し、signed 型との暗黙変換を禁止する
+  - [ ] 四則演算・比較・ビット演算を符号なし意味論で LLVM IR へ lowering する（`udiv`/`urem`/`icmp ult` 等）
+  - [ ] `toUInt()`/`toInt()` などの変換関数を stdlib stub として実装する
+  - [ ] 符号なし型リテラル（`42u`/`42uL`）を Lexer/Parser で認識し型推論する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task TYPE-005`
+  - **完了条件**: `val x: UInt = 4294967295u` が overflow せず正しく演算され、`toInt()` で符号変換が動作する
 
 ---
 
@@ -206,6 +215,15 @@
   - [x] `override` 修飾子なしで親の関数を隠蔽した場合に Error/Warning を出す
   - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CLASS-005`
   - **完了条件**: non-open class の継承は診断され、`open class` の継承と override が `kotlinc` と一致する
+
+
+- [ ] CLASS-008: クラス委譲（`class A : Interface by delegateInstance`）を front-to-back で実装する（spec.md J7/J12）
+  - [ ] class ヘッダの `: Interface by expr` 構文を Parser/AST で保持する（property delegation の `by` とは別パス）
+  - [ ] Sema で delegate 式の型が対象 interface を実装していることを検証する
+  - [ ] KIR lowering で interface の全メソッドを `delegateInstance.method(...)` へ転送するボイラープレートを合成する
+  - [ ] クラス自身が一部メソッドを override する場合は override 側を優先する dispatch を生成する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CLASS-008`
+  - **完了条件**: `class Logger(impl: Printer) : Printer by impl` が `impl` のメソッドを委譲し、override したメソッドだけ自前実装を呼ぶ
 
 
 - [ ] CLASS-006: `data object` / anonymous object の型と等値比較を実装する（spec.md J6）
@@ -405,6 +423,14 @@
   - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CORO-002`
   - **完了条件**: `launch { while(true) delay(10) }.cancel()` が coroutine を停止し `CancellationException` が伝播する
 
+- [ ] CORO-003: `Flow<T>` コールドストリームを実装する（spec.md J17）
+  - [ ] runtime に `kk_flow_create` / `kk_flow_collect` / `kk_flow_emit` の C ABI 関数を追加する
+  - [ ] `flow { emit(x) }` builder の lowering を実装し、collector lambda に suspension point を挿入する
+  - [ ] `Flow.map`・`Flow.filter`・`Flow.take`・`Flow.collect` 中間オペレーターを stub として実装する
+  - [ ] `Flow` はコールド（collect のたびに再実行）であることを runtime で保証する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CORO-003`
+  - **完了条件**: `flow { emit(1); emit(2) }.map { it * 2 }.collect { println(it) }` が `2\n4` を出力し `kotlinc` と一致する
+
 ---
 
 
@@ -417,6 +443,32 @@
   - [x] `for (x in list)` が stub 実装の `iterator()` 経由で動作することを確認する
   - [x] `listOf`/`mapOf`/`arrayOf` を含む diff/golden ケースを追加する
   - **完了条件**: `listOf(1, 2, 3).size` / `for (x in listOf(...))` が `kotlinc` と同一出力になる
+
+
+- [ ] STDLIB-004: スコープ関数（`let`/`run`/`with`/`apply`/`also`）を stdlib stub として実装する（spec.md J9）
+  - [ ] `let`/`run`/`also` を `T` の extension inline 関数として、`with` をトップレベル inline 関数として stub 実装する
+  - [ ] `apply` の receiver return と `also` の self return を型システムで正しく推論する
+  - [ ] 各スコープ関数の lambda 引数の receiver / `it` を Sema でスコープ束縛する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task STDLIB-004`
+  - **完了条件**: `val result = "hello".let { it.uppercase() }` / `buildList<Int> { }.apply { add(1) }` が `kotlinc` と同一出力になる
+
+
+- [ ] STDLIB-005: コレクション高階関数（`map`/`filter`/`flatMap`/`fold`/`reduce`/`forEach`/`any`/`all`/`none`/`groupBy`/`sortedBy`）を実装する（spec.md J15）
+  - [ ] runtime/stdlib stub に `kk_list_map` / `kk_list_filter` / `kk_list_fold` 等の C ABI 関数を追加する
+  - [ ] lambda を function pointer + closure として C ABI 経由で HOF に渡す lowering を実装する
+  - [ ] `flatMap`（`kk_list_flat_map`）・`groupBy`（`kk_list_group_by`）・`sortedBy`（`kk_list_sorted_by`）の安定ソートを実装する
+  - [ ] `any`/`all`/`none`/`count`/`first`/`last`/`find` の短絡評価を runtime で保証する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task STDLIB-005`
+  - **完了条件**: `listOf(1,2,3).filter { it > 1 }.map { it * 2 }` が `[4, 6]` を返し `kotlinc` と一致する
+
+
+- [ ] STDLIB-006: String stdlib 関数（`trim`/`split`/`replace`/`startsWith`/`endsWith`/`toInt`/`toDouble`/`format`）を実装する（spec.md J15）
+  - [ ] runtime/stdlib stub に `kk_string_trim` / `kk_string_split` / `kk_string_replace` 等を追加する
+  - [ ] `String.toInt()` / `String.toDouble()` の失敗時に `NumberFormatException` を投げる動作を実装する
+  - [ ] `String.format(vararg args)` を printf 相当の C ABI 関数へ lowering する
+  - [ ] `startsWith`/`endsWith`/`contains`（文字列検索版）を stdlib stub として実装する
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task STDLIB-006`
+  - **完了条件**: `"  hello  ".trim()` / `"1,2,3".split(",")` / `"42".toInt()` が `kotlinc` と同一出力になる
 
 
 - [ ] STDLIB-002: `buildString`/`buildList`/`buildMap` DSL builder を実装する（spec.md J9/J12）
