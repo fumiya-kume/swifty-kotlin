@@ -152,7 +152,7 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    // Builder DSL (STDLIB-002)
+    /// Builder DSL (STDLIB-002)
     static let kk_build_string = ExternDecl(
         name: "kk_build_string",
         parameterTypes: ["intptr_t"],

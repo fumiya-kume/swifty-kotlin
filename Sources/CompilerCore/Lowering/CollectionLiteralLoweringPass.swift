@@ -397,8 +397,8 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     // --- Rewrite builder member functions (STDLIB-002) ---
                     // Only rewrite append/add/put inside builder lambda functions
                     // to avoid incorrectly rewriting user-defined functions with same names.
-                    if builderLambdaFunctionNames.contains(function.name),
-                       callee == appendName, arguments.count == 1 {
+                    let isBuilderLambda = builderLambdaFunctionNames.contains(function.name)
+                    if isBuilderLambda, callee == appendName, arguments.count == 1 {
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: kkStringBuilderAppendName,
@@ -409,8 +409,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                         ))
                         continue
                     }
-                    if builderLambdaFunctionNames.contains(function.name),
-                       callee == addName, arguments.count == 1 {
+                    if isBuilderLambda, callee == addName, arguments.count == 1 {
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: kkMutableListAddName,
@@ -421,8 +420,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                         ))
                         continue
                     }
-                    if builderLambdaFunctionNames.contains(function.name),
-                       callee == putName, arguments.count == 2 {
+                    if isBuilderLambda, callee == putName, arguments.count == 2 {
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: kkMutableMapPutName,
