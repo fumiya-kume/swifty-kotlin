@@ -46,6 +46,7 @@ final class BuildKIRRegressionTests: XCTestCase {
                 "JvmStaticLowering",
                 "DataEnumSealedSynthesis",
                 "LambdaClosureConversion",
+                "TailrecLowering",
                 "InlineLowering",
                 "CoroutineLowering",
                 "ABILowering",

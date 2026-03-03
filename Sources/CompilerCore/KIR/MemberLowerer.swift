@@ -131,7 +131,8 @@ final class MemberLowerer {
                         returnType: returnType,
                         body: body,
                         isSuspend: function.isSuspend,
-                        isInline: function.isInline
+                        isInline: function.isInline,
+                        isTailrec: function.isTailrec
                     )
                 )
             )

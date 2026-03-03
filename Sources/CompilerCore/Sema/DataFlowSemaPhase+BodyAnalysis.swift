@@ -34,6 +34,20 @@ extension DataFlowSemaPhase {
                 bindings.bindExprType(expr, type: signature.returnType)
             }
 
+            // Validate tailrec: the terminal expression must be a self-recursive call.
+            if funDecl.isTailrec {
+                let isTailCall = checkTailRecursiveBody(
+                    funDecl.body, functionName: funDecl.name, ast: ast
+                )
+                if !isTailCall {
+                    diagnostics.warning(
+                        "KSWIFTK-SEMA-TAILREC",
+                        "Function marked 'tailrec' but last expression is not a self-recursive call.",
+                        range: funDecl.range
+                    )
+                }
+            }
+
         case let .propertyDecl(propertyDecl):
             if let symbol = bindings.declSymbols[declID] {
                 let expr = ExprID(rawValue: declID.rawValue)
@@ -495,5 +509,43 @@ extension DataFlowSemaPhase {
         case .star:
             fatalError("typeArgInnerType called on .star")
         }
+    }
+
+    // MARK: - Tailrec validation helpers
+
+    /// Check whether the function body ends with a self-recursive call (tail position).
+    func checkTailRecursiveBody(
+        _ body: FunctionBody, functionName: InternedString, ast: ASTModule
+    ) -> Bool {
+        switch body {
+        case .unit:
+            return false
+        case let .expr(exprID, _):
+            return isSelfRecursiveCall(exprID, functionName: functionName, ast: ast)
+        case let .block(exprIDs, _):
+            guard let lastExprID = exprIDs.last else { return false }
+            // If the last statement is a return expression, check its value.
+            if let expr = ast.arena.expr(lastExprID),
+               case let .returnExpr(value, _, _) = expr
+            {
+                guard let value else { return false }
+                return isSelfRecursiveCall(value, functionName: functionName, ast: ast)
+            }
+            return isSelfRecursiveCall(lastExprID, functionName: functionName, ast: ast)
+        }
+    }
+
+    /// Check if the given expression is a call to a function with the given name.
+    private func isSelfRecursiveCall(
+        _ exprID: ExprID, functionName: InternedString, ast: ASTModule
+    ) -> Bool {
+        guard let expr = ast.arena.expr(exprID),
+              case let .call(callee, _, _, _) = expr,
+              let calleeExpr = ast.arena.expr(callee),
+              case let .nameRef(name, _) = calleeExpr
+        else {
+            return false
+        }
+        return name == functionName
     }
 }

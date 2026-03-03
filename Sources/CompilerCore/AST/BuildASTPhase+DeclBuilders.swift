@@ -147,6 +147,7 @@ extension BuildASTPhase {
         let modifiers = declarationModifiers(from: nodeID, in: arena)
         let isSuspend = modifiers.contains(.suspend)
         let isInline = modifiers.contains(.inline)
+        let isTailrec = modifiers.contains(.tailrec)
         let functionName = declarationFunctionName(from: nodeID, in: arena, interner: interner)
         let valueParams = declarationValueParameters(from: nodeID, in: arena, interner: interner, astArena: astArena)
         let receiverType = declarationReceiverType(from: nodeID, in: arena, interner: interner, astArena: astArena)
@@ -167,7 +168,8 @@ extension BuildASTPhase {
             returnType: returnType,
             body: body,
             isSuspend: isSuspend,
-            isInline: isInline
+            isInline: isInline,
+            isTailrec: isTailrec
         )
     }
 

@@ -248,6 +248,7 @@ public struct FunDecl {
     public let body: FunctionBody
     public let isSuspend: Bool
     public let isInline: Bool
+    public let isTailrec: Bool
 
     public init(
         range: SourceRange,
@@ -260,7 +261,8 @@ public struct FunDecl {
         returnType: TypeRefID? = nil,
         body: FunctionBody = .unit,
         isSuspend: Bool = false,
-        isInline: Bool = false
+        isInline: Bool = false,
+        isTailrec: Bool = false
     ) {
         self.range = range
         self.name = name
@@ -273,6 +275,7 @@ public struct FunDecl {
         self.body = body
         self.isSuspend = isSuspend
         self.isInline = isInline
+        self.isTailrec = isTailrec
     }
 }
 

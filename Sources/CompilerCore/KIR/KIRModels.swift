@@ -114,13 +114,14 @@ public struct KIRFunction: Sendable {
     public var body: [KIRInstruction]
     public let isSuspend: Bool
     public let isInline: Bool
+    public let isTailrec: Bool
     public let sourceRange: SourceRange? // function-level source location
     public var instructionLocations: [SourceRange?] // per-instruction source locations, parallel to body
 
     public init(
         symbol: SymbolID, name: InternedString, params: [KIRParameter],
         returnType: TypeID, body: [KIRInstruction],
-        isSuspend: Bool, isInline: Bool,
+        isSuspend: Bool, isInline: Bool, isTailrec: Bool = false,
         sourceRange: SourceRange? = nil, instructionLocations: [SourceRange?] = []
     ) {
         self.symbol = symbol
@@ -130,6 +131,7 @@ public struct KIRFunction: Sendable {
         self.body = body
         self.isSuspend = isSuspend
         self.isInline = isInline
+        self.isTailrec = isTailrec
         self.sourceRange = sourceRange
         self.instructionLocations = instructionLocations
     }

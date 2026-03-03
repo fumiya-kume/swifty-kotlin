@@ -26,6 +26,7 @@ public final class LoweringPhase: CompilerPhase {
         JvmStaticLoweringPass(),
         DataEnumSealedSynthesisPass(),
         LambdaClosureConversionPass(),
+        TailrecLoweringPass(),
         InlineLoweringPass(),
         CoroutineLoweringPass(),
         ABILoweringPass(),
@@ -47,7 +48,7 @@ public final class LoweringPhase: CompilerPhase {
             if pass.shouldRun(module: module, ctx: kirCtx) {
                 try pass.run(module: module, ctx: kirCtx)
             } else {
-                module.recordLowering(type(of: pass).name)
+                module.recordLowering(pass.passName)
             }
         }
     }
