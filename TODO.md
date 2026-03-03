@@ -307,12 +307,12 @@
   - **完了条件**: `1 to "one"` が `Pair(1, "one")` に、カスタム infix 関数が正しい優先順位で評価される
 
 
-- [ ] FUNC-003: function type / lambda の `it`・型省略・destructuring を完全実装する（spec.md J9/J12）
-  - [ ] 単一引数 lambda の暗黙引数（`it`）を Sema でスコープに束縛する
-  - [ ] lambda パラメータの型が context から推論される場合（`list.map { it + 1 }`）に型注釈を省略できる
-  - [ ] lambda パラメータを `(a, b)` 形式で destructuring する（PROP-004 連携）
-  - [ ] trailing lambda 構文（`foo(1) { it * 2 }`）を parser で正しく扱う（既存実装済み 連携）
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task FUNC-003`
+- [x] FUNC-003: function type / lambda の `it`・型省略・destructuring を完全実装する（spec.md J9/J12）
+  - [x] 単一引数 lambda の暗黙引数（`it`）を Sema でスコープに束縛する
+  - [x] lambda パラメータの型が context から推論される場合（`list.map { it + 1 }`）に型注釈を省略できる
+  - [x] lambda パラメータを `(a, b)` 形式で destructuring する（PROP-004 連携）
+  - [x] trailing lambda 構文（`foo(1) { it * 2 }`）を parser で正しく扱う（既存実装済み 連携）
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task FUNC-003`
   - **完了条件**: `listOf(1,2,3).map { it * 2 }` / `pairs.map { (a,b) -> a + b }` が `kotlinc` と一致
 
 ---
@@ -328,29 +328,29 @@
   - **完了条件**: `fun <T> max(a: T, b: T): T where T : Comparable<T>` が `max(1, 2)` / `max("a", "b")` で動作する
 
 
-- [ ] GEN-002: variance（`out T`/`in T`）の declaration-site 制約違反診断を実装する（spec.md J8）
-  - [ ] `class Box<out T>` で `in` 位置（関数引数）に `T` が登場したら `KSWIFTK-SEMA-VARIANCE` を出す
-  - [ ] `class Sink<in T>` で `out` 位置（戻り値）に `T` が登場したら診断する
-  - [ ] private member は variance チェックの例外となる規則（Kotlin 仕様）を実装する
-  - [ ] contravariance の subtype 逆転（`Consumer<in Number>` に `IntConsumer` を代入不可）を型システムに反映する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task GEN-002`
+- [x] GEN-002: variance（`out T`/`in T`）の declaration-site 制約違反診断を実装する（spec.md J8）
+  - [x] `class Box<out T>` で `in` 位置（関数引数）に `T` が登場したら `KSWIFTK-SEMA-VARIANCE` を出す
+  - [x] `class Sink<in T>` で `out` 位置（戻り値）に `T` が登場したら診断する
+  - [x] private member は variance チェックの例外となる規則（Kotlin 仕様）を実装する
+  - [x] contravariance の subtype 逆転（`Consumer<in Number>` に `IntConsumer` を代入不可）を型システムに反映する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task GEN-002`
   - **完了条件**: `class Producer<out T>(val value: T)` は OK、`fun set(v: T) {}` 追加は `KSWIFTK-SEMA-VARIANCE` になる
 
 
-- [ ] GEN-003: `reified` inline 関数での `T::class` / `typeOf<T>()` を完全実装する（spec.md J12.2）
-  - [ ] `reified T` の inline body 内で `T::class`・`typeOf<T>()` が有効になるよう lowering する
-  - [ ] `typeOf<T>()` を runtime 型トークン（`KClass` stub）へ lowering し、`simpleName`・`qualifiedName` を実装する
-  - [ ] non-inline 文脈で `T::class`（non-reified）を使った場合に `KSWIFTK-SEMA-REIFIED` 診断を出す
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task GEN-003`
+- [x] GEN-003: `reified` inline 関数での `T::class` / `typeOf<T>()` を完全実装する（spec.md J12.2）
+  - [x] `reified T` の inline body 内で `T::class`・`typeOf<T>()` が有効になるよう lowering する
+  - [x] `typeOf<T>()` を runtime 型トークン（`KClass` stub）へ lowering し、`simpleName`・`qualifiedName` を実装する
+  - [x] non-inline 文脈で `T::class`（non-reified）を使った場合に `KSWIFTK-SEMA-REIFIED` 診断を出す
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task GEN-003`
   - **完了条件**: `inline fun <reified T> typeNameOf() = T::class.simpleName` が正しい型名を返す
 
 
-- [ ] GEN-004: generic lambda と SAM conversion（functional interface）を実装する（spec.md J8/J12）
-  - [ ] `fun interface` キーワードを Sema で認識し、SAM conversion の対象と判定する
-  - [ ] lambda を SAM 型（`Runnable`・カスタム functional interface）へ暗黙変換する
-  - [ ] SAM conversion 後の型推論と overload 解決への影響を実装する
-  - [ ] SAM lambda が `invoke` 経由で呼ばれることと、object キャッシュを確認する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task GEN-004`
+- [x] GEN-004: generic lambda と SAM conversion（functional interface）を実装する（spec.md J8/J12）
+  - [x] `fun interface` キーワードを Sema で認識し、SAM conversion の対象と判定する
+  - [x] lambda を SAM 型（`Runnable`・カスタム functional interface）へ暗黙変換する
+  - [x] SAM conversion 後の型推論と overload 解決への影響を実装する
+  - [x] SAM lambda が `invoke` 経由で呼ばれることと、object キャッシュを確認する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task GEN-004`
   - **完了条件**: `fun interface Action { fun run() }; val a: Action = { println("hi") }; a.run()` が動作する
 
 ---
@@ -374,11 +374,11 @@
   - **完了条件**: `null.isNullOrEmpty()` が `NullPointerException` を出さず `true` を返し `kotlinc` と一致する
 
 
-- [ ] NULL-003: nullable な型引数（`List<String?>`）と non-null 型引数（`List<String>`）の区別を実装する（spec.md J8）
-  - [ ] `List<String?>` と `List<String>` を異なる型として扱い代入を制限する
-  - [ ] `T` が `String?` にバインドされる場合と `String` にバインドされる場合を overload 解決で区別する
-  - [ ] nullable 型引数を持つ generic type の `get()`/`set()` 呼び出し型を正しく推論する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task NULL-003`
+- [x] NULL-003: nullable な型引数（`List<String?>`）と non-null 型引数（`List<String>`）の区別を実装する（spec.md J8）
+  - [x] `List<String?>` と `List<String>` を異なる型として扱い代入を制限する
+  - [x] `T` が `String?` にバインドされる場合と `String` にバインドされる場合を overload 解決で区別する
+  - [x] nullable 型引数を持つ generic type の `get()`/`set()` 呼び出し型を正しく推論する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task NULL-003`
   - **完了条件**: `val list: List<String?> = listOf("a", null)` の `list[1]` が `String?` 型になる
 
 ---
@@ -388,21 +388,21 @@
 
 #### ⚡ Coroutines
 
-- [ ] CORO-001: structured concurrency（`CoroutineScope` / `cancel` / `Job`）の runtime C ABI を整備する（spec.md J17）
-  - [ ] runtime に `kk_coroutine_scope_new` / `kk_coroutine_scope_cancel` / `kk_job_join` を追加する
-  - [ ] `coroutineScope { }` ブロックの開始・終了・cancel 伝播を lowering で生成する
-  - [ ] `launch` / `async` で生成した `Job` / `Deferred<T>` の lifecycle を parent scope へ登録する
-  - [ ] `cancel` 呼び出し後に子 coroutine が `CancellationException` を受け取る E2E ケースを追加する
+- [x] CORO-001: structured concurrency（`CoroutineScope` / `cancel` / `Job`）の runtime C ABI を整備する（spec.md J17）
+  - [x] runtime に `kk_coroutine_scope_new` / `kk_coroutine_scope_cancel` / `kk_job_join` を追加する
+  - [x] `coroutineScope { }` ブロックの開始・終了・cancel 伝播を lowering で生成する
+  - [x] `launch` / `async` で生成した `Job` / `Deferred<T>` の lifecycle を parent scope へ登録する
+  - [x] `cancel` 呼び出し後に子 coroutine が `CancellationException` を受け取る E2E ケースを追加する
   - **完了条件**: `coroutineScope { launch { delay(100) } }` が scope 終了後に全子 coroutine の完了を待ち、cancel が子へ伝播する
 
 ---
 
 
-- [ ] CORO-002: coroutine cancellation と `CancellationException` の伝播を実装する（spec.md J17）
-  - [ ] cancellation を suspension point で確認するチェックを各 `kk_coroutine_*` helper に追加する
-  - [ ] `job.cancel()` 呼び出し後に子 coroutine が次の suspension point で `CancellationException` を受け取る
-  - [ ] `CancellationException` は silent re-throw（catch で再 throw）する規則を Sema/runtime に反映する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CORO-002`
+- [x] CORO-002: coroutine cancellation と `CancellationException` の伝播を実装する（spec.md J17）
+  - [x] cancellation を suspension point で確認するチェックを各 `kk_coroutine_*` helper に追加する
+  - [x] `job.cancel()` 呼び出し後に子 coroutine が次の suspension point で `CancellationException` を受け取る
+  - [x] `CancellationException` は silent re-throw（catch で再 throw）する規則を Sema/runtime に反映する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CORO-002`
   - **完了条件**: `launch { while(true) delay(10) }.cancel()` が coroutine を停止し `CancellationException` が伝播する
 
 ---
@@ -410,12 +410,12 @@
 
 #### 📦 Stdlib / DSL
 
-- [ ] STDLIB-001: `Array<T>` / `List<T>` / `Map<K,V>` のリテラル（`listOf`/`mapOf`/`arrayOf`）を stdlib stub で最小実装する（spec.md J15）
-  - [ ] runtime/stdlib stub に `kk_list_of` / `kk_map_of` / `kk_array_of` の C ABI 関数を追加する
-  - [ ] `listOf(...)` / `mapOf(...)` / `arrayOf(...)` を上記 ABI に lowering する compiler-side shim を実装する
-  - [ ] `List<T>` / `Map<K, V>` の `size`・`get`・`contains`・`iterator` を stub で実装する
-  - [ ] `for (x in list)` が stub 実装の `iterator()` 経由で動作することを確認する
-  - [ ] `listOf`/`mapOf`/`arrayOf` を含む diff/golden ケースを追加する
+- [x] STDLIB-001: `Array<T>` / `List<T>` / `Map<K,V>` のリテラル（`listOf`/`mapOf`/`arrayOf`）を stdlib stub で最小実装する（spec.md J15）
+  - [x] runtime/stdlib stub に `kk_list_of` / `kk_map_of` / `kk_array_of` の C ABI 関数を追加する
+  - [x] `listOf(...)` / `mapOf(...)` / `arrayOf(...)` を上記 ABI に lowering する compiler-side shim を実装する
+  - [x] `List<T>` / `Map<K, V>` の `size`・`get`・`contains`・`iterator` を stub で実装する
+  - [x] `for (x in list)` が stub 実装の `iterator()` 経由で動作することを確認する
+  - [x] `listOf`/`mapOf`/`arrayOf` を含む diff/golden ケースを追加する
   - **完了条件**: `listOf(1, 2, 3).size` / `for (x in listOf(...))` が `kotlinc` と同一出力になる
 
 
@@ -427,12 +427,12 @@
   - **完了条件**: `buildString { append("hello "); append("world") }` が `"hello world"` を返す
 
 
-- [ ] STDLIB-003: `Sequence<T>` と lazy evaluation chain（`asSequence`/`map`/`filter`/`toList`）を実装する
-  - [ ] `Sequence<T>` を lazy iterator-based collection として runtime stub に定義する
-  - [ ] `asSequence()`・`map`・`filter`・`take`・`toList()` を Sequence extension stub として実装する
-  - [ ] Sequence は terminal operation（`toList()` 等）まで評価しない lazy semantics を保証する
-  - [ ] `sequence { yield(x) }` builder を coroutine-based lazy generator として stub 実装する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task STDLIB-003`
+- [x] STDLIB-003: `Sequence<T>` と lazy evaluation chain（`asSequence`/`map`/`filter`/`toList`）を実装する
+  - [x] `Sequence<T>` を lazy iterator-based collection として runtime stub に定義する
+  - [x] `asSequence()`・`map`・`filter`・`take`・`toList()` を Sequence extension stub として実装する
+  - [x] Sequence は terminal operation（`toList()` 等）まで評価しない lazy semantics を保証する
+  - [x] `sequence { yield(x) }` builder を coroutine-based lazy generator として stub 実装する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task STDLIB-003`
   - **完了条件**: `listOf(1,2,3).asSequence().map { it*2 }.filter { it>2 }.toList()` が `[4, 6]` を返す
 
 ---
@@ -461,12 +461,12 @@
   - **完了条件**: 全診断が `KSWIFTK-*` コードを持ち、JSON 出力が LSP 準拠スキーマで整合し、golden テストが pass する
 
 
-- [ ] TOOL-002: source-map / DWARF debug info 出力を LLVM C API backend に実装する（spec.md J1/J15）
-  - [ ] LLVM C API で `DIBuilder` を使い、source file / compilation unit メタデータを生成する
-  - [ ] 関数・変数宣言に対応する `DISubprogram` / `DILocalVariable` を生成し、IR に attach する
-  - [ ] 各 KIR instruction の source location（file/line/column）を AST から伝播し、LLVM `DebugLoc` を設定する
-  - [ ] `-g` フラグ付きビルドの object file に DWARF section が含まれることを `dwarfdump` / `llvm-dwarfdump` で確認する
-  - [ ] debugger（lldb）でステップ実行できる最小 E2E ケースをドキュメント化する
+- [x] TOOL-002: source-map / DWARF debug info 出力を LLVM C API backend に実装する（spec.md J1/J15）
+  - [x] LLVM C API で `DIBuilder` を使い、source file / compilation unit メタデータを生成する
+  - [x] 関数・変数宣言に対応する `DISubprogram` / `DILocalVariable` を生成し、IR に attach する
+  - [x] 各 KIR instruction の source location（file/line/column）を AST から伝播し、LLVM `DebugLoc` を設定する
+  - [x] `-g` フラグ付きビルドの object file に DWARF section が含まれることを `dwarfdump` / `llvm-dwarfdump` で確認する
+  - [x] debugger（lldb）でステップ実行できる最小 E2E ケースをドキュメント化する
   - **完了条件**: `-g` ビルドの object に DWARF .debug_info が存在し、`lldb` でソース行にブレークポイントが設定できる
 
 
