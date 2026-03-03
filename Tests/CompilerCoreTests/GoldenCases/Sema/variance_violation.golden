@@ -9,38 +9,45 @@ symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=
 symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
 symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
 symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
-symbol s11 kind=class fq=golden.sema.Producer vis=public flags=_
-symbol s12 kind=typeParameter fq=golden.sema.Producer.$class11.T vis=private flags=_
-symbol s13 kind=constructor fq=golden.sema.Producer.<init> vis=public flags=_ sig=recv=Class#11<T#12> params=[T#12] ret=Class#11<T#12> suspend=0 defaults=[0] vararg=[0]
-symbol s14 kind=valueParameter fq=golden.sema.Producer.<init>.$13.item vis=private flags=_
-symbol s15 kind=class fq=golden.sema.Consumer vis=public flags=_
-symbol s16 kind=typeParameter fq=golden.sema.Consumer.$class15.T vis=private flags=_
-symbol s17 kind=constructor fq=golden.sema.Consumer.<init> vis=public flags=_ sig=recv=Class#15<T#16> params=[] ret=Class#15<T#16> suspend=0 defaults=[] vararg=[]
-symbol s18 kind=function fq=golden.sema.Consumer.accept vis=public flags=_ sig=recv=Class#15<T#16> params=[T#16] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s19 kind=valueParameter fq=golden.sema.Consumer.accept.$18.item vis=private flags=_
-symbol s20 kind=function fq=golden.sema.validVariance vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s21 kind=class fq=golden.sema.BadProducer vis=public flags=_
-symbol s22 kind=typeParameter fq=golden.sema.BadProducer.$class21.T vis=private flags=_
-symbol s23 kind=constructor fq=golden.sema.BadProducer.<init> vis=public flags=_ sig=recv=Class#21<T#22> params=[] ret=Class#21<T#22> suspend=0 defaults=[] vararg=[]
-symbol s24 kind=function fq=golden.sema.BadProducer.consume vis=public flags=_ sig=recv=Class#21<T#22> params=[T#22] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s25 kind=valueParameter fq=golden.sema.BadProducer.consume.$24.item vis=private flags=_
-symbol s26 kind=class fq=golden.sema.BadConsumer vis=public flags=_
-symbol s27 kind=typeParameter fq=golden.sema.BadConsumer.$class26.T vis=private flags=_
-symbol s28 kind=constructor fq=golden.sema.BadConsumer.<init> vis=public flags=_ sig=recv=Class#26<T#27> params=[] ret=Class#26<T#27> suspend=0 defaults=[] vararg=[]
-symbol s29 kind=function fq=golden.sema.BadConsumer.produce vis=public flags=_ sig=recv=Class#26<T#27> params=[] ret=T#27? suspend=0 defaults=[] vararg=[]
-symbol s30 kind=local fq=__local_3.p vis=private flags=_
-symbol s31 kind=local fq=__local_6.c vis=private flags=_
+symbol s11 kind=package fq=kotlin.collections vis=public flags=synthetic
+symbol s12 kind=interface fq=kotlin.collections.List vis=public flags=synthetic
+symbol s13 kind=typeParameter fq=kotlin.collections.List.E vis=private flags=_
+symbol s14 kind=function fq=kotlin.collections.List.get vis=public flags=synthetic|operatorFunction sig=recv=Class#12<out T#13> params=[Int] ret=T#13 suspend=0 defaults=[] vararg=[]
+symbol s15 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
+symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
+symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
+symbol s18 kind=class fq=golden.sema.Producer vis=public flags=_
+symbol s19 kind=typeParameter fq=golden.sema.Producer.$class18.T vis=private flags=_
+symbol s20 kind=constructor fq=golden.sema.Producer.<init> vis=public flags=_ sig=recv=Class#18<T#19> params=[T#19] ret=Class#18<T#19> suspend=0 defaults=[0] vararg=[0]
+symbol s21 kind=valueParameter fq=golden.sema.Producer.<init>.$20.item vis=private flags=_
+symbol s22 kind=class fq=golden.sema.Consumer vis=public flags=_
+symbol s23 kind=typeParameter fq=golden.sema.Consumer.$class22.T vis=private flags=_
+symbol s24 kind=constructor fq=golden.sema.Consumer.<init> vis=public flags=_ sig=recv=Class#22<T#23> params=[] ret=Class#22<T#23> suspend=0 defaults=[] vararg=[]
+symbol s25 kind=function fq=golden.sema.Consumer.accept vis=public flags=_ sig=recv=Class#22<T#23> params=[T#23] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s26 kind=valueParameter fq=golden.sema.Consumer.accept.$25.item vis=private flags=_
+symbol s27 kind=function fq=golden.sema.validVariance vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s28 kind=class fq=golden.sema.BadProducer vis=public flags=_
+symbol s29 kind=typeParameter fq=golden.sema.BadProducer.$class28.T vis=private flags=_
+symbol s30 kind=constructor fq=golden.sema.BadProducer.<init> vis=public flags=_ sig=recv=Class#28<T#29> params=[] ret=Class#28<T#29> suspend=0 defaults=[] vararg=[]
+symbol s31 kind=function fq=golden.sema.BadProducer.consume vis=public flags=_ sig=recv=Class#28<T#29> params=[T#29] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s32 kind=valueParameter fq=golden.sema.BadProducer.consume.$31.item vis=private flags=_
+symbol s33 kind=class fq=golden.sema.BadConsumer vis=public flags=_
+symbol s34 kind=typeParameter fq=golden.sema.BadConsumer.$class33.T vis=private flags=_
+symbol s35 kind=constructor fq=golden.sema.BadConsumer.<init> vis=public flags=_ sig=recv=Class#33<T#34> params=[] ret=Class#33<T#34> suspend=0 defaults=[] vararg=[]
+symbol s36 kind=function fq=golden.sema.BadConsumer.produce vis=public flags=_ sig=recv=Class#33<T#34> params=[] ret=T#34? suspend=0 defaults=[] vararg=[]
+symbol s37 kind=local fq=__local_3.p vis=private flags=_
+symbol s38 kind=local fq=__local_6.c vis=private flags=_
 file f0 package=golden.sema
-  decl d0 class Producer sym=s11
-  decl d2 class Consumer sym=s15
-  decl d3 fun validVariance suspend=0 inline=0 sym=s20
-  decl d5 class BadProducer sym=s21
-  decl d7 class BadConsumer sym=s26
+  decl d0 class Producer sym=s18
+  decl d2 class Consumer sym=s22
+  decl d3 fun validVariance suspend=0 inline=0 sym=s27
+  decl d5 class BadProducer sym=s28
+  decl d7 class BadConsumer sym=s33
 expr e0 name(Producer) type=_
 expr e1 int(42) type=Int
 expr e2 call callee=e0 args=[_:e1] type=<error>
-expr e3 localDecl p mutable=0 type=t3 init=e2 type=Unit ref=s30
+expr e3 localDecl p mutable=0 type=t3 init=e2 type=Unit ref=s37
 expr e4 name(Consumer) type=_
-expr e5 call callee=e4 args=[] type=Class#15<Int> call=s17 map=[] targs=[Int]
-expr e6 localDecl c mutable=0 type=t5 init=e5 type=Unit ref=s31
+expr e5 call callee=e4 args=[] type=Class#22<Int> call=s24 map=[] targs=[Int]
+expr e6 localDecl c mutable=0 type=t5 init=e5 type=Unit ref=s38
 expr e7 name(null) type=Nothing?
