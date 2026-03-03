@@ -23,6 +23,9 @@ struct TypeInferenceContext {
     var enclosingClassSymbol: SymbolID?
     let visibilityChecker: VisibilityChecker
     var outerReceiverTypes: [(label: InternedString, type: TypeID)]
+    /// When true, the current scope is a builder DSL lambda body (STDLIB-002).
+    /// Used to scope `append`/`add`/`put` fallback resolution.
+    var isBuilderLambdaScope: Bool = false
     /// Sema cache context for hot-path caching.  `nil` when caching is disabled.
     let semaCacheContext: SemaCacheContext?
 

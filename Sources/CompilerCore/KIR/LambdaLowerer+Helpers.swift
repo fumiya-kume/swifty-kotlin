@@ -1,7 +1,8 @@
 import Foundation
 
-/// Helper methods for LambdaLowerer: synthetic naming, symbol resolution,
-/// type lookup, callable-ref target resolution, and capture computation.
+// Helper methods for LambdaLowerer: symbol naming, type resolution,
+// capture analysis, and callable-reference target resolution.
+
 extension LambdaLowerer {
     func syntheticLambdaName(for exprID: ExprID, interner: StringInterner) -> InternedString {
         interner.intern("kk_lambda_\(exprID.rawValue)")
@@ -153,7 +154,7 @@ extension LambdaLowerer {
         }).first
     }
 
-    private func nominalSymbol(for typeID: TypeID, types: TypeSystem) -> SymbolID? {
+    func nominalSymbol(for typeID: TypeID, types: TypeSystem) -> SymbolID? {
         guard case let .classType(classType) = types.kind(of: typeID) else {
             return nil
         }

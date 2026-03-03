@@ -53,7 +53,8 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
                 case .buildList, .buildMap: sema.types.anyType
                 }
                 // Infer the lambda argument with the builder receiver as implicit `this`.
-                let builderCtx = ctx.with(implicitReceiverType: receiverType)
+                var builderCtx = ctx.with(implicitReceiverType: receiverType)
+                builderCtx.isBuilderLambdaScope = true
                 _ = driver.inferExpr(args[0].expr, ctx: builderCtx, locals: &locals)
                 sema.bindings.markBuilderDSLExpr(id, kind: builderKind)
                 sema.bindings.markCollectionExpr(id)
@@ -281,7 +282,7 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
         // Builder DSL member functions (STDLIB-002).
         // Inside builder lambdas, unqualified `append`/`add`/`put` resolve as
         // implicit-receiver member calls that return Unit.
-        if let calleeName, ctx.implicitReceiverType != nil {
+        if let calleeName, ctx.isBuilderLambdaScope {
             let name = interner.resolve(calleeName)
             if (name == "append" && args.count == 1) ||
                 (name == "add" && args.count == 1) ||
