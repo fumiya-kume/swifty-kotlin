@@ -257,5 +257,4 @@ final class DeclTypeChecker {
             _ = inferFunctionBodyType(ctor.body, ctx: constructorCtx, locals: &locals, expectedType: nil)
         }
     }
-
 }
