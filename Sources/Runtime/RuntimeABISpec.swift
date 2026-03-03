@@ -684,7 +684,6 @@ public enum RuntimeABISpec {
             name: "kk_type_token_simple_name",
             parameters: [
                 RuntimeABIParameter(name: "typeToken", type: .intptr),
-                // swiftlint:disable:next trailing_comma
                 RuntimeABIParameter(name: "nameHint", type: .intptr),
             ],
             returnType: .intptr,
@@ -694,7 +693,6 @@ public enum RuntimeABISpec {
             name: "kk_type_token_qualified_name",
             parameters: [
                 RuntimeABIParameter(name: "typeToken", type: .intptr),
-                // swiftlint:disable:next trailing_comma
                 RuntimeABIParameter(name: "nameHint", type: .intptr),
             ],
             returnType: .intptr,
