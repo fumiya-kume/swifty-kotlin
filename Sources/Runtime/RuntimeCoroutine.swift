@@ -548,7 +548,8 @@ private final class RuntimeFlowHandle {
 /// Thread-local current flow handle (set by kk_flow_collect before invoking emitter).
 /// Access is serialized by single-threaded test execution; nonisolated(unsafe) suppresses
 /// Swift 6 strict concurrency warnings.
-nonisolated(unsafe) var _flowEmitContext: Int = 0
+// swiftlint:disable:next identifier_name
+nonisolated(unsafe) var flowEmitContext: Int = 0
 
 private func runtimeFlowHandle(from handle: Int) -> RuntimeFlowHandle? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else { return nil }
@@ -571,23 +572,23 @@ public func kk_flow_create(_ emitterFnPtr: Int) -> Int {
 
 /// Emit a value into the current flow context.
 /// ABI: (value: intptr) -> intptr
-/// Uses _flowEmitContext (set by kk_flow_collect) to locate the active flow handle.
+/// Uses flowEmitContext (set by kk_flow_collect) to locate the active flow handle.
 @_cdecl("kk_flow_emit")
 public func kk_flow_emit(_ value: Int) -> Int {
-    guard let flow = runtimeFlowHandle(from: _flowEmitContext) else { return 0 }
+    guard let flow = runtimeFlowHandle(from: flowEmitContext) else { return 0 }
     guard flow.collectorFnPtr != 0, flow.takeRemaining > 0 else { return 0 }
 
     var current = value
     for step in flow.steps {
         switch step {
         case let .mapStep(fnPtr):
-            let fn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+            let mapFn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
             var thrown = 0
-            current = fn(current, &thrown)
+            current = mapFn(current, &thrown)
         case let .filterStep(fnPtr):
-            let fn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+            let filterFn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
             var thrown = 0
-            if fn(current, &thrown) == 0 { return 0 }
+            if filterFn(current, &thrown) == 0 { return 0 }
         case .takeStep:
             break // takeRemaining guard handles the limit
         }
@@ -617,9 +618,9 @@ public func kk_flow_collect(_ flowHandle: Int, _ collectorFnPtr: Int) -> Int {
     }
     flow.collectorFnPtr = collectorFnPtr
     defer { flow.collectorFnPtr = 0; flow.takeRemaining = Int.max }
-    let previous = _flowEmitContext
-    _flowEmitContext = flowHandle
-    defer { _flowEmitContext = previous }
+    let previous = flowEmitContext
+    flowEmitContext = flowHandle
+    defer { flowEmitContext = previous }
     let emitter = unsafeBitCast(
         flow.emitterFnPtr,
         to: (@convention(c) (UnsafeMutablePointer<Int>?) -> Int).self
