@@ -65,6 +65,8 @@ public enum KIRUnaryOp: Equatable, Sendable {
 public enum KIRExprKind: Equatable, Sendable {
     case intLiteral(Int64)
     case longLiteral(Int64)
+    case uintLiteral(UInt64)
+    case ulongLiteral(UInt64)
     case floatLiteral(Double)
     case doubleLiteral(Double)
     case charLiteral(UInt32)
@@ -119,20 +121,14 @@ public struct KIRFunction: Sendable {
     public var instructionLocations: [SourceRange?] // per-instruction source locations, parallel to body
 
     public init(
-        symbol: SymbolID, name: InternedString, params: [KIRParameter],
-        returnType: TypeID, body: [KIRInstruction],
-        isSuspend: Bool, isInline: Bool, isTailrec: Bool = false,
+        symbol: SymbolID, name: InternedString, params: [KIRParameter], returnType: TypeID,
+        body: [KIRInstruction], isSuspend: Bool, isInline: Bool, isTailrec: Bool = false,
         sourceRange: SourceRange? = nil, instructionLocations: [SourceRange?] = []
     ) {
-        self.symbol = symbol
-        self.name = name
-        self.params = params
-        self.returnType = returnType
-        self.body = body
-        self.isSuspend = isSuspend
-        self.isInline = isInline
-        self.isTailrec = isTailrec
-        self.sourceRange = sourceRange
+        self.symbol = symbol; self.name = name; self.params = params
+        self.returnType = returnType; self.body = body
+        self.isSuspend = isSuspend; self.isInline = isInline
+        self.isTailrec = isTailrec; self.sourceRange = sourceRange
         self.instructionLocations = instructionLocations
     }
 }

@@ -36,27 +36,32 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
         // is inferred with the correct implicit receiver type.
         if let calleeName, args.count == 1 {
             let name = interner.resolve(calleeName)
-            let builderKind: BuilderDSLKind? = switch name {
-            case "buildString": .buildString
-            case "buildList": .buildList
-            case "buildMap": .buildMap
-            default: nil
-            }
-            if let builderKind {
-                // Determine the receiver type for the builder lambda.
-                // buildString → StringBuilder (treated as Any for member dispatch)
-                // buildList → MutableList (treated as Any)
-                // buildMap → MutableMap (treated as Any)
-                let receiverType = sema.types.anyType
+            if let builderKind = builderDSLKind(for: name),
+               shouldUseBuilderDSLSpecialHandling(calleeName: calleeName, ctx: ctx, locals: locals)
+            {
+                let argumentExprID = args[0].expr
+                guard isValidBuilderLambdaArgument(argumentExprID, ast: ast) else {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0002",
+                        "No viable overload found for call.",
+                        range: range
+                    )
+                    sema.bindings.bindExprType(id, type: sema.types.errorType)
+                    return sema.types.errorType
+                }
+
+                let receiverType = builderDSLReceiverType(kind: builderKind, sema: sema, interner: interner)
                 let returnType: TypeID = switch builderKind {
-                case .buildString: sema.types.stringType
-                case .buildList, .buildMap: sema.types.anyType
+                case .buildString:
+                    sema.types.stringType
+                case .buildList, .buildMap:
+                    sema.types.anyType
                 }
                 // Infer the lambda argument with the builder receiver as implicit `this`.
                 var builderCtx = ctx.with(implicitReceiverType: receiverType)
                 builderCtx.isBuilderLambdaScope = true
                 builderCtx.builderKind = builderKind
-                _ = driver.inferExpr(args[0].expr, ctx: builderCtx, locals: &locals)
+                _ = driver.inferExpr(argumentExprID, ctx: builderCtx, locals: &locals)
                 sema.bindings.markBuilderDSLExpr(id, kind: builderKind)
                 sema.bindings.markCollectionExpr(id)
                 sema.bindings.bindExprType(id, type: returnType)
@@ -321,11 +326,11 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
                 if let expectedType, expectedType != sema.types.errorType,
                    case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
                    !expectedClassType.args.isEmpty
-                { // swiftlint:disable:this opening_brace
+                {
                     collectionType = expectedType
                 } else if !argTypes.isEmpty,
                           name == "listOf" || name == "listOfNotNull" || name == "emptyList"
-                { // swiftlint:disable:this opening_brace
+                {
                     // Infer element type from arguments via LUB so that
                     // `listOf("a", null)` produces List<String?>.
                     // Only apply List<E> wrapping for list-like factories;
@@ -370,29 +375,17 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
     }
 
     func inferMemberCallExpr(
-        _ id: ExprID,
-        receiverID: ExprID,
-        calleeName: InternedString,
-        args: [CallArgument],
-        range: SourceRange,
-        ctx: TypeInferenceContext,
-        locals: inout LocalBindings,
-        expectedType: TypeID?,
-        explicitTypeArgs: [TypeID] = []
+        _ id: ExprID, receiverID: ExprID, calleeName: InternedString,
+        args: [CallArgument], range: SourceRange, ctx: TypeInferenceContext,
+        locals: inout LocalBindings, expectedType: TypeID?, explicitTypeArgs: [TypeID] = []
     ) -> TypeID {
         inferMemberCallImpl(id, receiverID: receiverID, calleeName: calleeName, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType, explicitTypeArgs: explicitTypeArgs, safeCall: false)
     }
 
     func inferSafeMemberCallExpr(
-        _ id: ExprID,
-        receiverID: ExprID,
-        calleeName: InternedString,
-        args: [CallArgument],
-        range: SourceRange,
-        ctx: TypeInferenceContext,
-        locals: inout LocalBindings,
-        expectedType: TypeID?,
-        explicitTypeArgs: [TypeID] = []
+        _ id: ExprID, receiverID: ExprID, calleeName: InternedString,
+        args: [CallArgument], range: SourceRange, ctx: TypeInferenceContext,
+        locals: inout LocalBindings, expectedType: TypeID?, explicitTypeArgs: [TypeID] = []
     ) -> TypeID {
         inferMemberCallImpl(id, receiverID: receiverID, calleeName: calleeName, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType, explicitTypeArgs: explicitTypeArgs, safeCall: true)
     }

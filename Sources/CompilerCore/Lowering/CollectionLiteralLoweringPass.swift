@@ -112,6 +112,10 @@ final class CollectionLiteralLoweringPass: LoweringPass {
         let kkPrintlnAnyName = interner.intern("kk_println_any")
         let kkAnyToStringName = interner.intern("kk_any_to_string")
 
+        // Pair / `to` infix (FUNC-002)
+        let toName = interner.intern("to")
+        let kkPairNewName = interner.intern("kk_pair_new")
+
         // Set of all list-factory callee names
         let listFactoryNames: Set<InternedString> = [
             listOfName, mutableListOfName, emptyListName, listOfNotNullName,
@@ -161,8 +165,8 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                 switch instruction {
                 case let .constValue(result, .symbolRef(symbol)):
                     exprSymbolMap[result.rawValue] = symbol
-                case let .call(_, callee, arguments, _, _, _, _):
-                    if builderDSLNames.contains(callee), !arguments.isEmpty {
+                case let .call(symbol, callee, arguments, _, _, _, _):
+                    if symbol == nil, builderDSLNames.contains(callee), !arguments.isEmpty {
                         builderLambdaArgEntries.append((argID: arguments[0].rawValue, callee: callee))
                     }
                 default:
@@ -259,7 +263,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
 
             for instruction in function.body {
                 switch instruction {
-                case let .call(_, callee, arguments, result, canThrow, thrownResult, _):
+                case let .call(symbol, callee, arguments, result, canThrow, thrownResult, _):
                     // --- Rewrite listOf/mutableListOf/emptyList → kk_list_of ---
                     if listFactoryNames.contains(callee) {
                         let count = arguments.count
@@ -408,7 +412,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     }
 
                     // --- Rewrite buildString/buildList/buildMap → kk_build_* (STDLIB-002) ---
-                    if builderDSLNames.contains(callee) {
+                    if symbol == nil, builderDSLNames.contains(callee) {
                         let kkCallee: InternedString = switch callee {
                         case buildStringName: kkBuildStringName
                         case buildListName: kkBuildListName
@@ -463,6 +467,19 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                             ))
                             continue
                         }
+                    }
+
+                    // --- Rewrite `to` infix → kk_pair_new (FUNC-002) ---
+                    if callee == toName, arguments.count == 2 {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkPairNewName,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        continue
                     }
 
                     // --- Rewrite arrayOf → kk_array_of ---
@@ -824,7 +841,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     if callee == mapName || callee == filterName || callee == forEachName
                         || callee == flatMapName || callee == anyName || callee == noneName
                         || callee == allName
-                    { // swiftlint:disable:this opening_brace
+                    {
                         // args = [receiver, lambdaFnPtr]
                         if arguments.count == 2 {
                             let receiverID = arguments[0]
@@ -1024,7 +1041,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     if callee == mapName || callee == filterName || callee == forEachName
                         || callee == flatMapName || callee == anyName || callee == noneName
                         || callee == allName
-                    { // swiftlint:disable:this opening_brace
+                    {
                         if arguments.count == 1 {
                             if listExprIDs.contains(receiver.rawValue) {
                                 let kkName: InternedString = switch callee {

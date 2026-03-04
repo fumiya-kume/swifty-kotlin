@@ -31,5 +31,6 @@ expr e2 name(execute) type=Any
 expr e3 name(println) type=_
 expr e4 string(hello) type=String
 expr e5 call callee=e3 args=[_:e4] type=Unit
-expr e6 lambda params=[] body=e5 type=() -> Unit
-expr e7 call callee=e2 args=[_:e6] type=<error>
+expr e6 blockExpr stmts=[] trailing=e5 type=Unit
+expr e7 lambda params=[] body=e6 type=() -> Unit
+expr e8 call callee=e2 args=[_:e7] type=<error>

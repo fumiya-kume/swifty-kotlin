@@ -22,6 +22,7 @@ extension ExprTypeChecker {
 
     // MARK: - Binary Expression Inference
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length function_parameter_count
     func inferBinaryExpr(
         _ id: ExprID,
         op: BinaryOp,
@@ -167,6 +168,27 @@ extension ExprTypeChecker {
             return effectiveType
         }
         let type: TypeID
+        let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
+        let uintType = sema.types.uintType
+        let ubyteType = sema.types.make(.primitive(.ubyte, .nonNull))
+        let ushortType = sema.types.make(.primitive(.ushort, .nonNull))
+
+        let lhsIsSigned = sema.types.isSigned(lhs)
+        let rhsIsUnsigned = sema.types.isUnsigned(rhs)
+        let lhsIsUnsigned = sema.types.isUnsigned(lhs)
+        let rhsIsSigned = sema.types.isSigned(rhs)
+
+        if (lhsIsSigned && rhsIsUnsigned) || (lhsIsUnsigned && rhsIsSigned) {
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-0043",
+                // swiftlint:disable:next line_length
+                "Operator '\(interner.resolve(operatorName))' cannot be applied to '(signed, unsigned)' or '(unsigned, signed)' types.",
+                range: range
+            )
+            sema.bindings.bindExprType(id, type: sema.types.errorType)
+            return sema.types.errorType
+        }
+
         switch op {
         case .add:
             if lhs == stringType || rhs == stringType {
@@ -180,6 +202,14 @@ extension ExprTypeChecker {
                 type = floatType
             } else if lhs == longType || rhs == longType {
                 type = longType
+            } else if lhs == ulongType || rhs == ulongType {
+                type = ulongType
+            } else if lhs == uintType || rhs == uintType {
+                type = uintType
+            } else if lhs == ushortType || rhs == ushortType {
+                type = ushortType
+            } else if lhs == ubyteType || rhs == ubyteType {
+                type = ubyteType
             } else {
                 type = intType
             }
@@ -196,6 +226,14 @@ extension ExprTypeChecker {
                 type = floatType
             } else if lhs == longType || rhs == longType {
                 type = longType
+            } else if lhs == ulongType || rhs == ulongType {
+                type = ulongType
+            } else if lhs == uintType || rhs == uintType {
+                type = uintType
+            } else if lhs == ushortType || rhs == ushortType {
+                type = ushortType
+            } else if lhs == ubyteType || rhs == ubyteType {
+                type = ubyteType
             } else {
                 type = intType
             }
@@ -206,6 +244,14 @@ extension ExprTypeChecker {
                 type = floatType
             } else if lhs == longType || rhs == longType {
                 type = longType
+            } else if lhs == ulongType || rhs == ulongType {
+                type = ulongType
+            } else if lhs == uintType || rhs == uintType {
+                type = uintType
+            } else if lhs == ushortType || rhs == ushortType {
+                type = ushortType
+            } else if lhs == ubyteType || rhs == ubyteType {
+                type = ubyteType
             } else {
                 type = intType
             }

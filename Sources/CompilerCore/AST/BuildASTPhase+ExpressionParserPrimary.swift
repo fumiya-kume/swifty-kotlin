@@ -8,7 +8,7 @@ extension BuildASTPhase.ExpressionParser {
         }
 
         switch token.kind {
-        case .intLiteral, .longLiteral, .floatLiteral, .doubleLiteral, .charLiteral:
+        case .intLiteral, .longLiteral, .uintLiteral, .ulongLiteral, .floatLiteral, .doubleLiteral, .charLiteral:
             return parsePrimaryNumericOrChar(token)
         case .keyword(.true):
             _ = consume()
@@ -66,6 +66,7 @@ extension BuildASTPhase.ExpressionParser {
         }
     }
 
+    // swiftlint:disable:next cyclomatic_complexity
     private func parsePrimaryNumericOrChar(_ token: Token) -> ExprID? {
         switch token.kind {
         case let .intLiteral(text):
@@ -77,6 +78,21 @@ extension BuildASTPhase.ExpressionParser {
             let stripped = text.filter { $0.isNumber || $0 == "-" }
             let value = Int64(stripped) ?? 0
             return astArena.appendExpr(.longLiteral(value, token.range))
+        case let .uintLiteral(text):
+            _ = consume()
+            guard let value = parseUnsignedLiteral(text, range: token.range) else {
+                return nil
+            }
+            if value > UInt32.max {
+                return astArena.appendExpr(.ulongLiteral(value, token.range))
+            }
+            return astArena.appendExpr(.uintLiteral(value, token.range))
+        case let .ulongLiteral(text):
+            _ = consume()
+            guard let value = parseUnsignedLiteral(text, range: token.range) else {
+                return nil
+            }
+            return astArena.appendExpr(.ulongLiteral(value, token.range))
         case let .floatLiteral(text):
             _ = consume()
             let stripped = String(text.dropLast()).replacingOccurrences(of: "_", with: "")
@@ -97,6 +113,35 @@ extension BuildASTPhase.ExpressionParser {
         default:
             return nil
         }
+    }
+
+    /// Parses unsigned literal text (e.g. "42u", "0xFFuL") to UInt64.
+    /// Returns nil on parse failure (diagnostic is emitted).
+    private func parseUnsignedLiteral(_ text: String, range: SourceRange) -> UInt64? {
+        var numPart = text.replacingOccurrences(of: "_", with: "")
+        // Strip trailing u/U and uL/UL
+        if numPart.uppercased().hasSuffix("UL") {
+            numPart = String(numPart.dropLast(2))
+        } else if numPart.last == "u" || numPart.last == "U" {
+            numPart = String(numPart.dropLast())
+        }
+        let lower = numPart.lowercased()
+        let result: UInt64? = if lower.hasPrefix("0x") {
+            UInt64(numPart.dropFirst(2).filter(\.isHexDigit), radix: 16)
+        } else if lower.hasPrefix("0b") {
+            UInt64(numPart.dropFirst(2).filter { $0 == "0" || $0 == "1" }, radix: 2)
+        } else {
+            UInt64(numPart.filter(\.isNumber), radix: 10)
+        }
+        if let val = result {
+            return val
+        }
+        diagnostics?.error(
+            "KSWIFTK-LEX-0003",
+            "Invalid unsigned literal format or overflow.",
+            range: range
+        )
+        return nil
     }
 
     // swiftlint:disable:next cyclomatic_complexity
@@ -127,11 +172,7 @@ extension BuildASTPhase.ExpressionParser {
                     return parseDoWhileExpression(label: name, start: start)
                 }
                 if matches(.symbol(.lBrace)) {
-                    if let lambda = parseLambdaLiteral(
-                        label: name,
-                        start: start,
-                        allowImplicitEmptyParams: true
-                    ) {
+                    if let lambda = parseLambdaLiteral(label: name, start: start) {
                         return lambda
                     }
                 }

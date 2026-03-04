@@ -16,6 +16,10 @@ public enum PrimitiveType: String, Hashable, Sendable {
     case float
     case double
     case string
+    case uint
+    case ulong
+    case ubyte
+    case ushort
 }
 
 public enum Nullability: Hashable, Sendable {

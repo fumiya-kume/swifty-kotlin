@@ -174,6 +174,22 @@ extension LLVMBackend {
                     continue
                 }
 
+                // Unsigned int ops: cast to uintptr_t for correct semantics
+                if LLVMBackend.unsignedBuiltinOps.contains(calleeName),
+                   let cOp = LLVMBackend.builtinOps[calleeName]
+                {
+                    let lhs = argVars.count > 0 ? argVars[0] : "0"
+                    let rhs = argVars.count > 1 ? argVars[1] : "0"
+                    let expr = "(intptr_t)((uintptr_t)\(lhs) \(cOp) (uintptr_t)\(rhs))"
+                    if let result {
+                        lines.append("  \(varName(result)) = \(expr);")
+                        syncRoot(result)
+                    } else {
+                        lines.append("  (void)\(expr);")
+                    }
+                    continue
+                }
+
                 if let cOp = LLVMBackend.builtinOps[calleeName] {
                     let lhs = argVars.count > 0 ? argVars[0] : "0"
                     let rhs = argVars.count > 1 ? argVars[1] : "0"

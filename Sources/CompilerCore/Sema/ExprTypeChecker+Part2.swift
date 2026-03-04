@@ -283,7 +283,7 @@ extension ExprTypeChecker {
         let effectiveParams: [InternedString] = if params.isEmpty,
                                                    let expectedFunctionType,
                                                    expectedFunctionType.params.count == 1
-        { // swiftlint:disable:this opening_brace
+        {
             [ctx.interner.intern("it")]
         } else {
             params
@@ -291,7 +291,7 @@ extension ExprTypeChecker {
 
         let parameterTypes: [TypeID] = if let expectedFunctionType,
                                           expectedFunctionType.params.count == effectiveParams.count
-        { // swiftlint:disable:this opening_brace
+        {
             expectedFunctionType.params
         } else {
             Array(repeating: sema.types.anyType, count: effectiveParams.count)
@@ -389,7 +389,7 @@ extension ExprTypeChecker {
         if interner.resolve(member) == "class",
            let receiver,
            case let .nameRef(receiverName, _) = ast.arena.expr(receiver)
-        { // swiftlint:disable:this opening_brace
+        {
             if let result = inferClassRefExpr(
                 id, receiver: receiver, receiverName: receiverName,
                 range: range, ctx: ctx, locals: &locals
