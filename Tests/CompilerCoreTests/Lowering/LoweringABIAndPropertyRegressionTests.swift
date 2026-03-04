@@ -775,6 +775,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
 
     /// Verify that a constValue(.symbolRef(propSym)) for a getter-only computed
     /// property (no backing field) is rewritten to a getter call by PropertyLoweringPass.
+    // swiftlint:disable:next function_body_length
     func testPropertyLoweringRewritesComputedPropertySymbolRefToGetterCall() throws {
         let interner = StringInterner()
         let arena = KIRArena()
@@ -863,6 +864,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
 
     /// Verify that a `var` property with a backing field is NOT rewritten
     /// (its constValue(.symbolRef) is preserved because it has storage).
+    // swiftlint:disable:next function_body_length
     func testPropertyLoweringPreservesBackedPropertySymbolRef() throws {
         let interner = StringInterner()
         let arena = KIRArena()

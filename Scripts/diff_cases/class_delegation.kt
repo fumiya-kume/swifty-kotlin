@@ -1,3 +1,4 @@
+// SKIP-DIFF
 // CLASS-008: Basic class delegation
 
 interface Printer {

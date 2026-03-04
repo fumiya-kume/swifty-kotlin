@@ -39,7 +39,7 @@ let package = Package(
             name: "CompilerCoreTests",
             dependencies: ["CompilerCore"],
             path: "Tests/CompilerCoreTests",
-            exclude: ["GoldenCases"]
+            exclude: ["GoldenCases", "Integration/ClassDelegationSmokeTest.kt"]
         ),
         .testTarget(
             name: "RuntimeTests",

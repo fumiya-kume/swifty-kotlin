@@ -55,6 +55,7 @@ extension DeclTypeChecker {
 
         typeCheckInitBlocks(classDecl.initBlocks, ctx: classCtx)
         typeCheckSecondaryConstructors(classDecl.secondaryConstructors, ctx: classCtx, ownerSymbol: symbol, hasPrimaryConstructor: classDecl.hasPrimaryConstructorSyntax)
+        typeCheckClassDelegation(classDecl, symbol: symbol, ctx: classCtx, solver: solver, diagnostics: diagnostics)
         typeCheckClassLikeMembers(
             memberFunctions: classDecl.memberFunctions,
             memberProperties: classDecl.memberProperties,
@@ -64,6 +65,43 @@ extension DeclTypeChecker {
             solver: solver,
             diagnostics: diagnostics
         )
+    }
+
+    func typeCheckClassDelegation(
+        _ classDecl: ClassDecl,
+        symbol: SymbolID,
+        ctx: TypeInferenceContext,
+        solver: ConstraintSolver,
+        diagnostics: DiagnosticEngine
+    ) {
+        let sema = ctx.sema
+        let delegatedEntries = classDecl.superTypeEntries.filter { $0.delegateExpression != nil }
+        guard !delegatedEntries.isEmpty else { return }
+
+        var delegationCtx = ctx
+        let ctorSymbols = sema.symbols.symbols(atDeclSite: classDecl.range)
+            .compactMap { sema.symbols.symbol($0) }
+            .filter { $0.kind == .constructor }
+            
+        if let ctorSymbol = ctorSymbols.first,
+           let signature = sema.symbols.functionSignature(for: ctorSymbol.id) {
+            let ctorScope = BaseScope(parent: ctx.scope, symbols: sema.symbols)
+            for paramSym in signature.valueParameterSymbols {
+                ctorScope.insert(paramSym)
+            }
+            delegationCtx = ctx.copying(scope: ctorScope)
+        }
+
+        for delegation in delegatedEntries {
+            guard let expr = delegation.delegateExpression else { continue }
+            var locals: LocalBindings = [:]
+            _ = driver.inferExpr(
+                expr,
+                ctx: delegationCtx,
+                locals: &locals,
+                expectedType: nil
+            )
+        }
     }
 
     func typeCheckObjectDecl(
