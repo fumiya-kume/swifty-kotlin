@@ -16,6 +16,7 @@ public final class LoweringPhase: CompilerPhase {
     public static let name = "Lowerings"
 
     private let passes: [any LoweringPass] = [
+        TailrecLoweringPass(), // Must run before NormalizeBlocksPass (relies on beginBlock)
         NormalizeBlocksPass(),
         OperatorLoweringPass(),
         ForLoweringPass(),

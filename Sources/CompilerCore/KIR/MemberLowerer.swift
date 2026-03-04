@@ -1,5 +1,6 @@
 import Foundation
 
+// swiftlint:disable file_length type_body_length
 /// Delegate class for KIR lowering: MemberLowerer.
 /// Holds an unowned reference to the driver for mutual recursion.
 final class MemberLowerer {
@@ -9,6 +10,7 @@ final class MemberLowerer {
         self.driver = driver
     }
 
+    // swiftlint:disable function_body_length
     func lowerMemberDecls(
         memberFunctions: [DeclID],
         memberProperties: [DeclID],
@@ -131,7 +133,8 @@ final class MemberLowerer {
                         returnType: returnType,
                         body: body,
                         isSuspend: function.isSuspend,
-                        isInline: function.isInline
+                        isInline: function.isInline,
+                        isTailrec: function.isTailrec
                     )
                 )
             )
@@ -360,6 +363,8 @@ final class MemberLowerer {
         return (directMembers, allDecls)
     }
 
+    // swiftlint:enable function_body_length
+
     /// Synthesise a getter or setter function for a delegated property.
     ///
     /// Getter emits: `return $delegate_x.getValue(thisRef, KProperty("x"))`
@@ -431,3 +436,5 @@ final class MemberLowerer {
         )
     }
 }
+
+// swiftlint:enable file_length type_body_length
