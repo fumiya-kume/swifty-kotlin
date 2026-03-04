@@ -7,7 +7,15 @@ readonly skip_test_run="${COVERAGE_SKIP_TEST_RUN:-0}"
 readonly profile_override="${COVERAGE_PROFILE_PATH:-}"
 readonly tests_binary_override="${COVERAGE_TESTS_BINARY:-}"
 readonly json_output_override="${COVERAGE_JSON_OUTPUT:-}"
-readonly llvm_cov_bin="${LLVM_COV_BIN:-llvm-cov}"
+if [[ -n "${LLVM_COV_BIN:-}" ]]; then
+  readonly llvm_cov_bin="$LLVM_COV_BIN"
+else
+  if [[ "$(uname)" == "Darwin" ]]; then
+    readonly llvm_cov_bin="$(xcrun -f llvm-cov 2>/dev/null || true)"
+  else
+    readonly llvm_cov_bin="llvm-cov"
+  fi
+fi
 
 readonly targets=(
   "Sources/CompilerCore/Lexer/TokenStream.swift"
@@ -66,9 +74,18 @@ if [[ ! -e "$tests_binary" ]]; then
   exit 1
 fi
 
-if ! command -v "$llvm_cov_bin" >/dev/null 2>&1; then
-  echo "llvm-cov binary not found: ${llvm_cov_bin}" >&2
-  exit 1
+if [[ -z "$llvm_cov_bin" || ! -x "$llvm_cov_bin" ]]; then
+  if [[ "$(uname)" == "Darwin" ]]; then
+    if ! xcrun llvm-cov --version >/dev/null 2>&1; then
+      echo "llvm-cov not found (tried xcrun llvm-cov). Install Xcode command line tools." >&2
+      exit 1
+    fi
+  else
+    if ! command -v llvm-cov >/dev/null 2>&1; then
+      echo "llvm-cov binary not found. Set LLVM_COV_BIN or ensure llvm-cov is in PATH." >&2
+      exit 1
+    fi
+  fi
 fi
 
 mkdir -p "$(dirname "$json_output")"

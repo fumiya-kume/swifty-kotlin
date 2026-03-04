@@ -923,7 +923,6 @@ extension NativeEmitter {
                     // Fallback path: use the direct callee.
                     bindings.positionBuilder(builder, at: fallbackBlock)
                     var fbCallArguments = argumentValues
-                    var fbThrownSlotPointer: LLVMCAPIBindings.LLVMValueRef?
                     if shouldAppendThrownChannel {
                         if usesThrownChannel {
                             let thrownSlot = bindings.buildAlloca(
@@ -934,7 +933,6 @@ extension NativeEmitter {
                             if let thrownSlot {
                                 _ = bindings.buildStore(builder, value: zeroValue, pointer: thrownSlot)
                                 fbCallArguments.append(thrownSlot)
-                                fbThrownSlotPointer = thrownSlot
                             } else {
                                 fbCallArguments.append(nullThrownPointer)
                             }
