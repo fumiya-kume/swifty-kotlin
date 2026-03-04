@@ -56,6 +56,8 @@ private func literalConditionKey(_ expr: Expr, interner: StringInterner) -> Stri
     switch expr {
     case let .intLiteral(value, _): "int:\(value)"
     case let .longLiteral(value, _): "long:\(value)"
+    case let .uintLiteral(value, _): "uint:\(value)"
+    case let .ulongLiteral(value, _): "ulong:\(value)"
     case let .doubleLiteral(value, _): "double:\(value)"
     case let .floatLiteral(value, _): "float:\(value)"
     case let .charLiteral(value, _): "char:\(value)"

@@ -168,6 +168,10 @@ struct ConstantCollector {
             return .intLiteral(value)
         case let .longLiteral(value, _):
             return .longLiteral(value)
+        case let .uintLiteral(value, _):
+            return .uintLiteral(value)
+        case let .ulongLiteral(value, _):
+            return .ulongLiteral(value)
         case let .floatLiteral(value, _):
             return .floatLiteral(value)
         case let .doubleLiteral(value, _):
@@ -206,7 +210,7 @@ struct ConstantCollector {
             }
         case .unaryPlus:
             switch inner {
-            case .intLiteral, .longLiteral, .floatLiteral, .doubleLiteral:
+            case .intLiteral, .longLiteral, .uintLiteral, .ulongLiteral, .floatLiteral, .doubleLiteral:
                 return inner
             default:
                 return nil

@@ -62,6 +62,8 @@ extension LLVMCAPIBindings {
                   let buildSub = loadSymbol(handle: handle, name: "LLVMBuildSub", as: LLVMBuildSubFn.self),
                   let buildMul = loadSymbol(handle: handle, name: "LLVMBuildMul", as: LLVMBuildMulFn.self),
                   let buildSDiv = loadSymbol(handle: handle, name: "LLVMBuildSDiv", as: LLVMBuildSDivFn.self),
+                  let buildUDiv = loadSymbol(handle: handle, name: "LLVMBuildUDiv", as: LLVMBuildUDivFn.self),
+                  let buildURem = loadSymbol(handle: handle, name: "LLVMBuildURem", as: LLVMBuildURemFn.self),
                   let buildICmp = loadSymbol(handle: handle, name: "LLVMBuildICmp", as: LLVMBuildICmpFn.self),
                   let constInt = loadSymbol(handle: handle, name: "LLVMConstInt", as: LLVMConstIntFn.self),
                   let getDefaultTargetTriple = loadSymbol(handle: handle, name: "LLVMGetDefaultTargetTriple", as: LLVMGetDefaultTargetTripleFn.self),
@@ -111,6 +113,8 @@ extension LLVMCAPIBindings {
                 buildSubFn: buildSub,
                 buildMulFn: buildMul,
                 buildSDivFn: buildSDiv,
+                buildUDivFn: buildUDiv,
+                buildURemFn: buildURem,
                 // Bitwise/shift builder symbols (P5-103)
                 buildAndFn: loadSymbol(handle: handle, name: "LLVMBuildAnd", as: LLVMBuildAndFn.self),
                 buildOrFn: loadSymbol(handle: handle, name: "LLVMBuildOr", as: LLVMBuildOrFn.self),

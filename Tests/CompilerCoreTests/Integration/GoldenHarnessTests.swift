@@ -217,6 +217,10 @@ final class GoldenHarnessTests: XCTestCase {
             "intLiteral(\(text))"
         case let .longLiteral(text):
             "longLiteral(\(text))"
+        case let .uintLiteral(text):
+            "uintLiteral(\(text))"
+        case let .ulongLiteral(text):
+            "ulongLiteral(\(text))"
         case let .floatLiteral(text):
             "floatLiteral(\(text))"
         case let .doubleLiteral(text):

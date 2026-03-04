@@ -15,7 +15,6 @@ extension LocalDeclTypeChecker {
         locals: inout LocalBindings
     ) -> TypeID {
         let sema = ctx.sema
-        let interner = ctx.interner
 
         let receiverType = driver.inferExpr(receiverExpr, ctx: ctx, locals: &locals, expectedType: nil)
         var indexTypes: [TypeID] = []

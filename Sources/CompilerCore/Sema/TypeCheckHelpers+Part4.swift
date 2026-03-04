@@ -55,7 +55,7 @@ extension TypeCheckHelpers {
         if case let .classType(classType) = sema.types.kind(of: expanded),
            let targetSymbol = sema.symbols.symbol(classType.classSymbol),
            targetSymbol.kind == .typeAlias
-        { // swiftlint:disable:this opening_brace
+        {
             var newVisited = visited
             newVisited.insert(symbolID)
             let chainArgs = classType.args

@@ -33,7 +33,7 @@ final class LambdaLowerer {
         let effectiveFuncTypeID: TypeID? = {
             if sema.bindings.isSamConversion(exprID),
                let samFuncType = sema.bindings.samUnderlyingFunctionType(for: exprID)
-            { // swiftlint:disable:this opening_brace
+            {
                 return samFuncType
             }
             return boundType

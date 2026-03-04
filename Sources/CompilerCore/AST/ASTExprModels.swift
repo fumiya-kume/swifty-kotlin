@@ -125,6 +125,8 @@ public enum StringTemplatePart: Equatable {
 public enum Expr: Equatable {
     case intLiteral(Int64, SourceRange)
     case longLiteral(Int64, SourceRange)
+    case uintLiteral(UInt64, SourceRange)
+    case ulongLiteral(UInt64, SourceRange)
     case floatLiteral(Double, SourceRange)
     case doubleLiteral(Double, SourceRange)
     case charLiteral(UInt32, SourceRange)

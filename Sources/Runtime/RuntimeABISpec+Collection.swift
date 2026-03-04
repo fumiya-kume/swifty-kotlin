@@ -175,6 +175,40 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         ),
+        // Pair (FUNC-002)
+        RuntimeABIFunctionSpec(
+            name: "kk_pair_new",
+            parameters: [
+                RuntimeABIParameter(name: "first", type: .intptr),
+                RuntimeABIParameter(name: "second", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_pair_first",
+            parameters: [
+                RuntimeABIParameter(name: "pairRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_pair_second",
+            parameters: [
+                RuntimeABIParameter(name: "pairRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_pair_to_string",
+            parameters: [
+                RuntimeABIParameter(name: "pairRaw", type: .intptr),
+            ],
+            returnType: .opaquePointer,
+            section: "Collection"
+        ),
         // Builder DSL (STDLIB-002)
         RuntimeABIFunctionSpec(
             name: "kk_build_string",

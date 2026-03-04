@@ -27,6 +27,10 @@ extension LLVMBackend {
             return "\(number)"
         case let .longLiteral(number):
             return "\(number)"
+        case let .uintLiteral(number):
+            return "\(number)"
+        case let .ulongLiteral(number):
+            return "\(number)"
         case let .floatLiteral(value):
             return "kk_float_to_bits(\(formatCFloat(value))f)"
         case let .doubleLiteral(value):
