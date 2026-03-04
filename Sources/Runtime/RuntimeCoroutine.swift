@@ -548,7 +548,6 @@ private final class RuntimeFlowHandle {
 /// Thread-local current flow handle (set by kk_flow_collect before invoking emitter).
 /// Access is serialized by single-threaded test execution; nonisolated(unsafe) suppresses
 /// Swift 6 strict concurrency warnings.
-// swiftlint:disable:next identifier_name
 nonisolated(unsafe) var flowEmitContext: Int = 0
 
 private func runtimeFlowHandle(from handle: Int) -> RuntimeFlowHandle? {

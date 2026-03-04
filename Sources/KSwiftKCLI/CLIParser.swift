@@ -30,7 +30,6 @@ enum CLIParser {
       -g                     Emit debug info
     """
 
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     static func parse(args: [String]) throws -> CompilerOptions {
         var inputPaths: [String] = []
         var outputPath = "./a.out"

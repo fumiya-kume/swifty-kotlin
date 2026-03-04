@@ -1,6 +1,5 @@
 import Foundation
 
-// swiftlint:disable file_length type_body_length
 /// Delegate class for KIR lowering: MemberLowerer.
 /// Holds an unowned reference to the driver for mutual recursion.
 final class MemberLowerer {

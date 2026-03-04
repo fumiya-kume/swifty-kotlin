@@ -250,7 +250,6 @@ extension CallTypeChecker {
                                enclosingClass: ctx.enclosingClassSymbol
                            )
                         {
-                            // swiftlint:disable:next line_length
                             driver.helpers.emitVisibilityError(for: propSym, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
                             return driver.helpers.bindAndReturnErrorType(id, sema: sema)
                         }
@@ -352,7 +351,6 @@ extension CallTypeChecker {
                        enclosingClass: ctx.enclosingClassSymbol
                    )
                 {
-                    // swiftlint:disable:next line_length
                     driver.helpers.emitVisibilityError(for: memberSymbol, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
                     return driver.helpers.bindAndReturnErrorType(id, sema: sema)
                 }
@@ -453,10 +451,8 @@ extension CallTypeChecker {
             {
                 // Check visibility before trying callable-style resolution.
                 if let propSymbol = sema.symbols.symbol(propResult.symbol),
-                   // swiftlint:disable:next line_length
                    !ctx.visibilityChecker.isAccessible(propSymbol, fromFile: ctx.currentFileID, enclosingClass: ctx.enclosingClassSymbol)
                 {
-                    // swiftlint:disable:next line_length
                     driver.helpers.emitVisibilityError(for: propSymbol, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
                     return driver.helpers.bindAndReturnErrorType(id, sema: sema)
                 }
@@ -512,7 +508,6 @@ extension CallTypeChecker {
                         return driver.helpers.bindAndReturnErrorType(id, sema: sema)
                     }
                     if let chosen = resolved.chosenCallee {
-                        // swiftlint:disable:next line_length
                         let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
                         sema.bindings.markInvokeOperatorCall(id)
                         let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
@@ -538,7 +533,6 @@ extension CallTypeChecker {
                        enclosingClass: ctx.enclosingClassSymbol
                    )
                 {
-                    // swiftlint:disable:next line_length
                     driver.helpers.emitVisibilityError(for: propSymbol, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
                     return driver.helpers.bindAndReturnErrorType(id, sema: sema)
                 }
@@ -579,7 +573,6 @@ extension CallTypeChecker {
                 return finalType
             }
             if let firstInvisible = invisible.first {
-                // swiftlint:disable:next line_length
                 driver.helpers.emitVisibilityError(for: firstInvisible, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
                 return driver.helpers.bindAndReturnErrorType(id, sema: sema)
             }
@@ -941,5 +934,4 @@ extension CallTypeChecker {
             typeVarBySymbol: typeVarBySymbol
         )
     }
-    // swiftlint:disable:next file_length
 }

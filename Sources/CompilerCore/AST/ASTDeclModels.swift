@@ -1,4 +1,3 @@
-// swiftlint:disable file_length
 /// Represents a single annotation usage in Kotlin source code, e.g. `@Suppress("UNCHECKED_CAST")`.
 public struct AnnotationNode {
     /// The simple or qualified name of the annotation (e.g. "Suppress", "kotlin.Deprecated").

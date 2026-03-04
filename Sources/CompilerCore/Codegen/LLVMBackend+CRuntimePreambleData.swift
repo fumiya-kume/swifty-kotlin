@@ -1,4 +1,3 @@
-// swiftlint:disable file_length
 import Foundation
 
 extension LLVMBackend {
@@ -1377,7 +1376,6 @@ extension LLVMBackend {
         "static intptr_t kk_maybe_unbox(intptr_t val) {",
         "  if (val > -(intptr_t)0x100000000LL && val < (intptr_t)0x100000000LL) return val;",
         "  KKBoxedValue* box = (KKBoxedValue*)(void*)val;",
-        // swiftlint:disable:next line_length
         "  if (box && (box->tag == KK_BOX_TAG_INT || box->tag == KK_BOX_TAG_LONG || box->tag == KK_BOX_TAG_BOOL)) return box->value;",
         "  return val;",
         "}",
@@ -1495,7 +1493,6 @@ extension LLVMBackend {
         "    char elem[64];",
         "    kk_format_element(list->elements[i], elem, sizeof(elem));",
         "    size_t elen = strlen(elem);",
-        // swiftlint:disable:next line_length
         "    while (pos + elen + 2 >= cap) { cap *= 2; char* tmp = (char*)realloc(out, cap); if (!tmp) { free(out); return (intptr_t)kk_string_from_utf8((const uint8_t*)\"[]\", 2); } out = tmp; }",
         "    memcpy(out + pos, elem, elen); pos += elen;",
         "  }",
@@ -1611,7 +1608,6 @@ extension LLVMBackend {
         "  return arr->length;",
         "}",
         "/* --- Sequence runtime (STDLIB-003) --- */",
-        // swiftlint:disable:next line_length
         "typedef struct { intptr_t kind; intptr_t fnPtr; intptr_t count; intptr_t srcLen; intptr_t* srcElems; } KKSeqStep;",
         "typedef struct { intptr_t stepCount; KKSeqStep* steps; } KKSequence;",
         "__attribute__((weak)) intptr_t kk_sequence_from_list(intptr_t listRaw) {",

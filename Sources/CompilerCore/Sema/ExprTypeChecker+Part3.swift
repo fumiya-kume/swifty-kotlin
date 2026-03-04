@@ -22,7 +22,6 @@ extension ExprTypeChecker {
 
     // MARK: - Binary Expression Inference
 
-    // swiftlint:disable:next cyclomatic_complexity function_body_length function_parameter_count
     func inferBinaryExpr(
         _ id: ExprID,
         op: BinaryOp,
@@ -181,7 +180,6 @@ extension ExprTypeChecker {
         if (lhsIsSigned && rhsIsUnsigned) || (lhsIsUnsigned && rhsIsSigned) {
             ctx.semaCtx.diagnostics.error(
                 "KSWIFTK-SEMA-0043",
-                // swiftlint:disable:next line_length
                 "Operator '\(interner.resolve(operatorName))' cannot be applied to '(signed, unsigned)' or '(unsigned, signed)' types.",
                 range: range
             )

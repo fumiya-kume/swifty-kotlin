@@ -4,7 +4,6 @@ import Foundation
 // MARK: - Render helpers extracted from GoldenHarnessTests to reduce type/file body length.
 
 extension GoldenHarnessTests {
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func renderExpr(_ expr: Expr, interner: StringInterner) -> String {
         switch expr {
         case let .intLiteral(value, _):

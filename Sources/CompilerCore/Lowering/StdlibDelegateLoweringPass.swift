@@ -18,7 +18,6 @@ enum StdlibDelegateKind: Equatable {
 final class StdlibDelegateLoweringPass: LoweringPass {
     static let name = "StdlibDelegateLowering"
 
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func run(module: KIRModule, ctx: KIRContext) throws {
         let interner = ctx.interner
         let sema = ctx.sema
@@ -46,7 +45,7 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                     }
                     let nextIndex = index + 1
                     guard nextIndex < body.count,
-                          case let .copy(_, to) = body[nextIndex], // swiftlint:disable:this identifier_name
+                          case let .copy(_, to) = body[nextIndex],
                           let toExpr = module.arena.expr(to),
                           case let .symbolRef(targetSym) = toExpr,
                           let targetSymInfo = sema.symbols.symbol(targetSym),
@@ -97,7 +96,7 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                 if case let .call(_, _, callArgs, callResult, _, _, _) = instruction {
                     let nextIndex = index + 1
                     if nextIndex < function.body.count,
-                       case let .copy(_, to) = function.body[nextIndex], // swiftlint:disable:this identifier_name
+                       case let .copy(_, to) = function.body[nextIndex],
                        let toExpr = module.arena.expr(to),
                        case let .symbolRef(targetSym) = toExpr,
                        let targetSymInfo = sema?.symbols.symbol(targetSym),

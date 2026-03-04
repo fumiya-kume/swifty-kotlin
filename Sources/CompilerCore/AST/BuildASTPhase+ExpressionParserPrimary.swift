@@ -1,7 +1,6 @@
 import Foundation
 
 extension BuildASTPhase.ExpressionParser {
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func parsePrimary() -> ExprID? {
         guard let token = current() else {
             return nil

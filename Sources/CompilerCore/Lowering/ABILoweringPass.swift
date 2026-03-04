@@ -650,7 +650,6 @@ final class ABILoweringPass: LoweringPass {
         return kind
     }
 
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     private func boxingCallee(
         argType: TypeID,
         paramType: TypeID,

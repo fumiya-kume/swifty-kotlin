@@ -2,7 +2,6 @@ import Foundation
 
 /// Stateless utility functions for type checking. No back-reference to the driver needed.
 /// Derived from TypeCheckSemaPass+InferHelpers.swift.
-// swiftlint:disable:next type_body_length
 struct TypeCheckHelpers {
     func emitVisibilityError(
         for symbol: SemanticSymbol,

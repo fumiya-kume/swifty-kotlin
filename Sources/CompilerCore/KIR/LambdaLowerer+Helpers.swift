@@ -81,7 +81,6 @@ extension LambdaLowerer {
         return nil
     }
 
-    // swiftlint:disable:next function_body_length
     func resolveCallableRefTargetSymbol(
         exprID: ExprID,
         receiverExpr: ExprID?,

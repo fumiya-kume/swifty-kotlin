@@ -4,7 +4,6 @@ import Foundation
 // Derived from TypeCheckSemaPhase+ExprInference.swift and TypeCheckSemaPhase+ExprInferCases.swift.
 
 extension ExprTypeChecker {
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func inferCompoundAssignExpr(
         _ id: ExprID,
         op: CompoundAssignOp,
@@ -132,7 +131,6 @@ extension ExprTypeChecker {
 
     // MARK: - Specific Expression Cases (from +ExprInferCases.swift)
 
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func inferNameRefExpr(
         _ id: ExprID,
         name: InternedString,
@@ -243,7 +241,6 @@ extension ExprTypeChecker {
         return resolvedType
     }
 
-    // swiftlint:disable:next function_body_length
     func inferLambdaLiteralExpr(
         _ id: ExprID,
         params: [InternedString],
@@ -510,7 +507,7 @@ extension ExprTypeChecker {
 
     /// Helper: handles `T::class` / `SomeType::class` callable-ref expressions.
     /// Returns the inferred type if matched, or `nil` to fall through.
-    private func inferClassRefExpr( // swiftlint:disable:this function_parameter_count
+    private func inferClassRefExpr(
         _ id: ExprID,
         receiver: ExprID,
         receiverName: InternedString,
@@ -682,5 +679,4 @@ extension ExprTypeChecker {
         sema.bindings.bindExprType(id, type: receiverType)
         return receiverType
     }
-    // swiftlint:disable:next file_length
 }

@@ -4,7 +4,6 @@ import Foundation
 // to keep the main file within SwiftLint length limits.
 
 extension DeclTypeChecker {
-    // swiftlint:disable:next function_parameter_count
     func typeCheckGetter(
         _ getter: PropertyAccessorDecl,
         symbol: SymbolID,
@@ -35,7 +34,6 @@ extension DeclTypeChecker {
         return getterType
     }
 
-    // swiftlint:disable:next function_body_length
     func typeCheckDelegate(
         _ delegateExpr: ExprID,
         property: PropertyDecl,
@@ -114,7 +112,6 @@ extension DeclTypeChecker {
         return result
     }
 
-    // swiftlint:disable:next function_parameter_count
     func typeCheckSetter(
         _ setter: PropertyAccessorDecl,
         property: PropertyDecl,

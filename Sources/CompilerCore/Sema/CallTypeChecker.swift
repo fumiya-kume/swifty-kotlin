@@ -2,7 +2,7 @@ import Foundation
 
 /// Handles call expression type inference (function calls, member calls, safe member calls).
 /// Derived from TypeCheckSemaPass+InferCallsAndBinary.swift.
-final class CallTypeChecker { // swiftlint:disable:this type_body_length
+final class CallTypeChecker {
     unowned let driver: TypeCheckDriver
 
     init(driver: TypeCheckDriver) {
