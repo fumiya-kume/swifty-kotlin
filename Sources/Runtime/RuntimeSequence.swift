@@ -30,15 +30,6 @@ private func runtimeSequenceBuilderBox(from rawValue: Int) -> RuntimeSequenceBui
     return tryCast(ptr, to: RuntimeSequenceBuilderBox.self)
 }
 
-/// Helper to register an opaque handle with the runtime.
-private func registerRuntimeObject(_ box: AnyObject) -> Int {
-    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
-        state.objectPointers.insert(UInt(bitPattern: opaque))
-    }
-    return Int(bitPattern: opaque)
-}
-
 /// Extracts source elements from a sequence step, if applicable.
 private func extractSourceElements(from step: SequenceStepKind) -> [Int]? {
     switch step {
@@ -108,25 +99,7 @@ private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
     return elements
 }
 
-/// Unbox a boxed value to its raw integer if it's a RuntimeIntBox or RuntimeBoolBox.
-private func maybeUnbox(_ value: Int) -> Int {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
-        return value
-    }
-    let isObjectPointer = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: ptr))
-    }
-    guard isObjectPointer else {
-        return value
-    }
-    if let intBox = tryCast(ptr, to: RuntimeIntBox.self) {
-        return intBox.value
-    }
-    if let boolBox = tryCast(ptr, to: RuntimeBoolBox.self) {
-        return boolBox.value ? 1 : 0
-    }
-    return value
-}
+// maybeUnbox() is defined in RuntimeCollectionHelpers.swift
 
 // MARK: - Sequence Factory Functions
 

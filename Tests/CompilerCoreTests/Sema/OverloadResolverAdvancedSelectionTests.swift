@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 @testable import CompilerCore
 import XCTest
 
@@ -433,6 +434,56 @@ extension OverloadResolverTests {
             ctx: ctx
         )
         XCTAssertEqual(resolved.chosenCallee, extString)
+        XCTAssertNil(resolved.diagnostic)
+    }
+
+    /// When both non-null and nullable receiver extensions are viable,
+    /// the non-null receiver extension should be preferred.
+    func testResolveCallPrefersNonNullReceiverExtensionOverNullable() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let stringType = types.make(.primitive(.string, .nonNull))
+        let nullableStringType = types.make(.primitive(.string, .nullable))
+
+        let nonNullExt = defineSymbol(
+            kind: .function, name: "tag", suffix: "tagNonNull", symbols: symbols, interner: interner
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: stringType,
+                parameterTypes: [],
+                returnType: intType
+            ),
+            for: nonNullExt
+        )
+
+        let nullableExt = defineSymbol(
+            kind: .function, name: "tag", suffix: "tagNullable", symbols: symbols, interner: interner
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: nullableStringType,
+                parameterTypes: [],
+                returnType: intType
+            ),
+            for: nullableExt
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 706, end: 715),
+            calleeName: interner.intern("tag"),
+            args: []
+        )
+        let resolved = resolver.resolveCall(
+            candidates: [nullableExt, nonNullExt],
+            call: call,
+            expectedType: nil,
+            implicitReceiverType: stringType,
+            ctx: ctx
+        )
+
+        XCTAssertEqual(resolved.chosenCallee, nonNullExt)
         XCTAssertNil(resolved.diagnostic)
     }
 

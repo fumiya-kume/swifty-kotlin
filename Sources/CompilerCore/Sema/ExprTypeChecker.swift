@@ -401,7 +401,7 @@ final class ExprTypeChecker {
             return inferSuperRefExpr(id, interfaceQualifier: interfaceQualifier, range: range, ctx: ctx)
 
         case let .thisRef(label, range):
-            return inferThisRefExpr(id, label: label, range: range, ctx: ctx)
+            return inferThisRefExpr(id, label: label, range: range, ctx: ctx, locals: locals)
 
         case let .inExpr(lhsID, rhsID, _):
             _ = driver.inferExpr(lhsID, ctx: ctx, locals: &locals)

@@ -1,0 +1,56 @@
+symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s1 kind=package fq=kotlin vis=public flags=synthetic
+symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
+symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
+symbol s4 kind=interface fq=kotlin.properties.ReadWriteProperty vis=public flags=synthetic
+symbol s5 kind=interface fq=kotlin.properties.ReadOnlyProperty vis=public flags=synthetic
+symbol s6 kind=function fq=kotlin.lazy vis=public flags=synthetic sig=recv=_ params=[() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=kotlin.lazy.mode vis=public flags=synthetic sig=recv=_ params=[Any,() -> Any] ret=Class#3 suspend=0 defaults=[] vararg=[]
+symbol s8 kind=object fq=kotlin.properties.Delegates vis=public flags=synthetic type=Class#8
+symbol s9 kind=function fq=kotlin.properties.Delegates.observable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s10 kind=function fq=kotlin.properties.Delegates.vetoable vis=public flags=synthetic sig=recv=Class#8 params=[Any] ret=Class#4 suspend=0 defaults=[] vararg=[]
+symbol s11 kind=package fq=kotlin.collections vis=public flags=synthetic
+symbol s12 kind=interface fq=kotlin.collections.List vis=public flags=synthetic
+symbol s13 kind=typeParameter fq=kotlin.collections.List.E vis=private flags=_
+symbol s14 kind=function fq=kotlin.collections.List.get vis=public flags=synthetic|operatorFunction sig=recv=Class#12<out T#13> params=[Int] ret=T#13 suspend=0 defaults=[] vararg=[]
+symbol s15 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
+symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
+symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
+symbol s18 kind=function fq=golden.sema.isNullOrEmptyCompat vis=public flags=_ sig=recv=String? params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s19 kind=function fq=golden.sema.tagCompat vis=public flags=_ sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s20 kind=function fq=golden.sema.tagCompat vis=public flags=_ sig=recv=String? params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s21 kind=function fq=golden.sema.useNullableReceiver vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s22 kind=local fq=__local_11.s vis=private flags=_
+symbol s23 kind=local fq=__local_14.fromNullable vis=private flags=_
+symbol s24 kind=local fq=__local_17.fromNullLiteral vis=private flags=_
+symbol s25 kind=local fq=__local_20.nonNullPreferred vis=private flags=_
+symbol s26 kind=local fq=__local_23.nullableFallback vis=private flags=_
+file f0 package=golden.sema
+  decl d0 fun isNullOrEmptyCompat suspend=0 inline=0 sym=s18
+  decl d1 fun tagCompat suspend=0 inline=0 sym=s19
+  decl d2 fun tagCompat suspend=0 inline=0 sym=s20
+  decl d3 fun useNullableReceiver suspend=0 inline=0 sym=s21
+expr e0 this type=String?
+expr e1 name(null) type=Nothing?
+expr e2 binary(equal) lhs=e0 rhs=e1 type=Boolean
+expr e3 this type=String
+expr e4 memberCall recv=e3 callee=length args=[] type=Int
+expr e5 int(0) type=Int
+expr e6 binary(equal) lhs=e4 rhs=e5 type=Boolean
+expr e7 binary(logicalOr) lhs=e2 rhs=e6 type=Boolean
+expr e8 int(1) type=Int
+expr e9 int(0) type=Int
+expr e10 name(null) type=Nothing?
+expr e11 localDecl s mutable=0 type=t6 init=e10 type=Unit ref=s22
+expr e12 name(s) type=String? ref=s22
+expr e13 memberCall recv=e12 callee=isNullOrEmptyCompat args=[] type=Boolean call=s18 map=[] targs=[]
+expr e14 localDecl fromNullable mutable=0 type=_ init=e13 type=Unit ref=s23
+expr e15 name(null) type=Nothing?
+expr e16 memberCall recv=e15 callee=isNullOrEmptyCompat args=[] type=Boolean call=s18 map=[] targs=[]
+expr e17 localDecl fromNullLiteral mutable=0 type=_ init=e16 type=Unit ref=s24
+expr e18 string(abc) type=String
+expr e19 memberCall recv=e18 callee=tagCompat args=[] type=Int call=s19 map=[] targs=[]
+expr e20 localDecl nonNullPreferred mutable=0 type=_ init=e19 type=Unit ref=s25
+expr e21 name(s) type=String? ref=s22
+expr e22 memberCall recv=e21 callee=tagCompat args=[] type=Int call=s20 map=[] targs=[]
+expr e23 localDecl nullableFallback mutable=0 type=_ init=e22 type=Unit ref=s26
