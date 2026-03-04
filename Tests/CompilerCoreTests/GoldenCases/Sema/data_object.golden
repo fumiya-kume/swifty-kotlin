@@ -18,11 +18,12 @@ symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private fl
 symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
 symbol s18 kind=object fq=golden.sema.None vis=public flags=dataType
 symbol s19 kind=function fq=golden.sema.None.toString vis=public flags=synthetic sig=recv=Class#18 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s20 kind=function fq=golden.sema.None.equals vis=public flags=synthetic sig=recv=Class#18 params=[Any?] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s21 kind=function fq=golden.sema.useDataObject vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s20 kind=function fq=golden.sema.None.equals vis=public flags=synthetic sig=recv=Class#18 params=[Any?] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s21 kind=valueParameter fq=golden.sema.None.equals.other vis=private flags=synthetic
+symbol s22 kind=function fq=golden.sema.useDataObject vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
   decl d0 object None sym=s18
-  decl d1 fun useDataObject suspend=0 inline=0 sym=s21
+  decl d1 fun useDataObject suspend=0 inline=0 sym=s22
 expr e0 name(None) type=Class#18 ref=s18
 expr e1 name(None) type=Class#18 ref=s18
 expr e2 binary(equal) lhs=e0 rhs=e1 type=Boolean call=s20 map=[0->0] targs=[]
