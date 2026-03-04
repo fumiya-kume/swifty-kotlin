@@ -84,7 +84,12 @@ extension BuildASTPhase.ExpressionParser {
                 return nil
             }
             if value > UInt32.max {
-                return astArena.appendExpr(.ulongLiteral(value, token.range))
+                diagnostics?.error(
+                    "KSWIFTK-LEX-0003",
+                    "Unsigned literal '\(text)' is out of range for UInt. Use 'uL' for ULong.",
+                    range: token.range
+                )
+                return nil
             }
             return astArena.appendExpr(.uintLiteral(value, token.range))
         case let .ulongLiteral(text):

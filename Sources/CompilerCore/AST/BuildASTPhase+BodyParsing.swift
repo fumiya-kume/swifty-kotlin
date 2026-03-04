@@ -429,9 +429,9 @@ extension BuildASTPhase {
         case let .longLiteral(value):
             "\(value)"
         case let .uintLiteral(value):
-            "\(value)"
+            "\(value)u"
         case let .ulongLiteral(value):
-            "\(value)"
+            "\(value)uL"
         case let .floatLiteral(value):
             "\(value)"
         case let .doubleLiteral(value):

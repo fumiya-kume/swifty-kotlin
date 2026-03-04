@@ -18,7 +18,11 @@ readonly targets=(
 bash Scripts/swift_test.sh --enable-code-coverage
 
 if [[ "$(uname)" == "Linux" ]]; then
-  profile_candidate="$(find .build -name "default.profdata" 2>/dev/null | head -1)"
+  profile_candidate="$(
+    find .build -type f -path '*/debug/codecov/default.profdata' 2>/dev/null \
+      | sort \
+      | head -1
+  )"
   readonly profile="${profile_candidate:-.build/debug/codecov/default.profdata}"
   build_dir="$(dirname "$(dirname "$profile")")"
   readonly tests_binary="${build_dir}/KSwiftKPackageTests.xctest"
