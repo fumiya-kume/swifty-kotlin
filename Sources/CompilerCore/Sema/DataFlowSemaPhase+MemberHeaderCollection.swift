@@ -551,6 +551,26 @@ extension DataFlowSemaPhase {
                 diagnostics: diagnostics,
                 interner: interner
             )
+            if nestedObject.modifiers.contains(.data) {
+                collectSyntheticDataObjectToString(
+                    ownerSymbol: nestedSymbol,
+                    ownerFQName: nestedFQName,
+                    objectType: nestedType,
+                    symbols: symbols,
+                    types: types,
+                    scope: nestedScope,
+                    interner: interner
+                )
+                collectSyntheticDataObjectEquals(
+                    ownerSymbol: nestedSymbol,
+                    ownerFQName: nestedFQName,
+                    objectType: nestedType,
+                    symbols: symbols,
+                    types: types,
+                    scope: nestedScope,
+                    interner: interner
+                )
+            }
         }
     }
 

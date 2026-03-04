@@ -151,6 +151,11 @@ normalize_text() {
   tr -d '\r'
 }
 
+should_skip_case() {
+  local kt_file="$1"
+  grep -Eq '^[[:space:]]*//[[:space:]]*KSWIFTK_DIFF_IGNORE\b' "$kt_file"
+}
+
 run_case() {
   local kt_file="$1"
   local tmp_dir
@@ -293,6 +298,13 @@ while IFS= read -r test_case; do
     continue
   fi
   TOTAL=$((TOTAL + 1))
+  if should_skip_case "$test_case"; then
+    echo "SKIP $test_case"
+    if [[ -n "$REPORT_PATH" ]]; then
+      printf '%s\tSKIP\t-\n' "$test_case" >>"$REPORT_PATH"
+    fi
+    continue
+  fi
   echo "CASE $TOTAL: $test_case"
   status="PASS"
   if ! run_case "$test_case"; then
