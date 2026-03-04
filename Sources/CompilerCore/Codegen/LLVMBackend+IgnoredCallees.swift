@@ -119,6 +119,15 @@ extension LLVMBackend {
         "kk_list_any",
         "kk_list_none",
         "kk_list_all",
+        // Additional higher-order collection functions (STDLIB-005)
+        "kk_list_fold",
+        "kk_list_reduce",
+        "kk_list_groupBy",
+        "kk_list_sortedBy",
+        "kk_list_count",
+        "kk_list_first",
+        "kk_list_last",
+        "kk_list_find",
         // Sequence (STDLIB-003)
         "kk_sequence_from_list",
         "kk_sequence_map",

@@ -429,7 +429,7 @@ public func kk_string_isNullOrBlank(_ strRaw: Int) -> Int {
     guard let str = extractString(from: UnsafeMutableRawPointer(bitPattern: strRaw)) else {
         return kk_box_bool(1)
     }
-    return kk_box_bool(str.allSatisfy { $0.isWhitespace } ? 1 : 0)
+    return kk_box_bool(str.allSatisfy(\.isWhitespace) ? 1 : 0)
 }
 
 @_cdecl("kk_string_startsWith")
