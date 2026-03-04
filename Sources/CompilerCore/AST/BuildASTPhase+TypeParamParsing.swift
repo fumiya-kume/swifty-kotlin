@@ -9,8 +9,7 @@ extension BuildASTPhase {
     ) -> [TypeParamDecl] {
         for child in arena.children(of: nodeID) {
             if case let .node(childID) = child,
-               arena.node(childID).kind == .typeArgs
-            {
+               arena.node(childID).kind == .typeArgs {
                 let tokens = collectTokens(from: childID, in: arena)
                 var result: [TypeParamDecl] = []
                 var angleDepth = 0
@@ -79,8 +78,7 @@ extension BuildASTPhase {
 
                     var upperBound: TypeRefID?
                     if tokenIndex < tokens.count,
-                       tokens[tokenIndex].kind == .symbol(.colon)
-                    {
+                       tokens[tokenIndex].kind == .symbol(.colon) {
                         tokenIndex += 1
                         var boundTokens: [Token] = []
                         var innerDepth = BracketDepth()

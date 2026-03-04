@@ -247,21 +247,21 @@ extension KotlinParser {
 enum ParserBoundaryPolicy {
     /// Keywords that start declarations or act as statement/synchronization boundaries.
     private static let declarationBoundaryKeywords: Set<Keyword> = [
-        .class, .object, .interface, .fun, .val, .var, .typealias, .enum, .package, .import,
+        .class, .object, .interface, .fun, .val, .var, .typealias, .enum, .package, .import
     ]
 
     /// Keywords used as error-recovery synchronization points.
     /// Excludes `.enum` because `enum` is a soft modifier (always followed by `class`)
     /// and was not a synchronization point in the original implementation.
     private static let synchronizationKeywords: Set<Keyword> = [
-        .class, .object, .interface, .fun, .val, .var, .typealias, .package, .import,
+        .class, .object, .interface, .fun, .val, .var, .typealias, .package, .import
     ]
 
     private static let nonSplittingNewlineSymbols: Set<Symbol> = [
         .dot, .comma, .questionDot, .questionQuestion,
         .plus, .minus, .star, .slash,
         .equalEqual, .assign, .arrow,
-        .rParen, .rBracket, .rBrace,
+        .rParen, .rBracket, .rBrace
     ]
 
     static func shouldStopStatementBefore(

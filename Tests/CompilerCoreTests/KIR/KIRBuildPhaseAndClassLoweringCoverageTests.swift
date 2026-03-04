@@ -26,7 +26,7 @@ final class KIRBuildPhaseAndClassLoweringCoverageTests: XCTestCase {
                     imports: [],
                     topLevelDecls: [],
                     scriptBody: []
-                ),
+                )
             ],
             arena: astArena,
             declarationCount: 0,

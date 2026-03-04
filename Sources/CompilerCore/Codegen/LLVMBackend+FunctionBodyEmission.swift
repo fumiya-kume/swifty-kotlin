@@ -64,8 +64,7 @@ extension LLVMBackend {
             case let .constValue(result, value):
                 ensureDeclared(result, declared: &declared, lines: &lines)
                 if case let .symbolRef(symbol) = value,
-                   let parameterName = parameterNameBySymbol[symbol]
-                {
+                   let parameterName = parameterNameBySymbol[symbol] {
                     lines.append("  \(varName(result)) = \(parameterName);")
                 } else {
                     lines.append(
@@ -176,8 +175,7 @@ extension LLVMBackend {
 
                 // Unsigned int ops: cast to uintptr_t for correct semantics
                 if LLVMBackend.unsignedBuiltinOps.contains(calleeName),
-                   let cOp = LLVMBackend.builtinOps[calleeName]
-                {
+                   let cOp = LLVMBackend.builtinOps[calleeName] {
                     let lhs = argVars.count > 0 ? argVars[0] : "0"
                     let rhs = argVars.count > 1 ? argVars[1] : "0"
                     let expr = "(intptr_t)((uintptr_t)\(lhs) \(cOp) (uintptr_t)\(rhs))"
@@ -450,8 +448,7 @@ extension LLVMBackend {
                 // instead of the local register so the store persists.
                 if let targetExpr = arena.expr(to),
                    case let .symbolRef(targetSymbol) = targetExpr,
-                   let globalSlot = globalValueSymbols[targetSymbol]
-                {
+                   let globalSlot = globalValueSymbols[targetSymbol] {
                     lines.append("  \(globalSlot) = \(varName(from));")
                 } else {
                     ensureDeclared(to, declared: &declared, lines: &lines)

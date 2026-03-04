@@ -107,8 +107,7 @@ extension KotlinParser {
         let isCompanionObject = kind == .objectDecl && leadingChildren.contains(where: { child in
             if case let .token(tokenID) = child,
                let token = arena.token(tokenID),
-               case .keyword(.companion) = token.kind
-            {
+               case .keyword(.companion) = token.kind {
                 return true
             }
             return false

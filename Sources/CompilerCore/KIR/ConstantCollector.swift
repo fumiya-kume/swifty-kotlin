@@ -130,8 +130,7 @@ struct ConstantCollector {
 
     func literalConstantExpr(property: PropertyDecl, ast: ASTModule) -> KIRExprKind? {
         if let initializer = property.initializer,
-           let literal = literalConstantExpr(initializer, ast: ast)
-        {
+           let literal = literalConstantExpr(initializer, ast: ast) {
             return literal
         }
         if let getter = property.getter {
@@ -151,8 +150,7 @@ struct ConstantCollector {
                 return nil
             }
             if case let .returnExpr(valueExprID, _, _) = lastExpr,
-               let valueExprID
-            {
+               let valueExprID {
                 return literalConstantExpr(valueExprID, ast: ast)
             }
             return literalConstantExpr(lastExprID, ast: ast)

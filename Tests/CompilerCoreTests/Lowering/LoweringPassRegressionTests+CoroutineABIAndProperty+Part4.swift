@@ -26,7 +26,7 @@ extension LoweringPassRegressionTests {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .returnUnit,
+                .returnUnit
             ],
             isSuspend: false,
             isInline: false
@@ -92,7 +92,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .copy(from: fromExpr, to: toExpr),
-                .returnUnit,
+                .returnUnit
             ],
             isSuspend: false,
             isInline: false
@@ -170,7 +170,7 @@ extension LoweringPassRegressionTests {
             returnType: types.anyType,
             body: [
                 .constValue(result: getterRetExpr, value: .stringLiteral(interner.intern("hello"))),
-                .returnValue(getterRetExpr),
+                .returnValue(getterRetExpr)
             ],
             isSuspend: false,
             isInline: false
@@ -187,7 +187,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .constValue(result: propRef, value: .symbolRef(propertySym)),
-                .returnUnit,
+                .returnUnit
             ],
             isSuspend: false,
             isInline: false
@@ -226,8 +226,7 @@ extension LoweringPassRegressionTests {
         let hasSymbolRef = lowered.body.contains { instruction in
             if case let .constValue(_, value) = instruction,
                case let .symbolRef(sym) = value,
-               sym == propertySym
-            {
+               sym == propertySym {
                 return true
             }
             return false
@@ -273,7 +272,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .constValue(result: propRef, value: .symbolRef(propertySym)),
-                .returnUnit,
+                .returnUnit
             ],
             isSuspend: false,
             isInline: false
@@ -302,8 +301,7 @@ extension LoweringPassRegressionTests {
         let hasSymbolRef = lowered.body.contains { instruction in
             if case let .constValue(_, value) = instruction,
                case let .symbolRef(sym) = value,
-               sym == propertySym
-            {
+               sym == propertySym {
                 return true
             }
             return false

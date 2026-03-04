@@ -82,8 +82,7 @@ extension BuildASTPhase.ExpressionParser {
 
     private func parseWhenBranchCondition(subject: ExprID?) -> ExprID? {
         if let subject,
-           let token = current()
-        {
+           let token = current() {
             if token.kind == .keyword(.is) {
                 _ = consume()
                 guard let typeRef = parseTypeReference(token.range) else {
@@ -94,8 +93,7 @@ extension BuildASTPhase.ExpressionParser {
             }
             if token.kind == .symbol(.bang),
                let isToken = peek(1),
-               isToken.kind == .keyword(.is)
-            {
+               isToken.kind == .keyword(.is) {
                 _ = consume() // !
                 _ = consume() // is
                 guard let typeRef = parseTypeReference(token.range) else {
@@ -149,8 +147,7 @@ extension BuildASTPhase.ExpressionParser {
                 }
                 if scan > startIndex,
                    hasLeadingNewline(token),
-                   startsWhenBranchHeader(at: scan)
-                {
+                   startsWhenBranchHeader(at: scan) {
                     return scan
                 }
             }
@@ -198,8 +195,7 @@ extension BuildASTPhase.ExpressionParser {
 
             if parenDepth == 0, bracketDepth == 0, braceDepth == 0 {
                 if scan > startIndex,
-                   hasLeadingNewline(token)
-                {
+                   hasLeadingNewline(token) {
                     return false
                 }
 
@@ -253,8 +249,7 @@ extension BuildASTPhase.ExpressionParser {
         var end = returnToken.range.end
         if let atToken = current(), atToken.kind == .symbol(.at),
            let labelToken = peek(1),
-           let labelName = identifierFromToken(labelToken)
-        {
+           let labelName = identifierFromToken(labelToken) {
             _ = consume()
             _ = consume()
             label = labelName
@@ -320,8 +315,7 @@ extension BuildASTPhase.ExpressionParser {
                         _ = consume()
                         while let t = current(),
                               t.kind != .symbol(.comma),
-                              t.kind != .symbol(.rParen)
-                        {
+                              t.kind != .symbol(.rParen) {
                             _ = consume()
                         }
                     }
@@ -368,16 +362,14 @@ extension BuildASTPhase.ExpressionParser {
         var loopVariable: InternedString?
         if let token = current(),
            token.kind != .keyword(.in),
-           let name = tokenText(token)
-        {
+           let name = tokenText(token) {
             loopVariable = name
             _ = consume()
         }
 
         while let token = current(),
               token.kind != .keyword(.in),
-              token.kind != .symbol(.rParen)
-        {
+              token.kind != .symbol(.rParen) {
             _ = consume()
         }
         _ = consumeIf(.keyword(.in))
@@ -425,8 +417,7 @@ extension BuildASTPhase.ExpressionParser {
         if !matches(.keyword(.while)),
            let whileIndex = findDoWhileConditionKeyword(startingAt: bodyStartIndex),
            bodyStartIndex < whileIndex,
-           whileIndex >= index
-        {
+           whileIndex >= index {
             let bodyTokens = tokens[bodyStartIndex ..< whileIndex]
             if let reparsedBody = parseDoWhileBodyExpression(from: bodyTokens) {
                 body = reparsedBody

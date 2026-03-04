@@ -229,7 +229,7 @@ extension ASTModelsTests {
             .add, .subtract, .multiply, .divide, .modulo,
             .equal, .notEqual, .lessThan, .lessOrEqual,
             .greaterThan, .greaterOrEqual, .logicalAnd,
-            .logicalOr, .elvis, .rangeTo,
+            .logicalOr, .elvis, .rangeTo
         ]
         for op in ops {
             let expr = Expr.binary(op: op, lhs: lhs, rhs: rhs, range: r)

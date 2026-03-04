@@ -60,7 +60,7 @@ public final class TypeSystem {
             .primitive(.uint, .nonNull),
             .primitive(.ulong, .nonNull),
             .primitive(.ubyte, .nonNull),
-            .primitive(.ushort, .nonNull),
+            .primitive(.ushort, .nonNull)
         ]
         kindToID = [
             .error: errorType,
@@ -79,7 +79,7 @@ public final class TypeSystem {
             .primitive(.uint, .nonNull): uintType,
             .primitive(.ulong, .nonNull): ulongType,
             .primitive(.ubyte, .nonNull): ubyteType,
-            .primitive(.ushort, .nonNull): ushortType,
+            .primitive(.ushort, .nonNull): ushortType
         ]
     }
 

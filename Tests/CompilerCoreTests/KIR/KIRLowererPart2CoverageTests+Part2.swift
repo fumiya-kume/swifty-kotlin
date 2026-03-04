@@ -66,7 +66,7 @@ extension KIRLowererPart2CoverageTests {
             ("Boolean", TypeKind.primitive(.boolean, .nonNull)),
             ("Char", TypeKind.primitive(.char, .nonNull)),
             // swiftlint:disable:next trailing_comma
-            ("String", TypeKind.primitive(.string, .nonNull)),
+            ("String", TypeKind.primitive(.string, .nonNull))
         ]
 
         for (name, expectedKind) in builtinNames {

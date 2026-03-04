@@ -149,7 +149,7 @@ extension CodegenBackendIntegrationTests {
                     thrownResult: nil
                 ),
                 .call(symbol: nil, callee: interner.intern("external_throwing"), arguments: [], result: throwingResult, canThrow: true, thrownResult: nil),
-                .returnUnit,
+                .returnUnit
             ],
             isSuspend: false,
             isInline: false

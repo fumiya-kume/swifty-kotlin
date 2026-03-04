@@ -148,8 +148,7 @@ extension ExprTypeChecker {
             return sema.types.nullableNothingType
         }
         if interner.resolve(name) == "this",
-           let receiverType = ctx.implicitReceiverType
-        {
+           let receiverType = ctx.implicitReceiverType {
             sema.bindings.bindExprType(id, type: receiverType)
             return receiverType
         }
@@ -226,8 +225,7 @@ extension ExprTypeChecker {
             // can resolve.  Without a companion, keep the previous anyType
             // fallback so that `ClassName.instanceMethod()` correctly errors.
             if symbol.kind == .class || symbol.kind == .interface || symbol.kind == .enumClass,
-               sema.symbols.companionObjectSymbol(for: symbol.id) != nil
-            {
+               sema.symbols.companionObjectSymbol(for: symbol.id) != nil {
                 return sema.types.make(.classType(ClassType(classSymbol: symbol.id, args: [], nullability: .nonNull)))
             }
             return nil
@@ -436,8 +434,7 @@ extension ExprTypeChecker {
             if candidates.isEmpty,
                let local = locals[member],
                let localSymbol = ctx.cachedSymbol(local.symbol),
-               localSymbol.kind == .function
-            {
+               localSymbol.kind == .function {
                 candidates = [local.symbol]
             }
         }
@@ -450,8 +447,7 @@ extension ExprTypeChecker {
         )
 
         if let chosen,
-           let signature = sema.symbols.functionSignature(for: chosen)
-        {
+           let signature = sema.symbols.functionSignature(for: chosen) {
             let inferredType = driver.helpers.callableFunctionType(
                 for: signature,
                 bindReceiver: receiver != nil,
@@ -459,8 +455,7 @@ extension ExprTypeChecker {
             )
             let resultType: TypeID
             if let expectedType,
-               case .functionType = sema.types.kind(of: expectedType)
-            {
+               case .functionType = sema.types.kind(of: expectedType) {
                 driver.emitSubtypeConstraint(
                     left: inferredType,
                     right: expectedType,
@@ -489,8 +484,7 @@ extension ExprTypeChecker {
         }
 
         let fallbackType: TypeID = if let expectedType,
-                                      case .functionType = sema.types.kind(of: expectedType)
-        {
+                                      case .functionType = sema.types.kind(of: expectedType) {
             expectedType
         } else {
             sema.types.anyType

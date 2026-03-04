@@ -64,7 +64,7 @@ public final class CompilerDriver {
             BuildKIRPhase(),
             LoweringPhase(),
             CodegenPhase(),
-            LinkPhase(),
+            LinkPhase()
         ]
 
         executePhases(ctx: ctx, phases: phases, incrementalEnabled: prepared.incrementalEnabled)

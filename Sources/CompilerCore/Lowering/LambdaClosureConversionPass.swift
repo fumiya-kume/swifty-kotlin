@@ -9,8 +9,7 @@ final class LambdaClosureConversionPass: LoweringPass {
             guard case let .function(function) = decl else { continue }
             for instruction in function.body {
                 if case let .call(_, callee, _, _, _, _, _) = instruction,
-                   callee == marker
-                {
+                   callee == marker {
                     return true
                 }
             }

@@ -37,8 +37,7 @@ extension ControlFlowTypeChecker {
 
             let componentType: TypeID
             if let candidate = candidates.first,
-               let signature = sema.symbols.functionSignature(for: candidate)
-            {
+               let signature = sema.symbols.functionSignature(for: candidate) {
                 componentType = signature.returnType
             } else {
                 // Fallback: try to find componentN via scope lookup
@@ -52,8 +51,7 @@ extension ControlFlowTypeChecker {
                     return sig.receiverType != nil
                 }
                 if let candidate = scopeCandidates.first,
-                   let signature = sema.symbols.functionSignature(for: candidate)
-                {
+                   let signature = sema.symbols.functionSignature(for: candidate) {
                     componentType = signature.returnType
                 } else {
                     componentType = sema.types.anyType
@@ -66,7 +64,7 @@ extension ControlFlowTypeChecker {
                 name: name,
                 fqName: [
                     interner.intern("__destructuring_\(id.rawValue)"),
-                    name,
+                    name
                 ],
                 declSite: range,
                 visibility: .private,
@@ -113,8 +111,7 @@ extension ControlFlowTypeChecker {
             )
 
             let componentType: TypeID = if let candidate = candidates.first,
-                                           let signature = sema.symbols.functionSignature(for: candidate)
-            {
+                                           let signature = sema.symbols.functionSignature(for: candidate) {
                 signature.returnType
             } else {
                 sema.types.anyType
@@ -125,7 +122,7 @@ extension ControlFlowTypeChecker {
                 name: name,
                 fqName: [
                     interner.intern("__for_destructuring_\(id.rawValue)"),
-                    name,
+                    name
                 ],
                 declSite: range,
                 visibility: .private,

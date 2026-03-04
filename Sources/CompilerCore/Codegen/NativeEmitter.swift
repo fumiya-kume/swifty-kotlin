@@ -81,8 +81,7 @@ struct NativeEmitter {
         if targetMachine == nil,
            let hostTriple = bindings.defaultTargetTriple(),
            !hostTriple.isEmpty,
-           hostTriple != triple
-        {
+           hostTriple != triple {
             triple = hostTriple
             bindings.setTarget(built.module, triple: triple)
             targetMachine = bindings.createTargetMachine(triple: hostTriple, optLevel: optLevel)
@@ -364,15 +363,13 @@ struct NativeEmitter {
 
         if let int32Type = bindings.int32Type(context: context),
            let debugVersionConst = bindings.constInt(int32Type, value: 3),
-           let debugVersionMD = bindings.valueAsMetadata(debugVersionConst)
-        {
+           let debugVersionMD = bindings.valueAsMetadata(debugVersionConst) {
             bindings.addModuleFlag(llvmModule, behavior: 1, key: "Debug Info Version", value: debugVersionMD)
         }
 
         if let int32Type = bindings.int32Type(context: context),
            let dwarfVersionConst = bindings.constInt(int32Type, value: 5),
-           let dwarfVersionMD = bindings.valueAsMetadata(dwarfVersionConst)
-        {
+           let dwarfVersionMD = bindings.valueAsMetadata(dwarfVersionConst) {
             bindings.addModuleFlag(llvmModule, behavior: 1, key: "Dwarf Version", value: dwarfVersionMD)
         }
     }

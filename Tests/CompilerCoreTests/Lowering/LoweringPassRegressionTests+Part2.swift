@@ -27,7 +27,7 @@ extension LoweringPassRegressionTests {
                 .constValue(result: inlineArg, value: .symbolRef(inlineParamSym)),
                 .constValue(result: inlineOne, value: .intLiteral(1)),
                 .call(symbol: nil, callee: interner.intern("kk_op_add"), arguments: [inlineArg, inlineOne], result: inlineSum, canThrow: false, thrownResult: nil),
-                .returnValue(inlineSum),
+                .returnValue(inlineSum)
             ],
             isSuspend: false,
             isInline: true
@@ -40,7 +40,7 @@ extension LoweringPassRegressionTests {
             body: [
                 .constValue(result: callerArg, value: .intLiteral(41)),
                 .call(symbol: inlineSym, callee: interner.intern("plusOne"), arguments: [callerArg], result: callerResult, canThrow: false, thrownResult: nil),
-                .returnValue(callerResult),
+                .returnValue(callerResult)
             ],
             isSuspend: false,
             isInline: false
