@@ -138,28 +138,28 @@ public final class TypeSystem {
             // or we only explicitly mark Int and Long as signed. Wait, UByte and UShort are unsigned logically,
             // but for binary operations they might already be promoted to Int unless we are strict.
             // Let's rely strictly on Int, Long for signed integer type.
-            return type == intType || type == longType || type == charType ||
-                   type == makeNullable(intType) || type == makeNullable(longType) || type == makeNullable(charType)
+            type == intType || type == longType || type == charType ||
+                type == makeNullable(intType) || type == makeNullable(longType) || type == makeNullable(charType)
         default:
-            return false
+            false
         }
     }
 
     public func isSigned(_ type: TypeID) -> Bool {
         switch kind(of: type) {
         case .primitive(.int, _), .primitive(.long, _):
-            return true
+            true
         default:
-            return false
+            false
         }
     }
 
     public func isUnsigned(_ type: TypeID) -> Bool {
         switch kind(of: type) {
         case .primitive(.uint, _), .primitive(.ulong, _), .primitive(.ubyte, _), .primitive(.ushort, _):
-            return true
+            true
         default:
-            return false
+            false
         }
     }
 

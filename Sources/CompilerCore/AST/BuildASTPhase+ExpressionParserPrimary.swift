@@ -120,13 +120,12 @@ extension BuildASTPhase.ExpressionParser {
             numPart = String(numPart.dropLast())
         }
         let lower = numPart.lowercased()
-        let result: UInt64?
-        if lower.hasPrefix("0x") {
-            result = UInt64(numPart.dropFirst(2).filter(\.isHexDigit), radix: 16)
+        let result: UInt64? = if lower.hasPrefix("0x") {
+            UInt64(numPart.dropFirst(2).filter(\.isHexDigit), radix: 16)
         } else if lower.hasPrefix("0b") {
-            result = UInt64(numPart.dropFirst(2).filter { $0 == "0" || $0 == "1" }, radix: 2)
+            UInt64(numPart.dropFirst(2).filter { $0 == "0" || $0 == "1" }, radix: 2)
         } else {
-            result = UInt64(numPart.filter(\.isNumber), radix: 10)
+            UInt64(numPart.filter(\.isNumber), radix: 10)
         }
         if let val = result {
             return val
