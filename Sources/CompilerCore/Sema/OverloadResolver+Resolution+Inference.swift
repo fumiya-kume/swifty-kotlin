@@ -72,7 +72,7 @@ extension OverloadResolver {
             for bound in upperBounds where !ctx.types.isSubtype(substitutedType, bound) {
                 return Diagnostic(
                     severity: .error,
-                    code: "KSWIFTK-SEMA-BOUND",
+                    code: "KSWIFTK-SEMA-0030",
                     message: "Type argument does not satisfy upper bound constraint.",
                     primaryRange: range,
                     secondaryRanges: []
