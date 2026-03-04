@@ -98,7 +98,7 @@ final class ASTModelsTests: XCTestCase {
         XCTAssertEqual(aliasedImport.alias, interner.intern("KList"))
         XCTAssertEqual(aliasedImport.path.count, 3)
 
-        let typeParam = TypeParamDecl(name: interner.intern("T"))
+        let typeParam = TypeParamDecl(name: interner.intern("T"), upperBounds: [])
         XCTAssertEqual(typeParam.name, interner.intern("T"))
 
         let valueParam = ValueParamDecl(name: interner.intern("value"), type: typeRef)

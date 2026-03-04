@@ -245,7 +245,7 @@ extension BuildKIRRegressionTests {
             range: range,
             name: pickName,
             modifiers: [.inline],
-            typeParams: [TypeParamDecl(name: tName, variance: .invariant, isReified: true)],
+            typeParams: [TypeParamDecl(name: tName, variance: .invariant, isReified: true, upperBounds: [])],
             receiverType: nil,
             valueParams: [ValueParamDecl(name: valueName, type: nil)],
             returnType: nil,
