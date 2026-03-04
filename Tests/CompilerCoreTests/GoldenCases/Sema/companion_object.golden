@@ -16,25 +16,28 @@ symbol s14 kind=function fq=kotlin.collections.List.get vis=public flags=synthet
 symbol s15 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
 symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
 symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
-symbol s18 kind=class fq=golden.sema.Foo vis=public flags=_
-symbol s19 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#18 params=[Int] ret=Class#18 suspend=0 defaults=[0] vararg=[0]
-symbol s20 kind=valueParameter fq=golden.sema.Foo.<init>.$19.x vis=private flags=_
-symbol s21 kind=object fq=golden.sema.Foo.Companion vis=public flags=_
-symbol s22 kind=function fq=golden.sema.Foo.Companion.create vis=public flags=_ sig=recv=Class#21 params=[] ret=Class#18 suspend=0 defaults=[] vararg=[]
-symbol s23 kind=property fq=golden.sema.Foo.Companion.MAX_COUNT vis=public flags=constValue type=Int
-symbol s24 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s25 kind=local fq=__local_6.f vis=private flags=_
-symbol s26 kind=local fq=__local_9.m vis=private flags=_
+symbol s18 kind=interface fq=kotlin.Comparable vis=public flags=synthetic
+symbol s19 kind=typeParameter fq=kotlin.Comparable.T vis=private flags=_
+symbol s20 kind=function fq=kotlin.Comparable.compareTo vis=public flags=synthetic|operatorFunction sig=recv=Class#18<T#19> params=[T#19] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s21 kind=class fq=golden.sema.Foo vis=public flags=_
+symbol s22 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#21 params=[Int] ret=Class#21 suspend=0 defaults=[0] vararg=[0]
+symbol s23 kind=valueParameter fq=golden.sema.Foo.<init>.$22.x vis=private flags=_
+symbol s24 kind=object fq=golden.sema.Foo.Companion vis=public flags=_
+symbol s25 kind=function fq=golden.sema.Foo.Companion.create vis=public flags=_ sig=recv=Class#24 params=[] ret=Class#21 suspend=0 defaults=[] vararg=[]
+symbol s26 kind=property fq=golden.sema.Foo.Companion.MAX_COUNT vis=public flags=constValue type=Int
+symbol s27 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s28 kind=local fq=__local_6.f vis=private flags=_
+symbol s29 kind=local fq=__local_9.m vis=private flags=_
 file f0 package=golden.sema
-  decl d3 class Foo sym=s18
-  decl d4 fun main suspend=0 inline=0 sym=s24
-expr e0 int(100) type=Int ref=s23
+  decl d3 class Foo sym=s21
+  decl d4 fun main suspend=0 inline=0 sym=s27
+expr e0 int(100) type=Int ref=s26
 expr e1 name(Foo) type=_
 expr e2 int(0) type=Int
-expr e3 call callee=e1 args=[_:e2] type=Class#18 call=s19 map=[0->0] targs=[]
-expr e4 name(Foo) type=Class#21 ref=s18
-expr e5 memberCall recv=e4 callee=create args=[] type=Class#18 call=s22 map=[] targs=[]
-expr e6 localDecl f mutable=0 type=t3 init=e5 type=Unit ref=s25
-expr e7 name(Foo) type=Class#21 ref=s18
-expr e8 memberCall recv=e7 callee=MAX_COUNT args=[] type=Int ref=s23
-expr e9 localDecl m mutable=0 type=t4 init=e8 type=Unit ref=s26
+expr e3 call callee=e1 args=[_:e2] type=Class#21 call=s22 map=[0->0] targs=[]
+expr e4 name(Foo) type=Class#24 ref=s21
+expr e5 memberCall recv=e4 callee=create args=[] type=Class#21 call=s25 map=[] targs=[]
+expr e6 localDecl f mutable=0 type=t3 init=e5 type=Unit ref=s28
+expr e7 name(Foo) type=Class#24 ref=s21
+expr e8 memberCall recv=e7 callee=MAX_COUNT args=[] type=Int ref=s26
+expr e9 localDecl m mutable=0 type=t4 init=e8 type=Unit ref=s29

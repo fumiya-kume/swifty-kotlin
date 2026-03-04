@@ -437,6 +437,12 @@ public enum DiagnosticRegistry {
             defaultSeverity: .error,
             summary: "Cannot use non-reified type parameter in reified context."
         ),
+        DiagnosticDescriptor(
+            code: "KSWIFTK-SEMA-BOUND",
+            pass: "SEMA",
+            defaultSeverity: .error,
+            summary: "Type argument does not satisfy upper bound constraint."
+        ),
     ]
 
     // MARK: - Type resolution pass (TYPE)

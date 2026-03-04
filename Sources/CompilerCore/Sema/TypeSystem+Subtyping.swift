@@ -71,6 +71,20 @@ extension TypeSystem {
             }
         }
 
+        // primitive <: Comparable<same_primitive>
+        // In Kotlin, all numeric types and String implement Comparable<Self>.
+        if case let .primitive(_, leftNullability) = lhs,
+           case let .classType(rightClass) = rhs,
+           let comparableSym = comparableInterfaceSymbol,
+           rightClass.classSymbol == comparableSym,
+           rightClass.args.count == 1,
+           case let .invariant(argType) = rightClass.args[0],
+           argType == subtype,
+           nullabilitySubtype(leftNullability, rightClass.nullability)
+        {
+            return true
+        }
+
         switch (lhs, rhs) {
         case (.any(.nonNull), .any(.nullable)):
             return true

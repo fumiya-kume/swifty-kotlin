@@ -461,7 +461,7 @@ extension OverloadResolverTests {
         )
 
         XCTAssertNil(resolved.chosenCallee)
-        XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-SEMA-0030")
+        XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-SEMA-BOUND")
     }
 
     // MARK: - Advanced Named Arguments Tests

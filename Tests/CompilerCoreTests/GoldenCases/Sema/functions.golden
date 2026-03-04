@@ -16,17 +16,20 @@ symbol s14 kind=function fq=kotlin.collections.List.get vis=public flags=synthet
 symbol s15 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
 symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
 symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
-symbol s18 kind=function fq=golden.sema.add vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s19 kind=valueParameter fq=golden.sema.add.$18.a vis=private flags=_
-symbol s20 kind=valueParameter fq=golden.sema.add.$18.b vis=private flags=_
-symbol s21 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s18 kind=interface fq=kotlin.Comparable vis=public flags=synthetic
+symbol s19 kind=typeParameter fq=kotlin.Comparable.T vis=private flags=_
+symbol s20 kind=function fq=kotlin.Comparable.compareTo vis=public flags=synthetic|operatorFunction sig=recv=Class#18<T#19> params=[T#19] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s21 kind=function fq=golden.sema.add vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s22 kind=valueParameter fq=golden.sema.add.$21.a vis=private flags=_
+symbol s23 kind=valueParameter fq=golden.sema.add.$21.b vis=private flags=_
+symbol s24 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 fun add suspend=0 inline=0 sym=s18
-  decl d1 fun main suspend=0 inline=0 sym=s21
-expr e0 name(a) type=Int ref=s19
-expr e1 name(b) type=Int ref=s20
+  decl d0 fun add suspend=0 inline=0 sym=s21
+  decl d1 fun main suspend=0 inline=0 sym=s24
+expr e0 name(a) type=Int ref=s22
+expr e1 name(b) type=Int ref=s23
 expr e2 binary(add) lhs=e0 rhs=e1 type=Int
 expr e3 name(add) type=_
 expr e4 int(40) type=Int
 expr e5 int(2) type=Int
-expr e6 call callee=e3 args=[_:e4,_:e5] type=Int call=s18 map=[0->0,1->1] targs=[]
+expr e6 call callee=e3 args=[_:e4,_:e5] type=Int call=s21 map=[0->0,1->1] targs=[]

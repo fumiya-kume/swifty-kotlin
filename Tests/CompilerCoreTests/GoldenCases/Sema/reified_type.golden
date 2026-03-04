@@ -16,16 +16,19 @@ symbol s14 kind=function fq=kotlin.collections.List.get vis=public flags=synthet
 symbol s15 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
 symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
 symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
-symbol s18 kind=function fq=golden.sema.typeNameOf vis=public flags=inlineFunction sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s19 kind=typeParameter fq=golden.sema.typeNameOf.$18.T vis=private flags=reifiedTypeParameter
-symbol s20 kind=function fq=golden.sema.useReified vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s18 kind=interface fq=kotlin.Comparable vis=public flags=synthetic
+symbol s19 kind=typeParameter fq=kotlin.Comparable.T vis=private flags=_
+symbol s20 kind=function fq=kotlin.Comparable.compareTo vis=public flags=synthetic|operatorFunction sig=recv=Class#18<T#19> params=[T#19] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s21 kind=function fq=golden.sema.typeNameOf vis=public flags=inlineFunction sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s22 kind=typeParameter fq=golden.sema.typeNameOf.$21.T vis=private flags=reifiedTypeParameter
+symbol s23 kind=function fq=golden.sema.useReified vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 fun typeNameOf suspend=0 inline=1 sym=s18
-  decl d1 fun useReified suspend=0 inline=0 sym=s20
-expr e0 name(T) type=Any ref=s19
+  decl d0 fun typeNameOf suspend=0 inline=1 sym=s21
+  decl d1 fun useReified suspend=0 inline=0 sym=s23
+expr e0 name(T) type=Any ref=s22
 expr e1 callableRef recv=e0 member=class type=Any
 expr e2 memberCall recv=e1 callee=simpleName args=[] type=String?
 expr e3 string(unknown) type=String
 expr e4 binary(elvis) lhs=e2 rhs=e3 type=String
 expr e5 name(typeNameOf) type=_
-expr e6 call callee=e5 args=[] type=String call=s18 map=[] targs=[Int]
+expr e6 call callee=e5 args=[] type=String call=s21 map=[] targs=[Int]

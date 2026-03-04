@@ -16,15 +16,18 @@ symbol s14 kind=function fq=kotlin.collections.List.get vis=public flags=synthet
 symbol s15 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
 symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
 symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
-symbol s18 kind=function fq=golden.sema.useBuildStringReceiverThis vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s19 kind=function fq=golden.sema.useBuildListReceiverThis vis=public flags=_ sig=recv=_ params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s20 kind=package fq=kotlin.text vis=public flags=synthetic
-symbol s21 kind=class fq=kotlin.text.StringBuilder vis=public flags=synthetic
+symbol s18 kind=interface fq=kotlin.Comparable vis=public flags=synthetic
+symbol s19 kind=typeParameter fq=kotlin.Comparable.T vis=private flags=_
+symbol s20 kind=function fq=kotlin.Comparable.compareTo vis=public flags=synthetic|operatorFunction sig=recv=Class#18<T#19> params=[T#19] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s21 kind=function fq=golden.sema.useBuildStringReceiverThis vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s22 kind=function fq=golden.sema.useBuildListReceiverThis vis=public flags=_ sig=recv=_ params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s23 kind=package fq=kotlin.text vis=public flags=synthetic
+symbol s24 kind=class fq=kotlin.text.StringBuilder vis=public flags=synthetic
 file f0 package=golden.sema
-  decl d0 fun useBuildStringReceiverThis suspend=0 inline=0 sym=s18
-  decl d1 fun useBuildListReceiverThis suspend=0 inline=0 sym=s19
+  decl d0 fun useBuildStringReceiverThis suspend=0 inline=0 sym=s21
+  decl d1 fun useBuildListReceiverThis suspend=0 inline=0 sym=s22
 expr e0 name(buildString) type=String
-expr e1 this type=Class#21
+expr e1 this type=Class#24
 expr e2 string(a) type=String
 expr e3 memberCall recv=e1 callee=append args=[_:e2] type=Unit
 expr e4 name(append) type=_

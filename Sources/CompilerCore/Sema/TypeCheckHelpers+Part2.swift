@@ -246,14 +246,19 @@ extension TypeCheckHelpers {
     }
 
     /// Collects all nominal symbols from a type, including all parts of an intersection.
-    func allNominalSymbols(of type: TypeID, types: TypeSystem) -> [SymbolID] {
+    /// For type parameters, follows upper bounds to discover interface symbols.
+    func allNominalSymbols(of type: TypeID, types: TypeSystem, symbols: SymbolTable) -> [SymbolID] {
         switch types.kind(of: type) {
         case let .classType(classType):
-            [classType.classSymbol]
+            return [classType.classSymbol]
         case let .intersection(parts):
-            parts.flatMap { allNominalSymbols(of: $0, types: types) }
+            return parts.flatMap { allNominalSymbols(of: $0, types: types, symbols: symbols) }
+        case let .typeParam(typeParam):
+            // Collect nominal symbols reachable via the type parameter's upper bounds.
+            let bounds = symbols.typeParameterUpperBounds(for: typeParam.symbol)
+            return bounds.flatMap { allNominalSymbols(of: $0, types: types, symbols: symbols) }
         default:
-            []
+            return []
         }
     }
 
@@ -263,7 +268,7 @@ extension TypeCheckHelpers {
         sema: SemaModule,
         allowedOwnerSymbols: Set<SymbolID>? = nil
     ) -> [SymbolID] {
-        let nominalRoots = allNominalSymbols(of: receiverType, types: sema.types)
+        let nominalRoots = allNominalSymbols(of: receiverType, types: sema.types, symbols: sema.symbols)
         guard !nominalRoots.isEmpty else {
             return []
         }
@@ -355,7 +360,7 @@ extension TypeCheckHelpers {
         receiverType: TypeID,
         sema: SemaModule
     ) -> (symbol: SymbolID, type: TypeID)? {
-        let nominalRoots = allNominalSymbols(of: receiverType, types: sema.types)
+        let nominalRoots = allNominalSymbols(of: receiverType, types: sema.types, symbols: sema.symbols)
         guard !nominalRoots.isEmpty else {
             return nil
         }

@@ -1,9 +1,91 @@
 import Foundation
 
-// Collection type stubs (List<E>, MutableList<E>) for kotlin.collections.
+// Collection type stubs (List<E>, MutableList<E>) for kotlin.collections,
+// and Comparable<T> for kotlin.
 // Split from DataFlowSemaPhase+HeaderHelpers.swift to stay within file-length limits.
 
 extension DataFlowSemaPhase {
+    /// Register `kotlin.Comparable<T>` interface stub with `operator fun compareTo(other: T): Int`.
+    func registerSyntheticComparableStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let kotlinPkg: [InternedString] = [interner.intern("kotlin")]
+        if symbols.lookup(fqName: kotlinPkg) == nil {
+            _ = symbols.define(
+                kind: .package,
+                name: interner.intern("kotlin"),
+                fqName: kotlinPkg,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+
+        let comparableName = interner.intern("Comparable")
+        let comparableFQName = kotlinPkg + [comparableName]
+        let comparableSymbol: SymbolID = if let existing = symbols.lookup(fqName: comparableFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .interface,
+                name: comparableName,
+                fqName: comparableFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+
+        // Store in TypeSystem for use in isSubtype
+        types.comparableInterfaceSymbol = comparableSymbol
+
+        // Define type parameter T for Comparable<T>
+        let tParamName = interner.intern("T")
+        let tParamFQName = comparableFQName + [tParamName]
+        let tParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: tParamName,
+            fqName: tParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let tParamType = types.make(.typeParam(TypeParamType(
+            symbol: tParamSymbol, nullability: .nonNull
+        )))
+
+        // Register `operator fun compareTo(other: T): Int`
+        let compareToName = interner.intern("compareTo")
+        let compareToFQName = comparableFQName + [compareToName]
+        guard symbols.lookup(fqName: compareToFQName) == nil else { return }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: comparableSymbol,
+            args: [.invariant(tParamType)],
+            nullability: .nonNull
+        )))
+        let compareToSymbol = symbols.define(
+            kind: .function,
+            name: compareToName,
+            fqName: compareToFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(comparableSymbol, for: compareToSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [tParamType],
+                returnType: types.intType,
+                typeParameterSymbols: [tParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: compareToSymbol
+        )
+    }
+
     func registerSyntheticCollectionStubs(
         symbols: SymbolTable,
         types: TypeSystem,
