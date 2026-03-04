@@ -40,44 +40,49 @@ symbol s38 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=rec
 symbol s39 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
 symbol s40 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
 symbol s41 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
-symbol s42 kind=enumClass fq=golden.sema.Color vis=public flags=_
-symbol s43 kind=constructor fq=golden.sema.Color.<init> vis=public flags=_ sig=recv=Class#42 params=[] ret=Class#42 suspend=0 defaults=[] vararg=[]
-symbol s44 kind=field fq=golden.sema.Color.Red vis=public flags=_ type=Class#42
-symbol s45 kind=field fq=golden.sema.Color.Green vis=public flags=_ type=Class#42
-symbol s46 kind=field fq=golden.sema.Color.Blue vis=public flags=_ type=Class#42
-symbol s47 kind=function fq=golden.sema.classify vis=public flags=_ sig=recv=_ params=[Int] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s48 kind=valueParameter fq=golden.sema.classify.$47.x vis=private flags=_
-symbol s49 kind=function fq=golden.sema.classifyColor vis=public flags=_ sig=recv=_ params=[Class#42] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s50 kind=valueParameter fq=golden.sema.classifyColor.$49.c vis=private flags=_
-symbol s51 kind=function fq=golden.sema.classifyBool vis=public flags=_ sig=recv=_ params=[Boolean] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s52 kind=valueParameter fq=golden.sema.classifyBool.$51.b vis=private flags=_
+symbol s42 kind=function fq=golden.sema.useTrim vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s43 kind=function fq=golden.sema.useSplit vis=public flags=_ sig=recv=_ params=[] ret=Class#12<String> suspend=0 defaults=[] vararg=[]
+symbol s44 kind=function fq=golden.sema.useReplace vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s45 kind=function fq=golden.sema.useStartsWith vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s46 kind=function fq=golden.sema.useEndsWith vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s47 kind=function fq=golden.sema.useContains vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s48 kind=function fq=golden.sema.useToInt vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s49 kind=function fq=golden.sema.useToDouble vis=public flags=_ sig=recv=_ params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s50 kind=function fq=golden.sema.useFormat vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 class Color sym=s42
-  decl d1 fun classify suspend=0 inline=0 sym=s47
-  decl d2 fun classifyColor suspend=0 inline=0 sym=s49
-  decl d3 fun classifyBool suspend=0 inline=0 sym=s51
-expr e0 name(x) type=Int ref=s48
-expr e1 int(1) type=Int
-expr e2 int(2) type=Int
-expr e3 int(3) type=Int
-expr e4 string(few) type=String
-expr e5 int(4) type=Int
-expr e6 int(5) type=Int
-expr e7 string(some) type=String
-expr e8 string(many) type=String
-expr e9 when subject=e0 branches=[e1,e2,e3->e4,e5,e6->e7] else=e8 type=String
-expr e10 name(c) type=Class#42 ref=s50
-expr e11 name(Color) type=Any ref=s42
-expr e12 memberCall recv=e11 callee=Red args=[] type=Class#42 ref=s44
-expr e13 name(Color) type=Any ref=s42
-expr e14 memberCall recv=e13 callee=Green args=[] type=Class#42 ref=s45
-expr e15 string(warm) type=String
-expr e16 name(Color) type=Any ref=s42
-expr e17 memberCall recv=e16 callee=Blue args=[] type=Class#42 ref=s46
-expr e18 string(cold) type=String
-expr e19 when subject=e10 branches=[e12,e14->e15,e17->e18] else=_ type=String
-expr e20 name(b) type=Boolean ref=s52
-expr e21 bool(true) type=Boolean
-expr e22 bool(false) type=Boolean
-expr e23 string(always) type=String
-expr e24 when subject=e20 branches=[e21,e22->e23] else=_ type=String
+  decl d0 fun useTrim suspend=0 inline=0 sym=s42
+  decl d1 fun useSplit suspend=0 inline=0 sym=s43
+  decl d2 fun useReplace suspend=0 inline=0 sym=s44
+  decl d3 fun useStartsWith suspend=0 inline=0 sym=s45
+  decl d4 fun useEndsWith suspend=0 inline=0 sym=s46
+  decl d5 fun useContains suspend=0 inline=0 sym=s47
+  decl d6 fun useToInt suspend=0 inline=0 sym=s48
+  decl d7 fun useToDouble suspend=0 inline=0 sym=s49
+  decl d8 fun useFormat suspend=0 inline=0 sym=s50
+expr e0 string(  hi  ) type=String
+expr e1 memberCall recv=e0 callee=trim args=[] type=String call=s19 map=[] targs=[]
+expr e2 string(1,2,3) type=String
+expr e3 string(,) type=String
+expr e4 memberCall recv=e2 callee=split args=[_:e3] type=<error>
+expr e5 string(abc) type=String
+expr e6 string(a) type=String
+expr e7 string(z) type=String
+expr e8 memberCall recv=e5 callee=replace args=[_:e6,_:e7] type=String call=s24 map=[0->0,1->1] targs=[]
+expr e9 string(Kotlin) type=String
+expr e10 string(Ko) type=String
+expr e11 memberCall recv=e9 callee=startsWith args=[_:e10] type=Boolean call=s28 map=[0->0] targs=[]
+expr e12 string(Kotlin) type=String
+expr e13 string(lin) type=String
+expr e14 bool(true) type=Boolean
+expr e15 memberCall recv=e12 callee=endsWith args=[_:e13,_:e14] type=Boolean call=s32 map=[0->0,1->1] targs=[]
+expr e16 string(Kotlin) type=String
+expr e17 string(otl) type=String
+expr e18 memberCall recv=e16 callee=contains args=[_:e17] type=Boolean call=s35 map=[0->0] targs=[]
+expr e19 string(42) type=String
+expr e20 memberCall recv=e19 callee=toInt args=[] type=Int call=s38 map=[] targs=[]
+expr e21 string(3.14) type=String
+expr e22 memberCall recv=e21 callee=toDouble args=[] type=Double call=s39 map=[] targs=[]
+expr e23 string(%s-%d) type=String
+expr e24 string(x) type=String
+expr e25 int(1) type=Int
+expr e26 memberCall recv=e23 callee=format args=[_:e24,_:e25] type=String call=s40 map=[0->0,1->0] targs=[]
