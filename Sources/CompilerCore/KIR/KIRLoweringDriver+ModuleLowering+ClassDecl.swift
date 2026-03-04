@@ -7,7 +7,6 @@ extension KIRLoweringDriver {
         shared: KIRLoweringSharedContext,
         compilationCtx: CompilationContext
     ) -> [KIRDeclID] {
-        let ast = shared.ast
         let sema = shared.sema
         let arena = shared.arena
 

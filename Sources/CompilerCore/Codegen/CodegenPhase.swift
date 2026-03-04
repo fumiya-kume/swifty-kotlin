@@ -314,6 +314,10 @@ public final class CodegenPhase: CompilerPhase {
             "int:\(intValue)"
         case let .longLiteral(longValue):
             "long:\(longValue)"
+        case let .uintLiteral(uintValue):
+            "uint:\(uintValue)"
+        case let .ulongLiteral(ulongValue):
+            "ulong:\(ulongValue)"
         case let .floatLiteral(floatValue):
             "float:\(floatValue)"
         case let .doubleLiteral(doubleValue):

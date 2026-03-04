@@ -179,6 +179,14 @@ public final class NameMangler {
                 "I"
             case .long:
                 "J"
+            case .uint:
+                "UI"
+            case .ulong:
+                "UJ"
+            case .ubyte:
+                "UB"
+            case .ushort:
+                "US"
             case .float:
                 "F"
             case .double:

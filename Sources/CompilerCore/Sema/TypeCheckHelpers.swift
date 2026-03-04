@@ -122,6 +122,10 @@ struct TypeCheckHelpers {
         case "Boolean": types.withNullability(nullability, for: types.booleanType)
         case "Char": types.withNullability(nullability, for: types.charType)
         case "String": types.withNullability(nullability, for: types.stringType)
+        case "UInt": types.withNullability(nullability, for: types.uintType)
+        case "ULong": types.withNullability(nullability, for: types.ulongType)
+        case "UByte": types.withNullability(nullability, for: types.ubyteType)
+        case "UShort": types.withNullability(nullability, for: types.ushortType)
         case "Any": nullability == .nullable ? types.nullableAnyType : types.anyType
         case "Unit": types.unitType
         case "Nothing": nullability == .nullable ? types.nullableNothingType : types.nothingType

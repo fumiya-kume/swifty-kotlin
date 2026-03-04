@@ -188,6 +188,8 @@ public enum TokenKind: Equatable, Sendable {
     case softKeyword(SoftKeyword)
     case intLiteral(String)
     case longLiteral(String)
+    case uintLiteral(String)
+    case ulongLiteral(String)
     case floatLiteral(String)
     case doubleLiteral(String)
     case charLiteral(UInt32)

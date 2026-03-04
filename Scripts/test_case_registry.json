@@ -116,6 +116,28 @@
       ]
     },
     {
+      "task": "TYPE-005",
+      "category": "types",
+      "description": "Unsigned integer types (UInt/ULong), literals (42u/42uL), conversions, and bitwise ops",
+      "cases": [
+        {
+          "type": "golden-lexer",
+          "name": "unsigned_literals",
+          "template": "Scripts/test_templates/lexer/unsigned_literals.kt"
+        },
+        {
+          "type": "golden-sema",
+          "name": "unsigned_integers",
+          "template": "Scripts/test_templates/sema/unsigned_integers.kt"
+        },
+        {
+          "type": "diff",
+          "name": "unsigned_integers",
+          "template": "Scripts/test_templates/diff/unsigned_integers.kt"
+        }
+      ]
+    },
+    {
       "task": "P5-100",
       "category": "expressions",
       "description": "as (unsafe cast) / as? (safe cast)",
@@ -403,6 +425,23 @@
           "type": "diff",
           "name": "init_block_order",
           "template": "Scripts/test_templates/diff/init_block_order.kt"
+        }
+      ]
+    },
+    {
+      "task": "CLASS-008",
+      "category": "class_object",
+      "description": "Class delegation (: Interface by delegateInstance)",
+      "cases": [
+        {
+          "type": "diff",
+          "name": "class_delegation",
+          "template": "Scripts/test_templates/diff/class_delegation.kt"
+        },
+        {
+          "type": "diff",
+          "name": "class_delegation_override",
+          "template": "Scripts/test_templates/diff/class_delegation_override.kt"
         }
       ]
     },

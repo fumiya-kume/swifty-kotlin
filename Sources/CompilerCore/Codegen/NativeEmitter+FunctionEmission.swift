@@ -467,14 +467,14 @@ extension NativeEmitter {
                    bindings.debugLocationAvailable,
                    case let .symbolRef(localSymbol) = value,
                    !parameterValues.keys.contains(localSymbol)
-                { // swiftlint:disable:this opening_brace
+                {
                     let varName = "local_\(localSymbol.rawValue)"
                     var varLine: UInt32 = 0
                     if function.instructionLocations.count == function.body.count,
                        instructionIndex < function.instructionLocations.count,
                        let instrRange = function.instructionLocations[instructionIndex],
                        let srcMgr = sourceManager
-                    { // swiftlint:disable:this opening_brace
+                    {
                         varLine = UInt32(srcMgr.lineColumn(of: instrRange.start).line)
                     } else if let sourceRange = function.sourceRange, let srcMgr = sourceManager {
                         varLine = UInt32(srcMgr.lineColumn(of: sourceRange.start).line)
@@ -483,7 +483,7 @@ extension NativeEmitter {
                         if function.instructionLocations.count == function.body.count,
                            instructionIndex < function.instructionLocations.count,
                            let instrRange = function.instructionLocations[instructionIndex]
-                        { // swiftlint:disable:this opening_brace
+                        {
                             return diContext.diFiles[instrRange.start.file] ?? diContext.file
                         }
                         return diContext.file

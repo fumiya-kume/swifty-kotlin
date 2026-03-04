@@ -93,6 +93,14 @@ extension DataFlowSemaPhase {
                 return types.make(.primitive(.boolean, nullability))
             case "String":
                 return types.make(.primitive(.string, nullability))
+            case "UInt":
+                return types.make(.primitive(.uint, nullability))
+            case "ULong":
+                return types.make(.primitive(.ulong, nullability))
+            case "UByte":
+                return types.make(.primitive(.ubyte, nullability))
+            case "UShort":
+                return types.make(.primitive(.ushort, nullability))
             case "Any":
                 return nullability == .nullable ? types.nullableAnyType : types.anyType
             case "Unit":

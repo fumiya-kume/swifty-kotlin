@@ -11,6 +11,10 @@ extension GoldenHarnessTests {
             return "int(\(value))"
         case let .longLiteral(value, _):
             return "long(\(value))"
+        case let .uintLiteral(value, _):
+            return "uint(\(value))"
+        case let .ulongLiteral(value, _):
+            return "ulong(\(value))"
         case let .floatLiteral(value, _):
             return "float(\(value))"
         case let .doubleLiteral(value, _):
