@@ -36,27 +36,32 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
         // is inferred with the correct implicit receiver type.
         if let calleeName, args.count == 1 {
             let name = interner.resolve(calleeName)
-            let builderKind: BuilderDSLKind? = switch name {
-            case "buildString": .buildString
-            case "buildList": .buildList
-            case "buildMap": .buildMap
-            default: nil
-            }
-            if let builderKind {
-                // Determine the receiver type for the builder lambda.
-                // buildString → StringBuilder (treated as Any for member dispatch)
-                // buildList → MutableList (treated as Any)
-                // buildMap → MutableMap (treated as Any)
-                let receiverType = sema.types.anyType
+            if let builderKind = builderDSLKind(for: name),
+               shouldUseBuilderDSLSpecialHandling(calleeName: calleeName, ctx: ctx, locals: locals)
+            {
+                let argumentExprID = args[0].expr
+                guard isValidBuilderLambdaArgument(argumentExprID, ast: ast) else {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0002",
+                        "No viable overload found for call.",
+                        range: range
+                    )
+                    sema.bindings.bindExprType(id, type: sema.types.errorType)
+                    return sema.types.errorType
+                }
+
+                let receiverType = builderDSLReceiverType(kind: builderKind, sema: sema, interner: interner)
                 let returnType: TypeID = switch builderKind {
-                case .buildString: sema.types.stringType
-                case .buildList, .buildMap: sema.types.anyType
+                case .buildString:
+                    sema.types.stringType
+                case .buildList, .buildMap:
+                    sema.types.anyType
                 }
                 // Infer the lambda argument with the builder receiver as implicit `this`.
                 var builderCtx = ctx.with(implicitReceiverType: receiverType)
                 builderCtx.isBuilderLambdaScope = true
                 builderCtx.builderKind = builderKind
-                _ = driver.inferExpr(args[0].expr, ctx: builderCtx, locals: &locals)
+                _ = driver.inferExpr(argumentExprID, ctx: builderCtx, locals: &locals)
                 sema.bindings.markBuilderDSLExpr(id, kind: builderKind)
                 sema.bindings.markCollectionExpr(id)
                 sema.bindings.bindExprType(id, type: returnType)
@@ -395,5 +400,122 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
         explicitTypeArgs: [TypeID] = []
     ) -> TypeID {
         inferMemberCallImpl(id, receiverID: receiverID, calleeName: calleeName, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType, explicitTypeArgs: explicitTypeArgs, safeCall: true)
+    }
+}
+
+private extension CallTypeChecker {
+    func builderDSLKind(for name: String) -> BuilderDSLKind? {
+        switch name {
+        case "buildString":
+            .buildString
+        case "buildList":
+            .buildList
+        case "buildMap":
+            .buildMap
+        default:
+            nil
+        }
+    }
+
+    func shouldUseBuilderDSLSpecialHandling(
+        calleeName: InternedString,
+        ctx: TypeInferenceContext,
+        locals: LocalBindings
+    ) -> Bool {
+        if locals[calleeName] != nil {
+            return false
+        }
+        if !ctx.cachedScopeLookup(calleeName).isEmpty {
+            return false
+        }
+        return true
+    }
+
+    func isValidBuilderLambdaArgument(_ argumentExprID: ExprID, ast: ASTModule) -> Bool {
+        guard let argumentExpr = ast.arena.expr(argumentExprID),
+              case let .lambdaLiteral(params, _, _, _) = argumentExpr
+        else {
+            return false
+        }
+        return params.isEmpty
+    }
+
+    func builderDSLReceiverType(
+        kind: BuilderDSLKind,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID {
+        switch kind {
+        case .buildString:
+            return ensureSyntheticStringBuilderType(sema: sema, interner: interner)
+        case .buildList:
+            let mutableListFQName: [InternedString] = [
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("MutableList"), // swiftlint:disable:this trailing_comma
+            ]
+            guard let mutableListSymbol = sema.symbols.lookup(fqName: mutableListFQName) else {
+                return sema.types.anyType
+            }
+            return sema.types.make(.classType(ClassType(
+                classSymbol: mutableListSymbol,
+                args: [.invariant(sema.types.anyType)],
+                nullability: .nonNull
+            )))
+        case .buildMap:
+            // Keep current compatibility for map builders.
+            return sema.types.anyType
+        }
+    }
+
+    func ensureSyntheticStringBuilderType(
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID {
+        let symbols = sema.symbols
+        let kotlinPkg: [InternedString] = [interner.intern("kotlin")]
+        let kotlinTextPkg: [InternedString] = kotlinPkg + [interner.intern("text")]
+        _ = ensureSyntheticPackage(fqName: kotlinPkg, symbols: symbols)
+        _ = ensureSyntheticPackage(fqName: kotlinTextPkg, symbols: symbols)
+
+        let stringBuilderName = interner.intern("StringBuilder")
+        let stringBuilderFQName = kotlinTextPkg + [stringBuilderName]
+        let stringBuilderSymbol: SymbolID = if let existing = symbols.lookup(fqName: stringBuilderFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .class,
+                name: stringBuilderName,
+                fqName: stringBuilderFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        return sema.types.make(.classType(ClassType(
+            classSymbol: stringBuilderSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+    }
+
+    func ensureSyntheticPackage(
+        fqName: [InternedString],
+        symbols: SymbolTable
+    ) -> SymbolID {
+        if let existing = symbols.lookup(fqName: fqName) {
+            return existing
+        }
+        guard let name = fqName.last else {
+            return .invalid
+        }
+        return symbols.define(
+            kind: .package,
+            name: name,
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
     }
 }

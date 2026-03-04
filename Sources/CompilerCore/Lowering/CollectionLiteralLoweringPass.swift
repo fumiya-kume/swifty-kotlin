@@ -165,8 +165,8 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                 switch instruction {
                 case let .constValue(result, .symbolRef(symbol)):
                     exprSymbolMap[result.rawValue] = symbol
-                case let .call(_, callee, arguments, _, _, _, _):
-                    if builderDSLNames.contains(callee), !arguments.isEmpty {
+                case let .call(symbol, callee, arguments, _, _, _, _):
+                    if symbol == nil, builderDSLNames.contains(callee), !arguments.isEmpty {
                         builderLambdaArgEntries.append((argID: arguments[0].rawValue, callee: callee))
                     }
                 default:
@@ -263,7 +263,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
 
             for instruction in function.body {
                 switch instruction {
-                case let .call(_, callee, arguments, result, canThrow, thrownResult, _):
+                case let .call(symbol, callee, arguments, result, canThrow, thrownResult, _):
                     // --- Rewrite listOf/mutableListOf/emptyList → kk_list_of ---
                     if listFactoryNames.contains(callee) {
                         let count = arguments.count
@@ -412,7 +412,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     }
 
                     // --- Rewrite buildString/buildList/buildMap → kk_build_* (STDLIB-002) ---
-                    if builderDSLNames.contains(callee) {
+                    if symbol == nil, builderDSLNames.contains(callee) {
                         let kkCallee: InternedString = switch callee {
                         case buildStringName: kkBuildStringName
                         case buildListName: kkBuildListName

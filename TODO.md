@@ -115,11 +115,11 @@
 
 ### 📦 Stdlib / DSL
 
-- [ ] STDLIB-002: `buildString`/`buildList`/`buildMap` DSL builder を実装する（spec.md J9/J12）
-  - [ ] `buildString { append("a"); append("b") }` を `StringBuilder` ベースの DSL として実装する
-  - [ ] `buildList { add(1); add(2) }` を mutable list builder として実装する
-  - [ ] builder lambda の receiver (`StringBuilder`/`MutableList`) を Sema で `this` として束縛する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task STDLIB-002`
+- [x] STDLIB-002: `buildString`/`buildList`/`buildMap` DSL builder を実装する（spec.md J9/J12）
+  - [x] `buildString { append("a"); append("b") }` を `StringBuilder` ベースの DSL として実装する
+  - [x] `buildList { add(1); add(2) }` を mutable list builder として実装する
+  - [x] builder lambda の receiver (`StringBuilder`/`MutableList`) を Sema で `this` として束縛する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task STDLIB-002`
   - **完了条件**: `buildString { append("hello "); append("world") }` が `"hello world"` を返す
 
 
