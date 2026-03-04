@@ -67,6 +67,52 @@ extension CompilerCoreTests {
         }
     }
 
+    func testBuildASTParsesNullableExtensionFunctionReceiverType() throws {
+        let source = """
+        fun String?.echoNullable(): String = this ?: ""
+        """
+        let ctx = makeContextFromSource(source)
+        try runFrontend(ctx)
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let firstFile = try XCTUnwrap(ast.files.first)
+        let firstDeclID = try XCTUnwrap(firstFile.topLevelDecls.first)
+        let decl = try XCTUnwrap(ast.arena.decl(firstDeclID))
+        guard case let .funDecl(funDecl) = decl else {
+            XCTFail("Expected function declaration")
+            return
+        }
+
+        let receiverTypeID = try XCTUnwrap(funDecl.receiverType)
+        let receiverType = try XCTUnwrap(ast.arena.typeRef(receiverTypeID))
+        if case let .named(path, _, nullable) = receiverType {
+            XCTAssertTrue(nullable)
+            XCTAssertEqual(path.count, 1)
+            XCTAssertEqual(ctx.interner.resolve(path[0]), "String")
+        } else {
+            XCTFail("Expected named receiver type")
+        }
+    }
+
+    func testSemaResolvesNullableReceiverExtensionWithoutSafeCall() throws {
+        let source = """
+        fun String?.isNullOrEmpty(): Boolean = this == null || this.length == 0
+
+        fun useNullableReceiver(s: String?): Int {
+            val fromNullable = s.isNullOrEmpty()
+            val fromNullLiteral = null.isNullOrEmpty()
+            return if (fromNullable || fromNullLiteral) 1 else 0
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
+        assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+        assertNoDiagnostic("KSWIFTK-SEMA-0051", in: ctx)
+        assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+    }
+
     func testBuildASTParsesClassTypeParameterVariance() throws {
         let source = """
         class Box<out T, in U, V>
