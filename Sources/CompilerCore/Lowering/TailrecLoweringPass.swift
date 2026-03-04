@@ -95,7 +95,7 @@ final class TailrecLoweringPass: LoweringPass {
                isSelfRecursiveCall(symbol: symbol, functionIdentity: functionIdentity),
                instructionIndex + 1 < body.count,
                isReturnOfResult(body[instructionIndex + 1], callResult: callResult)
-            {
+            { // swiftlint:disable:this opening_brace
                 emitParameterReassignment(arguments: arguments, params: params, arena: arena, result: &result)
                 result.append(.jump(loopLabel))
                 emittedTailJump = true
@@ -108,7 +108,7 @@ final class TailrecLoweringPass: LoweringPass {
                isSelfRecursiveCall(symbol: symbol, functionIdentity: functionIdentity),
                instructionIndex + 1 < body.count,
                isReturnUnitInstruction(body[instructionIndex + 1])
-            {
+            { // swiftlint:disable:this opening_brace
                 emitParameterReassignment(arguments: arguments, params: params, arena: arena, result: &result)
                 result.append(.jump(loopLabel))
                 emittedTailJump = true
