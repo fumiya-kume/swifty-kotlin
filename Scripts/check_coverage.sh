@@ -3,6 +3,10 @@ set -euo pipefail
 
 threshold="${COVERAGE_THRESHOLD:-80}"
 readonly report_file="${COVERAGE_REPORT_MD:-}"
+readonly skip_test_run="${COVERAGE_SKIP_TEST_RUN:-0}"
+readonly profile_override="${COVERAGE_PROFILE_PATH:-}"
+readonly tests_binary_override="${COVERAGE_TESTS_BINARY:-}"
+readonly json_output_override="${COVERAGE_JSON_OUTPUT:-}"
 
 readonly targets=(
   "Sources/CompilerCore/Lexer/TokenStream.swift"
@@ -15,19 +19,53 @@ readonly targets=(
   "Sources/CompilerCore/AST/ASTModels.swift"
 )
 
-bash Scripts/swift_test.sh --enable-code-coverage
+run_tests=true
+case "$skip_test_run" in
+  1|true|TRUE|True|yes|YES|Yes)
+    run_tests=false
+    ;;
+esac
+
+if [[ "$run_tests" == true ]]; then
+  bash Scripts/swift_test.sh --enable-code-coverage
+fi
 
 if [[ "$(uname)" == "Linux" ]]; then
-  profile_candidate="$(find .build -name "default.profdata" 2>/dev/null | head -1)"
-  readonly profile="${profile_candidate:-.build/debug/codecov/default.profdata}"
-  build_dir="$(dirname "$(dirname "$profile")")"
-  readonly tests_binary="${build_dir}/KSwiftKPackageTests.xctest"
-  readonly json_output="${build_dir}/codecov/KSwiftK.json"
+  if [[ -n "$profile_override" ]]; then
+    readonly profile="$profile_override"
+  else
+    profile_candidate="$(find .build -name "default.profdata" 2>/dev/null | head -1)"
+    readonly profile="${profile_candidate:-.build/debug/codecov/default.profdata}"
+  fi
+
+  if [[ -n "$tests_binary_override" ]]; then
+    readonly tests_binary="$tests_binary_override"
+  else
+    tests_binary_candidate="$(find .build -name "KSwiftKPackageTests.xctest" 2>/dev/null | head -1)"
+    readonly tests_binary="${tests_binary_candidate:-.build/debug/KSwiftKPackageTests.xctest}"
+  fi
 else
-  readonly profile=".build/debug/codecov/default.profdata"
-  readonly tests_binary=".build/debug/KSwiftKPackageTests.xctest/Contents/MacOS/KSwiftKPackageTests"
-  readonly json_output=".build/debug/codecov/KSwiftK.json"
+  readonly profile="${profile_override:-.build/debug/codecov/default.profdata}"
+  readonly tests_binary="${tests_binary_override:-.build/debug/KSwiftKPackageTests.xctest/Contents/MacOS/KSwiftKPackageTests}"
 fi
+
+if [[ -n "$json_output_override" ]]; then
+  readonly json_output="$json_output_override"
+else
+  readonly json_output="$(dirname "$tests_binary")/codecov/KSwiftK.json"
+fi
+
+if [[ ! -f "$profile" ]]; then
+  echo "Coverage profile not found: ${profile}" >&2
+  exit 1
+fi
+
+if [[ ! -e "$tests_binary" ]]; then
+  echo "Test binary not found: ${tests_binary}" >&2
+  exit 1
+fi
+
+mkdir -p "$(dirname "$json_output")"
 
 if [[ "$(uname)" == "Linux" ]]; then
   llvm-cov export "$tests_binary" -instr-profile "$profile" > "$json_output"
