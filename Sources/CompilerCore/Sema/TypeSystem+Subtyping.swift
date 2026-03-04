@@ -22,11 +22,11 @@ extension TypeSystem {
                 return true
             case .primitive(_, .nullable), .primitive(_, .platformType):
                 return true
-            case let .classType(ct) where ct.nullability == .nullable || ct.nullability == .platformType:
+            case let .classType(cls) where cls.nullability == .nullable || cls.nullability == .platformType:
                 return true
-            case let .typeParam(tp) where tp.nullability == .nullable || tp.nullability == .platformType:
+            case let .typeParam(tpm) where tpm.nullability == .nullable || tpm.nullability == .platformType:
                 return true
-            case let .functionType(ft) where ft.nullability == .nullable || ft.nullability == .platformType:
+            case let .functionType(fnt) where fnt.nullability == .nullable || fnt.nullability == .platformType:
                 return true
             case let .intersection(parts):
                 return parts.allSatisfy { isSubtype(subtype, $0) }

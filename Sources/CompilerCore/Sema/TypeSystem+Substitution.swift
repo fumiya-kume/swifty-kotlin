@@ -1,4 +1,13 @@
 public extension TypeSystem {
+    /// Returns the suffix character representing the given nullability: `""`, `"?"`, or `"!"`.
+    internal func nullabilitySuffix(_ nullability: Nullability) -> String {
+        switch nullability {
+        case .nullable: "?"
+        case .platformType: "!"
+        case .nonNull: ""
+        }
+    }
+
     internal func renderType(_ type: TypeID) -> String {
         switch kind(of: type) {
         case .error:
@@ -6,11 +15,9 @@ public extension TypeSystem {
         case .unit:
             return "Unit"
         case let .nothing(nullability):
-            let suffix = nullability == .nullable ? "?" : nullability == .platformType ? "!" : ""
-            return "Nothing\(suffix)"
+            return "Nothing\(nullabilitySuffix(nullability))"
         case let .any(nullability):
-            let suffix = nullability == .nullable ? "?" : nullability == .platformType ? "!" : ""
-            return "Any\(suffix)"
+            return "Any\(nullabilitySuffix(nullability))"
         case let .primitive(primitive, nullability):
             let base = switch primitive {
             case .boolean:
@@ -36,19 +43,16 @@ public extension TypeSystem {
             case .string:
                 "String"
             }
-            let suffix = nullability == .nullable ? "?" : nullability == .platformType ? "!" : ""
-            return "\(base)\(suffix)"
+            return "\(base)\(nullabilitySuffix(nullability))"
         case let .classType(classType):
             let args = if classType.args.isEmpty {
                 ""
             } else {
                 "<" + classType.args.map(renderTypeArg).joined(separator: ", ") + ">"
             }
-            let nullSuffix = classType.nullability == .nullable ? "?" : classType.nullability == .platformType ? "!" : ""
-            return "Class#\(classType.classSymbol.rawValue)\(args)\(nullSuffix)"
+            return "Class#\(classType.classSymbol.rawValue)\(args)\(nullabilitySuffix(classType.nullability))"
         case let .typeParam(typeParam):
-            let nullSuffix = typeParam.nullability == .nullable ? "?" : typeParam.nullability == .platformType ? "!" : ""
-            return "T#\(typeParam.symbol.rawValue)\(nullSuffix)"
+            return "T#\(typeParam.symbol.rawValue)\(nullabilitySuffix(typeParam.nullability))"
         case let .functionType(functionType):
             let receiverPrefix = if let receiver = functionType.receiver {
                 "\(renderType(receiver))."
@@ -57,8 +61,9 @@ public extension TypeSystem {
             }
             let suspendPrefix = functionType.isSuspend ? "suspend " : ""
             let params = functionType.params.map(renderType).joined(separator: ", ")
-            let nullSuffix = functionType.nullability == .nullable ? "?" : functionType.nullability == .platformType ? "!" : ""
-            return "\(suspendPrefix)\(receiverPrefix)(\(params)) -> \(renderType(functionType.returnType))\(nullSuffix)"
+            let retType = renderType(functionType.returnType)
+            let suffix = nullabilitySuffix(functionType.nullability)
+            return "\(suspendPrefix)\(receiverPrefix)(\(params)) -> \(retType)\(suffix)"
         case let .intersection(parts):
             return parts.map(renderType).joined(separator: " & ")
         }
