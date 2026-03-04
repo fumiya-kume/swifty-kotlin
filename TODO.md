@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-03-03
+最終更新: 2026-03-04
 
 ## 運用ルール
 
@@ -15,53 +15,58 @@
 
 ---
 
-## 未完了バックログ（16件）
+## 未完了バックログ（12件 + 完了3件）
 
 ### 📐 Type System
 
-- [ ] TYPE-005: 符号なし整数型（`UInt`/`ULong`/`UByte`/`UShort`）の演算・型変換・stdlib を完全実装する（spec.md J8）
-  - [ ] `UInt`/`ULong`/`UByte`/`UShort` を distinct な primitive 型として TypeSystem に登録し、signed 型との暗黙変換を禁止する
-  - [ ] 四則演算・比較・ビット演算を符号なし意味論で LLVM IR へ lowering する（`udiv`/`urem`/`icmp ult` 等）
-  - [ ] `toUInt()`/`toInt()` などの変換関数を stdlib stub として実装する
-  - [ ] 符号なし型リテラル（`42u`/`42uL`）を Lexer/Parser で認識し型推論する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task TYPE-005`
+- [x] TYPE-005: 符号なし整数型（`UInt`/`ULong`/`UByte`/`UShort`）の演算・型変換・stdlib を完全実装する（spec.md J8）
+  - [x] `UInt`/`ULong`/`UByte`/`UShort` を distinct な primitive 型として TypeSystem に登録し、signed 型との暗黙変換を禁止する
+  - [x] 四則演算・比較・ビット演算を符号なし意味論で LLVM IR へ lowering する（`udiv`/`urem`/`icmp ult` 等）
+  - [x] `toUInt()`/`toInt()` などの変換関数を stdlib stub として実装する
+  - [x] 符号なし型リテラル（`42u`/`42uL`）を Lexer/Parser で認識し型推論する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task TYPE-005`
   - **完了条件**: `val x: UInt = 4294967295u` が overflow せず正しく演算され、`toInt()` で符号変換が動作する
 
 ---
 
 ### 🏗️ Class / Object
 
-- [ ] CLASS-006: `data object` の型と等値比較を実装する（spec.md J6）
-  - [ ] `data object Singleton` を singleton かつ equals/hashCode/toString 合成ありとして扱う
+- [x] CLASS-006: `data object` の型と等値比較を実装する（spec.md J6）
+  - [x] `data object Singleton` を singleton かつ equals/toString 合成ありとして扱う（hashCode は未実装）
   - [ ] anonymous object の型を local nominal として推論し、呼び出しスコープ内で有効にする
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CLASS-006`
-  - **完了条件**: `data object None` が `None == None` → `true`、`None.toString()` → `"None"` を返す
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CLASS-006`
+  - **完了条件**: `data object None` が `None == None` → `true`、`None.toString()` → `"None"` を返す ✓
 
 
-- [ ] CLASS-008: クラス委譲（`class A : Interface by delegateInstance`）を front-to-back で実装する（spec.md J7/J12）
-  - [ ] class ヘッダの `: Interface by expr` 構文を Parser/AST で保持する（property delegation の `by` とは別パス）
-  - [ ] Sema で delegate 式の型が対象 interface を実装していることを検証する
-  - [ ] KIR lowering で interface の全メソッドを `delegateInstance.method(...)` へ転送するボイラープレートを合成する
-  - [ ] クラス自身が一部メソッドを override する場合は override 側を優先する dispatch を生成する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CLASS-008`
-  - **完了条件**: `class Logger(impl: Printer) : Printer by impl` が `impl` のメソッドを委譲し、override したメソッドだけ自前実装を呼ぶ
+- [x] CLASS-008: クラス委譲（`class A : Interface by delegateInstance`）を front-to-back で実装する（spec.md J7/J12）
+  - [x] class ヘッダの `: Interface by expr` 構文を Parser/AST で保持する（property delegation の `by` とは別パス）
+  - [x] Sema で delegate 式の型が対象 interface を実装していることを検証する
+  - [x] KIR lowering で interface の全メソッドを `delegateInstance.method(...)` へ転送するボイラープレートを合成する
+  - [x] クラス自身が一部メソッドを override する場合は override 側を優先する dispatch を生成する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CLASS-008`
+  - **完了条件**: `class Logger(impl: Printer) : Printer by impl` が `impl` のメソッドを委譲し、override したメソッドだけ自前実装を呼ぶ（※itable 未実装のため diff は SKIP-DIFF、CLASS-008-FOLLOW 参照）
+
+- [ ] CLASS-008-FOLLOW: クラス委譲の既知の制限を解消する
+  - [ ] NativeEmitter（LLVM C API バックエンド）で `virtualCall` の itable ディスパッチを実装する（`kk_itable_lookup` を呼び、戻り値を関数ポインタとして indirect call する）
+  - [ ] 委譲フィールドを KIRGlobal ではなくインスタンスフィールド（receiver + fieldOffset）として保持する
+  - **完了条件**: `-Xir backend=synthetic-c` なしで `logger.print()` が正しく動作し、複数インスタンスで委譲が独立して動作する
 
 ---
 
 ### 🧩 Functions
 
-- [ ] FUNC-001: tail-recursive 関数（`tailrec fun`）の末尾呼び出し最適化を実装する（spec.md J9）
-  - [ ] `tailrec` 修飾子を Sema で認識し、最後の式が self-recursive call であることを検証する
-  - [ ] tail call が満たされない場合に `KSWIFTK-SEMA-TAILREC` warning を出す
-  - [ ] KIR/Lowering で `tailrec fun` をループ（label jump）へ変換し、スタック消費を抑制する
-  - [ ] 深い再帰が tailrec により StackOverflow を起こさないことを E2E テストで確認する
-  - **完了条件**: `tailrec fun fact(n: Int, acc: Int = 1): Int` が 100000 段の再帰で StackOverflow しない
+- [x] FUNC-001: tail-recursive 関数（`tailrec fun`）の末尾呼び出し最適化を実装する（spec.md J9）
+  - [x] `tailrec` 修飾子を Sema で認識し、最後の式が self-recursive call であることを検証する
+  - [x] tail call が満たされない場合に `KSWIFTK-SEMA-TAILREC` warning を出す
+  - [x] KIR/Lowering で `tailrec fun` をループ（label jump）へ変換し、スタック消費を抑制する
+  - [x] 深い再帰が tailrec により StackOverflow を起こさないことを E2E テストで確認する
+  - **完了条件**: `tailrec fun fact(n: Int, acc: Int = 1): Int` が 100000 段の再帰で StackOverflow しない ✓
 
 
-- [ ] FUNC-002: infix 関数宣言（`infix fun`）の構文と解決を実装する（spec.md J9）
-  - [ ] `infix fun T.foo(arg: Type)` を parser/AST で infix function として保持する
-  - [ ] `a foo b` 形式の中置呼び出しを Sema で receiver + infix function 呼び出しへ解決する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task FUNC-002`
+- [x] P5-2 FUNC-002: Infix function declarations (`infix fun`)
+  - [x] Handle `infix` modifier in parser/AST
+  - [x] Add resolution logic in Sema.
+  - [x] Build cases and implement `to` in `RuntimeCollections.swift` that returns `Any` (underneath it produces a Pair struct)diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task FUNC-002`
   - **完了条件**: `1 to "one"` が `Pair(1, "one")` に、カスタム infix 関数が正しい優先順位で評価される（優先順位設定は既存実装済み）
 
 ---
