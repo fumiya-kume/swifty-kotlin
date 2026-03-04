@@ -62,6 +62,21 @@ public struct ConstructorDecl {
     }
 }
 
+/// A single supertype entry in a class declaration, optionally with delegation.
+/// Used for `class Foo(impl: Printer) : Printer by impl` — the `by expr` part
+/// delegates interface implementation to the given expression.
+public struct SuperTypeEntry: Equatable {
+    public let typeRef: TypeRefID
+    /// When present, this supertype (must be an interface) is implemented by
+    /// delegating to the given expression. Absent for non-delegated supertypes.
+    public let delegateExpression: ExprID?
+
+    public init(typeRef: TypeRefID, delegateExpression: ExprID? = nil) {
+        self.typeRef = typeRef
+        self.delegateExpression = delegateExpression
+    }
+}
+
 /// Represents a member in the class body initialization sequence.
 /// Used to guarantee Kotlin's declaration-order execution of property
 /// initializers and `init` blocks.
@@ -85,7 +100,8 @@ public struct ClassDecl {
     /// `true` when the class header contains explicit constructor parentheses,
     /// distinguishing `class Foo()` (has primary ctor) from `class Foo` (no primary ctor).
     public let hasPrimaryConstructorSyntax: Bool
-    public let superTypes: [TypeRefID]
+    /// Supertype entries; each may have an optional `by expr` for interface delegation.
+    public let superTypeEntries: [SuperTypeEntry]
     public let nestedTypeAliases: [TypeAliasDecl]
     public let enumEntries: [EnumEntryDecl]
     public let initBlocks: [FunctionBody]
@@ -111,7 +127,7 @@ public struct ClassDecl {
         typeParams: [TypeParamDecl] = [],
         primaryConstructorParams: [ValueParamDecl] = [],
         hasPrimaryConstructorSyntax: Bool = false,
-        superTypes: [TypeRefID] = [],
+        superTypeEntries: [SuperTypeEntry] = [],
         nestedTypeAliases: [TypeAliasDecl] = [],
         enumEntries: [EnumEntryDecl] = [],
         initBlocks: [FunctionBody] = [],
@@ -131,7 +147,7 @@ public struct ClassDecl {
         self.typeParams = typeParams
         self.primaryConstructorParams = primaryConstructorParams
         self.hasPrimaryConstructorSyntax = hasPrimaryConstructorSyntax
-        self.superTypes = superTypes
+        self.superTypeEntries = superTypeEntries
         self.nestedTypeAliases = nestedTypeAliases
         self.enumEntries = enumEntries
         self.initBlocks = initBlocks

@@ -22,7 +22,7 @@
 - [x] TYPE-005: 符号なし整数型（`UInt`/`ULong`/`UByte`/`UShort`）の演算・型変換・stdlib を完全実装する（spec.md J8）
   - [x] `UInt`/`ULong`/`UByte`/`UShort` を distinct な primitive 型として TypeSystem に登録し、signed 型との暗黙変換を禁止する
   - [x] 四則演算・比較・ビット演算を符号なし意味論で LLVM IR へ lowering する（`udiv`/`urem`/`icmp ult` 等）
-  - [x] `toUInt()`/`toInt()` などの変換関数を stdlib stub として実装する
+  - [x] `toUInt()`/`toInt()` などの変換関数を stdlib stub として実装する ✓
   - [x] 符号なし型リテラル（`42u`/`42uL`）を Lexer/Parser で認識し型推論する
   - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task TYPE-005`
   - **完了条件**: `val x: UInt = 4294967295u` が overflow せず正しく演算され、`toInt()` で符号変換が動作する
