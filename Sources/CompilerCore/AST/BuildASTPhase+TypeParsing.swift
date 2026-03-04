@@ -69,16 +69,20 @@ extension BuildASTPhase {
             return nil
         }
 
-        var dotIndex: Int?
+        var receiverSeparatorIndex: Int?
+        var receiverSeparatorToken: Token?
         var depth = BracketDepth()
         for index in 0 ..< nameIndex {
             let token = tokens[index]
             depth.track(token.kind)
-            if depth.angle == 0, token.kind == .symbol(.dot) {
-                dotIndex = index
+            if depth.angle == 0,
+               (token.kind == .symbol(.dot) || token.kind == .symbol(.questionDot))
+            {
+                receiverSeparatorIndex = index
+                receiverSeparatorToken = token
             }
         }
-        guard let dotIndex else {
+        guard let receiverSeparatorIndex else {
             return nil
         }
 
@@ -91,11 +95,16 @@ extension BuildASTPhase {
             open: .symbol(.lessThan), close: .symbol(.greaterThan)
         )
 
-        if receiverStart >= dotIndex {
+        if receiverStart >= receiverSeparatorIndex {
             return nil
         }
 
-        let receiverTokens = Array(tokens[receiverStart ..< dotIndex])
+        var receiverTokens = Array(tokens[receiverStart ..< receiverSeparatorIndex])
+        if receiverSeparatorToken?.kind == .symbol(.questionDot),
+           let separatorRange = receiverSeparatorToken?.range
+        {
+            receiverTokens.append(Token(kind: .symbol(.question), range: separatorRange))
+        }
         return parseTypeRef(from: receiverTokens, interner: interner, astArena: astArena)
     }
 

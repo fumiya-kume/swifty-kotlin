@@ -653,7 +653,8 @@ extension ExprTypeChecker {
         _ id: ExprID,
         label: InternedString?,
         range: SourceRange,
-        ctx: TypeInferenceContext
+        ctx: TypeInferenceContext,
+        locals: LocalBindings
     ) -> TypeID {
         let sema = ctx.sema
         guard let receiverType = ctx.implicitReceiverType else {
@@ -678,6 +679,10 @@ extension ExprTypeChecker {
             )
             sema.bindings.bindExprType(id, type: sema.types.errorType)
             return sema.types.errorType
+        }
+        if let thisLocal = locals[ctx.interner.intern("this")] {
+            sema.bindings.bindExprType(id, type: thisLocal.type)
+            return thisLocal.type
         }
         sema.bindings.bindExprType(id, type: receiverType)
         return receiverType

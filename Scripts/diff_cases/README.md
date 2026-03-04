@@ -14,6 +14,7 @@ Cases:
 - `if_expr.kt`: expression-body `if` function
 - `named_default.kt`: named argument + default parameter補完
 - `extension_receiver.kt`: extension receiver 呼び出しと `this` 束縛
+- `nullable_receiver_ext.kt`: nullable receiver 拡張（`fun T?.foo()`）の直接呼び出しと優先順位 parity（出力は `1/0` 比較）
 - `local_var.kt`: block 内 local `val` 宣言と参照
 - `local_assign.kt`: block 内 local `var` 再代入
 - `loop_basic.kt`: `while` / `do-while` の制御フローと `break` の基本実行

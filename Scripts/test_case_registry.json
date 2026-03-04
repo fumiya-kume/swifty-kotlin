@@ -645,6 +645,11 @@
           "type": "golden-sema",
           "name": "nullable_receiver_ext",
           "template": "Scripts/test_templates/sema/nullable_receiver_ext.kt"
+        },
+        {
+          "type": "diff",
+          "name": "nullable_receiver_ext",
+          "template": "Scripts/test_templates/diff/nullable_receiver_ext.kt"
         }
       ]
     },
