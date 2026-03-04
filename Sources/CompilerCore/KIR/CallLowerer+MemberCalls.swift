@@ -11,6 +11,7 @@ extension CallLowerer {
         "to", // FUNC-002
     ]
 
+    // swiftlint:disable:next cyclomatic_complexity
     func lowerMemberCallExpr(
         _ exprID: ExprID,
         receiverExpr: ExprID,

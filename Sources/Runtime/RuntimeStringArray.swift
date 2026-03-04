@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 
 @_cdecl("kk_throwable_new")
@@ -458,12 +459,12 @@ public func kk_string_split(_ strRaw: Int, _ delimRaw: Int) -> Int {
     }
     let arrayHandle = kk_array_new(parts.count)
     if let arrayBox = runtimeArrayBox(from: arrayHandle) {
-        for (i, part) in parts.enumerated() {
+        for (idx, part) in parts.enumerated() {
             let utf8 = Array(part.utf8)
             let strPtr = utf8.withUnsafeBufferPointer { buf in
                 kk_string_from_utf8(buf.baseAddress ?? UnsafePointer<UInt8>(bitPattern: 1)!, Int32(buf.count))
             }
-            arrayBox.elements[i] = Int(bitPattern: strPtr)
+            arrayBox.elements[idx] = Int(bitPattern: strPtr)
         }
     }
     return kk_list_of(arrayHandle, parts.count)

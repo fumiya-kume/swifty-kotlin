@@ -1,6 +1,8 @@
+// swiftlint:disable file_length
 import Foundation
 
 extension LLVMBackend {
+    // swiftlint:disable:next function_body_length cyclomatic_complexity
     func emitFunctionBody(
         function: KIRFunction,
         frameMapPlan: FrameMapPlan,
