@@ -167,6 +167,10 @@ extension ExprTypeChecker {
             return effectiveType
         }
         let type: TypeID
+        let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
+        let uintType = sema.types.uintType
+        let ubyteType = sema.types.make(.primitive(.ubyte, .nonNull))
+        let ushortType = sema.types.make(.primitive(.ushort, .nonNull))
         switch op {
         case .add:
             if lhs == stringType || rhs == stringType {
@@ -180,6 +184,14 @@ extension ExprTypeChecker {
                 type = floatType
             } else if lhs == longType || rhs == longType {
                 type = longType
+            } else if lhs == ulongType || rhs == ulongType {
+                type = ulongType
+            } else if lhs == uintType || rhs == uintType {
+                type = uintType
+            } else if lhs == ushortType || rhs == ushortType {
+                type = ushortType
+            } else if lhs == ubyteType || rhs == ubyteType {
+                type = ubyteType
             } else {
                 type = intType
             }
@@ -196,6 +208,14 @@ extension ExprTypeChecker {
                 type = floatType
             } else if lhs == longType || rhs == longType {
                 type = longType
+            } else if lhs == ulongType || rhs == ulongType {
+                type = ulongType
+            } else if lhs == uintType || rhs == uintType {
+                type = uintType
+            } else if lhs == ushortType || rhs == ushortType {
+                type = ushortType
+            } else if lhs == ubyteType || rhs == ubyteType {
+                type = ubyteType
             } else {
                 type = intType
             }
@@ -206,6 +226,14 @@ extension ExprTypeChecker {
                 type = floatType
             } else if lhs == longType || rhs == longType {
                 type = longType
+            } else if lhs == ulongType || rhs == ulongType {
+                type = ulongType
+            } else if lhs == uintType || rhs == uintType {
+                type = uintType
+            } else if lhs == ushortType || rhs == ushortType {
+                type = ushortType
+            } else if lhs == ubyteType || rhs == ubyteType {
+                type = ubyteType
             } else {
                 type = intType
             }

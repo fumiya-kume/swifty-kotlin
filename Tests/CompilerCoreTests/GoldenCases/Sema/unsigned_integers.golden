@@ -52,11 +52,11 @@ expr e17 memberCall recv=e16 callee=toInt args=[] type=Int
 expr e18 localDecl e mutable=0 type=_ init=e17 type=Unit ref=s25
 expr e19 uint(100) type=UInt
 expr e20 uint(3) type=UInt
-expr e21 binary(divide) lhs=e19 rhs=e20 type=Int
+expr e21 binary(divide) lhs=e19 rhs=e20 type=UInt
 expr e22 localDecl f mutable=0 type=_ init=e21 type=Unit ref=s26
 expr e23 uint(100) type=UInt
 expr e24 uint(3) type=UInt
-expr e25 binary(modulo) lhs=e23 rhs=e24 type=Int
+expr e25 binary(modulo) lhs=e23 rhs=e24 type=UInt
 expr e26 localDecl g mutable=0 type=_ init=e25 type=Unit ref=s27
 expr e27 uint(255) type=UInt
 expr e28 localDecl i mutable=0 type=_ init=e27 type=Unit ref=s28
@@ -80,10 +80,10 @@ expr e45 name(println) type=_
 expr e46 name(e) type=Int ref=s25
 expr e47 call callee=e45 args=[_:e46] type=Unit
 expr e48 name(println) type=_
-expr e49 name(f) type=Int ref=s26
+expr e49 name(f) type=UInt ref=s26
 expr e50 call callee=e48 args=[_:e49] type=Unit
 expr e51 name(println) type=_
-expr e52 name(g) type=Int ref=s27
+expr e52 name(g) type=UInt ref=s27
 expr e53 call callee=e51 args=[_:e52] type=Unit
 expr e54 name(println) type=_
 expr e55 name(i) type=UInt ref=s28

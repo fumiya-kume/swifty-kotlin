@@ -35,6 +35,8 @@ private enum RuntimeTypeTokenEncoding {
     static let nominalBase: Int64 = 6
     static let uintBase: Int64 = 7
     static let ulongBase: Int64 = 8
+    static let ubyteBase: Int64 = 9
+    static let ushortBase: Int64 = 10
 }
 
 func runtimePanicMessage(fromCString cstr: UnsafePointer<CChar>) -> String {
@@ -135,7 +137,9 @@ public func kk_op_is(_ value: Int, _ typeToken: Int) -> Int {
 
     case RuntimeTypeTokenEncoding.intBase,
          RuntimeTypeTokenEncoding.uintBase,
-         RuntimeTypeTokenEncoding.ulongBase:
+         RuntimeTypeTokenEncoding.ulongBase,
+         RuntimeTypeTokenEncoding.ubyteBase,
+         RuntimeTypeTokenEncoding.ushortBase:
         guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
             return 1
         }
@@ -242,6 +246,10 @@ public func kk_type_token_simple_name(_ typeToken: Int, _ nameHint: Int) -> Int 
         "UInt"
     case RuntimeTypeTokenEncoding.ulongBase:
         "ULong"
+    case RuntimeTypeTokenEncoding.ubyteBase:
+        "UByte"
+    case RuntimeTypeTokenEncoding.ushortBase:
+        "UShort"
     case RuntimeTypeTokenEncoding.booleanBase:
         "Boolean"
     case RuntimeTypeTokenEncoding.nullBase:

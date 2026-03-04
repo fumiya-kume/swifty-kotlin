@@ -15,6 +15,8 @@ enum RuntimeTypeCheckToken {
     static let nominalBase: Int64 = 6
     static let uintBase: Int64 = 7
     static let ulongBase: Int64 = 8
+    static let ubyteBase: Int64 = 9
+    static let ushortBase: Int64 = 10
 
     static let baseMask: Int64 = 0xFF
     static let nullableFlag: Int64 = 1 << 8
@@ -43,6 +45,10 @@ enum RuntimeTypeCheckToken {
             encode(base: uintBase, nullable: nullable)
         case "ULong":
             encode(base: ulongBase, nullable: nullable)
+        case "UByte":
+            encode(base: ubyteBase, nullable: nullable)
+        case "UShort":
+            encode(base: ushortBase, nullable: nullable)
         case "Boolean":
             encode(base: booleanBase, nullable: nullable)
         case "Nothing":
@@ -65,6 +71,10 @@ enum RuntimeTypeCheckToken {
             return encode(base: uintBase, nullable: nullable)
         case .primitive(.ulong, _):
             return encode(base: ulongBase, nullable: nullable)
+        case .primitive(.ubyte, _):
+            return encode(base: ubyteBase, nullable: nullable)
+        case .primitive(.ushort, _):
+            return encode(base: ushortBase, nullable: nullable)
         case .primitive(.boolean, _):
             return encode(base: booleanBase, nullable: nullable)
         case .nothing:
