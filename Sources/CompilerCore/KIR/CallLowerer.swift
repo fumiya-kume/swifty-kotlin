@@ -37,6 +37,67 @@ final class CallLowerer {
                 instructions: &instructions
             )
         }
+
+        // --- Scope function: with(receiver, block) (STDLIB-004) ---
+        if let scopeKind = sema.bindings.scopeFunctionKind(for: exprID),
+           scopeKind == .with_,
+           args.count == 2
+        {
+            let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+            let loweredReceiverID = driver.lowerExpr(
+                args[0].expr,
+                ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            // Set up implicit receiver for the lambda body.
+            let receiverSymbol = driver.ctx.allocateSyntheticGeneratedSymbol()
+            let receiverType = sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
+            let receiverSymExpr = arena.appendExpr(.symbolRef(receiverSymbol), type: receiverType)
+            instructions.append(.copy(from: loweredReceiverID, to: receiverSymExpr))
+
+            let savedReceiverExprID = driver.ctx.currentImplicitReceiverExprID
+            let savedReceiverSymbol = driver.ctx.currentImplicitReceiverSymbol
+            driver.ctx.localValuesBySymbol[receiverSymbol] = receiverSymExpr
+            driver.ctx.currentImplicitReceiverExprID = receiverSymExpr
+            driver.ctx.currentImplicitReceiverSymbol = receiverSymbol
+
+            let loweredLambdaID = driver.lowerExpr(
+                args[1].expr,
+                ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+
+            driver.ctx.currentImplicitReceiverExprID = savedReceiverExprID
+            driver.ctx.currentImplicitReceiverSymbol = savedReceiverSymbol
+
+            let result = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: boundType
+            )
+            if let info = driver.ctx.callableValueInfoByExprID[loweredLambdaID] {
+                instructions.append(.call(
+                    symbol: info.symbol,
+                    callee: info.callee,
+                    arguments: info.captureArguments,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            } else {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_scope_with"),
+                    arguments: [loweredReceiverID, loweredLambdaID],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            }
+            return result
+        }
+
         let boundType = sema.bindings.exprTypes[exprID]
         let loweredCalleeExprID = driver.lowerExpr(
             calleeExpr,

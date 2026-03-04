@@ -46,6 +46,21 @@ extension CallLowerer {
             }
         }
 
+        // --- Scope functions: let, run, apply, also (STDLIB-004) ---
+        if let scopeResult = tryScopeFunctionLowering(
+            exprID,
+            receiverExpr: receiverExpr,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        ) {
+            return scopeResult
+        }
+
         let effectiveCalleeName = if sema.bindings.isInvokeOperatorCall(exprID) {
             interner.intern("invoke")
         } else {
@@ -83,6 +98,21 @@ extension CallLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
+        // --- Scope functions with safe call: ?.let, ?.run, etc. (STDLIB-004) ---
+        if let scopeResult = tryScopeFunctionLowering(
+            exprID,
+            receiverExpr: receiverExpr,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        ) {
+            return scopeResult
+        }
+
         let effectiveCalleeName = if sema.bindings.isInvokeOperatorCall(exprID) {
             interner.intern("invoke")
         } else {
@@ -902,6 +932,136 @@ extension CallLowerer {
             thrownResult: nil
         ))
         return result
+    }
+
+    // MARK: - Scope Function Lowering (STDLIB-004)
+
+    /// Attempts to lower a scope function call (let/run/apply/also).
+    /// Returns nil if the expression is not a scope function call.
+    func tryScopeFunctionLowering(
+        _ exprID: ExprID,
+        receiverExpr: ExprID,
+        args: [CallArgument],
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        guard let scopeKind = sema.bindings.scopeFunctionKind(for: exprID),
+              args.count == 1
+        else { return nil }
+
+        let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+
+        // Lower the receiver expression.
+        let loweredReceiverID = driver.lowerExpr(
+            receiverExpr,
+            ast: ast, sema: sema, arena: arena, interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+
+        switch scopeKind {
+        case .let_, .also_:
+            // let/also: lambda takes `it` as explicit parameter.
+            // Lower lambda normally, then call it with receiver as argument.
+            let loweredLambdaID = driver.lowerExpr(
+                args[0].expr,
+                ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            let result = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: boundType
+            )
+            if let info = driver.ctx.callableValueInfoByExprID[loweredLambdaID] {
+                instructions.append(.call(
+                    symbol: info.symbol,
+                    callee: info.callee,
+                    arguments: info.captureArguments + [loweredReceiverID],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            } else {
+                // Fallback: emit call using the lambda expression directly.
+                let calleeName = interner.intern(scopeKind == .let_ ? "kk_scope_let" : "kk_scope_also")
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: calleeName,
+                    arguments: [loweredReceiverID, loweredLambdaID],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            }
+            if scopeKind == .also_ {
+                // also: result is the receiver, not the lambda return value.
+                instructions.append(.copy(from: loweredReceiverID, to: result))
+            }
+            return result
+
+        case .run_, .apply_:
+            // run/apply: lambda has `this` as implicit receiver.
+            // Set the implicit receiver to the lowered receiver before lowering
+            // the lambda so that the lambda captures it.
+            let receiverSymbol = driver.ctx.allocateSyntheticGeneratedSymbol()
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let receiverSymExpr = arena.appendExpr(.symbolRef(receiverSymbol), type: receiverType)
+            instructions.append(.copy(from: loweredReceiverID, to: receiverSymExpr))
+
+            let savedReceiverExprID = driver.ctx.currentImplicitReceiverExprID
+            let savedReceiverSymbol = driver.ctx.currentImplicitReceiverSymbol
+            driver.ctx.localValuesBySymbol[receiverSymbol] = receiverSymExpr
+            driver.ctx.currentImplicitReceiverExprID = receiverSymExpr
+            driver.ctx.currentImplicitReceiverSymbol = receiverSymbol
+
+            let loweredLambdaID = driver.lowerExpr(
+                args[0].expr,
+                ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+
+            driver.ctx.currentImplicitReceiverExprID = savedReceiverExprID
+            driver.ctx.currentImplicitReceiverSymbol = savedReceiverSymbol
+
+            let result = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: boundType
+            )
+            if let info = driver.ctx.callableValueInfoByExprID[loweredLambdaID] {
+                instructions.append(.call(
+                    symbol: info.symbol,
+                    callee: info.callee,
+                    arguments: info.captureArguments,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            } else {
+                let calleeName = interner.intern(scopeKind == .run_ ? "kk_scope_run" : "kk_scope_apply")
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: calleeName,
+                    arguments: [loweredReceiverID, loweredLambdaID],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            }
+            if scopeKind == .apply_ {
+                // apply: result is the receiver, not the lambda return value.
+                instructions.append(.copy(from: loweredReceiverID, to: result))
+            }
+            return result
+
+        case .with_:
+            return nil // with is handled in lowerCallExpr
+        }
     }
 
     // swiftlint:disable:next file_length

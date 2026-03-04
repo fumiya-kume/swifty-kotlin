@@ -178,7 +178,8 @@ extension LambdaLowerer {
                 )
             }
             if let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol,
-               containsImplicitReceiverReference(in: lambdaBodyExprID, ast: ast),
+               (containsImplicitReceiverReference(in: lambdaBodyExprID, ast: ast)
+                   || containsImplicitReceiverMemberAccess(in: lambdaBodyExprID, ast: ast, sema: sema)),
                canCaptureSymbolForLambda(
                    receiverSymbol,
                    lambdaExprID: lambdaExprID,
@@ -225,7 +226,8 @@ extension LambdaLowerer {
             )
         }
         if let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol,
-           containsImplicitReceiverReference(in: lambdaBodyExprID, ast: ast),
+           (containsImplicitReceiverReference(in: lambdaBodyExprID, ast: ast)
+               || containsImplicitReceiverMemberAccess(in: lambdaBodyExprID, ast: ast, sema: sema)),
            canCaptureSymbolForLambda(
                receiverSymbol,
                lambdaExprID: lambdaExprID,
@@ -237,6 +239,38 @@ extension LambdaLowerer {
             captures.append(receiverSymbol)
         }
         return captures
+    }
+
+    /// STDLIB-004: Check if an expression tree contains any implicit receiver
+    /// member accesses (bare name references resolved through implicitReceiverType).
+    /// Uses a simple check: any expression in the Sema binding table means the receiver is needed.
+    func containsImplicitReceiverMemberAccess(in exprID: ExprID, ast: ASTModule, sema: SemaModule) -> Bool {
+        if sema.bindings.implicitReceiverMemberNames[exprID] != nil {
+            return true
+        }
+        guard let expr = ast.arena.expr(exprID) else {
+            return false
+        }
+        switch expr {
+        case let .blockExpr(stmts, trailing, _):
+            if stmts.contains(where: { containsImplicitReceiverMemberAccess(in: $0, ast: ast, sema: sema) }) {
+                return true
+            }
+            if let trailing { return containsImplicitReceiverMemberAccess(in: trailing, ast: ast, sema: sema) }
+            return false
+        case let .call(callee, _, args, _):
+            if containsImplicitReceiverMemberAccess(in: callee, ast: ast, sema: sema) { return true }
+            return args.contains { containsImplicitReceiverMemberAccess(in: $0.expr, ast: ast, sema: sema) }
+        case let .memberCall(receiver, _, _, args, _),
+             let .safeMemberCall(receiver, _, _, args, _):
+            if containsImplicitReceiverMemberAccess(in: receiver, ast: ast, sema: sema) { return true }
+            return args.contains { containsImplicitReceiverMemberAccess(in: $0.expr, ast: ast, sema: sema) }
+        case let .returnExpr(value, _, _):
+            if let v = value { return containsImplicitReceiverMemberAccess(in: v, ast: ast, sema: sema) }
+            return false
+        default:
+            return false
+        }
     }
 
     func captureValueExpr(
