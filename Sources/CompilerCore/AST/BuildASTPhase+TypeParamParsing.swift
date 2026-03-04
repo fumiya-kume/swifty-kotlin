@@ -221,8 +221,9 @@ extension BuildASTPhase {
         whereClauses: [(name: InternedString, bound: TypeRefID)]
     ) -> [TypeParamDecl] {
         guard !whereClauses.isEmpty else { return typeParams }
+        let clausesByName = Dictionary(grouping: whereClauses, by: \.name)
         return typeParams.map { param in
-            let paramClauses = whereClauses.filter { $0.name == param.name }
+            let paramClauses = clausesByName[param.name] ?? []
             guard !paramClauses.isEmpty else {
                 return param
             }
