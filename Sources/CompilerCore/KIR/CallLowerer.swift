@@ -88,14 +88,9 @@ final class CallLowerer {
                     thrownResult: nil
                 ))
             } else {
-                instructions.append(.call(
-                    symbol: nil,
-                    callee: interner.intern("kk_scope_with"),
-                    arguments: [loweredReceiverID, loweredLambdaID],
-                    result: result,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
+                preconditionFailure(
+                    "Missing callableValueInfo for scope with lambda"
+                )
             }
             return result
         }

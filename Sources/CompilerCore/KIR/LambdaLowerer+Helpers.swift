@@ -241,10 +241,9 @@ extension LambdaLowerer {
         return captures
     }
 
-    // swiftlint:disable:next cyclomatic_complexity
     /// STDLIB-004: Check if an expression tree contains any implicit receiver
     /// member accesses (bare name references resolved through implicitReceiverType).
-    /// Uses a simple check: any expression in the Sema binding table means the receiver is needed.
+    /// Mirrors `containsImplicitReceiverReference` for comprehensive AST coverage.
     func containsImplicitReceiverMemberAccess(in exprID: ExprID, ast: ASTModule, sema: SemaModule) -> Bool {
         if sema.bindings.implicitReceiverMemberNames[exprID] != nil {
             return true
@@ -252,23 +251,59 @@ extension LambdaLowerer {
         guard let expr = ast.arena.expr(exprID) else {
             return false
         }
+        let check = { (id: ExprID) -> Bool in
+            self.containsImplicitReceiverMemberAccess(in: id, ast: ast, sema: sema)
+        }
         switch expr {
         case let .blockExpr(stmts, trailing, _):
-            if stmts.contains(where: { containsImplicitReceiverMemberAccess(in: $0, ast: ast, sema: sema) }) {
-                return true
-            }
-            if let trailing { return containsImplicitReceiverMemberAccess(in: trailing, ast: ast, sema: sema) }
-            return false
+            return stmts.contains(where: check) || trailing.map(check) ?? false
         case let .call(callee, _, args, _):
-            if containsImplicitReceiverMemberAccess(in: callee, ast: ast, sema: sema) { return true }
-            return args.contains { containsImplicitReceiverMemberAccess(in: $0.expr, ast: ast, sema: sema) }
+            return check(callee) || args.contains { check($0.expr) }
         case let .memberCall(receiver, _, _, args, _),
              let .safeMemberCall(receiver, _, _, args, _):
-            if containsImplicitReceiverMemberAccess(in: receiver, ast: ast, sema: sema) { return true }
-            return args.contains { containsImplicitReceiverMemberAccess(in: $0.expr, ast: ast, sema: sema) }
+            return check(receiver) || args.contains { check($0.expr) }
+        case let .binary(_, lhs, rhs, _):
+            return check(lhs) || check(rhs)
+        case let .ifExpr(cond, thenExpr, elseExpr, _):
+            return check(cond) || check(thenExpr) || elseExpr.map(check) ?? false
+        case let .whenExpr(subject, branches, elseBody, _):
+            return subject.map(check) ?? false
+                || branches.contains { check($0.body) }
+                || elseBody.map(check) ?? false
         case let .returnExpr(value, _, _):
-            if let retVal = value { return containsImplicitReceiverMemberAccess(in: retVal, ast: ast, sema: sema) }
-            return false
+            return value.map(check) ?? false
+        case let .unaryExpr(_, operand, _),
+             let .nullAssert(operand, _),
+             let .throwExpr(operand, _):
+            return check(operand)
+        case let .isCheck(operand, _, _, _),
+             let .asCast(operand, _, _, _):
+            return check(operand)
+        case let .tryExpr(body, _, finallyBody, _):
+            return check(body) || finallyBody.map(check) ?? false
+        case let .lambdaLiteral(_, bodyExpr, _, _):
+            return check(bodyExpr)
+        case let .indexedAccess(receiver, indices, _):
+            return check(receiver) || indices.contains(where: check)
+        case let .stringTemplate(parts, _):
+            return parts.contains { part in
+                if case let .expression(exprID) = part {
+                    return check(exprID)
+                }
+                return false
+            }
+        case let .localDecl(_, _, _, initializer, _):
+            return initializer.map(check) ?? false
+        case let .localAssign(_, valueExpr, _):
+            return check(valueExpr)
+        case let .compoundAssign(_, _, valueExpr, _):
+            return check(valueExpr)
+        case let .forExpr(_, iterable, body, _, _):
+            return check(iterable) || check(body)
+        case let .whileExpr(condition, body, _, _):
+            return check(condition) || check(body)
+        case let .doWhileExpr(body, condition, _, _):
+            return check(body) || check(condition)
         default:
             return false
         }

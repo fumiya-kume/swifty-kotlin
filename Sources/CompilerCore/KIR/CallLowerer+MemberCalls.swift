@@ -989,16 +989,9 @@ extension CallLowerer {
                     thrownResult: nil
                 ))
             } else {
-                // Fallback: emit call using the lambda expression directly.
-                let calleeName = interner.intern(scopeKind == .scopeLet ? "kk_scope_let" : "kk_scope_also")
-                instructions.append(.call(
-                    symbol: nil,
-                    callee: calleeName,
-                    arguments: [loweredReceiverID, loweredLambdaID],
-                    result: result,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
+                preconditionFailure(
+                    "Missing callableValueInfo for scope \(scopeKind) lambda"
+                )
             }
             if scopeKind == .scopeAlso {
                 // also: result is the receiver, not the lambda return value.
@@ -1045,15 +1038,9 @@ extension CallLowerer {
                     thrownResult: nil
                 ))
             } else {
-                let calleeName = interner.intern(scopeKind == .scopeRun ? "kk_scope_run" : "kk_scope_apply")
-                instructions.append(.call(
-                    symbol: nil,
-                    callee: calleeName,
-                    arguments: [loweredReceiverID, loweredLambdaID],
-                    result: result,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
+                preconditionFailure(
+                    "Missing callableValueInfo for scope \(scopeKind) lambda"
+                )
             }
             if scopeKind == .scopeApply {
                 // apply: result is the receiver, not the lambda return value.

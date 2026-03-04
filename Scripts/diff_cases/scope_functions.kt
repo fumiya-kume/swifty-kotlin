@@ -10,6 +10,9 @@ fun main() {
     val alsoResult = "hello".also { println(it) }
     println(alsoResult)
 
+    val applyResult = "hello".apply { println(length) }
+    println(applyResult)
+
     val withLen = with("hello") { length }
     println(withLen)
 }
