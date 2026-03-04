@@ -69,6 +69,10 @@ final class LocalDeclTypeChecker {
             sema.bindings.markCollectionExpr(id)
             sema.bindings.markCollectionSymbol(localSymbol)
         }
+        if let initializer, sema.bindings.isFlowExpr(initializer) {
+            sema.bindings.markFlowExpr(id)
+            sema.bindings.markFlowSymbol(localSymbol)
+        }
         sema.bindings.bindExprType(id, type: sema.types.unitType)
         return sema.types.unitType
     }

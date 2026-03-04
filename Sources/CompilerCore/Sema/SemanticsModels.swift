@@ -661,7 +661,9 @@ public final class BindingTable {
     public private(set) var superCallExprs: Set<ExprID> = []
     public private(set) var invokeOperatorCallExprs: Set<ExprID> = []
     public private(set) var collectionExprIDs: Set<ExprID> = []
+    public private(set) var flowExprIDs: Set<ExprID> = []
     public private(set) var collectionSymbolIDs: Set<SymbolID> = []
+    public private(set) var flowSymbolIDs: Set<SymbolID> = []
     /// Maps `T::class` callable-ref expression IDs to the resolved type that
     /// `T` refers to.  Used by KIR lowering to emit the correct type token
     /// and name hint for `T::class.simpleName` / `.qualifiedName`.
@@ -740,12 +742,28 @@ public final class BindingTable {
         collectionExprIDs.contains(expr)
     }
 
+    public func markFlowExpr(_ expr: ExprID) {
+        flowExprIDs.insert(expr)
+    }
+
+    public func isFlowExpr(_ expr: ExprID) -> Bool {
+        flowExprIDs.contains(expr)
+    }
+
     public func markCollectionSymbol(_ symbol: SymbolID) {
         collectionSymbolIDs.insert(symbol)
     }
 
     public func isCollectionSymbol(_ symbol: SymbolID) -> Bool {
         collectionSymbolIDs.contains(symbol)
+    }
+
+    public func markFlowSymbol(_ symbol: SymbolID) {
+        flowSymbolIDs.insert(symbol)
+    }
+
+    public func isFlowSymbol(_ symbol: SymbolID) -> Bool {
+        flowSymbolIDs.contains(symbol)
     }
 
     public func bindClassRefTargetType(_ expr: ExprID, type: TypeID) {

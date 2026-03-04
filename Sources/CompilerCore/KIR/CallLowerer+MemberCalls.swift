@@ -7,7 +7,7 @@ extension CallLowerer {
         "count", "iterator",
         "map", "filter", "forEach", "flatMap",
         "any", "none", "all",
-        "asSequence", "toList", "take",
+        "asSequence", "toList", "take", "collect",
         "to", // FUNC-002
     ]
 

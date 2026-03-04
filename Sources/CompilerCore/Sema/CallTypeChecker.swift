@@ -64,8 +64,53 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
             }
         }
 
-        let argTypes = args.map { argument in
-            driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
+        // --- Flow builder function (CORO-003) ---
+        // `flow { emit(...) }` is treated as a builtin cold stream factory.
+        // We infer the lambda with a flow-builder scope so unqualified `emit`
+        // resolves in Sema fallback.
+        if let calleeName,
+           interner.resolve(calleeName) == "flow",
+           args.count == 1
+        {
+            var flowBuilderCtx = ctx.with(implicitReceiverType: sema.types.anyType)
+            flowBuilderCtx.isFlowBuilderLambdaScope = true
+            let flowLambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                params: [],
+                returnType: sema.types.unitType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            _ = driver.inferExpr(
+                args[0].expr,
+                ctx: flowBuilderCtx,
+                locals: &locals,
+                expectedType: flowLambdaExpectedType
+            )
+            sema.bindings.markFlowExpr(id)
+            sema.bindings.markCollectionExpr(id)
+            sema.bindings.bindExprType(id, type: sema.types.anyType)
+            return sema.types.anyType
+        }
+
+        let launcherLambdaExpectedType = coroutineLauncherLambdaExpectedType(
+            calleeName: calleeName,
+            expectedType: expectedType,
+            sema: sema,
+            interner: interner
+        )
+        let argTypes = args.enumerated().map { index, argument in
+            if index == 0,
+               let launcherLambdaExpectedType,
+               isLambdaLikeExpr(argument.expr, ast: ast)
+            {
+                return driver.inferExpr(
+                    argument.expr,
+                    ctx: ctx,
+                    locals: &locals,
+                    expectedType: launcherLambdaExpectedType
+                )
+            }
+            return driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
         }
 
         var candidates: [SymbolID]
@@ -276,12 +321,31 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
             sema: sema,
             interner: interner
         ) {
+            if let calleeName,
+               let expectedType
+            {
+                let calleeText = interner.resolve(calleeName)
+                if calleeText == "runBlocking" || calleeText == "coroutineScope" {
+                    sema.bindings.bindExprType(id, type: expectedType)
+                    return expectedType
+                }
+            }
             sema.bindings.bindExprType(id, type: builtinType)
             return builtinType
         }
         if let calleeName,
            interner.resolve(calleeName) == "println",
            args.count <= 1
+        {
+            sema.bindings.bindExprType(id, type: sema.types.unitType)
+            return sema.types.unitType
+        }
+        // Flow builder fallback (CORO-003): allow unqualified `emit(x)` inside
+        // `flow { ... }` lambda scopes.
+        if let calleeName,
+           ctx.isFlowBuilderLambdaScope,
+           interner.resolve(calleeName) == "emit",
+           args.count == 1
         {
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
@@ -367,6 +431,50 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
         }
         sema.bindings.bindExprType(id, type: sema.types.errorType)
         return sema.types.errorType
+    }
+
+    private func coroutineLauncherLambdaExpectedType(
+        calleeName: InternedString?,
+        expectedType: TypeID?,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID? {
+        guard let calleeName else {
+            return nil
+        }
+        let calleeText = interner.resolve(calleeName)
+        let returnType: TypeID?
+        switch calleeText {
+        case "runBlocking", "coroutineScope":
+            returnType = expectedType ?? sema.types.unitType
+        case "launch":
+            returnType = sema.types.unitType
+        case "async":
+            returnType = sema.types.nullableAnyType
+        default:
+            returnType = nil
+        }
+        guard let returnType else {
+            return nil
+        }
+        return sema.types.make(.functionType(FunctionType(
+            params: [],
+            returnType: returnType,
+            isSuspend: true,
+            nullability: .nonNull
+        )))
+    }
+
+    private func isLambdaLikeExpr(_ exprID: ExprID, ast: ASTModule) -> Bool {
+        guard let expr = ast.arena.expr(exprID) else {
+            return false
+        }
+        switch expr {
+        case .lambdaLiteral, .callableRef:
+            return true
+        default:
+            return false
+        }
     }
 
     func inferMemberCallExpr(

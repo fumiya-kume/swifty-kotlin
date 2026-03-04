@@ -47,11 +47,15 @@ extension CallTypeChecker {
         let receiverType = driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
         // Defer inference of lambda arguments for collection HOFs so that the
         // contextual function type (and thus implicit `it`) is available.
+        let calleeText = interner.resolve(calleeName)
         let collectionHOFNames: Set<String> = ["map", "filter", "forEach", "flatMap", "any", "none", "all"]
-        let isCollectionHOF = collectionHOFNames.contains(interner.resolve(calleeName))
+        let isCollectionHOF = collectionHOFNames.contains(calleeText)
             && sema.bindings.isCollectionExpr(receiverID)
+        let flowDeferredLambdaNames: Set<String> = ["map", "filter", "collect"]
+        let isFlowDeferredLambda = flowDeferredLambdaNames.contains(calleeText)
+            && sema.bindings.isFlowExpr(receiverID)
         let argTypes = args.map { arg -> TypeID in
-            if isCollectionHOF,
+            if (isCollectionHOF || isFlowDeferredLambda),
                let argExpr = ast.arena.expr(arg.expr),
                case .lambdaLiteral = argExpr
             {
@@ -521,7 +525,10 @@ extension CallTypeChecker {
             // Collection member access fallback (P5-84): allow only members
             // that have corresponding runtime implementations in
             // CollectionLiteralLoweringPass and CallLowerer.
-            if !isClassNameReceiver, sema.bindings.isCollectionExpr(receiverID) {
+            if !isClassNameReceiver,
+               sema.bindings.isCollectionExpr(receiverID),
+               !sema.bindings.isFlowExpr(receiverID)
+            {
                 let memberName = interner.resolve(calleeName)
                 let collectionMembers: Set<String> = [
                     "size", "get", "contains", "containsKey",
@@ -550,7 +557,9 @@ extension CallTypeChecker {
                     // function type for the trailing lambda argument so that Sema
                     // can infer the implicit `it` parameter type.
                     if ["map", "filter", "forEach", "flatMap", "any", "none", "all"].contains(memberName),
-                       args.count == 1
+                       args.count == 1,
+                       let argExpr = ast.arena.expr(args[0].expr),
+                       case .lambdaLiteral = argExpr
                     {
                         let lambdaReturnType: TypeID = switch memberName {
                         case "filter", "any", "none", "all":
@@ -571,6 +580,55 @@ extension CallTypeChecker {
                     let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
+                }
+            }
+            if !isClassNameReceiver,
+               sema.bindings.isFlowExpr(receiverID)
+            {
+                let memberName = interner.resolve(calleeName)
+                let flowMembers: Set<String> = ["map", "filter", "take", "collect"]
+                if flowMembers.contains(memberName) {
+                    if args.count == 1 {
+                        if memberName == "map" || memberName == "filter" || memberName == "collect",
+                           let argExpr = ast.arena.expr(args[0].expr),
+                           case .lambdaLiteral = argExpr
+                        {
+                            let lambdaReturnType: TypeID = switch memberName {
+                            case "filter":
+                                sema.types.booleanType
+                            case "collect":
+                                sema.types.unitType
+                            default:
+                                sema.types.anyType
+                            }
+                            let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                                params: [sema.types.anyType],
+                                returnType: lambdaReturnType,
+                                isSuspend: memberName == "collect",
+                                nullability: .nonNull
+                            )))
+                            _ = driver.inferExpr(
+                                args[0].expr,
+                                ctx: ctx,
+                                locals: &locals,
+                                expectedType: lambdaExpectedType
+                            )
+                        }
+
+                        let resultType: TypeID = switch memberName {
+                        case "collect":
+                            sema.types.unitType
+                        default:
+                            sema.types.anyType
+                        }
+                        if memberName != "collect" {
+                            sema.bindings.markFlowExpr(id)
+                            sema.bindings.markCollectionExpr(id)
+                        }
+                        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                        sema.bindings.bindExprType(id, type: finalType)
+                        return finalType
+                    }
                 }
             }
             let isCoroutineHandleReceiver = if case .primitive = sema.types.kind(of: lookupReceiverType) {

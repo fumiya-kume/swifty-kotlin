@@ -20,6 +20,7 @@ public final class LoweringPhase: CompilerPhase {
         OperatorLoweringPass(),
         ForLoweringPass(),
         CollectionLiteralLoweringPass(),
+        FlowLoweringPass(),
 
         PropertyLoweringPass(),
         StdlibDelegateLoweringPass(),
