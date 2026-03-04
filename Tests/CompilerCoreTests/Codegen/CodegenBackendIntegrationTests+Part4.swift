@@ -240,7 +240,7 @@ extension CodegenBackendIntegrationTests {
             body: [
                 .constValue(result: expr0, value: .intLiteral(42)),
                 .constValue(result: expr1, value: .symbolRef(localSym)),
-                .returnValue(expr0) // swiftlint:disable:this trailing_comma
+                .returnValue(expr0), // swiftlint:disable:this trailing_comma
             ],
             isSuspend: false, isInline: false
         )

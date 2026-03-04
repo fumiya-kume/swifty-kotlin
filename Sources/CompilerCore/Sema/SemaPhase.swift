@@ -5,7 +5,7 @@ public final class SemaPhase: CompilerPhase {
 
     private let passes: [CompilerPhase] = [
         DataFlowSemaPhase(),
-        TypeCheckSemaPhase()
+        TypeCheckSemaPhase(),
     ]
 
     public init() {}

@@ -5,7 +5,8 @@ extension BuildASTPhase {
         for child in arena.children(of: nodeID) {
             if case let .token(tokenID) = child,
                let token = resolveToken(tokenID, in: arena),
-               token.kind == .keyword(.var) {
+               token.kind == .keyword(.var)
+            {
                 return true
             }
         }
@@ -146,7 +147,8 @@ extension BuildASTPhase {
             guard isAccessorKeyword else { continue }
             // Require `(` immediately after to distinguish from identifiers.
             if index + 1 < tokens.count,
-               tokens[index + 1].kind == .symbol(.lParen) {
+               tokens[index + 1].kind == .symbol(.lParen)
+            {
                 return index
             }
         }
@@ -220,7 +222,8 @@ extension BuildASTPhase {
             let afterParen = closeParenIdx + 1
             let body: FunctionBody
             if afterParen < remaining.endIndex,
-               remaining[afterParen].kind == .symbol(.assign) {
+               remaining[afterParen].kind == .symbol(.assign)
+            {
                 // Find extent of body expression: up to the next get/set keyword or end.
                 let exprStart = afterParen + 1
                 var exprEnd = remaining.endIndex
@@ -229,7 +232,8 @@ extension BuildASTPhase {
                     case .softKeyword(.get), .softKeyword(.set):
                         // Check if it's followed by `(` to confirm it's an accessor keyword.
                         if i + 1 < remaining.endIndex,
-                           remaining[i + 1].kind == .symbol(.lParen) {
+                           remaining[i + 1].kind == .symbol(.lParen)
+                        {
                             exprEnd = i
                         }
                     default:
@@ -241,7 +245,8 @@ extension BuildASTPhase {
                 if !exprTokens.isEmpty {
                     let parser = ExpressionParser(tokens: ArraySlice(exprTokens), interner: interner, astArena: astArena)
                     if let exprID = parser.parse(),
-                       let range = astArena.exprRange(exprID) {
+                       let range = astArena.exprRange(exprID)
+                    {
                         body = .expr(exprID, range)
                     } else {
                         body = .unit
@@ -284,7 +289,8 @@ extension BuildASTPhase {
                 break
             }
             if let name = internedIdentifier(from: token, interner: interner),
-               isTypeLikeNameToken(token.kind) {
+               isTypeLikeNameToken(token.kind)
+            {
                 return name
             }
         }

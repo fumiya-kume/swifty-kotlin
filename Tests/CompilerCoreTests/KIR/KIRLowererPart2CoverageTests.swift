@@ -170,7 +170,7 @@ final class KIRLowererPart2CoverageTests: XCTestCase {
                     memberAssignExpr,
                     fixture.astArena.appendExpr(.thisRef(label: nil, range)),
                     // swiftlint:disable:next trailing_comma
-                    fixture.astArena.appendExpr(.superRef(interfaceQualifier: nil, range))
+                    fixture.astArena.appendExpr(.superRef(interfaceQualifier: nil, range)),
                 ],
                 trailingExpr: rhs,
                 range: range
@@ -274,7 +274,7 @@ final class KIRLowererPart2CoverageTests: XCTestCase {
             localSymbol,
             parameterSymbol,
             localSymbol,
-            parameterSymbol
+            parameterSymbol,
         ])
         XCTAssertEqual(unique, [localSymbol, parameterSymbol])
 

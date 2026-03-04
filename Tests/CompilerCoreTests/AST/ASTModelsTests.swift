@@ -188,7 +188,7 @@ final class ASTModelsTests: XCTestCase {
             .lambdaLiteral(params: [name], body: dummyExprID, range: r),
             .objectLiteral(superTypes: [dummyTypeRefID], range: r),
             .callableRef(receiver: dummyExprID, member: name, range: r),
-            .localFunDecl(name: name, valueParams: [], returnType: nil, body: .unit, range: r)
+            .localFunDecl(name: name, valueParams: [], returnType: nil, body: .unit, range: r),
         ]
 
         for (index, exprCase) in cases.enumerated() {

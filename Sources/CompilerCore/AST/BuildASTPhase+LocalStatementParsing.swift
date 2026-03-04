@@ -12,7 +12,8 @@ extension BuildASTPhase {
         var startIndex = 0
         while startIndex < statementTokens.count,
               case let .keyword(kw) = statementTokens[startIndex].kind,
-              KotlinParser.isDeclarationModifierKeyword(kw) {
+              KotlinParser.isDeclarationModifierKeyword(kw)
+        {
             startIndex += 1
         }
         guard startIndex < statementTokens.count else {
@@ -98,7 +99,8 @@ extension BuildASTPhase {
         var afterKeyword = startIndex + 1
         // Skip any missing tokens inserted by the CST parser
         while afterKeyword < statementTokens.count,
-              case .missing = statementTokens[afterKeyword].kind {
+              case .missing = statementTokens[afterKeyword].kind
+        {
             afterKeyword += 1
         }
         guard afterKeyword < statementTokens.count,

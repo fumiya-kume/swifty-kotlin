@@ -296,7 +296,7 @@ final class MetadataSerializerTests: XCTestCase {
                     annotationFQName: "kotlin.Deprecated",
                     arguments: ["old"],
                     useSiteTarget: "get"
-                )
+                ),
             ]
         )
         let output = encoder.serialize([record])
@@ -309,7 +309,7 @@ final class MetadataSerializerTests: XCTestCase {
         let encoder = MetadataEncoder()
         let records = [
             MetadataRecord(kind: .function, mangledName: "m1", fqName: "test.fn1"),
-            MetadataRecord(kind: .class, mangledName: "m2", fqName: "test.Cls")
+            MetadataRecord(kind: .class, mangledName: "m2", fqName: "test.Cls"),
         ]
         let output = encoder.serialize(records)
         XCTAssertTrue(output.hasPrefix("symbols=2\n"))

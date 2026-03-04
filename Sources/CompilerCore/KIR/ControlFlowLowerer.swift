@@ -590,7 +590,7 @@ final class ControlFlowLowerer {
             // Look up the symbol first so we can use the per-component type
             let candidates = sema.symbols.lookupAll(fqName: [
                 interner.intern("__for_destructuring_\(exprID.rawValue)"),
-                name
+                name,
             ])
             let componentType = candidates.first.flatMap { sema.symbols.propertyType(for: $0) } ?? sema.types.anyType
             let componentResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: componentType)
@@ -794,7 +794,8 @@ final class ControlFlowLowerer {
         if let loweredSubjectID,
            let conditionExpr = ast.arena.expr(conditionExprID),
            case let .isCheck(checkedExprID, _, negated, _) = conditionExpr,
-           isSameWhenSubjectExpression(checkedExprID, subjectExprID: subjectExprID, sema: sema) {
+           isSameWhenSubjectExpression(checkedExprID, subjectExprID: subjectExprID, sema: sema)
+        {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let typeTokenLiteral: Int64 = if let targetType = sema.bindings.isCheckTargetType(for: conditionExprID) {
                 RuntimeTypeCheckToken.encode(type: targetType, sema: sema, interner: interner)

@@ -1094,7 +1094,7 @@ extension BuildKIRRegressionTests {
             ("await", "kk_kxmini_async_await", 1),
             ("join", "kk_job_join", 1),
             ("cancel", "kk_job_cancel", 1),
-            ("noop", "noop", 0)
+            ("noop", "noop", 0),
         ]
 
         for testCase in cases {

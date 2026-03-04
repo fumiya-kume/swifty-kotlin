@@ -54,7 +54,8 @@ extension BuildASTPhase {
                         astArena: astArena
                     )
                     if let exprID = parser.parse(),
-                       let range = astArena.exprRange(exprID) {
+                       let range = astArena.exprRange(exprID)
+                    {
                         result.append(.expr(exprID, range))
                         continue
                     }

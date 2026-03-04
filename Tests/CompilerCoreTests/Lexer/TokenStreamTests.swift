@@ -119,7 +119,8 @@ final class TokenStreamTests: XCTestCase {
         // Complex predicate that does NOT match: intLiteral with value > 100
         let noMatch = stream.consumeIf { token in
             if case let .intLiteral(value) = token.kind,
-               let intValue = Int(value) {
+               let intValue = Int(value)
+            {
                 return intValue > 100
             }
             return false

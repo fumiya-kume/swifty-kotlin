@@ -204,6 +204,6 @@ extension LLVMBackend {
         "extern intptr_t kk_string_builder_append(intptr_t strRaw);",
         "extern intptr_t kk_mutable_list_add(intptr_t elem);",
         "extern intptr_t kk_mutable_map_put(intptr_t key, intptr_t value);",
-        ""
+        "",
     ]
 }

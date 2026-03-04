@@ -190,7 +190,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         // swiftlint:disable trailing_comma
         let body: [KIRInstruction] = [
             .constValue(result: resultExpr, value: .intLiteral(value)),
-            .returnValue(resultExpr)
+            .returnValue(resultExpr),
         ]
         // swiftlint:enable trailing_comma
         appendSyntheticFunctionIfNeeded(
@@ -240,7 +240,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         // swiftlint:disable trailing_comma
         let body: [KIRInstruction] = [
             .constValue(result: resultExpr, value: .symbolRef(parameterSymbol)),
-            .returnValue(resultExpr)
+            .returnValue(resultExpr),
         ]
         // swiftlint:enable trailing_comma
         let signature = FunctionSignature(
@@ -441,7 +441,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         // swiftlint:disable trailing_comma
         let body: [KIRInstruction] = [
             .constValue(result: resultExpr, value: .stringLiteral(value)),
-            .returnValue(resultExpr)
+            .returnValue(resultExpr),
         ]
         // swiftlint:enable trailing_comma
         appendSyntheticFunctionIfNeeded(

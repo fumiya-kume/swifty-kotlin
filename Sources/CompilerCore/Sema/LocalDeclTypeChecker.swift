@@ -54,7 +54,7 @@ final class LocalDeclTypeChecker {
             name: name,
             fqName: [
                 ctx.interner.intern("__local_\(id.rawValue)"),
-                name
+                name,
             ],
             declSite: range,
             visibility: .private,

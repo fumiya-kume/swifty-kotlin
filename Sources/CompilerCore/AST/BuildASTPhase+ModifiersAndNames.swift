@@ -6,7 +6,8 @@ extension BuildASTPhase {
         var modifiers: Modifiers = []
         for child in arena.children(of: nodeID) {
             if case let .token(tokenID) = child,
-               let token = resolveToken(tokenID, in: arena) {
+               let token = resolveToken(tokenID, in: arena)
+            {
                 switch token.kind {
                 case .keyword(.public):
                     modifiers.insert(.public)

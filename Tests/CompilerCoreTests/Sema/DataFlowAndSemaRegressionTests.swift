@@ -71,7 +71,8 @@ final class DataFlowAndSemaRegressionTests: XCTestCase {
             }
             XCTAssertNotNil(nullableSymbol)
             if let sym = nullableSymbol,
-               let sig = sema.symbols.functionSignature(for: sym.id) {
+               let sig = sema.symbols.functionSignature(for: sym.id)
+            {
                 XCTAssertEqual(sig.parameterTypes.count, 1)
             }
         }
@@ -212,7 +213,8 @@ final class DataFlowAndSemaRegressionTests: XCTestCase {
             }
             XCTAssertNotNil(shoutSymbol)
             if let sym = shoutSymbol,
-               let sig = sema.symbols.functionSignature(for: sym.id) {
+               let sig = sema.symbols.functionSignature(for: sym.id)
+            {
                 XCTAssertNotNil(sig.receiverType)
             }
         }
@@ -234,7 +236,8 @@ final class DataFlowAndSemaRegressionTests: XCTestCase {
             }
             XCTAssertNotNil(typeCheckSymbol)
             if let sym = typeCheckSymbol,
-               let sig = sema.symbols.functionSignature(for: sym.id) {
+               let sig = sema.symbols.functionSignature(for: sym.id)
+            {
                 XCTAssertFalse(sig.reifiedTypeParameterIndices.isEmpty)
             }
         }
