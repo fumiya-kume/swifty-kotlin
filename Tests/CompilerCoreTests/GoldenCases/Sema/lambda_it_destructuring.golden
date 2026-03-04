@@ -18,7 +18,7 @@ symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private fl
 symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
 symbol s18 kind=function fq=golden.sema.useIt vis=public flags=_ sig=recv=_ params=[] ret=Class#12<Int> suspend=0 defaults=[] vararg=[]
 symbol s19 kind=function fq=golden.sema.useDestructuring vis=public flags=_ sig=recv=_ params=[] ret=Class#12<Int> suspend=0 defaults=[] vararg=[]
-symbol s20 kind=local fq=__destructuring_20.num vis=private flags=_ type=Any
+symbol s20 kind=local fq=__destructuring_21.num vis=private flags=_ type=Any
 file f0 package=golden.sema
   decl d0 fun useIt suspend=0 inline=0 sym=s18
   decl d1 fun useDestructuring suspend=0 inline=0 sym=s19
@@ -35,14 +35,15 @@ expr e9 memberCall recv=e4 callee=map args=[_:e8] type=Any
 expr e10 name(listOf) type=_
 expr e11 int(1) type=Int
 expr e12 string(a) type=String
-expr e13 memberCall recv=e11 callee=to args=[_:e12] type=<error>
+expr e13 memberCall recv=e11 callee=to args=[_:e12] type=Any
 expr e14 int(2) type=Int
 expr e15 string(b) type=String
-expr e16 memberCall recv=e14 callee=to args=[_:e15] type=<error>
-expr e17 call callee=e10 args=[_:e13,_:e16] type=Class#12<<error>>
+expr e16 memberCall recv=e14 callee=to args=[_:e15] type=Any
+expr e17 call callee=e10 args=[_:e13,_:e16] type=Class#12<Any>
 expr e18 name(num) type=Any ref=s20
-expr e19 name(__destructured_0) type=Any ref=s-1005632
-expr e20 destructuringDecl names=[num,_] mutable=0 init=e19 type=Unit
-expr e21 blockExpr stmts=[e20] trailing=e18 type=Any
-expr e22 lambda params=[__destructured_0] body=e21 type=(Any) -> Any
-expr e23 memberCall recv=e17 callee=map args=[_:e22] type=Any
+expr e19 blockExpr stmts=[] trailing=e18 type=Any
+expr e20 name(__destructured_0) type=Any ref=s-1005888
+expr e21 destructuringDecl names=[num,_] mutable=0 init=e20 type=Unit
+expr e22 blockExpr stmts=[e21] trailing=e19 type=Any
+expr e23 lambda params=[__destructured_0] body=e22 type=(Any) -> Any
+expr e24 memberCall recv=e17 callee=map args=[_:e23] type=Any

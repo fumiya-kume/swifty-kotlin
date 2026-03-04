@@ -19,6 +19,10 @@ public final class TypeSystem {
     public let floatType: TypeID
     public let doubleType: TypeID
     public let stringType: TypeID
+    public let uintType: TypeID
+    public let ulongType: TypeID
+    public let ubyteType: TypeID
+    public let ushortType: TypeID
 
     public init() {
         errorType = TypeID(rawValue: 0)
@@ -34,6 +38,10 @@ public final class TypeSystem {
         floatType = TypeID(rawValue: 10)
         doubleType = TypeID(rawValue: 11)
         stringType = TypeID(rawValue: 12)
+        uintType = TypeID(rawValue: 13)
+        ulongType = TypeID(rawValue: 14)
+        ubyteType = TypeID(rawValue: 15)
+        ushortType = TypeID(rawValue: 16)
 
         idToKind = [
             .error,
@@ -49,6 +57,10 @@ public final class TypeSystem {
             .primitive(.float, .nonNull),
             .primitive(.double, .nonNull),
             .primitive(.string, .nonNull),
+            .primitive(.uint, .nonNull),
+            .primitive(.ulong, .nonNull),
+            .primitive(.ubyte, .nonNull),
+            .primitive(.ushort, .nonNull),
         ]
         kindToID = [
             .error: errorType,
@@ -64,6 +76,10 @@ public final class TypeSystem {
             .primitive(.float, .nonNull): floatType,
             .primitive(.double, .nonNull): doubleType,
             .primitive(.string, .nonNull): stringType,
+            .primitive(.uint, .nonNull): uintType,
+            .primitive(.ulong, .nonNull): ulongType,
+            .primitive(.ubyte, .nonNull): ubyteType,
+            .primitive(.ushort, .nonNull): ushortType,
         ]
     }
 
@@ -111,6 +127,39 @@ public final class TypeSystem {
             tp.nullability
         case let .intersection(parts):
             parts.contains { nullability(of: $0) == .nonNull } ? .nonNull : .nullable
+        }
+    }
+
+    public func isSignedInteger(_ type: TypeID) -> Bool {
+        switch kind(of: type) {
+        case .primitive(.int, _), .primitive(.long, _), .primitive(.char, _),
+             .primitive(.ubyte, _), .primitive(.ushort, _):
+            // In Kotlin, Char, UByte, UShort undergo widening to Int for arithmetic, so we treat them as signed
+            // or we only explicitly mark Int and Long as signed. Wait, UByte and UShort are unsigned logically,
+            // but for binary operations they might already be promoted to Int unless we are strict.
+            // Let's rely strictly on Int, Long for signed integer type.
+            type == intType || type == longType || type == charType ||
+                type == makeNullable(intType) || type == makeNullable(longType) || type == makeNullable(charType)
+        default:
+            false
+        }
+    }
+
+    public func isSigned(_ type: TypeID) -> Bool {
+        switch kind(of: type) {
+        case .primitive(.int, _), .primitive(.long, _):
+            true
+        default:
+            false
+        }
+    }
+
+    public func isUnsigned(_ type: TypeID) -> Bool {
+        switch kind(of: type) {
+        case .primitive(.uint, _), .primitive(.ulong, _), .primitive(.ubyte, _), .primitive(.ushort, _):
+            true
+        default:
+            false
         }
     }
 

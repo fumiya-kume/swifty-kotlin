@@ -1,6 +1,6 @@
 import Foundation
 
-// swiftlint:disable function_body_length function_parameter_count opening_brace
+// swiftlint:disable function_body_length function_parameter_count
 
 // Indexed access and assignment type inference.
 // Split from LocalDeclTypeChecker+Part2.swift to satisfy file_length limit.
@@ -199,4 +199,4 @@ extension LocalDeclTypeChecker {
     }
 }
 
-// swiftlint:enable function_body_length function_parameter_count opening_brace
+// swiftlint:enable function_body_length function_parameter_count

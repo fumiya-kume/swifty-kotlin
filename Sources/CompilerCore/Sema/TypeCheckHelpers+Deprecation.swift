@@ -19,7 +19,7 @@ extension TypeCheckHelpers {
         for ann in annotations
             where ann.annotationFQName == "Deprecated"
             || ann.annotationFQName == "kotlin.Deprecated"
-        { // swiftlint:disable:this opening_brace
+        {
             let symbolName = if let sym = sema.symbols.symbol(symbolID) {
                 sym.fqName.map { interner.resolve($0) }.joined(separator: ".")
             } else {

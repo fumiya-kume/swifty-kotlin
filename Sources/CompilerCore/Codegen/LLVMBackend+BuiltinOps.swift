@@ -9,6 +9,12 @@ extension LLVMBackend {
         "kk_op_mul": "*",
         "kk_op_div": "/",
         "kk_op_mod": "%",
+        "kk_op_udiv": "/",
+        "kk_op_urem": "%",
+        "kk_op_ult": "<",
+        "kk_op_ule": "<=",
+        "kk_op_ugt": ">",
+        "kk_op_uge": ">=",
         "kk_op_eq": "==",
         "kk_op_ne": "!=",
         "kk_op_lt": "<",
@@ -46,10 +52,15 @@ extension LLVMBackend {
     /// Returns `true` when `calleeName` refers to a built-in operator that the
     /// C backend inlines directly, meaning it should NOT be listed as an
     /// external callee declaration.
+    static let unsignedBuiltinOps: Set<String> = [
+        "kk_op_udiv", "kk_op_urem", "kk_op_ult", "kk_op_ule", "kk_op_ugt", "kk_op_uge",
+    ]
+
     static func isBuiltinOp(_ calleeName: String) -> Bool {
         builtinOps[calleeName] != nil
             || unaryBuiltinOps[calleeName] != nil
             || calleeName == "kk_op_ushr"
+            || unsignedBuiltinOps.contains(calleeName)
             || floatBuiltinOps.contains(calleeName)
             || doubleBuiltinOps.contains(calleeName)
     }

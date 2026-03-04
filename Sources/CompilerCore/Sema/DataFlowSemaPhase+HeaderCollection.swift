@@ -459,6 +459,26 @@ extension DataFlowSemaPhase {
                 diagnostics: diagnostics,
                 interner: interner
             )
+            if objectDecl.modifiers.contains(.data) {
+                collectSyntheticDataObjectToString(
+                    ownerSymbol: symbol,
+                    ownerFQName: fqName,
+                    objectType: objectType,
+                    symbols: symbols,
+                    types: types,
+                    scope: objectScope,
+                    interner: interner
+                )
+                collectSyntheticDataObjectEquals(
+                    ownerSymbol: symbol,
+                    ownerFQName: fqName,
+                    objectType: objectType,
+                    symbols: symbols,
+                    types: types,
+                    scope: objectScope,
+                    interner: interner
+                )
+            }
 
         case let .funDecl(funDecl):
             let localNamespaceFQName = fqName + [interner.intern("$\(symbol.rawValue)")]
@@ -507,7 +527,9 @@ extension DataFlowSemaPhase {
                     anyType
                 }
             }
-            let upperBounds: [TypeID?] = typeParamResult.typeParameterSymbols.map { symbols.typeParameterUpperBound(for: $0) }
+            let upperBoundsByTypeParam: [[TypeID]] = typeParamResult.typeParameterSymbols.map {
+                symbols.typeParameterUpperBounds(for: $0)
+            }
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: receiverType,
@@ -519,7 +541,7 @@ extension DataFlowSemaPhase {
                     valueParameterIsVararg: params.paramIsVararg,
                     typeParameterSymbols: typeParamResult.typeParameterSymbols,
                     reifiedTypeParameterIndices: typeParamResult.reifiedIndices,
-                    typeParameterUpperBounds: upperBounds
+                    typeParameterUpperBoundsList: upperBoundsByTypeParam
                 ),
                 for: symbol
             )
@@ -697,10 +719,11 @@ extension DataFlowSemaPhase {
             for: ownerSymbol
         )
         for typeParam in typeParams {
-            if let boundRef = typeParam.upperBound,
-               let typeParamSym = localTypeParameters[typeParam.name]
-            {
-                if let boundType = resolveTypeRef(
+            guard let typeParamSym = localTypeParameters[typeParam.name] else {
+                continue
+            }
+            let resolvedBounds = typeParam.upperBounds.compactMap { boundRef in
+                resolveTypeRef(
                     boundRef,
                     ast: ast,
                     symbols: symbols,
@@ -708,9 +731,10 @@ extension DataFlowSemaPhase {
                     interner: interner,
                     localTypeParameters: localTypeParameters,
                     diagnostics: diagnostics
-                ) {
-                    symbols.setTypeParameterUpperBound(boundType, for: typeParamSym)
-                }
+                )
+            }
+            if !resolvedBounds.isEmpty {
+                symbols.setTypeParameterUpperBounds(resolvedBounds, for: typeParamSym)
             }
         }
 

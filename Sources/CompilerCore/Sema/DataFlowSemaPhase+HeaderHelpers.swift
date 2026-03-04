@@ -133,6 +133,128 @@ extension DataFlowSemaPhase {
         }
     }
 
+    // swiftlint:disable function_parameter_count
+    /// Registers synthetic `toString(): String` for data object so member resolution finds it.
+    func collectSyntheticDataObjectToString(
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        objectType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        scope: Scope,
+        interner: StringInterner
+    ) {
+        let toStringName = interner.intern("toString")
+        let toStringFQName = ownerFQName + [toStringName]
+        let stringType = types.make(.primitive(.string, .nonNull))
+        let hasUserDeclaredToString = symbols.lookupAll(fqName: toStringFQName).contains { id in
+            guard let symbol = symbols.symbol(id),
+                  symbol.kind == .function,
+                  !symbol.flags.contains(.synthetic),
+                  let signature = symbols.functionSignature(for: id)
+            else {
+                return false
+            }
+            return signature.receiverType == objectType
+                && signature.parameterTypes.isEmpty
+                && signature.returnType == stringType
+        }
+        guard !hasUserDeclaredToString else {
+            return
+        }
+        let funcSymbol = symbols.define(
+            kind: .function,
+            name: toStringName,
+            fqName: toStringFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: funcSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: objectType,
+                parameterTypes: [],
+                returnType: stringType,
+                isSuspend: false,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: [],
+                typeParameterSymbols: []
+            ),
+            for: funcSymbol
+        )
+        scope.insert(funcSymbol)
+    }
+
+    // swiftlint:enable function_parameter_count
+
+    // swiftlint:disable function_parameter_count function_body_length
+    /// Registers synthetic `equals(other: Any?): Boolean` for data object (identity comparison).
+    func collectSyntheticDataObjectEquals(
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        objectType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        scope: Scope,
+        interner: StringInterner
+    ) {
+        let equalsName = interner.intern("equals")
+        let equalsFQName = ownerFQName + [equalsName]
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let nullableAnyType = types.nullableAnyType
+        let hasUserDeclaredEquals = symbols.lookupAll(fqName: equalsFQName).contains { id in
+            guard let symbol = symbols.symbol(id),
+                  symbol.kind == .function,
+                  !symbol.flags.contains(.synthetic),
+                  let signature = symbols.functionSignature(for: id)
+            else {
+                return false
+            }
+            return signature.receiverType == objectType
+                && signature.parameterTypes == [nullableAnyType]
+                && signature.returnType == boolType
+        }
+        guard !hasUserDeclaredEquals else {
+            return
+        }
+        let funcSymbol = symbols.define(
+            kind: .function,
+            name: equalsName,
+            fqName: equalsFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: funcSymbol)
+        let otherParamName = interner.intern("other")
+        let otherParamSymbol = symbols.define(
+            kind: .valueParameter,
+            name: otherParamName,
+            fqName: equalsFQName + [otherParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: objectType,
+                parameterTypes: [nullableAnyType],
+                returnType: boolType,
+                isSuspend: false,
+                valueParameterSymbols: [otherParamSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: []
+            ),
+            for: funcSymbol
+        )
+        scope.insert(funcSymbol)
+    }
+
+    // swiftlint:enable function_parameter_count function_body_length
+
     /// Collects value parameters into parallel arrays of types, symbols, default-value flags,
     /// and vararg flags.  Shared by constructor and function header collection.
     func collectValueParameters(
@@ -212,19 +334,21 @@ extension DataFlowSemaPhase {
             }
         }
         for typeParam in typeParams {
-            if let boundRef = typeParam.upperBound,
-               let typeParamSym = localTypeParameters[typeParam.name]
-            {
-                if let boundType = resolveTypeRef(
+            guard let typeParamSym = localTypeParameters[typeParam.name] else {
+                continue
+            }
+            let resolvedBounds = typeParam.upperBounds.compactMap { boundRef in
+                resolveTypeRef(
                     boundRef,
                     ast: ast,
                     symbols: symbols,
                     types: types,
                     interner: interner,
                     localTypeParameters: localTypeParameters
-                ) {
-                    symbols.setTypeParameterUpperBound(boundType, for: typeParamSym)
-                }
+                )
+            }
+            if !resolvedBounds.isEmpty {
+                symbols.setTypeParameterUpperBounds(resolvedBounds, for: typeParamSym)
             }
         }
         if !reifiedIndices.isEmpty, !isInline {
@@ -325,4 +449,5 @@ extension DataFlowSemaPhase {
         }
         return kotlinPropertiesPkg
     }
+    // swiftlint:disable:next file_length
 }

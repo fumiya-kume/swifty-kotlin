@@ -328,7 +328,7 @@ extension BuildASTPhase {
                 while index + 1 < tokens.count,
                       tokens[index].kind == .symbol(.dot),
                       let nextPart = tokenText(tokens[index + 1], interner: interner)
-                { // swiftlint:disable:this opening_brace
+                {
                     nameParts.append(nextPart)
                     index += 2
                 }
@@ -418,16 +418,16 @@ extension BuildASTPhase {
             "\(value)"
         case let .longLiteral(value):
             "\(value)"
+        case let .uintLiteral(value):
+            "\(value)"
+        case let .ulongLiteral(value):
+            "\(value)"
         case let .floatLiteral(value):
             "\(value)"
         case let .doubleLiteral(value):
             "\(value)"
         case let .charLiteral(value):
             "'\(value)'"
-        case .keyword(.true):
-            "true"
-        case .keyword(.false):
-            "false"
         case .symbol(.assign):
             "="
         case .symbol(.dot):

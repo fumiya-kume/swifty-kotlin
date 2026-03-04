@@ -11,6 +11,10 @@ extension GoldenHarnessTests {
             return "int(\(value))"
         case let .longLiteral(value, _):
             return "long(\(value))"
+        case let .uintLiteral(value, _):
+            return "uint(\(value))"
+        case let .ulongLiteral(value, _):
+            return "ulong(\(value))"
         case let .floatLiteral(value, _):
             return "float(\(value))"
         case let .doubleLiteral(value, _):
@@ -197,11 +201,14 @@ extension GoldenHarnessTests {
         let vararg = signature.valueParameterIsVararg.map { $0 ? "1" : "0" }.joined(separator: ",")
         var result = "recv=\(receiver) params=[\(parameters)] ret=\(returnType)"
         result += " suspend=\(signature.isSuspend ? 1 : 0) defaults=[\(defaults)] vararg=[\(vararg)]"
-        let hasBounds = !signature.typeParameterUpperBounds.isEmpty
-            && signature.typeParameterUpperBounds.contains(where: { $0 != nil })
+        let hasBounds = !signature.typeParameterUpperBoundsList.isEmpty
+            && signature.typeParameterUpperBoundsList.contains(where: { !$0.isEmpty })
         if hasBounds {
-            let bounds = signature.typeParameterUpperBounds.map { bound in
-                bound.map { types.renderType($0) } ?? "_"
+            let bounds = signature.typeParameterUpperBoundsList.map { upperBounds in
+                if upperBounds.isEmpty {
+                    return "_"
+                }
+                return upperBounds.map { types.renderType($0) }.joined(separator: "&")
             }.joined(separator: ",")
             result += " bounds=[\(bounds)]"
         }

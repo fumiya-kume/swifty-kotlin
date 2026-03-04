@@ -15,7 +15,7 @@ extension BuildASTPhase.ExpressionParser {
                         var args = parseCallArguments()
                         let close = consumeIf(.symbol(.rParen))
                         var callEndRange = close?.range ?? open.range
-                        // Trailing lambda without parentheses: foo<T> { ... }.
+                        // Trailing lambda after parenthesized generic call: foo<T>(...) { ... }.
                         if matches(.symbol(.lBrace)),
                            let braceToken = current(),
                            let trailingLambda = parseLambdaLiteral(allowImplicitEmptyParams: true)
@@ -153,7 +153,7 @@ extension BuildASTPhase.ExpressionParser {
             }
             if matches(.symbol(.lParen)),
                let open = consume()
-            { // swiftlint:disable:this opening_brace
+            {
                 args = parseCallArguments()
                 let close = consumeIf(.symbol(.rParen))
                 memberEndRange = close?.range ?? open.range

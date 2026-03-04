@@ -116,6 +116,28 @@
       ]
     },
     {
+      "task": "TYPE-005",
+      "category": "types",
+      "description": "Unsigned integer types (UInt/ULong), literals (42u/42uL), conversions, and bitwise ops",
+      "cases": [
+        {
+          "type": "golden-lexer",
+          "name": "unsigned_literals",
+          "template": "Scripts/test_templates/lexer/unsigned_literals.kt"
+        },
+        {
+          "type": "golden-sema",
+          "name": "unsigned_integers",
+          "template": "Scripts/test_templates/sema/unsigned_integers.kt"
+        },
+        {
+          "type": "diff",
+          "name": "unsigned_integers",
+          "template": "Scripts/test_templates/diff/unsigned_integers.kt"
+        }
+      ]
+    },
+    {
       "task": "P5-100",
       "category": "expressions",
       "description": "as (unsafe cast) / as? (safe cast)",
@@ -407,6 +429,23 @@
       ]
     },
     {
+      "task": "CLASS-008",
+      "category": "class_object",
+      "description": "Class delegation (: Interface by delegateInstance)",
+      "cases": [
+        {
+          "type": "diff",
+          "name": "class_delegation",
+          "template": "Scripts/test_templates/diff/class_delegation.kt"
+        },
+        {
+          "type": "diff",
+          "name": "class_delegation_override",
+          "template": "Scripts/test_templates/diff/class_delegation_override.kt"
+        }
+      ]
+    },
+    {
       "task": "FUNC-001",
       "category": "functions",
       "description": "tailrec fun tail-call optimization",
@@ -692,9 +731,24 @@
       "description": "buildString/buildList/buildMap DSL builder",
       "cases": [
         {
+          "type": "golden-sema",
+          "name": "builder_dsl_receiver",
+          "template": "Scripts/test_templates/sema/builder_dsl_receiver.kt"
+        },
+        {
           "type": "diff",
           "name": "builder_dsl",
           "template": "Scripts/test_templates/diff/builder_dsl.kt"
+        },
+        {
+          "type": "diff",
+          "name": "builder_dsl_invalid_arg",
+          "template": "Scripts/test_templates/diff/builder_dsl_invalid_arg.kt"
+        },
+        {
+          "type": "diff",
+          "name": "builder_dsl_shadowing",
+          "template": "Scripts/test_templates/diff/builder_dsl_shadowing.kt"
         }
       ]
     },

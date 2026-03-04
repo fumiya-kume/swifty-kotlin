@@ -69,15 +69,17 @@ extension CallLowerer {
             calleeName
         }
 
-        // Primitive member function: Int/Long.inv() → kk_op_inv (P5-103)
+        // Primitive member function: Int/Long/UInt/ULong.inv() → kk_op_inv (P5-103, TYPE-005)
         if interner.resolve(effectiveCalleeName) == "inv",
            args.isEmpty
         {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
+            let uintType = sema.types.make(.primitive(.uint, .nonNull))
+            let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
-            if nonNullReceiverType == intType || nonNullReceiverType == longType {
+            if nonNullReceiverType == intType || nonNullReceiverType == longType || nonNullReceiverType == uintType || nonNullReceiverType == ulongType {
                 instructions.append(.call(
                     symbol: nil,
                     callee: interner.intern("kk_op_inv"),
@@ -90,21 +92,24 @@ extension CallLowerer {
             }
         }
 
-        // Primitive infix member functions: Int/Long.and|or|xor|shl|shr|ushr (EXPR-003)
+        // Primitive infix member functions: Int/Long/UInt/ULong.and|or|xor|shl|shr|ushr (EXPR-003, TYPE-005)
         if args.count == 1 {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
+            let uintType = sema.types.make(.primitive(.uint, .nonNull))
+            let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
-            if nonNullReceiverType == intType || nonNullReceiverType == longType {
+            if nonNullReceiverType == intType || nonNullReceiverType == longType || nonNullReceiverType == uintType || nonNullReceiverType == ulongType {
                 let rhsType = sema.types.makeNonNullable(sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType)
+                let isIntegerRhs = rhsType == intType || rhsType == longType || rhsType == uintType || rhsType == ulongType
                 let primitiveCallee: InternedString? = switch interner.resolve(effectiveCalleeName) {
                 case "and":
-                    (rhsType == intType || rhsType == longType) ? interner.intern("kk_bitwise_and") : nil
+                    isIntegerRhs ? interner.intern("kk_bitwise_and") : nil
                 case "or":
-                    (rhsType == intType || rhsType == longType) ? interner.intern("kk_bitwise_or") : nil
+                    isIntegerRhs ? interner.intern("kk_bitwise_or") : nil
                 case "xor":
-                    (rhsType == intType || rhsType == longType) ? interner.intern("kk_bitwise_xor") : nil
+                    isIntegerRhs ? interner.intern("kk_bitwise_xor") : nil
                 case "shl":
                     rhsType == intType ? interner.intern("kk_op_shl") : nil
                 case "shr":
@@ -145,6 +150,53 @@ extension CallLowerer {
                     canThrow: false,
                     thrownResult: nil
                 ))
+                return result
+            }
+        }
+
+        // Primitive conversion: toInt(), toUInt(), toLong(), toULong() (TYPE-005)
+        if args.isEmpty {
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let longType = sema.types.make(.primitive(.long, .nonNull))
+            let uintType = sema.types.make(.primitive(.uint, .nonNull))
+            let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+            let nonNullResultType = sema.types.makeNonNullable(resultType)
+            let calleeStr = interner.resolve(effectiveCalleeName)
+            let conversionCallee: InternedString? = switch (calleeStr, nonNullReceiverType, nonNullResultType) {
+            case ("toInt", uintType, intType): interner.intern("kk_uint_to_int")
+            case ("toInt", ulongType, intType): interner.intern("kk_ulong_to_int")
+            case ("toInt", intType, intType), ("toInt", longType, intType): nil
+            case ("toUInt", intType, uintType): interner.intern("kk_int_to_uint")
+            case ("toUInt", longType, uintType): interner.intern("kk_long_to_uint")
+            case ("toUInt", uintType, uintType), ("toUInt", ulongType, uintType): nil
+            case ("toLong", intType, longType): interner.intern("kk_int_to_long")
+            case ("toLong", uintType, longType): interner.intern("kk_uint_to_long")
+            case ("toLong", longType, longType), ("toLong", ulongType, longType): nil
+            case ("toULong", intType, ulongType): interner.intern("kk_int_to_ulong")
+            case ("toULong", longType, ulongType): interner.intern("kk_long_to_ulong")
+            case ("toULong", uintType, ulongType): interner.intern("kk_uint_to_ulong")
+            case ("toULong", ulongType, ulongType): nil
+            default: nil
+            }
+            if let callee = conversionCallee {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: callee,
+                    arguments: [loweredReceiverID],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+            if ["toInt", "toUInt", "toLong", "toULong"].contains(calleeStr),
+               nonNullReceiverType == nonNullResultType,
+               nonNullReceiverType == intType || nonNullReceiverType == longType || nonNullReceiverType == uintType || nonNullReceiverType == ulongType
+            {
+                instructions.append(.copy(from: loweredReceiverID, to: result))
                 return result
             }
         }

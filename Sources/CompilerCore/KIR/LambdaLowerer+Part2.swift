@@ -65,6 +65,8 @@ extension LambdaLowerer {
         switch expr {
         case .intLiteral,
              .longLiteral,
+             .uintLiteral,
+             .ulongLiteral,
              .floatLiteral,
              .doubleLiteral,
              .charLiteral,
@@ -250,6 +252,8 @@ extension LambdaLowerer {
 
         case .intLiteral,
              .longLiteral,
+             .uintLiteral,
+             .ulongLiteral,
              .floatLiteral,
              .doubleLiteral,
              .charLiteral,

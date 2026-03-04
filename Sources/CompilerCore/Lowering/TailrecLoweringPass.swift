@@ -27,8 +27,15 @@ final class TailrecLoweringPass: LoweringPass {
         module.arena.transformFunctions { function in
             guard function.isTailrec else { return function }
 
-            let loopLabel = nextLoopLabel
-            nextLoopLabel += 1
+            // Avoid label collision: scan the function's existing labels and
+            // ensure the generated loop-head label is strictly greater.
+            let maxExistingLabel = function.body.compactMap { instruction -> Int32? in
+                if case let .label(id) = instruction { return id }
+                return nil
+            }.max() ?? (tailrecLoopLabelBase - 1)
+
+            let loopLabel = max(nextLoopLabel, maxExistingLabel + 1)
+            nextLoopLabel = loopLabel + 1
 
             let functionIdentity = TailrecFunctionIdentity(
                 symbol: function.symbol,
@@ -42,6 +49,14 @@ final class TailrecLoweringPass: LoweringPass {
                 loopLabel: loopLabel,
                 arena: module.arena
             )
+            // Reset instructionLocations to match the new body length.
+            // The rewrite changes instruction count, so the old parallel
+            // array is stale.  Use the function-level sourceRange as a
+            // conservative location for every synthesised instruction.
+            updated.instructionLocations = Array(
+                repeating: function.sourceRange,
+                count: updated.body.count
+            )
             return updated
         }
 
@@ -49,10 +64,11 @@ final class TailrecLoweringPass: LoweringPass {
     }
 
     /// Rewrite a tailrec function body:
-    /// 1. Insert a loop-head label after the first `beginBlock` only.
+    /// 1. Insert a loop-head label at the start of the body (index 0).
     /// 2. Replace `call(self, args) + returnValue(result)` with
     ///    parameter reassignment (`copy`) + `jump(loopLabel)`.
-    private func rewriteTailCalls( // swiftlint:disable:this function_body_length
+    /// 3. Also handle Unit-returning tail calls (`call + returnUnit`).
+    private func rewriteTailCalls(
         body: [KIRInstruction],
         functionIdentity: TailrecFunctionIdentity,
         params: [KIRParameter],
@@ -62,82 +78,48 @@ final class TailrecLoweringPass: LoweringPass {
         var result: [KIRInstruction] = []
         result.reserveCapacity(body.count + 2)
 
+        // Always insert the loop-head label at the very start of the body
+        // so the pass works regardless of whether NormalizeBlocksPass has
+        // already stripped beginBlock/endBlock instructions.
+        result.append(.label(loopLabel))
+
         var instructionIndex = 0
-        var insertedLoopLabel = false
+        var emittedTailJump = false
         while instructionIndex < body.count {
             let instruction = body[instructionIndex]
 
-            // Insert loop-head label right after the first beginBlock only.
-            if case .beginBlock = instruction, !insertedLoopLabel {
-                result.append(instruction)
-                result.append(.label(loopLabel))
-                insertedLoopLabel = true
-                instructionIndex += 1
-                continue
-            }
-
-            // Detect: call(self, args) → result, followed by returnValue(result).
-            if case let .call(symbol, callee, arguments, callResult, _, _, _) = instruction {
-                let isSelfRecursive = isSelfRecursiveCall(
-                    symbol: symbol,
-                    callee: callee,
-                    functionIdentity: functionIdentity
-                )
-                guard isSelfRecursive else {
-                    result.append(instruction)
-                    instructionIndex += 1
-                    continue
-                }
-                let hasReturnOfCallResult = instructionIndex + 1 < body.count
-                    && isReturnOfResult(
-                        body[instructionIndex + 1],
-                        callResult: callResult
-                    )
-                if hasReturnOfCallResult {
-                    // Emit parameter reassignment.
-                    emitParameterReassignment(
-                        arguments: arguments,
-                        params: params,
-                        arena: arena,
-                        result: &result
-                    )
-                    // Jump back to loop head.
-                    result.append(.jump(loopLabel))
-                    instructionIndex += 2 // Skip both the call and the returnValue.
-                    continue
-                }
+            // Skip beginBlock/endBlock — NormalizeBlocksPass may or may not
+            // have removed these already; either way we don't need them for
+            // the loop-head approach.
+            if case .beginBlock = instruction {
                 result.append(instruction)
                 instructionIndex += 1
                 continue
             }
 
-            // Detect: call(self, args) with no result, followed by returnUnit.
-            if case let .call(symbol, callee, arguments, nil, _, _, _) = instruction {
-                let isSelfRecursive = isSelfRecursiveCall(
-                    symbol: symbol,
-                    callee: callee,
-                    functionIdentity: functionIdentity
-                )
-                guard isSelfRecursive else {
-                    result.append(instruction)
-                    instructionIndex += 1
-                    continue
-                }
-                let hasFollowingReturnUnit = instructionIndex + 1 < body.count
-                    && isReturnUnitInstruction(body[instructionIndex + 1])
-                if hasFollowingReturnUnit {
-                    emitParameterReassignment(
-                        arguments: arguments,
-                        params: params,
-                        arena: arena,
-                        result: &result
-                    )
-                    result.append(.jump(loopLabel))
-                    instructionIndex += 2
-                    continue
-                }
-                result.append(instruction)
-                instructionIndex += 1
+            // --- Value-returning tail call: call(self, args) → result, then returnValue(result) ---
+            if case let .call(symbol, _, arguments, callResult?, _, _, _) = instruction,
+               isSelfRecursiveCall(symbol: symbol, functionIdentity: functionIdentity),
+               instructionIndex + 1 < body.count,
+               isReturnOfResult(body[instructionIndex + 1], callResult: callResult)
+            { // swiftlint:disable:this opening_brace
+                emitParameterReassignment(arguments: arguments, params: params, arena: arena, result: &result)
+                result.append(.jump(loopLabel))
+                emittedTailJump = true
+                instructionIndex += 2
+                continue
+            }
+
+            // --- Unit-returning tail call: call(self, args, nil), then returnUnit ---
+            if case let .call(symbol, _, arguments, nil, _, _, _) = instruction,
+               isSelfRecursiveCall(symbol: symbol, functionIdentity: functionIdentity),
+               instructionIndex + 1 < body.count,
+               isReturnUnitInstruction(body[instructionIndex + 1])
+            { // swiftlint:disable:this opening_brace
+                emitParameterReassignment(arguments: arguments, params: params, arena: arena, result: &result)
+                result.append(.jump(loopLabel))
+                emittedTailJump = true
+                instructionIndex += 2
                 continue
             }
 
@@ -145,21 +127,26 @@ final class TailrecLoweringPass: LoweringPass {
             instructionIndex += 1
         }
 
+        // Safety: if we emitted a jump but somehow the label is missing
+        // (should not happen with the unconditional insert above), leave
+        // the body unchanged to avoid producing invalid KIR.
+        if emittedTailJump, !result.contains(where: { if case .label(loopLabel) = $0 { return true }; return false }) {
+            return body
+        }
+
         return result
     }
 
     /// Check if a call instruction targets the function being optimized.
+    /// Only matches by symbol identity; name-only fallback is intentionally
+    /// omitted to avoid misidentifying calls to different functions that
+    /// share the same name (overloads, runtime helpers, etc.).
     private func isSelfRecursiveCall(
         symbol: SymbolID?,
-        callee: InternedString,
         functionIdentity: TailrecFunctionIdentity
     ) -> Bool {
-        // Prefer matching by symbol when available (more precise).
-        if let symbol, symbol == functionIdentity.symbol {
-            return true
-        }
-        // Fall back to name matching for cases where symbol is nil.
-        return callee == functionIdentity.name
+        guard let symbol else { return false }
+        return symbol == functionIdentity.symbol
     }
 
     /// Check if the next instruction is `returnValue(r)` where `r` matches

@@ -52,14 +52,16 @@ fi
 emit_summary() {
   local total="$1"
   local failed="$2"
-  local body_file="$3"
+  local skipped="$3"
+  local body_file="$4"
 
-  local passed=$((total - failed))
+  local passed=$((total - failed - skipped))
   {
     echo "## kotlinc diff regression"
     echo
     echo "- Total: $total"
     echo "- Passed: $passed"
+    echo "- Skipped: $skipped"
     echo "- Failed: $failed"
     if [[ $failed -gt 0 ]]; then
       echo
@@ -76,7 +78,7 @@ emit_summary() {
 if [[ ! -f "$REPORT_PATH" ]]; then
   tmp_body="$(mktemp -t kswiftk-diff-summary-empty-XXXXXX)"
   trap 'rm -f "$tmp_body"' EXIT
-  emit_summary 0 0 "$tmp_body"
+  emit_summary 0 0 0 "$tmp_body"
   exit 0
 fi
 
@@ -85,10 +87,13 @@ trap 'rm -f "$tmp_body"' EXIT
 
 total=0
 failed=0
+skipped=0
 while IFS=$'\t' read -r case_path status artifact_dir; do
   [[ -z "$case_path" ]] && continue
   total=$((total + 1))
-  if [[ "$status" == "FAIL" ]]; then
+  if [[ "$status" == "SKIP" ]]; then
+    skipped=$((skipped + 1))
+  elif [[ "$status" == "FAIL" ]]; then
     failed=$((failed + 1))
     display_artifact="$artifact_dir"
     if [[ -z "$display_artifact" ]]; then
@@ -98,4 +103,4 @@ while IFS=$'\t' read -r case_path status artifact_dir; do
   fi
 done <"$REPORT_PATH"
 
-emit_summary "$total" "$failed" "$tmp_body"
+emit_summary "$total" "$failed" "$skipped" "$tmp_body"

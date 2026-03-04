@@ -34,6 +34,9 @@ Cases:
 - `try_expression.kt`: `try` 式（multi-catch / partial catch / `finally` 実行順）の parity
 - `interface_default_method.kt`: interface default method（body あり fun）の default 実装呼び出しと concrete override の共存 parity
 - `abstract_class.kt`: abstract class / abstract member の制約と override 強制（abstract fun, multi-level inheritance chain）
+- `builder_dsl.kt`: `buildString` / `buildList` の DSL builder 正常系 parity
+- `builder_dsl_invalid_arg.kt`: builder への不正引数（非 lambda）を compile error として扱う parity
+- `builder_dsl_shadowing.kt`: user-defined `buildString` / `buildList` / `buildMap` が DSL 特別扱いに奪われないことの parity
 - `sequence_lazy.kt`: `Sequence<T>` lazy evaluation chain（`asSequence` → `map` → `filter` → `toList`）の parity
 
 The set intentionally includes both successful programs and compile-error cases.

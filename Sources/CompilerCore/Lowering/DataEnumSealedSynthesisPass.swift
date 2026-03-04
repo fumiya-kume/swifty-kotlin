@@ -1,8 +1,10 @@
 import Foundation
 
+// swiftlint:disable:next type_body_length
 final class DataEnumSealedSynthesisPass: LoweringPass {
     static let name = "DataEnumSealedSynthesis"
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func run(module: KIRModule, ctx: KIRContext) throws {
         module.arena.transformFunctions { function in
             var updated = function
@@ -127,6 +129,37 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
                     existingFunctionSymbols: existingFunctionSymbols,
                     interner: ctx.interner
                 )
+                if nominalSymbol.kind == .object {
+                    let toStringName = ctx.interner.intern("toString")
+                    let objectNameStr = nominalSymbol.name
+                    let toStringFQName = nominalSymbol.fqName + [toStringName]
+                    let existingToStringSymbol = sema.symbols.lookupAll(fqName: toStringFQName).first { id in
+                        sema.symbols.symbol(id).map { $0.flags.contains(.synthetic) } ?? false
+                    }
+                    appendSyntheticDataObjectToStringIfNeeded(
+                        name: toStringName,
+                        owner: nominalSymbol,
+                        objectName: objectNameStr,
+                        existingSymbol: existingToStringSymbol,
+                        module: module,
+                        sema: sema,
+                        existingFunctionSymbols: existingFunctionSymbols,
+                        interner: ctx.interner
+                    )
+                    let equalsName = ctx.interner.intern("equals")
+                    let equalsFQName = nominalSymbol.fqName + [equalsName]
+                    let existingEqualsSymbol = sema.symbols.lookupAll(fqName: equalsFQName).first { id in
+                        sema.symbols.symbol(id).map { $0.flags.contains(.synthetic) } ?? false
+                    }
+                    appendSyntheticDataObjectEqualsIfNeeded(
+                        owner: nominalSymbol,
+                        existingSymbol: existingEqualsSymbol,
+                        module: module,
+                        sema: sema,
+                        existingFunctionSymbols: existingFunctionSymbols,
+                        interner: ctx.interner
+                    )
+                }
             }
         }
 
@@ -154,10 +187,12 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             .temporary(Int32(module.arena.expressions.count)),
             type: returnType
         )
+        // swiftlint:disable trailing_comma
         let body: [KIRInstruction] = [
             .constValue(result: resultExpr, value: .intLiteral(value)),
             .returnValue(resultExpr),
         ]
+        // swiftlint:enable trailing_comma
         appendSyntheticFunctionIfNeeded(
             name: name,
             owner: owner,
@@ -202,10 +237,12 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             .temporary(Int32(module.arena.expressions.count)),
             type: receiverType
         )
+        // swiftlint:disable trailing_comma
         let body: [KIRInstruction] = [
             .constValue(result: resultExpr, value: .symbolRef(parameterSymbol)),
             .returnValue(resultExpr),
         ]
+        // swiftlint:enable trailing_comma
         let signature = FunctionSignature(
             parameterTypes: [receiverType],
             returnType: receiverType,
@@ -226,6 +263,167 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         )
     }
 
+    // swiftlint:disable function_parameter_count
+    /// Synthesizes `toString(): String` for data object, returning the object name.
+    /// Uses existingSymbol when provided (from Sema) so call resolution matches the KIR function.
+    private func appendSyntheticDataObjectToStringIfNeeded(
+        name: InternedString,
+        owner: SemanticSymbol,
+        objectName: InternedString,
+        existingSymbol: SymbolID?,
+        module: KIRModule,
+        sema: SemaModule,
+        existingFunctionSymbols: Set<SymbolID>,
+        interner: StringInterner
+    ) {
+        guard owner.kind == .object, let functionSymbol = existingSymbol else {
+            return
+        }
+        if existingFunctionSymbols.contains(functionSymbol) {
+            return
+        }
+
+        let receiverType = sema.types.make(.classType(ClassType(
+            classSymbol: owner.id,
+            args: [],
+            nullability: .nonNull
+        )))
+        let stringType = sema.types.make(.primitive(.string, .nonNull))
+        let parameterName = interner.intern("$self")
+        let fqName = owner.fqName + [name]
+        let parameterSymbol = sema.symbols.define(
+            kind: .valueParameter,
+            name: parameterName,
+            fqName: fqName + [parameterName],
+            declSite: owner.declSite,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let parameter = KIRParameter(symbol: parameterSymbol, type: receiverType)
+        let resultExpr = module.arena.appendExpr(
+            .temporary(Int32(module.arena.expressions.count)),
+            type: stringType
+        )
+        // swiftlint:disable trailing_comma
+        let body: [KIRInstruction] = [
+            .constValue(result: resultExpr, value: .stringLiteral(objectName)),
+            .returnValue(resultExpr),
+        ]
+        // swiftlint:enable trailing_comma
+        let signature = FunctionSignature(
+            receiverType: receiverType,
+            parameterTypes: [],
+            returnType: stringType,
+            isSuspend: false,
+            valueParameterSymbols: [],
+            valueParameterHasDefaultValues: [],
+            valueParameterIsVararg: [],
+            typeParameterSymbols: []
+        )
+        appendSyntheticFunctionWithSymbol(
+            functionSymbol: functionSymbol,
+            name: name,
+            module: module,
+            sema: sema,
+            signature: signature,
+            params: [parameter],
+            body: body
+        )
+    }
+
+    // swiftlint:enable function_parameter_count
+
+    // swiftlint:disable function_parameter_count function_body_length
+    /// Synthesizes `equals(other: Any?): Boolean` for data object (identity comparison via kk_op_eq).
+    private func appendSyntheticDataObjectEqualsIfNeeded(
+        owner: SemanticSymbol,
+        existingSymbol: SymbolID?,
+        module: KIRModule,
+        sema: SemaModule,
+        existingFunctionSymbols: Set<SymbolID>,
+        interner: StringInterner
+    ) {
+        guard owner.kind == .object, let functionSymbol = existingSymbol else {
+            return
+        }
+        if existingFunctionSymbols.contains(functionSymbol) {
+            return
+        }
+
+        let receiverType = sema.types.make(.classType(ClassType(
+            classSymbol: owner.id,
+            args: [],
+            nullability: .nonNull
+        )))
+        let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+        let nullableAnyType = sema.types.nullableAnyType
+        let equalsName = interner.intern("equals")
+        let paramName = interner.intern("other")
+        let fqName = owner.fqName + [equalsName]
+        let paramSymbol = sema.symbols.define(
+            kind: .valueParameter,
+            name: paramName,
+            fqName: fqName + [paramName],
+            declSite: owner.declSite,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let receiverParam = KIRParameter(
+            symbol: sema.symbols.define(
+                kind: .valueParameter,
+                name: interner.intern("$self"),
+                fqName: fqName + [interner.intern("$self")],
+                declSite: owner.declSite,
+                visibility: .private,
+                flags: [.synthetic]
+            ),
+            type: receiverType
+        )
+        let otherParam = KIRParameter(symbol: paramSymbol, type: nullableAnyType)
+        let receiverRef = module.arena.appendExpr(.symbolRef(receiverParam.symbol), type: receiverType)
+        let otherRef = module.arena.appendExpr(.symbolRef(paramSymbol), type: nullableAnyType)
+        let resultExpr = module.arena.appendExpr(
+            .temporary(Int32(module.arena.expressions.count)),
+            type: boolType
+        )
+        // swiftlint:disable trailing_comma
+        let body: [KIRInstruction] = [
+            .constValue(result: receiverRef, value: .symbolRef(receiverParam.symbol)),
+            .constValue(result: otherRef, value: .symbolRef(paramSymbol)),
+            .call(
+                symbol: nil,
+                callee: interner.intern("kk_op_eq"),
+                arguments: [receiverRef, otherRef],
+                result: resultExpr,
+                canThrow: false,
+                thrownResult: nil
+            ),
+            .returnValue(resultExpr),
+        ]
+        // swiftlint:enable trailing_comma
+        let signature = FunctionSignature(
+            receiverType: receiverType,
+            parameterTypes: [nullableAnyType],
+            returnType: boolType,
+            isSuspend: false,
+            valueParameterSymbols: [paramSymbol],
+            valueParameterHasDefaultValues: [false],
+            valueParameterIsVararg: [false],
+            typeParameterSymbols: []
+        )
+        appendSyntheticFunctionWithSymbol(
+            functionSymbol: functionSymbol,
+            name: equalsName,
+            module: module,
+            sema: sema,
+            signature: signature,
+            params: [receiverParam, otherParam],
+            body: body
+        )
+    }
+
+    // swiftlint:enable function_parameter_count function_body_length
+
     private func appendSyntheticStringFunctionIfNeeded(
         name: InternedString,
         owner: SemanticSymbol,
@@ -240,10 +438,12 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             .temporary(Int32(module.arena.expressions.count)),
             type: returnType
         )
+        // swiftlint:disable trailing_comma
         let body: [KIRInstruction] = [
             .constValue(result: resultExpr, value: .stringLiteral(value)),
             .returnValue(resultExpr),
         ]
+        // swiftlint:enable trailing_comma
         appendSyntheticFunctionIfNeeded(
             name: name,
             owner: owner,
@@ -418,6 +618,34 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         )
     }
 
+    // swiftlint:disable function_parameter_count
+    /// Appends a KIR function using an existing symbol (e.g. from Sema). Used when the symbol
+    /// was already registered for resolution so call sites bind to the same symbol.
+    private func appendSyntheticFunctionWithSymbol(
+        functionSymbol: SymbolID,
+        name: InternedString,
+        module: KIRModule,
+        sema: SemaModule,
+        signature: FunctionSignature,
+        params: [KIRParameter],
+        body: [KIRInstruction]
+    ) {
+        sema.symbols.setFunctionSignature(signature, for: functionSymbol)
+        _ = module.arena.appendDecl(.function(
+            KIRFunction(
+                symbol: functionSymbol,
+                name: name,
+                params: params,
+                returnType: signature.returnType,
+                body: body,
+                isSuspend: false,
+                isInline: false
+            )
+        ))
+    }
+
+    // swiftlint:enable function_parameter_count
+
     private func appendSyntheticFunctionIfNeeded(
         name: InternedString,
         owner: SemanticSymbol,
@@ -475,4 +703,5 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             )
         ))
     }
+    // swiftlint:disable:next file_length
 }

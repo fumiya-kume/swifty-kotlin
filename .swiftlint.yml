@@ -1,3 +1,8 @@
+# opening_brace は SwiftFormat の wrapMultilineStatementBraces と競合するため無効化
+# （SwiftFormat は複数行文で { を改行、SwiftLint は同一行を要求）
+disabled_rules:
+  - opening_brace
+
 included:
   - Sources
   - Tests
