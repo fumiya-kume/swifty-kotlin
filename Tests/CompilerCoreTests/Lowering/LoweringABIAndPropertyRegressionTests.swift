@@ -5,6 +5,7 @@ import XCTest
 final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:disable:this type_body_length
     // MARK: - ABI Boxing/Unboxing Tests
 
+    // swiftlint:disable:next function_body_length
     func testABILoweringBoxesIntArgumentForAnyParameter() throws {
         let interner = StringInterner()
         let arena = KIRArena()
@@ -21,7 +22,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let targetName = interner.intern("acceptAny")
 
         symbols.setFunctionSignature(
-            FunctionSignature(parameterTypes: [anyNullableType], returnType: types.unitType, valueParameterSymbols: [targetParamSym]),
+            FunctionSignature(parameterTypes: [anyNullableType], returnType: types.unitType, valueParameterSymbols: [targetParamSym]), // swiftlint:disable:this line_length
             for: targetSym
         )
 
@@ -34,7 +35,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             params: [],
             returnType: types.unitType,
             body: [
-                .call(symbol: targetSym, callee: targetName, arguments: [argExpr], result: resultExpr, canThrow: false, thrownResult: nil),
+                .call(symbol: targetSym, callee: targetName, arguments: [argExpr], result: resultExpr, canThrow: false, thrownResult: nil), // swiftlint:disable:this line_length
                 .returnUnit
             ],
             isSuspend: false,
@@ -56,7 +57,13 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
 
         let sema = SemaModule(symbols: symbols, types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
         let ctx = CompilationContext(
-            options: CompilerOptions(moduleName: "ABIBoxInt", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+            options: CompilerOptions(
+                moduleName: "ABIBoxInt",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
             sourceManager: SourceManager(),
             diagnostics: DiagnosticEngine(),
             interner: interner
@@ -68,9 +75,10 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
 
         let lowered = try findKIRFunction(named: "main", in: module, interner: interner)
         let callees = extractCallees(from: lowered.body, interner: interner)
-        XCTAssertTrue(callees.contains("kk_box_int"), "Expected kk_box_int call for Int -> Any? boxing, got: \(callees)")
+        XCTAssertTrue(callees.contains("kk_box_int"), "Expected kk_box_int call for Int -> Any? boxing, got: \(callees)") // swiftlint:disable:this line_length
     }
 
+        // swiftlint:disable:next function_body_length
     func testABILoweringBoxesBoolArgumentForAnyParameter() throws {
         let interner = StringInterner()
         let arena = KIRArena()
@@ -87,7 +95,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let targetName = interner.intern("acceptAny")
 
         symbols.setFunctionSignature(
-            FunctionSignature(parameterTypes: [anyNullableType], returnType: types.unitType, valueParameterSymbols: [targetParamSym]),
+            FunctionSignature(parameterTypes: [anyNullableType], returnType: types.unitType, valueParameterSymbols: [targetParamSym]), // swiftlint:disable:this line_length
             for: targetSym
         )
 
@@ -100,7 +108,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             params: [],
             returnType: types.unitType,
             body: [
-                .call(symbol: targetSym, callee: targetName, arguments: [argExpr], result: resultExpr, canThrow: false, thrownResult: nil),
+                .call(symbol: targetSym, callee: targetName, arguments: [argExpr], result: resultExpr, canThrow: false, thrownResult: nil), // swiftlint:disable:this line_length
                 .returnUnit
             ],
             isSuspend: false,
@@ -122,7 +130,13 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
 
         let sema = SemaModule(symbols: symbols, types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
         let ctx = CompilationContext(
-            options: CompilerOptions(moduleName: "ABIBoxBool", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+            options: CompilerOptions(
+                moduleName: "ABIBoxBool",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
             sourceManager: SourceManager(),
             diagnostics: DiagnosticEngine(),
             interner: interner
@@ -134,9 +148,10 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
 
         let lowered = try findKIRFunction(named: "main", in: module, interner: interner)
         let callees = extractCallees(from: lowered.body, interner: interner)
-        XCTAssertTrue(callees.contains("kk_box_bool"), "Expected kk_box_bool call for Bool -> Any? boxing, got: \(callees)")
+        XCTAssertTrue(callees.contains("kk_box_bool"), "Expected kk_box_bool call for Bool -> Any? boxing, got: \(callees)") // swiftlint:disable:this line_length
     }
 
+    // swiftlint:disable:next function_body_length
     func testABILoweringBoxesIntToNullableIntParameter() throws {
         let interner = StringInterner()
         let arena = KIRArena()
@@ -153,7 +168,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let targetName = interner.intern("acceptNullableInt")
 
         symbols.setFunctionSignature(
-            FunctionSignature(parameterTypes: [nullableIntType], returnType: types.unitType, valueParameterSymbols: [targetParamSym]),
+            FunctionSignature(parameterTypes: [nullableIntType], returnType: types.unitType, valueParameterSymbols: [targetParamSym]), // swiftlint:disable:this line_length
             for: targetSym
         )
 
@@ -166,7 +181,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             params: [],
             returnType: types.unitType,
             body: [
-                .call(symbol: targetSym, callee: targetName, arguments: [argExpr], result: resultExpr, canThrow: false, thrownResult: nil),
+                .call(symbol: targetSym, callee: targetName, arguments: [argExpr], result: resultExpr, canThrow: false, thrownResult: nil), // swiftlint:disable:this line_length
                 .returnUnit
             ],
             isSuspend: false,
@@ -188,7 +203,13 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
 
         let sema = SemaModule(symbols: symbols, types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
         let ctx = CompilationContext(
-            options: CompilerOptions(moduleName: "ABIBoxNullableInt", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+            options: CompilerOptions(
+                moduleName: "ABIBoxNullableInt",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
             sourceManager: SourceManager(),
             diagnostics: DiagnosticEngine(),
             interner: interner
@@ -200,7 +221,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
 
         let lowered = try findKIRFunction(named: "main", in: module, interner: interner)
         let callees = extractCallees(from: lowered.body, interner: interner)
-        XCTAssertTrue(callees.contains("kk_box_int"), "Expected kk_box_int call for Int -> Int? boxing, got: \(callees)")
+        XCTAssertTrue(callees.contains("kk_box_int"), "Expected kk_box_int call for Int -> Int? boxing, got: \(callees)") // swiftlint:disable:this line_length
     }
 
     func testABILoweringUnboxesAnyReturnToIntResult() throws {
@@ -230,7 +251,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             params: [],
             returnType: types.unitType,
             body: [
-                .call(symbol: targetSym, callee: targetName, arguments: [], result: resultExpr, canThrow: false, thrownResult: nil),
+                .call(symbol: targetSym, callee: targetName, arguments: [], result: resultExpr, canThrow: false, thrownResult: nil), // swiftlint:disable:this line_length
                 .returnUnit
             ],
             isSuspend: false,
@@ -255,7 +276,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
 
         let lowered = try findKIRFunction(named: "main", in: module, interner: interner)
         let callees = extractCallees(from: lowered.body, interner: interner)
-        XCTAssertTrue(callees.contains("kk_unbox_int"), "Expected kk_unbox_int call for Any? -> Int unboxing, got: \(callees)")
+        XCTAssertTrue(callees.contains("kk_unbox_int"), "Expected kk_unbox_int call for Any? -> Int unboxing, got: \(callees)") // swiftlint:disable:this line_length
     }
 
     func testABILoweringUnboxesNullableIntReturnToNonNullInt() throws {
@@ -285,7 +306,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             params: [],
             returnType: types.unitType,
             body: [
-                .call(symbol: targetSym, callee: targetName, arguments: [], result: resultExpr, canThrow: false, thrownResult: nil),
+                .call(symbol: targetSym, callee: targetName, arguments: [], result: resultExpr, canThrow: false, thrownResult: nil), // swiftlint:disable:this line_length
                 .returnUnit
             ],
             isSuspend: false,
@@ -310,7 +331,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
 
         let lowered = try findKIRFunction(named: "main", in: module, interner: interner)
         let callees = extractCallees(from: lowered.body, interner: interner)
-        XCTAssertTrue(callees.contains("kk_unbox_int"), "Expected kk_unbox_int call for Int? -> Int unboxing, got: \(callees)")
+        XCTAssertTrue(callees.contains("kk_unbox_int"), "Expected kk_unbox_int call for Int? -> Int unboxing, got: \(callees)") // swiftlint:disable:this line_length
     }
 
     func testABILoweringBoxesReturnValueWhenFunctionReturnsAny() throws {
@@ -324,7 +345,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let fnSym = SymbolID(rawValue: 3500)
         let valueExpr = arena.appendExpr(.intLiteral(42), type: intType)
 
-        let fn = KIRFunction(
+        let function = KIRFunction(
             symbol: fnSym,
             name: interner.intern("returnBoxed"),
             params: [],
@@ -336,15 +357,15 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             isInline: false
         )
 
-        let fnID = arena.appendDecl(.function(fn))
+        let fnID = arena.appendDecl(.function(function))
         let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [fnID])], arena: arena)
 
-        let sema = SemaModule(symbols: SymbolTable(), types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
+        let sema = SemaModule(symbols: SymbolTable(), types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine()) // swiftlint:disable:this line_length
         _ = try runLowering(module: module, interner: interner, moduleName: "ABIBoxReturn", sema: sema)
 
         let lowered = try findKIRFunction(named: "returnBoxed", in: module, interner: interner)
         let callees = extractCallees(from: lowered.body, interner: interner)
-        XCTAssertTrue(callees.contains("kk_box_int"), "Expected kk_box_int before returnValue for Any? return type, got: \(callees)")
+        XCTAssertTrue(callees.contains("kk_box_int"), "Expected kk_box_int before returnValue for Any? return type, got: \(callees)") // swiftlint:disable:this line_length
     }
 
     func testABILoweringBoxesCopyFromIntToAnySlot() throws {
@@ -359,7 +380,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let fromExpr = arena.appendExpr(.intLiteral(10), type: intType)
         let toExpr = arena.appendExpr(.temporary(1), type: anyNullableType)
 
-        let fn = KIRFunction(
+        let function = KIRFunction(
             symbol: fnSym,
             name: interner.intern("copyBoxed"),
             params: [],
@@ -372,10 +393,10 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             isInline: false
         )
 
-        let fnID = arena.appendDecl(.function(fn))
+        let fnID = arena.appendDecl(.function(function))
         let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [fnID])], arena: arena)
 
-        let sema = SemaModule(symbols: SymbolTable(), types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
+        let sema = SemaModule(symbols: SymbolTable(), types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine()) // swiftlint:disable:this line_length
         _ = try runLowering(module: module, interner: interner, moduleName: "ABICopyBox", sema: sema)
 
         let lowered = try findKIRFunction(named: "copyBoxed", in: module, interner: interner)
@@ -401,7 +422,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let fromExpr = arena.appendExpr(.temporary(0), type: anyNullableType)
         let toExpr = arena.appendExpr(.temporary(1), type: intType)
 
-        let fn = KIRFunction(
+        let function = KIRFunction(
             symbol: fnSym,
             name: interner.intern("copyUnboxed"),
             params: [],
@@ -414,10 +435,10 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             isInline: false
         )
 
-        let fnID = arena.appendDecl(.function(fn))
+        let fnID = arena.appendDecl(.function(function))
         let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [fnID])], arena: arena)
 
-        let sema = SemaModule(symbols: SymbolTable(), types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
+        let sema = SemaModule(symbols: SymbolTable(), types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine()) // swiftlint:disable:this line_length
         _ = try runLowering(module: module, interner: interner, moduleName: "ABICopyUnbox", sema: sema)
 
         let lowered = try findKIRFunction(named: "copyUnboxed", in: module, interner: interner)
@@ -431,6 +452,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         XCTAssertFalse(hasCopy, "Expected copy to be replaced with unboxing call")
     }
 
+    // swiftlint:disable:next function_body_length
     func testABILoweringBoxesAllPrimitiveTypesForAnyParameter() throws {
         let interner = StringInterner()
         let types = TypeSystem()
@@ -439,6 +461,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let anyNullableType = types.make(.any(.nullable))
 
         // Define primitives and their expected boxing callees
+        // swiftlint:disable:next large_tuple
         let primitives: [(TypeKind, KIRExprKind, String)] = [
             (.primitive(.int, .nonNull), .intLiteral(1), "kk_box_int"),
             (.primitive(.boolean, .nonNull), .boolLiteral(true), "kk_box_bool"),
@@ -458,7 +481,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             let targetName = interner.intern("accept_\(expectedCallee)")
 
             symbols.setFunctionSignature(
-                FunctionSignature(parameterTypes: [anyNullableType], returnType: types.unitType, valueParameterSymbols: [targetParamSym]),
+                FunctionSignature(parameterTypes: [anyNullableType], returnType: types.unitType, valueParameterSymbols: [targetParamSym]), // swiftlint:disable:this line_length
                 for: targetSym
             )
 
@@ -471,7 +494,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
                 params: [],
                 returnType: types.unitType,
                 body: [
-                    .call(symbol: targetSym, callee: targetName, arguments: [argExpr], result: resultExpr, canThrow: false, thrownResult: nil),
+                    .call(symbol: targetSym, callee: targetName, arguments: [argExpr], result: resultExpr, canThrow: false, thrownResult: nil), // swiftlint:disable:this line_length
                     .returnUnit
                 ],
                 isSuspend: false,
@@ -491,12 +514,12 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             _ = testArena.appendDecl(.function(targetFn))
             let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [callerID])], arena: testArena)
 
-            let sema = SemaModule(symbols: symbols, types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
+            let sema = SemaModule(symbols: symbols, types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine()) // swiftlint:disable:this line_length
             _ = try runLowering(module: module, interner: interner, moduleName: "ABIBoxAll_\(index)", sema: sema)
 
             let lowered = try findKIRFunction(named: "main", in: module, interner: interner)
             let callees = extractCallees(from: lowered.body, interner: interner)
-            XCTAssertTrue(callees.contains(expectedCallee), "Expected \(expectedCallee) for \(kind) -> Any? boxing, got: \(callees)")
+            XCTAssertTrue(callees.contains(expectedCallee), "Expected \(expectedCallee) for \(kind) -> Any? boxing, got: \(callees)") // swiftlint:disable:this line_length
         }
     }
 
@@ -512,7 +535,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let fromExpr = arena.appendExpr(.intLiteral(5), type: intType)
         let toExpr = arena.appendExpr(.temporary(1), type: nullableIntType)
 
-        let fn = KIRFunction(
+        let function = KIRFunction(
             symbol: fnSym,
             name: interner.intern("copyNullableBox"),
             params: [],
@@ -525,10 +548,10 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             isInline: false
         )
 
-        let fnID = arena.appendDecl(.function(fn))
+        let fnID = arena.appendDecl(.function(function))
         let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [fnID])], arena: arena)
 
-        let sema = SemaModule(symbols: SymbolTable(), types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
+        let sema = SemaModule(symbols: SymbolTable(), types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine()) // swiftlint:disable:this line_length
         _ = try runLowering(module: module, interner: interner, moduleName: "ABICopyNullableBox", sema: sema)
 
         let lowered = try findKIRFunction(named: "copyNullableBox", in: module, interner: interner)
@@ -697,7 +720,9 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         XCTAssertFalse(callees.contains("kk_property_access"))
     }
 
+    // swiftlint:disable:next orphaned_doc_comment
     /// Verify that backing field copy is rewritten to a direct setter call.
+    // swiftlint:disable:next function_body_length
     func testPropertyLoweringRewritesBackingFieldCopyToDirectSetterCall() throws {
         let interner = StringInterner()
         let arena = KIRArena()
@@ -773,6 +798,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         XCTAssertFalse(hasCopy, "Backing field copy should have been rewritten to a setter call")
     }
 
+    // swiftlint:disable:next orphaned_doc_comment
     /// Verify that a constValue(.symbolRef(propSym)) for a getter-only computed
     /// property (no backing field) is rewritten to a getter call by PropertyLoweringPass.
     // swiftlint:disable:next function_body_length
@@ -862,6 +888,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
                        "constValue(.symbolRef) for computed property should have been rewritten to a getter call")
     }
 
+    // swiftlint:disable:next orphaned_doc_comment
     /// Verify that a `var` property with a backing field is NOT rewritten
     /// (its constValue(.symbolRef) is preserved because it has storage).
     // swiftlint:disable:next function_body_length
@@ -906,13 +933,13 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             isInline: false
         )
 
-        let fnID = arena.appendDecl(.function(callerFn))
-        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [fnID])], arena: arena)
+        let funcID = arena.appendDecl(.function(callerFn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [funcID])], arena: arena)
 
         let sema = SemaModule(symbols: symbols, types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
         _ = try runLowering(module: module, interner: interner, moduleName: "BackedProp", sema: sema)
 
-        guard case let .function(lowered)? = module.arena.decl(fnID) else {
+        guard case let .function(lowered)? = module.arena.decl(funcID) else {
             XCTFail("expected function")
             return
         }
@@ -930,8 +957,10 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
                       "constValue(.symbolRef) for backed property should NOT be rewritten")
     }
 
+    // swiftlint:disable:next orphaned_doc_comment
     /// Integration test: compile `val computed: String get() = "hello"` through
     /// the full pipeline and verify no KIRGlobal is emitted for the computed property.
+    // swiftlint:disable:next function_body_length
     func testGetterOnlyComputedPropertyEmitsNoGlobal() throws {
         let source = """
         package test
@@ -996,7 +1025,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             return kirFunc.symbol
         }
         XCTAssertTrue(getterSymbols.contains(expectedGetterSymbol),
-                      "Getter accessor symbol for computed property should be emitted. expected=\(expectedGetterSymbol), actual=\(getterSymbols)")
+                      "Getter accessor symbol for computed property should be emitted. expected=\(expectedGetterSymbol), actual=\(getterSymbols)") // swiftlint:disable:this line_length
     }
 
     /// Verifies that getter-only computed property overrides emit getter

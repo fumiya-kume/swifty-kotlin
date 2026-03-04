@@ -1,0 +1,49 @@
+decl[0] function print params=1 suspend=false inline=false
+  const r0=symbolRef(CompilerCore.SymbolID(rawValue: -10019))
+  returnUnit
+decl[1] type Printer
+decl[2] function print params=1 suspend=false inline=false
+  const r1=symbolRef(CompilerCore.SymbolID(rawValue: -10022))
+  const r2=unit
+  const r3=stringLiteral(CompilerCore.InternedString(rawValue: 2))
+  call println symbol=_ args=[r3] ret=r4 thrown=true thrownResult=_
+  return r4
+decl[3] type PrinterImpl
+decl[4] function PrinterImpl params=1 suspend=false inline=false
+  const r5=symbolRef(CompilerCore.SymbolID(rawValue: -10021))
+  return r5
+decl[5] type Logger
+decl[6] function Logger params=2 suspend=false inline=false
+  const r6=symbolRef(CompilerCore.SymbolID(rawValue: -10024))
+  const r7=unit
+  const r8=intLiteral(2)
+  call kk_array_set symbol=_ args=[r6, r8, r7] ret=r9 thrown=true thrownResult=_
+  return r6
+decl[7] function main params=0 suspend=false inline=false
+  const r10=unit
+  const r12=intLiteral(2)
+  const r13=intLiteral(14675765516991329)
+  call kk_object_new symbol=_ args=[r12, r13] ret=r14 thrown=false thrownResult=_
+  const r15=intLiteral(14675765516991329)
+  const r16=intLiteral(3149135910311935)
+  call kk_type_register_iface symbol=_ args=[r15, r16] ret=r17 thrown=false thrownResult=_
+  call PrinterImpl symbol=PrinterImpl args=[r14] ret=r11 thrown=true thrownResult=_
+  const r18=unit
+  const r19=unit
+  const r21=intLiteral(3)
+  const r22=intLiteral(26808669503018549)
+  call kk_object_new symbol=_ args=[r21, r22] ret=r23 thrown=false thrownResult=_
+  const r24=intLiteral(26808669503018549)
+  const r25=intLiteral(3149135910311935)
+  call kk_type_register_iface symbol=_ args=[r24, r25] ret=r26 thrown=false thrownResult=_
+  call Logger symbol=Logger args=[r23, r11] ret=r20 thrown=true thrownResult=_
+  const r27=unit
+  const r28=unit
+  const r29=stringLiteral(CompilerCore.InternedString(rawValue: 8))
+  call println symbol=_ args=[r29] ret=r30 thrown=true thrownResult=_
+  call print symbol=print args=[r20] ret=r31 thrown=true thrownResult=_
+  const r32=unit
+  const r33=stringLiteral(CompilerCore.InternedString(rawValue: 9))
+  call println symbol=_ args=[r33] ret=r34 thrown=true thrownResult=_
+  return r34
+lowerings: NormalizeBlocks, OperatorLowering, ForLowering, CollectionLiteralLowering, PropertyLowering, StdlibDelegateLowering, JvmStaticLowering, DataEnumSealedSynthesis, LambdaClosureConversion, InlineLowering, CoroutineLowering, ABILowering
