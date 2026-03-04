@@ -5,7 +5,11 @@ import XCTest
 final class ABIMismatchTests: XCTestCase {
     // MARK: - Helpers
 
-    private func requireSpec(_ name: String, file: StaticString = #filePath, line: UInt = #line) throws -> RuntimeABIFunctionSpec {
+    private func requireSpec(
+        _ name: String,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) throws -> RuntimeABIFunctionSpec {
         let spec = RuntimeABISpec.allFunctions.first(where: { $0.name == name })
         return try XCTUnwrap(spec, "'\(name)' not found in RuntimeABISpec.allFunctions", file: file, line: line)
     }
