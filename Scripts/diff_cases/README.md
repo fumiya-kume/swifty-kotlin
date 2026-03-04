@@ -6,6 +6,14 @@ Run all cases:
 bash Scripts/diff_kotlinc.sh Scripts/diff_cases
 ```
 
+Run with additional kotlinx classpath (for `Flow`-related cases):
+
+```bash
+bash Scripts/diff_kotlinc.sh \
+  --kotlinc-classpath "/path/to/kotlinx-coroutines-core-jvm.jar" \
+  Scripts/diff_cases/flow_cold.kt
+```
+
 Cases:
 
 - `hello.kt`: minimal executable smoke case
@@ -39,5 +47,7 @@ Cases:
 - `builder_dsl_invalid_arg.kt`: builder への不正引数（非 lambda）を compile error として扱う parity
 - `builder_dsl_shadowing.kt`: user-defined `buildString` / `buildList` / `buildMap` が DSL 特別扱いに奪われないことの parity
 - `sequence_lazy.kt`: `Sequence<T>` lazy evaluation chain（`asSequence` → `map` → `filter` → `toList`）の parity
+- `stdlib_string_ops.kt`: String stdlib parity（`trim/split/replace/startsWith/endsWith/contains/toInt/toDouble/format`）
+- `flow_cold.kt`: `Flow<T>` cold stream chain（`flow { emit(...) }.map { ... }.collect { ... }`）の parity（kotlinx classpath 必須）
 
 The set intentionally includes both successful programs and compile-error cases.

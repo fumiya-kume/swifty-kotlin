@@ -527,16 +527,215 @@ public func kk_kxmini_delay(_ milliseconds: Int, _ continuation: Int) -> Int {
 
 // MARK: - Flow Runtime Stubs (P5-88)
 
-/// Opaque handle wrapping a flow emitter function pointer and its continuation.
-final class RuntimeFlowHandle {
-    let emitterFnPtr: Int
-    var collectedValues: [Int] = []
+private let runtimeFlowCollectStackKey = "kk_flow_collect_stack"
 
-    init(emitterFnPtr: Int) {
+private enum RuntimeFlowOpKind: Int {
+    case map = 1
+    case filter = 2
+    case take = 3
+}
+
+private struct RuntimeFlowOp {
+    let kind: RuntimeFlowOpKind
+    let argument: Int
+}
+
+private final class RuntimeFlowCollectContext {
+    var emittedValues: [Int] = []
+}
+
+/// Opaque flow handle. Immutable operation chain; source emitter is re-executed
+/// for every collect to guarantee cold-stream semantics.
+private final class RuntimeFlowHandle {
+    let emitterFnPtr: Int
+    let opChain: [RuntimeFlowOp]
+
+    init(emitterFnPtr: Int, opChain: [RuntimeFlowOp] = []) {
         self.emitterFnPtr = emitterFnPtr
+        self.opChain = opChain
     }
 }
 
+private func runtimeFlowHandle(from rawValue: Int) -> RuntimeFlowHandle? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
+        return nil
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObjectPointer else {
+        return nil
+    }
+    return tryCast(ptr, to: RuntimeFlowHandle.self)
+}
+
+private func runtimeFlowCollectStack() -> [RuntimeFlowCollectContext] {
+    Thread.current.threadDictionary[runtimeFlowCollectStackKey] as? [RuntimeFlowCollectContext] ?? []
+}
+
+private func runtimeFlowPushCollectContext(_ context: RuntimeFlowCollectContext) {
+    var stack = runtimeFlowCollectStack()
+    stack.append(context)
+    Thread.current.threadDictionary[runtimeFlowCollectStackKey] = stack
+}
+
+private func runtimeFlowPopCollectContext() {
+    var stack = runtimeFlowCollectStack()
+    guard !stack.isEmpty else {
+        return
+    }
+    _ = stack.popLast()
+    Thread.current.threadDictionary[runtimeFlowCollectStackKey] = stack
+}
+
+private func runtimeFlowCurrentCollectContext() -> RuntimeFlowCollectContext? {
+    runtimeFlowCollectStack().last
+}
+
+private func runtimeFlowMaybeUnbox(_ value: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
+        return value
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObjectPointer else {
+        return value
+    }
+    if let intBox = tryCast(ptr, to: RuntimeIntBox.self) {
+        return intBox.value
+    }
+    if let boolBox = tryCast(ptr, to: RuntimeBoolBox.self) {
+        return boolBox.value ? 1 : 0
+    }
+    return value
+}
+
+private func runtimeFlowEvaluateSource(_ flow: RuntimeFlowHandle) -> [Int] {
+    let context = RuntimeFlowCollectContext()
+    runtimeFlowPushCollectContext(context)
+    defer { runtimeFlowPopCollectContext() }
+
+    guard flow.emitterFnPtr != 0 else {
+        return []
+    }
+    let emitter = unsafeBitCast(
+        flow.emitterFnPtr,
+        to: (@convention(c) (UnsafeMutablePointer<Int>?) -> Int).self
+    )
+    var outThrown = 0
+    _ = emitter(&outThrown)
+    if outThrown != 0 {
+        return []
+    }
+    return context.emittedValues
+}
+
+private func runtimeFlowApplyOps(_ source: [Int], ops: [RuntimeFlowOp]) -> [Int] {
+    var values = source
+    for op in ops {
+        switch op.kind {
+        case .map:
+            guard op.argument != 0 else {
+                values = []
+                continue
+            }
+            let transform = unsafeBitCast(
+                op.argument,
+                to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self
+            )
+            var mapped: [Int] = []
+            mapped.reserveCapacity(values.count)
+            for value in values {
+                var thrown = 0
+                let transformed = transform(value, &thrown)
+                if thrown != 0 {
+                    return []
+                }
+                mapped.append(runtimeFlowMaybeUnbox(transformed))
+            }
+            values = mapped
+
+        case .filter:
+            guard op.argument != 0 else {
+                values = []
+                continue
+            }
+            let predicate = unsafeBitCast(
+                op.argument,
+                to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self
+            )
+            var filtered: [Int] = []
+            filtered.reserveCapacity(values.count)
+            for value in values {
+                var thrown = 0
+                let decision = predicate(value, &thrown)
+                if thrown != 0 {
+                    return []
+                }
+                if runtimeFlowMaybeUnbox(decision) != 0 {
+                    filtered.append(value)
+                }
+            }
+            values = filtered
+
+        case .take:
+            let count = max(0, runtimeFlowMaybeUnbox(op.argument))
+            if count < values.count {
+                values = Array(values.prefix(count))
+            }
+        }
+    }
+    return values
+}
+
+private func runtimeFlowCollectNonSuspend(_ values: [Int], collectorFnPtr: Int) -> Int {
+    guard collectorFnPtr != 0 else {
+        return 0
+    }
+    let collector = unsafeBitCast(
+        collectorFnPtr,
+        to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self
+    )
+    for value in values {
+        var thrown = 0
+        _ = collector(value, &thrown)
+        if thrown != 0 {
+            return 0
+        }
+    }
+    return 0
+}
+
+private func runtimeFlowCollectSuspend(_ values: [Int], collectorFnPtr: Int, functionID: Int) -> Int {
+    guard collectorFnPtr != 0 else {
+        return 0
+    }
+    let suspendedToken = Int(bitPattern: kk_coroutine_suspended())
+    let collector = unsafeBitCast(
+        collectorFnPtr,
+        to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
+    )
+    for value in values {
+        let continuation = kk_coroutine_continuation_new(functionID)
+        while true {
+            var outThrown = 0
+            let result = collector(value, continuation, &outThrown)
+            if outThrown != 0 {
+                _ = kk_coroutine_state_exit(continuation, 0)
+                return 0
+            }
+            if result != suspendedToken {
+                break
+            }
+            guard let state = runtimeContinuationState(from: continuation) else {
+                return 0
+            }
+            state.waitForResumeSignal()
+        }
+    }
+    return 0
+}
 @_cdecl("kk_flow_create")
 public func kk_flow_create(_ emitterFnPtr: Int, _: Int) -> Int {
     let flow = RuntimeFlowHandle(emitterFnPtr: emitterFnPtr)
@@ -548,25 +747,41 @@ public func kk_flow_create(_ emitterFnPtr: Int, _: Int) -> Int {
 }
 
 @_cdecl("kk_flow_emit")
-public func kk_flow_emit(_ flowHandle: Int, _ value: Int, _: Int) -> Int {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: flowHandle) else {
+public func kk_flow_emit(_ flowHandle: Int, _ value: Int, _ tag: Int) -> Int {
+    if tag == 0 {
+        runtimeFlowCurrentCollectContext()?.emittedValues.append(runtimeFlowMaybeUnbox(value))
+        return value
+    }
+    guard let opKind = RuntimeFlowOpKind(rawValue: tag),
+          let flow = runtimeFlowHandle(from: flowHandle)
+    else {
         return 0
     }
-    let flow = Unmanaged<RuntimeFlowHandle>.fromOpaque(ptr).takeUnretainedValue()
-    flow.collectedValues.append(value)
-    return value
+    let derived = RuntimeFlowHandle(
+        emitterFnPtr: flow.emitterFnPtr,
+        opChain: flow.opChain + [RuntimeFlowOp(kind: opKind, argument: value)]
+    )
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(derived).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: ptr))
+    }
+    return Int(bitPattern: ptr)
 }
 
 @_cdecl("kk_flow_collect")
-public func kk_flow_collect(_ flowHandle: Int, _: Int, _: Int) -> Int {
-    // Stub: invoke collector on each emitted value; full suspend semantics deferred
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: flowHandle) else {
+public func kk_flow_collect(_ flowHandle: Int, _ collectorFnPtr: Int, _ continuation: Int) -> Int {
+    guard let flow = runtimeFlowHandle(from: flowHandle) else {
         return 0
     }
-    let flow = Unmanaged<RuntimeFlowHandle>.fromOpaque(ptr).takeUnretainedValue()
-    // Collect emitted values — actual suspend-based collection is a future lowering task
-    _ = flow.collectedValues
-    return 0
+
+    // Cold-stream semantics: evaluate source emissions anew on each collect.
+    let sourceValues = runtimeFlowEvaluateSource(flow)
+    let collectedValues = runtimeFlowApplyOps(sourceValues, ops: flow.opChain)
+
+    if continuation == 0 {
+        return runtimeFlowCollectNonSuspend(collectedValues, collectorFnPtr: collectorFnPtr)
+    }
+    return runtimeFlowCollectSuspend(collectedValues, collectorFnPtr: collectorFnPtr, functionID: continuation)
 }
 
 // MARK: - Dispatcher Runtime Stubs (P5-133)

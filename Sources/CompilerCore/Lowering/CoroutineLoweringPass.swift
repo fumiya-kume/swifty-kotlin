@@ -45,6 +45,7 @@ final class CoroutineLoweringPass: LoweringPass {
         let runtimeAsyncCallee = ctx.interner.intern("kk_kxmini_async")
         let runtimeCoroutineScopeRunCallee = ctx.interner.intern("kk_coroutine_scope_run")
         let runtimeDelayCallee = ctx.interner.intern("kk_kxmini_delay")
+        let flowCollectCallee = ctx.interner.intern("kk_flow_collect")
         let runtimeSuspendCallNames: Set<InternedString> = [kxMiniDelayCallee, runtimeDelayCallee]
         let kxMiniLauncherRuntimeCallees: [InternedString: InternedString] = [
             kxMiniRunBlockingCallee: runtimeRunBlockingCallee,
@@ -415,6 +416,38 @@ final class CoroutineLoweringPass: LoweringPass {
                             )
                         )
                     }
+                    continue
+                }
+
+                if callee == flowCollectCallee,
+                   arguments.count == 3,
+                   let collectorExpr = module.arena.expr(arguments[1]),
+                   case let .symbolRef(collectorSymbol) = collectorExpr,
+                   let loweredCollector = loweredBySymbol[collectorSymbol]
+                {
+                    let collectorEntryPoint = module.arena.appendExpr(
+                        .symbolRef(loweredCollector.symbol),
+                        type: intType
+                    )
+                    let collectorFunctionID = module.arena.appendExpr(
+                        .intLiteral(Int64(loweredCollector.symbol.rawValue)),
+                        type: intType
+                    )
+
+                    var rewrittenArguments = arguments
+                    rewrittenArguments[1] = collectorEntryPoint
+                    rewrittenArguments[2] = collectorFunctionID
+                    loweredBody.append(
+                        .call(
+                            symbol: symbol,
+                            callee: callee,
+                            arguments: rewrittenArguments,
+                            result: result,
+                            canThrow: canThrow,
+                            thrownResult: nil,
+                            isSuperCall: isSuperCall
+                        )
+                    )
                     continue
                 }
 

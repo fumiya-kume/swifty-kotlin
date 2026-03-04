@@ -166,6 +166,9 @@ extension ExprTypeChecker {
             if sema.bindings.isCollectionSymbol(local.symbol) {
                 sema.bindings.markCollectionExpr(id)
             }
+            if sema.bindings.isFlowSymbol(local.symbol) {
+                sema.bindings.markFlowExpr(id)
+            }
             sema.bindings.bindExprType(id, type: local.type)
             return local.type
         }

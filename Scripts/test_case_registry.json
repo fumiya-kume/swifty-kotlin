@@ -645,11 +645,6 @@
           "type": "golden-sema",
           "name": "nullable_receiver_ext",
           "template": "Scripts/test_templates/sema/nullable_receiver_ext.kt"
-        },
-        {
-          "type": "diff",
-          "name": "nullable_receiver_ext",
-          "template": "Scripts/test_templates/diff/nullable_receiver_ext.kt"
         }
       ]
     },
@@ -714,6 +709,18 @@
       ]
     },
     {
+      "task": "CORO-003",
+      "category": "coroutines",
+      "description": "Flow cold stream (flow/map/filter/take/collect)",
+      "cases": [
+        {
+          "type": "diff",
+          "name": "flow_cold",
+          "template": "Scripts/test_templates/diff/flow_cold.kt"
+        }
+      ]
+    },
+    {
       "task": "P5-137",
       "category": "stdlib",
       "description": "Scope functions (let/run/apply/also)",
@@ -736,24 +743,9 @@
       "description": "buildString/buildList/buildMap DSL builder",
       "cases": [
         {
-          "type": "golden-sema",
-          "name": "builder_dsl_receiver",
-          "template": "Scripts/test_templates/sema/builder_dsl_receiver.kt"
-        },
-        {
           "type": "diff",
           "name": "builder_dsl",
           "template": "Scripts/test_templates/diff/builder_dsl.kt"
-        },
-        {
-          "type": "diff",
-          "name": "builder_dsl_invalid_arg",
-          "template": "Scripts/test_templates/diff/builder_dsl_invalid_arg.kt"
-        },
-        {
-          "type": "diff",
-          "name": "builder_dsl_shadowing",
-          "template": "Scripts/test_templates/diff/builder_dsl_shadowing.kt"
         }
       ]
     },

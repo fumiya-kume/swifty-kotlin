@@ -101,7 +101,7 @@ final class ABIMismatchTests: XCTestCase {
 
     func testCoroutineFunctionCount() {
         // 19 base + 12 consolidated stubs + 7 structured concurrency (P5-89)
-        // + 4 CORO-002 cancellation
+        // + 4 CORO-002 cancellation + 3 CORO-003 flow (kk_flow_create/kk_flow_emit/kk_flow_collect)
         XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 42)
     }
 

@@ -29,6 +29,9 @@ struct TypeInferenceContext {
     /// The specific builder kind for this scope (STDLIB-002).
     /// Used to restrict member function resolution to the correct kind.
     var builderKind: BuilderDSLKind?
+    /// When true, the current scope is a `flow { ... }` builder lambda body.
+    /// Used to resolve unqualified `emit(...)` fallback.
+    var isFlowBuilderLambdaScope: Bool = false
     /// Sema cache context for hot-path caching.  `nil` when caching is disabled.
     let semaCacheContext: SemaCacheContext?
 
