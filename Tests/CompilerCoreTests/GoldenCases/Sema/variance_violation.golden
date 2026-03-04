@@ -21,60 +21,51 @@ symbol s19 kind=typeParameter fq=kotlin.Comparable.T vis=private flags=_
 symbol s20 kind=function fq=kotlin.Comparable.compareTo vis=public flags=synthetic|operatorFunction sig=recv=Class#18<T#19> params=[T#19] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s21 kind=package fq=kotlin.text vis=public flags=synthetic
 symbol s22 kind=function fq=kotlin.text.trim vis=public flags=synthetic sig=recv=String params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s23 kind=function fq=kotlin.text.split vis=public flags=synthetic sig=recv=String params=[String,Boolean,Int] ret=Class#12<out String> suspend=0 defaults=[0,1,1] vararg=[1,0,0]
+symbol s23 kind=function fq=kotlin.text.split vis=public flags=synthetic sig=recv=String params=[String] ret=Class#12<out String> suspend=0 defaults=[0] vararg=[0]
 symbol s24 kind=valueParameter fq=kotlin.text.split.delimiters vis=private flags=synthetic
-symbol s25 kind=valueParameter fq=kotlin.text.split.ignoreCase vis=private flags=synthetic
-symbol s26 kind=valueParameter fq=kotlin.text.split.limit vis=private flags=synthetic
-symbol s27 kind=function fq=kotlin.text.replace vis=public flags=synthetic sig=recv=String params=[String,String,Boolean] ret=String suspend=0 defaults=[0,0,1] vararg=[0,0,0]
-symbol s28 kind=valueParameter fq=kotlin.text.replace.oldValue vis=private flags=synthetic
-symbol s29 kind=valueParameter fq=kotlin.text.replace.newValue vis=private flags=synthetic
-symbol s30 kind=valueParameter fq=kotlin.text.replace.ignoreCase vis=private flags=synthetic
-symbol s31 kind=function fq=kotlin.text.startsWith vis=public flags=synthetic sig=recv=String params=[String,Int,Boolean] ret=Boolean suspend=0 defaults=[0,1,1] vararg=[0,0,0]
-symbol s32 kind=valueParameter fq=kotlin.text.startsWith.prefix vis=private flags=synthetic
-symbol s33 kind=valueParameter fq=kotlin.text.startsWith.startIndex vis=private flags=synthetic
-symbol s34 kind=valueParameter fq=kotlin.text.startsWith.ignoreCase vis=private flags=synthetic
-symbol s35 kind=function fq=kotlin.text.endsWith vis=public flags=synthetic sig=recv=String params=[String,Boolean] ret=Boolean suspend=0 defaults=[0,1] vararg=[0,0]
-symbol s36 kind=valueParameter fq=kotlin.text.endsWith.suffix vis=private flags=synthetic
-symbol s37 kind=valueParameter fq=kotlin.text.endsWith.ignoreCase vis=private flags=synthetic
-symbol s38 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=recv=String params=[String,Boolean] ret=Boolean suspend=0 defaults=[0,1] vararg=[0,0]
-symbol s39 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
-symbol s40 kind=valueParameter fq=kotlin.text.contains.ignoreCase vis=private flags=synthetic
-symbol s41 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s42 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s43 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
-symbol s44 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
-symbol s45 kind=class fq=golden.sema.Producer vis=public flags=_
-symbol s46 kind=typeParameter fq=golden.sema.Producer.$class45.T vis=private flags=_
-symbol s47 kind=constructor fq=golden.sema.Producer.<init> vis=public flags=_ sig=recv=Class#45<T#46> params=[T#46] ret=Class#45<T#46> suspend=0 defaults=[0] vararg=[0]
-symbol s48 kind=valueParameter fq=golden.sema.Producer.<init>.$47.item vis=private flags=_
-symbol s49 kind=class fq=golden.sema.Consumer vis=public flags=_
-symbol s50 kind=typeParameter fq=golden.sema.Consumer.$class49.T vis=private flags=_
-symbol s51 kind=constructor fq=golden.sema.Consumer.<init> vis=public flags=_ sig=recv=Class#49<T#50> params=[] ret=Class#49<T#50> suspend=0 defaults=[] vararg=[]
-symbol s52 kind=function fq=golden.sema.Consumer.accept vis=public flags=_ sig=recv=Class#49<T#50> params=[T#50] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s53 kind=valueParameter fq=golden.sema.Consumer.accept.$52.item vis=private flags=_
-symbol s54 kind=function fq=golden.sema.validVariance vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s55 kind=class fq=golden.sema.BadProducer vis=public flags=_
-symbol s56 kind=typeParameter fq=golden.sema.BadProducer.$class55.T vis=private flags=_
-symbol s57 kind=constructor fq=golden.sema.BadProducer.<init> vis=public flags=_ sig=recv=Class#55<T#56> params=[] ret=Class#55<T#56> suspend=0 defaults=[] vararg=[]
-symbol s58 kind=function fq=golden.sema.BadProducer.consume vis=public flags=_ sig=recv=Class#55<T#56> params=[T#56] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s59 kind=valueParameter fq=golden.sema.BadProducer.consume.$58.item vis=private flags=_
-symbol s60 kind=class fq=golden.sema.BadConsumer vis=public flags=_
-symbol s61 kind=typeParameter fq=golden.sema.BadConsumer.$class60.T vis=private flags=_
-symbol s62 kind=constructor fq=golden.sema.BadConsumer.<init> vis=public flags=_ sig=recv=Class#60<T#61> params=[] ret=Class#60<T#61> suspend=0 defaults=[] vararg=[]
-symbol s63 kind=function fq=golden.sema.BadConsumer.produce vis=public flags=_ sig=recv=Class#60<T#61> params=[] ret=T#61? suspend=0 defaults=[] vararg=[]
-symbol s64 kind=local fq=__local_3.p vis=private flags=_
-symbol s65 kind=local fq=__local_6.c vis=private flags=_
+symbol s25 kind=function fq=kotlin.text.replace vis=public flags=synthetic sig=recv=String params=[String,String] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s26 kind=valueParameter fq=kotlin.text.replace.oldValue vis=private flags=synthetic
+symbol s27 kind=valueParameter fq=kotlin.text.replace.newValue vis=private flags=synthetic
+symbol s28 kind=function fq=kotlin.text.startsWith vis=public flags=synthetic sig=recv=String params=[String] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s29 kind=valueParameter fq=kotlin.text.startsWith.prefix vis=private flags=synthetic
+symbol s30 kind=function fq=kotlin.text.endsWith vis=public flags=synthetic sig=recv=String params=[String] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s31 kind=valueParameter fq=kotlin.text.endsWith.suffix vis=private flags=synthetic
+symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=recv=String params=[String] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
+symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s36 kind=class fq=golden.sema.Producer vis=public flags=_
+symbol s37 kind=typeParameter fq=golden.sema.Producer.$class36.T vis=private flags=_
+symbol s38 kind=constructor fq=golden.sema.Producer.<init> vis=public flags=_ sig=recv=Class#36<T#37> params=[T#37] ret=Class#36<T#37> suspend=0 defaults=[0] vararg=[0]
+symbol s39 kind=valueParameter fq=golden.sema.Producer.<init>.$38.item vis=private flags=_
+symbol s40 kind=class fq=golden.sema.Consumer vis=public flags=_
+symbol s41 kind=typeParameter fq=golden.sema.Consumer.$class40.T vis=private flags=_
+symbol s42 kind=constructor fq=golden.sema.Consumer.<init> vis=public flags=_ sig=recv=Class#40<T#41> params=[] ret=Class#40<T#41> suspend=0 defaults=[] vararg=[]
+symbol s43 kind=function fq=golden.sema.Consumer.accept vis=public flags=_ sig=recv=Class#40<T#41> params=[T#41] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s44 kind=valueParameter fq=golden.sema.Consumer.accept.$43.item vis=private flags=_
+symbol s45 kind=function fq=golden.sema.validVariance vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s46 kind=class fq=golden.sema.BadProducer vis=public flags=_
+symbol s47 kind=typeParameter fq=golden.sema.BadProducer.$class46.T vis=private flags=_
+symbol s48 kind=constructor fq=golden.sema.BadProducer.<init> vis=public flags=_ sig=recv=Class#46<T#47> params=[] ret=Class#46<T#47> suspend=0 defaults=[] vararg=[]
+symbol s49 kind=function fq=golden.sema.BadProducer.consume vis=public flags=_ sig=recv=Class#46<T#47> params=[T#47] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s50 kind=valueParameter fq=golden.sema.BadProducer.consume.$49.item vis=private flags=_
+symbol s51 kind=class fq=golden.sema.BadConsumer vis=public flags=_
+symbol s52 kind=typeParameter fq=golden.sema.BadConsumer.$class51.T vis=private flags=_
+symbol s53 kind=constructor fq=golden.sema.BadConsumer.<init> vis=public flags=_ sig=recv=Class#51<T#52> params=[] ret=Class#51<T#52> suspend=0 defaults=[] vararg=[]
+symbol s54 kind=function fq=golden.sema.BadConsumer.produce vis=public flags=_ sig=recv=Class#51<T#52> params=[] ret=T#52? suspend=0 defaults=[] vararg=[]
+symbol s55 kind=local fq=__local_3.p vis=private flags=_
+symbol s56 kind=local fq=__local_6.c vis=private flags=_
 file f0 package=golden.sema
-  decl d0 class Producer sym=s45
-  decl d2 class Consumer sym=s49
-  decl d3 fun validVariance suspend=0 inline=0 sym=s54
-  decl d5 class BadProducer sym=s55
-  decl d7 class BadConsumer sym=s60
+  decl d0 class Producer sym=s36
+  decl d2 class Consumer sym=s40
+  decl d3 fun validVariance suspend=0 inline=0 sym=s45
+  decl d5 class BadProducer sym=s46
+  decl d7 class BadConsumer sym=s51
 expr e0 name(Producer) type=_
 expr e1 int(42) type=Int
 expr e2 call callee=e0 args=[_:e1] type=<error>
-expr e3 localDecl p mutable=0 type=t3 init=e2 type=Unit ref=s64
+expr e3 localDecl p mutable=0 type=t3 init=e2 type=Unit ref=s55
 expr e4 name(Consumer) type=_
-expr e5 call callee=e4 args=[] type=Class#49<Int> call=s51 map=[] targs=[Int]
-expr e6 localDecl c mutable=0 type=t5 init=e5 type=Unit ref=s65
+expr e5 call callee=e4 args=[] type=Class#40<Int> call=s42 map=[] targs=[Int]
+expr e6 localDecl c mutable=0 type=t5 init=e5 type=Unit ref=s56
 expr e7 name(null) type=Nothing?

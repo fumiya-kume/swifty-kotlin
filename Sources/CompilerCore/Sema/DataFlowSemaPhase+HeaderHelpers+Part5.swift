@@ -14,7 +14,6 @@ extension DataFlowSemaPhase {
         let boolType = types.make(.primitive(.boolean, .nonNull))
         let intType = types.intType
         let doubleType = types.doubleType
-        let nullableAnyType = types.nullableAnyType
         let listStringType = makeListOfStringType(symbols: symbols, types: types, interner: interner)
 
         registerSyntheticStringExtensionFunction(
@@ -33,9 +32,7 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_string_split",
             receiverType: stringType,
             parameters: [
-                ("delimiters", stringType, false, true),
-                ("ignoreCase", boolType, true, false),
-                ("limit", intType, true, false),
+                ("delimiters", stringType, false, false),
             ],
             returnType: listStringType,
             packageFQName: kotlinTextPkg,
@@ -50,7 +47,6 @@ extension DataFlowSemaPhase {
             parameters: [
                 ("oldValue", stringType, false, false),
                 ("newValue", stringType, false, false),
-                ("ignoreCase", boolType, true, false),
             ],
             returnType: stringType,
             packageFQName: kotlinTextPkg,
@@ -64,8 +60,6 @@ extension DataFlowSemaPhase {
             receiverType: stringType,
             parameters: [
                 ("prefix", stringType, false, false),
-                ("startIndex", intType, true, false),
-                ("ignoreCase", boolType, true, false),
             ],
             returnType: boolType,
             packageFQName: kotlinTextPkg,
@@ -79,7 +73,6 @@ extension DataFlowSemaPhase {
             receiverType: stringType,
             parameters: [
                 ("suffix", stringType, false, false),
-                ("ignoreCase", boolType, true, false),
             ],
             returnType: boolType,
             packageFQName: kotlinTextPkg,
@@ -89,11 +82,10 @@ extension DataFlowSemaPhase {
 
         registerSyntheticStringExtensionFunction(
             named: "contains",
-            externalLinkName: "kk_string_contains",
+            externalLinkName: "kk_string_contains_str",
             receiverType: stringType,
             parameters: [
                 ("other", stringType, false, false),
-                ("ignoreCase", boolType, true, false),
             ],
             returnType: boolType,
             packageFQName: kotlinTextPkg,
@@ -123,18 +115,6 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        registerSyntheticStringExtensionFunction(
-            named: "format",
-            externalLinkName: "kk_string_format",
-            receiverType: stringType,
-            parameters: [
-                ("args", nullableAnyType, false, true),
-            ],
-            returnType: stringType,
-            packageFQName: kotlinTextPkg,
-            symbols: symbols,
-            interner: interner
-        )
     }
 
     private func ensureKotlinTextPackage(

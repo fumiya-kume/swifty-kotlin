@@ -21,57 +21,48 @@ symbol s19 kind=typeParameter fq=kotlin.Comparable.T vis=private flags=_
 symbol s20 kind=function fq=kotlin.Comparable.compareTo vis=public flags=synthetic|operatorFunction sig=recv=Class#18<T#19> params=[T#19] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s21 kind=package fq=kotlin.text vis=public flags=synthetic
 symbol s22 kind=function fq=kotlin.text.trim vis=public flags=synthetic sig=recv=String params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s23 kind=function fq=kotlin.text.split vis=public flags=synthetic sig=recv=String params=[String,Boolean,Int] ret=Class#12<out String> suspend=0 defaults=[0,1,1] vararg=[1,0,0]
+symbol s23 kind=function fq=kotlin.text.split vis=public flags=synthetic sig=recv=String params=[String] ret=Class#12<out String> suspend=0 defaults=[0] vararg=[0]
 symbol s24 kind=valueParameter fq=kotlin.text.split.delimiters vis=private flags=synthetic
-symbol s25 kind=valueParameter fq=kotlin.text.split.ignoreCase vis=private flags=synthetic
-symbol s26 kind=valueParameter fq=kotlin.text.split.limit vis=private flags=synthetic
-symbol s27 kind=function fq=kotlin.text.replace vis=public flags=synthetic sig=recv=String params=[String,String,Boolean] ret=String suspend=0 defaults=[0,0,1] vararg=[0,0,0]
-symbol s28 kind=valueParameter fq=kotlin.text.replace.oldValue vis=private flags=synthetic
-symbol s29 kind=valueParameter fq=kotlin.text.replace.newValue vis=private flags=synthetic
-symbol s30 kind=valueParameter fq=kotlin.text.replace.ignoreCase vis=private flags=synthetic
-symbol s31 kind=function fq=kotlin.text.startsWith vis=public flags=synthetic sig=recv=String params=[String,Int,Boolean] ret=Boolean suspend=0 defaults=[0,1,1] vararg=[0,0,0]
-symbol s32 kind=valueParameter fq=kotlin.text.startsWith.prefix vis=private flags=synthetic
-symbol s33 kind=valueParameter fq=kotlin.text.startsWith.startIndex vis=private flags=synthetic
-symbol s34 kind=valueParameter fq=kotlin.text.startsWith.ignoreCase vis=private flags=synthetic
-symbol s35 kind=function fq=kotlin.text.endsWith vis=public flags=synthetic sig=recv=String params=[String,Boolean] ret=Boolean suspend=0 defaults=[0,1] vararg=[0,0]
-symbol s36 kind=valueParameter fq=kotlin.text.endsWith.suffix vis=private flags=synthetic
-symbol s37 kind=valueParameter fq=kotlin.text.endsWith.ignoreCase vis=private flags=synthetic
-symbol s38 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=recv=String params=[String,Boolean] ret=Boolean suspend=0 defaults=[0,1] vararg=[0,0]
-symbol s39 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
-symbol s40 kind=valueParameter fq=kotlin.text.contains.ignoreCase vis=private flags=synthetic
-symbol s41 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s42 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s43 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
-symbol s44 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
-symbol s45 kind=class fq=golden.sema.Outer vis=public flags=_
-symbol s46 kind=constructor fq=golden.sema.Outer.<init> vis=public flags=_ sig=recv=Class#45 params=[Int] ret=Class#45 suspend=0 defaults=[0] vararg=[0]
-symbol s47 kind=valueParameter fq=golden.sema.Outer.<init>.$46.x vis=private flags=_
-symbol s48 kind=property fq=golden.sema.Outer.y vis=public flags=_ type=Int
-symbol s49 kind=class fq=golden.sema.Outer.Inner vis=public flags=innerClass
-symbol s50 kind=constructor fq=golden.sema.Outer.Inner.<init> vis=public flags=_ sig=recv=Class#49 params=[] ret=Class#49 suspend=0 defaults=[] vararg=[]
-symbol s51 kind=function fq=golden.sema.Outer.Inner.getY vis=public flags=_ sig=recv=Class#49 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s52 kind=class fq=golden.sema.Outer.Nested vis=public flags=_
-symbol s53 kind=constructor fq=golden.sema.Outer.Nested.<init> vis=public flags=_ sig=recv=Class#52 params=[] ret=Class#52 suspend=0 defaults=[] vararg=[]
-symbol s54 kind=function fq=golden.sema.Outer.Nested.tryAccess vis=public flags=_ sig=recv=Class#52 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s55 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s56 kind=local fq=__local_8.outer vis=private flags=_
-symbol s57 kind=local fq=__local_11.inner vis=private flags=_
-symbol s58 kind=local fq=__local_14.result vis=private flags=_
+symbol s25 kind=function fq=kotlin.text.replace vis=public flags=synthetic sig=recv=String params=[String,String] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s26 kind=valueParameter fq=kotlin.text.replace.oldValue vis=private flags=synthetic
+symbol s27 kind=valueParameter fq=kotlin.text.replace.newValue vis=private flags=synthetic
+symbol s28 kind=function fq=kotlin.text.startsWith vis=public flags=synthetic sig=recv=String params=[String] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s29 kind=valueParameter fq=kotlin.text.startsWith.prefix vis=private flags=synthetic
+symbol s30 kind=function fq=kotlin.text.endsWith vis=public flags=synthetic sig=recv=String params=[String] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s31 kind=valueParameter fq=kotlin.text.endsWith.suffix vis=private flags=synthetic
+symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=recv=String params=[String] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
+symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s36 kind=class fq=golden.sema.Outer vis=public flags=_
+symbol s37 kind=constructor fq=golden.sema.Outer.<init> vis=public flags=_ sig=recv=Class#36 params=[Int] ret=Class#36 suspend=0 defaults=[0] vararg=[0]
+symbol s38 kind=valueParameter fq=golden.sema.Outer.<init>.$37.x vis=private flags=_
+symbol s39 kind=property fq=golden.sema.Outer.y vis=public flags=_ type=Int
+symbol s40 kind=class fq=golden.sema.Outer.Inner vis=public flags=innerClass
+symbol s41 kind=constructor fq=golden.sema.Outer.Inner.<init> vis=public flags=_ sig=recv=Class#40 params=[] ret=Class#40 suspend=0 defaults=[] vararg=[]
+symbol s42 kind=function fq=golden.sema.Outer.Inner.getY vis=public flags=_ sig=recv=Class#40 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s43 kind=class fq=golden.sema.Outer.Nested vis=public flags=_
+symbol s44 kind=constructor fq=golden.sema.Outer.Nested.<init> vis=public flags=_ sig=recv=Class#43 params=[] ret=Class#43 suspend=0 defaults=[] vararg=[]
+symbol s45 kind=function fq=golden.sema.Outer.Nested.tryAccess vis=public flags=_ sig=recv=Class#43 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s46 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s47 kind=local fq=__local_8.outer vis=private flags=_
+symbol s48 kind=local fq=__local_11.inner vis=private flags=_
+symbol s49 kind=local fq=__local_14.result vis=private flags=_
 file f0 package=golden.sema
-  decl d5 class Outer sym=s45
-  decl d6 fun main suspend=0 inline=0 sym=s55
-expr e0 name(x) type=Int ref=s48
-expr e1 this@Outer type=Class#45
-expr e2 memberCall recv=e1 callee=y args=[] type=Int ref=s48
+  decl d5 class Outer sym=s36
+  decl d6 fun main suspend=0 inline=0 sym=s46
+expr e0 name(x) type=Int ref=s39
+expr e1 this@Outer type=Class#36
+expr e2 memberCall recv=e1 callee=y args=[] type=Int ref=s39
 expr e3 this@Outer type=<error>
 expr e4 memberCall recv=e3 callee=y args=[] type=<error>
 expr e5 name(Outer) type=_
 expr e6 int(42) type=Int
-expr e7 call callee=e5 args=[_:e6] type=Class#45 call=s46 map=[0->0] targs=[]
-expr e8 localDecl outer mutable=0 type=_ init=e7 type=Unit ref=s56
-expr e9 name(outer) type=Class#45 ref=s56
-expr e10 memberCall recv=e9 callee=Inner args=[] type=Class#49 call=s50 map=[] targs=[]
-expr e11 localDecl inner mutable=0 type=_ init=e10 type=Unit ref=s57
-expr e12 name(inner) type=Class#49 ref=s57
-expr e13 memberCall recv=e12 callee=getY args=[] type=Int call=s51 map=[] targs=[]
-expr e14 localDecl result mutable=0 type=_ init=e13 type=Unit ref=s58
+expr e7 call callee=e5 args=[_:e6] type=Class#36 call=s37 map=[0->0] targs=[]
+expr e8 localDecl outer mutable=0 type=_ init=e7 type=Unit ref=s47
+expr e9 name(outer) type=Class#36 ref=s47
+expr e10 memberCall recv=e9 callee=Inner args=[] type=Class#40 call=s41 map=[] targs=[]
+expr e11 localDecl inner mutable=0 type=_ init=e10 type=Unit ref=s48
+expr e12 name(inner) type=Class#40 ref=s48
+expr e13 memberCall recv=e12 callee=getY args=[] type=Int call=s42 map=[] targs=[]
+expr e14 localDecl result mutable=0 type=_ init=e13 type=Unit ref=s49

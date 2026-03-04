@@ -98,7 +98,7 @@ final class KIRModelsBehaviorTests: XCTestCase {
         module.recordLowering("OperatorLowering")
         let dump = module.dump(interner: interner, symbols: symbols)
 
-        XCTAssertTrue(dump.contains("function alpha"))
+        XCTAssertTrue(dump.contains("function #\(symA.rawValue) alpha"))
         XCTAssertTrue(dump.contains("global"))
         XCTAssertTrue(dump.contains("type beta"))
         XCTAssertTrue(dump.contains("const r"))

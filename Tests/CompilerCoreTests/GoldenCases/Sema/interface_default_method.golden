@@ -21,47 +21,38 @@ symbol s19 kind=typeParameter fq=kotlin.Comparable.T vis=private flags=_
 symbol s20 kind=function fq=kotlin.Comparable.compareTo vis=public flags=synthetic|operatorFunction sig=recv=Class#18<T#19> params=[T#19] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s21 kind=package fq=kotlin.text vis=public flags=synthetic
 symbol s22 kind=function fq=kotlin.text.trim vis=public flags=synthetic sig=recv=String params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s23 kind=function fq=kotlin.text.split vis=public flags=synthetic sig=recv=String params=[String,Boolean,Int] ret=Class#12<out String> suspend=0 defaults=[0,1,1] vararg=[1,0,0]
+symbol s23 kind=function fq=kotlin.text.split vis=public flags=synthetic sig=recv=String params=[String] ret=Class#12<out String> suspend=0 defaults=[0] vararg=[0]
 symbol s24 kind=valueParameter fq=kotlin.text.split.delimiters vis=private flags=synthetic
-symbol s25 kind=valueParameter fq=kotlin.text.split.ignoreCase vis=private flags=synthetic
-symbol s26 kind=valueParameter fq=kotlin.text.split.limit vis=private flags=synthetic
-symbol s27 kind=function fq=kotlin.text.replace vis=public flags=synthetic sig=recv=String params=[String,String,Boolean] ret=String suspend=0 defaults=[0,0,1] vararg=[0,0,0]
-symbol s28 kind=valueParameter fq=kotlin.text.replace.oldValue vis=private flags=synthetic
-symbol s29 kind=valueParameter fq=kotlin.text.replace.newValue vis=private flags=synthetic
-symbol s30 kind=valueParameter fq=kotlin.text.replace.ignoreCase vis=private flags=synthetic
-symbol s31 kind=function fq=kotlin.text.startsWith vis=public flags=synthetic sig=recv=String params=[String,Int,Boolean] ret=Boolean suspend=0 defaults=[0,1,1] vararg=[0,0,0]
-symbol s32 kind=valueParameter fq=kotlin.text.startsWith.prefix vis=private flags=synthetic
-symbol s33 kind=valueParameter fq=kotlin.text.startsWith.startIndex vis=private flags=synthetic
-symbol s34 kind=valueParameter fq=kotlin.text.startsWith.ignoreCase vis=private flags=synthetic
-symbol s35 kind=function fq=kotlin.text.endsWith vis=public flags=synthetic sig=recv=String params=[String,Boolean] ret=Boolean suspend=0 defaults=[0,1] vararg=[0,0]
-symbol s36 kind=valueParameter fq=kotlin.text.endsWith.suffix vis=private flags=synthetic
-symbol s37 kind=valueParameter fq=kotlin.text.endsWith.ignoreCase vis=private flags=synthetic
-symbol s38 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=recv=String params=[String,Boolean] ret=Boolean suspend=0 defaults=[0,1] vararg=[0,0]
-symbol s39 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
-symbol s40 kind=valueParameter fq=kotlin.text.contains.ignoreCase vis=private flags=synthetic
-symbol s41 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s42 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s43 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
-symbol s44 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
-symbol s45 kind=interface fq=golden.sema.Greeter vis=public flags=_
-symbol s46 kind=function fq=golden.sema.Greeter.greet vis=public flags=_ sig=recv=Class#45 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s47 kind=class fq=golden.sema.FormalGreeter vis=public flags=_
-symbol s48 kind=constructor fq=golden.sema.FormalGreeter.<init> vis=public flags=_ sig=recv=Class#47 params=[] ret=Class#47 suspend=0 defaults=[] vararg=[]
-symbol s49 kind=function fq=golden.sema.FormalGreeter.greet vis=public flags=overrideMember sig=recv=Class#47 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s50 kind=class fq=golden.sema.DefaultGreeter vis=public flags=_
-symbol s51 kind=constructor fq=golden.sema.DefaultGreeter.<init> vis=public flags=_ sig=recv=Class#50 params=[] ret=Class#50 suspend=0 defaults=[] vararg=[]
-symbol s52 kind=interface fq=golden.sema.Animal vis=public flags=_
-symbol s53 kind=function fq=golden.sema.Animal.name vis=public flags=abstractType sig=recv=Class#52 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s54 kind=function fq=golden.sema.Animal.sound vis=public flags=_ sig=recv=Class#52 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s55 kind=class fq=golden.sema.Dog vis=public flags=_
-symbol s56 kind=constructor fq=golden.sema.Dog.<init> vis=public flags=_ sig=recv=Class#55 params=[] ret=Class#55 suspend=0 defaults=[] vararg=[]
-symbol s57 kind=function fq=golden.sema.Dog.name vis=public flags=overrideMember sig=recv=Class#55 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s25 kind=function fq=kotlin.text.replace vis=public flags=synthetic sig=recv=String params=[String,String] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s26 kind=valueParameter fq=kotlin.text.replace.oldValue vis=private flags=synthetic
+symbol s27 kind=valueParameter fq=kotlin.text.replace.newValue vis=private flags=synthetic
+symbol s28 kind=function fq=kotlin.text.startsWith vis=public flags=synthetic sig=recv=String params=[String] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s29 kind=valueParameter fq=kotlin.text.startsWith.prefix vis=private flags=synthetic
+symbol s30 kind=function fq=kotlin.text.endsWith vis=public flags=synthetic sig=recv=String params=[String] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s31 kind=valueParameter fq=kotlin.text.endsWith.suffix vis=private flags=synthetic
+symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=recv=String params=[String] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
+symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s36 kind=interface fq=golden.sema.Greeter vis=public flags=_
+symbol s37 kind=function fq=golden.sema.Greeter.greet vis=public flags=_ sig=recv=Class#36 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s38 kind=class fq=golden.sema.FormalGreeter vis=public flags=_
+symbol s39 kind=constructor fq=golden.sema.FormalGreeter.<init> vis=public flags=_ sig=recv=Class#38 params=[] ret=Class#38 suspend=0 defaults=[] vararg=[]
+symbol s40 kind=function fq=golden.sema.FormalGreeter.greet vis=public flags=overrideMember sig=recv=Class#38 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s41 kind=class fq=golden.sema.DefaultGreeter vis=public flags=_
+symbol s42 kind=constructor fq=golden.sema.DefaultGreeter.<init> vis=public flags=_ sig=recv=Class#41 params=[] ret=Class#41 suspend=0 defaults=[] vararg=[]
+symbol s43 kind=interface fq=golden.sema.Animal vis=public flags=_
+symbol s44 kind=function fq=golden.sema.Animal.name vis=public flags=abstractType sig=recv=Class#43 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s45 kind=function fq=golden.sema.Animal.sound vis=public flags=_ sig=recv=Class#43 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s46 kind=class fq=golden.sema.Dog vis=public flags=_
+symbol s47 kind=constructor fq=golden.sema.Dog.<init> vis=public flags=_ sig=recv=Class#46 params=[] ret=Class#46 suspend=0 defaults=[] vararg=[]
+symbol s48 kind=function fq=golden.sema.Dog.name vis=public flags=overrideMember sig=recv=Class#46 params=[] ret=String suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d1 interface Greeter sym=s45
-  decl d3 class FormalGreeter sym=s47
-  decl d4 class DefaultGreeter sym=s50
-  decl d7 interface Animal sym=s52
-  decl d9 class Dog sym=s55
+  decl d1 interface Greeter sym=s36
+  decl d3 class FormalGreeter sym=s38
+  decl d4 class DefaultGreeter sym=s41
+  decl d7 interface Animal sym=s43
+  decl d9 class Dog sym=s46
 expr e0 string(Hello) type=String
 expr e1 string(Good day) type=String
 expr e2 string(...) type=String

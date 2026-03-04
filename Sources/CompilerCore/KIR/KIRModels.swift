@@ -273,7 +273,7 @@ public final class KIRModule {
             switch decl {
             case let .function(function):
                 let name = interner.resolve(function.name)
-                lines.append("decl[\(index)] function \(name) params=\(function.params.count) suspend=\(function.isSuspend) inline=\(function.isInline)")
+                lines.append("decl[\(index)] function #\(function.symbol.rawValue) \(name) params=\(function.params.count) suspend=\(function.isSuspend) inline=\(function.isInline)")
                 for instruction in function.body {
                     lines.append("  \(instructionDescription(instruction, interner: interner, arena: arena, symbols: symbols))")
                 }

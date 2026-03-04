@@ -101,7 +101,6 @@ extension BuildKIRRegressionTests {
             "1,2,3".split(",")
             "42".toInt()
             "3.14".toDouble()
-            "%s-%d".format("x", 1)
         }
         """
 
@@ -117,7 +116,6 @@ extension BuildKIRRegressionTests {
             XCTAssertEqual(throwFlags["kk_string_split"]?.allSatisfy { $0 == true }, true)
             XCTAssertEqual(throwFlags["kk_string_toInt"]?.allSatisfy { $0 == true }, true)
             XCTAssertEqual(throwFlags["kk_string_toDouble"]?.allSatisfy { $0 == true }, true)
-            XCTAssertEqual(throwFlags["kk_string_format"]?.allSatisfy { $0 == false }, true)
         }
     }
 

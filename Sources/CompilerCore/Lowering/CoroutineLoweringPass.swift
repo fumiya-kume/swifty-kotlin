@@ -24,9 +24,6 @@ final class CoroutineLoweringPass: LoweringPass {
             ctx.interner.intern("kk_flow_create"),
             ctx.interner.intern("kk_flow_emit"),
             ctx.interner.intern("kk_flow_collect"),
-            ctx.interner.intern("kk_flow_map"),
-            ctx.interner.intern("kk_flow_filter"),
-            ctx.interner.intern("kk_flow_take"),
         ]
         let virtualCallees: Set<InternedString> = [
             ctx.interner.intern("collect"),
@@ -114,12 +111,14 @@ final class CoroutineLoweringPass: LoweringPass {
                 existingFunctionNames: &existingFunctionNames,
                 interner: ctx.interner
             )
-            let loweredSymbol = defineSyntheticCoroutineFunctionSymbol(
+            let loweredFunctionSymbol = defineSyntheticCoroutineFunctionSymbol(
                 original: suspendFunction,
                 loweredName: loweredName,
                 nextSyntheticSymbol: &nextSyntheticSymbol,
                 sema: ctx.sema
             )
+            let loweredSymbol = loweredFunctionSymbol.kirSymbol
+            let loweredSemaSymbol = loweredFunctionSymbol.semaSymbol
             let suspendLoweringPlan = analyzeSuspendLoweringPlan(
                 originalBody: suspendFunction.body,
                 suspendFunctionSymbols: suspendFunctionSymbols,
@@ -137,7 +136,7 @@ final class CoroutineLoweringPass: LoweringPass {
             let continuationType = continuationNominal?.continuationType
                 ?? (ctx.sema?.types.nullableAnyType ?? suspendFunction.returnType)
             let continuationParameterSymbol = defineSyntheticContinuationParameterSymbol(
-                owner: loweredSymbol,
+                owner: loweredSemaSymbol ?? loweredSymbol,
                 loweredName: loweredName,
                 nextSyntheticSymbol: &nextSyntheticSymbol,
                 sema: ctx.sema,
@@ -182,13 +181,15 @@ final class CoroutineLoweringPass: LoweringPass {
             loweredByNameBuckets[suspendFunction.name, default: []].append(lowered)
             let byNameArityKey = SuspendCallLookupKey(name: suspendFunction.name, arity: suspendFunction.params.count)
             loweredByNameArityBuckets[byNameArityKey, default: []].append(lowered)
-            updateLoweredFunctionSignatureIfPossible(
-                loweredSymbol: loweredSymbol,
-                continuationParameterSymbol: continuationParameterSymbol,
-                originalSymbol: suspendFunction.symbol,
-                continuationType: continuationType,
-                sema: ctx.sema
-            )
+            if let loweredSemaSymbol {
+                updateLoweredFunctionSignatureIfPossible(
+                    loweredSymbol: loweredSemaSymbol,
+                    continuationParameterSymbol: continuationParameterSymbol,
+                    originalSymbol: suspendFunction.symbol,
+                    continuationType: continuationType,
+                    sema: ctx.sema
+                )
+            }
         }
 
         var launcherThunkByOriginalSymbol: [SymbolID: (name: InternedString, symbol: SymbolID)] = [:]

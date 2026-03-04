@@ -438,15 +438,13 @@ extension CallLowerer {
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
                 let calleeStr = interner.resolve(calleeName)
-                let zero = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
-                instructions.append(.constValue(result: zero, value: .intLiteral(0)))
                 let runtimeCall: (callee: String, arguments: [KIRExprID])? = switch calleeStr {
                 case "startsWith":
-                    ("kk_string_startsWith", [loweredReceiverID, loweredArgIDs[0], zero, zero])
+                    ("kk_string_startsWith", [loweredReceiverID, loweredArgIDs[0]])
                 case "endsWith":
-                    ("kk_string_endsWith", [loweredReceiverID, loweredArgIDs[0], zero])
+                    ("kk_string_endsWith", [loweredReceiverID, loweredArgIDs[0]])
                 case "contains":
-                    ("kk_string_contains", [loweredReceiverID, loweredArgIDs[0], zero])
+                    ("kk_string_contains_str", [loweredReceiverID, loweredArgIDs[0]])
                 default:
                     nil
                 }
@@ -469,12 +467,10 @@ extension CallLowerer {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
-                let zero = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
-                instructions.append(.constValue(result: zero, value: .intLiteral(0)))
                 instructions.append(.call(
                     symbol: nil,
                     callee: interner.intern("kk_string_replace"),
-                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1], zero],
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
                     result: result,
                     canThrow: false,
                     thrownResult: nil

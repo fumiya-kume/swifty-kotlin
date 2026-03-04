@@ -21,36 +21,27 @@ symbol s19 kind=typeParameter fq=kotlin.Comparable.T vis=private flags=_
 symbol s20 kind=function fq=kotlin.Comparable.compareTo vis=public flags=synthetic|operatorFunction sig=recv=Class#18<T#19> params=[T#19] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s21 kind=package fq=kotlin.text vis=public flags=synthetic
 symbol s22 kind=function fq=kotlin.text.trim vis=public flags=synthetic sig=recv=String params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s23 kind=function fq=kotlin.text.split vis=public flags=synthetic sig=recv=String params=[String,Boolean,Int] ret=Class#12<out String> suspend=0 defaults=[0,1,1] vararg=[1,0,0]
+symbol s23 kind=function fq=kotlin.text.split vis=public flags=synthetic sig=recv=String params=[String] ret=Class#12<out String> suspend=0 defaults=[0] vararg=[0]
 symbol s24 kind=valueParameter fq=kotlin.text.split.delimiters vis=private flags=synthetic
-symbol s25 kind=valueParameter fq=kotlin.text.split.ignoreCase vis=private flags=synthetic
-symbol s26 kind=valueParameter fq=kotlin.text.split.limit vis=private flags=synthetic
-symbol s27 kind=function fq=kotlin.text.replace vis=public flags=synthetic sig=recv=String params=[String,String,Boolean] ret=String suspend=0 defaults=[0,0,1] vararg=[0,0,0]
-symbol s28 kind=valueParameter fq=kotlin.text.replace.oldValue vis=private flags=synthetic
-symbol s29 kind=valueParameter fq=kotlin.text.replace.newValue vis=private flags=synthetic
-symbol s30 kind=valueParameter fq=kotlin.text.replace.ignoreCase vis=private flags=synthetic
-symbol s31 kind=function fq=kotlin.text.startsWith vis=public flags=synthetic sig=recv=String params=[String,Int,Boolean] ret=Boolean suspend=0 defaults=[0,1,1] vararg=[0,0,0]
-symbol s32 kind=valueParameter fq=kotlin.text.startsWith.prefix vis=private flags=synthetic
-symbol s33 kind=valueParameter fq=kotlin.text.startsWith.startIndex vis=private flags=synthetic
-symbol s34 kind=valueParameter fq=kotlin.text.startsWith.ignoreCase vis=private flags=synthetic
-symbol s35 kind=function fq=kotlin.text.endsWith vis=public flags=synthetic sig=recv=String params=[String,Boolean] ret=Boolean suspend=0 defaults=[0,1] vararg=[0,0]
-symbol s36 kind=valueParameter fq=kotlin.text.endsWith.suffix vis=private flags=synthetic
-symbol s37 kind=valueParameter fq=kotlin.text.endsWith.ignoreCase vis=private flags=synthetic
-symbol s38 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=recv=String params=[String,Boolean] ret=Boolean suspend=0 defaults=[0,1] vararg=[0,0]
-symbol s39 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
-symbol s40 kind=valueParameter fq=kotlin.text.contains.ignoreCase vis=private flags=synthetic
-symbol s41 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s42 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s43 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
-symbol s44 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
-symbol s45 kind=object fq=golden.sema.None vis=public flags=dataType
-symbol s46 kind=function fq=golden.sema.None.toString vis=public flags=synthetic sig=recv=Class#45 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s47 kind=function fq=golden.sema.None.equals vis=public flags=synthetic sig=recv=Class#45 params=[Any?] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s48 kind=valueParameter fq=golden.sema.None.equals.other vis=private flags=synthetic
-symbol s49 kind=function fq=golden.sema.useDataObject vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s25 kind=function fq=kotlin.text.replace vis=public flags=synthetic sig=recv=String params=[String,String] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s26 kind=valueParameter fq=kotlin.text.replace.oldValue vis=private flags=synthetic
+symbol s27 kind=valueParameter fq=kotlin.text.replace.newValue vis=private flags=synthetic
+symbol s28 kind=function fq=kotlin.text.startsWith vis=public flags=synthetic sig=recv=String params=[String] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s29 kind=valueParameter fq=kotlin.text.startsWith.prefix vis=private flags=synthetic
+symbol s30 kind=function fq=kotlin.text.endsWith vis=public flags=synthetic sig=recv=String params=[String] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s31 kind=valueParameter fq=kotlin.text.endsWith.suffix vis=private flags=synthetic
+symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=recv=String params=[String] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
+symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s36 kind=object fq=golden.sema.None vis=public flags=dataType
+symbol s37 kind=function fq=golden.sema.None.toString vis=public flags=synthetic sig=recv=Class#36 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s38 kind=function fq=golden.sema.None.equals vis=public flags=synthetic sig=recv=Class#36 params=[Any?] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s39 kind=valueParameter fq=golden.sema.None.equals.other vis=private flags=synthetic
+symbol s40 kind=function fq=golden.sema.useDataObject vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 object None sym=s45
-  decl d1 fun useDataObject suspend=0 inline=0 sym=s49
-expr e0 name(None) type=Class#45 ref=s45
-expr e1 name(None) type=Class#45 ref=s45
-expr e2 binary(equal) lhs=e0 rhs=e1 type=Boolean call=s47 map=[0->0] targs=[]
+  decl d0 object None sym=s36
+  decl d1 fun useDataObject suspend=0 inline=0 sym=s40
+expr e0 name(None) type=Class#36 ref=s36
+expr e1 name(None) type=Class#36 ref=s36
+expr e2 binary(equal) lhs=e0 rhs=e1 type=Boolean call=s38 map=[0->0] targs=[]

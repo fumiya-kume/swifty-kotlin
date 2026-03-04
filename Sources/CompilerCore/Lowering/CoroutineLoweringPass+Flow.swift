@@ -18,25 +18,38 @@ extension CoroutineLoweringPass {
         let kkFlowCreateName = ctx.interner.intern("kk_flow_create")
         let kkFlowEmitName = ctx.interner.intern("kk_flow_emit")
         let kkFlowCollectName = ctx.interner.intern("kk_flow_collect")
-        let kkFlowMapName = ctx.interner.intern("kk_flow_map")
-        let kkFlowFilterName = ctx.interner.intern("kk_flow_filter")
-        let kkFlowTakeName = ctx.interner.intern("kk_flow_take")
 
         module.arena.transformFunctions { function in
             var updated = function
 
-            // Phase 1: identify which expression IDs hold Flow values.
             var flowExprIDs: Set<Int32> = []
             var flowGlobalSymbols: Set<SymbolID> = []
+
+            enum RuntimeFlowTag: Int64 {
+                case emit = 0
+                case map = 1
+                case filter = 2
+                case take = 3
+            }
 
             func markFlowExpr(_ result: KIRExprID?) -> Bool {
                 guard let result else { return false }
                 return flowExprIDs.insert(result.rawValue).inserted
             }
 
-            func isFlowTransformCall(_ callee: InternedString, argumentCount: Int) -> Bool {
-                (callee == mapName || callee == filterName || callee == takeName) && argumentCount == 2 ||
-                    (callee == kkFlowMapName || callee == kkFlowFilterName || callee == kkFlowTakeName) && argumentCount == 2
+            func isFlowTransformEmitCall(_ callee: InternedString, _ arguments: [KIRExprID]) -> Bool {
+                guard callee == kkFlowEmitName, arguments.count == 3 else {
+                    return false
+                }
+                guard let tagExpr = module.arena.expr(arguments[2]),
+                      case let .intLiteral(tagValue) = tagExpr,
+                      tagValue == RuntimeFlowTag.map.rawValue ||
+                      tagValue == RuntimeFlowTag.filter.rawValue ||
+                      tagValue == RuntimeFlowTag.take.rawValue
+                else {
+                    return false
+                }
+                return true
             }
 
             var changed = true
@@ -50,36 +63,47 @@ extension CoroutineLoweringPass {
                             if markFlowExpr(result) { changed = true }
                             continue
                         }
-                        if callee == kkFlowCreateName, arguments.count == 1 {
+                        if callee == kkFlowCreateName, arguments.count == 2 {
                             if markFlowExpr(result) { changed = true }
                             continue
                         }
-
-                        // map/filter/take produce a new flow handle when the
-                        // first argument is already known as a flow handle.
-                        if isFlowTransformCall(callee, argumentCount: arguments.count),
+                        if isFlowTransformEmitCall(callee, arguments) {
+                            if markFlowExpr(result) { changed = true }
+                            continue
+                        }
+                        if (callee == mapName || callee == filterName || callee == takeName),
+                           arguments.count == 2,
                            let flowHandleArg = arguments.first,
                            flowExprIDs.contains(flowHandleArg.rawValue)
                         {
                             if markFlowExpr(result) { changed = true }
                             continue
                         }
-
-                        // collect call form (collect(flow, lambda)) seeds the
-                        // first argument as a flow handle.
-                        if (callee == collectName && arguments.count == 2 && symbol == nil) ||
-                            (callee == kkFlowCollectName && arguments.count == 2)
+                        if (callee == collectName || callee == kkFlowCollectName),
+                           (arguments.count == 2 || arguments.count == 3),
+                           let flowHandleArg = arguments.first,
+                           flowExprIDs.contains(flowHandleArg.rawValue)
                         {
-                            if let flowHandleArg = arguments.first,
-                               flowExprIDs.insert(flowHandleArg.rawValue).inserted
-                            {
-                                changed = true
-                            }
+                            if flowExprIDs.insert(flowHandleArg.rawValue).inserted { changed = true }
+                            continue
+                        }
+                        if callee == emitName,
+                           arguments.count == 1,
+                           symbol == nil
+                        {
+                            if markFlowExpr(result) { changed = true }
                             continue
                         }
 
                     case let .virtualCall(_, callee, receiver, arguments, result, _, _, _):
-                        if callee == mapName || callee == filterName || callee == takeName,
+                        if (callee == mapName || callee == filterName || callee == takeName),
+                           arguments.count == 1,
+                           flowExprIDs.contains(receiver.rawValue)
+                        {
+                            if markFlowExpr(result) { changed = true }
+                            continue
+                        }
+                        if callee == collectName,
                            arguments.count == 1,
                            flowExprIDs.contains(receiver.rawValue)
                         {
@@ -119,14 +143,13 @@ extension CoroutineLoweringPass {
             let hasFlowLikeCalls = function.body.contains { instruction in
                 switch instruction {
                 case let .call(_, callee, _, _, _, _, _):
-                    callee == flowName || callee == emitName || callee == collectName ||
+                    return callee == flowName || callee == emitName || callee == collectName ||
                         callee == mapName || callee == filterName || callee == takeName ||
-                        callee == kkFlowCreateName || callee == kkFlowEmitName || callee == kkFlowCollectName ||
-                        callee == kkFlowMapName || callee == kkFlowFilterName || callee == kkFlowTakeName
+                        callee == kkFlowCreateName || callee == kkFlowEmitName || callee == kkFlowCollectName
                 case let .virtualCall(_, callee, _, _, _, _, _, _):
-                    callee == mapName || callee == filterName || callee == takeName || callee == collectName
+                    return callee == mapName || callee == filterName || callee == takeName || callee == collectName
                 default:
-                    false
+                    return false
                 }
             }
 
@@ -138,15 +161,23 @@ extension CoroutineLoweringPass {
             var loweredBody: [KIRInstruction] = []
             loweredBody.reserveCapacity(function.body.count)
 
+            func appendIntConstantInBody(_ value: Int64) -> KIRExprID {
+                let expr = module.arena.appendExpr(
+                    .temporary(Int32(module.arena.expressions.count)),
+                    type: ctx.sema?.types.intType ?? TypeID.invalid
+                )
+                loweredBody.append(.constValue(result: expr, value: .intLiteral(value)))
+                return expr
+            }
+
             for instruction in function.body {
                 switch instruction {
                 case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall):
-                    // flow(lambda) → kk_flow_create(lambda)
                     if callee == flowName, arguments.count == 1, symbol == nil {
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: kkFlowCreateName,
-                            arguments: arguments,
+                            arguments: [arguments[0], appendIntConstantInBody(0)],
                             result: result,
                             canThrow: false,
                             thrownResult: nil,
@@ -154,12 +185,16 @@ extension CoroutineLoweringPass {
                         ))
                         continue
                     }
-                    // emit(value) → kk_flow_emit(value) [uses flowEmitContext]
+
                     if callee == emitName, arguments.count == 1, symbol == nil {
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: kkFlowEmitName,
-                            arguments: arguments,
+                            arguments: [
+                                appendIntConstantInBody(0),
+                                arguments[0],
+                                appendIntConstantInBody(RuntimeFlowTag.emit.rawValue),
+                            ],
                             result: result,
                             canThrow: false,
                             thrownResult: nil,
@@ -167,56 +202,74 @@ extension CoroutineLoweringPass {
                         ))
                         continue
                     }
-                    // map(flowHandle, lambda) → kk_flow_map(flowHandle, lambda)
+
                     if callee == mapName, arguments.count == 2, symbol == nil,
-                       flowExprIDs.contains(arguments[0].rawValue)
-                    {
+                       flowExprIDs.contains(arguments[0].rawValue) {
                         loweredBody.append(.call(
                             symbol: nil,
-                            callee: kkFlowMapName,
-                            arguments: arguments,
+                            callee: kkFlowEmitName,
+                            arguments: [arguments[0], arguments[1], appendIntConstantInBody(RuntimeFlowTag.map.rawValue)],
                             result: result,
                             canThrow: false,
                             thrownResult: nil,
                             isSuperCall: isSuperCall
                         ))
-                        if let result { flowExprIDs.insert(result.rawValue) }
+                        if let result {
+                            flowExprIDs.insert(result.rawValue)
+                        }
                         continue
                     }
-                    // filter(flowHandle, predicate) → kk_flow_filter(flowHandle, predicate)
+
                     if callee == filterName, arguments.count == 2, symbol == nil,
-                       flowExprIDs.contains(arguments[0].rawValue)
-                    {
+                       flowExprIDs.contains(arguments[0].rawValue) {
                         loweredBody.append(.call(
                             symbol: nil,
-                            callee: kkFlowFilterName,
-                            arguments: arguments,
+                            callee: kkFlowEmitName,
+                            arguments: [arguments[0], arguments[1], appendIntConstantInBody(RuntimeFlowTag.filter.rawValue)],
                             result: result,
                             canThrow: false,
                             thrownResult: nil,
                             isSuperCall: isSuperCall
                         ))
-                        if let result { flowExprIDs.insert(result.rawValue) }
+                        if let result {
+                            flowExprIDs.insert(result.rawValue)
+                        }
                         continue
                     }
-                    // take(flowHandle, n) → kk_flow_take(flowHandle, n)
+
                     if callee == takeName, arguments.count == 2, symbol == nil,
-                       flowExprIDs.contains(arguments[0].rawValue)
-                    {
+                       flowExprIDs.contains(arguments[0].rawValue) {
                         loweredBody.append(.call(
                             symbol: nil,
-                            callee: kkFlowTakeName,
-                            arguments: arguments,
+                            callee: kkFlowEmitName,
+                            arguments: [arguments[0], arguments[1], appendIntConstantInBody(RuntimeFlowTag.take.rawValue)],
                             result: result,
                             canThrow: false,
                             thrownResult: nil,
                             isSuperCall: isSuperCall
                         ))
-                        if let result { flowExprIDs.insert(result.rawValue) }
+                        if let result {
+                            flowExprIDs.insert(result.rawValue)
+                        }
                         continue
                     }
-                    // collect(flowHandle, lambda) → kk_flow_collect(flowHandle, lambda)
+
                     if callee == collectName, arguments.count == 2, symbol == nil,
+                       flowExprIDs.contains(arguments[0].rawValue)
+                    {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkFlowCollectName,
+                            arguments: [arguments[0], arguments[1], appendIntConstantInBody(0)],
+                            result: result,
+                            canThrow: canThrow,
+                            thrownResult: thrownResult,
+                            isSuperCall: isSuperCall
+                        ))
+                        continue
+                    }
+
+                    if callee == collectName, arguments.count == 3, symbol == nil,
                        flowExprIDs.contains(arguments[0].rawValue)
                     {
                         loweredBody.append(.call(
@@ -230,66 +283,101 @@ extension CoroutineLoweringPass {
                         ))
                         continue
                     }
+
+                    if callee == kkFlowCollectName,
+                       arguments.count == 2,
+                       flowExprIDs.contains(arguments[0].rawValue)
+                    {
+                        loweredBody.append(.call(
+                            symbol: symbol,
+                            callee: callee,
+                            arguments: [arguments[0], arguments[1], appendIntConstantInBody(0)],
+                            result: result,
+                            canThrow: canThrow,
+                            thrownResult: thrownResult,
+                            isSuperCall: isSuperCall
+                        ))
+                        continue
+                    }
+
                     loweredBody.append(instruction)
 
-                // Method-call form: flow.map { }, flow.collect { }, etc.
-                case let .virtualCall(_, callee, receiver, arguments, result, canThrow, thrownResult, _):
+                case let .virtualCall(symbol, callee, receiver, arguments, result, canThrow, thrownResult, dispatch):
                     if callee == mapName, arguments.count == 1,
                        flowExprIDs.contains(receiver.rawValue)
                     {
                         loweredBody.append(.call(
                             symbol: nil,
-                            callee: kkFlowMapName,
-                            arguments: [receiver] + arguments,
+                            callee: kkFlowEmitName,
+                            arguments: [receiver, arguments[0], appendIntConstantInBody(RuntimeFlowTag.map.rawValue)],
                             result: result,
                             canThrow: false,
                             thrownResult: nil
                         ))
-                        if let result { flowExprIDs.insert(result.rawValue) }
+                        if let result {
+                            flowExprIDs.insert(result.rawValue)
+                        }
                         continue
                     }
+
                     if callee == filterName, arguments.count == 1,
                        flowExprIDs.contains(receiver.rawValue)
                     {
                         loweredBody.append(.call(
                             symbol: nil,
-                            callee: kkFlowFilterName,
-                            arguments: [receiver] + arguments,
+                            callee: kkFlowEmitName,
+                            arguments: [receiver, arguments[0], appendIntConstantInBody(RuntimeFlowTag.filter.rawValue)],
                             result: result,
                             canThrow: false,
                             thrownResult: nil
                         ))
-                        if let result { flowExprIDs.insert(result.rawValue) }
+                        if let result {
+                            flowExprIDs.insert(result.rawValue)
+                        }
                         continue
                     }
+
                     if callee == takeName, arguments.count == 1,
                        flowExprIDs.contains(receiver.rawValue)
                     {
                         loweredBody.append(.call(
                             symbol: nil,
-                            callee: kkFlowTakeName,
-                            arguments: [receiver] + arguments,
+                            callee: kkFlowEmitName,
+                            arguments: [receiver, arguments[0], appendIntConstantInBody(RuntimeFlowTag.take.rawValue)],
                             result: result,
                             canThrow: false,
                             thrownResult: nil
                         ))
-                        if let result { flowExprIDs.insert(result.rawValue) }
+                        if let result {
+                            flowExprIDs.insert(result.rawValue)
+                        }
                         continue
                     }
+
                     if callee == collectName, arguments.count == 1,
                        flowExprIDs.contains(receiver.rawValue)
                     {
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: kkFlowCollectName,
-                            arguments: [receiver] + arguments,
+                            arguments: [receiver, arguments[0], appendIntConstantInBody(0)],
                             result: result,
                             canThrow: canThrow,
                             thrownResult: thrownResult
                         ))
                         continue
                     }
-                    loweredBody.append(instruction)
+
+                    loweredBody.append(.virtualCall(
+                        symbol: symbol,
+                        callee: callee,
+                        receiver: receiver,
+                        arguments: arguments,
+                        result: result,
+                        canThrow: canThrow,
+                        thrownResult: thrownResult,
+                        dispatch: dispatch
+                    ))
 
                 default:
                     loweredBody.append(instruction)

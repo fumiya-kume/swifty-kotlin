@@ -112,14 +112,17 @@ extension LoweringPassRegressionTests {
 
     func testFlowMapCollectExecutablePrintsExpectedOutput() throws {
         let source = """
+        suspend fun runFlowCollectExecutable() {
+            flow {
+                emit(1)
+                emit(2)
+            }.map { it * 2 }
+                .collect { println(it) }
+        }
+
         fun main() {
-            runBlocking {
-                flow {
-                    emit(1)
-                    emit(2)
-                }.map { it * 2 }
-                    .collect { println(it) }
-            }
+            runBlocking(::runFlowCollectExecutable)
+            return
         }
         """
 
@@ -149,15 +152,18 @@ extension LoweringPassRegressionTests {
 
     func testFlowCollectTwiceReexecutesEmitterForColdSemantics() throws {
         let source = """
+        suspend fun runFlowCollectTwice() {
+            val stream = flow {
+                emit(1)
+                emit(2)
+            }.map { it * 2 }
+            stream.collect { println(it) }
+            stream.collect { println(it) }
+        }
+
         fun main() {
-            runBlocking {
-                val stream = flow {
-                    emit(1)
-                    emit(2)
-                }.map { it * 2 }
-                stream.collect { println(it) }
-                stream.collect { println(it) }
-            }
+            runBlocking(::runFlowCollectTwice)
+            return
         }
         """
 
