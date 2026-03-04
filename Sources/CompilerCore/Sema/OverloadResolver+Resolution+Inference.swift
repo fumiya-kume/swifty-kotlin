@@ -55,8 +55,9 @@ extension OverloadResolver {
     ) -> Diagnostic? {
         for (index, typeParamSymbol) in signature.typeParameterSymbols.enumerated() {
             // Get all upper bounds for this type parameter
-            let upperBounds: [TypeID] = if index < signature.typeParameterUpperBounds.count {
-                signature.typeParameterUpperBounds.compactMap { $0 }
+            let upperBounds: [TypeID] = if index < signature.typeParameterUpperBounds.count,
+               let bound = signature.typeParameterUpperBounds[index] {
+                [bound]
             } else {
                 ctx.symbols.typeParameterUpperBounds(for: typeParamSymbol)
             }

@@ -177,16 +177,16 @@ extension BuildASTPhase {
     ) -> [TypeParamDecl] {
         guard !whereClauses.isEmpty else { return typeParams }
         return typeParams.map { param in
-            if !param.upperBounds.isEmpty { return param }
             let paramClauses = whereClauses.filter { $0.name == param.name }
             guard !paramClauses.isEmpty else {
                 return param
             }
+            let mergedBounds = param.upperBounds + paramClauses.map { $0.bound }
             return TypeParamDecl(
                 name: param.name,
                 variance: param.variance,
                 isReified: param.isReified,
-                upperBounds: paramClauses.map { $0.bound }
+                upperBounds: mergedBounds
             )
         }
     }
