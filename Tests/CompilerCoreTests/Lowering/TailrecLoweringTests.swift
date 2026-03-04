@@ -197,10 +197,10 @@ final class TailrecLoweringTests: XCTestCase {
 
     // MARK: - E2E integration test
 
-    /// Compile a tailrec factorial function with n=100000 and verify it
-    /// completes without StackOverflow — the loop transformation prevents
-    /// unbounded stack growth.
-    func testTailrecFactorialDeepRecursionDoesNotStackOverflow() throws {
+    /// Compile a tailrec factorial function and verify that tailrec lowering
+    /// transforms the recursion into a loop in KIR (no self-recursive calls
+    /// remain and control flow uses a loop-head label with jump).
+    func testTailrecFactorialLoweredToLoop() throws {
         let source = """
         tailrec fun fact(n: Int, acc: Int = 1): Int {
             if (n == 0) return acc

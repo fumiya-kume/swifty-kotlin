@@ -37,6 +37,7 @@ final class BuildKIRRegressionTests: XCTestCase {
 
             let module = try XCTUnwrap(ctx.kir)
             XCTAssertEqual(module.executedLowerings, [
+                "TailrecLowering",
                 "NormalizeBlocks",
                 "OperatorLowering",
                 "ForLowering",
@@ -46,7 +47,6 @@ final class BuildKIRRegressionTests: XCTestCase {
                 "JvmStaticLowering",
                 "DataEnumSealedSynthesis",
                 "LambdaClosureConversion",
-                "TailrecLowering",
                 "InlineLowering",
                 "CoroutineLowering",
                 "ABILowering",

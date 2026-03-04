@@ -547,16 +547,30 @@ extension DataFlowSemaPhase {
     }
 
     /// Check if the given expression is a call to a function with the given name.
+    /// Handles direct calls (`f(...)`) and qualified self-calls (`this.f(...)`).
     private func isSelfRecursiveCall(
         _ exprID: ExprID, functionName: InternedString, ast: ASTModule
     ) -> Bool {
-        guard let expr = ast.arena.expr(exprID),
-              case let .call(callee, _, _, _) = expr,
-              let calleeExpr = ast.arena.expr(callee),
-              case let .nameRef(name, _) = calleeExpr
-        else {
+        guard let expr = ast.arena.expr(exprID) else { return false }
+
+        switch expr {
+        case let .call(callee, _, _, _):
+            // Direct self call: `f(...)`.
+            guard let calleeExpr = ast.arena.expr(callee),
+                  case let .nameRef(name, _) = calleeExpr
+            else { return false }
+            return name == functionName
+
+        case let .memberCall(receiver, callee, _, _, _),
+             let .safeMemberCall(receiver, callee, _, _, _):
+            // Qualified self call: `this.f(...)` / `this?.f(...)`.
+            guard let receiverExpr = ast.arena.expr(receiver),
+                  case .thisRef = receiverExpr
+            else { return false }
+            return callee == functionName
+
+        default:
             return false
         }
-        return name == functionName
     }
 }
