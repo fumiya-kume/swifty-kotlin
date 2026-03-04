@@ -138,6 +138,7 @@ extension CallTypeChecker {
                 : lookupReceiverType
             if receiverForCheck == intType || receiverForCheck == longType,
                argTypes[0] == intType
+            // swiftlint:disable:next opening_brace
             {
                 let finalType = safeCall ? sema.types.makeNullable(stringType) : stringType
                 sema.bindings.bindExprType(id, type: finalType)
@@ -342,6 +343,7 @@ extension CallTypeChecker {
                    memberName: calleeName,
                    sema: sema
                )
+            // swiftlint:disable:next opening_brace
             {
                 if let memberSymbol = sema.symbols.symbol(staticMember.symbol),
                    !ctx.visibilityChecker.isAccessible(
@@ -360,6 +362,7 @@ extension CallTypeChecker {
             }
             if args.isEmpty,
                interner.resolve(calleeName) == "length"
+            // swiftlint:disable:next opening_brace
             {
                 let receiverTypeForCheck = safeCall
                     ? sema.types.makeNonNullable(lookupReceiverType)
@@ -503,6 +506,7 @@ extension CallTypeChecker {
             if !isClassNameReceiver,
                args.count == 1,
                interner.resolve(calleeName) == "to"
+            // swiftlint:disable:next opening_brace
             {
                 let resultType = sema.types.anyType
                 let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
