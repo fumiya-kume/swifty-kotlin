@@ -750,6 +750,23 @@
       ]
     },
     {
+      "task": "STDLIB-006",
+      "category": "stdlib",
+      "description": "String stdlib functions (trim/split/replace/startsWith/endsWith/contains/toInt/toDouble/format)",
+      "cases": [
+        {
+          "type": "golden-sema",
+          "name": "stdlib_string_ops",
+          "template": "Scripts/test_templates/sema/stdlib_string_ops.kt"
+        },
+        {
+          "type": "diff",
+          "name": "stdlib_string_ops",
+          "template": "Scripts/test_templates/diff/stdlib_string_ops.kt"
+        }
+      ]
+    },
+    {
       "task": "MPP-001",
       "category": "multiplatform",
       "description": "expect/actual declarations",

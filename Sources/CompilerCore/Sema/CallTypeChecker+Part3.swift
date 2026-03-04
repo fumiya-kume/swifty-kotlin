@@ -719,6 +719,9 @@ extension CallTypeChecker {
         }
 
         let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
+        if sema.symbols.externalLinkName(for: chosen) == "kk_string_split" {
+            sema.bindings.markCollectionExpr(id)
+        }
         if isSuperCall { sema.bindings.markSuperCall(id) }
         let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
         sema.bindings.bindExprType(id, type: finalType)

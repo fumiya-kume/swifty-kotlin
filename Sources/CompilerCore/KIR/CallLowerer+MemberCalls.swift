@@ -536,7 +536,8 @@ extension CallLowerer {
     ) {
         var finalArguments = arguments
         if normalized.defaultMask != 0,
-           let chosenCallee
+           let chosenCallee,
+           (sema.symbols.externalLinkName(for: chosenCallee)?.isEmpty ?? true)
         {
             appendReifiedTypeTokens(
                 chosenCallee: chosenCallee,

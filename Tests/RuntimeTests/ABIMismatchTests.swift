@@ -79,8 +79,8 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testStringFunctionCount() {
-        // kk_string_from_utf8, kk_string_concat, kk_string_compareTo, kk_string_length
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 4)
+        // kk_string_from_utf8/concat/compareTo/length + STDLIB-006 string ABI
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 13)
     }
 
     func testPrintlnFunctionCount() {
@@ -213,6 +213,86 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(spec.returnType, .intptr)
         XCTAssertEqual(spec.parameters.count, 1)
         XCTAssertEqual(spec.parameters[0].type, .intptr)
+    }
+
+    func testKKStringTrimSignature() throws {
+        let spec = try requireSpec("kk_string_trim")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 1)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+    }
+
+    func testKKStringSplitSignature() throws {
+        let spec = try requireSpec("kk_string_split")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 5)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
+        XCTAssertEqual(spec.parameters[3].type, .intptr)
+        XCTAssertEqual(spec.parameters[4].type, .nullableIntptrPointer)
+    }
+
+    func testKKStringReplaceSignature() throws {
+        let spec = try requireSpec("kk_string_replace")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 4)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
+        XCTAssertEqual(spec.parameters[3].type, .intptr)
+    }
+
+    func testKKStringStartsWithSignature() throws {
+        let spec = try requireSpec("kk_string_startsWith")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 4)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
+        XCTAssertEqual(spec.parameters[3].type, .intptr)
+    }
+
+    func testKKStringEndsWithSignature() throws {
+        let spec = try requireSpec("kk_string_endsWith")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 3)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
+    }
+
+    func testKKStringContainsSignature() throws {
+        let spec = try requireSpec("kk_string_contains")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 3)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
+    }
+
+    func testKKStringToIntSignature() throws {
+        let spec = try requireSpec("kk_string_toInt")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 2)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].type, .nullableIntptrPointer)
+    }
+
+    func testKKStringToDoubleSignature() throws {
+        let spec = try requireSpec("kk_string_toDouble")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 2)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].type, .nullableIntptrPointer)
+    }
+
+    func testKKStringFormatSignature() throws {
+        let spec = try requireSpec("kk_string_format")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 2)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
     }
 
     func testKKOpIsSignature() throws {

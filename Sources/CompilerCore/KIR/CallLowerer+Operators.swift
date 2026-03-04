@@ -85,7 +85,9 @@ extension CallLowerer {
                     finalArguments.append(tokenExpr)
                 }
             }
-            if normalizedResult.defaultMask != 0 {
+            if normalizedResult.defaultMask != 0,
+               (sema.symbols.externalLinkName(for: callBinding.chosenCallee)?.isEmpty ?? true)
+            {
                 let maskExpr = arena.appendExpr(.intLiteral(Int64(normalizedResult.defaultMask)), type: intType)
                 instructions.append(.constValue(result: maskExpr, value: .intLiteral(Int64(normalizedResult.defaultMask))))
                 finalArguments.append(maskExpr)

@@ -187,6 +187,54 @@ final class CollectionLiteralLoweringTests: XCTestCase {
                       "setOf should be rewritten to kk_list_of, got: \(callees)")
     }
 
+    func testStringSplitResultIsTreatedAsListForPrintlnRewrite() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let sourceExpr = arena.appendExpr(.temporary(0))
+        let delimitersExpr = arena.appendExpr(.temporary(1))
+        let ignoreCaseExpr = arena.appendExpr(.temporary(2))
+        let limitExpr = arena.appendExpr(.temporary(3))
+        let splitResult = arena.appendExpr(.temporary(4))
+        let printlnResult = arena.appendExpr(.temporary(5))
+        let fn = KIRFunction(
+            symbol: SymbolID(rawValue: 1),
+            name: interner.intern("main"),
+            params: [],
+            returnType: TypeSystem().unitType,
+            body: [
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_split"),
+                    arguments: [sourceExpr, delimitersExpr, ignoreCaseExpr, limitExpr],
+                    result: splitResult,
+                    canThrow: true,
+                    thrownResult: nil
+                ),
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("kk_println_any"),
+                    arguments: [splitResult],
+                    result: printlnResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .returnUnit,
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let declID = arena.appendDecl(.function(fn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertTrue(callees.contains("kk_string_split"))
+        XCTAssertTrue(callees.contains("kk_list_to_string"),
+                      "split result should be recognized as list and routed through kk_list_to_string")
+    }
+
     // MARK: - shouldRun always returns true (default implementation)
 
     func testShouldRunAlwaysReturnsTrue() {
