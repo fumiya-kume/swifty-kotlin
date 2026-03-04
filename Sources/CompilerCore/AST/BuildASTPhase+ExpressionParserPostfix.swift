@@ -25,11 +25,15 @@ extension BuildASTPhase.ExpressionParser {
                         continue
                     }
                     if matches(.symbol(.lBrace)), let trailingLambda = parseLambdaLiteral(isTrailing: true) {
-                        let fallbackEnd = astArena.exprRange(trailingLambda)?.end ?? (astArena.exprRange(expr)?.end ?? tokens[max(0, index - 1)].range.end)
+                        let fallbackEnd = astArena.exprRange(trailingLambda)?.end
+                            ?? (astArena.exprRange(expr)?.end ?? tokens[max(0, index - 1)].range.end)
                         let endRange = SourceRange(start: fallbackEnd, end: fallbackEnd)
                         let fallbackRange = astArena.exprRange(expr) ?? endRange
                         let range = mergeRanges(astArena.exprRange(expr), endRange, fallback: fallbackRange)
-                        expr = astArena.appendExpr(.call(callee: expr, typeArgs: typeArgs, args: [CallArgument(expr: trailingLambda)], range: range))
+                        expr = astArena.appendExpr(.call(
+                            callee: expr, typeArgs: typeArgs,
+                            args: [CallArgument(expr: trailingLambda)], range: range
+                        ))
                         continue
                     }
                 }
@@ -52,11 +56,14 @@ extension BuildASTPhase.ExpressionParser {
             }
 
             if matches(.symbol(.lBrace)), let trailingLambda = parseLambdaLiteral(isTrailing: true) {
-                let fallbackEnd = astArena.exprRange(trailingLambda)?.end ?? (astArena.exprRange(expr)?.end ?? tokens[max(0, index - 1)].range.end)
+                let fallbackEnd = astArena.exprRange(trailingLambda)?.end
+                    ?? (astArena.exprRange(expr)?.end ?? tokens[max(0, index - 1)].range.end)
                 let endRange = SourceRange(start: fallbackEnd, end: fallbackEnd)
                 let fallbackRange = astArena.exprRange(expr) ?? endRange
                 let range = mergeRanges(astArena.exprRange(expr), endRange, fallback: fallbackRange)
-                expr = astArena.appendExpr(.call(callee: expr, typeArgs: [], args: [CallArgument(expr: trailingLambda)], range: range))
+                expr = astArena.appendExpr(
+                    .call(callee: expr, typeArgs: [], args: [CallArgument(expr: trailingLambda)], range: range)
+                )
                 continue
             }
 
