@@ -527,18 +527,18 @@ public func kk_kxmini_delay(_ milliseconds: Int, _ continuation: Int) -> Int {
 
 // MARK: - Flow Runtime (CORO-003)
 
-fileprivate enum FlowStepKind {
+private enum FlowStepKind {
     case mapStep(fnPtr: Int)
     case filterStep(fnPtr: Int)
     case takeStep(count: Int)
 }
 
 /// Opaque handle for a cold Flow: stores emitter fn ptr and a lazy step chain.
-fileprivate final class RuntimeFlowHandle {
+private final class RuntimeFlowHandle {
     let emitterFnPtr: Int
     var steps: [FlowStepKind] = []
     var collectorFnPtr: Int = 0
-    var takeRemaining: Int = Int.max
+    var takeRemaining = Int.max
 
     init(emitterFnPtr: Int) {
         self.emitterFnPtr = emitterFnPtr

@@ -7,19 +7,19 @@ extension CoroutineLoweringPass {
     /// runtime ABI equivalents. Mirrors the `sequenceExprIDs` pattern in
     /// `CollectionLiteralLoweringPass`.
     func lowerFlowExpressions(module: KIRModule, ctx: KIRContext) {
-        let flowName    = ctx.interner.intern("flow")
-        let emitName    = ctx.interner.intern("emit")
+        let flowName = ctx.interner.intern("flow")
+        let emitName = ctx.interner.intern("emit")
         let collectName = ctx.interner.intern("collect")
-        let mapName     = ctx.interner.intern("map")
-        let filterName  = ctx.interner.intern("filter")
-        let takeName    = ctx.interner.intern("take")
+        let mapName = ctx.interner.intern("map")
+        let filterName = ctx.interner.intern("filter")
+        let takeName = ctx.interner.intern("take")
 
-        let kkFlowCreateName  = ctx.interner.intern("kk_flow_create")
-        let kkFlowEmitName    = ctx.interner.intern("kk_flow_emit")
+        let kkFlowCreateName = ctx.interner.intern("kk_flow_create")
+        let kkFlowEmitName = ctx.interner.intern("kk_flow_emit")
         let kkFlowCollectName = ctx.interner.intern("kk_flow_collect")
-        let kkFlowMapName     = ctx.interner.intern("kk_flow_map")
-        let kkFlowFilterName  = ctx.interner.intern("kk_flow_filter")
-        let kkFlowTakeName    = ctx.interner.intern("kk_flow_take")
+        let kkFlowMapName = ctx.interner.intern("kk_flow_map")
+        let kkFlowFilterName = ctx.interner.intern("kk_flow_filter")
+        let kkFlowTakeName = ctx.interner.intern("kk_flow_take")
 
         module.arena.transformFunctions { function in
             var updated = function
