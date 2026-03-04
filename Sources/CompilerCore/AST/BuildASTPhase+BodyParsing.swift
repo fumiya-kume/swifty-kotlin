@@ -424,10 +424,6 @@ extension BuildASTPhase {
             "\(value)"
         case let .charLiteral(value):
             "'\(value)'"
-        case .keyword(.true):
-            "true"
-        case .keyword(.false):
-            "false"
         case .symbol(.assign):
             "="
         case .symbol(.dot):

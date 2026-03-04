@@ -35,11 +35,11 @@ expr e9 memberCall recv=e4 callee=map args=[_:e8] type=Any
 expr e10 name(listOf) type=_
 expr e11 int(1) type=Int
 expr e12 string(a) type=String
-expr e13 memberCall recv=e11 callee=to args=[_:e12] type=<error>
+expr e13 memberCall recv=e11 callee=to args=[_:e12] type=Any
 expr e14 int(2) type=Int
 expr e15 string(b) type=String
-expr e16 memberCall recv=e14 callee=to args=[_:e15] type=<error>
-expr e17 call callee=e10 args=[_:e13,_:e16] type=Class#12<<error>>
+expr e16 memberCall recv=e14 callee=to args=[_:e15] type=Any
+expr e17 call callee=e10 args=[_:e13,_:e16] type=Class#12<Any>
 expr e18 name(num) type=Any ref=s20
 expr e19 name(__destructured_0) type=Any ref=s-1005632
 expr e20 destructuringDecl names=[num,_] mutable=0 init=e19 type=Unit
