@@ -129,7 +129,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
                 )
                 if nominalSymbol.kind == .object {
                     let toStringName = ctx.interner.intern("toString")
-                    let objectNameStr = ctx.interner.intern(ctx.interner.resolve(nominalSymbol.name))
+                    let objectNameStr = nominalSymbol.name
                     let toStringFQName = nominalSymbol.fqName + [toStringName]
                     let existingToStringSymbol = sema.symbols.lookupAll(fqName: toStringFQName).first { id in
                         sema.symbols.symbol(id).map { $0.flags.contains(.synthetic) } ?? false
@@ -303,12 +303,12 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         ]
         let signature = FunctionSignature(
             receiverType: receiverType,
-            parameterTypes: [receiverType],
+            parameterTypes: [],
             returnType: stringType,
             isSuspend: false,
-            valueParameterSymbols: [parameterSymbol],
-            valueParameterHasDefaultValues: [false],
-            valueParameterIsVararg: [false],
+            valueParameterSymbols: [],
+            valueParameterHasDefaultValues: [],
+            valueParameterIsVararg: [],
             typeParameterSymbols: []
         )
         appendSyntheticFunctionWithSymbol(
@@ -389,12 +389,12 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         ]
         let signature = FunctionSignature(
             receiverType: receiverType,
-            parameterTypes: [receiverType, nullableAnyType],
+            parameterTypes: [nullableAnyType],
             returnType: boolType,
             isSuspend: false,
-            valueParameterSymbols: [receiverParam.symbol, paramSymbol],
-            valueParameterHasDefaultValues: [false, false],
-            valueParameterIsVararg: [false, false],
+            valueParameterSymbols: [paramSymbol],
+            valueParameterHasDefaultValues: [false],
+            valueParameterIsVararg: [false],
             typeParameterSymbols: []
         )
         appendSyntheticFunctionWithSymbol(

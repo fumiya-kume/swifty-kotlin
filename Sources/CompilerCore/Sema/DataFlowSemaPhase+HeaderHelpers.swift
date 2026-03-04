@@ -206,15 +206,24 @@ extension DataFlowSemaPhase {
             flags: [.synthetic]
         )
         symbols.setParentSymbol(ownerSymbol, for: funcSymbol)
+        let otherParamName = interner.intern("other")
+        let otherParamSymbol = symbols.define(
+            kind: .valueParameter,
+            name: otherParamName,
+            fqName: equalsFQName + [otherParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: objectType,
                 parameterTypes: [nullableAnyType],
                 returnType: boolType,
                 isSuspend: false,
-                valueParameterSymbols: [],
-                valueParameterHasDefaultValues: [],
-                valueParameterIsVararg: [],
+                valueParameterSymbols: [otherParamSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
                 typeParameterSymbols: []
             ),
             for: funcSymbol
