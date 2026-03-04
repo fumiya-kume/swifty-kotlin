@@ -110,12 +110,15 @@ extension BuildASTPhase {
         return aliases
     }
 
-    func declarationSuperTypes(
+    /// Parses supertype entries for class declarations, including optional
+    /// `by expr` delegation (e.g. `class Foo(impl: Printer) : Printer by impl`).
+    /// Returns `[SuperTypeEntry]`; use `declarationSuperTypes` for interface/object.
+    func declarationSuperTypeEntries(
         from nodeID: NodeID,
         in arena: SyntaxArena,
         interner: StringInterner,
         astArena: ASTArena
-    ) -> [TypeRefID] {
+    ) -> [SuperTypeEntry] {
         let tokens = collectTokens(from: nodeID, in: arena)
         guard !tokens.isEmpty else {
             return []
@@ -141,7 +144,7 @@ extension BuildASTPhase {
         }
         index += 1
 
-        var refs: [TypeRefID] = []
+        var entries: [SuperTypeEntry] = []
         var current: [Token] = []
         var depth = BracketDepth()
         while index < tokens.count {
@@ -154,12 +157,8 @@ extension BuildASTPhase {
                     break
                 }
                 if token.kind == .symbol(.comma) {
-                    if let ref = parseTypeRef(
-                        from: stripSuperTypeInvocation(from: current),
-                        interner: interner,
-                        astArena: astArena
-                    ) {
-                        refs.append(ref)
+                    if let entry = parseSuperTypeEntry(from: current, interner: interner, astArena: astArena) {
+                        entries.append(entry)
                     }
                     current.removeAll(keepingCapacity: true)
                     index += 1
@@ -171,14 +170,66 @@ extension BuildASTPhase {
             current.append(token)
             index += 1
         }
-        if let ref = parseTypeRef(
-            from: stripSuperTypeInvocation(from: current),
-            interner: interner,
-            astArena: astArena
-        ) {
-            refs.append(ref)
+        if let entry = parseSuperTypeEntry(from: current, interner: interner, astArena: astArena) {
+            entries.append(entry)
         }
-        return refs
+        return entries
+    }
+
+    // swiftlint:enable cyclomatic_complexity function_body_length
+
+    /// Parses a single supertype chunk, optionally with `by expr` (class delegation).
+    private func parseSuperTypeEntry(
+        from tokens: [Token],
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> SuperTypeEntry? {
+        let stripped = stripSuperTypeInvocation(from: tokens)
+        guard !stripped.isEmpty else { return nil }
+
+        var byIndex: Int?
+        var depth = BracketDepth()
+        for (index, token) in stripped.enumerated() {
+            if case .softKeyword(.by) = token.kind, depth.isAtTopLevel {
+                byIndex = index
+                break
+            }
+            depth.track(token.kind)
+        }
+
+        let typeTokens: [Token]
+        let exprTokens: ArraySlice<Token>
+        if let byIndex {
+            typeTokens = Array(stripped[..<byIndex])
+            exprTokens = stripped[(byIndex + 1)...].filter { $0.kind != .symbol(.semicolon) }
+        } else {
+            typeTokens = stripped
+            exprTokens = [][...]
+        }
+
+        guard let typeRef = parseTypeRef(from: typeTokens, interner: interner, astArena: astArena) else {
+            return nil
+        }
+
+        let delegateExpr: ExprID?
+        if exprTokens.isEmpty {
+            delegateExpr = nil
+        } else {
+            let parser = ExpressionParser(tokens: exprTokens, interner: interner, astArena: astArena)
+            delegateExpr = parser.parse()
+        }
+
+        return SuperTypeEntry(typeRef: typeRef, delegateExpression: delegateExpr)
+    }
+
+    func declarationSuperTypes(
+        from nodeID: NodeID,
+        in arena: SyntaxArena,
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> [TypeRefID] {
+        let entries = declarationSuperTypeEntries(from: nodeID, in: arena, interner: interner, astArena: astArena)
+        return entries.map(\.typeRef)
     }
 
     func stripSuperTypeInvocation(from tokens: [Token]) -> [Token] {

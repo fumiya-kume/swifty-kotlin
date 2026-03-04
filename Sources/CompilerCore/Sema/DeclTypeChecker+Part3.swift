@@ -183,6 +183,11 @@ extension DeclTypeChecker {
                 : sema.types.anyType
             locals[param.name] = (type, paramSymbol, false, true)
         }
+        if let receiverType = signature.receiverType {
+            let thisName = ctx.interner.intern("this")
+            let syntheticThisSymbol = SyntheticSymbolScheme.receiverParameterSymbol(for: symbol)
+            locals[thisName] = (receiverType, syntheticThisSymbol, false, true)
+        }
 
         let functionScope = FunctionScope(parent: ctx.scope, symbols: sema.symbols)
         for typeParameterSymbol in signature.typeParameterSymbols {

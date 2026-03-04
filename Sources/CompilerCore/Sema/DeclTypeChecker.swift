@@ -60,7 +60,6 @@ final class DeclTypeChecker {
 
     // MARK: - Property Type Checking (from +DeclTypeCheck.swift)
 
-    // swiftlint:disable:next function_body_length
     func typeCheckPropertyDecl(
         _ property: PropertyDecl,
         symbol: SymbolID,

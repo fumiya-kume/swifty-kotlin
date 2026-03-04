@@ -1,4 +1,3 @@
-// swiftlint:disable file_length
 /// Represents a single annotation usage in Kotlin source code, e.g. `@Suppress("UNCHECKED_CAST")`.
 public struct AnnotationNode {
     /// The simple or qualified name of the annotation (e.g. "Suppress", "kotlin.Deprecated").
@@ -62,6 +61,21 @@ public struct ConstructorDecl {
     }
 }
 
+/// A single supertype entry in a class declaration, optionally with delegation.
+/// Used for `class Foo(impl: Printer) : Printer by impl` — the `by expr` part
+/// delegates interface implementation to the given expression.
+public struct SuperTypeEntry: Equatable {
+    public let typeRef: TypeRefID
+    /// When present, this supertype (must be an interface) is implemented by
+    /// delegating to the given expression. Absent for non-delegated supertypes.
+    public let delegateExpression: ExprID?
+
+    public init(typeRef: TypeRefID, delegateExpression: ExprID? = nil) {
+        self.typeRef = typeRef
+        self.delegateExpression = delegateExpression
+    }
+}
+
 /// Represents a member in the class body initialization sequence.
 /// Used to guarantee Kotlin's declaration-order execution of property
 /// initializers and `init` blocks.
@@ -85,7 +99,8 @@ public struct ClassDecl {
     /// `true` when the class header contains explicit constructor parentheses,
     /// distinguishing `class Foo()` (has primary ctor) from `class Foo` (no primary ctor).
     public let hasPrimaryConstructorSyntax: Bool
-    public let superTypes: [TypeRefID]
+    /// Supertype entries; each may have an optional `by expr` for interface delegation.
+    public let superTypeEntries: [SuperTypeEntry]
     public let nestedTypeAliases: [TypeAliasDecl]
     public let enumEntries: [EnumEntryDecl]
     public let initBlocks: [FunctionBody]
@@ -111,7 +126,7 @@ public struct ClassDecl {
         typeParams: [TypeParamDecl] = [],
         primaryConstructorParams: [ValueParamDecl] = [],
         hasPrimaryConstructorSyntax: Bool = false,
-        superTypes: [TypeRefID] = [],
+        superTypeEntries: [SuperTypeEntry] = [],
         nestedTypeAliases: [TypeAliasDecl] = [],
         enumEntries: [EnumEntryDecl] = [],
         initBlocks: [FunctionBody] = [],
@@ -131,7 +146,7 @@ public struct ClassDecl {
         self.typeParams = typeParams
         self.primaryConstructorParams = primaryConstructorParams
         self.hasPrimaryConstructorSyntax = hasPrimaryConstructorSyntax
-        self.superTypes = superTypes
+        self.superTypeEntries = superTypeEntries
         self.nestedTypeAliases = nestedTypeAliases
         self.enumEntries = enumEntries
         self.initBlocks = initBlocks
@@ -248,6 +263,7 @@ public struct FunDecl {
     public let body: FunctionBody
     public let isSuspend: Bool
     public let isInline: Bool
+    public let isTailrec: Bool
 
     public init(
         range: SourceRange,
@@ -260,7 +276,8 @@ public struct FunDecl {
         returnType: TypeRefID? = nil,
         body: FunctionBody = .unit,
         isSuspend: Bool = false,
-        isInline: Bool = false
+        isInline: Bool = false,
+        isTailrec: Bool = false
     ) {
         self.range = range
         self.name = name
@@ -273,6 +290,7 @@ public struct FunDecl {
         self.body = body
         self.isSuspend = isSuspend
         self.isInline = isInline
+        self.isTailrec = isTailrec
     }
 }
 
@@ -391,18 +409,36 @@ public struct TypeParamDecl {
     public let name: InternedString
     public let variance: TypeVariance
     public let isReified: Bool
-    public let upperBound: TypeRefID?
+    public let upperBounds: [TypeRefID]
+
+    /// Backward compatibility property - returns the first upper bound if any
+    public var upperBound: TypeRefID? {
+        upperBounds.first
+    }
 
     public init(
         name: InternedString,
         variance: TypeVariance = .invariant,
         isReified: Bool = false,
-        upperBound: TypeRefID? = nil
+        upperBounds: [TypeRefID] = []
     ) {
         self.name = name
         self.variance = variance
         self.isReified = isReified
-        self.upperBound = upperBound
+        self.upperBounds = upperBounds
+    }
+
+    /// Backward compatibility initializer
+    public init(
+        name: InternedString,
+        variance: TypeVariance = .invariant,
+        isReified: Bool = false,
+        upperBound: TypeRefID?
+    ) {
+        self.name = name
+        self.variance = variance
+        self.isReified = isReified
+        upperBounds = upperBound.map { [$0] } ?? []
     }
 }
 

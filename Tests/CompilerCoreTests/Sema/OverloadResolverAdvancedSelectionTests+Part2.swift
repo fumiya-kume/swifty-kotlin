@@ -77,7 +77,7 @@ extension OverloadResolverTests {
         )
         let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
         XCTAssertNil(resolved.chosenCallee)
-        XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-SEMA-0030")
+        XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-SEMA-BOUND")
     }
 
     /// Multiple type params with expected return type constraint.

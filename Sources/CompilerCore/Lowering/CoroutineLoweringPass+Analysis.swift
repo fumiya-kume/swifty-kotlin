@@ -136,7 +136,7 @@ extension CoroutineLoweringPass {
             }
         }
 
-        var leaders: Set<Int> = [0]
+        var leaders: Set = [0]
         for (index, instruction) in instructions.enumerated() {
             switch instruction {
             case .label:

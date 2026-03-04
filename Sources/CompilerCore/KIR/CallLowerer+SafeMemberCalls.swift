@@ -225,7 +225,7 @@ extension CallLowerer {
         }
         if safeNormalized.defaultMask != 0,
            let chosen,
-           (sema.symbols.externalLinkName(for: chosen)?.isEmpty ?? true)
+           sema.symbols.externalLinkName(for: chosen)?.isEmpty ?? true
         {
             appendReifiedTypeTokens(
                 chosenCallee: chosen,

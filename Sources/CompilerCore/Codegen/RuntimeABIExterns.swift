@@ -102,54 +102,77 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // swiftlint:disable:next identifier_name
     public static let kk_string_trim = ExternDecl(
         name: "kk_string_trim",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
+    // swiftlint:disable:next identifier_name
+    public static let kk_string_isNullOrEmpty = ExternDecl(
+        name: "kk_string_isNullOrEmpty",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // swiftlint:disable:next identifier_name
+    public static let kk_string_isNullOrBlank = ExternDecl(
+        name: "kk_string_isNullOrBlank",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // swiftlint:disable:next identifier_name
     public static let kk_string_split = ExternDecl(
         name: "kk_string_split",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
+    // swiftlint:disable:next identifier_name
     public static let kk_string_replace = ExternDecl(
         name: "kk_string_replace",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
+    // swiftlint:disable:next identifier_name
     public static let kk_string_startsWith = ExternDecl(
         name: "kk_string_startsWith",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
+    // swiftlint:disable:next identifier_name
     public static let kk_string_endsWith = ExternDecl(
         name: "kk_string_endsWith",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
+    // swiftlint:disable:next identifier_name
     public static let kk_string_contains = ExternDecl(
         name: "kk_string_contains",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
+    // swiftlint:disable:next identifier_name
     public static let kk_string_toInt = ExternDecl(
         name: "kk_string_toInt",
         parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
+    // swiftlint:disable:next identifier_name
     public static let kk_string_toDouble = ExternDecl(
         name: "kk_string_toDouble",
         parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
+    // swiftlint:disable:next identifier_name
     public static let kk_string_format = ExternDecl(
         name: "kk_string_format",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -340,19 +363,37 @@ public enum RuntimeABIExterns {
 
     public static let kk_flow_create = ExternDecl(
         name: "kk_flow_create",
-        parameterTypes: ["intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
     public static let kk_flow_emit = ExternDecl(
         name: "kk_flow_emit",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
     public static let kk_flow_collect = ExternDecl(
         name: "kk_flow_collect",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_flow_map = ExternDecl(
+        name: "kk_flow_map",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_flow_filter = ExternDecl(
+        name: "kk_flow_filter",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_flow_take = ExternDecl(
+        name: "kk_flow_take",
+        parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -750,6 +791,8 @@ public enum RuntimeABIExterns {
         kk_string_compareTo,
         kk_string_length,
         kk_string_trim,
+        kk_string_isNullOrEmpty,
+        kk_string_isNullOrBlank,
         kk_string_split,
         kk_string_replace,
         kk_string_startsWith,
@@ -790,10 +833,13 @@ public enum RuntimeABIExterns {
         kk_kxmini_run_blocking_with_cont,
         kk_kxmini_launch_with_cont,
         kk_kxmini_async_with_cont,
-        // Flow
+        // Flow (CORO-003)
         kk_flow_create,
         kk_flow_emit,
         kk_flow_collect,
+        kk_flow_map,
+        kk_flow_filter,
+        kk_flow_take,
         // Dispatchers / withContext
         kk_dispatcher_default,
         kk_dispatcher_io,

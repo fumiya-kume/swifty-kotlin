@@ -5,6 +5,7 @@ import Foundation
 final class ABILoweringPass: LoweringPass {
     static let name = "ABILowering"
 
+    // swiftlint:disable:next function_body_length
     func run(module: KIRModule, ctx: KIRContext) throws {
         let nonThrowingCallees: Set<InternedString> = Set([
             ctx.interner.intern("kk_op_add"),
@@ -74,6 +75,12 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_kxmini_run_blocking_with_cont"),
             ctx.interner.intern("kk_kxmini_launch_with_cont"),
             ctx.interner.intern("kk_kxmini_async_with_cont"),
+            ctx.interner.intern("kk_flow_create"),
+            ctx.interner.intern("kk_flow_emit"),
+            ctx.interner.intern("kk_flow_collect"),
+            ctx.interner.intern("kk_flow_map"),
+            ctx.interner.intern("kk_flow_filter"),
+            ctx.interner.intern("kk_flow_take"),
             ctx.interner.intern("kk_coroutine_scope_run"),
             ctx.interner.intern("kk_coroutine_scope_run_with_cont"),
             ctx.interner.intern("kk_coroutine_scope_new"),
@@ -656,7 +663,6 @@ final class ABILoweringPass: LoweringPass {
         return kind
     }
 
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     private func boxingCallee(
         argType: TypeID,
         paramType: TypeID,

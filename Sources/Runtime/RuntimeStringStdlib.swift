@@ -79,10 +79,10 @@ public func kk_string_startsWith(
     let sourceLength = sourceNSString.length
     let prefixLength = prefixNSString.length
     if startIndex < 0 || startIndex > sourceLength {
-        return 0
+        return kk_box_bool(0)
     }
     if prefixLength > sourceLength - startIndex {
-        return 0
+        return kk_box_bool(0)
     }
     let options: NSString.CompareOptions = ignoreCase != 0 ? [.caseInsensitive] : []
     let compared = sourceNSString.compare(
@@ -90,7 +90,7 @@ public func kk_string_startsWith(
         options: options,
         range: NSRange(location: startIndex, length: prefixLength)
     )
-    return compared == .orderedSame ? 1 : 0
+    return kk_box_bool(compared == .orderedSame ? 1 : 0)
 }
 
 @_cdecl("kk_string_endsWith")
@@ -106,7 +106,7 @@ public func kk_string_endsWith(
     let sourceLength = sourceNSString.length
     let suffixLength = suffixNSString.length
     if suffixLength > sourceLength {
-        return 0
+        return kk_box_bool(0)
     }
     let options: NSString.CompareOptions = ignoreCase != 0 ? [.caseInsensitive] : []
     let compared = sourceNSString.compare(
@@ -114,7 +114,7 @@ public func kk_string_endsWith(
         options: options,
         range: NSRange(location: sourceLength - suffixLength, length: suffixLength)
     )
-    return compared == .orderedSame ? 1 : 0
+    return kk_box_bool(compared == .orderedSame ? 1 : 0)
 }
 
 @_cdecl("kk_string_contains")
@@ -126,10 +126,10 @@ public func kk_string_contains(
     let source = runtimeStringFromRaw(strRaw) ?? ""
     let needle = runtimeStringFromRaw(needleRaw) ?? ""
     if needle.isEmpty {
-        return 1
+        return kk_box_bool(1)
     }
     let options: String.CompareOptions = ignoreCase != 0 ? [.caseInsensitive] : []
-    return source.range(of: needle, options: options, range: nil, locale: nil) == nil ? 0 : 1
+    return kk_box_bool(source.range(of: needle, options: options, range: nil, locale: nil) == nil ? 0 : 1)
 }
 
 @_cdecl("kk_string_toInt")
@@ -183,6 +183,7 @@ public func kk_string_toDouble(
 }
 
 @_cdecl("kk_string_format")
+// swiftlint:disable:next cyclomatic_complexity
 public func kk_string_format(_ formatRaw: Int, _ argsArrayRaw: Int) -> Int {
     let format = runtimeStringFromRaw(formatRaw) ?? ""
     let arguments = runtimeArrayBox(from: argsArrayRaw)?.elements ?? []
@@ -497,4 +498,5 @@ private func runtimeMakeStringListRaw(_ values: [String]) -> Int {
 
 private func runtimeSetThrown(_ outThrown: UnsafeMutablePointer<Int>?, message: String) {
     outThrown?.pointee = runtimeAllocateThrowable(message: message)
+    // swiftlint:disable:next file_length
 }

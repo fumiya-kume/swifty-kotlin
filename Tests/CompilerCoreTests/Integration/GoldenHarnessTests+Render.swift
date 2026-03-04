@@ -4,7 +4,6 @@ import Foundation
 // MARK: - Render helpers extracted from GoldenHarnessTests to reduce type/file body length.
 
 extension GoldenHarnessTests {
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func renderExpr(_ expr: Expr, interner: StringInterner) -> String {
         switch expr {
         case let .intLiteral(value, _):
@@ -201,11 +200,14 @@ extension GoldenHarnessTests {
         let vararg = signature.valueParameterIsVararg.map { $0 ? "1" : "0" }.joined(separator: ",")
         var result = "recv=\(receiver) params=[\(parameters)] ret=\(returnType)"
         result += " suspend=\(signature.isSuspend ? 1 : 0) defaults=[\(defaults)] vararg=[\(vararg)]"
-        let hasBounds = !signature.typeParameterUpperBounds.isEmpty
-            && signature.typeParameterUpperBounds.contains(where: { $0 != nil })
+        let hasBounds = !signature.typeParameterUpperBoundsList.isEmpty
+            && signature.typeParameterUpperBoundsList.contains(where: { !$0.isEmpty })
         if hasBounds {
-            let bounds = signature.typeParameterUpperBounds.map { bound in
-                bound.map { types.renderType($0) } ?? "_"
+            let bounds = signature.typeParameterUpperBoundsList.map { upperBounds in
+                if upperBounds.isEmpty {
+                    return "_"
+                }
+                return upperBounds.map { types.renderType($0) }.joined(separator: "&")
             }.joined(separator: ",")
             result += " bounds=[\(bounds)]"
         }

@@ -89,6 +89,7 @@ extension KIRFunction {
         body: KIRLoweringEmitContext,
         isSuspend: Bool,
         isInline: Bool,
+        isTailrec: Bool = false,
         sourceRange: SourceRange? = nil
     ) {
         self.init(
@@ -99,6 +100,7 @@ extension KIRFunction {
             body: body.instructions,
             isSuspend: isSuspend,
             isInline: isInline,
+            isTailrec: isTailrec,
             sourceRange: sourceRange,
             instructionLocations: body.instructionLocations
         )

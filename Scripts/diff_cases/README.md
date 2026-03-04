@@ -14,6 +14,7 @@ Cases:
 - `if_expr.kt`: expression-body `if` function
 - `named_default.kt`: named argument + default parameter補完
 - `extension_receiver.kt`: extension receiver 呼び出しと `this` 束縛
+- `nullable_receiver_ext.kt`: nullable receiver 拡張（`fun T?.foo()`）の直接呼び出しと優先順位 parity（出力は `1/0` 比較）
 - `local_var.kt`: block 内 local `val` 宣言と参照
 - `local_assign.kt`: block 内 local `var` 再代入
 - `loop_basic.kt`: `while` / `do-while` の制御フローと `break` の基本実行
@@ -34,6 +35,9 @@ Cases:
 - `try_expression.kt`: `try` 式（multi-catch / partial catch / `finally` 実行順）の parity
 - `interface_default_method.kt`: interface default method（body あり fun）の default 実装呼び出しと concrete override の共存 parity
 - `abstract_class.kt`: abstract class / abstract member の制約と override 強制（abstract fun, multi-level inheritance chain）
+- `builder_dsl.kt`: `buildString` / `buildList` の DSL builder 正常系 parity
+- `builder_dsl_invalid_arg.kt`: builder への不正引数（非 lambda）を compile error として扱う parity
+- `builder_dsl_shadowing.kt`: user-defined `buildString` / `buildList` / `buildMap` が DSL 特別扱いに奪われないことの parity
 - `sequence_lazy.kt`: `Sequence<T>` lazy evaluation chain（`asSequence` → `map` → `filter` → `toList`）の parity
 - `stdlib_string_ops.kt`: String stdlib parity（`trim/split/replace/startsWith/endsWith/contains/toInt/toDouble/format`）
 

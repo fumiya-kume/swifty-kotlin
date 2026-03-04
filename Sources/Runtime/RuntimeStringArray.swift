@@ -391,3 +391,27 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
     }
     Swift.print("<object \(raw)>")
 }
+
+// MARK: - String nullable receiver helpers
+
+@_cdecl("kk_string_isNullOrEmpty")
+public func kk_string_isNullOrEmpty(_ strRaw: Int) -> Int {
+    guard let rawPointer = UnsafeMutableRawPointer(bitPattern: strRaw) else {
+        return kk_box_bool(1)
+    }
+    guard let str = extractString(from: rawPointer) else {
+        return kk_box_bool(0)
+    }
+    return kk_box_bool(str.isEmpty ? 1 : 0)
+}
+
+@_cdecl("kk_string_isNullOrBlank")
+public func kk_string_isNullOrBlank(_ strRaw: Int) -> Int {
+    guard let rawPointer = UnsafeMutableRawPointer(bitPattern: strRaw) else {
+        return kk_box_bool(1)
+    }
+    guard let str = extractString(from: rawPointer) else {
+        return kk_box_bool(0)
+    }
+    return kk_box_bool(str.allSatisfy(\.isWhitespace) ? 1 : 0)
+}

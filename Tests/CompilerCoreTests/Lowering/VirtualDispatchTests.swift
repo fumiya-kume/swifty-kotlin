@@ -277,21 +277,21 @@ final class VirtualDispatchTests: XCTestCase {
     // MARK: - 1. KIRDispatchKind enum tests
 
     func testKIRDispatchKindVtableEquality() {
-        let a = KIRDispatchKind.vtable(slot: 3)
-        let b = KIRDispatchKind.vtable(slot: 3)
-        let c = KIRDispatchKind.vtable(slot: 5)
-        XCTAssertEqual(a, b, "vtable with same slot should be equal")
-        XCTAssertNotEqual(a, c, "vtable with different slot should not be equal")
+        let firstKind = KIRDispatchKind.vtable(slot: 3)
+        let secondKind = KIRDispatchKind.vtable(slot: 3)
+        let thirdKind = KIRDispatchKind.vtable(slot: 5)
+        XCTAssertEqual(firstKind, secondKind, "vtable with same slot should be equal")
+        XCTAssertNotEqual(firstKind, thirdKind, "vtable with different slot should not be equal")
     }
 
     func testKIRDispatchKindItableEquality() {
-        let a = KIRDispatchKind.itable(interfaceSlot: 1, methodSlot: 2)
-        let b = KIRDispatchKind.itable(interfaceSlot: 1, methodSlot: 2)
-        let c = KIRDispatchKind.itable(interfaceSlot: 1, methodSlot: 3)
-        let d = KIRDispatchKind.itable(interfaceSlot: 0, methodSlot: 2)
-        XCTAssertEqual(a, b)
-        XCTAssertNotEqual(a, c, "different methodSlot should not be equal")
-        XCTAssertNotEqual(a, d, "different interfaceSlot should not be equal")
+        let firstKind = KIRDispatchKind.itable(interfaceSlot: 1, methodSlot: 2)
+        let secondKind = KIRDispatchKind.itable(interfaceSlot: 1, methodSlot: 2)
+        let thirdKind = KIRDispatchKind.itable(interfaceSlot: 1, methodSlot: 3)
+        let fourthKind = KIRDispatchKind.itable(interfaceSlot: 0, methodSlot: 2)
+        XCTAssertEqual(firstKind, secondKind)
+        XCTAssertNotEqual(firstKind, thirdKind, "different methodSlot should not be equal")
+        XCTAssertNotEqual(firstKind, fourthKind, "different interfaceSlot should not be equal")
     }
 
     func testKIRDispatchKindVtableNotEqualToItable() {

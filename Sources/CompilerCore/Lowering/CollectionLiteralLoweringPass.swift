@@ -54,6 +54,15 @@ final class CollectionLiteralLoweringPass: LoweringPass {
         let kkListAnyName = interner.intern("kk_list_any")
         let kkListNoneName = interner.intern("kk_list_none")
         let kkListAllName = interner.intern("kk_list_all")
+        // Additional higher-order collection function ABI names (STDLIB-005)
+        let kkListFoldName = interner.intern("kk_list_fold")
+        let kkListReduceName = interner.intern("kk_list_reduce")
+        let kkListGroupByName = interner.intern("kk_list_groupBy")
+        let kkListSortedByName = interner.intern("kk_list_sortedBy")
+        let kkListCountName = interner.intern("kk_list_count")
+        let kkListFirstName = interner.intern("kk_list_first")
+        let kkListLastName = interner.intern("kk_list_last")
+        let kkListFindName = interner.intern("kk_list_find")
 
         // Sequence ABI names (STDLIB-003)
         let kkSequenceFromListName = interner.intern("kk_sequence_from_list")
@@ -100,6 +109,14 @@ final class CollectionLiteralLoweringPass: LoweringPass {
         let anyName = interner.intern("any")
         let noneName = interner.intern("none")
         let allName = interner.intern("all")
+        // Additional higher-order collection member names (STDLIB-005)
+        let foldName = interner.intern("fold")
+        let reduceName = interner.intern("reduce")
+        let groupByName = interner.intern("groupBy")
+        let sortedByName = interner.intern("sortedBy")
+        let findName = interner.intern("find")
+        let firstName = interner.intern("first")
+        let lastName = interner.intern("last")
 
         // Sequence member names (STDLIB-003)
         let asSequenceName = interner.intern("asSequence")
@@ -166,8 +183,8 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                 switch instruction {
                 case let .constValue(result, .symbolRef(symbol)):
                     exprSymbolMap[result.rawValue] = symbol
-                case let .call(_, callee, arguments, _, _, _, _):
-                    if builderDSLNames.contains(callee), !arguments.isEmpty {
+                case let .call(symbol, callee, arguments, _, _, _, _):
+                    if symbol == nil, builderDSLNames.contains(callee), !arguments.isEmpty {
                         builderLambdaArgEntries.append((argID: arguments[0].rawValue, callee: callee))
                     }
                 default:
@@ -268,7 +285,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
 
             for instruction in function.body {
                 switch instruction {
-                case let .call(_, callee, arguments, result, canThrow, thrownResult, _):
+                case let .call(symbol, callee, arguments, result, canThrow, thrownResult, _):
                     // --- Rewrite listOf/mutableListOf/emptyList → kk_list_of ---
                     if listFactoryNames.contains(callee) {
                         let count = arguments.count
@@ -417,7 +434,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     }
 
                     // --- Rewrite buildString/buildList/buildMap → kk_build_* (STDLIB-002) ---
-                    if builderDSLNames.contains(callee) {
+                    if symbol == nil, builderDSLNames.contains(callee) {
                         let kkCallee: InternedString = switch callee {
                         case buildStringName: kkBuildStringName
                         case buildListName: kkBuildListName
@@ -885,6 +902,116 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                         }
                     }
 
+                    // --- Rewrite additional HOF collection member calls (STDLIB-005) ---
+                    // 1-param lambda HOFs with 2 args: [receiver, lambda]
+                    if callee == groupByName || callee == sortedByName || callee == findName {
+                        if arguments.count == 2 {
+                            let receiverID = arguments[0]
+                            if listExprIDs.contains(receiverID.rawValue) {
+                                let kkName: InternedString = switch callee {
+                                case groupByName: kkListGroupByName
+                                case sortedByName: kkListSortedByName
+                                case findName: kkListFindName
+                                default: callee
+                                }
+                                let hofResult = module.arena.appendExpr(
+                                    .temporary(Int32(module.arena.expressions.count)), type: nil
+                                )
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: kkName,
+                                    arguments: arguments,
+                                    result: hofResult,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult
+                                ))
+                                if callee == sortedByName, let result {
+                                    listExprIDs.insert(result.rawValue)
+                                    listExprIDs.insert(hofResult.rawValue)
+                                }
+                                if callee == groupByName, let result {
+                                    mapExprIDs.insert(result.rawValue)
+                                    mapExprIDs.insert(hofResult.rawValue)
+                                }
+                                if let result {
+                                    loweredBody.append(.copy(from: hofResult, to: result))
+                                }
+                                continue
+                            }
+                        }
+                    }
+                    // count/first/last with predicate: args = [receiver, lambda] (2 args)
+                    if callee == countName || callee == firstName || callee == lastName {
+                        if arguments.count == 2 {
+                            let receiverID = arguments[0]
+                            if listExprIDs.contains(receiverID.rawValue) {
+                                let kkName: InternedString = switch callee {
+                                case countName: kkListCountName
+                                case firstName: kkListFirstName
+                                case lastName: kkListLastName
+                                default: callee
+                                }
+                                let hofResult = module.arena.appendExpr(
+                                    .temporary(Int32(module.arena.expressions.count)), type: nil
+                                )
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: kkName,
+                                    arguments: arguments,
+                                    result: hofResult,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult
+                                ))
+                                if let result {
+                                    loweredBody.append(.copy(from: hofResult, to: result))
+                                }
+                                continue
+                            }
+                        }
+                    }
+                    // fold: args = [receiver, initial, lambda] (3 args)
+                    if callee == foldName, arguments.count == 3 {
+                        let receiverID = arguments[0]
+                        if listExprIDs.contains(receiverID.rawValue) {
+                            let hofResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkListFoldName,
+                                arguments: arguments,
+                                result: hofResult,
+                                canThrow: canThrow,
+                                thrownResult: thrownResult
+                            ))
+                            if let result {
+                                loweredBody.append(.copy(from: hofResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+                    // reduce: args = [receiver, lambda] (2 args)
+                    if callee == reduceName, arguments.count == 2 {
+                        let receiverID = arguments[0]
+                        if listExprIDs.contains(receiverID.rawValue) {
+                            let hofResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkListReduceName,
+                                arguments: arguments,
+                                result: hofResult,
+                                canThrow: canThrow,
+                                thrownResult: thrownResult
+                            ))
+                            if let result {
+                                loweredBody.append(.copy(from: hofResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+
                     // Rewrite println on list/map → kk_list_to_string / kk_map_to_string
                     if callee == kkPrintlnAnyName || callee == printlnName, arguments.count == 1 {
                         let argID = arguments[0]
@@ -1082,6 +1209,108 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                                 }
                                 continue
                             }
+                        }
+                    }
+
+                    // --- Additional HOF virtualCall rewrites (STDLIB-005) ---
+                    // 1-param lambda HOFs: groupBy/sortedBy/find (args == 1 lambda)
+                    if callee == groupByName || callee == sortedByName || callee == findName {
+                        if arguments.count == 1, listExprIDs.contains(receiver.rawValue) {
+                            let kkName: InternedString = switch callee {
+                            case groupByName: kkListGroupByName
+                            case sortedByName: kkListSortedByName
+                            case findName: kkListFindName
+                            default: callee
+                            }
+                            let hofResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkName,
+                                arguments: [receiver] + arguments,
+                                result: hofResult,
+                                canThrow: origCanThrow,
+                                thrownResult: origThrownResult
+                            ))
+                            if callee == sortedByName, let result {
+                                listExprIDs.insert(result.rawValue)
+                                listExprIDs.insert(hofResult.rawValue)
+                            }
+                            if callee == groupByName, let result {
+                                mapExprIDs.insert(result.rawValue)
+                                mapExprIDs.insert(hofResult.rawValue)
+                            }
+                            if let result {
+                                loweredBody.append(.copy(from: hofResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+                    // count/first/last with predicate (args == 1 lambda)
+                    if callee == countName || callee == firstName || callee == lastName {
+                        if arguments.count == 1, listExprIDs.contains(receiver.rawValue) {
+                            let kkName: InternedString = switch callee {
+                            case countName: kkListCountName
+                            case firstName: kkListFirstName
+                            case lastName: kkListLastName
+                            default: callee
+                            }
+                            let hofResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkName,
+                                arguments: [receiver] + arguments,
+                                result: hofResult,
+                                canThrow: origCanThrow,
+                                thrownResult: origThrownResult
+                            ))
+                            if let result {
+                                loweredBody.append(.copy(from: hofResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+                    // fold: args == 2 (initial + lambda)
+                    if callee == foldName, arguments.count == 2 {
+                        if listExprIDs.contains(receiver.rawValue) {
+                            let hofResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkListFoldName,
+                                arguments: [receiver] + arguments,
+                                result: hofResult,
+                                canThrow: origCanThrow,
+                                thrownResult: origThrownResult
+                            ))
+                            if let result {
+                                loweredBody.append(.copy(from: hofResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+                    // reduce: args == 1 (lambda)
+                    if callee == reduceName, arguments.count == 1 {
+                        if listExprIDs.contains(receiver.rawValue) {
+                            let hofResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkListReduceName,
+                                arguments: [receiver] + arguments,
+                                result: hofResult,
+                                canThrow: origCanThrow,
+                                thrownResult: origThrownResult
+                            ))
+                            if let result {
+                                loweredBody.append(.copy(from: hofResult, to: result))
+                            }
+                            continue
                         }
                     }
 

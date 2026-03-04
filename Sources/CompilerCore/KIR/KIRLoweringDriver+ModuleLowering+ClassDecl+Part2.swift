@@ -3,8 +3,7 @@ import Foundation
 extension KIRLoweringDriver {
     // MARK: - Constructor lowering
 
-    // Lowers a single constructor (primary or secondary) into KIR declarations.
-    // swiftlint:disable:next function_parameter_count
+    /// Lowers a single constructor (primary or secondary) into KIR declarations.
     func lowerConstructor(
         ctorSymbol: SymbolID,
         ctorFQName: [InternedString],
@@ -44,8 +43,7 @@ extension KIRLoweringDriver {
         )
     }
 
-    // Builds the constructor body instructions for a primary or secondary constructor.
-    // swiftlint:disable:next function_parameter_count
+    /// Builds the constructor body instructions for a primary or secondary constructor.
     private func buildConstructorBody(
         ctorSymbol: SymbolID,
         ctorFQName: [InternedString],
@@ -63,6 +61,11 @@ extension KIRLoweringDriver {
         }
         let isSecondary = sema.symbols.symbol(ctorSymbol)?.declSite != classDecl.range
         if !isSecondary {
+            emitClassDelegationInitializers(
+                classDecl: classDecl, ownerSymbol: ownerSymbol,
+                receiverID: ctx.currentImplicitReceiverExprID!,
+                shared: shared, compilationCtx: compilationCtx, body: &body
+            )
             emitClassBodyInitializers(
                 classDecl: classDecl, shared: shared,
                 compilationCtx: compilationCtx, body: &body
@@ -84,8 +87,7 @@ extension KIRLoweringDriver {
         return body
     }
 
-    // Creates the KIR function declaration and default-argument stub for a constructor.
-    // swiftlint:disable:next function_parameter_count
+    /// Creates the KIR function declaration and default-argument stub for a constructor.
     private func finalizeConstructorDecl(
         ctorSymbol: SymbolID,
         classDecl: ClassDecl,
@@ -116,6 +118,46 @@ extension KIRLoweringDriver {
         declIDs.append(contentsOf: ctx.drainGeneratedCallableDecls())
         return declIDs
     }
+
+    /// CLASS-008: Emits delegate field initialization for `: Interface by expr`.
+    private func emitClassDelegationInitializers(
+        classDecl _: ClassDecl,
+        ownerSymbol: SymbolID,
+        receiverID: KIRExprID,
+        shared: KIRLoweringSharedContext,
+        compilationCtx: CompilationContext,
+        body: inout KIRLoweringEmitContext
+    ) {
+        let sema = shared.sema
+        let arena = shared.arena
+        for interfaceSymbol in sema.symbols.delegatedInterfaces(forClass: ownerSymbol) {
+            guard let delegateExpr = sema.symbols.classDelegationExpr(forClass: ownerSymbol, interface: interfaceSymbol),
+                  let fieldSymbol = sema.symbols.classDelegationField(forClass: ownerSymbol, interface: interfaceSymbol)
+            else {
+                continue
+            }
+            let delegateValue = lowerExpr(delegateExpr, shared: shared, emit: &body)
+
+            guard let fieldOffset = shared.sema.symbols.nominalLayout(for: ownerSymbol)?.fieldOffsets[fieldSymbol] else {
+                continue
+            }
+            let offsetExpr = arena.appendExpr(.intLiteral(Int64(fieldOffset)), type: shared.sema.types.intType)
+            body.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(fieldOffset))))
+
+            let unusedResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: shared.sema.types.anyType)
+            body.append(.call(
+                symbol: nil,
+                callee: compilationCtx.interner.intern("kk_array_set"),
+                arguments: [receiverID, offsetExpr, delegateValue],
+                result: unusedResult,
+                canThrow: true,
+                thrownResult: nil,
+                isSuperCall: false
+            ))
+        }
+    }
+
+    // swiftlint:enable function_parameter_count
 
     /// Emits property initializers and `init { }` blocks in the order they
     /// appear in the class body, matching Kotlin's guaranteed top-to-bottom
@@ -235,9 +277,8 @@ extension KIRLoweringDriver {
 
     // MARK: - Secondary constructor body emission
 
-    // Emits the body of a secondary constructor, including delegation
-    // call and body statements.
-    // swiftlint:disable:next function_parameter_count
+    /// Emits the body of a secondary constructor, including delegation
+    /// call and body statements.
     func emitSecondaryConstructorBody(
         classDecl: ClassDecl,
         ctorSymbol: SymbolID,
@@ -279,9 +320,8 @@ extension KIRLoweringDriver {
         }
     }
 
-    // Emits a delegated property initializer, handling provideDelegate
-    // when available on the delegate type.
-    // swiftlint:disable:next function_parameter_count
+    /// Emits a delegated property initializer, handling provideDelegate
+    /// when available on the delegate type.
     private func emitDelegatePropertyInitializer(
         delegateExpr: ExprID,
         propSymbol: SymbolID,
@@ -313,8 +353,7 @@ extension KIRLoweringDriver {
         }
     }
 
-    // Wraps a delegate value in a provideDelegate call.
-    // swiftlint:disable:next function_parameter_count
+    /// Wraps a delegate value in a provideDelegate call.
     private func emitProvideDelegateCall(
         delegateValue: KIRExprID,
         storageSym: SymbolID,

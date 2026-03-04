@@ -133,7 +133,6 @@ extension DataFlowSemaPhase {
         }
     }
 
-    // swiftlint:disable function_parameter_count
     /// Registers synthetic `toString(): String` for data object so member resolution finds it.
     func collectSyntheticDataObjectToString(
         ownerSymbol: SymbolID,
@@ -189,7 +188,6 @@ extension DataFlowSemaPhase {
 
     // swiftlint:enable function_parameter_count
 
-    // swiftlint:disable function_parameter_count function_body_length
     /// Registers synthetic `equals(other: Any?): Boolean` for data object (identity comparison).
     func collectSyntheticDataObjectEquals(
         ownerSymbol: SymbolID,
@@ -334,19 +332,21 @@ extension DataFlowSemaPhase {
             }
         }
         for typeParam in typeParams {
-            if let boundRef = typeParam.upperBound,
-               let typeParamSym = localTypeParameters[typeParam.name]
-            {
-                if let boundType = resolveTypeRef(
+            guard let typeParamSym = localTypeParameters[typeParam.name] else {
+                continue
+            }
+            let resolvedBounds = typeParam.upperBounds.compactMap { boundRef in
+                resolveTypeRef(
                     boundRef,
                     ast: ast,
                     symbols: symbols,
                     types: types,
                     interner: interner,
                     localTypeParameters: localTypeParameters
-                ) {
-                    symbols.setTypeParameterUpperBound(boundType, for: typeParamSym)
-                }
+                )
+            }
+            if !resolvedBounds.isEmpty {
+                symbols.setTypeParameterUpperBounds(resolvedBounds, for: typeParamSym)
             }
         }
         if !reifiedIndices.isEmpty, !isInline {
@@ -406,6 +406,7 @@ extension DataFlowSemaPhase {
             kotlinPkg: kotlinPkg, kotlinPropertiesPkg: kotlinPropertiesPkg
         )
         registerSyntheticCollectionStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticComparableStub(symbols: symbols, types: types, interner: interner)
         registerSyntheticStringStubs(symbols: symbols, types: types, interner: interner)
     }
 
@@ -448,5 +449,4 @@ extension DataFlowSemaPhase {
         }
         return kotlinPropertiesPkg
     }
-    // swiftlint:disable:next file_length
 }

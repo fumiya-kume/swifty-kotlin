@@ -24,7 +24,6 @@ extension DataFlowSemaPhase {
         }
     }
 
-    // swiftlint:disable:next function_parameter_count
     private func validateDiamondOverridesForDecl(
         declID: DeclID,
         ast: ASTModule,
@@ -69,7 +68,6 @@ extension DataFlowSemaPhase {
         )
     }
 
-    // swiftlint:disable:next function_parameter_count
     private func recurseDiamondValidation(
         decl: Decl,
         ast: ASTModule,
@@ -155,7 +153,6 @@ extension DataFlowSemaPhase {
             .mapValues { $0.sorted(by: { $0.rawValue < $1.rawValue }) }
     }
 
-    // swiftlint:disable:next function_parameter_count
     private func emitDiamondDiagnostics(
         conflicts: [InternedString: [SymbolID]],
         overriddenNames: Set<InternedString>,

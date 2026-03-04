@@ -1,4 +1,5 @@
 extension TypeSystem {
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     public func isSubtype(_ subtype: TypeID, _ supertype: TypeID) -> Bool {
         if subtype == supertype {
             return true
@@ -69,6 +70,20 @@ extension TypeSystem {
             default:
                 return false
             }
+        }
+
+        // primitive <: Comparable<same_primitive>
+        // All Kotlin primitive types (Int, Long, Double, Float, Char, Boolean, etc.) implement Comparable<Self>.
+        if case let .primitive(_, leftNullability) = lhs,
+           case let .classType(rightClass) = rhs,
+           let comparableSym = comparableInterfaceSymbol,
+           rightClass.classSymbol == comparableSym,
+           rightClass.args.count == 1,
+           case let .invariant(argType) = rightClass.args[0],
+           argType == subtype,
+           nullabilitySubtype(leftNullability, rightClass.nullability)
+        {
+            return true
         }
 
         switch (lhs, rhs) {

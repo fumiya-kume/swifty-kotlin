@@ -1,7 +1,6 @@
 import Foundation
 
 extension BuildASTPhase.ExpressionParser {
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func parsePrimary() -> ExprID? {
         guard let token = current() else {
             return nil
@@ -172,7 +171,11 @@ extension BuildASTPhase.ExpressionParser {
                     return parseDoWhileExpression(label: name, start: start)
                 }
                 if matches(.symbol(.lBrace)) {
-                    if let lambda = parseLambdaLiteral(label: name, start: start) {
+                    if let lambda = parseLambdaLiteral(
+                        label: name,
+                        start: start,
+                        allowImplicitEmptyParams: true
+                    ) {
                         return lambda
                     }
                 }

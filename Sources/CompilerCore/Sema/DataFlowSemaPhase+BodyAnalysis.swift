@@ -1,5 +1,6 @@
 import Foundation
 
+// swiftlint:disable file_length
 extension DataFlowSemaPhase {
     func analyzeBody(
         declID: DeclID,
@@ -25,6 +26,7 @@ extension DataFlowSemaPhase {
                 seenNames.insert(valueParam.name)
             }
 
+            // swiftlint:disable opening_brace
             if let symbol = bindings.declSymbols[declID],
                let signature = symbols.functionSignature(for: symbol),
                case .expr = funDecl.body
@@ -32,6 +34,21 @@ extension DataFlowSemaPhase {
                 // Bind a synthetic expression type for expression-body functions.
                 let expr = ExprID(rawValue: declID.rawValue)
                 bindings.bindExprType(expr, type: signature.returnType)
+            }
+            // swiftlint:enable opening_brace
+
+            // Validate tailrec: the terminal expression must be a self-recursive call.
+            if funDecl.isTailrec {
+                let isTailCall = checkTailRecursiveBody(
+                    funDecl.body, functionName: funDecl.name, ast: ast
+                )
+                if !isTailCall {
+                    diagnostics.warning(
+                        "KSWIFTK-SEMA-TAILREC",
+                        "Function marked 'tailrec' but last expression is not a self-recursive call.",
+                        range: funDecl.range
+                    )
+                }
             }
 
         case let .propertyDecl(propertyDecl):
@@ -448,6 +465,7 @@ extension DataFlowSemaPhase {
         case let .invariant(inner):
             // If the inner type is a bare type parameter with a substitution,
             // replace the entire arg with the use-site TypeArg (preserving projection).
+            // swiftlint:disable opening_brace
             if case let .typeParam(tp) = types.kind(of: inner),
                let replacement = argSubstitution[tp.symbol]
             {
@@ -456,8 +474,10 @@ extension DataFlowSemaPhase {
                 }
                 return replacement
             }
+            // swiftlint:enable opening_brace
             return .invariant(applySubstitution(inner, argSubstitution: argSubstitution, types: types, symbols: symbols))
         case let .out(inner):
+            // swiftlint:disable opening_brace
             if case let .typeParam(tp) = types.kind(of: inner),
                let replacement = argSubstitution[tp.symbol]
             {
@@ -467,8 +487,10 @@ extension DataFlowSemaPhase {
                 let resolved = tp.nullability == .nullable ? applyNullability(innerType, types: types) : innerType
                 return .out(resolved)
             }
+            // swiftlint:enable opening_brace
             return .out(applySubstitution(inner, argSubstitution: argSubstitution, types: types, symbols: symbols))
         case let .in(inner):
+            // swiftlint:disable opening_brace
             if case let .typeParam(tp) = types.kind(of: inner),
                let replacement = argSubstitution[tp.symbol]
             {
@@ -477,6 +499,7 @@ extension DataFlowSemaPhase {
                 let resolved = tp.nullability == .nullable ? applyNullability(innerType, types: types) : innerType
                 return .in(resolved)
             }
+            // swiftlint:enable opening_brace
             return .in(applySubstitution(inner, argSubstitution: argSubstitution, types: types, symbols: symbols))
         case .star:
             return .star
@@ -502,6 +525,69 @@ extension DataFlowSemaPhase {
             inner
         case .star:
             fatalError("typeArgInnerType called on .star")
+        }
+    }
+
+    // MARK: - Tailrec validation helpers
+
+    /// Check whether the function body contains a self-recursive call in tail position.
+    /// For block bodies, checks ALL return expressions (not just the last statement)
+    /// to handle patterns like `if (cond) return f(x); return base`.
+    func checkTailRecursiveBody(
+        _ body: FunctionBody, functionName: InternedString, ast: ASTModule
+    ) -> Bool {
+        switch body {
+        case .unit:
+            return false
+        case let .expr(exprID, _):
+            return isSelfRecursiveCall(exprID, functionName: functionName, ast: ast)
+        case let .block(exprIDs, _):
+            // Check any explicit return expression in the block whose value
+            // is a self-recursive call — the tail call may appear in an
+            // early-return branch, not necessarily the last statement.
+            for exprID in exprIDs {
+                // swiftlint:disable opening_brace
+                if let expr = ast.arena.expr(exprID),
+                   case let .returnExpr(value, _, _) = expr,
+                   let value
+                {
+                    if isSelfRecursiveCall(value, functionName: functionName, ast: ast) {
+                        return true
+                    }
+                }
+                // swiftlint:enable opening_brace
+            }
+            // Also check the last expression for implicit return (expression-body style).
+            guard let lastExprID = exprIDs.last else { return false }
+            return isSelfRecursiveCall(lastExprID, functionName: functionName, ast: ast)
+        }
+    }
+
+    /// Check if the given expression is a call to a function with the given name.
+    /// Handles direct calls (`f(...)`) and qualified self-calls (`this.f(...)`).
+    private func isSelfRecursiveCall(
+        _ exprID: ExprID, functionName: InternedString, ast: ASTModule
+    ) -> Bool {
+        guard let expr = ast.arena.expr(exprID) else { return false }
+
+        switch expr {
+        case let .call(callee, _, _, _):
+            // Direct self call: `f(...)`.
+            guard let calleeExpr = ast.arena.expr(callee),
+                  case let .nameRef(name, _) = calleeExpr
+            else { return false }
+            return name == functionName
+
+        case let .memberCall(receiver, callee, _, _, _),
+             let .safeMemberCall(receiver, callee, _, _, _):
+            // Qualified self call: `this.f(...)` / `this?.f(...)`.
+            guard let receiverExpr = ast.arena.expr(receiver),
+                  case .thisRef = receiverExpr
+            else { return false }
+            return callee == functionName
+
+        default:
+            return false
         }
     }
 }

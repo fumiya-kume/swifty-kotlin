@@ -70,6 +70,37 @@ func runtimeMapArrayPair(
     return (keysArray.elements, valuesArray.elements)
 }
 
+/// Registers an opaque handle with the runtime GC tracking.
+/// Shared by RuntimeCollections and RuntimeSequence.
+func registerRuntimeObject(_ box: AnyObject) -> Int {
+    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
+    return Int(bitPattern: opaque)
+}
+
+/// Unbox a boxed value to its raw integer if it's a RuntimeIntBox or RuntimeBoolBox.
+/// Shared by RuntimeCollections HOFs and RuntimeSequence.
+func maybeUnbox(_ value: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
+        return value
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObjectPointer else {
+        return value
+    }
+    if let intBox = tryCast(ptr, to: RuntimeIntBox.self) {
+        return intBox.value
+    }
+    if let boolBox = tryCast(ptr, to: RuntimeBoolBox.self) {
+        return boolBox.value ? 1 : 0
+    }
+    return value
+}
+
 /// Converts a runtime element value (intptr_t) to its string representation.
 /// Used by `kk_list_to_string` and `kk_map_to_string`.
 func runtimeElementToString(_ elem: Int) -> String {

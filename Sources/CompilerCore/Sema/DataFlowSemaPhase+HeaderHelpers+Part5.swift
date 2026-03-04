@@ -175,7 +175,6 @@ extension DataFlowSemaPhase {
         )))
     }
 
-    // swiftlint:disable:next function_parameter_count
     private func registerSyntheticStringExtensionFunction(
         named name: String,
         externalLinkName: String,
@@ -193,7 +192,7 @@ extension DataFlowSemaPhase {
                 return false
             }
             return existingSignature.receiverType == receiverType
-                && existingSignature.parameterTypes == parameters.map { $0.type }
+                && existingSignature.parameterTypes == parameters.map(\.type)
         }) {
             symbols.setExternalLinkName(externalLinkName, for: existing)
             return

@@ -2,7 +2,6 @@
 import Foundation
 import XCTest
 
-// swiftlint:disable:next type_body_length
 final class BuildKIRRegressionTests: XCTestCase {
     func testLoadSourcesPhaseReportsMissingInputsAndUnreadableFiles() {
         let emptyCtx = makeCompilationContext(inputs: [])
@@ -37,6 +36,7 @@ final class BuildKIRRegressionTests: XCTestCase {
 
             let module = try XCTUnwrap(ctx.kir)
             XCTAssertEqual(module.executedLowerings, [
+                "TailrecLowering",
                 "NormalizeBlocks",
                 "OperatorLowering",
                 "ForLowering",

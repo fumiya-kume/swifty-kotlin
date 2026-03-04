@@ -56,7 +56,13 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
 
         let sema = SemaModule(symbols: symbols, types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
         let ctx = CompilationContext(
-            options: CompilerOptions(moduleName: "ABIBoxInt", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+            options: CompilerOptions(
+                moduleName: "ABIBoxInt",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
             sourceManager: SourceManager(),
             diagnostics: DiagnosticEngine(),
             interner: interner
@@ -122,7 +128,13 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
 
         let sema = SemaModule(symbols: symbols, types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
         let ctx = CompilationContext(
-            options: CompilerOptions(moduleName: "ABIBoxBool", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+            options: CompilerOptions(
+                moduleName: "ABIBoxBool",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
             sourceManager: SourceManager(),
             diagnostics: DiagnosticEngine(),
             interner: interner
@@ -188,7 +200,13 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
 
         let sema = SemaModule(symbols: symbols, types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
         let ctx = CompilationContext(
-            options: CompilerOptions(moduleName: "ABIBoxNullableInt", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+            options: CompilerOptions(
+                moduleName: "ABIBoxNullableInt",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
             sourceManager: SourceManager(),
             diagnostics: DiagnosticEngine(),
             interner: interner
@@ -324,7 +342,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let fnSym = SymbolID(rawValue: 3500)
         let valueExpr = arena.appendExpr(.intLiteral(42), type: intType)
 
-        let fn = KIRFunction(
+        let function = KIRFunction(
             symbol: fnSym,
             name: interner.intern("returnBoxed"),
             params: [],
@@ -336,7 +354,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             isInline: false
         )
 
-        let fnID = arena.appendDecl(.function(fn))
+        let fnID = arena.appendDecl(.function(function))
         let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [fnID])], arena: arena)
 
         let sema = SemaModule(symbols: SymbolTable(), types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
@@ -359,7 +377,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let fromExpr = arena.appendExpr(.intLiteral(10), type: intType)
         let toExpr = arena.appendExpr(.temporary(1), type: anyNullableType)
 
-        let fn = KIRFunction(
+        let function = KIRFunction(
             symbol: fnSym,
             name: interner.intern("copyBoxed"),
             params: [],
@@ -372,7 +390,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             isInline: false
         )
 
-        let fnID = arena.appendDecl(.function(fn))
+        let fnID = arena.appendDecl(.function(function))
         let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [fnID])], arena: arena)
 
         let sema = SemaModule(symbols: SymbolTable(), types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
@@ -401,7 +419,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let fromExpr = arena.appendExpr(.temporary(0), type: anyNullableType)
         let toExpr = arena.appendExpr(.temporary(1), type: intType)
 
-        let fn = KIRFunction(
+        let function = KIRFunction(
             symbol: fnSym,
             name: interner.intern("copyUnboxed"),
             params: [],
@@ -414,7 +432,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             isInline: false
         )
 
-        let fnID = arena.appendDecl(.function(fn))
+        let fnID = arena.appendDecl(.function(function))
         let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [fnID])], arena: arena)
 
         let sema = SemaModule(symbols: SymbolTable(), types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
@@ -439,6 +457,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let anyNullableType = types.make(.any(.nullable))
 
         // Define primitives and their expected boxing callees
+        // swiftlint:disable:next large_tuple
         let primitives: [(TypeKind, KIRExprKind, String)] = [
             (.primitive(.int, .nonNull), .intLiteral(1), "kk_box_int"),
             (.primitive(.boolean, .nonNull), .boolLiteral(true), "kk_box_bool"),
@@ -512,7 +531,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let fromExpr = arena.appendExpr(.intLiteral(5), type: intType)
         let toExpr = arena.appendExpr(.temporary(1), type: nullableIntType)
 
-        let fn = KIRFunction(
+        let function = KIRFunction(
             symbol: fnSym,
             name: interner.intern("copyNullableBox"),
             params: [],
@@ -525,7 +544,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             isInline: false
         )
 
-        let fnID = arena.appendDecl(.function(fn))
+        let fnID = arena.appendDecl(.function(function))
         let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [fnID])], arena: arena)
 
         let sema = SemaModule(symbols: SymbolTable(), types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
@@ -905,13 +924,13 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             isInline: false
         )
 
-        let fnID = arena.appendDecl(.function(callerFn))
-        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [fnID])], arena: arena)
+        let funcID = arena.appendDecl(.function(callerFn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [funcID])], arena: arena)
 
         let sema = SemaModule(symbols: symbols, types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
         _ = try runLowering(module: module, interner: interner, moduleName: "BackedProp", sema: sema)
 
-        guard case let .function(lowered)? = module.arena.decl(fnID) else {
+        guard case let .function(lowered)? = module.arena.decl(funcID) else {
             XCTFail("expected function")
             return
         }
@@ -1126,7 +1145,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
     /// Verifies that a top-level getter-only computed property does not emit
     /// a KIRGlobal and that reads of a non-literal getter body are lowered
     /// to getter accessor calls (not loadGlobal) by PropertyLoweringPass.
-    func testTopLevelGetterOnlyComputedPropertyEmitsNoGlobal() throws { // swiftlint:disable:this function_body_length
+    func testTopLevelGetterOnlyComputedPropertyEmitsNoGlobal() throws {
         // Use a non-literal getter body (`= stored`) so the constant
         // collector does NOT inline the value.  This forces ExprLowerer
         // to emit .loadGlobal which PropertyLoweringPass must rewrite.
@@ -1256,5 +1275,4 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         try LoweringPhase().run(ctx)
         return ctx
     }
-    // swiftlint:disable:next file_length
 }

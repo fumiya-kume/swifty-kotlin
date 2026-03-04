@@ -106,8 +106,12 @@ extension DataFlowSemaPhase {
             // Include class type parameter symbols so the overload resolver can
             // infer them from the receiver type arguments.
             let allTypeParameterSymbols = classTypeParameterSymbols + typeParamResult.typeParameterSymbols
-            let classUpperBounds: [TypeID?] = classTypeParameterSymbols.map { symbols.typeParameterUpperBound(for: $0) }
-            let memberUpperBounds: [TypeID?] = classUpperBounds + typeParamResult.typeParameterSymbols.map { symbols.typeParameterUpperBound(for: $0) }
+            let classUpperBounds: [[TypeID]] = classTypeParameterSymbols.map {
+                symbols.typeParameterUpperBounds(for: $0)
+            }
+            let memberUpperBounds: [[TypeID]] = classUpperBounds + typeParamResult.typeParameterSymbols.map {
+                symbols.typeParameterUpperBounds(for: $0)
+            }
             // Offset reified indices by the number of prepended class type params
             // so they still point at the correct function-own type parameters.
             let classTPCount = classTypeParameterSymbols.count
@@ -125,7 +129,7 @@ extension DataFlowSemaPhase {
                     valueParameterIsVararg: params.paramIsVararg,
                     typeParameterSymbols: allTypeParameterSymbols,
                     reifiedTypeParameterIndices: offsetReifiedIndices,
-                    typeParameterUpperBounds: memberUpperBounds,
+                    typeParameterUpperBoundsList: memberUpperBounds,
                     classTypeParameterCount: classTPCount
                 ),
                 for: memberSymbol

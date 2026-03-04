@@ -5,7 +5,11 @@ import XCTest
 final class ABIMismatchTests: XCTestCase {
     // MARK: - Helpers
 
-    private func requireSpec(_ name: String, file: StaticString = #filePath, line: UInt = #line) throws -> RuntimeABIFunctionSpec {
+    private func requireSpec(
+        _ name: String,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) throws -> RuntimeABIFunctionSpec {
         let spec = RuntimeABISpec.allFunctions.first(where: { $0.name == name })
         return try XCTUnwrap(spec, "'\(name)' not found in RuntimeABISpec.allFunctions", file: file, line: line)
     }
@@ -79,8 +83,11 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testStringFunctionCount() {
-        // kk_string_from_utf8/concat/compareTo/length + STDLIB-006 string ABI
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 13)
+        // kk_string_from_utf8, kk_string_concat, kk_string_compareTo, kk_string_length,
+        // kk_string_trim, kk_string_isNullOrEmpty, kk_string_isNullOrBlank, kk_string_split,
+        // kk_string_replace, kk_string_startsWith, kk_string_endsWith, kk_string_contains,
+        // kk_string_toInt, kk_string_toDouble, kk_string_format
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 15)
     }
 
     func testPrintlnFunctionCount() {
@@ -98,8 +105,8 @@ final class ABIMismatchTests: XCTestCase {
 
     func testCoroutineFunctionCount() {
         // 19 base + 12 consolidated stubs + 7 structured concurrency (P5-89)
-        // + 4 CORO-002 cancellation
-        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 42)
+        // + 4 CORO-002 cancellation + 3 CORO-003 flow (kk_flow_map/filter/take)
+        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 45)
     }
 
     func testBoxingFunctionCount() {
@@ -217,6 +224,20 @@ final class ABIMismatchTests: XCTestCase {
 
     func testKKStringTrimSignature() throws {
         let spec = try requireSpec("kk_string_trim")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 1)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+    }
+
+    func testKKStringIsNullOrEmptySignature() throws {
+        let spec = try requireSpec("kk_string_isNullOrEmpty")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 1)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+    }
+
+    func testKKStringIsNullOrBlankSignature() throws {
+        let spec = try requireSpec("kk_string_isNullOrBlank")
         XCTAssertEqual(spec.returnType, .intptr)
         XCTAssertEqual(spec.parameters.count, 1)
         XCTAssertEqual(spec.parameters[0].type, .intptr)

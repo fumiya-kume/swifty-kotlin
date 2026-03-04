@@ -26,6 +26,7 @@ extension KIRLoweringDriver {
             symbol: symbol, name: function.name, params: params,
             returnType: returnType, body: body,
             isSuspend: function.isSuspend, isInline: function.isInline,
+            isTailrec: function.isTailrec,
             sourceRange: function.range
         )))
         var declIDs: [KIRDeclID] = [kirID]

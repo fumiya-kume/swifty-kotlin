@@ -4,7 +4,6 @@ import Foundation
 // Derived from TypeCheckSemaPhase+ExprInference.swift and TypeCheckSemaPhase+ExprInferCases.swift.
 
 extension ExprTypeChecker {
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func inferCompoundAssignExpr(
         _ id: ExprID,
         op: CompoundAssignOp,
@@ -132,7 +131,6 @@ extension ExprTypeChecker {
 
     // MARK: - Specific Expression Cases (from +ExprInferCases.swift)
 
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func inferNameRefExpr(
         _ id: ExprID,
         name: InternedString,
@@ -183,6 +181,63 @@ extension ExprTypeChecker {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-FIELD",
                     "'field' can only be used inside a property getter or setter body.",
+                    range: nameRange
+                )
+            } else if let receiverType = ctx.implicitReceiverType {
+                // STDLIB-004: Inside receiver lambdas (run/apply/with), bare name
+                // references resolve as properties on the implicit receiver (this).
+                let resolvedName = interner.resolve(name)
+                let nonNullReceiver = sema.types.makeNonNullable(receiverType)
+                var implicitMemberType: TypeID?
+
+                // Check known String properties
+                if sema.types.isSubtype(nonNullReceiver, sema.types.stringType) {
+                    if resolvedName == "length" {
+                        implicitMemberType = sema.types.intType
+                    }
+                }
+
+                // Check known collection properties
+                if implicitMemberType == nil {
+                    if resolvedName == "size" || resolvedName == "isEmpty" {
+                        if case let .classType(classInfo) = sema.types.kind(of: nonNullReceiver) {
+                            let className = sema.symbols.symbol(classInfo.classSymbol)
+                                .map { interner.resolve($0.name) } ?? ""
+                            if className.contains("List") || className.contains("Set") || className.contains("Map")
+                                || className.contains("Collection") || className.contains("Array")
+                            {
+                                implicitMemberType = resolvedName == "size"
+                                    ? sema.types.intType
+                                    : sema.types.make(.primitive(.boolean, .nonNull))
+                            }
+                        }
+                    }
+                }
+
+                // Try symbol-table member property lookup as general fallback
+                if implicitMemberType == nil,
+                   let result = driver.helpers.lookupMemberProperty(
+                       named: name,
+                       receiverType: nonNullReceiver,
+                       sema: sema
+                   )
+                {
+                    sema.bindings.markImplicitReceiverMember(id, name: name)
+                    sema.bindings.bindIdentifier(id, symbol: result.symbol)
+                    sema.bindings.bindExprType(id, type: result.type)
+                    return result.type
+                }
+
+                if let memberType = implicitMemberType {
+                    sema.bindings.markImplicitReceiverMember(id, name: name)
+                    sema.bindings.bindExprType(id, type: memberType)
+                    return memberType
+                }
+
+                // Unresolved even with implicit receiver
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0022",
+                    "Unresolved reference '\(resolvedName)'.",
                     range: nameRange
                 )
             } else {
@@ -243,7 +298,6 @@ extension ExprTypeChecker {
         return resolvedType
     }
 
-    // swiftlint:disable:next function_body_length
     func inferLambdaLiteralExpr(
         _ id: ExprID,
         params: [InternedString],
@@ -510,7 +564,7 @@ extension ExprTypeChecker {
 
     /// Helper: handles `T::class` / `SomeType::class` callable-ref expressions.
     /// Returns the inferred type if matched, or `nil` to fall through.
-    private func inferClassRefExpr( // swiftlint:disable:this function_parameter_count
+    private func inferClassRefExpr(
         _ id: ExprID,
         receiver: ExprID,
         receiverName: InternedString,
@@ -653,7 +707,8 @@ extension ExprTypeChecker {
         _ id: ExprID,
         label: InternedString?,
         range: SourceRange,
-        ctx: TypeInferenceContext
+        ctx: TypeInferenceContext,
+        locals: LocalBindings
     ) -> TypeID {
         let sema = ctx.sema
         guard let receiverType = ctx.implicitReceiverType else {
@@ -679,8 +734,11 @@ extension ExprTypeChecker {
             sema.bindings.bindExprType(id, type: sema.types.errorType)
             return sema.types.errorType
         }
+        if let thisLocal = locals[ctx.interner.intern("this")] {
+            sema.bindings.bindExprType(id, type: thisLocal.type)
+            return thisLocal.type
+        }
         sema.bindings.bindExprType(id, type: receiverType)
         return receiverType
     }
-    // swiftlint:disable:next file_length
 }

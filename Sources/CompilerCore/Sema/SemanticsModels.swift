@@ -77,6 +77,7 @@ public struct FunctionSignature: Hashable, Sendable {
     public let typeParameterSymbols: [SymbolID]
     public let reifiedTypeParameterIndices: Set<Int>
     public let typeParameterUpperBounds: [TypeID?]
+    public let typeParameterUpperBoundsList: [[TypeID]]
     /// Number of leading entries in `typeParameterSymbols` that belong to the
     /// enclosing class/interface (not the function itself).  The overload resolver
     /// skips these when matching explicit type arguments and offsetting reified
@@ -94,6 +95,7 @@ public struct FunctionSignature: Hashable, Sendable {
         typeParameterSymbols: [SymbolID] = [],
         reifiedTypeParameterIndices: Set<Int> = [],
         typeParameterUpperBounds: [TypeID?] = [],
+        typeParameterUpperBoundsList: [[TypeID]] = [],
         classTypeParameterCount: Int = 0
     ) {
         self.receiverType = receiverType
@@ -105,7 +107,15 @@ public struct FunctionSignature: Hashable, Sendable {
         self.valueParameterIsVararg = valueParameterIsVararg
         self.typeParameterSymbols = typeParameterSymbols
         self.reifiedTypeParameterIndices = reifiedTypeParameterIndices
-        self.typeParameterUpperBounds = typeParameterUpperBounds
+        let normalizedUpperBoundsList: [[TypeID]] = if !typeParameterUpperBoundsList.isEmpty {
+            typeParameterUpperBoundsList
+        } else {
+            typeParameterUpperBounds.map { bound in
+                bound.map { [$0] } ?? []
+            }
+        }
+        self.typeParameterUpperBoundsList = normalizedUpperBoundsList
+        self.typeParameterUpperBounds = normalizedUpperBoundsList.map(\.first)
         self.classTypeParameterCount = classTypeParameterCount
     }
 }
@@ -262,7 +272,7 @@ public final class SymbolTable {
     private var extensionPropertyReceiverTypes: [SymbolID: TypeID] = [:]
     private var extensionPropertyGetterAccessors: [SymbolID: SymbolID] = [:]
     private var extensionPropertySetterAccessors: [SymbolID: SymbolID] = [:]
-    private var typeParameterUpperBoundsMap: [SymbolID: TypeID] = [:]
+    private var typeParameterUpperBoundsMap: [SymbolID: [TypeID]] = [:]
     private var sourceFileIDs: [SymbolID: FileID] = [:]
     private var annotationsStorage: [SymbolID: [MetadataAnnotationRecord]] = [:]
     private var companionObjectSymbols: [SymbolID: SymbolID] = [:]
@@ -271,6 +281,9 @@ public final class SymbolTable {
     private var constValueExprKinds: [SymbolID: KIRExprKind] = [:]
     private var delegateHasProvideDelegate: Set<SymbolID> = []
     private var expectActualLinks: [SymbolID: SymbolID] = [:]
+    /// CLASS-008: Interfaces delegated by a class via `: Interface by expr`.
+    /// Key = class symbol, Value = set of interface symbols that class delegates to.
+    private var delegatedInterfacesByClass: [SymbolID: Set<SymbolID>] = [:]
 
     public init() {}
 
@@ -457,6 +470,78 @@ public final class SymbolTable {
         return result.sorted(by: { $0.rawValue < $1.rawValue })
     }
 
+    /// CLASS-008: Record that a class delegates to an interface.
+    public func addDelegatedInterface(_ interfaceSymbol: SymbolID, forClass classSymbol: SymbolID) {
+        delegatedInterfacesByClass[classSymbol, default: []].insert(interfaceSymbol)
+    }
+
+    /// CLASS-008: Return the set of interface symbols that a class delegates to.
+    public func delegatedInterfaces(forClass classSymbol: SymbolID) -> Set<SymbolID> {
+        delegatedInterfacesByClass[classSymbol] ?? []
+    }
+
+    /// CLASS-008: Map from (classSymbol, interfaceSymbol) to the delegate field symbol.
+    private var classDelegationFieldByClassAndInterface: [SymbolID: [SymbolID: SymbolID]] = [:]
+
+    /// CLASS-008: Record the delegate field symbol for a class delegating to an interface.
+    public func setClassDelegationField(
+        _ fieldSymbol: SymbolID, forClass classSymbol: SymbolID, interface interfaceSymbol: SymbolID
+    ) {
+        classDelegationFieldByClassAndInterface[classSymbol, default: [:]][interfaceSymbol] = fieldSymbol
+    }
+
+    /// CLASS-008: Get the delegate field symbol for a class delegating to an interface.
+    public func classDelegationField(forClass classSymbol: SymbolID, interface interfaceSymbol: SymbolID) -> SymbolID? {
+        classDelegationFieldByClassAndInterface[classSymbol]?[interfaceSymbol]
+    }
+
+    /// CLASS-008: Map from (classSymbol, interfaceSymbol) to the delegate expression DeclID for lowering.
+    private var classDelegationExprByClassAndInterface: [SymbolID: [SymbolID: ExprID]] = [:]
+
+    /// CLASS-008: Record the delegate expression for a class delegating to an interface.
+    public func setClassDelegationExpr(
+        _ exprID: ExprID, forClass classSymbol: SymbolID, interface interfaceSymbol: SymbolID
+    ) {
+        classDelegationExprByClassAndInterface[classSymbol, default: [:]][interfaceSymbol] = exprID
+    }
+
+    /// CLASS-008: Get the delegate expression for a class delegating to an interface.
+    public func classDelegationExpr(forClass classSymbol: SymbolID, interface interfaceSymbol: SymbolID) -> ExprID? {
+        classDelegationExprByClassAndInterface[classSymbol]?[interfaceSymbol]
+    }
+
+    /// CLASS-008: Synthetic forwarding method symbols created for class delegation.
+    /// Maps forwarding method symbol -> (interfaceSymbol, interfaceMethodSymbol, fieldSymbol).
+    private var classDelegationForwardingMethodInfo: [SymbolID: (interfaceSymbol: SymbolID, interfaceMethodSymbol: SymbolID, fieldSymbol: SymbolID)] = [:]
+    // swiftlint:enable large_tuple line_length
+
+    /// CLASS-008: Per-class list of synthetic forwarding method symbols.
+    private var classDelegationForwardingMethodsByClass: [SymbolID: [SymbolID]] = [:]
+
+    /// CLASS-008: Record a synthetic forwarding method for class delegation.
+    public func addClassDelegationForwardingMethod(
+        _ forwardingSymbol: SymbolID,
+        forClass classSymbol: SymbolID,
+        interface interfaceSymbol: SymbolID,
+        interfaceMethod interfaceMethodSymbol: SymbolID,
+        field fieldSymbol: SymbolID
+    ) {
+        classDelegationForwardingMethodInfo[forwardingSymbol] = (interfaceSymbol, interfaceMethodSymbol, fieldSymbol)
+        classDelegationForwardingMethodsByClass[classSymbol, default: []].append(forwardingSymbol)
+    }
+
+    /// CLASS-008: Get synthetic forwarding method symbols for a class.
+    public func classDelegationForwardingMethodSymbols(forClass classSymbol: SymbolID) -> [SymbolID] {
+        classDelegationForwardingMethodsByClass[classSymbol] ?? []
+    }
+
+    /// CLASS-008: Get the info needed to emit the forwarding body for a synthetic method.
+    public func classDelegationForwardingMethodInfo(for forwardingSymbol: SymbolID) -> (interfaceSymbol: SymbolID, interfaceMethodSymbol: SymbolID, fieldSymbol: SymbolID)? {
+        classDelegationForwardingMethodInfo[forwardingSymbol]
+    }
+
+    // swiftlint:enable large_tuple line_length
+
     public func setNominalLayout(_ layout: NominalLayout, for symbol: SymbolID) {
         nominalLayouts[symbol] = layout
     }
@@ -554,11 +639,28 @@ public final class SymbolTable {
     }
 
     public func setTypeParameterUpperBound(_ bound: TypeID, for symbol: SymbolID) {
-        typeParameterUpperBoundsMap[symbol] = bound
+        var bounds = typeParameterUpperBoundsMap[symbol] ?? []
+        if !bounds.contains(bound) {
+            bounds.append(bound)
+        }
+        typeParameterUpperBoundsMap[symbol] = bounds
+    }
+
+    public func setTypeParameterUpperBounds(_ bounds: [TypeID], for symbol: SymbolID) {
+        var uniqueBounds: [TypeID] = []
+        uniqueBounds.reserveCapacity(bounds.count)
+        for bound in bounds where !uniqueBounds.contains(bound) {
+            uniqueBounds.append(bound)
+        }
+        typeParameterUpperBoundsMap[symbol] = uniqueBounds
     }
 
     public func typeParameterUpperBound(for symbol: SymbolID) -> TypeID? {
-        typeParameterUpperBoundsMap[symbol]
+        typeParameterUpperBoundsMap[symbol]?.first
+    }
+
+    public func typeParameterUpperBounds(for symbol: SymbolID) -> [TypeID] {
+        typeParameterUpperBoundsMap[symbol] ?? []
     }
 
     public func setSourceFileID(_ fileID: FileID, for symbol: SymbolID) {
@@ -680,6 +782,13 @@ public final class BindingTable {
     public private(set) var builderDSLExprIDs: Set<ExprID> = []
     /// Maps builder DSL call expression IDs to their builder kind.
     public private(set) var builderDSLKinds: [ExprID: BuilderDSLKind] = [:]
+    /// Tracks call expressions that are scope function calls (STDLIB-004).
+    public private(set) var scopeFunctionExprIDs: Set<ExprID> = []
+    /// Maps scope function call expression IDs to their kind.
+    public private(set) var scopeFunctionKinds: [ExprID: ScopeFunctionKind] = [:]
+    /// Maps nameRef expression IDs to their member name when they were resolved
+    /// as implicit receiver member accesses (STDLIB-004).
+    public private(set) var implicitReceiverMemberNames: [ExprID: InternedString] = [:]
 
     public init() {}
 
@@ -851,6 +960,27 @@ public final class BindingTable {
     /// Retrieve the builder DSL kind for a builder call expression.
     public func builderDSLKind(for expr: ExprID) -> BuilderDSLKind? {
         builderDSLKinds[expr]
+    }
+
+    /// Mark a call expression as a scope function call (STDLIB-004).
+    public func markScopeFunctionExpr(_ expr: ExprID, kind: ScopeFunctionKind) {
+        scopeFunctionExprIDs.insert(expr)
+        scopeFunctionKinds[expr] = kind
+    }
+
+    /// Whether the given expression is a scope function call.
+    public func isScopeFunctionExpr(_ expr: ExprID) -> Bool {
+        scopeFunctionExprIDs.contains(expr)
+    }
+
+    /// Retrieve the scope function kind for a scope function call expression.
+    public func scopeFunctionKind(for expr: ExprID) -> ScopeFunctionKind? {
+        scopeFunctionKinds[expr]
+    }
+
+    /// Mark a nameRef expression as an implicit receiver member access (STDLIB-004).
+    public func markImplicitReceiverMember(_ expr: ExprID, name: InternedString) {
+        implicitReceiverMemberNames[expr] = name
     }
 }
 

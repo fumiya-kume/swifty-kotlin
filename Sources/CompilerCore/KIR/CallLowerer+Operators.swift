@@ -3,6 +3,7 @@ import Foundation
 extension CallLowerer {
     // MARK: - Binary Operations
 
+    // swiftlint:disable:next function_body_length
     func lowerBinaryExpr(
         _ exprID: ExprID,
         op: BinaryOp,
@@ -86,7 +87,7 @@ extension CallLowerer {
                 }
             }
             if normalizedResult.defaultMask != 0,
-               (sema.symbols.externalLinkName(for: callBinding.chosenCallee)?.isEmpty ?? true)
+               sema.symbols.externalLinkName(for: callBinding.chosenCallee)?.isEmpty ?? true
             {
                 let maskExpr = arena.appendExpr(.intLiteral(Int64(normalizedResult.defaultMask)), type: intType)
                 instructions.append(.constValue(result: maskExpr, value: .intLiteral(Int64(normalizedResult.defaultMask))))
@@ -509,4 +510,5 @@ extension CallLowerer {
         instructions.append(.constValue(result: unit, value: .unit))
         return unit
     }
+    // swiftlint:disable:next file_length
 }

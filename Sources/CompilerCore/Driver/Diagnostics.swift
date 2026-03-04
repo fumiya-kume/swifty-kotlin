@@ -32,7 +32,6 @@ public struct Diagnostic: Equatable {
     }
 }
 
-// swiftlint:disable:next type_body_length
 public final class DiagnosticEngine: @unchecked Sendable {
     private let lock = NSLock()
     private var _diagnostics: [Diagnostic] = []

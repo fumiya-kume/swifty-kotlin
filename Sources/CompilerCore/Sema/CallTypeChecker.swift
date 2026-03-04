@@ -2,7 +2,7 @@ import Foundation
 
 /// Handles call expression type inference (function calls, member calls, safe member calls).
 /// Derived from TypeCheckSemaPass+InferCallsAndBinary.swift.
-final class CallTypeChecker { // swiftlint:disable:this type_body_length
+final class CallTypeChecker {
     unowned let driver: TypeCheckDriver
 
     init(driver: TypeCheckDriver) {
@@ -36,32 +36,73 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
         // is inferred with the correct implicit receiver type.
         if let calleeName, args.count == 1 {
             let name = interner.resolve(calleeName)
-            let builderKind: BuilderDSLKind? = switch name {
-            case "buildString": .buildString
-            case "buildList": .buildList
-            case "buildMap": .buildMap
-            default: nil
-            }
-            if let builderKind {
-                // Determine the receiver type for the builder lambda.
-                // buildString → StringBuilder (treated as Any for member dispatch)
-                // buildList → MutableList (treated as Any)
-                // buildMap → MutableMap (treated as Any)
-                let receiverType = sema.types.anyType
+            if let builderKind = builderDSLKind(for: name),
+               shouldUseBuilderDSLSpecialHandling(calleeName: calleeName, ctx: ctx, locals: locals)
+            {
+                let argumentExprID = args[0].expr
+                guard isValidBuilderLambdaArgument(argumentExprID, ast: ast) else {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0002",
+                        "No viable overload found for call.",
+                        range: range
+                    )
+                    sema.bindings.bindExprType(id, type: sema.types.errorType)
+                    return sema.types.errorType
+                }
+
+                let receiverType = builderDSLReceiverType(kind: builderKind, sema: sema, interner: interner)
                 let returnType: TypeID = switch builderKind {
-                case .buildString: sema.types.stringType
-                case .buildList, .buildMap: sema.types.anyType
+                case .buildString:
+                    sema.types.stringType
+                case .buildList, .buildMap:
+                    sema.types.anyType
                 }
                 // Infer the lambda argument with the builder receiver as implicit `this`.
                 var builderCtx = ctx.with(implicitReceiverType: receiverType)
                 builderCtx.isBuilderLambdaScope = true
                 builderCtx.builderKind = builderKind
-                _ = driver.inferExpr(args[0].expr, ctx: builderCtx, locals: &locals)
+                _ = driver.inferExpr(argumentExprID, ctx: builderCtx, locals: &locals)
                 sema.bindings.markBuilderDSLExpr(id, kind: builderKind)
                 sema.bindings.markCollectionExpr(id)
                 sema.bindings.bindExprType(id, type: returnType)
                 return returnType
             }
+        }
+
+        // --- Scope function: with(receiver, block) (STDLIB-004) ---
+        // Must intercept BEFORE eager arg inference so the lambda argument
+        // is inferred with the correct implicit receiver type.
+        // Only intercept when no user-defined function named `with` is in scope.
+        if let calleeName, args.count == 2,
+           interner.resolve(calleeName) == "with",
+           ctx.cachedScopeLookup(calleeName).isEmpty
+        {
+            // First arg is the receiver object
+            let withReceiverType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+            // Second arg is the lambda with receiver
+            let receiverCtx = ctx.with(implicitReceiverType: withReceiverType)
+            let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                receiver: withReceiverType,
+                params: [],
+                returnType: expectedType ?? sema.types.anyType
+            )))
+            let lambdaType = driver.inferExpr(
+                args[1].expr, ctx: receiverCtx, locals: &locals,
+                expectedType: lambdaExpectedType
+            )
+            let returnType: TypeID = if case let .functionType(fnType) = sema.types.kind(of: lambdaType) {
+                fnType.returnType
+            } else {
+                sema.bindings.exprTypes[args[1].expr].flatMap { typeID in
+                    if case let .functionType(fnType) = sema.types.kind(of: typeID) {
+                        return fnType.returnType
+                    }
+                    return nil
+                } ?? sema.types.anyType
+            }
+            sema.bindings.markScopeFunctionExpr(id, kind: .scopeWith)
+            sema.bindings.bindExprType(id, type: returnType)
+            return returnType
         }
 
         let argTypes = args.map { argument in
@@ -153,6 +194,18 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
                 diagnostics: ctx.semaCtx.diagnostics
             )
             let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
+            if let calleeName {
+                switch interner.resolve(calleeName) {
+                case "listOf", "mutableListOf", "emptyList",
+                     "arrayOf", "intArrayOf", "longArrayOf",
+                     "mapOf", "mutableMapOf", "emptyMap",
+                     "setOf", "mutableSetOf", "emptySet",
+                     "listOfNotNull":
+                    sema.bindings.markCollectionExpr(id)
+                default:
+                    break
+                }
+            }
             sema.bindings.bindExprType(id, type: returnType)
             return returnType
         }
@@ -355,6 +408,60 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
                 break
             }
         }
+        // STDLIB-004: Inside receiver lambdas (run/apply/with), unqualified
+        // function calls resolve as member calls on the implicit receiver.
+        if let calleeName, let receiverType = ctx.implicitReceiverType {
+            let nonNullReceiver = sema.types.makeNonNullable(receiverType)
+            let name = interner.resolve(calleeName)
+
+            // String stdlib methods (STDLIB-006) via implicit receiver
+            if sema.types.isSubtype(nonNullReceiver, sema.types.stringType) {
+                var stringResultType: TypeID?
+                if args.isEmpty {
+                    stringResultType = switch name {
+                    case "trim": sema.types.stringType
+                    case "uppercase": sema.types.stringType
+                    case "lowercase": sema.types.stringType
+                    case "toInt": sema.types.intType
+                    case "toDouble": sema.types.make(.primitive(.double, .nonNull))
+                    default: nil
+                    }
+                } else if args.count == 1 {
+                    stringResultType = switch name {
+                    case "startsWith", "endsWith", "contains":
+                        sema.types.make(.primitive(.boolean, .nonNull))
+                    case "split": sema.types.anyType
+                    default: nil
+                    }
+                } else if args.count == 2, name == "replace" {
+                    stringResultType = sema.types.stringType
+                }
+                if let resultType = stringResultType {
+                    sema.bindings.bindExprType(id, type: resultType)
+                    return resultType
+                }
+            }
+
+            // General member function lookup via implicit receiver
+            let memberCandidates = driver.helpers.collectMemberFunctionCandidates(
+                named: calleeName,
+                receiverType: nonNullReceiver,
+                sema: sema
+            )
+            if let bestCandidate = memberCandidates.first,
+               let sig = sema.symbols.functionSignature(for: bestCandidate)
+            {
+                // Eagerly infer argument types
+                for arg in args {
+                    _ = driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
+                }
+                sema.bindings.bindIdentifier(id, symbol: bestCandidate)
+                let resultType = sig.returnType
+                sema.bindings.bindExprType(id, type: resultType)
+                return resultType
+            }
+        }
+
         if let firstInvisible = callInvisible.first, let calleeName {
             driver.helpers.emitVisibilityError(for: firstInvisible, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
         } else {
@@ -370,29 +477,17 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
     }
 
     func inferMemberCallExpr(
-        _ id: ExprID,
-        receiverID: ExprID,
-        calleeName: InternedString,
-        args: [CallArgument],
-        range: SourceRange,
-        ctx: TypeInferenceContext,
-        locals: inout LocalBindings,
-        expectedType: TypeID?,
-        explicitTypeArgs: [TypeID] = []
+        _ id: ExprID, receiverID: ExprID, calleeName: InternedString,
+        args: [CallArgument], range: SourceRange, ctx: TypeInferenceContext,
+        locals: inout LocalBindings, expectedType: TypeID?, explicitTypeArgs: [TypeID] = []
     ) -> TypeID {
         inferMemberCallImpl(id, receiverID: receiverID, calleeName: calleeName, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType, explicitTypeArgs: explicitTypeArgs, safeCall: false)
     }
 
     func inferSafeMemberCallExpr(
-        _ id: ExprID,
-        receiverID: ExprID,
-        calleeName: InternedString,
-        args: [CallArgument],
-        range: SourceRange,
-        ctx: TypeInferenceContext,
-        locals: inout LocalBindings,
-        expectedType: TypeID?,
-        explicitTypeArgs: [TypeID] = []
+        _ id: ExprID, receiverID: ExprID, calleeName: InternedString,
+        args: [CallArgument], range: SourceRange, ctx: TypeInferenceContext,
+        locals: inout LocalBindings, expectedType: TypeID?, explicitTypeArgs: [TypeID] = []
     ) -> TypeID {
         inferMemberCallImpl(id, receiverID: receiverID, calleeName: calleeName, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType, explicitTypeArgs: explicitTypeArgs, safeCall: true)
     }

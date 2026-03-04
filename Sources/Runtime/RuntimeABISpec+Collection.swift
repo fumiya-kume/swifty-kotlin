@@ -80,6 +80,7 @@ public extension RuntimeABISpec {
             returnType: .opaquePointer,
             section: "Collection"
         ),
+    ] + Self.collectionHOFFunctions + [
         // Map
         RuntimeABIFunctionSpec(
             name: "kk_map_of",
@@ -263,6 +264,42 @@ public extension RuntimeABISpec {
             section: "Collection"
         ),
     ]
+
+    private static let hofLambdaParams: [RuntimeABIParameter] = [
+        RuntimeABIParameter(name: "listRaw", type: .intptr),
+        RuntimeABIParameter(name: "fnPtr", type: .intptr),
+        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+    ]
+
+    private static func hofSpec(_ name: String) -> RuntimeABIFunctionSpec {
+        RuntimeABIFunctionSpec(
+            name: name, parameters: hofLambdaParams,
+            returnType: .intptr, section: "Collection"
+        )
+    }
+
+    static let collectionHOFFunctions: [RuntimeABIFunctionSpec] = {
+        let foldSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_fold",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "initial", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let before = [
+            "kk_list_map", "kk_list_filter", "kk_list_forEach",
+            "kk_list_flatMap", "kk_list_any", "kk_list_none", "kk_list_all",
+        ]
+        let after = [
+            "kk_list_reduce", "kk_list_groupBy", "kk_list_sortedBy",
+            "kk_list_count", "kk_list_first", "kk_list_last", "kk_list_find",
+        ]
+        return before.map { hofSpec($0) } + [foldSpec] + after.map { hofSpec($0) }
+    }()
 }
 
 // swiftlint:enable trailing_comma
