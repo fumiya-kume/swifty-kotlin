@@ -80,6 +80,9 @@ extension BuildASTPhase.ExpressionParser {
         case let .uintLiteral(text):
             _ = consume()
             let value = parseUnsignedLiteral(text, range: token.range)
+            if value > UInt32.max {
+                return astArena.appendExpr(.ulongLiteral(value, token.range))
+            }
             return astArena.appendExpr(.uintLiteral(value, token.range))
         case let .ulongLiteral(text):
             _ = consume()

@@ -171,6 +171,17 @@ extension ExprTypeChecker {
         let uintType = sema.types.uintType
         let ubyteType = sema.types.make(.primitive(.ubyte, .nonNull))
         let ushortType = sema.types.make(.primitive(.ushort, .nonNull))
+
+        if (sema.types.isSigned(lhs) && sema.types.isUnsigned(rhs)) || (sema.types.isUnsigned(lhs) && sema.types.isSigned(rhs)) {
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-0043",
+                "Operator '\(interner.resolve(operatorName))' cannot be applied to '(signed, unsigned)' or '(unsigned, signed)' types.",
+                range: range
+            )
+            sema.bindings.bindExprType(id, type: sema.types.errorType)
+            return sema.types.errorType
+        }
+
         switch op {
         case .add:
             if lhs == stringType || rhs == stringType {

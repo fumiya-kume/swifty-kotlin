@@ -70,8 +70,9 @@ final class OperatorLoweringPass: LoweringPass {
                         }
                     }
                     // For unsigned int/long: add/sub/mul/eq/ne use same callees; div/rem/lt/le/gt/ge use u-prefix
-                    let divModCmpPrefix = (isUnsigned && rank == 0) ? "u" : prefix
-                    let divModOp = (isUnsigned && rank == 0) ? "rem" : "mod" // unsigned uses urem (LLVM), signed uses mod
+                    let useUnsignedRank0 = isUnsigned && rank == 0
+                    let divModCmpPrefix = useUnsignedRank0 ? "u" : prefix
+                    let divModOp = useUnsignedRank0 ? "rem" : "mod" // unsigned uses urem (LLVM), signed uses mod
                     let callee: InternedString = switch op {
                     case .add:
                         ctx.interner.intern("kk_op_\(prefix)add")
