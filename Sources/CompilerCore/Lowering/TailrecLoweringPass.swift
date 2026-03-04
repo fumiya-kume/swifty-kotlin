@@ -27,8 +27,15 @@ final class TailrecLoweringPass: LoweringPass {
         module.arena.transformFunctions { function in
             guard function.isTailrec else { return function }
 
-            let loopLabel = nextLoopLabel
-            nextLoopLabel += 1
+            // Avoid label collision: scan the function's existing labels and
+            // ensure the generated loop-head label is strictly greater.
+            let maxExistingLabel = function.body.compactMap { instruction -> Int32? in
+                if case let .label(id) = instruction { return id }
+                return nil
+            }.max() ?? (tailrecLoopLabelBase - 1)
+
+            let loopLabel = max(nextLoopLabel, maxExistingLabel + 1)
+            nextLoopLabel = loopLabel + 1
 
             let functionIdentity = TailrecFunctionIdentity(
                 symbol: function.symbol,

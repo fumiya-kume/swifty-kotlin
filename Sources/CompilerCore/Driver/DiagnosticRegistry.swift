@@ -392,6 +392,12 @@ public enum DiagnosticRegistry {
             summary: "Cannot apply postfix operator to operand type."
         ),
         DiagnosticDescriptor(
+            code: "KSWIFTK-SEMA-TAILREC",
+            pass: "SEMA",
+            defaultSeverity: .warning,
+            summary: "Function marked 'tailrec' but last expression is not a self-recursive call."
+        ),
+        DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-DIAMOND",
             pass: "SEMA",
             defaultSeverity: .error,
