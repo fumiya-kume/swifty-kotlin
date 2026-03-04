@@ -69,10 +69,10 @@ extension DeclTypeChecker {
 
     func typeCheckClassDelegation(
         _ classDecl: ClassDecl,
-        symbol: SymbolID,
+        symbol _: SymbolID,
         ctx: TypeInferenceContext,
-        solver: ConstraintSolver,
-        diagnostics: DiagnosticEngine
+        solver _: ConstraintSolver,
+        diagnostics _: DiagnosticEngine
     ) {
         let sema = ctx.sema
         let delegatedEntries = classDecl.superTypeEntries.filter { $0.delegateExpression != nil }
@@ -82,9 +82,10 @@ extension DeclTypeChecker {
         let ctorSymbols = sema.symbols.symbols(atDeclSite: classDecl.range)
             .compactMap { sema.symbols.symbol($0) }
             .filter { $0.kind == .constructor }
-            
+
         if let ctorSymbol = ctorSymbols.first,
-           let signature = sema.symbols.functionSignature(for: ctorSymbol.id) {
+           let signature = sema.symbols.functionSignature(for: ctorSymbol.id)
+        {
             let ctorScope = BaseScope(parent: ctx.scope, symbols: sema.symbols)
             for paramSym in signature.valueParameterSymbols {
                 ctorScope.insert(paramSym)
@@ -306,7 +307,8 @@ extension DeclTypeChecker {
         // owning class/interface scope (e.g. `MAX_COUNT` instead of
         // `Companion.MAX_COUNT`).
         if let companionSymbol = sema.symbols.companionObjectSymbol(for: ownerSymbol),
-           let companion = sema.symbols.symbol(companionSymbol) {
+           let companion = sema.symbols.symbol(companionSymbol)
+        {
             for memberSymbol in sema.symbols.children(ofFQName: companion.fqName) {
                 guard let member = sema.symbols.symbol(memberSymbol),
                       member.kind == .property || member.kind == .field

@@ -33,7 +33,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .call(symbol: targetSym, callee: targetName, arguments: [argExpr], result: resultExpr, canThrow: false, thrownResult: nil),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -99,7 +99,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .call(symbol: targetSym, callee: targetName, arguments: [argExpr], result: resultExpr, canThrow: false, thrownResult: nil),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -165,7 +165,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .call(symbol: targetSym, callee: targetName, arguments: [argExpr], result: resultExpr, canThrow: false, thrownResult: nil),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -229,7 +229,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .call(symbol: targetSym, callee: targetName, arguments: [], result: resultExpr, canThrow: false, thrownResult: nil),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -293,7 +293,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .call(symbol: targetSym, callee: targetName, arguments: [], result: resultExpr, canThrow: false, thrownResult: nil),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false

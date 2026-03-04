@@ -780,7 +780,7 @@ public enum RuntimeABIExterns {
         kk_op_rangeTo,
         kk_op_rangeUntil,
         kk_op_downTo,
-        kk_op_step
+        kk_op_step,
     ] + kPropertyStubExterns + [
         // Delegate
         kk_lazy_create,
@@ -800,7 +800,7 @@ public enum RuntimeABIExterns {
         kk_op_shl,
         kk_op_shr,
         kk_op_ushr,
-        kk_int_toString_radix
+        kk_int_toString_radix,
     ] + collectionExterns + sequenceExterns
 
     /// Look up an extern declaration by symbol name.

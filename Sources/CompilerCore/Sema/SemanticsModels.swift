@@ -239,6 +239,7 @@ public final class ClassMemberScope: BaseScope {
 public final class FunctionScope: BaseScope {}
 public final class BlockScope: BaseScope {}
 
+// swiftlint:disable:next type_body_length
 public final class SymbolTable {
     private var symbolsStorage: [SemanticSymbol] = []
     private var byFQName: [[InternedString]: [SymbolID]] = [:]
@@ -474,7 +475,9 @@ public final class SymbolTable {
     private var classDelegationFieldByClassAndInterface: [SymbolID: [SymbolID: SymbolID]] = [:]
 
     /// CLASS-008: Record the delegate field symbol for a class delegating to an interface.
-    public func setClassDelegationField(_ fieldSymbol: SymbolID, forClass classSymbol: SymbolID, interface interfaceSymbol: SymbolID) {
+    public func setClassDelegationField(
+        _ fieldSymbol: SymbolID, forClass classSymbol: SymbolID, interface interfaceSymbol: SymbolID
+    ) {
         classDelegationFieldByClassAndInterface[classSymbol, default: [:]][interfaceSymbol] = fieldSymbol
     }
 
@@ -487,7 +490,9 @@ public final class SymbolTable {
     private var classDelegationExprByClassAndInterface: [SymbolID: [SymbolID: ExprID]] = [:]
 
     /// CLASS-008: Record the delegate expression for a class delegating to an interface.
-    public func setClassDelegationExpr(_ exprID: ExprID, forClass classSymbol: SymbolID, interface interfaceSymbol: SymbolID) {
+    public func setClassDelegationExpr(
+        _ exprID: ExprID, forClass classSymbol: SymbolID, interface interfaceSymbol: SymbolID
+    ) {
         classDelegationExprByClassAndInterface[classSymbol, default: [:]][interfaceSymbol] = exprID
     }
 
@@ -496,9 +501,11 @@ public final class SymbolTable {
         classDelegationExprByClassAndInterface[classSymbol]?[interfaceSymbol]
     }
 
+    // swiftlint:disable large_tuple line_length
     /// CLASS-008: Synthetic forwarding method symbols created for class delegation.
     /// Maps forwarding method symbol -> (interfaceSymbol, interfaceMethodSymbol, fieldSymbol).
     private var classDelegationForwardingMethodInfo: [SymbolID: (interfaceSymbol: SymbolID, interfaceMethodSymbol: SymbolID, fieldSymbol: SymbolID)] = [:]
+    // swiftlint:enable large_tuple line_length
 
     /// CLASS-008: Per-class list of synthetic forwarding method symbols.
     private var classDelegationForwardingMethodsByClass: [SymbolID: [SymbolID]] = [:]
@@ -520,10 +527,12 @@ public final class SymbolTable {
         classDelegationForwardingMethodsByClass[classSymbol] ?? []
     }
 
+    // swiftlint:disable large_tuple line_length
     /// CLASS-008: Get the info needed to emit the forwarding body for a synthetic method.
     public func classDelegationForwardingMethodInfo(for forwardingSymbol: SymbolID) -> (interfaceSymbol: SymbolID, interfaceMethodSymbol: SymbolID, fieldSymbol: SymbolID)? {
         classDelegationForwardingMethodInfo[forwardingSymbol]
     }
+    // swiftlint:enable large_tuple line_length
 
     public func setNominalLayout(_ layout: NominalLayout, for symbol: SymbolID) {
         nominalLayouts[symbol] = layout

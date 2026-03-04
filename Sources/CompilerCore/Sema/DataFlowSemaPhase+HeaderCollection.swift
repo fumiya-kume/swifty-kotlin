@@ -718,7 +718,8 @@ extension DataFlowSemaPhase {
         )
         for typeParam in typeParams {
             if let boundRef = typeParam.upperBound,
-               let typeParamSym = localTypeParameters[typeParam.name] {
+               let typeParamSym = localTypeParameters[typeParam.name]
+            {
                 if let boundType = resolveTypeRef(
                     boundRef,
                     ast: ast,

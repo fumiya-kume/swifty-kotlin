@@ -26,7 +26,8 @@ extension CallLowerer {
         // ── T::class.simpleName / T::class.qualifiedName ──────────────
         if case let .callableRef(classRefReceiver, refMember, _) = ast.arena.expr(receiverExpr),
            interner.resolve(refMember) == "class",
-           let classRefTargetType = sema.bindings.classRefTargetType(for: receiverExpr) {
+           let classRefTargetType = sema.bindings.classRefTargetType(for: receiverExpr)
+        {
             let callee = interner.resolve(calleeName)
             if callee == "simpleName" || callee == "qualifiedName" {
                 return lowerClassRefPropertyAccess(
@@ -166,7 +167,8 @@ extension CallLowerer {
         // Primitive member function: Int/Long.inv() → kk_op_inv (P5-103)
         if calleeName == interner.intern("inv"),
            args.isEmpty,
-           shouldLowerPrimitiveInv(receiverExpr: receiverExpr, sema: sema, nullableReceiverAllowed: requireNonNullableReceiverForConstFold) {
+           shouldLowerPrimitiveInv(receiverExpr: receiverExpr, sema: sema, nullableReceiverAllowed: requireNonNullableReceiverForConstFold)
+        {
             instructions.append(.call(
                 symbol: nil,
                 callee: interner.intern("kk_op_inv"),
@@ -180,7 +182,8 @@ extension CallLowerer {
 
         // Primitive infix member functions: Int/Long/UInt/ULong.and|or|xor|shl|shr|ushr (EXPR-003, TYPE-005)
         if args.count == 1,
-           shouldLowerPrimitiveInv(receiverExpr: receiverExpr, sema: sema, nullableReceiverAllowed: requireNonNullableReceiverForConstFold) {
+           shouldLowerPrimitiveInv(receiverExpr: receiverExpr, sema: sema, nullableReceiverAllowed: requireNonNullableReceiverForConstFold)
+        {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let uintType = sema.types.make(.primitive(.uint, .nonNull))
@@ -218,7 +221,8 @@ extension CallLowerer {
 
         // Primitive member function: Int/Long.toString(radix: Int) → kk_int_toString_radix (EXPR-003)
         if calleeName == interner.intern("toString"),
-           args.count == 1 {
+           args.count == 1
+        {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
@@ -422,7 +426,8 @@ extension CallLowerer {
 
     private func isEnumEntryField(_ fieldSymbol: SymbolID, sema: SemaModule) -> Bool {
         if let parentSymbol = sema.symbols.parentSymbol(for: fieldSymbol),
-           sema.symbols.symbol(parentSymbol)?.kind == .enumClass {
+           sema.symbols.symbol(parentSymbol)?.kind == .enumClass
+        {
             return true
         }
         guard let field = sema.symbols.symbol(fieldSymbol),
@@ -497,7 +502,8 @@ extension CallLowerer {
     ) {
         if let chosenCallee,
            let signature = sema.symbols.functionSignature(for: chosenCallee),
-           signature.receiverType != nil {
+           signature.receiverType != nil
+        {
             arguments.insert(loweredReceiverID, at: 0)
             return
         }
@@ -530,7 +536,8 @@ extension CallLowerer {
     ) {
         var finalArguments = arguments
         if normalized.defaultMask != 0,
-           let chosenCallee {
+           let chosenCallee
+        {
             appendReifiedTypeTokens(
                 chosenCallee: chosenCallee,
                 callBinding: callBinding,
@@ -620,7 +627,8 @@ extension CallLowerer {
         ) else { return nil }
         var vcArguments = finalArguments
         if let sig = sema.symbols.functionSignature(for: chosenCallee),
-           sig.receiverType != nil, !vcArguments.isEmpty {
+           sig.receiverType != nil, !vcArguments.isEmpty
+        {
             vcArguments.removeFirst()
         }
         return .virtualCall(

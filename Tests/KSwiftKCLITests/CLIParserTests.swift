@@ -25,7 +25,7 @@ final class CLIParserTests: XCTestCase {
             "-Xir", "backend=llvm-c-api",
             "-Xruntime", "trace=true",
             "-g",
-            "main.kt"
+            "main.kt",
         ])
 
         XCTAssertEqual(options.outputPath, "out.bin")

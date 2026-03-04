@@ -612,7 +612,7 @@ private func makeHelpersFixture() -> HelpersFixture {
                 imports: [],
                 topLevelDecls: [],
                 scriptBody: []
-            )
+            ),
         ],
         arena: astArena,
         declarationCount: 0,

@@ -31,6 +31,7 @@ extension BuildASTPhase {
             typeParams: typeParams,
             primaryConstructorParams: declarationValueParameters(from: nodeID, in: arena, interner: interner, astArena: astArena),
             hasPrimaryConstructorSyntax: declarationHasPrimaryConstructorSyntax(from: nodeID, in: arena),
+            // swiftlint:disable:next line_length
             superTypeEntries: declarationSuperTypeEntries(from: nodeID, in: arena, interner: interner, astArena: astArena),
             nestedTypeAliases: declarationNestedTypeAliases(from: nodeID, in: arena, interner: interner, astArena: astArena),
             enumEntries: declarationEnumEntries(from: nodeID, in: arena, interner: interner),
@@ -257,7 +258,8 @@ extension BuildASTPhase {
         for child in arena.children(of: nodeID) {
             if case let .token(tokenID) = child,
                let token = resolveToken(tokenID, in: arena),
-               let name = internedIdentifier(from: token, interner: interner) {
+               let name = internedIdentifier(from: token, interner: interner)
+            {
                 if case let .keyword(keyword) = token.kind, isLeadingDeclarationKeyword(keyword) {
                     continue
                 }
@@ -384,7 +386,8 @@ extension BuildASTPhase {
         let defaultValueExpr: ExprID?
         if let defaultTokens = split.defaultTokens?
             .filter({ $0.kind != .symbol(.semicolon) }),
-            !defaultTokens.isEmpty {
+            !defaultTokens.isEmpty
+        {
             let parser = ExpressionParser(tokens: defaultTokens, interner: interner, astArena: astArena)
             defaultValueExpr = parser.parse()
         } else {

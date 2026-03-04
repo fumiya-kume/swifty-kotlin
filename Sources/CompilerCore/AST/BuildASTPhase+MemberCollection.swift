@@ -49,7 +49,8 @@ extension BuildASTPhase {
 
         for token in tokens {
             if depth.isAtTopLevel,
-               token.kind == .symbol(.comma) || token.kind == .symbol(.semicolon) {
+               token.kind == .symbol(.comma) || token.kind == .symbol(.semicolon)
+            {
                 if !current.isEmpty {
                     segments.append(current)
                     current.removeAll(keepingCapacity: true)
@@ -109,6 +110,7 @@ extension BuildASTPhase {
         return aliases
     }
 
+    // swiftlint:disable cyclomatic_complexity function_body_length
     /// Parses supertype entries for class declarations, including optional
     /// `by expr` delegation (e.g. `class Foo(impl: Printer) : Printer by impl`).
     /// Returns `[SuperTypeEntry]`; use `declarationSuperTypes` for interface/object.
@@ -174,6 +176,7 @@ extension BuildASTPhase {
         }
         return entries
     }
+    // swiftlint:enable cyclomatic_complexity function_body_length
 
     /// Parses a single supertype chunk, optionally with `by expr` (class delegation).
     private func parseSuperTypeEntry(
@@ -186,9 +189,9 @@ extension BuildASTPhase {
 
         var byIndex: Int?
         var depth = BracketDepth()
-        for (i, token) in stripped.enumerated() {
+        for (index, token) in stripped.enumerated() {
             if case .softKeyword(.by) = token.kind, depth.isAtTopLevel {
-                byIndex = i
+                byIndex = index
                 break
             }
             depth.track(token.kind)

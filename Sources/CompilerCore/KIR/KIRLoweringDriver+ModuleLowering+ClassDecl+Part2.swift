@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 
 extension KIRLoweringDriver {
@@ -122,9 +123,10 @@ extension KIRLoweringDriver {
         return declIDs
     }
 
+    // swiftlint:disable function_parameter_count
     /// CLASS-008: Emits delegate field initialization for `: Interface by expr`.
     private func emitClassDelegationInitializers(
-        classDecl: ClassDecl,
+        classDecl _: ClassDecl,
         ownerSymbol: SymbolID,
         receiverID: KIRExprID,
         shared: KIRLoweringSharedContext,
@@ -134,6 +136,7 @@ extension KIRLoweringDriver {
         let sema = shared.sema
         let arena = shared.arena
         for interfaceSymbol in sema.symbols.delegatedInterfaces(forClass: ownerSymbol) {
+            // swiftlint:disable:next line_length
             guard let delegateExpr = sema.symbols.classDelegationExpr(forClass: ownerSymbol, interface: interfaceSymbol),
                   let fieldSymbol = sema.symbols.classDelegationField(forClass: ownerSymbol, interface: interfaceSymbol)
             else {
@@ -141,12 +144,14 @@ extension KIRLoweringDriver {
             }
             let delegateValue = lowerExpr(delegateExpr, shared: shared, emit: &body)
 
+            // swiftlint:disable:next line_length
             guard let fieldOffset = shared.sema.symbols.nominalLayout(for: ownerSymbol)?.fieldOffsets[fieldSymbol] else {
                 continue
             }
             let offsetExpr = arena.appendExpr(.intLiteral(Int64(fieldOffset)), type: shared.sema.types.intType)
             body.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(fieldOffset))))
 
+            // swiftlint:disable:next line_length
             let unusedResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: shared.sema.types.anyType)
             body.append(.call(
                 symbol: nil,
@@ -159,6 +164,7 @@ extension KIRLoweringDriver {
             ))
         }
     }
+    // swiftlint:enable function_parameter_count
 
     /// Emits property initializers and `init { }` blocks in the order they
     /// appear in the class body, matching Kotlin's guaranteed top-to-bottom

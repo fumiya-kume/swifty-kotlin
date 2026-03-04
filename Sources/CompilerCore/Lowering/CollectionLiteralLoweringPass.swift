@@ -119,17 +119,17 @@ final class CollectionLiteralLoweringPass: LoweringPass {
         // Set of all list-factory callee names
         let listFactoryNames: Set<InternedString> = [
             listOfName, mutableListOfName, emptyListName, listOfNotNullName,
-            setOfName, mutableSetOfName, emptySetName
+            setOfName, mutableSetOfName, emptySetName,
         ]
 
         // Set of all map-factory callee names
         let mapFactoryNames: Set<InternedString> = [
-            mapOfName, mutableMapOfName, emptyMapName
+            mapOfName, mutableMapOfName, emptyMapName,
         ]
 
         // Set of all arrayOf-factory callee names
         let arrayOfFactoryNames: Set<InternedString> = [
-            arrayOfName, intArrayOfName, longArrayOfName
+            arrayOfName, intArrayOfName, longArrayOfName,
         ]
 
         // Builder DSL names (STDLIB-002)

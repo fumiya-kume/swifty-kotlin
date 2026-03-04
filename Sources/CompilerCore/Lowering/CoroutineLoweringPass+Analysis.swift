@@ -204,13 +204,15 @@ extension CoroutineLoweringPass {
             switch terminator {
             case let .some(.jump(target)):
                 if let targetInstruction = labelToInstructionIndex[target],
-                   let targetBlock = instructionToBlock[targetInstruction] {
+                   let targetBlock = instructionToBlock[targetInstruction]
+                {
                     successors.append(targetBlock)
                 }
 
             case let .some(.jumpIfEqual(_, _, target)):
                 if let targetInstruction = labelToInstructionIndex[target],
-                   let targetBlock = instructionToBlock[targetInstruction] {
+                   let targetBlock = instructionToBlock[targetInstruction]
+                {
                     successors.append(targetBlock)
                 }
                 if blockID + 1 < ranges.count {
@@ -219,7 +221,8 @@ extension CoroutineLoweringPass {
 
             case let .some(.jumpIfNotNull(_, target)):
                 if let targetInstruction = labelToInstructionIndex[target],
-                   let targetBlock = instructionToBlock[targetInstruction] {
+                   let targetBlock = instructionToBlock[targetInstruction]
+                {
                     successors.append(targetBlock)
                 }
                 if blockID + 1 < ranges.count {
@@ -371,7 +374,8 @@ extension CoroutineLoweringPass {
         case let .jumpIfEqual(_, _, target):
             var successors = fallthroughSuccessors
             if let targetIndex = labelToInstructionIndex[target],
-               !successors.contains(targetIndex) {
+               !successors.contains(targetIndex)
+            {
                 successors.append(targetIndex)
             }
             return successors
@@ -379,7 +383,8 @@ extension CoroutineLoweringPass {
         case let .jumpIfNotNull(_, target):
             var successors = fallthroughSuccessors
             if let targetIndex = labelToInstructionIndex[target],
-               !successors.contains(targetIndex) {
+               !successors.contains(targetIndex)
+            {
                 successors.append(targetIndex)
             }
             return successors

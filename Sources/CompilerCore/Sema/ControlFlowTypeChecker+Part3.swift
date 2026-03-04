@@ -81,7 +81,8 @@ extension ControlFlowTypeChecker {
                     switch conditionSymbol.kind {
                     case .field:
                         if let ownerID = driver.helpers.enumOwnerSymbol(for: conditionSymbol, symbols: sema.symbols),
-                           ownerID == subjectNominalSymbol {
+                           ownerID == subjectNominalSymbol
+                        {
                             covered.insert(conditionSymbol.name)
                         } else if let fallbackName {
                             covered.insert(fallbackName)
@@ -91,7 +92,8 @@ extension ControlFlowTypeChecker {
 
                     case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
                         if let subjectNominalSymbol,
-                           driver.helpers.isNominalSubtype(conditionSymbolID, of: subjectNominalSymbol, symbols: sema.symbols) {
+                           driver.helpers.isNominalSubtype(conditionSymbolID, of: subjectNominalSymbol, symbols: sema.symbols)
+                        {
                             covered.insert(conditionSymbol.name)
                         } else if let fallbackName {
                             covered.insert(fallbackName)
@@ -233,7 +235,8 @@ extension ControlFlowTypeChecker {
                            ctx.dataFlow.resolvedTypeFromFlowState(
                                branchFlowState,
                                symbol: subjectLocalBinding.symbol
-                           ) == nil {
+                           ) == nil
+                        {
                             branchFlowState = ctx.dataFlow.whenNonNullBranchState(
                                 subjectSymbol: subjectLocalBinding.symbol,
                                 subjectType: subjectLocalBinding.type,

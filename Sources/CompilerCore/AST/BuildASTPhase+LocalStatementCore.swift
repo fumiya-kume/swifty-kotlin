@@ -35,7 +35,8 @@ extension BuildASTPhase {
             var index = 0
             while index < tokens.count {
                 if case let .keyword(keyword) = tokens[index].kind,
-                   KotlinParser.isDeclarationModifierKeyword(keyword) {
+                   KotlinParser.isDeclarationModifierKeyword(keyword)
+                {
                     index += 1
                     continue
                 }
@@ -59,7 +60,7 @@ extension BuildASTPhase {
             let assignmentOps: [TokenKind] = [
                 .symbol(.assign),
                 .symbol(.plusAssign), .symbol(.minusAssign),
-                .symbol(.starAssign), .symbol(.slashAssign), .symbol(.percentAssign)
+                .symbol(.starAssign), .symbol(.slashAssign), .symbol(.percentAssign),
             ]
             var depth = BuildASTPhase.BracketDepth()
             for token in tokens {
@@ -91,7 +92,8 @@ extension BuildASTPhase {
             var startIndex = statementTokens.startIndex
             while startIndex < statementTokens.endIndex,
                   case let .keyword(keyword) = statementTokens[startIndex].kind,
-                  KotlinParser.isDeclarationModifierKeyword(keyword) {
+                  KotlinParser.isDeclarationModifierKeyword(keyword)
+            {
                 startIndex = statementTokens.index(after: startIndex)
             }
             guard startIndex < statementTokens.endIndex else {
@@ -152,7 +154,8 @@ extension BuildASTPhase {
                 while index < statementTokens.endIndex {
                     let token = statementTokens[index]
                     if typeDepth.isAtTopLevel,
-                       token.kind == .symbol(.assign) || token.kind == .symbol(.semicolon) {
+                       token.kind == .symbol(.assign) || token.kind == .symbol(.semicolon)
+                    {
                         break
                     }
                     typeDepth.track(token.kind)
@@ -324,7 +327,7 @@ extension BuildASTPhase {
                 (.symbol(.minusAssign), .minusAssign),
                 (.symbol(.starAssign), .timesAssign),
                 (.symbol(.slashAssign), .divAssign),
-                (.symbol(.percentAssign), .modAssign)
+                (.symbol(.percentAssign), .modAssign),
             ]
 
             var foundIndex: Int?

@@ -97,7 +97,8 @@ final class CallLowerer {
         if let loweredCallable {
             finalArgIDs.insert(contentsOf: loweredCallable.captureArguments, at: 0)
         } else if let chosen,
-                  sema.symbols.symbol(chosen)?.kind == .constructor {
+                  sema.symbols.symbol(chosen)?.kind == .constructor
+        {
             // Constructor calls need an allocated object as the implicit receiver (p0).
             // Allocate via kk_array_new(slotCount) and prepend it to the argument list.
             // Derive slot count from NominalLayout.instanceSizeWords of the owning class.
@@ -106,7 +107,8 @@ final class CallLowerer {
             var slotCount: Int64 = 1
             var ownerNominalSymbol: SymbolID?
             if let parentClassID = sema.symbols.parentSymbol(for: chosen),
-               let layout = sema.symbols.nominalLayout(for: parentClassID) {
+               let layout = sema.symbols.nominalLayout(for: parentClassID)
+            {
                 ownerNominalSymbol = parentClassID
                 slotCount = Int64(max(layout.instanceSizeWords, 1))
             }
@@ -165,7 +167,8 @@ final class CallLowerer {
         } else if let chosen,
                   let signature = sema.symbols.functionSignature(for: chosen),
                   signature.receiverType != nil,
-                  let implicitReceiver = driver.ctx.currentImplicitReceiverExprID {
+                  let implicitReceiver = driver.ctx.currentImplicitReceiverExprID
+        {
             finalArgIDs.insert(implicitReceiver, at: 0)
         }
 
@@ -180,7 +183,8 @@ final class CallLowerer {
         // function reference); subsequent arguments are value args for the
         // referenced suspend function and should not be expanded.
         if chosen == nil,
-           loweredCallable == nil {
+           loweredCallable == nil
+        {
             let runBlockingID = interner.intern("runBlocking")
             let launchID = interner.intern("launch")
             let asyncID = interner.intern("async")
@@ -189,7 +193,8 @@ final class CallLowerer {
                 || sourceCalleeName == asyncID,
                 let firstArg = finalArgIDs.first,
                 let callableInfo = driver.ctx.callableValueInfoByExprID[firstArg],
-                !callableInfo.captureArguments.isEmpty {
+                !callableInfo.captureArguments.isEmpty
+            {
                 finalArgIDs.insert(contentsOf: callableInfo.captureArguments, at: 1)
             }
         }
@@ -232,7 +237,8 @@ final class CallLowerer {
             )
             let loweredCalleeName: InternedString = if let chosen,
                                                        let externalLinkName = sema.symbols.externalLinkName(for: chosen),
-                                                       !externalLinkName.isEmpty {
+                                                       !externalLinkName.isEmpty
+            {
                 interner.intern(externalLinkName)
             } else if let loweredCallable {
                 loweredCallable.callee

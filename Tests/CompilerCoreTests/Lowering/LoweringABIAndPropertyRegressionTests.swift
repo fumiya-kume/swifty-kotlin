@@ -36,7 +36,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             returnType: types.unitType,
             body: [
                 .call(symbol: targetSym, callee: targetName, arguments: [argExpr], result: resultExpr, canThrow: false, thrownResult: nil), // swiftlint:disable:this line_length
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -78,7 +78,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         XCTAssertTrue(callees.contains("kk_box_int"), "Expected kk_box_int call for Int -> Any? boxing, got: \(callees)") // swiftlint:disable:this line_length
     }
 
-        // swiftlint:disable:next function_body_length
+    // swiftlint:disable:next function_body_length
     func testABILoweringBoxesBoolArgumentForAnyParameter() throws {
         let interner = StringInterner()
         let arena = KIRArena()
@@ -109,7 +109,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             returnType: types.unitType,
             body: [
                 .call(symbol: targetSym, callee: targetName, arguments: [argExpr], result: resultExpr, canThrow: false, thrownResult: nil), // swiftlint:disable:this line_length
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -182,7 +182,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             returnType: types.unitType,
             body: [
                 .call(symbol: targetSym, callee: targetName, arguments: [argExpr], result: resultExpr, canThrow: false, thrownResult: nil), // swiftlint:disable:this line_length
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -252,7 +252,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             returnType: types.unitType,
             body: [
                 .call(symbol: targetSym, callee: targetName, arguments: [], result: resultExpr, canThrow: false, thrownResult: nil), // swiftlint:disable:this line_length
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -307,7 +307,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             returnType: types.unitType,
             body: [
                 .call(symbol: targetSym, callee: targetName, arguments: [], result: resultExpr, canThrow: false, thrownResult: nil), // swiftlint:disable:this line_length
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -351,7 +351,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             params: [],
             returnType: anyNullableType,
             body: [
-                .returnValue(valueExpr)
+                .returnValue(valueExpr),
             ],
             isSuspend: false,
             isInline: false
@@ -387,7 +387,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             returnType: types.unitType,
             body: [
                 .copy(from: fromExpr, to: toExpr),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -429,7 +429,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             returnType: types.unitType,
             body: [
                 .copy(from: fromExpr, to: toExpr),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -468,7 +468,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             (.primitive(.long, .nonNull), .longLiteral(1), "kk_box_long"),
             (.primitive(.float, .nonNull), .floatLiteral(1), "kk_box_float"),
             (.primitive(.double, .nonNull), .doubleLiteral(1), "kk_box_double"),
-            (.primitive(.char, .nonNull), .charLiteral(65), "kk_box_char")
+            (.primitive(.char, .nonNull), .charLiteral(65), "kk_box_char"),
         ]
 
         for (index, (kind, exprKind, expectedCallee)) in primitives.enumerated() {
@@ -495,7 +495,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
                 returnType: types.unitType,
                 body: [
                     .call(symbol: targetSym, callee: targetName, arguments: [argExpr], result: resultExpr, canThrow: false, thrownResult: nil), // swiftlint:disable:this line_length
-                    .returnUnit
+                    .returnUnit,
                 ],
                 isSuspend: false,
                 isInline: false
@@ -542,7 +542,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             returnType: types.unitType,
             body: [
                 .copy(from: fromExpr, to: toExpr),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -588,7 +588,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -646,7 +646,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -698,7 +698,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -759,7 +759,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             returnType: types.unitType,
             body: [
                 .copy(from: fromExpr, to: toExpr),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -831,7 +831,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             returnType: types.anyType,
             body: [
                 .constValue(result: getterRetExpr, value: .stringLiteral(interner.intern("hello"))),
-                .returnValue(getterRetExpr)
+                .returnValue(getterRetExpr),
             ],
             isSuspend: false,
             isInline: false
@@ -848,7 +848,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             returnType: types.unitType,
             body: [
                 .constValue(result: propRef, value: .symbolRef(propertySym)),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -879,7 +879,8 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let hasSymbolRef = lowered.body.contains { instruction in
             if case let .constValue(_, value) = instruction,
                case let .symbolRef(sym) = value,
-               sym == propertySym {
+               sym == propertySym
+            {
                 return true
             }
             return false
@@ -927,7 +928,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             returnType: types.unitType,
             body: [
                 .constValue(result: propRef, value: .symbolRef(propertySym)),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -948,7 +949,8 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let hasSymbolRef = lowered.body.contains { instruction in
             if case let .constValue(_, value) = instruction,
                case let .symbolRef(sym) = value,
-               sym == propertySym {
+               sym == propertySym
+            {
                 return true
             }
             return false

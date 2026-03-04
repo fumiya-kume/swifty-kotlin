@@ -198,7 +198,8 @@ extension BuildASTPhase.ExpressionParser {
         if let first = current(),
            let second = peek(1),
            isArgumentLabelToken(first.kind),
-           second.kind == .symbol(.assign) {
+           second.kind == .symbol(.assign)
+        {
             label = tokenText(first)
             _ = consume()
             _ = consume()

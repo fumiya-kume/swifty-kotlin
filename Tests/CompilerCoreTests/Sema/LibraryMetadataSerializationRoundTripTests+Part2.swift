@@ -166,7 +166,7 @@ extension LibraryMetadataSerializationRoundTripTests {
                 annotationFQName: "kotlin.Deprecated",
                 arguments: ["old name", "use new() instead", "WARNING"],
                 useSiteTarget: nil
-            )
+            ),
         ]
         let record = MetadataRecord(
             kind: .function,
@@ -194,7 +194,7 @@ extension LibraryMetadataSerializationRoundTripTests {
                 annotationFQName: "custom.Config",
                 arguments: ["key=value", "a|b|c", "semi;colon", "space here", "emoji\u{1F600}"],
                 useSiteTarget: nil
-            )
+            ),
         ]
         let record = MetadataRecord(
             kind: .property,
@@ -221,7 +221,7 @@ extension LibraryMetadataSerializationRoundTripTests {
         let annotations = [
             MetadataAnnotationRecord(annotationFQName: "kotlin.Deprecated"),
             MetadataAnnotationRecord(annotationFQName: "kotlin.jvm.JvmStatic", useSiteTarget: "get"),
-            MetadataAnnotationRecord(annotationFQName: "kotlin.Suppress", arguments: ["UNCHECKED_CAST"])
+            MetadataAnnotationRecord(annotationFQName: "kotlin.Suppress", arguments: ["UNCHECKED_CAST"]),
         ]
         let record = MetadataRecord(
             kind: .function,
@@ -288,7 +288,7 @@ extension LibraryMetadataSerializationRoundTripTests {
         let records = [
             MetadataRecord(kind: .function, mangledName: "_kk_a", fqName: "a"),
             MetadataRecord(kind: .function, mangledName: "_kk_b", fqName: "b"),
-            MetadataRecord(kind: .function, mangledName: "_kk_c", fqName: "c")
+            MetadataRecord(kind: .function, mangledName: "_kk_c", fqName: "c"),
         ]
         let encoder = MetadataEncoder()
         let serialized = encoder.serialize(records)
@@ -408,7 +408,7 @@ extension LibraryMetadataSerializationRoundTripTests {
             fqName: "ext.oldMethod",
             arity: 0,
             annotations: [
-                MetadataAnnotationRecord(annotationFQName: "kotlin.Deprecated", arguments: ["replaced"])
+                MetadataAnnotationRecord(annotationFQName: "kotlin.Deprecated", arguments: ["replaced"]),
             ]
         )
         let serialized = encoder.serialize([annotatedRecord])

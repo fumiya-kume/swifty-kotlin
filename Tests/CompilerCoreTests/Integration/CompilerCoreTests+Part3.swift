@@ -132,7 +132,7 @@ extension CompilerCoreTests {
             """
             package demo
             fun use() = helper(1)
-            """
+            """,
         ]
         let ctx = makeContextFromSources(sources)
         try runSema(ctx)
@@ -150,7 +150,7 @@ extension CompilerCoreTests {
             package app
             import lib.helper
             fun use() = helper(1)
-            """
+            """,
         ]
         let ctx = makeContextFromSources(sources)
         try runSema(ctx)
@@ -172,7 +172,7 @@ extension CompilerCoreTests {
             package app
             import custom.io.pick
             fun use() = pick(1)
-            """
+            """,
         ]
         let ctx = makeContextFromSources(sources)
         try runSema(ctx)
@@ -198,7 +198,7 @@ extension CompilerCoreTests {
             package app
             import lib as L
             fun use() = 1
-            """
+            """,
         ]
         let ctx = makeContextFromSources(sources)
         try runSema(ctx)
@@ -218,7 +218,7 @@ extension CompilerCoreTests {
             import lib.foo as X
             import lib.bar as X
             fun use() = 1
-            """
+            """,
         ]
         let ctx = makeContextFromSources(sources)
         try runSema(ctx)
@@ -248,7 +248,7 @@ extension CompilerCoreTests {
             package app
             import lib.helper as h
             fun use() = h(1)
-            """
+            """,
         ]
         let ctx = makeContextFromSources(sources)
         try runSema(ctx)
@@ -266,7 +266,7 @@ extension CompilerCoreTests {
             package app
             import lib.compute as calc
             fun use(): Int = calc(5)
-            """
+            """,
         ]
         let ctx = makeContextFromSources(sources)
         try runSema(ctx)
@@ -293,7 +293,7 @@ extension CompilerCoreTests {
             import lib.foo as f
             import lib.bar as b
             fun use() = f(1) + b(2)
-            """
+            """,
         ]
         let ctx = makeContextFromSources(sources)
         try runSema(ctx)
@@ -314,7 +314,7 @@ extension CompilerCoreTests {
             import lib.foo as f
             import lib.bar
             fun use() = f(1) + bar(2)
-            """
+            """,
         ]
         let ctx = makeContextFromSources(sources)
         try runSema(ctx)

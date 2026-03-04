@@ -113,7 +113,7 @@ final class LibraryMetadataSerializationRoundTripTests: XCTestCase {
                 annotationFQName: "kotlin.jvm.JvmStatic",
                 arguments: [],
                 useSiteTarget: "get"
-            )
+            ),
         ]
         let record = MetadataRecord(
             kind: .function,
@@ -193,7 +193,7 @@ final class LibraryMetadataSerializationRoundTripTests: XCTestCase {
                 declaredInstanceSizeWords: 4,
                 isDataClass: true,
                 annotations: [
-                    MetadataAnnotationRecord(annotationFQName: "kotlin.Serializable")
+                    MetadataAnnotationRecord(annotationFQName: "kotlin.Serializable"),
                 ]
             ),
             MetadataRecord(
@@ -209,7 +209,7 @@ final class LibraryMetadataSerializationRoundTripTests: XCTestCase {
                 mangledName: "_kk_demo_name",
                 fqName: "demo.name",
                 typeSignature: "S"
-            )
+            ),
         ]
         let encoder = MetadataEncoder()
         let serialized = encoder.serialize(records)

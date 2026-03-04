@@ -1734,7 +1734,7 @@ extension LLVMBackend {
         "  }",
         "  return 0;",
         "}",
-        ""
+        "",
     ]
 }
 

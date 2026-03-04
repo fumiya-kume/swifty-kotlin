@@ -62,7 +62,8 @@ extension CallTypeChecker {
         let lookupReceiverType = safeCall ? sema.types.makeNonNullable(receiverType) : receiverType
         // Primitive member function: Int/Long/UInt/ULong.inv() → same type (P5-103, TYPE-005)
         if interner.resolve(calleeName) == "inv",
-           args.isEmpty {
+           args.isEmpty
+        {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let uintType = sema.types.make(.primitive(.uint, .nonNull))
@@ -127,7 +128,8 @@ extension CallTypeChecker {
 
         // Primitive member function: Int/Long.toString(radix: Int) → String (EXPR-003)
         if interner.resolve(calleeName) == "toString",
-           args.count == 1 {
+           args.count == 1
+        {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let stringType = sema.types.make(.primitive(.string, .nonNull))
@@ -301,7 +303,8 @@ extension CallTypeChecker {
                    let parentSymbol = sema.symbols.parentSymbol(for: first),
                    let ownerNominal = driver.helpers.nominalSymbol(of: memberLookupType, types: sema.types),
                    parentSymbol != ownerNominal,
-                   sema.symbols.companionObjectSymbol(for: ownerNominal) == parentSymbol {
+                   sema.symbols.companionObjectSymbol(for: ownerNominal) == parentSymbol
+                {
                     companionReceiverType = sema.types.make(.classType(ClassType(classSymbol: parentSymbol, args: [], nullability: .nonNull)))
                 }
                 allCandidates = memberCandidates
@@ -347,7 +350,8 @@ extension CallTypeChecker {
                        memberSymbol,
                        fromFile: ctx.currentFileID,
                        enclosingClass: ctx.enclosingClassSymbol
-                   ) {
+                   )
+                {
                     // swiftlint:disable:next line_length
                     driver.helpers.emitVisibilityError(for: memberSymbol, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
                     return driver.helpers.bindAndReturnErrorType(id, sema: sema)
@@ -525,7 +529,7 @@ extension CallTypeChecker {
                     "count", "iterator",
                     "map", "filter", "forEach", "flatMap",
                     "any", "none", "all",
-                    "asSequence", "toList", "take" // swiftlint:disable:this trailing_comma
+                    "asSequence", "toList", "take", // swiftlint:disable:this trailing_comma
                 ]
                 if collectionMembers.contains(memberName) {
                     let resultType: TypeID = switch memberName {
@@ -650,7 +654,8 @@ extension CallTypeChecker {
         if isSuperCall,
            let chosenSym = sema.symbols.symbol(chosen),
            chosenSym.flags.contains(.abstractType),
-           chosenSym.kind == .function || chosenSym.kind == .property {
+           chosenSym.kind == .function || chosenSym.kind == .property
+        {
             let memberName = interner.resolve(calleeName)
             ctx.semaCtx.diagnostics.error(
                 "KSWIFTK-SEMA-ABSTRACT",

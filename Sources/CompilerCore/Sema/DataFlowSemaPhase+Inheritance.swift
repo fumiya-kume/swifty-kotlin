@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 
 extension DataFlowSemaPhase {
@@ -85,7 +86,8 @@ extension DataFlowSemaPhase {
         for candidatePath in candidatePaths {
             if let symbol = symbols.lookupAll(fqName: candidatePath)
                 .compactMap({ symbols.symbol($0) })
-                .first(where: { isNominalTypeSymbol($0.kind) })?.id {
+                .first(where: { isNominalTypeSymbol($0.kind) })?.id
+            {
                 let resolvedArgs = resolveTypeArgRefsForInheritance(
                     argRefs,
                     currentPackage: currentPackage,
@@ -158,7 +160,8 @@ extension DataFlowSemaPhase {
             for candidatePath in candidatePaths {
                 if let nominalSymbol = symbols.lookupAll(fqName: candidatePath)
                     .compactMap({ symbols.symbol($0) })
-                    .first(where: { isNominalTypeSymbol($0.kind) }) {
+                    .first(where: { isNominalTypeSymbol($0.kind) })
+                {
                     let resolvedArgs = resolveTypeArgRefsForInheritance(argRefs, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types)
                     return types.make(.classType(ClassType(classSymbol: nominalSymbol.id, args: resolvedArgs, nullability: nullability)))
                 }
@@ -204,6 +207,7 @@ extension DataFlowSemaPhase {
     }
 
     // P5-112: Validate that concrete subclasses of abstract classes override all abstract members.
+    // swiftlint:disable:next function_parameter_count
     func validateAbstractOverrides(
         ast: ASTModule,
         symbols: SymbolTable,
@@ -228,6 +232,7 @@ extension DataFlowSemaPhase {
         }
     }
 
+    // swiftlint:disable function_body_length function_parameter_count
     /// CLASS-008: Validate class delegation (`: Interface by expr`).
     /// Ensures delegated supertypes are interfaces (not classes) and records them for abstract override exemption.
     func validateClassDelegation(
@@ -267,7 +272,8 @@ extension DataFlowSemaPhase {
                         )
                     } else if let classSymbol = bindings.declSymbols[declID],
                               let classSym = symbols.symbol(classSymbol),
-                              let delegateExpr = entry.delegateExpression {
+                              let delegateExpr = entry.delegateExpression
+                    {
                         symbols.addDelegatedInterface(resolved.symbol, forClass: classSymbol)
                         symbols.setClassDelegationExpr(delegateExpr, forClass: classSymbol, interface: resolved.symbol)
                         let interfaceName = interner.resolve(superSymbol.fqName.last ?? interner.intern(""))
@@ -294,7 +300,9 @@ extension DataFlowSemaPhase {
             }
         }
     }
+    // swiftlint:enable function_body_length function_parameter_count
 
+    // swiftlint:disable cyclomatic_complexity function_body_length
     /// CLASS-008: Create synthetic method symbols for delegated interface methods
     /// that the class does not override. These are used for itable layout and KIR lowering.
     func synthesizeClassDelegationForwardingMethodSymbols(
@@ -338,7 +346,9 @@ extension DataFlowSemaPhase {
                 }
 
                 for interfaceSymbol in symbols.delegatedInterfaces(forClass: classSymbol) {
-                    guard let fieldSymbol = symbols.classDelegationField(forClass: classSymbol, interface: interfaceSymbol),
+                    guard let fieldSymbol = symbols.classDelegationField(
+                            forClass: classSymbol, interface: interfaceSymbol
+                          ),
                           let interfaceSym = symbols.symbol(interfaceSymbol)
                     else {
                         continue
@@ -416,7 +426,9 @@ extension DataFlowSemaPhase {
             }
         }
     }
+    // swiftlint:enable cyclomatic_complexity function_body_length
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length function_parameter_count
     private func validateAbstractOverridesForDecl(
         declID: DeclID,
         file: ASTFile,
@@ -509,7 +521,8 @@ extension DataFlowSemaPhase {
             guard let abstractSym = symbols.symbol(abstractMember) else { continue }
             // Skip if this abstract member belongs to a delegated interface
             if let owner = symbols.parentSymbol(for: abstractMember),
-               delegatedInterfaces.contains(owner) {
+               delegatedInterfaces.contains(owner)
+            {
                 continue
             }
             let memberName = interner.resolve(abstractSym.name)

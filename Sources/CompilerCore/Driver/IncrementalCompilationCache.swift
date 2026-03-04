@@ -42,10 +42,12 @@ public final class IncrementalCompilationCache {
         let depsPath = cachePath + "/deps.json"
 
         if fm.fileExists(atPath: manifestPath),
-           let data = try? Data(contentsOf: URL(fileURLWithPath: manifestPath)) {
+           let data = try? Data(contentsOf: URL(fileURLWithPath: manifestPath))
+        {
             let decoder = JSONDecoder()
             if let manifest = try? decoder.decode(CacheManifest.self, from: data),
-               manifest.version == Self.supportedManifestVersion {
+               manifest.version == Self.supportedManifestVersion
+            {
                 for fp in manifest.fingerprints {
                     previousFingerprints[fp.path] = fp
                 }
@@ -53,7 +55,8 @@ public final class IncrementalCompilationCache {
         }
 
         if fm.fileExists(atPath: depsPath),
-           let data = try? Data(contentsOf: URL(fileURLWithPath: depsPath)) {
+           let data = try? Data(contentsOf: URL(fileURLWithPath: depsPath))
+        {
             if let graph = try? DependencyGraph.deserialize(from: data) {
                 previousDependencyGraph = graph
             }
