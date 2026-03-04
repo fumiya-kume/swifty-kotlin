@@ -24,15 +24,17 @@ extension BuildASTPhase.ExpressionParser {
                         expr = astArena.appendExpr(.call(callee: expr, typeArgs: typeArgs, args: args, range: range))
                         continue
                     }
-                    if matches(.symbol(.lBrace)), let trailingLambda = parseLambdaLiteral(isTrailing: true) {
-                        let fallbackEnd = astArena.exprRange(trailingLambda)?.end
-                            ?? (astArena.exprRange(expr)?.end
-                                ?? (index > tokens.startIndex ? tokens[index - 1].range.end : tokens[tokens.startIndex].range.start))
-                        let endRange = SourceRange(start: fallbackEnd, end: fallbackEnd)
-                        let fallbackRange = astArena.exprRange(expr) ?? endRange
-                        let range = mergeRanges(astArena.exprRange(expr), endRange, fallback: fallbackRange)
-                        expr = astArena.appendExpr(.call(
-                            callee: expr, typeArgs: typeArgs,
+                if matches(.symbol(.lBrace)), let trailingLambda = parseLambdaLiteral(isTrailing: true) {
+                    let fallbackEnd = astArena.exprRange(trailingLambda)?.end
+                        ?? (astArena.exprRange(expr)?.end
+                            ?? (index > tokens.startIndex
+                                ? tokens[index - 1].range.end
+                                : tokens[tokens.startIndex].range.end))
+                    let endRange = SourceRange(start: fallbackEnd, end: fallbackEnd)
+                    let fallbackRange = astArena.exprRange(expr) ?? endRange
+                    let range = mergeRanges(astArena.exprRange(expr), endRange, fallback: fallbackRange)
+                    expr = astArena.appendExpr(.call(
+                        callee: expr, typeArgs: typeArgs,
                             args: [CallArgument(expr: trailingLambda)], range: range
                         ))
                         continue
@@ -59,7 +61,9 @@ extension BuildASTPhase.ExpressionParser {
             if matches(.symbol(.lBrace)), let trailingLambda = parseLambdaLiteral(isTrailing: true) {
                 let fallbackEnd = astArena.exprRange(trailingLambda)?.end
                     ?? (astArena.exprRange(expr)?.end
-                        ?? (index > tokens.startIndex ? tokens[index - 1].range.end : tokens[tokens.startIndex].range.start))
+                        ?? (index > tokens.startIndex
+                            ? tokens[index - 1].range.end
+                            : tokens[tokens.startIndex].range.end))
                 let endRange = SourceRange(start: fallbackEnd, end: fallbackEnd)
                 let fallbackRange = astArena.exprRange(expr) ?? endRange
                 let range = mergeRanges(astArena.exprRange(expr), endRange, fallback: fallbackRange)
