@@ -17,13 +17,17 @@ readonly targets=(
 
 bash Scripts/swift_test.sh --enable-code-coverage
 
-readonly profile=".build/debug/codecov/default.profdata"
 if [[ "$(uname)" == "Linux" ]]; then
-  readonly tests_binary=".build/debug/KSwiftKPackageTests.xctest"
+  profile_candidate="$(find .build -name "default.profdata" 2>/dev/null | head -1)"
+  readonly profile="${profile_candidate:-.build/debug/codecov/default.profdata}"
+  build_dir="$(dirname "$(dirname "$profile")")"
+  readonly tests_binary="${build_dir}/KSwiftKPackageTests.xctest"
+  readonly json_output="${build_dir}/codecov/KSwiftK.json"
 else
+  readonly profile=".build/debug/codecov/default.profdata"
   readonly tests_binary=".build/debug/KSwiftKPackageTests.xctest/Contents/MacOS/KSwiftKPackageTests"
+  readonly json_output=".build/debug/codecov/KSwiftK.json"
 fi
-readonly json_output=".build/debug/codecov/KSwiftK.json"
 
 if [[ "$(uname)" == "Linux" ]]; then
   llvm-cov export "$tests_binary" -instr-profile "$profile" > "$json_output"
@@ -40,7 +44,8 @@ for target in "${targets[@]}"; do
     .data[0].files[]
     | select(.filename | endswith($target))
     | .summary.lines.percent
-  ' "$json_output")"
+    | select(. != null)
+  ' "$json_output" | head -1)"
 
   if [[ -z "$percent" || "$percent" == "null" ]]; then
     failed+=("$target (missing)")

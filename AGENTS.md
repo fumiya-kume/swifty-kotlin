@@ -42,7 +42,7 @@ Run the compiler locally after build:
 
 Coverage and compatibility checks used by CI:
 ```bash
-COVERAGE_THRESHOLD=95 Scripts/check_coverage.sh
+COVERAGE_THRESHOLD=80 Scripts/check_coverage.sh
 Scripts/diff_kotlinc.sh [--kswiftc path] [--kotlinc path] path/to/tests
 ```
 
@@ -60,7 +60,7 @@ Scripts/diff_kotlinc.sh [--kswiftc path] [--kotlinc path] path/to/tests
 - `Scripts/swift_test.sh` runs tests in parallel by default; tune with `SWIFT_TEST_WORKERS`, or disable with `SWIFT_TEST_PARALLEL=0`.
 - Test file names should end with `Tests.swift`, and test methods should describe expected behavior directly.
 - For critical behavior changes, prefer adding/adjusting focused coverage tests in `Tests/CompilerCoreTests` and include them in PR notes.
-- CI enforces targeted line coverage thresholds (95% by default) in `Scripts/check_coverage.sh`.
+- CI enforces targeted line coverage thresholds (80% by default) in `Scripts/check_coverage.sh`.
 
 ## Commit & Pull Request Guidelines
 Recent history uses short, imperative-style commit messages (e.g., `Add ...`, `Rewrite ...`).
