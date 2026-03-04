@@ -431,7 +431,7 @@ public struct TypeParamDecl {
         name: InternedString,
         variance: TypeVariance = .invariant,
         isReified: Bool = false,
-        upperBound: TypeRefID? = nil
+        upperBound: TypeRefID?
     ) {
         self.name = name
         self.variance = variance
