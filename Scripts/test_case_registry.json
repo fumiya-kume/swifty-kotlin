@@ -714,6 +714,18 @@
       ]
     },
     {
+      "task": "CORO-003",
+      "category": "coroutines",
+      "description": "Flow<T> cold stream: flow builder, emit, map, filter, collect",
+      "cases": [
+        {
+          "type": "diff",
+          "name": "flow_basic",
+          "template": "Scripts/diff_cases/flow_basic.kt"
+        }
+      ]
+    },
+    {
       "task": "P5-137",
       "category": "stdlib",
       "description": "Scope functions (let/run/apply/also)",

@@ -7,7 +7,6 @@ import XCTest
 // Covers: P5-47 — block expression with multiple statements + trailing expression
 // Spec references: J6, J9, J11
 
-// swiftlint:disable:next type_body_length
 final class BlockExpressionTests: XCTestCase {
     // MARK: - AST: single expression block always produces blockExpr
 

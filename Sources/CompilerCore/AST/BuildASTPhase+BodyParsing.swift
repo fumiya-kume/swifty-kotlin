@@ -1,4 +1,3 @@
-// swiftlint:disable file_length
 import Foundation
 
 extension BuildASTPhase {
@@ -281,7 +280,6 @@ extension BuildASTPhase {
     // Annotations appear as `@Name` or `@Name(args)` tokens before the declaration
     // keyword (class, fun, val, var, etc.).  Also handles use-site targets like
     // `@get:Name` or `@field:Name(args)`.
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func declarationAnnotations(
         from nodeID: NodeID, in arena: SyntaxArena, interner: StringInterner
     ) -> [AnnotationNode] {

@@ -4,7 +4,6 @@ import Foundation
 final class DataEnumSealedSynthesisPass: LoweringPass {
     static let name = "DataEnumSealedSynthesis"
 
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func run(module: KIRModule, ctx: KIRContext) throws {
         module.arena.transformFunctions { function in
             var updated = function
@@ -263,7 +262,6 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         )
     }
 
-    // swiftlint:disable function_parameter_count
     /// Synthesizes `toString(): String` for data object, returning the object name.
     /// Uses existingSymbol when provided (from Sema) so call resolution matches the KIR function.
     private func appendSyntheticDataObjectToStringIfNeeded(
@@ -333,7 +331,6 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
 
     // swiftlint:enable function_parameter_count
 
-    // swiftlint:disable function_parameter_count function_body_length
     /// Synthesizes `equals(other: Any?): Boolean` for data object (identity comparison via kk_op_eq).
     private func appendSyntheticDataObjectEqualsIfNeeded(
         owner: SemanticSymbol,
@@ -618,7 +615,6 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         )
     }
 
-    // swiftlint:disable function_parameter_count
     /// Appends a KIR function using an existing symbol (e.g. from Sema). Used when the symbol
     /// was already registered for resolution so call sites bind to the same symbol.
     private func appendSyntheticFunctionWithSymbol(
@@ -703,5 +699,4 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             )
         ))
     }
-    // swiftlint:disable:next file_length
 }

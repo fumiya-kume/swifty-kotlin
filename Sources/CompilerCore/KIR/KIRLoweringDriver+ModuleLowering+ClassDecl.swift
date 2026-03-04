@@ -58,7 +58,6 @@ extension KIRLoweringDriver {
         return declIDs
     }
 
-    // swiftlint:disable function_body_length
     /// CLASS-008: Synthesize forwarding method bodies for delegated interface methods.
     private func synthesizeClassDelegationForwardingMethods(
         classSymbol: SymbolID,
@@ -87,7 +86,6 @@ extension KIRLoweringDriver {
 
             var params: [KIRParameter] = []
             if let receiverType = signature.receiverType {
-                // swiftlint:disable:next line_length
                 let receiverSymbol = callSupportLowerer.syntheticReceiverParameterSymbol(functionSymbol: forwardingSymbol)
                 params.append(KIRParameter(symbol: receiverSymbol, type: receiverType))
                 ctx.currentImplicitReceiverSymbol = receiverSymbol
@@ -168,8 +166,7 @@ extension KIRLoweringDriver {
         return declIDs
     }
 
-    // Emits a constructor delegation call (`this(...)` or `super(...)`).
-    // swiftlint:disable:next function_parameter_count
+    /// Emits a constructor delegation call (`this(...)` or `super(...)`).
     func emitDelegationCall(
         delegation: ConstructorDelegationCall,
         ctorFQName: [InternedString],

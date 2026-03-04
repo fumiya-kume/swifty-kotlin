@@ -1,4 +1,3 @@
-// swiftlint:disable file_length
 import Foundation
 
 extension BuildASTPhase {
@@ -31,7 +30,6 @@ extension BuildASTPhase {
         }
     }
 
-    // swiftlint:disable:next type_body_length
     final class ExpressionParser {
         let tokens: ArraySlice<Token>
         let interner: StringInterner

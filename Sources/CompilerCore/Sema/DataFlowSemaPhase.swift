@@ -58,7 +58,6 @@ public final class DataFlowSemaPhase: CompilerPhase {
         return importedInlineFunctions
     }
 
-    // swiftlint:disable:next function_parameter_count
     private func collectAllHeaders(
         ast: ASTModule, fileScopes: [Int32: FileScope],
         symbols: SymbolTable, types: TypeSystem, bindings: BindingTable,

@@ -7,7 +7,7 @@ final class TailrecLoweringTests: XCTestCase {
 
     /// Verify that a tailrec function's self-recursive call + returnValue
     /// is replaced by parameter copy + jump to loop head.
-    func testTailrecRewritesSelfRecursiveCallToLoop() throws { // swiftlint:disable:this function_body_length
+    func testTailrecRewritesSelfRecursiveCallToLoop() throws {
         let interner = StringInterner()
         let arena = KIRArena()
         let types = TypeSystem()

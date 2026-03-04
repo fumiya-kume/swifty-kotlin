@@ -4,7 +4,6 @@ import XCTest
 // MARK: - ControlFlow and Call lowerer tests extracted to reduce file length.
 
 extension KIRLowererPart2CoverageTests {
-    // swiftlint:disable:next function_body_length
     func testControlFlowLowererPart2CatchBindingAndLegacyTypeResolution() {
         let fixture = makeDirectKIRFixture()
         let range = makeRange()
@@ -103,7 +102,6 @@ extension KIRLowererPart2CoverageTests {
         XCTAssertFalse(fixture.driver.controlFlowLowerer.isCatchAllType(fixture.types.intType, sema: fixture.sema))
     }
 
-    // swiftlint:disable:next function_body_length
     func testControlFlowLowererPart2ForwardersEmitInstructions() {
         let fixture = makeDirectKIRFixture()
         let range = makeRange()
@@ -208,7 +206,6 @@ extension KIRLowererPart2CoverageTests {
         lowered.instructions.append(.nop)
     }
 
-    // swiftlint:disable:next function_body_length
     func testCallLowererPart2LowersClassNameMemberValuesAsDirectSymbolRefs() {
         let fixture = makeDirectKIRFixture()
         let range = makeRange()

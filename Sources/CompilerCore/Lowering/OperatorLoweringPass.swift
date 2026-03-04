@@ -24,7 +24,6 @@ final class OperatorLoweringPass: LoweringPass {
         return false
     }
 
-    // swiftlint:disable:next function_body_length
     func run(module: KIRModule, ctx: KIRContext) throws {
         let types = ctx.sema?.types
         let printlnCallee = ctx.interner.intern("println")
@@ -215,7 +214,6 @@ final class OperatorLoweringPass: LoweringPass {
         return interner.intern("kk_int_to_double_bits")
     }
 
-    // swiftlint:disable:next function_parameter_count
     private func appendPrimitivePrintlnCall(
         to body: inout [KIRInstruction],
         symbol: SymbolID?,

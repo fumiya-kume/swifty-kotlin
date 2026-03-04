@@ -133,7 +133,6 @@ extension DataFlowSemaPhase {
         }
     }
 
-    // swiftlint:disable function_parameter_count
     /// Registers synthetic `toString(): String` for data object so member resolution finds it.
     func collectSyntheticDataObjectToString(
         ownerSymbol: SymbolID,
@@ -189,7 +188,6 @@ extension DataFlowSemaPhase {
 
     // swiftlint:enable function_parameter_count
 
-    // swiftlint:disable function_parameter_count function_body_length
     /// Registers synthetic `equals(other: Any?): Boolean` for data object (identity comparison).
     func collectSyntheticDataObjectEquals(
         ownerSymbol: SymbolID,
@@ -450,5 +448,4 @@ extension DataFlowSemaPhase {
         }
         return kotlinPropertiesPkg
     }
-    // swiftlint:disable:next file_length
 }

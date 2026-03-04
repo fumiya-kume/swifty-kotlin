@@ -1,4 +1,3 @@
-// swiftlint:disable file_length
 import Dispatch
 @testable import Runtime
 import XCTest
@@ -93,7 +92,6 @@ func runtime_test_suspend_cancel_loop(_ continuation: Int, _ outThrown: UnsafeMu
     return kk_kxmini_delay(5, continuation)
 }
 
-// swiftlint:disable:next type_body_length
 final class RuntimeCoroutineStateTests: XCTestCase {
     override func setUp() {
         super.setUp()

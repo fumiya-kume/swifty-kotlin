@@ -1,4 +1,3 @@
-// swiftlint:disable file_length
 import Foundation
 
 extension BuildASTPhase {
@@ -31,7 +30,6 @@ extension BuildASTPhase {
             typeParams: typeParams,
             primaryConstructorParams: declarationValueParameters(from: nodeID, in: arena, interner: interner, astArena: astArena),
             hasPrimaryConstructorSyntax: declarationHasPrimaryConstructorSyntax(from: nodeID, in: arena),
-            // swiftlint:disable:next line_length
             superTypeEntries: declarationSuperTypeEntries(from: nodeID, in: arena, interner: interner, astArena: astArena),
             nestedTypeAliases: declarationNestedTypeAliases(from: nodeID, in: arena, interner: interner, astArena: astArena),
             enumEntries: declarationEnumEntries(from: nodeID, in: arena, interner: interner),

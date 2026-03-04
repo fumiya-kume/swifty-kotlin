@@ -178,8 +178,11 @@ extension CallTypeChecker {
         ]
         let isCollectionHOF = collectionHOFNames.contains(interner.resolve(calleeName))
             && sema.bindings.isCollectionExpr(receiverID)
+        let flowHOFNames: Set = ["map", "filter", "collect"]
+        let isErasedFlowReceiver = receiverType == sema.types.anyType || receiverType == sema.types.nullableAnyType
+        let isFlowHOF = flowHOFNames.contains(interner.resolve(calleeName)) && isErasedFlowReceiver
         let argTypes = args.map { arg -> TypeID in
-            if isCollectionHOF,
+            if isCollectionHOF || isFlowHOF,
                let argExpr = ast.arena.expr(arg.expr),
                case .lambdaLiteral = argExpr
             {
@@ -378,7 +381,6 @@ extension CallTypeChecker {
                                enclosingClass: ctx.enclosingClassSymbol
                            )
                         {
-                            // swiftlint:disable:next line_length
                             driver.helpers.emitVisibilityError(for: propSym, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
                             return driver.helpers.bindAndReturnErrorType(id, sema: sema)
                         }
@@ -480,7 +482,6 @@ extension CallTypeChecker {
                        enclosingClass: ctx.enclosingClassSymbol
                    )
                 {
-                    // swiftlint:disable:next line_length
                     driver.helpers.emitVisibilityError(for: memberSymbol, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
                     return driver.helpers.bindAndReturnErrorType(id, sema: sema)
                 }
@@ -595,10 +596,8 @@ extension CallTypeChecker {
             {
                 // Check visibility before trying callable-style resolution.
                 if let propSymbol = sema.symbols.symbol(propResult.symbol),
-                   // swiftlint:disable:next line_length
                    !ctx.visibilityChecker.isAccessible(propSymbol, fromFile: ctx.currentFileID, enclosingClass: ctx.enclosingClassSymbol)
                 {
-                    // swiftlint:disable:next line_length
                     driver.helpers.emitVisibilityError(for: propSymbol, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
                     return driver.helpers.bindAndReturnErrorType(id, sema: sema)
                 }
@@ -654,7 +653,6 @@ extension CallTypeChecker {
                         return driver.helpers.bindAndReturnErrorType(id, sema: sema)
                     }
                     if let chosen = resolved.chosenCallee {
-                        // swiftlint:disable:next line_length
                         let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
                         sema.bindings.markInvokeOperatorCall(id)
                         let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
@@ -680,7 +678,6 @@ extension CallTypeChecker {
                        enclosingClass: ctx.enclosingClassSymbol
                    )
                 {
-                    // swiftlint:disable:next line_length
                     driver.helpers.emitVisibilityError(for: propSymbol, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
                     return driver.helpers.bindAndReturnErrorType(id, sema: sema)
                 }
@@ -721,7 +718,6 @@ extension CallTypeChecker {
                 return finalType
             }
             if let firstInvisible = invisible.first {
-                // swiftlint:disable:next line_length
                 driver.helpers.emitVisibilityError(for: firstInvisible, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
                 return driver.helpers.bindAndReturnErrorType(id, sema: sema)
             }
@@ -811,6 +807,43 @@ extension CallTypeChecker {
                     let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
+                }
+            }
+            // Flow member access fallback (CORO-003): flow(...) is currently
+            // type-erased to Any?, so unresolved member chains must be accepted
+            // on Any/Any? receivers.
+            let isFlowLikeReceiver = lookupReceiverType == sema.types.anyType || lookupReceiverType == sema.types.nullableAnyType
+            if !isClassNameReceiver, isFlowLikeReceiver {
+                let memberName = interner.resolve(calleeName)
+                let flowMembers: Set = ["map", "filter", "take", "collect"]
+                if flowMembers.contains(memberName) {
+                    let acceptsArity = args.count == 1
+                    if acceptsArity, memberName == "map" || memberName == "filter" || memberName == "collect" {
+                        let lambdaReturnType: TypeID = switch memberName {
+                        case "filter":
+                            sema.types.make(.primitive(.boolean, .nonNull))
+                        case "collect":
+                            sema.types.unitType
+                        default:
+                            sema.types.anyType
+                        }
+                        let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                            params: [sema.types.anyType],
+                            returnType: lambdaReturnType,
+                            isSuspend: false,
+                            nullability: .nonNull
+                        )))
+                        _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                    }
+
+                    if acceptsArity {
+                        let resultType: TypeID = memberName == "collect"
+                            ? sema.types.unitType
+                            : sema.types.nullableAnyType
+                        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                        sema.bindings.bindExprType(id, type: finalType)
+                        return finalType
+                    }
                 }
             }
             let isCoroutineHandleReceiver = if case .primitive = sema.types.kind(of: lookupReceiverType) {
@@ -1116,5 +1149,4 @@ extension CallTypeChecker {
             typeVarBySymbol: typeVarBySymbol
         )
     }
-    // swiftlint:disable:next file_length
 }

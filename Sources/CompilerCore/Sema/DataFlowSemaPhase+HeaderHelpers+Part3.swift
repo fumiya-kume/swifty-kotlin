@@ -186,7 +186,7 @@ extension DataFlowSemaPhase {
     }
 
     /// Register `operator fun get(index: Int): E` on the List interface.
-    private func registerListGetOperator( // swiftlint:disable:this function_parameter_count
+    private func registerListGetOperator(
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
@@ -275,7 +275,7 @@ extension DataFlowSemaPhase {
     }
 
     /// Register `operator fun set(index: Int, element: E): E` on MutableList.
-    private func registerMutableListSetOperator( // swiftlint:disable:this function_parameter_count
+    private func registerMutableListSetOperator(
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,

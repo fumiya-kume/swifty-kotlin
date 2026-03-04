@@ -1,6 +1,5 @@
 import Foundation
 
-// swiftlint:disable:next type_body_length
 public final class CompilerDriver {
     private struct PreparedRunContext {
         let context: CompilationContext

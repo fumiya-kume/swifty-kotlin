@@ -1,7 +1,6 @@
 import Foundation
 
 extension BuildASTPhase {
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func declarationModifiers(from nodeID: NodeID, in arena: SyntaxArena) -> Modifiers {
         var modifiers: Modifiers = []
         for child in arena.children(of: nodeID) {

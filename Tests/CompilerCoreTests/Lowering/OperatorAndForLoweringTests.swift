@@ -4,7 +4,6 @@ import XCTest
 
 // swiftformat:disable trailingCommas
 
-// swiftlint:disable:next type_body_length
 final class OperatorAndForLoweringTests: XCTestCase {
     // MARK: - Helper
 
@@ -96,7 +95,6 @@ final class OperatorAndForLoweringTests: XCTestCase {
         let result = arena.appendExpr(.temporary(1), type: types.unitType)
         let (module, declID) = makeModule(
             body: [
-                // swiftlint:disable:next line_length
                 .call(symbol: nil, callee: interner.intern("println"), arguments: [arg], result: result, canThrow: false, thrownResult: nil),
 
                 .returnUnit

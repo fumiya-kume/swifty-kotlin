@@ -1,4 +1,3 @@
-// swiftlint:disable file_length
 import Foundation
 
 @_cdecl("kk_throwable_new")
