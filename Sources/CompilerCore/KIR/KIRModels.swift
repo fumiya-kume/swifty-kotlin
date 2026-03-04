@@ -118,7 +118,7 @@ public struct KIRFunction: Sendable {
     public let sourceRange: SourceRange? // function-level source location
     public var instructionLocations: [SourceRange?] // per-instruction source locations, parallel to body
 
-    public init( // swiftlint:disable:this function_parameter_count
+    public init(
         symbol: SymbolID, name: InternedString, params: [KIRParameter], returnType: TypeID,
         body: [KIRInstruction], isSuspend: Bool, isInline: Bool, isTailrec: Bool = false,
         sourceRange: SourceRange? = nil, instructionLocations: [SourceRange?] = []

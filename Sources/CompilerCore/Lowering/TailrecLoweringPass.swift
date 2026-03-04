@@ -61,7 +61,7 @@ final class TailrecLoweringPass: LoweringPass {
     /// 2. Replace `call(self, args) + returnValue(result)` with
     ///    parameter reassignment (`copy`) + `jump(loopLabel)`.
     /// 3. Also handle Unit-returning tail calls (`call + returnUnit`).
-    private func rewriteTailCalls( // swiftlint:disable:this function_body_length
+    private func rewriteTailCalls(
         body: [KIRInstruction],
         functionIdentity: TailrecFunctionIdentity,
         params: [KIRParameter],
