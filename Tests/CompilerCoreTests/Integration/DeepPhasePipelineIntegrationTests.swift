@@ -48,7 +48,7 @@ final class DeepPhasePipelineIntegrationTests: XCTestCase {
             .token(token(.keyword(.package))),
             .token(token(.identifier(interner.intern("demo")))),
             .token(token(.symbol(.dot))),
-            .token(token(.identifier(interner.intern("synthetic"))))
+            .token(token(.identifier(interner.intern("synthetic")))),
         ])
 
         let importNode = node(.importHeader, [
@@ -57,7 +57,7 @@ final class DeepPhasePipelineIntegrationTests: XCTestCase {
             .token(token(.symbol(.dot))),
             .token(token(.identifier(interner.intern("synthetic")))),
             .token(token(.symbol(.dot))),
-            .token(token(.symbol(.star)))
+            .token(token(.symbol(.star))),
         ])
 
         let typeArgsNode = node(.typeArgs, [
@@ -66,7 +66,7 @@ final class DeepPhasePipelineIntegrationTests: XCTestCase {
             .token(token(.symbol(.comma))),
             .token(token(.softKeyword(.out))),
             .token(token(.identifier(interner.intern("R")))),
-            .token(token(.symbol(.greaterThan)))
+            .token(token(.symbol(.greaterThan))),
         ])
 
         let funExprNode = node(.funDecl, [
@@ -129,22 +129,22 @@ final class DeepPhasePipelineIntegrationTests: XCTestCase {
             .token(token(.symbol(.colon))),
             .token(token(.identifier(interner.intern("Any")))),
             .token(token(.symbol(.assign))),
-            .token(token(.identifier(interner.intern("fallback"))))
+            .token(token(.identifier(interner.intern("fallback")))),
         ])
 
         let stmtBool = node(.statement, [
-            .token(token(.keyword(.true)))
+            .token(token(.keyword(.true))),
         ])
         let stmtBinary = node(.statement, [
             .token(token(.intLiteral("1"))),
             .token(token(.symbol(.plus))),
-            .token(token(.intLiteral("2")))
+            .token(token(.intLiteral("2"))),
         ])
         let stringSegment = interner.intern("txt")
         let stmtString = node(.statement, [
             .token(token(.stringQuote)),
             .token(token(.stringSegment(stringSegment))),
-            .token(token(.stringQuote))
+            .token(token(.stringQuote)),
         ])
         let stmtCall = node(.statement, [
             .token(token(.identifier(interner.intern("compute")))),
@@ -152,7 +152,7 @@ final class DeepPhasePipelineIntegrationTests: XCTestCase {
             .token(token(.intLiteral("3"))),
             .token(token(.symbol(.comma))),
             .token(token(.intLiteral("4"))),
-            .token(token(.symbol(.rParen)))
+            .token(token(.symbol(.rParen))),
         ])
         let stmtWhen = node(.statement, [
             .token(token(.keyword(.when))),
@@ -171,7 +171,7 @@ final class DeepPhasePipelineIntegrationTests: XCTestCase {
             .token(token(.keyword(.else))),
             .token(token(.symbol(.arrow))),
             .token(token(.intLiteral("2"))),
-            .token(token(.symbol(.rBrace)))
+            .token(token(.symbol(.rBrace))),
         ])
 
         let blockNode = node(.block, [
@@ -181,7 +181,7 @@ final class DeepPhasePipelineIntegrationTests: XCTestCase {
             .node(stmtString),
             .node(stmtCall),
             .node(stmtWhen),
-            .token(token(.symbol(.rBrace)))
+            .token(token(.symbol(.rBrace))),
         ])
 
         let funBlockNode = node(.funDecl, [
@@ -189,7 +189,7 @@ final class DeepPhasePipelineIntegrationTests: XCTestCase {
             .token(token(.identifier(interner.intern("blocky")))),
             .token(token(.symbol(.lParen))),
             .token(token(.symbol(.rParen))),
-            .node(blockNode)
+            .node(blockNode),
         ])
 
         let propertyTypedNode = node(.propertyDecl, [
@@ -201,35 +201,35 @@ final class DeepPhasePipelineIntegrationTests: XCTestCase {
             .token(token(.symbol(.assign))),
             .token(token(.stringQuote)),
             .token(token(.stringSegment(interner.intern("hello")))),
-            .token(token(.stringQuote))
+            .token(token(.stringQuote)),
         ])
 
         let propertyDelegatedNode = node(.propertyDecl, [
             .token(token(.keyword(.var))),
             .token(token(.identifier(interner.intern("delegated")))),
             .token(token(.softKeyword(.by))),
-            .token(token(.identifier(interner.intern("provider"))))
+            .token(token(.identifier(interner.intern("provider")))),
         ])
 
         let classNode = node(.classDecl, [
             .token(token(.keyword(.class))),
-            .token(token(.identifier(interner.intern("C"))))
+            .token(token(.identifier(interner.intern("C")))),
         ])
 
         let objectNode = node(.objectDecl, [
             .token(token(.keyword(.object))),
-            .token(token(.identifier(interner.intern("O"))))
+            .token(token(.identifier(interner.intern("O")))),
         ])
 
         let typeAliasNode = node(.typeAliasDecl, [
             .token(token(.keyword(.typealias))),
             .token(token(.identifier(interner.intern("Alias")))),
             .token(token(.symbol(.assign))),
-            .token(token(.identifier(interner.intern("Int"))))
+            .token(token(.identifier(interner.intern("Int")))),
         ])
 
         let enumEntryNode = node(.enumEntry, [
-            .token(token(.identifier(interner.intern("Entry"))))
+            .token(token(.identifier(interner.intern("Entry")))),
         ])
 
         let root = node(.kotlinFile, [
@@ -242,7 +242,7 @@ final class DeepPhasePipelineIntegrationTests: XCTestCase {
             .node(propertyTypedNode),
             .node(propertyDelegatedNode),
             .node(funExprNode),
-            .node(funBlockNode)
+            .node(funBlockNode),
         ])
 
         return SyntheticCSTFixture(ctx: ctx, tokens: tokens, cst: cst, root: root)

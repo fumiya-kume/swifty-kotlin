@@ -310,7 +310,8 @@ final class BlockExpressionTests: XCTestCase {
             var foundMultiStmtBlock = false
             for expr in ast.arena.exprs {
                 if case let .blockExpr(stmts, trailing, _) = expr,
-                   !stmts.isEmpty, trailing != nil {
+                   !stmts.isEmpty, trailing != nil
+                {
                     foundMultiStmtBlock = true
                     break
                 }

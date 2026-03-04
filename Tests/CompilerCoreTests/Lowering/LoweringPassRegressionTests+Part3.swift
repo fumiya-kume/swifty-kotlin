@@ -22,7 +22,7 @@ extension LoweringPassRegressionTests {
                 .constValue(result: liveValue, value: .intLiteral(41)),
                 .call(symbol: suspendSym, callee: interner.intern("suspendTarget"), arguments: [], result: callResult, canThrow: false, thrownResult: nil),
                 .binary(op: .add, lhs: liveValue, rhs: callResult, result: summedResult),
-                .returnValue(summedResult)
+                .returnValue(summedResult),
             ],
             isSuspend: true,
             isInline: false
@@ -127,7 +127,7 @@ extension LoweringPassRegressionTests {
                     thrownResult: nil
                 ),
                 .binary(op: .add, lhs: liveValue, rhs: callResult, result: sumResult),
-                .returnValue(sumResult)
+                .returnValue(sumResult),
             ],
             isSuspend: true,
             isInline: false
@@ -226,7 +226,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .call(symbol: topSymbol, callee: interner.intern("top"), arguments: [], result: mainResult, canThrow: false, thrownResult: nil),
-                .returnValue(mainResult)
+                .returnValue(mainResult),
             ],
             isSuspend: false,
             isInline: false
@@ -238,7 +238,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .call(symbol: leafSymbol, callee: interner.intern("leaf"), arguments: [], result: topResult, canThrow: false, thrownResult: nil),
-                .returnValue(topResult)
+                .returnValue(topResult),
             ],
             isSuspend: true,
             isInline: false
@@ -250,7 +250,7 @@ extension LoweringPassRegressionTests {
             returnType: types.unitType,
             body: [
                 .call(symbol: nil, callee: interner.intern("external_throwing"), arguments: [], result: leafResult, canThrow: false, thrownResult: nil),
-                .returnValue(leafResult)
+                .returnValue(leafResult),
             ],
             isSuspend: true,
             isInline: false

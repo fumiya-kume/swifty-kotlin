@@ -174,7 +174,7 @@ extension MetadataSerializerTests {
                 ),
                 MetadataAnnotationRecord(
                     annotationFQName: "kotlin.JvmStatic"
-                )
+                ),
             ]
         )
         let serialized = encoder.serialize([original])
@@ -195,7 +195,7 @@ extension MetadataSerializerTests {
             MetadataRecord(kind: .class, mangledName: "m2", fqName: "test.Cls"),
             MetadataRecord(kind: .interface, mangledName: "m3", fqName: "test.IFace"),
             MetadataRecord(kind: .property, mangledName: "m4", fqName: "test.prop", typeSignature: "I"),
-            MetadataRecord(kind: .object, mangledName: "m5", fqName: "test.Obj")
+            MetadataRecord(kind: .object, mangledName: "m5", fqName: "test.Obj"),
         ]
         let serialized = encoder.serialize(records)
         let decoded = decoder.decode(serialized)
@@ -226,7 +226,7 @@ extension MetadataSerializerTests {
             ("typeParameter", .typeParameter),
             ("valueParameter", .valueParameter),
             ("local", .local),
-            ("label", .label)
+            ("label", .label),
         ]
         for (token, expectedKind) in mapping {
             let result = decoder.symbolKindFromMetadata(token)
@@ -250,7 +250,7 @@ extension MetadataSerializerTests {
             mangledName: "_KK",
             fqName: "test.fn",
             annotations: [
-                MetadataAnnotationRecord(annotationFQName: "kotlin.JvmStatic")
+                MetadataAnnotationRecord(annotationFQName: "kotlin.JvmStatic"),
             ]
         )
         let output = encoder.serialize([record])
@@ -269,7 +269,7 @@ extension MetadataSerializerTests {
                     annotationFQName: "kotlin.Deprecated",
                     arguments: ["msg1", "msg2"],
                     useSiteTarget: "set"
-                )
+                ),
             ]
         )
         let serialized = encoder.serialize([record])

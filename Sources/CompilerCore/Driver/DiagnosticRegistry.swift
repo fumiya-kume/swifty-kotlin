@@ -251,6 +251,12 @@ public enum DiagnosticRegistry {
             summary: "Type inference failure."
         ),
         DiagnosticDescriptor(
+            code: "KSWIFTK-SEMA-BOUND",
+            pass: "SEMA",
+            defaultSeverity: .error,
+            summary: "Type argument does not satisfy upper bound constraint."
+        ),
+        DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-0031",
             pass: "SEMA",
             defaultSeverity: .error,

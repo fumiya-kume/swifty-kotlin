@@ -54,7 +54,7 @@ final class KIRModelsBehaviorTests: XCTestCase {
                 .call(symbol: symB, callee: interner.intern("beta"), arguments: [expr0], result: expr4, canThrow: false, thrownResult: nil),
                 .returnIfEqual(lhs: expr0, rhs: expr1),
                 .returnValue(expr4),
-                .endBlock
+                .endBlock,
             ],
             isSuspend: false,
             isInline: true

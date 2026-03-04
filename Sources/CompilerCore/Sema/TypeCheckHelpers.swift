@@ -152,7 +152,8 @@ struct TypeCheckHelpers {
             }
             if path.count == 1,
                let scope,
-               let typeParameterSymbol = resolveTypeParameterSymbol(firstName, scope: scope, sema: sema) {
+               let typeParameterSymbol = resolveTypeParameterSymbol(firstName, scope: scope, sema: sema)
+            {
                 return sema.types.make(.typeParam(TypeParamType(symbol: typeParameterSymbol, nullability: nullability)))
             }
             do {

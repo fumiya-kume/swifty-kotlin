@@ -14,14 +14,15 @@ final class CoroutineLoweringPass: LoweringPass {
             ctx.interner.intern("runBlocking"),
             ctx.interner.intern("launch"),
             ctx.interner.intern("async"),
-            ctx.interner.intern("coroutineScope")
+            ctx.interner.intern("coroutineScope"),
         ]
         for decl in module.arena.declarations {
             if case let .function(function) = decl {
                 if function.isSuspend { return true }
                 for instruction in function.body {
                     if case let .call(_, callee, _, _, _, _, _) = instruction,
-                       launcherCallees.contains(callee) {
+                       launcherCallees.contains(callee)
+                    {
                         return true
                     }
                 }
@@ -49,7 +50,7 @@ final class CoroutineLoweringPass: LoweringPass {
             kxMiniRunBlockingCallee: runtimeRunBlockingCallee,
             kxMiniLaunchCallee: runtimeLaunchCallee,
             kxMiniAsyncCallee: runtimeAsyncCallee,
-            kxMiniCoroutineScopeCallee: runtimeCoroutineScopeRunCallee
+            kxMiniCoroutineScopeCallee: runtimeCoroutineScopeRunCallee,
         ]
 
         let suspendFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
@@ -136,7 +137,7 @@ final class CoroutineLoweringPass: LoweringPass {
                 symbol: loweredSymbol,
                 name: loweredName,
                 params: suspendFunction.params + [
-                    KIRParameter(symbol: continuationParameterSymbol, type: continuationType)
+                    KIRParameter(symbol: continuationParameterSymbol, type: continuationType),
                 ],
                 returnType: continuationType,
                 body: loweredBody,
@@ -260,7 +261,7 @@ final class CoroutineLoweringPass: LoweringPass {
             kxMiniRunBlockingCallee: ctx.interner.intern("kk_kxmini_run_blocking_with_cont"),
             kxMiniLaunchCallee: ctx.interner.intern("kk_kxmini_launch_with_cont"),
             kxMiniAsyncCallee: ctx.interner.intern("kk_kxmini_async_with_cont"),
-            kxMiniCoroutineScopeCallee: ctx.interner.intern("kk_coroutine_scope_run_with_cont")
+            kxMiniCoroutineScopeCallee: ctx.interner.intern("kk_coroutine_scope_run_with_cont"),
         ]
 
         module.arena.transformFunctions { function in
@@ -274,7 +275,8 @@ final class CoroutineLoweringPass: LoweringPass {
                 }
 
                 if symbol == nil,
-                   let runtimeLauncherCallee = kxMiniLauncherRuntimeCallees[callee] {
+                   let runtimeLauncherCallee = kxMiniLauncherRuntimeCallees[callee]
+                {
                     guard arguments.count >= 1 else {
                         ctx.diagnostics.error(
                             "KSWIFTK-CORO-0001",

@@ -120,7 +120,8 @@ extension DataFlowSemaPhase {
                 symbols.setFunctionSignature(signature, for: symbol)
                 if record.isInline,
                    !record.mangledName.isEmpty,
-                   let inlineDir = binding.inlineKIRDir {
+                   let inlineDir = binding.inlineKIRDir
+                {
                     let inlinePath = URL(fileURLWithPath: inlineDir)
                         .appendingPathComponent(record.mangledName + ".kirbin")
                         .path

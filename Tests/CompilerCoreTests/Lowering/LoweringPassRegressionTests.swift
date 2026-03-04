@@ -208,7 +208,7 @@ final class LoweringPassRegressionTests: XCTestCase {
                 .constValue(result: argValue, value: .intLiteral(42)),
                 .call(symbol: nil, callee: interner.intern("susp"), arguments: [], result: noArgResult, canThrow: false, thrownResult: nil),
                 .call(symbol: nil, callee: interner.intern("susp"), arguments: [argValue], result: oneArgResult, canThrow: false, thrownResult: nil),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -302,7 +302,7 @@ final class LoweringPassRegressionTests: XCTestCase {
                 .jumpIfEqual(lhs: lhs, rhs: rhs, target: 20),
                 .returnValue(lhs),
                 .label(20),
-                .returnValue(rhs)
+                .returnValue(rhs),
             ],
             isSuspend: true,
             isInline: false

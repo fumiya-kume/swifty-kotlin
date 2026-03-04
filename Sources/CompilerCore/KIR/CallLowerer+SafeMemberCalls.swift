@@ -32,10 +32,12 @@ extension CallLowerer {
             if let chosen = callBinding?.chosenCallee,
                let constant = propertyConstantInitializers[chosen],
                let symInfo = sema.symbols.symbol(chosen),
-               symInfo.flags.contains(.constValue) {
+               symInfo.flags.contains(.constValue)
+            {
                 let receiverType = sema.bindings.exprTypes[receiverExpr]
                 if let receiverType,
-                   receiverType == sema.types.makeNonNullable(receiverType) {
+                   receiverType == sema.types.makeNonNullable(receiverType)
+                {
                     let id = arena.appendExpr(constant, type: boundType ?? sema.types.anyType)
                     instructions.append(.constValue(result: id, value: constant))
                     return id
@@ -69,7 +71,8 @@ extension CallLowerer {
 
         // Primitive member function: Int/Long.inv() → kk_op_inv (P5-103)
         if interner.resolve(effectiveCalleeName) == "inv",
-           args.isEmpty {
+           args.isEmpty
+        {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
@@ -127,7 +130,8 @@ extension CallLowerer {
 
         // Primitive member function: Int/Long.toString(radix: Int) → kk_int_toString_radix (EXPR-003)
         if interner.resolve(effectiveCalleeName) == "toString",
-           args.count == 1 {
+           args.count == 1
+        {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
@@ -158,7 +162,8 @@ extension CallLowerer {
         var finalArguments = safeNormalized.arguments
         if let chosen,
            let signature = sema.symbols.functionSignature(for: chosen),
-           signature.receiverType != nil {
+           signature.receiverType != nil
+        {
             finalArguments.insert(loweredReceiverID, at: 0)
         } else if chosen == nil {
             let calleeStr = interner.resolve(effectiveCalleeName)
@@ -206,7 +211,8 @@ extension CallLowerer {
             )
             let loweredMemberCalleeName: InternedString = if let chosen,
                                                              let externalLinkName = sema.symbols.externalLinkName(for: chosen),
-                                                             !externalLinkName.isEmpty {
+                                                             !externalLinkName.isEmpty
+            {
                 interner.intern(externalLinkName)
             } else if chosen == nil, isCoroutineReceiver, args.isEmpty {
                 switch interner.resolve(effectiveCalleeName) {
@@ -225,13 +231,15 @@ extension CallLowerer {
             let receiverTypeForDispatch = sema.bindings.exprTypes[receiverExpr]
             if !isSuperCall,
                let chosen,
-               let dispatchKind = resolveVirtualDispatch(callee: chosen, receiverTypeID: receiverTypeForDispatch, sema: sema) {
+               let dispatchKind = resolveVirtualDispatch(callee: chosen, receiverTypeID: receiverTypeForDispatch, sema: sema)
+            {
                 // For virtualCall, the receiver is a separate field, so remove it
                 // from finalArguments (it was inserted at index 0 above).
                 var vcArguments = finalArguments
                 if let signature = sema.symbols.functionSignature(for: chosen),
                    signature.receiverType != nil,
-                   !vcArguments.isEmpty {
+                   !vcArguments.isEmpty
+                {
                     vcArguments.removeFirst()
                 }
                 instructions.append(.virtualCall(
@@ -291,7 +299,8 @@ extension CallLowerer {
             // dispatch.  Kotlin classes are final by default, so this is safe and
             // avoids the itable path which requires runtime typeInfo support.
             if let receiverClassSym = sema.symbols.symbol(receiverClassSymID),
-               receiverClassSym.kind == .class {
+               receiverClassSym.kind == .class
+            {
                 let subtypes = sema.symbols.directSubtypes(of: receiverClassSymID)
                 if subtypes.isEmpty {
                     return nil

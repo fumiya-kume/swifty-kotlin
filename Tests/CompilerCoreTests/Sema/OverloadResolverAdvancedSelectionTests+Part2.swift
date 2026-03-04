@@ -77,7 +77,7 @@ extension OverloadResolverTests {
         )
         let resolved = resolver.resolveCall(candidates: [fn], call: call, expectedType: nil, ctx: ctx)
         XCTAssertNil(resolved.chosenCallee)
-        XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-SEMA-0030")
+        XCTAssertEqual(resolved.diagnostic?.code, "KSWIFTK-SEMA-BOUND")
     }
 
     /// Multiple type params with expected return type constraint.
@@ -394,7 +394,7 @@ extension OverloadResolverTests {
             args: [
                 CallArg(label: interner.intern("a"), type: stringType),
                 CallArg(type: intType),
-                CallArg(type: intType)
+                CallArg(type: intType),
             ]
         )
         let resolved = resolver.resolveCall(
@@ -452,7 +452,7 @@ extension OverloadResolverTests {
             calleeName: interner.intern("namedThenNonVararg"),
             args: [
                 CallArg(label: interner.intern("a"), type: intType),
-                CallArg(type: boolType)
+                CallArg(type: boolType),
             ]
         )
         let resolved = resolver.resolveCall(

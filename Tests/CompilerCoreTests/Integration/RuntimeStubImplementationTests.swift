@@ -391,7 +391,7 @@ final class RuntimeStubImplementationTests: XCTestCase {
             "kk_register_global_root",
             "kk_unregister_global_root",
             "kk_register_coroutine_root",
-            "kk_unregister_coroutine_root"
+            "kk_unregister_coroutine_root",
         ]
         for name in runtimeFunctions {
             XCTAssertTrue(
