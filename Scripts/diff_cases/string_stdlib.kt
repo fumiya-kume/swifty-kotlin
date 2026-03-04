@@ -18,9 +18,15 @@ fun main() {
     // replace
     println("hello world".replace("world", "kotlin"))
     println("aaa".replace("a", "bb"))
+    println("ababa".replace("aba", "x"))
 
     // toInt
     println("42".toInt())
     println("-123".toInt())
     println("0".toInt())
+
+    // toDouble
+    println("3.14".toDouble())
+    println("-0.5".toDouble())
+    println("42.0".toDouble())
 }

@@ -403,7 +403,9 @@ extension CallTypeChecker {
                 let receiverTypeForCheck = safeCall
                     ? sema.types.makeNonNullable(lookupReceiverType)
                     : lookupReceiverType
-                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType) {
+                let arg0Type = sema.types.makeNonNullable(argTypes[0])
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType),
+                   sema.types.isSubtype(arg0Type, sema.types.stringType) {
                     let calleeStr = interner.resolve(calleeName)
                     let resultType: TypeID? = switch calleeStr {
                     case "startsWith", "endsWith", "contains":
@@ -425,7 +427,11 @@ extension CallTypeChecker {
                 let receiverTypeForCheck = safeCall
                     ? sema.types.makeNonNullable(lookupReceiverType)
                     : lookupReceiverType
-                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType) {
+                let oldType = sema.types.makeNonNullable(argTypes[0])
+                let newType = sema.types.makeNonNullable(argTypes[1])
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType),
+                   sema.types.isSubtype(oldType, sema.types.stringType),
+                   sema.types.isSubtype(newType, sema.types.stringType) {
                     let finalType = safeCall ? sema.types.makeNullable(sema.types.stringType) : sema.types.stringType
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
