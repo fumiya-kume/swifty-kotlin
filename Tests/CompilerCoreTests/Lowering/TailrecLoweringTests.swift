@@ -3,12 +3,11 @@ import Foundation
 import XCTest
 
 final class TailrecLoweringTests: XCTestCase {
-
     // MARK: - Unit Tests (KIR level)
 
     /// Verify that a tailrec function's self-recursive call + returnValue
     /// is replaced by parameter copy + jump to loop head.
-    func testTailrecRewritesSelfRecursiveCallToLoop() throws {
+    func testTailrecRewritesSelfRecursiveCallToLoop() throws { // swiftlint:disable:this function_body_length
         let interner = StringInterner()
         let arena = KIRArena()
         let types = TypeSystem()
@@ -26,13 +25,10 @@ final class TailrecLoweringTests: XCTestCase {
         let mulResult = arena.appendExpr(.temporary(1))
         let callResult = arena.appendExpr(.temporary(2))
 
-        let fn = KIRFunction(
+        let tailrecFunction = KIRFunction(
             symbol: fnSymbol,
             name: interner.intern("fact"),
-            params: [
-                KIRParameter(symbol: paramN, type: intType),
-                KIRParameter(symbol: paramAcc, type: intType),
-            ],
+            params: [KIRParameter(symbol: paramN, type: intType), KIRParameter(symbol: paramAcc, type: intType)],
             returnType: intType,
             body: [
                 .beginBlock,
@@ -53,14 +49,14 @@ final class TailrecLoweringTests: XCTestCase {
                 // base case
                 .label(1),
                 .returnValue(accExpr),
-                .endBlock,
+                .endBlock, // swiftlint:disable:this trailing_comma
             ],
             isSuspend: false,
             isInline: false,
             isTailrec: true
         )
 
-        let fnID = arena.appendDecl(.function(fn))
+        let fnID = arena.appendDecl(.function(tailrecFunction))
         let module = KIRModule(
             files: [KIRFile(fileID: FileID(rawValue: 0), decls: [fnID])],
             arena: arena
@@ -122,7 +118,7 @@ final class TailrecLoweringTests: XCTestCase {
     }
 
     /// Verify that non-tailrec functions are NOT rewritten.
-    func testNonTailrecFunctionIsNotModified() throws {
+    func testNonTailrecFunctionIsNotModified() {
         let interner = StringInterner()
         let arena = KIRArena()
         let types = TypeSystem()
@@ -130,7 +126,7 @@ final class TailrecLoweringTests: XCTestCase {
         let fnSymbol = SymbolID(rawValue: 200)
         let callResult = arena.appendExpr(.temporary(0))
 
-        let fn = KIRFunction(
+        let nonTailrecFunction = KIRFunction(
             symbol: fnSymbol,
             name: interner.intern("regular"),
             params: [],
@@ -146,14 +142,14 @@ final class TailrecLoweringTests: XCTestCase {
                     thrownResult: nil
                 ),
                 .returnValue(callResult),
-                .endBlock,
+                .endBlock, // swiftlint:disable:this trailing_comma
             ],
             isSuspend: false,
             isInline: false,
-            isTailrec: false  // NOT tailrec
+            isTailrec: false // NOT tailrec
         )
 
-        let fnID = arena.appendDecl(.function(fn))
+        let fnID = arena.appendDecl(.function(nonTailrecFunction))
         let module = KIRModule(
             files: [KIRFile(fileID: FileID(rawValue: 0), decls: [fnID])],
             arena: arena
