@@ -16,18 +16,18 @@ extension TypeSystem {
             switch rhs {
             case .error:
                 return true
-            case .any(.nullable), .any(.platformType):
-                return true
-            case .nothing(.nullable), .nothing(.platformType):
-                return true
-            case .primitive(_, .nullable), .primitive(_, .platformType):
-                return true
-            case let .classType(cls) where cls.nullability == .nullable || cls.nullability == .platformType:
-                return true
-            case let .typeParam(tpm) where tpm.nullability == .nullable || tpm.nullability == .platformType:
-                return true
-            case let .functionType(fnt) where fnt.nullability == .nullable || fnt.nullability == .platformType:
-                return true
+            case let .any(n):
+                return nullabilitySubtype(.nullable, n)
+            case let .nothing(n):
+                return nullabilitySubtype(.nullable, n)
+            case let .primitive(_, n):
+                return nullabilitySubtype(.nullable, n)
+            case let .classType(ct):
+                return nullabilitySubtype(.nullable, ct.nullability)
+            case let .typeParam(tp):
+                return nullabilitySubtype(.nullable, tp.nullability)
+            case let .functionType(ft):
+                return nullabilitySubtype(.nullable, ft.nullability)
             case let .intersection(parts):
                 return parts.allSatisfy { isSubtype(subtype, $0) }
             default:

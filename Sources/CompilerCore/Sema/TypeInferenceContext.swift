@@ -26,6 +26,9 @@ struct TypeInferenceContext {
     /// When true, the current scope is a builder DSL lambda body (STDLIB-002).
     /// Used to scope `append`/`add`/`put` fallback resolution.
     var isBuilderLambdaScope: Bool = false
+    /// When true, platform-type warnings for `return` expressions should be suppressed.
+    /// Set for functions whose return type is inferred (not user-declared).
+    var suppressPlatformReturnWarning: Bool = false
     /// The specific builder kind for this scope (STDLIB-002).
     /// Used to restrict member function resolution to the correct kind.
     var builderKind: BuilderDSLKind?

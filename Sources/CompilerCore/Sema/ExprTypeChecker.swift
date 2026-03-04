@@ -163,7 +163,8 @@ final class ExprTypeChecker {
                         range: range,
                         solver: ConstraintSolver(),
                         sema: sema,
-                        diagnostics: ctx.semaCtx.diagnostics
+                        diagnostics: ctx.semaCtx.diagnostics,
+                        suppressPlatformWarning: ctx.suppressPlatformReturnWarning
                     )
                 }
             } else if let expectedType {
@@ -174,7 +175,8 @@ final class ExprTypeChecker {
                     range: range,
                     solver: ConstraintSolver(),
                     sema: sema,
-                    diagnostics: ctx.semaCtx.diagnostics
+                    diagnostics: ctx.semaCtx.diagnostics,
+                    suppressPlatformWarning: ctx.suppressPlatformReturnWarning
                 )
             }
             sema.bindings.bindExprType(id, type: sema.types.nothingType)

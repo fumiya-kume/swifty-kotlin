@@ -162,8 +162,9 @@ extension DataFlowSemaPhase {
         metadataPath: String,
         cache: LibraryMetadataCache? = nil
     ) -> TypeID {
+        let platformAny = types.withNullability(.platformType, for: types.anyType)
         guard let encodedSignature = record.typeSignature else {
-            return types.withNullability(.platformType, for: types.anyType)
+            return platformAny
         }
         return decodeImportedTypeSignature(
             token: encodedSignature,
@@ -174,7 +175,7 @@ extension DataFlowSemaPhase {
             metadataPath: metadataPath,
             ownerFQName: record.fqName,
             cache: cache
-        ) ?? types.anyType
+        ) ?? platformAny
     }
 
     func importedTypeAliasUnderlyingType(

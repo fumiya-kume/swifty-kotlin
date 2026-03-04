@@ -418,4 +418,12 @@ final class TypeSystemTests: XCTestCase {
         let nullableInt = ts.makeNullable(platformInt)
         XCTAssertEqual(ts.nullability(of: nullableInt), .nullable)
     }
+
+    func testNothingNullableIsSubtypeOfPlatformType() {
+        let types = TypeSystem()
+        let platformInt = types.make(.primitive(.int, .platformType))
+        let platformAny = types.withNullability(.platformType, for: types.anyType)
+        XCTAssertTrue(types.isSubtype(types.nullableNothingType, platformInt))
+        XCTAssertTrue(types.isSubtype(types.nullableNothingType, platformAny))
+    }
 }

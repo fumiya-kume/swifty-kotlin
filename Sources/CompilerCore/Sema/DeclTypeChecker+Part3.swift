@@ -193,7 +193,10 @@ extension DeclTypeChecker {
         for typeParameterSymbol in signature.typeParameterSymbols {
             functionScope.insert(typeParameterSymbol)
         }
-        let functionCtx = ctx.copying(scope: functionScope, implicitReceiverType: signature.receiverType)
+        var functionCtx = ctx.copying(scope: functionScope, implicitReceiverType: signature.receiverType)
+        // Propagate suppression flag so that individual `return` statements inside
+        // functions with inferred return types also skip the platform-type warning.
+        functionCtx.suppressPlatformReturnWarning = (function.returnType == nil)
 
         // Abstract methods use .unit as their body sentinel – skip body type
         // inference. Gate on abstractType so non-abstract missing bodies still
