@@ -26,9 +26,9 @@ Options:
   --no-parallel      Disable parallel execution
   --jobs <n>         Number of parallel workers (default: env DIFF_WORKERS, default: 4, clipped by CPU)
   --compile-timeout <seconds>
-                     Per-compiler timeout (default: $DIFF_COMPILE_TIMEOUT or 120)
+                     Per-compiler timeout (default: \$DIFF_COMPILE_TIMEOUT or 120)
   --run-timeout <seconds>
-                     Per-program timeout (default: $DIFF_RUN_TIMEOUT or 30)
+                     Per-program timeout (default: \$DIFF_RUN_TIMEOUT or 30)
   --keep-temp        Keep per-test temporary directories
   --report <path>    Write TSV report (case, status, artifact_dir)
   -h, --help         Show this help
