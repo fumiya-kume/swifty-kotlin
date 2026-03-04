@@ -32,7 +32,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let callerFn = KIRFunction(
             symbol: callerSym,
             name: interner.intern("main"),
-            params: []
+            params: [],
             returnType: types.unitType,
             body: [
                 .call(symbol: targetSym, callee: targetName, arguments: [argExpr], result: resultExpr, canThrow: false, thrownResult: nil), // swiftlint:disable:this line_length
@@ -105,7 +105,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let callerFn = KIRFunction(
             symbol: callerSym,
             name: interner.intern("main"),
-            params: []
+            params: [],
             returnType: types.unitType,
             body: [
                 .call(symbol: targetSym, callee: targetName, arguments: [argExpr], result: resultExpr, canThrow: false, thrownResult: nil), // swiftlint:disable:this line_length
@@ -178,7 +178,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let callerFn = KIRFunction(
             symbol: callerSym,
             name: interner.intern("main"),
-            params: []
+            params: [],
             returnType: types.unitType,
             body: [
                 .call(symbol: targetSym, callee: targetName, arguments: [argExpr], result: resultExpr, canThrow: false, thrownResult: nil), // swiftlint:disable:this line_length
@@ -248,7 +248,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let callerFn = KIRFunction(
             symbol: callerSym,
             name: interner.intern("main"),
-            params: []
+            params: [],
             returnType: types.unitType,
             body: [
                 .call(symbol: targetSym, callee: targetName, arguments: [], result: resultExpr, canThrow: false, thrownResult: nil), // swiftlint:disable:this line_length
@@ -260,7 +260,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let targetFn = KIRFunction(
             symbol: targetSym,
             name: targetName,
-            params: []
+            params: [],
             returnType: anyNullableType,
             body: [.returnUnit],
             isSuspend: false,
@@ -303,7 +303,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let callerFn = KIRFunction(
             symbol: callerSym,
             name: interner.intern("main"),
-            params: []
+            params: [],
             returnType: types.unitType,
             body: [
                 .call(symbol: targetSym, callee: targetName, arguments: [], result: resultExpr, canThrow: false, thrownResult: nil), // swiftlint:disable:this line_length
@@ -315,7 +315,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let targetFn = KIRFunction(
             symbol: targetSym,
             name: targetName,
-            params: []
+            params: [],
             returnType: nullableIntType,
             body: [.returnUnit],
             isSuspend: false,
@@ -348,7 +348,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let function = KIRFunction(
             symbol: fnSym,
             name: interner.intern("returnBoxed"),
-            params: []
+            params: [],
             returnType: anyNullableType,
             body: [
                 .returnValue(valueExpr),
@@ -383,7 +383,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let function = KIRFunction(
             symbol: fnSym,
             name: interner.intern("copyBoxed"),
-            params: []
+            params: [],
             returnType: types.unitType,
             body: [
                 .copy(from: fromExpr, to: toExpr),
@@ -425,7 +425,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let function = KIRFunction(
             symbol: fnSym,
             name: interner.intern("copyUnboxed"),
-            params: []
+            params: [],
             returnType: types.unitType,
             body: [
                 .copy(from: fromExpr, to: toExpr),
@@ -491,7 +491,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
             let callerFn = KIRFunction(
                 symbol: callerSym,
                 name: interner.intern("main"),
-                params: []
+                params: [],
                 returnType: types.unitType,
                 body: [
                     .call(symbol: targetSym, callee: targetName, arguments: [argExpr], result: resultExpr, canThrow: false, thrownResult: nil), // swiftlint:disable:this line_length
@@ -538,7 +538,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let function = KIRFunction(
             symbol: fnSym,
             name: interner.intern("copyNullableBox"),
-            params: []
+            params: [],
             returnType: types.unitType,
             body: [
                 .copy(from: fromExpr, to: toExpr),
@@ -577,7 +577,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let callerFn = KIRFunction(
             symbol: callerSym,
             name: interner.intern("caller"),
-            params: []
+            params: [],
             returnType: types.unitType,
             body: [
                 .call(
@@ -635,7 +635,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let callerFn = KIRFunction(
             symbol: callerSym,
             name: interner.intern("setter_caller"),
-            params: []
+            params: [],
             returnType: types.unitType,
             body: [
                 .call(
@@ -687,7 +687,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let callerFn = KIRFunction(
             symbol: callerSym,
             name: interner.intern("no_sym_caller"),
-            params: []
+            params: [],
             returnType: types.unitType,
             body: [
                 .call(
@@ -755,7 +755,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let callerFn = KIRFunction(
             symbol: callerSym,
             name: interner.intern("bf_setter"),
-            params: []
+            params: [],
             returnType: types.unitType,
             body: [
                 .copy(from: fromExpr, to: toExpr),
@@ -827,7 +827,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let getterFn = KIRFunction(
             symbol: getterSymbol,
             name: interner.intern("get"),
-            params: []
+            params: [],
             returnType: types.anyType,
             body: [
                 .constValue(result: getterRetExpr, value: .stringLiteral(interner.intern("hello"))),
@@ -844,7 +844,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let callerFn = KIRFunction(
             symbol: callerSym,
             name: interner.intern("caller"),
-            params: []
+            params: [],
             returnType: types.unitType,
             body: [
                 .constValue(result: propRef, value: .symbolRef(propertySym)),
@@ -924,7 +924,7 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase { // swiftlint:dis
         let callerFn = KIRFunction(
             symbol: callerSym,
             name: interner.intern("caller"),
-            params: []
+            params: [],
             returnType: types.unitType,
             body: [
                 .constValue(result: propRef, value: .symbolRef(propertySym)),
