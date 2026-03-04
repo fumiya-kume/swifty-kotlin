@@ -182,7 +182,7 @@ extension CallTypeChecker {
         let isErasedFlowReceiver = receiverType == sema.types.anyType || receiverType == sema.types.nullableAnyType
         let isFlowHOF = flowHOFNames.contains(interner.resolve(calleeName)) && isErasedFlowReceiver
         let argTypes = args.map { arg -> TypeID in
-            if (isCollectionHOF || isFlowHOF),
+            if isCollectionHOF || isFlowHOF,
                let argExpr = ast.arena.expr(arg.expr),
                case .lambdaLiteral = argExpr
             {
@@ -818,7 +818,7 @@ extension CallTypeChecker {
                 let flowMembers: Set = ["map", "filter", "take", "collect"]
                 if flowMembers.contains(memberName) {
                     let acceptsArity = args.count == 1
-                    if acceptsArity, (memberName == "map" || memberName == "filter" || memberName == "collect") {
+                    if acceptsArity, memberName == "map" || memberName == "filter" || memberName == "collect" {
                         let lambdaReturnType: TypeID = switch memberName {
                         case "filter":
                             sema.types.make(.primitive(.boolean, .nonNull))

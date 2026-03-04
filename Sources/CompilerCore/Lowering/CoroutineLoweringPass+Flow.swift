@@ -3,9 +3,9 @@ import Foundation
 // MARK: - Flow Lowering (CORO-003)
 
 extension CoroutineLoweringPass {
-    /// Lower `flow { }`, `emit`, `map`, `filter`, `take`, `collect` calls to their
-    /// runtime ABI equivalents. Mirrors the `sequenceExprIDs` pattern in
-    /// `CollectionLiteralLoweringPass`.
+    // Lower `flow { }`, `emit`, `map`, `filter`, `take`, `collect` calls to their
+    // runtime ABI equivalents. Mirrors the `sequenceExprIDs` pattern in
+    // `CollectionLiteralLoweringPass`.
     // swiftlint:disable:next cyclomatic_complexity function_body_length
     func lowerFlowExpressions(module: KIRModule, ctx: KIRContext) {
         let flowName = ctx.interner.intern("flow")
@@ -79,7 +79,7 @@ extension CoroutineLoweringPass {
                         }
 
                     case let .virtualCall(_, callee, receiver, arguments, result, _, _, _):
-                        if (callee == mapName || callee == filterName || callee == takeName),
+                        if callee == mapName || callee == filterName || callee == takeName,
                            arguments.count == 1,
                            flowExprIDs.contains(receiver.rawValue)
                         {
@@ -119,14 +119,14 @@ extension CoroutineLoweringPass {
             let hasFlowLikeCalls = function.body.contains { instruction in
                 switch instruction {
                 case let .call(_, callee, _, _, _, _, _):
-                    return callee == flowName || callee == emitName || callee == collectName ||
+                    callee == flowName || callee == emitName || callee == collectName ||
                         callee == mapName || callee == filterName || callee == takeName ||
                         callee == kkFlowCreateName || callee == kkFlowEmitName || callee == kkFlowCollectName ||
                         callee == kkFlowMapName || callee == kkFlowFilterName || callee == kkFlowTakeName
                 case let .virtualCall(_, callee, _, _, _, _, _, _):
-                    return callee == mapName || callee == filterName || callee == takeName || callee == collectName
+                    callee == mapName || callee == filterName || callee == takeName || callee == collectName
                 default:
-                    return false
+                    false
                 }
             }
 
