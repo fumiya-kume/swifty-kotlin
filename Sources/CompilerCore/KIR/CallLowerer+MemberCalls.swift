@@ -322,26 +322,24 @@ extension CallLowerer {
                     return result
                 }
                 if calleeStr == "toInt" {
-                    let thrownResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: nil)
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern("kk_string_toInt"),
                         arguments: [loweredReceiverID],
                         result: result,
                         canThrow: true,
-                        thrownResult: thrownResult
+                        thrownResult: nil
                     ))
                     return result
                 }
                 if calleeStr == "toDouble" {
-                    let thrownResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: nil)
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern("kk_string_toDouble"),
                         arguments: [loweredReceiverID],
                         result: result,
                         canThrow: true,
-                        thrownResult: thrownResult
+                        thrownResult: nil
                     ))
                     return result
                 }
