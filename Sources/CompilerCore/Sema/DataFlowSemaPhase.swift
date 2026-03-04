@@ -85,8 +85,12 @@ public final class DataFlowSemaPhase: CompilerPhase {
             ast: ast, symbols: symbols, bindings: bindings,
             diagnostics: ctx.diagnostics, interner: ctx.interner
         )
+        validateClassDelegation(
+            ast: ast, symbols: symbols, bindings: bindings, types: types,
+            diagnostics: ctx.diagnostics, interner: ctx.interner
+        )
         validateAbstractOverrides(
-            ast: ast, symbols: symbols, bindings: bindings,
+            ast: ast, symbols: symbols, bindings: bindings, types: types,
             diagnostics: ctx.diagnostics, interner: ctx.interner
         )
         validateDiamondOverrides(
@@ -107,6 +111,10 @@ public final class DataFlowSemaPhase: CompilerPhase {
         validateDeclarationSiteVariance(
             ast: ast, symbols: symbols, bindings: bindings,
             types: types, diagnostics: ctx.diagnostics, interner: ctx.interner
+        )
+        synthesizeClassDelegationForwardingMethodSymbols(
+            ast: ast, symbols: symbols, bindings: bindings,
+            types: types, interner: ctx.interner
         )
         synthesizeNominalLayouts(symbols: symbols)
     }

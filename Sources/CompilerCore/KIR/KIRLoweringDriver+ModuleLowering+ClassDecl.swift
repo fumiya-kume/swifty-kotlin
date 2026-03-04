@@ -23,9 +23,17 @@ extension KIRLoweringDriver {
             nestedObjects: allNestedObjects,
             shared: shared
         )
-        let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: directMembers)))
+        var finalDirectMembers = directMembers
+        let forwardingDeclIDs = synthesizeClassDelegationForwardingMethods(
+            classSymbol: symbol,
+            shared: shared,
+            compilationCtx: compilationCtx
+        )
+        finalDirectMembers.append(contentsOf: forwardingDeclIDs)
+        let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: finalDirectMembers)))
         declIDs.append(kirID)
         declIDs.append(contentsOf: allDecls)
+        declIDs.append(contentsOf: forwardingDeclIDs)
         declIDs.append(contentsOf: synthesizeCompanionInitializerIfNeeded(
             companionDeclID: classDecl.companionObject,
             ownerSymbol: symbol,
@@ -47,6 +55,116 @@ extension KIRLoweringDriver {
             ))
         }
 
+        return declIDs
+    }
+
+    // swiftlint:disable function_body_length
+    /// CLASS-008: Synthesize forwarding method bodies for delegated interface methods.
+    private func synthesizeClassDelegationForwardingMethods(
+        classSymbol: SymbolID,
+        shared: KIRLoweringSharedContext,
+        compilationCtx: CompilationContext
+    ) -> [KIRDeclID] {
+        let sema = shared.sema
+        let arena = shared.arena
+        var declIDs: [KIRDeclID] = []
+
+        for forwardingSymbol in sema.symbols.classDelegationForwardingMethodSymbols(forClass: classSymbol) {
+            guard let info = sema.symbols.classDelegationForwardingMethodInfo(for: forwardingSymbol),
+                  let signature = sema.symbols.functionSignature(for: forwardingSymbol),
+                  let interfaceLayout = sema.symbols.nominalLayout(for: info.interfaceSymbol),
+                  let methodSlot = interfaceLayout.vtableSlots[info.interfaceMethodSymbol],
+                  let interfaceSlot = interfaceLayout.itableSlots[info.interfaceSymbol],
+                  let interfaceMethodSym = sema.symbols.symbol(info.interfaceMethodSymbol)
+            else {
+                continue
+            }
+            let calleeName = interfaceMethodSym.name
+
+            ctx.resetScopeForFunction()
+            ctx.beginCallableLoweringScope()
+            ctx.currentFunctionSymbol = forwardingSymbol
+
+            var params: [KIRParameter] = []
+            if let receiverType = signature.receiverType {
+                // swiftlint:disable:next line_length
+                let receiverSymbol = callSupportLowerer.syntheticReceiverParameterSymbol(functionSymbol: forwardingSymbol)
+                params.append(KIRParameter(symbol: receiverSymbol, type: receiverType))
+                ctx.currentImplicitReceiverSymbol = receiverSymbol
+                ctx.currentImplicitReceiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: receiverType)
+            }
+            params.append(contentsOf: zip(signature.valueParameterSymbols, signature.parameterTypes).map { pair in
+                KIRParameter(symbol: pair.0, type: pair.1)
+            })
+
+            var body: KIRLoweringEmitContext = [.beginBlock]
+            if let receiverExpr = ctx.currentImplicitReceiverExprID,
+               let receiverSym = ctx.currentImplicitReceiverSymbol
+            {
+                body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
+            }
+
+            let offset = shared.sema.symbols.nominalLayout(for: classSymbol)?.fieldOffsets[info.fieldSymbol] ?? 0
+            let offsetExpr = arena.appendExpr(.intLiteral(Int64(offset)), type: shared.sema.types.intType)
+            body.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(offset))))
+
+            let delegateResultID = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: shared.sema.symbols.propertyType(for: info.fieldSymbol) ?? shared.sema.types.anyType
+            )
+            body.append(.call(
+                symbol: nil,
+                callee: compilationCtx.interner.intern("kk_array_get"),
+                arguments: [ctx.currentImplicitReceiverExprID!, offsetExpr],
+                result: delegateResultID,
+                canThrow: true,
+                thrownResult: nil,
+                isSuperCall: false
+            ))
+
+            var callArgExprs: [KIRExprID] = []
+            for (paramSym, paramType) in zip(signature.valueParameterSymbols, signature.parameterTypes) {
+                callArgExprs.append(arena.appendExpr(.symbolRef(paramSym), type: paramType))
+            }
+
+            let resultExprID = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: signature.returnType
+            )
+            body.append(.virtualCall(
+                symbol: info.interfaceMethodSymbol,
+                callee: calleeName,
+                receiver: delegateResultID,
+                arguments: callArgExprs,
+                result: resultExprID,
+                canThrow: false,
+                thrownResult: nil,
+                dispatch: .itable(interfaceSlot: interfaceSlot, methodSlot: methodSlot)
+            ))
+
+            if signature.returnType == sema.types.unitType {
+                body.append(.returnUnit)
+            } else {
+                body.append(.returnValue(resultExprID))
+            }
+            body.append(.endBlock)
+
+            let kirFunc = KIRFunction(
+                symbol: forwardingSymbol,
+                name: calleeName,
+                params: params,
+                returnType: signature.returnType,
+                body: body,
+                isSuspend: signature.isSuspend,
+                isInline: false,
+                sourceRange: nil
+            )
+            let funcDeclID = arena.appendDecl(.function(kirFunc))
+            declIDs.append(funcDeclID)
+        }
+
+        ctx.currentImplicitReceiverExprID = nil
+        ctx.currentImplicitReceiverSymbol = nil
         return declIDs
     }
 
@@ -211,4 +329,5 @@ extension KIRLoweringDriver {
         ctx.currentImplicitReceiverSymbol = nil
         return declIDs
     }
+    // swiftlint:enable function_body_length
 }

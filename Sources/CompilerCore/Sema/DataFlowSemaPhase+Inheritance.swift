@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 
 extension DataFlowSemaPhase {
@@ -17,7 +18,7 @@ extension DataFlowSemaPhase {
                 let superTypeRefs: [TypeRefID]
                 switch decl {
                 case let .classDecl(classDecl):
-                    superTypeRefs = classDecl.superTypes
+                    superTypeRefs = classDecl.superTypeEntries.map(\.typeRef)
                 case let .interfaceDecl(interfaceDecl):
                     superTypeRefs = interfaceDecl.superTypes
                 case let .objectDecl(objectDecl):
@@ -206,10 +207,12 @@ extension DataFlowSemaPhase {
     }
 
     // P5-112: Validate that concrete subclasses of abstract classes override all abstract members.
+    // swiftlint:disable:next function_parameter_count
     func validateAbstractOverrides(
         ast: ASTModule,
         symbols: SymbolTable,
         bindings: BindingTable,
+        types: TypeSystem,
         diagnostics: DiagnosticEngine,
         interner: StringInterner
     ) {
@@ -217,9 +220,11 @@ extension DataFlowSemaPhase {
             for declID in file.topLevelDecls {
                 validateAbstractOverridesForDecl(
                     declID: declID,
+                    file: file,
                     ast: ast,
                     symbols: symbols,
                     bindings: bindings,
+                    types: types,
                     diagnostics: diagnostics,
                     interner: interner
                 )
@@ -227,11 +232,212 @@ extension DataFlowSemaPhase {
         }
     }
 
-    private func validateAbstractOverridesForDecl(
-        declID: DeclID,
+    // swiftlint:disable function_body_length function_parameter_count
+    /// CLASS-008: Validate class delegation (`: Interface by expr`).
+    /// Ensures delegated supertypes are interfaces (not classes) and records them for abstract override exemption.
+    func validateClassDelegation(
         ast: ASTModule,
         symbols: SymbolTable,
         bindings: BindingTable,
+        types: TypeSystem,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner
+    ) {
+        for file in ast.sortedFiles {
+            for declID in file.topLevelDecls {
+                guard let decl = ast.arena.decl(declID),
+                      case let .classDecl(classDecl) = decl
+                else {
+                    continue
+                }
+                for entry in classDecl.superTypeEntries where entry.delegateExpression != nil {
+                    guard let resolved = resolveNominalSymbolAndTypeArgs(
+                        entry.typeRef,
+                        currentPackage: file.packageFQName,
+                        ast: ast,
+                        symbols: symbols,
+                        types: types
+                    ) else {
+                        continue
+                    }
+                    guard let superSymbol = symbols.symbol(resolved.symbol) else {
+                        continue
+                    }
+                    if superSymbol.kind != .interface {
+                        let name = superSymbol.fqName.map { interner.resolve($0) }.joined(separator: ".")
+                        diagnostics.error(
+                            "KSWIFTK-SEMA-DELEGATE",
+                            "Class delegation is only supported for interfaces, not '\(name)'.",
+                            range: classDecl.range
+                        )
+                    } else if let classSymbol = bindings.declSymbols[declID],
+                              let classSym = symbols.symbol(classSymbol),
+                              let delegateExpr = entry.delegateExpression
+                    {
+                        symbols.addDelegatedInterface(resolved.symbol, forClass: classSymbol)
+                        symbols.setClassDelegationExpr(delegateExpr, forClass: classSymbol, interface: resolved.symbol)
+                        let interfaceName = interner.resolve(superSymbol.fqName.last ?? interner.intern(""))
+                        let fieldName = interner.intern("$delegate_\(interfaceName)")
+                        let fieldFQName = classSym.fqName + [fieldName]
+                        let fieldSymbol = symbols.define(
+                            kind: .field,
+                            name: fieldName,
+                            fqName: fieldFQName,
+                            declSite: classDecl.range,
+                            visibility: .private,
+                            flags: []
+                        )
+                        symbols.setParentSymbol(classSymbol, for: fieldSymbol)
+                        let interfaceType = types.make(.classType(ClassType(
+                            classSymbol: resolved.symbol,
+                            args: resolved.typeArgs,
+                            nullability: .nonNull
+                        )))
+                        symbols.setPropertyType(interfaceType, for: fieldSymbol)
+                        symbols.setClassDelegationField(fieldSymbol, forClass: classSymbol, interface: resolved.symbol)
+                    }
+                }
+            }
+        }
+    }
+
+    // swiftlint:enable function_body_length function_parameter_count
+
+    // swiftlint:disable cyclomatic_complexity function_body_length
+    /// CLASS-008: Create synthetic method symbols for delegated interface methods
+    /// that the class does not override. These are used for itable layout and KIR lowering.
+    func synthesizeClassDelegationForwardingMethodSymbols(
+        ast: ASTModule,
+        symbols: SymbolTable,
+        bindings: BindingTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        struct MethodDispatchKey: Hashable {
+            let name: InternedString
+            let arity: Int
+            let isSuspend: Bool
+        }
+        func methodDispatchKey(for methodSymbol: SymbolID, symbols: SymbolTable) -> MethodDispatchKey {
+            let signature = symbols.functionSignature(for: methodSymbol)
+            let methodInfo = symbols.symbol(methodSymbol)
+            return MethodDispatchKey(
+                name: methodInfo?.name ?? interner.intern(""),
+                arity: signature?.parameterTypes.count ?? 0,
+                isSuspend: signature?.isSuspend ?? false
+            )
+        }
+
+        for file in ast.sortedFiles {
+            for declID in file.topLevelDecls {
+                guard let decl = ast.arena.decl(declID),
+                      case let .classDecl(classDecl) = decl,
+                      let classSymbol = bindings.declSymbols[declID],
+                      let classSym = symbols.symbol(classSymbol)
+                else {
+                    continue
+                }
+                let classFQName = classSym.fqName
+
+                // Collect class's own method dispatch keys (from member functions)
+                var classMethodKeys: Set<MethodDispatchKey> = []
+                for funDeclID in classDecl.memberFunctions {
+                    guard let funSymbol = bindings.declSymbols[funDeclID] else { continue }
+                    classMethodKeys.insert(methodDispatchKey(for: funSymbol, symbols: symbols))
+                }
+
+                for interfaceSymbol in symbols.delegatedInterfaces(forClass: classSymbol) {
+                    guard let fieldSymbol = symbols.classDelegationField(
+                        forClass: classSymbol, interface: interfaceSymbol
+                    ),
+                        let interfaceSym = symbols.symbol(interfaceSymbol)
+                    else {
+                        continue
+                    }
+                    let interfaceFQName = interfaceSym.fqName
+
+                    let interfaceMethods = symbols.children(ofFQName: interfaceFQName)
+                        .compactMap { symbols.symbol($0) }
+                        .filter { $0.kind == .function }
+
+                    for methodSym in interfaceMethods {
+                        let key = methodDispatchKey(for: methodSym.id, symbols: symbols)
+                        if classMethodKeys.contains(key) {
+                            continue
+                        }
+                        guard let ifaceSig = symbols.functionSignature(for: methodSym.id) else {
+                            continue
+                        }
+
+                        let methodName = methodSym.name
+                        let forwardingFQName = classFQName + [methodName]
+                        let forwardingSymbol = symbols.define(
+                            kind: .function,
+                            name: methodName,
+                            fqName: forwardingFQName,
+                            declSite: classDecl.range,
+                            visibility: .private,
+                            flags: [.synthetic]
+                        )
+                        symbols.setParentSymbol(classSymbol, for: forwardingSymbol)
+
+                        let classType = types.make(.classType(ClassType(
+                            classSymbol: classSymbol,
+                            args: [],
+                            nullability: .nonNull
+                        )))
+
+                        var paramSymbols: [SymbolID] = []
+                        for (index, paramType) in ifaceSig.parameterTypes.enumerated() {
+                            let paramName = interner.intern("p\(index)")
+                            let paramFQName = forwardingFQName + [paramName]
+                            let paramSymbol = symbols.define(
+                                kind: .valueParameter,
+                                name: paramName,
+                                fqName: paramFQName,
+                                declSite: classDecl.range,
+                                visibility: .private,
+                                flags: []
+                            )
+                            symbols.setParentSymbol(forwardingSymbol, for: paramSymbol)
+                            symbols.setPropertyType(paramType, for: paramSymbol)
+                            paramSymbols.append(paramSymbol)
+                        }
+
+                        let forwardingSig = FunctionSignature(
+                            receiverType: classType,
+                            parameterTypes: ifaceSig.parameterTypes,
+                            returnType: ifaceSig.returnType,
+                            isSuspend: ifaceSig.isSuspend,
+                            valueParameterSymbols: paramSymbols,
+                            valueParameterHasDefaultValues: Array(repeating: false, count: paramSymbols.count),
+                            valueParameterIsVararg: Array(repeating: false, count: paramSymbols.count)
+                        )
+                        symbols.setFunctionSignature(forwardingSig, for: forwardingSymbol)
+
+                        symbols.addClassDelegationForwardingMethod(
+                            forwardingSymbol,
+                            forClass: classSymbol,
+                            interface: interfaceSymbol,
+                            interfaceMethod: methodSym.id,
+                            field: fieldSymbol
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // swiftlint:enable cyclomatic_complexity function_body_length
+
+    // swiftlint:disable:next cyclomatic_complexity function_body_length function_parameter_count
+    private func validateAbstractOverridesForDecl(
+        declID: DeclID,
+        file: ASTFile,
+        ast: ASTModule,
+        symbols: SymbolTable,
+        bindings: BindingTable,
+        types: TypeSystem,
         diagnostics: DiagnosticEngine,
         interner: StringInterner
     ) {
@@ -248,9 +454,11 @@ extension DataFlowSemaPhase {
             for nestedDeclID in classDecl.nestedClasses {
                 validateAbstractOverridesForDecl(
                     declID: nestedDeclID,
+                    file: file,
                     ast: ast,
                     symbols: symbols,
                     bindings: bindings,
+                    types: types,
                     diagnostics: diagnostics,
                     interner: interner
                 )
@@ -259,9 +467,11 @@ extension DataFlowSemaPhase {
             for nestedDeclID in interfaceDecl.nestedClasses {
                 validateAbstractOverridesForDecl(
                     declID: nestedDeclID,
+                    file: file,
                     ast: ast,
                     symbols: symbols,
                     bindings: bindings,
+                    types: types,
                     diagnostics: diagnostics,
                     interner: interner
                 )
@@ -270,9 +480,11 @@ extension DataFlowSemaPhase {
             for nestedDeclID in objectDecl.nestedClasses {
                 validateAbstractOverridesForDecl(
                     declID: nestedDeclID,
+                    file: file,
                     ast: ast,
                     symbols: symbols,
                     bindings: bindings,
+                    types: types,
                     diagnostics: diagnostics,
                     interner: interner
                 )
@@ -295,6 +507,9 @@ extension DataFlowSemaPhase {
         )
         guard !abstractMembers.isEmpty else { return }
 
+        // CLASS-008: Abstract members from delegated interfaces are satisfied by delegation.
+        let delegatedInterfaces = symbols.delegatedInterfaces(forClass: symbol)
+
         // Collect the names of members that this class provides overrides for
         let overriddenNames = collectOverriddenMemberNames(
             for: symbol,
@@ -303,9 +518,15 @@ extension DataFlowSemaPhase {
             symbols: symbols
         )
 
-        // Check that every abstract member name is overridden
+        // Check that every abstract member name is overridden (or delegated)
         for abstractMember in abstractMembers {
             guard let abstractSym = symbols.symbol(abstractMember) else { continue }
+            // Skip if this abstract member belongs to a delegated interface
+            if let owner = symbols.parentSymbol(for: abstractMember),
+               delegatedInterfaces.contains(owner)
+            {
+                continue
+            }
             let memberName = interner.resolve(abstractSym.name)
             if !overriddenNames.contains(abstractSym.name) {
                 let className = symbolInfo.fqName.map { interner.resolve($0) }.joined(separator: ".")
@@ -428,7 +649,7 @@ extension DataFlowSemaPhase {
                 let hasSuperTypes: Bool
                 switch decl {
                 case let .classDecl(classDecl):
-                    hasSuperTypes = !classDecl.superTypes.isEmpty
+                    hasSuperTypes = !classDecl.superTypeEntries.isEmpty
                 case let .interfaceDecl(interfaceDecl):
                     hasSuperTypes = !interfaceDecl.superTypes.isEmpty
                 case let .objectDecl(objectDecl):
