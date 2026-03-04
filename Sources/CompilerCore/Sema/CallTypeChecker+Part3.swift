@@ -176,10 +176,21 @@ extension CallTypeChecker {
             // swiftlint:disable:next trailing_comma
             "fold", "reduce", "groupBy", "sortedBy", "count", "first", "last", "find",
         ]
+        let flowHOFNames: Set = ["map", "filter", "collect"]
+        let isFlowReceiver: Bool = if sema.bindings.isFlowExpr(receiverID) {
+            true
+        } else if case .nameRef = ast.arena.expr(receiverID),
+                  let receiverSymbol = sema.bindings.identifierSymbol(for: receiverID),
+                  sema.bindings.isFlowSymbol(receiverSymbol) {
+            true
+        } else {
+            false
+        }
+        let isFlowHOF = isFlowReceiver && flowHOFNames.contains(interner.resolve(calleeName))
         let isCollectionHOF = collectionHOFNames.contains(interner.resolve(calleeName))
             && sema.bindings.isCollectionExpr(receiverID)
         let argTypes = args.map { arg -> TypeID in
-            if isCollectionHOF,
+            if (isCollectionHOF || isFlowHOF),
                let argExpr = ast.arena.expr(arg.expr),
                case .lambdaLiteral = argExpr
             {
@@ -850,6 +861,9 @@ extension CallTypeChecker {
                     }
 
                     if acceptsArity {
+                        if memberName == "map" || memberName == "filter" || memberName == "take" {
+                            sema.bindings.markFlowExpr(id)
+                        }
                         let resultType: TypeID = memberName == "collect"
                             ? sema.types.unitType
                             : sema.types.nullableAnyType

@@ -27,11 +27,17 @@ final class FlowLoweringPass: LoweringPass {
                 continue
             }
             for instruction in function.body {
-                guard case let .call(_, callee, _, _, _, _, _) = instruction else {
+                switch instruction {
+                case let .call(_, callee, _, _, _, _, _):
+                    if calleeNames.contains(callee) {
+                        return true
+                    }
+                case let .virtualCall(_, callee, _, _, _, _, _, _):
+                    if calleeNames.contains(callee) {
+                        return true
+                    }
+                default:
                     continue
-                }
-                if calleeNames.contains(callee) {
-                    return true
                 }
             }
         }
@@ -74,22 +80,38 @@ final class FlowLoweringPass: LoweringPass {
                 }
             }
             for instruction in function.body {
-                guard case let .call(_, callee, arguments, _, _, _, _) = instruction,
-                      callee == flowName,
-                      arguments.count == 1
-                else {
+                switch instruction {
+                case let .call(_, callee, arguments, _, _, _, _):
+                    guard callee == flowName, arguments.count == 1 else {
+                        continue
+                    }
+                    let lambdaArg = arguments[0]
+                    if let symbol = symbolByExprRaw[lambdaArg.rawValue] {
+                        flowBuilderFunctionSymbols.insert(symbol)
+                        if let lambdaName = functionNameBySymbol[symbol] {
+                            flowBuilderFunctionNames.insert(lambdaName)
+                        }
+                    }
+                    // Keep convention-based fallback for synthetic lambda names.
+                    let fallbackLambdaName = interner.intern("kk_lambda_\(lambdaArg.rawValue)")
+                    flowBuilderFunctionNames.insert(fallbackLambdaName)
+                case let .virtualCall(_, callee, _, arguments, _, _, _, _):
+                    guard callee == flowName, arguments.count == 1 else {
+                        continue
+                    }
+                    let lambdaArg = arguments[0]
+                    if let symbol = symbolByExprRaw[lambdaArg.rawValue] {
+                        flowBuilderFunctionSymbols.insert(symbol)
+                        if let lambdaName = functionNameBySymbol[symbol] {
+                            flowBuilderFunctionNames.insert(lambdaName)
+                        }
+                    }
+                    // Keep convention-based fallback for synthetic lambda names.
+                    let fallbackLambdaName = interner.intern("kk_lambda_\(lambdaArg.rawValue)")
+                    flowBuilderFunctionNames.insert(fallbackLambdaName)
+                default:
                     continue
                 }
-                let lambdaArg = arguments[0]
-                if let symbol = symbolByExprRaw[lambdaArg.rawValue] {
-                    flowBuilderFunctionSymbols.insert(symbol)
-                    if let lambdaName = functionNameBySymbol[symbol] {
-                        flowBuilderFunctionNames.insert(lambdaName)
-                    }
-                }
-                // Keep convention-based fallback for synthetic lambda names.
-                let fallbackLambdaName = interner.intern("kk_lambda_\(lambdaArg.rawValue)")
-                flowBuilderFunctionNames.insert(fallbackLambdaName)
             }
         }
 
@@ -100,6 +122,7 @@ final class FlowLoweringPass: LoweringPass {
                 || flowBuilderFunctionNames.contains(function.name)
 
             var flowExprIDs: Set<Int32> = []
+            var activeFlowExpr: KIRExprID? = nil
             var loweredBody: [KIRInstruction] = []
             loweredBody.reserveCapacity(function.body.count + 16)
 
@@ -117,10 +140,31 @@ final class FlowLoweringPass: LoweringPass {
                 case let .copy(from, to):
                     if flowExprIDs.contains(from.rawValue) {
                         flowExprIDs.insert(to.rawValue)
+                        activeFlowExpr = to
                     }
                     loweredBody.append(instruction)
 
                 case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall):
+                    if callee == collectName,
+                       arguments.count == 1,
+                       let flowExpr = activeFlowExpr,
+                       flowExprIDs.contains(flowExpr.rawValue)
+                    {
+                        // Placeholder: CoroutineLoweringPass rewrites collectorFunctionID
+                        // to the actual suspend-lowered function ID for non-suspend
+                        // collector references.
+                        let collectorFunctionID = appendIntConstant(0)
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkFlowCollectName,
+                            arguments: [flowExpr, arguments[0], collectorFunctionID],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        continue
+                    }
+
                     if callee == flowName, arguments.count == 1 {
                         let continuation = appendIntConstant(0)
                         loweredBody.append(.call(
@@ -133,9 +177,10 @@ final class FlowLoweringPass: LoweringPass {
                         ))
                         if let result {
                             flowExprIDs.insert(result.rawValue)
+                            activeFlowExpr = result
                         }
-                        continue
-                    }
+                    continue
+                }
 
                     if callee == emitName, isFlowBuilderFunction {
                         let flowHandleExpr: KIRExprID
@@ -161,6 +206,9 @@ final class FlowLoweringPass: LoweringPass {
                             canThrow: false,
                             thrownResult: nil
                         ))
+                        if let result {
+                            activeFlowExpr = result
+                        }
                         continue
                     }
 
@@ -187,6 +235,7 @@ final class FlowLoweringPass: LoweringPass {
                         ))
                         if let result {
                             flowExprIDs.insert(result.rawValue)
+                            activeFlowExpr = result
                         }
                         continue
                     }
@@ -207,6 +256,9 @@ final class FlowLoweringPass: LoweringPass {
                             canThrow: false,
                             thrownResult: nil
                         ))
+                        if let result {
+                            activeFlowExpr = result
+                        }
                         continue
                     }
 
@@ -214,6 +266,7 @@ final class FlowLoweringPass: LoweringPass {
                        let result
                     {
                         flowExprIDs.insert(result.rawValue)
+                        activeFlowExpr = result
                     } else if callee == kkFlowEmitName,
                               arguments.count == 3,
                               let result,
@@ -225,6 +278,7 @@ final class FlowLoweringPass: LoweringPass {
                             || tag == RuntimeFlowTag.take.rawValue
                         {
                             flowExprIDs.insert(result.rawValue)
+                            activeFlowExpr = result
                         }
                     }
 
@@ -236,6 +290,122 @@ final class FlowLoweringPass: LoweringPass {
                         canThrow: canThrow,
                         thrownResult: thrownResult,
                         isSuperCall: isSuperCall
+                    ))
+
+                case let .virtualCall(symbol, callee, receiver, arguments, result, canThrow, thrownResult, dispatch):
+                    if callee == emitName, isFlowBuilderFunction {
+                        let flowHandleExpr: KIRExprID
+                        let valueExpr: KIRExprID
+                        if arguments.count == 1 {
+                            // Flow builder `emit(x)` has no explicit receiver.
+                            // Runtime resolves handle from active collection context.
+                            flowHandleExpr = appendIntConstant(0)
+                            valueExpr = arguments[0]
+                        } else {
+                        loweredBody.append(.virtualCall(
+                            symbol: symbol,
+                            callee: callee,
+                            receiver: receiver,
+                            arguments: arguments,
+                                result: result,
+                                canThrow: canThrow,
+                                thrownResult: thrownResult,
+                                dispatch: dispatch
+                            ))
+                            continue
+                        }
+                        let tag = appendIntConstant(RuntimeFlowTag.emit.rawValue)
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkFlowEmitName,
+                            arguments: [flowHandleExpr, valueExpr, tag],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        if let result {
+                            activeFlowExpr = result
+                        }
+                        continue
+                    }
+
+                    if (callee == mapName || callee == filterName || callee == takeName),
+                       arguments.count == 1,
+                       flowExprIDs.contains(receiver.rawValue)
+                    {
+                        let tagValue: Int64 = switch callee {
+                        case mapName:
+                            RuntimeFlowTag.map.rawValue
+                        case filterName:
+                            RuntimeFlowTag.filter.rawValue
+                        default:
+                            RuntimeFlowTag.take.rawValue
+                        }
+                        let tag = appendIntConstant(tagValue)
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkFlowEmitName,
+                            arguments: [receiver, arguments[0], tag],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        if let result {
+                            flowExprIDs.insert(result.rawValue)
+                            activeFlowExpr = result
+                        }
+                        continue
+                    }
+
+                    if callee == collectName,
+                       arguments.count == 1,
+                       flowExprIDs.contains(receiver.rawValue)
+                    {
+                        // Placeholder: CoroutineLoweringPass rewrites collectorFunctionID
+                        // to the actual suspend-lowered function ID for non-suspend
+                        // collector references.
+                        let collectorFunctionID = appendIntConstant(0)
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: kkFlowCollectName,
+                            arguments: [receiver, arguments[0], collectorFunctionID],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        activeFlowExpr = receiver
+                        continue
+                    }
+
+                    if callee == kkFlowCreateName,
+                       let result
+                    {
+                        flowExprIDs.insert(result.rawValue)
+                        activeFlowExpr = result
+                    } else if callee == kkFlowEmitName,
+                              arguments.count == 3,
+                              let result,
+                              let tagExpr = module.arena.expr(arguments[2]),
+                              case let .intLiteral(tag) = tagExpr
+                    {
+                        if tag == RuntimeFlowTag.map.rawValue
+                            || tag == RuntimeFlowTag.filter.rawValue
+                            || tag == RuntimeFlowTag.take.rawValue
+                        {
+                            flowExprIDs.insert(result.rawValue)
+                            activeFlowExpr = result
+                        }
+                    }
+
+                    loweredBody.append(.virtualCall(
+                        symbol: symbol,
+                        callee: callee,
+                        receiver: receiver,
+                        arguments: arguments,
+                        result: result,
+                        canThrow: canThrow,
+                        thrownResult: thrownResult,
+                        dispatch: dispatch
                     ))
 
                 default:

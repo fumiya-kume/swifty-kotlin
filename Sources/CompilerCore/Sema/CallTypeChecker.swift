@@ -132,6 +132,19 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
             return sema.types.anyType
         }
 
+        // --- Flow builder lambda calls (CORO-003) ---
+        // Inside `flow { ... }`, unqualified `emit` resolves as a builtin
+        // effect call and returns Unit.
+        if ctx.isFlowBuilderLambdaScope,
+           let calleeName,
+           interner.resolve(calleeName) == "emit",
+           args.count == 1
+        {
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+            sema.bindings.bindExprType(id, type: sema.types.unitType)
+            return sema.types.unitType
+        }
+
         let argTypes = args.map { argument in
             driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
         }
