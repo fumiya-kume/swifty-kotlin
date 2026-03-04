@@ -134,8 +134,9 @@ public extension TypeSystem {
             guard index < typeParamSymbols.count else { break }
             let tpSymbol = typeParamSymbols[index]
             guard let typeVar = typeVarBySymbol[tpSymbol] else { continue }
-            applyVarianceArg(arg, typeVar: typeVar, tpSymbol: tpSymbol, symbols: symbols,
-                             covariantSub: &covariantSub, writeForbidden: &writeForbidden)
+            let resolved = resolveVarianceArg(arg, tpSymbol: tpSymbol, symbols: symbols)
+            covariantSub[typeVar] = resolved.type
+            if resolved.writeForbidden { writeForbidden.insert(tpSymbol) }
         }
 
         return VarianceProjectionResult(
@@ -144,22 +145,20 @@ public extension TypeSystem {
         )
     }
 
-    /// Apply a single variance-projected type argument to the covariant substitution map.
-    private func applyVarianceArg(
-        _ arg: TypeArg, typeVar: TypeVarID, tpSymbol: SymbolID, symbols: SymbolTable,
-        covariantSub: inout [TypeVarID: TypeID], writeForbidden: inout Set<SymbolID>
-    ) {
+    /// Resolve a single variance-projected type argument into a covariant substitution entry.
+    /// Returns the substituted type and whether the projection forbids writes.
+    private func resolveVarianceArg(
+        _ arg: TypeArg, tpSymbol: SymbolID, symbols: SymbolTable
+    ) -> (type: TypeID, writeForbidden: Bool) {
         switch arg {
         case let .invariant(type):
-            covariantSub[typeVar] = type
+            (type, false)
         case let .out(type):
-            covariantSub[typeVar] = type
-            writeForbidden.insert(tpSymbol)
+            (type, true)
         case .in:
-            covariantSub[typeVar] = effectiveUpperBound(for: tpSymbol, symbols: symbols)
+            (effectiveUpperBound(for: tpSymbol, symbols: symbols), false)
         case .star:
-            covariantSub[typeVar] = effectiveUpperBound(for: tpSymbol, symbols: symbols)
-            writeForbidden.insert(tpSymbol)
+            (effectiveUpperBound(for: tpSymbol, symbols: symbols), true)
         }
     }
 
