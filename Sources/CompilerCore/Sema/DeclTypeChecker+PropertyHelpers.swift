@@ -74,7 +74,7 @@ extension DeclTypeChecker {
            let getValueSig = sema.symbols.functionSignature(
                for: getValueSymbol
            ), result == nil
-        { // swiftlint:disable:this opening_brace
+        {
             result = getValueSig.returnType
         }
         if result == nil {

@@ -167,13 +167,13 @@ extension CompilerCoreTests {
 
         XCTAssertEqual(params.map { ctx.interner.resolve($0) }, ["x"])
         // Lambda body may be wrapped in blockExpr(statements: [], trailingExpr: expr)
-        let effectiveBodyID: ExprID
-        if let bodyExpr = ast.arena.expr(bodyExprID),
-           case let .blockExpr(_, trailing, _) = bodyExpr,
-           let trailingID = trailing {
-            effectiveBodyID = trailingID
+        let effectiveBodyID: ExprID = if let bodyExpr = ast.arena.expr(bodyExprID),
+                                         case let .blockExpr(_, trailing, _) = bodyExpr,
+                                         let trailingID = trailing
+        {
+            trailingID
         } else {
-            effectiveBodyID = bodyExprID
+            bodyExprID
         }
         guard let bodyExpr = ast.arena.expr(effectiveBodyID),
               case .binary = bodyExpr

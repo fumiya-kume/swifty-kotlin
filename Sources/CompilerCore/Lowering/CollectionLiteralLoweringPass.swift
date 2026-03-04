@@ -841,7 +841,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     if callee == mapName || callee == filterName || callee == forEachName
                         || callee == flatMapName || callee == anyName || callee == noneName
                         || callee == allName
-                    { // swiftlint:disable:this opening_brace
+                    {
                         // args = [receiver, lambdaFnPtr]
                         if arguments.count == 2 {
                             let receiverID = arguments[0]
@@ -1041,7 +1041,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     if callee == mapName || callee == filterName || callee == forEachName
                         || callee == flatMapName || callee == anyName || callee == noneName
                         || callee == allName
-                    { // swiftlint:disable:this opening_brace
+                    {
                         if arguments.count == 1 {
                             if listExprIDs.contains(receiver.rawValue) {
                                 let kkName: InternedString = switch callee {

@@ -321,11 +321,11 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
                 if let expectedType, expectedType != sema.types.errorType,
                    case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
                    !expectedClassType.args.isEmpty
-                { // swiftlint:disable:this opening_brace
+                {
                     collectionType = expectedType
                 } else if !argTypes.isEmpty,
                           name == "listOf" || name == "listOfNotNull" || name == "emptyList"
-                { // swiftlint:disable:this opening_brace
+                {
                     // Infer element type from arguments via LUB so that
                     // `listOf("a", null)` produces List<String?>.
                     // Only apply List<E> wrapping for list-like factories;
