@@ -168,7 +168,10 @@ final class ExprLowerer {
                 let receiverType = arena.exprType(receiverExprID) ?? sema.types.anyType
                 let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
                 let memberStr = interner.resolve(memberName)
-                let result = arena.appendExpr(.unit, type: boundType ?? sema.types.anyType)
+                let resultType = boundType ?? sema.types.anyType
+                let result = arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)), type: resultType
+                )
 
                 // String properties
                 if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
@@ -183,6 +186,30 @@ final class ExprLowerer {
                         ))
                         return result
                     }
+                }
+
+                // Collection properties: size, isEmpty
+                if memberStr == "size" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_collection_size"),
+                        arguments: [receiverExprID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+                if memberStr == "isEmpty" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_collection_isEmpty"),
+                        arguments: [receiverExprID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
                 }
 
                 // General fallback: try to find a getter symbol for the property

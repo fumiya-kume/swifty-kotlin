@@ -72,8 +72,10 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
         // --- Scope function: with(receiver, block) (STDLIB-004) ---
         // Must intercept BEFORE eager arg inference so the lambda argument
         // is inferred with the correct implicit receiver type.
+        // Only intercept when no user-defined function named `with` is in scope.
         if let calleeName, args.count == 2,
-           interner.resolve(calleeName) == "with"
+           interner.resolve(calleeName) == "with",
+           ctx.cachedScopeLookup(calleeName).isEmpty
         {
             // First arg is the receiver object
             let withReceiverType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)

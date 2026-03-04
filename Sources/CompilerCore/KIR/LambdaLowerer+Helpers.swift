@@ -268,7 +268,9 @@ extension LambdaLowerer {
             return check(cond) || check(thenExpr) || elseExpr.map(check) ?? false
         case let .whenExpr(subject, branches, elseBody, _):
             return subject.map(check) ?? false
-                || branches.contains { check($0.body) }
+                || branches.contains { branch in
+                    branch.conditions.contains(where: check) || check(branch.body)
+                }
                 || elseBody.map(check) ?? false
         case let .returnExpr(value, _, _):
             return value.map(check) ?? false
@@ -298,6 +300,23 @@ extension LambdaLowerer {
             return check(valueExpr)
         case let .compoundAssign(_, _, valueExpr, _):
             return check(valueExpr)
+        case let .memberAssign(receiver, _, value, _):
+            return check(receiver) || check(value)
+        case let .indexedAssign(receiver, indices, value, _):
+            return check(receiver) || indices.contains(where: check) || check(value)
+        case let .indexedCompoundAssign(_, receiver, indices, value, _):
+            return check(receiver) || indices.contains(where: check) || check(value)
+        case let .inExpr(lhs, rhs, _),
+             let .notInExpr(lhs, rhs, _):
+            return check(lhs) || check(rhs)
+        case let .callableRef(receiver, _, _):
+            return receiver.map(check) ?? false
+        case let .localFunDecl(_, _, _, body, _):
+            switch body {
+            case let .block(stmts, _): return stmts.contains(where: check)
+            case let .expr(bodyExpr, _): return check(bodyExpr)
+            case .unit: return false
+            }
         case let .forExpr(_, iterable, body, _, _):
             return check(iterable) || check(body)
         case let .whileExpr(condition, body, _, _):

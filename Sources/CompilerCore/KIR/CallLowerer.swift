@@ -88,9 +88,10 @@ final class CallLowerer {
                     thrownResult: nil
                 ))
             } else {
-                preconditionFailure(
-                    "Missing callableValueInfo for scope with lambda"
-                )
+                // Non-lambda-literal argument; restore state and
+                // fall through to normal call lowering.
+                driver.ctx.currentImplicitReceiverExprID = savedReceiverExprID
+                driver.ctx.currentImplicitReceiverSymbol = savedReceiverSymbol
             }
             return result
         }

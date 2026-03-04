@@ -100,18 +100,49 @@ extension CallLowerer {
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
         // --- Scope functions with safe call: ?.let, ?.run, etc. (STDLIB-004) ---
-        if let scopeResult = tryScopeFunctionLowering(
-            exprID,
-            receiverExpr: receiverExpr,
-            args: args,
-            ast: ast,
-            sema: sema,
-            arena: arena,
-            interner: interner,
-            propertyConstantInitializers: propertyConstantInitializers,
-            instructions: &instructions
-        ) {
-            return scopeResult
+        // For safe-call (?.let etc.), we need a null guard: if receiver is null,
+        // skip the lambda and produce null; otherwise invoke normally.
+        if sema.bindings.scopeFunctionKind(for: exprID) != nil {
+            let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+            let nullableResultType = sema.types.makeNullable(boundType)
+            let result = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: nullableResultType
+            )
+            // Lower receiver first for null check
+            let loweredReceiver = driver.lowerExpr(
+                receiverExpr,
+                ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            let nonNullLabel = driver.ctx.makeLoopLabel()
+            let endLabel = driver.ctx.makeLoopLabel()
+            // Jump to nonNullLabel if receiver is not null
+            instructions.append(.jumpIfNotNull(value: loweredReceiver, target: nonNullLabel))
+            // Null path: produce null result
+            let nullVal = arena.appendExpr(.unit, type: nullableResultType)
+            instructions.append(.constValue(result: nullVal, value: .null))
+            instructions.append(.copy(from: nullVal, to: result))
+            instructions.append(.jump(endLabel))
+            // Non-null path: invoke the scope function
+            instructions.append(.label(nonNullLabel))
+            if let scopeResult = tryScopeFunctionLowering(
+                exprID,
+                receiverExpr: receiverExpr,
+                args: args,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions,
+                precomputedReceiver: loweredReceiver
+            ) {
+                instructions.append(.copy(from: scopeResult, to: result))
+            }
+            instructions.append(.label(endLabel))
+            return result
         }
 
         let effectiveCalleeName = if sema.bindings.isInvokeOperatorCall(exprID) {
@@ -949,7 +980,8 @@ extension CallLowerer {
         arena: KIRArena,
         interner: StringInterner,
         propertyConstantInitializers: [SymbolID: KIRExprKind],
-        instructions: inout [KIRInstruction]
+        instructions: inout [KIRInstruction],
+        precomputedReceiver: KIRExprID? = nil
     ) -> KIRExprID? {
         guard let scopeKind = sema.bindings.scopeFunctionKind(for: exprID),
               args.count == 1
@@ -957,8 +989,8 @@ extension CallLowerer {
 
         let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
 
-        // Lower the receiver expression.
-        let loweredReceiverID = driver.lowerExpr(
+        // Lower the receiver expression (or use precomputed one for safe calls).
+        let loweredReceiverID = precomputedReceiver ?? driver.lowerExpr(
             receiverExpr,
             ast: ast, sema: sema, arena: arena, interner: interner,
             propertyConstantInitializers: propertyConstantInitializers,
@@ -989,9 +1021,9 @@ extension CallLowerer {
                     thrownResult: nil
                 ))
             } else {
-                preconditionFailure(
-                    "Missing callableValueInfo for scope \(scopeKind) lambda"
-                )
+                // Non-lambda-literal argument (e.g. function reference);
+                // fall back to normal member call lowering.
+                return nil
             }
             if scopeKind == .scopeAlso {
                 // also: result is the receiver, not the lambda return value.
@@ -1038,9 +1070,11 @@ extension CallLowerer {
                     thrownResult: nil
                 ))
             } else {
-                preconditionFailure(
-                    "Missing callableValueInfo for scope \(scopeKind) lambda"
-                )
+                // Non-lambda-literal argument (e.g. function reference);
+                // restore state and fall back to normal member call lowering.
+                driver.ctx.currentImplicitReceiverExprID = savedReceiverExprID
+                driver.ctx.currentImplicitReceiverSymbol = savedReceiverSymbol
+                return nil
             }
             if scopeKind == .scopeApply {
                 // apply: result is the receiver, not the lambda return value.

@@ -49,6 +49,8 @@ extension CallTypeChecker {
         // --- Scope functions: let, run, apply, also (STDLIB-004) ---
         // Must intercept BEFORE eager arg inference so the lambda argument
         // is inferred with the correct expected type (it vs. receiver this).
+        // Skip interception when the receiver type defines a real member
+        // with the same name (user-defined members take precedence).
         if args.count == 1 {
             let calleeStr = interner.resolve(calleeName)
             let scopeKind: ScopeFunctionKind? = switch calleeStr {
@@ -58,7 +60,16 @@ extension CallTypeChecker {
             case "also": .scopeAlso
             default: nil
             }
-            if let scopeKind {
+            let hasUserDefinedMember = if scopeKind != nil {
+                !driver.helpers.collectMemberFunctionCandidates(
+                    named: calleeName,
+                    receiverType: receiverType,
+                    sema: sema
+                ).isEmpty
+            } else {
+                false
+            }
+            if let scopeKind, !hasUserDefinedMember {
                 let nonNullReceiverType = safeCall
                     ? sema.types.makeNonNullable(receiverType)
                     : receiverType
