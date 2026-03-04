@@ -1,0 +1,281 @@
+import Foundation
+
+// MARK: - Higher-Order Collection Functions (STDLIB-005)
+
+/// Applies a transformation function to each element and returns a new list.
+@_cdecl("kk_list_map")
+public func kk_list_map(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var mapped: [Int] = []
+    mapped.reserveCapacity(list.elements.count)
+    for elem in list.elements {
+        var thrown = 0
+        let result = lambda(elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeListBox(elements: [])) }
+        mapped.append(maybeUnbox(result))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: mapped))
+}
+
+/// Returns a list containing only elements matching the predicate.
+@_cdecl("kk_list_filter")
+public func kk_list_filter(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var filtered: [Int] = []
+    for elem in list.elements {
+        var thrown = 0
+        let result = lambda(elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeListBox(elements: [])) }
+        if maybeUnbox(result) != 0 { filtered.append(elem) }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: filtered))
+}
+
+/// Performs the given action on each element. Returns Unit (0).
+@_cdecl("kk_list_forEach")
+public func kk_list_forEach(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { return 0 }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for elem in list.elements {
+        var thrown = 0
+        _ = lambda(elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+    }
+    return 0
+}
+
+/// Applies a transformation returning a list for each element, then flattens.
+@_cdecl("kk_list_flatMap")
+public func kk_list_flatMap(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var result: [Int] = []
+    for elem in list.elements {
+        var thrown = 0
+        let subListRaw = lambda(elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeListBox(elements: [])) }
+        if let subList = runtimeListBox(from: subListRaw) {
+            result.append(contentsOf: subList.elements)
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: result))
+}
+
+/// Returns true if any element matches the predicate. Short-circuit evaluation.
+@_cdecl("kk_list_any")
+public func kk_list_any(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { return kk_box_bool(0) }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for elem in list.elements {
+        var thrown = 0
+        let result = lambda(elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return kk_box_bool(0) }
+        if maybeUnbox(result) != 0 { return kk_box_bool(1) }
+    }
+    return kk_box_bool(0)
+}
+
+/// Returns true if no element matches the predicate. Short-circuit evaluation.
+@_cdecl("kk_list_none")
+public func kk_list_none(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { return kk_box_bool(1) }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for elem in list.elements {
+        var thrown = 0
+        let result = lambda(elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return kk_box_bool(0) }
+        if maybeUnbox(result) != 0 { return kk_box_bool(0) }
+    }
+    return kk_box_bool(1)
+}
+
+/// Returns true if all elements match the predicate. Short-circuit evaluation.
+@_cdecl("kk_list_all")
+public func kk_list_all(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { return kk_box_bool(1) }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for elem in list.elements {
+        var thrown = 0
+        let result = lambda(elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return kk_box_bool(0) }
+        if maybeUnbox(result) == 0 { return kk_box_bool(0) }
+    }
+    return kk_box_bool(1)
+}
+
+/// Accumulates value starting with initial and applying operation from left to right.
+@_cdecl("kk_list_fold")
+public func kk_list_fold(
+    _ listRaw: Int, _ initial: Int, _ fnPtr: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { return initial }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var acc = initial
+    for elem in list.elements {
+        var thrown = 0
+        acc = maybeUnbox(lambda(acc, elem, &thrown))
+        if thrown != 0 { outThrown?.pointee = thrown; return initial }
+    }
+    return acc
+}
+
+/// Accumulates value starting with first element and applying operation from left to right.
+/// Throws UnsupportedOperationException on empty collection.
+@_cdecl("kk_list_reduce")
+public func kk_list_reduce(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw), !list.elements.isEmpty else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Empty collection can't be reduced.")
+        return 0
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var acc = list.elements[0]
+    for idx in 1 ..< list.elements.count {
+        var thrown = 0
+        acc = maybeUnbox(lambda(acc, list.elements[idx], &thrown))
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+    }
+    return acc
+}
+
+/// Groups elements by the key returned by the selector function.
+/// Returns a Map<K, List<T>> as RuntimeMapBox.
+@_cdecl("kk_list_groupBy")
+public func kk_list_groupBy(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var groupKeys: [Int] = []
+    var groupElements: [[Int]] = []
+    var keyToIndex: [Int: Int] = [:]
+    for elem in list.elements {
+        var thrown = 0
+        let key = lambda(elem, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+        }
+        let unboxedKey = maybeUnbox(key)
+        if let grpIdx = keyToIndex[unboxedKey] {
+            groupElements[grpIdx].append(elem)
+        } else {
+            let newIndex = groupKeys.count
+            keyToIndex[unboxedKey] = newIndex
+            groupKeys.append(unboxedKey)
+            groupElements.append([elem])
+        }
+    }
+    let values = groupElements.map { registerRuntimeObject(RuntimeListBox(elements: $0)) }
+    return registerRuntimeObject(RuntimeMapBox(keys: groupKeys, values: values))
+}
+
+/// Returns a list sorted by the value returned by the selector function (stable sort).
+@_cdecl("kk_list_sortedBy")
+public func kk_list_sortedBy(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var elems: [Int] = []
+    var keys: [Int] = []
+    elems.reserveCapacity(list.elements.count)
+    keys.reserveCapacity(list.elements.count)
+    for elem in list.elements {
+        var thrown = 0
+        let key = lambda(elem, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return registerRuntimeObject(RuntimeListBox(elements: []))
+        }
+        elems.append(elem)
+        keys.append(maybeUnbox(key))
+    }
+    let indices = Array(elems.indices)
+    let sorted = indices.sorted { lhs, rhs in
+        if keys[lhs] != keys[rhs] { return keys[lhs] < keys[rhs] }
+        return lhs < rhs
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: sorted.map { elems[$0] }))
+}
+
+/// Returns the count of elements matching the predicate.
+@_cdecl("kk_list_count")
+public func kk_list_count(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { return 0 }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var count = 0
+    for elem in list.elements {
+        var thrown = 0
+        let result = lambda(elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if maybeUnbox(result) != 0 { count += 1 }
+    }
+    return count
+}
+
+/// Returns the first element matching the predicate.
+/// Throws NoSuchElementException if no element matches.
+@_cdecl("kk_list_first")
+public func kk_list_first(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Collection is empty.")
+        return 0
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for elem in list.elements {
+        var thrown = 0
+        let result = lambda(elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if maybeUnbox(result) != 0 { return elem }
+    }
+    outThrown?.pointee = runtimeAllocateThrowable(
+        message: "Collection contains no element matching the predicate."
+    )
+    return 0
+}
+
+/// Returns the last element matching the predicate.
+/// Throws NoSuchElementException if no element matches.
+@_cdecl("kk_list_last")
+public func kk_list_last(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Collection is empty.")
+        return 0
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var lastMatch: Int?
+    for elem in list.elements {
+        var thrown = 0
+        let result = lambda(elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if maybeUnbox(result) != 0 { lastMatch = elem }
+    }
+    if let match = lastMatch { return match }
+    outThrown?.pointee = runtimeAllocateThrowable(
+        message: "Collection contains no element matching the predicate."
+    )
+    return 0
+}
+
+/// Returns the first element matching the predicate, or null if none found.
+@_cdecl("kk_list_find")
+public func kk_list_find(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { return runtimeNullSentinelInt }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for elem in list.elements {
+        var thrown = 0
+        let result = lambda(elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+        if maybeUnbox(result) != 0 { return elem }
+    }
+    return runtimeNullSentinelInt
+}

@@ -16,21 +16,23 @@ symbol s14 kind=function fq=kotlin.collections.List.get vis=public flags=synthet
 symbol s15 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
 symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
 symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
-symbol s18 kind=interface fq=golden.sema.Action vis=public flags=funInterface
-symbol s19 kind=function fq=golden.sema.Action.run vis=public flags=abstractType sig=recv=Class#18 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s20 kind=function fq=golden.sema.execute vis=public flags=_ sig=recv=_ params=[Class#18] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s21 kind=valueParameter fq=golden.sema.execute.$20.action vis=private flags=_
-symbol s22 kind=function fq=golden.sema.useSam vis=public flags=_ sig=recv=_ params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s18 kind=interface fq=kotlin.Comparable vis=public flags=synthetic
+symbol s19 kind=typeParameter fq=kotlin.Comparable.T vis=private flags=_
+symbol s20 kind=function fq=kotlin.Comparable.compareTo vis=public flags=synthetic|operatorFunction sig=recv=Class#18<T#19> params=[T#19] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s21 kind=interface fq=golden.sema.Action vis=public flags=funInterface
+symbol s22 kind=function fq=golden.sema.Action.run vis=public flags=abstractType sig=recv=Class#21 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s23 kind=function fq=golden.sema.execute vis=public flags=_ sig=recv=_ params=[Class#21] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s24 kind=valueParameter fq=golden.sema.execute.$23.action vis=private flags=_
+symbol s25 kind=function fq=golden.sema.useSam vis=public flags=_ sig=recv=_ params=[] ret=Any suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d1 interface Action sym=s18
-  decl d2 fun execute suspend=0 inline=0 sym=s20
-  decl d3 fun useSam suspend=0 inline=0 sym=s22
-expr e0 name(action) type=Class#18 ref=s21
-expr e1 memberCall recv=e0 callee=run args=[] type=Unit call=s19 map=[] targs=[]
+  decl d1 interface Action sym=s21
+  decl d2 fun execute suspend=0 inline=0 sym=s23
+  decl d3 fun useSam suspend=0 inline=0 sym=s25
+expr e0 name(action) type=Class#21 ref=s24
+expr e1 memberCall recv=e0 callee=run args=[] type=Unit call=s22 map=[] targs=[]
 expr e2 name(execute) type=Any
 expr e3 name(println) type=_
 expr e4 string(hello) type=String
 expr e5 call callee=e3 args=[_:e4] type=Unit
-expr e6 blockExpr stmts=[] trailing=e5 type=Unit
-expr e7 lambda params=[] body=e6 type=() -> Unit
-expr e8 call callee=e2 args=[_:e7] type=<error>
+expr e6 lambda params=[] body=e5 type=() -> Unit
+expr e7 call callee=e2 args=[_:e6] type=<error>

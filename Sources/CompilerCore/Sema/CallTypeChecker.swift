@@ -69,6 +69,42 @@ final class CallTypeChecker {
             }
         }
 
+        // --- Scope function: with(receiver, block) (STDLIB-004) ---
+        // Must intercept BEFORE eager arg inference so the lambda argument
+        // is inferred with the correct implicit receiver type.
+        // Only intercept when no user-defined function named `with` is in scope.
+        if let calleeName, args.count == 2,
+           interner.resolve(calleeName) == "with",
+           ctx.cachedScopeLookup(calleeName).isEmpty
+        {
+            // First arg is the receiver object
+            let withReceiverType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+            // Second arg is the lambda with receiver
+            let receiverCtx = ctx.with(implicitReceiverType: withReceiverType)
+            let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                receiver: withReceiverType,
+                params: [],
+                returnType: expectedType ?? sema.types.anyType
+            )))
+            let lambdaType = driver.inferExpr(
+                args[1].expr, ctx: receiverCtx, locals: &locals,
+                expectedType: lambdaExpectedType
+            )
+            let returnType: TypeID = if case let .functionType(fnType) = sema.types.kind(of: lambdaType) {
+                fnType.returnType
+            } else {
+                sema.bindings.exprTypes[args[1].expr].flatMap { typeID in
+                    if case let .functionType(fnType) = sema.types.kind(of: typeID) {
+                        return fnType.returnType
+                    }
+                    return nil
+                } ?? sema.types.anyType
+            }
+            sema.bindings.markScopeFunctionExpr(id, kind: .scopeWith)
+            sema.bindings.bindExprType(id, type: returnType)
+            return returnType
+        }
+
         let argTypes = args.map { argument in
             driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
         }
@@ -360,6 +396,60 @@ final class CallTypeChecker {
                 break
             }
         }
+        // STDLIB-004: Inside receiver lambdas (run/apply/with), unqualified
+        // function calls resolve as member calls on the implicit receiver.
+        if let calleeName, let receiverType = ctx.implicitReceiverType {
+            let nonNullReceiver = sema.types.makeNonNullable(receiverType)
+            let name = interner.resolve(calleeName)
+
+            // String stdlib methods (STDLIB-006) via implicit receiver
+            if sema.types.isSubtype(nonNullReceiver, sema.types.stringType) {
+                var stringResultType: TypeID?
+                if args.isEmpty {
+                    stringResultType = switch name {
+                    case "trim": sema.types.stringType
+                    case "uppercase": sema.types.stringType
+                    case "lowercase": sema.types.stringType
+                    case "toInt": sema.types.intType
+                    case "toDouble": sema.types.make(.primitive(.double, .nonNull))
+                    default: nil
+                    }
+                } else if args.count == 1 {
+                    stringResultType = switch name {
+                    case "startsWith", "endsWith", "contains":
+                        sema.types.make(.primitive(.boolean, .nonNull))
+                    case "split": sema.types.anyType
+                    default: nil
+                    }
+                } else if args.count == 2, name == "replace" {
+                    stringResultType = sema.types.stringType
+                }
+                if let resultType = stringResultType {
+                    sema.bindings.bindExprType(id, type: resultType)
+                    return resultType
+                }
+            }
+
+            // General member function lookup via implicit receiver
+            let memberCandidates = driver.helpers.collectMemberFunctionCandidates(
+                named: calleeName,
+                receiverType: nonNullReceiver,
+                sema: sema
+            )
+            if let bestCandidate = memberCandidates.first,
+               let sig = sema.symbols.functionSignature(for: bestCandidate)
+            {
+                // Eagerly infer argument types
+                for arg in args {
+                    _ = driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
+                }
+                sema.bindings.bindIdentifier(id, symbol: bestCandidate)
+                let resultType = sig.returnType
+                sema.bindings.bindExprType(id, type: resultType)
+                return resultType
+            }
+        }
+
         if let firstInvisible = callInvisible.first, let calleeName {
             driver.helpers.emitVisibilityError(for: firstInvisible, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
         } else {

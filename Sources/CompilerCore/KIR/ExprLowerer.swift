@@ -9,6 +9,7 @@ final class ExprLowerer {
         self.driver = driver
     }
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func lowerExpr(
         _ exprID: ExprID,
         ast: ASTModule,
@@ -158,6 +159,65 @@ final class ExprLowerer {
                let receiverExprID = driver.ctx.currentImplicitReceiverExprID
             {
                 return receiverExprID
+            }
+            // STDLIB-004: Implicit receiver member access (e.g. `length` inside
+            // `run { length }` resolves as `this.length`).
+            if let memberName = sema.bindings.implicitReceiverMemberNames[exprID],
+               let receiverExprID = driver.ctx.currentImplicitReceiverExprID
+            {
+                let receiverType = arena.exprType(receiverExprID) ?? sema.types.anyType
+                let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+                let memberStr = interner.resolve(memberName)
+                let resultType = boundType ?? sema.types.anyType
+                let result = arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)), type: resultType
+                )
+
+                // String properties
+                if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+                    if memberStr == "length" {
+                        instructions.append(.call(
+                            symbol: nil,
+                            callee: interner.intern("kk_string_length"),
+                            arguments: [receiverExprID],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        return result
+                    }
+                }
+
+                // Collection properties: size, isEmpty
+                if memberStr == "size" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_collection_size"),
+                        arguments: [receiverExprID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+                if memberStr == "isEmpty" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_collection_isEmpty"),
+                        arguments: [receiverExprID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+
+                // General fallback: try to find a getter symbol for the property
+                if let symbol = sema.bindings.identifierSymbols[exprID],
+                   let localValue = driver.ctx.localValuesBySymbol[symbol]
+                {
+                    return localValue
+                }
             }
             if let symbol = sema.bindings.identifierSymbols[exprID] {
                 if let localValue = driver.ctx.localValuesBySymbol[symbol] {

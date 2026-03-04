@@ -84,9 +84,10 @@ final class ABIMismatchTests: XCTestCase {
 
     func testStringFunctionCount() {
         // kk_string_from_utf8, kk_string_concat, kk_string_compareTo, kk_string_length,
-        // kk_string_trim, kk_string_startsWith, kk_string_endsWith, kk_string_contains_str,
+        // kk_string_trim, kk_string_isNullOrEmpty, kk_string_isNullOrBlank,
+        // kk_string_startsWith, kk_string_endsWith, kk_string_contains_str,
         // kk_string_replace, kk_string_split, kk_string_toInt, kk_string_toDouble
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 12)
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 14)
     }
 
     func testPrintlnFunctionCount() {

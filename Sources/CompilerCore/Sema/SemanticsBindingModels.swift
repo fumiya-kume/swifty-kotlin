@@ -34,6 +34,15 @@ public enum BuilderDSLKind: Equatable {
     case buildMap
 }
 
+/// Identifies the kind of scope function (STDLIB-004).
+public enum ScopeFunctionKind: Equatable {
+    case scopeLet
+    case scopeRun
+    case scopeWith
+    case scopeApply
+    case scopeAlso
+}
+
 public struct CatchClauseBinding: Equatable {
     public let parameterSymbol: SymbolID
     public let parameterType: TypeID

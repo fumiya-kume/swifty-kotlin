@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 public struct VariableFlowState: Equatable {
     public var possibleTypes: Set<TypeID>
     public var nullability: Nullability
@@ -50,6 +51,7 @@ public struct ConditionBranch: Equatable {
     }
 }
 
+// swiftlint:disable:next type_body_length
 public final class DataFlowAnalyzer {
     public init() {}
 
@@ -453,22 +455,33 @@ public final class DataFlowAnalyzer {
         locals: [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
         ast: ASTModule,
         sema: SemaModule,
-        interner _: StringInterner
+        interner: StringInterner
     ) -> (symbol: SymbolID, type: TypeID, isStable: Bool)? {
-        guard let expr = ast.arena.expr(id),
-              case let .nameRef(name, _) = expr,
-              let local = locals[name]
-        else {
+        guard let expr = ast.arena.expr(id) else {
             return nil
         }
-        guard let symbol = sema.symbols.symbol(local.symbol) else {
-            return nil
-        }
-        let isStable: Bool = switch symbol.kind {
-        case .valueParameter, .local:
-            !symbol.flags.contains(.mutable)
+        // swiftlint:disable:next large_tuple
+        let local: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)
+        switch expr {
+        case let .nameRef(name, _):
+            guard let resolved = locals[name] else { return nil }
+            local = resolved
+        case let .thisRef(label, _) where label == nil:
+            let thisName = interner.intern("this")
+            guard let resolved = locals[thisName] else { return nil }
+            local = resolved
         default:
-            false
+            return nil
+        }
+        let isStable: Bool = if let symbol = sema.symbols.symbol(local.symbol) {
+            switch symbol.kind {
+            case .valueParameter, .local:
+                !symbol.flags.contains(.mutable)
+            default:
+                false
+            }
+        } else {
+            !local.isMutable
         }
         return (local.symbol, local.type, isStable)
     }

@@ -245,12 +245,6 @@ public enum DiagnosticRegistry {
             summary: "Type mismatch in argument."
         ),
         DiagnosticDescriptor(
-            code: "KSWIFTK-SEMA-0030",
-            pass: "SEMA",
-            defaultSeverity: .error,
-            summary: "Type inference failure."
-        ),
-        DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-0031",
             pass: "SEMA",
             defaultSeverity: .error,
@@ -436,6 +430,12 @@ public enum DiagnosticRegistry {
             pass: "SEMA",
             defaultSeverity: .error,
             summary: "Cannot use non-reified type parameter in reified context."
+        ),
+        DiagnosticDescriptor(
+            code: "KSWIFTK-SEMA-BOUND",
+            pass: "SEMA",
+            defaultSeverity: .error,
+            summary: "Type argument does not satisfy upper bound constraint."
         ),
     ]
 

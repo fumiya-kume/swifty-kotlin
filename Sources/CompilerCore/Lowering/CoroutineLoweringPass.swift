@@ -10,21 +10,45 @@ final class CoroutineLoweringPass: LoweringPass {
     }
 
     func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool {
-        let launcherCallees: Set<InternedString> = [
+        let callCallees: Set<InternedString> = [
             ctx.interner.intern("runBlocking"),
             ctx.interner.intern("launch"),
             ctx.interner.intern("async"),
             ctx.interner.intern("coroutineScope"),
             ctx.interner.intern("flow"),
+            ctx.interner.intern("emit"),
+            ctx.interner.intern("collect"),
+            ctx.interner.intern("map"),
+            ctx.interner.intern("filter"),
+            ctx.interner.intern("take"),
+            ctx.interner.intern("kk_flow_create"),
+            ctx.interner.intern("kk_flow_emit"),
+            ctx.interner.intern("kk_flow_collect"),
+            ctx.interner.intern("kk_flow_map"),
+            ctx.interner.intern("kk_flow_filter"),
+            ctx.interner.intern("kk_flow_take"),
+        ]
+        let virtualCallees: Set<InternedString> = [
+            ctx.interner.intern("collect"),
+            ctx.interner.intern("map"),
+            ctx.interner.intern("filter"),
+            ctx.interner.intern("take"),
         ]
         for decl in module.arena.declarations {
             if case let .function(function) = decl {
                 if function.isSuspend { return true }
                 for instruction in function.body {
-                    if case let .call(_, callee, _, _, _, _, _) = instruction,
-                       launcherCallees.contains(callee)
-                    {
-                        return true
+                    switch instruction {
+                    case let .call(_, callee, _, _, _, _, _):
+                        if callCallees.contains(callee) {
+                            return true
+                        }
+                    case let .virtualCall(_, callee, _, _, _, _, _, _):
+                        if virtualCallees.contains(callee) {
+                            return true
+                        }
+                    default:
+                        break
                     }
                 }
             }

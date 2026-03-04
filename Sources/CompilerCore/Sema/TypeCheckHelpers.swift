@@ -119,6 +119,9 @@ struct TypeCheckHelpers {
         case "collect":
             guard argumentCount >= 1 else { return nil }
             return sema.types.unitType
+        case "map", "filter", "take":
+            guard argumentCount == 1 || argumentCount == 2 else { return nil }
+            return sema.types.nullableAnyType
         default:
             return nil
         }

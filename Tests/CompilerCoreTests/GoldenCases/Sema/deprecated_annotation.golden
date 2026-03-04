@@ -16,23 +16,26 @@ symbol s14 kind=function fq=kotlin.collections.List.get vis=public flags=synthet
 symbol s15 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
 symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
 symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
-symbol s18 kind=function fq=golden.sema.oldFunError vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s19 kind=function fq=golden.sema.oldFunWarning vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s20 kind=function fq=golden.sema.newFun vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s21 kind=function fq=golden.sema.caller vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s18 kind=interface fq=kotlin.Comparable vis=public flags=synthetic
+symbol s19 kind=typeParameter fq=kotlin.Comparable.T vis=private flags=_
+symbol s20 kind=function fq=kotlin.Comparable.compareTo vis=public flags=synthetic|operatorFunction sig=recv=Class#18<T#19> params=[T#19] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s21 kind=function fq=golden.sema.oldFunError vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s22 kind=function fq=golden.sema.oldFunWarning vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s23 kind=function fq=golden.sema.newFun vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s24 kind=function fq=golden.sema.caller vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 fun oldFunError suspend=0 inline=0 sym=s18
-  decl d1 fun oldFunWarning suspend=0 inline=0 sym=s19
-  decl d2 fun newFun suspend=0 inline=0 sym=s20
-  decl d3 fun caller suspend=0 inline=0 sym=s21
+  decl d0 fun oldFunError suspend=0 inline=0 sym=s21
+  decl d1 fun oldFunWarning suspend=0 inline=0 sym=s22
+  decl d2 fun newFun suspend=0 inline=0 sym=s23
+  decl d3 fun caller suspend=0 inline=0 sym=s24
 expr e0 int(1) type=Int
 expr e1 int(2) type=Int
 expr e2 int(3) type=Int
 expr e3 name(oldFunError) type=Int
-expr e4 call callee=e3 args=[] type=Int call=s18 map=[] targs=[]
+expr e4 call callee=e3 args=[] type=Int call=s21 map=[] targs=[]
 expr e5 name(oldFunWarning) type=_
-expr e6 call callee=e5 args=[] type=Int call=s19 map=[] targs=[]
+expr e6 call callee=e5 args=[] type=Int call=s22 map=[] targs=[]
 expr e7 binary(add) lhs=e4 rhs=e6 type=Int
 expr e8 name(newFun) type=_
-expr e9 call callee=e8 args=[] type=Int call=s20 map=[] targs=[]
+expr e9 call callee=e8 args=[] type=Int call=s23 map=[] targs=[]
 expr e10 binary(add) lhs=e7 rhs=e9 type=Int

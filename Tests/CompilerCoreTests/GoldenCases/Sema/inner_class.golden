@@ -16,35 +16,38 @@ symbol s14 kind=function fq=kotlin.collections.List.get vis=public flags=synthet
 symbol s15 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
 symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
 symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
-symbol s18 kind=class fq=golden.sema.Outer vis=public flags=_
-symbol s19 kind=constructor fq=golden.sema.Outer.<init> vis=public flags=_ sig=recv=Class#18 params=[Int] ret=Class#18 suspend=0 defaults=[0] vararg=[0]
-symbol s20 kind=valueParameter fq=golden.sema.Outer.<init>.$19.x vis=private flags=_
-symbol s21 kind=property fq=golden.sema.Outer.y vis=public flags=_ type=Int
-symbol s22 kind=class fq=golden.sema.Outer.Inner vis=public flags=innerClass
-symbol s23 kind=constructor fq=golden.sema.Outer.Inner.<init> vis=public flags=_ sig=recv=Class#22 params=[] ret=Class#22 suspend=0 defaults=[] vararg=[]
-symbol s24 kind=function fq=golden.sema.Outer.Inner.getY vis=public flags=_ sig=recv=Class#22 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s25 kind=class fq=golden.sema.Outer.Nested vis=public flags=_
-symbol s26 kind=constructor fq=golden.sema.Outer.Nested.<init> vis=public flags=_ sig=recv=Class#25 params=[] ret=Class#25 suspend=0 defaults=[] vararg=[]
-symbol s27 kind=function fq=golden.sema.Outer.Nested.tryAccess vis=public flags=_ sig=recv=Class#25 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s28 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s29 kind=local fq=__local_8.outer vis=private flags=_
-symbol s30 kind=local fq=__local_11.inner vis=private flags=_
-symbol s31 kind=local fq=__local_14.result vis=private flags=_
+symbol s18 kind=interface fq=kotlin.Comparable vis=public flags=synthetic
+symbol s19 kind=typeParameter fq=kotlin.Comparable.T vis=private flags=_
+symbol s20 kind=function fq=kotlin.Comparable.compareTo vis=public flags=synthetic|operatorFunction sig=recv=Class#18<T#19> params=[T#19] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s21 kind=class fq=golden.sema.Outer vis=public flags=_
+symbol s22 kind=constructor fq=golden.sema.Outer.<init> vis=public flags=_ sig=recv=Class#21 params=[Int] ret=Class#21 suspend=0 defaults=[0] vararg=[0]
+symbol s23 kind=valueParameter fq=golden.sema.Outer.<init>.$22.x vis=private flags=_
+symbol s24 kind=property fq=golden.sema.Outer.y vis=public flags=_ type=Int
+symbol s25 kind=class fq=golden.sema.Outer.Inner vis=public flags=innerClass
+symbol s26 kind=constructor fq=golden.sema.Outer.Inner.<init> vis=public flags=_ sig=recv=Class#25 params=[] ret=Class#25 suspend=0 defaults=[] vararg=[]
+symbol s27 kind=function fq=golden.sema.Outer.Inner.getY vis=public flags=_ sig=recv=Class#25 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s28 kind=class fq=golden.sema.Outer.Nested vis=public flags=_
+symbol s29 kind=constructor fq=golden.sema.Outer.Nested.<init> vis=public flags=_ sig=recv=Class#28 params=[] ret=Class#28 suspend=0 defaults=[] vararg=[]
+symbol s30 kind=function fq=golden.sema.Outer.Nested.tryAccess vis=public flags=_ sig=recv=Class#28 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s31 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s32 kind=local fq=__local_8.outer vis=private flags=_
+symbol s33 kind=local fq=__local_11.inner vis=private flags=_
+symbol s34 kind=local fq=__local_14.result vis=private flags=_
 file f0 package=golden.sema
-  decl d5 class Outer sym=s18
-  decl d6 fun main suspend=0 inline=0 sym=s28
-expr e0 name(x) type=Int ref=s21
-expr e1 this@Outer type=Class#18
-expr e2 memberCall recv=e1 callee=y args=[] type=Int ref=s21
+  decl d5 class Outer sym=s21
+  decl d6 fun main suspend=0 inline=0 sym=s31
+expr e0 name(x) type=Int ref=s24
+expr e1 this@Outer type=Class#21
+expr e2 memberCall recv=e1 callee=y args=[] type=Int ref=s24
 expr e3 this@Outer type=<error>
 expr e4 memberCall recv=e3 callee=y args=[] type=<error>
 expr e5 name(Outer) type=_
 expr e6 int(42) type=Int
-expr e7 call callee=e5 args=[_:e6] type=Class#18 call=s19 map=[0->0] targs=[]
-expr e8 localDecl outer mutable=0 type=_ init=e7 type=Unit ref=s29
-expr e9 name(outer) type=Class#18 ref=s29
-expr e10 memberCall recv=e9 callee=Inner args=[] type=Class#22 call=s23 map=[] targs=[]
-expr e11 localDecl inner mutable=0 type=_ init=e10 type=Unit ref=s30
-expr e12 name(inner) type=Class#22 ref=s30
-expr e13 memberCall recv=e12 callee=getY args=[] type=Int call=s24 map=[] targs=[]
-expr e14 localDecl result mutable=0 type=_ init=e13 type=Unit ref=s31
+expr e7 call callee=e5 args=[_:e6] type=Class#21 call=s22 map=[0->0] targs=[]
+expr e8 localDecl outer mutable=0 type=_ init=e7 type=Unit ref=s32
+expr e9 name(outer) type=Class#21 ref=s32
+expr e10 memberCall recv=e9 callee=Inner args=[] type=Class#25 call=s26 map=[] targs=[]
+expr e11 localDecl inner mutable=0 type=_ init=e10 type=Unit ref=s33
+expr e12 name(inner) type=Class#25 ref=s33
+expr e13 memberCall recv=e12 callee=getY args=[] type=Int call=s27 map=[] targs=[]
+expr e14 localDecl result mutable=0 type=_ init=e13 type=Unit ref=s34

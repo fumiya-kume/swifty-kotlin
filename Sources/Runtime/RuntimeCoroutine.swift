@@ -538,7 +538,8 @@ private final class RuntimeFlowHandle {
     let emitterFnPtr: Int
     var steps: [FlowStepKind] = []
     var collectorFnPtr: Int = 0
-    var takeRemaining = Int.max
+    var takeRemainingByStepIndex: [Int: Int] = [:]
+    var isTerminated = false
 
     init(emitterFnPtr: Int) {
         self.emitterFnPtr = emitterFnPtr
@@ -546,9 +547,16 @@ private final class RuntimeFlowHandle {
 }
 
 /// Thread-local current flow handle (set by kk_flow_collect before invoking emitter).
-/// Access is serialized by single-threaded test execution; nonisolated(unsafe) suppresses
-/// Swift 6 strict concurrency warnings.
-nonisolated(unsafe) var flowEmitContext: Int = 0
+/// nonisolated(unsafe) suppresses Swift 6 strict concurrency warnings.
+private let flowEmitContextThreadKey = "KSwiftK.flowEmitContext"
+nonisolated(unsafe) var flowEmitContext: Int {
+    get {
+        Thread.current.threadDictionary[flowEmitContextThreadKey] as? Int ?? 0
+    }
+    set {
+        Thread.current.threadDictionary[flowEmitContextThreadKey] = newValue
+    }
+}
 
 private func runtimeFlowHandle(from handle: Int) -> RuntimeFlowHandle? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else { return nil }
@@ -575,30 +583,46 @@ public func kk_flow_create(_ emitterFnPtr: Int) -> Int {
 @_cdecl("kk_flow_emit")
 public func kk_flow_emit(_ value: Int) -> Int {
     guard let flow = runtimeFlowHandle(from: flowEmitContext) else { return 0 }
-    guard flow.collectorFnPtr != 0, flow.takeRemaining > 0 else { return 0 }
+    guard flow.collectorFnPtr != 0, !flow.isTerminated else { return 0 }
 
     var current = value
-    for step in flow.steps {
+    for (stepIndex, step) in flow.steps.enumerated() {
         switch step {
         case let .mapStep(fnPtr):
             let mapFn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
             var thrown = 0
             current = mapFn(current, &thrown)
+            if thrown != 0 {
+                flow.isTerminated = true
+                return 0
+            }
         case let .filterStep(fnPtr):
             let filterFn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
             var thrown = 0
-            if filterFn(current, &thrown) == 0 { return 0 }
+            let predicateResult = filterFn(current, &thrown)
+            if thrown != 0 {
+                flow.isTerminated = true
+                return 0
+            }
+            if kk_unbox_bool(predicateResult) == 0 { return 0 }
         case .takeStep:
-            break // takeRemaining guard handles the limit
+            let remaining = flow.takeRemainingByStepIndex[stepIndex] ?? 0
+            guard remaining > 0 else {
+                flow.isTerminated = true
+                return 0
+            }
+            flow.takeRemainingByStepIndex[stepIndex] = remaining - 1
         }
     }
-    flow.takeRemaining -= 1
     let collector = unsafeBitCast(
         flow.collectorFnPtr,
         to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self
     )
     var thrown = 0
     _ = collector(current, &thrown)
+    if thrown != 0 {
+        flow.isTerminated = true
+    }
     return 0
 }
 
@@ -607,16 +631,20 @@ public func kk_flow_emit(_ value: Int) -> Int {
 @_cdecl("kk_flow_collect")
 public func kk_flow_collect(_ flowHandle: Int, _ collectorFnPtr: Int) -> Int {
     guard let flow = runtimeFlowHandle(from: flowHandle) else { return 0 }
-    // Reset take limit for cold semantics (re-run per collect).
-    flow.takeRemaining = Int.max
-    for step in flow.steps {
+    // Reset per-take limits for cold semantics (re-run per collect).
+    flow.takeRemainingByStepIndex.removeAll(keepingCapacity: true)
+    for (stepIndex, step) in flow.steps.enumerated() {
         if case let .takeStep(count) = step {
-            flow.takeRemaining = count
-            break
+            flow.takeRemainingByStepIndex[stepIndex] = max(0, count)
         }
     }
     flow.collectorFnPtr = collectorFnPtr
-    defer { flow.collectorFnPtr = 0; flow.takeRemaining = Int.max }
+    flow.isTerminated = false
+    defer {
+        flow.collectorFnPtr = 0
+        flow.takeRemainingByStepIndex.removeAll(keepingCapacity: true)
+        flow.isTerminated = false
+    }
     let previous = flowEmitContext
     flowEmitContext = flowHandle
     defer { flowEmitContext = previous }
@@ -626,6 +654,9 @@ public func kk_flow_collect(_ flowHandle: Int, _ collectorFnPtr: Int) -> Int {
     )
     var thrown = 0
     _ = emitter(&thrown)
+    if thrown != 0 {
+        flow.isTerminated = true
+    }
     return 0
 }
 

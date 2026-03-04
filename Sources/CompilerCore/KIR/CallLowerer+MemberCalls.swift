@@ -7,10 +7,12 @@ extension CallLowerer {
         "count", "iterator",
         "map", "filter", "forEach", "flatMap",
         "any", "none", "all",
-        "asSequence", "toList", "take",
+        "fold", "reduce", "groupBy", "sortedBy", "find",
+        "asSequence", "toList", "take", "collect",
         "to", // FUNC-002
     ]
 
+    // swiftlint:disable:next function_body_length
     func lowerMemberCallExpr(
         _ exprID: ExprID,
         receiverExpr: ExprID,
@@ -43,6 +45,21 @@ extension CallLowerer {
                     instructions: &instructions
                 )
             }
+        }
+
+        // --- Scope functions: let, run, apply, also (STDLIB-004) ---
+        if let scopeResult = tryScopeFunctionLowering(
+            exprID,
+            receiverExpr: receiverExpr,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        ) {
+            return scopeResult
         }
 
         let effectiveCalleeName = if sema.bindings.isInvokeOperatorCall(exprID) {
@@ -82,6 +99,52 @@ extension CallLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
+        // --- Scope functions with safe call: ?.let, ?.run, etc. (STDLIB-004) ---
+        // For safe-call (?.let etc.), we need a null guard: if receiver is null,
+        // skip the lambda and produce null; otherwise invoke normally.
+        if sema.bindings.scopeFunctionKind(for: exprID) != nil {
+            let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+            let nullableResultType = sema.types.makeNullable(boundType)
+            let result = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: nullableResultType
+            )
+            // Lower receiver first for null check
+            let loweredReceiver = driver.lowerExpr(
+                receiverExpr,
+                ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            let nonNullLabel = driver.ctx.makeLoopLabel()
+            let endLabel = driver.ctx.makeLoopLabel()
+            // Jump to nonNullLabel if receiver is not null
+            instructions.append(.jumpIfNotNull(value: loweredReceiver, target: nonNullLabel))
+            // Null path: produce null result
+            let nullVal = arena.appendExpr(.unit, type: nullableResultType)
+            instructions.append(.constValue(result: nullVal, value: .null))
+            instructions.append(.copy(from: nullVal, to: result))
+            instructions.append(.jump(endLabel))
+            // Non-null path: invoke the scope function
+            instructions.append(.label(nonNullLabel))
+            if let scopeResult = tryScopeFunctionLowering(
+                exprID,
+                receiverExpr: receiverExpr,
+                args: args,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions,
+                precomputedReceiver: loweredReceiver
+            ) {
+                instructions.append(.copy(from: scopeResult, to: result))
+            }
+            instructions.append(.label(endLabel))
+            return result
+        }
+
         let effectiveCalleeName = if sema.bindings.isInvokeOperatorCall(exprID) {
             interner.intern("invoke")
         } else {
@@ -304,6 +367,29 @@ extension CallLowerer {
             }
         }
 
+        // String stdlib: nullable-receiver 0-arg methods (NULL-002)
+        // isNullOrEmpty/isNullOrBlank pass the raw (potentially null) receiver pointer to C runtime.
+        if args.isEmpty {
+            let calleeStr = interner.resolve(calleeName)
+            if calleeStr == "isNullOrEmpty" || calleeStr == "isNullOrBlank" {
+                let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+                let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+                if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+                    let runtimeCallee = calleeStr == "isNullOrEmpty"
+                        ? "kk_string_isNullOrEmpty"
+                        : "kk_string_isNullOrBlank"
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(runtimeCallee),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+        }
         // String stdlib: 0-arg methods (STDLIB-006)
         if args.isEmpty {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
@@ -605,6 +691,7 @@ extension CallLowerer {
         }
     }
 
+    // swiftlint:disable:next function_body_length
     private func emitMemberCallInstruction(
         normalized: NormalizedCallResult,
         callBinding: CallBinding?,
@@ -690,8 +777,9 @@ extension CallLowerer {
         ))
     }
 
-    /// Callees with an externalLinkName (C runtime functions such as
-    /// kk_array_get) are never dispatched virtually.
+    // Callees with an externalLinkName (C runtime functions such as
+    // kk_array_get) are never dispatched virtually.
+    // swiftlint:disable:next function_parameter_count
     private func tryEmitVirtualDispatch(
         chosenCallee: SymbolID?,
         calleeName: InternedString,
@@ -877,4 +965,127 @@ extension CallLowerer {
         ))
         return result
     }
+
+    // MARK: - Scope Function Lowering (STDLIB-004)
+
+    // swiftlint:disable:next function_body_length function_parameter_count
+    /// Attempts to lower a scope function call (let/run/apply/also).
+    /// Returns nil if the expression is not a scope function call.
+    func tryScopeFunctionLowering(
+        _ exprID: ExprID,
+        receiverExpr: ExprID,
+        args: [CallArgument],
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction],
+        precomputedReceiver: KIRExprID? = nil
+    ) -> KIRExprID? {
+        guard let scopeKind = sema.bindings.scopeFunctionKind(for: exprID),
+              args.count == 1
+        else { return nil }
+
+        let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+
+        // Lower the receiver expression (or use precomputed one for safe calls).
+        let loweredReceiverID = precomputedReceiver ?? driver.lowerExpr(
+            receiverExpr,
+            ast: ast, sema: sema, arena: arena, interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+
+        switch scopeKind {
+        case .scopeLet, .scopeAlso:
+            // let/also: lambda takes `it` as explicit parameter.
+            // Lower lambda normally, then call it with receiver as argument.
+            let loweredLambdaID = driver.lowerExpr(
+                args[0].expr,
+                ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            let result = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: boundType
+            )
+            if let info = driver.ctx.callableValueInfoByExprID[loweredLambdaID] {
+                instructions.append(.call(
+                    symbol: info.symbol,
+                    callee: info.callee,
+                    arguments: info.captureArguments + [loweredReceiverID],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            } else {
+                // Non-lambda-literal argument (e.g. function reference);
+                // fall back to normal member call lowering.
+                return nil
+            }
+            if scopeKind == .scopeAlso {
+                // also: result is the receiver, not the lambda return value.
+                instructions.append(.copy(from: loweredReceiverID, to: result))
+            }
+            return result
+
+        case .scopeRun, .scopeApply:
+            // run/apply: lambda has `this` as implicit receiver.
+            // Set the implicit receiver to the lowered receiver before lowering
+            // the lambda so that the lambda captures it.
+            let receiverSymbol = driver.ctx.allocateSyntheticGeneratedSymbol()
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let receiverSymExpr = arena.appendExpr(.symbolRef(receiverSymbol), type: receiverType)
+            instructions.append(.copy(from: loweredReceiverID, to: receiverSymExpr))
+
+            let savedReceiverExprID = driver.ctx.currentImplicitReceiverExprID
+            let savedReceiverSymbol = driver.ctx.currentImplicitReceiverSymbol
+            driver.ctx.localValuesBySymbol[receiverSymbol] = receiverSymExpr
+            driver.ctx.currentImplicitReceiverExprID = receiverSymExpr
+            driver.ctx.currentImplicitReceiverSymbol = receiverSymbol
+
+            let loweredLambdaID = driver.lowerExpr(
+                args[0].expr,
+                ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+
+            driver.ctx.currentImplicitReceiverExprID = savedReceiverExprID
+            driver.ctx.currentImplicitReceiverSymbol = savedReceiverSymbol
+
+            let result = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: boundType
+            )
+            if let info = driver.ctx.callableValueInfoByExprID[loweredLambdaID] {
+                instructions.append(.call(
+                    symbol: info.symbol,
+                    callee: info.callee,
+                    arguments: info.captureArguments,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            } else {
+                // Non-lambda-literal argument (e.g. function reference);
+                // restore state and fall back to normal member call lowering.
+                driver.ctx.currentImplicitReceiverExprID = savedReceiverExprID
+                driver.ctx.currentImplicitReceiverSymbol = savedReceiverSymbol
+                return nil
+            }
+            if scopeKind == .scopeApply {
+                // apply: result is the receiver, not the lambda return value.
+                instructions.append(.copy(from: loweredReceiverID, to: result))
+            }
+            return result
+
+        case .scopeWith:
+            return nil // with is handled in lowerCallExpr
+        }
+    }
+
+    // swiftlint:disable:next file_length
 }

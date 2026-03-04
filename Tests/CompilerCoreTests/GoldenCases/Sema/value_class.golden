@@ -16,17 +16,20 @@ symbol s14 kind=function fq=kotlin.collections.List.get vis=public flags=synthet
 symbol s15 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
 symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
 symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
-symbol s18 kind=class fq=golden.sema.Meter vis=public flags=valueType
-symbol s19 kind=constructor fq=golden.sema.Meter.<init> vis=public flags=_ sig=recv=Class#18 params=[Int] ret=Class#18 suspend=0 defaults=[0] vararg=[0]
-symbol s20 kind=valueParameter fq=golden.sema.Meter.<init>.$19.amount vis=private flags=_
-symbol s21 kind=function fq=golden.sema.measure vis=public flags=_ sig=recv=_ params=[Class#18] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s22 kind=valueParameter fq=golden.sema.measure.$21.m vis=private flags=_
-symbol s23 kind=function fq=golden.sema.toAny vis=public flags=_ sig=recv=_ params=[Class#18] ret=Any suspend=0 defaults=[0] vararg=[0]
-symbol s24 kind=valueParameter fq=golden.sema.toAny.$23.m vis=private flags=_
+symbol s18 kind=interface fq=kotlin.Comparable vis=public flags=synthetic
+symbol s19 kind=typeParameter fq=kotlin.Comparable.T vis=private flags=_
+symbol s20 kind=function fq=kotlin.Comparable.compareTo vis=public flags=synthetic|operatorFunction sig=recv=Class#18<T#19> params=[T#19] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s21 kind=class fq=golden.sema.Meter vis=public flags=valueType
+symbol s22 kind=constructor fq=golden.sema.Meter.<init> vis=public flags=_ sig=recv=Class#21 params=[Int] ret=Class#21 suspend=0 defaults=[0] vararg=[0]
+symbol s23 kind=valueParameter fq=golden.sema.Meter.<init>.$22.amount vis=private flags=_
+symbol s24 kind=function fq=golden.sema.measure vis=public flags=_ sig=recv=_ params=[Class#21] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s25 kind=valueParameter fq=golden.sema.measure.$24.m vis=private flags=_
+symbol s26 kind=function fq=golden.sema.toAny vis=public flags=_ sig=recv=_ params=[Class#21] ret=Any suspend=0 defaults=[0] vararg=[0]
+symbol s27 kind=valueParameter fq=golden.sema.toAny.$26.m vis=private flags=_
 file f0 package=golden.sema
-  decl d0 class Meter sym=s18
-  decl d1 fun measure suspend=0 inline=0 sym=s21
-  decl d2 fun toAny suspend=0 inline=0 sym=s23
-expr e0 name(m) type=Class#18 ref=s22
+  decl d0 class Meter sym=s21
+  decl d1 fun measure suspend=0 inline=0 sym=s24
+  decl d2 fun toAny suspend=0 inline=0 sym=s26
+expr e0 name(m) type=Class#21 ref=s25
 expr e1 memberCall recv=e0 callee=amount args=[] type=<error>
-expr e2 name(m) type=Class#18 ref=s24
+expr e2 name(m) type=Class#21 ref=s27

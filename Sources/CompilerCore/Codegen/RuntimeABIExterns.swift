@@ -110,6 +110,20 @@ public enum RuntimeABIExterns {
     )
 
     // swiftlint:disable:next identifier_name
+    public static let kk_string_isNullOrEmpty = ExternDecl(
+        name: "kk_string_isNullOrEmpty",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // swiftlint:disable:next identifier_name
+    public static let kk_string_isNullOrBlank = ExternDecl(
+        name: "kk_string_isNullOrBlank",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // swiftlint:disable:next identifier_name
     public static let kk_string_startsWith = ExternDecl(
         name: "kk_string_startsWith",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -770,6 +784,8 @@ public enum RuntimeABIExterns {
         kk_string_compareTo,
         kk_string_length,
         kk_string_trim,
+        kk_string_isNullOrEmpty,
+        kk_string_isNullOrBlank,
         kk_string_startsWith,
         kk_string_endsWith,
         kk_string_contains_str,

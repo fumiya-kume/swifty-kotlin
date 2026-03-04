@@ -16,27 +16,30 @@ symbol s14 kind=function fq=kotlin.collections.List.get vis=public flags=synthet
 symbol s15 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
 symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
 symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
-symbol s18 kind=function fq=multiGuard vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=String suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s19 kind=valueParameter fq=multiGuard.$18.a vis=private flags=_
-symbol s20 kind=valueParameter fq=multiGuard.$18.b vis=private flags=_
-symbol s21 kind=valueParameter fq=multiGuard.$18.c vis=private flags=_
-symbol s22 kind=function fq=noElseGuard vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s23 kind=valueParameter fq=noElseGuard.$22.x vis=private flags=_
-symbol s24 kind=function fq=boolExhaustive vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s25 kind=local fq=__local_16.result vis=private flags=_
+symbol s18 kind=interface fq=kotlin.Comparable vis=public flags=synthetic
+symbol s19 kind=typeParameter fq=kotlin.Comparable.T vis=private flags=_
+symbol s20 kind=function fq=kotlin.Comparable.compareTo vis=public flags=synthetic|operatorFunction sig=recv=Class#18<T#19> params=[T#19] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s21 kind=function fq=multiGuard vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=String suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s22 kind=valueParameter fq=multiGuard.$21.a vis=private flags=_
+symbol s23 kind=valueParameter fq=multiGuard.$21.b vis=private flags=_
+symbol s24 kind=valueParameter fq=multiGuard.$21.c vis=private flags=_
+symbol s25 kind=function fq=noElseGuard vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s26 kind=valueParameter fq=noElseGuard.$25.x vis=private flags=_
+symbol s27 kind=function fq=boolExhaustive vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s28 kind=local fq=__local_16.result vis=private flags=_
 file f0 package=_
-  decl d0 fun multiGuard suspend=0 inline=0 sym=s18
-  decl d1 fun noElseGuard suspend=0 inline=0 sym=s22
-  decl d2 fun boolExhaustive suspend=0 inline=0 sym=s24
-expr e0 name(a) type=Int ref=s19
+  decl d0 fun multiGuard suspend=0 inline=0 sym=s21
+  decl d1 fun noElseGuard suspend=0 inline=0 sym=s25
+  decl d2 fun boolExhaustive suspend=0 inline=0 sym=s27
+expr e0 name(a) type=Int ref=s22
 expr e1 int(0) type=Int
 expr e2 binary(greaterThan) lhs=e0 rhs=e1 type=Boolean
 expr e3 string(positive_a) type=String
-expr e4 name(b) type=Int ref=s20
+expr e4 name(b) type=Int ref=s23
 expr e5 int(0) type=Int
 expr e6 binary(greaterThan) lhs=e4 rhs=e5 type=Boolean
 expr e7 string(positive_b) type=String
-expr e8 name(c) type=Int ref=s21
+expr e8 name(c) type=Int ref=s24
 expr e9 int(0) type=Int
 expr e10 binary(greaterThan) lhs=e8 rhs=e9 type=Boolean
 expr e11 string(positive_c) type=String
@@ -44,17 +47,17 @@ expr e12 string(all_non_positive) type=String
 expr e13 when subject=_ branches=[e2->e3,e6->e7,e10->e11] else=e12 type=String
 expr e14 return value=e13 type=Nothing
 expr e15 int(0) type=Int
-expr e16 localDecl result mutable=0 type=_ init=e15 type=Unit ref=s25
-expr e17 name(x) type=Int ref=s23
+expr e16 localDecl result mutable=0 type=_ init=e15 type=Unit ref=s28
+expr e17 name(x) type=Int ref=s26
 expr e18 int(10) type=Int
 expr e19 binary(greaterThan) lhs=e17 rhs=e18 type=Boolean
-expr e20 name(result) type=Int ref=s25
-expr e21 name(x) type=Int ref=s23
+expr e20 name(result) type=Int ref=s28
+expr e21 name(x) type=Int ref=s26
 expr e22 int(0) type=Int
 expr e23 binary(greaterThan) lhs=e21 rhs=e22 type=Boolean
-expr e24 name(result) type=Int ref=s25
+expr e24 name(result) type=Int ref=s28
 expr e25 when subject=_ branches=[e19->e20,e23->e24] else=_ type=Int
-expr e26 name(result) type=Int ref=s25
+expr e26 name(result) type=Int ref=s28
 expr e27 return value=e26 type=Nothing
 expr e28 bool(true) type=Boolean
 expr e29 int(1) type=Int

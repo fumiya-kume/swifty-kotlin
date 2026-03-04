@@ -13,6 +13,21 @@ public extension RuntimeABIExterns {
         kk_list_iterator_hasNext,
         kk_list_iterator_next,
         kk_list_to_string,
+        kk_list_map,
+        kk_list_filter,
+        kk_list_forEach,
+        kk_list_flatMap,
+        kk_list_any,
+        kk_list_none,
+        kk_list_all,
+        kk_list_fold,
+        kk_list_reduce,
+        kk_list_groupBy,
+        kk_list_sortedBy,
+        kk_list_count,
+        kk_list_first,
+        kk_list_last,
+        kk_list_find,
         kk_map_of,
         kk_map_size,
         kk_map_get,
@@ -153,6 +168,97 @@ public extension RuntimeABIExterns {
     static let kk_array_size = ExternDecl(
         name: "kk_array_size",
         parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    /// Higher-order collection functions (STDLIB-005)
+    static let kk_list_map = ExternDecl(
+        name: "kk_list_map",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_filter = ExternDecl(
+        name: "kk_list_filter",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_forEach = ExternDecl(
+        name: "kk_list_forEach",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_flatMap = ExternDecl(
+        name: "kk_list_flatMap",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_any = ExternDecl(
+        name: "kk_list_any",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_none = ExternDecl(
+        name: "kk_list_none",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_all = ExternDecl(
+        name: "kk_list_all",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_fold = ExternDecl(
+        name: "kk_list_fold",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_reduce = ExternDecl(
+        name: "kk_list_reduce",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_groupBy = ExternDecl(
+        name: "kk_list_groupBy",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_sortedBy = ExternDecl(
+        name: "kk_list_sortedBy",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_count = ExternDecl(
+        name: "kk_list_count",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_first = ExternDecl(
+        name: "kk_list_first",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_last = ExternDecl(
+        name: "kk_list_last",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_find = ExternDecl(
+        name: "kk_list_find",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
