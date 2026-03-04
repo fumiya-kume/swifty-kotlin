@@ -359,7 +359,8 @@ public func kk_pair_second(_ pairRaw: Int) -> Int {
 @_cdecl("kk_pair_to_string")
 public func kk_pair_to_string(_ pairRaw: Int) -> UnsafeMutableRawPointer {
     guard let array = runtimeArrayBox(from: pairRaw),
-          array.elements.count >= 2 else {
+          array.elements.count >= 2
+    else {
         let str = "(null, null)"
         let utf8 = Array(str.utf8)
         return utf8.withUnsafeBufferPointer { buf in

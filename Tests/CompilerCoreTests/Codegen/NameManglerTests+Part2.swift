@@ -206,7 +206,7 @@ extension NameManglerTests {
         let primitives: [(PrimitiveType, String)] = [
             (.boolean, "Z"), (.char, "C"), (.int, "I"),
             (.long, "J"), (.float, "F"), (.double, "D"),
-            (.string, "Lkotlin_String;")
+            (.string, "Lkotlin_String;"),
         ]
 
         for (prim, expected) in primitives {

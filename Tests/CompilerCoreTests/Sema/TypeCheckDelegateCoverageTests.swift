@@ -419,7 +419,7 @@ private func makeTypeCheckFixture() -> TypeCheckFixture {
                 imports: [],
                 topLevelDecls: [],
                 scriptBody: []
-            )
+            ),
         ],
         arena: astArena,
         declarationCount: 0,

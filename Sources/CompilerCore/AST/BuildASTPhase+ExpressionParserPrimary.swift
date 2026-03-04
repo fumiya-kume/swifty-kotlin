@@ -118,12 +118,12 @@ extension BuildASTPhase.ExpressionParser {
         }
         let lower = numPart.lowercased()
         if lower.hasPrefix("0x") {
-            return UInt64(numPart.dropFirst(2).filter { $0.isHexDigit }, radix: 16) ?? 0
+            return UInt64(numPart.dropFirst(2).filter(\.isHexDigit), radix: 16) ?? 0
         }
         if lower.hasPrefix("0b") {
             return UInt64(numPart.dropFirst(2).filter { $0 == "0" || $0 == "1" }, radix: 2) ?? 0
         }
-        return UInt64(numPart.filter { $0.isNumber }, radix: 10) ?? 0
+        return UInt64(numPart.filter(\.isNumber), radix: 10) ?? 0
     }
 
     // swiftlint:disable:next cyclomatic_complexity

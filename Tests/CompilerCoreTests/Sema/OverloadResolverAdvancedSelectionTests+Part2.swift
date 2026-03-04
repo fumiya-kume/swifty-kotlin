@@ -394,7 +394,7 @@ extension OverloadResolverTests {
             args: [
                 CallArg(label: interner.intern("a"), type: stringType),
                 CallArg(type: intType),
-                CallArg(type: intType)
+                CallArg(type: intType),
             ]
         )
         let resolved = resolver.resolveCall(
@@ -452,7 +452,7 @@ extension OverloadResolverTests {
             calleeName: interner.intern("namedThenNonVararg"),
             args: [
                 CallArg(label: interner.intern("a"), type: intType),
-                CallArg(type: boolType)
+                CallArg(type: boolType),
             ]
         )
         let resolved = resolver.resolveCall(

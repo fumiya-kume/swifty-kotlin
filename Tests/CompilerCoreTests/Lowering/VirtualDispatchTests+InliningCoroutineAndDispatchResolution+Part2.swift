@@ -110,7 +110,7 @@ extension VirtualDispatchTests {
             params: [
                 KIRParameter(symbol: SymbolID(rawValue: 8011), type: anyType),
                 KIRParameter(symbol: SymbolID(rawValue: 8012), type: anyType),
-                KIRParameter(symbol: SymbolID(rawValue: 8013), type: anyType)
+                KIRParameter(symbol: SymbolID(rawValue: 8013), type: anyType),
             ],
             returnType: types.unitType,
             body: [
@@ -124,7 +124,7 @@ extension VirtualDispatchTests {
                     thrownResult: nil,
                     dispatch: .vtable(slot: 0)
                 ),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false

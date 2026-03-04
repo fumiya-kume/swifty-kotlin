@@ -156,7 +156,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         )
         let body: [KIRInstruction] = [
             .constValue(result: resultExpr, value: .intLiteral(value)),
-            .returnValue(resultExpr)
+            .returnValue(resultExpr),
         ]
         appendSyntheticFunctionIfNeeded(
             name: name,
@@ -204,7 +204,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         )
         let body: [KIRInstruction] = [
             .constValue(result: resultExpr, value: .symbolRef(parameterSymbol)),
-            .returnValue(resultExpr)
+            .returnValue(resultExpr),
         ]
         let signature = FunctionSignature(
             parameterTypes: [receiverType],
@@ -242,7 +242,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         )
         let body: [KIRInstruction] = [
             .constValue(result: resultExpr, value: .stringLiteral(value)),
-            .returnValue(resultExpr)
+            .returnValue(resultExpr),
         ]
         appendSyntheticFunctionIfNeeded(
             name: name,

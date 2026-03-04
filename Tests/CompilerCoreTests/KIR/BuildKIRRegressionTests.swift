@@ -48,7 +48,7 @@ final class BuildKIRRegressionTests: XCTestCase {
                 "LambdaClosureConversion",
                 "InlineLowering",
                 "CoroutineLowering",
-                "ABILowering"
+                "ABILowering",
             ])
             // Source defines add, susp, chooser, main
             XCTAssertGreaterThanOrEqual(module.functionCount, 4)

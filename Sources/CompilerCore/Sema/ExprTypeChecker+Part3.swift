@@ -258,11 +258,13 @@ extension ExprTypeChecker {
             type = sema.types.lub([nonNullLhs, rhs])
             // Smart cast: `x ?: return` / `x ?: throw` narrows x to non-null (P5-66)
             if let rhsExpr = ast.arena.expr(rhsID),
-               driver.helpers.isTerminatingExpr(rhsExpr) {
+               driver.helpers.isTerminatingExpr(rhsExpr)
+            {
                 if let lhsExpr = ast.arena.expr(lhsID),
                    case let .nameRef(elvisVarName, _) = lhsExpr,
                    let elvisLocal = locals[elvisVarName],
-                   driver.helpers.isStableLocalSymbol(elvisLocal.symbol, sema: sema) {
+                   driver.helpers.isStableLocalSymbol(elvisLocal.symbol, sema: sema)
+                {
                     let nonNullType = sema.types.makeNonNullable(elvisLocal.type)
                     locals[elvisVarName] = (nonNullType, elvisLocal.symbol, elvisLocal.isMutable, elvisLocal.isInitialized)
                 }

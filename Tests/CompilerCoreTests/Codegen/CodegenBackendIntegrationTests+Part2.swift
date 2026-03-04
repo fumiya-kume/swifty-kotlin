@@ -38,7 +38,7 @@ extension CodegenBackendIntegrationTests {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .returnValue(exited)
+                .returnValue(exited),
             ],
             isSuspend: false,
             isInline: false
@@ -77,7 +77,7 @@ extension CodegenBackendIntegrationTests {
             returnType: types.anyType,
             body: [
                 .call(symbol: nil, callee: interner.intern("external_throwing"), arguments: [], result: callResult, canThrow: true, thrownResult: nil),
-                .returnValue(callResult)
+                .returnValue(callResult),
             ],
             isSuspend: false,
             isInline: false
@@ -186,7 +186,8 @@ extension CodegenBackendIntegrationTests {
         let placeholder = "deterministic_X"
         if outputBasename != placeholder,
            let pathData = outputBasename.data(using: .utf8),
-           let fixedData = placeholder.data(using: .utf8) {
+           let fixedData = placeholder.data(using: .utf8)
+        {
             var searchStart = result.startIndex
             while let range = result.range(of: pathData, in: searchStart ..< result.endIndex) {
                 result.replaceSubrange(range, with: fixedData)
@@ -293,7 +294,7 @@ extension CodegenBackendIntegrationTests {
                 .label(801),
                 .call(symbol: calleeSym, callee: interner.intern("ignored"), arguments: [], result: e5, canThrow: false, thrownResult: nil),
                 .returnValue(e5),
-                .endBlock
+                .endBlock,
             ],
             isSuspend: false,
             isInline: false

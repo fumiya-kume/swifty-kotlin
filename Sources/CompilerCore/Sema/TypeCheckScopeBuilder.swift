@@ -203,7 +203,7 @@ struct TypeCheckScopeBuilder {
             ["kotlin", "io"],
             ["kotlin", "ranges"],
             ["kotlin", "sequences"],
-            ["kotlin", "text"]
+            ["kotlin", "text"],
         ]
         return packages.map { segments in
             segments.map { interner.intern($0) }

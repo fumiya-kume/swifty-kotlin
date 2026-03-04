@@ -37,7 +37,8 @@ extension NativeEmitter {
             lowered = bindings.buildUDiv(state.builder, lhs: lhs, rhs: rhs, name: "udiv_\(instructionIndex)")
         case "kk_op_mod":
             if let quotient = bindings.buildSDiv(state.builder, lhs: lhs, rhs: rhs, name: "mod_q_\(instructionIndex)"),
-               let product = bindings.buildMul(state.builder, lhs: quotient, rhs: rhs, name: "mod_p_\(instructionIndex)") {
+               let product = bindings.buildMul(state.builder, lhs: quotient, rhs: rhs, name: "mod_p_\(instructionIndex)")
+            {
                 lowered = bindings.buildSub(state.builder, lhs: lhs, rhs: product, name: "mod_\(instructionIndex)")
             } else {
                 lowered = nil
@@ -108,7 +109,8 @@ extension NativeEmitter {
             if let lhsBool = boolCondition(from: lhs, name: "and_lhs_\(instructionIndex)"),
                let rhsBool = boolCondition(from: rhs, name: "and_rhs_\(instructionIndex)"),
                let lhsInt = bindings.buildZExt(state.builder, value: lhsBool, type: state.int64Type, name: "and_lhs64_\(instructionIndex)"),
-               let rhsInt = bindings.buildZExt(state.builder, value: rhsBool, type: state.int64Type, name: "and_rhs64_\(instructionIndex)") {
+               let rhsInt = bindings.buildZExt(state.builder, value: rhsBool, type: state.int64Type, name: "and_rhs64_\(instructionIndex)")
+            {
                 lowered = bindings.buildMul(state.builder, lhs: lhsInt, rhs: rhsInt, name: "and64_\(instructionIndex)")
             } else {
                 lowered = nil
@@ -119,7 +121,8 @@ extension NativeEmitter {
                let lhsInt = bindings.buildZExt(state.builder, value: lhsBool, type: state.int64Type, name: "or_lhs64_\(instructionIndex)"),
                let rhsInt = bindings.buildZExt(state.builder, value: rhsBool, type: state.int64Type, name: "or_rhs64_\(instructionIndex)"),
                let sum = bindings.buildAdd(state.builder, lhs: lhsInt, rhs: rhsInt, name: "or_sum_\(instructionIndex)"),
-               let nonZero = bindings.buildICmpNotEqual(state.builder, lhs: sum, rhs: state.zeroValue, name: "or_nonzero_\(instructionIndex)") {
+               let nonZero = bindings.buildICmpNotEqual(state.builder, lhs: sum, rhs: state.zeroValue, name: "or_nonzero_\(instructionIndex)")
+            {
                 lowered = bindings.buildZExt(state.builder, value: nonZero, type: state.int64Type, name: "or64_\(instructionIndex)")
             } else {
                 lowered = nil
@@ -235,7 +238,8 @@ extension NativeEmitter {
                    value: internalFunction.value,
                    type: state.int64Type,
                    name: "fn_ptr_\(symbol.rawValue)"
-               ) {
+               )
+            {
                 return functionPointer
             }
             // Load from LLVM global variable if this symbol refers to a global.

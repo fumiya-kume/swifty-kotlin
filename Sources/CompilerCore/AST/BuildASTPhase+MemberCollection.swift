@@ -49,7 +49,8 @@ extension BuildASTPhase {
 
         for token in tokens {
             if depth.isAtTopLevel,
-               token.kind == .symbol(.comma) || token.kind == .symbol(.semicolon) {
+               token.kind == .symbol(.comma) || token.kind == .symbol(.semicolon)
+            {
                 if !current.isEmpty {
                     segments.append(current)
                     current.removeAll(keepingCapacity: true)

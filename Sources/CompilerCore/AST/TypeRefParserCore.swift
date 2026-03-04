@@ -143,7 +143,8 @@ enum TypeRefParserCore {
                interner: interner,
                astArena: astArena,
                options: options
-           ) {
+           )
+        {
             return functionType
         }
 
@@ -167,7 +168,8 @@ enum TypeRefParserCore {
                interner: interner,
                astArena: astArena,
                options: options
-           ) {
+           )
+        {
             typeArgs = parsedArgs.args
             next = parsedArgs.next
         }
@@ -175,7 +177,8 @@ enum TypeRefParserCore {
         if options.allowQualifiedPath {
             while next + 1 < tokens.count,
                   tokens[next].kind == .symbol(.dot),
-                  let name = identifier(from: tokens[next + 1], interner: interner, options: options) {
+                  let name = identifier(from: tokens[next + 1], interner: interner, options: options)
+            {
                 typeArgs = []
                 path.append(name)
                 next += 2
@@ -188,7 +191,8 @@ enum TypeRefParserCore {
                        interner: interner,
                        astArena: astArena,
                        options: options
-                   ) {
+                   )
+                {
                     typeArgs = parsedArgs.args
                     next = parsedArgs.next
                 }
@@ -295,7 +299,8 @@ enum TypeRefParserCore {
                 isSuspend = true
                 next += 1
             } else if case let .softKeyword(keyword) = tokens[next].kind,
-                      keyword.rawValue == "suspend" {
+                      keyword.rawValue == "suspend"
+            {
                 isSuspend = true
                 next += 1
             }

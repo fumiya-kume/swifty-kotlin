@@ -70,7 +70,7 @@ extension LoweringPassRegressionTests {
             returnType: intType,
             body: [
                 .constValue(result: inlineTokenExpr, value: .symbolRef(typeParameterSymbol)),
-                .returnValue(inlineTokenExpr)
+                .returnValue(inlineTokenExpr),
             ],
             isSuspend: false,
             isInline: true
@@ -90,7 +90,7 @@ extension LoweringPassRegressionTests {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .returnValue(callerResultExpr)
+                .returnValue(callerResultExpr),
             ],
             isSuspend: false,
             isInline: false
@@ -204,7 +204,7 @@ extension LoweringPassRegressionTests {
                 .call(symbol: nil, callee: interner.intern("<lambda>"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil),
                 .call(symbol: nil, callee: interner.intern("inlineTarget"), arguments: [], result: v1, canThrow: false, thrownResult: nil),
                 .call(symbol: nil, callee: interner.intern("suspendTarget"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil),
-                .returnUnit
+                .returnUnit,
             ],
             isSuspend: false,
             isInline: false
@@ -225,7 +225,7 @@ extension LoweringPassRegressionTests {
             returnType: TypeSystem().unitType,
             body: [
                 .call(symbol: suspendSym, callee: interner.intern("suspendTarget"), arguments: [], result: v2, canThrow: false, thrownResult: nil),
-                .returnValue(v2)
+                .returnValue(v2),
             ],
             isSuspend: true,
             isInline: false

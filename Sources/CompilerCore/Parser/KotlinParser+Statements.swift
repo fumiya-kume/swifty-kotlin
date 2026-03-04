@@ -68,7 +68,8 @@ extension KotlinParser {
                parenDepth == 0,
                bracketDepth == 0,
                hasLeadingNewline(token),
-               shouldSplitStatementOnNewline(token.kind) {
+               shouldSplitStatementOnNewline(token.kind)
+            {
                 break
             }
             if shouldStopStatementBefore(token, inBlock: inBlock) {
@@ -307,7 +308,8 @@ extension KotlinParser {
                parenDepth == 0,
                bracketDepth == 0,
                hasLeadingNewline(token),
-               shouldSplitStatementOnNewline(token.kind) {
+               shouldSplitStatementOnNewline(token.kind)
+            {
                 break
             }
 
@@ -493,12 +495,14 @@ extension KotlinParser {
         case .callExpr:
             for child in children {
                 if case let .node(childID) = child,
-                   arena.node(childID).kind == .block {
+                   arena.node(childID).kind == .block
+                {
                     return .callExpr
                 }
                 if case let .token(tokenID) = child,
                    let token = arena.token(tokenID),
-                   token.kind == .symbol(.lParen) {
+                   token.kind == .symbol(.lParen)
+                {
                     return .callExpr
                 }
             }
@@ -580,7 +584,8 @@ extension KotlinParser {
             let token = stream.peek()
             let atTopLevel = parenDepth == 0 && bracketDepth == 0 && braceDepth == 0
             if atTopLevel, !bodyChildren.isEmpty,
-               token.kind == .keyword(.while) {
+               token.kind == .keyword(.while)
+            {
                 break
             }
             if shouldStopStatementBefore(token, inBlock: true) {
@@ -589,7 +594,8 @@ extension KotlinParser {
             if atTopLevel,
                !bodyChildren.isEmpty,
                hasLeadingNewline(token),
-               shouldSplitStatementOnNewline(token.kind) {
+               shouldSplitStatementOnNewline(token.kind)
+            {
                 break
             }
 
@@ -685,7 +691,8 @@ extension KotlinParser {
                     // (modifier keyword, declaration keyword, or annotation).
                     let nextToken = stream.peek()
                     if case let .keyword(kw) = nextToken.kind,
-                       Self.isDeclarationModifierKeyword(kw) {
+                       Self.isDeclarationModifierKeyword(kw)
+                    {
                         break
                     }
                     if isDeclarationStart(nextToken.kind) {

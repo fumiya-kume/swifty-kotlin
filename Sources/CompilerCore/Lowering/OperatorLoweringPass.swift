@@ -71,7 +71,7 @@ final class OperatorLoweringPass: LoweringPass {
                     }
                     // For unsigned int/long: add/sub/mul/eq/ne use same callees; div/rem/lt/le/gt/ge use u-prefix
                     let divModCmpPrefix = (isUnsigned && rank == 0) ? "u" : prefix
-                    let divModOp = (isUnsigned && rank == 0) ? "rem" : "mod"  // unsigned uses urem (LLVM), signed uses mod
+                    let divModOp = (isUnsigned && rank == 0) ? "rem" : "mod" // unsigned uses urem (LLVM), signed uses mod
                     let callee: InternedString = switch op {
                     case .add:
                         ctx.interner.intern("kk_op_\(prefix)add")
@@ -116,7 +116,8 @@ final class OperatorLoweringPass: LoweringPass {
                 case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall):
                     if callee == printlnCallee || callee == kkPrintlnAnyCallee,
                        arguments.count == 1,
-                       let types {
+                       let types
+                    {
                         let argType = module.arena.exprType(arguments[0])
                         if let argType {
                             switch types.kind(of: argType) {

@@ -228,7 +228,8 @@ final class ExprTypeChecker {
             )
             if case let .typeParam(typeParam) = sema.types.kind(of: targetType),
                let typeParameterSymbol = sema.symbols.symbol(typeParam.symbol),
-               !typeParameterSymbol.flags.contains(.reifiedTypeParameter) {
+               !typeParameterSymbol.flags.contains(.reifiedTypeParameter)
+            {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0084",
                     "Cannot check for instance of non-reified type parameter '\(interner.resolve(typeParameterSymbol.name))'.",
@@ -237,7 +238,8 @@ final class ExprTypeChecker {
             }
             // Emit erasure warning for generic type checks with non-star type arguments
             if let typeRef = ast.arena.typeRef(typeRefID),
-               case let .named(_, argRefs, _) = typeRef, !argRefs.isEmpty {
+               case let .named(_, argRefs, _) = typeRef, !argRefs.isEmpty
+            {
                 let hasNonStarArg = argRefs.contains { arg in
                     if case .star = arg { return false }
                     return true
@@ -277,7 +279,8 @@ final class ExprTypeChecker {
                let castSubjectExpr = ast.arena.expr(exprID),
                case let .nameRef(castVarName, _) = castSubjectExpr,
                let castLocal = locals[castVarName],
-               driver.helpers.isStableLocalSymbol(castLocal.symbol, sema: sema) {
+               driver.helpers.isStableLocalSymbol(castLocal.symbol, sema: sema)
+            {
                 let refinedType: TypeID = if sema.types.isSubtype(castLocal.0, targetType) {
                     castLocal.0 // already a subtype, no need for intersection
                 } else if sema.types.isSubtype(targetType, castLocal.0) {
@@ -297,7 +300,8 @@ final class ExprTypeChecker {
             if let assertSubjectExpr = ast.arena.expr(exprID),
                case let .nameRef(assertVarName, _) = assertSubjectExpr,
                let assertLocal = locals[assertVarName],
-               driver.helpers.isStableLocalSymbol(assertLocal.symbol, sema: sema) {
+               driver.helpers.isStableLocalSymbol(assertLocal.symbol, sema: sema)
+            {
                 locals[assertVarName] = (type, assertLocal.symbol, assertLocal.isMutable, assertLocal.isInitialized)
             }
             sema.bindings.bindExprType(id, type: type)
@@ -381,7 +385,8 @@ final class ExprTypeChecker {
                 for (name, outerLocal) in locals {
                     if let blockLocal = blockLocals[name],
                        blockLocal.symbol == outerLocal.symbol,
-                       !outerLocal.isInitialized, blockLocal.isInitialized {
+                       !outerLocal.isInitialized, blockLocal.isInitialized
+                    {
                         locals[name] = (outerLocal.type, outerLocal.symbol, outerLocal.isMutable, true)
                     }
                 }

@@ -47,7 +47,7 @@ extension TokenModelTests {
             (.lBrace, "{"),
             (.rBrace, "}"),
             (.at, "@"),
-            (.hash, "#")
+            (.hash, "#"),
         ]
 
         for (symbol, expected) in expectedSymbols {
@@ -61,7 +61,7 @@ extension TokenModelTests {
             "==", "!=", "<", "<=", ">", ">=", "=", "+=", "-=", "*=",
             "/=", "%=", "..", "..<", "??", "?", "?.", "?:", "!!",
             "::", ",", ".", ";", ":", "->", "=>", "(", ")", "[", "]",
-            "{", "}", "@", "#"
+            "{", "}", "@", "#",
         ]
 
         for raw in allRawValues {
@@ -86,7 +86,7 @@ extension TokenModelTests {
             .dotDotLt, .questionQuestion, .question, .questionDot, .questionColon,
             .bangBang, .doubleColon, .comma, .dot, .semicolon, .colon, .arrow,
             .fatArrow, .lParen, .rParen, .lBracket, .rBracket, .lBrace, .rBrace,
-            .at, .hash
+            .at, .hash,
         ]
 
         for symbol in allSymbols {
@@ -235,7 +235,7 @@ extension TokenModelTests {
             .templateSimpleNameStart,
             .symbol(.plus),
             .eof,
-            .missing(expected: .eof)
+            .missing(expected: .eof),
         ]
 
         // Each kind should only be equal to itself
