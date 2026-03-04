@@ -78,7 +78,7 @@ extension BuildASTPhase {
                 tokens: exprTokens,
                 interner: interner,
                 astArena: astArena,
-                diagnostics: self.diagnostics
+                diagnostics: diagnostics
             )
             if let exprID = parser.parse(), let exprRange = astArena.exprRange(exprID) {
                 body = .expr(exprID, exprRange)
@@ -122,7 +122,7 @@ extension BuildASTPhase {
                             tokens: filtered,
                             interner: interner,
                             astArena: astArena,
-                            diagnostics: self.diagnostics
+                            diagnostics: diagnostics
                         )
                         if let exprID = parser.parse() {
                             blockExprs.append(exprID)

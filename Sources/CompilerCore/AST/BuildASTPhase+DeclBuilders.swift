@@ -391,7 +391,7 @@ extension BuildASTPhase {
                 tokens: defaultTokens,
                 interner: interner,
                 astArena: astArena,
-                diagnostics: self.diagnostics
+                diagnostics: diagnostics
             )
             defaultValueExpr = parser.parse()
         } else {

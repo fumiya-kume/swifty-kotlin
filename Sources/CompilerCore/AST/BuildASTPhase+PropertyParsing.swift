@@ -52,7 +52,7 @@ extension BuildASTPhase {
             tokens: exprTokens[...],
             interner: interner,
             astArena: astArena,
-            diagnostics: self.diagnostics
+            diagnostics: diagnostics
         )
         return parser.parse()
     }
@@ -252,7 +252,7 @@ extension BuildASTPhase {
                         tokens: ArraySlice(exprTokens),
                         interner: interner,
                         astArena: astArena,
-                        diagnostics: self.diagnostics
+                        diagnostics: diagnostics
                     )
                     if let exprID = parser.parse(),
                        let range = astArena.exprRange(exprID)
@@ -344,7 +344,7 @@ extension BuildASTPhase {
             tokens: ArraySlice(exprTokens),
             interner: interner,
             astArena: astArena,
-            diagnostics: self.diagnostics
+            diagnostics: diagnostics
         )
         guard let exprID = parser.parse(),
               let range = astArena.exprRange(exprID)

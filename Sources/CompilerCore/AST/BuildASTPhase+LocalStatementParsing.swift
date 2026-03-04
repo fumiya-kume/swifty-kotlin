@@ -40,16 +40,15 @@ extension BuildASTPhase {
         ) {
             return destructuringResult
         }
-
         let context = LocalStatementCoreContext(
             interner: interner,
             astArena: astArena,
-            parseExpression: { tokens in
+            parseExpression: { [parserDiagnostics = self.diagnostics] tokens in
                 ExpressionParser(
                     tokens: tokens,
                     interner: interner,
                     astArena: astArena,
-                    diagnostics: self.diagnostics
+                    diagnostics: parserDiagnostics
                 ).parse()
             },
             parseTypeReference: { typeTokens in
@@ -77,12 +76,12 @@ extension BuildASTPhase {
         let context = LocalStatementCoreContext(
             interner: interner,
             astArena: astArena,
-            parseExpression: { tokens in
+            parseExpression: { [parserDiagnostics = self.diagnostics] tokens in
                 ExpressionParser(
                     tokens: tokens,
                     interner: interner,
                     astArena: astArena,
-                    diagnostics: self.diagnostics
+                    diagnostics: parserDiagnostics
                 ).parse()
             },
             parseTypeReference: { _ in nil },
@@ -208,7 +207,7 @@ extension BuildASTPhase {
             tokens: initializerTokens[...],
             interner: interner,
             astArena: astArena,
-            diagnostics: self.diagnostics
+            diagnostics: diagnostics
         )
         guard let initializerExpr = parser.parse() else {
             return nil

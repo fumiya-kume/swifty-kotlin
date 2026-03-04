@@ -346,7 +346,7 @@ extension BuildASTPhase {
             tokens: ArraySlice(exprTokens),
             interner: interner,
             astArena: astArena,
-            diagnostics: self.diagnostics
+            diagnostics: diagnostics
         )
         return parser.parse()
     }

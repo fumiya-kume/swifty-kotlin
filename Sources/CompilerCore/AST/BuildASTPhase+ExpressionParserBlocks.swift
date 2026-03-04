@@ -49,7 +49,7 @@ extension BuildASTPhase.ExpressionParser {
                 tokens: group,
                 interner: interner,
                 astArena: astArena,
-                diagnostics: self.diagnostics
+                diagnostics: diagnostics
             ).parse() {
                 statements.append(expr)
             }
@@ -166,15 +166,15 @@ extension BuildASTPhase.ExpressionParser {
         let context = BuildASTPhase.LocalStatementCoreContext(
             interner: interner,
             astArena: astArena,
-            parseExpression: { slice in
+            parseExpression: { [parserDiagnostics = self.diagnostics] slice in
                 BuildASTPhase.ExpressionParser(
                     tokens: slice,
                     interner: interner,
                     astArena: astArena,
-                    diagnostics: self.diagnostics
+                    diagnostics: parserDiagnostics
                 ).parse()
             },
-            parseTypeReference: { typeTokens in
+            parseTypeReference: { [parserDiagnostics = self.diagnostics] typeTokens in
                 guard let first = typeTokens.first else {
                     return nil
                 }
@@ -182,7 +182,7 @@ extension BuildASTPhase.ExpressionParser {
                     tokens: typeTokens,
                     interner: interner,
                     astArena: astArena,
-                    diagnostics: self.diagnostics
+                    diagnostics: parserDiagnostics
                 )
                 return parser.parseTypeReference(first.range)
             },
@@ -212,12 +212,12 @@ extension BuildASTPhase.ExpressionParser {
         let context = BuildASTPhase.LocalStatementCoreContext(
             interner: interner,
             astArena: astArena,
-            parseExpression: { slice in
+            parseExpression: { [parserDiagnostics = self.diagnostics] slice in
                 BuildASTPhase.ExpressionParser(
                     tokens: slice,
                     interner: interner,
                     astArena: astArena,
-                    diagnostics: self.diagnostics
+                    diagnostics: parserDiagnostics
                 ).parse()
             },
             parseTypeReference: { _ in nil },
@@ -274,7 +274,7 @@ extension BuildASTPhase.ExpressionParser {
                 tokens: group,
                 interner: interner,
                 astArena: astArena,
-                diagnostics: self.diagnostics
+                diagnostics: diagnostics
             ).parse() {
                 statements.append(expr)
             }

@@ -45,7 +45,7 @@ extension BuildASTPhase {
             tokens: exprTokens,
             interner: interner,
             astArena: astArena,
-            diagnostics: self.diagnostics
+            diagnostics: diagnostics
         )
         guard let exprID = parser.parse() else {
             return .unit
@@ -138,7 +138,7 @@ extension BuildASTPhase {
             tokens: filtered,
             interner: interner,
             astArena: astArena,
-            diagnostics: self.diagnostics
+            diagnostics: diagnostics
         )
         return parser.parse()
     }
