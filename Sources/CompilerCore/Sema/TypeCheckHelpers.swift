@@ -140,9 +140,9 @@ struct TypeCheckHelpers {
         case "ULong": types.withNullability(nullability, for: types.ulongType)
         case "UByte": types.withNullability(nullability, for: types.ubyteType)
         case "UShort": types.withNullability(nullability, for: types.ushortType)
-        case "Any": nullability == .nullable ? types.nullableAnyType : types.anyType
+        case "Any": types.withNullability(nullability, for: types.anyType)
         case "Unit": types.unitType
-        case "Nothing": nullability == .nullable ? types.nullableNothingType : types.nothingType
+        case "Nothing": types.withNullability(nullability, for: types.nothingType)
         default: nil
         }
     }

@@ -6,9 +6,11 @@ public extension TypeSystem {
         case .unit:
             return "Unit"
         case let .nothing(nullability):
-            return nullability == .nullable ? "Nothing?" : "Nothing"
+            let suffix = nullability == .nullable ? "?" : nullability == .platformType ? "!" : ""
+            return "Nothing\(suffix)"
         case let .any(nullability):
-            return nullability == .nullable ? "Any?" : "Any"
+            let suffix = nullability == .nullable ? "?" : nullability == .platformType ? "!" : ""
+            return "Any\(suffix)"
         case let .primitive(primitive, nullability):
             let base = switch primitive {
             case .boolean:
@@ -34,17 +36,18 @@ public extension TypeSystem {
             case .string:
                 "String"
             }
-            return nullability == .nullable ? "\(base)?" : base
+            let suffix = nullability == .nullable ? "?" : nullability == .platformType ? "!" : ""
+            return "\(base)\(suffix)"
         case let .classType(classType):
             let args = if classType.args.isEmpty {
                 ""
             } else {
                 "<" + classType.args.map(renderTypeArg).joined(separator: ", ") + ">"
             }
-            let nullSuffix = classType.nullability == .nullable ? "?" : ""
+            let nullSuffix = classType.nullability == .nullable ? "?" : classType.nullability == .platformType ? "!" : ""
             return "Class#\(classType.classSymbol.rawValue)\(args)\(nullSuffix)"
         case let .typeParam(typeParam):
-            let nullSuffix = typeParam.nullability == .nullable ? "?" : ""
+            let nullSuffix = typeParam.nullability == .nullable ? "?" : typeParam.nullability == .platformType ? "!" : ""
             return "T#\(typeParam.symbol.rawValue)\(nullSuffix)"
         case let .functionType(functionType):
             let receiverPrefix = if let receiver = functionType.receiver {
@@ -54,7 +57,7 @@ public extension TypeSystem {
             }
             let suspendPrefix = functionType.isSuspend ? "suspend " : ""
             let params = functionType.params.map(renderType).joined(separator: ", ")
-            let nullSuffix = functionType.nullability == .nullable ? "?" : ""
+            let nullSuffix = functionType.nullability == .nullable ? "?" : functionType.nullability == .platformType ? "!" : ""
             return "\(suspendPrefix)\(receiverPrefix)(\(params)) -> \(renderType(functionType.returnType))\(nullSuffix)"
         case let .intersection(parts):
             return parts.map(renderType).joined(separator: " & ")

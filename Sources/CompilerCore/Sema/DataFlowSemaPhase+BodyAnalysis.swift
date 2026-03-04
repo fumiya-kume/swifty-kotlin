@@ -119,11 +119,11 @@ extension DataFlowSemaPhase {
             case "UShort":
                 return types.make(.primitive(.ushort, nullability))
             case "Any":
-                return nullability == .nullable ? types.nullableAnyType : types.anyType
+                return types.withNullability(nullability, for: types.anyType)
             case "Unit":
                 return nullability == .nullable ? types.nullableAnyType : types.unitType
             case "Nothing":
-                return nullability == .nullable ? types.nullableNothingType : types.nothingType
+                return types.withNullability(nullability, for: types.nothingType)
             default:
                 break
             }

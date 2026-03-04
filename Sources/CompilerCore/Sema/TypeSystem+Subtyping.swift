@@ -12,21 +12,21 @@ extension TypeSystem {
             return true
         }
         if case .nothing(.nullable) = lhs {
-            // Nothing? is subtype of all nullable types, Any?, and Nothing? itself
+            // Nothing? is subtype of all nullable and platform types, Any?, and Nothing? itself
             switch rhs {
             case .error:
                 return true
-            case .any(.nullable):
+            case .any(.nullable), .any(.platformType):
                 return true
-            case .nothing(.nullable):
+            case .nothing(.nullable), .nothing(.platformType):
                 return true
-            case .primitive(_, .nullable):
+            case .primitive(_, .nullable), .primitive(_, .platformType):
                 return true
-            case let .classType(ct) where ct.nullability == .nullable:
+            case let .classType(ct) where ct.nullability == .nullable || ct.nullability == .platformType:
                 return true
-            case let .typeParam(tp) where tp.nullability == .nullable:
+            case let .typeParam(tp) where tp.nullability == .nullable || tp.nullability == .platformType:
                 return true
-            case let .functionType(ft) where ft.nullability == .nullable:
+            case let .functionType(ft) where ft.nullability == .nullable || ft.nullability == .platformType:
                 return true
             case let .intersection(parts):
                 return parts.allSatisfy { isSubtype(subtype, $0) }
@@ -53,9 +53,13 @@ extension TypeSystem {
         if case .any(.nullable) = rhs {
             return true
         }
+        if case .any(.platformType) = rhs {
+            // Any! accepts all types (platform type has unknown nullability)
+            return true
+        }
         if case .any(.nonNull) = rhs {
             switch lhs {
-            case .any(.nonNull), .any(.platformType), .unit, .nothing(.nonNull), .nothing(.platformType):
+            case .any(.nonNull), .any(.platformType), .unit, .nothing(.nonNull):
                 return true
             case let .primitive(_, nullability):
                 return nullabilitySubtype(nullability, .nonNull)

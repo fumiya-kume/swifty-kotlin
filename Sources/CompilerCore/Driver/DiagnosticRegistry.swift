@@ -437,6 +437,13 @@ public enum DiagnosticRegistry {
             defaultSeverity: .error,
             summary: "Type argument does not satisfy upper bound constraint."
         ),
+        DiagnosticDescriptor(
+            code: "KSWIFTK-SEMA-PLATFORM",
+            pass: "SEMA",
+            defaultSeverity: .warning,
+            summary: "Platform-typed expression used without null check; may throw NullPointerException at runtime.",
+            codeActions: [DiagnosticCodeAction(title: "Add null check before use")]
+        ),
     ]
 
     // MARK: - Type resolution pass (TYPE)
