@@ -42,6 +42,7 @@ final class BuildKIRRegressionTests: XCTestCase {
                 "OperatorLowering",
                 "ForLowering",
                 "CollectionLiteralLowering",
+                "FlowLowering",
                 "PropertyLowering",
                 "StdlibDelegateLowering",
                 "JvmStaticLowering",

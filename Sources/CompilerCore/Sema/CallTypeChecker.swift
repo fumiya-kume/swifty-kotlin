@@ -105,6 +105,33 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
             return returnType
         }
 
+        // --- Flow builder function (CORO-003) ---
+        // `flow { emit(...) }` is treated as a builtin cold stream factory.
+        // We infer the lambda with a flow-builder scope so unqualified `emit`
+        // resolves in Sema fallback.
+        if let calleeName,
+           interner.resolve(calleeName) == "flow",
+           args.count == 1
+        {
+            var flowBuilderCtx = ctx.with(implicitReceiverType: sema.types.anyType)
+            flowBuilderCtx.isFlowBuilderLambdaScope = true
+            let flowLambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                params: [],
+                returnType: sema.types.unitType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            _ = driver.inferExpr(
+                args[0].expr,
+                ctx: flowBuilderCtx,
+                locals: &locals,
+                expectedType: flowLambdaExpectedType
+            )
+            sema.bindings.markFlowExpr(id)
+            sema.bindings.bindExprType(id, type: sema.types.anyType)
+            return sema.types.anyType
+        }
+
         let argTypes = args.map { argument in
             driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
         }

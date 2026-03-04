@@ -349,10 +349,17 @@ public func kk_coroutine_state_set_label(_ continuation: Int, _ label: Int) -> I
 @_cdecl("kk_coroutine_state_exit")
 public func kk_coroutine_state_exit(_ continuation: Int, _ value: Int) -> Int {
     if let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) {
+        var shouldRelease = false
         runtimeStorage.withLock { state in
-            state.objectPointers.remove(UInt(bitPattern: continuationPtr))
+            let key = UInt(bitPattern: continuationPtr)
+            if state.objectPointers.contains(key) {
+                state.objectPointers.remove(key)
+                shouldRelease = true
+            }
         }
-        Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).release()
+        if shouldRelease {
+            Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).release()
+        }
     }
     return value
 }
@@ -529,14 +536,17 @@ public func kk_kxmini_delay(_ milliseconds: Int, _ continuation: Int) -> Int {
 
 private let runtimeFlowCollectStackKey = "kk_flow_collect_stack"
 
-private enum RuntimeFlowOpKind: Int {
+// Runtime flow op tags must be aligned with C preamble constants in
+// LLVMBackend+CRuntimePreambleData.swift.
+private enum RuntimeFlowTag: Int {
+    case emit = 0
     case map = 1
     case filter = 2
     case take = 3
 }
 
 private struct RuntimeFlowOp {
-    let kind: RuntimeFlowOpKind
+    let kind: RuntimeFlowTag
     let argument: Int
 }
 
@@ -635,6 +645,10 @@ private func runtimeFlowApplyOps(_ source: [Int], ops: [RuntimeFlowOp]) -> [Int]
     var values = source
     for op in ops {
         switch op.kind {
+        case .emit:
+            // Emit operations are handled during flow construction.
+            break
+
         case .map:
             guard op.argument != 0 else {
                 values = []
@@ -729,10 +743,12 @@ private func runtimeFlowCollectSuspend(_ values: [Int], collectorFnPtr: Int, fun
                 break
             }
             guard let state = runtimeContinuationState(from: continuation) else {
+                _ = kk_coroutine_state_exit(continuation, 0)
                 return 0
             }
             state.waitForResumeSignal()
         }
+        _ = kk_coroutine_state_exit(continuation, 0)
     }
     return 0
 }
@@ -748,11 +764,11 @@ public func kk_flow_create(_ emitterFnPtr: Int, _: Int) -> Int {
 
 @_cdecl("kk_flow_emit")
 public func kk_flow_emit(_ flowHandle: Int, _ value: Int, _ tag: Int) -> Int {
-    if tag == 0 {
+    if tag == RuntimeFlowTag.emit.rawValue {
         runtimeFlowCurrentCollectContext()?.emittedValues.append(runtimeFlowMaybeUnbox(value))
         return value
     }
-    guard let opKind = RuntimeFlowOpKind(rawValue: tag),
+    guard let opKind = RuntimeFlowTag(rawValue: tag),
           let flow = runtimeFlowHandle(from: flowHandle)
     else {
         return 0
