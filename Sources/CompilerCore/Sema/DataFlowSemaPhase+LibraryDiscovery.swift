@@ -143,7 +143,7 @@ extension DataFlowSemaPhase {
         }
 
         // kotlinLanguageVersion: optional but validated when present
-        let supportedLanguageVersions: Set<String> = ["2.3.10"]
+        let supportedLanguageVersions: Set = ["2.3.10"]
         if let langVersion = object["kotlinLanguageVersion"] as? String {
             if !supportedLanguageVersions.contains(langVersion) {
                 diagnostics.error(

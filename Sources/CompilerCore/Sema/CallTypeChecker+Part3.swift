@@ -45,6 +45,130 @@ extension CallTypeChecker {
         }
 
         let receiverType = driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
+
+        // --- Scope functions: let, run, apply, also (STDLIB-004) ---
+        // Must intercept BEFORE eager arg inference so the lambda argument
+        // is inferred with the correct expected type (it vs. receiver this).
+        // Skip interception when the receiver type defines a real member
+        // with the same name (user-defined members take precedence).
+        if args.count == 1 {
+            let calleeStr = interner.resolve(calleeName)
+            let scopeKind: ScopeFunctionKind? = switch calleeStr {
+            case "let": .scopeLet
+            case "run": .scopeRun
+            case "apply": .scopeApply
+            case "also": .scopeAlso
+            default: nil
+            }
+            let hasUserDefinedMember = if scopeKind != nil {
+                !driver.helpers.collectMemberFunctionCandidates(
+                    named: calleeName,
+                    receiverType: receiverType,
+                    sema: sema
+                ).isEmpty
+            } else {
+                false
+            }
+            if let scopeKind, !hasUserDefinedMember {
+                let nonNullReceiverType = safeCall
+                    ? sema.types.makeNonNullable(receiverType)
+                    : receiverType
+
+                switch scopeKind {
+                case .scopeLet:
+                    // let: lambda receives `it` parameter typed as T, returns R
+                    let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [nonNullReceiverType],
+                        returnType: expectedType ?? sema.types.anyType
+                    )))
+                    let lambdaType = driver.inferExpr(
+                        args[0].expr, ctx: ctx, locals: &locals,
+                        expectedType: lambdaExpectedType
+                    )
+                    let returnType: TypeID = if case let .functionType(fnType) = sema.types.kind(of: lambdaType) {
+                        fnType.returnType
+                    } else {
+                        sema.bindings.exprTypes[args[0].expr].flatMap { typeID in
+                            if case let .functionType(fnType) = sema.types.kind(of: typeID) {
+                                return fnType.returnType
+                            }
+                            return nil
+                        } ?? sema.types.anyType
+                    }
+                    let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
+                    sema.bindings.markScopeFunctionExpr(id, kind: scopeKind)
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+
+                case .scopeRun:
+                    // run: lambda has receiver T as `this`, returns R
+                    let receiverCtx = ctx.with(implicitReceiverType: nonNullReceiverType)
+                    let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                        receiver: nonNullReceiverType,
+                        params: [],
+                        returnType: expectedType ?? sema.types.anyType
+                    )))
+                    let lambdaType = driver.inferExpr(
+                        args[0].expr, ctx: receiverCtx, locals: &locals,
+                        expectedType: lambdaExpectedType
+                    )
+                    let returnType: TypeID = if case let .functionType(fnType) = sema.types.kind(of: lambdaType) {
+                        fnType.returnType
+                    } else {
+                        sema.bindings.exprTypes[args[0].expr].flatMap { typeID in
+                            if case let .functionType(fnType) = sema.types.kind(of: typeID) {
+                                return fnType.returnType
+                            }
+                            return nil
+                        } ?? sema.types.anyType
+                    }
+                    let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
+                    sema.bindings.markScopeFunctionExpr(id, kind: scopeKind)
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+
+                case .scopeApply:
+                    // apply: lambda has receiver T as `this`, returns T (receiver itself)
+                    let receiverCtx = ctx.with(implicitReceiverType: nonNullReceiverType)
+                    let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                        receiver: nonNullReceiverType,
+                        params: [],
+                        returnType: sema.types.unitType
+                    )))
+                    _ = driver.inferExpr(
+                        args[0].expr, ctx: receiverCtx, locals: &locals,
+                        expectedType: lambdaExpectedType
+                    )
+                    let finalType = safeCall
+                        ? sema.types.makeNullable(nonNullReceiverType)
+                        : nonNullReceiverType
+                    sema.bindings.markScopeFunctionExpr(id, kind: scopeKind)
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+
+                case .scopeAlso:
+                    // also: lambda receives `it` parameter typed as T, returns T
+                    let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [nonNullReceiverType],
+                        returnType: sema.types.unitType
+                    )))
+                    _ = driver.inferExpr(
+                        args[0].expr, ctx: ctx, locals: &locals,
+                        expectedType: lambdaExpectedType
+                    )
+                    let finalType = safeCall
+                        ? sema.types.makeNullable(nonNullReceiverType)
+                        : nonNullReceiverType
+                    sema.bindings.markScopeFunctionExpr(id, kind: scopeKind)
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+
+                case .scopeWith:
+                    break // with is handled in inferCallExpr (top-level function)
+                }
+            }
+        }
+
         // Defer inference of lambda arguments for collection HOFs so that the
         // contextual function type (and thus implicit `it`) is available.
         let collectionHOFNames: Set = [

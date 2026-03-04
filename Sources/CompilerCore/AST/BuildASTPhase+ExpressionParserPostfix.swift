@@ -143,7 +143,7 @@ extension BuildASTPhase.ExpressionParser {
             }
             // Trailing lambda: attach `{ ... }` as the last argument (Kotlin grammar).
             if matches(.symbol(.lBrace)),
-               let trailingLambda = parseLambdaLiteral()
+               let trailingLambda = parseLambdaLiteral(isTrailing: true)
             {
                 args.append(CallArgument(expr: trailingLambda))
                 memberEndRange = astArena.exprRange(trailingLambda) ?? memberEndRange

@@ -178,7 +178,8 @@ extension LambdaLowerer {
                 )
             }
             if let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol,
-               containsImplicitReceiverReference(in: lambdaBodyExprID, ast: ast),
+               containsImplicitReceiverReference(in: lambdaBodyExprID, ast: ast)
+               || containsImplicitReceiverMemberAccess(in: lambdaBodyExprID, ast: ast, sema: sema),
                canCaptureSymbolForLambda(
                    receiverSymbol,
                    lambdaExprID: lambdaExprID,
@@ -225,7 +226,8 @@ extension LambdaLowerer {
             )
         }
         if let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol,
-           containsImplicitReceiverReference(in: lambdaBodyExprID, ast: ast),
+           containsImplicitReceiverReference(in: lambdaBodyExprID, ast: ast)
+           || containsImplicitReceiverMemberAccess(in: lambdaBodyExprID, ast: ast, sema: sema),
            canCaptureSymbolForLambda(
                receiverSymbol,
                lambdaExprID: lambdaExprID,
@@ -237,6 +239,93 @@ extension LambdaLowerer {
             captures.append(receiverSymbol)
         }
         return captures
+    }
+
+    /// STDLIB-004: Check if an expression tree contains any implicit receiver
+    /// member accesses (bare name references resolved through implicitReceiverType).
+    /// Mirrors `containsImplicitReceiverReference` for comprehensive AST coverage.
+    func containsImplicitReceiverMemberAccess(in exprID: ExprID, ast: ASTModule, sema: SemaModule) -> Bool {
+        if sema.bindings.implicitReceiverMemberNames[exprID] != nil {
+            return true
+        }
+        guard let expr = ast.arena.expr(exprID) else {
+            return false
+        }
+        let check = { (id: ExprID) -> Bool in
+            self.containsImplicitReceiverMemberAccess(in: id, ast: ast, sema: sema)
+        }
+        switch expr {
+        case let .blockExpr(stmts, trailing, _):
+            return stmts.contains(where: check) || trailing.map(check) ?? false
+        case let .call(callee, _, args, _):
+            return check(callee) || args.contains { check($0.expr) }
+        case let .memberCall(receiver, _, _, args, _),
+             let .safeMemberCall(receiver, _, _, args, _):
+            return check(receiver) || args.contains { check($0.expr) }
+        case let .binary(_, lhs, rhs, _):
+            return check(lhs) || check(rhs)
+        case let .ifExpr(cond, thenExpr, elseExpr, _):
+            return check(cond) || check(thenExpr) || elseExpr.map(check) ?? false
+        case let .whenExpr(subject, branches, elseBody, _):
+            return subject.map(check) ?? false
+                || branches.contains { branch in
+                    branch.conditions.contains(where: check) || check(branch.body)
+                }
+                || elseBody.map(check) ?? false
+        case let .returnExpr(value, _, _):
+            return value.map(check) ?? false
+        case let .unaryExpr(_, operand, _),
+             let .nullAssert(operand, _),
+             let .throwExpr(operand, _):
+            return check(operand)
+        case let .isCheck(operand, _, _, _),
+             let .asCast(operand, _, _, _):
+            return check(operand)
+        case let .tryExpr(body, _, finallyBody, _):
+            return check(body) || finallyBody.map(check) ?? false
+        case let .lambdaLiteral(_, bodyExpr, _, _):
+            return check(bodyExpr)
+        case let .indexedAccess(receiver, indices, _):
+            return check(receiver) || indices.contains(where: check)
+        case let .stringTemplate(parts, _):
+            return parts.contains { part in
+                if case let .expression(exprID) = part {
+                    return check(exprID)
+                }
+                return false
+            }
+        case let .localDecl(_, _, _, initializer, _):
+            return initializer.map(check) ?? false
+        case let .localAssign(_, valueExpr, _):
+            return check(valueExpr)
+        case let .compoundAssign(_, _, valueExpr, _):
+            return check(valueExpr)
+        case let .memberAssign(receiver, _, value, _):
+            return check(receiver) || check(value)
+        case let .indexedAssign(receiver, indices, value, _):
+            return check(receiver) || indices.contains(where: check) || check(value)
+        case let .indexedCompoundAssign(_, receiver, indices, value, _):
+            return check(receiver) || indices.contains(where: check) || check(value)
+        case let .inExpr(lhs, rhs, _),
+             let .notInExpr(lhs, rhs, _):
+            return check(lhs) || check(rhs)
+        case let .callableRef(receiver, _, _):
+            return receiver.map(check) ?? false
+        case let .localFunDecl(_, _, _, body, _):
+            switch body {
+            case let .block(stmts, _): return stmts.contains(where: check)
+            case let .expr(bodyExpr, _): return check(bodyExpr)
+            case .unit: return false
+            }
+        case let .forExpr(_, iterable, body, _, _):
+            return check(iterable) || check(body)
+        case let .whileExpr(condition, body, _, _):
+            return check(condition) || check(body)
+        case let .doWhileExpr(body, condition, _, _):
+            return check(body) || check(condition)
+        default:
+            return false
+        }
     }
 
     func captureValueExpr(

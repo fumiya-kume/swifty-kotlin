@@ -1,7 +1,7 @@
 import Foundation
 
 extension LLVMBackend {
-    struct FrameMapPlan: Sendable {
+    struct FrameMapPlan {
         let parameterSlotBySymbol: [SymbolID: Int]
         let exprSlotByID: [Int32: Int]
         let rootOffsets: [Int32]

@@ -307,7 +307,7 @@ extension BuildASTPhase {
             if index + 1 < tokens.count, tokens[index + 1].kind == .symbol(.colon) {
                 let candidate = tokens[index]
                 if let candidateName = tokenText(candidate, interner: interner) {
-                    let knownTargets: Set<String> = [
+                    let knownTargets: Set = [
                         "get", "set", "field", "param", "setparam",
                         "delegate", "property", "receiver", "file", // swiftlint:disable:this trailing_comma
                     ]

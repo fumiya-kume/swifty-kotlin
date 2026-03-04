@@ -785,6 +785,13 @@ public final class BindingTable {
     public private(set) var builderDSLExprIDs: Set<ExprID> = []
     /// Maps builder DSL call expression IDs to their builder kind.
     public private(set) var builderDSLKinds: [ExprID: BuilderDSLKind] = [:]
+    /// Tracks call expressions that are scope function calls (STDLIB-004).
+    public private(set) var scopeFunctionExprIDs: Set<ExprID> = []
+    /// Maps scope function call expression IDs to their kind.
+    public private(set) var scopeFunctionKinds: [ExprID: ScopeFunctionKind] = [:]
+    /// Maps nameRef expression IDs to their member name when they were resolved
+    /// as implicit receiver member accesses (STDLIB-004).
+    public private(set) var implicitReceiverMemberNames: [ExprID: InternedString] = [:]
 
     public init() {}
 
@@ -956,6 +963,27 @@ public final class BindingTable {
     /// Retrieve the builder DSL kind for a builder call expression.
     public func builderDSLKind(for expr: ExprID) -> BuilderDSLKind? {
         builderDSLKinds[expr]
+    }
+
+    /// Mark a call expression as a scope function call (STDLIB-004).
+    public func markScopeFunctionExpr(_ expr: ExprID, kind: ScopeFunctionKind) {
+        scopeFunctionExprIDs.insert(expr)
+        scopeFunctionKinds[expr] = kind
+    }
+
+    /// Whether the given expression is a scope function call.
+    public func isScopeFunctionExpr(_ expr: ExprID) -> Bool {
+        scopeFunctionExprIDs.contains(expr)
+    }
+
+    /// Retrieve the scope function kind for a scope function call expression.
+    public func scopeFunctionKind(for expr: ExprID) -> ScopeFunctionKind? {
+        scopeFunctionKinds[expr]
+    }
+
+    /// Mark a nameRef expression as an implicit receiver member access (STDLIB-004).
+    public func markImplicitReceiverMember(_ expr: ExprID, name: InternedString) {
+        implicitReceiverMemberNames[expr] = name
     }
 }
 

@@ -54,7 +54,7 @@ final class RuntimeStubCache: @unchecked Sendable {
 }
 
 /// Immutable context for compiling a runtime stub.
-struct StubCompilationContext: Sendable {
+struct StubCompilationContext {
     let source: String
     let cacheKey: String
     let clangTargetArgs: [String]
