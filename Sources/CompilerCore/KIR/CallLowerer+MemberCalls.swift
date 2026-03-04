@@ -12,6 +12,7 @@ extension CallLowerer {
         "to", // FUNC-002
     ]
 
+    // swiftlint:disable:next function_body_length
     func lowerMemberCallExpr(
         _ exprID: ExprID,
         receiverExpr: ExprID,
@@ -936,6 +937,7 @@ extension CallLowerer {
 
     // MARK: - Scope Function Lowering (STDLIB-004)
 
+    // swiftlint:disable:next function_body_length function_parameter_count
     /// Attempts to lower a scope function call (let/run/apply/also).
     /// Returns nil if the expression is not a scope function call.
     func tryScopeFunctionLowering(
@@ -964,7 +966,7 @@ extension CallLowerer {
         )
 
         switch scopeKind {
-        case .let_, .also_:
+        case .scopeLet, .scopeAlso:
             // let/also: lambda takes `it` as explicit parameter.
             // Lower lambda normally, then call it with receiver as argument.
             let loweredLambdaID = driver.lowerExpr(
@@ -988,7 +990,7 @@ extension CallLowerer {
                 ))
             } else {
                 // Fallback: emit call using the lambda expression directly.
-                let calleeName = interner.intern(scopeKind == .let_ ? "kk_scope_let" : "kk_scope_also")
+                let calleeName = interner.intern(scopeKind == .scopeLet ? "kk_scope_let" : "kk_scope_also")
                 instructions.append(.call(
                     symbol: nil,
                     callee: calleeName,
@@ -998,13 +1000,13 @@ extension CallLowerer {
                     thrownResult: nil
                 ))
             }
-            if scopeKind == .also_ {
+            if scopeKind == .scopeAlso {
                 // also: result is the receiver, not the lambda return value.
                 instructions.append(.copy(from: loweredReceiverID, to: result))
             }
             return result
 
-        case .run_, .apply_:
+        case .scopeRun, .scopeApply:
             // run/apply: lambda has `this` as implicit receiver.
             // Set the implicit receiver to the lowered receiver before lowering
             // the lambda so that the lambda captures it.
@@ -1043,7 +1045,7 @@ extension CallLowerer {
                     thrownResult: nil
                 ))
             } else {
-                let calleeName = interner.intern(scopeKind == .run_ ? "kk_scope_run" : "kk_scope_apply")
+                let calleeName = interner.intern(scopeKind == .scopeRun ? "kk_scope_run" : "kk_scope_apply")
                 instructions.append(.call(
                     symbol: nil,
                     callee: calleeName,
@@ -1053,13 +1055,13 @@ extension CallLowerer {
                     thrownResult: nil
                 ))
             }
-            if scopeKind == .apply_ {
+            if scopeKind == .scopeApply {
                 // apply: result is the receiver, not the lambda return value.
                 instructions.append(.copy(from: loweredReceiverID, to: result))
             }
             return result
 
-        case .with_:
+        case .scopeWith:
             return nil // with is handled in lowerCallExpr
         }
     }

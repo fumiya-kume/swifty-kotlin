@@ -241,6 +241,7 @@ extension LambdaLowerer {
         return captures
     }
 
+    // swiftlint:disable:next cyclomatic_complexity
     /// STDLIB-004: Check if an expression tree contains any implicit receiver
     /// member accesses (bare name references resolved through implicitReceiverType).
     /// Uses a simple check: any expression in the Sema binding table means the receiver is needed.
@@ -266,7 +267,7 @@ extension LambdaLowerer {
             if containsImplicitReceiverMemberAccess(in: receiver, ast: ast, sema: sema) { return true }
             return args.contains { containsImplicitReceiverMemberAccess(in: $0.expr, ast: ast, sema: sema) }
         case let .returnExpr(value, _, _):
-            if let v = value { return containsImplicitReceiverMemberAccess(in: v, ast: ast, sema: sema) }
+            if let retVal = value { return containsImplicitReceiverMemberAccess(in: retVal, ast: ast, sema: sema) }
             return false
         default:
             return false

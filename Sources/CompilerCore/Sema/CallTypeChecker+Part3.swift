@@ -52,10 +52,10 @@ extension CallTypeChecker {
         if args.count == 1 {
             let calleeStr = interner.resolve(calleeName)
             let scopeKind: ScopeFunctionKind? = switch calleeStr {
-            case "let": .let_
-            case "run": .run_
-            case "apply": .apply_
-            case "also": .also_
+            case "let": .scopeLet
+            case "run": .scopeRun
+            case "apply": .scopeApply
+            case "also": .scopeAlso
             default: nil
             }
             if let scopeKind {
@@ -64,7 +64,7 @@ extension CallTypeChecker {
                     : receiverType
 
                 switch scopeKind {
-                case .let_:
+                case .scopeLet:
                     // let: lambda receives `it` parameter typed as T, returns R
                     let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                         params: [nonNullReceiverType],
@@ -74,12 +74,12 @@ extension CallTypeChecker {
                         args[0].expr, ctx: ctx, locals: &locals,
                         expectedType: lambdaExpectedType
                     )
-                    let returnType: TypeID = if case let .functionType(ft) = sema.types.kind(of: lambdaType) {
-                        ft.returnType
+                    let returnType: TypeID = if case let .functionType(fnType) = sema.types.kind(of: lambdaType) {
+                        fnType.returnType
                     } else {
                         sema.bindings.exprTypes[args[0].expr].flatMap { typeID in
-                            if case let .functionType(ft) = sema.types.kind(of: typeID) {
-                                return ft.returnType
+                            if case let .functionType(fnType) = sema.types.kind(of: typeID) {
+                                return fnType.returnType
                             }
                             return nil
                         } ?? sema.types.anyType
@@ -89,7 +89,7 @@ extension CallTypeChecker {
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
 
-                case .run_:
+                case .scopeRun:
                     // run: lambda has receiver T as `this`, returns R
                     let receiverCtx = ctx.with(implicitReceiverType: nonNullReceiverType)
                     let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
@@ -101,12 +101,12 @@ extension CallTypeChecker {
                         args[0].expr, ctx: receiverCtx, locals: &locals,
                         expectedType: lambdaExpectedType
                     )
-                    let returnType: TypeID = if case let .functionType(ft) = sema.types.kind(of: lambdaType) {
-                        ft.returnType
+                    let returnType: TypeID = if case let .functionType(fnType) = sema.types.kind(of: lambdaType) {
+                        fnType.returnType
                     } else {
                         sema.bindings.exprTypes[args[0].expr].flatMap { typeID in
-                            if case let .functionType(ft) = sema.types.kind(of: typeID) {
-                                return ft.returnType
+                            if case let .functionType(fnType) = sema.types.kind(of: typeID) {
+                                return fnType.returnType
                             }
                             return nil
                         } ?? sema.types.anyType
@@ -116,7 +116,7 @@ extension CallTypeChecker {
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
 
-                case .apply_:
+                case .scopeApply:
                     // apply: lambda has receiver T as `this`, returns T (receiver itself)
                     let receiverCtx = ctx.with(implicitReceiverType: nonNullReceiverType)
                     let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
@@ -135,7 +135,7 @@ extension CallTypeChecker {
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
 
-                case .also_:
+                case .scopeAlso:
                     // also: lambda receives `it` parameter typed as T, returns T
                     let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                         params: [nonNullReceiverType],
@@ -152,7 +152,7 @@ extension CallTypeChecker {
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
 
-                case .with_:
+                case .scopeWith:
                     break // with is handled in inferCallExpr (top-level function)
                 }
             }

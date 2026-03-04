@@ -36,11 +36,11 @@ public enum BuilderDSLKind: Equatable {
 
 /// Identifies the kind of scope function (STDLIB-004).
 public enum ScopeFunctionKind: Equatable {
-    case let_
-    case run_
-    case with_
-    case apply_
-    case also_
+    case scopeLet
+    case scopeRun
+    case scopeWith
+    case scopeApply
+    case scopeAlso
 }
 
 public struct CatchClauseBinding: Equatable {

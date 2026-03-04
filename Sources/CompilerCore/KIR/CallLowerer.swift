@@ -1,5 +1,6 @@
 import Foundation
 
+// swiftlint:disable:next type_body_length
 /// Delegate class for KIR lowering: CallLowerer.
 /// Holds an unowned reference to the driver for mutual recursion.
 final class CallLowerer {
@@ -9,6 +10,7 @@ final class CallLowerer {
         self.driver = driver
     }
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func lowerCallExpr(
         _ exprID: ExprID,
         calleeExpr: ExprID,
@@ -40,7 +42,7 @@ final class CallLowerer {
 
         // --- Scope function: with(receiver, block) (STDLIB-004) ---
         if let scopeKind = sema.bindings.scopeFunctionKind(for: exprID),
-           scopeKind == .with_,
+           scopeKind == .scopeWith,
            args.count == 2
         {
             let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType

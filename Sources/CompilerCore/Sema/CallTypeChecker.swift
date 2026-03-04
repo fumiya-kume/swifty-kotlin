@@ -88,17 +88,17 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
                 args[1].expr, ctx: receiverCtx, locals: &locals,
                 expectedType: lambdaExpectedType
             )
-            let returnType: TypeID = if case let .functionType(ft) = sema.types.kind(of: lambdaType) {
-                ft.returnType
+            let returnType: TypeID = if case let .functionType(fnType) = sema.types.kind(of: lambdaType) {
+                fnType.returnType
             } else {
                 sema.bindings.exprTypes[args[1].expr].flatMap { typeID in
-                    if case let .functionType(ft) = sema.types.kind(of: typeID) {
-                        return ft.returnType
+                    if case let .functionType(fnType) = sema.types.kind(of: typeID) {
+                        return fnType.returnType
                     }
                     return nil
                 } ?? sema.types.anyType
             }
-            sema.bindings.markScopeFunctionExpr(id, kind: .with_)
+            sema.bindings.markScopeFunctionExpr(id, kind: .scopeWith)
             sema.bindings.bindExprType(id, type: returnType)
             return returnType
         }

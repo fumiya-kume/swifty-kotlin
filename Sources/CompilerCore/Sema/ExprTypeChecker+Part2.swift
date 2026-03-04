@@ -202,8 +202,9 @@ extension ExprTypeChecker {
                 // Check known collection properties
                 if implicitMemberType == nil {
                     if resolvedName == "size" || resolvedName == "isEmpty" {
-                        if case let .classType(ct) = sema.types.kind(of: nonNullReceiver) {
-                            let className = sema.symbols.symbol(ct.classSymbol).map { interner.resolve($0.name) } ?? ""
+                        if case let .classType(classInfo) = sema.types.kind(of: nonNullReceiver) {
+                            let className = sema.symbols.symbol(classInfo.classSymbol)
+                                .map { interner.resolve($0.name) } ?? ""
                             if className.contains("List") || className.contains("Set") || className.contains("Map")
                                 || className.contains("Collection") || className.contains("Array")
                             {

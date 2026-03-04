@@ -9,6 +9,7 @@ final class ExprLowerer {
         self.driver = driver
     }
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func lowerExpr(
         _ exprID: ExprID,
         ast: ASTModule,
