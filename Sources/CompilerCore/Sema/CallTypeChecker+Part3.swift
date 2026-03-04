@@ -374,6 +374,63 @@ extension CallTypeChecker {
                     return finalType
                 }
             }
+            // String stdlib: 0-arg methods (STDLIB-006)
+            if args.isEmpty {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType) {
+                    let calleeStr = interner.resolve(calleeName)
+                    let resultType: TypeID? = switch calleeStr {
+                    case "trim":
+                        sema.types.stringType
+                    case "toInt":
+                        sema.types.intType
+                    case "toDouble":
+                        sema.types.make(.primitive(.double, .nonNull))
+                    default:
+                        nil
+                    }
+                    if let resultType {
+                        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                        sema.bindings.bindExprType(id, type: finalType)
+                        return finalType
+                    }
+                }
+            }
+            // String stdlib: 1-arg methods (STDLIB-006)
+            if args.count == 1 {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType) {
+                    let calleeStr = interner.resolve(calleeName)
+                    let resultType: TypeID? = switch calleeStr {
+                    case "startsWith", "endsWith", "contains":
+                        sema.types.make(.primitive(.boolean, .nonNull))
+                    case "split":
+                        sema.types.anyType
+                    default:
+                        nil
+                    }
+                    if let resultType {
+                        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                        sema.bindings.bindExprType(id, type: finalType)
+                        return finalType
+                    }
+                }
+            }
+            // String stdlib: 2-arg methods (STDLIB-006)
+            if args.count == 2, interner.resolve(calleeName) == "replace" {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType) {
+                    let finalType = safeCall ? sema.types.makeNullable(sema.types.stringType) : sema.types.stringType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            }
             // For non-empty-arg member calls, try member property/field lookup.
             // This handles callable property syntax (e.g. `receiver.f(...)`).
             // Skip this for class-name receivers — only companion members are

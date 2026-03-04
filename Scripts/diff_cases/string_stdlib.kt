@@ -1,0 +1,27 @@
+fun main() {
+    // trim
+    println("  hello  ".trim())
+    println("\t\nhello\n\t".trim())
+    println("".trim())
+    println("   ".trim())
+
+    // startsWith / endsWith
+    println("hello world".startsWith("hello"))
+    println("hello world".endsWith("world"))
+    println("hello world".startsWith("world"))
+    println("hello world".endsWith("hello"))
+
+    // contains
+    println("hello world".contains("lo wo"))
+    println("hello world".contains("xyz"))
+    println("hello world".contains(""))
+
+    // replace
+    println("hello world".replace("world", "kotlin"))
+    println("aaa".replace("a", "bb"))
+
+    // toInt
+    println("42".toInt())
+    println("-123".toInt())
+    println("0".toInt())
+}

@@ -11,7 +11,7 @@ import Foundation
 /// The build-time ABI reconciliation tests (in RuntimeTests) verify that
 /// these declarations match the Runtime module's `RuntimeABISpec`.
 public enum RuntimeABIExterns {
-    public static let specVersion = "J19"
+    public static let specVersion = "J20"
 
     /// A single extern function declaration for the C preamble.
     public struct ExternDecl: Equatable, Sendable {
@@ -99,6 +99,54 @@ public enum RuntimeABIExterns {
     public static let kk_string_length = ExternDecl(
         name: "kk_string_length",
         parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_trim = ExternDecl(
+        name: "kk_string_trim",
+        parameterTypes: ["intptr_t"],
+        returnType: "void *"
+    )
+
+    public static let kk_string_startsWith = ExternDecl(
+        name: "kk_string_startsWith",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_endsWith = ExternDecl(
+        name: "kk_string_endsWith",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_contains_str = ExternDecl(
+        name: "kk_string_contains_str",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_replace = ExternDecl(
+        name: "kk_string_replace",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "void *"
+    )
+
+    public static let kk_string_split = ExternDecl(
+        name: "kk_string_split",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_toInt = ExternDecl(
+        name: "kk_string_toInt",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_toDouble = ExternDecl(
+        name: "kk_string_toDouble",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
@@ -695,6 +743,14 @@ public enum RuntimeABIExterns {
         kk_string_concat,
         kk_string_compareTo,
         kk_string_length,
+        kk_string_trim,
+        kk_string_startsWith,
+        kk_string_endsWith,
+        kk_string_contains_str,
+        kk_string_replace,
+        kk_string_split,
+        kk_string_toInt,
+        kk_string_toDouble,
         // Println
         kk_println_any,
         // GC

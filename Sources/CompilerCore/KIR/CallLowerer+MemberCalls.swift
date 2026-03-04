@@ -303,6 +303,94 @@ extension CallLowerer {
             }
         }
 
+        // String stdlib: 0-arg methods (STDLIB-006)
+        if args.isEmpty {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+                let calleeStr = interner.resolve(calleeName)
+                if calleeStr == "trim" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_trim"),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+                if calleeStr == "toInt" {
+                    let thrownResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: nil)
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_toInt"),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: true,
+                        thrownResult: thrownResult
+                    ))
+                    return result
+                }
+                if calleeStr == "toDouble" {
+                    let thrownResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: nil)
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_toDouble"),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: true,
+                        thrownResult: thrownResult
+                    ))
+                    return result
+                }
+            }
+        }
+
+        // String stdlib: 1-arg methods (STDLIB-006)
+        if args.count == 1 {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+                let calleeStr = interner.resolve(calleeName)
+                let runtimeCallee: String? = switch calleeStr {
+                case "startsWith": "kk_string_startsWith"
+                case "endsWith": "kk_string_endsWith"
+                case "contains": "kk_string_contains_str"
+                case "split": "kk_string_split"
+                default: nil
+                }
+                if let runtimeCallee {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(runtimeCallee),
+                        arguments: [loweredReceiverID, loweredArgIDs[0]],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+        }
+
+        // String stdlib: replace(old, new) (STDLIB-006)
+        if args.count == 2, interner.resolve(calleeName) == "replace" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_replace"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
         let isSuperCall = sema.bindings.isSuperCallExpr(exprID)
         let callBinding = sema.bindings.callBindings[exprID]
         let chosen = callBinding?.chosenCallee
