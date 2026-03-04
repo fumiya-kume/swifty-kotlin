@@ -138,6 +138,7 @@ extension CallTypeChecker {
                 : lookupReceiverType
             if receiverForCheck == intType || receiverForCheck == longType,
                argTypes[0] == intType
+            // swiftlint:disable:next opening_brace
             {
                 let finalType = safeCall ? sema.types.makeNullable(stringType) : stringType
                 sema.bindings.bindExprType(id, type: finalType)
@@ -342,6 +343,7 @@ extension CallTypeChecker {
                    memberName: calleeName,
                    sema: sema
                )
+            // swiftlint:disable:next opening_brace
             {
                 if let memberSymbol = sema.symbols.symbol(staticMember.symbol),
                    !ctx.visibilityChecker.isAccessible(
@@ -360,6 +362,7 @@ extension CallTypeChecker {
             }
             if args.isEmpty,
                interner.resolve(calleeName) == "length"
+            // swiftlint:disable:next opening_brace
             {
                 let receiverTypeForCheck = safeCall
                     ? sema.types.makeNonNullable(lookupReceiverType)
@@ -496,6 +499,19 @@ extension CallTypeChecker {
             }
             if lookupReceiverType == sema.types.errorType {
                 return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+            }
+            // Kotlin infix `to` is effectively a universal extension used by
+            // destructuring-friendly literals (e.g. `1 to "a"`). Keep a
+            // lightweight fallback when no symbol candidate was discovered.
+            if !isClassNameReceiver,
+               args.count == 1,
+               interner.resolve(calleeName) == "to"
+            // swiftlint:disable:next opening_brace
+            {
+                let resultType = sema.types.anyType
+                let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
             }
             if let firstInvisible = invisible.first {
                 // swiftlint:disable:next line_length
