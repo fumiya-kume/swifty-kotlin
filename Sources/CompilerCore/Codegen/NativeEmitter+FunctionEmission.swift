@@ -786,10 +786,7 @@ extension NativeEmitter {
                     }
                 }
 
-            case let .virtualCall(symbol, callee, receiver, arguments, result, usesThrownChannel, thrownResult, _):
-                // Virtual dispatch: fall back to direct call via symbol/callee resolution.
-                // The vtable/itable lookup is handled by the C backend; the LLVM IR backend
-                // emits a direct call using the statically resolved callee for now.
+            case let .virtualCall(symbol, callee, receiver, arguments, result, usesThrownChannel, thrownResult, dispatch):
                 guard !bindings.hasTerminator(currentBlock) else {
                     continue
                 }
@@ -797,10 +794,10 @@ extension NativeEmitter {
                 let calleeName = interner.resolve(callee)
                 let argumentValues = [resolveValue(receiver)] + arguments.map(resolveValue)
 
-                let calleeFunction: LLVMFunction?
                 let isInternalCall = symbol.flatMap { internalFunctions[$0] } != nil
                 let shouldAppendThrownChannel = usesThrownChannel || isInternalCall
 
+                let calleeFunction: LLVMFunction?
                 if let symbol,
                    let internalFunction = internalFunctions[symbol]
                 {
@@ -819,6 +816,41 @@ extension NativeEmitter {
                     storeResult(result, nil)
                     continue
                 }
+
+                let lookupFunction: LLVMFunction?
+                var lookupArgs: [LLVMCAPIBindings.LLVMValueRef] = []
+                switch dispatch {
+                case let .vtable(slot):
+                    lookupFunction = declareExternalFunction(named: "kk_vtable_lookup", argumentCount: 2, appendThrownChannel: false)
+                    lookupArgs = [
+                        resolveValue(receiver),
+                        bindings.constInt(int64Type, value: UInt64(slot)) ?? bindings.constInt(int64Type, value: 0)!
+                    ]
+                case let .itable(interfaceSlot, methodSlot):
+                    lookupFunction = declareExternalFunction(named: "kk_itable_lookup", argumentCount: 3, appendThrownChannel: false)
+                    lookupArgs = [
+                        resolveValue(receiver),
+                        bindings.constInt(int64Type, value: UInt64(interfaceSlot)) ?? bindings.constInt(int64Type, value: 0)!,
+                        bindings.constInt(int64Type, value: UInt64(methodSlot)) ?? bindings.constInt(int64Type, value: 0)!
+                    ]
+                }
+
+                guard let lookupFn = lookupFunction else { continue }
+                guard let fptrRaw = bindings.buildCall(
+                    builder,
+                    functionType: lookupFn.type,
+                    callee: lookupFn.value,
+                    arguments: lookupArgs,
+                    name: "lookup_raw_\(instructionIndex)"
+                ) else { continue }
+
+                let functionPointerType = bindings.pointerType(calleeFunction.type)
+                let fptr = bindings.buildIntToPtr(
+                    builder,
+                    value: fptrRaw,
+                    type: functionPointerType,
+                    name: "lookup_fptr_\(instructionIndex)"
+                )
 
                 var callArguments = argumentValues
                 var thrownSlotPointer: LLVMCAPIBindings.LLVMValueRef?
@@ -844,7 +876,7 @@ extension NativeEmitter {
                 let callValue = bindings.buildCall(
                     builder,
                     functionType: calleeFunction.type,
-                    callee: calleeFunction.value,
+                    callee: fptr ?? calleeFunction.value,
                     arguments: callArguments,
                     name: "vcall_\(instructionIndex)"
                 )
