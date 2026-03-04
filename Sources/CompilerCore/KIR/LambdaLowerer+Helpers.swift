@@ -178,8 +178,8 @@ extension LambdaLowerer {
                 )
             }
             if let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol,
-               (containsImplicitReceiverReference(in: lambdaBodyExprID, ast: ast)
-                   || containsImplicitReceiverMemberAccess(in: lambdaBodyExprID, ast: ast, sema: sema)),
+               containsImplicitReceiverReference(in: lambdaBodyExprID, ast: ast)
+                   || containsImplicitReceiverMemberAccess(in: lambdaBodyExprID, ast: ast, sema: sema),
                canCaptureSymbolForLambda(
                    receiverSymbol,
                    lambdaExprID: lambdaExprID,
@@ -226,8 +226,8 @@ extension LambdaLowerer {
             )
         }
         if let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol,
-           (containsImplicitReceiverReference(in: lambdaBodyExprID, ast: ast)
-               || containsImplicitReceiverMemberAccess(in: lambdaBodyExprID, ast: ast, sema: sema)),
+           containsImplicitReceiverReference(in: lambdaBodyExprID, ast: ast)
+               || containsImplicitReceiverMemberAccess(in: lambdaBodyExprID, ast: ast, sema: sema),
            canCaptureSymbolForLambda(
                receiverSymbol,
                lambdaExprID: lambdaExprID,
