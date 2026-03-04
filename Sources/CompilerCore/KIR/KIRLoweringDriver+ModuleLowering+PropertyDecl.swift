@@ -1,7 +1,6 @@
 import Foundation
 
 extension KIRLoweringDriver {
-    // swiftlint:disable:next function_parameter_count
     func lowerTopLevelPropertyDecl(
         _ propertyDecl: PropertyDecl,
         symbol: SymbolID,
@@ -112,7 +111,6 @@ extension KIRLoweringDriver {
 
     // MARK: - Property Initializer
 
-    // swiftlint:disable:next function_parameter_count
     private func lowerPropertyInitializer(
         _ propertyDecl: PropertyDecl,
         symbol: SymbolID,
@@ -147,7 +145,6 @@ extension KIRLoweringDriver {
 
     // MARK: - Delegate Property
 
-    // swiftlint:disable:next function_parameter_count
     private func lowerPropertyDelegate(
         _ propertyDecl: PropertyDecl,
         symbol: SymbolID,
@@ -208,7 +205,6 @@ extension KIRLoweringDriver {
         return storageSymbol
     }
 
-    // swiftlint:disable:next function_parameter_count
     private func emitDelegateAccessorsIfCustom(
         delegateKind: StdlibDelegateKind,
         propertyDecl: PropertyDecl,
@@ -235,7 +231,6 @@ extension KIRLoweringDriver {
 
     // MARK: - Delegate init instructions
 
-    // swiftlint:disable:next function_parameter_count
     private func emitDelegateInitInstructions(
         delegateKind: StdlibDelegateKind,
         propertyDecl: PropertyDecl,
@@ -276,7 +271,6 @@ extension KIRLoweringDriver {
         }
     }
 
-    // swiftlint:disable:next function_parameter_count
     private func emitLazyDelegateInit(
         propertyDecl: PropertyDecl,
         symbol: SymbolID,
@@ -304,7 +298,6 @@ extension KIRLoweringDriver {
         initInstructions.append(.storeGlobal(value: createResult, symbol: delegateStorageSymbol))
     }
 
-    // swiftlint:disable:next function_parameter_count
     private func emitCallbackDelegateInit(
         runtimeFnName: String,
         propertyDecl: PropertyDecl,
@@ -332,7 +325,6 @@ extension KIRLoweringDriver {
         initInstructions.append(.storeGlobal(value: createResult, symbol: delegateStorageSymbol))
     }
 
-    // swiftlint:disable:next function_parameter_count
     private func emitCustomDelegateInit(
         propertyDecl: PropertyDecl,
         symbol: SymbolID,

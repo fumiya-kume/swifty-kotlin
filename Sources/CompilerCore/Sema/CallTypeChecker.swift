@@ -2,7 +2,7 @@ import Foundation
 
 /// Handles call expression type inference (function calls, member calls, safe member calls).
 /// Derived from TypeCheckSemaPass+InferCallsAndBinary.swift.
-final class CallTypeChecker { // swiftlint:disable:this type_body_length
+final class CallTypeChecker {
     unowned let driver: TypeCheckDriver
 
     init(driver: TypeCheckDriver) {
@@ -234,6 +234,18 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
                 diagnostics: ctx.semaCtx.diagnostics
             )
             let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
+            if let calleeName {
+                switch interner.resolve(calleeName) {
+                case "listOf", "mutableListOf", "emptyList",
+                     "arrayOf", "intArrayOf", "longArrayOf",
+                     "mapOf", "mutableMapOf", "emptyMap",
+                     "setOf", "mutableSetOf", "emptySet",
+                     "listOfNotNull":
+                    sema.bindings.markCollectionExpr(id)
+                default:
+                    break
+                }
+            }
             sema.bindings.bindExprType(id, type: returnType)
             return returnType
         }

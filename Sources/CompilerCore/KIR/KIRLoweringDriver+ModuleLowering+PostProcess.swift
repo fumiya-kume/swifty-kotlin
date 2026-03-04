@@ -100,7 +100,6 @@ extension KIRLoweringDriver {
 
     // MARK: - Delegate Access Rewriting
 
-    // swiftlint:disable:next function_body_length function_parameter_count
     private func rewriteDelegateAccesses(
         body: [KIRInstruction],
         arena: KIRArena,
@@ -169,7 +168,6 @@ extension KIRLoweringDriver {
         return result.instructions
     }
 
-    // swiftlint:disable:next function_parameter_count
     private func emitGetValue(
         result: KIRExprID, storageSym: SymbolID, propSym: SymbolID,
         kindMap: [SymbolID: StdlibDelegateKind], names: DelegateRuntimeNames,
@@ -191,7 +189,6 @@ extension KIRLoweringDriver {
         ))
     }
 
-    // swiftlint:disable:next function_parameter_count
     private func emitSetValue(
         fromExpr: KIRExprID, storageSym: SymbolID, kind: StdlibDelegateKind?,
         names: DelegateRuntimeNames,

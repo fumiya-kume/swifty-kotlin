@@ -94,6 +94,33 @@ extension BuildKIRRegressionTests {
         }
     }
 
+    func testStringStdlibThrowFlagsAreClassifiedByABI() throws {
+        let source = """
+        fun main() {
+            "  hi  ".trim()
+            "1,2,3".split(",")
+            "42".toInt()
+            "3.14".toDouble()
+            "%s-%d".format("x", 1)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let throwFlags = extractThrowFlags(from: body, interner: ctx.interner)
+            XCTAssertEqual(throwFlags["kk_string_trim"]?.allSatisfy { $0 == false }, true)
+            XCTAssertEqual(throwFlags["kk_string_split"]?.allSatisfy { $0 == true }, true)
+            XCTAssertEqual(throwFlags["kk_string_toInt"]?.allSatisfy { $0 == true }, true)
+            XCTAssertEqual(throwFlags["kk_string_toDouble"]?.allSatisfy { $0 == true }, true)
+            XCTAssertEqual(throwFlags["kk_string_format"]?.allSatisfy { $0 == false }, true)
+        }
+    }
+
     func testArrayAccessAndAssignmentLowerToRuntimeCallsWithExpectedThrowFlags() throws {
         let source = """
         fun main(): Any? {

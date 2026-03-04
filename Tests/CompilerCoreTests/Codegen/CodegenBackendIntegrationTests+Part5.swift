@@ -3,7 +3,6 @@ import Foundation
 import XCTest
 
 extension CodegenBackendIntegrationTests {
-    // swiftlint:disable:next function_body_length
     func testLlvmCapiBackendDebugObjectContainsDwarfSections() throws {
         let diagnostics = DiagnosticEngine()
         let interner = StringInterner()

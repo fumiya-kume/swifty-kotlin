@@ -65,9 +65,8 @@ extension KIRLoweringDriver {
         return kPropertyExprID
     }
 
-    // Emits the full provideDelegate flow for top-level properties: store raw delegate,
-    // build thisRef + KProperty stub, call provideDelegate, wrap result in kk_custom_delegate_create.
-    // swiftlint:disable:next function_parameter_count
+    /// Emits the full provideDelegate flow for top-level properties: store raw delegate,
+    /// build thisRef + KProperty stub, call provideDelegate, wrap result in kk_custom_delegate_create.
     func emitProvideDelegateInit(
         delegateObjExpr: KIRExprID,
         symbol: SymbolID,

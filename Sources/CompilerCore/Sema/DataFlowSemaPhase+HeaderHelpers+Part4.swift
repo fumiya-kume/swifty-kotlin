@@ -4,7 +4,6 @@ import Foundation
 // Split from DataFlowSemaPhase+HeaderHelpers.swift to stay within file-length limits.
 
 extension DataFlowSemaPhase {
-    // swiftlint:disable:next function_body_length
     func registerSyntheticPropertyInterfaceStubs(
         symbols: SymbolTable,
         types: TypeSystem,

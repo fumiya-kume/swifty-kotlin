@@ -110,7 +110,6 @@ extension BuildASTPhase {
         return aliases
     }
 
-    // swiftlint:disable cyclomatic_complexity function_body_length
     /// Parses supertype entries for class declarations, including optional
     /// `by expr` delegation (e.g. `class Foo(impl: Printer) : Printer by impl`).
     /// Returns `[SuperTypeEntry]`; use `declarationSuperTypes` for interface/object.

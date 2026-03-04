@@ -325,53 +325,6 @@ extension LLVMBackend {
                     continue
                 }
 
-                // String stdlib: void*-returning functions need (intptr_t) cast (STDLIB-006)
-                if calleeName == "kk_string_trim" {
-                    let arg = argVars.count > 0 ? argVars[0] : "0"
-                    let expr = "(intptr_t)kk_string_trim(\(arg))"
-                    if let result {
-                        lines.append("  \(varName(result)) = \(expr);")
-                        syncRoot(result)
-                    } else {
-                        lines.append("  (void)\(expr);")
-                    }
-                    continue
-                }
-
-                if calleeName == "kk_string_replace" {
-                    let str = argVars.count > 0 ? argVars[0] : "0"
-                    let old = argVars.count > 1 ? argVars[1] : "0"
-                    let new = argVars.count > 2 ? argVars[2] : "0"
-                    let expr = "(intptr_t)kk_string_replace(\(str), \(old), \(new))"
-                    if let result {
-                        lines.append("  \(varName(result)) = \(expr);")
-                        syncRoot(result)
-                    } else {
-                        lines.append("  (void)\(expr);")
-                    }
-                    continue
-                }
-
-                // String stdlib: intptr_t-returning 2-arg functions (STDLIB-006)
-                if calleeName == "kk_string_startsWith"
-                    || calleeName == "kk_string_endsWith"
-                    || calleeName == "kk_string_contains_str"
-                    || calleeName == "kk_string_split"
-                {
-                    let str = argVars.count > 0 ? argVars[0] : "0"
-                    let arg = argVars.count > 1 ? argVars[1] : "0"
-                    let expr = "\(calleeName)(\(str), \(arg))"
-                    if let result {
-                        lines.append("  \(varName(result)) = \(expr);")
-                        if calleeName == "kk_string_split" {
-                            syncRoot(result)
-                        }
-                    } else {
-                        lines.append("  (void)\(expr);")
-                    }
-                    continue
-                }
-
                 let target: String
                 let isInternalFunction: Bool
                 if let symbol, let resolved = functionSymbols[symbol] {

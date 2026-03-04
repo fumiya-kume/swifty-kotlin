@@ -1,4 +1,3 @@
-// swiftlint:disable file_length
 import Foundation
 
 @_cdecl("kk_throwable_new")
@@ -393,122 +392,26 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
     Swift.print("<object \(raw)>")
 }
 
-// MARK: - String stdlib (STDLIB-006)
+// MARK: - String nullable receiver helpers
 
-@_cdecl("kk_string_trim")
-public func kk_string_trim(_ strRaw: Int) -> UnsafeMutableRawPointer {
-    let str = extractString(from: UnsafeMutableRawPointer(bitPattern: strRaw)) ?? ""
-    // Kotlin/Java trim(): remove chars <= ' ' (ASCII 32) from both ends
-    let scalars = Array(str.unicodeScalars)
-    var start = 0
-    while start < scalars.count, scalars[start].value <= 32 {
-        start += 1
-    }
-    var end = scalars.count
-    while end > start, scalars[end - 1].value <= 32 {
-        end -= 1
-    }
-    let trimmed = String(String.UnicodeScalarView(scalars[start ..< end]))
-    let utf8 = Array(trimmed.utf8)
-    return utf8.withUnsafeBufferPointer { buf in
-        kk_string_from_utf8(buf.baseAddress ?? UnsafePointer<UInt8>(bitPattern: 1)!, Int32(buf.count))
-    }
-}
-
-// NULL-002: nullable receiver extension functions
 @_cdecl("kk_string_isNullOrEmpty")
 public func kk_string_isNullOrEmpty(_ strRaw: Int) -> Int {
-    guard let str = extractString(from: UnsafeMutableRawPointer(bitPattern: strRaw)) else {
+    guard let rawPointer = UnsafeMutableRawPointer(bitPattern: strRaw) else {
         return kk_box_bool(1)
+    }
+    guard let str = extractString(from: rawPointer) else {
+        return kk_box_bool(0)
     }
     return kk_box_bool(str.isEmpty ? 1 : 0)
 }
 
 @_cdecl("kk_string_isNullOrBlank")
 public func kk_string_isNullOrBlank(_ strRaw: Int) -> Int {
-    guard let str = extractString(from: UnsafeMutableRawPointer(bitPattern: strRaw)) else {
+    guard let rawPointer = UnsafeMutableRawPointer(bitPattern: strRaw) else {
         return kk_box_bool(1)
     }
+    guard let str = extractString(from: rawPointer) else {
+        return kk_box_bool(0)
+    }
     return kk_box_bool(str.allSatisfy(\.isWhitespace) ? 1 : 0)
-}
-
-@_cdecl("kk_string_startsWith")
-public func kk_string_startsWith(_ strRaw: Int, _ prefixRaw: Int) -> Int {
-    let str = extractString(from: UnsafeMutableRawPointer(bitPattern: strRaw)) ?? ""
-    let prefix = extractString(from: UnsafeMutableRawPointer(bitPattern: prefixRaw)) ?? ""
-    return kk_box_bool(str.hasPrefix(prefix) ? 1 : 0)
-}
-
-@_cdecl("kk_string_endsWith")
-public func kk_string_endsWith(_ strRaw: Int, _ suffixRaw: Int) -> Int {
-    let str = extractString(from: UnsafeMutableRawPointer(bitPattern: strRaw)) ?? ""
-    let suffix = extractString(from: UnsafeMutableRawPointer(bitPattern: suffixRaw)) ?? ""
-    return kk_box_bool(str.hasSuffix(suffix) ? 1 : 0)
-}
-
-@_cdecl("kk_string_contains_str")
-public func kk_string_contains_str(_ strRaw: Int, _ otherRaw: Int) -> Int {
-    let str = extractString(from: UnsafeMutableRawPointer(bitPattern: strRaw)) ?? ""
-    let other = extractString(from: UnsafeMutableRawPointer(bitPattern: otherRaw)) ?? ""
-    return kk_box_bool(str.contains(other) ? 1 : 0)
-}
-
-@_cdecl("kk_string_replace")
-public func kk_string_replace(_ strRaw: Int, _ oldRaw: Int, _ newRaw: Int) -> UnsafeMutableRawPointer {
-    let str = extractString(from: UnsafeMutableRawPointer(bitPattern: strRaw)) ?? ""
-    let oldValue = extractString(from: UnsafeMutableRawPointer(bitPattern: oldRaw)) ?? ""
-    let newValue = extractString(from: UnsafeMutableRawPointer(bitPattern: newRaw)) ?? ""
-    let result = str.replacingOccurrences(of: oldValue, with: newValue)
-    let utf8 = Array(result.utf8)
-    return utf8.withUnsafeBufferPointer { buf in
-        kk_string_from_utf8(buf.baseAddress ?? UnsafePointer<UInt8>(bitPattern: 1)!, Int32(buf.count))
-    }
-}
-
-@_cdecl("kk_string_split")
-public func kk_string_split(_ strRaw: Int, _ delimRaw: Int) -> Int {
-    let str = extractString(from: UnsafeMutableRawPointer(bitPattern: strRaw)) ?? ""
-    let delim = extractString(from: UnsafeMutableRawPointer(bitPattern: delimRaw)) ?? ""
-    let parts = if delim.isEmpty {
-        [str]
-    } else {
-        str.components(separatedBy: delim)
-    }
-    let arrayHandle = kk_array_new(parts.count)
-    if let arrayBox = runtimeArrayBox(from: arrayHandle) {
-        for (idx, part) in parts.enumerated() {
-            let utf8 = Array(part.utf8)
-            let strPtr = utf8.withUnsafeBufferPointer { buf in
-                kk_string_from_utf8(buf.baseAddress ?? UnsafePointer<UInt8>(bitPattern: 1)!, Int32(buf.count))
-            }
-            arrayBox.elements[idx] = Int(bitPattern: strPtr)
-        }
-    }
-    return kk_list_of(arrayHandle, parts.count)
-}
-
-@_cdecl("kk_string_toInt")
-public func kk_string_toInt(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    outThrown?.pointee = 0
-    let str = extractString(from: UnsafeMutableRawPointer(bitPattern: strRaw)) ?? ""
-    guard let value = Int(str) else {
-        outThrown?.pointee = runtimeAllocateThrowable(
-            message: "NumberFormatException: For input string: \"\(str)\""
-        )
-        return 0
-    }
-    return value
-}
-
-@_cdecl("kk_string_toDouble")
-public func kk_string_toDouble(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    outThrown?.pointee = 0
-    let str = extractString(from: UnsafeMutableRawPointer(bitPattern: strRaw)) ?? ""
-    guard let value = Double(str) else {
-        outThrown?.pointee = runtimeAllocateThrowable(
-            message: "NumberFormatException: For input string: \"\(str)\""
-        )
-        return 0
-    }
-    return Int(bitPattern: UInt(value.bitPattern))
 }

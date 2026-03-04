@@ -1,7 +1,6 @@
 @testable import CompilerCore
 import XCTest
 
-// swiftlint:disable:next type_body_length
 final class KIRLowererPart2CoverageTests: XCTestCase {
     func testLambdaLowererPart2TraversesNestedExpressionsAndDetectsImplicitReceiver() {
         let fixture = makeDirectKIRFixture()

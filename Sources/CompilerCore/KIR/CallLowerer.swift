@@ -257,7 +257,10 @@ final class CallLowerer {
                 finalArgIDs.insert(contentsOf: callableInfo.captureArguments, at: 1)
             }
         }
-        if callNormalized.defaultMask != 0, let chosen {
+        if callNormalized.defaultMask != 0,
+           let chosen,
+           sema.symbols.externalLinkName(for: chosen)?.isEmpty ?? true
+        {
             appendReifiedTypeTokens(
                 chosenCallee: chosen,
                 callBinding: callBinding,

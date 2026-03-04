@@ -77,7 +77,6 @@ final class LocalDeclTypeChecker {
         return sema.types.unitType
     }
 
-    // swiftlint:disable:next function_body_length
     func inferLocalAssignExpr(
         _ id: ExprID,
         name: InternedString,

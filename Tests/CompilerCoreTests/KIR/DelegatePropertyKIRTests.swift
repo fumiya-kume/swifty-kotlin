@@ -1,4 +1,3 @@
-// swiftlint:disable type_body_length
 @testable import CompilerCore
 import Foundation
 import XCTest

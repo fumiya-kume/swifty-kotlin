@@ -249,7 +249,6 @@ public final class ClassMemberScope: BaseScope {
 public final class FunctionScope: BaseScope {}
 public final class BlockScope: BaseScope {}
 
-// swiftlint:disable:next type_body_length
 public final class SymbolTable {
     private var symbolsStorage: [SemanticSymbol] = []
     private var byFQName: [[InternedString]: [SymbolID]] = [:]
@@ -511,7 +510,6 @@ public final class SymbolTable {
         classDelegationExprByClassAndInterface[classSymbol]?[interfaceSymbol]
     }
 
-    // swiftlint:disable large_tuple line_length
     /// CLASS-008: Synthetic forwarding method symbols created for class delegation.
     /// Maps forwarding method symbol -> (interfaceSymbol, interfaceMethodSymbol, fieldSymbol).
     private var classDelegationForwardingMethodInfo: [SymbolID: (interfaceSymbol: SymbolID, interfaceMethodSymbol: SymbolID, fieldSymbol: SymbolID)] = [:]
@@ -537,7 +535,6 @@ public final class SymbolTable {
         classDelegationForwardingMethodsByClass[classSymbol] ?? []
     }
 
-    // swiftlint:disable large_tuple line_length
     /// CLASS-008: Get the info needed to emit the forwarding body for a synthetic method.
     public func classDelegationForwardingMethodInfo(for forwardingSymbol: SymbolID) -> (interfaceSymbol: SymbolID, interfaceMethodSymbol: SymbolID, fieldSymbol: SymbolID)? {
         classDelegationForwardingMethodInfo[forwardingSymbol]

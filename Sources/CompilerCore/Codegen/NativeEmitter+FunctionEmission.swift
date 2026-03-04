@@ -786,7 +786,6 @@ extension NativeEmitter {
                     }
                 }
 
-            // swiftlint:disable:next line_length
             case let .virtualCall(symbol, callee, receiver, arguments, result, usesThrownChannel, thrownResult, dispatch):
                 guard !bindings.hasTerminator(currentBlock) else {
                     continue
@@ -821,7 +820,6 @@ extension NativeEmitter {
                 var lookupArgs: [LLVMCAPIBindings.LLVMValueRef] = []
                 switch dispatch {
                 case let .vtable(slot):
-                    // swiftlint:disable:next line_length
                     lookupFunction = declareExternalFunction(named: "kk_vtable_lookup", argumentCount: 2, appendThrownChannel: false)
                     lookupArgs = [
                         resolveValue(receiver),
@@ -829,13 +827,10 @@ extension NativeEmitter {
                         bindings.constInt(int64Type, value: UInt64(slot)) ?? bindings.constInt(int64Type, value: 0)!,
                     ]
                 case let .itable(interfaceSlot, methodSlot):
-                    // swiftlint:disable:next line_length
                     lookupFunction = declareExternalFunction(named: "kk_itable_lookup", argumentCount: 3, appendThrownChannel: false)
                     lookupArgs = [
                         resolveValue(receiver),
-                        // swiftlint:disable:next line_length
                         bindings.constInt(int64Type, value: UInt64(interfaceSlot)) ?? bindings.constInt(int64Type, value: 0)!,
-                        // swiftlint:disable:next line_length trailing_comma
                         bindings.constInt(int64Type, value: UInt64(methodSlot)) ?? bindings.constInt(int64Type, value: 0)!,
                     ]
                 }

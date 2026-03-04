@@ -207,7 +207,6 @@ extension DataFlowSemaPhase {
     }
 
     // P5-112: Validate that concrete subclasses of abstract classes override all abstract members.
-    // swiftlint:disable:next function_parameter_count
     func validateAbstractOverrides(
         ast: ASTModule,
         symbols: SymbolTable,
@@ -232,7 +231,6 @@ extension DataFlowSemaPhase {
         }
     }
 
-    // swiftlint:disable function_body_length function_parameter_count
     /// CLASS-008: Validate class delegation (`: Interface by expr`).
     /// Ensures delegated supertypes are interfaces (not classes) and records them for abstract override exemption.
     func validateClassDelegation(
@@ -303,7 +301,6 @@ extension DataFlowSemaPhase {
 
     // swiftlint:enable function_body_length function_parameter_count
 
-    // swiftlint:disable cyclomatic_complexity function_body_length
     /// CLASS-008: Create synthetic method symbols for delegated interface methods
     /// that the class does not override. These are used for itable layout and KIR lowering.
     func synthesizeClassDelegationForwardingMethodSymbols(
@@ -430,7 +427,6 @@ extension DataFlowSemaPhase {
 
     // swiftlint:enable cyclomatic_complexity function_body_length
 
-    // swiftlint:disable:next cyclomatic_complexity function_body_length function_parameter_count
     private func validateAbstractOverridesForDecl(
         declID: DeclID,
         file: ASTFile,

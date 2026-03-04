@@ -8,7 +8,7 @@ extension CallLowerer {
         "map", "filter", "forEach", "flatMap",
         "any", "none", "all",
         "fold", "reduce", "groupBy", "sortedBy", "find",
-        "asSequence", "toList", "take",
+        "asSequence", "toList", "take", "collect",
         "to", // FUNC-002
     ]
 
@@ -438,18 +438,23 @@ extension CallLowerer {
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
                 let calleeStr = interner.resolve(calleeName)
-                let runtimeCallee: String? = switch calleeStr {
-                case "startsWith": "kk_string_startsWith"
-                case "endsWith": "kk_string_endsWith"
-                case "contains": "kk_string_contains_str"
-                case "split": "kk_string_split"
-                default: nil
+                let zero = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zero, value: .intLiteral(0)))
+                let runtimeCall: (callee: String, arguments: [KIRExprID])? = switch calleeStr {
+                case "startsWith":
+                    ("kk_string_startsWith", [loweredReceiverID, loweredArgIDs[0], zero, zero])
+                case "endsWith":
+                    ("kk_string_endsWith", [loweredReceiverID, loweredArgIDs[0], zero])
+                case "contains":
+                    ("kk_string_contains", [loweredReceiverID, loweredArgIDs[0], zero])
+                default:
+                    nil
                 }
-                if let runtimeCallee {
+                if let runtimeCall {
                     instructions.append(.call(
                         symbol: nil,
-                        callee: interner.intern(runtimeCallee),
-                        arguments: [loweredReceiverID, loweredArgIDs[0]],
+                        callee: interner.intern(runtimeCall.callee),
+                        arguments: runtimeCall.arguments,
                         result: result,
                         canThrow: false,
                         thrownResult: nil
@@ -464,10 +469,12 @@ extension CallLowerer {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+                let zero = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zero, value: .intLiteral(0)))
                 instructions.append(.call(
                     symbol: nil,
                     callee: interner.intern("kk_string_replace"),
-                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1], zero],
                     result: result,
                     canThrow: false,
                     thrownResult: nil
@@ -709,7 +716,8 @@ extension CallLowerer {
     ) {
         var finalArguments = arguments
         if normalized.defaultMask != 0,
-           let chosenCallee
+           let chosenCallee,
+           sema.symbols.externalLinkName(for: chosenCallee)?.isEmpty ?? true
         {
             appendReifiedTypeTokens(
                 chosenCallee: chosenCallee,
