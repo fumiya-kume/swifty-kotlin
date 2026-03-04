@@ -825,7 +825,7 @@ extension NativeEmitter {
                     lookupFunction = declareExternalFunction(named: "kk_vtable_lookup", argumentCount: 2, appendThrownChannel: false)
                     lookupArgs = [
                         resolveValue(receiver),
-                        bindings.constInt(int64Type, value: UInt64(slot)) ?? bindings.constInt(int64Type, value: 0)!
+                        bindings.constInt(int64Type, value: UInt64(slot)) ?? bindings.constInt(int64Type, value: 0)!,
                     ]
                 case let .itable(interfaceSlot, methodSlot):
                     // swiftlint:disable:next line_length
@@ -835,7 +835,7 @@ extension NativeEmitter {
                         // swiftlint:disable:next line_length
                         bindings.constInt(int64Type, value: UInt64(interfaceSlot)) ?? bindings.constInt(int64Type, value: 0)!,
                         // swiftlint:disable:next line_length
-                        bindings.constInt(int64Type, value: UInt64(methodSlot)) ?? bindings.constInt(int64Type, value: 0)!
+                        bindings.constInt(int64Type, value: UInt64(methodSlot)) ?? bindings.constInt(int64Type, value: 0)!,
                     ]
                 }
 

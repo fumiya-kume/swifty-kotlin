@@ -532,6 +532,7 @@ public final class SymbolTable {
     public func classDelegationForwardingMethodInfo(for forwardingSymbol: SymbolID) -> (interfaceSymbol: SymbolID, interfaceMethodSymbol: SymbolID, fieldSymbol: SymbolID)? {
         classDelegationForwardingMethodInfo[forwardingSymbol]
     }
+
     // swiftlint:enable large_tuple line_length
 
     public func setNominalLayout(_ layout: NominalLayout, for symbol: SymbolID) {

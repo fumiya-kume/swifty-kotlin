@@ -176,6 +176,7 @@ extension BuildASTPhase {
         }
         return entries
     }
+
     // swiftlint:enable cyclomatic_complexity function_body_length
 
     /// Parses a single supertype chunk, optionally with `by expr` (class delegation).

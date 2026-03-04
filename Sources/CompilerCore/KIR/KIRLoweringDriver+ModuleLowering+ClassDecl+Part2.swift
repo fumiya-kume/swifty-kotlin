@@ -164,6 +164,7 @@ extension KIRLoweringDriver {
             ))
         }
     }
+
     // swiftlint:enable function_parameter_count
 
     /// Emits property initializers and `init { }` blocks in the order they

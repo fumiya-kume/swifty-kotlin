@@ -300,6 +300,7 @@ extension DataFlowSemaPhase {
             }
         }
     }
+
     // swiftlint:enable function_body_length function_parameter_count
 
     // swiftlint:disable cyclomatic_complexity function_body_length
@@ -347,9 +348,9 @@ extension DataFlowSemaPhase {
 
                 for interfaceSymbol in symbols.delegatedInterfaces(forClass: classSymbol) {
                     guard let fieldSymbol = symbols.classDelegationField(
-                            forClass: classSymbol, interface: interfaceSymbol
-                          ),
-                          let interfaceSym = symbols.symbol(interfaceSymbol)
+                        forClass: classSymbol, interface: interfaceSymbol
+                    ),
+                        let interfaceSym = symbols.symbol(interfaceSymbol)
                     else {
                         continue
                     }
@@ -426,6 +427,7 @@ extension DataFlowSemaPhase {
             }
         }
     }
+
     // swiftlint:enable cyclomatic_complexity function_body_length
 
     // swiftlint:disable:next cyclomatic_complexity function_body_length function_parameter_count
