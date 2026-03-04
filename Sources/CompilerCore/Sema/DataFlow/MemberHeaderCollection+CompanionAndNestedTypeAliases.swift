@@ -37,6 +37,13 @@ extension DataFlowSemaPhase {
             visibility: visibility(from: companionObject.modifiers),
             flags: flags(from: companionObject.modifiers)
         )
+        registerAnnotations(
+            for: decl,
+            symbol: companionSymbol,
+            declRange: companionObject.range,
+            symbols: symbols,
+            diagnostics: diagnostics
+        )
         bindings.bindDecl(companionDeclID, symbol: companionSymbol)
         symbols.setParentSymbol(ownerSymbol, for: companionSymbol)
         symbols.setCompanionObjectSymbol(companionSymbol, for: ownerSymbol)

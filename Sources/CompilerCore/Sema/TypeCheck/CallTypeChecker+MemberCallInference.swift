@@ -1689,6 +1689,13 @@ extension CallTypeChecker {
             ctx.semaCtx.diagnostics.error("KSWIFTK-SEMA-0024", "Unresolved member function '\(interner.resolve(calleeName))'.", range: range)
             return driver.helpers.bindAndReturnErrorType(id, sema: sema)
         }
+        driver.helpers.checkDeprecation(
+            for: chosen,
+            sema: sema,
+            interner: interner,
+            range: range,
+            diagnostics: ctx.semaCtx.diagnostics
+        )
         // P5-112: Prohibit super.foo() calls to abstract members.
         if isSuperCall,
            let chosenSym = sema.symbols.symbol(chosen),

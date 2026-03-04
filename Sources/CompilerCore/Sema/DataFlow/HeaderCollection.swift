@@ -156,36 +156,13 @@ extension DataFlowSemaPhase {
         scope.insert(symbol)
         bindings.bindDecl(declID, symbol: symbol)
 
-        // ANNO-001: Collect annotations from AST declarations and store on SymbolTable.
-        let astAnnotations: [AnnotationNode] = switch decl {
-        case let .classDecl(classDecl): classDecl.annotations
-        case let .interfaceDecl(ifaceDecl): ifaceDecl.annotations
-        case let .objectDecl(objectDecl): objectDecl.annotations
-        case let .funDecl(funDecl): funDecl.annotations
-        case let .propertyDecl(propDecl): propDecl.annotations
-        default: []
-        }
-        if !astAnnotations.isEmpty {
-            let records = astAnnotations.map { ann in
-                MetadataAnnotationRecord(
-                    annotationFQName: ann.name,
-                    arguments: ann.arguments,
-                    useSiteTarget: ann.useSiteTarget
-                )
-            }
-            symbols.setAnnotations(records, for: symbol)
-
-            // ANNO-001: Register @Suppress annotations with the DiagnosticEngine.
-            for ann in astAnnotations where ann.name == "Suppress" || ann.name == "kotlin.Suppress" {
-                if let declRange = declaration.range {
-                    for arg in ann.arguments {
-                        // Strip surrounding quotes from the diagnostic code argument.
-                        let code = arg.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
-                        diagnostics.addSuppression(code: code, range: declRange)
-                    }
-                }
-            }
-        }
+        registerAnnotations(
+            for: decl,
+            symbol: symbol,
+            declRange: declaration.range,
+            symbols: symbols,
+            diagnostics: diagnostics
+        )
 
         switch decl {
         case let .classDecl(classDecl):

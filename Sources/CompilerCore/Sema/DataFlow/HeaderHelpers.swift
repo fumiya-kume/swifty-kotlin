@@ -1,6 +1,73 @@
 import Foundation
 
 extension DataFlowSemaPhase {
+    func declarationAnnotations(for decl: Decl) -> [AnnotationNode] {
+        switch decl {
+        case let .classDecl(classDecl):
+            classDecl.annotations
+        case let .interfaceDecl(interfaceDecl):
+            interfaceDecl.annotations
+        case let .objectDecl(objectDecl):
+            objectDecl.annotations
+        case let .funDecl(funDecl):
+            funDecl.annotations
+        case let .propertyDecl(propertyDecl):
+            propertyDecl.annotations
+        default:
+            []
+        }
+    }
+
+    func registerAnnotations(
+        for decl: Decl,
+        symbol: SymbolID,
+        declRange: SourceRange?,
+        symbols: SymbolTable,
+        diagnostics: DiagnosticEngine
+    ) {
+        registerAnnotations(
+            declarationAnnotations(for: decl),
+            symbol: symbol,
+            declRange: declRange,
+            symbols: symbols,
+            diagnostics: diagnostics
+        )
+    }
+
+    func registerAnnotations(
+        _ astAnnotations: [AnnotationNode],
+        symbol: SymbolID,
+        declRange: SourceRange?,
+        symbols: SymbolTable,
+        diagnostics: DiagnosticEngine
+    ) {
+        guard !astAnnotations.isEmpty else {
+            return
+        }
+
+        let records = astAnnotations.map { ann in
+            MetadataAnnotationRecord(
+                annotationFQName: ann.name,
+                arguments: ann.arguments,
+                useSiteTarget: ann.useSiteTarget
+            )
+        }
+        symbols.setAnnotations(records, for: symbol)
+
+        // Register @Suppress ranges so matching diagnostics are filtered.
+        guard let declRange else {
+            return
+        }
+        for ann in astAnnotations where ann.name == "Suppress" || ann.name == "kotlin.Suppress" {
+            for arg in ann.arguments {
+                let code = arg.trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
+                if !code.isEmpty {
+                    diagnostics.addSuppression(code: code, range: declRange)
+                }
+            }
+        }
+    }
+
     /// Base value for synthetic type parameter symbol IDs used in metadata encoding.
     /// Shared between MetadataTypeSignatureParser (encoding) and collectSyntheticTypeParameters (decoding).
     static var syntheticTypeParameterBase: Int32 {

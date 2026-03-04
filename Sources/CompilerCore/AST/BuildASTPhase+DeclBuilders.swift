@@ -326,11 +326,50 @@ extension BuildASTPhase {
     }
 
     func declarationName(from nodeID: NodeID, in arena: SyntaxArena, interner: StringInterner) -> InternedString {
-        for child in arena.children(of: nodeID) {
-            if case let .token(tokenID) = child,
-               let token = resolveToken(tokenID, in: arena),
-               let name = internedIdentifier(from: token, interner: interner)
+        let tokens = collectTokens(from: nodeID, in: arena)
+        if let introducerIndex = declarationIntroducerIndex(in: tokens) {
+            var index = introducerIndex + 1
+            if tokens[introducerIndex].kind == .keyword(.enum),
+               index < tokens.count,
+               tokens[index].kind == .keyword(.class)
             {
+                index += 1
+            }
+            if tokens[introducerIndex].kind == .keyword(.fun),
+               index < tokens.count,
+               tokens[index].kind == .symbol(.lessThan)
+            {
+                index = skipBalancedBracket(
+                    in: tokens,
+                    from: index,
+                    open: .symbol(.lessThan),
+                    close: .symbol(.greaterThan)
+                )
+            }
+            while index < tokens.count {
+                let token = tokens[index]
+                if token.kind == .symbol(.lParen)
+                    || token.kind == .symbol(.lBrace)
+                    || token.kind == .symbol(.colon)
+                    || token.kind == .symbol(.assign)
+                    || token.kind == .symbol(.semicolon)
+                {
+                    break
+                }
+                if let name = internedIdentifier(from: token, interner: interner) {
+                    if case let .keyword(keyword) = token.kind, isLeadingDeclarationKeyword(keyword) {
+                        index += 1
+                        continue
+                    }
+                    return name
+                }
+                index += 1
+            }
+            return interner.intern("")
+        }
+
+        for token in tokens {
+            if let name = internedIdentifier(from: token, interner: interner) {
                 if case let .keyword(keyword) = token.kind, isLeadingDeclarationKeyword(keyword) {
                     continue
                 }
@@ -346,67 +385,12 @@ extension BuildASTPhase {
         interner: StringInterner,
         astArena: ASTArena
     ) -> [ValueParamDecl] {
-        let node = arena.node(nodeID)
         let tokens = collectTokens(from: nodeID, in: arena)
-        let startIndex: Int?
-        switch node.kind {
-        case .classDecl:
-            var pastClassKeyword = false
-            var pastDeclarationName = false
-            var angleBracketDepth = 0
-            var foundIndex: Int?
-            for (index, token) in tokens.enumerated() {
-                if !pastClassKeyword {
-                    if case .keyword(.class) = token.kind {
-                        pastClassKeyword = true
-                    }
-                    continue
-                }
-                if !pastDeclarationName {
-                    if internedIdentifier(from: token, interner: interner) != nil {
-                        pastDeclarationName = true
-                    } else {
-                        continue
-                    }
-                    continue
-                }
-                if token.kind == .symbol(.lessThan) {
-                    angleBracketDepth += 1
-                    continue
-                }
-                if token.kind == .symbol(.greaterThan) {
-                    angleBracketDepth = max(0, angleBracketDepth - 1)
-                    continue
-                }
-                if angleBracketDepth > 0 {
-                    continue
-                }
-                if token.kind == .symbol(.lParen) {
-                    foundIndex = index
-                    break
-                }
-                if token.kind == .symbol(.colon) || token.kind == .symbol(.lBrace) {
-                    break
-                }
-            }
-            startIndex = foundIndex
-        default:
-            // Only look for the opening `(` that occurs before any `{` (class body).
-            // This prevents picking up `(` from member function declarations like
-            // `class F { operator fun invoke(x: Int) }` as constructor parameters.
-            startIndex = tokens.firstIndex(where: { token in
-                if case .symbol(.lParen) = token.kind {
-                    return true
-                }
-                if case .symbol(.lBrace) = token.kind {
-                    return true
-                }
-                return false
-            })
-        }
-        guard let startIndex,
-              case .symbol(.lParen) = tokens[startIndex].kind
-        else {
+        let nodeKind = arena.node(nodeID).kind
+        // Only look for the opening `(` that occurs before any `{` (class body).
+        // This prevents picking up `(` from member function declarations like
+        // `class F { operator fun invoke(x: Int) }` as constructor parameters.
+        guard let startIndex = declarationParameterOpenParenIndex(in: tokens, nodeKind: nodeKind) else {
             return []
         }
 
@@ -445,6 +429,93 @@ extension BuildASTPhase {
             appendValueParameter(from: paramTokens, into: &arguments, interner: interner, astArena: astArena)
         }
         return arguments
+    }
+
+    func declarationIntroducerIndex(in tokens: [Token]) -> Int? {
+        for (index, token) in tokens.enumerated() {
+            guard case let .keyword(keyword) = token.kind else {
+                continue
+            }
+            switch keyword {
+            case .class, .object, .interface, .fun, .val, .var, .typealias, .enum, .package, .import:
+                return index
+            case .companion:
+                if index + 1 < tokens.count, tokens[index + 1].kind == .keyword(.object) {
+                    return index + 1
+                }
+            default:
+                continue
+            }
+        }
+        return nil
+    }
+
+    func declarationParameterOpenParenIndex(in tokens: [Token], nodeKind: SyntaxKind) -> Int? {
+        switch nodeKind {
+        case .funDecl:
+            return functionParameterOpenParenIndex(in: tokens)
+        case .classDecl:
+            return classPrimaryConstructorOpenParenIndex(in: tokens)
+        case .constructorDecl:
+            return constructorParameterOpenParenIndex(in: tokens)
+        default:
+            return tokens.firstIndex(where: { token in
+                token.kind == .symbol(.lParen)
+            })
+        }
+    }
+
+    func classPrimaryConstructorOpenParenIndex(in tokens: [Token]) -> Int? {
+        guard let classIndex = tokens.firstIndex(where: { token in
+            token.kind == .keyword(.class)
+        }) else {
+            return nil
+        }
+        var index = classIndex + 1
+        if index < tokens.count, isTypeLikeNameToken(tokens[index].kind) {
+            index += 1
+        }
+        if index < tokens.count, tokens[index].kind == .symbol(.lessThan) {
+            index = skipBalancedBracket(
+                in: tokens,
+                from: index,
+                open: .symbol(.lessThan),
+                close: .symbol(.greaterThan)
+            )
+        }
+        while index < tokens.count {
+            let kind = tokens[index].kind
+            if kind == .symbol(.lParen) {
+                return index
+            }
+            if kind == .symbol(.colon) || kind == .symbol(.lBrace) || kind == .symbol(.assign) {
+                return nil
+            }
+            index += 1
+        }
+        return nil
+    }
+
+    func constructorParameterOpenParenIndex(in tokens: [Token]) -> Int? {
+        guard let ctorIndex = tokens.firstIndex(where: { token in
+            token.kind == .keyword(.constructor) || token.kind == .softKeyword(.constructor)
+        }) else {
+            return tokens.firstIndex(where: { token in
+                token.kind == .symbol(.lParen)
+            })
+        }
+        var index = ctorIndex + 1
+        while index < tokens.count {
+            let kind = tokens[index].kind
+            if kind == .symbol(.lParen) {
+                return index
+            }
+            if kind == .symbol(.colon) || kind == .symbol(.lBrace) {
+                return nil
+            }
+            index += 1
+        }
+        return nil
     }
 
     func appendValueParameter(

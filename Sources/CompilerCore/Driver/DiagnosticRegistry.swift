@@ -67,6 +67,29 @@ public enum DiagnosticRegistry {
         allDescriptors.map(\.code).sorted()
     }
 
+    /// Expands a user-facing suppression key (e.g. `UNCHECKED_CAST`) into one
+    /// or more internal diagnostic codes.
+    public static func suppressionCodes(for requestedCode: String) -> [String] {
+        let normalized = requestedCode.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalized.isEmpty else {
+            return []
+        }
+        let upper = normalized.uppercased()
+        var expanded: Set<String> = [normalized]
+        if let aliases = suppressionAliases[normalized] {
+            expanded.formUnion(aliases)
+        }
+        if let aliases = suppressionAliases[upper] {
+            expanded.formUnion(aliases)
+        }
+        return expanded.sorted()
+    }
+
+    private static let suppressionAliases: [String: [String]] = [
+        "UNCHECKED_CAST": ["KSWIFTK-SEMA-UNCHECKED-CAST"],
+        "DEPRECATION": ["KSWIFTK-SEMA-DEPRECATED"],
+    ]
+
     // MARK: - Lexer pass (LEX)
 
     static let lexDescriptors: [DiagnosticDescriptor] = [
@@ -304,6 +327,18 @@ public enum DiagnosticRegistry {
             pass: "SEMA",
             defaultSeverity: .error,
             summary: "Invalid is-check on non-class type."
+        ),
+        DiagnosticDescriptor(
+            code: "KSWIFTK-SEMA-UNCHECKED-CAST",
+            pass: "SEMA",
+            defaultSeverity: .warning,
+            summary: "Unchecked cast to a generic type."
+        ),
+        DiagnosticDescriptor(
+            code: "KSWIFTK-SEMA-DEPRECATED",
+            pass: "SEMA",
+            defaultSeverity: .warning,
+            summary: "Reference to deprecated declaration."
         ),
         DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-0061",

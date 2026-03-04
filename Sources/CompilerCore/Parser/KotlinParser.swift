@@ -51,7 +51,7 @@ public final class KotlinParser {
                 importRange.append(arena.node(node).range)
                 range.append(arena.node(node).range)
                 continue
-            case let .keyword(keyword) where isDeclarationKeyword(keyword):
+            case _ where isDeclarationStart(token.kind):
                 node = parseDeclaration()
                 if arena.node(node).kind != .propertyDecl {
                     sawNonPropertyDecl = true

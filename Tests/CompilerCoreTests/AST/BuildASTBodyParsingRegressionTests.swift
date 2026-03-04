@@ -342,4 +342,81 @@ final class BuildASTBodyParsingRegressionTests: XCTestCase {
             )
         }
     }
+
+    func testTopLevelDeclarationAnnotationsAreCollectedWithMixedModifierOrder() throws {
+        let source = """
+        package anno.ast
+
+        public @Suppress("UNCHECKED_CAST")
+        fun suppressedCast(x: Any): String = x as String
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runFrontend(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let file = try XCTUnwrap(ast.sortedFiles.first)
+            let function = try XCTUnwrap(file.topLevelDecls.compactMap { declID -> FunDecl? in
+                guard let decl = ast.arena.decl(declID),
+                      case let .funDecl(funDecl) = decl,
+                      ctx.interner.resolve(funDecl.name) == "suppressedCast"
+                else {
+                    return nil
+                }
+                return funDecl
+            }.first)
+
+            XCTAssertEqual(function.annotations.count, 1)
+            XCTAssertEqual(function.annotations[0].name, "Suppress")
+            XCTAssertEqual(function.annotations[0].arguments, ["\"\"UNCHECKED_CAST\"\""])
+        }
+    }
+
+    func testCompanionMemberAnnotationsAreCollectedWithMixedModifierOrder() throws {
+        let source = """
+        package anno.ast
+
+        class Host {
+            companion object {
+                public @JvmStatic
+                fun create(): Int = 1
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runFrontend(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let file = try XCTUnwrap(ast.sortedFiles.first)
+            let hostClass = try XCTUnwrap(file.topLevelDecls.compactMap { declID -> ClassDecl? in
+                guard let decl = ast.arena.decl(declID),
+                      case let .classDecl(classDecl) = decl,
+                      ctx.interner.resolve(classDecl.name) == "Host"
+                else {
+                    return nil
+                }
+                return classDecl
+            }.first)
+            let companionDeclID = try XCTUnwrap(hostClass.companionObject)
+            guard let companionDecl = ast.arena.decl(companionDeclID),
+                  case let .objectDecl(companionObject) = companionDecl
+            else {
+                XCTFail("Expected companion object declaration.")
+                return
+            }
+            let companionFunctionDeclID = try XCTUnwrap(companionObject.memberFunctions.first)
+            guard let functionDecl = ast.arena.decl(companionFunctionDeclID),
+                  case let .funDecl(function) = functionDecl
+            else {
+                XCTFail("Expected companion member function declaration.")
+                return
+            }
+
+            XCTAssertEqual(function.annotations.count, 1)
+            XCTAssertEqual(function.annotations[0].name, "JvmStatic")
+        }
+    }
 }

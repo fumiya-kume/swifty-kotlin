@@ -8,9 +8,19 @@ extension BuildASTPhase {
         astArena: ASTArena
     ) -> FunctionBody {
         let directTokens = collectDirectTokens(from: nodeID, in: arena)
-        let hasExpressionBody = directTokens.contains(where: { token in
-            token.kind == .symbol(.assign)
-        })
+        let hasExpressionBody: Bool = {
+            var depth = BracketDepth()
+            for token in directTokens {
+                if token.kind == .symbol(.assign), depth.isAtTopLevel {
+                    return true
+                }
+                if token.kind == .symbol(.lBrace), depth.isAtTopLevel {
+                    return false
+                }
+                depth.track(token.kind)
+            }
+            return false
+        }()
 
         if !hasExpressionBody {
             for child in arena.children(of: nodeID) {
@@ -327,8 +337,10 @@ extension BuildASTPhase {
         var index = 0
         while index < tokens.count {
             let token = tokens[index]
-            // Stop scanning when we hit a declaration keyword — annotations are before these.
-            if isLeadingDeclarationKeyword(token) || isDeclarationStart(token.kind) {
+            // Stop scanning when we hit the declaration introducer keyword
+            // (`class`, `fun`, `val`, ...). Modifiers may appear before/after
+            // annotations, so they must not terminate the scan.
+            if isDeclarationStart(token.kind) {
                 break
             }
             guard token.kind == .symbol(.at) else {
