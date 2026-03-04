@@ -731,9 +731,24 @@
       "description": "buildString/buildList/buildMap DSL builder",
       "cases": [
         {
+          "type": "golden-sema",
+          "name": "builder_dsl_receiver",
+          "template": "Scripts/test_templates/sema/builder_dsl_receiver.kt"
+        },
+        {
           "type": "diff",
           "name": "builder_dsl",
           "template": "Scripts/test_templates/diff/builder_dsl.kt"
+        },
+        {
+          "type": "diff",
+          "name": "builder_dsl_invalid_arg",
+          "template": "Scripts/test_templates/diff/builder_dsl_invalid_arg.kt"
+        },
+        {
+          "type": "diff",
+          "name": "builder_dsl_shadowing",
+          "template": "Scripts/test_templates/diff/builder_dsl_shadowing.kt"
         }
       ]
     },
