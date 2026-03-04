@@ -375,29 +375,17 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
     }
 
     func inferMemberCallExpr(
-        _ id: ExprID,
-        receiverID: ExprID,
-        calleeName: InternedString,
-        args: [CallArgument],
-        range: SourceRange,
-        ctx: TypeInferenceContext,
-        locals: inout LocalBindings,
-        expectedType: TypeID?,
-        explicitTypeArgs: [TypeID] = []
+        _ id: ExprID, receiverID: ExprID, calleeName: InternedString,
+        args: [CallArgument], range: SourceRange, ctx: TypeInferenceContext,
+        locals: inout LocalBindings, expectedType: TypeID?, explicitTypeArgs: [TypeID] = []
     ) -> TypeID {
         inferMemberCallImpl(id, receiverID: receiverID, calleeName: calleeName, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType, explicitTypeArgs: explicitTypeArgs, safeCall: false)
     }
 
     func inferSafeMemberCallExpr(
-        _ id: ExprID,
-        receiverID: ExprID,
-        calleeName: InternedString,
-        args: [CallArgument],
-        range: SourceRange,
-        ctx: TypeInferenceContext,
-        locals: inout LocalBindings,
-        expectedType: TypeID?,
-        explicitTypeArgs: [TypeID] = []
+        _ id: ExprID, receiverID: ExprID, calleeName: InternedString,
+        args: [CallArgument], range: SourceRange, ctx: TypeInferenceContext,
+        locals: inout LocalBindings, expectedType: TypeID?, explicitTypeArgs: [TypeID] = []
     ) -> TypeID {
         inferMemberCallImpl(id, receiverID: receiverID, calleeName: calleeName, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType, explicitTypeArgs: explicitTypeArgs, safeCall: true)
     }
