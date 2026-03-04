@@ -56,7 +56,25 @@ extension DataFlowSemaPhase {
             symbol: tParamSymbol, nullability: .nonNull
         )))
 
-        // Register `operator fun compareTo(other: T): Int`
+        registerComparableCompareToOperator(
+            symbols: symbols, types: types, interner: interner,
+            comparableFQName: comparableFQName,
+            comparableSymbol: comparableSymbol,
+            tParamSymbol: tParamSymbol,
+            tParamType: tParamType
+        )
+    }
+
+    /// Register `operator fun compareTo(other: T): Int` on the Comparable interface.
+    private func registerComparableCompareToOperator( // swiftlint:disable:this function_parameter_count
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        comparableFQName: [InternedString],
+        comparableSymbol: SymbolID,
+        tParamSymbol: SymbolID,
+        tParamType: TypeID
+    ) {
         let compareToName = interner.intern("compareTo")
         let compareToFQName = comparableFQName + [compareToName]
         guard symbols.lookup(fqName: compareToFQName) == nil else { return }
