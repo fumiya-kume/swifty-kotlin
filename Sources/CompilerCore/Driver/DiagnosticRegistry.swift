@@ -245,12 +245,6 @@ public enum DiagnosticRegistry {
             summary: "Type mismatch in argument."
         ),
         DiagnosticDescriptor(
-            code: "KSWIFTK-SEMA-0030",
-            pass: "SEMA",
-            defaultSeverity: .error,
-            summary: "Type inference failure."
-        ),
-        DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-0031",
             pass: "SEMA",
             defaultSeverity: .error,

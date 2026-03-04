@@ -73,7 +73,7 @@ extension TypeSystem {
         }
 
         // primitive <: Comparable<same_primitive>
-        // In Kotlin, all numeric types and String implement Comparable<Self>.
+        // All Kotlin primitive types (Int, Long, Double, Float, Char, Boolean, etc.) implement Comparable<Self>.
         if case let .primitive(_, leftNullability) = lhs,
            case let .classType(rightClass) = rhs,
            let comparableSym = comparableInterfaceSymbol,

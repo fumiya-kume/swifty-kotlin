@@ -44,14 +44,18 @@ extension DataFlowSemaPhase {
         // Define type parameter T for Comparable<T>
         let tParamName = interner.intern("T")
         let tParamFQName = comparableFQName + [tParamName]
-        let tParamSymbol = symbols.define(
-            kind: .typeParameter,
-            name: tParamName,
-            fqName: tParamFQName,
-            declSite: nil,
-            visibility: .private,
-            flags: []
-        )
+        let tParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: tParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: tParamName,
+                fqName: tParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
         let tParamType = types.make(.typeParam(TypeParamType(
             symbol: tParamSymbol, nullability: .nonNull
         )))

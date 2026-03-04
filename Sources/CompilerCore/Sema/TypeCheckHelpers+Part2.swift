@@ -248,15 +248,26 @@ extension TypeCheckHelpers {
     /// Collects all nominal symbols from a type, including all parts of an intersection.
     /// For type parameters, follows upper bounds to discover interface symbols.
     func allNominalSymbols(of type: TypeID, types: TypeSystem, symbols: SymbolTable) -> [SymbolID] {
+        var visited = Set<SymbolID>()
+        return allNominalSymbolsImpl(of: type, types: types, symbols: symbols, visited: &visited)
+    }
+
+    private func allNominalSymbolsImpl(
+        of type: TypeID,
+        types: TypeSystem,
+        symbols: SymbolTable,
+        visited: inout Set<SymbolID>
+    ) -> [SymbolID] {
         switch types.kind(of: type) {
         case let .classType(classType):
             return [classType.classSymbol]
         case let .intersection(parts):
-            return parts.flatMap { allNominalSymbols(of: $0, types: types, symbols: symbols) }
+            return parts.flatMap { allNominalSymbolsImpl(of: $0, types: types, symbols: symbols, visited: &visited) }
         case let .typeParam(typeParam):
-            // Collect nominal symbols reachable via the type parameter's upper bounds.
+            // Guard against cycles (e.g. T : U, U : T).
+            guard visited.insert(typeParam.symbol).inserted else { return [] }
             let bounds = symbols.typeParameterUpperBounds(for: typeParam.symbol)
-            return bounds.flatMap { allNominalSymbols(of: $0, types: types, symbols: symbols) }
+            return bounds.flatMap { allNominalSymbolsImpl(of: $0, types: types, symbols: symbols, visited: &visited) }
         default:
             return []
         }

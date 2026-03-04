@@ -8,7 +8,7 @@ public final class TypeSystem {
     private var nominalSupertypeTypeArgsMap: [SymbolID: [SymbolID: [TypeArg]]] = [:]
 
     /// The symbol ID of the synthetic `kotlin.Comparable` interface, set during registration.
-    public var comparableInterfaceSymbol: SymbolID?
+    public internal(set) var comparableInterfaceSymbol: SymbolID?
 
     public let errorType: TypeID
     public let unitType: TypeID
