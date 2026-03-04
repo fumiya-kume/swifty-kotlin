@@ -2,6 +2,36 @@
 # （SwiftFormat は複数行文で { を改行、SwiftLint は同一行を要求）
 disabled_rules:
   - opening_brace
+  - large_tuple
+  - trailing_comma
+
+identifier_name:
+  min_length:
+    warning: 1
+    error: 1
+  max_length:
+    warning: 60
+    error: 80
+
+function_body_length:
+  warning: 200
+  error: 300
+
+type_body_length:
+  warning: 500
+  error: 600
+
+file_length:
+  warning: 500
+  error: 600
+
+line_length:
+  warning: 200
+  error: 250
+
+function_parameter_count:
+  warning: 8
+  error: 12
 
 included:
   - Sources
