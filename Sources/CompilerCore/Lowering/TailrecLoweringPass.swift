@@ -94,7 +94,8 @@ final class TailrecLoweringPass: LoweringPass {
             if case let .call(symbol, _, arguments, callResult?, _, _, _) = instruction,
                isSelfRecursiveCall(symbol: symbol, functionIdentity: functionIdentity),
                instructionIndex + 1 < body.count,
-               isReturnOfResult(body[instructionIndex + 1], callResult: callResult) {
+               isReturnOfResult(body[instructionIndex + 1], callResult: callResult)
+            {
                 emitParameterReassignment(arguments: arguments, params: params, arena: arena, result: &result)
                 result.append(.jump(loopLabel))
                 emittedTailJump = true
@@ -106,7 +107,8 @@ final class TailrecLoweringPass: LoweringPass {
             if case let .call(symbol, _, arguments, nil, _, _, _) = instruction,
                isSelfRecursiveCall(symbol: symbol, functionIdentity: functionIdentity),
                instructionIndex + 1 < body.count,
-               isReturnUnitInstruction(body[instructionIndex + 1]) {
+               isReturnUnitInstruction(body[instructionIndex + 1])
+            {
                 emitParameterReassignment(arguments: arguments, params: params, arena: arena, result: &result)
                 result.append(.jump(loopLabel))
                 emittedTailJump = true
