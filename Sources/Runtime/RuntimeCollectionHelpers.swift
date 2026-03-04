@@ -106,3 +106,68 @@ func runtimeElementToString(_ elem: Int) -> String {
     }
     return "\(elem)"
 }
+
+// MARK: - Collection HOF Helpers (STDLIB-005)
+
+typealias RuntimeCollectionLambda1 = @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int
+typealias RuntimeCollectionLambda2 = @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
+
+/// Retains an object and registers it as a runtime handle.
+func runtimeRetainObjectHandle(_ object: AnyObject) -> Int {
+    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(object).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
+    return Int(bitPattern: opaque)
+}
+
+/// Writes a thrown payload when the caller provided an out-thrown slot.
+func runtimeSetThrown(_ outThrown: UnsafeMutablePointer<Int>?, _ value: Int) {
+    outThrown?.pointee = value
+}
+
+/// Converts boxed primitive values to raw payloads where needed.
+func runtimeCollectionUnbox(_ value: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
+        return value
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObjectPointer else {
+        return value
+    }
+    if let intBox = tryCast(ptr, to: RuntimeIntBox.self) {
+        return intBox.value
+    }
+    if let boolBox = tryCast(ptr, to: RuntimeBoolBox.self) {
+        return boolBox.value ? 1 : 0
+    }
+    return value
+}
+
+/// Normalizes truthiness for predicates from raw/boxed Boolean values.
+func runtimeCollectionBool(_ value: Int) -> Bool {
+    kk_unbox_bool(value) != 0
+}
+
+func runtimeInvokeCollectionLambda1(
+    fnPtr: Int,
+    closureRaw: Int,
+    value: Int,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let fn = unsafeBitCast(fnPtr, to: RuntimeCollectionLambda1.self)
+    return fn(closureRaw, value, outThrown)
+}
+
+func runtimeInvokeCollectionLambda2(
+    fnPtr: Int,
+    closureRaw: Int,
+    lhs: Int,
+    rhs: Int,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let fn = unsafeBitCast(fnPtr, to: RuntimeCollectionLambda2.self)
+    return fn(closureRaw, lhs, rhs, outThrown)
+}

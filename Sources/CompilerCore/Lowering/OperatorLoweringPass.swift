@@ -170,6 +170,19 @@ final class OperatorLoweringPass: LoweringPass {
                                     isSuperCall: isSuperCall
                                 )
                                 continue
+                            case .primitive(.boolean, _):
+                                appendBooleanPrintlnCall(
+                                    to: &newBody,
+                                    arena: module.arena,
+                                    interner: ctx.interner,
+                                    symbol: symbol,
+                                    argument: arguments[0],
+                                    result: result,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult,
+                                    isSuperCall: isSuperCall
+                                )
+                                continue
                             default:
                                 break
                             }
@@ -232,6 +245,43 @@ final class OperatorLoweringPass: LoweringPass {
                 symbol: symbol,
                 callee: callee,
                 arguments: arguments,
+                result: nil,
+                canThrow: canThrow,
+                thrownResult: thrownResult,
+                isSuperCall: isSuperCall
+            )
+        )
+        if let result {
+            body.append(.constValue(result: result, value: .unit))
+        }
+    }
+
+    // swiftlint:disable:next function_parameter_count
+    private func appendBooleanPrintlnCall(
+        to body: inout [KIRInstruction],
+        arena: KIRArena,
+        interner: StringInterner,
+        symbol: SymbolID?,
+        argument: KIRExprID,
+        result: KIRExprID?,
+        canThrow: Bool,
+        thrownResult: KIRExprID?,
+        isSuperCall: Bool
+    ) {
+        let boxedBool = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: nil)
+        body.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_box_bool"),
+            arguments: [argument],
+            result: boxedBool,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        body.append(
+            .call(
+                symbol: symbol,
+                callee: interner.intern("kk_println_any"),
+                arguments: [boxedBool],
                 result: nil,
                 canThrow: canThrow,
                 thrownResult: thrownResult,

@@ -7,6 +7,8 @@ extension CallLowerer {
         "count", "iterator",
         "map", "filter", "forEach", "flatMap",
         "any", "none", "all",
+        "fold", "reduce",
+        "groupBy", "sortedBy", "find",
         "asSequence", "toList", "take",
         "to", // FUNC-002
     ]
@@ -330,6 +332,16 @@ extension CallLowerer {
             interner: interner,
             arguments: &finalArguments
         )
+        rewriteCollectionHigherOrderLambdaArguments(
+            exprID: exprID,
+            receiverExpr: receiverExpr,
+            calleeName: calleeName,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            arguments: &finalArguments,
+            instructions: &instructions
+        )
         emitMemberCallInstruction(
             normalized: normalized,
             callBinding: callBinding,
@@ -346,6 +358,257 @@ extension CallLowerer {
             arguments: finalArguments
         )
         return result
+    }
+
+    private func rewriteCollectionHigherOrderLambdaArguments(
+        exprID: ExprID,
+        receiverExpr: ExprID,
+        calleeName: InternedString,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        arguments: inout [KIRExprID],
+        instructions: inout [KIRInstruction]
+    ) {
+        guard sema.bindings.isCollectionExpr(receiverExpr) else {
+            return
+        }
+
+        let calleeText = interner.resolve(calleeName)
+        let lambdaIndexAndArity: (index: Int, arity: Int)? = switch calleeText {
+        case "map", "filter", "forEach", "flatMap",
+             "any", "all", "none",
+             "count", "first", "last", "find",
+             "groupBy", "sortedBy":
+            arguments.count >= 2 ? (1, 1) : nil
+        case "fold":
+            arguments.count >= 3 ? (2, 2) : nil
+        case "reduce":
+            arguments.count >= 2 ? (1, 2) : nil
+        default:
+            nil
+        }
+        guard let lambdaIndexAndArity else {
+            return
+        }
+
+        let lambdaArg = arguments[lambdaIndexAndArity.index]
+        guard let rewritten = lowerCollectionHOFCallableToAdapter(
+            sourceExprID: exprID,
+            callableExprID: lambdaArg,
+            lambdaArity: lambdaIndexAndArity.arity,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            instructions: &instructions
+        ) else {
+            return
+        }
+
+        arguments[lambdaIndexAndArity.index] = rewritten.fnPtr
+        arguments.insert(rewritten.closureRaw, at: lambdaIndexAndArity.index + 1)
+    }
+
+    private struct CollectionHOFAdapterTarget {
+        let symbol: SymbolID?
+        let callee: InternedString
+        let captureArguments: [KIRExprID]
+    }
+
+    private struct CollectionHOFAdapterLoweringResult {
+        let fnPtr: KIRExprID
+        let closureRaw: KIRExprID
+    }
+
+    private func lowerCollectionHOFCallableToAdapter(
+        sourceExprID: ExprID,
+        callableExprID: KIRExprID,
+        lambdaArity: Int,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> CollectionHOFAdapterLoweringResult? {
+        guard let target = resolveCollectionHOFAdapterTarget(
+            callableExprID: callableExprID,
+            sema: sema,
+            arena: arena,
+            interner: interner
+        ) else {
+            return nil
+        }
+
+        let closureRaw = buildCollectionHOFClosureArray(
+            captures: target.captureArguments,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            instructions: &instructions
+        )
+
+        let adapterSymbol = driver.ctx.allocateSyntheticGeneratedSymbol()
+        let adapterName = interner.intern("kk_hof_adapter_\(sourceExprID.rawValue)_\(max(0, adapterSymbol.rawValue))")
+        let anyType = sema.types.anyType
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+
+        let closureParam = KIRParameter(
+            symbol: driver.ctx.allocateSyntheticGeneratedSymbol(),
+            type: anyType
+        )
+        let valueParams: [KIRParameter] = (0 ..< max(0, lambdaArity)).map { _ in
+            KIRParameter(
+                symbol: driver.ctx.allocateSyntheticGeneratedSymbol(),
+                type: anyType
+            )
+        }
+
+        var body: [KIRInstruction] = [.beginBlock]
+        let closureRef = arena.appendExpr(.symbolRef(closureParam.symbol), type: anyType)
+        body.append(.constValue(result: closureRef, value: .symbolRef(closureParam.symbol)))
+
+        var valueRefs: [KIRExprID] = []
+        valueRefs.reserveCapacity(valueParams.count)
+        for valueParam in valueParams {
+            let valueRef = arena.appendExpr(.symbolRef(valueParam.symbol), type: anyType)
+            body.append(.constValue(result: valueRef, value: .symbolRef(valueParam.symbol)))
+            valueRefs.append(valueRef)
+        }
+
+        var capturedValues: [KIRExprID] = []
+        capturedValues.reserveCapacity(target.captureArguments.count)
+        for index in target.captureArguments.indices {
+            let indexExpr = arena.appendExpr(.intLiteral(Int64(index)), type: intType)
+            body.append(.constValue(result: indexExpr, value: .intLiteral(Int64(index))))
+            let loadedCapture = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: anyType)
+            body.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_array_get"),
+                arguments: [closureRef, indexExpr],
+                result: loadedCapture,
+                canThrow: true,
+                thrownResult: nil
+            ))
+            capturedValues.append(loadedCapture)
+        }
+
+        let callResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: anyType)
+        body.append(.call(
+            symbol: target.symbol,
+            callee: target.callee,
+            arguments: capturedValues + valueRefs,
+            result: callResult,
+            canThrow: true,
+            thrownResult: nil
+        ))
+        body.append(.returnValue(callResult))
+        body.append(.endBlock)
+
+        let adapterDecl = arena.appendDecl(.function(KIRFunction(
+            symbol: adapterSymbol,
+            name: adapterName,
+            params: [closureParam] + valueParams,
+            returnType: anyType,
+            body: body,
+            isSuspend: false,
+            isInline: false
+        )))
+        driver.ctx.pendingGeneratedCallableDeclIDs.append(adapterDecl)
+
+        let adapterFnRef = arena.appendExpr(.symbolRef(adapterSymbol), type: anyType)
+        instructions.append(.constValue(result: adapterFnRef, value: .symbolRef(adapterSymbol)))
+
+        return CollectionHOFAdapterLoweringResult(fnPtr: adapterFnRef, closureRaw: closureRaw)
+    }
+
+    private func resolveCollectionHOFAdapterTarget(
+        callableExprID: KIRExprID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner
+    ) -> CollectionHOFAdapterTarget? {
+        if let callableInfo = driver.ctx.callableValueInfoByExprID[callableExprID] {
+            return CollectionHOFAdapterTarget(
+                symbol: callableInfo.symbol,
+                callee: callableInfo.callee,
+                captureArguments: callableInfo.captureArguments
+            )
+        }
+        guard case let .symbolRef(symbol)? = arena.expr(callableExprID) else {
+            return nil
+        }
+        return CollectionHOFAdapterTarget(
+            symbol: symbol,
+            callee: calleeNameForAdapterSymbol(symbol, sema: sema, arena: arena, interner: interner),
+            captureArguments: []
+        )
+    }
+
+    private func calleeNameForAdapterSymbol(
+        _ symbol: SymbolID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner
+    ) -> InternedString {
+        if let external = sema.symbols.externalLinkName(for: symbol),
+           !external.isEmpty
+        {
+            return interner.intern(external)
+        }
+        if let symbolInfo = sema.symbols.symbol(symbol) {
+            return symbolInfo.name
+        }
+        for decl in arena.declarations {
+            guard case let .function(function) = decl,
+                  function.symbol == symbol
+            else {
+                continue
+            }
+            return function.name
+        }
+        return interner.intern("kk_unknown_callable")
+    }
+
+    private func buildCollectionHOFClosureArray(
+        captures: [KIRExprID],
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+        if captures.isEmpty {
+            let zeroExpr = arena.appendExpr(.intLiteral(0), type: intType)
+            instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            return zeroExpr
+        }
+
+        let countExpr = arena.appendExpr(.intLiteral(Int64(captures.count)), type: intType)
+        instructions.append(.constValue(result: countExpr, value: .intLiteral(Int64(captures.count))))
+
+        let closureArray = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_array_new"),
+            arguments: [countExpr],
+            result: closureArray,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        for (index, capture) in captures.enumerated() {
+            let indexExpr = arena.appendExpr(.intLiteral(Int64(index)), type: intType)
+            instructions.append(.constValue(result: indexExpr, value: .intLiteral(Int64(index))))
+            let setResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_array_set"),
+                arguments: [closureArray, indexExpr, capture],
+                result: setResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+        }
+        return closureArray
     }
 
     private func tryLowerObjectMemberPropertyRead(

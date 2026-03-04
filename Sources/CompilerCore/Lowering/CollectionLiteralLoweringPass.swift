@@ -50,9 +50,17 @@ final class CollectionLiteralLoweringPass: LoweringPass {
         let kkListFilterName = interner.intern("kk_list_filter")
         let kkListForEachName = interner.intern("kk_list_forEach")
         let kkListFlatMapName = interner.intern("kk_list_flatMap")
+        let kkListFoldName = interner.intern("kk_list_fold")
+        let kkListReduceName = interner.intern("kk_list_reduce")
         let kkListAnyName = interner.intern("kk_list_any")
         let kkListNoneName = interner.intern("kk_list_none")
         let kkListAllName = interner.intern("kk_list_all")
+        let kkListCountName = interner.intern("kk_list_count")
+        let kkListFirstName = interner.intern("kk_list_first")
+        let kkListLastName = interner.intern("kk_list_last")
+        let kkListFindName = interner.intern("kk_list_find")
+        let kkListGroupByName = interner.intern("kk_list_groupBy")
+        let kkListSortedByName = interner.intern("kk_list_sortedBy")
 
         // Sequence ABI names (STDLIB-003)
         let kkSequenceFromListName = interner.intern("kk_sequence_from_list")
@@ -91,14 +99,21 @@ final class CollectionLiteralLoweringPass: LoweringPass {
         let containsKeyName = interner.intern("containsKey")
         let isEmptyName = interner.intern("isEmpty")
         let countName = interner.intern("count")
+        let firstName = interner.intern("first")
+        let lastName = interner.intern("last")
         // Higher-order collection member names (FUNC-003)
         let mapName = interner.intern("map")
         let filterName = interner.intern("filter")
         let forEachName = interner.intern("forEach")
         let flatMapName = interner.intern("flatMap")
+        let foldName = interner.intern("fold")
+        let reduceName = interner.intern("reduce")
         let anyName = interner.intern("any")
         let noneName = interner.intern("none")
         let allName = interner.intern("all")
+        let findName = interner.intern("find")
+        let groupByName = interner.intern("groupBy")
+        let sortedByName = interner.intern("sortedBy")
 
         // Sequence member names (STDLIB-003)
         let asSequenceName = interner.intern("asSequence")
@@ -604,7 +619,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
 
                     // --- Rewrite collection member calls ---
                     // Member calls are lowered as call(callee=memberName, args=[receiver, ...])
-                    if callee == sizeName || callee == countName {
+                    if callee == sizeName {
                         if arguments.count == 1 {
                             let receiverID = arguments[0]
                             if listExprIDs.contains(receiverID.rawValue) {
@@ -640,6 +655,105 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                                 ))
                                 continue
                             }
+                        }
+                    }
+
+                    if callee == countName {
+                        if arguments.count == 1 {
+                            let receiverID = arguments[0]
+                            if listExprIDs.contains(receiverID.rawValue) {
+                                let zeroFnExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: zeroFnExpr, value: .intLiteral(0)))
+                                let zeroClosureExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: zeroClosureExpr, value: .intLiteral(0)))
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: kkListCountName,
+                                    arguments: [receiverID, zeroFnExpr, zeroClosureExpr],
+                                    result: result,
+                                    canThrow: false,
+                                    thrownResult: nil
+                                ))
+                                continue
+                            }
+                            if mapExprIDs.contains(receiverID.rawValue) {
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: kkMapSizeName,
+                                    arguments: [receiverID],
+                                    result: result,
+                                    canThrow: false,
+                                    thrownResult: nil
+                                ))
+                                continue
+                            }
+                        }
+                        // count(predicate): args = [receiver, fnPtr, closureRaw]
+                        if arguments.count == 3 {
+                            let receiverID = arguments[0]
+                            if listExprIDs.contains(receiverID.rawValue) {
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: kkListCountName,
+                                    arguments: arguments,
+                                    result: result,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult
+                                ))
+                                continue
+                            }
+                        }
+                    }
+
+                    if callee == firstName || callee == lastName {
+                        let kkName = callee == firstName ? kkListFirstName : kkListLastName
+                        if arguments.count == 1 {
+                            let receiverID = arguments[0]
+                            if listExprIDs.contains(receiverID.rawValue) {
+                                let zeroFnExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: zeroFnExpr, value: .intLiteral(0)))
+                                let zeroClosureExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: zeroClosureExpr, value: .intLiteral(0)))
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: kkName,
+                                    arguments: [receiverID, zeroFnExpr, zeroClosureExpr],
+                                    result: result,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult
+                                ))
+                                continue
+                            }
+                        }
+                        // first/last(predicate): args = [receiver, fnPtr, closureRaw]
+                        if arguments.count == 3 {
+                            let receiverID = arguments[0]
+                            if listExprIDs.contains(receiverID.rawValue) {
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: kkName,
+                                    arguments: arguments,
+                                    result: result,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult
+                                ))
+                                continue
+                            }
+                        }
+                    }
+
+                    if callee == findName, arguments.count == 3 {
+                        let receiverID = arguments[0]
+                        if listExprIDs.contains(receiverID.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkListFindName,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: canThrow,
+                                thrownResult: thrownResult
+                            ))
+                            continue
                         }
                     }
 
@@ -839,44 +953,79 @@ final class CollectionLiteralLoweringPass: LoweringPass {
 
                     // --- Rewrite higher-order collection member calls (FUNC-003) ---
                     if callee == mapName || callee == filterName || callee == forEachName
-                        || callee == flatMapName || callee == anyName || callee == noneName
-                        || callee == allName
+                        || callee == flatMapName || callee == foldName || callee == reduceName
+                        || callee == anyName || callee == noneName || callee == allName
+                        || callee == groupByName || callee == sortedByName
                     {
-                        // args = [receiver, lambdaFnPtr]
-                        if arguments.count == 2 {
-                            let receiverID = arguments[0]
-                            if listExprIDs.contains(receiverID.rawValue) {
-                                let kkName: InternedString = switch callee {
-                                case mapName: kkListMapName
-                                case filterName: kkListFilterName
-                                case forEachName: kkListForEachName
-                                case flatMapName: kkListFlatMapName
-                                case anyName: kkListAnyName
-                                case noneName: kkListNoneName
-                                case allName: kkListAllName
-                                default: callee
-                                }
-                                let needsListTag = callee == mapName || callee == flatMapName || callee == filterName
-                                let hofResult = module.arena.appendExpr(
-                                    .temporary(Int32(module.arena.expressions.count)), type: nil
-                                )
-                                loweredBody.append(.call(
-                                    symbol: nil,
-                                    callee: kkName,
-                                    arguments: arguments,
-                                    result: hofResult,
-                                    canThrow: canThrow,
-                                    thrownResult: thrownResult
-                                ))
-                                if needsListTag, let result {
-                                    listExprIDs.insert(result.rawValue)
-                                    listExprIDs.insert(hofResult.rawValue)
-                                }
-                                if let result {
-                                    loweredBody.append(.copy(from: hofResult, to: result))
-                                }
-                                continue
+                        guard let receiverID = arguments.first else {
+                            continue
+                        }
+                        if listExprIDs.contains(receiverID.rawValue) {
+                            let kkName: InternedString = switch callee {
+                            case mapName: kkListMapName
+                            case filterName: kkListFilterName
+                            case forEachName: kkListForEachName
+                            case flatMapName: kkListFlatMapName
+                            case foldName: kkListFoldName
+                            case reduceName: kkListReduceName
+                            case anyName: kkListAnyName
+                            case noneName: kkListNoneName
+                            case allName: kkListAllName
+                            case groupByName: kkListGroupByName
+                            case sortedByName: kkListSortedByName
+                            default: callee
                             }
+
+                            var runtimeArguments = arguments
+                            if callee == anyName || callee == noneName || callee == allName {
+                                if arguments.count == 1 {
+                                    let zeroFnExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                    loweredBody.append(.constValue(result: zeroFnExpr, value: .intLiteral(0)))
+                                    let zeroClosureExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                    loweredBody.append(.constValue(result: zeroClosureExpr, value: .intLiteral(0)))
+                                    runtimeArguments = [receiverID, zeroFnExpr, zeroClosureExpr]
+                                } else if arguments.count != 3 {
+                                    continue
+                                }
+                            } else if callee == foldName {
+                                if arguments.count != 4 { continue }
+                            } else if callee == reduceName {
+                                if arguments.count != 3 { continue }
+                            } else {
+                                // map/filter/forEach/flatMap/groupBy/sortedBy
+                                if arguments.count != 3 { continue }
+                            }
+
+                            let needsListTag = callee == mapName
+                                || callee == filterName
+                                || callee == flatMapName
+                                || callee == sortedByName
+                            let needsMapTag = callee == groupByName
+
+                            let hofResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)),
+                                type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkName,
+                                arguments: runtimeArguments,
+                                result: hofResult,
+                                canThrow: canThrow,
+                                thrownResult: thrownResult
+                            ))
+                            if needsListTag, let result {
+                                listExprIDs.insert(result.rawValue)
+                                listExprIDs.insert(hofResult.rawValue)
+                            }
+                            if needsMapTag, let result {
+                                mapExprIDs.insert(result.rawValue)
+                                mapExprIDs.insert(hofResult.rawValue)
+                            }
+                            if let result {
+                                loweredBody.append(.copy(from: hofResult, to: result))
+                            }
+                            continue
                         }
                     }
 
@@ -1037,52 +1186,83 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                     }
 
                     // Also handle higher-order collection calls that may come
-                    // through as .virtualCall (map/filter/forEach on lists).
+                    // through as .virtualCall.
                     if callee == mapName || callee == filterName || callee == forEachName
-                        || callee == flatMapName || callee == anyName || callee == noneName
-                        || callee == allName
+                        || callee == flatMapName || callee == foldName || callee == reduceName
+                        || callee == anyName || callee == noneName || callee == allName
+                        || callee == groupByName || callee == sortedByName
                     {
-                        if arguments.count == 1 {
-                            if listExprIDs.contains(receiver.rawValue) {
-                                let kkName: InternedString = switch callee {
-                                case mapName: kkListMapName
-                                case filterName: kkListFilterName
-                                case forEachName: kkListForEachName
-                                case flatMapName: kkListFlatMapName
-                                case anyName: kkListAnyName
-                                case noneName: kkListNoneName
-                                case allName: kkListAllName
-                                default: callee
-                                }
-                                let needsListTag = callee == mapName
-                                    || callee == flatMapName || callee == filterName
-                                let hofResult = module.arena.appendExpr(
-                                    .temporary(Int32(module.arena.expressions.count)),
-                                    type: nil
-                                )
-                                loweredBody.append(.call(
-                                    symbol: nil,
-                                    callee: kkName,
-                                    arguments: [receiver] + arguments,
-                                    result: hofResult,
-                                    canThrow: origCanThrow,
-                                    thrownResult: origThrownResult
-                                ))
-                                if needsListTag, let result {
-                                    listExprIDs.insert(result.rawValue)
-                                    listExprIDs.insert(hofResult.rawValue)
-                                }
-                                if let result {
-                                    loweredBody.append(.copy(from: hofResult, to: result))
-                                }
-                                continue
+                        if listExprIDs.contains(receiver.rawValue) {
+                            let kkName: InternedString = switch callee {
+                            case mapName: kkListMapName
+                            case filterName: kkListFilterName
+                            case forEachName: kkListForEachName
+                            case flatMapName: kkListFlatMapName
+                            case foldName: kkListFoldName
+                            case reduceName: kkListReduceName
+                            case anyName: kkListAnyName
+                            case noneName: kkListNoneName
+                            case allName: kkListAllName
+                            case groupByName: kkListGroupByName
+                            case sortedByName: kkListSortedByName
+                            default: callee
                             }
+
+                            var runtimeArguments = [receiver] + arguments
+                            if callee == anyName || callee == noneName || callee == allName {
+                                if arguments.isEmpty {
+                                    let zeroFnExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                    loweredBody.append(.constValue(result: zeroFnExpr, value: .intLiteral(0)))
+                                    let zeroClosureExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                    loweredBody.append(.constValue(result: zeroClosureExpr, value: .intLiteral(0)))
+                                    runtimeArguments = [receiver, zeroFnExpr, zeroClosureExpr]
+                                } else if arguments.count != 2 {
+                                    continue
+                                }
+                            } else if callee == foldName {
+                                if arguments.count != 3 { continue }
+                            } else if callee == reduceName {
+                                if arguments.count != 2 { continue }
+                            } else {
+                                // map/filter/forEach/flatMap/groupBy/sortedBy
+                                if arguments.count != 2 { continue }
+                            }
+
+                            let needsListTag = callee == mapName
+                                || callee == filterName
+                                || callee == flatMapName
+                                || callee == sortedByName
+                            let needsMapTag = callee == groupByName
+
+                            let hofResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)),
+                                type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkName,
+                                arguments: runtimeArguments,
+                                result: hofResult,
+                                canThrow: origCanThrow,
+                                thrownResult: origThrownResult
+                            ))
+                            if needsListTag, let result {
+                                listExprIDs.insert(result.rawValue)
+                                listExprIDs.insert(hofResult.rawValue)
+                            }
+                            if needsMapTag, let result {
+                                mapExprIDs.insert(result.rawValue)
+                                mapExprIDs.insert(hofResult.rawValue)
+                            }
+                            if let result {
+                                loweredBody.append(.copy(from: hofResult, to: result))
+                            }
+                            continue
                         }
                     }
 
-                    // Also handle collection member calls (size, get, etc.)
-                    // that may arrive as .virtualCall.
-                    if callee == sizeName || callee == countName {
+                    // Also handle collection member calls that may arrive as .virtualCall.
+                    if callee == sizeName {
                         if listExprIDs.contains(receiver.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
@@ -1102,6 +1282,94 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                                 result: result,
                                 canThrow: false,
                                 thrownResult: nil
+                            ))
+                            continue
+                        }
+                    }
+
+                    if callee == countName {
+                        if listExprIDs.contains(receiver.rawValue) {
+                            if arguments.isEmpty {
+                                let zeroFnExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: zeroFnExpr, value: .intLiteral(0)))
+                                let zeroClosureExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: zeroClosureExpr, value: .intLiteral(0)))
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: kkListCountName,
+                                    arguments: [receiver, zeroFnExpr, zeroClosureExpr],
+                                    result: result,
+                                    canThrow: false,
+                                    thrownResult: nil
+                                ))
+                                continue
+                            }
+                            if arguments.count == 2 {
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: kkListCountName,
+                                    arguments: [receiver] + arguments,
+                                    result: result,
+                                    canThrow: origCanThrow,
+                                    thrownResult: origThrownResult
+                                ))
+                                continue
+                            }
+                        }
+                        if mapExprIDs.contains(receiver.rawValue), arguments.isEmpty {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkMapSizeName,
+                                arguments: [receiver],
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            continue
+                        }
+                    }
+
+                    if callee == firstName || callee == lastName {
+                        let kkName = callee == firstName ? kkListFirstName : kkListLastName
+                        if listExprIDs.contains(receiver.rawValue) {
+                            if arguments.isEmpty {
+                                let zeroFnExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: zeroFnExpr, value: .intLiteral(0)))
+                                let zeroClosureExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: zeroClosureExpr, value: .intLiteral(0)))
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: kkName,
+                                    arguments: [receiver, zeroFnExpr, zeroClosureExpr],
+                                    result: result,
+                                    canThrow: origCanThrow,
+                                    thrownResult: origThrownResult
+                                ))
+                                continue
+                            }
+                            if arguments.count == 2 {
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: kkName,
+                                    arguments: [receiver] + arguments,
+                                    result: result,
+                                    canThrow: origCanThrow,
+                                    thrownResult: origThrownResult
+                                ))
+                                continue
+                            }
+                        }
+                    }
+
+                    if callee == findName, arguments.count == 2 {
+                        if listExprIDs.contains(receiver.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkListFindName,
+                                arguments: [receiver] + arguments,
+                                result: result,
+                                canThrow: origCanThrow,
+                                thrownResult: origThrownResult
                             ))
                             continue
                         }

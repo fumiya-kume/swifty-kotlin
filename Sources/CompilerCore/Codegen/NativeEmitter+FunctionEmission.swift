@@ -243,7 +243,24 @@ extension NativeEmitter {
             from value: LLVMCAPIBindings.LLVMValueRef,
             name: String
         ) -> LLVMCAPIBindings.LLVMValueRef? {
-            bindings.buildICmpNotEqual(builder, lhs: value, rhs: zeroValue, name: name)
+            let normalizedValue: LLVMCAPIBindings.LLVMValueRef = if let unboxBool = declareExternalFunction(
+                named: "kk_unbox_bool",
+                argumentCount: 1,
+                appendThrownChannel: false
+            ),
+                let unboxed = bindings.buildCall(
+                    builder,
+                    functionType: unboxBool.type,
+                    callee: unboxBool.value,
+                    arguments: [value],
+                    name: "\(name)_unboxed"
+                )
+            {
+                unboxed
+            } else {
+                value
+            }
+            return bindings.buildICmpNotEqual(builder, lhs: normalizedValue, rhs: zeroValue, name: name)
         }
 
         func storeOutThrownIfNonNull(

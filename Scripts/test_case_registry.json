@@ -750,6 +750,18 @@
       ]
     },
     {
+      "task": "STDLIB-005",
+      "category": "stdlib",
+      "description": "Collection higher-order functions, closure ABI, short-circuit and stable ordering parity",
+      "cases": [
+        {
+          "type": "diff",
+          "name": "stdlib_collection_hof",
+          "template": "Scripts/test_templates/diff/stdlib_collection_hof.kt"
+        }
+      ]
+    },
+    {
       "task": "MPP-001",
       "category": "multiplatform",
       "description": "expect/actual declarations",

@@ -6,8 +6,9 @@ final class RuntimeStubCache: @unchecked Sendable {
     private var cache: [String: String] = [:]
 
     func getOrInsert(triple: String, context: StubCompilationContext) -> String? {
+        let cacheKey = "\(triple)::\(context.cacheKey)"
         lock.lock()
-        if let cached = cache[triple], FileManager.default.fileExists(atPath: cached) {
+        if let cached = cache[cacheKey], FileManager.default.fileExists(atPath: cached) {
             lock.unlock()
             return cached
         }
@@ -19,10 +20,10 @@ final class RuntimeStubCache: @unchecked Sendable {
 
         lock.lock()
         defer { lock.unlock() }
-        if let cached = cache[triple], FileManager.default.fileExists(atPath: cached) {
+        if let cached = cache[cacheKey], FileManager.default.fileExists(atPath: cached) {
             return cached
         }
-        cache[triple] = compiled
+        cache[cacheKey] = compiled
         return compiled
     }
 

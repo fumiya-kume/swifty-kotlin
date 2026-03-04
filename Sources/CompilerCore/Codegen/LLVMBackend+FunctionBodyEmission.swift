@@ -442,7 +442,10 @@ extension LLVMBackend {
 
             case let .jumpIfNotNull(value, target):
                 ensureDeclared(value, declared: &declared, lines: &lines)
-                lines.append("  if (\(varName(value)) != 0) goto \(labelName(target));")
+                let normalized = "bool_cond_\(callIndex)"
+                callIndex += 1
+                lines.append("  intptr_t \(normalized) = kk_unbox_bool(\(varName(value)));")
+                lines.append("  if (\(normalized) != 0) goto \(labelName(target));")
 
             case let .copy(from, to):
                 ensureDeclared(from, declared: &declared, lines: &lines)
