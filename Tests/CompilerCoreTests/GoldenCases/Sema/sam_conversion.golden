@@ -20,11 +20,16 @@ symbol s18 kind=interface fq=golden.sema.Action vis=public flags=funInterface
 symbol s19 kind=function fq=golden.sema.Action.run vis=public flags=abstractType sig=recv=Class#18 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s20 kind=function fq=golden.sema.execute vis=public flags=_ sig=recv=_ params=[Class#18] ret=Unit suspend=0 defaults=[0] vararg=[0]
 symbol s21 kind=valueParameter fq=golden.sema.execute.$20.action vis=private flags=_
-symbol s22 kind=function fq=golden.sema.useSam vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s22 kind=function fq=golden.sema.useSam vis=public flags=_ sig=recv=_ params=[] ret=Any suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
   decl d1 interface Action sym=s18
   decl d2 fun execute suspend=0 inline=0 sym=s20
   decl d3 fun useSam suspend=0 inline=0 sym=s22
 expr e0 name(action) type=Class#18 ref=s21
 expr e1 memberCall recv=e0 callee=run args=[] type=Unit call=s19 map=[] targs=[]
-expr e2 name(execute) type=Unit ref=s20
+expr e2 name(execute) type=Any
+expr e3 name(println) type=_
+expr e4 string(hello) type=String
+expr e5 call callee=e3 args=[_:e4] type=Unit
+expr e6 lambda params=[] body=e5 type=() -> Unit
+expr e7 call callee=e2 args=[_:e6] type=<error>

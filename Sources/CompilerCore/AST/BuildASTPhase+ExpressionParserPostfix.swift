@@ -12,12 +12,36 @@ extension BuildASTPhase.ExpressionParser {
                 if let typeArgs = tryParseExplicitTypeArgs() {
                     if matches(.symbol(.lParen)) {
                         guard let open = consume() else { break }
-                        let args = parseCallArguments()
+                        var args = parseCallArguments()
                         let close = consumeIf(.symbol(.rParen))
+                        var callEndRange = close?.range ?? open.range
+                        // Trailing lambda without parentheses: foo<T> { ... }.
+                        if matches(.symbol(.lBrace)),
+                           let braceToken = current(),
+                           let trailingLambda = parseLambdaLiteral(allowImplicitEmptyParams: true)
+                        { // swiftlint:disable:this opening_brace
+                            args.append(CallArgument(expr: trailingLambda))
+                            callEndRange = astArena.exprRange(trailingLambda) ?? braceToken.range
+                        }
                         let fallbackEnd = close?.range.end ?? open.range.end
                         let endRange = SourceRange(start: fallbackEnd, end: fallbackEnd)
-                        let range = mergeRanges(astArena.exprRange(expr), close?.range ?? endRange, fallback: open.range)
+                        let range = mergeRanges(astArena.exprRange(expr), callEndRange, fallback: endRange)
                         expr = astArena.appendExpr(.call(callee: expr, typeArgs: typeArgs, args: args, range: range))
+                        continue
+                    }
+                    // Trailing lambda without parentheses: foo<T> { ... }.
+                    if matches(.symbol(.lBrace)),
+                       let braceToken = current(),
+                       let trailingLambda = parseLambdaLiteral(allowImplicitEmptyParams: true)
+                    { // swiftlint:disable:this opening_brace
+                        let trailingRange = astArena.exprRange(trailingLambda) ?? braceToken.range
+                        let range = mergeRanges(astArena.exprRange(expr), trailingRange, fallback: trailingRange)
+                        expr = astArena.appendExpr(.call(
+                            callee: expr,
+                            typeArgs: typeArgs,
+                            args: [CallArgument(expr: trailingLambda)],
+                            range: range
+                        ))
                         continue
                     }
                 }
@@ -26,12 +50,37 @@ extension BuildASTPhase.ExpressionParser {
 
             if matches(.symbol(.lParen)) {
                 guard let open = consume() else { break }
-                let args = parseCallArguments()
+                var args = parseCallArguments()
                 let close = consumeIf(.symbol(.rParen))
+                var callEndRange = close?.range ?? open.range
+                // Trailing lambda after a parenthesized call: foo(...) { ... }.
+                if matches(.symbol(.lBrace)),
+                   let braceToken = current(),
+                   let trailingLambda = parseLambdaLiteral(allowImplicitEmptyParams: true)
+                { // swiftlint:disable:this opening_brace
+                    args.append(CallArgument(expr: trailingLambda))
+                    callEndRange = astArena.exprRange(trailingLambda) ?? braceToken.range
+                }
                 let fallbackEnd = close?.range.end ?? open.range.end
                 let endRange = SourceRange(start: fallbackEnd, end: fallbackEnd)
-                let range = mergeRanges(astArena.exprRange(expr), close?.range ?? endRange, fallback: open.range)
+                let range = mergeRanges(astArena.exprRange(expr), callEndRange, fallback: endRange)
                 expr = astArena.appendExpr(.call(callee: expr, typeArgs: [], args: args, range: range))
+                continue
+            }
+
+            // Trailing lambda without parentheses: foo { ... }.
+            if matches(.symbol(.lBrace)),
+               let braceToken = current(),
+               let trailingLambda = parseLambdaLiteral(allowImplicitEmptyParams: true)
+            { // swiftlint:disable:this opening_brace
+                let trailingRange = astArena.exprRange(trailingLambda) ?? braceToken.range
+                let range = mergeRanges(astArena.exprRange(expr), trailingRange, fallback: trailingRange)
+                expr = astArena.appendExpr(.call(
+                    callee: expr,
+                    typeArgs: [],
+                    args: [CallArgument(expr: trailingLambda)],
+                    range: range
+                ))
                 continue
             }
 
@@ -111,7 +160,7 @@ extension BuildASTPhase.ExpressionParser {
             }
             // Trailing lambda: attach `{ ... }` as the last argument (Kotlin grammar).
             if matches(.symbol(.lBrace)),
-               let trailingLambda = parseLambdaLiteral()
+               let trailingLambda = parseLambdaLiteral(allowImplicitEmptyParams: true)
             { // swiftlint:disable:this opening_brace
                 args.append(CallArgument(expr: trailingLambda))
                 memberEndRange = astArena.exprRange(trailingLambda) ?? memberEndRange

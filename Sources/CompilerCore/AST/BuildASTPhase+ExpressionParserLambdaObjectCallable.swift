@@ -2,7 +2,11 @@ import Foundation
 
 extension BuildASTPhase.ExpressionParser {
     // swiftlint:disable:next cyclomatic_complexity function_body_length
-    func parseLambdaLiteral(label: InternedString? = nil, start: SourceLocation? = nil) -> ExprID? {
+    func parseLambdaLiteral(
+        label: InternedString? = nil,
+        start: SourceLocation? = nil,
+        allowImplicitEmptyParams: Bool = false
+    ) -> ExprID? {
         guard matches(.symbol(.lBrace)) else {
             return nil
         }
@@ -59,9 +63,11 @@ extension BuildASTPhase.ExpressionParser {
             return astArena.appendExpr(.lambdaLiteral(params: params, body: bodyExpr, label: label, range: range))
         }
 
-        // No-arrow lambda: { body } — check if body references `it` at the top level.
-        // If so, emit a lambdaLiteral with empty params; Sema will inject implicit `it`.
-        if containsImplicitItReference(in: bodyTokens) {
+        // No-arrow lambda: { body }.
+        // Accept either:
+        // - explicit implicit-it usage (`{ it * 2 }`), or
+        // - call-site trailing lambdas/labeled lambdas that omit parameters (`foo { 1 }`, `label@ { ... }`).
+        if containsImplicitItReference(in: bodyTokens) || allowImplicitEmptyParams {
             let bodyExpr = parseLambdaBody(bodySlice: bodyTokens[...], fallbackStart: openBrace.range.end)
             let range = SourceRange(start: start ?? openBrace.range.start, end: end)
             return astArena.appendExpr(.lambdaLiteral(params: [], body: bodyExpr, label: label, range: range))
@@ -316,25 +322,6 @@ extension BuildASTPhase.ExpressionParser {
         ))
         return astArena.appendExpr(.lambdaLiteral(
             params: [syntheticParam], body: wrappedBody, label: label, range: range
-        ))
-    }
-
-    private func parseLambdaBody(
-        bodySlice: ArraySlice<Token>,
-        fallbackStart: SourceLocation
-    ) -> ExprID {
-        if let parsed = BuildASTPhase.ExpressionParser(
-            tokens: bodySlice, interner: interner, astArena: astArena
-        ).parse() {
-            return parsed
-        }
-        let bodyRange = if let first = bodySlice.first, let last = bodySlice.last {
-            SourceRange(start: first.range.start, end: last.range.end)
-        } else {
-            SourceRange(start: fallbackStart, end: fallbackStart)
-        }
-        return astArena.appendExpr(.blockExpr(
-            statements: [], trailingExpr: nil, range: bodyRange
         ))
     }
 

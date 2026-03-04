@@ -127,7 +127,11 @@ extension BuildASTPhase.ExpressionParser {
                     return parseDoWhileExpression(label: name, start: start)
                 }
                 if matches(.symbol(.lBrace)) {
-                    if let lambda = parseLambdaLiteral(label: name, start: start) {
+                    if let lambda = parseLambdaLiteral(
+                        label: name,
+                        start: start,
+                        allowImplicitEmptyParams: true
+                    ) {
                         return lambda
                     }
                 }
