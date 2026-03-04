@@ -7,6 +7,7 @@ readonly skip_test_run="${COVERAGE_SKIP_TEST_RUN:-0}"
 readonly profile_override="${COVERAGE_PROFILE_PATH:-}"
 readonly tests_binary_override="${COVERAGE_TESTS_BINARY:-}"
 readonly json_output_override="${COVERAGE_JSON_OUTPUT:-}"
+readonly llvm_cov_bin="${LLVM_COV_BIN:-llvm-cov}"
 
 readonly targets=(
   "Sources/CompilerCore/Lexer/TokenStream.swift"
@@ -65,10 +66,15 @@ if [[ ! -e "$tests_binary" ]]; then
   exit 1
 fi
 
+if ! command -v "$llvm_cov_bin" >/dev/null 2>&1; then
+  echo "llvm-cov binary not found: ${llvm_cov_bin}" >&2
+  exit 1
+fi
+
 mkdir -p "$(dirname "$json_output")"
 
 if [[ "$(uname)" == "Linux" ]]; then
-  llvm-cov export "$tests_binary" -instr-profile "$profile" > "$json_output"
+  "$llvm_cov_bin" export "$tests_binary" -instr-profile "$profile" > "$json_output"
 else
   xcrun llvm-cov export "$tests_binary" -instr-profile "$profile" > "$json_output"
 fi

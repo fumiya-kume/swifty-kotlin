@@ -202,15 +202,23 @@ jobs:
           echo "One or more coverage shards failed." >&2
           exit 1
       - uses: actions/checkout@v4
-      - name: Install LLVM and jq
-        run: sudo apt-get update && sudo apt-get install -y llvm-dev jq
-      - name: Configure LLVM paths
-        run: |
-          LLVM_PREFIX="$(llvm-config --prefix)"
-          echo "C_INCLUDE_PATH=${LLVM_PREFIX}/include" >> "$GITHUB_ENV"
-          echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
+      - name: Install Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.2"
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
       - name: Verify prerequisites
-        run: jq --version
+        run: |
+          jq --version
+          swift --version
+      - name: Configure coverage tools from Swift toolchain
+        run: |
+          TOOLCHAIN_BIN="$(dirname "$(command -v swift)")"
+          echo "LLVM_COV_BIN=${TOOLCHAIN_BIN}/llvm-cov" >> "$GITHUB_ENV"
+          echo "LLVM_PROFDATA_BIN=${TOOLCHAIN_BIN}/llvm-profdata" >> "$GITHUB_ENV"
+          "${TOOLCHAIN_BIN}/llvm-profdata" --version
+          "${TOOLCHAIN_BIN}/llvm-cov" --version
       - name: Download shard coverage profiles
         uses: actions/download-artifact@v4
         with:
@@ -233,7 +241,7 @@ jobs:
           fi
 
           MERGED_PROFILE="${RUNNER_TEMP}/merged.profdata"
-          llvm-profdata merge -sparse "${profiles[@]}" -o "$MERGED_PROFILE"
+          "${LLVM_PROFDATA_BIN}" merge -sparse "${profiles[@]}" -o "$MERGED_PROFILE"
           echo "path=${MERGED_PROFILE}" >> "$GITHUB_OUTPUT"
       - name: Run tests with coverage threshold
         id: coverage
