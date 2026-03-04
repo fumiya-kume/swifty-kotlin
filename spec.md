@@ -1142,4 +1142,3 @@ bash Scripts/check_coverage.sh
   * `Sources/CompilerCore/AST/ASTModels.swift`
 * しきい値: 80%（`COVERAGE_THRESHOLD` で上書き可）
 * いずれか1ファイルでも未達なら `exit 1`
-aa

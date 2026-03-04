@@ -45,7 +45,12 @@ extension BuildASTPhase.ExpressionParser {
                 statements.append(localDecl)
             } else if let localAssign = parseLocalAssignFromSlice(group) {
                 statements.append(localAssign)
-            } else if let expr = BuildASTPhase.ExpressionParser(tokens: group, interner: interner, astArena: astArena).parse() {
+            } else if let expr = BuildASTPhase.ExpressionParser(
+                tokens: group,
+                interner: interner,
+                astArena: astArena,
+                diagnostics: self.diagnostics
+            ).parse() {
                 statements.append(expr)
             }
         }
@@ -162,7 +167,12 @@ extension BuildASTPhase.ExpressionParser {
             interner: interner,
             astArena: astArena,
             parseExpression: { slice in
-                BuildASTPhase.ExpressionParser(tokens: slice, interner: interner, astArena: astArena).parse()
+                BuildASTPhase.ExpressionParser(
+                    tokens: slice,
+                    interner: interner,
+                    astArena: astArena,
+                    diagnostics: self.diagnostics
+                ).parse()
             },
             parseTypeReference: { typeTokens in
                 guard let first = typeTokens.first else {
@@ -171,7 +181,8 @@ extension BuildASTPhase.ExpressionParser {
                 let parser = BuildASTPhase.ExpressionParser(
                     tokens: typeTokens,
                     interner: interner,
-                    astArena: astArena
+                    astArena: astArena,
+                    diagnostics: self.diagnostics
                 )
                 return parser.parseTypeReference(first.range)
             },
@@ -202,7 +213,12 @@ extension BuildASTPhase.ExpressionParser {
             interner: interner,
             astArena: astArena,
             parseExpression: { slice in
-                BuildASTPhase.ExpressionParser(tokens: slice, interner: interner, astArena: astArena).parse()
+                BuildASTPhase.ExpressionParser(
+                    tokens: slice,
+                    interner: interner,
+                    astArena: astArena,
+                    diagnostics: self.diagnostics
+                ).parse()
             },
             parseTypeReference: { _ in nil },
             resolveDeclarationName: { _, _ in nil }
@@ -255,7 +271,10 @@ extension BuildASTPhase.ExpressionParser {
             } else if let localAssign = parseLocalAssignFromSlice(group) {
                 statements.append(localAssign)
             } else if let expr = BuildASTPhase.ExpressionParser(
-                tokens: group, interner: interner, astArena: astArena
+                tokens: group,
+                interner: interner,
+                astArena: astArena,
+                diagnostics: self.diagnostics
             ).parse() {
                 statements.append(expr)
             }

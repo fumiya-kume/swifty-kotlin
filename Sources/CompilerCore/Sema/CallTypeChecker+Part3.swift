@@ -630,7 +630,6 @@ extension CallTypeChecker {
             return driver.helpers.bindAndReturnErrorType(id, sema: sema)
         }
         guard let chosen = resolved.chosenCallee else {
-            print("DEBUG: Unresolved member call (post-resolve): \(interner.resolve(calleeName))")
             ctx.semaCtx.diagnostics.error("KSWIFTK-SEMA-0024", "Unresolved member function '\(interner.resolve(calleeName))'.", range: range)
             return driver.helpers.bindAndReturnErrorType(id, sema: sema)
         }

@@ -283,6 +283,12 @@ public enum DiagnosticRegistry {
             summary: "Invalid operator application."
         ),
         DiagnosticDescriptor(
+            code: "KSWIFTK-SEMA-0043",
+            pass: "SEMA",
+            defaultSeverity: .error,
+            summary: "Cannot use signed and unsigned integer operations together."
+        ),
+        DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-0050",
             pass: "SEMA",
             defaultSeverity: .error,

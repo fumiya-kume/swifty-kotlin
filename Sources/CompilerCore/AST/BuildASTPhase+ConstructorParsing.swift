@@ -51,7 +51,8 @@ extension BuildASTPhase {
                     let parser = ExpressionParser(
                         tokens: headerTokens.dropFirst(),
                         interner: interner,
-                        astArena: astArena
+                        astArena: astArena,
+                        diagnostics: self.diagnostics
                     )
                     if let exprID = parser.parse(),
                        let range = astArena.exprRange(exprID)
@@ -173,7 +174,12 @@ extension BuildASTPhase {
                 }
                 if t.kind == .symbol(.comma), depth == 0 {
                     if !argTokens.isEmpty {
-                        let parser = ExpressionParser(tokens: argTokens, interner: interner, astArena: astArena)
+                        let parser = ExpressionParser(
+                            tokens: argTokens,
+                            interner: interner,
+                            astArena: astArena,
+                            diagnostics: self.diagnostics
+                        )
                         if let exprID = parser.parse() {
                             args.append(CallArgument(expr: exprID))
                         }
@@ -185,7 +191,12 @@ extension BuildASTPhase {
                 index += 1
             }
             if !argTokens.isEmpty {
-                let parser = ExpressionParser(tokens: argTokens, interner: interner, astArena: astArena)
+                let parser = ExpressionParser(
+                    tokens: argTokens,
+                    interner: interner,
+                    astArena: astArena,
+                    diagnostics: self.diagnostics
+                )
                 if let exprID = parser.parse() {
                     args.append(CallArgument(expr: exprID))
                 }

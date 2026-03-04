@@ -26,7 +26,8 @@ extension BuildASTPhase.ExpressionParser {
                     }
                     if matches(.symbol(.lBrace)), let trailingLambda = parseLambdaLiteral(isTrailing: true) {
                         let fallbackEnd = astArena.exprRange(trailingLambda)?.end
-                            ?? (astArena.exprRange(expr)?.end ?? tokens[max(0, index - 1)].range.end)
+                            ?? (astArena.exprRange(expr)?.end
+                                ?? (index > tokens.startIndex ? tokens[index - 1].range.end : tokens[tokens.startIndex].range.start))
                         let endRange = SourceRange(start: fallbackEnd, end: fallbackEnd)
                         let fallbackRange = astArena.exprRange(expr) ?? endRange
                         let range = mergeRanges(astArena.exprRange(expr), endRange, fallback: fallbackRange)
@@ -57,7 +58,8 @@ extension BuildASTPhase.ExpressionParser {
 
             if matches(.symbol(.lBrace)), let trailingLambda = parseLambdaLiteral(isTrailing: true) {
                 let fallbackEnd = astArena.exprRange(trailingLambda)?.end
-                    ?? (astArena.exprRange(expr)?.end ?? tokens[max(0, index - 1)].range.end)
+                    ?? (astArena.exprRange(expr)?.end
+                        ?? (index > tokens.startIndex ? tokens[index - 1].range.end : tokens[tokens.startIndex].range.start))
                 let endRange = SourceRange(start: fallbackEnd, end: fallbackEnd)
                 let fallbackRange = astArena.exprRange(expr) ?? endRange
                 let range = mergeRanges(astArena.exprRange(expr), endRange, fallback: fallbackRange)

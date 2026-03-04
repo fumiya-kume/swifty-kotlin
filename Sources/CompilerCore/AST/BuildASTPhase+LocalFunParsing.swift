@@ -74,7 +74,12 @@ extension BuildASTPhase {
         if index < statementTokens.count, statementTokens[index].kind == .symbol(.assign) {
             index += 1
             let exprTokens = Array(statementTokens[index...]).filter { $0.kind != .symbol(.semicolon) }
-            let parser = ExpressionParser(tokens: exprTokens, interner: interner, astArena: astArena)
+            let parser = ExpressionParser(
+                tokens: exprTokens,
+                interner: interner,
+                astArena: astArena,
+                diagnostics: self.diagnostics
+            )
             if let exprID = parser.parse(), let exprRange = astArena.exprRange(exprID) {
                 body = .expr(exprID, exprRange)
             } else {
@@ -113,7 +118,12 @@ extension BuildASTPhase {
                     } else if let localAssign = parseLocalAssignmentExpr(from: filtered, interner: interner, astArena: astArena) {
                         blockExprs.append(localAssign)
                     } else {
-                        let parser = ExpressionParser(tokens: filtered, interner: interner, astArena: astArena)
+                        let parser = ExpressionParser(
+                            tokens: filtered,
+                            interner: interner,
+                            astArena: astArena,
+                            diagnostics: self.diagnostics
+                        )
                         if let exprID = parser.parse() {
                             blockExprs.append(exprID)
                         }

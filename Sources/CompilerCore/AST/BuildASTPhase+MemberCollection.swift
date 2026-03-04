@@ -342,7 +342,12 @@ extension BuildASTPhase {
         guard !exprTokens.isEmpty else {
             return nil
         }
-        let parser = ExpressionParser(tokens: ArraySlice(exprTokens), interner: interner, astArena: astArena)
+        let parser = ExpressionParser(
+            tokens: ArraySlice(exprTokens),
+            interner: interner,
+            astArena: astArena,
+            diagnostics: self.diagnostics
+        )
         return parser.parse()
     }
 }

@@ -387,7 +387,12 @@ extension BuildASTPhase {
             .filter({ $0.kind != .symbol(.semicolon) }),
             !defaultTokens.isEmpty
         {
-            let parser = ExpressionParser(tokens: defaultTokens, interner: interner, astArena: astArena)
+            let parser = ExpressionParser(
+                tokens: defaultTokens,
+                interner: interner,
+                astArena: astArena,
+                diagnostics: self.diagnostics
+            )
             defaultValueExpr = parser.parse()
         } else {
             defaultValueExpr = nil

@@ -94,7 +94,10 @@ extension BuildASTPhase {
             _ = consume()
             if negated { _ = consume() }
             guard let typeRef = parseTypeReference(token.range) else { return nil }
-            let range = mergeRanges(astArena.exprRange(lhs), nil, fallback: token.range)
+            let typeRange = index > tokens.startIndex
+                ? SourceRange(start: tokens[index - 1].range.start, end: tokens[index - 1].range.end)
+                : token.range
+            let range = mergeRanges(astArena.exprRange(lhs), typeRange, fallback: token.range)
             return astArena.appendExpr(.isCheck(expr: lhs, type: typeRef, negated: negated, range: range))
         }
 
@@ -122,7 +125,10 @@ extension BuildASTPhase {
             _ = consume()
             let isSafe = consumeIf(.symbol(.question)) != nil
             guard let typeRef = parseTypeReference(token.range) else { return nil }
-            let range = mergeRanges(astArena.exprRange(lhs), nil, fallback: token.range)
+            let typeRange = index > tokens.startIndex
+                ? SourceRange(start: tokens[index - 1].range.start, end: tokens[index - 1].range.end)
+                : token.range
+            let range = mergeRanges(astArena.exprRange(lhs), typeRange, fallback: token.range)
             return astArena.appendExpr(.asCast(expr: lhs, type: typeRef, isSafe: isSafe, range: range))
         }
 

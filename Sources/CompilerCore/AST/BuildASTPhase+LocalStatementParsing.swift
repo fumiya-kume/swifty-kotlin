@@ -45,7 +45,12 @@ extension BuildASTPhase {
             interner: interner,
             astArena: astArena,
             parseExpression: { tokens in
-                ExpressionParser(tokens: tokens, interner: interner, astArena: astArena).parse()
+                ExpressionParser(
+                    tokens: tokens,
+                    interner: interner,
+                    astArena: astArena,
+                    diagnostics: self.diagnostics
+                ).parse()
             },
             parseTypeReference: { typeTokens in
                 self.parseTypeRef(from: typeTokens, interner: interner, astArena: astArena)
@@ -73,7 +78,12 @@ extension BuildASTPhase {
             interner: interner,
             astArena: astArena,
             parseExpression: { tokens in
-                ExpressionParser(tokens: tokens, interner: interner, astArena: astArena).parse()
+                ExpressionParser(
+                    tokens: tokens,
+                    interner: interner,
+                    astArena: astArena,
+                    diagnostics: self.diagnostics
+                ).parse()
             },
             parseTypeReference: { _ in nil },
             resolveDeclarationName: { _, _ in nil }
@@ -194,7 +204,12 @@ extension BuildASTPhase {
         guard !initializerTokens.isEmpty else {
             return nil
         }
-        let parser = ExpressionParser(tokens: initializerTokens[...], interner: interner, astArena: astArena)
+        let parser = ExpressionParser(
+            tokens: initializerTokens[...],
+            interner: interner,
+            astArena: astArena,
+            diagnostics: self.diagnostics
+        )
         guard let initializerExpr = parser.parse() else {
             return nil
         }

@@ -122,7 +122,8 @@ extension BuildASTPhase.ExpressionParser {
         let parser = BuildASTPhase.ExpressionParser(
             tokens: tokens[startIndex ..< endIndex],
             interner: interner,
-            astArena: astArena
+            astArena: astArena,
+            diagnostics: diagnostics
         )
         guard let body = parser.parse() else {
             return nil
@@ -470,7 +471,12 @@ extension BuildASTPhase.ExpressionParser {
         if let localAssign = parseLocalAssignFromSlice(sanitized[...]) {
             return localAssign
         }
-        return BuildASTPhase.ExpressionParser(tokens: sanitized[...], interner: interner, astArena: astArena).parse()
+        return BuildASTPhase.ExpressionParser(
+            tokens: sanitized[...],
+            interner: interner,
+            astArena: astArena,
+            diagnostics: diagnostics
+        ).parse()
     }
 
     /// Finds the top-level `while` keyword that starts the condition part of
