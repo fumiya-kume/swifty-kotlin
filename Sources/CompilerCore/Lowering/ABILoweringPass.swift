@@ -1,6 +1,7 @@
 // swiftlint:disable file_length
 import Foundation
 
+// swiftlint:disable:next type_body_length
 final class ABILoweringPass: LoweringPass {
     static let name = "ABILowering"
 
@@ -649,6 +650,7 @@ final class ABILoweringPass: LoweringPass {
         return kind
     }
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     private func boxingCallee(
         argType: TypeID,
         paramType: TypeID,
@@ -704,6 +706,10 @@ final class ABILoweringPass: LoweringPass {
                     return boxDoubleCallee
                 case .char:
                     return boxCharCallee
+                case .uint, .ubyte, .ushort:
+                    return boxIntCallee
+                case .ulong:
+                    return boxLongCallee
                 default:
                     return nil
                 }
@@ -724,11 +730,16 @@ final class ABILoweringPass: LoweringPass {
             return boxDoubleCallee
         case .primitive(.char, _):
             return boxCharCallee
+        case .primitive(.uint, _), .primitive(.ubyte, _), .primitive(.ushort, _):
+            return boxIntCallee
+        case .primitive(.ulong, _):
+            return boxLongCallee
         default:
             return nil
         }
     }
 
+    // swiftlint:disable:next cyclomatic_complexity
     private func unboxingCallee(
         sourceKind: TypeKind,
         targetKind: TypeKind,
@@ -763,6 +774,10 @@ final class ABILoweringPass: LoweringPass {
             return unboxDoubleCallee
         case .primitive(.char, _):
             return unboxCharCallee
+        case .primitive(.uint, _), .primitive(.ubyte, _), .primitive(.ushort, _):
+            return unboxIntCallee
+        case .primitive(.ulong, _):
+            return unboxLongCallee
         default:
             return nil
         }
@@ -892,6 +907,10 @@ final class ABILoweringPass: LoweringPass {
             boxDoubleCallee
         case .primitive(.char, .nonNull):
             boxCharCallee
+        case .primitive(.uint, .nonNull), .primitive(.ubyte, .nonNull), .primitive(.ushort, .nonNull):
+            boxIntCallee
+        case .primitive(.ulong, .nonNull):
+            boxLongCallee
         default:
             nil
         }
