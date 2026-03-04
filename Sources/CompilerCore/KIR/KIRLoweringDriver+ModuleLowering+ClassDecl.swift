@@ -110,14 +110,13 @@ extension KIRLoweringDriver {
                 .temporary(Int32(arena.expressions.count)),
                 type: shared.sema.symbols.propertyType(for: info.fieldSymbol) ?? shared.sema.types.anyType
             )
-            let thrownResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: shared.sema.types.anyType)
             body.append(.call(
                 symbol: nil,
                 callee: compilationCtx.interner.intern("kk_array_get"),
                 arguments: [ctx.currentImplicitReceiverExprID!, offsetExpr],
                 result: delegateResultID,
                 canThrow: true,
-                thrownResult: thrownResult,
+                thrownResult: nil,
                 isSuperCall: false
             ))
 
@@ -156,7 +155,6 @@ extension KIRLoweringDriver {
                 body: body,
                 isSuspend: signature.isSuspend,
                 isInline: false,
-                isTailrec: false,
                 sourceRange: nil
             )
             let funcDeclID = arena.appendDecl(.function(kirFunc))

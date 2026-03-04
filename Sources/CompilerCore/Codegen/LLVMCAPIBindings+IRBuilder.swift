@@ -116,6 +116,13 @@ extension LLVMCAPIBindings {
         return name.withCString { buildPtrToIntFn(builder, value, type, $0) }
     }
 
+    func buildIntToPtr(_ builder: LLVMBuilderRef?, value: LLVMValueRef?, type: LLVMTypeRef?, name: String) -> LLVMValueRef? {
+        guard let buildIntToPtrFn else {
+            return nil
+        }
+        return name.withCString { buildIntToPtrFn(builder, value, type, $0) }
+    }
+
     func buildAdd(_ builder: LLVMBuilderRef?, lhs: LLVMValueRef?, rhs: LLVMValueRef?, name: String) -> LLVMValueRef? {
         name.withCString { buildAddFn(builder, lhs, rhs, $0) }
     }

@@ -141,19 +141,20 @@ extension KIRLoweringDriver {
             }
             let delegateValue = lowerExpr(delegateExpr, shared: shared, emit: &body)
             
-            let offset = shared.sema.symbols.nominalLayout(for: ownerSymbol)?.fieldOffsets[fieldSymbol] ?? 0
-            let offsetExpr = arena.appendExpr(.intLiteral(Int64(offset)), type: shared.sema.types.intType)
-            body.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(offset))))
+            guard let fieldOffset = shared.sema.symbols.nominalLayout(for: ownerSymbol)?.fieldOffsets[fieldSymbol] else {
+                continue
+            }
+            let offsetExpr = arena.appendExpr(.intLiteral(Int64(fieldOffset)), type: shared.sema.types.intType)
+            body.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(fieldOffset))))
 
             let unusedResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: shared.sema.types.anyType)
-            let thrownResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: shared.sema.types.anyType)
             body.append(.call(
                 symbol: nil,
                 callee: compilationCtx.interner.intern("kk_array_set"),
                 arguments: [receiverID, offsetExpr, delegateValue],
                 result: unusedResult,
                 canThrow: true,
-                thrownResult: thrownResult,
+                thrownResult: nil,
                 isSuperCall: false
             ))
         }
