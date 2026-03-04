@@ -588,6 +588,20 @@ extension CallTypeChecker {
                     break
                 }
             }
+            // Builder DSL member functions (STDLIB-002).
+            if ctx.isBuilderLambdaScope, let activeBuilderKind = ctx.builderKind {
+                let name = interner.resolve(calleeName)
+                let isBuilderMember: Bool = switch activeBuilderKind {
+                case .buildString: name == "append" && args.count == 1
+                case .buildList: name == "add" && args.count == 1
+                case .buildMap: name == "put" && args.count == 2
+                }
+                if isBuilderMember {
+                    sema.bindings.bindExprType(id, type: sema.types.unitType)
+                    return sema.types.unitType
+                }
+            }
+
             if safeCall {
                 let resultType = sema.types.nullableAnyType
                 sema.bindings.bindExprType(id, type: resultType)
@@ -625,6 +639,7 @@ extension CallTypeChecker {
             return driver.helpers.bindAndReturnErrorType(id, sema: sema)
         }
         guard let chosen = resolved.chosenCallee else {
+            print("DEBUG: Unresolved member call (post-resolve): \(interner.resolve(calleeName))")
             ctx.semaCtx.diagnostics.error("KSWIFTK-SEMA-0024", "Unresolved member function '\(interner.resolve(calleeName))'.", range: range)
             return driver.helpers.bindAndReturnErrorType(id, sema: sema)
         }

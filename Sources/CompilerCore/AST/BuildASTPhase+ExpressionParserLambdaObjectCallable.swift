@@ -2,7 +2,7 @@ import Foundation
 
 extension BuildASTPhase.ExpressionParser {
     // swiftlint:disable:next cyclomatic_complexity function_body_length
-    func parseLambdaLiteral(label: InternedString? = nil, start: SourceLocation? = nil) -> ExprID? {
+    func parseLambdaLiteral(label: InternedString? = nil, start: SourceLocation? = nil, isTrailing: Bool = false) -> ExprID? {
         guard matches(.symbol(.lBrace)) else {
             return nil
         }
@@ -59,9 +59,9 @@ extension BuildASTPhase.ExpressionParser {
             return astArena.appendExpr(.lambdaLiteral(params: params, body: bodyExpr, label: label, range: range))
         }
 
-        // No-arrow lambda: { body } — check if body references `it` at the top level.
-        // If so, emit a lambdaLiteral with empty params; Sema will inject implicit `it`.
-        if containsImplicitItReference(in: bodyTokens) {
+        // No-arrow lambda: { body } — check if body references `it` at the top level,
+        // OR if this is explicitly a trailing lambda (which must be a lambda, not a block).
+        if isTrailing || containsImplicitItReference(in: bodyTokens) {
             let bodyExpr = parseLambdaBody(bodySlice: bodyTokens[...], fallbackStart: openBrace.range.end)
             let range = SourceRange(start: start ?? openBrace.range.start, end: end)
             return astArena.appendExpr(.lambdaLiteral(params: [], body: bodyExpr, label: label, range: range))
@@ -305,7 +305,7 @@ extension BuildASTPhase.ExpressionParser {
         range: SourceRange,
         label: InternedString?
     ) -> ExprID {
-        let parsedBody = parseLambdaBody(bodySlice: bodySlice, fallbackStart: fallbackStart)
+        let parsedBody = parseLambdaBody(bodySlice: bodySlice, fallbackStart: fallbackStart, label: label, range: range)
         let syntheticParam = interner.intern("__destructured_0")
         let nameRefExpr = astArena.appendExpr(.nameRef(syntheticParam, range))
         let destructuringExpr = astArena.appendExpr(.destructuringDecl(
@@ -319,23 +319,54 @@ extension BuildASTPhase.ExpressionParser {
         ))
     }
 
-    private func parseLambdaBody(
+    private func bodyExprRange(_ exprID: ExprID) -> SourceRange {
+        let loc = SourceLocation(file: FileID(), offset: 0)
+        return astArena.exprRange(exprID) ?? SourceRange(start: loc, end: loc)
+    }
+
+    func parseLambdaBody(
         bodySlice: ArraySlice<Token>,
-        fallbackStart: SourceLocation
+        fallbackStart: SourceLocation,
+        label: InternedString? = nil,
+        range: SourceRange? = nil
     ) -> ExprID {
-        if let parsed = BuildASTPhase.ExpressionParser(
-            tokens: bodySlice, interner: interner, astArena: astArena
-        ).parse() {
-            return parsed
+        let tokens = Array(bodySlice)
+        let ranges = splitBlockTokensIntoStatementRanges(tokens)
+        if ranges.isEmpty {
+            let bodyRange = range ?? SourceRange(start: fallbackStart, end: fallbackStart)
+            return astArena.appendExpr(.blockExpr(statements: [], trailingExpr: nil, range: bodyRange))
         }
-        let bodyRange = if let first = bodySlice.first, let last = bodySlice.last {
-            SourceRange(start: first.range.start, end: last.range.end)
-        } else {
-            SourceRange(start: fallbackStart, end: fallbackStart)
+
+        var statements: [ExprID] = []
+        for (start, rangeEnd) in ranges {
+            let group = tokens[start ..< rangeEnd]
+            guard !group.isEmpty else { continue }
+            if let localDecl = parseLocalDeclFromSlice(group) {
+                statements.append(localDecl)
+            } else if let localAssign = parseLocalAssignFromSlice(group) {
+                statements.append(localAssign)
+            } else if let expr = BuildASTPhase.ExpressionParser(tokens: group, interner: interner, astArena: astArena).parse() {
+                statements.append(expr)
+            }
         }
-        return astArena.appendExpr(.blockExpr(
-            statements: [], trailingExpr: nil, range: bodyRange
-        ))
+
+        var trailingExpr: ExprID?
+        if let lastID = statements.last, let lastExpr = astArena.expr(lastID) {
+            switch lastExpr {
+            case .localDecl, .localAssign, .memberAssign, .indexedAssign, .compoundAssign, .indexedCompoundAssign, .localFunDecl:
+                break
+            default:
+                trailingExpr = statements.removeLast()
+            }
+        }
+
+        let bodyRange = range ?? {
+            if let first = tokens.first, let last = tokens.last {
+                return SourceRange(start: first.range.start, end: last.range.end)
+            }
+            return SourceRange(start: fallbackStart, end: fallbackStart)
+        }()
+        return astArena.appendExpr(.blockExpr(statements: statements, trailingExpr: trailingExpr, range: bodyRange))
     }
 
     /// Scans body tokens for a top-level reference to `it` — the implicit single-parameter name

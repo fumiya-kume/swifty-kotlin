@@ -150,6 +150,7 @@ extension BuildASTPhase {
                 if infixPrecedence >= minPrecedence,
                    let token = current(),
                    isInfixIdentifierToken(token),
+                   !token.leadingTrivia.contains(where: { if case .newline = $0 { return true }; return false }),
                    let nextToken = peek(1),
                    canStartExpression(nextToken)
                 {
@@ -363,7 +364,7 @@ extension BuildASTPhase {
             switch token.kind {
             case .identifier, .backtickedIdentifier:
                 true
-            case .intLiteral, .longLiteral, .floatLiteral, .doubleLiteral, .charLiteral:
+            case .intLiteral, .longLiteral, .uintLiteral, .ulongLiteral, .floatLiteral, .doubleLiteral, .charLiteral:
                 true
             case .keyword(.true), .keyword(.false), .keyword(.null):
                 true
