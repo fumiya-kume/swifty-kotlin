@@ -87,7 +87,6 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
                 expectedType: flowLambdaExpectedType
             )
             sema.bindings.markFlowExpr(id)
-            sema.bindings.markCollectionExpr(id)
             sema.bindings.bindExprType(id, type: sema.types.anyType)
             return sema.types.anyType
         }

@@ -5,6 +5,14 @@ import Foundation
 final class FlowLoweringPass: LoweringPass {
     static let name = "FlowLowering"
 
+    /// Runtime ABI tag contract shared by C/Swift flow runtime (see `RuntimeFlowOp`).
+    private enum RuntimeFlowTag: Int64 {
+        case emit = 0
+        case map = 1
+        case filter = 2
+        case take = 3
+    }
+
     func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool {
         let calleeNames: Set<InternedString> = [
             ctx.interner.intern("flow"),
@@ -144,7 +152,7 @@ final class FlowLoweringPass: LoweringPass {
                             loweredBody.append(instruction)
                             continue
                         }
-                        let tag = appendIntConstant(0)
+                        let tag = appendIntConstant(RuntimeFlowTag.emit.rawValue)
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: kkFlowEmitName,
@@ -162,11 +170,11 @@ final class FlowLoweringPass: LoweringPass {
                     {
                         let tagValue: Int64 = switch callee {
                         case mapName:
-                            1
+                            RuntimeFlowTag.map.rawValue
                         case filterName:
-                            2
+                            RuntimeFlowTag.filter.rawValue
                         default:
-                            3
+                            RuntimeFlowTag.take.rawValue
                         }
                         let tag = appendIntConstant(tagValue)
                         loweredBody.append(.call(
@@ -209,7 +217,10 @@ final class FlowLoweringPass: LoweringPass {
                               let tagExpr = module.arena.expr(arguments[2]),
                               case let .intLiteral(tag) = tagExpr
                     {
-                        if tag >= 1 && tag <= 3 {
+                        if tag == RuntimeFlowTag.map.rawValue
+                            || tag == RuntimeFlowTag.filter.rawValue
+                            || tag == RuntimeFlowTag.take.rawValue
+                        {
                             flowExprIDs.insert(result.rawValue)
                         }
                     }
