@@ -418,21 +418,21 @@ public func kk_string_trim(_ strRaw: Int) -> UnsafeMutableRawPointer {
 public func kk_string_startsWith(_ strRaw: Int, _ prefixRaw: Int) -> Int {
     let str = extractString(from: UnsafeMutableRawPointer(bitPattern: strRaw)) ?? ""
     let prefix = extractString(from: UnsafeMutableRawPointer(bitPattern: prefixRaw)) ?? ""
-    return str.hasPrefix(prefix) ? 1 : 0
+    return kk_box_bool(str.hasPrefix(prefix) ? 1 : 0)
 }
 
 @_cdecl("kk_string_endsWith")
 public func kk_string_endsWith(_ strRaw: Int, _ suffixRaw: Int) -> Int {
     let str = extractString(from: UnsafeMutableRawPointer(bitPattern: strRaw)) ?? ""
     let suffix = extractString(from: UnsafeMutableRawPointer(bitPattern: suffixRaw)) ?? ""
-    return str.hasSuffix(suffix) ? 1 : 0
+    return kk_box_bool(str.hasSuffix(suffix) ? 1 : 0)
 }
 
 @_cdecl("kk_string_contains_str")
 public func kk_string_contains_str(_ strRaw: Int, _ otherRaw: Int) -> Int {
     let str = extractString(from: UnsafeMutableRawPointer(bitPattern: strRaw)) ?? ""
     let other = extractString(from: UnsafeMutableRawPointer(bitPattern: otherRaw)) ?? ""
-    return str.contains(other) ? 1 : 0
+    return kk_box_bool(str.contains(other) ? 1 : 0)
 }
 
 @_cdecl("kk_string_replace")
@@ -451,11 +451,10 @@ public func kk_string_replace(_ strRaw: Int, _ oldRaw: Int, _ newRaw: Int) -> Un
 public func kk_string_split(_ strRaw: Int, _ delimRaw: Int) -> Int {
     let str = extractString(from: UnsafeMutableRawPointer(bitPattern: strRaw)) ?? ""
     let delim = extractString(from: UnsafeMutableRawPointer(bitPattern: delimRaw)) ?? ""
-    let parts: [String]
-    if delim.isEmpty {
-        parts = [str]
+    let parts = if delim.isEmpty {
+        [str]
     } else {
-        parts = str.components(separatedBy: delim)
+        str.components(separatedBy: delim)
     }
     let arrayHandle = kk_array_new(parts.count)
     if let arrayBox = runtimeArrayBox(from: arrayHandle) {

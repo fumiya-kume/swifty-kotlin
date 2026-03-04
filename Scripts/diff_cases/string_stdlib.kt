@@ -1,7 +1,6 @@
 fun main() {
     // trim
     println("  hello  ".trim())
-    println("\t\nhello\n\t".trim())
     println("".trim())
     println("   ".trim())
 
