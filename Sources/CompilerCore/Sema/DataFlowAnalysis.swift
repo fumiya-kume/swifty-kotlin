@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 public struct VariableFlowState: Equatable {
     public var possibleTypes: Set<TypeID>
     public var nullability: Nullability
@@ -50,6 +51,7 @@ public struct ConditionBranch: Equatable {
     }
 }
 
+// swiftlint:disable:next type_body_length
 public final class DataFlowAnalyzer {
     public init() {}
 
@@ -458,6 +460,7 @@ public final class DataFlowAnalyzer {
         guard let expr = ast.arena.expr(id) else {
             return nil
         }
+        // swiftlint:disable:next large_tuple
         let local: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)
         switch expr {
         case let .nameRef(name, _):
@@ -470,16 +473,15 @@ public final class DataFlowAnalyzer {
         default:
             return nil
         }
-        let isStable: Bool
-        if let symbol = sema.symbols.symbol(local.symbol) {
-            isStable = switch symbol.kind {
+        let isStable: Bool = if let symbol = sema.symbols.symbol(local.symbol) {
+            switch symbol.kind {
             case .valueParameter, .local:
                 !symbol.flags.contains(.mutable)
             default:
                 false
             }
         } else {
-            isStable = !local.isMutable
+            !local.isMutable
         }
         return (local.symbol, local.type, isStable)
     }

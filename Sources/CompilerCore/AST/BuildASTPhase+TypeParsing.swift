@@ -76,7 +76,7 @@ extension BuildASTPhase {
             let token = tokens[index]
             depth.track(token.kind)
             if depth.angle == 0,
-               (token.kind == .symbol(.dot) || token.kind == .symbol(.questionDot))
+               token.kind == .symbol(.dot) || token.kind == .symbol(.questionDot)
             {
                 receiverSeparatorIndex = index
                 receiverSeparatorToken = token

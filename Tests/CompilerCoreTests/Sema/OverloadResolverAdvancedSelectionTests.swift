@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 @testable import CompilerCore
 import XCTest
 
@@ -445,7 +446,9 @@ extension OverloadResolverTests {
         let stringType = types.make(.primitive(.string, .nonNull))
         let nullableStringType = types.make(.primitive(.string, .nullable))
 
-        let nonNullExt = defineSymbol(kind: .function, name: "tag", suffix: "tagNonNull", symbols: symbols, interner: interner)
+        let nonNullExt = defineSymbol(
+            kind: .function, name: "tag", suffix: "tagNonNull", symbols: symbols, interner: interner
+        )
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: stringType,
@@ -455,7 +458,9 @@ extension OverloadResolverTests {
             for: nonNullExt
         )
 
-        let nullableExt = defineSymbol(kind: .function, name: "tag", suffix: "tagNullable", symbols: symbols, interner: interner)
+        let nullableExt = defineSymbol(
+            kind: .function, name: "tag", suffix: "tagNullable", symbols: symbols, interner: interner
+        )
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: nullableStringType,
