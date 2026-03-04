@@ -339,7 +339,7 @@ public func kk_pair_new(_ first: Int, _ second: Int) -> Int {
 @_cdecl("kk_pair_first")
 public func kk_pair_first(_ pairRaw: Int) -> Int {
     guard let array = runtimeArrayBox(from: pairRaw),
-          array.elements.count >= 2 else { return 0 }
+          array.elements.count >= 2 else { return runtimeNullSentinelInt }
     return array.elements[0]
 }
 
@@ -349,7 +349,7 @@ public func kk_pair_first(_ pairRaw: Int) -> Int {
 @_cdecl("kk_pair_second")
 public func kk_pair_second(_ pairRaw: Int) -> Int {
     guard let array = runtimeArrayBox(from: pairRaw),
-          array.elements.count >= 2 else { return 0 }
+          array.elements.count >= 2 else { return runtimeNullSentinelInt }
     return array.elements[1]
 }
 
