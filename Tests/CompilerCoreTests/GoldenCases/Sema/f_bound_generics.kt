@@ -1,9 +1,14 @@
 package golden.sema
 
-fun <T> max(a: T, b: T): T where T : Comparable<T> =
-    if (a > b) a else b
+interface LeftBound
+interface RightBound
 
-fun useMax() {
-    val m1 = max(1, 2)
-    val m2 = max("a", "b")
+class BothBound : LeftBound, RightBound
+class LeftOnly : LeftBound
+
+fun <T> pickFirst(a: T, b: T): T where T : LeftBound, T : RightBound = a
+
+fun usePick() {
+    val ok = pickFirst(BothBound(), BothBound())
+    val ng = pickFirst(LeftOnly(), LeftOnly())
 }

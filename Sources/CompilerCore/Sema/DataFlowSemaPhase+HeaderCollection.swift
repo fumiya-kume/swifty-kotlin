@@ -507,7 +507,9 @@ extension DataFlowSemaPhase {
                     anyType
                 }
             }
-            let upperBounds: [TypeID?] = typeParamResult.typeParameterSymbols.map { symbols.typeParameterUpperBounds(for: $0).first }
+            let upperBoundsByTypeParam: [[TypeID]] = typeParamResult.typeParameterSymbols.map {
+                symbols.typeParameterUpperBounds(for: $0)
+            }
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: receiverType,
@@ -519,7 +521,7 @@ extension DataFlowSemaPhase {
                     valueParameterIsVararg: params.paramIsVararg,
                     typeParameterSymbols: typeParamResult.typeParameterSymbols,
                     reifiedTypeParameterIndices: typeParamResult.reifiedIndices,
-                    typeParameterUpperBounds: upperBounds
+                    typeParameterUpperBoundsList: upperBoundsByTypeParam
                 ),
                 for: symbol
             )
@@ -697,9 +699,11 @@ extension DataFlowSemaPhase {
             for: ownerSymbol
         )
         for typeParam in typeParams {
-            if let boundRef = typeParam.upperBound,
-               let typeParamSym = localTypeParameters[typeParam.name] {
-                if let boundType = resolveTypeRef(
+            guard let typeParamSym = localTypeParameters[typeParam.name] else {
+                continue
+            }
+            let resolvedBounds = typeParam.upperBounds.compactMap { boundRef in
+                resolveTypeRef(
                     boundRef,
                     ast: ast,
                     symbols: symbols,
@@ -707,9 +711,10 @@ extension DataFlowSemaPhase {
                     interner: interner,
                     localTypeParameters: localTypeParameters,
                     diagnostics: diagnostics
-                ) {
-                    symbols.setTypeParameterUpperBound(boundType, for: typeParamSym)
-                }
+                )
+            }
+            if !resolvedBounds.isEmpty {
+                symbols.setTypeParameterUpperBounds(resolvedBounds, for: typeParamSym)
             }
         }
 

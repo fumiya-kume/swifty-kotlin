@@ -13,9 +13,34 @@ extension SymbolTableTests {
         let interner = StringInterner()
         let symbols = SymbolTable()
         let types = TypeSystem()
-        let id = symbols.define(kind: .typeParameter, name: interner.intern("T"), fqName: [interner.intern("T")], declSite: nil, visibility: .public)
+        let id = symbols.define(
+            kind: .typeParameter,
+            name: interner.intern("T"),
+            fqName: [interner.intern("T")],
+            declSite: nil,
+            visibility: .public
+        )
         symbols.setTypeParameterUpperBound(types.anyType, for: id)
         XCTAssertEqual(symbols.typeParameterUpperBound(for: id), types.anyType)
+    }
+
+    func testSetTypeParameterUpperBoundAppendsDistinctBounds() {
+        let interner = StringInterner()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+        let id = symbols.define(
+            kind: .typeParameter,
+            name: interner.intern("T"),
+            fqName: [interner.intern("T")],
+            declSite: nil,
+            visibility: .public
+        )
+
+        symbols.setTypeParameterUpperBound(types.anyType, for: id)
+        symbols.setTypeParameterUpperBound(types.nullableAnyType, for: id)
+        symbols.setTypeParameterUpperBound(types.anyType, for: id)
+
+        XCTAssertEqual(symbols.typeParameterUpperBounds(for: id), [types.anyType, types.nullableAnyType])
     }
 
     func testTypeParameterUpperBoundReturnsNilForUnset() {
@@ -276,6 +301,21 @@ final class FunctionSignatureTests: XCTestCase {
         XCTAssertEqual(sig.typeParameterSymbols.count, 1)
         XCTAssertEqual(sig.reifiedTypeParameterIndices, [0])
         XCTAssertEqual(sig.typeParameterUpperBounds, [intType])
+    }
+
+    func testFunctionSignatureRetainsMultipleUpperBoundsList() {
+        let types = TypeSystem()
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let sig = FunctionSignature(
+            parameterTypes: [intType],
+            returnType: intType,
+            typeParameterSymbols: [SymbolID(rawValue: 1), SymbolID(rawValue: 2)],
+            typeParameterUpperBoundsList: [[intType, boolType], []]
+        )
+
+        XCTAssertEqual(sig.typeParameterUpperBoundsList, [[intType, boolType], []])
+        XCTAssertEqual(sig.typeParameterUpperBounds, [intType, nil])
     }
 }
 

@@ -77,6 +77,7 @@ public struct FunctionSignature: Hashable, Sendable {
     public let typeParameterSymbols: [SymbolID]
     public let reifiedTypeParameterIndices: Set<Int>
     public let typeParameterUpperBounds: [TypeID?]
+    public let typeParameterUpperBoundsList: [[TypeID]]
     /// Number of leading entries in `typeParameterSymbols` that belong to the
     /// enclosing class/interface (not the function itself).  The overload resolver
     /// skips these when matching explicit type arguments and offsetting reified
@@ -94,6 +95,7 @@ public struct FunctionSignature: Hashable, Sendable {
         typeParameterSymbols: [SymbolID] = [],
         reifiedTypeParameterIndices: Set<Int> = [],
         typeParameterUpperBounds: [TypeID?] = [],
+        typeParameterUpperBoundsList: [[TypeID]] = [],
         classTypeParameterCount: Int = 0
     ) {
         self.receiverType = receiverType
@@ -105,7 +107,15 @@ public struct FunctionSignature: Hashable, Sendable {
         self.valueParameterIsVararg = valueParameterIsVararg
         self.typeParameterSymbols = typeParameterSymbols
         self.reifiedTypeParameterIndices = reifiedTypeParameterIndices
-        self.typeParameterUpperBounds = typeParameterUpperBounds
+        let normalizedUpperBoundsList: [[TypeID]] = if !typeParameterUpperBoundsList.isEmpty {
+            typeParameterUpperBoundsList
+        } else {
+            typeParameterUpperBounds.map { bound in
+                bound.map { [$0] } ?? []
+            }
+        }
+        self.typeParameterUpperBoundsList = normalizedUpperBoundsList
+        self.typeParameterUpperBounds = normalizedUpperBoundsList.map(\.first)
         self.classTypeParameterCount = classTypeParameterCount
     }
 }
@@ -239,6 +249,7 @@ public final class ClassMemberScope: BaseScope {
 public final class FunctionScope: BaseScope {}
 public final class BlockScope: BaseScope {}
 
+// swiftlint:disable:next type_body_length
 public final class SymbolTable {
     private var symbolsStorage: [SemanticSymbol] = []
     private var byFQName: [[InternedString]: [SymbolID]] = [:]
@@ -554,11 +565,20 @@ public final class SymbolTable {
     }
 
     public func setTypeParameterUpperBound(_ bound: TypeID, for symbol: SymbolID) {
-        typeParameterUpperBoundsMap[symbol] = [bound]
+        var bounds = typeParameterUpperBoundsMap[symbol] ?? []
+        if !bounds.contains(bound) {
+            bounds.append(bound)
+        }
+        typeParameterUpperBoundsMap[symbol] = bounds
     }
 
     public func setTypeParameterUpperBounds(_ bounds: [TypeID], for symbol: SymbolID) {
-        typeParameterUpperBoundsMap[symbol] = bounds
+        var uniqueBounds: [TypeID] = []
+        uniqueBounds.reserveCapacity(bounds.count)
+        for bound in bounds where !uniqueBounds.contains(bound) {
+            uniqueBounds.append(bound)
+        }
+        typeParameterUpperBoundsMap[symbol] = uniqueBounds
     }
 
     public func typeParameterUpperBound(for symbol: SymbolID) -> TypeID? {
