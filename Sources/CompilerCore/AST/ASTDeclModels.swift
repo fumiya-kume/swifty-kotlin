@@ -407,18 +407,36 @@ public struct TypeParamDecl {
     public let name: InternedString
     public let variance: TypeVariance
     public let isReified: Bool
-    public let upperBound: TypeRefID?
+    public let upperBounds: [TypeRefID]
+
+    /// Backward compatibility property - returns the first upper bound if any
+    public var upperBound: TypeRefID? {
+        upperBounds.first
+    }
 
     public init(
         name: InternedString,
         variance: TypeVariance = .invariant,
         isReified: Bool = false,
-        upperBound: TypeRefID? = nil
+        upperBounds: [TypeRefID] = []
     ) {
         self.name = name
         self.variance = variance
         self.isReified = isReified
-        self.upperBound = upperBound
+        self.upperBounds = upperBounds
+    }
+
+    /// Backward compatibility initializer
+    public init(
+        name: InternedString,
+        variance: TypeVariance = .invariant,
+        isReified: Bool = false,
+        upperBound: TypeRefID?
+    ) {
+        self.name = name
+        self.variance = variance
+        self.isReified = isReified
+        upperBounds = upperBound.map { [$0] } ?? []
     }
 }
 

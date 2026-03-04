@@ -53,19 +53,38 @@ extension OverloadResolver {
         range: SourceRange,
         ctx: SemaModule
     ) -> Diagnostic? {
-        for (index, typeParamSymbol) in signature.typeParameterSymbols.enumerated() {
-            let upperBound: TypeID? = if index < signature.typeParameterUpperBounds.count {
-                signature.typeParameterUpperBounds[index]
-            } else {
-                ctx.symbols.typeParameterUpperBound(for: typeParamSymbol)
+        func mergedUpperBounds(signatureBounds: [TypeID], symbolBounds: [TypeID]) -> [TypeID] {
+            var merged: [TypeID] = []
+            merged.reserveCapacity(signatureBounds.count + symbolBounds.count)
+            for bound in signatureBounds where !merged.contains(bound) {
+                merged.append(bound)
             }
-            guard let bound = upperBound else { continue }
+            for bound in symbolBounds where !merged.contains(bound) {
+                merged.append(bound)
+            }
+            return merged
+        }
+
+        for (index, typeParamSymbol) in signature.typeParameterSymbols.enumerated() {
+            let signatureUpperBounds: [TypeID] = if index < signature.typeParameterUpperBoundsList.count {
+                signature.typeParameterUpperBoundsList[index]
+            } else {
+                []
+            }
+            let symbolUpperBounds = ctx.symbols.typeParameterUpperBounds(for: typeParamSymbol)
+            let upperBounds = mergedUpperBounds(
+                signatureBounds: signatureUpperBounds,
+                symbolBounds: symbolUpperBounds
+            )
+
             guard let typeVar = typeVarBySymbol[typeParamSymbol],
                   let substitutedType = substitution[typeVar]
             else {
                 continue
             }
-            if !ctx.types.isSubtype(substitutedType, bound) {
+
+            // Check all upper bounds
+            for bound in upperBounds where !ctx.types.isSubtype(substitutedType, bound) {
                 return Diagnostic(
                     severity: .error,
                     code: "KSWIFTK-SEMA-0030",

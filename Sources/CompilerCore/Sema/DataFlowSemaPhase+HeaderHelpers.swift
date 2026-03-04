@@ -334,19 +334,21 @@ extension DataFlowSemaPhase {
             }
         }
         for typeParam in typeParams {
-            if let boundRef = typeParam.upperBound,
-               let typeParamSym = localTypeParameters[typeParam.name]
-            {
-                if let boundType = resolveTypeRef(
+            guard let typeParamSym = localTypeParameters[typeParam.name] else {
+                continue
+            }
+            let resolvedBounds = typeParam.upperBounds.compactMap { boundRef in
+                resolveTypeRef(
                     boundRef,
                     ast: ast,
                     symbols: symbols,
                     types: types,
                     interner: interner,
                     localTypeParameters: localTypeParameters
-                ) {
-                    symbols.setTypeParameterUpperBound(boundType, for: typeParamSym)
-                }
+                )
+            }
+            if !resolvedBounds.isEmpty {
+                symbols.setTypeParameterUpperBounds(resolvedBounds, for: typeParamSym)
             }
         }
         if !reifiedIndices.isEmpty, !isInline {

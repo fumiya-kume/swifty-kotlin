@@ -91,6 +91,15 @@ public extension TypeSystem {
         public let writeForbiddenSymbols: Set<SymbolID>
     }
 
+    /// Resolve the effective upper bound for a type parameter, returning `Any?` when
+    /// no explicit bounds exist and an intersection type when multiple bounds exist.
+    private func effectiveUpperBound(for symbol: SymbolID, symbols: SymbolTable) -> TypeID {
+        let bounds = symbols.typeParameterUpperBounds(for: symbol)
+        if bounds.isEmpty { return nullableAnyType }
+        if bounds.count == 1 { return bounds[0] }
+        return make(.intersection(bounds))
+    }
+
     /// Build variance-aware substitutions for a member access on a projected receiver type.
     ///
     /// Given a receiver like `MutableList<out Number>`, this builds:
@@ -106,14 +115,9 @@ public extension TypeSystem {
         guard case let .classType(classType) = kind(of: receiverType) else {
             return nil
         }
-        let classSymbol = classType.classSymbol
-        let typeParamSymbols = nominalTypeParameterSymbols(for: classSymbol)
+        let typeParamSymbols = nominalTypeParameterSymbols(for: classType.classSymbol)
+        guard !typeParamSymbols.isEmpty, !classType.args.isEmpty else { return nil }
 
-        guard !typeParamSymbols.isEmpty, !classType.args.isEmpty else {
-            return nil
-        }
-
-        // Check if any arg is projected (non-invariant with a concrete type or star)
         let hasProjection = classType.args.contains { arg in
             switch arg {
             case .out, .in, .star: true
@@ -130,27 +134,32 @@ public extension TypeSystem {
             guard index < typeParamSymbols.count else { break }
             let tpSymbol = typeParamSymbols[index]
             guard let typeVar = typeVarBySymbol[tpSymbol] else { continue }
-
-            switch arg {
-            case let .invariant(type):
-                covariantSub[typeVar] = type
-            case let .out(type):
-                covariantSub[typeVar] = type
-                writeForbidden.insert(tpSymbol)
-            case .in:
-                let upperBound = symbols.typeParameterUpperBound(for: tpSymbol) ?? nullableAnyType
-                covariantSub[typeVar] = upperBound
-            case .star:
-                let upperBound = symbols.typeParameterUpperBound(for: tpSymbol) ?? nullableAnyType
-                covariantSub[typeVar] = upperBound
-                writeForbidden.insert(tpSymbol)
-            }
+            let resolved = resolveVarianceArg(arg, tpSymbol: tpSymbol, symbols: symbols)
+            covariantSub[typeVar] = resolved.type
+            if resolved.writeForbidden { writeForbidden.insert(tpSymbol) }
         }
 
         return VarianceProjectionResult(
             covariantSubstitution: covariantSub,
             writeForbiddenSymbols: writeForbidden
         )
+    }
+
+    /// Resolve a single variance-projected type argument into a covariant substitution entry.
+    /// Returns the substituted type and whether the projection forbids writes.
+    private func resolveVarianceArg(
+        _ arg: TypeArg, tpSymbol: SymbolID, symbols: SymbolTable
+    ) -> (type: TypeID, writeForbidden: Bool) {
+        switch arg {
+        case let .invariant(type):
+            (type, false)
+        case let .out(type):
+            (type, true)
+        case .in:
+            (effectiveUpperBound(for: tpSymbol, symbols: symbols), false)
+        case .star:
+            (effectiveUpperBound(for: tpSymbol, symbols: symbols), true)
+        }
     }
 
     /// Check if a member function's parameters use any write-forbidden type parameters.
