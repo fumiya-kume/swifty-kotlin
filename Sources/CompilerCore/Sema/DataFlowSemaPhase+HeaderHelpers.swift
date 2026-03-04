@@ -407,6 +407,7 @@ extension DataFlowSemaPhase {
         )
         registerSyntheticCollectionStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticComparableStub(symbols: symbols, types: types, interner: interner)
+        registerSyntheticStringStubs(symbols: symbols, types: types, interner: interner)
     }
 
     /// Look up or define a synthetic interface symbol in the given package.

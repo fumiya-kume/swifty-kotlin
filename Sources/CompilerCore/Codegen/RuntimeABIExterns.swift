@@ -106,7 +106,7 @@ public enum RuntimeABIExterns {
     public static let kk_string_trim = ExternDecl(
         name: "kk_string_trim",
         parameterTypes: ["intptr_t"],
-        returnType: "void *"
+        returnType: "intptr_t"
     )
 
     // swiftlint:disable:next identifier_name
@@ -124,37 +124,37 @@ public enum RuntimeABIExterns {
     )
 
     // swiftlint:disable:next identifier_name
-    public static let kk_string_startsWith = ExternDecl(
-        name: "kk_string_startsWith",
-        parameterTypes: ["intptr_t", "intptr_t"],
-        returnType: "intptr_t"
-    )
-
-    // swiftlint:disable:next identifier_name
-    public static let kk_string_endsWith = ExternDecl(
-        name: "kk_string_endsWith",
-        parameterTypes: ["intptr_t", "intptr_t"],
-        returnType: "intptr_t"
-    )
-
-    // swiftlint:disable:next identifier_name
-    public static let kk_string_contains_str = ExternDecl(
-        name: "kk_string_contains_str",
-        parameterTypes: ["intptr_t", "intptr_t"],
+    public static let kk_string_split = ExternDecl(
+        name: "kk_string_split",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
     // swiftlint:disable:next identifier_name
     public static let kk_string_replace = ExternDecl(
         name: "kk_string_replace",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
-        returnType: "void *"
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
     )
 
     // swiftlint:disable:next identifier_name
-    public static let kk_string_split = ExternDecl(
-        name: "kk_string_split",
-        parameterTypes: ["intptr_t", "intptr_t"],
+    public static let kk_string_startsWith = ExternDecl(
+        name: "kk_string_startsWith",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // swiftlint:disable:next identifier_name
+    public static let kk_string_endsWith = ExternDecl(
+        name: "kk_string_endsWith",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // swiftlint:disable:next identifier_name
+    public static let kk_string_contains = ExternDecl(
+        name: "kk_string_contains",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -169,6 +169,13 @@ public enum RuntimeABIExterns {
     public static let kk_string_toDouble = ExternDecl(
         name: "kk_string_toDouble",
         parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    // swiftlint:disable:next identifier_name
+    public static let kk_string_format = ExternDecl(
+        name: "kk_string_format",
+        parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -786,13 +793,14 @@ public enum RuntimeABIExterns {
         kk_string_trim,
         kk_string_isNullOrEmpty,
         kk_string_isNullOrBlank,
+        kk_string_split,
+        kk_string_replace,
         kk_string_startsWith,
         kk_string_endsWith,
-        kk_string_contains_str,
-        kk_string_replace,
-        kk_string_split,
+        kk_string_contains,
         kk_string_toInt,
         kk_string_toDouble,
+        kk_string_format,
         // Println
         kk_println_any,
         // GC

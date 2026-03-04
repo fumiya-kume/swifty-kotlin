@@ -45,6 +45,7 @@ final class CollectionLiteralLoweringPass: LoweringPass {
         let kkListIteratorHasNextName = interner.intern("kk_list_iterator_hasNext")
         let kkListIteratorNextName = interner.intern("kk_list_iterator_next")
         let kkListToStringName = interner.intern("kk_list_to_string")
+        let kkStringSplitName = interner.intern("kk_string_split")
         // Higher-order collection function ABI names (FUNC-003)
         let kkListMapName = interner.intern("kk_list_map")
         let kkListFilterName = interner.intern("kk_list_filter")
@@ -221,6 +222,8 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                 case let .call(_, callee, arguments, result, _, _, _):
                     if listFactoryNames.contains(callee) || callee == kkListOfName {
                         if let result { listExprIDs.insert(result.rawValue) }
+                    } else if callee == kkStringSplitName {
+                        if let result { listExprIDs.insert(result.rawValue) }
                     } else if mapFactoryNames.contains(callee) || callee == kkMapOfName {
                         if let result { mapExprIDs.insert(result.rawValue) }
                     } else if arrayOfFactoryNames.contains(callee) {
@@ -245,6 +248,8 @@ final class CollectionLiteralLoweringPass: LoweringPass {
                 case let .virtualCall(_, callee, receiver, _, result, _, _, _):
                     if callee == asSequenceName {
                         if let result { sequenceExprIDs.insert(result.rawValue) }
+                    } else if callee == kkStringSplitName {
+                        if let result { listExprIDs.insert(result.rawValue) }
                     } else if callee == toListName {
                         if sequenceExprIDs.contains(receiver.rawValue) {
                             if let result { listExprIDs.insert(result.rawValue) }

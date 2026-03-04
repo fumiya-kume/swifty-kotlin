@@ -19,32 +19,56 @@ symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=
 symbol s18 kind=interface fq=kotlin.Comparable vis=public flags=synthetic
 symbol s19 kind=typeParameter fq=kotlin.Comparable.T vis=private flags=_
 symbol s20 kind=function fq=kotlin.Comparable.compareTo vis=public flags=synthetic|operatorFunction sig=recv=Class#18<T#19> params=[T#19] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s21 kind=class fq=golden.sema.LazyHolder vis=public flags=_
-symbol s22 kind=constructor fq=golden.sema.LazyHolder.<init> vis=public flags=_ sig=recv=Class#21 params=[] ret=Class#21 suspend=0 defaults=[] vararg=[]
-symbol s23 kind=property fq=golden.sema.LazyHolder.x vis=public flags=_ type=Int
-symbol s24 kind=field fq=golden.sema.LazyHolder.$delegate_x vis=private flags=_
-symbol s25 kind=class fq=golden.sema.CustomDelegate vis=public flags=_
-symbol s26 kind=constructor fq=golden.sema.CustomDelegate.<init> vis=public flags=_ sig=recv=Class#25 params=[] ret=Class#25 suspend=0 defaults=[] vararg=[]
-symbol s27 kind=function fq=golden.sema.CustomDelegate.getValue vis=public flags=operatorFunction sig=recv=Class#25 params=[Any?,Any?] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s28 kind=valueParameter fq=golden.sema.CustomDelegate.getValue.$27.thisRef vis=private flags=_
-symbol s29 kind=valueParameter fq=golden.sema.CustomDelegate.getValue.$27.property vis=private flags=_
-symbol s30 kind=function fq=golden.sema.CustomDelegate.setValue vis=public flags=operatorFunction sig=recv=Class#25 params=[Any?,Any?] ret=Unit suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s31 kind=valueParameter fq=golden.sema.CustomDelegate.setValue.$30.thisRef vis=private flags=_
-symbol s32 kind=valueParameter fq=golden.sema.CustomDelegate.setValue.$30.property vis=private flags=_
-symbol s33 kind=class fq=golden.sema.Holder vis=public flags=_
-symbol s34 kind=constructor fq=golden.sema.Holder.<init> vis=public flags=_ sig=recv=Class#33 params=[] ret=Class#33 suspend=0 defaults=[] vararg=[]
-symbol s35 kind=property fq=golden.sema.Holder.name vis=public flags=_ type=String
-symbol s36 kind=field fq=golden.sema.Holder.$delegate_name vis=private flags=_
-symbol s37 kind=property fq=golden.sema.Holder.mutable vis=public flags=mutable type=String
-symbol s38 kind=field fq=golden.sema.Holder.$delegate_mutable vis=private flags=_
+symbol s21 kind=package fq=kotlin.text vis=public flags=synthetic
+symbol s22 kind=function fq=kotlin.text.trim vis=public flags=synthetic sig=recv=String params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s23 kind=function fq=kotlin.text.split vis=public flags=synthetic sig=recv=String params=[String,Boolean,Int] ret=Class#12<out String> suspend=0 defaults=[0,1,1] vararg=[1,0,0]
+symbol s24 kind=valueParameter fq=kotlin.text.split.delimiters vis=private flags=synthetic
+symbol s25 kind=valueParameter fq=kotlin.text.split.ignoreCase vis=private flags=synthetic
+symbol s26 kind=valueParameter fq=kotlin.text.split.limit vis=private flags=synthetic
+symbol s27 kind=function fq=kotlin.text.replace vis=public flags=synthetic sig=recv=String params=[String,String,Boolean] ret=String suspend=0 defaults=[0,0,1] vararg=[0,0,0]
+symbol s28 kind=valueParameter fq=kotlin.text.replace.oldValue vis=private flags=synthetic
+symbol s29 kind=valueParameter fq=kotlin.text.replace.newValue vis=private flags=synthetic
+symbol s30 kind=valueParameter fq=kotlin.text.replace.ignoreCase vis=private flags=synthetic
+symbol s31 kind=function fq=kotlin.text.startsWith vis=public flags=synthetic sig=recv=String params=[String,Int,Boolean] ret=Boolean suspend=0 defaults=[0,1,1] vararg=[0,0,0]
+symbol s32 kind=valueParameter fq=kotlin.text.startsWith.prefix vis=private flags=synthetic
+symbol s33 kind=valueParameter fq=kotlin.text.startsWith.startIndex vis=private flags=synthetic
+symbol s34 kind=valueParameter fq=kotlin.text.startsWith.ignoreCase vis=private flags=synthetic
+symbol s35 kind=function fq=kotlin.text.endsWith vis=public flags=synthetic sig=recv=String params=[String,Boolean] ret=Boolean suspend=0 defaults=[0,1] vararg=[0,0]
+symbol s36 kind=valueParameter fq=kotlin.text.endsWith.suffix vis=private flags=synthetic
+symbol s37 kind=valueParameter fq=kotlin.text.endsWith.ignoreCase vis=private flags=synthetic
+symbol s38 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=recv=String params=[String,Boolean] ret=Boolean suspend=0 defaults=[0,1] vararg=[0,0]
+symbol s39 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
+symbol s40 kind=valueParameter fq=kotlin.text.contains.ignoreCase vis=private flags=synthetic
+symbol s41 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s42 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s43 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s44 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s45 kind=class fq=golden.sema.LazyHolder vis=public flags=_
+symbol s46 kind=constructor fq=golden.sema.LazyHolder.<init> vis=public flags=_ sig=recv=Class#45 params=[] ret=Class#45 suspend=0 defaults=[] vararg=[]
+symbol s47 kind=property fq=golden.sema.LazyHolder.x vis=public flags=_ type=Int
+symbol s48 kind=field fq=golden.sema.LazyHolder.$delegate_x vis=private flags=_
+symbol s49 kind=class fq=golden.sema.CustomDelegate vis=public flags=_
+symbol s50 kind=constructor fq=golden.sema.CustomDelegate.<init> vis=public flags=_ sig=recv=Class#49 params=[] ret=Class#49 suspend=0 defaults=[] vararg=[]
+symbol s51 kind=function fq=golden.sema.CustomDelegate.getValue vis=public flags=operatorFunction sig=recv=Class#49 params=[Any?,Any?] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s52 kind=valueParameter fq=golden.sema.CustomDelegate.getValue.$51.thisRef vis=private flags=_
+symbol s53 kind=valueParameter fq=golden.sema.CustomDelegate.getValue.$51.property vis=private flags=_
+symbol s54 kind=function fq=golden.sema.CustomDelegate.setValue vis=public flags=operatorFunction sig=recv=Class#49 params=[Any?,Any?] ret=Unit suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s55 kind=valueParameter fq=golden.sema.CustomDelegate.setValue.$54.thisRef vis=private flags=_
+symbol s56 kind=valueParameter fq=golden.sema.CustomDelegate.setValue.$54.property vis=private flags=_
+symbol s57 kind=class fq=golden.sema.Holder vis=public flags=_
+symbol s58 kind=constructor fq=golden.sema.Holder.<init> vis=public flags=_ sig=recv=Class#57 params=[] ret=Class#57 suspend=0 defaults=[] vararg=[]
+symbol s59 kind=property fq=golden.sema.Holder.name vis=public flags=_ type=String
+symbol s60 kind=field fq=golden.sema.Holder.$delegate_name vis=private flags=_
+symbol s61 kind=property fq=golden.sema.Holder.mutable vis=public flags=mutable type=String
+symbol s62 kind=field fq=golden.sema.Holder.$delegate_mutable vis=private flags=_
 file f0 package=golden.sema
-  decl d1 class LazyHolder sym=s21
-  decl d4 class CustomDelegate sym=s25
-  decl d7 class Holder sym=s33
-expr e0 name(lazy) type=Int ref=s23
+  decl d1 class LazyHolder sym=s45
+  decl d4 class CustomDelegate sym=s49
+  decl d7 class Holder sym=s57
+expr e0 name(lazy) type=Int ref=s47
 expr e1 int(42) type=_
 expr e2 string(hello) type=String
 expr e3 name(CustomDelegate) type=_
-expr e4 call callee=e3 args=[] type=Class#25 call=s26 map=[] targs=[]
-expr e5 name(CustomDelegate) type=String ref=s35
-expr e6 call callee=e5 args=[] type=String ref=s37 call=s26 map=[] targs=[]
+expr e4 call callee=e3 args=[] type=Class#49 call=s50 map=[] targs=[]
+expr e5 name(CustomDelegate) type=String ref=s59
+expr e6 call callee=e5 args=[] type=String ref=s61 call=s50 map=[] targs=[]

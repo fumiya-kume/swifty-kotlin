@@ -194,6 +194,18 @@ final class CallTypeChecker {
                 diagnostics: ctx.semaCtx.diagnostics
             )
             let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
+            if let calleeName {
+                switch interner.resolve(calleeName) {
+                case "listOf", "mutableListOf", "emptyList",
+                     "arrayOf", "intArrayOf", "longArrayOf",
+                     "mapOf", "mutableMapOf", "emptyMap",
+                     "setOf", "mutableSetOf", "emptySet",
+                     "listOfNotNull":
+                    sema.bindings.markCollectionExpr(id)
+                default:
+                    break
+                }
+            }
             sema.bindings.bindExprType(id, type: returnType)
             return returnType
         }

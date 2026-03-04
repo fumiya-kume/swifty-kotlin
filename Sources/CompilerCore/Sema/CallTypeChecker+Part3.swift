@@ -508,9 +508,18 @@ extension CallTypeChecker {
             if args.isEmpty {
                 let calleeStr = interner.resolve(calleeName)
                 if calleeStr == "isNullOrEmpty" || calleeStr == "isNullOrBlank" {
-                    // Strip nullability so that String? and String both match.
-                    let baseType = sema.types.makeNonNullable(lookupReceiverType)
-                    if sema.types.isSubtype(baseType, sema.types.stringType) {
+                    // Keep parity with kotlinc for `null.isNullOrEmpty()` by
+                    // rejecting the literal-null receiver as ambiguous.
+                    if lookupReceiverType == sema.types.nullableNothingType {
+                        ctx.semaCtx.diagnostics.error(
+                            "KSWIFTK-SEMA-0002",
+                            "No viable overload found for call.",
+                            range: range
+                        )
+                        return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                    }
+                    let nullableStringType = sema.types.makeNullable(sema.types.stringType)
+                    if sema.types.isSubtype(lookupReceiverType, nullableStringType) {
                         let resultType = sema.types.booleanType
                         sema.bindings.bindExprType(id, type: resultType)
                         return resultType
@@ -724,90 +733,19 @@ extension CallTypeChecker {
             // Collection member access fallback (P5-84): allow only members
             // that have corresponding runtime implementations in
             // CollectionLiteralLoweringPass and CallLowerer.
-            if !isClassNameReceiver, sema.bindings.isCollectionExpr(receiverID) {
-                let memberName = interner.resolve(calleeName)
-                let collectionMembers: Set = [
-                    "size", "get", "contains", "containsKey",
-                    "isEmpty", "first", "last", "indexOf",
-                    "count", "iterator",
-                    "map", "filter", "forEach", "flatMap",
-                    "any", "none", "all",
-                    "fold", "reduce", "groupBy", "sortedBy", "find",
-                    "asSequence", "toList", "take", // swiftlint:disable:this trailing_comma
-                ]
-                if collectionMembers.contains(memberName) {
-                    let resultType: TypeID = switch memberName {
-                    case "size", "indexOf":
-                        sema.types.make(.primitive(.int, .nonNull))
-                    case "count":
-                        // count with predicate (args >= 1) returns Int
-                        sema.types.make(.primitive(.int, .nonNull))
-                    case "isEmpty", "contains", "containsKey",
-                         "any", "none", "all":
-                        sema.types.make(.primitive(.boolean, .nonNull))
-                    case "forEach":
-                        sema.types.unitType
-                    case "find":
-                        sema.types.nullableAnyType
-                    case "fold", "reduce", "first", "last":
-                        sema.types.anyType
-                    case "groupBy":
-                        sema.types.anyType
-                    case "asSequence", "toList", "take",
-                         "map", "filter", "flatMap", "sortedBy":
-                        sema.types.anyType
-                    default:
-                        sema.types.anyType
-                    }
-                    // For higher-order collection functions, provide contextual
-                    // function type for the trailing lambda argument so that Sema
-                    // can infer the implicit `it` parameter type.
-                    // 1-param lambda HOFs (args == 1 lambda only)
-                    let oneParamHOFs: Set = [
-                        "map", "filter", "forEach", "flatMap", "any", "none", "all",
-                        // swiftlint:disable:next trailing_comma
-                        "groupBy", "sortedBy", "count", "first", "last", "find",
-                    ]
-                    if oneParamHOFs.contains(memberName), args.count == 1 {
-                        let lambdaReturnType: TypeID = switch memberName {
-                        case "filter", "any", "none", "all", "count", "first", "last", "find":
-                            sema.types.make(.primitive(.boolean, .nonNull))
-                        default:
-                            sema.types.anyType
-                        }
-                        let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
-                            params: [sema.types.anyType],
-                            returnType: lambdaReturnType,
-                            isSuspend: false,
-                            nullability: .nonNull
-                        )))
-                        _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
-                    }
-                    // fold: args == 2 (initial + lambda), 2-param lambda (acc, elem) -> Any
-                    if memberName == "fold", args.count == 2 {
-                        let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
-                            params: [sema.types.anyType, sema.types.anyType],
-                            returnType: sema.types.anyType,
-                            isSuspend: false,
-                            nullability: .nonNull
-                        )))
-                        _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
-                    }
-                    // reduce: args == 1 (lambda only), 2-param lambda (acc, elem) -> Any
-                    if memberName == "reduce", args.count == 1 {
-                        let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
-                            params: [sema.types.anyType, sema.types.anyType],
-                            returnType: sema.types.anyType,
-                            isSuspend: false,
-                            nullability: .nonNull
-                        )))
-                        _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
-                    }
-                    sema.bindings.markCollectionExpr(id)
-                    let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
-                    sema.bindings.bindExprType(id, type: finalType)
-                    return finalType
-                }
+            if !isClassNameReceiver,
+               let collectionFallback = inferCollectionMemberFallback(
+                   id: id,
+                   receiverID: receiverID,
+                   calleeName: calleeName,
+                   args: args,
+                   lookupReceiverType: lookupReceiverType,
+                   safeCall: safeCall,
+                   ctx: ctx,
+                   locals: &locals
+               )
+            {
+                return collectionFallback
             }
             // Flow member access fallback (CORO-003): flow(...) is currently
             // type-erased to Any?, so unresolved member chains must be accepted
@@ -904,6 +842,18 @@ extension CallTypeChecker {
             ctx: ctx.semaCtx
         )
         if let diagnostic = resolved.diagnostic {
+            if let collectionFallback = inferCollectionMemberFallback(
+                id: id,
+                receiverID: receiverID,
+                calleeName: calleeName,
+                args: args,
+                lookupReceiverType: lookupReceiverType,
+                safeCall: safeCall,
+                ctx: ctx,
+                locals: &locals
+            ) {
+                return collectionFallback
+            }
             if let projectionDiagnostic = makeProjectionViolationDiagnostic(
                 candidates: candidates,
                 receiverType: lookupReceiverType,
@@ -992,6 +942,9 @@ extension CallTypeChecker {
         }
 
         let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
+        if sema.symbols.externalLinkName(for: chosen) == "kk_string_split" {
+            sema.bindings.markCollectionExpr(id)
+        }
         if isSuperCall { sema.bindings.markSuperCall(id) }
         let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
         sema.bindings.bindExprType(id, type: finalType)
@@ -1029,6 +982,120 @@ extension CallTypeChecker {
             }
         }
         return nil
+    }
+
+    // swiftlint:disable:next cyclomatic_complexity
+    private func inferCollectionMemberFallback(
+        id: ExprID,
+        receiverID: ExprID,
+        calleeName: InternedString,
+        args: [CallArgument],
+        lookupReceiverType: TypeID,
+        safeCall: Bool,
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> TypeID? {
+        let sema = ctx.sema
+        let interner = ctx.interner
+
+        let isTypedCollectionReceiver: Bool = {
+            let nonNullType = sema.types.makeNonNullable(lookupReceiverType)
+            guard case let .classType(classInfo) = sema.types.kind(of: nonNullType),
+                  let symbol = sema.symbols.symbol(classInfo.classSymbol)
+            else {
+                return false
+            }
+            let className = interner.resolve(symbol.name)
+            return className.contains("List")
+                || className.contains("Set")
+                || className.contains("Map")
+                || className.contains("Collection")
+                || className.contains("Array")
+        }()
+        guard sema.bindings.isCollectionExpr(receiverID) || isTypedCollectionReceiver else {
+            return nil
+        }
+
+        let memberName = interner.resolve(calleeName)
+        let collectionMembers: Set = [
+            "size", "get", "contains", "containsKey",
+            "isEmpty", "first", "last", "indexOf",
+            "count", "iterator",
+            "map", "filter", "forEach", "flatMap",
+            "any", "none", "all",
+            "fold", "reduce", "groupBy", "sortedBy", "find",
+            "asSequence", "toList", "take", // swiftlint:disable:this trailing_comma
+        ]
+        guard collectionMembers.contains(memberName) else {
+            return nil
+        }
+
+        let resultType: TypeID = switch memberName {
+        case "size", "indexOf":
+            sema.types.make(.primitive(.int, .nonNull))
+        case "count":
+            sema.types.make(.primitive(.int, .nonNull))
+        case "isEmpty", "contains", "containsKey",
+             "any", "none", "all":
+            sema.types.make(.primitive(.boolean, .nonNull))
+        case "forEach":
+            sema.types.unitType
+        case "find":
+            sema.types.nullableAnyType
+        case "fold", "reduce", "first", "last":
+            sema.types.anyType
+        case "groupBy":
+            sema.types.anyType
+        case "asSequence", "toList", "take",
+             "map", "filter", "flatMap", "sortedBy":
+            sema.types.anyType
+        default:
+            sema.types.anyType
+        }
+
+        let oneParamHOFs: Set = [
+            "map", "filter", "forEach", "flatMap", "any", "none", "all",
+            // swiftlint:disable:next trailing_comma
+            "groupBy", "sortedBy", "count", "first", "last", "find",
+        ]
+        if oneParamHOFs.contains(memberName), args.count == 1 {
+            let lambdaReturnType: TypeID = switch memberName {
+            case "filter", "any", "none", "all", "count", "first", "last", "find":
+                sema.types.make(.primitive(.boolean, .nonNull))
+            default:
+                sema.types.anyType
+            }
+            let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                params: [sema.types.anyType],
+                returnType: lambdaReturnType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+        }
+        if memberName == "fold", args.count == 2 {
+            let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                params: [sema.types.anyType, sema.types.anyType],
+                returnType: sema.types.anyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+        }
+        if memberName == "reduce", args.count == 1 {
+            let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                params: [sema.types.anyType, sema.types.anyType],
+                returnType: sema.types.anyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+        }
+
+        sema.bindings.markCollectionExpr(id)
+        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+        sema.bindings.bindExprType(id, type: finalType)
+        return finalType
     }
 
     private func makeProjectionViolationDiagnostic(
@@ -1149,4 +1216,5 @@ extension CallTypeChecker {
             typeVarBySymbol: typeVarBySymbol
         )
     }
+    // swiftlint:disable:next file_length
 }

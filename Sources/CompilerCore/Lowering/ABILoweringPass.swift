@@ -5,6 +5,7 @@ import Foundation
 final class ABILoweringPass: LoweringPass {
     static let name = "ABILowering"
 
+    // swiftlint:disable:next function_body_length
     func run(module: KIRModule, ctx: KIRContext) throws {
         let nonThrowingCallees: Set<InternedString> = Set([
             ctx.interner.intern("kk_op_add"),
@@ -30,6 +31,12 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_op_eq"),
             ctx.interner.intern("kk_string_concat"),
             ctx.interner.intern("kk_string_length"),
+            ctx.interner.intern("kk_string_trim"),
+            ctx.interner.intern("kk_string_replace"),
+            ctx.interner.intern("kk_string_startsWith"),
+            ctx.interner.intern("kk_string_endsWith"),
+            ctx.interner.intern("kk_string_contains"),
+            ctx.interner.intern("kk_string_format"),
             ctx.interner.intern("kk_op_is"),
             ctx.interner.intern("kk_op_safe_cast"),
             ctx.interner.intern("kk_op_contains"),

@@ -39,5 +39,6 @@ Cases:
 - `builder_dsl_invalid_arg.kt`: builder への不正引数（非 lambda）を compile error として扱う parity
 - `builder_dsl_shadowing.kt`: user-defined `buildString` / `buildList` / `buildMap` が DSL 特別扱いに奪われないことの parity
 - `sequence_lazy.kt`: `Sequence<T>` lazy evaluation chain（`asSequence` → `map` → `filter` → `toList`）の parity
+- `stdlib_string_ops.kt`: String stdlib parity（`trim/split/replace/startsWith/endsWith/contains/toInt/toDouble/format`）
 
 The set intentionally includes both successful programs and compile-error cases.
