@@ -21,7 +21,7 @@ symbol s19 kind=typeParameter fq=kotlin.Comparable.T vis=private flags=_
 symbol s20 kind=function fq=kotlin.Comparable.compareTo vis=public flags=synthetic|operatorFunction sig=recv=Class#18<T#19> params=[T#19] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s21 kind=function fq=golden.sema.useIt vis=public flags=_ sig=recv=_ params=[] ret=Class#12<Int> suspend=0 defaults=[] vararg=[]
 symbol s22 kind=function fq=golden.sema.useDestructuring vis=public flags=_ sig=recv=_ params=[] ret=Class#12<Int> suspend=0 defaults=[] vararg=[]
-symbol s23 kind=local fq=__destructuring_22.num vis=private flags=_ type=Any
+symbol s23 kind=local fq=__destructuring_20.num vis=private flags=_ type=Any
 file f0 package=golden.sema
   decl d0 fun useIt suspend=0 inline=0 sym=s21
   decl d1 fun useDestructuring suspend=0 inline=0 sym=s22
@@ -30,24 +30,22 @@ expr e1 int(1) type=Int
 expr e2 int(2) type=Int
 expr e3 int(3) type=Int
 expr e4 call callee=e0 args=[_:e1,_:e2,_:e3] type=Class#12<Int>
-expr e5 name(it) type=Any ref=s-1002304
+expr e5 name(it) type=Any ref=s-1002048
 expr e6 int(2) type=Int
 expr e7 binary(multiply) lhs=e5 rhs=e6 type=Int
-expr e8 blockExpr stmts=[] trailing=e7 type=Int
-expr e9 lambda params=[] body=e8 type=(Any) -> Any
-expr e10 memberCall recv=e4 callee=map args=[_:e9] type=Any
-expr e11 name(listOf) type=_
-expr e12 int(1) type=Int
-expr e13 string(a) type=String
-expr e14 memberCall recv=e12 callee=to args=[_:e13] type=Any
-expr e15 int(2) type=Int
-expr e16 string(b) type=String
-expr e17 memberCall recv=e15 callee=to args=[_:e16] type=Any
-expr e18 call callee=e11 args=[_:e14,_:e17] type=Class#12<Any>
-expr e19 name(num) type=Any ref=s23
-expr e20 blockExpr stmts=[] trailing=e19 type=Any
-expr e21 name(__destructured_0) type=Any ref=s-1006144
-expr e22 destructuringDecl names=[num,_] mutable=0 init=e21 type=Unit
-expr e23 blockExpr stmts=[e22] trailing=e20 type=Any
-expr e24 lambda params=[__destructured_0] body=e23 type=(Any) -> Any
-expr e25 memberCall recv=e18 callee=map args=[_:e24] type=Any
+expr e8 lambda params=[] body=e7 type=(Any) -> Any
+expr e9 memberCall recv=e4 callee=map args=[_:e8] type=Any
+expr e10 name(listOf) type=_
+expr e11 int(1) type=Int
+expr e12 string(a) type=String
+expr e13 memberCall recv=e11 callee=to args=[_:e12] type=Any
+expr e14 int(2) type=Int
+expr e15 string(b) type=String
+expr e16 memberCall recv=e14 callee=to args=[_:e15] type=Any
+expr e17 call callee=e10 args=[_:e13,_:e16] type=Class#12<Any>
+expr e18 name(num) type=Any ref=s23
+expr e19 name(__destructured_0) type=Any ref=s-1005632
+expr e20 destructuringDecl names=[num,_] mutable=0 init=e19 type=Unit
+expr e21 blockExpr stmts=[e20] trailing=e18 type=Any
+expr e22 lambda params=[__destructured_0] body=e21 type=(Any) -> Any
+expr e23 memberCall recv=e17 callee=map args=[_:e22] type=Any

@@ -16,63 +16,59 @@ symbol s14 kind=function fq=kotlin.collections.List.get vis=public flags=synthet
 symbol s15 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
 symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
 symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
-symbol s18 kind=function fq=golden.sema.useLet vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s19 kind=function fq=golden.sema.useRun vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s20 kind=function fq=golden.sema.useRunWithThis vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s21 kind=function fq=golden.sema.useApply vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s22 kind=function fq=golden.sema.useAlso vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s23 kind=function fq=golden.sema.useWith vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s24 kind=function fq=golden.sema.useWithThis vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s18 kind=interface fq=kotlin.Comparable vis=public flags=synthetic
+symbol s19 kind=typeParameter fq=kotlin.Comparable.T vis=private flags=_
+symbol s20 kind=function fq=kotlin.Comparable.compareTo vis=public flags=synthetic|operatorFunction sig=recv=Class#18<T#19> params=[T#19] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s21 kind=function fq=golden.sema.useLet vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s22 kind=function fq=golden.sema.useRun vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s23 kind=function fq=golden.sema.useRunWithThis vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s24 kind=function fq=golden.sema.useApply vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s25 kind=function fq=golden.sema.useAlso vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s26 kind=function fq=golden.sema.useWith vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s27 kind=function fq=golden.sema.useWithThis vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 fun useLet suspend=0 inline=0 sym=s18
-  decl d1 fun useRun suspend=0 inline=0 sym=s19
-  decl d2 fun useRunWithThis suspend=0 inline=0 sym=s20
-  decl d3 fun useApply suspend=0 inline=0 sym=s21
-  decl d4 fun useAlso suspend=0 inline=0 sym=s22
-  decl d5 fun useWith suspend=0 inline=0 sym=s23
-  decl d6 fun useWithThis suspend=0 inline=0 sym=s24
+  decl d0 fun useLet suspend=0 inline=0 sym=s21
+  decl d1 fun useRun suspend=0 inline=0 sym=s22
+  decl d2 fun useRunWithThis suspend=0 inline=0 sym=s23
+  decl d3 fun useApply suspend=0 inline=0 sym=s24
+  decl d4 fun useAlso suspend=0 inline=0 sym=s25
+  decl d5 fun useWith suspend=0 inline=0 sym=s26
+  decl d6 fun useWithThis suspend=0 inline=0 sym=s27
 expr e0 string(hello) type=String
-expr e1 name(it) type=String ref=s-1001024
+expr e1 name(it) type=String ref=s-1000768
 expr e2 memberCall recv=e1 callee=length args=[] type=Int
-expr e3 blockExpr stmts=[] trailing=e2 type=Int
-expr e4 lambda params=[] body=e3 type=(String) -> Int
-expr e5 memberCall recv=e0 callee=let args=[_:e4] type=Int
-expr e6 string(hello) type=String
-expr e7 name(length) type=Int
-expr e8 blockExpr stmts=[] trailing=e7 type=Int
-expr e9 lambda params=[] body=e8 type=String.() -> Int
-expr e10 memberCall recv=e6 callee=run args=[_:e9] type=Int
-expr e11 string(hello) type=String
-expr e12 this type=String
-expr e13 memberCall recv=e12 callee=length args=[] type=Int
-expr e14 blockExpr stmts=[] trailing=e13 type=Int
-expr e15 lambda params=[] body=e14 type=String.() -> Int
-expr e16 memberCall recv=e11 callee=run args=[_:e15] type=Int
-expr e17 string(hello) type=String
-expr e18 name(println) type=_
-expr e19 this type=String
-expr e20 memberCall recv=e19 callee=length args=[] type=Int
-expr e21 call callee=e18 args=[_:e20] type=Unit
-expr e22 blockExpr stmts=[] trailing=e21 type=Unit
-expr e23 lambda params=[] body=e22 type=String.() -> Unit
-expr e24 memberCall recv=e17 callee=apply args=[_:e23] type=String
-expr e25 string(hello) type=String
-expr e26 name(println) type=_
-expr e27 name(it) type=String ref=s-1007680
-expr e28 call callee=e26 args=[_:e27] type=Unit
-expr e29 blockExpr stmts=[] trailing=e28 type=Unit
-expr e30 lambda params=[] body=e29 type=(String) -> Unit
-expr e31 memberCall recv=e25 callee=also args=[_:e30] type=String
+expr e3 lambda params=[] body=e2 type=(String) -> Int
+expr e4 memberCall recv=e0 callee=let args=[_:e3] type=Int
+expr e5 string(hello) type=String
+expr e6 name(length) type=Int
+expr e7 lambda params=[] body=e6 type=String.() -> Int
+expr e8 memberCall recv=e5 callee=run args=[_:e7] type=Int
+expr e9 string(hello) type=String
+expr e10 this type=String
+expr e11 memberCall recv=e10 callee=length args=[] type=Int
+expr e12 lambda params=[] body=e11 type=String.() -> Int
+expr e13 memberCall recv=e9 callee=run args=[_:e12] type=Int
+expr e14 string(hello) type=String
+expr e15 name(println) type=_
+expr e16 this type=String
+expr e17 memberCall recv=e16 callee=length args=[] type=Int
+expr e18 call callee=e15 args=[_:e17] type=Unit
+expr e19 lambda params=[] body=e18 type=String.() -> Unit
+expr e20 memberCall recv=e14 callee=apply args=[_:e19] type=String
+expr e21 string(hello) type=String
+expr e22 name(println) type=_
+expr e23 name(it) type=String ref=s-1006400
+expr e24 call callee=e22 args=[_:e23] type=Unit
+expr e25 lambda params=[] body=e24 type=(String) -> Unit
+expr e26 memberCall recv=e21 callee=also args=[_:e25] type=String
+expr e27 name(with) type=_
+expr e28 string(hello) type=String
+expr e29 name(length) type=Int
+expr e30 lambda params=[] body=e29 type=String.() -> Int
+expr e31 call callee=e27 args=[_:e28,_:e30] type=Int
 expr e32 name(with) type=_
 expr e33 string(hello) type=String
-expr e34 name(length) type=Int
-expr e35 blockExpr stmts=[] trailing=e34 type=Int
+expr e34 this type=String
+expr e35 memberCall recv=e34 callee=length args=[] type=Int
 expr e36 lambda params=[] body=e35 type=String.() -> Int
 expr e37 call callee=e32 args=[_:e33,_:e36] type=Int
-expr e38 name(with) type=_
-expr e39 string(hello) type=String
-expr e40 this type=String
-expr e41 memberCall recv=e40 callee=length args=[] type=Int
-expr e42 blockExpr stmts=[] trailing=e41 type=Int
-expr e43 lambda params=[] body=e42 type=String.() -> Int
-expr e44 call callee=e38 args=[_:e39,_:e43] type=Int
