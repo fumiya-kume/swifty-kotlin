@@ -108,6 +108,16 @@ struct TypeCheckHelpers {
         case "kk_array_set":
             guard argumentCount == 3 else { return nil }
             return sema.types.unitType
+        // Flow (CORO-003): type-erase Flow<T> as nullableAnyType
+        case "flow":
+            guard argumentCount == 1 else { return nil }
+            return sema.types.nullableAnyType
+        case "emit":
+            guard argumentCount == 1 else { return nil }
+            return sema.types.unitType
+        case "collect":
+            guard argumentCount >= 1 else { return nil }
+            return sema.types.unitType
         default:
             return nil
         }

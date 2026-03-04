@@ -483,12 +483,11 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Coroutine"
         ),
-        // Flow (P5-88)
+        // Flow (CORO-003)
         RuntimeABIFunctionSpec(
             name: "kk_flow_create",
             parameters: [
                 RuntimeABIParameter(name: "emitterFnPtr", type: .intptr),
-                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -496,9 +495,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_flow_emit",
             parameters: [
-                RuntimeABIParameter(name: "flowHandle", type: .intptr),
                 RuntimeABIParameter(name: "value", type: .intptr),
-                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -508,7 +505,33 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "flowHandle", type: .intptr),
                 RuntimeABIParameter(name: "collectorFnPtr", type: .intptr),
-                RuntimeABIParameter(name: "continuation", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_map",
+            parameters: [
+                RuntimeABIParameter(name: "flowHandle", type: .intptr),
+                RuntimeABIParameter(name: "mapFnPtr", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_filter",
+            parameters: [
+                RuntimeABIParameter(name: "flowHandle", type: .intptr),
+                RuntimeABIParameter(name: "filterFnPtr", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_take",
+            parameters: [
+                RuntimeABIParameter(name: "flowHandle", type: .intptr),
+                RuntimeABIParameter(name: "count", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"

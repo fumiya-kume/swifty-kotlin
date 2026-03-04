@@ -342,19 +342,37 @@ public enum RuntimeABIExterns {
 
     public static let kk_flow_create = ExternDecl(
         name: "kk_flow_create",
-        parameterTypes: ["intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
     public static let kk_flow_emit = ExternDecl(
         name: "kk_flow_emit",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
     public static let kk_flow_collect = ExternDecl(
         name: "kk_flow_collect",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_flow_map = ExternDecl(
+        name: "kk_flow_map",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_flow_filter = ExternDecl(
+        name: "kk_flow_filter",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_flow_take = ExternDecl(
+        name: "kk_flow_take",
+        parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -791,10 +809,13 @@ public enum RuntimeABIExterns {
         kk_kxmini_run_blocking_with_cont,
         kk_kxmini_launch_with_cont,
         kk_kxmini_async_with_cont,
-        // Flow
+        // Flow (CORO-003)
         kk_flow_create,
         kk_flow_emit,
         kk_flow_collect,
+        kk_flow_map,
+        kk_flow_filter,
+        kk_flow_take,
         // Dispatchers / withContext
         kk_dispatcher_default,
         kk_dispatcher_io,

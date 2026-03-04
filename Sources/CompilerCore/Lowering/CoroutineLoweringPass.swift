@@ -15,6 +15,7 @@ final class CoroutineLoweringPass: LoweringPass {
             ctx.interner.intern("launch"),
             ctx.interner.intern("async"),
             ctx.interner.intern("coroutineScope"),
+            ctx.interner.intern("flow"),
         ]
         for decl in module.arena.declarations {
             if case let .function(function) = decl {
@@ -32,6 +33,9 @@ final class CoroutineLoweringPass: LoweringPass {
     }
 
     func run(module: KIRModule, ctx: KIRContext) throws {
+        // Lower flow { }, emit, map, filter, take, collect before suspend-function lowering.
+        lowerFlowExpressions(module: module, ctx: ctx)
+
         let anyType = ctx.sema?.types.nullableAnyType ?? ctx.sema?.types.anyType
         let intType = ctx.sema?.types.make(.primitive(.int, .nonNull))
         let unitType = ctx.sema?.types.unitType

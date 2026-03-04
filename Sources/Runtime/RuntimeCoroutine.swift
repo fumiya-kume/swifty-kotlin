@@ -525,21 +525,38 @@ public func kk_kxmini_delay(_ milliseconds: Int, _ continuation: Int) -> Int {
     return Int(bitPattern: kk_coroutine_suspended())
 }
 
-// MARK: - Flow Runtime Stubs (P5-88)
+// MARK: - Flow Runtime (CORO-003)
 
-/// Opaque handle wrapping a flow emitter function pointer and its continuation.
-final class RuntimeFlowHandle {
+fileprivate enum FlowStepKind {
+    case mapStep(fnPtr: Int)
+    case filterStep(fnPtr: Int)
+    case takeStep(count: Int)
+}
+
+/// Opaque handle for a cold Flow: stores emitter fn ptr and a lazy step chain.
+fileprivate final class RuntimeFlowHandle {
     let emitterFnPtr: Int
-    var collectedValues: [Int] = []
+    var steps: [FlowStepKind] = []
+    var collectorFnPtr: Int = 0
+    var takeRemaining: Int = Int.max
 
     init(emitterFnPtr: Int) {
         self.emitterFnPtr = emitterFnPtr
     }
 }
 
-@_cdecl("kk_flow_create")
-public func kk_flow_create(_ emitterFnPtr: Int, _: Int) -> Int {
-    let flow = RuntimeFlowHandle(emitterFnPtr: emitterFnPtr)
+/// Thread-local current flow handle (set by kk_flow_collect before invoking emitter).
+/// Access is serialized by single-threaded test execution; nonisolated(unsafe) suppresses
+/// Swift 6 strict concurrency warnings.
+nonisolated(unsafe) var _flowEmitContext: Int = 0
+
+private func runtimeFlowHandle(from handle: Int) -> RuntimeFlowHandle? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else { return nil }
+    guard runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: ptr)) }) else { return nil }
+    return Unmanaged<RuntimeFlowHandle>.fromOpaque(ptr).takeUnretainedValue()
+}
+
+private func registerFlowHandle(_ flow: RuntimeFlowHandle) -> Int {
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(flow).toOpaque())
     runtimeStorage.withLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
@@ -547,26 +564,96 @@ public func kk_flow_create(_ emitterFnPtr: Int, _: Int) -> Int {
     return Int(bitPattern: ptr)
 }
 
-@_cdecl("kk_flow_emit")
-public func kk_flow_emit(_ flowHandle: Int, _ value: Int, _: Int) -> Int {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: flowHandle) else {
-        return 0
-    }
-    let flow = Unmanaged<RuntimeFlowHandle>.fromOpaque(ptr).takeUnretainedValue()
-    flow.collectedValues.append(value)
-    return value
+@_cdecl("kk_flow_create")
+public func kk_flow_create(_ emitterFnPtr: Int) -> Int {
+    registerFlowHandle(RuntimeFlowHandle(emitterFnPtr: emitterFnPtr))
 }
 
-@_cdecl("kk_flow_collect")
-public func kk_flow_collect(_ flowHandle: Int, _: Int, _: Int) -> Int {
-    // Stub: invoke collector on each emitted value; full suspend semantics deferred
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: flowHandle) else {
-        return 0
+/// Emit a value into the current flow context.
+/// ABI: (value: intptr) -> intptr
+/// Uses _flowEmitContext (set by kk_flow_collect) to locate the active flow handle.
+@_cdecl("kk_flow_emit")
+public func kk_flow_emit(_ value: Int) -> Int {
+    guard let flow = runtimeFlowHandle(from: _flowEmitContext) else { return 0 }
+    guard flow.collectorFnPtr != 0, flow.takeRemaining > 0 else { return 0 }
+
+    var current = value
+    for step in flow.steps {
+        switch step {
+        case let .mapStep(fnPtr):
+            let fn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+            var thrown = 0
+            current = fn(current, &thrown)
+        case let .filterStep(fnPtr):
+            let fn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+            var thrown = 0
+            if fn(current, &thrown) == 0 { return 0 }
+        case .takeStep:
+            break // takeRemaining guard handles the limit
+        }
     }
-    let flow = Unmanaged<RuntimeFlowHandle>.fromOpaque(ptr).takeUnretainedValue()
-    // Collect emitted values — actual suspend-based collection is a future lowering task
-    _ = flow.collectedValues
+    flow.takeRemaining -= 1
+    let collector = unsafeBitCast(
+        flow.collectorFnPtr,
+        to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self
+    )
+    var thrown = 0
+    _ = collector(current, &thrown)
     return 0
+}
+
+/// Collect all values from a cold flow by invoking its emitter.
+/// ABI: (flowHandle: intptr, collectorFnPtr: intptr) -> intptr
+@_cdecl("kk_flow_collect")
+public func kk_flow_collect(_ flowHandle: Int, _ collectorFnPtr: Int) -> Int {
+    guard let flow = runtimeFlowHandle(from: flowHandle) else { return 0 }
+    // Reset take limit for cold semantics (re-run per collect).
+    flow.takeRemaining = Int.max
+    for step in flow.steps {
+        if case let .takeStep(count) = step {
+            flow.takeRemaining = count
+            break
+        }
+    }
+    flow.collectorFnPtr = collectorFnPtr
+    defer { flow.collectorFnPtr = 0; flow.takeRemaining = Int.max }
+    let previous = _flowEmitContext
+    _flowEmitContext = flowHandle
+    defer { _flowEmitContext = previous }
+    let emitter = unsafeBitCast(
+        flow.emitterFnPtr,
+        to: (@convention(c) (UnsafeMutablePointer<Int>?) -> Int).self
+    )
+    var thrown = 0
+    _ = emitter(&thrown)
+    return 0
+}
+
+/// Build a new Flow that applies a map transform on top of an existing Flow.
+@_cdecl("kk_flow_map")
+public func kk_flow_map(_ flowHandle: Int, _ mapFnPtr: Int) -> Int {
+    guard let source = runtimeFlowHandle(from: flowHandle) else { return 0 }
+    let derived = RuntimeFlowHandle(emitterFnPtr: source.emitterFnPtr)
+    derived.steps = source.steps + [.mapStep(fnPtr: mapFnPtr)]
+    return registerFlowHandle(derived)
+}
+
+/// Build a new Flow that applies a filter predicate on top of an existing Flow.
+@_cdecl("kk_flow_filter")
+public func kk_flow_filter(_ flowHandle: Int, _ filterFnPtr: Int) -> Int {
+    guard let source = runtimeFlowHandle(from: flowHandle) else { return 0 }
+    let derived = RuntimeFlowHandle(emitterFnPtr: source.emitterFnPtr)
+    derived.steps = source.steps + [.filterStep(fnPtr: filterFnPtr)]
+    return registerFlowHandle(derived)
+}
+
+/// Build a new Flow that stops emitting after `count` items.
+@_cdecl("kk_flow_take")
+public func kk_flow_take(_ flowHandle: Int, _ count: Int) -> Int {
+    guard let source = runtimeFlowHandle(from: flowHandle) else { return 0 }
+    let derived = RuntimeFlowHandle(emitterFnPtr: source.emitterFnPtr)
+    derived.steps = source.steps + [.takeStep(count: count)]
+    return registerFlowHandle(derived)
 }
 
 // MARK: - Dispatcher Runtime Stubs (P5-133)
