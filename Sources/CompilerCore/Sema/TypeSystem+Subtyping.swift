@@ -213,7 +213,7 @@ extension TypeSystem {
 
     func nullabilitySubtype(_ lhs: Nullability, _ rhs: Nullability) -> Bool {
         if lhs == rhs { return true }
-        if lhs == .nonNull && rhs == .nullable { return true }
+        if lhs == .nonNull, rhs == .nullable { return true }
         // Platform type (T!) is assignable to both nullable and non-null
         if lhs == .platformType { return true }
         // Both nullable and non-null are assignable to platform type

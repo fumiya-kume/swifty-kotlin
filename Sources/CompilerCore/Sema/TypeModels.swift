@@ -25,7 +25,7 @@ public enum PrimitiveType: String, Hashable, Sendable {
 public enum Nullability: Hashable, Sendable {
     case nonNull
     case nullable
-    case platformType  // T! — nullability unknown (from external declarations)
+    case platformType // T! — nullability unknown (from external declarations)
 }
 
 public struct ClassType: Hashable, Sendable {
