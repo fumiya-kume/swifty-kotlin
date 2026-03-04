@@ -65,7 +65,6 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_kxmini_delay"),
             ctx.interner.intern("kk_flow_create"),
             ctx.interner.intern("kk_flow_emit"),
-            ctx.interner.intern("kk_flow_collect"),
             ctx.interner.intern("kk_coroutine_launcher_arg_set"),
             ctx.interner.intern("kk_coroutine_launcher_arg_get"),
             ctx.interner.intern("kk_kxmini_run_blocking_with_cont"),

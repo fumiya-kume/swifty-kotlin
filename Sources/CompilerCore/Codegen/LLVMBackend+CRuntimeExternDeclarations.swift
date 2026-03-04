@@ -101,7 +101,7 @@ extension LLVMBackend {
         "extern intptr_t kk_kxmini_async(intptr_t entryRaw, intptr_t functionId);",
         "extern intptr_t kk_kxmini_async_await(intptr_t handle);",
         "extern intptr_t kk_flow_create(intptr_t emitterFnPtr, intptr_t continuation);",
-        "extern intptr_t kk_flow_emit(intptr_t flowHandle, intptr_t value, intptr_t continuation);",
+        "extern intptr_t kk_flow_emit(intptr_t flowHandle, intptr_t value, intptr_t tag);",
         "extern intptr_t kk_flow_collect(intptr_t flowHandle, intptr_t collectorFnPtr, intptr_t continuation);",
         "extern intptr_t kk_dispatcher_default(void);",
         "extern intptr_t kk_dispatcher_io(void);",

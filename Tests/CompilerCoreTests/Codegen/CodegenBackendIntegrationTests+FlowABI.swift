@@ -6,7 +6,7 @@ extension CodegenBackendIntegrationTests {
         let externs = LLVMBackend.fixedExternDeclarations
 
         XCTAssertTrue(externs.contains("extern intptr_t kk_flow_create(intptr_t emitterFnPtr, intptr_t continuation);"))
-        XCTAssertTrue(externs.contains("extern intptr_t kk_flow_emit(intptr_t flowHandle, intptr_t value, intptr_t continuation);"))
+        XCTAssertTrue(externs.contains("extern intptr_t kk_flow_emit(intptr_t flowHandle, intptr_t value, intptr_t tag);"))
         XCTAssertTrue(externs.contains("extern intptr_t kk_flow_collect(intptr_t flowHandle, intptr_t collectorFnPtr, intptr_t continuation);"))
 
         XCTAssertFalse(externs.contains("extern intptr_t kk_flow_map(intptr_t flowHandle, intptr_t mapFnPtr);"))
@@ -22,7 +22,7 @@ extension CodegenBackendIntegrationTests {
         let preamble = LLVMBackend.fixedRuntimePreamble
 
         XCTAssertTrue(preamble.contains("__attribute__((weak)) intptr_t kk_flow_create(intptr_t emitterFnPtr, intptr_t continuation) {"))
-        XCTAssertTrue(preamble.contains("__attribute__((weak)) intptr_t kk_flow_emit(intptr_t flowHandle, intptr_t value, intptr_t continuation) {"))
+        XCTAssertTrue(preamble.contains("__attribute__((weak)) intptr_t kk_flow_emit(intptr_t flowHandle, intptr_t value, intptr_t tag) {"))
         XCTAssertTrue(preamble.contains("__attribute__((weak)) intptr_t kk_flow_collect(intptr_t flowHandle, intptr_t collectorFnPtr, intptr_t continuation) {"))
 
         XCTAssertFalse(preamble.contains("__attribute__((weak)) intptr_t kk_flow_map(intptr_t flowHandle, intptr_t mapFnPtr) {"))

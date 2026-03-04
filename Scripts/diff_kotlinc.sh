@@ -59,6 +59,10 @@ while [[ $# -gt 0 ]]; do
       KOTLINC="$1"
       ;;
     --kotlinc-classpath)
+      if [[ $# -eq 0 ]]; then
+        echo "Missing value for --kotlinc-classpath" >&2
+        exit 1
+      fi
       shift
       KOTLINC_CLASSPATH="$1"
       ;;

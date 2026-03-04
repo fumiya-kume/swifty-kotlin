@@ -113,7 +113,7 @@ final class TypeCheckHelpersCoverageTests: XCTestCase {
                 sema: fixture.sema,
                 interner: fixture.interner
             ),
-            fixture.types.nullableAnyType
+            fixture.types.anyType
         )
         XCTAssertEqual(
             helpers.kxMiniCoroutineBuiltinReturnType(

@@ -270,7 +270,7 @@ final class CoroutineLoweringPass: LoweringPass {
             var loweredBody: [KIRInstruction] = []
             loweredBody.reserveCapacity(function.body.count)
             for instruction in function.body {
-                guard case let .call(symbol, callee, arguments, result, canThrow, _, isSuperCall) = instruction else {
+                guard case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall) = instruction else {
                     loweredBody.append(instruction)
                     continue
                 }
@@ -444,7 +444,7 @@ final class CoroutineLoweringPass: LoweringPass {
                             arguments: rewrittenArguments,
                             result: result,
                             canThrow: canThrow,
-                            thrownResult: nil,
+                            thrownResult: thrownResult,
                             isSuperCall: isSuperCall
                         )
                     )

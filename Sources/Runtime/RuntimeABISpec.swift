@@ -514,7 +514,7 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "flowHandle", type: .intptr),
                 RuntimeABIParameter(name: "value", type: .intptr),
-                RuntimeABIParameter(name: "continuation", type: .intptr),
+                RuntimeABIParameter(name: "tag", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"

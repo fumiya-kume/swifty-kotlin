@@ -195,6 +195,9 @@ final class FlowLoweringPass: LoweringPass {
                        arguments.count == 2,
                        flowExprIDs.contains(arguments[0].rawValue)
                     {
+                        // Placeholder: CoroutineLoweringPass rewrites collectorFunctionID
+                        // to the actual suspend-lowered function ID for non-suspend
+                        // collector references.
                         let collectorFunctionID = appendIntConstant(0)
                         loweredBody.append(.call(
                             symbol: nil,

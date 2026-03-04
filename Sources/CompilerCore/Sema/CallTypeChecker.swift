@@ -118,7 +118,7 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
             let flowLambdaExpectedType = sema.types.make(.functionType(FunctionType(
                 params: [],
                 returnType: sema.types.unitType,
-                isSuspend: false,
+                isSuspend: true,
                 nullability: .nonNull
             )))
             _ = driver.inferExpr(

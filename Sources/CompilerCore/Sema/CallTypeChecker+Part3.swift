@@ -813,6 +813,52 @@ extension CallTypeChecker {
                     return finalType
                 }
             }
+            // Flow member access fallback (CORO-003): allow flow chain calls on Any/Any?.
+            if !isClassNameReceiver,
+               lookupReceiverType == sema.types.anyType || lookupReceiverType == sema.types.nullableAnyType
+            {
+                let memberName = interner.resolve(calleeName)
+                let flowMembers: Set = ["map", "filter", "take", "collect"]
+                if flowMembers.contains(memberName) {
+                    let acceptsArity = args.count == 1
+                    if acceptsArity, memberName == "map" || memberName == "filter" || memberName == "collect" {
+                        let expectsLambdaTypeConstraint = switch ast.arena.expr(args[0].expr) {
+                            case .callableRef:
+                                false
+                            default:
+                                true
+                        }
+                        let lambdaReturnType: TypeID = switch memberName {
+                            case "filter":
+                                sema.types.make(.primitive(.boolean, .nonNull))
+                            case "collect":
+                                sema.types.unitType
+                            default:
+                                sema.types.anyType
+                        }
+                        let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                            params: [sema.types.anyType],
+                            returnType: lambdaReturnType,
+                            isSuspend: true,
+                            nullability: .nonNull
+                        )))
+                        if expectsLambdaTypeConstraint {
+                            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                        } else {
+                            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+                        }
+                    }
+
+                    if acceptsArity {
+                        let resultType: TypeID = memberName == "collect"
+                            ? sema.types.unitType
+                            : sema.types.nullableAnyType
+                        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                        sema.bindings.bindExprType(id, type: finalType)
+                        return finalType
+                    }
+                }
+            }
             let isCoroutineHandleReceiver = if case .primitive = sema.types.kind(of: lookupReceiverType) {
                 false
             } else {

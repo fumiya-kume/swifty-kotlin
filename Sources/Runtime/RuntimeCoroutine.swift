@@ -664,7 +664,7 @@ private func runtimeFlowApplyOps(_ source: [Int], ops: [RuntimeFlowOp]) -> [Int]
                 var thrown = 0
                 let transformed = transform(value, &thrown)
                 if thrown != 0 {
-                    return []
+                    return mapped
                 }
                 mapped.append(runtimeFlowMaybeUnbox(transformed))
             }
@@ -685,7 +685,7 @@ private func runtimeFlowApplyOps(_ source: [Int], ops: [RuntimeFlowOp]) -> [Int]
                 var thrown = 0
                 let decision = predicate(value, &thrown)
                 if thrown != 0 {
-                    return []
+                    return filtered
                 }
                 if runtimeFlowMaybeUnbox(decision) != 0 {
                     filtered.append(value)
