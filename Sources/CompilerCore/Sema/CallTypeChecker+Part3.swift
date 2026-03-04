@@ -378,6 +378,20 @@ extension CallTypeChecker {
                     return finalType
                 }
             }
+            // String stdlib: nullable-receiver 0-arg methods (NULL-002)
+            // isNullOrEmpty/isNullOrBlank accept String? receiver directly (no safe-call needed).
+            if args.isEmpty {
+                let calleeStr = interner.resolve(calleeName)
+                if calleeStr == "isNullOrEmpty" || calleeStr == "isNullOrBlank" {
+                    // Strip nullability so that String? and String both match.
+                    let baseType = sema.types.makeNonNullable(lookupReceiverType)
+                    if sema.types.isSubtype(baseType, sema.types.stringType) {
+                        let resultType = sema.types.booleanType
+                        sema.bindings.bindExprType(id, type: resultType)
+                        return resultType
+                    }
+                }
+            }
             // String stdlib: 0-arg methods (STDLIB-006)
             if args.isEmpty {
                 let receiverTypeForCheck = safeCall

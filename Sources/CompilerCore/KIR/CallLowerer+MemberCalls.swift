@@ -305,6 +305,29 @@ extension CallLowerer {
             }
         }
 
+        // String stdlib: nullable-receiver 0-arg methods (NULL-002)
+        // isNullOrEmpty/isNullOrBlank pass the raw (potentially null) receiver pointer to C runtime.
+        if args.isEmpty {
+            let calleeStr = interner.resolve(calleeName)
+            if calleeStr == "isNullOrEmpty" || calleeStr == "isNullOrBlank" {
+                let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+                let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+                if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+                    let runtimeCallee = calleeStr == "isNullOrEmpty"
+                        ? "kk_string_isNullOrEmpty"
+                        : "kk_string_isNullOrBlank"
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(runtimeCallee),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+        }
         // String stdlib: 0-arg methods (STDLIB-006)
         if args.isEmpty {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
