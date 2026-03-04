@@ -630,19 +630,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         params: [KIRParameter],
         body: [KIRInstruction]
     ) {
-        sema.symbols.setFunctionSignature(
-            FunctionSignature(
-                receiverType: signature.receiverType,
-                parameterTypes: signature.parameterTypes,
-                returnType: signature.returnType,
-                isSuspend: signature.isSuspend,
-                valueParameterSymbols: params.map(\.symbol),
-                valueParameterHasDefaultValues: params.map { _ in false },
-                valueParameterIsVararg: params.map { _ in false },
-                typeParameterSymbols: []
-            ),
-            for: functionSymbol
-        )
+        sema.symbols.setFunctionSignature(signature, for: functionSymbol)
         _ = module.arena.appendDecl(.function(
             KIRFunction(
                 symbol: functionSymbol,

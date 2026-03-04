@@ -146,13 +146,22 @@ extension DataFlowSemaPhase {
     ) {
         let toStringName = interner.intern("toString")
         let toStringFQName = ownerFQName + [toStringName]
+        let stringType = types.make(.primitive(.string, .nonNull))
         let hasUserDeclaredToString = symbols.lookupAll(fqName: toStringFQName).contains { id in
-            symbols.symbol(id).map { !$0.flags.contains(.synthetic) } ?? false
+            guard let symbol = symbols.symbol(id),
+                  symbol.kind == .function,
+                  !symbol.flags.contains(.synthetic),
+                  let signature = symbols.functionSignature(for: id)
+            else {
+                return false
+            }
+            return signature.receiverType == objectType
+                && signature.parameterTypes.isEmpty
+                && signature.returnType == stringType
         }
         guard !hasUserDeclaredToString else {
             return
         }
-        let stringType = types.make(.primitive(.string, .nonNull))
         let funcSymbol = symbols.define(
             kind: .function,
             name: toStringName,
@@ -180,7 +189,7 @@ extension DataFlowSemaPhase {
 
     // swiftlint:enable function_parameter_count
 
-    // swiftlint:disable function_parameter_count
+    // swiftlint:disable function_parameter_count function_body_length
     /// Registers synthetic `equals(other: Any?): Boolean` for data object (identity comparison).
     func collectSyntheticDataObjectEquals(
         ownerSymbol: SymbolID,
@@ -193,14 +202,23 @@ extension DataFlowSemaPhase {
     ) {
         let equalsName = interner.intern("equals")
         let equalsFQName = ownerFQName + [equalsName]
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let nullableAnyType = types.nullableAnyType
         let hasUserDeclaredEquals = symbols.lookupAll(fqName: equalsFQName).contains { id in
-            symbols.symbol(id).map { !$0.flags.contains(.synthetic) } ?? false
+            guard let symbol = symbols.symbol(id),
+                  symbol.kind == .function,
+                  !symbol.flags.contains(.synthetic),
+                  let signature = symbols.functionSignature(for: id)
+            else {
+                return false
+            }
+            return signature.receiverType == objectType
+                && signature.parameterTypes == [nullableAnyType]
+                && signature.returnType == boolType
         }
         guard !hasUserDeclaredEquals else {
             return
         }
-        let boolType = types.make(.primitive(.boolean, .nonNull))
-        let nullableAnyType = types.nullableAnyType
         let funcSymbol = symbols.define(
             kind: .function,
             name: equalsName,
@@ -235,7 +253,7 @@ extension DataFlowSemaPhase {
         scope.insert(funcSymbol)
     }
 
-    // swiftlint:enable function_parameter_count
+    // swiftlint:enable function_parameter_count function_body_length
 
     /// Collects value parameters into parallel arrays of types, symbols, default-value flags,
     /// and vararg flags.  Shared by constructor and function header collection.
