@@ -13,6 +13,8 @@ fun main() {
     val i = 255u and 15u
     val j = 240u or 15u
     val k = 255u xor 15u
+    val l = 255u shl 2
+    val m = 240u shr 2
     println(a)
     println(b)
     println(c)
@@ -23,4 +25,6 @@ fun main() {
     println(i)
     println(j)
     println(k)
+    println(l)
+    println(m)
 }
