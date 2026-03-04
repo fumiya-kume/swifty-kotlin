@@ -214,7 +214,10 @@ extension DeclTypeChecker {
             range: function.range,
             solver: solver,
             sema: sema,
-            diagnostics: diagnostics
+            diagnostics: diagnostics,
+            // Suppress platform warning when return type is inferred (not explicitly declared):
+            // the placeholder anyType is not a user-declared non-null constraint.
+            suppressPlatformWarning: function.returnType == nil
         )
 
         updateInferredReturnType(

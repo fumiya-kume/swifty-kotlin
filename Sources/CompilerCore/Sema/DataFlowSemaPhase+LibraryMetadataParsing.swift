@@ -109,9 +109,10 @@ extension DataFlowSemaPhase {
         metadataPath: String,
         cache: LibraryMetadataCache? = nil
     ) -> FunctionSignature {
+        let platformAny = types.withNullability(.platformType, for: types.anyType)
         let fallback = FunctionSignature(
-            parameterTypes: Array(repeating: types.anyType, count: max(0, record.arity)),
-            returnType: types.anyType,
+            parameterTypes: Array(repeating: platformAny, count: max(0, record.arity)),
+            returnType: platformAny,
             isSuspend: record.isSuspend
         )
         guard let encodedSignature = record.typeSignature else {
@@ -162,7 +163,7 @@ extension DataFlowSemaPhase {
         cache: LibraryMetadataCache? = nil
     ) -> TypeID {
         guard let encodedSignature = record.typeSignature else {
-            return types.anyType
+            return types.withNullability(.platformType, for: types.anyType)
         }
         return decodeImportedTypeSignature(
             token: encodedSignature,

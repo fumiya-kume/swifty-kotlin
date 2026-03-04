@@ -357,4 +357,65 @@ final class TypeSystemTests: XCTestCase {
         let ts = TypeSystem()
         XCTAssertEqual(ts.nominalTypeParameterVariances(for: SymbolID(rawValue: 42)), [])
     }
+
+    // MARK: - Platform Type (T!)
+
+    func testPlatformTypeMakeAndKind() {
+        let ts = TypeSystem()
+        let platformInt = ts.make(.primitive(.int, .platformType))
+        XCTAssertEqual(ts.kind(of: platformInt), .primitive(.int, .platformType))
+    }
+
+    func testPlatformTypeNullabilityOf() {
+        let ts = TypeSystem()
+        let platformInt = ts.make(.primitive(.int, .platformType))
+        XCTAssertEqual(ts.nullability(of: platformInt), .platformType)
+    }
+
+    func testPlatformTypeIsSubtypeOfNonNull() {
+        let ts = TypeSystem()
+        let platformInt = ts.make(.primitive(.int, .platformType))
+        let nonNullInt = ts.make(.primitive(.int, .nonNull))
+        XCTAssertTrue(ts.isSubtype(platformInt, nonNullInt))
+    }
+
+    func testPlatformTypeIsSubtypeOfNullable() {
+        let ts = TypeSystem()
+        let platformInt = ts.make(.primitive(.int, .platformType))
+        let nullableInt = ts.make(.primitive(.int, .nullable))
+        XCTAssertTrue(ts.isSubtype(platformInt, nullableInt))
+    }
+
+    func testNonNullIsSubtypeOfPlatformType() {
+        let ts = TypeSystem()
+        let nonNullInt = ts.make(.primitive(.int, .nonNull))
+        let platformInt = ts.make(.primitive(.int, .platformType))
+        XCTAssertTrue(ts.isSubtype(nonNullInt, platformInt))
+    }
+
+    func testNullableIsSubtypeOfPlatformType() {
+        let ts = TypeSystem()
+        let nullableInt = ts.make(.primitive(.int, .nullable))
+        let platformInt = ts.make(.primitive(.int, .platformType))
+        XCTAssertTrue(ts.isSubtype(nullableInt, platformInt))
+    }
+
+    func testPlatformTypeIsNotDefinitelyNonNull() {
+        let ts = TypeSystem()
+        let platformInt = ts.make(.primitive(.int, .platformType))
+        XCTAssertFalse(ts.isDefinitelyNonNull(platformInt))
+    }
+
+    func testWithNullabilityPlatformType() {
+        let ts = TypeSystem()
+        let platformAny = ts.withNullability(.platformType, for: ts.anyType)
+        XCTAssertEqual(ts.nullability(of: platformAny), .platformType)
+    }
+
+    func testMakeNullableOnPlatformType() {
+        let ts = TypeSystem()
+        let platformInt = ts.make(.primitive(.int, .platformType))
+        let nullableInt = ts.makeNullable(platformInt)
+        XCTAssertEqual(ts.nullability(of: nullableInt), .nullable)
+    }
 }

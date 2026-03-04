@@ -159,7 +159,8 @@ final class TypeCheckDriver {
         range: SourceRange?,
         solver: ConstraintSolver,
         sema: SemaModule,
-        diagnostics: DiagnosticEngine
+        diagnostics: DiagnosticEngine,
+        suppressPlatformWarning: Bool = false
     ) {
         let solution = solver.solve(
             vars: [],
@@ -175,6 +176,15 @@ final class TypeCheckDriver {
         )
         if !solution.isSuccess, let failure = solution.failure {
             diagnostics.emit(failure)
+        } else if !suppressPlatformWarning
+            && sema.types.nullability(of: left) == .platformType
+            && sema.types.nullability(of: right) == .nonNull {
+            diagnostics.warning(
+                "KSWIFTK-SEMA-PLATFORM",
+                "Expression of platform type is used as non-null without a null check. " +
+                "This may cause a NullPointerException at runtime.",
+                range: range
+            )
         }
     }
 }

@@ -55,16 +55,16 @@ extension TypeSystem {
         }
         if case .any(.nonNull) = rhs {
             switch lhs {
-            case .any(.nonNull), .unit, .nothing(.nonNull):
+            case .any(.nonNull), .any(.platformType), .unit, .nothing(.nonNull), .nothing(.platformType):
                 return true
             case let .primitive(_, nullability):
-                return nullability == .nonNull
+                return nullabilitySubtype(nullability, .nonNull)
             case let .classType(classType):
-                return classType.nullability == .nonNull
+                return nullabilitySubtype(classType.nullability, .nonNull)
             case let .functionType(functionType):
-                return functionType.nullability == .nonNull
+                return nullabilitySubtype(functionType.nullability, .nonNull)
             case let .typeParam(typeParam):
-                return typeParam.nullability == .nonNull
+                return nullabilitySubtype(typeParam.nullability, .nonNull)
             case .intersection:
                 return isSubtype(subtype, supertype)
             default:
@@ -212,7 +212,13 @@ extension TypeSystem {
     }
 
     func nullabilitySubtype(_ lhs: Nullability, _ rhs: Nullability) -> Bool {
-        lhs == rhs || (lhs == .nonNull && rhs == .nullable)
+        if lhs == rhs { return true }
+        if lhs == .nonNull && rhs == .nullable { return true }
+        // Platform type (T!) is assignable to both nullable and non-null
+        if lhs == .platformType { return true }
+        // Both nullable and non-null are assignable to platform type
+        if rhs == .platformType { return true }
+        return false
     }
 
     func isNominalSubtypeSymbol(_ candidate: SymbolID, of base: SymbolID) -> Bool {

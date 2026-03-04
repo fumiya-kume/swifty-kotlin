@@ -184,10 +184,10 @@ public final class TypeSystem {
             return type // intersections don't become nullable directly
         case let .nothing(existing):
             if existing == nullability { return type }
-            return nullability == .nullable ? nullableNothingType : nothingType
+            return make(.nothing(nullability))
         case let .any(existing):
             if existing == nullability { return type }
-            return nullability == .nullable ? nullableAnyType : anyType
+            return make(.any(nullability))
         case let .primitive(prim, existing):
             if existing == nullability { return type }
             return make(.primitive(prim, nullability))
