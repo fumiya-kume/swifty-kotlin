@@ -1,3 +1,4 @@
+// swiftlint:disable:next type_body_length
 public final class TypeSystem {
     private var kindToID: [TypeKind: TypeID] = [:]
     private var idToKind: [TypeKind] = []
@@ -5,6 +6,9 @@ public final class TypeSystem {
     private var nominalTypeParameterVariancesMap: [SymbolID: [TypeVariance]] = [:]
     private var nominalTypeParameterSymbolsMap: [SymbolID: [SymbolID]] = [:]
     private var nominalSupertypeTypeArgsMap: [SymbolID: [SymbolID: [TypeArg]]] = [:]
+
+    /// The symbol ID of the synthetic `kotlin.Comparable` interface, set during registration.
+    public internal(set) var comparableInterfaceSymbol: SymbolID?
 
     public let errorType: TypeID
     public let unitType: TypeID

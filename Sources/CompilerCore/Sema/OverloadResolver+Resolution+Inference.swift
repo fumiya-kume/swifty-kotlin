@@ -83,15 +83,22 @@ extension OverloadResolver {
                 continue
             }
 
-            // Check all upper bounds
-            for bound in upperBounds where !ctx.types.isSubtype(substitutedType, bound) {
-                return Diagnostic(
-                    severity: .error,
-                    code: "KSWIFTK-SEMA-0030",
-                    message: "Type argument does not satisfy upper bound constraint.",
-                    primaryRange: range,
-                    secondaryRanges: []
+            // Check all upper bounds (with type parameter substitution applied to bounds)
+            for bound in upperBounds {
+                let substitutedBound = ctx.types.substituteTypeParameters(
+                    in: bound,
+                    substitution: substitution,
+                    typeVarBySymbol: typeVarBySymbol
                 )
+                if !ctx.types.isSubtype(substitutedType, substitutedBound) {
+                    return Diagnostic(
+                        severity: .error,
+                        code: "KSWIFTK-SEMA-BOUND",
+                        message: "Type argument does not satisfy upper bound constraint.",
+                        primaryRange: range,
+                        secondaryRanges: []
+                    )
+                }
             }
         }
         return nil

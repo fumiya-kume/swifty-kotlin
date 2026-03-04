@@ -16,23 +16,26 @@ symbol s14 kind=function fq=kotlin.collections.List.get vis=public flags=synthet
 symbol s15 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
 symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
 symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
-symbol s18 kind=enumClass fq=golden.sema.Color vis=public flags=_
-symbol s19 kind=constructor fq=golden.sema.Color.<init> vis=public flags=_ sig=recv=Class#18 params=[] ret=Class#18 suspend=0 defaults=[] vararg=[]
-symbol s20 kind=field fq=golden.sema.Color.Red vis=public flags=_ type=Class#18
-symbol s21 kind=field fq=golden.sema.Color.Green vis=public flags=_ type=Class#18
-symbol s22 kind=field fq=golden.sema.Color.Blue vis=public flags=_ type=Class#18
-symbol s23 kind=function fq=golden.sema.classify vis=public flags=_ sig=recv=_ params=[Int] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s24 kind=valueParameter fq=golden.sema.classify.$23.x vis=private flags=_
-symbol s25 kind=function fq=golden.sema.classifyColor vis=public flags=_ sig=recv=_ params=[Class#18] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s26 kind=valueParameter fq=golden.sema.classifyColor.$25.c vis=private flags=_
-symbol s27 kind=function fq=golden.sema.classifyBool vis=public flags=_ sig=recv=_ params=[Boolean] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s28 kind=valueParameter fq=golden.sema.classifyBool.$27.b vis=private flags=_
+symbol s18 kind=interface fq=kotlin.Comparable vis=public flags=synthetic
+symbol s19 kind=typeParameter fq=kotlin.Comparable.T vis=private flags=_
+symbol s20 kind=function fq=kotlin.Comparable.compareTo vis=public flags=synthetic|operatorFunction sig=recv=Class#18<T#19> params=[T#19] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s21 kind=enumClass fq=golden.sema.Color vis=public flags=_
+symbol s22 kind=constructor fq=golden.sema.Color.<init> vis=public flags=_ sig=recv=Class#21 params=[] ret=Class#21 suspend=0 defaults=[] vararg=[]
+symbol s23 kind=field fq=golden.sema.Color.Red vis=public flags=_ type=Class#21
+symbol s24 kind=field fq=golden.sema.Color.Green vis=public flags=_ type=Class#21
+symbol s25 kind=field fq=golden.sema.Color.Blue vis=public flags=_ type=Class#21
+symbol s26 kind=function fq=golden.sema.classify vis=public flags=_ sig=recv=_ params=[Int] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s27 kind=valueParameter fq=golden.sema.classify.$26.x vis=private flags=_
+symbol s28 kind=function fq=golden.sema.classifyColor vis=public flags=_ sig=recv=_ params=[Class#21] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s29 kind=valueParameter fq=golden.sema.classifyColor.$28.c vis=private flags=_
+symbol s30 kind=function fq=golden.sema.classifyBool vis=public flags=_ sig=recv=_ params=[Boolean] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s31 kind=valueParameter fq=golden.sema.classifyBool.$30.b vis=private flags=_
 file f0 package=golden.sema
-  decl d0 class Color sym=s18
-  decl d1 fun classify suspend=0 inline=0 sym=s23
-  decl d2 fun classifyColor suspend=0 inline=0 sym=s25
-  decl d3 fun classifyBool suspend=0 inline=0 sym=s27
-expr e0 name(x) type=Int ref=s24
+  decl d0 class Color sym=s21
+  decl d1 fun classify suspend=0 inline=0 sym=s26
+  decl d2 fun classifyColor suspend=0 inline=0 sym=s28
+  decl d3 fun classifyBool suspend=0 inline=0 sym=s30
+expr e0 name(x) type=Int ref=s27
 expr e1 int(1) type=Int
 expr e2 int(2) type=Int
 expr e3 int(3) type=Int
@@ -42,17 +45,17 @@ expr e6 int(5) type=Int
 expr e7 string(some) type=String
 expr e8 string(many) type=String
 expr e9 when subject=e0 branches=[e1,e2,e3->e4,e5,e6->e7] else=e8 type=String
-expr e10 name(c) type=Class#18 ref=s26
-expr e11 name(Color) type=Any ref=s18
-expr e12 memberCall recv=e11 callee=Red args=[] type=Class#18 ref=s20
-expr e13 name(Color) type=Any ref=s18
-expr e14 memberCall recv=e13 callee=Green args=[] type=Class#18 ref=s21
+expr e10 name(c) type=Class#21 ref=s29
+expr e11 name(Color) type=Any ref=s21
+expr e12 memberCall recv=e11 callee=Red args=[] type=Class#21 ref=s23
+expr e13 name(Color) type=Any ref=s21
+expr e14 memberCall recv=e13 callee=Green args=[] type=Class#21 ref=s24
 expr e15 string(warm) type=String
-expr e16 name(Color) type=Any ref=s18
-expr e17 memberCall recv=e16 callee=Blue args=[] type=Class#18 ref=s22
+expr e16 name(Color) type=Any ref=s21
+expr e17 memberCall recv=e16 callee=Blue args=[] type=Class#21 ref=s25
 expr e18 string(cold) type=String
 expr e19 when subject=e10 branches=[e12,e14->e15,e17->e18] else=_ type=String
-expr e20 name(b) type=Boolean ref=s28
+expr e20 name(b) type=Boolean ref=s31
 expr e21 bool(true) type=Boolean
 expr e22 bool(false) type=Boolean
 expr e23 string(always) type=String

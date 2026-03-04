@@ -16,25 +16,28 @@ symbol s14 kind=function fq=kotlin.collections.List.get vis=public flags=synthet
 symbol s15 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
 symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
 symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
-symbol s18 kind=interface fq=golden.sema.A vis=public flags=_
-symbol s19 kind=function fq=golden.sema.A.greet vis=public flags=_ sig=recv=Class#18 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s20 kind=interface fq=golden.sema.B vis=public flags=_
-symbol s21 kind=function fq=golden.sema.B.greet vis=public flags=overrideMember sig=recv=Class#20 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s22 kind=interface fq=golden.sema.C vis=public flags=_
-symbol s23 kind=function fq=golden.sema.C.greet vis=public flags=overrideMember sig=recv=Class#22 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s24 kind=class fq=golden.sema.D vis=public flags=_
-symbol s25 kind=constructor fq=golden.sema.D.<init> vis=public flags=_ sig=recv=Class#24 params=[] ret=Class#24 suspend=0 defaults=[] vararg=[]
-symbol s26 kind=function fq=golden.sema.D.greet vis=public flags=overrideMember sig=recv=Class#24 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s18 kind=interface fq=kotlin.Comparable vis=public flags=synthetic
+symbol s19 kind=typeParameter fq=kotlin.Comparable.T vis=private flags=_
+symbol s20 kind=function fq=kotlin.Comparable.compareTo vis=public flags=synthetic|operatorFunction sig=recv=Class#18<T#19> params=[T#19] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s21 kind=interface fq=golden.sema.A vis=public flags=_
+symbol s22 kind=function fq=golden.sema.A.greet vis=public flags=_ sig=recv=Class#21 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s23 kind=interface fq=golden.sema.B vis=public flags=_
+symbol s24 kind=function fq=golden.sema.B.greet vis=public flags=overrideMember sig=recv=Class#23 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s25 kind=interface fq=golden.sema.C vis=public flags=_
+symbol s26 kind=function fq=golden.sema.C.greet vis=public flags=overrideMember sig=recv=Class#25 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s27 kind=class fq=golden.sema.D vis=public flags=_
+symbol s28 kind=constructor fq=golden.sema.D.<init> vis=public flags=_ sig=recv=Class#27 params=[] ret=Class#27 suspend=0 defaults=[] vararg=[]
+symbol s29 kind=function fq=golden.sema.D.greet vis=public flags=overrideMember sig=recv=Class#27 params=[] ret=String suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d1 interface A sym=s18
-  decl d3 interface B sym=s20
-  decl d5 interface C sym=s22
-  decl d7 class D sym=s24
+  decl d1 interface A sym=s21
+  decl d3 interface B sym=s23
+  decl d5 interface C sym=s25
+  decl d7 class D sym=s27
 expr e0 string(A) type=String
 expr e1 string(B) type=String
 expr e2 string(C) type=String
-expr e3 super<B> type=Class#20
-expr e4 memberCall recv=e3 callee=greet args=[] type=String call=s21 map=[] targs=[]
-expr e5 super<C> type=Class#22
-expr e6 memberCall recv=e5 callee=greet args=[] type=String call=s23 map=[] targs=[]
+expr e3 super<B> type=Class#23
+expr e4 memberCall recv=e3 callee=greet args=[] type=String call=s24 map=[] targs=[]
+expr e5 super<C> type=Class#25
+expr e6 memberCall recv=e5 callee=greet args=[] type=String call=s26 map=[] targs=[]
 expr e7 binary(add) lhs=e4 rhs=e6 type=String

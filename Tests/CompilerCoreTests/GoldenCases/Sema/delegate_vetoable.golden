@@ -16,12 +16,15 @@ symbol s14 kind=function fq=kotlin.collections.List.get vis=public flags=synthet
 symbol s15 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
 symbol s16 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
 symbol s17 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#15<T#16> params=[Int,T#16] ret=T#16 suspend=0 defaults=[] vararg=[]
-symbol s18 kind=property fq=golden.sema.age vis=public flags=mutable type=Int
-symbol s19 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s18 kind=interface fq=kotlin.Comparable vis=public flags=synthetic
+symbol s19 kind=typeParameter fq=kotlin.Comparable.T vis=private flags=_
+symbol s20 kind=function fq=kotlin.Comparable.compareTo vis=public flags=synthetic|operatorFunction sig=recv=Class#18<T#19> params=[T#19] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s21 kind=property fq=golden.sema.age vis=public flags=mutable type=Int
+symbol s22 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 property age var=1 sym=s18
-  decl d1 fun main suspend=0 inline=0 sym=s19
-expr e0 name(Delegates) type=Int ref=s18
+  decl d0 property age var=1 sym=s21
+  decl d1 fun main suspend=0 inline=0 sym=s22
+expr e0 name(Delegates) type=Int ref=s21
 expr e1 int(0) type=Int
 expr e2 memberCall recv=e0 callee=vetoable args=[_:e1] type=Class#4 call=s10 map=[0->0] targs=[]
 expr e3 name(prop) type=_
@@ -29,11 +32,11 @@ expr e4 name(new) type=_
 expr e5 int(0) type=_
 expr e6 binary(greaterOrEqual) lhs=e4 rhs=e5 type=_
 expr e7 name(println) type=_
-expr e8 name(age) type=Int ref=s18
+expr e8 name(age) type=Int ref=s21
 expr e9 call callee=e7 args=[_:e8] type=Unit
 expr e10 name(age) type=_
 expr e11 int(10) type=Int
-expr e12 localAssign age value=e11 type=Unit ref=s18
+expr e12 localAssign age value=e11 type=Unit ref=s21
 expr e13 name(println) type=_
-expr e14 name(age) type=Int ref=s18
+expr e14 name(age) type=Int ref=s21
 expr e15 call callee=e13 args=[_:e14] type=Unit

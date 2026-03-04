@@ -408,6 +408,7 @@ extension DataFlowSemaPhase {
             kotlinPkg: kotlinPkg, kotlinPropertiesPkg: kotlinPropertiesPkg
         )
         registerSyntheticCollectionStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticComparableStub(symbols: symbols, types: types, interner: interner)
     }
 
     /// Look up or define a synthetic interface symbol in the given package.

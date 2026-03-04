@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 
 // Stateless utility functions for type checking. No back-reference to the driver needed.
@@ -246,14 +247,30 @@ extension TypeCheckHelpers {
     }
 
     /// Collects all nominal symbols from a type, including all parts of an intersection.
-    func allNominalSymbols(of type: TypeID, types: TypeSystem) -> [SymbolID] {
+    /// For type parameters, follows upper bounds to discover interface symbols.
+    func allNominalSymbols(of type: TypeID, types: TypeSystem, symbols: SymbolTable) -> [SymbolID] {
+        var visited = Set<SymbolID>()
+        return allNominalSymbolsImpl(of: type, types: types, symbols: symbols, visited: &visited)
+    }
+
+    private func allNominalSymbolsImpl(
+        of type: TypeID,
+        types: TypeSystem,
+        symbols: SymbolTable,
+        visited: inout Set<SymbolID>
+    ) -> [SymbolID] {
         switch types.kind(of: type) {
         case let .classType(classType):
-            [classType.classSymbol]
+            return [classType.classSymbol]
         case let .intersection(parts):
-            parts.flatMap { allNominalSymbols(of: $0, types: types) }
+            return parts.flatMap { allNominalSymbolsImpl(of: $0, types: types, symbols: symbols, visited: &visited) }
+        case let .typeParam(typeParam):
+            // Guard against cycles (e.g. T : U, U : T).
+            guard visited.insert(typeParam.symbol).inserted else { return [] }
+            let bounds = symbols.typeParameterUpperBounds(for: typeParam.symbol)
+            return bounds.flatMap { allNominalSymbolsImpl(of: $0, types: types, symbols: symbols, visited: &visited) }
         default:
-            []
+            return []
         }
     }
 
@@ -263,7 +280,7 @@ extension TypeCheckHelpers {
         sema: SemaModule,
         allowedOwnerSymbols: Set<SymbolID>? = nil
     ) -> [SymbolID] {
-        let nominalRoots = allNominalSymbols(of: receiverType, types: sema.types)
+        let nominalRoots = allNominalSymbols(of: receiverType, types: sema.types, symbols: sema.symbols)
         guard !nominalRoots.isEmpty else {
             return []
         }
@@ -355,7 +372,7 @@ extension TypeCheckHelpers {
         receiverType: TypeID,
         sema: SemaModule
     ) -> (symbol: SymbolID, type: TypeID)? {
-        let nominalRoots = allNominalSymbols(of: receiverType, types: sema.types)
+        let nominalRoots = allNominalSymbols(of: receiverType, types: sema.types, symbols: sema.symbols)
         guard !nominalRoots.isEmpty else {
             return nil
         }
