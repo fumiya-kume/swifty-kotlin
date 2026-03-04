@@ -480,7 +480,7 @@ else
     artifact_dir=""
 
     if [[ -f "$status_path" ]]; then
-      IFS=$'\t' read -r status artifact_dir < "$status_path"
+      IFS=$'\t' read -r status artifact_dir < "$status_path" || true
     fi
 
     if [[ "$status" != "PASS" && "$status" != "FAIL" ]]; then
