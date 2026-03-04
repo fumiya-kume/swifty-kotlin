@@ -81,7 +81,7 @@ public struct FileFingerprint: Equatable, Codable {
             0x19A4_C116, 0x1E37_6C08, 0x2748_774C, 0x34B0_BCB5,
             0x391C_0CB3, 0x4ED8_AA4A, 0x5B9C_CA4F, 0x682E_6FF3,
             0x748F_82EE, 0x78A5_636F, 0x84C8_7814, 0x8CC7_0208,
-            0x90BE_FFFA, 0xA450_6CEB, 0xBEF9_A3F7, 0xC671_78F2,
+            0x90BE_FFFA, 0xA450_6CEB, 0xBEF9_A3F7, 0xC671_78F2
         ]
 
         var h0: UInt32 = 0x6A09_E667

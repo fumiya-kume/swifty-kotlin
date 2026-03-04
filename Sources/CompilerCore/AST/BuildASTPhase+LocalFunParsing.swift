@@ -121,8 +121,7 @@ extension BuildASTPhase {
                 }
                 if !blockExprs.isEmpty,
                    let firstRange = astArena.exprRange(blockExprs.first!),
-                   let lastRange = astArena.exprRange(blockExprs.last!)
-                {
+                   let lastRange = astArena.exprRange(blockExprs.last!) {
                     let bodyRange = SourceRange(start: firstRange.start, end: lastRange.end)
                     body = .block(blockExprs, bodyRange)
                 } else {

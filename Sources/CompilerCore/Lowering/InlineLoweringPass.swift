@@ -110,8 +110,7 @@ final class InlineLoweringPass: LoweringPass {
         var typeParamTokenValues: [SymbolID: KIRExprID] = [:]
         if let sema = ctx.sema,
            let sig = sema.symbols.functionSignature(for: inlineTarget.symbol),
-           !sig.reifiedTypeParameterIndices.isEmpty
-        {
+           !sig.reifiedTypeParameterIndices.isEmpty {
             for index in sig.reifiedTypeParameterIndices.sorted() {
                 guard index < sig.typeParameterSymbols.count else { continue }
                 let typeParamSymbol = sig.typeParameterSymbols[index]

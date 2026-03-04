@@ -106,7 +106,7 @@ final class DriverIncrementalTests: XCTestCase {
     func testIncrementalWithMultipleFiles() throws {
         try withTemporaryFiles(contents: [
             "fun greet(): String = \"Hello\"",
-            "fun main() { println(greet()) }",
+            "fun main() { println(greet()) }"
         ]) { paths in
             let driver = makeDriver()
             let cachePath = tempDir + "/cache"

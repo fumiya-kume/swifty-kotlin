@@ -46,7 +46,7 @@ extension VirtualDispatchTests {
                     thrownResult: nil,
                     dispatch: .vtable(slot: 1)
                 ),
-                .returnUnit,
+                .returnUnit
             ],
             isSuspend: false,
             isInline: true
@@ -69,7 +69,7 @@ extension VirtualDispatchTests {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .returnUnit,
+                .returnUnit
             ],
             isSuspend: false,
             isInline: false
@@ -156,7 +156,7 @@ extension VirtualDispatchTests {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .returnUnit,
+                .returnUnit
             ],
             isSuspend: false,
             isInline: false
@@ -321,7 +321,7 @@ extension VirtualDispatchTests {
                     thrownResult: nil,
                     dispatch: .vtable(slot: 0)
                 ),
-                .returnValue(callResult),
+                .returnValue(callResult)
             ],
             isSuspend: true,
             isInline: false
@@ -351,7 +351,7 @@ extension VirtualDispatchTests {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .returnUnit,
+                .returnUnit
             ],
             isSuspend: false,
             isInline: false

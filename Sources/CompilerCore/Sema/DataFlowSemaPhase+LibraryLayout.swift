@@ -208,8 +208,7 @@ extension DataFlowSemaPhase {
         let maxITableSize = (resolvedITableSlots.values.max() ?? -1) + 1
         if let declaredVTableSize = record.declaredVtableSize,
            declaredVTableSize >= 0,
-           declaredVTableSize < maxVTableSize
-        {
+           declaredVTableSize < maxVTableSize {
             diagnostics.warning(
                 "KSWIFTK-LIB-0005",
                 "metadata vtable size mismatch at \(metadataPath) for symbol \(symbol.rawValue)",
@@ -218,8 +217,7 @@ extension DataFlowSemaPhase {
         }
         if let declaredITableSize = record.declaredItableSize,
            declaredITableSize >= 0,
-           declaredITableSize < maxITableSize
-        {
+           declaredITableSize < maxITableSize {
             diagnostics.warning(
                 "KSWIFTK-LIB-0005",
                 "metadata itable size mismatch at \(metadataPath) for symbol \(symbol.rawValue)",

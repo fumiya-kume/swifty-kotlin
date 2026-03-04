@@ -85,8 +85,7 @@ extension DataFlowSemaPhase {
         for candidatePath in candidatePaths {
             if let symbol = symbols.lookupAll(fqName: candidatePath)
                 .compactMap({ symbols.symbol($0) })
-                .first(where: { isNominalTypeSymbol($0.kind) })?.id
-            {
+                .first(where: { isNominalTypeSymbol($0.kind) })?.id {
                 let resolvedArgs = resolveTypeArgRefsForInheritance(
                     argRefs,
                     currentPackage: currentPackage,
@@ -159,8 +158,7 @@ extension DataFlowSemaPhase {
             for candidatePath in candidatePaths {
                 if let nominalSymbol = symbols.lookupAll(fqName: candidatePath)
                     .compactMap({ symbols.symbol($0) })
-                    .first(where: { isNominalTypeSymbol($0.kind) })
-                {
+                    .first(where: { isNominalTypeSymbol($0.kind) }) {
                     let resolvedArgs = resolveTypeArgRefsForInheritance(argRefs, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types)
                     return types.make(.classType(ClassType(classSymbol: nominalSymbol.id, args: resolvedArgs, nullability: nullability)))
                 }

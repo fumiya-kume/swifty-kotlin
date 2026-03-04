@@ -13,7 +13,7 @@ extension CompilerCoreTests {
             package app
             import lib.helper as h
             fun use() = h(1)
-            """,
+            """
         ]
         let ctx = makeContextFromSources(sources)
         try runFrontend(ctx)
@@ -39,7 +39,7 @@ extension CompilerCoreTests {
             package app
             import lib.helper
             fun use() = helper(1)
-            """,
+            """
         ]
         let ctx = makeContextFromSources(sources)
         try runFrontend(ctx)

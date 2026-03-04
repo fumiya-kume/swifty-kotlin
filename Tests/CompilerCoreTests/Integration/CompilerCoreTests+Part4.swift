@@ -142,8 +142,7 @@ extension CompilerCoreTests {
         XCTAssertEqual(op, .lessThan)
 
         if let bodyRange = ast.arena.exprRange(bodyExprID),
-           let conditionRange = ast.arena.exprRange(conditionExprID)
-        {
+           let conditionRange = ast.arena.exprRange(conditionExprID) {
             XCTAssertLessThanOrEqual(bodyRange.end.offset, conditionRange.start.offset)
         }
     }

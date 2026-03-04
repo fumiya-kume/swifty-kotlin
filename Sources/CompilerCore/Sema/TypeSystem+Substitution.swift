@@ -183,8 +183,7 @@ public extension TypeSystem {
         switch kind {
         case let .typeParam(typeParam):
             if let variable = typeVarBySymbol[typeParam.symbol],
-               let concrete = substitution[variable]
-            {
+               let concrete = substitution[variable] {
                 return concrete
             }
             return type
@@ -245,8 +244,7 @@ public extension TypeSystem {
             )
             if newReceiver == functionType.receiver,
                newParams == functionType.params,
-               newReturn == functionType.returnType
-            {
+               newReturn == functionType.returnType {
                 return type
             }
             return make(.functionType(FunctionType(

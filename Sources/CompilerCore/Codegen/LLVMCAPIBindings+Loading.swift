@@ -22,7 +22,7 @@ extension LLVMCAPIBindings {
             "libLLVM.dylib",
             "/usr/lib/x86_64-linux-gnu/libLLVM-15.so",
             "/usr/lib/x86_64-linux-gnu/libLLVM.so",
-            "libLLVM.so",
+            "libLLVM.so"
         ])
         return deduplicated(candidates)
     }

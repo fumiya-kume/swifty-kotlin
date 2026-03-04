@@ -233,7 +233,7 @@ public final class ConstraintSolver {
         case .equal:
             [
                 (constraint.left, constraint.right, constraint.blameRange),
-                (constraint.right, constraint.left, constraint.blameRange),
+                (constraint.right, constraint.left, constraint.blameRange)
             ]
         case .supertype:
             [(constraint.right, constraint.left, constraint.blameRange)]

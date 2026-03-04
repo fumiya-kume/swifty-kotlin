@@ -1003,8 +1003,7 @@ func runSuspendEntryLoopWithContinuation(entryPointRaw: Int, continuation: Int) 
     while true {
         // Check cancellation before each resume (cooperative cancellation)
         if let state = runtimeContinuationState(from: continuation),
-           let job = state.jobHandle, job.cancellationSnapshot()
-        {
+           let job = state.jobHandle, job.cancellationSnapshot() {
             _ = kk_coroutine_state_exit(continuation, 0)
             return 0
         }

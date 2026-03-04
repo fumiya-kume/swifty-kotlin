@@ -9,8 +9,7 @@ extension BuildASTPhase {
     ) -> [TypeParamDecl] {
         for child in arena.children(of: nodeID) {
             if case let .node(childID) = child,
-               arena.node(childID).kind == .typeArgs
-            {
+               arena.node(childID).kind == .typeArgs {
                 let tokens = collectTokens(from: childID, in: arena)
                 var result: [TypeParamDecl] = []
                 var angleDepth = 0
@@ -79,28 +78,31 @@ extension BuildASTPhase {
 
                     var upperBound: TypeRefID?
                     if tokenIndex < tokens.count,
-                       tokens[tokenIndex].kind == .symbol(.colon)
-                    {
+                       tokens[tokenIndex].kind == .symbol(.colon) {
                         tokenIndex += 1
                         var boundTokens: [Token] = []
                         var innerDepth = BracketDepth()
                         while tokenIndex < tokens.count {
-                            let t = tokens[tokenIndex]
+                            let tokenItem = tokens[tokenIndex]
                             if innerDepth.isAtTopLevel {
-                                if t.kind == .symbol(.comma) || t.kind == .symbol(.greaterThan) {
+                                if tokenItem.kind == .symbol(.comma) || tokenItem.kind == .symbol(.greaterThan) {
                                     break
                                 }
                             }
-                            innerDepth.track(t.kind)
-                            boundTokens.append(t)
+                            innerDepth.track(tokenItem.kind)
+                            boundTokens.append(tokenItem)
                             tokenIndex += 1
                         }
                         if let astArena {
                             upperBound = parseTypeRef(from: boundTokens, interner: interner, astArena: astArena)
                         }
                     }
-
-                    result.append(TypeParamDecl(name: name, variance: pendingVariance, isReified: pendingReified, upperBound: upperBound))
+                    result.append(TypeParamDecl(
+                        name: name,
+                        variance: pendingVariance,
+                        isReified: pendingReified,
+                        upperBound: upperBound
+                    ))
                     pendingVariance = .invariant
                     pendingReified = false
                 }
@@ -151,14 +153,19 @@ extension BuildASTPhase {
             var boundTokens: [Token] = []
             var innerDepth = BracketDepth()
             while index < tokens.count {
-                let t = tokens[index]
+                let tokenItem = tokens[index]
                 if innerDepth.isAtTopLevel {
-                    if t.kind == .symbol(.comma) || t.kind == .symbol(.lBrace) || t.kind == .symbol(.semicolon) || t.kind == .symbol(.assign) {
+                    let kind = tokenItem.kind
+                    let shouldBreak = kind == .symbol(.comma)
+                        || kind == .symbol(.lBrace)
+                        || kind == .symbol(.semicolon)
+                        || kind == .symbol(.assign)
+                    if shouldBreak {
                         break
                     }
                 }
-                innerDepth.track(t.kind)
-                boundTokens.append(t)
+                innerDepth.track(tokenItem.kind)
+                boundTokens.append(tokenItem)
                 index += 1
             }
             if let boundRef = parseTypeRef(from: boundTokens, interner: interner, astArena: astArena) {
