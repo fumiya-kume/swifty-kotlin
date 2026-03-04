@@ -131,14 +131,13 @@ public final class TypeSystem {
     }
 
     public func isSignedInteger(_ type: TypeID) -> Bool {
-        switch kind(of: type) {
+        switch kind(of: makeNonNullable(type)) {
         case .primitive(.int, _), .primitive(.long, _), .primitive(.char, _):
             // Char participates in arithmetic on the int domain (e.g. "a + 1"),
             // so it is tracked as a signed-integer-like type.
-            type == intType || type == longType || type == charType ||
-                type == makeNullable(intType) || type == makeNullable(longType) || type == makeNullable(charType)
+            return true
         default:
-            false
+            return false
         }
     }
 
