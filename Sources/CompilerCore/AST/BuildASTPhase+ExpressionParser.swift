@@ -34,17 +34,19 @@ extension BuildASTPhase {
         let tokens: ArraySlice<Token>
         let interner: StringInterner
         let astArena: ASTArena
+        let diagnostics: DiagnosticEngine?
         var index: Int
 
-        init(tokens: ArraySlice<Token>, interner: StringInterner, astArena: ASTArena) {
+        init(tokens: ArraySlice<Token>, interner: StringInterner, astArena: ASTArena, diagnostics: DiagnosticEngine? = nil) {
             self.tokens = tokens
             self.interner = interner
             self.astArena = astArena
+            self.diagnostics = diagnostics
             index = tokens.startIndex
         }
 
-        convenience init(tokens: [Token], interner: StringInterner, astArena: ASTArena) {
-            self.init(tokens: tokens[...], interner: interner, astArena: astArena)
+        convenience init(tokens: [Token], interner: StringInterner, astArena: ASTArena, diagnostics: DiagnosticEngine? = nil) {
+            self.init(tokens: tokens[...], interner: interner, astArena: astArena, diagnostics: diagnostics)
         }
 
         func parse() -> ExprID? {

@@ -79,11 +79,11 @@ extension BuildASTPhase.ExpressionParser {
             return astArena.appendExpr(.longLiteral(value, token.range))
         case let .uintLiteral(text):
             _ = consume()
-            let value = parseUnsignedLiteral(text)
+            let value = parseUnsignedLiteral(text, range: token.range)
             return astArena.appendExpr(.uintLiteral(value, token.range))
         case let .ulongLiteral(text):
             _ = consume()
-            let value = parseUnsignedLiteral(text)
+            let value = parseUnsignedLiteral(text, range: token.range)
             return astArena.appendExpr(.ulongLiteral(value, token.range))
         case let .floatLiteral(text):
             _ = consume()
@@ -108,7 +108,7 @@ extension BuildASTPhase.ExpressionParser {
     }
 
     /// Parses unsigned literal text (e.g. "42u", "0xFFuL") to UInt64.
-    private func parseUnsignedLiteral(_ text: String) -> UInt64 {
+    private func parseUnsignedLiteral(_ text: String, range: SourceRange) -> UInt64 {
         var numPart = text.replacingOccurrences(of: "_", with: "")
         // Strip trailing u/U and uL/UL
         if numPart.uppercased().hasSuffix("UL") {
@@ -117,13 +117,23 @@ extension BuildASTPhase.ExpressionParser {
             numPart = String(numPart.dropLast())
         }
         let lower = numPart.lowercased()
+        let result: UInt64?
         if lower.hasPrefix("0x") {
-            return UInt64(numPart.dropFirst(2).filter(\.isHexDigit), radix: 16) ?? 0
+            result = UInt64(numPart.dropFirst(2).filter(\.isHexDigit), radix: 16)
+        } else if lower.hasPrefix("0b") {
+            result = UInt64(numPart.dropFirst(2).filter { $0 == "0" || $0 == "1" }, radix: 2)
+        } else {
+            result = UInt64(numPart.filter(\.isNumber), radix: 10)
         }
-        if lower.hasPrefix("0b") {
-            return UInt64(numPart.dropFirst(2).filter { $0 == "0" || $0 == "1" }, radix: 2) ?? 0
+        if let val = result {
+            return val
         }
-        return UInt64(numPart.filter(\.isNumber), radix: 10) ?? 0
+        diagnostics?.error(
+            "KSWIFTK-LEX-0003",
+            "Invalid unsigned literal format or overflow.",
+            range: range
+        )
+        return 0
     }
 
     // swiftlint:disable:next cyclomatic_complexity

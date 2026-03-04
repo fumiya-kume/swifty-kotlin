@@ -171,7 +171,11 @@ public final class BuildASTPhase: CompilerPhase {
     /// because different `SyntaxArena`s reuse the same `NodeID` space.
     var tokenCache: [NodeID: [Token]] = [:]
 
-    public init() {}
+    let diagnostics: DiagnosticEngine?
+
+    public init(diagnostics: DiagnosticEngine? = nil) {
+        self.diagnostics = diagnostics
+    }
 
     public func run(_ ctx: CompilationContext) throws {
         if ctx.syntaxTrees.isEmpty {
@@ -199,9 +203,10 @@ public final class BuildASTPhase: CompilerPhase {
 
     private func runSequential(_ ctx: CompilationContext) {
         let arena = ASTArena()
+        let phase = BuildASTPhase(diagnostics: ctx.diagnostics)
         let perFileResults: [PerFileASTResult] = ctx.syntaxTrees.map { fileID, cst, root in
-            tokenCache.removeAll(keepingCapacity: true)
-            return buildFileAST(
+            phase.tokenCache.removeAll(keepingCapacity: true)
+            return phase.buildFileAST(
                 fileID: fileID,
                 cst: cst,
                 root: root,
@@ -245,7 +250,7 @@ public final class BuildASTPhase: CompilerPhase {
                 let (fileID, cst, root) = syntaxTrees[index]
                 // Each task gets its own BuildASTPhase so that `tokenCache`
                 // is not shared across concurrent tasks.
-                let taskPhase = BuildASTPhase()
+                let taskPhase = BuildASTPhase(diagnostics: ctx.diagnostics)
                 perFileResults.store(taskPhase.buildFileAST(
                     fileID: fileID,
                     cst: cst,
