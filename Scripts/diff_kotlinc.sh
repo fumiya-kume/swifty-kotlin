@@ -7,6 +7,8 @@ KOTLINC="${KOTLINC:-kotlinc}"
 JAVA_BIN="${JAVA_BIN:-java}"
 KEEP_TEMP=0
 REPORT_PATH=""
+DIFF_PARALLEL="${DIFF_PARALLEL:-1}"
+DIFF_WORKERS="${DIFF_WORKERS:-4}"
 LAST_ARTIFACT_DIR=""
 COMPILE_TIMEOUT="${DIFF_COMPILE_TIMEOUT:-120}"
 RUN_TIMEOUT="${DIFF_RUN_TIMEOUT:-30}"
@@ -20,6 +22,9 @@ Options:
   --kswiftc <path>   Path to kswiftc binary (default: .build/debug/kswiftc)
   --kotlinc <path>   Path to kotlinc command (default: kotlinc)
   --java <path>      Path to java command (default: java)
+  --parallel [0|1]   Enable (or disable) parallel execution (default: env DIFF_PARALLEL)
+  --no-parallel      Disable parallel execution
+  --jobs <n>         Number of parallel workers (default: env DIFF_WORKERS, default: 4, clipped by CPU)
   --compile-timeout <seconds>
                      Per-compiler timeout (default: \$DIFF_COMPILE_TIMEOUT or 120)
   --run-timeout <seconds>
@@ -54,17 +59,41 @@ while [[ $# -gt 0 ]]; do
       shift
       JAVA_BIN="$1"
       ;;
+    --parallel)
+      if [[ $# -gt 1 && ( "$2" == "0" || "$2" == "1" ) ]]; then
+        DIFF_PARALLEL="$2"
+        shift
+      else
+        DIFF_PARALLEL=1
+      fi
+      ;;
+    --no-parallel)
+      DIFF_PARALLEL=0
+      ;;
+    --jobs)
+      shift
+      if [[ $# -eq 0 ]]; then
+        echo "--jobs requires an argument" >&2
+        exit 1
+      fi
+      DIFF_WORKERS="$1"
+      ;;
+    --jobs=*)
+      DIFF_WORKERS="${1#*=}"
+      ;;
     --compile-timeout)
       shift
       if [[ $# -eq 0 ]]; then
-        echo "--compile-timeout requires an argument" >&2; exit 1
+        echo "--compile-timeout requires an argument" >&2
+        exit 1
       fi
       COMPILE_TIMEOUT="$1"
       ;;
     --run-timeout)
       shift
       if [[ $# -eq 0 ]]; then
-        echo "--run-timeout requires an argument" >&2; exit 1
+        echo "--run-timeout requires an argument" >&2
+        exit 1
       fi
       RUN_TIMEOUT="$1"
       ;;
@@ -73,6 +102,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --report)
       shift
+      if [[ $# -eq 0 ]]; then
+        echo "--report requires an argument" >&2
+        exit 1
+      fi
       REPORT_PATH="$1"
       ;;
     -h|--help)
@@ -100,6 +133,16 @@ if [[ -z "$TARGET" ]]; then
   exit 1
 fi
 
+if ! [[ "$DIFF_PARALLEL" =~ ^[01]$ ]]; then
+  echo "DIFF_PARALLEL must be 0 or 1: $DIFF_PARALLEL" >&2
+  exit 1
+fi
+
+if ! [[ "$DIFF_WORKERS" =~ ^[1-9][0-9]*$ ]]; then
+  echo "DIFF_WORKERS must be a positive integer: $DIFF_WORKERS" >&2
+  exit 1
+fi
+
 if ! [[ "$COMPILE_TIMEOUT" =~ ^[1-9][0-9]*$ ]]; then
   echo "compile timeout must be a positive integer: $COMPILE_TIMEOUT" >&2
   exit 1
@@ -114,7 +157,7 @@ if [[ -n "$REPORT_PATH" ]]; then
   : >"$REPORT_PATH"
 fi
 
-if [[ ! -x "$KSWIFTC" ]]; then
+if ! [[ -x "$KSWIFTC" ]]; then
   echo "kswiftc not found or not executable: $KSWIFTC" >&2
   exit 1
 fi
@@ -129,10 +172,46 @@ if ! command -v "$JAVA_BIN" >/dev/null 2>&1; then
   exit 1
 fi
 
-should_skip_case() {
-  local kt_file="$1"
-  head -5 "$kt_file" 2>/dev/null | grep -q '// SKIP-DIFF' || return 1
+detect_workers() {
+  local detected
+
+  if detected="$(nproc 2>/dev/null)" \
+    && [[ "$detected" =~ ^[0-9]+$ ]] \
+    && (( detected > 0 )); then
+    printf "%s" "$detected"
+    return
+  fi
+
+  if detected="$(sysctl -n hw.logicalcpu 2>/dev/null)" \
+    && [[ "$detected" =~ ^[0-9]+$ ]] \
+    && (( detected > 0 )); then
+    printf "%s" "$detected"
+    return
+  fi
+
+  if detected="$(sysctl -n hw.physicalcpu 2>/dev/null)" \
+    && [[ "$detected" =~ ^[0-9]+$ ]] \
+    && (( detected > 0 )); then
+    printf "%s" "$detected"
+    return
+  fi
+
+  printf "" 
 }
+
+WORKER_COUNT="$DIFF_WORKERS"
+if [[ "$DIFF_PARALLEL" -eq 1 ]]; then
+  CPU_LIMIT="$(detect_workers)"
+  if [[ -n "$CPU_LIMIT" && "$WORKER_COUNT" -gt "$CPU_LIMIT" ]]; then
+    WORKER_COUNT="$CPU_LIMIT"
+  fi
+else
+  WORKER_COUNT=1
+fi
+
+if [[ "$WORKER_COUNT" -lt 1 ]]; then
+  WORKER_COUNT=1
+fi
 
 collect_cases() {
   local path="$1"
@@ -153,11 +232,12 @@ normalize_text() {
 
 should_skip_case() {
   local kt_file="$1"
-  grep -Eq '^[[:space:]]*//[[:space:]]*KSWIFTK_DIFF_IGNORE\b' "$kt_file"
+  grep -Eq '^[[:space:]]*//[[:space:]]*(KSWIFTK_DIFF_IGNORE|SKIP-DIFF)\b' "$kt_file"
 }
 
 run_case() {
   local kt_file="$1"
+  local artifact_file="${2:-}"
   local tmp_dir
   tmp_dir="$(mktemp -d -t kswiftk-diff-XXXXXX)"
   LAST_ARTIFACT_DIR="$tmp_dir"
@@ -281,40 +361,152 @@ run_case() {
     echo "  artifacts: $tmp_dir"
   fi
 
+  if [[ -n "$artifact_file" ]]; then
+    printf '%s\n' "$LAST_ARTIFACT_DIR" >"$artifact_file"
+  fi
+
   return $((1 - ok))
+}
+
+run_case_worker() {
+  local kt_file="$1"
+  local log_path="$2"
+  local status_path="$3"
+  local artifact_file="$4"
+
+  local case_exit=0
+  local status="PASS"
+  local artifact=""
+
+  run_case "$kt_file" "$artifact_file" >"$log_path" 2>&1 || case_exit=$?
+
+  if [[ $case_exit -ne 0 ]]; then
+    status="FAIL"
+  fi
+
+  artifact="$(cat "$artifact_file" 2>/dev/null || true)"
+  printf '%s\t%s\n' "$status" "$artifact" >"$status_path"
 }
 
 TOTAL=0
 FAILED=0
 SKIPPED=0
-while IFS= read -r test_case; do
-  [[ -z "$test_case" ]] && continue
-  if should_skip_case "$test_case"; then
-    echo "SKIP $test_case (// SKIP-DIFF)"
-    SKIPPED=$((SKIPPED + 1))
-    if [[ -n "$REPORT_PATH" ]]; then
-      printf '%s\tSKIP\t\n' "$test_case" >>"$REPORT_PATH"
+if [[ "$DIFF_PARALLEL" -eq 0 || "$WORKER_COUNT" -le 1 ]]; then
+  while IFS= read -r test_case; do
+    [[ -z "$test_case" ]] && continue
+    if should_skip_case "$test_case"; then
+      echo "SKIP $test_case (// SKIP-DIFF)"
+      SKIPPED=$((SKIPPED + 1))
+      if [[ -n "$REPORT_PATH" ]]; then
+        printf '%s\tSKIP\t\n' "$test_case" >>"$REPORT_PATH"
+      fi
+      continue
     fi
-    continue
-  fi
-  TOTAL=$((TOTAL + 1))
-  if should_skip_case "$test_case"; then
-    echo "SKIP $test_case"
-    if [[ -n "$REPORT_PATH" ]]; then
-      printf '%s\tSKIP\t-\n' "$test_case" >>"$REPORT_PATH"
+    TOTAL=$((TOTAL + 1))
+    echo "CASE $TOTAL: $test_case"
+    status="PASS"
+    if ! run_case "$test_case"; then
+      FAILED=$((FAILED + 1))
+      status="FAIL"
     fi
-    continue
+    if [[ -n "$REPORT_PATH" ]]; then
+      printf '%s\t%s\t%s\n' "$test_case" "$status" "$LAST_ARTIFACT_DIR" >>"$REPORT_PATH"
+    fi
+  done < <(collect_cases "$TARGET")
+else
+  declare -a TEST_CASES=()
+  declare -a CASE_KIND=()
+  declare -a CASE_NUM=()
+  declare -a RUN_INPUT_INDEXES=()
+  while IFS= read -r test_case; do
+    [[ -z "$test_case" ]] && continue
+    TEST_CASES+=("$test_case")
+  done < <(collect_cases "$TARGET")
+
+  if [[ ${#TEST_CASES[@]} -eq 0 ]]; then
+    echo "No .kt files found." >&2
+    exit 1
   fi
-  echo "CASE $TOTAL: $test_case"
-  status="PASS"
-  if ! run_case "$test_case"; then
-    FAILED=$((FAILED + 1))
+  for i in "${!TEST_CASES[@]}"; do
+    test_case="${TEST_CASES[$i]}"
+    if should_skip_case "$test_case"; then
+      CASE_KIND[$i]="SKIP"
+      SKIPPED=$((SKIPPED + 1))
+      continue
+    fi
+    TOTAL=$((TOTAL + 1))
+    CASE_KIND[$i]="RUN"
+    CASE_NUM[$i]="$TOTAL"
+    RUN_INPUT_INDEXES+=("$i")
+  done
+
+  RUN_DIR="$(mktemp -d -t kswiftk-diff-run-XXXXXX)"
+  declare -a RUNNING_PIDS=()
+
+  for input_index in "${RUN_INPUT_INDEXES[@]}"; do
+    test_case="${TEST_CASES[$input_index]}"
+    log_path="$RUN_DIR/case_${input_index}.log"
+    status_path="$RUN_DIR/case_${input_index}.status"
+    artifact_path="$RUN_DIR/case_${input_index}.artifact"
+
+    run_case_worker "$test_case" "$log_path" "$status_path" "$artifact_path" &
+    RUNNING_PIDS+=("$!")
+
+    if (( ${#RUNNING_PIDS[@]} >= WORKER_COUNT )); then
+      for pid in "${RUNNING_PIDS[@]}"; do
+        wait "$pid" || true
+      done
+      RUNNING_PIDS=()
+    fi
+  done
+
+  for pid in "${RUNNING_PIDS[@]}"; do
+    wait "$pid" || true
+  done
+
+  for i in "${!TEST_CASES[@]}"; do
+    test_case="${TEST_CASES[$i]}"
+    if [[ "${CASE_KIND[$i]:-}" == "SKIP" ]]; then
+      echo "SKIP $test_case (// SKIP-DIFF)"
+      if [[ -n "$REPORT_PATH" ]]; then
+        printf '%s\tSKIP\t\n' "$test_case" >>"$REPORT_PATH"
+      fi
+      continue
+    fi
+    case_number="${CASE_NUM[$i]:-0}"
+    log_path="$RUN_DIR/case_${i}.log"
+    status_path="$RUN_DIR/case_${i}.status"
     status="FAIL"
-  fi
-  if [[ -n "$REPORT_PATH" ]]; then
-    printf '%s\t%s\t%s\n' "$test_case" "$status" "$LAST_ARTIFACT_DIR" >>"$REPORT_PATH"
-  fi
-done < <(collect_cases "$TARGET")
+    artifact_dir=""
+
+    if [[ -f "$status_path" ]]; then
+      IFS=$'\t' read -r status artifact_dir < "$status_path" || true
+    fi
+
+    if [[ "$status" != "PASS" && "$status" != "FAIL" ]]; then
+      status="FAIL"
+    fi
+
+    echo "CASE $case_number: $test_case"
+    if [[ -f "$log_path" ]]; then
+      cat "$log_path"
+    else
+      echo "FAIL $test_case"
+      echo "  parallel worker output missing: $log_path"
+      status="FAIL"
+    fi
+
+    if [[ "$status" == "FAIL" ]]; then
+      FAILED=$((FAILED + 1))
+    fi
+
+    if [[ -n "$REPORT_PATH" ]]; then
+      printf '%s\t%s\t%s\n' "$test_case" "$status" "$artifact_dir" >>"$REPORT_PATH"
+    fi
+  done
+
+  rm -rf "$RUN_DIR"
+fi
 
 if [[ $TOTAL -eq 0 && $SKIPPED -eq 0 ]]; then
   echo "No .kt files found." >&2
