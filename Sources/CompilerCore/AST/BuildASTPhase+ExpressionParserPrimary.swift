@@ -79,14 +79,18 @@ extension BuildASTPhase.ExpressionParser {
             return astArena.appendExpr(.longLiteral(value, token.range))
         case let .uintLiteral(text):
             _ = consume()
-            let value = parseUnsignedLiteral(text, range: token.range)
+            guard let value = parseUnsignedLiteral(text, range: token.range) else {
+                return nil
+            }
             if value > UInt32.max {
                 return astArena.appendExpr(.ulongLiteral(value, token.range))
             }
             return astArena.appendExpr(.uintLiteral(value, token.range))
         case let .ulongLiteral(text):
             _ = consume()
-            let value = parseUnsignedLiteral(text, range: token.range)
+            guard let value = parseUnsignedLiteral(text, range: token.range) else {
+                return nil
+            }
             return astArena.appendExpr(.ulongLiteral(value, token.range))
         case let .floatLiteral(text):
             _ = consume()
@@ -111,7 +115,8 @@ extension BuildASTPhase.ExpressionParser {
     }
 
     /// Parses unsigned literal text (e.g. "42u", "0xFFuL") to UInt64.
-    private func parseUnsignedLiteral(_ text: String, range: SourceRange) -> UInt64 {
+    /// Returns nil on parse failure (diagnostic is emitted).
+    private func parseUnsignedLiteral(_ text: String, range: SourceRange) -> UInt64? {
         var numPart = text.replacingOccurrences(of: "_", with: "")
         // Strip trailing u/U and uL/UL
         if numPart.uppercased().hasSuffix("UL") {
@@ -135,7 +140,7 @@ extension BuildASTPhase.ExpressionParser {
             "Invalid unsigned literal format or overflow.",
             range: range
         )
-        return 0
+        return nil
     }
 
     // swiftlint:disable:next cyclomatic_complexity
