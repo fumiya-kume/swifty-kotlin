@@ -64,6 +64,14 @@ extension ControlFlowLowerer {
             return sema.types.make(.primitive(.char, .nonNull))
         case "String":
             return sema.types.make(.primitive(.string, .nonNull))
+        case "UInt":
+            return sema.types.make(.primitive(.uint, .nonNull))
+        case "ULong":
+            return sema.types.make(.primitive(.ulong, .nonNull))
+        case "UByte":
+            return sema.types.make(.primitive(.ubyte, .nonNull))
+        case "UShort":
+            return sema.types.make(.primitive(.ushort, .nonNull))
         case "Any":
             return sema.types.anyType
         case "Unit":

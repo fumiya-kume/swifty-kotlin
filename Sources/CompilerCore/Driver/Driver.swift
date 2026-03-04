@@ -302,7 +302,7 @@ public final class CompilerDriver {
         switch decl {
         case let .classDecl(d):
             collectNominalDeclDependencies(
-                superTypes: d.superTypes,
+                superTypes: d.superTypeEntries.map(\.typeRef),
                 memberIDs: d.memberFunctions + d.memberProperties + d.nestedClasses + d.nestedObjects,
                 ast: ast,
                 interner: interner,

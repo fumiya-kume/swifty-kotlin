@@ -232,4 +232,52 @@ extension BuildASTPhase.ExpressionParser {
             }
         }
     }
+
+    func parseLambdaBody(
+        bodySlice: ArraySlice<Token>,
+        fallbackStart: SourceLocation,
+        label _: InternedString? = nil,
+        range: SourceRange? = nil
+    ) -> ExprID {
+        let tokens = Array(bodySlice)
+        let ranges = splitBlockTokensIntoStatementRanges(tokens)
+        if ranges.isEmpty {
+            let bodyRange = range ?? SourceRange(start: fallbackStart, end: fallbackStart)
+            return astArena.appendExpr(.blockExpr(statements: [], trailingExpr: nil, range: bodyRange))
+        }
+
+        var statements: [ExprID] = []
+        for (start, rangeEnd) in ranges {
+            let group = tokens[start ..< rangeEnd]
+            guard !group.isEmpty else { continue }
+            if let localDecl = parseLocalDeclFromSlice(group) {
+                statements.append(localDecl)
+            } else if let localAssign = parseLocalAssignFromSlice(group) {
+                statements.append(localAssign)
+            } else if let expr = BuildASTPhase.ExpressionParser(
+                tokens: group, interner: interner, astArena: astArena
+            ).parse() {
+                statements.append(expr)
+            }
+        }
+
+        var trailingExpr: ExprID?
+        if let lastID = statements.last, let lastExpr = astArena.expr(lastID) {
+            switch lastExpr {
+            case .localDecl, .localAssign, .memberAssign, .indexedAssign,
+                 .compoundAssign, .indexedCompoundAssign, .localFunDecl:
+                break
+            default:
+                trailingExpr = statements.removeLast()
+            }
+        }
+
+        let bodyRange = range ?? {
+            if let first = tokens.first, let last = tokens.last {
+                return SourceRange(start: first.range.start, end: last.range.end)
+            }
+            return SourceRange(start: fallbackStart, end: fallbackStart)
+        }()
+        return astArena.appendExpr(.blockExpr(statements: statements, trailingExpr: trailingExpr, range: bodyRange))
+    }
 }

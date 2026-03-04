@@ -40,6 +40,8 @@ final class OperatorLoweringPass: LoweringPass {
                     let lhsRank = self.primitiveRank(for: lhs, arena: module.arena, types: types)
                     let rhsRank = self.primitiveRank(for: rhs, arena: module.arena, types: types)
                     let rank = max(lhsRank, rhsRank)
+                    let isUnsigned = self.isUnsignedOperand(lhs, arena: module.arena, types: types)
+                        || self.isUnsignedOperand(rhs, arena: module.arena, types: types)
                     let prefix = switch rank {
                     case 2: "d"
                     case 1: "f"
@@ -67,6 +69,10 @@ final class OperatorLoweringPass: LoweringPass {
                             effectiveRhs = converted
                         }
                     }
+                    // For unsigned int/long: add/sub/mul/eq/ne use same callees; div/rem/lt/le/gt/ge use u-prefix
+                    let useUnsignedRank0 = isUnsigned && rank == 0
+                    let divModCmpPrefix = useUnsignedRank0 ? "u" : prefix
+                    let divModOp = useUnsignedRank0 ? "rem" : "mod" // unsigned uses urem (LLVM), signed uses mod
                     let callee: InternedString = switch op {
                     case .add:
                         ctx.interner.intern("kk_op_\(prefix)add")
@@ -75,21 +81,21 @@ final class OperatorLoweringPass: LoweringPass {
                     case .multiply:
                         ctx.interner.intern("kk_op_\(prefix)mul")
                     case .divide:
-                        ctx.interner.intern("kk_op_\(prefix)div")
+                        ctx.interner.intern("kk_op_\(divModCmpPrefix)div")
                     case .modulo:
-                        ctx.interner.intern("kk_op_\(prefix)mod")
+                        ctx.interner.intern("kk_op_\(divModCmpPrefix)\(divModOp)")
                     case .equal:
                         ctx.interner.intern("kk_op_\(prefix)eq")
                     case .notEqual:
                         ctx.interner.intern("kk_op_\(prefix)ne")
                     case .lessThan:
-                        ctx.interner.intern("kk_op_\(prefix)lt")
+                        ctx.interner.intern("kk_op_\(divModCmpPrefix)lt")
                     case .lessOrEqual:
-                        ctx.interner.intern("kk_op_\(prefix)le")
+                        ctx.interner.intern("kk_op_\(divModCmpPrefix)le")
                     case .greaterThan:
-                        ctx.interner.intern("kk_op_\(prefix)gt")
+                        ctx.interner.intern("kk_op_\(divModCmpPrefix)gt")
                     case .greaterOrEqual:
-                        ctx.interner.intern("kk_op_\(prefix)ge")
+                        ctx.interner.intern("kk_op_\(divModCmpPrefix)ge")
                     case .logicalAnd:
                         ctx.interner.intern("kk_op_and")
                     case .logicalOr:
@@ -185,6 +191,16 @@ final class OperatorLoweringPass: LoweringPass {
         case .primitive(.double, _): return 2
         case .primitive(.float, _): return 1
         default: return 0
+        }
+    }
+
+    private func isUnsignedOperand(_ exprID: KIRExprID, arena: KIRArena, types: TypeSystem?) -> Bool {
+        guard let types, let typeID = arena.exprType(exprID) else { return false }
+        switch types.kind(of: typeID) {
+        case .primitive(.uint, _), .primitive(.ulong, _), .primitive(.ubyte, _), .primitive(.ushort, _):
+            return true
+        default:
+            return false
         }
     }
 

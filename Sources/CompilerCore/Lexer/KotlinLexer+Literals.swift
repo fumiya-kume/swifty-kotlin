@@ -58,7 +58,34 @@ extension KotlinLexer {
         let suffix = cursor < bytes.count ? bytes[cursor] : nil
         var textEnd = cursor
 
-        if suffix == 0x4C {
+        // Unsigned suffixes: u/U (UInt) or uL/UL (ULong). Must be checked before L.
+        if suffix == 0x75 || suffix == 0x55 {
+            if hasDot || hasExponent {
+                diagnostics.error(
+                    "KSWIFTK-LEX-0003",
+                    "Unsigned suffix 'u'/'U' is not allowed on floating-point literals.",
+                    range: makeRange(start: cursor, end: cursor + 1)
+                )
+            }
+            textEnd = cursor + 1
+            let nextChar = textEnd < bytes.count ? bytes[textEnd] : nil
+            if nextChar == 0x4C || nextChar == 0x6C {
+                if nextChar == 0x6C {
+                    diagnostics.error(
+                        "KSWIFTK-LEX-0003",
+                        "Use uppercase 'L' for ULong suffix; lowercase 'l' is not allowed.",
+                        range: makeRange(start: textEnd, end: textEnd + 1)
+                    )
+                }
+                textEnd += 1
+                let literal = text(from: start ..< textEnd)
+                offset = textEnd
+                return Token(kind: .ulongLiteral(literal), range: makeRange(start: start, end: textEnd), leadingTrivia: leadingTrivia)
+            }
+            let literal = text(from: start ..< textEnd)
+            offset = textEnd
+            return Token(kind: .uintLiteral(literal), range: makeRange(start: start, end: textEnd), leadingTrivia: leadingTrivia)
+        } else if suffix == 0x4C {
             if hasDot || hasExponent {
                 diagnostics.error(
                     "KSWIFTK-LEX-0003",

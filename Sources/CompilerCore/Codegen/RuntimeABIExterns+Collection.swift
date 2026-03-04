@@ -24,6 +24,10 @@ public extension RuntimeABIExterns {
         kk_map_iterator_next,
         kk_array_of,
         kk_array_size,
+        kk_pair_new,
+        kk_pair_first,
+        kk_pair_second,
+        kk_pair_to_string,
         kk_build_string,
         kk_build_list,
         kk_build_map,
@@ -150,6 +154,31 @@ public extension RuntimeABIExterns {
         name: "kk_array_size",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
+    )
+
+    /// Pair (FUNC-002)
+    static let kk_pair_new = ExternDecl(
+        name: "kk_pair_new",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_pair_first = ExternDecl(
+        name: "kk_pair_first",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_pair_second = ExternDecl(
+        name: "kk_pair_second",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_pair_to_string = ExternDecl(
+        name: "kk_pair_to_string",
+        parameterTypes: ["intptr_t"],
+        returnType: "void *"
     )
 
     /// Builder DSL (STDLIB-002)

@@ -46,6 +46,8 @@ final class LLVMCAPIBindings {
     typealias LLVMBuildSubFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     typealias LLVMBuildMulFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     typealias LLVMBuildSDivFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    typealias LLVMBuildUDivFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    typealias LLVMBuildURemFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     // Bitwise/shift builder function types (P5-103)
     typealias LLVMBuildAndFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     typealias LLVMBuildOrFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
@@ -63,6 +65,7 @@ final class LLVMCAPIBindings {
     typealias LLVMBuildSelectFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     typealias LLVMBuildGlobalStringPtrFn = @convention(c) (LLVMBuilderRef?, UnsafePointer<CChar>?, UnsafePointer<CChar>?) -> LLVMValueRef?
     typealias LLVMBuildPtrToIntFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMTypeRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
+    typealias LLVMBuildIntToPtrFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMTypeRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
     typealias LLVMBuildCall2Fn = @convention(c) (
         LLVMBuilderRef?,
         LLVMTypeRef?,
@@ -240,6 +243,8 @@ final class LLVMCAPIBindings {
     let buildSubFn: LLVMBuildSubFn
     let buildMulFn: LLVMBuildMulFn
     let buildSDivFn: LLVMBuildSDivFn
+    let buildUDivFn: LLVMBuildUDivFn
+    let buildURemFn: LLVMBuildURemFn
     // Bitwise/shift builder stored properties (P5-103)
     let buildAndFn: LLVMBuildAndFn?
     let buildOrFn: LLVMBuildOrFn?
@@ -257,6 +262,7 @@ final class LLVMCAPIBindings {
     let buildSelectFn: LLVMBuildSelectFn?
     let buildGlobalStringPtrFn: LLVMBuildGlobalStringPtrFn?
     let buildPtrToIntFn: LLVMBuildPtrToIntFn?
+    let buildIntToPtrFn: LLVMBuildIntToPtrFn?
     let buildCall2Fn: LLVMBuildCall2Fn?
     let buildCallFn: LLVMBuildCallFn?
     let constIntFn: LLVMConstIntFn
@@ -329,6 +335,8 @@ final class LLVMCAPIBindings {
         buildSubFn: @escaping LLVMBuildSubFn,
         buildMulFn: @escaping LLVMBuildMulFn,
         buildSDivFn: @escaping LLVMBuildSDivFn,
+        buildUDivFn: @escaping LLVMBuildUDivFn,
+        buildURemFn: @escaping LLVMBuildURemFn,
         // Bitwise/shift builder init params (P5-103)
         buildAndFn: LLVMBuildAndFn?,
         buildOrFn: LLVMBuildOrFn?,
@@ -346,6 +354,7 @@ final class LLVMCAPIBindings {
         buildSelectFn: LLVMBuildSelectFn?,
         buildGlobalStringPtrFn: LLVMBuildGlobalStringPtrFn?,
         buildPtrToIntFn: LLVMBuildPtrToIntFn?,
+        buildIntToPtrFn: LLVMBuildIntToPtrFn?,
         buildCall2Fn: LLVMBuildCall2Fn?,
         buildCallFn: LLVMBuildCallFn?,
         constIntFn: @escaping LLVMConstIntFn,
@@ -417,6 +426,8 @@ final class LLVMCAPIBindings {
         self.buildSubFn = buildSubFn
         self.buildMulFn = buildMulFn
         self.buildSDivFn = buildSDivFn
+        self.buildUDivFn = buildUDivFn
+        self.buildURemFn = buildURemFn
         // Bitwise/shift builder assignments (P5-103)
         self.buildAndFn = buildAndFn
         self.buildOrFn = buildOrFn
@@ -434,6 +445,7 @@ final class LLVMCAPIBindings {
         self.buildSelectFn = buildSelectFn
         self.buildGlobalStringPtrFn = buildGlobalStringPtrFn
         self.buildPtrToIntFn = buildPtrToIntFn
+        self.buildIntToPtrFn = buildIntToPtrFn
         self.buildCall2Fn = buildCall2Fn
         self.buildCallFn = buildCallFn
         self.constIntFn = constIntFn

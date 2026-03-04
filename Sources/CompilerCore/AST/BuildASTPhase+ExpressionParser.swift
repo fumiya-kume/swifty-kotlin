@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 
 extension BuildASTPhase {
@@ -30,21 +31,34 @@ extension BuildASTPhase {
         }
     }
 
+    // swiftlint:disable:next type_body_length
     final class ExpressionParser {
         let tokens: ArraySlice<Token>
         let interner: StringInterner
         let astArena: ASTArena
+        let diagnostics: DiagnosticEngine?
         var index: Int
 
-        init(tokens: ArraySlice<Token>, interner: StringInterner, astArena: ASTArena) {
+        init(
+            tokens: ArraySlice<Token>,
+            interner: StringInterner,
+            astArena: ASTArena,
+            diagnostics: DiagnosticEngine? = nil
+        ) {
             self.tokens = tokens
             self.interner = interner
             self.astArena = astArena
+            self.diagnostics = diagnostics
             index = tokens.startIndex
         }
 
-        convenience init(tokens: [Token], interner: StringInterner, astArena: ASTArena) {
-            self.init(tokens: tokens[...], interner: interner, astArena: astArena)
+        convenience init(
+            tokens: [Token],
+            interner: StringInterner,
+            astArena: ASTArena,
+            diagnostics: DiagnosticEngine? = nil
+        ) {
+            self.init(tokens: tokens[...], interner: interner, astArena: astArena, diagnostics: diagnostics)
         }
 
         func parse() -> ExprID? {
@@ -56,103 +70,97 @@ extension BuildASTPhase {
         }
 
         func parseExpression(minPrecedence: Int) -> ExprID? {
-            guard var lhs = parsePrefixUnary() else {
-                return nil
-            }
-
+            guard var lhs = parsePrefixUnary() else { return nil }
             while true {
-                if let token = current(), token.kind == .keyword(.is) {
-                    let prec = 85
-                    guard prec >= minPrecedence else { break }
-                    _ = consume()
-                    guard let typeRef = parseTypeReference(token.range) else { break }
-                    let range = mergeRanges(astArena.exprRange(lhs), nil, fallback: token.range)
-                    lhs = astArena.appendExpr(.isCheck(expr: lhs, type: typeRef, negated: false, range: range))
-                    continue
-                }
-
-                if let token = current(), token.kind == .symbol(.bang),
-                   let next = peek(1), next.kind == .keyword(.is) {
-                    let prec = 85
-                    guard prec >= minPrecedence else { break }
-                    _ = consume()
-                    _ = consume()
-                    guard let typeRef = parseTypeReference(token.range) else { break }
-                    let range = mergeRanges(astArena.exprRange(lhs), nil, fallback: token.range)
-                    lhs = astArena.appendExpr(.isCheck(expr: lhs, type: typeRef, negated: true, range: range))
-                    continue
-                }
-
-                if let token = current(), token.kind == .keyword(.in) {
-                    let prec = 85
-                    guard prec >= minPrecedence else { break }
-                    _ = consume()
-                    guard let rhs = parseExpression(minPrecedence: prec + 1) else { break }
-                    let range = mergeRanges(astArena.exprRange(lhs), astArena.exprRange(rhs), fallback: token.range)
-                    lhs = astArena.appendExpr(.inExpr(lhs: lhs, rhs: rhs, range: range))
-                    continue
-                }
-
-                if let token = current(), token.kind == .symbol(.bang),
-                   let next = peek(1), next.kind == .keyword(.in) {
-                    let prec = 85
-                    guard prec >= minPrecedence else { break }
-                    _ = consume()
-                    _ = consume()
-                    guard let rhs = parseExpression(minPrecedence: prec + 1) else { break }
-                    let range = mergeRanges(astArena.exprRange(lhs), astArena.exprRange(rhs), fallback: token.range)
-                    lhs = astArena.appendExpr(.notInExpr(lhs: lhs, rhs: rhs, range: range))
-                    continue
-                }
-
-                if let token = current(), token.kind == .keyword(.as) {
-                    let prec = 130
-                    guard prec >= minPrecedence else { break }
-                    _ = consume()
-                    let isSafe = consumeIf(.symbol(.question)) != nil
-                    guard let typeRef = parseTypeReference(token.range) else { break }
-                    let range = mergeRanges(astArena.exprRange(lhs), nil, fallback: token.range)
-                    lhs = astArena.appendExpr(.asCast(expr: lhs, type: typeRef, isSafe: isSafe, range: range))
-                    continue
-                }
-
-                // Check for known binary operators (symbol-based and known infix identifiers)
-                if let op = binaryOperator(at: current()), precedence(of: op) >= minPrecedence {
-                    guard let opToken = consume() else { break }
-                    let assoc = associativity(of: op)
-                    let nextMin = assoc == .right ? precedence(of: op) : precedence(of: op) + 1
-                    guard let rhs = parseExpression(minPrecedence: nextMin) else { break }
-                    let range = mergeRanges(astArena.exprRange(lhs), astArena.exprRange(rhs), fallback: opToken.range)
-                    lhs = astArena.appendExpr(.binary(op: op, lhs: lhs, rhs: rhs, range: range))
-                    continue
-                }
-
-                // General infix function call: any identifier in infix position
-                // Kotlin grammar: infixFunctionCall = rangeExpression (simpleIdentifier rangeExpression)*
-                // All infix functions share the same precedence level as range operators (.downTo / .step)
-                let infixPrecedence = precedence(of: .downTo)
-                if infixPrecedence >= minPrecedence,
-                   let token = current(),
-                   isInfixIdentifierToken(token),
-                   let nextToken = peek(1),
-                   canStartExpression(nextToken) {
-                    guard let calleeName = identifierFromToken(token) else { break }
-                    _ = consume()
-                    guard let rhs = parseExpression(minPrecedence: infixPrecedence + 1) else { break }
-                    let range = mergeRanges(astArena.exprRange(lhs), astArena.exprRange(rhs), fallback: token.range)
-                    lhs = astArena.appendExpr(.memberCall(
-                        receiver: lhs,
-                        callee: calleeName,
-                        typeArgs: [],
-                        args: [CallArgument(expr: rhs)],
-                        range: range
-                    ))
-                    continue
-                }
-
+                if let next = tryParseIsCheck(lhs: lhs, minPrecedence: minPrecedence) { lhs = next; continue }
+                if let next = tryParseInCheck(lhs: lhs, minPrecedence: minPrecedence) { lhs = next; continue }
+                if let next = tryParseAsCast(lhs: lhs, minPrecedence: minPrecedence) { lhs = next; continue }
+                if let next = tryParseBinaryOp(lhs: lhs, minPrecedence: minPrecedence) { lhs = next; continue }
+                if let next = tryParseInfixCall(lhs: lhs, minPrecedence: minPrecedence) { lhs = next; continue }
                 break
             }
             return lhs
+        }
+
+        private func tryParseIsCheck(lhs: ExprID, minPrecedence: Int) -> ExprID? {
+            guard let token = current() else { return nil }
+            let negated: Bool
+            switch (token.kind, peek(1)?.kind) {
+            case (.keyword(.is), _): negated = false
+            case (.symbol(.bang), .some(.keyword(.is))): negated = true
+            default: return nil
+            }
+            guard minPrecedence <= 85 else { return nil }
+            _ = consume()
+            if negated { _ = consume() }
+            guard let typeRef = parseTypeReference(token.range) else { return nil }
+            let range = mergeRanges(astArena.exprRange(lhs), nil, fallback: token.range)
+            return astArena.appendExpr(.isCheck(expr: lhs, type: typeRef, negated: negated, range: range))
+        }
+
+        private func tryParseInCheck(lhs: ExprID, minPrecedence: Int) -> ExprID? {
+            guard let token = current() else { return nil }
+            let negated: Bool
+            switch (token.kind, peek(1)?.kind) {
+            case (.keyword(.in), _): negated = false
+            case (.symbol(.bang), .some(.keyword(.in))): negated = true
+            default: return nil
+            }
+            guard minPrecedence <= 85 else { return nil }
+            _ = consume()
+            if negated { _ = consume() }
+            guard let rhs = parseExpression(minPrecedence: 86) else { return nil }
+            let range = mergeRanges(astArena.exprRange(lhs), astArena.exprRange(rhs), fallback: token.range)
+            return negated
+                ? astArena.appendExpr(.notInExpr(lhs: lhs, rhs: rhs, range: range))
+                : astArena.appendExpr(.inExpr(lhs: lhs, rhs: rhs, range: range))
+        }
+
+        private func tryParseAsCast(lhs: ExprID, minPrecedence: Int) -> ExprID? {
+            guard let token = current(), token.kind == .keyword(.as) else { return nil }
+            guard minPrecedence <= 130 else { return nil }
+            _ = consume()
+            let isSafe = consumeIf(.symbol(.question)) != nil
+            guard let typeRef = parseTypeReference(token.range) else { return nil }
+            let range = mergeRanges(astArena.exprRange(lhs), nil, fallback: token.range)
+            return astArena.appendExpr(.asCast(expr: lhs, type: typeRef, isSafe: isSafe, range: range))
+        }
+
+        private func tryParseBinaryOp(lhs: ExprID, minPrecedence: Int) -> ExprID? {
+            guard let binOp = binaryOperator(at: current()),
+                  precedence(of: binOp) >= minPrecedence
+            else { return nil }
+            guard let opToken = consume() else { return nil }
+            let assoc = associativity(of: binOp)
+            let nextMin = assoc == .right ? precedence(of: binOp) : precedence(of: binOp) + 1
+            guard let rhs = parseExpression(minPrecedence: nextMin) else { return nil }
+            let range = mergeRanges(astArena.exprRange(lhs), astArena.exprRange(rhs), fallback: opToken.range)
+            return astArena.appendExpr(.binary(op: binOp, lhs: lhs, rhs: rhs, range: range))
+        }
+
+        /// General infix function call: any identifier in infix position.
+        /// Kotlin grammar: infixFunctionCall = rangeExpression (simpleIdentifier rangeExpression)*
+        /// All infix functions share the same precedence level as range operators (.downTo / .step)
+        private func tryParseInfixCall(lhs: ExprID, minPrecedence: Int) -> ExprID? {
+            let infixPrecedence = precedence(of: .downTo)
+            guard infixPrecedence >= minPrecedence,
+                  let token = current(),
+                  isInfixIdentifierToken(token),
+                  !token.leadingTrivia.contains(where: { if case .newline = $0 { return true }; return false }),
+                  let nextToken = peek(1),
+                  canStartExpression(nextToken)
+            else { return nil }
+            guard let calleeName = identifierFromToken(token) else { return nil }
+            _ = consume()
+            guard let rhs = parseExpression(minPrecedence: infixPrecedence + 1) else { return nil }
+            let range = mergeRanges(astArena.exprRange(lhs), astArena.exprRange(rhs), fallback: token.range)
+            return astArena.appendExpr(.memberCall(
+                receiver: lhs,
+                callee: calleeName,
+                typeArgs: [],
+                args: [CallArgument(expr: rhs)],
+                range: range
+            ))
         }
 
         private func parsePrefixUnary() -> ExprID? {
@@ -346,7 +354,7 @@ extension BuildASTPhase {
             switch token.kind {
             case .identifier, .backtickedIdentifier:
                 true
-            case .intLiteral, .longLiteral, .floatLiteral, .doubleLiteral, .charLiteral:
+            case .intLiteral, .longLiteral, .uintLiteral, .ulongLiteral, .floatLiteral, .doubleLiteral, .charLiteral:
                 true
             case .keyword(.true), .keyword(.false), .keyword(.null):
                 true

@@ -165,7 +165,16 @@ extension CompilerCoreTests {
         }
 
         XCTAssertEqual(params.map { ctx.interner.resolve($0) }, ["x"])
-        guard let bodyExpr = ast.arena.expr(bodyExprID),
+        // Lambda body may be wrapped in blockExpr(statements: [], trailingExpr: expr)
+        let effectiveBodyID: ExprID = if let bodyExpr = ast.arena.expr(bodyExprID),
+                                         case let .blockExpr(_, trailing, _) = bodyExpr,
+                                         let trailingID = trailing
+        {
+            trailingID
+        } else {
+            bodyExprID
+        }
+        guard let bodyExpr = ast.arena.expr(effectiveBodyID),
               case .binary = bodyExpr
         else {
             XCTFail("Expected parsed lambda body expression.")

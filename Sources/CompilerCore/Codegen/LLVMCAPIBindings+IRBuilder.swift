@@ -116,6 +116,13 @@ extension LLVMCAPIBindings {
         return name.withCString { buildPtrToIntFn(builder, value, type, $0) }
     }
 
+    func buildIntToPtr(_ builder: LLVMBuilderRef?, value: LLVMValueRef?, type: LLVMTypeRef?, name: String) -> LLVMValueRef? {
+        guard let buildIntToPtrFn else {
+            return nil
+        }
+        return name.withCString { buildIntToPtrFn(builder, value, type, $0) }
+    }
+
     func buildAdd(_ builder: LLVMBuilderRef?, lhs: LLVMValueRef?, rhs: LLVMValueRef?, name: String) -> LLVMValueRef? {
         name.withCString { buildAddFn(builder, lhs, rhs, $0) }
     }
@@ -130,6 +137,31 @@ extension LLVMCAPIBindings {
 
     func buildSDiv(_ builder: LLVMBuilderRef?, lhs: LLVMValueRef?, rhs: LLVMValueRef?, name: String) -> LLVMValueRef? {
         name.withCString { buildSDivFn(builder, lhs, rhs, $0) }
+    }
+
+    func buildUDiv(_ builder: LLVMBuilderRef?, lhs: LLVMValueRef?, rhs: LLVMValueRef?, name: String) -> LLVMValueRef? {
+        name.withCString { buildUDivFn(builder, lhs, rhs, $0) }
+    }
+
+    func buildURem(_ builder: LLVMBuilderRef?, lhs: LLVMValueRef?, rhs: LLVMValueRef?, name: String) -> LLVMValueRef? {
+        name.withCString { buildURemFn(builder, lhs, rhs, $0) }
+    }
+
+    /// LLVM ICmp predicate: 34=UGT, 35=UGE, 36=ULT, 37=ULE
+    func buildICmpUnsignedLessThan(_ builder: LLVMBuilderRef?, lhs: LLVMValueRef?, rhs: LLVMValueRef?, name: String) -> LLVMValueRef? {
+        name.withCString { buildICmpFn(builder, 36, lhs, rhs, $0) }
+    }
+
+    func buildICmpUnsignedLessOrEqual(_ builder: LLVMBuilderRef?, lhs: LLVMValueRef?, rhs: LLVMValueRef?, name: String) -> LLVMValueRef? {
+        name.withCString { buildICmpFn(builder, 37, lhs, rhs, $0) }
+    }
+
+    func buildICmpUnsignedGreaterThan(_ builder: LLVMBuilderRef?, lhs: LLVMValueRef?, rhs: LLVMValueRef?, name: String) -> LLVMValueRef? {
+        name.withCString { buildICmpFn(builder, 34, lhs, rhs, $0) }
+    }
+
+    func buildICmpUnsignedGreaterOrEqual(_ builder: LLVMBuilderRef?, lhs: LLVMValueRef?, rhs: LLVMValueRef?, name: String) -> LLVMValueRef? {
+        name.withCString { buildICmpFn(builder, 35, lhs, rhs, $0) }
     }
 
     /// Bitwise/shift builder convenience methods (P5-103)

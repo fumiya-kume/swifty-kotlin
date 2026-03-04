@@ -42,6 +42,14 @@ final class ExprTypeChecker {
             sema.bindings.bindExprType(id, type: longType)
             return longType
 
+        case .uintLiteral:
+            sema.bindings.bindExprType(id, type: sema.types.uintType)
+            return sema.types.uintType
+
+        case .ulongLiteral:
+            sema.bindings.bindExprType(id, type: sema.types.ulongType)
+            return sema.types.ulongType
+
         case .floatLiteral:
             sema.bindings.bindExprType(id, type: floatType)
             return floatType

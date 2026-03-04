@@ -85,6 +85,21 @@ Emit a machine-readable report (TSV) for CI tooling:
 bash Scripts/diff_kotlinc.sh --report /tmp/diff_report.tsv Scripts/diff_cases
 ```
 
+You can control parallel execution:
+
+```bash
+# Enable/disable with environment variable
+DIFF_PARALLEL=1 bash Scripts/diff_kotlinc.sh Scripts/diff_cases
+DIFF_PARALLEL=0 bash Scripts/diff_kotlinc.sh Scripts/diff_cases
+
+# Override workers explicitly
+DIFF_WORKERS=4 bash Scripts/diff_kotlinc.sh Scripts/diff_cases
+
+# Or via command line options
+bash Scripts/diff_kotlinc.sh --parallel --jobs 4 Scripts/diff_cases
+bash Scripts/diff_kotlinc.sh --no-parallel Scripts/diff_cases
+```
+
 Render a markdown summary from that report:
 
 ```bash

@@ -33,6 +33,8 @@ extension NativeEmitter {
             lowered = bindings.buildMul(state.builder, lhs: lhs, rhs: rhs, name: "mul_\(instructionIndex)")
         case "kk_op_div":
             lowered = bindings.buildSDiv(state.builder, lhs: lhs, rhs: rhs, name: "div_\(instructionIndex)")
+        case "kk_op_udiv":
+            lowered = bindings.buildUDiv(state.builder, lhs: lhs, rhs: rhs, name: "udiv_\(instructionIndex)")
         case "kk_op_mod":
             if let quotient = bindings.buildSDiv(state.builder, lhs: lhs, rhs: rhs, name: "mod_q_\(instructionIndex)"),
                let product = bindings.buildMul(state.builder, lhs: quotient, rhs: rhs, name: "mod_p_\(instructionIndex)") {
@@ -40,6 +42,8 @@ extension NativeEmitter {
             } else {
                 lowered = nil
             }
+        case "kk_op_urem":
+            lowered = bindings.buildURem(state.builder, lhs: lhs, rhs: rhs, name: "urem_\(instructionIndex)")
         case "kk_op_eq":
             if let compared = bindings.buildICmpEqual(state.builder, lhs: lhs, rhs: rhs, name: "eq_\(instructionIndex)") {
                 lowered = bindings.buildZExt(state.builder, value: compared, type: state.int64Type, name: "eq64_\(instructionIndex)")
@@ -73,6 +77,30 @@ extension NativeEmitter {
         case "kk_op_ge":
             if let compared = bindings.buildICmpSignedGreaterOrEqual(state.builder, lhs: lhs, rhs: rhs, name: "ge_\(instructionIndex)") {
                 lowered = bindings.buildZExt(state.builder, value: compared, type: state.int64Type, name: "ge64_\(instructionIndex)")
+            } else {
+                lowered = nil
+            }
+        case "kk_op_ult":
+            if let compared = bindings.buildICmpUnsignedLessThan(state.builder, lhs: lhs, rhs: rhs, name: "ult_\(instructionIndex)") {
+                lowered = bindings.buildZExt(state.builder, value: compared, type: state.int64Type, name: "ult64_\(instructionIndex)")
+            } else {
+                lowered = nil
+            }
+        case "kk_op_ule":
+            if let compared = bindings.buildICmpUnsignedLessOrEqual(state.builder, lhs: lhs, rhs: rhs, name: "ule_\(instructionIndex)") {
+                lowered = bindings.buildZExt(state.builder, value: compared, type: state.int64Type, name: "ule64_\(instructionIndex)")
+            } else {
+                lowered = nil
+            }
+        case "kk_op_ugt":
+            if let compared = bindings.buildICmpUnsignedGreaterThan(state.builder, lhs: lhs, rhs: rhs, name: "ugt_\(instructionIndex)") {
+                lowered = bindings.buildZExt(state.builder, value: compared, type: state.int64Type, name: "ugt64_\(instructionIndex)")
+            } else {
+                lowered = nil
+            }
+        case "kk_op_uge":
+            if let compared = bindings.buildICmpUnsignedGreaterOrEqual(state.builder, lhs: lhs, rhs: rhs, name: "uge_\(instructionIndex)") {
+                lowered = bindings.buildZExt(state.builder, value: compared, type: state.int64Type, name: "uge64_\(instructionIndex)")
             } else {
                 lowered = nil
             }
@@ -140,6 +168,10 @@ extension NativeEmitter {
             return bindings.constInt(state.int64Type, value: UInt64(bitPattern: number), signExtend: true) ?? state.zeroValue
         case let .longLiteral(number):
             return bindings.constInt(state.int64Type, value: UInt64(bitPattern: number), signExtend: true) ?? state.zeroValue
+        case let .uintLiteral(number):
+            return bindings.constInt(state.int64Type, value: number, signExtend: false) ?? state.zeroValue
+        case let .ulongLiteral(number):
+            return bindings.constInt(state.int64Type, value: number, signExtend: false) ?? state.zeroValue
         case let .floatLiteral(value):
             var f = Float(value)
             var bits: UInt32 = 0

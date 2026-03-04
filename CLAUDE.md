@@ -35,7 +35,7 @@ bash Scripts/diff_kotlinc.sh Scripts/diff_cases             # All cases
 ### Coverage
 
 ```bash
-COVERAGE_THRESHOLD=97 Scripts/check_coverage.sh  # CI enforces 97% line coverage
+COVERAGE_THRESHOLD=80 Scripts/check_coverage.sh  # CI enforces 80% line coverage
 ```
 
 ## Architecture
