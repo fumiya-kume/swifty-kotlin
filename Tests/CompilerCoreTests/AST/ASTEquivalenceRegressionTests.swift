@@ -75,9 +75,9 @@ final class ASTEquivalenceRegressionTests: XCTestCase {
         // At least: localDecl(a), localDecl(b), compoundAssign, returnExpr, + body expressions
         XCTAssertGreaterThanOrEqual(ast.arena.exprs.count, 6)
 
-        for i in ast.arena.exprs.indices {
-            let id = ExprID(rawValue: Int32(i))
-            assertValidSourceRange(ast.arena.exprRange(id), label: "expr[\(i)]")
+        for idx in ast.arena.exprs.indices {
+            let id = ExprID(rawValue: Int32(idx))
+            assertValidSourceRange(ast.arena.exprRange(id), label: "expr[\(idx)]")
         }
     }
 
@@ -133,9 +133,9 @@ final class ASTEquivalenceRegressionTests: XCTestCase {
         // localDecl(a), localDecl(b), forExpr, localDecl(tmp), localAssign(a), localAssign(b), returnExpr etc.
         XCTAssertGreaterThanOrEqual(ast.arena.exprs.count, 8)
 
-        for i in ast.arena.exprs.indices {
-            let id = ExprID(rawValue: Int32(i))
-            assertValidSourceRange(ast.arena.exprRange(id), label: "expr[\(i)]")
+        for idx in ast.arena.exprs.indices {
+            let id = ExprID(rawValue: Int32(idx))
+            assertValidSourceRange(ast.arena.exprRange(id), label: "expr[\(idx)]")
         }
     }
 
@@ -162,9 +162,9 @@ final class ASTEquivalenceRegressionTests: XCTestCase {
         XCTAssertEqual(ast.declarationCount, 3)
         XCTAssertGreaterThanOrEqual(ast.arena.exprs.count, 6)
 
-        for i in ast.arena.exprs.indices {
-            let id = ExprID(rawValue: Int32(i))
-            assertValidSourceRange(ast.arena.exprRange(id), label: "expr[\(i)]")
+        for idx in ast.arena.exprs.indices {
+            let id = ExprID(rawValue: Int32(idx))
+            assertValidSourceRange(ast.arena.exprRange(id), label: "expr[\(idx)]")
         }
     }
 
@@ -207,9 +207,9 @@ final class ASTEquivalenceRegressionTests: XCTestCase {
 
         XCTAssertEqual(ast.declarationCount, 2)
 
-        for i in ast.arena.exprs.indices {
-            let id = ExprID(rawValue: Int32(i))
-            assertValidSourceRange(ast.arena.exprRange(id), label: "expr[\(i)]")
+        for idx in ast.arena.exprs.indices {
+            let id = ExprID(rawValue: Int32(idx))
+            assertValidSourceRange(ast.arena.exprRange(id), label: "expr[\(idx)]")
         }
     }
 
@@ -243,27 +243,27 @@ final class ASTEquivalenceRegressionTests: XCTestCase {
         // Verify ALL decl ranges are valid
         for decl in ast.arena.declarations() {
             switch decl {
-            case let .funDecl(f):
-                assertValidSourceRange(f.range, label: "funDecl(\(f.name.rawValue))")
-            case let .classDecl(c):
-                assertValidSourceRange(c.range, label: "classDecl")
-            case let .interfaceDecl(i):
-                assertValidSourceRange(i.range, label: "interfaceDecl")
-            case let .propertyDecl(p):
-                assertValidSourceRange(p.range, label: "propertyDecl")
-            case let .objectDecl(o):
-                assertValidSourceRange(o.range, label: "objectDecl")
-            case let .typeAliasDecl(t):
-                assertValidSourceRange(t.range, label: "typeAliasDecl")
-            case let .enumEntryDecl(e):
-                assertValidSourceRange(e.range, label: "enumEntryDecl")
+            case let .funDecl(funDecl):
+                assertValidSourceRange(funDecl.range, label: "funDecl(\(funDecl.name.rawValue))")
+            case let .classDecl(classDecl):
+                assertValidSourceRange(classDecl.range, label: "classDecl")
+            case let .interfaceDecl(interfaceDecl):
+                assertValidSourceRange(interfaceDecl.range, label: "interfaceDecl")
+            case let .propertyDecl(propDecl):
+                assertValidSourceRange(propDecl.range, label: "propertyDecl")
+            case let .objectDecl(objDecl):
+                assertValidSourceRange(objDecl.range, label: "objectDecl")
+            case let .typeAliasDecl(typeAliasDecl):
+                assertValidSourceRange(typeAliasDecl.range, label: "typeAliasDecl")
+            case let .enumEntryDecl(enumEntryDecl):
+                assertValidSourceRange(enumEntryDecl.range, label: "enumEntryDecl")
             }
         }
 
         // Verify ALL expr ranges are valid
-        for i in ast.arena.exprs.indices {
-            let id = ExprID(rawValue: Int32(i))
-            assertValidSourceRange(ast.arena.exprRange(id), label: "expr[\(i)]")
+        for idx in ast.arena.exprs.indices {
+            let id = ExprID(rawValue: Int32(idx))
+            assertValidSourceRange(ast.arena.exprRange(id), label: "expr[\(idx)]")
         }
     }
 

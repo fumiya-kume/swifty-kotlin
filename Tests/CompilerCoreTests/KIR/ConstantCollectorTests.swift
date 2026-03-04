@@ -205,7 +205,7 @@ final class ConstantCollectorTests: XCTestCase {
         var result: [Int32: String] = [:]
         for fileID in ctx.sourceManager.fileIDs() {
             let data = ctx.sourceManager.contents(of: fileID)
-            result[fileID.rawValue] = String(decoding: data, as: UTF8.self)
+            result[fileID.rawValue] = String(data: data, encoding: .utf8) ?? ""
         }
         return result
     }

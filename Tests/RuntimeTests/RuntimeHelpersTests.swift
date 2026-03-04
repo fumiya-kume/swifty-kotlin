@@ -39,7 +39,10 @@ final class RuntimeHelpersTests: XCTestCase {
     }
 
     func testNormalizeValidPointerReturnsItself() {
-        let ptr = UnsafeMutableRawPointer.allocate(byteCount: MemoryLayout<Int>.size, alignment: MemoryLayout<Int>.alignment)
+        let ptr = UnsafeMutableRawPointer.allocate(
+            byteCount: MemoryLayout<Int>.size,
+            alignment: MemoryLayout<Int>.alignment
+        )
         defer { ptr.deallocate() }
         ptr.storeBytes(of: 42, as: Int.self)
         let result = normalizeNullableRuntimePointer(ptr)
@@ -98,7 +101,10 @@ final class RuntimeHelpersTests: XCTestCase {
     // MARK: - KKDispatchContinuation
 
     func testDispatchContinuationStoresContext() {
-        let ptr = UnsafeMutableRawPointer.allocate(byteCount: MemoryLayout<Int>.size, alignment: MemoryLayout<Int>.alignment)
+        let ptr = UnsafeMutableRawPointer.allocate(
+            byteCount: MemoryLayout<Int>.size,
+            alignment: MemoryLayout<Int>.alignment
+        )
         defer { ptr.deallocate() }
         ptr.storeBytes(of: 99, as: Int.self)
         let continuation = KKDispatchContinuation(context: ptr) { _ in }
@@ -124,7 +130,10 @@ final class RuntimeHelpersTests: XCTestCase {
         let continuation = KKDispatchContinuation(context: nil) { result in
             receivedResult = result
         }
-        let resultPtr = UnsafeMutableRawPointer.allocate(byteCount: MemoryLayout<Int>.size, alignment: MemoryLayout<Int>.alignment)
+        let resultPtr = UnsafeMutableRawPointer.allocate(
+            byteCount: MemoryLayout<Int>.size,
+            alignment: MemoryLayout<Int>.alignment
+        )
         defer { resultPtr.deallocate() }
         resultPtr.storeBytes(of: 7, as: Int.self)
         continuation.resumeWith(resultPtr)

@@ -57,8 +57,8 @@ final class RuntimeGCTests: XCTestCase {
     }
 
     func testGCCollectsUnreachableAllocation() {
-        withDummyTypeInfo { ti in
-            _ = kk_alloc(16, ti)
+        withDummyTypeInfo { typeInfo in
+            _ = kk_alloc(16, typeInfo)
             XCTAssertEqual(kk_runtime_heap_object_count(), 1)
             kk_gc_collect()
             XCTAssertEqual(kk_runtime_heap_object_count(), 0)
@@ -66,9 +66,9 @@ final class RuntimeGCTests: XCTestCase {
     }
 
     func testGlobalRootPreventsCollectionUntilCleared() {
-        withDummyTypeInfo { ti in
+        withDummyTypeInfo { typeInfo in
             let slot = UnsafeMutablePointer<UnsafeMutableRawPointer?>.allocate(capacity: 1)
-            slot.initialize(to: kk_alloc(16, ti))
+            slot.initialize(to: kk_alloc(16, typeInfo))
             defer {
                 slot.deinitialize(count: 1)
                 slot.deallocate()
@@ -94,9 +94,9 @@ final class RuntimeGCTests: XCTestCase {
             }
         }
 
-        withDummyTypeInfo { ti in
+        withDummyTypeInfo { typeInfo in
             let frameRootSlot = UnsafeMutablePointer<UnsafeMutableRawPointer?>.allocate(capacity: 1)
-            frameRootSlot.initialize(to: kk_alloc(8, ti))
+            frameRootSlot.initialize(to: kk_alloc(8, typeInfo))
             defer {
                 frameRootSlot.deinitialize(count: 1)
                 frameRootSlot.deallocate()
@@ -116,8 +116,8 @@ final class RuntimeGCTests: XCTestCase {
     }
 
     func testCoroutineRootRegistrationPreventsCollection() {
-        withDummyTypeInfo { ti in
-            let object = kk_alloc(12, ti)
+        withDummyTypeInfo { typeInfo in
+            let object = kk_alloc(12, typeInfo)
             kk_register_coroutine_root(object)
             kk_gc_collect()
             XCTAssertEqual(kk_runtime_heap_object_count(), 1)

@@ -62,23 +62,23 @@ final class RuntimeStringArrayTests: XCTestCase {
     // MARK: - kk_string_concat
 
     func testStringConcatTwoStrings() {
-        let a = makeRuntimeString("Hello, ")
-        let b = makeRuntimeString("World!")
-        let result = kk_string_concat(a, b)
+        let strA = makeRuntimeString("Hello, ")
+        let strB = makeRuntimeString("World!")
+        let result = kk_string_concat(strA, strB)
         let output = capturePrintln { kk_println_any(result) }
         XCTAssertEqual(output, "Hello, World!")
     }
 
     func testStringConcatWithNilLeftReturnsRightOnly() {
-        let b = makeRuntimeString("World")
-        let result = kk_string_concat(nil, b)
+        let strB = makeRuntimeString("World")
+        let result = kk_string_concat(nil, strB)
         let output = capturePrintln { kk_println_any(result) }
         XCTAssertEqual(output, "World")
     }
 
     func testStringConcatWithNilRightReturnsLeftOnly() {
-        let a = makeRuntimeString("Hello")
-        let result = kk_string_concat(a, nil)
+        let strA = makeRuntimeString("Hello")
+        let result = kk_string_concat(strA, nil)
         let output = capturePrintln { kk_println_any(result) }
         XCTAssertEqual(output, "Hello")
     }
@@ -92,21 +92,21 @@ final class RuntimeStringArrayTests: XCTestCase {
     // MARK: - kk_string_compareTo
 
     func testStringCompareToEqual() {
-        let a = makeRuntimeString("abc")
-        let b = makeRuntimeString("abc")
-        XCTAssertEqual(kk_string_compareTo(a, b), 0)
+        let strA = makeRuntimeString("abc")
+        let strB = makeRuntimeString("abc")
+        XCTAssertEqual(kk_string_compareTo(strA, strB), 0)
     }
 
     func testStringCompareToLessThan() {
-        let a = makeRuntimeString("abc")
-        let b = makeRuntimeString("xyz")
-        XCTAssertEqual(kk_string_compareTo(a, b), -1)
+        let strA = makeRuntimeString("abc")
+        let strB = makeRuntimeString("xyz")
+        XCTAssertEqual(kk_string_compareTo(strA, strB), -1)
     }
 
     func testStringCompareToGreaterThan() {
-        let a = makeRuntimeString("xyz")
-        let b = makeRuntimeString("abc")
-        XCTAssertEqual(kk_string_compareTo(a, b), 1)
+        let strA = makeRuntimeString("xyz")
+        let strB = makeRuntimeString("abc")
+        XCTAssertEqual(kk_string_compareTo(strA, strB), 1)
     }
 
     func testStringCompareToNils() {
