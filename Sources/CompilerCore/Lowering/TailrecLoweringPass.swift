@@ -32,8 +32,7 @@ final class TailrecLoweringPass: LoweringPass {
                 functionName: function.name,
                 params: function.params,
                 loopLabel: loopLabel,
-                arena: module.arena,
-                interner: ctx.interner
+                arena: module.arena
             )
             return updated
         }
@@ -42,7 +41,7 @@ final class TailrecLoweringPass: LoweringPass {
     }
 
     /// Rewrite a tailrec function body:
-    /// 1. Insert a loop-head label after `beginBlock`.
+    /// 1. Insert a loop-head label after the first `beginBlock` only.
     /// 2. Replace `call(self, args) + returnValue(result)` with
     ///    parameter reassignment (`copy`) + `jump(loopLabel)`.
     private func rewriteTailCalls(
@@ -51,20 +50,21 @@ final class TailrecLoweringPass: LoweringPass {
         functionName: InternedString,
         params: [KIRParameter],
         loopLabel: Int32,
-        arena: KIRArena,
-        interner: StringInterner
+        arena: KIRArena
     ) -> [KIRInstruction] {
         var result: [KIRInstruction] = []
         result.reserveCapacity(body.count + 2)
 
         var i = 0
+        var insertedLoopLabel = false
         while i < body.count {
             let instruction = body[i]
 
-            // Insert loop-head label right after beginBlock.
-            if case .beginBlock = instruction {
+            // Insert loop-head label right after the first beginBlock only.
+            if case .beginBlock = instruction, !insertedLoopLabel {
                 result.append(instruction)
                 result.append(.label(loopLabel))
+                insertedLoopLabel = true
                 i += 1
                 continue
             }
@@ -140,7 +140,8 @@ final class TailrecLoweringPass: LoweringPass {
     }
 
     /// Emit `copy` instructions to reassign the function parameters from
-    /// the recursive call arguments.
+    /// the recursive call arguments.  Also propagates expression types for
+    /// the newly created temporaries and symbol refs.
     private func emitParameterReassignment(
         arguments: [KIRExprID],
         params: [KIRParameter],
@@ -152,7 +153,8 @@ final class TailrecLoweringPass: LoweringPass {
         var temporaries: [KIRExprID] = []
         temporaries.reserveCapacity(arguments.count)
         for arg in arguments {
-            let temp = arena.appendExpr(.temporary(Int32(arena.expressions.count)))
+            let argType = arena.exprType(arg)
+            let temp = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: argType)
             result.append(.copy(from: arg, to: temp))
             temporaries.append(temp)
         }
@@ -160,7 +162,7 @@ final class TailrecLoweringPass: LoweringPass {
         // Then, assign temporaries to parameter symbol refs.
         for (index, param) in params.enumerated() {
             guard index < temporaries.count else { break }
-            let paramExpr = arena.appendExpr(.symbolRef(param.symbol))
+            let paramExpr = arena.appendExpr(.symbolRef(param.symbol), type: param.type)
             result.append(.copy(from: temporaries[index], to: paramExpr))
         }
     }

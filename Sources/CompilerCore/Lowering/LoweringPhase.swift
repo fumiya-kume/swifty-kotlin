@@ -48,7 +48,7 @@ public final class LoweringPhase: CompilerPhase {
             if pass.shouldRun(module: module, ctx: kirCtx) {
                 try pass.run(module: module, ctx: kirCtx)
             } else {
-                module.recordLowering(pass.passName)
+                module.recordLowering(type(of: pass).name)
             }
         }
     }
