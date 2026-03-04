@@ -59,16 +59,11 @@ extension BuildASTPhase.ExpressionParser {
             return astArena.appendExpr(.lambdaLiteral(params: params, body: bodyExpr, label: label, range: range))
         }
 
-        // No-arrow lambda: { body } — check if body references `it` at the top level.
-        // If so, emit a lambdaLiteral with empty params; Sema will inject implicit `it`.
-        if containsImplicitItReference(in: bodyTokens) {
-            let bodyExpr = parseLambdaBody(bodySlice: bodyTokens[...], fallbackStart: openBrace.range.end)
-            let range = SourceRange(start: start ?? openBrace.range.start, end: end)
-            return astArena.appendExpr(.lambdaLiteral(params: [], body: bodyExpr, label: label, range: range))
-        }
-
-        index = savedIndex
-        return nil
+        // No-arrow lambda: `{ body }`.
+        // The body may be a single expression or multiple newline-separated statements.
+        let bodyExpr = parseLambdaBody(bodySlice: bodyTokens[...], fallbackStart: openBrace.range.end)
+        let range = SourceRange(start: start ?? openBrace.range.start, end: end)
+        return astArena.appendExpr(.lambdaLiteral(params: [], body: bodyExpr, label: label, range: range))
     }
 
     func parseObjectLiteral() -> ExprID? {
@@ -319,69 +314,68 @@ extension BuildASTPhase.ExpressionParser {
         ))
     }
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     private func parseLambdaBody(
         bodySlice: ArraySlice<Token>,
         fallbackStart: SourceLocation
     ) -> ExprID {
-        if let parsed = BuildASTPhase.ExpressionParser(
-            tokens: bodySlice, interner: interner, astArena: astArena
-        ).parse() {
-            return parsed
+        let bodyTokens = Array(bodySlice)
+        let ranges = splitBlockTokensIntoStatementRanges(bodyTokens)
+
+        if ranges.isEmpty {
+            let bodyRange = SourceRange(start: fallbackStart, end: fallbackStart)
+            return astArena.appendExpr(.blockExpr(
+                statements: [],
+                trailingExpr: nil,
+                range: bodyRange
+            ))
         }
+
+        var exprs: [ExprID] = []
+        let allTokens = bodyTokens[...]
+        for (start, rangeEnd) in ranges {
+            let group = allTokens[start ..< rangeEnd]
+            guard !group.isEmpty else {
+                continue
+            }
+            if let localDecl = parseLocalDeclFromSlice(group) {
+                exprs.append(localDecl)
+            } else if let localAssign = parseLocalAssignFromSlice(group) {
+                exprs.append(localAssign)
+            } else if let parsed = BuildASTPhase.ExpressionParser(
+                tokens: group,
+                interner: interner,
+                astArena: astArena
+            ).parse() {
+                exprs.append(parsed)
+            }
+        }
+
+        if exprs.count == 1, let only = exprs.first {
+            return only
+        }
+
+        var statements = exprs
+        var trailingExpr: ExprID?
+        if let lastID = statements.last, let lastExpr = astArena.expr(lastID) {
+            switch lastExpr {
+            case .localDecl, .localAssign, .memberAssign, .indexedAssign,
+                 .compoundAssign, .indexedCompoundAssign, .localFunDecl:
+                break
+            default:
+                trailingExpr = statements.removeLast()
+            }
+        }
+
         let bodyRange = if let first = bodySlice.first, let last = bodySlice.last {
             SourceRange(start: first.range.start, end: last.range.end)
         } else {
             SourceRange(start: fallbackStart, end: fallbackStart)
         }
         return astArena.appendExpr(.blockExpr(
-            statements: [], trailingExpr: nil, range: bodyRange
+            statements: statements,
+            trailingExpr: trailingExpr,
+            range: bodyRange
         ))
-    }
-
-    /// Scans body tokens for a top-level reference to `it` — the implicit single-parameter name
-    /// used by Kotlin's no-arrow lambda syntax (`{ it * 2 }`).
-    private func containsImplicitItReference(in tokens: [Token]) -> Bool {
-        var braceDepth = 0
-        for token in tokens {
-            // Only consider identifiers at the top brace level; nested lambdas
-            // define their own `it` so we must not look inside them.
-            if braceDepth == 0 {
-                switch token.kind {
-                case let .identifier(name) where interner.resolve(name) == "it":
-                    return true
-                default:
-                    break
-                }
-            }
-            switch token.kind {
-            case .symbol(.lBrace): braceDepth += 1
-            case .symbol(.rBrace): braceDepth = max(0, braceDepth - 1)
-            default: break
-            }
-        }
-        return false
-    }
-
-    private func isPotentialLambdaParameterList(_ tokens: [Token]) -> Bool {
-        var depth = BuildASTPhase.BracketDepth()
-        for token in tokens {
-            if depth.isAtTopLevel {
-                switch token.kind {
-                case .keyword(.val), .keyword(.var), .keyword(.fun), .keyword(.return),
-                     .keyword(.if), .keyword(.when), .keyword(.for), .keyword(.while),
-                     .keyword(.do), .keyword(.try), .keyword(.throw),
-                     .keyword(.class), .keyword(.object), .keyword(.interface):
-                    return false
-                case .symbol(.assign), .symbol(.plusAssign), .symbol(.minusAssign),
-                     .symbol(.starAssign), .symbol(.slashAssign), .symbol(.percentAssign),
-                     .symbol(.semicolon):
-                    return false
-                default:
-                    break
-                }
-            }
-            depth.track(token.kind)
-        }
-        return true
     }
 }

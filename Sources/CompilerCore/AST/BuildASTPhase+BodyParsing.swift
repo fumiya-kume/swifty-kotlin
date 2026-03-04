@@ -309,7 +309,7 @@ extension BuildASTPhase {
                 if let candidateName = tokenText(candidate, interner: interner) {
                     let knownTargets: Set<String> = [
                         "get", "set", "field", "param", "setparam",
-                        "delegate", "property", "receiver", "file" // swiftlint:disable:this trailing_comma
+                        "delegate", "property", "receiver", "file", // swiftlint:disable:this trailing_comma
                     ]
                     if knownTargets.contains(candidateName) {
                         useSiteTarget = candidateName
