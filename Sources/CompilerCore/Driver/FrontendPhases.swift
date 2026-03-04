@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 
 private final class LockedIndexedResults<Element>: @unchecked Sendable {
@@ -154,6 +155,7 @@ public final class ParsePhase: CompilerPhase {
     }
 }
 
+// swiftlint:disable:next type_body_length
 public final class BuildASTPhase: CompilerPhase {
     public static let name = "BuildAST"
 

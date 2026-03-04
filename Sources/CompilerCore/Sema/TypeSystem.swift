@@ -132,12 +132,14 @@ public final class TypeSystem {
 
     public func isSignedInteger(_ type: TypeID) -> Bool {
         switch kind(of: type) {
-        case .primitive(.int, _), .primitive(.long, _), .primitive(.char, _), .primitive(.ubyte, _), .primitive(.ushort, _):
+        case .primitive(.int, _), .primitive(.long, _), .primitive(.char, _),
+             .primitive(.ubyte, _), .primitive(.ushort, _):
             // In Kotlin, Char, UByte, UShort undergo widening to Int for arithmetic, so we treat them as signed
             // or we only explicitly mark Int and Long as signed. Wait, UByte and UShort are unsigned logically,
             // but for binary operations they might already be promoted to Int unless we are strict.
             // Let's rely strictly on Int, Long for signed integer type.
-            return type == intType || type == longType || type == charType || type == makeNullable(intType) || type == makeNullable(longType) || type == makeNullable(charType)
+            return type == intType || type == longType || type == charType ||
+                   type == makeNullable(intType) || type == makeNullable(longType) || type == makeNullable(charType)
         default:
             return false
         }

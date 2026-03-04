@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 
 extension BuildASTPhase {
@@ -30,6 +31,7 @@ extension BuildASTPhase {
         }
     }
 
+    // swiftlint:disable:next type_body_length
     final class ExpressionParser {
         let tokens: ArraySlice<Token>
         let interner: StringInterner
@@ -37,7 +39,12 @@ extension BuildASTPhase {
         let diagnostics: DiagnosticEngine?
         var index: Int
 
-        init(tokens: ArraySlice<Token>, interner: StringInterner, astArena: ASTArena, diagnostics: DiagnosticEngine? = nil) {
+        init(
+            tokens: ArraySlice<Token>,
+            interner: StringInterner,
+            astArena: ASTArena,
+            diagnostics: DiagnosticEngine? = nil
+        ) {
             self.tokens = tokens
             self.interner = interner
             self.astArena = astArena
@@ -45,7 +52,12 @@ extension BuildASTPhase {
             index = tokens.startIndex
         }
 
-        convenience init(tokens: [Token], interner: StringInterner, astArena: ASTArena, diagnostics: DiagnosticEngine? = nil) {
+        convenience init(
+            tokens: [Token],
+            interner: StringInterner,
+            astArena: ASTArena,
+            diagnostics: DiagnosticEngine? = nil
+        ) {
             self.init(tokens: tokens[...], interner: interner, astArena: astArena, diagnostics: diagnostics)
         }
 
