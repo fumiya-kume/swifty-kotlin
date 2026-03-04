@@ -139,7 +139,7 @@ final class TokenModelTests: XCTestCase {
             (.noinline, "noinline"),
             (.tailrec, "tailrec"),
             (.vararg, "vararg"),
-            (.value, "value"),
+            (.value, "value")
         ]
 
         for (keyword, expected) in expectedKeywords {
@@ -157,7 +157,7 @@ final class TokenModelTests: XCTestCase {
             "reified", "open", "private", "public", "protected", "internal",
             "override", "final", "abstract", "suspend", "inline", "expect",
             "actual", "constructor", "companion", "annotation", "const",
-            "crossinline", "lateinit", "noinline", "tailrec", "vararg", "value",
+            "crossinline", "lateinit", "noinline", "tailrec", "vararg", "value"
         ]
 
         for raw in allRawValues {
@@ -183,7 +183,7 @@ final class TokenModelTests: XCTestCase {
             .reified, .open, .private, .public, .protected, .internal,
             .override, .final, .abstract, .suspend, .inline, .expect,
             .actual, .constructor, .companion, .annotation, .const,
-            .crossinline, .lateinit, .noinline, .tailrec, .vararg, .value,
+            .crossinline, .lateinit, .noinline, .tailrec, .vararg, .value
         ]
 
         for keyword in allKeywords {
@@ -214,7 +214,7 @@ final class TokenModelTests: XCTestCase {
             (.`init`, "init"),
             (.constructor, "constructor"),
             (.out, "out"),
-            (.when, "when"),
+            (.when, "when")
         ]
 
         for (softKeyword, expected) in expectedSoftKeywords {
@@ -226,7 +226,7 @@ final class TokenModelTests: XCTestCase {
         let allRawValues = [
             "by", "get", "set", "field", "property", "receiver",
             "param", "setparam", "delegate", "file", "where",
-            "init", "constructor", "out", "when",
+            "init", "constructor", "out", "when"
         ]
 
         for raw in allRawValues {
@@ -246,7 +246,7 @@ final class TokenModelTests: XCTestCase {
         let allSoftKeywords: [SoftKeyword] = [
             .by, .get, .set, .field, .property, .receiver,
             .param, .setparam, .delegate, .file, .where,
-            .`init`, .constructor, .out, .when,
+            .`init`, .constructor, .out, .when
         ]
 
         for softKeyword in allSoftKeywords {

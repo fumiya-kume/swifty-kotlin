@@ -158,7 +158,7 @@ extension ASTModelsTests {
             (.expect, 1 << 19),
             (.actual, 1 << 20),
             (.value, 1 << 21),
-            (.enumModifier, 1 << 22),
+            (.enumModifier, 1 << 22)
         ]
         for (flag, expected) in allFlags {
             XCTAssertEqual(flag.rawValue, expected, "Flag with rawValue \(flag.rawValue) expected \(expected)")

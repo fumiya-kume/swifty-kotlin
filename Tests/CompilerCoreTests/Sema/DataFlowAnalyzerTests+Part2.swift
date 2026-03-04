@@ -49,7 +49,7 @@ extension DataFlowAnalyzerTests {
         let intType = types.make(.primitive(.int, .nonNull))
         let sym = SymbolID(rawValue: 0)
         let state = DataFlowState(variables: [
-            sym: VariableFlowState(possibleTypes: [intType], nullability: .nonNull, isStable: true),
+            sym: VariableFlowState(possibleTypes: [intType], nullability: .nonNull, isStable: true)
         ])
         XCTAssertEqual(analyzer.resolvedTypeFromFlowState(state, symbol: sym), intType)
     }
@@ -61,7 +61,7 @@ extension DataFlowAnalyzerTests {
         let stringType = types.make(.primitive(.string, .nonNull))
         let sym = SymbolID(rawValue: 0)
         let state = DataFlowState(variables: [
-            sym: VariableFlowState(possibleTypes: [intType, stringType], nullability: .nonNull, isStable: true),
+            sym: VariableFlowState(possibleTypes: [intType, stringType], nullability: .nonNull, isStable: true)
         ])
         XCTAssertNil(analyzer.resolvedTypeFromFlowState(state, symbol: sym))
     }
@@ -76,7 +76,7 @@ extension DataFlowAnalyzerTests {
         let analyzer = DataFlowAnalyzer()
         let sym = SymbolID(rawValue: 0)
         let state = DataFlowState(variables: [
-            sym: VariableFlowState(possibleTypes: [], nullability: .nonNull, isStable: true),
+            sym: VariableFlowState(possibleTypes: [], nullability: .nonNull, isStable: true)
         ])
         XCTAssertNil(analyzer.resolvedTypeFromFlowState(state, symbol: sym))
     }

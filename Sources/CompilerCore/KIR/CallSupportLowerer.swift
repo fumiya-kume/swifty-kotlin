@@ -145,8 +145,7 @@ final class CallSupportLowerer {
         var body: [KIRInstruction] = [.beginBlock]
 
         if let receiverExpr = driver.ctx.currentImplicitReceiverExprID,
-           let receiverSym = driver.ctx.currentImplicitReceiverSymbol
-        {
+           let receiverSym = driver.ctx.currentImplicitReceiverSymbol {
             body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
         }
 

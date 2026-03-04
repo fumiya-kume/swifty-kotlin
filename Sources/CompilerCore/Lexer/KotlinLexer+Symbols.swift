@@ -38,7 +38,7 @@ extension KotlinLexer {
         ("%=", .percentAssign),
         ("++", .plusPlus),
         ("--", .minusMinus),
-        ("..", .dotDot),
+        ("..", .dotDot)
     ]
 
     private static let singleCharSymbols: [UInt8: Symbol] = [
@@ -64,6 +64,6 @@ extension KotlinLexer {
         0x7D: .rBrace, // }
         0x40: .at, // @
         0x23: .hash, // #
-        0x3F: .question, // ?
+        0x3F: .question // ?
     ]
 }

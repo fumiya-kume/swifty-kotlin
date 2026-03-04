@@ -140,7 +140,7 @@ extension KIRLoweringDriver {
                 continue
             }
             let delegateValue = lowerExpr(delegateExpr, shared: shared, emit: &body)
-            
+
             guard let fieldOffset = shared.sema.symbols.nominalLayout(for: ownerSymbol)?.fieldOffsets[fieldSymbol] else {
                 continue
             }

@@ -160,8 +160,7 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
         var callableTarget: CallableTarget?
         var callableCalleeType: TypeID?
         if let calleeName,
-           let local = locals[calleeName]
-        {
+           let local = locals[calleeName] {
             if !local.isInitialized {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0031",
@@ -222,8 +221,7 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
            let result = inferCallableValueInvocation(
                id, calleeType: callableCalleeType, callableTarget: callableTarget,
                args: args, argTypes: argTypes, range: range, ctx: ctx, expectedType: expectedType
-           )
-        {
+           ) {
             return result
         }
 
@@ -281,8 +279,7 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
         }
         if let calleeName,
            interner.resolve(calleeName) == "println",
-           args.count <= 1
-        {
+           args.count <= 1 {
             sema.bindings.bindExprType(id, type: sema.types.unitType)
             return sema.types.unitType
         }
@@ -335,7 +332,7 @@ final class CallTypeChecker { // swiftlint:disable:this type_body_length
                     let listFQName: [InternedString] = [
                         interner.intern("kotlin"),
                         interner.intern("collections"),
-                        interner.intern("List"), // swiftlint:disable:this trailing_comma
+                        interner.intern("List") // swiftlint:disable:this trailing_comma
                     ]
                     if let listSymbol = sema.symbols.lookup(fqName: listFQName) {
                         collectionType = sema.types.make(.classType(ClassType(

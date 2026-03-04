@@ -51,8 +51,7 @@ extension OverloadResolver {
                 // Advance the cursor past already-bound non-vararg params.
                 while positionalCursor < paramCount &&
                     !isVararg[positionalCursor] &&
-                    boundNonVarargParams.contains(positionalCursor)
-                {
+                    boundNonVarargParams.contains(positionalCursor) {
                     positionalCursor += 1
                 }
                 if positionalCursor >= paramCount || !isVararg[positionalCursor] {
@@ -64,8 +63,7 @@ extension OverloadResolver {
 
             while positionalCursor < paramCount,
                   !isVararg[positionalCursor],
-                  boundNonVarargParams.contains(positionalCursor)
-            {
+                  boundNonVarargParams.contains(positionalCursor) {
                 positionalCursor += 1
             }
             if positionalCursor >= paramCount {
@@ -118,8 +116,7 @@ extension OverloadResolver {
         names.reserveCapacity(count)
         for index in 0 ..< count {
             if index < signature.valueParameterSymbols.count,
-               let symbol = symbols.symbol(signature.valueParameterSymbols[index])
-            {
+               let symbol = symbols.symbol(signature.valueParameterSymbols[index]) {
                 names.append(symbol.name)
             } else {
                 names.append(nil)
@@ -148,8 +145,7 @@ extension OverloadResolver {
     ) -> ConstraintOperand {
         let kind = typeSystem.kind(of: type)
         if case let .typeParam(typeParam) = kind,
-           let variable = typeVarBySymbol[typeParam.symbol]
-        {
+           let variable = typeVarBySymbol[typeParam.symbol] {
             return .variable(variable)
         }
         return .type(type)
@@ -179,8 +175,7 @@ extension OverloadResolver {
             }
         case let .functionType(functionType):
             if let receiver = functionType.receiver,
-               containsTypeVariable(receiver, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem)
-            {
+               containsTypeVariable(receiver, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem) {
                 return true
             }
             if containsTypeVariable(functionType.returnType, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem) {
@@ -217,8 +212,7 @@ extension OverloadResolver {
 
         // Case 1: supertype is a direct type parameter → single variable constraint.
         if case let .typeParam(typeParam) = supertypeKind,
-           let variable = typeVarBySymbol[typeParam.symbol]
-        {
+           let variable = typeVarBySymbol[typeParam.symbol] {
             return [VariableConstraint(
                 kind: .subtype,
                 left: .type(subtype),
@@ -248,14 +242,12 @@ extension OverloadResolver {
         // Case 2: supertype is a class type with type args containing type variables.
         if case let .classType(superClass) = supertypeKind,
            !superClass.args.isEmpty,
-           containsTypeVariable(supertype, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem)
-        {
+           containsTypeVariable(supertype, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem) {
             let subtypeKind = typeSystem.kind(of: subtype)
             if case let .classType(subClass) = subtypeKind,
                subClass.classSymbol == superClass.classSymbol,
                subClass.args.count == superClass.args.count,
-               subClass.nullability == superClass.nullability || superClass.nullability == .nullable
-            {
+               subClass.nullability == superClass.nullability || superClass.nullability == .nullable {
                 var result: [VariableConstraint] = []
                 for (subArg, superArg) in zip(subClass.args, superClass.args) {
                     let decomposed = decomposeTypeArgConstraint(
@@ -275,15 +267,13 @@ extension OverloadResolver {
 
         // Case 3: supertype is a function type with type variables in params/return.
         if case let .functionType(superFunc) = supertypeKind,
-           containsTypeVariable(supertype, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem)
-        {
+           containsTypeVariable(supertype, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem) {
             let subtypeKind = typeSystem.kind(of: subtype)
             if case let .functionType(subFunc) = subtypeKind,
                subFunc.params.count == superFunc.params.count,
                subFunc.isSuspend == superFunc.isSuspend,
                subFunc.nullability == superFunc.nullability || superFunc.nullability == .nullable,
-               subFunc.receiver == superFunc.receiver
-            {
+               subFunc.receiver == superFunc.receiver {
                 var result: [VariableConstraint] = []
                 // Function types are contravariant in parameter types.
                 for (subParam, superParam) in zip(subFunc.params, superFunc.params) {
@@ -310,8 +300,7 @@ extension OverloadResolver {
         // Case 4: subtype contains type variables (e.g. return type T or List<T>).
         let subtypeKind = typeSystem.kind(of: subtype)
         if case let .typeParam(typeParam) = subtypeKind,
-           let variable = typeVarBySymbol[typeParam.symbol]
-        {
+           let variable = typeVarBySymbol[typeParam.symbol] {
             return [VariableConstraint(
                 kind: .subtype,
                 left: .variable(variable),
@@ -322,13 +311,11 @@ extension OverloadResolver {
 
         if case let .classType(subClass) = subtypeKind,
            !subClass.args.isEmpty,
-           containsTypeVariable(subtype, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem)
-        {
+           containsTypeVariable(subtype, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem) {
             if case let .classType(superClass) = supertypeKind,
                subClass.classSymbol == superClass.classSymbol,
                subClass.args.count == superClass.args.count,
-               subClass.nullability == superClass.nullability || superClass.nullability == .nullable
-            {
+               subClass.nullability == superClass.nullability || superClass.nullability == .nullable {
                 var result: [VariableConstraint] = []
                 for (subArg, superArg) in zip(subClass.args, superClass.args) {
                     let decomposed = decomposeTypeArgConstraint(

@@ -624,7 +624,7 @@ public final class SymbolTable {
     public func setTypeParameterUpperBound(_ bound: TypeID, for symbol: SymbolID) {
         typeParameterUpperBoundsMap[symbol] = [bound]
     }
-    
+
     public func setTypeParameterUpperBounds(_ bounds: [TypeID], for symbol: SymbolID) {
         typeParameterUpperBoundsMap[symbol] = bounds
     }
@@ -632,7 +632,7 @@ public final class SymbolTable {
     public func typeParameterUpperBound(for symbol: SymbolID) -> TypeID? {
         typeParameterUpperBoundsMap[symbol]?.first
     }
-    
+
     public func typeParameterUpperBounds(for symbol: SymbolID) -> [TypeID] {
         typeParameterUpperBoundsMap[symbol] ?? []
     }

@@ -257,8 +257,7 @@ extension BuildASTPhase {
         for child in arena.children(of: nodeID) {
             if case let .token(tokenID) = child,
                let token = resolveToken(tokenID, in: arena),
-               let name = internedIdentifier(from: token, interner: interner)
-            {
+               let name = internedIdentifier(from: token, interner: interner) {
                 if case let .keyword(keyword) = token.kind, isLeadingDeclarationKeyword(keyword) {
                     continue
                 }
@@ -385,8 +384,7 @@ extension BuildASTPhase {
         let defaultValueExpr: ExprID?
         if let defaultTokens = split.defaultTokens?
             .filter({ $0.kind != .symbol(.semicolon) }),
-            !defaultTokens.isEmpty
-        {
+            !defaultTokens.isEmpty {
             let parser = ExpressionParser(tokens: defaultTokens, interner: interner, astArena: astArena)
             defaultValueExpr = parser.parse()
         } else {

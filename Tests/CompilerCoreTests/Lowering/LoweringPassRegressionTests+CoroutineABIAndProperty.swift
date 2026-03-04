@@ -33,7 +33,7 @@ extension LoweringPassRegressionTests {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .returnValue(launcherResult),
+                .returnValue(launcherResult)
             ],
             isSuspend: false,
             isInline: false
@@ -127,7 +127,7 @@ extension LoweringPassRegressionTests {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .returnValue(launcherResult),
+                .returnValue(launcherResult)
             ],
             isSuspend: false,
             isInline: false
@@ -212,7 +212,7 @@ extension LoweringPassRegressionTests {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .returnValue(launcherResult),
+                .returnValue(launcherResult)
             ],
             isSuspend: false,
             isInline: false
@@ -313,7 +313,7 @@ extension LoweringPassRegressionTests {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .returnValue(launcherResult),
+                .returnValue(launcherResult)
             ],
             isSuspend: false,
             isInline: false
@@ -398,7 +398,7 @@ extension LoweringPassRegressionTests {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .returnValue(launcherResult),
+                .returnValue(launcherResult)
             ],
             isSuspend: false,
             isInline: false

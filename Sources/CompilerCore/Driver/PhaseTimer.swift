@@ -154,7 +154,7 @@ public final class PhaseTimer {
             var entry: [String: Any] = [
                 "phase": record.name,
                 "duration_ms": round(ms * 100) / 100,
-                "percent": round(pct * 10) / 10,
+                "percent": round(pct * 10) / 10
             ]
             if !record.subRecords.isEmpty {
                 entry["sub_phases"] = record.subRecords.map { sub in
@@ -163,7 +163,7 @@ public final class PhaseTimer {
                     return [
                         "phase": sub.name,
                         "duration_ms": round(subMs * 100) / 100,
-                        "percent": round(subPct * 10) / 10,
+                        "percent": round(subPct * 10) / 10
                     ] as [String: Any]
                 }
             }
@@ -172,7 +172,7 @@ public final class PhaseTimer {
         result.append([
             "phase": "TOTAL",
             "duration_ms": round(total * 100) / 100,
-            "percent": 100.0,
+            "percent": 100.0
         ])
         return result
     }

@@ -62,8 +62,7 @@ extension CallTypeChecker {
         let lookupReceiverType = safeCall ? sema.types.makeNonNullable(receiverType) : receiverType
         // Primitive member function: Int/Long.inv() → same type (P5-103)
         if interner.resolve(calleeName) == "inv",
-           args.isEmpty
-        {
+           args.isEmpty {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
             if lookupReceiverType == intType || lookupReceiverType == longType {
@@ -86,8 +85,7 @@ extension CallTypeChecker {
             switch interner.resolve(calleeName) {
             case "and", "or", "xor":
                 if isPrimitiveReceiver,
-                   rhsType == intType || rhsType == longType
-                {
+                   rhsType == intType || rhsType == longType {
                     let resultType = (receiverForCheck == longType || rhsType == longType) ? longType : intType
                     let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                     sema.bindings.bindExprType(id, type: finalType)
@@ -95,8 +93,7 @@ extension CallTypeChecker {
                 }
             case "shl", "shr", "ushr":
                 if isPrimitiveReceiver,
-                   rhsType == intType
-                {
+                   rhsType == intType {
                     let finalType = safeCall ? sema.types.makeNullable(receiverForCheck) : receiverForCheck
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
@@ -108,8 +105,7 @@ extension CallTypeChecker {
 
         // Primitive member function: Int/Long.toString(radix: Int) → String (EXPR-003)
         if interner.resolve(calleeName) == "toString",
-           args.count == 1
-        {
+           args.count == 1 {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let stringType = sema.types.make(.primitive(.string, .nonNull))
@@ -117,8 +113,7 @@ extension CallTypeChecker {
                 ? sema.types.makeNonNullable(lookupReceiverType)
                 : lookupReceiverType
             if receiverForCheck == intType || receiverForCheck == longType,
-               argTypes[0] == intType
-            {
+               argTypes[0] == intType {
                 let finalType = safeCall ? sema.types.makeNullable(stringType) : stringType
                 sema.bindings.bindExprType(id, type: finalType)
                 return finalType
@@ -262,8 +257,7 @@ extension CallTypeChecker {
                    let parentSymbol = sema.symbols.parentSymbol(for: first),
                    let ownerNominal = driver.helpers.nominalSymbol(of: memberLookupType, types: sema.types),
                    parentSymbol != ownerNominal,
-                   sema.symbols.companionObjectSymbol(for: ownerNominal) == parentSymbol
-                {
+                   sema.symbols.companionObjectSymbol(for: ownerNominal) == parentSymbol {
                     companionReceiverType = sema.types.make(.classType(ClassType(classSymbol: parentSymbol, args: [], nullability: .nonNull)))
                 }
                 allCandidates = memberCandidates
@@ -301,15 +295,13 @@ extension CallTypeChecker {
                    ownerNominalSymbol: classNameReceiverNominalSymbol,
                    memberName: calleeName,
                    sema: sema
-               )
-            {
+               ) {
                 if let memberSymbol = sema.symbols.symbol(staticMember.symbol),
                    !ctx.visibilityChecker.isAccessible(
                        memberSymbol,
                        fromFile: ctx.currentFileID,
                        enclosingClass: ctx.enclosingClassSymbol
-                   )
-                {
+                   ) {
                     // swiftlint:disable:next line_length
                     driver.helpers.emitVisibilityError(for: memberSymbol, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
                     return driver.helpers.bindAndReturnErrorType(id, sema: sema)
@@ -319,8 +311,7 @@ extension CallTypeChecker {
                 return staticMember.type
             }
             if args.isEmpty,
-               interner.resolve(calleeName) == "length"
-            {
+               interner.resolve(calleeName) == "length" {
                 let receiverTypeForCheck = safeCall
                     ? sema.types.makeNonNullable(lookupReceiverType)
                     : lookupReceiverType
@@ -478,7 +469,7 @@ extension CallTypeChecker {
                     "count", "iterator",
                     "map", "filter", "forEach", "flatMap",
                     "any", "none", "all",
-                    "asSequence", "toList", "take", // swiftlint:disable:this trailing_comma
+                    "asSequence", "toList", "take" // swiftlint:disable:this trailing_comma
                 ]
                 if collectionMembers.contains(memberName) {
                     let resultType: TypeID = switch memberName {
@@ -588,8 +579,7 @@ extension CallTypeChecker {
         if isSuperCall,
            let chosenSym = sema.symbols.symbol(chosen),
            chosenSym.flags.contains(.abstractType),
-           chosenSym.kind == .function || chosenSym.kind == .property
-        {
+           chosenSym.kind == .function || chosenSym.kind == .property {
             let memberName = interner.resolve(calleeName)
             ctx.semaCtx.diagnostics.error(
                 "KSWIFTK-SEMA-ABSTRACT",

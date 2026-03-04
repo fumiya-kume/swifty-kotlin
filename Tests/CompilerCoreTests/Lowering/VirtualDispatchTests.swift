@@ -135,7 +135,7 @@ final class VirtualDispatchTests: XCTestCase {
                     thrownResult: nil,
                     dispatch: .vtable(slot: 0)
                 ),
-                .returnUnit,
+                .returnUnit
             ],
             isSuspend: false,
             isInline: false
@@ -251,7 +251,7 @@ final class VirtualDispatchTests: XCTestCase {
                     thrownResult: nil,
                     dispatch: .itable(interfaceSlot: 0, methodSlot: 0)
                 ),
-                .returnUnit,
+                .returnUnit
             ],
             isSuspend: false,
             isInline: false
@@ -377,7 +377,7 @@ final class VirtualDispatchTests: XCTestCase {
                     thrownResult: nil,
                     dispatch: .vtable(slot: 0)
                 ),
-                .returnUnit,
+                .returnUnit
             ],
             isSuspend: false,
             isInline: false

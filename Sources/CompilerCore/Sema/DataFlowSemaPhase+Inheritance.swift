@@ -85,8 +85,7 @@ extension DataFlowSemaPhase {
         for candidatePath in candidatePaths {
             if let symbol = symbols.lookupAll(fqName: candidatePath)
                 .compactMap({ symbols.symbol($0) })
-                .first(where: { isNominalTypeSymbol($0.kind) })?.id
-            {
+                .first(where: { isNominalTypeSymbol($0.kind) })?.id {
                 let resolvedArgs = resolveTypeArgRefsForInheritance(
                     argRefs,
                     currentPackage: currentPackage,
@@ -159,8 +158,7 @@ extension DataFlowSemaPhase {
             for candidatePath in candidatePaths {
                 if let nominalSymbol = symbols.lookupAll(fqName: candidatePath)
                     .compactMap({ symbols.symbol($0) })
-                    .first(where: { isNominalTypeSymbol($0.kind) })
-                {
+                    .first(where: { isNominalTypeSymbol($0.kind) }) {
                     let resolvedArgs = resolveTypeArgRefsForInheritance(argRefs, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types)
                     return types.make(.classType(ClassType(classSymbol: nominalSymbol.id, args: resolvedArgs, nullability: nullability)))
                 }
@@ -269,8 +267,7 @@ extension DataFlowSemaPhase {
                         )
                     } else if let classSymbol = bindings.declSymbols[declID],
                               let classSym = symbols.symbol(classSymbol),
-                              let delegateExpr = entry.delegateExpression
-                    {
+                              let delegateExpr = entry.delegateExpression {
                         symbols.addDelegatedInterface(resolved.symbol, forClass: classSymbol)
                         symbols.setClassDelegationExpr(delegateExpr, forClass: classSymbol, interface: resolved.symbol)
                         let interfaceName = interner.resolve(superSymbol.fqName.last ?? interner.intern(""))
@@ -512,8 +509,7 @@ extension DataFlowSemaPhase {
             guard let abstractSym = symbols.symbol(abstractMember) else { continue }
             // Skip if this abstract member belongs to a delegated interface
             if let owner = symbols.parentSymbol(for: abstractMember),
-               delegatedInterfaces.contains(owner)
-            {
+               delegatedInterfaces.contains(owner) {
                 continue
             }
             let memberName = interner.resolve(abstractSym.name)

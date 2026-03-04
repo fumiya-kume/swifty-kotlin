@@ -140,7 +140,7 @@ extension DataFlowSemaPhase {
                 .jump(endLabel),
                 .label(elseLabel),
                 .copy(from: KIRExprID(rawValue: elseValue), to: KIRExprID(rawValue: result)),
-                .label(endLabel),
+                .label(endLabel)
             ]
         }
 

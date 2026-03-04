@@ -113,8 +113,7 @@ final class PropertyLoweringPass: LoweringPass {
                     { // swiftlint:disable:this opening_brace
                         let toExpr = module.arena.expr(to)
                         if case let .symbolRef(targetSym) = toExpr,
-                           sema.symbols.symbol(targetSym)?.kind == .backingField
-                        {
+                           sema.symbols.symbol(targetSym)?.kind == .backingField {
                             // Find the property symbol that owns this backing
                             // field and emit a direct setter accessor call.
                             let propSym = self.propertySymbolForBackingField(
@@ -160,8 +159,7 @@ final class PropertyLoweringPass: LoweringPass {
                    let sym = symbol,
                    let symInfo = sema.symbols.symbol(sym),
                    symInfo.kind == .field,
-                   interner.resolve(symInfo.name).hasPrefix("$delegate_")
-                {
+                   interner.resolve(symInfo.name).hasPrefix("$delegate_") {
                     let isSetter = callee == setValueName
                     // Derive the property symbol from the delegate field name
                     // ($delegate_<propName> → <propName>). MemberLowerer creates

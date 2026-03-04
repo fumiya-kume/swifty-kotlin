@@ -48,7 +48,7 @@ extension VirtualDispatchTests {
                     thrownResult: nil,
                     dispatch: .vtable(slot: 0)
                 ),
-                .returnUnit,
+                .returnUnit
             ],
             isSuspend: false,
             isInline: false
@@ -290,7 +290,7 @@ extension VirtualDispatchTests {
             name: interner.intern("callWithArg"),
             params: [
                 KIRParameter(symbol: SymbolID(rawValue: 5003), type: anyType),
-                KIRParameter(symbol: SymbolID(rawValue: 5004), type: anyType),
+                KIRParameter(symbol: SymbolID(rawValue: 5004), type: anyType)
             ],
             returnType: types.unitType,
             body: [
@@ -304,7 +304,7 @@ extension VirtualDispatchTests {
                     thrownResult: nil,
                     dispatch: .vtable(slot: 0)
                 ),
-                .returnUnit,
+                .returnUnit
             ],
             isSuspend: false,
             isInline: false
