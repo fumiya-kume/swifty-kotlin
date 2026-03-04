@@ -159,7 +159,7 @@ public final class ParsePhase: CompilerPhase {
 public final class BuildASTPhase: CompilerPhase {
     public static let name = "BuildAST"
 
-    struct PerFileASTResult: Sendable {
+    struct PerFileASTResult {
         let fileID: FileID
         let fileRawID: Int32
         let packageFQName: [InternedString]
